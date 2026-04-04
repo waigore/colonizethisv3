@@ -115,6 +115,19 @@ void main() {
     expect(find.text('2'), findsWidgets);
   });
 
+  testWidgets('AC: regiment rows show roster display names not type ids', (
+    WidgetTester tester,
+  ) async {
+    final richGame = gameWithMilitaryResources();
+    await tester.pumpWidget(
+      buildDialog(game: richGame, humanPlayerId: humanPlayerId),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Peasant Levies'), findsWidgets);
+    expect(find.text('peasant_levies'), findsNothing);
+  });
+
   testWidgets('dialog submits military orders when closed', (
     WidgetTester tester,
   ) async {
@@ -175,9 +188,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          currentGameProvider.overrideWith(
-            () => CurrentGameNotifier(richGame),
-          ),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(richGame)),
           currentOrdersProvider.overrideWith(
             () => CurrentOrdersNotifier(const Orders()),
           ),

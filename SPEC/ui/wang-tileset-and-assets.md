@@ -197,6 +197,28 @@ Native **64×64** plains/sea/desert fill tiles (not Wang tileset API). **MCP too
 
 ---
 
+## App map runtime configuration (Flutter)
+
+**Goal:** Choose Wang atlas paths, per-tileset atlas `tile_px`, and map grid `cellSize` without editing Dart.
+
+| Item | Detail |
+|------|--------|
+| **JSON asset** | `app/assets/data/map_terrain_tilesets.json` |
+| **Bundle** | `flutter.assets` includes `assets/data/` |
+| **Dart API** | `MapTerrainConfig.ensureLoaded()` then `MapTerrainConfig.instance` (`app/lib/config/map_terrain_config.dart`) |
+| **When loaded** | Before `TerrainTilesetCache` / map use: app `main.dart`; tests via `app/test/flutter_test_config.dart` |
+
+**Schema (informal):**
+
+- `map_cell_size_px` (int ≥ 1): logical pixels per map cell for Flame (`InitGameMapViewData` / `RegionMapViewData.cellSize`).
+- `wang_tilesets` (object): must contain exactly these keys: `sea_plains`, `sea_desert`, `plains_desert`.
+- Each Wang entry: `spec_json` (String, asset path to PixelLab-style JSON), `atlas_png` (String), `tile_px` (int ≥ 1). Loader requires `tile_px` to equal both `tile_size.width` and `tile_size.height` in that JSON.
+- **PNG vs metadata:** Every tile’s `bounding_box` must lie within the decoded PNG. If `tileset_image.dimensions` disagrees with the PNG size, the app may log a warning but still load when bboxes are valid.
+
+**Rendering note:** Source rects use JSON `bounding_box`; destination is always one map cell of size `map_cell_size_px`, so mixed `tile_px` across tilesets (e.g. 64 sea/plains atlas, 32 desert atlases) is supported.
+
+---
+
 ## Acceptance Criteria
 
 - Given the forced palette and tileset config, when generating `sea_plains`, then it produces a 16-tile Wang tileset with consistent sea and plains base tiles.
@@ -206,3 +228,4 @@ Native **64×64** plains/sea/desert fill tiles (not Wang tileset API). **MCP too
 - Given a map cell with sea adjacent to desert, when rendering, then the `sea_desert` Wang tileset is used.
 - Given a map cell with plains adjacent to desert, when rendering, then the `plains_desert` Wang tileset is used.
 - Given a feature cell (forest/hills/mountain/swamp), when rendering, then the appropriate land base is drawn first, then the feature overlay tile on top.
+- Given valid bundled `map_terrain_tilesets.json` and referenced atlases, when the Flutter map loads Wang tilesets, then `sea_plains`, `sea_desert`, and `plains_desert` all resolve from the configured paths and the map grid uses `map_cell_size_px`.

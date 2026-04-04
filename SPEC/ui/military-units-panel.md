@@ -16,8 +16,9 @@ The military units panel is a single place to see every **army** (composition of
 
 - **Included:** All **armies** owned by the human player from `WorldState.armies` (or per-region equivalent). **Home Army** is always listed for the capital region (even at **zero** regiments), pinned like Home Fleet.
 - **Grouping:** By **region**, then by **province** (stationed province). Under each province: **one row per army** (not one row per regiment type). **Order:** Region headings; within region, **Home Army** section first when capital is in that region; then **province** nodes (stable order by display name or id); within a province, armies in stable order (e.g. by army label or id).
-- **Row content (collapsed):** Army display name (or generated id label), **province + region** location, short composition summary (e.g. total regiments, strength summary if available from logic), optional **status** from aggregate regiment `Unit.status` (if any Working → show Working).
-- **Row content (expanded):** Table of **regiment types** with **counts**, **medals** (range per type if mixed), same pattern as prior regiment-type display but scoped to this army. **Split** / **Combine** per [military-units-army-management.md](military-units-army-management.md). **Move** control: **non-Home** armies only; **Home Army** does **not** show **Move** (cannot leave capital). Move flow emits a bus event; shell/logic applies `ArmyMoveOrder` per [orders.md](../program/orders.md).
+- **Row content (collapsed):** Army display name (or generated id label). **Location line:** After the regiment count, show the stationed province’s **display name** when `Province.displayName` is set (`Province.displayName ?? Province.id` from world state lookup by full province id); do **not** show raw `stationedProvinceId` alone when a display name exists. Region context remains on the location section header (“name — region”). Short composition summary (e.g. total regiments). Optional **status** from aggregate regiment `Unit.status` (if any Working → show Working).
+- **Row content (expanded):** Table of **regiment types** with **counts**, **medals** (range per type if mixed). Each regiment row’s title uses the **roster display name** from [military-units.md](../game/military-units.md) via `regimentTypeDisplayName` in `colonizethis_data` (e.g. `Peasant Levies`), not the persistence code (`peasant_levies`). **Split** / **Combine** per [military-units-army-management.md](military-units-army-management.md). **Move** control: **non-Home** armies only; **Home Army** does **not** show **Move** (cannot leave capital). Move flow emits a bus event; shell/logic applies `ArmyMoveOrder` per [orders.md](../program/orders.md).
+- **Naval ship-type rows (in this panel):** Ship aggregate row titles use `shipTypeDisplayName` in `colonizethis_data` (aligned with [ships-and-naval.md](../game/ships-and-naval.md) roster), not raw `ship_type_id` strings. Unknown ids fall back to the raw id.
 - **Move destination UX (armies):** On **Move**, the panel opens a local dialog with one **province dropdown grouped by region** (Old World / New World). Options include every **player-owned** province in any region except the army's current province. On confirm, emit `ArmyMoveRequestedEvent` with `ArmyMoveOrder.destinationProvinceId` in prefixed form.
 - **Excluded:** Civilian units. Armies/fleets owned by other factions.
 
@@ -25,7 +26,7 @@ The military units panel is a single place to see every **army** (composition of
 
 ## Scope: naval (fleets)
 
-Unchanged from [naval-units-panel.md](naval-units-panel.md): same grouping (region, Home Fleet, ports, sea zones), ship-type rows, missions, **Move** for sea-going fleets, fleet split/combine. Sea-zone location headers in this panel use sea-zone display names from world-state sea-zone naming (prefixed key), not raw ids. **Do not** merge naval rows into army rows; the panel contains **two** subsections (land armies | naval fleets) or one tree with clear **Land** / **Naval** branches per [empire-buttons.md](empire-buttons.md) layout constraints.
+Unchanged from [naval-units-panel.md](naval-units-panel.md): same grouping (region, Home Fleet, ports, sea zones), ship-type rows, missions, **Move** for sea-going fleets, fleet split/combine. Sea-zone location headers in this panel use sea-zone display names from world-state sea-zone naming (prefixed key), not raw ids. Ship-type **labels** in aggregate rows use the same `shipTypeDisplayName` mapping as the Naval Units panel composition table. **Do not** merge naval rows into army rows; the panel contains **two** subsections (land armies | naval fleets) or one tree with clear **Land** / **Naval** branches per [empire-buttons.md](empire-buttons.md) layout constraints.
 
 ---
 
@@ -73,7 +74,13 @@ Unchanged from [naval-units-panel.md](naval-units-panel.md): same grouping (regi
 
 - Given the Widgetbook “Military Units Panel” **With map** story, when the user selects an army row, then the map highlights and centers on that army’s province tile and switches region tab when needed.
 
-- **Given** the Military Units panel is open, **when** the user taps the Train button, **then** the UI layer closes the panel and emits `OpenDialogEvent(trainMilitaryDialogId)` so the Train Military dialog opens via `AppEventBus` wiring (the panel does not call `showDialog` directly).
+- Given a province has `displayName` set in world state and an army is stationed there, when the user views that army’s subtitle (collapsed row), then the UI layer shows that **display name** in the location segment after the regiment count, not only the raw `stationedProvinceId` string.
+
+- Given an army has regiments of type `peasant_levies`, when the user expands the army and reads a regiment-type row title, then the UI layer shows **Peasant Levies** (roster display name per [military-units.md](../game/military-units.md)), not the string `peasant_levies`.
+
+- Given a fleet at sea lists ships of type `galleon`, when the user reads a ship-type row in this panel, then the UI layer shows **Galleon** (or the mapped display name from `shipTypeDisplayName`), not the raw id `galleon`.
+
+- Given a regiment or ship type id is absent from the display-name maps, when the panel renders that row, then the UI layer shows the raw id as the label (fallback) and does not throw.
 
 ---
 

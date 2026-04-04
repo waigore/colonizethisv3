@@ -55,9 +55,9 @@ final class _PickPort extends _MovePick {
 
   @override
   NavalMoveOrder toOrder(String fleetId) => NavalMoveOrder(
-        fleetId: fleetId,
-        destinationPortProvinceId: fullProvinceId,
-      );
+    fleetId: fleetId,
+    destinationPortProvinceId: fullProvinceId,
+  );
 
   @override
   void emitLocate(AppEventBus bus, Game game) {
@@ -69,6 +69,16 @@ final class _PickPort extends _MovePick {
   }
 }
 
+String _fleetMoveDialogTitleLabel(Fleet fleet) => 'Fleet ${fleet.id}';
+
+String _fullProvinceIdForTopologyProvince(
+  String topologyProvinceId,
+  String regionId,
+) {
+  if (ProvinceId.isPrefixed(topologyProvinceId)) return topologyProvinceId;
+  return ProvinceId.full(regionId, topologyProvinceId);
+}
+
 List<_MovePick> _buildNavalMovePicks({
   required Game game,
   required MapTopology topology,
@@ -78,34 +88,14 @@ List<_MovePick> _buildNavalMovePicks({
   final outSea = <_PickSeaZone>[];
   final outPort = <_PickPort>[];
 
-  final String? currentSeaZoneId;
-  if (fleet.isAtSea) {
-    currentSeaZoneId = fleet.seaZoneId;
-  } else {
-    final inPort = fleet.inPortAtProvinceId;
-    if (inPort == null) return const [];
-    final rl = regionAndLocalProvinceForFleetInPort(inPort, fleet.regionId);
-    currentSeaZoneId = seaZoneIdForProvince(
-      topology,
-      rl.localId,
-      regionId: rl.regionId,
-    );
-  }
-  if (currentSeaZoneId == null || currentSeaZoneId.isEmpty) return const [];
+  final topo = navalMoveTopologyPicksForFleet(topology: topology, fleet: fleet);
+  if (topo.totalCount == 0) return const [];
 
-  final fleetSeaRegion =
-      regionIdForSeaZone(topology, currentSeaZoneId) ?? fleet.regionId;
+  final fleetSeaRegion = fleet.isAtSea && fleet.seaZoneId != null
+      ? regionIdForSeaZone(topology, fleet.seaZoneId!) ?? fleet.regionId
+      : fleet.regionId;
 
-  final adjZones = <String>{};
-  for (final e in topology.edges) {
-    if (e.id1 == currentSeaZoneId) {
-      adjZones.add(e.id2);
-    } else if (e.id2 == currentSeaZoneId) {
-      adjZones.add(e.id1);
-    }
-  }
-  final sortedZones = adjZones.toList()..sort();
-  for (final z in sortedZones) {
+  for (final z in topo.adjacentSeaZoneIds) {
     final zReg = regionIdForSeaZone(topology, z) ?? fleetSeaRegion;
     final regLabel = unitsPanelRegionLabel(zReg);
     final cross = zReg != fleetSeaRegion;
@@ -123,14 +113,9 @@ List<_MovePick> _buildNavalMovePicks({
 
   if (fleet.isAtSea && fleet.seaZoneId != null) {
     final rz = regionIdForSeaZone(topology, fleet.seaZoneId!) ?? fleet.regionId;
-    final localProvinces = provinceIdsAdjacentToSeaZone(
-      topology,
-      fleet.seaZoneId!,
-      regionId: rz,
-    );
     final portRows = <({String fullId, String label})>[];
-    for (final lp in localProvinces) {
-      final full = ProvinceId.full(rz, lp);
+    for (final lp in topo.adjacentProvinceIdsForDock) {
+      final full = _fullProvinceIdForTopologyProvince(lp, rz);
       final province = tryGetProvince(game.worldState, full);
       if (province == null || province.ownerId != humanPlayerId) continue;
       final name = province.displayName ?? province.id;
@@ -193,9 +178,13 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
     final picks = _picks;
     final seaPicks = picks.whereType<_PickSeaZone>().toList();
     final portPicks = picks.whereType<_PickPort>().toList();
+    final fleetLabel = _fleetMoveDialogTitleLabel(widget.fleet);
+    final titleText = picks.isEmpty
+        ? 'Move fleet — $fleetLabel'
+        : 'Move fleet — $fleetLabel (${picks.length} destinations)';
 
     return AlertDialog(
-      title: Text('Move fleet — ${widget.fleet.id}'),
+      title: Text(titleText),
       content: SizedBox(
         width: 420,
         child: picks.isEmpty

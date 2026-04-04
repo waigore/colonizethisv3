@@ -12,6 +12,7 @@ import '../game_events.dart';
 import 'naval.dart';
 import 'player_view.dart';
 import 'province_lookup.dart';
+import 'topology_helpers.dart';
 
 final _log = logicLogger();
 
@@ -22,14 +23,16 @@ Map<String, Map<String, String>> _revealProvinceTilesForPlayer(
   String fullProvinceId,
 ) {
   final regionId = ProvinceId.regionIdFrom(fullProvinceId);
-  final tileKeys = game.worldState.tileKeysByRegionAndProvince[regionId]?[fullProvinceId] ??
+  final tileKeys =
+      game.worldState.tileKeysByRegionAndProvince[regionId]?[fullProvinceId] ??
       const [];
   if (tileKeys.isEmpty) return visibilityByTile;
   final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
   for (final tk in tileKeys) {
     vis[tk] = VisibilityLevel.revealed.name;
   }
-  return Map<String, Map<String, String>>.from(visibilityByTile)..[playerId] = vis;
+  return Map<String, Map<String, String>>.from(visibilityByTile)
+    ..[playerId] = vis;
 }
 
 Map<String, Set<String>> _atWarByFaction(Game game) {
@@ -97,7 +100,8 @@ Game applyNavalMissionOrders(
             .map((p) => p.capitalProvinceId)
             .firstOrNull;
         if (capitalProvinceId == null ||
-            fleet.inPortAtProvinceId != capitalProvinceId) continue;
+            fleet.inPortAtProvinceId != capitalProvinceId)
+          continue;
         if (fleet.shipTypeIds.isEmpty) continue;
         final updatedHome = homeFleet.copyWith(
           ships: [...homeFleet.ships, ...fleet.ships],
@@ -123,14 +127,17 @@ Game applyNavalMissionOrders(
 
       if (mission == FleetMission.blockade) {
         final targetProvinceId = order.targetProvinceId;
-        final province = targetProvinceId != null &&
+        final province =
+            targetProvinceId != null &&
                 targetProvinceId.isNotEmpty &&
                 ProvinceId.isPrefixed(targetProvinceId)
             ? tryGetProvince(game.worldState, targetProvinceId)
             : null;
         final ownerId = province?.ownerId;
         final atWar =
-            ownerId != null && ownerId != playerId && factionsAtWar(game, playerId, ownerId);
+            ownerId != null &&
+            ownerId != playerId &&
+            factionsAtWar(game, playerId, ownerId);
         if (!atWar) {
           final cleared = fleet.copyWith(
             mission: FleetMission.none,
@@ -169,7 +176,9 @@ Game applyNavalMissionOrders(
         : null;
     final ownerId = province?.ownerId;
     final atWar =
-        ownerId != null && ownerId != f.ownerId && factionsAtWar(game, f.ownerId, ownerId);
+        ownerId != null &&
+        ownerId != f.ownerId &&
+        factionsAtWar(game, f.ownerId, ownerId);
     if (!atWar) {
       fleets = List<Fleet>.from(fleets)
         ..[i] = f.copyWith(
@@ -180,9 +189,7 @@ Game applyNavalMissionOrders(
     }
   }
 
-  return game.copyWith(
-    worldState: game.worldState.copyWith(fleets: fleets),
-  );
+  return game.copyWith(worldState: game.worldState.copyWith(fleets: fleets));
 }
 
 Game applyNavalMovesAndShipReveal(
@@ -213,7 +220,10 @@ Game applyNavalMovesAndShipReveal(
         final fullProvinceId = toFullProvinceId(fleet.regionId, portProvinceId);
         final province = tryGetProvince(game.worldState, fullProvinceId);
         if (province == null || province.ownerId != playerId) continue;
-        final adjacentSeaZones = seaZoneIdsAdjacentToProvince(topology, fullProvinceId);
+        final adjacentSeaZones = seaZoneIdsAdjacentToProvince(
+          topology,
+          fullProvinceId,
+        );
         if (!adjacentSeaZones.contains(fleet.seaZoneId)) continue;
 
         visibilityByTile = _revealProvinceTilesForPlayer(
@@ -266,28 +276,38 @@ Game applyNavalMovesAndShipReveal(
         continue;
       }
 
-      // Move to sea zone (or undock from port).
-      final String? currentSeaZoneId;
+      // Move to sea zone (S–S) or undock (P–S): destination must be a sea-zone node.
+      final destZoneId = order.destinationSeaZoneId;
+      if (destZoneId == null || destZoneId.isEmpty) continue;
+      if (!seaZoneNodeIds(topology).contains(destZoneId)) continue;
+
       if (fleet.isAtSea) {
-        currentSeaZoneId = fleet.seaZoneId;
+        final cur = fleet.seaZoneId;
+        if (cur == null) continue;
+        if (cur != destZoneId &&
+            !isAdjacentSeaSeaZone(topology, cur, destZoneId)) {
+          continue;
+        }
       } else {
-        // Fleet in port: adjacency is from the port's sea zone.
         final inPortProvinceId = fleet.inPortAtProvinceId;
         if (inPortProvinceId == null) continue;
         final rl = regionAndLocalProvinceForFleetInPort(
           inPortProvinceId,
           fleet.regionId,
         );
-        currentSeaZoneId = seaZoneIdForProvince(
+        final provinceNodeId = provinceTopologyNodeId(
           topology,
           rl.localId,
-          regionId: rl.regionId,
+          rl.regionId,
         );
+        if (provinceNodeId == null) continue;
+        if (!seaZonesAdjacentToProvince(
+          topology,
+          provinceNodeId,
+        ).contains(destZoneId)) {
+          continue;
+        }
       }
-      final destZoneId = order.destinationSeaZoneId;
-      if (currentSeaZoneId == null || destZoneId == null || destZoneId.isEmpty) continue;
-      if (currentSeaZoneId != destZoneId &&
-          !isAdjacentSeaZone(topology, currentSeaZoneId, destZoneId)) continue;
 
       final destRegionId = regionIdForSeaZone(topology, destZoneId);
       // Moving to sea zone: fleet ends at sea (undock if was in port); move clears mission.
@@ -317,22 +337,26 @@ Game applyNavalMovesAndShipReveal(
         final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
         for (final localProvinceId in provinceIds) {
           final fullProvinceId = ProvinceId.full(destRegionId, localProvinceId);
-          final tileKeys = game.worldState
+          final tileKeys =
+              game
+                  .worldState
                   .tileKeysByRegionAndProvince[destRegionId]?[fullProvinceId] ??
               [];
           for (final tk in tileKeys) {
             vis[tk] = VisibilityLevel.revealed.name;
           }
         }
-        final seaWaterKeys = game.worldState.tileKeysByRegionAndProvince[destRegionId]?[destZoneId];
+        final seaWaterKeys = game
+            .worldState
+            .tileKeysByRegionAndProvince[destRegionId]?[destZoneId];
         if (seaWaterKeys != null) {
           for (final tk in seaWaterKeys) {
             vis[tk] = VisibilityLevel.fullyVisible.name;
           }
         }
-        visibilityByTile =
-            Map<String, Map<String, String>>.from(visibilityByTile)
-              ..[playerId] = vis;
+        visibilityByTile = Map<String, Map<String, String>>.from(
+          visibilityByTile,
+        )..[playerId] = vis;
       }
     }
   }
@@ -361,9 +385,11 @@ Game runNavalInterceptionCombatPhase(
       for (final order in list) order.fleetId,
   };
   battles = [
-    for (final b in battles) normalizeNavalBattleSidesForAttacker(b, game, movedFleetIds),
+    for (final b in battles)
+      normalizeNavalBattleSidesForAttacker(b, game, movedFleetIds),
   ];
-  var seed = (game.globalGameSeed ?? 0) ^
+  var seed =
+      (game.globalGameSeed ?? 0) ^
       (game.worldState.turnState.turnNumber * 0x9E3779B1);
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
   _log.d('naval phase after interception battles=${battles.length}');
@@ -393,9 +419,11 @@ Game runNavalInterceptionCombatPhase(
     );
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
     final zoneRegionId = regionIdForSeaZone(topology, battle.seaZoneId);
-    final fleetsInZone =
-        state.worldState.fleets.where((f) => f.seaZoneId == battle.seaZoneId);
-    final regionId = zoneRegionId ??
+    final fleetsInZone = state.worldState.fleets.where(
+      (f) => f.seaZoneId == battle.seaZoneId,
+    );
+    final regionId =
+        zoneRegionId ??
         (fleetsInZone.isEmpty ? null : fleetsInZone.first.regionId) ??
         kRegionOldWorld;
     state = applyNavalBattleResults(
@@ -423,13 +451,19 @@ Game runNavalInterceptionCombatPhase(
       loserId = battle.side2.ownerId;
     }
     if (victorId != null && loserId != null) {
-      final evidence =
-          evidenceForNavalBattleVictory(state, victorId, loserId, turn);
+      final evidence = evidenceForNavalBattleVictory(
+        state,
+        victorId,
+        loserId,
+        turn,
+      );
       if (evidence.isNotEmpty) {
-        state = state.copyWith(dossierEvidenceEntries: [
-          ...state.dossierEvidenceEntries,
-          ...evidence
-        ]);
+        state = state.copyWith(
+          dossierEvidenceEntries: [
+            ...state.dossierEvidenceEntries,
+            ...evidence,
+          ],
+        );
       }
       final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
       final events = dialogueEventsForNavalBattleResult(

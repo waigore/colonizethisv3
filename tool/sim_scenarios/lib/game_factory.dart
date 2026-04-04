@@ -248,8 +248,10 @@ class GameFactory {
         initialWool: (raw['initialWool'] as num?)?.toInt() ?? 4,
         initialPaper: (raw['initialPaper'] as num?)?.toInt() ?? 2,
         initialMilitaryRegiments:
-            (raw['initialMilitaryRegiments'] as num?)?.toInt() ?? 5,
-        initialNavalShips: (raw['initialNavalShips'] as num?)?.toInt() ?? 3,
+            (raw['initialMilitaryRegiments'] as num?)?.toInt() ?? 3,
+        initialNavalShips: (raw['initialNavalShips'] as num?)?.toInt() ?? 1,
+        capitalTileGrainBonusPerTurn:
+            (raw['capitalTileGrainBonusPerTurn'] as num?)?.toInt() ?? 5,
         startingCivilianUnits: Map<String, int>.from(
           (raw['startingCivilianUnits'] as Map<String, dynamic>? ??
                   const <String, int>{})

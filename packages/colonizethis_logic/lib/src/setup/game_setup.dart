@@ -303,6 +303,8 @@ GameSetupResult createGameFromGeneratedMaps({
     turnTimeMapping: TurnTimeMapping.gdd01,
     diplomacyRelations: diplomacyRelations,
     aiControlByGpId: aiControlByGpId,
+    capitalTileGrainBonusPerTurn:
+        config.startingResources.capitalTileGrainBonusPerTurn,
   );
 
   // Capital auto-choice: GPs (OW), then minors (OW), then tribes (NW). Must run before naming.
@@ -1213,37 +1215,16 @@ Game _addStartingMilitaryAndNaval({
 
 /// Chooses the regiment type used for starting armies.
 String _startingRegimentTypeForPlayer(Player player) {
-  // MVP: fixed baseline regular-infantry regiment from era 1.
-  const fallbackId = 'pikemen';
+  // MVP: low-upkeep starting regiment (ruleset-config / game-setup-pipeline 7f).
+  const fallbackId = 'peasant_levies';
   final stats = regimentStatsById(fallbackId);
   if (stats != null) return stats.id;
   return regimentCatalog.isNotEmpty ? regimentCatalog.first.id : fallbackId;
 }
 
-/// Chooses the merchant ship type used for starting home fleets.
-String _startingShipTypeForPlayer(Player player) {
-  final techUnlocked = player.techUnlocked;
-  bool hasTech(String techId) =>
-      techUnlocked != null && techUnlocked[techId] == true;
-
-  String? bestTypeId;
-  var bestCargo = -1;
-
-  for (final entry in ShipEconomyCatalog.all) {
-    final typeId = entry.shipTypeId;
-    final requiredTech = unlockingTechByShipId[typeId];
-    if (requiredTech != null && !hasTech(requiredTech)) {
-      continue;
-    }
-    final cargo = NavalStatsCatalog.get(typeId).cargoHold;
-    if (cargo > bestCargo) {
-      bestCargo = cargo;
-      bestTypeId = typeId;
-    }
-  }
-
-  // Fallback: baseline carrack if nothing matched.
-  return bestTypeId ?? ShipEconomyCatalog.carrack.shipTypeId;
+/// Merchant ship type for starting home fleets (baseline era).
+String _startingShipTypeForPlayer(Player _) {
+  return ShipEconomyCatalog.carrack.shipTypeId;
 }
 
 /// Builds a map of province id -> neighbouring province ids using only P–P edges.

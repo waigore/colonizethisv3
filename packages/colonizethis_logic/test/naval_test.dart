@@ -11,10 +11,26 @@ void main() {
     setUp(() {
       topology = MapTopology(
         nodes: const [
-          TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
-          TopologyNode(id: 'sea2', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'sea1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 'sea2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
         ],
         edges: const [
           TopologyEdge(id1: 'p1', id2: 'sea1'),
@@ -45,8 +61,72 @@ void main() {
       });
     });
 
-    test('ship reveal sets coastal tiles to revealed when fleet enters sea zone',
-        () {
+    group('isAdjacentSeaSeaZone', () {
+      test('true only for S–S edges between sea-zone nodes', () {
+        expect(isAdjacentSeaSeaZone(topology, 'sea1', 'sea2'), isTrue);
+        expect(isAdjacentSeaSeaZone(topology, 'sea1', 'p1'), isFalse);
+        expect(isAdjacentSeaSeaZone(topology, 'p1', 'sea1'), isFalse);
+      });
+    });
+
+    group('navalMoveTopologyPicksForFleet', () {
+      test('at sea: sea list is S–S only; dock list from S–P', () {
+        final fleet = Fleet(
+          id: 'f1',
+          ownerId: 'p1',
+          regionId: 'oldWorld',
+          seaZoneId: 'sea1',
+          shipTypeIds: const ['carrack'],
+        );
+        final picks = navalMoveTopologyPicksForFleet(
+          topology: topology,
+          fleet: fleet,
+        );
+        expect(picks.adjacentSeaZoneIds, ['sea2']);
+        expect(picks.adjacentProvinceIdsForDock.toSet(), {'p1', 'p2'});
+      });
+
+      test('in port: undock list is P–S only (all seas touching port)', () {
+        final top = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'sea1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 'sea2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [
+            TopologyEdge(id1: 'p1', id2: 'sea1'),
+            TopologyEdge(id1: 'p1', id2: 'sea2'),
+          ],
+        );
+        final fleet = Fleet(
+          id: 'f1',
+          ownerId: 'p1',
+          regionId: 'oldWorld',
+          inPortAtProvinceId: 'p1',
+          shipTypeIds: const ['carrack'],
+        );
+        final picks = navalMoveTopologyPicksForFleet(
+          topology: top,
+          fleet: fleet,
+        );
+        expect(picks.adjacentSeaZoneIds.toSet(), {'sea1', 'sea2'});
+        expect(picks.adjacentProvinceIdsForDock, isEmpty);
+      });
+    });
+
+    test('ship reveal sets coastal tiles to revealed when fleet enters sea zone', () {
       // Single coastal province adjacent to a sea zone; moving fleet into that
       // sea zone should reveal the province's coastal tiles for the fleet owner.
       const ow = 'oldWorld';
@@ -58,13 +138,20 @@ void main() {
       final revealTopology = MapTopology(
         nodes: const [
           TopologyNode(
-              id: provinceLocalId,
-              regionId: ow,
-              type: TopologyNodeType.province),
+            id: provinceLocalId,
+            regionId: ow,
+            type: TopologyNodeType.province,
+          ),
           TopologyNode(
-              id: 'sea1', regionId: ow, type: TopologyNodeType.seaZone),
+            id: 'sea1',
+            regionId: ow,
+            type: TopologyNodeType.seaZone,
+          ),
           TopologyNode(
-              id: 'sea2', regionId: ow, type: TopologyNodeType.seaZone),
+            id: 'sea2',
+            regionId: ow,
+            type: TopologyNodeType.seaZone,
+          ),
         ],
         edges: const [
           // Province is coastal to the destination sea zone (sea2); sea1 adjacent
@@ -95,26 +182,18 @@ void main() {
               'sea2': [tileSea2],
             },
           },
-          playerVisibilityByTile: const {
-            'gp1': {},
-          },
+          playerVisibilityByTile: const {'gp1': {}},
         ),
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-        ],
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
       );
 
       final orders = {
         'gp1': [
-          const NavalMoveOrder(
-            fleetId: 'f1',
-            destinationSeaZoneId: 'sea2',
-          ),
+          const NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'sea2'),
         ],
       };
 
-      final next =
-          applyNavalMovesAndShipReveal(game, revealTopology, orders);
+      final next = applyNavalMovesAndShipReveal(game, revealTopology, orders);
 
       expect(
         next.worldState.playerVisibilityByTile['gp1']?[tileKey],
@@ -130,8 +209,16 @@ void main() {
       test('returns id2 when id1 matches seaZoneId', () {
         final seaOnly = MapTopology(
           nodes: const [
-            TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
-            TopologyNode(id: 'sea2', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+            TopologyNode(
+              id: 'sea1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 'sea2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
           ],
           edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
         );
@@ -141,8 +228,16 @@ void main() {
       test('returns id1 when id2 matches seaZoneId', () {
         final seaOnly = MapTopology(
           nodes: const [
-            TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
-            TopologyNode(id: 'sea2', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+            TopologyNode(
+              id: 'sea1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 'sea2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
           ],
           edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
         );
@@ -152,7 +247,11 @@ void main() {
       test('returns null when sea zone has no edges', () {
         final noEdgeTopology = MapTopology(
           nodes: const [
-            TopologyNode(id: 'sea0', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
+            TopologyNode(
+              id: 'sea0',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
           ],
           edges: const [],
         );
@@ -166,29 +265,62 @@ void main() {
         expect(seaZoneIdForProvince(topology, 'p2'), 'sea1');
       });
 
-      test('when regionId is provided, lookup is region-scoped (world-model-identity)', () {
-        final multiRegion = MapTopology(
-          nodes: const [
-            TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-            TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
-            TopologyNode(id: 'p1', regionId: 'newWorld', type: TopologyNodeType.province),
-            TopologyNode(id: 'sea2', regionId: 'newWorld', type: TopologyNodeType.seaZone),
-          ],
-          edges: const [
-            TopologyEdge(id1: 'p1', id2: 'sea1'),
-            TopologyEdge(id1: 'p1', id2: 'sea2'),
-          ],
-        );
-        expect(seaZoneIdForProvince(multiRegion, 'p1', regionId: 'oldWorld'), 'sea1');
-        expect(seaZoneIdForProvince(multiRegion, 'p1', regionId: 'newWorld'), 'sea2');
-        expect(seaZoneIdForProvince(multiRegion, 'p1'), isNotNull);
-      });
+      test(
+        'when regionId is provided, lookup is region-scoped (world-model-identity)',
+        () {
+          final multiRegion = MapTopology(
+            nodes: const [
+              TopologyNode(
+                id: 'p1',
+                regionId: 'oldWorld',
+                type: TopologyNodeType.province,
+              ),
+              TopologyNode(
+                id: 'sea1',
+                regionId: 'oldWorld',
+                type: TopologyNodeType.seaZone,
+              ),
+              TopologyNode(
+                id: 'p1',
+                regionId: 'newWorld',
+                type: TopologyNodeType.province,
+              ),
+              TopologyNode(
+                id: 'sea2',
+                regionId: 'newWorld',
+                type: TopologyNodeType.seaZone,
+              ),
+            ],
+            edges: const [
+              TopologyEdge(id1: 'p1', id2: 'sea1'),
+              TopologyEdge(id1: 'p1', id2: 'sea2'),
+            ],
+          );
+          expect(
+            seaZoneIdForProvince(multiRegion, 'p1', regionId: 'oldWorld'),
+            'sea1',
+          );
+          expect(
+            seaZoneIdForProvince(multiRegion, 'p1', regionId: 'newWorld'),
+            'sea2',
+          );
+          expect(seaZoneIdForProvince(multiRegion, 'p1'), isNotNull);
+        },
+      );
 
       test('returns null for province with no sea edge', () {
         final inland = MapTopology(
           nodes: const [
-            TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-            TopologyNode(id: 'p2', regionId: 'oldWorld', type: TopologyNodeType.province),
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'p2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
           ],
           edges: const [TopologyEdge(id1: 'p1', id2: 'p2')],
         );
@@ -212,9 +344,7 @@ void main() {
                 type: TopologyNodeType.seaZone,
               ),
             ],
-            edges: [
-              TopologyEdge(id1: '$ow|cap', id2: '$ow|sea1'),
-            ],
+            edges: [TopologyEdge(id1: '$ow|cap', id2: '$ow|sea1')],
           );
           expect(
             seaZoneIdForProvince(combined, 'cap', regionId: ow),
@@ -256,34 +386,57 @@ void main() {
       test('when regionId passed, returns only provinces in that region', () {
         final multiRegion = MapTopology(
           nodes: const [
-            TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
-            TopologyNode(id: 'sea1', regionId: 'oldWorld', type: TopologyNodeType.seaZone),
-            TopologyNode(id: 'p1', regionId: 'newWorld', type: TopologyNodeType.province),
-            TopologyNode(id: 'sea1', regionId: 'newWorld', type: TopologyNodeType.seaZone),
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'sea1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 'p1',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'sea1',
+              regionId: 'newWorld',
+              type: TopologyNodeType.seaZone,
+            ),
           ],
-          edges: const [
-            TopologyEdge(id1: 'p1', id2: 'sea1'),
-          ],
+          edges: const [TopologyEdge(id1: 'p1', id2: 'sea1')],
         );
         expect(
-          provinceIdsAdjacentToSeaZone(multiRegion, 'sea1', regionId: 'oldWorld'),
+          provinceIdsAdjacentToSeaZone(
+            multiRegion,
+            'sea1',
+            regionId: 'oldWorld',
+          ),
           equals({'p1'}),
         );
         expect(
-          provinceIdsAdjacentToSeaZone(multiRegion, 'sea1', regionId: 'newWorld'),
+          provinceIdsAdjacentToSeaZone(
+            multiRegion,
+            'sea1',
+            regionId: 'newWorld',
+          ),
           equals({'p1'}),
         );
         expect(
-          provinceIdsAdjacentToSeaZone(multiRegion, 'sea1', regionId: 'otherRegion'),
+          provinceIdsAdjacentToSeaZone(
+            multiRegion,
+            'sea1',
+            regionId: 'otherRegion',
+          ),
           isEmpty,
         );
       });
 
       test('when sea zone not in topology, returns empty', () {
-        expect(
-          provinceIdsAdjacentToSeaZone(topology, 'nonexistent'),
-          isEmpty,
-        );
+        expect(provinceIdsAdjacentToSeaZone(topology, 'nonexistent'), isEmpty);
       });
     });
 

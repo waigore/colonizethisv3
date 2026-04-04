@@ -30,6 +30,8 @@ import 'widgets/game_setup.dart';
 import 'widgets/main_menu.dart';
 import 'widgets/ct_nine_patch_button.dart';
 import 'widgets/ct_region_map.dart';
+import 'features/game/flame/game_region_minimap.dart';
+import 'features/game/flame/region_map_viewport_snapshot.dart';
 
 /// Widgetbook entry point. Run with: flutter run -t lib/widgetbook.dart
 void main() {
@@ -301,9 +303,65 @@ List<WidgetbookNode> get mapWidgetDirectories => [
           ),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Region minimap (mock viewport)',
+        builder: (context) => const _RegionMinimapWidgetbookStory(),
+      ),
     ],
   ),
 ];
+
+/// Region minimap with mock viewport + Riverpod visibility. SPEC/ui/empire-overview.md § Region minimap.
+class _RegionMinimapWidgetbookStory extends StatefulWidget {
+  const _RegionMinimapWidgetbookStory();
+
+  @override
+  State<_RegionMinimapWidgetbookStory> createState() =>
+      _RegionMinimapWidgetbookStoryState();
+}
+
+class _RegionMinimapWidgetbookStoryState
+    extends State<_RegionMinimapWidgetbookStory> {
+  late final AppEventBus _bus = AppEventBus.create();
+
+  @override
+  void dispose() {
+    _bus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final result = getDebugInitGameResult();
+    final region = result.mapViewData.oldWorld;
+    final w = region.width * 24.0;
+    final h = region.height * 24.0;
+    final viewport = RegionMapViewportSnapshot(
+      regionId: region.regionId,
+      cellSizePx: 24,
+      mapWidthWorld: w,
+      mapHeightWorld: h,
+      cameraCenterX: w / 2,
+      cameraCenterY: h / 2,
+      zoom: 1.0,
+      viewportWidthLogical: 320,
+      viewportHeightLogical: 240,
+    );
+    return ProviderScope(
+      child: Align(
+        alignment: Alignment.bottomRight,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: GameRegionMinimap(
+            region: region,
+            viewportSnapshot: viewport,
+            bus: _bus,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Civilian Units Panel stories. SPEC/ui/civilian-units-panel.md.
 List<WidgetbookNode> get civilianUnitsPanelDirectories => [

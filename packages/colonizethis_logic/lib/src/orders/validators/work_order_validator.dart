@@ -88,6 +88,14 @@ class WorkOrderValidator {
             : null;
         final ownerId = province?.ownerId;
 
+        if (o.target == 'upgrade_town') {
+          if (_player.techUnlocked?[kTechIdNationalBureaucracy] != true) {
+            return OrderValidationResult.rejected(
+              'National Bureaucracy tech required for upgrade_town',
+            );
+          }
+        }
+
         if (o.target == 'steal_tech') {
           if (targetProvinceId == null) {
             return OrderValidationResult.rejected(
@@ -181,7 +189,11 @@ class WorkOrderValidator {
             _playerId,
             o.targetTileKey,
           );
-          if (!controlled) {
+          final embassyWork = _civilianWorkAllowedInMinorTribeProvince(
+            type,
+            ownerId,
+          );
+          if (!controlled && !embassyWork) {
             return OrderValidationResult.rejected(
               'Cannot build improvement in foreign or uncontrolled province',
             );
@@ -213,7 +225,11 @@ class WorkOrderValidator {
             _playerId,
             o.targetTileKey,
           );
-          if (!controlled) {
+          final embassyWork = _civilianWorkAllowedInMinorTribeProvince(
+            type,
+            ownerId,
+          );
+          if (!controlled && !embassyWork) {
             return OrderValidationResult.rejected(
               'Cannot work in foreign province',
             );
@@ -351,5 +367,26 @@ class WorkOrderValidator {
         return OrderValidationResult.accepted();
       },
     );
+  }
+
+  /// Builder / Engineer / Merchant may work in Minor/Tribe provinces with embassy + Diplomatic Expertise. SPEC/game/tech-tree-diplomacy-civilian.md.
+  bool _civilianWorkAllowedInMinorTribeProvince(
+    String unitType,
+    String? provinceOwnerId,
+  ) {
+    if (provinceOwnerId == null || provinceOwnerId == _playerId) {
+      return false;
+    }
+    if (unitType != 'Builder' &&
+        unitType != 'Engineer' &&
+        unitType != 'Merchant') {
+      return false;
+    }
+    if (!isMinorOrTribe(_game, provinceOwnerId)) return false;
+    final rel = getRelation(_game, _playerId, provinceOwnerId);
+    if (rel?.atWar == true) return false;
+    final overture = getOverture(_game, _playerId, provinceOwnerId);
+    if (overture == null || !overture.hasEmbassy) return false;
+    return _player.techUnlocked?[kTechIdDiplomaticExpertise] == true;
   }
 }

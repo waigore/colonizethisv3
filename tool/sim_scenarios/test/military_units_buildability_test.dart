@@ -1,7 +1,7 @@
 // Test that every military unit in the game can be built in a normal game.
 // SPEC/game/military-units.md: regiment buildable iff unlocking tech in techUnlocked.
 // For each regiment we run a scenario with the same shape as military_units_buildability.json:
-// grant unlocking tech (if any), workers and stockpile, one build order, assert unit count >= 6.
+// grant unlocking tech (if any), workers and stockpile, one build order, assert unit count >= 4.
 
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -15,8 +15,8 @@ void main() {
       const capitalProvinceId = 'oldWorld|p1';
       const playerId = 'gp1';
 
-      // Same assertion as military_units_buildability.json: 5 starting military + 1 built => >= 6.
-      const minUnitCountAfterBuild = 6;
+      // 3 starting military + 1 built => >= 4.
+      const minUnitCountAfterBuild = 4;
 
       final unlockMap = unlockingTechByRegimentId;
       final runner = ScenarioRunner();

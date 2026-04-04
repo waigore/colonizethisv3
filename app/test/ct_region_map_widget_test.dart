@@ -239,12 +239,13 @@ void main() {
         await tester.pumpWidget(const SizedBox.shrink());
 
         const pngPaths = [
-          'assets/images/terrain/tilesets/tileset_sea_plains.png',
+          'assets/images/terrain/tilesets/tileset_sea_plains_v2_64.png',
           'assets/images/terrain/tilesets/tileset_sea_desert.png',
           'assets/images/terrain/tilesets/tileset_plains_desert.png',
         ];
         const jsonPaths = [
-          'assets/images/terrain/tilesets/tileset_sea_plains.json',
+          'assets/data/map_terrain_tilesets.json',
+          'assets/images/terrain/tilesets/tileset_sea_plains_v2_64.json',
           'assets/images/terrain/tilesets/tileset_sea_desert.json',
           'assets/images/terrain/tilesets/tileset_plains_desert.json',
         ];

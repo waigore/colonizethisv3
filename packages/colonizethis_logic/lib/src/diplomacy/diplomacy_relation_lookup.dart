@@ -1,7 +1,10 @@
 /// Relation and overture lookup helpers for diplomacy. SPEC/program/diplomacy-resolution.md.
 /// Shared by diplomacy_resolver and order validators.
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
 
 import '../combat/military_strength.dart';
 import '../world/province_lookup.dart';
@@ -81,6 +84,18 @@ const int relationScoreDisplayCordialMax = 69;
 
 /// Relation score change on war declaration (protest path). Clamped to [relationScoreMin, relationScoreMax].
 const int relationScoreWarDelta = 10;
+
+/// Reduced penalty when the aggressor has [kTechIdPropaganda]. SPEC/game/tech-tree-diplomacy-civilian.md.
+const int relationScoreWarDeltaReducedPropaganda = 5;
+
+/// Score penalty applied to third parties (e.g. intervention) reacting to [aggressorGpId]'s war declaration.
+int warDeclarationThirdPartyPenaltyDelta(Game game, String aggressorGpId) {
+  final u = game.playerById(aggressorGpId)?.techUnlocked;
+  if (u?[kTechIdPropaganda] == true) {
+    return relationScoreWarDeltaReducedPropaganda;
+  }
+  return relationScoreWarDelta;
+}
 
 /// Score drop on ally refusing a call to arms; alliance ends (no longer Allied). SPEC/game/diplomacy.md.
 const int callToArmsRefusalScorePenalty = 20;

@@ -52,6 +52,8 @@ For the MVP ruleset, each Great Power starts the game with a small, symmetric na
 
 The concrete integers `initialPeasants`, `initialGrainTurns`, `initialImprovementSlots`, the wool quantity, and the paper quantity are exposed via the ruleset/config layer (MVP: program-level `StartingResourcesConfig` in `colonizethis_data`; later: Base → Difficulty → Scenario merge per this document). Scenario layers MAY override any of these starting stockpile quantities on a per-commodity basis; when a scenario overrides a commodity, its value fully replaces the base-layer value for that scenario (no implicit addition).
 
+**Starting forces and capital bonus:** `initialMilitaryRegiments`, `initialNavalShips`, and `capitalTileGrainBonusPerTurn` use the same MVP config type; scenarios may override them alongside stockpile keys where the loader supports it.
+
 ## Configurable Values
 
 | Parameter | Default | Layer |

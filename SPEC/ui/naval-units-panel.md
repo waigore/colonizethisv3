@@ -23,9 +23,11 @@ For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the 
 
 **Dialog (local `showDialog`, commit via bus):** Opening **Move** shows a modal where the player:
 
-1. Sees two sections (**Sea zones** first, then **Provinces**), each a **sorted** list of **legal** destinations from the fleet’s **current** location per [ships-and-naval.md](../game/ships-and-naval.md) and [naval-movement-resolution.md](../program/naval-movement-resolution.md):
-   - **At sea:** all **adjacent** sea zones (including **warp** / cross‑region links); then all **owned** provinces the fleet may **dock** at from its current sea zone (topology P↔S). Destinations in a **different** region than the fleet’s current sea zone must be labeled so the player sees **cross‑region** (e.g. include the destination region label in the row text).
-   - **In port:** only **adjacent** sea zones for **undock**; the **Provinces** section is **empty** (no port‑to‑port moves).
+**Title:** **Fleet \<id\>** (or equivalent) and, when there is at least one destination, **(N destinations)** so numeric ids are not mistaken for option counts.
+
+1. Sees two sections (**Sea zones** first, then **Provinces**), each a **sorted** list of **legal** destinations from the fleet’s **current** location per [ships-and-naval.md](../game/ships-and-naval.md) and [naval-movement-resolution.md](../program/naval-movement-resolution.md). One-hop naval moves use topology only: **S→S** (sea to adjacent sea), **S→P** (dock at adjacent owned port), **P→S** (undock to adjacent sea). **No P→P** and no multi-hop in a single order; every offered destination shares an edge with the fleet’s current sea node or port node.
+   - **At sea:** **Sea zones** lists only **S–S** neighbors of the fleet’s current sea zone (including **warp** / cross‑region links where the graph has an S–S edge). **Provinces (dock)** lists only **owned** provinces with a direct **S–P** edge from that sea zone. Destinations in a **different** region than the fleet’s current sea zone must be labeled so the player sees **cross‑region** (e.g. include the destination region label in the row text).
+   - **In port:** **Sea zones** lists only seas with a direct **P–S** edge from the fleet’s port; the **Provinces** section is **empty** (no port‑to‑port moves).
 2. **Selects** one row (radio or single selection), then taps **Confirm** to submit (or **Cancel** to close without changing orders).
 3. May tap a **locate** control beside each destination row to emit **`LocateMapTileEvent`** (same family as fleet locate): province → town/first tile; sea zone → port tile adjacent to that zone per [map-widget.md](map-widget.md) / [map_location_resolver](military/naval panel contract).
 
@@ -88,7 +90,7 @@ For every fleet (including the Home Fleet), the collapsed row shows:
 |-------------------|------------------------------------------|-------|
 | **Fleet name**    | Fleet id or display name                | For Home Fleet, label is “Home Fleet”. For other fleets, use a human-readable label (e.g. “Fleet #3”, “Atlantic Squadron” if available; otherwise a stable fallback). |
 | **Location**      | `inPortAtProvinceId` or `seaZoneId`     | Display as `Region — Province` for in-port fleets (province display name) or `Region — Sea zone` for at-sea fleets. Region label uses same mapping as Military Units panel. |
-| **Mission**       | `Fleet.mission`                         | Enum mapped to user labels: None, Patrol, Blockade, Beachhead, Defend. For Home Fleet, always shown as “None”. |
+| **Mission**       | `Fleet.mission`                         | Enum mapped to user labels: None, Patrol, Blockade, Beachhead, Defend. For Home Fleet, always shown as “None”. When the shell’s draft **`Orders`** contains a **naval move** for this fleet, show **Moving to:** \<display name of destination sea zone or dock province\> (dock targets may suffix **(dock)** in UI copy). |
 | **Ships summary** | Fleet ship list and naval catalog       | Summary text such as `Total ships: N` and a short breakdown, e.g. `2 warships · 3 merchants` based on ship types' merchant/warship role per [ships-and-naval.md](../game/ships-and-naval.md) (§ Ship Types). |
 
 The entire collapsed row is clickable to select/locate the fleet and to toggle expansion.
@@ -98,7 +100,7 @@ The entire collapsed row is clickable to select/locate the fleet and to toggle e
 When a row is **expanded**, additional details are shown **within the same panel**:
 
 - **Composition table:** One row per ship type in the fleet:
-  - Type name (human-readable ship type, e.g. “Frigate”, “Merchant Steamship”).
+  - Type name: **display label** from `shipTypeDisplayName` in `colonizethis_data` (aligned with [ships-and-naval.md](../game/ships-and-naval.md) roster, e.g. “Frigate”, “Merchant Steamship”, “Ship of the Line”), not raw `ship_type_id` (e.g. not `frigate`, `merchant_steamship`, `ship_of_the_line`). Unknown ids fall back to the raw id.
   - Count of ships of that type.
   - Role tag (e.g. “Warship” vs “Merchant”) per [ships-and-naval.md](../game/ships-and-naval.md).
 - **Capabilities:**
@@ -177,6 +179,8 @@ The naval units panel participates in the Widgetbook catalog for review and test
 - **Given** the Naval Units panel is open and the human player’s Home Fleet exists in port at the capital province, **when** the user views the Home Fleet row in the capital region group, **then** the UI layer shows the fleet name “Home Fleet”, the location as the capital’s province name with the correct region label, the mission as “None”, and a ships summary that reflects the fleet’s current ship count (including `Total ships: 0` when it has no ships).
 
 - **Given** the Naval Units panel is open and the user expands a fleet row, **when** the fleet has one or more ships, **then** the UI layer shows a composition table with one row per ship type (including type name, count, and role tag) and a capabilities section (cargo capacity for the Home Fleet, strength summary for sea-going fleets) as defined in this spec.
+
+- **Given** the Naval Units panel is open and the user expands a fleet that includes ships of type `carrack`, **when** the user reads the composition row for that type, **then** the UI layer shows **Carrack** (or the mapped `shipTypeDisplayName` label) with the count, and does **not** show the raw id string `carrack:` as the row title.
 
 - **Given** the Naval Units panel is open and renders one or more at-sea fleets, **when** the UI shows sea-zone location labels (group headers or row subtitles), **then** the UI resolves and displays sea-zone display names from world-state sea-zone naming data (prefixed key) and does not show raw `seaZoneId` values as user-facing labels.
 

@@ -10,6 +10,7 @@ import '../../../../widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode, CtRegionMap;
 
 import 'game_map_province_detail_side_panel.dart';
+import 'region_map_viewport_snapshot.dart';
 
 /// Renders the Flame-backed map and the wide right-side detail panel.
 /// Map and panel communicate only via [mapProvincePanelProvider].
@@ -28,6 +29,7 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.validTileKeysForSelection,
     required this.onTileSelectedForWork,
     required this.onWorkTargetSelectionCancelled,
+    required this.onRegionViewportSnapshot,
     this.bus,
     super.key,
   });
@@ -46,6 +48,7 @@ class GameMapCanvasStack extends ConsumerWidget {
 
   final void Function(String tileKey)? onTileSelectedForWork;
   final VoidCallback? onWorkTargetSelectionCancelled;
+  final void Function(RegionMapViewportSnapshot snapshot) onRegionViewportSnapshot;
   final ct_models.AppEventBus? bus;
 
   @override
@@ -60,7 +63,7 @@ class GameMapCanvasStack extends ConsumerWidget {
               Expanded(
                 child: CtRegionMap(
                   region: region,
-                  cellSizePx: 24,
+                  cellSizePx: region.cellSize.toDouble(),
                   showProvinceOverlay: showProvinceOverlay,
                   showProvinceOwnershipTint: showProvinceOwnershipTint,
                   showProvinceNamesLayer: showProvinceNamesLayer,
@@ -83,6 +86,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   onWorkTargetSelectionCancelled:
                       onWorkTargetSelectionCancelled,
                   bus: bus,
+                  onViewportSnapshotChanged: onRegionViewportSnapshot,
                 ),
               ),
               if (!isNarrow)

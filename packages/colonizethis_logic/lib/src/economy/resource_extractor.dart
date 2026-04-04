@@ -23,6 +23,8 @@ class ExtractionTotals {
 /// Path transport cap = min road/port level along path to town then to capital (from [connectivityResult]);
 /// when absent, falls back to tile's own transport level.
 /// Sums by commodity; splits land (same region as capital) vs overseas.
+/// Adds [Game.capitalTileGrainBonusPerTurn] grain to each player's land totals
+/// when that player has a capital tile (unconditional on connectivity).
 Map<String, ExtractionTotals> computeExtraction({
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
@@ -37,13 +39,9 @@ Map<String, ExtractionTotals> computeExtraction({
   final out = <String, ExtractionTotals>{};
   for (final player in game.players) {
     final cr = connectivityResult[player.id];
-    final connected = cr?.connected;
-    if (connected == null || connected.isEmpty) {
-      out[player.id] = const ExtractionTotals();
-      continue;
-    }
-    final pathTransportCap = cr!.pathTransportCap;
-    final roadRuleTiles = cr.connectedByRoadRule;
+    final connected = cr?.connected ?? const <String>{};
+    final pathTransportCap = cr?.pathTransportCap ?? const <String, int>{};
+    final roadRuleTiles = cr?.connectedByRoadRule ?? const <String>{};
     final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
     final cap = player.capitalTile;
     final capitalRegionId = cap?.regionId;
@@ -128,6 +126,12 @@ Map<String, ExtractionTotals> computeExtraction({
         overseasTotals[commodityId] =
             (overseasTotals[commodityId] ?? 0) + effectiveCapped;
       }
+    }
+
+    final capBonus = game.capitalTileGrainBonusPerTurn;
+    if (player.capitalTile != null && capBonus > 0) {
+      final grainId = CommodityCatalog.grain.id;
+      landTotals[grainId] = (landTotals[grainId] ?? 0) + capBonus;
     }
 
     out[player.id] = ExtractionTotals(

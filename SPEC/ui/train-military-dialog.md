@@ -24,7 +24,7 @@ The Train Military dialog lets the player queue military regiment build orders i
 - **Resource bar:** Shows available `Treasury`, `Peasants`, and regiment-input commodities (as applicable): `fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze`. Use existing resource/worker icons.
 - **Deficit hint:** Same wording style as civilian (`{Resource} low`, `{A} and {B} low`, etc.) using military resource names.
 - **Rows:** One row per `RegimentEconomyCatalog.all` entry.
-  - regiment id label (text-only; no regiment icon requirement)
+  - primary label: **regiment display name** per [military-units.md](../game/military-units.md) via `regimentTypeDisplayName` in `colonizethis_data` (not the snake_case persistence id; e.g. `Peasant Levies` not `peasant_levies`). Text-only; no regiment icon requirement.
   - cost summary: treasury + commodity requirements with icons
   - locked state + `Requires: {tech}` when regiment unlocking tech is missing
   - `[-] count [+]` stepper
@@ -118,3 +118,5 @@ Dialog-specific affordability and tech-lock logic remains local to each dialog.
 - **Given** the Train Military dialog is open and the user closes it, **when** there are non-zero selected counts, **then** the UI layer writes `BuildUnitOrder` entries with `isMilitary == true` and `spawnProvinceId == Player.capitalProvinceId`, replacing only dialog-managed military orders and leaving all other build orders unchanged.
 
 - **Given** both train dialogs use shared orchestration behavior, **when** developers update train order/count conversion rules, **then** the UI layer updates `train_unit_dialog_helper.dart` and validates behavior with helper tests in `app/test/train_unit_dialog_helper_test.dart`.
+
+- **Given** the Train Military dialog is open, **when** the user reads a regiment row’s primary title text, **then** the UI layer shows the roster display name (e.g. `Peasant Levies` for `peasant_levies`), not the snake_case `unitType` id string.

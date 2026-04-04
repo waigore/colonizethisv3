@@ -12,7 +12,10 @@
     }
   },
   "setup": {
-    "initialTreasury": { "gp1": 25000 }
+    "initialTreasury": { "gp1": 25000 },
+    "initialTech": {
+      "gp1": ["diplomatic_expertise"]
+    }
   },
   "turns": [
     {
