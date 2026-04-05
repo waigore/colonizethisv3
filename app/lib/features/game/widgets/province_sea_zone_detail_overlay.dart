@@ -19,7 +19,7 @@ import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:flutter/material.dart';
 
-import '../flame/game_screen_shared.dart';
+import '../../../config/constants.dart';
 import '../utils/sea_zone_name_resolver.dart';
 
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.
@@ -62,7 +62,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
+    final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     final content = _isSeaZone(displayId)
         ? _seaZoneContent(game: game, region: region, seaZoneId: displayId)
         : _provinceContent(

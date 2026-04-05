@@ -22,6 +22,7 @@ import '../../../../providers/region_minimap_provider.dart';
 import 'region_map_viewport_snapshot.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
 
+import '../../../config/constants.dart';
 import 'game_screen_shared.dart';
 import 'game_side_menu.dart';
 import 'game_map_controls.dart';
@@ -293,7 +294,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       mapProvinceOwnershipTintVisibleProvider,
     );
     final showProvinceNames = ref.watch(mapProvinceNamesVisibleProvider);
-    final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
+    final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     final mapTopology = widget.mapViewData.combinedTopology;
     final humanPlayerView = buildPlayerView(
       widget.game,

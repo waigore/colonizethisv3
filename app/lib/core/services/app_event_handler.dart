@@ -29,7 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/routes.dart';
-import '../../features/game/flame/game_screen_shared.dart';
+import '../../config/constants.dart';
 import '../../features/game/widgets/civilian_units_panel.dart';
 import '../../features/game/widgets/military_units_panel.dart';
 import '../../features/game/widgets/naval_units_panel.dart';
@@ -236,7 +236,7 @@ class AppEventHandler {
           final availableWorkTargets = ref.watch(availableWorkTargetsProvider);
           final bus = ref.watch(appEventBusProvider);
           final isNarrow =
-              MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
+              MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
           final maxHeight =
               MediaQuery.sizeOf(context).height * (isNarrow ? 0.33 : 0.5);
           return ConstrainedBox(

@@ -21,6 +21,54 @@ final _log = gameLogger();
 /// Fog overlay opacity when drawing a dark rect over tiles (0 = no overlay, 1 = full black).
 const double _fogOverlayOpacity = 0.4;
 
+/// Work-target valid tiles: opacity baseline in **linear 0–1** before sin pulse.
+const double _kValidWorkTargetGlowOpacityBase = 0.4;
+
+/// Work-target valid tiles: extra opacity added by sin pulse (peak = base + amplitude).
+const double _kValidWorkTargetGlowOpacityAmplitude = 0.4;
+
+/// Work-target pulse speed: sin argument is `t *` this factor ([_hoverAnimationT] domain).
+const double _kValidWorkTargetGlowTimeScale = 3;
+
+/// Hovered-province glow: midpoint opacity for stroke (linear 0–1).
+const double _kHoveredProvinceGlowOpacityMid = 0.5;
+
+/// Hovered-province glow: half-amplitude of sin oscillation (linear 0–1).
+const double _kHoveredProvinceGlowOpacityAmplitude = 0.25;
+
+/// Hovered-province glow: angular frequency (radians per unit [_hoverAnimationT]); one full cycle per t=1.
+const double _kHoveredProvinceGlowAngularFrequency = 6.283185307179586;
+
+/// Capital marker fill and warp-zone accent (gold).
+const Color _kMapSelectionGold = Color(0xFFFFD700);
+
+/// Outer warp-zone glow alpha (linear 0–1) over [_kMapSelectionGold].
+const double _kWarpZoneOuterGlowAlpha = 0.3;
+
+/// Inner warp-zone stroke (bright yellow).
+const Color _kWarpZoneInnerHighlight = Color(0xFFFFEA00);
+
+/// Valid work-target tile stroke (pure yellow channel; alpha applied per frame).
+const Color _kValidWorkTargetStrokeYellow = Color(0xFFFFFF00);
+
+/// Selected tile outline (orange).
+const Color _kMapSelectedHighlightOrange = Color(0xFFFFAA00);
+
+/// Secondary tile highlight outline (cyan).
+const Color _kMapSecondarySelectionCyan = Color(0xFF66D9FF);
+
+/// Hover selector rect: scale baseline (1 = cell fit).
+const double _kHoverSelectorBounceBaseline = 1.0;
+
+/// Hover selector rect: sin amplitude for subtle pulse (visual feedback).
+const double _kHoverSelectorBounceAmplitude = 0.04;
+
+/// Hover selector stroke when not in work-target mode (white).
+const Color _kMapHoverSelectorIdle = Color(0xFFFFFFFF);
+
+/// Normalized midpoint for mapping sin from [-1,1] to [0,1] before scaling opacity.
+const double _kSinNormalizedMid = 0.5;
+
 /// Political border stroke colors.
 /// These are intentionally subtle so they don't overpower the terrain art.
 const Color _provinceBorderLandColor = Color.fromRGBO(0, 0, 0, 0.35);
@@ -381,11 +429,16 @@ class CtRegionMapComponent extends PositionComponent {
     // Flashing yellow border for valid tiles (opacity oscillates 0.4-0.8).
     // SPEC/ui/map-widget.md § Work target selection mode.
     final t = _hoverAnimationT;
-    final opacity = 0.4 + 0.4 * (0.5 + 0.5 * math.sin(t * 3));
+    final opacity =
+        _kValidWorkTargetGlowOpacityBase +
+        _kValidWorkTargetGlowOpacityAmplitude *
+            (_kSinNormalizedMid +
+                _kSinNormalizedMid *
+                    math.sin(t * _kValidWorkTargetGlowTimeScale));
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kMapValidTileTargetStrokeWidth
-      ..color = Color(0xFFFFFF00).withValues(alpha: opacity);
+      ..color = _kValidWorkTargetStrokeYellow.withValues(alpha: opacity);
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
         final cell = region.cellAt(x, y);
@@ -402,7 +455,7 @@ class CtRegionMapComponent extends PositionComponent {
     _paintTileOutlineRing(
       canvas,
       tileKey: selectedTileKey!,
-      color: const Color(0xFFFFAA00),
+      color: _kMapSelectedHighlightOrange,
       strokeWidth: kMapSelectedTileStrokeWidth,
     );
   }
@@ -411,7 +464,7 @@ class CtRegionMapComponent extends PositionComponent {
     _paintTileOutlineRing(
       canvas,
       tileKey: secondaryHighlightTileKey!,
-      color: const Color(0xFF66D9FF),
+      color: _kMapSecondarySelectionCyan,
       strokeWidth: kMapSecondaryHighlightStrokeWidth,
     );
   }
@@ -1134,7 +1187,10 @@ class CtRegionMapComponent extends PositionComponent {
 
   void _paintHoveredProvinceGlow(Canvas canvas) {
     final t = _hoverAnimationT;
-    final opacity = 0.5 + 0.25 * math.sin(t * 2 * math.pi);
+    final opacity =
+        _kHoveredProvinceGlowOpacityMid +
+        _kHoveredProvinceGlowOpacityAmplitude *
+            math.sin(t * _kHoveredProvinceGlowAngularFrequency);
     final coastInset = provinceOverlayLandSeaInsetPx(
       cellSizePx: cellSize,
       topologyStrokeWidth: kProvinceOverlayTopologyStrokeWidth,
@@ -1201,7 +1257,10 @@ class CtRegionMapComponent extends PositionComponent {
   void _paintSelector(Canvas canvas) {
     final x = _hoveredTileX!;
     final y = _hoveredTileY!;
-    final bounce = 1.0 + 0.04 * math.sin(_hoverAnimationT * 2 * math.pi);
+    final bounce =
+        _kHoverSelectorBounceBaseline +
+        _kHoverSelectorBounceAmplitude *
+            math.sin(_hoverAnimationT * _kHoveredProvinceGlowAngularFrequency);
     final cx = x * cellSize + cellSize / 2;
     final cy = y * cellSize + cellSize / 2;
     final half = (cellSize / 2 - 2.0) * bounce;
@@ -1212,8 +1271,8 @@ class CtRegionMapComponent extends PositionComponent {
     // Orange cursor when in work target selection mode; white otherwise.
     // SPEC/ui/map-widget.md § Work target selection mode.
     final color = (validTileKeys != null && validTileKeys!.isNotEmpty)
-        ? const Color(0xFFFFAA00)
-        : const Color(0xFFFFFFFF);
+        ? _kMapSelectedHighlightOrange
+        : _kMapHoverSelectorIdle;
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kMapHoverSelectorStrokeWidth
@@ -1370,7 +1429,7 @@ class CtRegionMapComponent extends PositionComponent {
       }
       final cx = cap.x * cellSize + cellSize / 2;
       final cy = cap.y * cellSize + cellSize / 2;
-      fill.color = const Color(0xFFFFD700);
+      fill.color = _kMapSelectionGold;
       canvas.drawCircle(Offset(cx, cy), 6, fill);
       canvas.drawCircle(Offset(cx, cy), 6, stroke);
     }
@@ -1475,12 +1534,12 @@ class CtRegionMapComponent extends PositionComponent {
     final glowOuter = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kWarpZoneGlowOuterStrokeWidth
-      ..color = const Color(0xFFFFD700).withValues(alpha: 0.3); // gold glow
+      ..color = _kMapSelectionGold.withValues(alpha: _kWarpZoneOuterGlowAlpha);
     // Inner bright border.
     final glowInner = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kWarpZoneGlowInnerStrokeWidth
-      ..color = const Color(0xFFFFEA00); // bright yellow
+      ..color = _kWarpZoneInnerHighlight;
 
     for (final (x, y) in warpTiles) {
       final cell = region.cellAt(x, y);

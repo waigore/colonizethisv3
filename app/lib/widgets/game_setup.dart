@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
+import '../config/constants.dart';
 import 'ct_dropdown.dart';
 import 'ct_nine_patch_button.dart';
 
@@ -24,10 +25,6 @@ enum GameSetupState {
 
 /// Number of player slots. Slot 0 = human, 1..5 = AI. SPEC/ui/game-setup.md.
 const int _kNumSlots = 6;
-
-/// Viewport width below which slot rows use stacked layout. SPEC/ui/mobile-adaptation.md.
-const double _kNarrowBreakpoint = 500;
-
 
 /// Game Setup screen. Six player slots; slot 0 = human, 1–5 = AI.
 /// Per slot: nation (GP) dropdown, then leader dropdown for that nation.
@@ -107,7 +104,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
   @override
   Widget build(BuildContext context) {
     final bool narrow =
-        MediaQuery.sizeOf(context).width < _kNarrowBreakpoint;
+        MediaQuery.sizeOf(context).width < kGameSetupNarrowBreakpoint;
     return Scaffold(
       body: SafeArea(
         child: Padding(
