@@ -107,9 +107,11 @@ CallToArmsDecision? _findCallToArmsDecision(
 /// Relation score 0–25 → 0%, 26–50 → 25%, 51–75 → 50%, 76–100 → 80%.
 double _aiInterventionProbability(int relationScore) {
   if (relationScore <= relationScoreLevelHostileMax) return 0;
-  if (relationScore <= relationScoreLevelNeutralMax) return 0.25;
-  if (relationScore <= relationScoreLevelFriendlyMax) return 0.5;
-  return 0.8;
+  if (relationScore <= relationScoreLevelNeutralMax)
+    return kInterventionProbabilityNeutral;
+  if (relationScore <= relationScoreLevelFriendlyMax)
+    return kInterventionProbabilityFriendly;
+  return kInterventionProbabilityAllied;
 }
 
 InterventionChoice _chooseAiIntervention(

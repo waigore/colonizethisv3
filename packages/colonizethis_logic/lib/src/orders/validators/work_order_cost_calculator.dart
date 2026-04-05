@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../constants.dart';
 import '../../world/province_lookup.dart';
 
 /// Calculates work order material costs. Reduces duplication between validation and projection.
@@ -19,9 +20,9 @@ class WorkOrderCostCalculator {
     int? fortLevel,
     int? roadLevel,
   }) {
-    if (target == 'steal_tech' ||
-        target == 'counter_spy' ||
-        target == 'purchase_land') {
+    if (target == kWorkTargetStealTech ||
+        target == kWorkTargetCounterSpy ||
+        target == kWorkTargetPurchaseLand) {
       return null;
     }
 
