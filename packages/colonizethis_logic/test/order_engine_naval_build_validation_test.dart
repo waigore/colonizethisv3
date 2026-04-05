@@ -427,11 +427,7 @@ void main() {
       const ow = 'oldWorld';
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(
-            id: 'P1',
-            regionId: ow,
-            type: TopologyNodeType.province,
-          ),
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
         ],
         edges: const [],
       );
@@ -474,7 +470,7 @@ void main() {
         ),
       );
       expect(result.status, OrderValidationStatus.rejected);
-      expect(result.reason, 'Insufficient resources');
+      expect(result.reason, 'Insufficient workers');
     });
   });
 }

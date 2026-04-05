@@ -54,6 +54,7 @@ void main() {
           'p1',
         );
         expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, 'Insufficient resources');
       });
 
       test('rejects Builder when treasury too low', () {
@@ -96,6 +97,7 @@ void main() {
           'p1',
         );
         expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, 'Insufficient treasury');
       });
 
       test('rejects Builder when paper insufficient', () {
@@ -138,6 +140,7 @@ void main() {
           'p1',
         );
         expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, 'Insufficient materials');
       });
 
       test('rejects Merchant when merchant_companies not unlocked', () {
@@ -181,6 +184,7 @@ void main() {
           'p1',
         );
         expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, 'Required technology not unlocked');
       });
 
       test('accepts Builder when treasury and paper sufficient', () {
