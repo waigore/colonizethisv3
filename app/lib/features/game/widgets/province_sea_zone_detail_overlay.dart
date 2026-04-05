@@ -17,10 +17,51 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 
 import '../../../config/constants.dart';
 import '../utils/sea_zone_name_resolver.dart';
+
+/// Supplementary GDD label for [roadLevel] on land tiles (issue #1537 / extraction-and-improvements § Transport Level).
+@visibleForTesting
+String roadRailSupplementaryLabel(int roadLevel) {
+  return switch (roadLevel) {
+    0 => 'none',
+    1 => 'primitive road',
+    2 => 'improved road',
+    4 => 'port or railroad',
+    _ => 'non-standard transport level',
+  };
+}
+
+/// Gloss under level 1 so “primitive road” is not read as railroad.
+@visibleForTesting
+const String kRoadRailPrimitiveVersusRailGloss =
+    'Basic land link for connectivity and yield caps. Railroads are transport level 4.';
+
+/// Primary Tile-section line for land tiles; [transportLevel] is stored road/rail level.
+@visibleForTesting
+String roadRailTransportLevelPrimaryLine(int transportLevel) {
+  return 'Road / railroad: transport level $transportLevel';
+}
+
+/// Ordered text lines for Tile “Road / railroad” (null → sea / no land transport row).
+@visibleForTesting
+List<String> roadRailTileDetailLinesForTests({required int? transportLevel}) {
+  if (transportLevel == null) {
+    return const ['Road / railroad: —'];
+  }
+  final v = transportLevel;
+  final lines = <String>[
+    roadRailTransportLevelPrimaryLine(v),
+    roadRailSupplementaryLabel(v),
+  ];
+  if (v == 1) {
+    lines.add(kRoadRailPrimitiveVersusRailGloss);
+  }
+  return lines;
+}
 
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.
 /// [displayId] is the province or sea-zone id (`regionId|localId`) for tab content;
@@ -66,6 +107,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     final content = _isSeaZone(displayId)
         ? _seaZoneContent(game: game, region: region, seaZoneId: displayId)
         : _provinceContent(
+            context: context,
             game: game,
             region: region,
             provinceId: displayId,
@@ -190,6 +232,7 @@ class _OverlayCloseButton extends StatelessWidget {
 }
 
 _OverlayContent _provinceContent({
+  required BuildContext context,
   required Game game,
   required RegionMapViewData region,
   required String provinceId,
@@ -330,6 +373,7 @@ _OverlayContent _provinceContent({
   }
 
   final tileSection = _buildTileSection(
+    context: context,
     game: game,
     region: region,
     provinceId: provinceId,
@@ -437,6 +481,7 @@ String _improvementLabelForTileDetail({
 }
 
 Widget _buildTileSection({
+  required BuildContext context,
   required Game game,
   required RegionMapViewData region,
   required String provinceId,
@@ -496,15 +541,11 @@ Widget _buildTileSection({
       : (prospected.contains(selectedTileKey) ? 'yes' : 'no');
   final impLevel = tileState.improvementLevel(selectedTileKey);
   final roadLevel = cell.isSea ? null : tileState.roadLevel(selectedTileKey);
-  final roadLabel = roadLevel == null
-      ? '—'
-      : switch (roadLevel) {
-          0 => 'none',
-          1 => 'primitive',
-          2 => 'improved',
-          4 => 'port or railroad',
-          _ => 'level $roadLevel',
-        };
+  final roadCaptionStyle = TextStyle(
+    fontSize: 11,
+    height: 1.25,
+    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
+  );
   final improvementLine = _improvementLabelForTileDetail(
     impLevel: impLevel,
     visLevel: visLevel,
@@ -532,7 +573,14 @@ Widget _buildTileSection({
         ),
         Text('Prospected: $prospectedLabel'),
         Text('Improvement: $improvementLine'),
-        Text('Road / railroad: $roadLabel'),
+        if (roadLevel == null)
+          const Text('Road / railroad: —')
+        else ...[
+          Text(roadRailTransportLevelPrimaryLine(roadLevel)),
+          Text(roadRailSupplementaryLabel(roadLevel), style: roadCaptionStyle),
+          if (roadLevel == 1)
+            Text(kRoadRailPrimitiveVersusRailGloss, style: roadCaptionStyle),
+        ],
         Text('Civilian units (province): $civilianCount'),
       ],
     ),
