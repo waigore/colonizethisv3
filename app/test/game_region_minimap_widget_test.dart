@@ -10,6 +10,7 @@ import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
 import 'package:colonizethis_app/features/game/flame/region_map_viewport_snapshot.dart'
     show RegionMapViewportSnapshot, kRegionMapZoomMultiplierMax;
 import 'package:colonizethis_app/features/game/flame/region_minimap_math.dart';
+import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -282,7 +283,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('200%'), findsOneWidget);
-      final slider = tester.widget<Slider>(
+      final slider = tester.widget<CtSlider>(
         find.byKey(kRegionMinimapZoomSliderKey),
       );
       expect(slider.value, closeTo(2.0, 1e-9));
@@ -344,6 +345,62 @@ void main() {
     expect(last.zoomMultiplier, greaterThan(1.0));
     expect(last.zoomMultiplier, lessThanOrEqualTo(kRegionMapZoomMultiplierMax));
   });
+
+  testWidgets(
+    'sequential taps on zoom track emit multiple RequestRegionMapSetZoomMultiplierEvent',
+    (WidgetTester tester) async {
+      final bus = AppEventBus.create();
+      final zooms = <RequestRegionMapSetZoomMultiplierEvent>[];
+      final sub = bus.on<RequestRegionMapSetZoomMultiplierEvent>().listen(
+        zooms.add,
+      );
+      addTearDown(() async {
+        await sub.cancel();
+        bus.dispose();
+      });
+
+      final region = _tinyRegion(regionId: 'minimapMultiTapZoomRegion');
+      const cellSizePx = 24.0;
+      final mw = region.width * cellSizePx;
+      final mh = region.height * cellSizePx;
+      final snap = RegionMapViewportSnapshot(
+        regionId: 'minimapMultiTapZoomRegion',
+        cellSizePx: cellSizePx,
+        mapWidthWorld: mw,
+        mapHeightWorld: mh,
+        cameraCenterX: 48,
+        cameraCenterY: 48,
+        zoom: 1.0,
+        fitMapZoom: 1.0,
+        viewportWidthLogical: 400,
+        viewportHeightLogical: 400,
+      );
+
+      await tester.pumpWidget(
+        _minimapTestShell(
+          GameRegionMinimap(
+            region: region,
+            viewportSnapshot: snap,
+            bus: bus,
+            cellSizePx: cellSizePx,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final box = tester.getRect(find.byKey(kRegionMinimapZoomSliderKey));
+      final y = box.center.dy;
+      await tester.tapAt(Offset(box.left + 4, y));
+      await tester.pump();
+      await tester.tapAt(Offset(box.center.dx, y));
+      await tester.pump();
+      await tester.tapAt(Offset(box.right - 6, y));
+      await tester.pump();
+
+      expect(zooms.length, greaterThan(1));
+      expect(zooms.every((e) => e.regionId == region.regionId), isTrue);
+    },
+  );
 
   testWidgets('toggle hides gesture target but keeps slider row', (
     WidgetTester tester,
