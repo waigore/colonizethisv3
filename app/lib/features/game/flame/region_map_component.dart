@@ -75,6 +75,15 @@ const Color _provinceBorderLandColor = Color.fromRGBO(0, 0, 0, 0.35);
 const Color _provinceBorderSeaLandColor = Color.fromRGBO(0, 0, 0, 0.25);
 const Color _provinceBorderSeaZoneColor = Color.fromRGBO(130, 200, 255, 0.55);
 
+/// Province name labels: text shadow (semi-transparent black, ARGB).
+const Color _kProvinceLabelShadowColor = Color(0x8A000000);
+
+/// Fogged land tiles: modulate alpha for resource icons (linear 0–1).
+const double _kFoggedResourceIconModulateAlpha = 0.6;
+
+/// Political (faction) border stroke — indigo, visible over terrain.
+const Color _kFactionPoliticalBorderColor = Color(0xFF1A237E);
+
 /// Land province labels: max text width and font size in **logical pixels** (screen space).
 const double _provinceLabelMaxWidthPx = 120;
 const double _provinceLabelFontSizePx = 11;
@@ -563,7 +572,7 @@ class CtRegionMapComponent extends PositionComponent {
       shadows: <Shadow>[
         Shadow(
           blurRadius: 2,
-          color: Color(0x8A000000),
+          color: _kProvinceLabelShadowColor,
           offset: Offset(0.5, 0.5),
         ),
       ],
@@ -1121,7 +1130,9 @@ class CtRegionMapComponent extends PositionComponent {
           if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
               cell.visibility == TileVisibility.fogged) {
             paint.colorFilter = ColorFilter.mode(
-              const Color(0xFFFFFFFF).withValues(alpha: 0.6),
+              _kMapHoverSelectorIdle.withValues(
+                alpha: _kFoggedResourceIconModulateAlpha,
+              ),
               BlendMode.modulate,
             );
           }
@@ -1198,7 +1209,7 @@ class CtRegionMapComponent extends PositionComponent {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kProvinceOverlayHoverGlowStrokeWidth
-      ..color = const Color(0x88FFFFFF).withValues(alpha: opacity);
+      ..color = _kMapHoverSelectorIdle.withValues(alpha: opacity);
     final provinceId = _hoveredProvinceId!;
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
@@ -1368,7 +1379,7 @@ class CtRegionMapComponent extends PositionComponent {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kProvinceOverlayPoliticalStrokeWidth
-      ..color = const Color(0xFF1A237E);
+      ..color = _kFactionPoliticalBorderColor;
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
         final cell = region.cellAt(x, y);
