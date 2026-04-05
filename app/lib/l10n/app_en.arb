@@ -31,6 +31,11 @@
     "description": "Main menu button label to start a new game."
   },
 
+  "mainMenu_resumeGame": "Resume game",
+  "@mainMenu_resumeGame": {
+    "description": "Main menu button label to continue from the auto-save slot."
+  },
+
   "mainMenu_loadGame": "Load Game",
   "@mainMenu_loadGame": {
     "description": "Main menu button label to load an existing game."

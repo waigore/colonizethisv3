@@ -17,6 +17,7 @@ class ShellScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bus = ref.watch(appEventBusProvider);
+    final resumeAvailable = ref.watch(mainMenuAutoSaveAvailableProvider);
     return CtMainMenu(
       variant: MainMenuVariant.plain,
       state: MainMenuState.default_,
@@ -24,6 +25,15 @@ class ShellScreen extends ConsumerWidget {
       onNewGame: () => bus.emit(
             const OpenDialogEvent(newGameLeaderSelectionDialogId),
           ),
+      resumeGameVisible: resumeAvailable,
+      onResumeGame: () {
+        final service = ref.read(gameServiceProvider);
+        final game = service.loadAutoSaveGame();
+        if (game != null && context.mounted) {
+          ref.read(currentGameProvider.notifier).setGame(game);
+          bus.emit(const NavigateToRouteEvent(Routes.game));
+        }
+      },
       onLoadGame: () async {
         final service = ref.read(gameServiceProvider);
         final ids = service.listGameIds();

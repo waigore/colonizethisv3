@@ -18,6 +18,8 @@ void main() {
     Widget buildMainMenu({
       MainMenuState state = MainMenuState.default_,
       MainMenuVariant variant = MainMenuVariant.plain,
+      bool resumeGameVisible = false,
+      VoidCallback? onResumeGame,
       required VoidCallback onNewGame,
       required VoidCallback onLoadGame,
       required VoidCallback onSettings,
@@ -30,6 +32,8 @@ void main() {
           state: state,
           version: 'v1.0.0',
           onNewGame: onNewGame,
+          resumeGameVisible: resumeGameVisible,
+          onResumeGame: onResumeGame,
           onLoadGame: onLoadGame,
           onSettings: onSettings,
           onQuit: onQuit,
@@ -51,6 +55,52 @@ void main() {
       expect(find.text('Load Game'), findsOneWidget);
       expect(find.text('Settings'), findsOneWidget);
       expect(find.text('Quit'), findsOneWidget);
+    });
+
+    testWidgets('AC Resume game: hidden when resumeGameVisible is false',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(buildMainMenu(
+        onNewGame: () {},
+        onLoadGame: () {},
+        onSettings: () {},
+        onQuit: () {},
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Resume game'), findsNothing);
+    });
+
+    testWidgets('AC Resume game: shown below New Game when resumeGameVisible',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(buildMainMenu(
+        resumeGameVisible: true,
+        onResumeGame: () {},
+        onNewGame: () {},
+        onLoadGame: () {},
+        onSettings: () {},
+        onQuit: () {},
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Resume game'), findsOneWidget);
+    });
+
+    testWidgets('AC Resume game: tap invokes onResumeGame',
+        (WidgetTester tester) async {
+      var called = false;
+      await tester.pumpWidget(buildMainMenu(
+        resumeGameVisible: true,
+        onResumeGame: () => called = true,
+        onNewGame: () {},
+        onLoadGame: () {},
+        onSettings: () {},
+        onQuit: () {},
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Resume game'));
+      await tester.pumpAndSettle();
+      expect(called, isTrue);
     });
 
     testWidgets('AC Visibility: displays version in footer',
