@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Pixel-art friendly slider for integer values.
-/// Replaces Material [Slider] in production allocation.
+/// Pixel-art friendly slider for integer or continuous values (`divisions: 0`).
+/// Replaces Material [Slider] in production allocation and region minimap zoom.
 class CtSlider extends StatefulWidget {
   const CtSlider({
     super.key,
@@ -12,6 +12,8 @@ class CtSlider extends StatefulWidget {
     required this.onChanged,
     this.comfortHeadroomActive = false,
     this.comfortHeadroomColor,
+    this.onDragStart,
+    this.onDragEnd,
   });
 
   final double value;
@@ -19,6 +21,12 @@ class CtSlider extends StatefulWidget {
   final double max;
   final int divisions;
   final ValueChanged<double> onChanged;
+
+  /// Optional hook when a horizontal drag begins (not fired for tap-only changes).
+  final VoidCallback? onDragStart;
+
+  /// Optional hook when a horizontal drag ends.
+  final VoidCallback? onDragEnd;
 
   /// When true, draws the track segment from thumb to max in [comfortHeadroomColor].
   /// SPEC/ui/production-panel.md
@@ -91,7 +99,13 @@ class _CtSliderState extends State<CtSlider> {
         return GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTapDown: (d) => handleTapOrDrag(d.localPosition),
+          onHorizontalDragStart: widget.onDragStart != null
+              ? (_) => widget.onDragStart!()
+              : null,
           onHorizontalDragUpdate: (d) => handleTapOrDrag(d.localPosition),
+          onHorizontalDragEnd: widget.onDragEnd != null
+              ? (_) => widget.onDragEnd!()
+              : null,
           child: SizedBox(
             height: 24,
             child: Stack(

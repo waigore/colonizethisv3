@@ -43,6 +43,11 @@ class RegionMapViewportSnapshot {
 
   static bool _e(double a, double b) => (a - b).abs() < 1.0;
 
+  /// Zoom and fit baseline must use a tight epsilon: a 1.0 absolute tolerance on
+  /// [zoom] incorrectly treated distinct camera zooms as equal and suppressed
+  /// minimap/shell updates during small slider steps (see region minimap zoom).
+  static bool _eZoom(double a, double b) => (a - b).abs() < 1e-5;
+
   /// True when [other] represents the same viewport (avoids redundant Riverpod writes).
   bool matches(RegionMapViewportSnapshot other) {
     return regionId == other.regionId &&
@@ -51,8 +56,8 @@ class RegionMapViewportSnapshot {
         _e(mapHeightWorld, other.mapHeightWorld) &&
         _e(cameraCenterX, other.cameraCenterX) &&
         _e(cameraCenterY, other.cameraCenterY) &&
-        _e(zoom, other.zoom) &&
-        _e(fitMapZoom, other.fitMapZoom) &&
+        _eZoom(zoom, other.zoom) &&
+        _eZoom(fitMapZoom, other.fitMapZoom) &&
         _e(viewportWidthLogical, other.viewportWidthLogical) &&
         _e(viewportHeightLogical, other.viewportHeightLogical);
   }
