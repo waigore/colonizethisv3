@@ -1016,159 +1016,22 @@ Set<String> _preFilterWorkTargetTiles({
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final result = <String>{};
-
-  switch (workTarget) {
-    case 'build_improvement':
-      // Tiles in owned provinces or purchased tiles, must have resource
-      _forEachPrefixedProvinceTile(
-        tileKeysByRegion: tileKeysByRegion,
-        onTile: (provinceId, tileKey) {
-          final isOwnedProvince = ownedProvinceIds.contains(provinceId);
-          final isPurchased = purchasedTiles[tileKey] == playerId;
-          if (!isOwnedProvince && !isPurchased) return;
-          final resourceId = resourceByTile[tileKey];
-          if (resourceId == null || resourceId.isEmpty) return;
-          result.add(tileKey);
-        },
-      );
-      break;
-
-    case 'build_road':
-      _forEachPrefixedProvinceTile(
-        tileKeysByRegion: tileKeysByRegion,
-        onTile: (provinceId, tileKey) {
-          final isOwnedProvince = ownedProvinceIds.contains(provinceId);
-          final isPurchased = purchasedTiles[tileKey] == playerId;
-          if (!isOwnedProvince && !isPurchased) return;
-          result.add(tileKey);
-        },
-      );
-      break;
-
-    case 'build_rail':
-      final player = game.players.where((p) => p.id == playerId).firstOrNull;
-      if (player != null) {
-        final tech = player.techUnlocked;
-        final tileState = game.worldState.tileState;
-        _forEachPrefixedProvinceTile(
-          tileKeysByRegion: tileKeysByRegion,
-          onTile: (provinceId, tileKey) {
-            final isOwnedProvince = ownedProvinceIds.contains(provinceId);
-            final isPurchased = purchasedTiles[tileKey] == playerId;
-            if (!isOwnedProvince && !isPurchased) return;
-            final roadLevel = tileState.roadLevel(tileKey);
-            if (roadLevel != 1 && roadLevel != 2) return;
-            final terrain = terrainTypeForTileKey(tileMapByRegion, tileKey);
-            if (rejectionReasonForBuildRailOrder(
-                  techUnlocked: tech,
-                  roadLevel: roadLevel,
-                  terrain: terrain,
-                ) !=
-                null) {
-              return;
-            }
-            result.add(tileKey);
-          },
-        );
-      }
-      break;
-
-    case 'upgrade_town':
-    case 'build_fort':
-      // Town tiles in owned provinces only
-      _addCandidateTilesForTownWork(
-        game: game,
-        ownedProvinceIds: ownedProvinceIds,
-        result: result,
-      );
-      break;
-
-    case 'build_port':
-      // Coastal or river tiles in owned provinces
-      _addCandidateTilesForPort(
-        game: game,
-        ownedProvinceIds: ownedProvinceIds,
-        tileKeysByRegion: tileKeysByRegion,
-        result: result,
-      );
-      break;
-
-    case kWorkTargetCounterSpy:
-      // Any tile in owned provinces
-      _addCandidateTilesForCounterSpy(
-        tileKeysByRegion: tileKeysByRegion,
-        ownedProvinceIds: ownedProvinceIds,
-        result: result,
-      );
-      break;
-
-    case kWorkTargetStealTech:
-      // Other GP capital provinces
-      _addCandidateTilesForStealTech(
-        game: game,
-        playerId: playerId,
-        result: result,
-      );
-      break;
-
-    case kWorkTargetPurchaseLand:
-      // Tiles in Minor/Tribe provinces with resource
-      final gpIds = game.players.map((p) => p.id).toSet();
-      final minorIds = game.minorNations.map((m) => m.id).toSet();
-      final tribeIds = game.tribes.map((t) => t.id).toSet();
-      _forEachPrefixedProvinceTile(
-        tileKeysByRegion: tileKeysByRegion,
-        onTile: (provinceId, tileKey) {
-          final province = tryGetProvince(game.worldState, provinceId);
-          if (province == null) return;
-          final ownerId = province.ownerId;
-          if (ownerId == null) return;
-          if (gpIds.contains(ownerId)) return;
-          if (!minorIds.contains(ownerId) && !tribeIds.contains(ownerId)) {
-            return;
-          }
-          final resourceId = resourceByTile[tileKey];
-          if (resourceId == null || resourceId.isEmpty) return;
-          final existingBuyer =
-              game.worldState.purchasedTilesByTileKey[tileKey];
-          if (existingBuyer != null) return;
-          result.add(tileKey);
-        },
-      );
-      break;
-
-    case kWorkTargetExplore:
-      for (final regionEntry in tileKeysByRegion.entries) {
-        for (final provinceEntry in regionEntry.value.entries) {
-          result.addAll(provinceEntry.value);
-        }
-      }
-      break;
-
-    case kWorkTargetProspect:
-      final prospected =
-          game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
-      _forEachPrefixedProvinceTile(
-        tileKeysByRegion: tileKeysByRegion,
-        onTile: (provinceId, tileKey) {
-          if (prospected.contains(tileKey)) return;
-          if (!isMineralEligibleTile(game, tileMapByRegion, tileKey)) {
-            return;
-          }
-          result.add(tileKey);
-        },
-      );
-      break;
-
-    default:
-      for (final regionEntry in tileKeysByRegion.entries) {
-        for (final provinceEntry in regionEntry.value.entries) {
-          result.addAll(provinceEntry.value);
-        }
-      }
-      break;
+  final ctx = _WorkTilePrefilterCtx(
+    game: game,
+    playerId: playerId,
+    tileKeysByRegion: tileKeysByRegion,
+    resourceByTile: resourceByTile,
+    purchasedTiles: purchasedTiles,
+    ownedProvinceIds: ownedProvinceIds,
+    tileMapByRegion: tileMapByRegion,
+    result: result,
+  );
+  final op = _workTargetPrefilters[workTarget];
+  if (op != null) {
+    op(ctx);
+  } else {
+    _prefilterWorkTargetDefault(ctx);
   }
-
   return result;
 }
 
@@ -1230,6 +1093,22 @@ void _forEachPrefixedProvinceTile({
   }
 }
 
+/// All land tiles in owned provinces with prefixed ids (build_port, counter_spy pre-filter).
+void _addAllTilesInOwnedPrefixedProvinces({
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Set<String> ownedProvinceIds,
+  required Set<String> result,
+}) {
+  for (final regionEntry in tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+      if (!ownedProvinceIds.contains(provinceId)) continue;
+      result.addAll(provinceEntry.value);
+    }
+  }
+}
+
 /// Adds candidate tiles for upgrade_town/build_fort: town tiles in owned provinces.
 void _addCandidateTilesForTownWork({
   required Game game,
@@ -1241,40 +1120,6 @@ void _addCandidateTilesForTownWork({
     final townTileKey = province.townTileKey;
     if (townTileKey == null || townTileKey.isEmpty) continue;
     result.add(townTileKey);
-  }
-}
-
-/// Adds candidate tiles for build_port: coastal/river tiles in owned provinces.
-void _addCandidateTilesForPort({
-  required Game game,
-  required Set<String> ownedProvinceIds,
-  required Map<String, Map<String, List<String>>> tileKeysByRegion,
-  required Set<String> result,
-}) {
-  // Port tiles must be in owned provinces; further validation checks coastal/river
-  for (final regionEntry in tileKeysByRegion.entries) {
-    for (final provinceEntry in regionEntry.value.entries) {
-      final provinceId = provinceEntry.key;
-      if (!ProvinceId.isPrefixed(provinceId)) continue;
-      if (!ownedProvinceIds.contains(provinceId)) continue;
-      result.addAll(provinceEntry.value);
-    }
-  }
-}
-
-/// Adds candidate tiles for counter_spy: any tile in owned provinces.
-void _addCandidateTilesForCounterSpy({
-  required Map<String, Map<String, List<String>>> tileKeysByRegion,
-  required Set<String> ownedProvinceIds,
-  required Set<String> result,
-}) {
-  for (final regionEntry in tileKeysByRegion.entries) {
-    for (final provinceEntry in regionEntry.value.entries) {
-      final provinceId = provinceEntry.key;
-      if (!ProvinceId.isPrefixed(provinceId)) continue;
-      if (!ownedProvinceIds.contains(provinceId)) continue;
-      result.addAll(provinceEntry.value);
-    }
   }
 }
 
@@ -1867,3 +1712,178 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   );
   return suggestions;
 }
+
+/// Context for [_workTargetPrefilters] map dispatch (work-target tile pre-filter).
+class _WorkTilePrefilterCtx {
+  _WorkTilePrefilterCtx({
+    required this.game,
+    required this.playerId,
+    required this.tileKeysByRegion,
+    required this.resourceByTile,
+    required this.purchasedTiles,
+    required this.ownedProvinceIds,
+    required this.tileMapByRegion,
+    required this.result,
+  });
+
+  final Game game;
+  final String playerId;
+  final Map<String, Map<String, List<String>>> tileKeysByRegion;
+  final Map<String, String> resourceByTile;
+  final Map<String, String> purchasedTiles;
+  final Set<String> ownedProvinceIds;
+  final Map<String, TileMapResult>? tileMapByRegion;
+  final Set<String> result;
+}
+
+typedef _WorkTilePrefilterOp = void Function(_WorkTilePrefilterCtx c);
+
+void _prefilterWtBuildImprovement(_WorkTilePrefilterCtx c) {
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      final resourceId = c.resourceByTile[tileKey];
+      if (resourceId == null || resourceId.isEmpty) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtBuildRoad(_WorkTilePrefilterCtx c) {
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtBuildRail(_WorkTilePrefilterCtx c) {
+  final player =
+      c.game.players.where((p) => p.id == c.playerId).firstOrNull;
+  if (player == null) return;
+  final tech = player.techUnlocked;
+  final tileState = c.game.worldState.tileState;
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      final roadLevel = tileState.roadLevel(tileKey);
+      if (roadLevel != 1 && roadLevel != 2) return;
+      final terrain = terrainTypeForTileKey(c.tileMapByRegion, tileKey);
+      if (rejectionReasonForBuildRailOrder(
+            techUnlocked: tech,
+            roadLevel: roadLevel,
+            terrain: terrain,
+          ) !=
+          null) {
+        return;
+      }
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtTownWork(_WorkTilePrefilterCtx c) {
+  _addCandidateTilesForTownWork(
+    game: c.game,
+    ownedProvinceIds: c.ownedProvinceIds,
+    result: c.result,
+  );
+}
+
+void _prefilterWtOwnedProvinceTiles(_WorkTilePrefilterCtx c) {
+  _addAllTilesInOwnedPrefixedProvinces(
+    tileKeysByRegion: c.tileKeysByRegion,
+    ownedProvinceIds: c.ownedProvinceIds,
+    result: c.result,
+  );
+}
+
+void _prefilterWtStealTech(_WorkTilePrefilterCtx c) {
+  _addCandidateTilesForStealTech(
+    game: c.game,
+    playerId: c.playerId,
+    result: c.result,
+  );
+}
+
+void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
+  final gpIds = c.game.players.map((p) => p.id).toSet();
+  final minorIds = c.game.minorNations.map((m) => m.id).toSet();
+  final tribeIds = c.game.tribes.map((t) => t.id).toSet();
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final province = tryGetProvince(c.game.worldState, provinceId);
+      if (province == null) return;
+      final ownerId = province.ownerId;
+      if (ownerId == null) return;
+      if (gpIds.contains(ownerId)) return;
+      if (!minorIds.contains(ownerId) && !tribeIds.contains(ownerId)) {
+        return;
+      }
+      final resourceId = c.resourceByTile[tileKey];
+      if (resourceId == null || resourceId.isEmpty) return;
+      final existingBuyer =
+          c.game.worldState.purchasedTilesByTileKey[tileKey];
+      if (existingBuyer != null) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtExplore(_WorkTilePrefilterCtx c) {
+  for (final regionEntry in c.tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      c.result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+void _prefilterWtProspect(_WorkTilePrefilterCtx c) {
+  final prospected =
+      c.game.worldState.playerProspectedTiles[c.playerId] ??
+      const <String>{};
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      if (prospected.contains(tileKey)) return;
+      if (!isMineralEligibleTile(c.game, c.tileMapByRegion, tileKey)) {
+        return;
+      }
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWorkTargetDefault(_WorkTilePrefilterCtx c) {
+  for (final regionEntry in c.tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      c.result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+final Map<String, _WorkTilePrefilterOp> _workTargetPrefilters =
+    <String, _WorkTilePrefilterOp>{
+      'build_improvement': _prefilterWtBuildImprovement,
+      'build_road': _prefilterWtBuildRoad,
+      'build_rail': _prefilterWtBuildRail,
+      'upgrade_town': _prefilterWtTownWork,
+      'build_fort': _prefilterWtTownWork,
+      'build_port': _prefilterWtOwnedProvinceTiles,
+      kWorkTargetCounterSpy: _prefilterWtOwnedProvinceTiles,
+      kWorkTargetStealTech: _prefilterWtStealTech,
+      kWorkTargetPurchaseLand: _prefilterWtPurchaseLand,
+      kWorkTargetExplore: _prefilterWtExplore,
+      kWorkTargetProspect: _prefilterWtProspect,
+    };
