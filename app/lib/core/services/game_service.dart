@@ -385,7 +385,7 @@ class GameService {
     final mapGenParams = MapGenerationParams(
       numContinents: cfg.continentCount,
       seed: cfg.seed,
-      seaFraction: 0.6,
+      seaFraction: kDefaultSeaFraction,
     );
     final sizeOW = computeGridSizeFromParams(
       cfg.numProvincesOldWorld,
@@ -395,7 +395,7 @@ class GameService {
       width: sizeOW.width,
       height: sizeOW.height,
       seed: cfg.seed,
-      seaFraction: 0.6,
+      seaFraction: kDefaultSeaFraction,
     );
     return TileMapGenerator(params: paramsOW).generate(
       numProvinces: cfg.numProvincesOldWorld,
@@ -410,7 +410,7 @@ class GameService {
     final mapGenParams = MapGenerationParams(
       numContinents: cfg.continentCount,
       seed: cfg.seed,
-      seaFraction: 0.6,
+      seaFraction: kDefaultSeaFraction,
     );
     final sizeNW = computeGridSizeFromParams(
       cfg.numProvincesNewWorld,
@@ -420,7 +420,7 @@ class GameService {
       width: sizeNW.width,
       height: sizeNW.height,
       seed: cfg.seed + 1,
-      seaFraction: 0.6,
+      seaFraction: kDefaultSeaFraction,
     );
     return TileMapGenerator(params: paramsNW).generate(
       numProvinces: cfg.numProvincesNewWorld,
