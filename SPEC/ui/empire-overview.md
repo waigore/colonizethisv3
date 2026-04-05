@@ -25,26 +25,26 @@
 ## Map area
 
 - **Content:** One instance of the map widget per active view. When the user switches tabs, the map widget is updated or swapped to show the selected region's map.
-- **Layers:** Base tile layer always; **province overlay** (province/sea boundary strokes), **province ownership** (Great Power land tint), and **political** overlay togglable by the user where the shell exposes them (see Map display options). **Base layer display mode** is controlled by a cycle button overlaid at the top-left of the map (see below).
+- **Layers:** Base tile layer always; **province overlay** (province/sea boundary strokes), **province ownership** (Great Power land tint), and **political** overlay togglable by the user where the shell exposes them (see Map display options). **Base layer display mode** and related map tools sit in a **horizontal icon row** at the **bottom-left** of the map (see below). **Empire actions** (Production, units, Diplomacy, Technology) use an **always-visible icon column** along the **left** of the map (east of the edge-swipe strip); see [empire-buttons.md](empire-buttons.md).
 - **Interaction:** Pan, zoom (fit-relative continuous band per [map-widget.md](map-widget.md) § Viewport, scale, pan, zoom), tap/click for province selection. Map widget fires `onProvinceSelected`; the Empire overview screen responds (e.g. show province details in a panel or bottom sheet; content TBD).
 - **Data:** Region map data from game state / view model (PlayerView or equivalent for human player). Province identity: prefixed id per [world-model-identity.md](../game/world-model-identity.md).
 
 ### Base layer display cycle (in-game map only)
 
-- **Overlay:** A single toggle button is overlaid at the **top-left** of the map area. Icon only: pixel-art stacked layers icon (`ui_icon_layer_toggle.png` from [game-toolbar-icons.md](game-toolbar-icons.md)). The button cycles the map's base layer display mode; it is shown only on the in-game Empire overview map, not in Widgetbook or debug map stories.
+- **Overlay:** A single toggle button is overlaid at the **bottom-left** of the map area as the **leftmost** control in a **horizontal row** of three map tool buttons. **Inset** from the map stack’s **left** and **bottom** edges is the **same** value (matches the inset previously used for the left edge of the top-left cluster: **0** unless implementation introduces a shared padding constant). Icon only: pixel-art stacked layers icon (`ui_icon_layer_toggle.png` from [game-toolbar-icons.md](game-toolbar-icons.md)). The button cycles the map's base layer display mode; it is shown only on the in-game Empire overview map, not in Widgetbook or debug map stories.
 - **Modes (cycle order):** 1) **terrain only** — no resource icons or improvement/road labels; 2) **terrain + resources** — resource icons only; 3) **terrain + resources + improvement labels** — resource icons plus improvement labels `I{n}` when `n > 0` (top-left of tile), no road labels; 4) **terrain + resources + improvements + roads** — resource icons, improvement labels when `n > 0`, and road/rail labels `R{n}` when `n > 0` (top-right; painted above improvement labels). Each tap advances to the next mode; after the fourth, the next tap returns to the first. Road labels are never shown without improvement labels (see [map-widget.md](map-widget.md) § Base layer display mode).
 - **Default at game start:** When the player enters the in-game shell (after init or load), the base layer display mode is **terrain + resources + improvements + roads** (full detail).
 - **Spec reference:** [map-widget.md](map-widget.md) § Base layer display mode.
 
 ### Home-to-capital button (in-game map only)
 
-- **Overlay:** A second toggle button is overlaid at the **top-left** of the map area, directly **beneath** the base-layer cycle button. Icon only: pixel-art home/flag icon (`ui_icon_home_capital.png` from [game-toolbar-icons.md](game-toolbar-icons.md)). The button is shown only on the in-game Empire overview map, not in Widgetbook or debug map stories.
+- **Overlay:** A second button in the **same horizontal row** at the **bottom-left**, **immediately to the right** of the base-layer cycle button (small fixed gap between icons). Icon only: pixel-art home/flag icon (`ui_icon_home_capital.png` from [game-toolbar-icons.md](game-toolbar-icons.md)). The button is shown only on the in-game Empire overview map, not in Widgetbook or debug map stories.
 - **Target:** Always uses the **current human player** (same rule as for visibility and panels). If multiple players are marked `isHuman`, use the first; if none are marked, fall back to the first player in the list.
 - **Behavior:** When tapped, the button **switches the active region** (Old World / New World) if necessary so that the map shows the human player's **capital region**, then **centers the camera** on the human player's **capital tile** and moves the **selection/highlight cursor** onto that tile. Capital identity comes from `Player.capitalTile` (tile key format `regionId|provinceId|x|y` per [world-model-identity.md](../game/world-model-identity.md) and [map-visualization.md](../program/map-visualization.md)).
 
 ### Map display options button and dialog (in-game map only)
 
-- **Overlay:** A third button is overlaid at the **top-left** of the map area, directly **beneath** the home-to-capital button. Icon only: pixel-art gear icon (`ui_icon_map_options.png` from [game-toolbar-icons.md](game-toolbar-icons.md)). The button is shown only on the in-game Empire overview map, not in Widgetbook or debug map stories.
+- **Overlay:** A third button in the **same horizontal row** at the **bottom-left**, **immediately to the right** of the home-to-capital button. Icon only: pixel-art gear icon (`ui_icon_map_options.png` from [game-toolbar-icons.md](game-toolbar-icons.md)). The button is shown only on the in-game Empire overview map, not in Widgetbook or debug map stories.
 - **Dialog type:** Tapping the button opens a modal **“Map display options”** dialog that blocks interaction with the underlying map and closes when the user taps the dialog’s **Close** button, taps outside the dialog, or presses the back key.
 - **Toggles:** The dialog contains **three** independent toggles (switch or checkbox): **“Show province overlay”** (province and sea-zone boundary strokes only), **“Show province ownership”** (Great Power land ownership tint at fixed alpha **0.5** per [map-widget.md](map-widget.md)), and **“Show province names”**. Each controls its own global layer for all in-game Empire overview maps in the current session (Old World and New World). No toggle affects another unless noted in [map-widget.md](map-widget.md) (e.g. political borders still require the province overlay for underlying strokes).
 - **Default behavior:** At the start of a game session (after init or load), **Show province overlay** and **Show province names** are **ON** by default; **Show province ownership** (Great Power land tint) is **OFF** by default. When the user changes any toggle, the new values are remembered for the remainder of the session and are reflected every time the dialog is reopened.
@@ -52,7 +52,11 @@
 
 ### Region minimap (in-game map stack)
 
-- **Placement:** Bottom-right of the map `Stack` in [GameMapArea](../../app/lib/features/game/flame/game_map_area.dart); does not replace top-left [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart).
+- **Placement:** Bottom-right of the map `Stack` in [GameMapArea](../../app/lib/features/game/flame/game_map_area.dart); does not replace bottom-left [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart) or [GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart).
+
+### Narrow layout: province detail above map chrome
+
+- **Z-order:** On narrow viewports, the province/sea zone detail host ([GameMapNarrowDetailOverlaySlot](../../app/lib/features/game/flame/game_map_narrow_detail_overlay.dart)) is a **sibling stacked above** the map `Stack` so the bottom detail **paints above** bottom-left map tool buttons and may **partially overlap** them; the detail layer receives hit testing above those buttons when visible.
 - **Widget:** [GameRegionMinimap](../../app/lib/features/game/flame/game_region_minimap.dart) — full active region grid (flat terrain colors), visibility per `CellViewData.visibility` (unrevealed = black; fogged = same terrain hue at alpha **0.55**; visible = full opacity). Sea uses deep blue `#0D47A1`; land terrains: plains `#A5D6A7`, forest `#2E7D32`, hills `#B0BEC5`, mountain `#546E7A`, swamp `#6D4C41`, desert `#D7CCC8`.
 - **Viewport:** White stroke rectangle aligned with main map camera (world center, zoom, logical viewport size, `cellSizePx`); see [map-widget.md](map-widget.md) § Region minimap camera sync.
 - **Interaction:** **Tap-up** sets main map camera center to world position under the pointer (clamped), so a press-and-drag does not first jump the camera to the press point. **Pointer movement while down** applies world-space pan to camera center (clamped). Does not change tile/province selection.
@@ -70,20 +74,19 @@
 
 ```text
 +------------------------------------------------------------------+
-|  [ Old World ]  [ New World ]   (region tabs)    [ Layers ▼ ] …  |
+|  [ Old World ]  [ New World ]   (region tabs)                     |
 +------------------------------------------------------------------+
-| [r]                                                              |
-|     Map widget (viewport = this area)                             |
-|     – base: terrain [+ resources + labels per 4-step cycle]        |
-|     – overlay: boundaries / ownership tint / political (toggles) |
-|     – pan / zoom / tap province                                   |
-|     – [r] = base layer cycle (top-left overlay, in-game only)    |
+| [E]   Map widget (viewport = this area)                          |
+| [E]   – empire icons (left rail, always visible)                 |
+| [E]   – base: terrain [+ resources + labels per 4-step cycle]    |
+| [E]   – bottom-left: [layer][home][map options] (horizontal)     |
+|       – minimap bottom-right                                     |
 +------------------------------------------------------------------+
-|  (HUD / province details / panels — layout and content TBD)       |
+|  (narrow: province detail may overlay bottom of map stack)        |
 +------------------------------------------------------------------+
 ```
 
-On mobile: same tab row; map area fills available space; one region visible at a time; province details may be bottom sheet or full-screen overlay (TBD).
+On mobile: same tab row; map area fills available space; one region visible at a time; province detail overlays the bottom of the map stack when open (narrow).
 
 ---
 
@@ -98,13 +101,13 @@ On mobile: same tab row; map area fills available space; one region visible at a
 - **Given** the player switches between Old World and New World tabs, **when** the region tab changes, **then** the cargo hold indicator value remains a single global total and does not switch to per-region values.
 - **Given** fleet composition or extraction-relevant state changes and the app event bus/provider flow publishes those changes into the in-game shell state, **when** the map controls rebuild, **then** the cargo hold indicator updates to the new `used/capacity` value without animation.
 - **Given** the player has just entered the in-game shell (after init or load), **when** the map area is first shown, **then** the base layer display mode is **terrain + resources + improvements + roads** (full detail per [map-widget.md](map-widget.md) § Base layer display mode).
-- **Given** the Empire overview map is visible, **when** the user taps the base-layer cycle button at the top-left of the map area, **then** the map advances to the next mode in order: terrain only → terrain + resources → terrain + resources + improvement labels (no road labels) → terrain + resources + improvement + road labels → terrain only (repeating).
-- **Given** the Empire overview map is visible, **then** the base-layer cycle button is visible at the top-left of the map area and displays the stacked layers icon (icon-only).
+- **Given** the Empire overview map is visible, **when** the user taps the base-layer cycle button at the **bottom-left** of the map area (leftmost of the horizontal map tool row), **then** the map advances to the next mode in order: terrain only → terrain + resources → terrain + resources + improvement labels (no road labels) → terrain + resources + improvement + road labels → terrain only (repeating).
+- **Given** the Empire overview map is visible, **then** the base-layer cycle button is visible at the **bottom-left** of the map area and displays the stacked layers icon (icon-only).
 
-- **Given** the Empire overview map is visible, **then** a second icon-only button with the home/flag icon is visible directly beneath the base-layer cycle button at the top-left of the map area.
-- **Given** the Empire overview map is visible and the human player has a defined capital tile, **when** the user taps the h button, **then** the active region switches (if needed) to the human player's capital region and the map centers on the human player's capital tile with the selection/highlight cursor placed on that tile.
+- **Given** the Empire overview map is visible, **then** a second icon-only button with the home/flag icon is visible **immediately to the right** of the base-layer cycle button in the same **bottom-left** horizontal row.
+- **Given** the Empire overview map is visible and the human player has a defined capital tile, **when** the user taps the home-to-capital button, **then** the active region switches (if needed) to the human player's capital region and the map centers on the human player's capital tile with the selection/highlight cursor placed on that tile.
 
-- **Given** the Empire overview map is visible, **then** a third icon-only button with the gear icon is visible directly beneath the home-to-capital button at the top-left of the map area.
+- **Given** the Empire overview map is visible, **then** a third icon-only button with the gear icon is visible **immediately to the right** of the home-to-capital button in the same **bottom-left** horizontal row.
 - **Given** the Empire overview map is visible, **when** the user taps the third map display options button, **then** the UI layer shows a modal dialog titled `Map display options` with a dismiss action and the underlying map is not interactive until the dialog is closed.
 - **Given** the player has just entered the in-game shell and the map is first shown, **when** no Map display options have been changed yet, **then** the map does not draw the Great Power ownership tint (default matches **Show province ownership** OFF).
 - **Given** the Map display options dialog is visible for the first time in a game session, **then** the dialog shows toggle controls labelled `Show province overlay`, `Show province ownership`, and `Show province names`, with **Show province overlay** and **Show province names** in the ON state and **Show province ownership** in the OFF state.
