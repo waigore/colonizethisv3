@@ -22,10 +22,10 @@ final mapProvinceOverlayVisibleProvider =
     );
 
 /// Great Power land ownership tint on in-game Empire overview maps.
-/// Independent of [mapProvinceOverlayVisibleProvider]. Defaults to true at app start.
+/// Independent of [mapProvinceOverlayVisibleProvider]. Defaults to false at app start.
 class MapProvinceOwnershipTintVisibleNotifier extends Notifier<bool> {
   @override
-  bool build() => true;
+  bool build() => false;
 
   void set(bool value) => state = value;
 }

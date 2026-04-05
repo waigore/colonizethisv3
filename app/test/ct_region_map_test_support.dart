@@ -32,7 +32,7 @@ Widget ctRegionMapTestHarness({
   double cellSizePx = 24,
   bool showPoliticalOverlay = true,
   bool showProvinceOverlay = true,
-  bool showProvinceOwnershipTint = true,
+  bool showProvinceOwnershipTint = false,
   CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
   BaseLayerDisplayMode? baseLayerDisplayMode,
   String? centerOnTileKey,

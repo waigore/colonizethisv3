@@ -299,6 +299,7 @@ void main() {
         );
         expect(ownershipFinder, findsOneWidget);
 
+        // Default OFF — turn ON and persist.
         await tester.tap(ownershipFinder);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
@@ -311,8 +312,50 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        final ownershipTile = tester.widget<SwitchListTile>(ownershipFinder);
+        var ownershipTile = tester.widget<SwitchListTile>(ownershipFinder);
+        expect(ownershipTile.value, isTrue);
+
+        // Turn OFF again and persist.
+        await tester.tap(ownershipFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.tap(find.text('Close'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.tap(optionsButtonFinder);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        ownershipTile = tester.widget<SwitchListTile>(ownershipFinder);
         expect(ownershipTile.value, isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'AC: first map display options open shows overlay and names ON, ownership OFF (SPEC/ui/empire-overview.md)',
+      (WidgetTester tester) async {
+        final dpr = tester.view.devicePixelRatio;
+        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
+        await tester.pump();
+
+        await tester.tap(find.byKey(kMapDisplayOptionsButtonKey));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        final overlayTile = tester.widget<SwitchListTile>(
+          find.widgetWithText(SwitchListTile, 'Show province overlay'),
+        );
+        final ownershipTile = tester.widget<SwitchListTile>(
+          find.widgetWithText(SwitchListTile, 'Show province ownership'),
+        );
+        final namesTile = tester.widget<SwitchListTile>(
+          find.widgetWithText(SwitchListTile, 'Show province names'),
+        );
+        expect(overlayTile.value, isTrue);
+        expect(ownershipTile.value, isFalse);
+        expect(namesTile.value, isTrue);
       },
       timeout: const Timeout(Duration(seconds: 20)),
     );

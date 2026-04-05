@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 
 import 'gp_ownership_tint_layer.dart';
 import 'region_map_boundary_visibility.dart';
+import 'region_map_province_overlay_geometry.dart';
 import 'resource_icon_cache.dart';
 import 'province_label_icon_cache.dart';
 import 'terrain_tileset.dart';
@@ -383,7 +384,7 @@ class CtRegionMapComponent extends PositionComponent {
     final opacity = 0.4 + 0.4 * (0.5 + 0.5 * math.sin(t * 3));
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
+      ..strokeWidth = kMapValidTileTargetStrokeWidth
       ..color = Color(0xFFFFFF00).withValues(alpha: opacity);
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
@@ -402,7 +403,7 @@ class CtRegionMapComponent extends PositionComponent {
       canvas,
       tileKey: selectedTileKey!,
       color: const Color(0xFFFFAA00),
-      strokeWidth: 3,
+      strokeWidth: kMapSelectedTileStrokeWidth,
     );
   }
 
@@ -411,7 +412,7 @@ class CtRegionMapComponent extends PositionComponent {
       canvas,
       tileKey: secondaryHighlightTileKey!,
       color: const Color(0xFF66D9FF),
-      strokeWidth: 2.5,
+      strokeWidth: kMapSecondaryHighlightStrokeWidth,
     );
   }
 
@@ -1134,9 +1135,13 @@ class CtRegionMapComponent extends PositionComponent {
   void _paintHoveredProvinceGlow(Canvas canvas) {
     final t = _hoverAnimationT;
     final opacity = 0.5 + 0.25 * math.sin(t * 2 * math.pi);
+    final coastInset = provinceOverlayLandSeaInsetPx(
+      cellSizePx: cellSize,
+      topologyStrokeWidth: kProvinceOverlayTopologyStrokeWidth,
+    );
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
+      ..strokeWidth = kProvinceOverlayHoverGlowStrokeWidth
       ..color = const Color(0x88FFFFFF).withValues(alpha: opacity);
     final provinceId = _hoveredProvinceId!;
     for (var y = 0; y < region.height; y++) {
@@ -1151,7 +1156,13 @@ class CtRegionMapComponent extends PositionComponent {
               visibilityA: cell.visibility,
               visibilityB: right.visibility,
             )) {
-              final xEdge = (x + 1) * cellSize;
+              final xEdge = verticalProvinceTopologyEdgeX(
+                left: cell,
+                right: right,
+                cellSizePx: cellSize,
+                leftTileX: x,
+                coastInsetPx: coastInset,
+              );
               canvas.drawLine(
                 Offset(xEdge, y * cellSize),
                 Offset(xEdge, (y + 1) * cellSize),
@@ -1168,7 +1179,13 @@ class CtRegionMapComponent extends PositionComponent {
               visibilityA: cell.visibility,
               visibilityB: bottom.visibility,
             )) {
-              final yEdge = (y + 1) * cellSize;
+              final yEdge = horizontalProvinceTopologyEdgeY(
+                top: cell,
+                bottom: bottom,
+                cellSizePx: cellSize,
+                topTileY: y,
+                coastInsetPx: coastInset,
+              );
               canvas.drawLine(
                 Offset(x * cellSize, yEdge),
                 Offset((x + 1) * cellSize, yEdge),
@@ -1199,7 +1216,7 @@ class CtRegionMapComponent extends PositionComponent {
         : const Color(0xFFFFFFFF);
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
+      ..strokeWidth = kMapHoverSelectorStrokeWidth
       ..color = color;
     canvas.drawRect(rect, paint);
   }
@@ -1216,9 +1233,13 @@ class CtRegionMapComponent extends PositionComponent {
   }
 
   void _paintProvinceBorders(Canvas canvas) {
+    final coastInset = provinceOverlayLandSeaInsetPx(
+      cellSizePx: cellSize,
+      topologyStrokeWidth: kProvinceOverlayTopologyStrokeWidth,
+    );
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
+      ..strokeWidth = kProvinceOverlayTopologyStrokeWidth
       ..color = _provinceBorderLandColor;
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
@@ -1232,7 +1253,13 @@ class CtRegionMapComponent extends PositionComponent {
               visibilityB: right.visibility,
             )) {
               paint.color = _provinceBorderColor(cell, right);
-              final xEdge = (x + 1) * cellSize;
+              final xEdge = verticalProvinceTopologyEdgeX(
+                left: cell,
+                right: right,
+                cellSizePx: cellSize,
+                leftTileX: x,
+                coastInsetPx: coastInset,
+              );
               canvas.drawLine(
                 Offset(xEdge, y * cellSize),
                 Offset(xEdge, (y + 1) * cellSize),
@@ -1250,7 +1277,13 @@ class CtRegionMapComponent extends PositionComponent {
               visibilityB: bottom.visibility,
             )) {
               paint.color = _provinceBorderColor(cell, bottom);
-              final yEdge = (y + 1) * cellSize;
+              final yEdge = horizontalProvinceTopologyEdgeY(
+                top: cell,
+                bottom: bottom,
+                cellSizePx: cellSize,
+                topTileY: y,
+                coastInsetPx: coastInset,
+              );
               canvas.drawLine(
                 Offset(x * cellSize, yEdge),
                 Offset((x + 1) * cellSize, yEdge),
@@ -1275,7 +1308,7 @@ class CtRegionMapComponent extends PositionComponent {
   void _paintFactionBorders(Canvas canvas) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
+      ..strokeWidth = kProvinceOverlayPoliticalStrokeWidth
       ..color = const Color(0xFF1A237E);
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
@@ -1324,7 +1357,7 @@ class CtRegionMapComponent extends PositionComponent {
     final fill = Paint()..style = PaintingStyle.fill;
     final stroke = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
+      ..strokeWidth = kCapitalMarkerRingStrokeWidth
       ..color = Colors.black;
     for (final cap in region.capitalMarkers) {
       final cell = region.cellAt(cap.x, cap.y);
@@ -1441,12 +1474,12 @@ class CtRegionMapComponent extends PositionComponent {
     // Outer glow (wider, more transparent).
     final glowOuter = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
+      ..strokeWidth = kWarpZoneGlowOuterStrokeWidth
       ..color = const Color(0xFFFFD700).withValues(alpha: 0.3); // gold glow
     // Inner bright border.
     final glowInner = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
+      ..strokeWidth = kWarpZoneGlowInnerStrokeWidth
       ..color = const Color(0xFFFFEA00); // bright yellow
 
     for (final (x, y) in warpTiles) {

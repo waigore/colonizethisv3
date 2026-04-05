@@ -513,7 +513,7 @@ class CtRegionMap extends StatefulWidget {
     required this.region,
     this.showPoliticalOverlay = true,
     this.showProvinceOverlay = true,
-    this.showProvinceOwnershipTint = true,
+    this.showProvinceOwnershipTint = false,
     this.showProvinceNamesLayer = true,
     this.cellSizePx = 32,
     this.visibilityMode = CtMapVisibilityMode.full,
