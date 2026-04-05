@@ -151,7 +151,7 @@ class GameService {
       eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
-    _emitTurnResolutionResultEvent(result);
+    _emitTurnResolutionEvents(result);
     return result;
   }
 
@@ -174,7 +174,7 @@ class GameService {
       eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
-    _emitTurnResolutionResultEvent(result);
+    _emitTurnResolutionEvents(result);
     return result;
   }
 
@@ -201,7 +201,7 @@ class GameService {
       eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
-    _emitTurnResolutionResultEvent(result);
+    _emitTurnResolutionEvents(result);
     return result;
   }
 
@@ -224,7 +224,7 @@ class GameService {
       eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
-    _emitTurnResolutionResultEvent(result);
+    _emitTurnResolutionEvents(result);
     return result;
   }
 
@@ -419,7 +419,9 @@ class GameService {
     eventBus?.emit(NewGameCreatedEvent(gameId: result.game.id));
   }
 
-  void _emitTurnResolutionResultEvent(TurnResolutionResult result) {
+  /// Maps [TurnResolutionResult] to app-level bus events and persists when complete.
+  /// SPEC/program/app-event-bus.md.
+  void _emitTurnResolutionEvents(TurnResolutionResult result) {
     if (result is TurnResolutionComplete) {
       final complete = result;
       saveGame(complete.game);
