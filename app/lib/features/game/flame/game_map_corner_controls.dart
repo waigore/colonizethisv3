@@ -4,7 +4,8 @@ import '../../../config/app_assets.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'game_screen_shared.dart';
 
-/// Top-left corner buttons for the in-game map.
+/// Bottom-left horizontal row: map tool buttons for the in-game map.
+/// SPEC/ui/empire-overview.md § Base layer display cycle, Home-to-capital, Map display options.
 class GameMapCornerControls extends StatelessWidget {
   const GameMapCornerControls({
     required this.onCycleBaseLayerDisplayMode,
@@ -19,9 +20,8 @@ class GameMapCornerControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Material(
           key: kBaseLayerCycleButtonKey,
@@ -41,7 +41,7 @@ class GameMapCornerControls extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(width: 4),
         Material(
           key: kHomeToCapitalButtonKey,
           color: Colors.white.withValues(alpha: 0.9),
@@ -60,7 +60,7 @@ class GameMapCornerControls extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(width: 4),
         Material(
           key: kMapDisplayOptionsButtonKey,
           color: Colors.white.withValues(alpha: 0.9),

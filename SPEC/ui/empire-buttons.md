@@ -1,6 +1,6 @@
 # Empire buttons
 
-**SPEC/ui** — In-game actions for the human player (Production, Civilian Units, Military Units, Diplomacy, Technology). All empire buttons are accessed via the side menu (hamburger menu) at all viewport sizes. Authority: [empire-overview.md](empire-overview.md); [in-game-shell-narrow.md](in-game-shell-narrow.md) for side menu implementation.
+**SPEC/ui** — In-game actions for the human player (Production, Civilian Units, Military Units, Naval Units, Diplomacy, Technology). At all viewport sizes these are **always visible** as **icon-only** controls along the **left edge** of the map (east of the edge-swipe strip); **labels** appear on **hover** (e.g. tooltip). The **hamburger** side menu is **Debug log** only. Authority: [empire-overview.md](empire-overview.md); [in-game-shell-narrow.md](in-game-shell-narrow.md) for hamburger menu.
 
 ---
 
@@ -23,30 +23,25 @@ Icons and assets: [game-toolbar-icons.md](game-toolbar-icons.md) — files live 
 
 ## Display
 
-- **All viewports:** Empire buttons are shown **only** in the **side menu** (opened via hamburger menu). The side menu is available at all viewport sizes (both narrow and wide). No empire buttons appear in the top bar.
-- **Top bar:** Shows hamburger (menu trigger) on the left, turn counter/button on the right, and region tabs centered below. No empire buttons.
+- **All viewports:** Empire actions appear as an **icon column** on the **left** of the map ([GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart)), **always visible**, same order as the table below. **Tooltip** (or equivalent) shows the full label on hover; **Semantics** expose the label for accessibility.
+- **Top bar:** Shows hamburger (opens **Debug log** menu only), turn counter/button, and region tabs. **No** empire buttons in the top bar.
+- **Edge swipe:** A narrow strip at the **left** edge of the map still opens the **hamburger** menu (Debug log); the empire rail begins **to the right** of that strip so both coexist.
 
 ---
 
-## Side menu
+## Hamburger menu (Debug log only)
 
-The side menu contains all empire buttons and is accessible at all viewport sizes.
+- **Open:** Tap the hamburger in the top bar, or swipe in from the **left** edge of the map.
+- **Content:** **Debug log** entry only (plus close affordances). Empire actions are **not** duplicated here.
 
-- **Open:** Tap the hamburger menu in the top bar, or swipe in from the left edge.
-- **Close:** Tap outside the menu (on scrim), swipe left, tap the close (×) button, or press Escape.
-- **Content:** All empire buttons in order (Production, Civilian Units, Military Units, Diplomacy, Technology).
-- **Layout:** Pixel-art layout with CtPanel and CtNinePatchButton.
-- **Modal:** When open, the map underneath is non-interactive.
-
-See [in-game-shell-narrow.md](in-game-shell-narrow.md) for full side menu specification.
+See [in-game-shell-narrow.md](in-game-shell-narrow.md) for modal behaviour and dismissal.
 
 ---
 
-## Styling
+## Styling (left rail)
 
-- All empire buttons use **CtNinePatchButton** with pixel-art icon + label.
-- Icon: `StrictAssetIcon(assetPath: '${kAppIconAssetPrefix}ui_icon_<id>.png', width: 20, height: 20)` (`lib/widgets/strict_asset_icon.dart`, `kAppIconAssetPrefix` in `lib/config/app_assets.dart`); 8 dp gap; then `Text(label)`. Missing or invalid assets throw `FlutterError`.
-- Same visual style in side menu at all viewport sizes. No Material buttons.
+- **Icon row/column:** `Material` + `InkWell` + `StrictAssetIcon` at **20×20** with light semi-opaque backing, aligned with map tool buttons ([GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart)) for visual consistency.
+- Asset paths: `ui_icon_<id>.png` per [game-toolbar-icons.md](game-toolbar-icons.md); missing or invalid assets throw `FlutterError`.
 
 ---
 

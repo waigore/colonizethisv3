@@ -1,3 +1,5 @@
+import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
 import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
@@ -9,13 +11,20 @@ import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
 import 'package:colonizethis_app/features/game/flame/region_minimap_math.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart' show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 
 /// Avoid open-ended [pumpAndSettle] (animations/shell work can hang tests).
 Future<void> _pumpUntilMinimapPaintVisible(WidgetTester tester) async {
@@ -36,6 +45,31 @@ Future<void> _pumpUntilMinimapPaintVisible(WidgetTester tester) async {
 void main() {
   suppressLogsForTests();
 
+  late Box<dynamic> gamesBox;
+
+  setUpAll(() async {
+    Hive.init('./.dart_tool/test_hive_game_map_area_minimap');
+    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+  });
+
+  _mapAreaProviderOverrides({
+    required AppEventBus bus,
+    required Game game,
+    required InitGameMapViewData mapViewData,
+  }) =>
+      [
+        appEventBusProvider.overrideWith((ref) => bus),
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+        gamesBoxProvider.overrideWith((ref) => gamesBox),
+        gameServiceProvider.overrideWith(
+          (ref) => GameService(gamesBox, GameSaveAdapter()),
+        ),
+        currentOrdersProvider.overrideWith(
+          () => CurrentOrdersNotifier(const Orders()),
+        ),
+        mapViewDataProvider.overrideWith((ref) => mapViewData),
+      ];
+
   testWidgets('region minimap: toggle visibility and minimap bus pan', (
     WidgetTester tester,
   ) async {
@@ -45,10 +79,11 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-        ],
+        overrides: _mapAreaProviderOverrides(
+          bus: bus,
+          game: game,
+          mapViewData: init.mapViewData,
+        ),
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -117,12 +152,11 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(
-            () => CurrentGameNotifier(init.game),
-          ),
-        ],
+        overrides: _mapAreaProviderOverrides(
+          bus: bus,
+          game: init.game,
+          mapViewData: init.mapViewData,
+        ),
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -170,12 +204,11 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(
-            () => CurrentGameNotifier(init.game),
-          ),
-        ],
+        overrides: _mapAreaProviderOverrides(
+          bus: bus,
+          game: init.game,
+          mapViewData: init.mapViewData,
+        ),
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -231,12 +264,11 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(
-            () => CurrentGameNotifier(init.game),
-          ),
-        ],
+        overrides: _mapAreaProviderOverrides(
+          bus: bus,
+          game: init.game,
+          mapViewData: init.mapViewData,
+        ),
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
