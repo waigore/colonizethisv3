@@ -5,12 +5,9 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 
-import 'ai_config.dart';
-import 'economy_planner.dart';
 import 'goal_manager.dart';
 import 'hidden_agenda.dart';
 import 'perception.dart';
-import 'seed_bundle.dart';
 
 final _log = aiLogger();
 

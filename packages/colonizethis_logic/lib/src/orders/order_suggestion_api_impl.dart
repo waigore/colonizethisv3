@@ -3,12 +3,13 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'order_suggestion.dart' as suggestion;
+import 'order_suggestion_api.dart';
 import '../world/player_view.dart';
 
 final _log = logicLogger();
 
 /// Default implementation of [OrderSuggestionAPI] using the top-level suggest* functions.
-class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
+class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
   const DefaultOrderSuggestionAPI();
 
   @override
