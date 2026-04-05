@@ -204,6 +204,20 @@ class AppEventHandler {
 
   void _navigateToShell(NavigatorState? nav) {
     if (nav == null) return;
+    final ctx = nav.context;
+    if (ctx.mounted) {
+      try {
+        final container = ProviderScope.containerOf(ctx, listen: false);
+        container.read(currentGameProvider.notifier).clear();
+        container.read(currentOrdersProvider.notifier).clear();
+      } catch (e, st) {
+        _log.d(
+          'navigateToShell: skipped in-memory game clear (no ProviderScope)',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }
     var foundShellRoute = false;
     nav.popUntil((route) {
       final matches = route.settings.name == Routes.shell;

@@ -136,6 +136,20 @@ List<WidgetbookNode> get mainMenuDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'With resume game',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.plain,
+          state: MainMenuState.default_,
+          version: 'v1.0.0',
+          onNewGame: () {},
+          resumeGameVisible: true,
+          onResumeGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'After victory',
         builder: (context) => CtMainMenu(
           variant: MainMenuVariant.plain,

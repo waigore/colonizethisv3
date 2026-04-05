@@ -10,6 +10,10 @@ const String _suffixTopologyByRegion = '_topologyByRegion';
 const String _suffixCombinedTopology = '_combinedTopology';
 const String _suffixWarpLinks = '_warpLinks';
 
+/// Fixed Hive key stem for the single auto-save slot. Not listed in [listGameIds].
+/// See SPEC/program/save-load.md § Auto-save slot.
+const String kAutoSaveSlotId = '__colonizethis_autosave';
+
 /// Saves and loads [Game] state to/from a Hive box. One entry per game, keyed by [Game.id].
 /// Map data (tile maps, topology) is required for playable saves. See SPEC/program/save-load.md.
 class GameSaveAdapter {
@@ -18,6 +22,70 @@ class GameSaveAdapter {
     _log.i('saving gameId=${game.id}');
     box.put(game.id, game.toJson());
     _log.i('saved gameId=${game.id}');
+  }
+
+  /// Writes [game] and map data under [kAutoSaveSlotId] (mirrors a playable session).
+  /// [Game.id] inside JSON remains the real session id. SPEC/program/save-load.md.
+  void saveAutoSave(
+    Box<dynamic> box,
+    Game game, {
+    required Map<String, TileMapResult> tileMapByRegion,
+    required Map<String, MapTopology> topologyByRegion,
+    required MapTopology combinedTopology,
+    List<WarpLink>? warpLinks,
+  }) {
+    _log.i('saving auto-save slot logicalGameId=${game.id}');
+    box.put(kAutoSaveSlotId, game.toJson());
+    saveMapData(
+      box,
+      kAutoSaveSlotId,
+      tileMapByRegion: tileMapByRegion,
+      topologyByRegion: topologyByRegion,
+      combinedTopology: combinedTopology,
+      warpLinks: warpLinks,
+    );
+    _log.i('saved auto-save slot logicalGameId=${game.id}');
+  }
+
+  /// Returns true when the auto-save slot holds a playable game + map data.
+  /// On invalid or partial data, clears the slot and logs with prefix `save:`.
+  bool hasValidAutoSave(Box<dynamic> box) {
+    if (!box.containsKey(kAutoSaveSlotId)) {
+      _removeOrphanAutosaveMapKeys(box);
+      return false;
+    }
+    final game = load(box, kAutoSaveSlotId);
+    if (game == null) {
+      _log.w('save: auto-save game JSON invalid; clearing slot');
+      delete(box, kAutoSaveSlotId);
+      return false;
+    }
+    try {
+      loadMapData(box, kAutoSaveSlotId);
+      return true;
+    } catch (e, st) {
+      _log.w(
+        'save: auto-save map data invalid; clearing slot',
+        error: e,
+        stackTrace: st,
+      );
+      delete(box, kAutoSaveSlotId);
+      return false;
+    }
+  }
+
+  void _removeOrphanAutosaveMapKeys(Box<dynamic> box) {
+    if (box.containsKey(kAutoSaveSlotId)) {
+      return;
+    }
+    final hasOrphan = box.containsKey(kAutoSaveSlotId + _suffixTileMapByRegion) ||
+        box.containsKey(kAutoSaveSlotId + _suffixTopologyByRegion) ||
+        box.containsKey(kAutoSaveSlotId + _suffixCombinedTopology) ||
+        box.containsKey(kAutoSaveSlotId + _suffixWarpLinks);
+    if (hasOrphan) {
+      _log.w('save: clearing orphan auto-save map keys');
+      delete(box, kAutoSaveSlotId);
+    }
   }
 
   /// Loads game by [gameId]. Returns null if not found or invalid.
@@ -51,6 +119,7 @@ class GameSaveAdapter {
     final definiteGameIds = allKeys
         .where(
           (k) =>
+              k != kAutoSaveSlotId &&
               !k.endsWith(_suffixTileMapByRegion) &&
               !k.endsWith(_suffixTopologyByRegion) &&
               !k.endsWith(_suffixCombinedTopology) &&
@@ -66,22 +135,30 @@ class GameSaveAdapter {
           0,
           key.length - _suffixTileMapByRegion.length,
         );
-        if (!definiteGameIds.contains(prefix)) result.add(key);
+        if (prefix != kAutoSaveSlotId && !definiteGameIds.contains(prefix)) {
+          result.add(key);
+        }
       } else if (key.endsWith(_suffixTopologyByRegion)) {
         final prefix = key.substring(
           0,
           key.length - _suffixTopologyByRegion.length,
         );
-        if (!definiteGameIds.contains(prefix)) result.add(key);
+        if (prefix != kAutoSaveSlotId && !definiteGameIds.contains(prefix)) {
+          result.add(key);
+        }
       } else if (key.endsWith(_suffixCombinedTopology)) {
         final prefix = key.substring(
           0,
           key.length - _suffixCombinedTopology.length,
         );
-        if (!definiteGameIds.contains(prefix)) result.add(key);
+        if (prefix != kAutoSaveSlotId && !definiteGameIds.contains(prefix)) {
+          result.add(key);
+        }
       } else if (key.endsWith(_suffixWarpLinks)) {
         final prefix = key.substring(0, key.length - _suffixWarpLinks.length);
-        if (!definiteGameIds.contains(prefix)) result.add(key);
+        if (prefix != kAutoSaveSlotId && !definiteGameIds.contains(prefix)) {
+          result.add(key);
+        }
       }
     }
 
