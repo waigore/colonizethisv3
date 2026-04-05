@@ -19,9 +19,10 @@ class ExtractionTotals {
 /// Computes per-player extraction from connected tiles. SPEC/game/extraction-and-improvements.
 ///
 /// For each connected tile: production = min(improvementLevel, techCap);
-/// effective = min(production, pathTransportCap, province.townDevelopmentLevel).
-/// Path transport cap = min road/port level along path to town then to capital (from [connectivityResult]);
-/// when absent, falls back to tile's own transport level.
+/// transport cap for yield = [ConnectivityResult.pathTransportCap]\[tileKey] when present,
+/// else the tile's own transport level (port = 4, else road level or 0).
+/// Effective yield applies GDD branches: min(production, transport cap), then town development
+/// caps where applicable ([Province.townDevelopmentLevel]).
 /// Sums by commodity; splits land (same region as capital) vs overseas.
 /// Adds [Game.capitalTileGrainBonusPerTurn] grain to each player's land totals
 /// when that player has a capital tile (unconditional on connectivity).
@@ -83,7 +84,14 @@ Map<String, ExtractionTotals> computeExtraction({
       final province = regionData?.provinces
           .where((p) => p.id == provinceId)
           .firstOrNull;
-      final townDevelopmentCap = province?.townDevelopmentLevel ?? 0;
+      if (regionData == null || province == null) {
+        final msg =
+            'extraction province missing tileKey=$tileKey provinceId=$provinceId '
+            '(region-scoped lookup failed; SPEC/game/world-model-identity.md)';
+        _log.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
+        continue;
+      }
+      final townDevelopmentCap = province.townDevelopmentLevel;
       final townTileKey = province?.townTileKey;
       final townTileIsPort =
           townTileKey != null && portTileKeys.contains(townTileKey);
