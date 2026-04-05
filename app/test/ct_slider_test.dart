@@ -1,8 +1,11 @@
 import 'package:colonizethis_app/widgets/ct_slider.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
+
   testWidgets('CtSlider invokes onDragStart and onDragEnd around horizontal drag', (
     WidgetTester tester,
   ) async {
