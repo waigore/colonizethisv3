@@ -67,6 +67,8 @@ Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles 
 
 **Tile:** From **`selectedTileKey`** only. Empty: “Click a tile to see details.” Else: coordinates, terrain, **resource** with **commodity icon beside the visible id/name** (— if none; same rule as [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) commodity labels), **Prospected** (prospectable & not prospected → no; not prospectable → —), improvement, roads/rail, **civilian count** (fog-aware: same rules as Civilian — `foreignCivilianVisibleToPlayer`; enemy Spies never). `???` when `CellViewData.visibility` is unrevealed or province is fully unrevealed.
 
+**Road / railroad (Tile):** On **land** tiles, the UI shows the **numeric transport level** first (stored road/rail level: **0**, **1**, **2**, or **4** per [extraction-and-improvements.md](../game/extraction-and-improvements.md) § Transport Level), e.g. `Road / railroad: transport level N`. A **second line** (caption style) gives the GDD label: **`none`**, **`primitive road`**, **`improved road`**, **`port or railroad`**, or **`non-standard transport level`** if the value is unexpected. For transport level **1**, a **third** short gloss clarifies that railroads are level **4**. **Sea** tiles (no land transport): a single line `Road / railroad: —`.
+
 **Military:** In-province military units (`Unit.locationProvinceId`); group by **owner**, then **type counts** per owner.
 
 **Civilian:** Own units — full lines (type, id, status). Other players — only if `foreignCivilianVisibleToPlayer` allows (tile visibility ≠ unknown; not enemy Spy).
