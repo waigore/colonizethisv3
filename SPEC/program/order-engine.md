@@ -34,6 +34,8 @@ Move and work-order validation are delegated to dedicated components for single-
 
 **Build validation (spawn province):** Build orders resolve an effective spawn province before affordability checks for **civilian** builds. **Military:** new regiments attach to **Home Army** at capital; `spawnProvinceId` is ignored unless TDD extends location choice. For naval, spawn always resolves to capital home fleet and `spawnProvinceId` is ignored. If no capital exists, military/naval build is rejected.
 
+**Build validation (rejection reasons):** `BuildOrderValidator` forwards the `reason` from `canAffordBuild` (see [orders.md](orders.md) § **BuildUnitOrder cost validation**). Distinct strings apply per failure category; `Insufficient resources` is only for unclassified failures (unknown type/category, missing catalog).
+
 ---
 
 ## Per-Player Scope
