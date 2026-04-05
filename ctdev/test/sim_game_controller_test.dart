@@ -212,7 +212,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'grenadiers',
+                type: 'Explorer',
                 ownerId: 'p1',
                 locationProvinceId: 'oldWorld|P1',
               ),
