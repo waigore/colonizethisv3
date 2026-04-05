@@ -406,6 +406,38 @@ void main() {
       expect(loaded.turnTimeMapping!.yearsPerTurnAfterCutoff, 2);
     });
 
+    test(
+      'load succeeds when turnTimeMapping is Map<dynamic,dynamic> (Hive typing)',
+      () {
+        final turnMap = <dynamic, dynamic>{
+          'startYear': 1600,
+          'cutoffYear': 1750,
+          'yearsPerTurnBeforeCutoff': 3,
+          'yearsPerTurnAfterCutoff': 2,
+        };
+        final gameJson = <String, dynamic>{
+          'id': 'hiveTurnMap',
+          'worldState': {
+            'turnState': {'phase': 'orders', 'turnNumber': 1},
+            'oldWorld': {'provinces': []},
+            'newWorld': {'provinces': []},
+          },
+          'players': [
+            {'id': 'pl1', 'displayName': 'Spain', 'isHuman': true},
+          ],
+          'turnTimeMapping': turnMap,
+        };
+        box.put('hiveTurnMap', gameJson);
+        final loaded = adapter.load(box, 'hiveTurnMap');
+        expect(loaded, isNotNull);
+        expect(loaded!.turnTimeMapping, isNotNull);
+        expect(loaded.turnTimeMapping!.startYear, 1600);
+        expect(loaded.turnTimeMapping!.cutoffYear, 1750);
+        expect(loaded.turnTimeMapping!.yearsPerTurnBeforeCutoff, 3);
+        expect(loaded.turnTimeMapping!.yearsPerTurnAfterCutoff, 2);
+      },
+    );
+
     test('loadMapData throws for invalid map data JSON', () {
       // Manually insert invalid map data to simulate corrupted save
       box.put('invalidMap_tileMapByRegion', {'invalid': 'data'});
@@ -505,6 +537,40 @@ void main() {
         final md = adapter.loadMapData(box, kAutoSaveSlotId);
         expect(md.tileMapByRegion['oldWorld']!.width, 2);
       });
+
+      test(
+        'hasValidAutoSave true when turnTimeMapping is Map<dynamic,dynamic>',
+        () {
+          final game = minimalGame('session_abc').copyWith(
+            turnTimeMapping: const TurnTimeMapping(
+              startYear: 1600,
+              cutoffYear: 1750,
+              yearsPerTurnBeforeCutoff: 3,
+              yearsPerTurnAfterCutoff: 2,
+            ),
+          );
+          final (tileMap, topo) = minimalMap();
+          final slotJson = Map<String, dynamic>.from(game.toJson());
+          slotJson['turnTimeMapping'] = <dynamic, dynamic>{
+            'startYear': 1600,
+            'cutoffYear': 1750,
+            'yearsPerTurnBeforeCutoff': 3,
+            'yearsPerTurnAfterCutoff': 2,
+          };
+          box.put(kAutoSaveSlotId, slotJson);
+          adapter.saveMapData(
+            box,
+            kAutoSaveSlotId,
+            tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+            topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+            combinedTopology: topo,
+          );
+          expect(adapter.hasValidAutoSave(box), isTrue);
+          final loaded = adapter.load(box, kAutoSaveSlotId);
+          expect(loaded, isNotNull);
+          expect(loaded!.turnTimeMapping!.startYear, 1600);
+        },
+      );
 
       test('listGameIds excludes auto-save stem even when slot is populated', () {
         final game = minimalGame('only_logical');
