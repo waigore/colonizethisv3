@@ -45,6 +45,19 @@ Multiple context-specific rules may apply to a single file (e.g., a UI widget ma
 
 For complete details, read the relevant rule file(s) in `.cursor/rules/`.
 
+## Project agent skills
+
+Skills live under `.cursor/skills/<name>/SKILL.md`. When a skill matches the task, read and follow it.
+
+| Skill | Use when |
+|-------|----------|
+| `create-github-issue-from-report` | Turn an informal bug/report into a structured GitHub issue (read-only repo work; may use `gh`). |
+| `fix-pr-checks` | Unblock a PR by fixing failing checks and quality gates. |
+| `implement-github-issue-fix` | User gives an issue **#** or **URL**; validate problem/design/testable ACs, update **SPEC** if needed, implement, add positive/negative tests, open PR to **`dev`** with **`Refs #…`** (do **not** auto-close). Very large issues: one isolatable slice only. |
+| `merge-dev-into-android-build` | Merge `dev` into `build/app/android` for APK build workflows. |
+| `plan-feature-github-issue` | Scope a feature from SPEC/code (read-only), then open a capturing issue—no implementation. |
+| `verify-github-issue` | Verify one open issue against ACs/specs/tests; gap analysis or closure steps. |
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution guidelines.

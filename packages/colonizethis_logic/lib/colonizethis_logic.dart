@@ -2,6 +2,8 @@
 library colonizethis_logic;
 
 // Root
+export 'package:colonizethis_models/colonizethis_models.dart' show AssignedRecipe;
+export 'order_suggestion_api.dart';
 export 'src/constants.dart';
 export 'src/event_bus/game_event_bus.dart';
 export 'src/game_events.dart';
@@ -74,6 +76,7 @@ export 'src/dossier/evidence_rules.dart';
 export 'src/dossier/event_dialogue.dart';
 
 // AI
+export 'src/ai/hidden_agenda_assignment.dart';
 export 'src/ai/ai_planner.dart';
 export 'src/ai/ai_control.dart';
 export 'src/ai/sim_game_ai.dart';

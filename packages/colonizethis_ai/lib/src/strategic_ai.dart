@@ -1,24 +1,16 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 
-import 'ai_config.dart';
 import 'domain_planners.dart';
 import 'economy_planner.dart';
 import 'goal_manager.dart';
 import 'mood_state_machine.dart';
 import 'perception.dart';
-import 'seed_bundle.dart';
 
 final _log = aiLogger();
-
-/// Result of strategic order generation: orders and economy plan. SPEC/ai/economy-planner.md.
-class StrategicOrderResult {
-  const StrategicOrderResult({required this.orders, required this.economyPlan});
-  final Orders orders;
-  final EconomyPlan economyPlan;
-}
 
 /// Strategic order generation for full AI. SPEC/program/ai-systems-impl.md.
 ///

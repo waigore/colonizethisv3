@@ -1,5 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import '../world/player_view.dart';
 
 /// Order visibility rules. SPEC/program/fog-and-exploration-resolution.md.
@@ -46,7 +47,11 @@ bool moveSourceVisibilityOk(
   String provinceId,
 ) {
   return provinceHasAtLeastVisibility(
-      view, regionId, provinceId, VisibilityLevel.revealed);
+    view,
+    regionId,
+    provinceId,
+    VisibilityLevel.revealed,
+  );
 }
 
 /// Move order: destination province must be known (not unknown).
@@ -88,7 +93,12 @@ String regionIdForUnit(PlayerView view, Unit unit) {
 
 /// Work order: true iff the unit's province (and [targetTileKey] when applicable) meets
 /// the minimum visibility for [workTarget]. SPEC/program/fog-and-exploration-resolution.md.
-bool workOrderVisibilityOk(PlayerView view, Unit unit, String workTarget, [String? targetTileKey]) {
+bool workOrderVisibilityOk(
+  PlayerView view,
+  Unit unit,
+  String workTarget, [
+  String? targetTileKey,
+]) {
   final regionId = targetTileKey != null && targetTileKey.isNotEmpty
       ? Unit.requireRegionIdFromTileKey(targetTileKey)
       : regionIdForUnit(view, unit);
@@ -101,10 +111,18 @@ bool workOrderVisibilityOk(PlayerView view, Unit unit, String workTarget, [Strin
   switch (workTarget) {
     case 'explore':
       return provinceHasAtLeastVisibility(
-          view, regionId, provinceId, VisibilityLevel.revealed);
+        view,
+        regionId,
+        provinceId,
+        VisibilityLevel.revealed,
+      );
     case 'prospect':
       return provinceHasAtLeastVisibility(
-          view, regionId, provinceId, VisibilityLevel.fogged);
+        view,
+        regionId,
+        provinceId,
+        VisibilityLevel.fogged,
+      );
     case 'build_improvement':
     case 'upgrade_town':
     case 'build_road':
@@ -113,19 +131,35 @@ bool workOrderVisibilityOk(PlayerView view, Unit unit, String workTarget, [Strin
     case 'build_rail':
       return isOwned ||
           provinceHasAtLeastVisibility(
-              view, regionId, provinceId, VisibilityLevel.fogged);
-    case 'purchase_land':
+            view,
+            regionId,
+            provinceId,
+            VisibilityLevel.fogged,
+          );
+    case kWorkTargetPurchaseLand:
       // Minor/Tribe province; tile must be visible to place order. SPEC/civilian-units.md.
       return provinceHasAtLeastVisibility(
-          view, regionId, provinceId, VisibilityLevel.revealed);
-    case 'steal_tech':
+        view,
+        regionId,
+        provinceId,
+        VisibilityLevel.revealed,
+      );
+    case kWorkTargetStealTech:
       // Other GP capital province must be visible. SPEC/civilian-units.md.
       return provinceHasAtLeastVisibility(
-          view, regionId, provinceId, VisibilityLevel.revealed);
-    case 'counter_spy':
+        view,
+        regionId,
+        provinceId,
+        VisibilityLevel.revealed,
+      );
+    case kWorkTargetCounterSpy:
       return isOwned ||
           provinceHasAtLeastVisibility(
-              view, regionId, provinceId, VisibilityLevel.fogged);
+            view,
+            regionId,
+            provinceId,
+            VisibilityLevel.fogged,
+          );
     default:
       return false;
   }

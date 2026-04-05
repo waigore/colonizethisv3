@@ -3,8 +3,6 @@ import 'dart:math' as math;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'ai_config.dart';
-
 /// Tactical (Quick Battle) decisions for full AI. SPEC/ai/ai-architecture.md,
 /// SPEC/program/ai-systems-impl.md.
 ///

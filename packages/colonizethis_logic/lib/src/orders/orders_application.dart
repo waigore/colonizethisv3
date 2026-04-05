@@ -39,8 +39,9 @@ void _appendMilitaryRegimentToArmy(
       : fieldArmyIdFor(player.id, spawnProvinceId);
   final ws = state.game.worldState;
   final regionId = ProvinceId.regionIdFrom(spawnProvinceId);
-  final idx =
-      ws.armies.indexWhere((a) => a.id == armyId && a.ownerId == player.id);
+  final idx = ws.armies.indexWhere(
+    (a) => a.id == armyId && a.ownerId == player.id,
+  );
   if (idx >= 0) {
     final a = ws.armies[idx];
     final updated = a.copyWith(
@@ -59,8 +60,7 @@ void _appendMilitaryRegimentToArmy(
     regimentUnitIds: [newUnitId],
     isHomeArmy: atHome,
   );
-  final next = [...ws.armies, newArmy]
-    ..sort((a, b) => a.id.compareTo(b.id));
+  final next = [...ws.armies, newArmy]..sort((a, b) => a.id.compareTo(b.id));
   state.game = state.game.copyWith(worldState: ws.copyWith(armies: next));
 }
 
@@ -253,7 +253,12 @@ void _runBuildPhase(_BuildWorkState state) {
       }
 
       if (category == BuildUnitCategory.military) {
-        _appendMilitaryRegimentToArmy(state, player, spawnProvinceId, newUnit.id);
+        _appendMilitaryRegimentToArmy(
+          state,
+          player,
+          spawnProvinceId,
+          newUnit.id,
+        );
       }
     }
 
@@ -489,8 +494,8 @@ Game applyBuildAndWorkOrders(
           }
         }
         break;
-      case 'steal_tech':
-      case 'counter_spy':
+      case kWorkTargetStealTech:
+      case kWorkTargetCounterSpy:
         break;
       default:
         break;
@@ -529,7 +534,8 @@ Game applyBuildAndWorkOrders(
       }
       // Cancel work if tile no longer under player control (conquest or purchase reverted). SPEC #376.
       // Use same rule as validation: owned province or purchased tile; skip for counter_spy/steal_tech.
-      if (cw.workTarget != 'counter_spy' && cw.workTarget != 'steal_tech') {
+      if (cw.workTarget != kWorkTargetCounterSpy &&
+          cw.workTarget != kWorkTargetStealTech) {
         if (!isTileControlledByPlayer(s.game, u.ownerId, cw.tileKey)) {
           unitsById[entry.key] = u.copyWith(
             status: UnitStatus.idle,
@@ -541,7 +547,7 @@ Game applyBuildAndWorkOrders(
           continue;
         }
       }
-      if (cw.workTarget == 'counter_spy') {
+      if (cw.workTarget == kWorkTargetCounterSpy) {
         // Per-turn: N% per friendly spy (cap M%) to kill one enemy spy in province
         final provinceId = u.locationProvinceId;
         final friendlySpies = unitsById.values
@@ -549,7 +555,7 @@ Game applyBuildAndWorkOrders(
               (x) =>
                   x.ownerId == u.ownerId &&
                   isSpyUnit(x.type) &&
-                  x.currentWork?.workTarget == 'counter_spy' &&
+                  x.currentWork?.workTarget == kWorkTargetCounterSpy &&
                   x.locationProvinceId == provinceId,
             )
             .length;
@@ -590,7 +596,7 @@ Game applyBuildAndWorkOrders(
       }
       final nextRemaining = cw.remainingTurns - 1;
       if (nextRemaining <= 0) {
-        if (cw.workTarget == 'steal_tech') {
+        if (cw.workTarget == kWorkTargetStealTech) {
           final targetProvinceId = Unit.provinceIdFromTileKey(cw.tileKey);
           final otherPlayer = s.game.players
               .where(
@@ -870,8 +876,11 @@ void _runWorkPhase(
         return true;
       }
 
-      if (order.target == 'purchase_land' &&
-          isWorkOrderTargetAllowedForUnitType(u.type, 'purchase_land') &&
+      if (order.target == kWorkTargetPurchaseLand &&
+          isWorkOrderTargetAllowedForUnitType(
+            u.type,
+            kWorkTargetPurchaseLand,
+          ) &&
           hasValidTarget) {
         // SPEC/game/diplomacy.md (GP–Minor/Tribe Rules): purchase_land requires an Embassy
         // with the Minor/Tribe and the buyer must not be at war with that faction.
@@ -915,11 +924,11 @@ void _runWorkPhase(
         continue;
       }
 
-      if (order.target == 'steal_tech' &&
-          isWorkOrderTargetAllowedForUnitType(u.type, 'steal_tech') &&
+      if (order.target == kWorkTargetStealTech &&
+          isWorkOrderTargetAllowedForUnitType(u.type, kWorkTargetStealTech) &&
           u.currentWork == null &&
           hasValidTarget) {
-        final totalTurns = totalTurnsForWork('steal_tech');
+        final totalTurns = totalTurnsForWork(kWorkTargetStealTech);
         _log.d(
           'work order accepted and assigned unit=${order.unitId} target=steal_tech targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
@@ -929,7 +938,7 @@ void _runWorkPhase(
             status: UnitStatus.working,
             tileKey: targetTileKey,
             currentWork: CurrentWork(
-              workTarget: 'steal_tech',
+              workTarget: kWorkTargetStealTech,
               tileKey: targetTileKey,
               totalTurns: totalTurns,
               remainingTurns: totalTurns,
@@ -939,11 +948,11 @@ void _runWorkPhase(
         continue;
       }
 
-      if (order.target == 'counter_spy' &&
-          isWorkOrderTargetAllowedForUnitType(u.type, 'counter_spy') &&
+      if (order.target == kWorkTargetCounterSpy &&
+          isWorkOrderTargetAllowedForUnitType(u.type, kWorkTargetCounterSpy) &&
           u.currentWork == null &&
           hasValidTarget) {
-        final totalTurns = totalTurnsForWork('counter_spy');
+        final totalTurns = totalTurnsForWork(kWorkTargetCounterSpy);
         _log.d(
           'work order accepted and assigned unit=${order.unitId} target=counter_spy targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
@@ -953,7 +962,7 @@ void _runWorkPhase(
             status: UnitStatus.working,
             tileKey: targetTileKey,
             currentWork: CurrentWork(
-              workTarget: 'counter_spy',
+              workTarget: kWorkTargetCounterSpy,
               tileKey: targetTileKey,
               totalTurns: totalTurns,
               remainingTurns: 1,
@@ -963,7 +972,7 @@ void _runWorkPhase(
         continue;
       }
 
-      if (order.target == 'prospect' &&
+      if (order.target == kWorkTargetProspect &&
           hasValidTarget &&
           isExplorerUnit(u.type) &&
           isMineralEligibleTile(
@@ -986,7 +995,7 @@ void _runWorkPhase(
       if (order.target == 'build_improvement') {
         if (applyStandardWorkOrder('build_improvement')) continue;
       }
-      if (order.target == 'explore' &&
+      if (order.target == kWorkTargetExplore &&
           isExplorerUnit(u.type) &&
           u.currentWork == null &&
           hasValidTarget) {
@@ -1012,7 +1021,7 @@ void _runWorkPhase(
               status: UnitStatus.working,
               tileKey: targetTileKey,
               currentWork: CurrentWork(
-                workTarget: 'explore',
+                workTarget: kWorkTargetExplore,
                 tileKey: targetTileKey,
                 totalTurns: totalTurns,
                 remainingTurns: totalTurns,
