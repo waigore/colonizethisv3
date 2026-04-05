@@ -324,6 +324,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
           nextTurnText: nextTurnText,
           cargoUsed: cargoSummary.used,
           cargoCapacity: cargoSummary.capacity,
+          isCargoUsedReliable: cargoSummary.isCargoUsedReliable,
         ),
         Expanded(
           child: Stack(

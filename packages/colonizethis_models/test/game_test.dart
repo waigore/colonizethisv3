@@ -19,6 +19,40 @@ void main() {
       expect(game2.players.first.displayName, 'Spain');
       expect(game2.worldState.turnState.turnNumber, 1);
     });
+
+    test(
+      'fromJson accepts turnTimeMapping as Map<dynamic,dynamic> (Hive typing)',
+      () {
+        final base = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+          turnTimeMapping: const TurnTimeMapping(
+            startYear: 1600,
+            cutoffYear: 1750,
+            yearsPerTurnBeforeCutoff: 3,
+            yearsPerTurnAfterCutoff: 2,
+          ),
+        );
+        final json = Map<String, dynamic>.from(base.toJson());
+        json['turnTimeMapping'] = <dynamic, dynamic>{
+          'startYear': 1600,
+          'cutoffYear': 1750,
+          'yearsPerTurnBeforeCutoff': 3,
+          'yearsPerTurnAfterCutoff': 2,
+        };
+        final parsed = Game.fromJson(json);
+        expect(parsed.turnTimeMapping, isNotNull);
+        expect(parsed.turnTimeMapping!.startYear, 1600);
+        expect(parsed.turnTimeMapping!.cutoffYear, 1750);
+        expect(parsed.turnTimeMapping!.yearsPerTurnBeforeCutoff, 3);
+        expect(parsed.turnTimeMapping!.yearsPerTurnAfterCutoff, 2);
+      },
+    );
     test('copyWith', () {
       final game = Game(
         id: 'g1',
