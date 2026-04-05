@@ -201,8 +201,11 @@ class Game {
     final playersList = json['players'] as List<dynamic>? ?? [];
     final minorNationsList = json['minorNations'] as List<dynamic>? ?? [];
     final tribesList = json['tribes'] as List<dynamic>? ?? [];
-    final turnTimeMappingJson =
-        json['turnTimeMapping'] as Map<String, dynamic>?;
+    final turnTimeMappingRaw = json['turnTimeMapping'];
+    final Map<String, dynamic>? turnTimeMappingJson =
+        turnTimeMappingRaw is Map
+            ? Map<String, dynamic>.from(turnTimeMappingRaw)
+            : null;
     final defaultCombatModeRaw = json['defaultCombatMode'] as String?;
     final defaultCombatMode = defaultCombatModeRaw != null
         ? CombatMode.values.firstWhere(
