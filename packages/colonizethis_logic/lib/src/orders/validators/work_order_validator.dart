@@ -96,7 +96,7 @@ class WorkOrderValidator {
           }
         }
 
-        if (o.target == 'steal_tech') {
+        if (o.target == kWorkTargetStealTech) {
           if (targetProvinceId == null) {
             return OrderValidationResult.rejected(
               'Invalid target for steal_tech',
@@ -124,13 +124,13 @@ class WorkOrderValidator {
               'Target has no technology you lack',
             );
           }
-        } else if (o.target == 'counter_spy') {
+        } else if (o.target == kWorkTargetCounterSpy) {
           if (ownerId != _playerId) {
             return OrderValidationResult.rejected(
               'counter_spy target must be your own province',
             );
           }
-        } else if (o.target == 'purchase_land') {
+        } else if (o.target == kWorkTargetPurchaseLand) {
           if (ownerId == null || ownerId == _playerId) {
             return OrderValidationResult.rejected(
               'purchase_land target must be a Minor or Tribe province',
@@ -244,9 +244,9 @@ class WorkOrderValidator {
           );
         }
 
-        if (o.target != 'steal_tech' &&
-            o.target != 'counter_spy' &&
-            o.target != 'purchase_land') {
+        if (o.target != kWorkTargetStealTech &&
+            o.target != kWorkTargetCounterSpy &&
+            o.target != kWorkTargetPurchaseLand) {
           final improvementLevel = o.target == 'build_improvement'
               ? _game.worldState.tileState.improvementLevel(o.targetTileKey)
               : 0;
@@ -315,7 +315,7 @@ class WorkOrderValidator {
           );
         }
 
-        if (o.target == 'prospect') {
+        if (o.target == kWorkTargetProspect) {
           if (!isMineralEligibleTile(
             _game,
             _tileMapByRegion,
@@ -339,14 +339,15 @@ class WorkOrderValidator {
         }
 
         // Apply projected cost so subsequent work orders see updated state.
-        if (o.target == 'purchase_land') {
+        if (o.target == kWorkTargetPurchaseLand) {
           final resourceId =
               _game.worldState.resourceByTileKey[o.targetTileKey];
           if (resourceId != null && resourceId.isNotEmpty) {
             final cost = purchaseLandCost(resourceId);
             _treasury -= cost;
           }
-        } else if (o.target != 'steal_tech' && o.target != 'counter_spy') {
+        } else if (o.target != kWorkTargetStealTech &&
+            o.target != kWorkTargetCounterSpy) {
           final improvementLevel = o.target == 'build_improvement'
               ? _game.worldState.tileState.improvementLevel(o.targetTileKey)
               : 0;

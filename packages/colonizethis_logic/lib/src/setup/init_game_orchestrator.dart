@@ -101,7 +101,7 @@ InitGameResult runInitGame({
   final mapGenParams = MapGenerationParams(
     numContinents: config.continentCount,
     seed: effectiveSeed,
-    seaFraction: 0.6,
+    seaFraction: kDefaultSeaFraction,
   );
   final sizeOW = computeGridSizeFromParams(
     config.numProvincesOldWorld,
@@ -111,7 +111,7 @@ InitGameResult runInitGame({
     width: sizeOW.width,
     height: sizeOW.height,
     seed: effectiveSeed,
-    seaFraction: 0.6,
+    seaFraction: kDefaultSeaFraction,
     skipFillLakes: options.skipFillLakes,
   );
   final gen = generateRegion ?? defaultTileMapRegionGenerator;
@@ -133,7 +133,7 @@ InitGameResult runInitGame({
     width: sizeNW.width,
     height: sizeNW.height,
     seed: effectiveSeed + 1,
-    seaFraction: 0.6,
+    seaFraction: kDefaultSeaFraction,
     skipFillLakes: options.skipFillLakes,
   );
   final (tileMapNW, topoNW) = gen(
