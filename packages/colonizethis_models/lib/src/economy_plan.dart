@@ -1,0 +1,20 @@
+// Economy planner output types. SPEC/ai/economy-planner.md.
+
+import 'assigned_recipe.dart';
+
+/// Cargo preference for naval/build planners. SPEC/ai/economy-planner.md.
+enum CargoPreference { none, preferCargo, strongCargo }
+
+/// Result of the economy planner for one AI player.
+class EconomyPlan {
+  const EconomyPlan({
+    required this.productionAssignments,
+    required this.cargoPreference,
+  });
+
+  /// Labour assignments per recipe for the Production phase.
+  final List<AssignedRecipe> productionAssignments;
+
+  /// Preference for cargo capacity (join home fleet / build merchants).
+  final CargoPreference cargoPreference;
+}

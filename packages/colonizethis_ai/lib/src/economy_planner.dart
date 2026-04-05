@@ -5,27 +5,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'ai_config.dart';
-import 'seed_bundle.dart';
-
 final _log = aiLogger('economy_planner');
-
-/// Cargo preference for naval/build planners. SPEC/ai/economy-planner.md.
-enum CargoPreference { none, preferCargo, strongCargo }
-
-/// Result of the economy planner for one AI player.
-class EconomyPlan {
-  const EconomyPlan({
-    required this.productionAssignments,
-    required this.cargoPreference,
-  });
-
-  /// Labour assignments per recipe for the Production phase.
-  final List<AssignedRecipe> productionAssignments;
-
-  /// Preference for cargo capacity (join home fleet / build merchants).
-  final CargoPreference cargoPreference;
-}
 
 /// Shortage target below which we consider a commodity "needed".
 const int _kShortageThreshold = 8;

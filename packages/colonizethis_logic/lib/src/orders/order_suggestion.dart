@@ -18,6 +18,7 @@ import 'unit_type_helpers.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 
+export 'order_suggestion_api.dart';
 export 'order_suggestion_helpers.dart';
 
 final _log = logicLogger('order_suggestion');
@@ -1865,59 +1866,4 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     'suggestDiplomaticOrders full list ${suggestions.map((o) => "${o.type.name}:${o.targetFactionId}").toList()}',
   );
   return suggestions;
-}
-
-/// Abstract order suggestion API for AI. SPEC/program/order-engine.md, ai-systems-impl.md.
-/// colonizethis_ai calls this to get candidate orders; logic provides the implementation.
-abstract class OrderSuggestionAPI {
-  List<MoveOrder> suggestMoveOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders,
-  );
-  List<ArmyMoveOrder> suggestArmyMoveOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders,
-  );
-  List<WorkOrder> suggestWorkOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders, {
-    Map<String, TileMapResult>? tileMapByRegion,
-  });
-  List<BuildUnitOrder> suggestBuildOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders,
-  );
-  List<ResearchOrder> suggestResearchOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders,
-  );
-  List<NavalMoveOrder> suggestNavalMoveOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders,
-  );
-  List<NavalMissionOrder> suggestNavalMissionOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders,
-  );
-  List<DiplomaticOrder> suggestDiplomaticOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders, {
-    Map<String, TileMapResult>? tileMapByRegion,
-  });
 }
