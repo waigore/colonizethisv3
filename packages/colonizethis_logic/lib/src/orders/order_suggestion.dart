@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/movement.dart';
@@ -17,6 +18,7 @@ import 'unit_type_helpers.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 
+export 'order_suggestion_api.dart';
 export 'order_suggestion_helpers.dart';
 
 final _log = logicLogger('order_suggestion');
@@ -205,13 +207,10 @@ bool _armyMoveNeedsDeclareWarTrial(
   String? destOwnerId,
   List<DiplomaticOrder> diplo,
 ) {
-  if (destOwnerId == null ||
-      destOwnerId.isEmpty ||
-      destOwnerId == playerId) {
+  if (destOwnerId == null || destOwnerId.isEmpty || destOwnerId == playerId) {
     return false;
   }
-  if (!isGreatPower(game, destOwnerId) &&
-      !isMinorOrTribe(game, destOwnerId)) {
+  if (!isGreatPower(game, destOwnerId) && !isMinorOrTribe(game, destOwnerId)) {
     return false;
   }
   return !canAttackWithWarOrDeclaring(game, playerId, destOwnerId, diplo);
@@ -228,7 +227,8 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
   required Orders currentOrders,
 }) {
   final view = buildPlayerView(game, topology, playerId);
-  final diplo = currentOrders.diplomaticOrdersByPlayerId[playerId] ??
+  final diplo =
+      currentOrders.diplomaticOrdersByPlayerId[playerId] ??
       const <DiplomaticOrder>[];
   final raw = armyMoveCandidateDestinationProvinceIds(
     game: game,
@@ -240,10 +240,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
   for (final fullId in raw) {
     final province = tryGetProvince(game.worldState, fullId);
     final ownerId = province?.ownerId ?? '';
-    final move = ArmyMoveOrder(
-      armyId: army.id,
-      destinationProvinceId: fullId,
-    );
+    final move = ArmyMoveOrder(armyId: army.id, destinationProvinceId: fullId);
     final acceptedBase = _isArmyMoveOrderAccepted(
       game,
       topology,
@@ -564,11 +561,12 @@ List<WorkOrder> suggestWorkOrders(
     if (isSpy && tilesInProvince.isNotEmpty) {
       final allowedTargets = workOrderTargetsByUnitType[type];
       if (allowedTargets != null) {
-        if (allowedTargets.contains('counter_spy') && ownerId == playerId) {
+        if (allowedTargets.contains(kWorkTargetCounterSpy) &&
+            ownerId == playerId) {
           final targetTileKey = tilesInProvince.first;
           final candidate = WorkOrder(
             unitId: unit.id,
-            target: 'counter_spy',
+            target: kWorkTargetCounterSpy,
             targetTileKey: targetTileKey,
           );
           if (_isWorkOrderAccepted(
@@ -582,7 +580,7 @@ List<WorkOrder> suggestWorkOrders(
             suggestions.add(candidate);
           }
         }
-        if (allowedTargets.contains('steal_tech')) {
+        if (allowedTargets.contains(kWorkTargetStealTech)) {
           for (final other in game.players) {
             if (other.id == playerId || other.capitalProvinceId == null)
               continue;
@@ -593,7 +591,7 @@ List<WorkOrder> suggestWorkOrders(
             if (capTiles.isEmpty) continue;
             final candidate = WorkOrder(
               unitId: unit.id,
-              target: 'steal_tech',
+              target: kWorkTargetStealTech,
               targetTileKey: capTiles.first,
             );
             if (_isWorkOrderAccepted(
@@ -614,7 +612,8 @@ List<WorkOrder> suggestWorkOrders(
 
     if (isMerchant) {
       final allowedTargets = workOrderTargetsByUnitType[type];
-      if (allowedTargets != null && allowedTargets.contains('purchase_land')) {
+      if (allowedTargets != null &&
+          allowedTargets.contains(kWorkTargetPurchaseLand)) {
         final resourceByTile = game.worldState.resourceByTileKey;
         final playerIds = game.players.map((p) => p.id).toSet();
         for (final p in allProvinces(game.worldState)) {
@@ -626,7 +625,7 @@ List<WorkOrder> suggestWorkOrders(
             if (devExclusiveReservedTiles.contains(tk)) continue;
             final candidate = WorkOrder(
               unitId: unit.id,
-              target: 'purchase_land',
+              target: kWorkTargetPurchaseLand,
               targetTileKey: tk,
             );
             if (_isWorkOrderAccepted(
@@ -1094,7 +1093,7 @@ Set<String> _preFilterWorkTargetTiles({
       );
       break;
 
-    case 'counter_spy':
+    case kWorkTargetCounterSpy:
       // Any tile in owned provinces
       _addCandidateTilesForCounterSpy(
         tileKeysByRegion: tileKeysByRegion,
@@ -1103,7 +1102,7 @@ Set<String> _preFilterWorkTargetTiles({
       );
       break;
 
-    case 'steal_tech':
+    case kWorkTargetStealTech:
       // Other GP capital provinces
       _addCandidateTilesForStealTech(
         game: game,
@@ -1112,7 +1111,7 @@ Set<String> _preFilterWorkTargetTiles({
       );
       break;
 
-    case 'purchase_land':
+    case kWorkTargetPurchaseLand:
       // Tiles in Minor/Tribe provinces with resource
       final gpIds = game.players.map((p) => p.id).toSet();
       final minorIds = game.minorNations.map((m) => m.id).toSet();
@@ -1138,7 +1137,7 @@ Set<String> _preFilterWorkTargetTiles({
       );
       break;
 
-    case 'explore':
+    case kWorkTargetExplore:
       for (final regionEntry in tileKeysByRegion.entries) {
         for (final provinceEntry in regionEntry.value.entries) {
           result.addAll(provinceEntry.value);
@@ -1146,7 +1145,7 @@ Set<String> _preFilterWorkTargetTiles({
       }
       break;
 
-    case 'prospect':
+    case kWorkTargetProspect:
       final prospected =
           game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
       _forEachPrefixedProvinceTile(
@@ -1867,59 +1866,4 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     'suggestDiplomaticOrders full list ${suggestions.map((o) => "${o.type.name}:${o.targetFactionId}").toList()}',
   );
   return suggestions;
-}
-
-/// Abstract order suggestion API for AI. SPEC/program/order-engine.md, ai-systems-impl.md.
-/// colonizethis_ai calls this to get candidate orders; logic provides the implementation.
-abstract class OrderSuggestionAPI {
-  List<MoveOrder> suggestMoveOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders,
-  );
-  List<ArmyMoveOrder> suggestArmyMoveOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders,
-  );
-  List<WorkOrder> suggestWorkOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders, {
-    Map<String, TileMapResult>? tileMapByRegion,
-  });
-  List<BuildUnitOrder> suggestBuildOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders,
-  );
-  List<ResearchOrder> suggestResearchOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders,
-  );
-  List<NavalMoveOrder> suggestNavalMoveOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders,
-  );
-  List<NavalMissionOrder> suggestNavalMissionOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders,
-  );
-  List<DiplomaticOrder> suggestDiplomaticOrders(
-    PlayerView view,
-    Game game,
-    MapTopology topology,
-    Orders currentOrders, {
-    Map<String, TileMapResult>? tileMapByRegion,
-  });
 }

@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'ai_config.dart';
 import 'hidden_agenda.dart';
 import 'perception.dart';
 
