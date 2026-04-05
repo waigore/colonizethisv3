@@ -19,17 +19,21 @@ Map<String, String> getProvinceOwnerMap(Game game) {
   return out;
 }
 
-/// Filters move orders to those allowed by diplomacy: no move into province of
+/// Filters orders to those allowed by diplomacy: no move into a province owned by
 /// a faction at peace with [playerId], or into Minor territory without war.
-List<MoveOrder> filterMoveOrdersByDiplomacy(
+///
+/// [destinationProvinceId] returns the destination province id for each order
+/// (full id: regionId|localId).
+List<T> filterOrdersByDiplomacy<T>(
   Game game,
   String playerId,
-  List<MoveOrder> orders,
+  List<T> orders,
+  String Function(T order) destinationProvinceId,
 ) {
   final provinceOwner = getProvinceOwnerMap(game);
-  final filtered = <MoveOrder>[];
+  final filtered = <T>[];
   for (final m in orders) {
-    final destOwner = provinceOwner[m.destinationProvinceId];
+    final destOwner = provinceOwner[destinationProvinceId(m)];
     if (destOwner == null || destOwner == playerId) {
       filtered.add(m);
       continue;
@@ -44,26 +48,29 @@ List<MoveOrder> filterMoveOrdersByDiplomacy(
   return filtered;
 }
 
+/// Filters move orders to those allowed by diplomacy: no move into province of
+/// a faction at peace with [playerId], or into Minor territory without war.
+List<MoveOrder> filterMoveOrdersByDiplomacy(
+  Game game,
+  String playerId,
+  List<MoveOrder> orders,
+) =>
+    filterOrdersByDiplomacy(
+      game,
+      playerId,
+      orders,
+      (MoveOrder o) => o.destinationProvinceId,
+    );
+
 /// Same diplomacy filter as [filterMoveOrdersByDiplomacy] for [ArmyMoveOrder].
 List<ArmyMoveOrder> filterArmyMoveOrdersByDiplomacy(
   Game game,
   String playerId,
   List<ArmyMoveOrder> orders,
-) {
-  final provinceOwner = getProvinceOwnerMap(game);
-  final filtered = <ArmyMoveOrder>[];
-  for (final m in orders) {
-    final destOwner = provinceOwner[m.destinationProvinceId];
-    if (destOwner == null || destOwner == playerId) {
-      filtered.add(m);
-      continue;
-    }
-    final rel = getRelation(game, playerId, destOwner);
-    if (rel != null && rel.atPeace) continue;
-    if (rel == null) {
-      if (game.minorNations.any((mn) => mn.id == destOwner)) continue;
-    }
-    filtered.add(m);
-  }
-  return filtered;
-}
+) =>
+    filterOrdersByDiplomacy(
+      game,
+      playerId,
+      orders,
+      (ArmyMoveOrder o) => o.destinationProvinceId,
+    );
