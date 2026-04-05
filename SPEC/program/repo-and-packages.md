@@ -90,3 +90,10 @@ lib/
 ```
 
 Flame owns game canvas and in-game pixel-art UI; Flutter owns app shell, routes, and list/form screens. Communication only via state (Riverpod) and callbacks.
+
+### App providers — recoverable failures (home fleet cargo)
+
+- **Given** `currentGameProvider` holds a game and `homeFleetCargoSummaryProvider` runs the overseas extraction path, **when** `GameService.getMapData` or downstream computation throws, **then** the provider logs the failure at **warn** or higher with `error` and `stackTrace`, returns capacity from the live game state, sets used cargo to `0`, and sets `HomeFleetCargoSummary.isCargoUsedReliable` to **false** so the map HUD does not present `used` as authoritative (display uses `—` for the used value).
+- **Given** map data is simply missing for the current game id (no throw), **when** the provider evaluates, **then** it returns used `0` with `isCargoUsedReliable` **true** (expected empty state, not a computation failure).
+
+**Rationale:** GitHub #1531; SPEC/program/logging — avoid silent `catch` in providers; align with core logging principles.

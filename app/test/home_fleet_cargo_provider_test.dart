@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -8,10 +9,20 @@ import 'package:colonizethis_app/providers/home_fleet_cargo_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+class _ThrowingMapGameService extends GameService {
+  _ThrowingMapGameService(super.box, super.adapter);
+
+  @override
+  getMapData(String gameId) {
+    throw StateError('simulated getMapData failure for test');
+  }
+}
 
 GameSetupConfig _tinyConfig() => GameSetupConfig(
   selectedGreatPowerIds: ['england', 'france'],
@@ -84,6 +95,7 @@ void main() {
 
       expect(summary.used, expectedUsed);
       expect(summary.capacity, expectedCapacity);
+      expect(summary.isCargoUsedReliable, isTrue);
     },
   );
 
@@ -110,7 +122,40 @@ void main() {
       summary.capacity,
       _homeFleetCapacity(gameWithoutCachedMap, humanPlayer.id),
     );
+    expect(summary.isCargoUsedReliable, isTrue);
   });
+
+  test(
+    'provider marks cargo used unreliable and logs when map load throws',
+    () {
+      final adapter = GameSaveAdapter();
+      final container = ProviderContainer(
+        overrides: [
+          gamesBoxProvider.overrideWith((ref) => box),
+          gameSaveAdapterProvider.overrideWith((ref) => adapter),
+          gameServiceProvider.overrideWith(
+            (ref) => _ThrowingMapGameService(box, adapter),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final realService = GameService(box, adapter);
+      final game = realService.createNewGame(
+        id: 'cargo_throw',
+        config: _tinyConfig(),
+      );
+      container.read(currentGameProvider.notifier).setGame(game);
+
+      final summary = container.read(homeFleetCargoSummaryProvider);
+      final humanPlayer =
+          game.players.where((p) => p.isHuman).firstOrNull ??
+          game.players.first;
+      expect(summary.used, 0);
+      expect(summary.capacity, _homeFleetCapacity(game, humanPlayer.id));
+      expect(summary.isCargoUsedReliable, isFalse);
+    },
+  );
 }
 
 int _homeFleetCapacity(Game game, String playerId) {
