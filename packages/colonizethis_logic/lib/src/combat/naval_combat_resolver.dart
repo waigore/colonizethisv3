@@ -255,14 +255,7 @@ List<BattleContextSea> filterBattlesByInterception(
 double navalStrength(List<String> shipTypeIds) {
   var total = 0.0;
   for (final typeId in shipTypeIds) {
-    final s = NavalStatsCatalog.get(typeId);
-    final durability = s.hull * (1 + (s.armour / 10.0));
-    final shipStrength = s.firepower +
-        (s.range * 0.4) +
-        (s.armour * 0.15) +
-        durability +
-        (s.movement * 0.1);
-    total += shipStrength;
+    total += NavalStatsCatalog.shipStrength(typeId);
   }
   return total;
 }

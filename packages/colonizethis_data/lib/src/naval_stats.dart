@@ -179,4 +179,16 @@ class NavalStatsCatalog {
 
   static NavalStatsEntry get(String shipTypeId) =>
       byId[shipTypeId] ?? const NavalStatsEntry();
+
+  /// Per-ship strength score (firepower, range, armour, hull durability, movement).
+  /// Used by naval combat aggregation and fleet strength in the naval units panel.
+  static double shipStrength(String shipTypeId) {
+    final s = get(shipTypeId);
+    final durability = s.hull * (1 + (s.armour / 10.0));
+    return s.firepower +
+        (s.range * 0.4) +
+        (s.armour * 0.15) +
+        durability +
+        (s.movement * 0.1);
+  }
 }

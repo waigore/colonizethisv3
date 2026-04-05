@@ -1,450 +1,18 @@
 // Naval units panel. SPEC/ui/naval-units-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show homeFleetIdFor, regionIdForSeaZone, tryGetProvince;
+import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../widgets/ct_nine_patch_button.dart';
-import '../utils/map_location_resolver.dart';
-import '../utils/sea_zone_name_resolver.dart';
+import 'utils/naval_tree_builder.dart';
 import 'move_fleet_dialog.dart';
 import 'split_fleet_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
-
-String? navalDraftMoveLineForFleet({
-  required Game game,
-  required MapTopology topology,
-  required String humanPlayerId,
-  required String fleetRegionId,
-  required String fleetId,
-  required Orders draftOrders,
-}) {
-  final moves =
-      draftOrders.navalMoveOrdersByPlayerId[humanPlayerId] ?? const [];
-  for (final o in moves) {
-    if (o.fleetId != fleetId) continue;
-    if (o.isDock) {
-      final pid = o.destinationPortProvinceId!;
-      final p = tryGetProvince(game.worldState, pid);
-      final name = p?.displayName ?? p?.id ?? pid;
-      return 'Moving to: $name (dock)';
-    }
-    final z = o.destinationSeaZoneId!;
-    final zReg = regionIdForSeaZone(topology, z) ?? fleetRegionId;
-    final zoneKey = z.contains('|') ? z : '$zReg|$z';
-    final label = seaZoneDisplayName(
-      game: game,
-      regionId: zReg,
-      seaZoneId: zoneKey,
-    );
-    return 'Moving to: $label';
-  }
-  return null;
-}
-
-String _missionLabel(FleetMission m) {
-  switch (m) {
-    case FleetMission.none:
-      return 'None';
-    case FleetMission.patrol:
-      return 'Patrol';
-    case FleetMission.blockade:
-      return 'Blockade';
-    case FleetMission.beachhead:
-      return 'Beachhead';
-    case FleetMission.defend:
-      return 'Defend';
-  }
-}
-
-class _FleetRow {
-  _FleetRow({
-    required this.fleetId,
-    required this.label,
-    required this.locationLabel,
-    required this.regionId,
-    required this.missionLabel,
-    required this.totalShips,
-    required this.warshipCount,
-    required this.merchantCount,
-    required this.strength,
-    required this.tileKey,
-    required this.isHomeFleet,
-    required this.shipCountsByType,
-    required this.cargoCapacity,
-    required this.isAtSea,
-    required this.locationKey,
-    this.inPortAtProvinceId,
-    this.seaZoneId,
-    this.draftNavalMoveLine,
-  });
-
-  final String fleetId;
-  final String label;
-  final String locationLabel;
-  final String regionId;
-  final String missionLabel;
-  final int totalShips;
-  final int warshipCount;
-  final int merchantCount;
-  final double strength;
-  final String? tileKey;
-  final bool isHomeFleet;
-  final Map<String, int> shipCountsByType;
-  final int cargoCapacity;
-  final bool isAtSea;
-  final String locationKey;
-  final String? inPortAtProvinceId;
-  final String? seaZoneId;
-  final String? draftNavalMoveLine;
-}
-
-abstract class _FleetLocationNode {
-  String get displayLabel;
-  String get regionId;
-  List<_FleetRow> get fleets;
-}
-
-class _PortLocationNode extends _FleetLocationNode {
-  _PortLocationNode({required this.province, required this.fleets});
-
-  final Province province;
-
-  @override
-  final List<_FleetRow> fleets;
-
-  @override
-  String get displayLabel => province.displayName ?? province.id;
-
-  @override
-  String get regionId => province.regionId;
-}
-
-class _SeaZoneLocationNode extends _FleetLocationNode {
-  _SeaZoneLocationNode({
-    required this.seaZoneLabel,
-    required this.regionId,
-    required this.fleets,
-  });
-
-  final String seaZoneLabel;
-
-  @override
-  final String regionId;
-
-  @override
-  final List<_FleetRow> fleets;
-
-  @override
-  String get displayLabel => seaZoneLabel;
-}
-
-List<_FleetRow> _flattenTree(
-  List<
-    ({
-      String regionId,
-      _FleetRow? homeFleet,
-      List<_FleetLocationNode> locations,
-    })
-  >
-  tree,
-) {
-  final rows = <_FleetRow>[];
-  for (final group in tree) {
-    if (group.homeFleet != null) {
-      rows.add(group.homeFleet!);
-    }
-    for (final loc in group.locations) {
-      rows.addAll(loc.fleets);
-    }
-  }
-  return rows;
-}
-
-List<
-  ({String regionId, _FleetRow? homeFleet, List<_FleetLocationNode> locations})
->
-_buildNavalTree(
-  Game game,
-  String humanPlayerId,
-  MapTopology topology,
-  Orders draftOrders,
-) {
-  final player = game.players.firstWhere(
-    (p) => p.id == humanPlayerId,
-    orElse: () => game.players.first,
-  );
-  final capitalTile = player.capitalTile;
-  String? capitalRegionId;
-  String? capitalProvinceLocalId;
-  if (capitalTile != null) {
-    final tileKey = capitalTile.toTileKey();
-    final parts = tileKey.split('|');
-    if (parts.length >= 2) {
-      capitalRegionId = parts[0];
-      capitalProvinceLocalId = parts[1];
-    }
-  }
-
-  final result =
-      <
-        ({
-          String regionId,
-          _FleetRow? homeFleet,
-          List<_FleetLocationNode> locations,
-        })
-      >[];
-
-  final provinceByRegionAndId = <String, Map<String, Province>>{
-    'oldWorld': {
-      for (final p in game.worldState.oldWorld.provinces)
-        '${p.regionId}|${p.id}': p,
-      for (final p in game.worldState.oldWorld.provinces) p.id: p,
-    },
-    'newWorld': {
-      for (final p in game.worldState.newWorld.provinces)
-        '${p.regionId}|${p.id}': p,
-      for (final p in game.worldState.newWorld.provinces) p.id: p,
-    },
-  };
-
-  bool _isMerchant(String typeId) {
-    final stats = NavalStatsCatalog.get(typeId);
-    return stats.cargoHold > 0;
-  }
-
-  double _shipStrength(String typeId) {
-    final stats = NavalStatsCatalog.get(typeId);
-    final durability = stats.hull * (1 + stats.armour / 10.0);
-    return stats.firepower * 1.0 +
-        stats.range * 0.4 +
-        stats.movement * 0.1 +
-        durability;
-  }
-
-  for (final regionEntry in {
-    'oldWorld': game.worldState.oldWorld,
-    'newWorld': game.worldState.newWorld,
-  }.entries) {
-    final regionId = regionEntry.key;
-
-    final fleetsInRegion = game.worldState.fleets
-        .where(
-          (f) =>
-              f.ownerId == humanPlayerId &&
-              f.regionId == regionId &&
-              f.shipTypeIds.isNotEmpty,
-        )
-        .toList();
-    if (fleetsInRegion.isEmpty && capitalRegionId != regionId) {
-      continue;
-    }
-
-    _FleetRow? homeFleetRow;
-    final ports = <String, List<_FleetRow>>{};
-    final seas = <String, List<_FleetRow>>{};
-
-    for (final fleet in fleetsInRegion) {
-      final isAtSea = fleet.isAtSea && fleet.seaZoneId != null;
-      final inPortId = fleet.inPortAtProvinceId;
-
-      final shipCounts = <String, int>{};
-      int totalShips = 0;
-      int warships = 0;
-      int merchants = 0;
-      int cargoCapacity = 0;
-      double strength = 0;
-      for (final typeId in fleet.shipTypeIds) {
-        shipCounts[typeId] = (shipCounts[typeId] ?? 0) + 1;
-        totalShips += 1;
-        final stats = NavalStatsCatalog.get(typeId);
-        cargoCapacity += stats.cargoHold;
-        strength += _shipStrength(typeId);
-        if (_isMerchant(typeId)) {
-          merchants += 1;
-        } else {
-          warships += 1;
-        }
-      }
-
-      final atPlayerCapitalPort =
-          capitalRegionId != null &&
-          capitalProvinceLocalId != null &&
-          !isAtSea &&
-          regionId == capitalRegionId &&
-          inPortId != null &&
-          (inPortId == capitalProvinceLocalId ||
-              inPortId == '$capitalRegionId|$capitalProvinceLocalId');
-      final isHomeFleet =
-          fleet.id == homeFleetIdFor(humanPlayerId) && atPlayerCapitalPort;
-
-      String locationLabel;
-      String? tileKey;
-      String locationKey;
-      if (isAtSea) {
-        final seaZoneId = fleet.seaZoneId!;
-        final zoneKey = seaZoneId.contains('|')
-            ? seaZoneId
-            : '$regionId|$seaZoneId';
-        final zoneLabel = seaZoneDisplayName(
-          game: game,
-          regionId: regionId,
-          seaZoneId: zoneKey,
-        );
-        locationLabel = '${unitsPanelRegionLabel(regionId)} — $zoneLabel';
-        tileKey = tileKeyForSeaZoneLocation(game, regionId, zoneKey);
-        locationKey = 'sea:$zoneKey';
-        final row = _FleetRow(
-          fleetId: fleet.id,
-          label: 'Fleet ${fleet.id}',
-          locationLabel: locationLabel,
-          regionId: regionId,
-          missionLabel: _missionLabel(fleet.mission),
-          totalShips: totalShips,
-          warshipCount: warships,
-          merchantCount: merchants,
-          strength: strength,
-          tileKey: tileKey,
-          isHomeFleet: isHomeFleet,
-          shipCountsByType: shipCounts,
-          cargoCapacity: cargoCapacity,
-          isAtSea: true,
-          locationKey: locationKey,
-          seaZoneId: zoneKey,
-          draftNavalMoveLine: navalDraftMoveLineForFleet(
-            game: game,
-            topology: topology,
-            humanPlayerId: humanPlayerId,
-            fleetRegionId: regionId,
-            fleetId: fleet.id,
-            draftOrders: draftOrders,
-          ),
-        );
-        seas.putIfAbsent(zoneKey, () => []).add(row);
-      } else if (inPortId != null) {
-        final provinceMap = provinceByRegionAndId[regionId] ?? const {};
-        final province =
-            provinceMap['$regionId|$inPortId'] ?? provinceMap[inPortId];
-        if (province == null) continue;
-        tileKey = tileKeyForProvinceLocation(game, province);
-        locationLabel =
-            '${unitsPanelRegionLabel(regionId)} — ${province.displayName ?? province.id}';
-        locationKey = 'port:${province.regionId}|${province.id}';
-        final row = _FleetRow(
-          fleetId: fleet.id,
-          label: isHomeFleet ? 'Home Fleet' : 'Fleet ${fleet.id}',
-          locationLabel: locationLabel,
-          regionId: regionId,
-          missionLabel: _missionLabel(fleet.mission),
-          totalShips: totalShips,
-          warshipCount: warships,
-          merchantCount: merchants,
-          strength: strength,
-          tileKey: tileKey,
-          isHomeFleet: isHomeFleet,
-          shipCountsByType: shipCounts,
-          cargoCapacity: cargoCapacity,
-          isAtSea: false,
-          locationKey: locationKey,
-          inPortAtProvinceId: inPortId,
-          draftNavalMoveLine: isHomeFleet
-              ? null
-              : navalDraftMoveLineForFleet(
-                  game: game,
-                  topology: topology,
-                  humanPlayerId: humanPlayerId,
-                  fleetRegionId: regionId,
-                  fleetId: fleet.id,
-                  draftOrders: draftOrders,
-                ),
-        );
-        if (isHomeFleet) {
-          homeFleetRow = row;
-        } else {
-          final fullProvinceId = '${province.regionId}|${province.id}';
-          ports.putIfAbsent(fullProvinceId, () => []).add(row);
-        }
-      }
-    }
-
-    if (capitalRegionId == regionId &&
-        capitalProvinceLocalId != null &&
-        homeFleetRow == null) {
-      final provinceMap = provinceByRegionAndId[regionId] ?? const {};
-      final province =
-          provinceMap['$capitalRegionId|$capitalProvinceLocalId'] ??
-          provinceMap[capitalProvinceLocalId];
-      if (province != null) {
-        final tileKey = tileKeyForProvinceLocation(game, province);
-        final locationLabel =
-            '${unitsPanelRegionLabel(regionId)} — ${province.displayName ?? province.id}';
-        homeFleetRow = _FleetRow(
-          fleetId: homeFleetIdFor(humanPlayerId),
-          label: 'Home Fleet',
-          locationLabel: locationLabel,
-          regionId: regionId,
-          missionLabel: _missionLabel(FleetMission.none),
-          totalShips: 0,
-          warshipCount: 0,
-          merchantCount: 0,
-          strength: 0,
-          tileKey: tileKey,
-          isHomeFleet: true,
-          shipCountsByType: const {},
-          cargoCapacity: 0,
-          isAtSea: false,
-          locationKey: 'port:${province.regionId}|${province.id}',
-          inPortAtProvinceId: '$capitalRegionId|$capitalProvinceLocalId',
-          draftNavalMoveLine: null,
-        );
-      }
-    }
-
-    final locations = <_FleetLocationNode>[];
-
-    final provinceIds = ports.keys.toList()..sort();
-    for (final fullProvinceId in provinceIds) {
-      final provinceMap = provinceByRegionAndId[regionId] ?? const {};
-      final province = provinceMap[fullProvinceId];
-      if (province == null) continue;
-      final fleets = ports[fullProvinceId]!
-        ..sort((a, b) => a.label.compareTo(b.label));
-      locations.add(_PortLocationNode(province: province, fleets: fleets));
-    }
-
-    final seaZoneKeys = seas.keys.toList()..sort();
-    for (final zoneKey in seaZoneKeys) {
-      final zoneLabel = seaZoneDisplayName(
-        game: game,
-        regionId: regionId,
-        seaZoneId: zoneKey,
-      );
-      final fleets = seas[zoneKey]!..sort((a, b) => a.label.compareTo(b.label));
-      locations.add(
-        _SeaZoneLocationNode(
-          seaZoneLabel: zoneLabel,
-          regionId: regionId,
-          fleets: fleets,
-        ),
-      );
-    }
-
-    if (homeFleetRow != null || locations.isNotEmpty) {
-      result.add((
-        regionId: regionId,
-        homeFleet: homeFleetRow,
-        locations: locations,
-      ));
-    }
-  }
-
-  return result;
-}
 
 class NavalUnitsPanel extends StatefulWidget {
   const NavalUnitsPanel({
@@ -470,13 +38,13 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   final Set<String> _selectedFleetIds = {};
 
   /// Canonical fleet id for combine/split selection (Home Fleet uses [homeFleetIdFor]).
-  String _selectionFleetId(_FleetRow row) {
+  String _selectionFleetId(FleetRow row) {
     if (row.isHomeFleet) return homeFleetIdFor(widget.humanPlayerId);
     return row.fleetId;
   }
 
-  bool _canCombineSelection(List<_FleetRow> flat) {
-    final rowsById = <String, _FleetRow>{
+  bool _canCombineSelection(List<FleetRow> flat) {
+    final rowsById = <String, FleetRow>{
       for (final r in flat) _selectionFleetId(r): r,
     };
     final activeIds = _selectedFleetIds.where(rowsById.containsKey).toList();
@@ -490,7 +58,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     return true;
   }
 
-  String _combineTargetFleetId(List<_FleetRow> flat, Set<String> selected) {
+  String _combineTargetFleetId(List<FleetRow> flat, Set<String> selected) {
     for (final row in flat) {
       final id = _selectionFleetId(row);
       if (!selected.contains(id)) continue;
@@ -503,7 +71,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     throw StateError('combine target: empty selection');
   }
 
-  Fleet? _fleetForRow(_FleetRow row) {
+  Fleet? _fleetForRow(FleetRow row) {
     final id = _selectionFleetId(row);
     for (final f in widget.game.worldState.fleets) {
       if (f.id == id) return f;
@@ -523,7 +91,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     return null;
   }
 
-  void _toggleFleetSelection(_FleetRow row) {
+  void _toggleFleetSelection(FleetRow row) {
     setState(() {
       final id = _selectionFleetId(row);
       if (_selectedFleetIds.contains(id)) {
@@ -534,7 +102,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     });
   }
 
-  bool? _headerSelectAllValue(List<_FleetRow> flat) {
+  bool? _headerSelectAllValue(List<FleetRow> flat) {
     if (flat.isEmpty) return false;
     final ids = flat.map(_selectionFleetId).toSet();
     var n = 0;
@@ -548,7 +116,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
 
   /// Select-all header: from none or partial → select every row; from all → clear.
   /// Does not rely on [Checkbox] tristate `next` (indeterminate taps may pass false).
-  void _onHeaderSelectAllTapped(List<_FleetRow> flat) {
+  void _onHeaderSelectAllTapped(List<FleetRow> flat) {
     setState(() {
       final ids = flat.map(_selectionFleetId).toSet();
       final allSelected =
@@ -563,13 +131,13 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     });
   }
 
-  void _performCombine(List<_FleetRow> flat) {
+  void _performCombine(List<FleetRow> flat) {
     if (!_canCombineSelection(flat)) return;
 
     final selected = Set<String>.from(_selectedFleetIds);
     final targetId = _combineTargetFleetId(flat, selected);
 
-    _FleetRow? targetRow;
+    FleetRow? targetRow;
     for (final row in flat) {
       if (_selectionFleetId(row) == targetId) {
         targetRow = row;
@@ -621,8 +189,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.game != widget.game ||
         oldWidget.draftOrders != widget.draftOrders) {
-      final flat = _flattenTree(
-        _buildNavalTree(
+      final flat = flattenNavalTree(
+        buildNavalTree(
           widget.game,
           widget.humanPlayerId,
           widget.topology,
@@ -644,7 +212,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     }
   }
 
-  void _openSplitDialog(_FleetRow row) {
+  void _openSplitDialog(FleetRow row) {
     final id = _selectionFleetId(row);
     Fleet? fleet;
     for (final f in widget.game.worldState.fleets) {
@@ -668,7 +236,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     );
   }
 
-  void _openMoveFleetDialog(_FleetRow row) {
+  void _openMoveFleetDialog(FleetRow row) {
     if (row.isHomeFleet) return;
     Fleet? fleet;
     for (final f in widget.game.worldState.fleets) {
@@ -693,13 +261,13 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final tree = _buildNavalTree(
+    final tree = buildNavalTree(
       widget.game,
       widget.humanPlayerId,
       widget.topology,
       widget.draftOrders,
     );
-    final flat = _flattenTree(tree);
+    final flat = flattenNavalTree(tree);
     final hasAny = tree.any(
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
     );
@@ -799,7 +367,7 @@ class _FleetExpansionTile extends StatelessWidget {
     this.isSplitAllowed = false,
   });
 
-  final _FleetRow row;
+  final FleetRow row;
   final VoidCallback? onTap;
   final bool isSelectedForCombine;
   final VoidCallback onCombineSelectionToggle;

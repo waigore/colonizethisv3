@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../flame/game_screen_shared.dart';
+import '../../../config/constants.dart';
 import '../production_recipe_affordance.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
@@ -57,7 +57,7 @@ class ProductionPanel extends StatelessWidget {
     );
     final inputCommodityIds = _inputCommodityIds;
     final outputCommodityIds = _outputCommodityIds;
-    final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
+    final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
 
     if (isNarrow) {
       return SingleChildScrollView(
