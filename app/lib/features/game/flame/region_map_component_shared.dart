@@ -133,6 +133,27 @@ bool shouldApplyFogToLandBase({
   return !_isFeatureTerrain(terrain);
 }
 
+/// Returns true when the feature-overlay pass should apply fog darkening.
+///
+/// Feature terrain should receive fog attenuation in the overlay pass only, so
+/// fogged feature cells do not get darkened twice across base + overlay.
+bool shouldApplyFogToFeatureOverlay({
+  required CtMapVisibilityMode visibilityMode,
+  required TileVisibility tileVisibility,
+  required TerrainType? terrain,
+}) {
+  if (visibilityMode != CtMapVisibilityMode.playerConstrained) {
+    return false;
+  }
+  if (tileVisibility != TileVisibility.fogged) {
+    return false;
+  }
+  if (terrain == null) {
+    return false;
+  }
+  return _isFeatureTerrain(terrain);
+}
+
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
 /// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
 bool _isFeatureTerrain(TerrainType terrain) {

@@ -617,8 +617,11 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     final srcRect = tile.boundingBox;
     final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
     final paint = Paint();
-    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        cell.visibility == TileVisibility.fogged) {
+    if (shouldApplyFogToLandBase(
+      visibilityMode: visibilityMode,
+      tileVisibility: cell.visibility,
+      terrain: terrain,
+    )) {
       paint.colorFilter = ColorFilter.mode(
         Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
         BlendMode.darken,
@@ -656,8 +659,11 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     }
 
     final paint = Paint();
-    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        cell.visibility == TileVisibility.fogged) {
+    if (shouldApplyFogToFeatureOverlay(
+      visibilityMode: visibilityMode,
+      tileVisibility: cell.visibility,
+      terrain: terrain,
+    )) {
       paint.colorFilter = ColorFilter.mode(
         Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
         BlendMode.darken,
