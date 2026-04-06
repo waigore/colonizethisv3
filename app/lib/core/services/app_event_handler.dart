@@ -261,6 +261,8 @@ class AppEventHandler {
               bus: bus,
               currentOrders: currentOrders,
               availableWorkTargets: availableWorkTargets,
+              tileScopeTileKey: event.tileScopeTileKey,
+              initialSelectedUnitId: event.initialSelectedUnitId,
             ),
           );
         },
