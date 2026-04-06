@@ -9,20 +9,15 @@ import 'province_lookup.dart';
 /// - It lies in a province owned by the player, or
 /// - It appears in [WorldState.purchasedTilesByTileKey] with buyer [playerId]
 ///   (Merchant purchase_land).
-bool isTileControlledByPlayer(
-  Game game,
-  String playerId,
-  String tileKey,
-) {
+bool isTileControlledByPlayer(Game game, String playerId, String tileKey) {
   final purchased = game.worldState.purchasedTilesByTileKey;
   if (purchased[tileKey] == playerId) return true;
 
   final provinceId = Unit.provinceIdFromTileKey(tileKey);
   if (provinceId == null) return false;
 
-  final province = tryGetProvince(game.worldState, provinceId);
+  final province = game.worldState.tryGetProvince(provinceId);
   if (province == null) return false;
 
   return province.ownerId == playerId;
 }
-

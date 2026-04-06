@@ -66,7 +66,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
           if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ??
               false)
             continue;
-          final province = tryGetProvince(game.worldState, fullProvinceId);
+          final province = game.worldState.tryGetProvince(fullProvinceId);
           if (province?.ownerId != playerId) continue;
           final candidate = NavalMoveOrder(
             fleetId: fleet.id,
@@ -126,7 +126,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
     'suggestNavalMoveOrders player=$playerId candidates=${suggestions.length}',
   );
   _log.d(
-    'suggestNavalMoveOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} destSea=${o.destinationSeaZoneId} destPort=${o.destinationPortProvinceId}").toList()}',
+    'suggestNavalMoveOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} destSea=${o.destinationSeaZoneId} destPort=${o.destinationPortProvinceId}").join(", ")}',
   );
   return suggestions;
 }
@@ -176,7 +176,7 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
     'suggestNavalMissionOrders player=$playerId candidates=${suggestions.length}',
   );
   _log.d(
-    'suggestNavalMissionOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} mission=${o.mission}").toList()}',
+    'suggestNavalMissionOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} mission=${o.mission}").join(", ")}',
   );
   return suggestions;
 }
@@ -546,7 +546,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     'suggestDiplomaticOrders player=$playerId candidates=${suggestions.length}',
   );
   _log.d(
-    'suggestDiplomaticOrders full list ${suggestions.map((o) => "${o.type.name}:${o.targetFactionId}").toList()}',
+    'suggestDiplomaticOrders full list ${suggestions.map((o) => "${o.type.name}:${o.targetFactionId}").join(", ")}',
   );
   return suggestions;
 }
@@ -660,7 +660,7 @@ void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
   _forEachPrefixedProvinceTile(
     tileKeysByRegion: c.tileKeysByRegion,
     onTile: (provinceId, tileKey) {
-      final province = tryGetProvince(c.game.worldState, provinceId);
+      final province = c.game.worldState.tryGetProvince(provinceId);
       if (province == null) return;
       final ownerId = province.ownerId;
       if (ownerId == null) return;
