@@ -1,6 +1,9 @@
 // Startup save check: testable logic for lock detection. SPEC/tui/ctterm.md §5.1.
 
 import 'package:ctterm/save_service.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
+
+final _log = tuiLogger();
 
 /// Runs the save-service readiness check. Returns true if a lock was detected
 /// ([StaleLockException]), so the app should show the lock-prompt screen.
@@ -15,7 +18,12 @@ Future<bool> runStartupSaveCheck(
     return false;
   } on StaleLockException {
     return true;
-  } catch (_) {
+  } on Exception catch (error, stackTrace) {
+    _log.w(
+      'startup_check: save readiness failed with non-lock exception',
+      error: error,
+      stackTrace: stackTrace,
+    );
     return false;
   }
 }

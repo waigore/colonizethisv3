@@ -35,7 +35,7 @@ class AppEventBus {
   Stream<AppEvent> get stream => _controller.stream;
 
   Stream<T> on<T extends AppEvent>() =>
-      _controller.stream.where((e) => e is T).cast<T>();
+      _controller.stream.where((e) => e is T).map((e) => e as T);
 
   Stream<UIActionEvent> get uiActionEvents => on<UIActionEvent>();
 

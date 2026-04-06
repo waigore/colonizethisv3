@@ -24,7 +24,10 @@ class DefaultDialogueEventBus implements DialogueEventBus {
   @override
   void Function() subscribe<T extends DialogueEvent>(void Function(T) handler) {
     late final StreamSubscription<DialogueEvent> sub;
-    sub = _controller.stream.where((e) => e is T).cast<T>().listen(handler);
+    sub = _controller.stream
+        .where((e) => e is T)
+        .map((e) => e as T)
+        .listen(handler);
     return () => sub.cancel();
   }
 
