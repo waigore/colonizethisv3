@@ -53,6 +53,7 @@
 ### Region minimap (in-game map stack)
 
 - **Placement:** Bottom-right of the map `Stack` in [GameMapArea](../../app/lib/features/game/flame/game_map_area.dart); does not replace bottom-left [GameMapCornerControls](../../app/lib/features/game/flame/game_map_corner_controls.dart) or [GameMapEmpireLeftRail](../../app/lib/features/game/flame/game_map_empire_left_rail.dart).
+- **Wide shell + province panel:** When the viewport is **not** narrow (side panel layout) and the province detail panel is **open** (`mapProvincePanelProvider.overlayOpen`), the minimap stack’s **horizontal inset from the right** increases by the **province panel width (320 dp)** so the minimap and its zoom slider stay **above** the panel column and remain usable. When the panel is closed, use the normal corner inset only.
 
 ### Narrow layout: province detail above map chrome
 
