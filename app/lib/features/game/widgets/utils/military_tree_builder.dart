@@ -1,7 +1,7 @@
 // Pure data for Military Units panel tree. SPEC/ui/military-units-panel.md.
 
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show resolveToFullProvinceId;
+    show resolveToFullProvinceId, tryGetProvince;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../utils/map_location_resolver.dart';
@@ -13,7 +13,7 @@ String armyStationedProvinceDisplayLabel(Game game, Army army) {
   final full = ProvinceId.isPrefixed(pid)
       ? pid
       : ProvinceId.full(army.regionId, pid);
-  final p = game.worldState.tryGetProvince(full);
+  final p = tryGetProvince(game.worldState, full);
   if (p != null) {
     return p.displayName ?? p.id;
   }
@@ -34,7 +34,7 @@ String? armyDraftMoveLineForArmy({
       game.worldState,
       o.destinationProvinceId,
     );
-    final p = game.worldState.tryGetProvince(full);
+    final p = tryGetProvince(game.worldState, full);
     final name = p?.displayName ?? p?.id ?? ProvinceId.localIdFrom(full);
     return 'Moving to: $name';
   }
@@ -204,7 +204,7 @@ List<RegionMilitaryGroup> buildMilitaryGroups(Game game, String humanPlayerId) {
       final full = ProvinceId.isPrefixed(a.stationedProvinceId)
           ? a.stationedProvinceId
           : ProvinceId.full(regionKey, a.stationedProvinceId);
-      final p = game.worldState.tryGetProvince(full);
+      final p = tryGetProvince(game.worldState, full);
       return p != null && p.regionId == regionKey;
     }).toList();
 
