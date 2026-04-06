@@ -153,23 +153,18 @@ All assets are 32×32 PNG with transparency. The map draws these icons tile-size
 
 ### PixelLab generation prompts (this slice)
 
-- Base style reference image: `assets/icons/ui_icon_map_presence_civilian.png`
-- Generator: `pixellab-generate_image_bitforge`
-- Shared settings: `width=32`, `height=32`, `no_background=true`, `style_strength=60`
+- Generator: `pixellab-generate_image_pixflux`
+- Shared settings: `width=32`, `height=32`, `no_background=true`, `outline='single color outline'`, `shading='medium shading'`, `detail='medium detail'`
 - Color prompts:
-  - `pixel art explorer civilian with compass, full body`
-  - `pixel art builder civilian with hammer, full body`
-  - `pixel art engineer civilian with wrench and tools, full body`
-  - `pixel art merchant civilian with coin pouch and ledger, full body`
-  - `pixel art spy civilian cloaked with dagger, full body`
-  - `pixel art rail builder civilian with pickaxe and rail tool, full body`
-- Grayscale prompts:
-  - `grayscale monochrome pixel art explorer civilian with compass, full body`
-  - `grayscale monochrome pixel art builder civilian with hammer, full body`
-  - `grayscale monochrome pixel art engineer civilian with wrench and tools, full body`
-  - `grayscale monochrome pixel art merchant civilian with coin pouch and ledger, full body`
-  - `grayscale monochrome pixel art spy civilian cloaked with dagger, full body`
-  - `grayscale monochrome pixel art rail builder civilian with pickaxe and rail tool, full body`
+  - `pixel art builder civilian with hammer and tool belt, full body, colonial era style, readable 32x32 unit marker icon`
+  - `pixel art engineer civilian with wrench and measuring tools, full body, colonial era style, readable 32x32 unit marker icon`
+  - `pixel art rail builder civilian with pickaxe and rail spike hammer, full body, colonial era style, readable 32x32 unit marker icon`
+  - `pixel art explorer civilian with compass and satchel, full body, colonial era style, readable 32x32 unit marker icon`
+  - `pixel art trader merchant civilian holding visible coin pouch and ledger, full body, colonial era clothing, readable 32x32 unit marker icon`
+  - `pixel art spy civilian cloaked with dagger and covert posture, full body, colonial era style, readable 32x32 unit marker icon`
+- Grayscale assets:
+  - Runtime assigned-state rendering is paint-time grayscale filtering of color icons.
+  - Compatibility `_gray` files are generated from approved color icons via deterministic grayscale conversion.
 
 ---
 
