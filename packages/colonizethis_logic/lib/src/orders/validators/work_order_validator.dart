@@ -138,14 +138,14 @@ class WorkOrderValidator {
         if (o.target != kWorkTargetStealTech &&
             o.target != kWorkTargetCounterSpy &&
             o.target != kWorkTargetPurchaseLand) {
-          final improvementLevel = o.target == 'build_improvement'
+          final improvementLevel = o.target == kWorkTargetBuildImprovement
               ? _game.worldState.tileState.improvementLevel(o.targetTileKey)
               : 0;
           final fortLevel = province?.fortLevel ?? 0;
           final roadLevel = _game.worldState.tileState.roadLevel(
             o.targetTileKey,
           );
-          if (o.target == 'build_road' && roadLevel >= 1) {
+          if (o.target == kWorkTargetBuildRoad && roadLevel >= 1) {
             final hasRoadConstruction =
                 _player.techUnlocked?['road_construction'] == true;
             if (!hasRoadConstruction) {
@@ -154,7 +154,7 @@ class WorkOrderValidator {
               );
             }
           }
-          if (o.target == 'build_fort') {
+          if (o.target == kWorkTargetBuildFort) {
             if (fortLevel == 1 &&
                 _player.techUnlocked?['mine_engineering'] != true) {
               return OrderValidationResult.rejected(
@@ -239,7 +239,7 @@ class WorkOrderValidator {
           }
         } else if (o.target != kWorkTargetStealTech &&
             o.target != kWorkTargetCounterSpy) {
-          final improvementLevel = o.target == 'build_improvement'
+          final improvementLevel = o.target == kWorkTargetBuildImprovement
               ? _game.worldState.tileState.improvementLevel(o.targetTileKey)
               : 0;
           final costMap = WorkOrderCostCalculator(_game).calculateCost(

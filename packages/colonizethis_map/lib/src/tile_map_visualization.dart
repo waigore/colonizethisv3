@@ -435,7 +435,9 @@ bool openInDefaultViewer(String path) {
       Process.runSync('explorer', [path]);
       return true;
     }
-  } catch (_) {
+  } on ProcessException {
+    return false;
+  } on ArgumentError {
     return false;
   }
   return false;

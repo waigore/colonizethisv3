@@ -74,7 +74,7 @@ class PlayerView {
 /// This is a pure function; it must be deterministic for the same inputs.
 PlayerView buildPlayerView(
   Game game,
-  MapTopology topology,
+  MapTopology _,
   String playerId,
 ) {
   final player = game.playerById(playerId);
@@ -136,10 +136,6 @@ PlayerView buildPlayerView(
 
   final prospectedTiles =
       game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
-
-  // Topology is currently unused but is part of the signature for future
-  // derived helpers (e.g. province neighbors visible to the player).
-  final _ = topology; // ignore: unused_local_variable
 
   return PlayerView(
     playerId: playerId,
