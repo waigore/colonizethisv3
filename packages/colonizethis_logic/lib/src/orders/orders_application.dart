@@ -640,78 +640,109 @@ void _runWorkPhase(
         int Function() totalTurnsFn,
       })
       workTargetConfig(String target) {
-        switch (target) {
-          case 'build_improvement':
-            return (
-              target: target,
-              allowedForUnitType: (t) =>
-                  isWorkOrderTargetAllowedForUnitType(t, target),
-              costFn: () => workOrderMaterialCost(
-                target,
-                improvementLevel: tileState.improvementLevel(targetTileKey),
-              ),
-              totalTurnsFn: () => totalTurnsForWork(
-                target,
-                improvementLevel: tileState.improvementLevel(targetTileKey),
-              ),
-            );
-          case 'build_road':
-            return (
-              target: target,
-              allowedForUnitType: (t) =>
-                  isWorkOrderTargetAllowedForUnitType(t, target),
-              costFn: () => workOrderMaterialCost(target),
-              totalTurnsFn: () => totalTurnsForWork(target),
-            );
-          case 'build_port':
-            return (
-              target: target,
-              allowedForUnitType: (t) =>
-                  isWorkOrderTargetAllowedForUnitType(t, target),
-              costFn: () => workOrderMaterialCost(target),
-              totalTurnsFn: () => totalTurnsForWork(target),
-            );
-          case 'build_fort':
-            return (
-              target: target,
-              allowedForUnitType: (t) =>
-                  isWorkOrderTargetAllowedForUnitType(t, target),
-              costFn: () {
-                final prov = provinceById(u.locationProvinceId);
-                final fortLevel = prov?.fortLevel ?? 0;
-                return workOrderMaterialCost(target, fortLevel: fortLevel);
-              },
-              totalTurnsFn: () {
-                final prov = provinceById(u.locationProvinceId);
-                final fortLevel = prov?.fortLevel ?? 0;
-                return totalTurnsForWork(target, fortLevel: fortLevel);
-              },
-            );
-          case 'build_rail':
-            return (
-              target: target,
-              allowedForUnitType: (t) =>
-                  isWorkOrderTargetAllowedForUnitType(t, target),
-              costFn: () => workOrderMaterialCost(target),
-              totalTurnsFn: () => totalTurnsForWork(target),
-            );
-          case 'upgrade_town':
-            return (
-              target: target,
-              allowedForUnitType: (t) =>
-                  isWorkOrderTargetAllowedForUnitType(t, target),
-              costFn: () => workOrderMaterialCost(target),
-              totalTurnsFn: () => totalTurnsForWork(target),
-            );
-          default:
-            // Fall through to individual handling for non-standard targets
-            return (
-              target: target,
-              allowedForUnitType: (_) => false,
-              costFn: () => null,
-              totalTurnsFn: () => 1,
-            );
+        ({
+          String target,
+          bool Function(String) allowedForUnitType,
+          WorkOrderCost? Function() costFn,
+          int Function() totalTurnsFn,
+        })
+        standardTargetConfig(String target) {
+          return (
+            target: target,
+            allowedForUnitType: (t) =>
+                isWorkOrderTargetAllowedForUnitType(t, target),
+            costFn: () => workOrderMaterialCost(target),
+            totalTurnsFn: () => totalTurnsForWork(target),
+          );
         }
+
+        ({
+          String target,
+          bool Function(String) allowedForUnitType,
+          WorkOrderCost? Function() costFn,
+          int Function() totalTurnsFn,
+        })
+        buildImprovementConfig() {
+          return (
+            target: kWorkTargetBuildImprovement,
+            allowedForUnitType: (t) => isWorkOrderTargetAllowedForUnitType(
+              t,
+              kWorkTargetBuildImprovement,
+            ),
+            costFn: () => workOrderMaterialCost(
+              kWorkTargetBuildImprovement,
+              improvementLevel: tileState.improvementLevel(targetTileKey),
+            ),
+            totalTurnsFn: () => totalTurnsForWork(
+              kWorkTargetBuildImprovement,
+              improvementLevel: tileState.improvementLevel(targetTileKey),
+            ),
+          );
+        }
+
+        ({
+          String target,
+          bool Function(String) allowedForUnitType,
+          WorkOrderCost? Function() costFn,
+          int Function() totalTurnsFn,
+        })
+        buildFortConfig() {
+          return (
+            target: kWorkTargetBuildFort,
+            allowedForUnitType: (t) =>
+                isWorkOrderTargetAllowedForUnitType(t, kWorkTargetBuildFort),
+            costFn: () {
+              final prov = provinceById(u.locationProvinceId);
+              final fortLevel = prov?.fortLevel ?? 0;
+              return workOrderMaterialCost(
+                kWorkTargetBuildFort,
+                fortLevel: fortLevel,
+              );
+            },
+            totalTurnsFn: () {
+              final prov = provinceById(u.locationProvinceId);
+              final fortLevel = prov?.fortLevel ?? 0;
+              return totalTurnsForWork(
+                kWorkTargetBuildFort,
+                fortLevel: fortLevel,
+              );
+            },
+          );
+        }
+
+        final handlers =
+            <
+              String,
+              ({
+                String target,
+                bool Function(String) allowedForUnitType,
+                WorkOrderCost? Function() costFn,
+                int Function() totalTurnsFn,
+              })
+              Function()
+            >{
+              kWorkTargetBuildImprovement: buildImprovementConfig,
+              kWorkTargetBuildRoad: () =>
+                  standardTargetConfig(kWorkTargetBuildRoad),
+              kWorkTargetBuildPort: () =>
+                  standardTargetConfig(kWorkTargetBuildPort),
+              kWorkTargetBuildFort: buildFortConfig,
+              kWorkTargetBuildRail: () =>
+                  standardTargetConfig(kWorkTargetBuildRail),
+              kWorkTargetUpgradeTown: () =>
+                  standardTargetConfig(kWorkTargetUpgradeTown),
+            };
+        final handler = handlers[target];
+        if (handler != null) {
+          return handler();
+        }
+        // Fall through to individual handling for non-standard targets.
+        return (
+          target: target,
+          allowedForUnitType: (_) => false,
+          costFn: () => null,
+          totalTurnsFn: () => 1,
+        );
       }
 
       // Applies a standard work order using the config dispatch.
