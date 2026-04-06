@@ -477,7 +477,7 @@ bool _gpHasPurchasedLandInFactionProvinces(
     if (entry.value != gpId) continue;
     final provinceId = Unit.provinceIdFromTileKey(entry.key);
     if (provinceId == null) continue;
-    final province = tryGetProvince(worldState, provinceId);
+    final province = worldState.tryGetProvince(provinceId);
     if (province != null && province.ownerId == factionId) {
       return true;
     }

@@ -11,7 +11,7 @@ import 'unit_lookup.dart';
 /// provinces back to fogged for that player. Timers MUST NOT affect a player's
 /// own provinces; own provinces remain fully visible. SPEC/program/fog-and-exploration-resolution.md.
 (Map<String, Map<String, String>>, Map<String, Map<String, int>>)
-    applySpyRevealTimerDecay(Game game) {
+applySpyRevealTimerDecay(Game game) {
   final world = game.worldState;
   final tileKeysByRegion = world.tileKeysByRegionAndProvince;
   var visibilityByTile = Map<String, Map<String, String>>.from(
@@ -146,7 +146,9 @@ MapTopology _topologyForRegion(
       .where((n) => n.regionId == regionId)
       .toList();
   final regionEdges = topology.edges
-      .where((e) => regionNodeIds.contains(e.id1) && regionNodeIds.contains(e.id2))
+      .where(
+        (e) => regionNodeIds.contains(e.id1) && regionNodeIds.contains(e.id2),
+      )
       .toList();
   return MapTopology(nodes: regionNodes, edges: regionEdges);
 }
@@ -221,7 +223,7 @@ bool _seaZoneHasOwnedCoastalProvinceForPlayer(
   );
   for (final localPid in adjacentLocal) {
     final full = ProvinceId.full(regionId, localPid);
-    final p = tryGetProvince(game.worldState, full);
+    final p = game.worldState.tryGetProvince(full);
     if (p != null && p.ownerId == playerId) return true;
   }
   return false;
@@ -263,7 +265,11 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
   }
 
   for (final regionId in [kRegionOldWorld, kRegionNewWorld]) {
-    final regionTopology = _topologyForRegion(topology, topologyByRegion, regionId);
+    final regionTopology = _topologyForRegion(
+      topology,
+      topologyByRegion,
+      regionId,
+    );
     final seaZoneIds = regionTopology.nodes
         .where((n) => n.type == TopologyNodeType.seaZone)
         .map((n) => n.id);
@@ -302,4 +308,3 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
 
   return result;
 }
-

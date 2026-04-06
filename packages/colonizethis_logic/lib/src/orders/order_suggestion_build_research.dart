@@ -65,7 +65,7 @@ List<BuildUnitOrder> suggestBuildOrders(
     'suggestBuildOrders player=$playerId candidates=${suggestions.length}',
   );
   _log.d(
-    'suggestBuildOrders full list ${suggestions.map((o) => o.unitType).toList()}',
+    'suggestBuildOrders full list ${suggestions.map((o) => o.unitType).join(", ")}',
   );
   if (suggestions.isEmpty)
     _log.w('suggestBuildOrders no candidates player=$playerId');
@@ -134,7 +134,7 @@ List<ResearchOrder> suggestResearchOrders(
     'suggestResearchOrders player=$playerId candidates=${suggestions.length}',
   );
   _log.d(
-    'suggestResearchOrders full list ${suggestions.map((o) => "slot${o.slotIndex}:${o.techId}").toList()}',
+    'suggestResearchOrders full list ${suggestions.map((o) => "slot${o.slotIndex}:${o.techId}").join(", ")}',
   );
   return suggestions;
 }

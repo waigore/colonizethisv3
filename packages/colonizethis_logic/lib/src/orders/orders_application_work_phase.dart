@@ -38,7 +38,7 @@ void _runWorkPhase(
         oldUnitsById.containsKey(unitId) ? kRegionOldWorld : kRegionNewWorld;
 
     Province? provinceById(String id) =>
-        tryGetProvince(state.game.worldState, id);
+        state.game.worldState.tryGetProvince(id);
 
     bool canAffordMaterialCost(WorkOrderCost cost) {
       for (final e in cost.entries) {

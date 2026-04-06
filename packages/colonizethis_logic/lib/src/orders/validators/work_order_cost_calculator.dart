@@ -41,6 +41,6 @@ class WorkOrderCostCalculator {
   Province? _targetProvince(String tileKey) {
     final provId = Unit.provinceIdFromTileKey(tileKey);
     if (provId == null) return null;
-    return tryGetProvince(game.worldState, provId);
+    return game.worldState.tryGetProvince(provId);
   }
 }
