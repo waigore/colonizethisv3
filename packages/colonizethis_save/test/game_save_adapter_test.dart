@@ -309,6 +309,51 @@ void main() {
       expect(loaded.players.single.capitalTile?.y, 0);
     });
 
+    test(
+      'save/load round-trip preserves civilian origin/assigned tile fields',
+      () {
+        final unit = Unit(
+          id: 'civ1',
+          type: 'Builder',
+          ownerId: 'pl1',
+          locationProvinceId: 'oldWorld|p1',
+          tileKey: 'oldWorld|p1|1|0',
+          originTileKey: 'oldWorld|p1|0|0',
+          assignedTileKey: 'oldWorld|p1|1|0',
+          status: UnitStatus.working,
+          currentWork: const CurrentWork(
+            workTarget: 'build_improvement',
+            tileKey: 'oldWorld|p1|1|0',
+            totalTurns: 2,
+            remainingTurns: 1,
+          ),
+        );
+        final game = Game(
+          id: 'withCivilianAssignment',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              ],
+              units: [unit],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'pl1', displayName: 'Spain', isHuman: true),
+          ],
+        );
+        adapter.save(box, game);
+        final loaded = adapter.load(box, 'withCivilianAssignment');
+        expect(loaded, isNotNull);
+        final loadedUnit = loaded!.worldState.oldWorld.units.single;
+        expect(loadedUnit.originTileKey, 'oldWorld|p1|0|0');
+        expect(loadedUnit.assignedTileKey, 'oldWorld|p1|1|0');
+        expect(loadedUnit.tileKey, 'oldWorld|p1|1|0');
+      },
+    );
+
     test('save/load round-trip includes Phase 3 combat state', () {
       final game = Game(
         id: 'phase3',
@@ -572,18 +617,21 @@ void main() {
         },
       );
 
-      test('listGameIds excludes auto-save stem even when slot is populated', () {
-        final game = minimalGame('only_logical');
-        final (tileMap, topo) = minimalMap();
-        adapter.saveAutoSave(
-          box,
-          game,
-          tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
-          topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
-          combinedTopology: topo,
-        );
-        expect(adapter.listGameIds(box), isEmpty);
-      });
+      test(
+        'listGameIds excludes auto-save stem even when slot is populated',
+        () {
+          final game = minimalGame('only_logical');
+          final (tileMap, topo) = minimalMap();
+          adapter.saveAutoSave(
+            box,
+            game,
+            tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+            topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+            combinedTopology: topo,
+          );
+          expect(adapter.listGameIds(box), isEmpty);
+        },
+      );
 
       test('listGameIds excludes stem when user game also exists', () {
         final userGame = minimalGame('user_slot');
@@ -626,14 +674,8 @@ void main() {
       test('hasValidAutoSave clears slot when map data invalid', () {
         final game = minimalGame('g');
         box.put(kAutoSaveSlotId, game.toJson());
-        box.put(
-          '${kAutoSaveSlotId}_tileMapByRegion',
-          {'bad': 'data'},
-        );
-        box.put(
-          '${kAutoSaveSlotId}_topologyByRegion',
-          {'bad': 'data'},
-        );
+        box.put('${kAutoSaveSlotId}_tileMapByRegion', {'bad': 'data'});
+        box.put('${kAutoSaveSlotId}_topologyByRegion', {'bad': 'data'});
         box.put('${kAutoSaveSlotId}_combinedTopology', 'x');
         expect(adapter.hasValidAutoSave(box), isFalse);
         expect(box.containsKey(kAutoSaveSlotId), isFalse);

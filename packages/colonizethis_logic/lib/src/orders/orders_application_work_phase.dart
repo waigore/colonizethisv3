@@ -169,6 +169,8 @@ void _runWorkPhase(
           u.copyWith(
             status: UnitStatus.working,
             tileKey: targetTileKey,
+            originTileKey: u.originTileKey ?? u.tileKey,
+            assignedTileKey: targetTileKey,
             currentWork: CurrentWork(
               workTarget: orderTarget,
               tileKey: targetTileKey,
@@ -241,6 +243,8 @@ void _runWorkPhase(
           u.copyWith(
             status: UnitStatus.working,
             tileKey: targetTileKey,
+            originTileKey: u.originTileKey ?? u.tileKey,
+            assignedTileKey: targetTileKey,
             currentWork: CurrentWork(
               workTarget: kWorkTargetStealTech,
               tileKey: targetTileKey,
@@ -265,6 +269,8 @@ void _runWorkPhase(
           u.copyWith(
             status: UnitStatus.working,
             tileKey: targetTileKey,
+            originTileKey: u.originTileKey ?? u.tileKey,
+            assignedTileKey: targetTileKey,
             currentWork: CurrentWork(
               workTarget: kWorkTargetCounterSpy,
               tileKey: targetTileKey,
@@ -324,6 +330,8 @@ void _runWorkPhase(
             u.copyWith(
               status: UnitStatus.working,
               tileKey: targetTileKey,
+              originTileKey: u.originTileKey ?? u.tileKey,
+              assignedTileKey: targetTileKey,
               currentWork: CurrentWork(
                 workTarget: kWorkTargetExplore,
                 tileKey: targetTileKey,
