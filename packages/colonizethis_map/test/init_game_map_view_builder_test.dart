@@ -1222,7 +1222,8 @@ void main() {
                   ownerId: 'gp_human',
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: 'oldWorld|p1|0|0',
-                  status: UnitStatus.idle,
+                  status: UnitStatus.working,
+                  assignedTileKey: 'oldWorld|p1|0|0',
                 ),
                 Unit(
                   id: 'u_spy',
@@ -1296,6 +1297,7 @@ void main() {
         );
         expect(tile00.stackCount, 2);
         expect(tile00.representativeUnitType, 'Builder');
+        expect(tile00.representativeIsAssigned, isTrue);
         expect(tile00.unitIds, equals(['u_builder', 'u_spy']));
         expect(tile00.unitTypes['u_builder'], 'Builder');
         expect(tile00.unitTypes['u_spy'], 'Spy');
@@ -1305,6 +1307,7 @@ void main() {
         );
         expect(tile10.stackCount, 1);
         expect(tile10.representativeUnitType, 'Engineer');
+        expect(tile10.representativeIsAssigned, isFalse);
         expect(tile10.unitIds, equals(['u_engineer']));
       },
     );
