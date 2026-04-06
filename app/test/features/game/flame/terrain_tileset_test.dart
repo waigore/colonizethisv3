@@ -35,6 +35,80 @@ void main() {
     });
   });
 
+  group('featureOverlayTileKey', () {
+    test('forest uses timber variant only for timber resource', () {
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.forest,
+          resourceId: 'timber',
+        ),
+        'tile_forest_timber',
+      );
+      expect(
+        featureOverlayTileKey(terrain: TerrainType.forest, resourceId: 'furs'),
+        'tile_forest',
+      );
+      expect(featureOverlayTileKey(terrain: TerrainType.forest), 'tile_forest');
+    });
+
+    test('hills uses mine variant only for improved mineral resources', () {
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.hills,
+          resourceId: 'iron',
+          improvementLevel: 1,
+        ),
+        'tile_hills_mine',
+      );
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.hills,
+          resourceId: 'silver',
+          improvementLevel: 2,
+        ),
+        'tile_hills_mine',
+      );
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.hills,
+          resourceId: 'iron',
+          improvementLevel: 0,
+        ),
+        'tile_hills',
+      );
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.hills,
+          resourceId: 'wool',
+          improvementLevel: 2,
+        ),
+        'tile_hills_wool',
+      );
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.hills,
+          resourceId: null,
+          improvementLevel: 0,
+        ),
+        'tile_hills',
+      );
+    });
+
+    test('mountain and swamp always use canonical defaults', () {
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.mountain,
+          resourceId: 'gold',
+        ),
+        'tile_mountain',
+      );
+      expect(
+        featureOverlayTileKey(terrain: TerrainType.swamp, resourceId: 'tin'),
+        'tile_swamp',
+      );
+    });
+  });
+
   group('WangTile', () {
     test('parses from JSON correctly', () {
       final json = {
