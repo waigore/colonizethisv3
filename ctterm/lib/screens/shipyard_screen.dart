@@ -4,10 +4,18 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:ctterm/screens/input_mode.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final _log = tuiLogger();
+
+T? _firstWhereOrNull<T>(Iterable<T> items, bool Function(T) test) {
+  for (final item in items) {
+    if (test(item)) return item;
+  }
+  return null;
+}
 
 /// Display info for a ship type in the Shipyard.
 class ShipDisplayInfo {
@@ -76,7 +84,7 @@ class ShipyardScreen extends StatefulComponent {
 
 class _ShipyardScreenState extends State<ShipyardScreen> {
   int _selectedIndex = 0;
-  String _inputMode = 'none';
+  InputMode _inputMode = InputMode.none;
   String _feedbackMessage = '';
   Color _feedbackColor = Colors.white;
   String _provinceInput = '';
@@ -92,11 +100,7 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
   Player? _getHumanPlayer() {
     final playerId = _getHumanPlayerId();
     if (playerId == null) return null;
-    try {
-      return component.game.players.firstWhere((p) => p.id == playerId);
-    } catch (_) {
-      return null;
-    }
+    return _firstWhereOrNull(component.game.players, (p) => p.id == playerId);
   }
 
   List<ShipDisplayInfo> _getShipList() {
@@ -166,7 +170,7 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
     );
     component.onOrdersChanged(newOrders);
     _log.i('build order for ${ship.name} in $provinceId');
-    setState(() { _inputMode = 'none'; _provinceInput = ''; _feedbackMessage = 'Build order issued'; _feedbackColor = Colors.green; });
+    setState(() { _inputMode = InputMode.none; _provinceInput = ''; _feedbackMessage = 'Build order issued'; _feedbackColor = Colors.green; });
   }
 
   void _cancelBuildOrder(int index) {
@@ -187,19 +191,19 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
       navalMissionOrdersByPlayerId: component.orders.navalMissionOrdersByPlayerId,
     );
     component.onOrdersChanged(newOrders);
-    setState(() { _inputMode = 'none'; _feedbackMessage = 'Order cancelled'; _feedbackColor = Colors.green; });
+    setState(() { _inputMode = InputMode.none; _feedbackMessage = 'Order cancelled'; _feedbackColor = Colors.green; });
   }
 
   bool _handleKeyEvent(dynamic event) {
     final key = event.logicalKey;
     final c = event.character?.toLowerCase();
     if (key == LogicalKey.escape) {
-      if (_inputMode != 'none') { setState(() { _inputMode = 'none'; _provinceInput = ''; _feedbackMessage = ''; }); return true; }
+      if (_inputMode != InputMode.none) { setState(() { _inputMode = InputMode.none; _provinceInput = ''; _feedbackMessage = ''; }); return true; }
       component.onNavigate(CttermRoute.inGameShell); return true;
     }
     final ships = _getShipList();
     if (ships.isEmpty) return false;
-    if (_inputMode == 'province') {
+    if (_inputMode == InputMode.province) {
       if (key == LogicalKey.enter) { _issueBuildOrder(_provinceInput, ships[_selectedIndex]); return true; }
       else if (key == LogicalKey.backspace) { setState(() { _provinceInput = _provinceInput.isNotEmpty ? _provinceInput.substring(0, _provinceInput.length - 1) : ''; }); return true; }
       else if (c != null && (c == '|' || (c.codeUnitAt(0) >= 48 && c.codeUnitAt(0) <= 57))) { setState(() { _provinceInput += c; }); return true; }
@@ -207,7 +211,7 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
     }
     if (key == LogicalKey.arrowUp || c == 'k') { setState(() { _selectedIndex = (_selectedIndex - 1).clamp(0, ships.length - 1); _feedbackMessage = ''; }); return true; }
     if (key == LogicalKey.arrowDown || c == 'j') { setState(() { _selectedIndex = (_selectedIndex + 1).clamp(0, ships.length - 1); _feedbackMessage = ''; }); return true; }
-    if (c == 'b') { setState(() { _inputMode = 'province'; _provinceInput = ''; _feedbackMessage = 'Enter province ID:'; _feedbackColor = Colors.cyan; }); return true; }
+    if (c == 'b') { setState(() { _inputMode = InputMode.province; _provinceInput = ''; _feedbackMessage = 'Enter province ID:'; _feedbackColor = Colors.cyan; }); return true; }
     if (c == 'c') { final orders = _getBuildOrders(); if (orders.isNotEmpty && _selectedIndex < orders.length) _cancelBuildOrder(_selectedIndex); return true; }
     if (c == 'h') { setState(() { _showHomeFleet = !_showHomeFleet; }); return true; }
     return false;
@@ -379,7 +383,7 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
             ),
           ),
           Container(padding: const EdgeInsets.all(1), color: Colors.grey, child: Row(children: [
-            if (_inputMode == 'province') ...[
+            if (_inputMode == InputMode.province) ...[
               Text(_provinceInput.isEmpty ? 'Province: ' : _provinceInput, style: TextStyle(color: _feedbackColor)),
               const Text('_', style: TextStyle(color: Colors.cyan)),
             ] else Text(_feedbackMessage.isEmpty ? 'arrows/jk b c h' : _feedbackMessage, style: TextStyle(color: _feedbackColor)),

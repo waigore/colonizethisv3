@@ -61,20 +61,24 @@ void initCttermLogging([String? dataDirOverride]) {
       ext: '.log',
       bufferSize: 20,
     ));
-  } catch (_) {
+  } on Object {
     _fileLogger = null;
     _logFilePath = null;
     return;
   }
 
   Logger.addLogListener((LogEvent e) {
-    try {
-      final lines = _formatLogEvent(e);
-      for (final line in lines) {
-        _fileLogger!.info(line);
+    final logger = _fileLogger;
+    if (logger == null) {
+      return;
+    }
+    final lines = _formatLogEvent(e);
+    for (final line in lines) {
+      try {
+        logger.info(line);
+      } on Exception {
+        // Ignore so file logging never blocks or breaks the app.
       }
-    } catch (_) {
-      // Ignore so file logging never blocks or breaks the app.
     }
   });
 }
