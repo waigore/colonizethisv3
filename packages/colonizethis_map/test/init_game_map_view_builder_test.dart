@@ -745,6 +745,103 @@ void main() {
     });
 
     test(
+      'town markers include non-player provinces with valid townTileKey',
+      () {
+        final owMap = TileMapResult(
+          width: 2,
+          height: 1,
+          grid: [
+            ['p1', 'p2'],
+          ],
+        );
+        final nwMap = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: [
+            ['p1'],
+          ],
+        );
+        final owTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'p2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final nwTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final game = Game(
+          id: 'towns_non_player',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp1',
+                  townTileKey: 'oldWorld|p1|0|0',
+                ),
+                Province(
+                  id: 'oldWorld|p2',
+                  regionId: 'oldWorld',
+                  ownerId: 'ai_minor',
+                  townTileKey: 'oldWorld|p2|1|0',
+                ),
+              ],
+              units: const [],
+            ),
+            newWorld: const RegionData(provinces: [], units: []),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'Player GP', isHuman: true),
+          ],
+          minorNations: const [
+            MinorNation(id: 'ai_minor', displayName: 'AI Minor Nation'),
+          ],
+          tribes: const [],
+        );
+
+        final viewData = buildInitGameMapViewData(
+          game: game,
+          tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
+          topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+          cellSize: 8,
+        );
+
+        expect(viewData.oldWorld.townMarkers.length, equals(2));
+        expect(
+          viewData.oldWorld.townMarkers.any(
+            (m) => m.provinceId == 'p1' && m.x == 0 && m.y == 0,
+          ),
+          isTrue,
+        );
+        expect(
+          viewData.oldWorld.townMarkers.any(
+            (m) => m.provinceId == 'p2' && m.x == 1 && m.y == 0,
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test(
       'town markers: port on capital tile places port drawable on sea by town',
       () {
         final owMap = TileMapResult(

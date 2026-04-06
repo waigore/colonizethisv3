@@ -11,6 +11,17 @@ void main() {
   suppressLogsForTests();
 
   group('Town icon cache', () {
+    test('town icon policy uses inland + port assets only', () {
+      expect(kTownIconIds.contains('town_inland_64'), isTrue);
+      expect(kTownIconIds.contains('port'), isTrue);
+      expect(kTownIconIds.contains('town_coastal'), isFalse);
+    });
+
+    test('town and port render sizes follow spec', () {
+      expect(TownIconCache.townIconSize, equals(64.0));
+      expect(TownIconCache.portIconSize, equals(32.0));
+    });
+
     testWidgets(
       'town and port icon contracts use expected ids and sizes',
       (WidgetTester tester) async {

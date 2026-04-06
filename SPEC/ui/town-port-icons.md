@@ -24,7 +24,7 @@ Icons are stored in `app/assets/icons/` following the existing resource icon nam
 | Port | `ui_icon_com_port.png` | Harbor with ships/anchors |
 | Town (all towns) | `ui_icon_com_town_inland_64.png` | Upscaled inland village/house cluster |
 
-### Asset Requirements
+### Asset and Render Requirements
 
 - **Format:** Town icon is 64×64 PNG with RGBA transparency; port icon is 32×32 PNG.
 - **Style:** Colonial-era pixel art matching `ui_icon_com_*.png` resource icons
@@ -66,7 +66,7 @@ Implementation populates `TownMarkerView.portIconX` / `portIconY` when `isPort` 
 
 ### Visibility
 
-- Town icon uses visibility of the **town** cell.
+- Town icon uses visibility of the **town** cell and applies regardless of province ownership (player, AI, unowned), subject only to visibility/fog rules.
 - Port icon uses visibility of the **port drawable** cell (typically sea when offset).
 - Fogged tiles render icons at reduced opacity; unrevealed tiles show no icon.
 
@@ -168,6 +168,8 @@ ProvinceSeaZoneDetailOverlay shown
 - **Given** a province with `townTileKey` (player-owned or non-player-owned), **when** the map renders in full visibility mode, **then** a town icon is displayed for that province.
 - **Given** a province with `townTileKey` set that is coastal **non-port**, **when** the map renders, **then** `isCoastal` is true on `TownMarkerView` and only the town icon is shown (no port sprite).
 - **Given** a province without a town (`townTileKey` is null), **when** the map renders, **then** no town icon is displayed for that province.
+- **Given** a non-player province with `townTileKey` in full visibility mode, **when** the map renders, **then** its town icon is displayed.
+- **Given** player-constrained visibility mode for a non-player province with `townTileKey`, **when** the town tile visibility is `visible` or `fogged`, **then** the town icon is displayed (fogged styling applies); **when** `unrevealed`, **then** no icon is shown.
 - **Given** a map widget in player-constrained visibility mode, **when** a town icon is on a fogged tile, **then** the icon is rendered at reduced opacity.
 - **Given** a map widget in player-constrained visibility mode, **when** a town icon is on an unrevealed tile, **then** no icon is rendered.
 
