@@ -1,7 +1,10 @@
 import 'current_work.dart';
 
 /// Normalizes persisted province id: tile-derived wins when [tileKey] is set.
-String _storedProvinceIdForTileAndLocation(String? tileKey, String locationHint) {
+String _storedProvinceIdForTileAndLocation(
+  String? tileKey,
+  String locationHint,
+) {
   if (tileKey != null && tileKey.isNotEmpty) {
     final derived = Unit.provinceIdFromTileKey(tileKey);
     if (derived != null) return derived;
@@ -23,22 +26,31 @@ class Unit {
     this.status = UnitStatus.idle,
     this.medals = 0,
     this.tileKey,
+    this.originTileKey,
+    this.assignedTileKey,
     this.currentWork,
   }) : _storedProvinceId = _storedProvinceIdForTileAndLocation(
-          tileKey,
-          locationProvinceId,
-        );
+         tileKey,
+         locationProvinceId,
+       );
 
   final String id;
   final String type;
   final String ownerId;
   final String _storedProvinceId;
   final UnitStatus status;
+
   /// Experience medals (0–4); multiplies FPN/FPM in combat. SPEC/game/military-units.md.
   final int medals;
 
   /// Tile-level position for civilians only (format regionId|provinceId|x|y). Null for military/naval.
   final String? tileKey;
+
+  /// Original tile before current assignment started; null when idle or after work resolves.
+  final String? originTileKey;
+
+  /// Assigned target tile for current in-progress work; null when idle or after work resolves.
+  final String? assignedTileKey;
 
   /// Province id parsed from [tileKey]; null if tileKey is null or invalid format.
   /// Use [Unit.provinceIdFromTileKey] for static parsing.
@@ -77,24 +89,27 @@ class Unit {
   }
 
   /// Canonical province id: derived from [tileKey] when set, else stored placement (military / no tile).
-  String get locationProvinceId =>
-      (tileKey != null && tileKey!.isNotEmpty)
-          ? (provinceIdFromTileKey(tileKey) ?? _storedProvinceId)
-          : _storedProvinceId;
+  String get locationProvinceId => (tileKey != null && tileKey!.isNotEmpty)
+      ? (provinceIdFromTileKey(tileKey) ?? _storedProvinceId)
+      : _storedProvinceId;
 
   /// Multi-turn work in progress. SPEC/program/development-resolution.md.
   final CurrentWork? currentWork;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'ownerId': ownerId,
-        'provinceId': locationProvinceId,
-        'status': status.name,
-        if (medals != 0) 'medals': medals,
-        if (tileKey != null && tileKey!.isNotEmpty) 'tileKey': tileKey,
-        if (currentWork != null) 'currentWork': currentWork!.toJson(),
-      };
+    'id': id,
+    'type': type,
+    'ownerId': ownerId,
+    'provinceId': locationProvinceId,
+    'status': status.name,
+    if (medals != 0) 'medals': medals,
+    if (tileKey != null && tileKey!.isNotEmpty) 'tileKey': tileKey,
+    if (originTileKey != null && originTileKey!.isNotEmpty)
+      'originTileKey': originTileKey,
+    if (assignedTileKey != null && assignedTileKey!.isNotEmpty)
+      'assignedTileKey': assignedTileKey,
+    if (currentWork != null) 'currentWork': currentWork!.toJson(),
+  };
 
   static Unit fromJson(Map<String, dynamic> json) {
     final cw = json['currentWork'];
@@ -112,16 +127,19 @@ class Unit {
       status: _statusFromJson(json['status'] as String?),
       medals: (json['medals'] as int?) ?? 0,
       tileKey: tileKey,
+      originTileKey: json['originTileKey'] as String?,
+      assignedTileKey: json['assignedTileKey'] as String?,
       currentWork: cw is Map<String, dynamic>
           ? CurrentWork.fromJson(cw)
           : cw is Map
-              ? CurrentWork.fromJson(Map<String, dynamic>.from(cw))
-              : null,
+          ? CurrentWork.fromJson(Map<String, dynamic>.from(cw))
+          : null,
     );
   }
 
   /// [clearCurrentWork] when true sets [currentWork] to null (use when cancelling work).
   /// Otherwise [currentWork] is used if provided, else kept.
+  /// [clearOriginTileKey] / [clearAssignedTileKey] clear their tracking fields.
   Unit copyWith({
     String? id,
     String? type,
@@ -130,11 +148,16 @@ class Unit {
     UnitStatus? status,
     int? medals,
     String? tileKey,
+    String? originTileKey,
+    String? assignedTileKey,
     CurrentWork? currentWork,
     bool clearCurrentWork = false,
+    bool clearOriginTileKey = false,
+    bool clearAssignedTileKey = false,
   }) {
     final nextTile = tileKey ?? this.tileKey;
-    final canonicalHint = locationProvinceId ??
+    final canonicalHint =
+        locationProvinceId ??
         ((nextTile != null && nextTile.isNotEmpty)
             ? (Unit.provinceIdFromTileKey(nextTile) ?? _storedProvinceId)
             : _storedProvinceId);
@@ -146,8 +169,13 @@ class Unit {
       status: status ?? this.status,
       medals: medals ?? this.medals,
       tileKey: nextTile,
-      currentWork:
-          clearCurrentWork ? null : (currentWork ?? this.currentWork),
+      originTileKey: clearOriginTileKey
+          ? null
+          : (originTileKey ?? this.originTileKey),
+      assignedTileKey: clearAssignedTileKey
+          ? null
+          : (assignedTileKey ?? this.assignedTileKey),
+      currentWork: clearCurrentWork ? null : (currentWork ?? this.currentWork),
     );
   }
 
@@ -163,27 +191,27 @@ class Unit {
           status == other.status &&
           medals == other.medals &&
           tileKey == other.tileKey &&
+          originTileKey == other.originTileKey &&
+          assignedTileKey == other.assignedTileKey &&
           currentWork == other.currentWork;
 
   @override
   int get hashCode => Object.hash(
-        id,
-        type,
-        ownerId,
-        _storedProvinceId,
-        status,
-        medals,
-        tileKey,
-        currentWork,
-      );
+    id,
+    type,
+    ownerId,
+    _storedProvinceId,
+    status,
+    medals,
+    tileKey,
+    originTileKey,
+    assignedTileKey,
+    currentWork,
+  );
 }
 
 /// Minimal status for Phase 2 work and movement.
-enum UnitStatus {
-  idle,
-  working,
-  done,
-}
+enum UnitStatus { idle, working, done }
 
 UnitStatus _statusFromJson(String? value) {
   if (value == null) return UnitStatus.idle;
