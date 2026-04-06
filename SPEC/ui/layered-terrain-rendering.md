@@ -41,11 +41,14 @@ The map renderer draws terrain in **three passes**:
 - **Purpose**: Draws feature overlays on top of land base.
 - **Terrain types**: Forest, Hills, Mountain, Swamp.
 - **Rendering**: Each feature cell draws its land base first (plains or desert, determined by L1), then overlays the feature standalone tile.
-- **Standalone tiles**:
-  - `forest_standalone` — Dense forest with trees
-  - `hills_standalone` — Rolling hills
-  - `mountain_standalone` — Rocky mountain peak
-  - `swamp_standalone` — Murky swamp
+- **Overlay tile IDs**:
+  - `tile_forest` — Default forest overlay
+  - `tile_forest_timber` — Forest overlay variant for timber resource tiles
+  - `tile_hills` — Default hills overlay
+  - `tile_hills_mine` — Hills overlay variant for mine-case tiles
+  - `tile_hills_wool` — Hills overlay variant for wool resource tiles
+  - `tile_mountain` — Default mountain overlay
+  - `tile_swamp` — Default swamp overlay
 
 ---
 
@@ -123,10 +126,13 @@ for each cell:
 
 | Tile ID | Description |
 |---------|-------------|
-| `forest_standalone` | Dense forest with tree canopies, overlay on land base |
-| `hills_standalone` | Rolling hills, overlay on land base |
-| `mountain_standalone` | Rocky mountain peak, overlay on land base |
-| `swamp_standalone` | Murky swamp, overlay on land base |
+| `tile_forest` | Default dense forest canopy overlay on land base |
+| `tile_forest_timber` | Forest overlay variant for `resourceId = timber` |
+| `tile_hills` | Default rolling hills overlay on land base |
+| `tile_hills_mine` | Hills overlay variant for mine-case tiles |
+| `tile_hills_wool` | Hills overlay variant for `resourceId = wool` |
+| `tile_mountain` | Rocky mountain overlay on land base |
+| `tile_swamp` | Murky swamp overlay on land base |
 
 ---
 
@@ -189,7 +195,9 @@ The **logic** (which tileset applies per corner pattern) is fixed by terrain typ
 - Given a sea cell adjacent to desert, when rendering, then the `sea_desert` Wang tileset is used.
 - Given a plains cell adjacent to desert, when rendering, then the `plains_desert` Wang tileset is used.
 - Given a desert cell adjacent to plains, when rendering, then the `plains_desert` Wang tileset is used.
-- Given a feature cell (forest/hills/mountain/swamp), when rendering, then the appropriate land base (plains or desert) is drawn first, then the feature standalone tile on top.
+- Given a feature cell (forest/hills/mountain/swamp), when rendering, then the appropriate land base (plains or desert) is drawn first, then the selected feature overlay tile on top.
+- Given a forest tile with `resourceId = timber`, when rendering L2+, then the renderer selects `tile_forest_timber`; otherwise for forest it selects `tile_forest`.
+- Given a hills tile where `improvementLevel > 0` and the `resourceId` is a mineral resource, when rendering L2+, then the renderer selects `tile_hills_mine`; otherwise if `resourceId = wool`, then it selects `tile_hills_wool`; otherwise it selects `tile_hills`.
 - Given fog-of-war visibility, when rendering, then appropriate darkening is applied to obscured cells.
 
 ---

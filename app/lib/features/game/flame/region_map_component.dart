@@ -777,10 +777,17 @@ class CtRegionMapComponent extends PositionComponent {
     // If a standalone tile is missing (e.g. asset regression), skip drawing the
     // overlay rather than failing the entire map render. Wang tilesets remain
     // strict (they must exist), but L2+ overlays are best-effort.
-    final standaloneTile = terrainTilesetCache.getStandaloneTile(terrain);
+    final overlayTileKey = featureOverlayTileKey(
+      terrain: terrain,
+      resourceId: cell.resourceId,
+      improvementLevel: cell.improvementLevel,
+    );
+    final standaloneTile =
+        terrainTilesetCache.getStandaloneTileByKey(overlayTileKey) ??
+        terrainTilesetCache.getStandaloneTile(terrain);
     if (standaloneTile == null) {
       _log.w(
-        'Standalone tile missing for terrain=$terrain; '
+        'Feature overlay tile missing for key=$overlayTileKey terrain=$terrain; '
         'skipping feature overlay for cell (${cell.x}, ${cell.y})',
       );
       return;

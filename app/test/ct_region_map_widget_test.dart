@@ -155,7 +155,9 @@ void main() {
       'didUpdateWidget refreshes map region presence data after rebuild',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();
-        final localProvinceId = base.cells.firstWhere((c) => !c.isSea).regionCellId;
+        final localProvinceId = base.cells
+            .firstWhere((c) => !c.isSea)
+            .regionCellId;
         final fullProvinceId = '${base.regionId}|$localProvinceId';
 
         RegionMapViewData withPresence({
@@ -211,8 +213,10 @@ void main() {
         );
         expect(gameWidgetFinder, findsOneWidget);
         final beforeWidget = tester.widget(gameWidgetFinder);
-        final beforeRegion = (beforeWidget as dynamic).game.region as RegionMapViewData;
-        final beforePresence = beforeRegion.provinceUnitPresenceByProvinceId[fullProvinceId];
+        final beforeRegion =
+            (beforeWidget as dynamic).game.region as RegionMapViewData;
+        final beforePresence =
+            beforeRegion.provinceUnitPresenceByProvinceId[fullProvinceId];
         expect(beforePresence, isNotNull);
         expect(beforePresence!.civilianCount, 0);
         expect(beforePresence.regimentCount, 0);
@@ -222,8 +226,10 @@ void main() {
         await tester.pump();
 
         final afterWidget = tester.widget(gameWidgetFinder);
-        final afterRegion = (afterWidget as dynamic).game.region as RegionMapViewData;
-        final afterPresence = afterRegion.provinceUnitPresenceByProvinceId[fullProvinceId];
+        final afterRegion =
+            (afterWidget as dynamic).game.region as RegionMapViewData;
+        final afterPresence =
+            afterRegion.provinceUnitPresenceByProvinceId[fullProvinceId];
         expect(afterPresence, isNotNull);
         expect(afterPresence!.civilianCount, 1);
         expect(afterPresence.regimentCount, 1);
@@ -251,6 +257,33 @@ void main() {
         ];
 
         for (final path in [...pngPaths, ...jsonPaths]) {
+          final data = await rootBundle.load(path);
+          expect(
+            data.lengthInBytes,
+            greaterThan(0),
+            reason: 'Asset $path is empty',
+          );
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'required canonical and variant L2 overlay PNGs exist in bundle',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        const paths = [
+          'assets/images/terrain/tile_forest.png',
+          'assets/images/terrain/tile_forest_timber.png',
+          'assets/images/terrain/tile_hills.png',
+          'assets/images/terrain/tile_hills_mine.png',
+          'assets/images/terrain/tile_hills_wool.png',
+          'assets/images/terrain/tile_mountain.png',
+          'assets/images/terrain/tile_swamp.png',
+        ];
+
+        for (final path in paths) {
           final data = await rootBundle.load(path);
           expect(
             data.lengthInBytes,
