@@ -12,6 +12,7 @@ import '../order_visibility.dart';
 import '../order_validation_result.dart';
 import '../unit_type_helpers.dart';
 import 'work_order_cost_calculator.dart';
+import 'work_order_special_target_validation.dart';
 
 /// Validates work orders for a single player in submission order.
 /// Mutates internal economy state (stockpile, treasury) and [devExclusiveTiles]
@@ -96,92 +97,22 @@ class WorkOrderValidator {
           }
         }
 
-        if (o.target == kWorkTargetStealTech) {
-          if (targetProvinceId == null) {
-            return OrderValidationResult.rejected(
-              'Invalid target for steal_tech',
-            );
-          }
-          final otherPlayer = _game.players
-              .where(
-                (p) =>
-                    p.id != _playerId &&
-                    p.capitalProvinceId == targetProvinceId,
-              )
-              .firstOrNull;
-          if (otherPlayer == null) {
-            return OrderValidationResult.rejected(
-              'steal_tech target must be another Great Power capital province',
-            );
-          }
-          final ourTech = _player.techUnlocked ?? {};
-          final theirTech = otherPlayer.techUnlocked ?? {};
-          final hasTechWeLack = theirTech.entries.any(
-            (e) => e.value == true && ourTech[e.key] != true,
+        final specialCheck = workOrderSpecialTargetChecks[o.target];
+        if (specialCheck != null) {
+          final specialCtx = WorkOrderSpecialTargetContext(
+            game: _game,
+            player: _player,
+            playerId: _playerId,
+            treasury: _treasury,
           );
-          if (!hasTechWeLack) {
-            return OrderValidationResult.rejected(
-              'Target has no technology you lack',
-            );
-          }
-        } else if (o.target == kWorkTargetCounterSpy) {
-          if (ownerId != _playerId) {
-            return OrderValidationResult.rejected(
-              'counter_spy target must be your own province',
-            );
-          }
-        } else if (o.target == kWorkTargetPurchaseLand) {
-          if (ownerId == null || ownerId == _playerId) {
-            return OrderValidationResult.rejected(
-              'purchase_land target must be a Minor or Tribe province',
-            );
-          }
-          if (!isMinorOrTribe(_game, ownerId)) {
-            return OrderValidationResult.rejected(
-              'purchase_land target must be a Minor or Tribe province',
-            );
-          }
-          final rel = getRelation(_game, _playerId, ownerId);
-          if (rel?.atWar == true) {
-            return OrderValidationResult.rejected(
-              'Cannot purchase land: at war with that faction',
-            );
-          }
-          final overture = getOverture(_game, _playerId, ownerId);
-          if (overture == null || !overture.hasEmbassy) {
-            return OrderValidationResult.rejected(
-              'Cannot purchase land: embassy required with that Minor/Tribe',
-            );
-          }
-          final resourceId =
-              _game.worldState.resourceByTileKey[o.targetTileKey];
-          if (resourceId == null || resourceId.isEmpty) {
-            return OrderValidationResult.rejected('Tile has no resource');
-          }
-          if (kMineralResourceIds.contains(resourceId)) {
-            final prospected =
-                _game.worldState.playerProspectedTiles[_playerId] ??
-                const <String>{};
-            if (!prospected.contains(o.targetTileKey)) {
-              return OrderValidationResult.rejected(
-                'Mineral tile must be prospected first',
-              );
-            }
-          }
-          final cost = purchaseLandCost(resourceId);
-          if (_treasury < cost) {
-            return OrderValidationResult.rejected(
-              'Insufficient treasury for purchase_land (need $cost)',
-            );
-          }
-          final existingBuyer =
-              _game.worldState.purchasedTilesByTileKey[o.targetTileKey];
-          if (existingBuyer != null) {
-            return OrderValidationResult.rejected(
-              existingBuyer == _playerId
-                  ? 'You already own this tile'
-                  : 'Tile already purchased by another power',
-            );
+          final specialResult = specialCheck(
+            specialCtx,
+            o,
+            targetProvinceId,
+            ownerId,
+          );
+          if (specialResult != null) {
+            return specialResult;
           }
         } else if (o.target == 'build_improvement') {
           final controlled = isTileControlledByPlayer(
