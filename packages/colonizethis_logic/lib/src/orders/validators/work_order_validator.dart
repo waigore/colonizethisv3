@@ -12,7 +12,7 @@ import '../order_visibility.dart';
 import '../order_validation_result.dart';
 import '../unit_type_helpers.dart';
 import 'work_order_cost_calculator.dart';
-import 'work_order_special_target_validation.dart';
+import 'work_order_target_prechecks.dart';
 
 /// Validates work orders for a single player in submission order.
 /// Mutates internal economy state (stockpile, treasury) and [devExclusiveTiles]
@@ -89,68 +89,28 @@ class WorkOrderValidator {
             : null;
         final ownerId = province?.ownerId;
 
-        if (o.target == 'upgrade_town') {
-          if (_player.techUnlocked?[kTechIdNationalBureaucracy] != true) {
-            return OrderValidationResult.rejected(
-              'National Bureaucracy tech required for upgrade_town',
-            );
-          }
+        final preCtx = WorkOrderTargetPrecheckContext(
+          game: _game,
+          player: _player,
+          playerId: _playerId,
+          treasury: _treasury,
+          civilianEmbassyWorkAllowed: _civilianWorkAllowedInMinorTribeProvince,
+        );
+        final preResult = runWorkOrderTargetPrecheck(
+          preCtx,
+          o,
+          targetProvinceId,
+          ownerId,
+          type,
+        );
+        if (preResult != null) {
+          return preResult;
         }
 
-        final specialCheck = workOrderSpecialTargetChecks[o.target];
-        if (specialCheck != null) {
-          final specialCtx = WorkOrderSpecialTargetContext(
-            game: _game,
-            player: _player,
-            playerId: _playerId,
-            treasury: _treasury,
-          );
-          final specialResult = specialCheck(
-            specialCtx,
-            o,
-            targetProvinceId,
-            ownerId,
-          );
-          if (specialResult != null) {
-            return specialResult;
-          }
-        } else if (o.target == 'build_improvement') {
-          final controlled = isTileControlledByPlayer(
-            _game,
-            _playerId,
-            o.targetTileKey,
-          );
-          final embassyWork = _civilianWorkAllowedInMinorTribeProvince(
-            type,
-            ownerId,
-          );
-          if (!controlled && !embassyWork) {
-            return OrderValidationResult.rejected(
-              'Cannot build improvement in foreign or uncontrolled province',
-            );
-          }
-          final resourceId =
-              _game.worldState.resourceByTileKey[o.targetTileKey];
-          if (resourceId == null || resourceId.isEmpty) {
-            return OrderValidationResult.rejected(
-              'Tile has no resource; build_improvement requires a resource on the tile',
-            );
-          }
-          final currentLevel = _game.worldState.tileState.improvementLevel(
-            o.targetTileKey,
-          );
-          if (currentLevel >= 4) {
-            return OrderValidationResult.rejected(
-              'Improvement level already at maximum (4)',
-            );
-          }
-          final techCap = extractionCapForUnlocked(_player.techUnlocked);
-          if (currentLevel + 1 > techCap) {
-            return OrderValidationResult.rejected(
-              'Insufficient tech to build next improvement level (cap $techCap)',
-            );
-          }
-        } else if (!isExplorerUnit(type)) {
+        if (!isExplorerUnit(type) &&
+            !kWorkTargetsSkippingDefaultForeignProvinceCheck.contains(
+              o.target,
+            )) {
           final controlled = isTileControlledByPlayer(
             _game,
             _playerId,
