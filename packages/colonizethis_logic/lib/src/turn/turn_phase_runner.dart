@@ -10,15 +10,7 @@ import 'turn_resolution_events.dart';
 import 'turn_resolution_result.dart';
 import 'turn_resolution_sequence.dart';
 import 'turn_resolver_config.dart';
-import 'phases/build_work_phase.dart';
-import 'phases/combat_phase.dart';
-import 'phases/consumption_phase.dart';
-import 'phases/extraction_phase.dart';
-import 'phases/minor_regiment_upgrade_phase.dart';
-import 'phases/movement_phase.dart';
-import 'phases/naval_interception_turn_phase.dart';
-import 'phases/production_phase.dart';
-import 'phases/riches_to_treasury_phase.dart';
+import 'phases.dart';
 
 final _log = logicLogger();
 

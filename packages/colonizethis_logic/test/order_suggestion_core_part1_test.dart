@@ -226,6 +226,60 @@ void main() {
       expect(suggestions.where((o) => o.target == 'explore'), isEmpty);
     });
 
+    test('suggestWorkOrders explore target uses kWorkTargetExplore', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      const p1Id = '$ow|p1';
+      const t0 = 'oldWorld|p1|0|0';
+      const t1 = 'oldWorld|p1|1|0';
+      final player = const Player(
+        id: playerId,
+        displayName: 'GP',
+        isHuman: false,
+      );
+      final p1 = Province(id: p1Id, regionId: ow, ownerId: playerId);
+      final unit = Unit(
+        id: 'u1',
+        type: 'Explorer',
+        ownerId: playerId,
+        locationProvinceId: p1Id,
+      );
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(provinces: [p1], units: [unit]),
+        newWorld: const RegionData(),
+        playerVisibilityByTile: const {
+          playerId: {
+            t0: 'fullyVisible',
+            t1: 'revealed',
+          },
+        },
+        tileKeysByRegionAndProvince: {
+          ow: {p1Id: [t0, t1]},
+        },
+      );
+      final game = Game(id: 'g1', worldState: world, players: [player]);
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+      final view = buildPlayerView(game, topology, playerId);
+      final suggestions = suggestWorkOrders(
+        view,
+        game,
+        topology,
+        const Orders(),
+      );
+      final explore = suggestions.where((o) => o.target == kWorkTargetExplore);
+      expect(explore, isNotEmpty);
+    });
+
     test('no prospect suggestion when province not at least fogged', () {
       const playerId = 'gp1';
       const ow = 'oldWorld';

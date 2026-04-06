@@ -123,6 +123,10 @@ void main() {
         workOrderVisibilityOk(view, unit, 'explore'),
         isTrue,
       );
+      expect(
+        workOrderVisibilityOk(view, unit, kWorkTargetExplore),
+        isTrue,
+      );
     });
 
     test('prospect requires at least fogged', () {

@@ -365,141 +365,14 @@ Game applyBuildAndWorkOrders(
     List<Province> Function() getProvinces,
     void Function(List<Province>) setProvinces,
   ) {
-    _log.d(
-      'work completed unit=${u.id} workTarget=${cw.workTarget} tileKey=${cw.tileKey}',
+    _dispatchCompletedWorkTarget(
+      s,
+      u,
+      cw,
+      getProvinces,
+      setProvinces,
+      applyExploreCompletion,
     );
-    switch (cw.workTarget) {
-      case 'build_improvement':
-        // Stored level: min(level+1, 4). Tech/resource gating at assign only;
-        // SPEC/program/development-resolution.md (build_improvement completion).
-        final level = s.tileState.improvementLevel(cw.tileKey);
-        s.tileState = s.tileState.setImprovement(
-          cw.tileKey,
-          (level + 1).clamp(0, 4),
-        );
-        break;
-      case 'upgrade_town':
-        final provinces = getProvinces();
-        final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
-        if (idx >= 0) {
-          final p = provinces[idx];
-          setProvinces(
-            List<Province>.from(provinces)
-              ..[idx] = p.copyWith(
-                townDevelopmentLevel: (p.townDevelopmentLevel + 1).clamp(0, 4),
-              ),
-          );
-        }
-        break;
-      case 'explore':
-        applyExploreCompletion(
-          s,
-          u,
-          ProvinceId.regionIdFrom(u.locationProvinceId),
-        );
-        break;
-      case 'build_road':
-        {
-          final roadLevel = s.tileState.roadLevel(cw.tileKey);
-          final player = s.game.players
-              .where((p) => p.id == u.ownerId)
-              .firstOrNull;
-          final hasRoadConstruction =
-              player?.techUnlocked?['road_construction'] == true;
-          final nextLevel = (roadLevel + 1).clamp(
-            0,
-            hasRoadConstruction ? 2 : 1,
-          );
-          s.tileState = s.tileState.setRoadLevel(cw.tileKey, nextLevel);
-
-          final tileMap = s.tileMapByRegion;
-          if (tileMap != null) {
-            _propagateRoadToAdjacentCapitalOrPort(
-              tileKey: cw.tileKey,
-              nextLevel: nextLevel,
-              player: player,
-              worldState: s.game.worldState,
-              tileMapByRegion: tileMap,
-              tileState: s.tileState,
-              setTileState: (newTileState) => s.tileState = newTileState,
-            );
-          }
-          break;
-        }
-      case 'build_port':
-        if (s.topology != null) {
-          final parts = cw.tileKey.split('|');
-          final regionIdFromTile = parts.isNotEmpty
-              ? parts[0]
-              : ProvinceId.regionIdFrom(u.locationProvinceId);
-          final localId = parts.length > 1
-              ? parts[1]
-              : ProvinceId.localIdFrom(u.locationProvinceId);
-          final fullProvinceId = ProvinceId.full(regionIdFromTile, localId);
-          final seaZoneId = seaZoneIdForProvince(
-            s.topology!,
-            localId,
-            regionId: regionIdFromTile,
-          );
-          if (seaZoneId != null) {
-            s.portsByProvinceSeaboard['$fullProvinceId|$seaZoneId'] =
-                cw.tileKey;
-            s.tileState = s.tileState.setRoadLevel(cw.tileKey, 4);
-          }
-        }
-        break;
-      case 'build_fort':
-        {
-          final provinces = getProvinces();
-          final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
-          if (idx >= 0) {
-            final p = provinces[idx];
-            setProvinces(
-              List<Province>.from(provinces)
-                ..[idx] = p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3)),
-            );
-          }
-          if (s.topology != null && s.onDialogue != null) {
-            final seed =
-                ((s.game.globalGameSeed ?? 0) ^
-                        (s.game.worldState.turnState.turnNumber * 0x9E3779B1))
-                    .toInt();
-            final events = dialogueEventsForReactiveFortsOnBorder(
-              s.game,
-              s.topology!,
-              u.ownerId,
-              u.locationProvinceId,
-              seed,
-            );
-            for (final e in events) s.onDialogue!(e);
-          }
-          break;
-        }
-      case 'build_rail':
-        {
-          final player = s.game.players
-              .where((p) => p.id == u.ownerId)
-              .firstOrNull;
-          final roadLevel = s.tileState.roadLevel(cw.tileKey);
-          final terrain = terrainTypeForTileKey(s.tileMapByRegion, cw.tileKey);
-          final reason = rejectionReasonForBuildRailOrder(
-            techUnlocked: player?.techUnlocked,
-            roadLevel: roadLevel,
-            terrain: terrain,
-          );
-          if (reason == null) {
-            s.tileState = s.tileState.setRoadLevel(cw.tileKey, 4);
-          } else {
-            _log.d('build_rail completion skipped unit=${u.id} reason=$reason');
-          }
-        }
-        break;
-      case kWorkTargetStealTech:
-      case kWorkTargetCounterSpy:
-        break;
-      default:
-        break;
-    }
   }
 
   void processWorkUnits(
@@ -1171,3 +1044,212 @@ void _propagateRoadToAdjacentCapitalOrPort({
     }
   }
 }
+
+typedef _CompletedWorkHandler =
+    void Function(
+      _BuildWorkState s,
+      Unit u,
+      CurrentWork cw,
+      List<Province> Function() getProvinces,
+      void Function(List<Province>) setProvinces,
+      void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+    );
+
+void _dispatchCompletedWorkTarget(
+  _BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  void Function(List<Province>) setProvinces,
+  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+) {
+  _log.d(
+    'work completed unit=${u.id} workTarget=${cw.workTarget} tileKey=${cw.tileKey}',
+  );
+  final handler = _completedWorkTargetHandlers[cw.workTarget];
+  handler?.call(s, u, cw, getProvinces, setProvinces, applyExploreCompletion);
+}
+
+void _completedWorkBuildImprovement(
+  _BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  void Function(List<Province>) setProvinces,
+  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+) {
+  final level = s.tileState.improvementLevel(cw.tileKey);
+  s.tileState = s.tileState.setImprovement(cw.tileKey, (level + 1).clamp(0, 4));
+}
+
+void _completedWorkUpgradeTown(
+  _BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  void Function(List<Province>) setProvinces,
+  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+) {
+  final provinces = getProvinces();
+  final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
+  if (idx >= 0) {
+    final p = provinces[idx];
+    setProvinces(
+      List<Province>.from(provinces)
+        ..[idx] = p.copyWith(
+          townDevelopmentLevel: (p.townDevelopmentLevel + 1).clamp(0, 4),
+        ),
+    );
+  }
+}
+
+void _completedWorkExplore(
+  _BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  void Function(List<Province>) setProvinces,
+  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+) {
+  applyExploreCompletion(s, u, ProvinceId.regionIdFrom(u.locationProvinceId));
+}
+
+void _completedWorkBuildRoad(
+  _BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  void Function(List<Province>) setProvinces,
+  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+) {
+  final roadLevel = s.tileState.roadLevel(cw.tileKey);
+  final player = s.game.players.where((p) => p.id == u.ownerId).firstOrNull;
+  final hasRoadConstruction =
+      player?.techUnlocked?['road_construction'] == true;
+  final nextLevel = (roadLevel + 1).clamp(0, hasRoadConstruction ? 2 : 1);
+  s.tileState = s.tileState.setRoadLevel(cw.tileKey, nextLevel);
+
+  final tileMap = s.tileMapByRegion;
+  if (tileMap != null) {
+    _propagateRoadToAdjacentCapitalOrPort(
+      tileKey: cw.tileKey,
+      nextLevel: nextLevel,
+      player: player,
+      worldState: s.game.worldState,
+      tileMapByRegion: tileMap,
+      tileState: s.tileState,
+      setTileState: (newTileState) => s.tileState = newTileState,
+    );
+  }
+}
+
+void _completedWorkBuildPort(
+  _BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  void Function(List<Province>) setProvinces,
+  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+) {
+  if (s.topology == null) {
+    return;
+  }
+  final parts = cw.tileKey.split('|');
+  final regionIdFromTile = parts.isNotEmpty
+      ? parts[0]
+      : ProvinceId.regionIdFrom(u.locationProvinceId);
+  final localId = parts.length > 1
+      ? parts[1]
+      : ProvinceId.localIdFrom(u.locationProvinceId);
+  final fullProvinceId = ProvinceId.full(regionIdFromTile, localId);
+  final seaZoneId = seaZoneIdForProvince(
+    s.topology!,
+    localId,
+    regionId: regionIdFromTile,
+  );
+  if (seaZoneId != null) {
+    s.portsByProvinceSeaboard['$fullProvinceId|$seaZoneId'] = cw.tileKey;
+    s.tileState = s.tileState.setRoadLevel(cw.tileKey, 4);
+  }
+}
+
+void _completedWorkBuildFort(
+  _BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  void Function(List<Province>) setProvinces,
+  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+) {
+  final provinces = getProvinces();
+  final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
+  if (idx >= 0) {
+    final p = provinces[idx];
+    setProvinces(
+      List<Province>.from(provinces)
+        ..[idx] = p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3)),
+    );
+  }
+  if (s.topology != null && s.onDialogue != null) {
+    final seed =
+        ((s.game.globalGameSeed ?? 0) ^
+                (s.game.worldState.turnState.turnNumber * 0x9E3779B1))
+            .toInt();
+    final events = dialogueEventsForReactiveFortsOnBorder(
+      s.game,
+      s.topology!,
+      u.ownerId,
+      u.locationProvinceId,
+      seed,
+    );
+    for (final e in events) {
+      s.onDialogue!(e);
+    }
+  }
+}
+
+void _completedWorkBuildRail(
+  _BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  void Function(List<Province>) setProvinces,
+  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+) {
+  final player = s.game.players.where((p) => p.id == u.ownerId).firstOrNull;
+  final roadLevel = s.tileState.roadLevel(cw.tileKey);
+  final terrain = terrainTypeForTileKey(s.tileMapByRegion, cw.tileKey);
+  final reason = rejectionReasonForBuildRailOrder(
+    techUnlocked: player?.techUnlocked,
+    roadLevel: roadLevel,
+    terrain: terrain,
+  );
+  if (reason == null) {
+    s.tileState = s.tileState.setRoadLevel(cw.tileKey, 4);
+  } else {
+    _log.d('build_rail completion skipped unit=${u.id} reason=$reason');
+  }
+}
+
+void _completedWorkNoop(
+  _BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  void Function(List<Province>) setProvinces,
+  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+) {}
+
+/// Map-based work completion (Refs #1531). Unknown targets no-op.
+final Map<String, _CompletedWorkHandler> _completedWorkTargetHandlers =
+    <String, _CompletedWorkHandler>{
+      'build_improvement': _completedWorkBuildImprovement,
+      'upgrade_town': _completedWorkUpgradeTown,
+      kWorkTargetExplore: _completedWorkExplore,
+      'build_road': _completedWorkBuildRoad,
+      'build_port': _completedWorkBuildPort,
+      'build_fort': _completedWorkBuildFort,
+      'build_rail': _completedWorkBuildRail,
+      kWorkTargetStealTech: _completedWorkNoop,
+      kWorkTargetCounterSpy: _completedWorkNoop,
+    };
