@@ -1,6 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+import 'package:colonizethis_logic/ai_api.dart' show PlayerView;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -59,8 +59,7 @@ StrategicOrderResult generateStrategicOrders({
     tileMapByRegion: tileMapByRegion,
   );
   final moveCount = orders.moveOrdersByPlayerId[nationId]?.length ?? 0;
-  final armyMoveCount =
-      orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
+  final armyMoveCount = orders.armyMoveOrdersByPlayerId[nationId]?.length ?? 0;
   final buildCount = orders.buildUnitOrdersByPlayerId[nationId]?.length ?? 0;
   final workCount = orders.workOrdersByPlayerId[nationId]?.length ?? 0;
   final researchCount = orders.researchOrdersByPlayerId[nationId]?.length ?? 0;

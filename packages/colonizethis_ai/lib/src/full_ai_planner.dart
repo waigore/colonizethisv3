@@ -1,7 +1,8 @@
 /// Full Phase 6 AI order orchestration (delegates to strategic planners). SPEC/program/ai-planner.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'strategic_ai.dart';
@@ -40,8 +41,7 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
     personalityId: leaderId,
     hiddenAgendaId: agendaId,
   );
-  final suggestionAPI =
-      orderSuggestionApi ?? const DefaultOrderSuggestionAPI();
+  final suggestionAPI = orderSuggestionApi ?? const DefaultOrderSuggestionAPI();
   return generateStrategicOrders(
     game: game,
     topology: topology,
@@ -98,18 +98,46 @@ FullAIResult generateOrdersForGameFullAI(
       onMood: onMood,
     );
     economyPlansByPlayerId[player.id] = result.economyPlan;
-    _addOrdersIfNonEmpty(moveByPlayer, player.id, result.orders.moveOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(
+      moveByPlayer,
+      player.id,
+      result.orders.moveOrdersByPlayerId[player.id],
+    );
     _addOrdersIfNonEmpty(
       armyMoveByPlayer,
       player.id,
       result.orders.armyMoveOrdersByPlayerId[player.id],
     );
-    _addOrdersIfNonEmpty(buildByPlayer, player.id, result.orders.buildUnitOrdersByPlayerId[player.id]);
-    _addOrdersIfNonEmpty(workByPlayer, player.id, result.orders.workOrdersByPlayerId[player.id]);
-    _addOrdersIfNonEmpty(researchByPlayer, player.id, result.orders.researchOrdersByPlayerId[player.id]);
-    _addOrdersIfNonEmpty(diploByPlayer, player.id, result.orders.diplomaticOrdersByPlayerId[player.id]);
-    _addOrdersIfNonEmpty(navalByPlayer, player.id, result.orders.navalMoveOrdersByPlayerId[player.id]);
-    _addOrdersIfNonEmpty(missionByPlayer, player.id, result.orders.navalMissionOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(
+      buildByPlayer,
+      player.id,
+      result.orders.buildUnitOrdersByPlayerId[player.id],
+    );
+    _addOrdersIfNonEmpty(
+      workByPlayer,
+      player.id,
+      result.orders.workOrdersByPlayerId[player.id],
+    );
+    _addOrdersIfNonEmpty(
+      researchByPlayer,
+      player.id,
+      result.orders.researchOrdersByPlayerId[player.id],
+    );
+    _addOrdersIfNonEmpty(
+      diploByPlayer,
+      player.id,
+      result.orders.diplomaticOrdersByPlayerId[player.id],
+    );
+    _addOrdersIfNonEmpty(
+      navalByPlayer,
+      player.id,
+      result.orders.navalMoveOrdersByPlayerId[player.id],
+    );
+    _addOrdersIfNonEmpty(
+      missionByPlayer,
+      player.id,
+      result.orders.navalMissionOrdersByPlayerId[player.id],
+    );
   }
 
   return FullAIResult(
