@@ -196,6 +196,7 @@ The **logic** (which tileset applies per corner pattern) is fixed by terrain typ
 - Given a plains cell adjacent to desert, when rendering, then the `plains_desert` Wang tileset is used.
 - Given a desert cell adjacent to plains, when rendering, then the `plains_desert` Wang tileset is used.
 - Given a feature cell (forest/hills/mountain/swamp), when rendering, then the appropriate land base (plains or desert) is drawn first, then the selected feature overlay tile on top.
+- Given a fogged feature cell (forest/hills/mountain/swamp), when rendering completes, then fog attenuation is applied exactly once for that tile (single-pass), matching the intended fog darkness level used for other fogged land tiles.
 - Given a forest tile with `resourceId = timber`, when rendering L2+, then the renderer selects `tile_forest_timber`; otherwise for forest it selects `tile_forest`.
 - Given a hills tile where `improvementLevel > 0` and the `resourceId` is a mineral resource, when rendering L2+, then the renderer selects `tile_hills_mine`; otherwise if `resourceId = wool`, then it selects `tile_hills_wool`; otherwise it selects `tile_hills`.
 - Given fog-of-war visibility, when rendering, then appropriate darkening is applied to obscured cells.

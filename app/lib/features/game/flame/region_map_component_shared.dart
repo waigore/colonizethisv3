@@ -111,6 +111,28 @@ bool shouldWrapProvinceLabelPresenceIcons({
   return singleLineContentWidth > maxWidthPx;
 }
 
+/// Returns true when the land-base pass should apply fog darkening.
+///
+/// Feature terrain (forest/hills/mountain/swamp) is darkened in the feature
+/// overlay pass, so land-base darkening must be skipped there to avoid
+/// compounded fog attenuation on the same tile.
+bool shouldApplyFogToLandBase({
+  required CtMapVisibilityMode visibilityMode,
+  required TileVisibility tileVisibility,
+  required TerrainType? terrain,
+}) {
+  if (visibilityMode != CtMapVisibilityMode.playerConstrained) {
+    return false;
+  }
+  if (tileVisibility != TileVisibility.fogged) {
+    return false;
+  }
+  if (terrain == null) {
+    return true;
+  }
+  return !_isFeatureTerrain(terrain);
+}
+
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
 /// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
 bool _isFeatureTerrain(TerrainType terrain) {

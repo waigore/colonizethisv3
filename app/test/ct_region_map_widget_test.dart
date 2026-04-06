@@ -12,6 +12,7 @@ import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show
         resolveProvinceLabelPresenceIconIds,
+        shouldApplyFogToLandBase,
         shouldWrapProvinceLabelPresenceIcons;
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
@@ -33,6 +34,59 @@ void main() {
       await townIconCache.load();
       await provinceLabelIconCache.load();
     });
+
+    testWidgets(
+      'land-base fog application skips feature terrains to prevent double darkening',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(
+          shouldApplyFogToLandBase(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.plains,
+          ),
+          isTrue,
+          reason: 'Fogged plains should darken in land-base pass',
+        );
+        expect(
+          shouldApplyFogToLandBase(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.desert,
+          ),
+          isTrue,
+          reason: 'Fogged desert should darken in land-base pass',
+        );
+        expect(
+          shouldApplyFogToLandBase(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.swamp,
+          ),
+          isFalse,
+          reason: 'Fogged feature tiles darken in overlay pass only',
+        );
+        expect(
+          shouldApplyFogToLandBase(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.forest,
+          ),
+          isFalse,
+        );
+        expect(
+          shouldApplyFogToLandBase(
+            visibilityMode: CtMapVisibilityMode.full,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.plains,
+          ),
+          isFalse,
+          reason: 'Full visibility mode must not apply fog',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
 
     testWidgets(
       'throws StateError when playerConstrained without playerViewForResources',
