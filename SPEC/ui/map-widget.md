@@ -138,6 +138,36 @@ All icons are 32×32 PNG with RGBA transparency, colonial-era pixel art style ma
 
 ---
 
+## Civilian Marker Icons
+
+Interactive civilian tile markers use per-type color icon assets in `assets/icons/`:
+
+- `ui_icon_civ_builder.png`
+- `ui_icon_civ_engineer.png`
+- `ui_icon_civ_rail_builder.png`
+- `ui_icon_civ_explorer.png`
+- `ui_icon_civ_merchant.png`
+- `ui_icon_civ_spy.png`
+
+All assets are 32×32 PNG with transparency. The map draws these icons tile-sized in world space so marker occupancy scales with zoom. Assigned-state rendering is achieved by applying a grayscale color filter at paint time, not by loading separate grayscale runtime assets.
+
+### PixelLab generation prompts (this slice)
+
+- Generator: `pixellab-generate_image_pixflux`
+- Shared settings: `width=32`, `height=32`, `no_background=true`, `outline='single color outline'`, `shading='medium shading'`, `detail='medium detail'`
+- Color prompts:
+  - `pixel art builder civilian with hammer and tool belt, full body, colonial era style, readable 32x32 unit marker icon`
+  - `pixel art engineer civilian with wrench and measuring tools, full body, colonial era style, readable 32x32 unit marker icon`
+  - `pixel art rail builder civilian with pickaxe and rail spike hammer, full body, colonial era style, readable 32x32 unit marker icon`
+  - `pixel art explorer civilian with compass and satchel, full body, colonial era style, readable 32x32 unit marker icon`
+  - `pixel art trader merchant civilian holding visible coin pouch and ledger, full body, colonial era clothing, readable 32x32 unit marker icon`
+  - `pixel art spy civilian cloaked with dagger and covert posture, full body, colonial era style, readable 32x32 unit marker icon`
+- Grayscale assets:
+  - Runtime assigned-state rendering is paint-time grayscale filtering of color icons.
+  - Compatibility `_gray` files are generated from approved color icons via deterministic grayscale conversion.
+
+---
+
 ## Warp Zone Indicators
 
 Warp zones are sea zones that link to sea zones in other regions (Old World ↔ New World). The map widget renders a **glowing yellow border** around each warp sea zone to make cross-region connections visible.
@@ -193,7 +223,7 @@ The map widget exposes callbacks so the parent (e.g. Empire overview) can react;
 
 **Constructor / props (driven by parent):** **`selectedTileKey`** — full tile key for the **orange** selection outline (detail panel’s selected tile; stroke **6 logical px** world space, 2× legacy 3 px). **`secondaryHighlightTileKey`** — optional second outline (e.g. cyan) for list/locate (**5 logical px**, 2× legacy 2.5 px); distinct from selection. Parents set these from shared state (e.g. Riverpod); the map does not read panel widgets.
 
-**Civilian map marker slice:** The map may render tile-scoped player civilian markers from `RegionMapViewData.civilianTileMarkers` as tile-sized overlays with deterministic representative type and stack badge. In this slice, marker visuals are implemented as in-canvas typed marker glyphs (not final PixelLab icon art), but marker z-order, tile occupancy, tap hit-testing precedence, and selected-marker blink behavior are part of the reusable map contract.
+**Civilian map marker slice:** The map may render tile-scoped player civilian markers from `RegionMapViewData.civilianTileMarkers` as tile-sized overlays with deterministic representative type and stack badge. Marker visuals use PixelLab icon assets (color for idle, grayscale for assigned), while marker z-order, tile occupancy, tap hit-testing precedence, and selected-marker blink behavior remain part of the reusable map contract.
 
 Details of what “province details” shows are **not** defined in this spec; the screen that embeds the map defines that. The map widget reports taps via callbacks and paints outlines from passed-in keys.
 
@@ -410,6 +440,8 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 - **Given** the map widget is in work target selection mode, **when** the user taps a tile in **validTileKeys** or taps outside valid tiles, **then** the widget invokes **onTileSelected** (for valid tiles) or **onWorkTargetSelectionCancelled** (for invalid/empty), respectively; hover gestures remain purely visual during selection mode and do not commit or cancel.
 - **Given** the map widget is in work target selection mode, **when** the map renders, **then** a cancel button with a cross icon (×) is overlaid on the map (Flutter overlay) in a visible position (e.g., top-right corner). Clicking the cancel button invokes **onWorkTargetSelectionCancelled** and exits selection mode.
 - **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` and the map is not in work target selection mode, **when** the map renders tile `T`, **then** it draws one tile-sized civilian marker with a stack badge when `stackCount > 1`.
+- **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` with representative unit type `U` and `representativeIsAssigned = false`, **when** the map renders tile `T`, **then** the UI layer draws `assets/icons/ui_icon_civ_<slug(U)>.png` mapped by unit type.
+- **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` with representative unit type `U` and `representativeIsAssigned = true`, **when** the map renders tile `T`, **then** the UI layer draws `assets/icons/ui_icon_civ_<slug(U)>.png` mapped by unit type and applies grayscale via paint-time color filtering.
 - **Given** a selected civilian marker tile key and a map frame render, **when** the selected marker is painted, **then** only that marker (including its badge) uses blink modulation; unselected civilian markers remain steady.
 - **Given** the map is not in work target selection mode and tile `T` contains a civilian marker, **when** the user taps tile `T`, **then** `onCivilianTileTapped` is invoked and default province/tile-detail tap handling for that tap is suppressed.
 - **Given** a civilian marker is selected and the map is not in work target selection mode, **when** the user taps a non-civilian tile, **then** `onCivilianTileSelectionCleared` is invoked and regular map detail/province tap handling still runs.

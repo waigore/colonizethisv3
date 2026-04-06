@@ -12,6 +12,20 @@ void main() {
 
   group('Town icon cache', () {
     testWidgets(
+      'town and port icon contracts use expected ids and sizes',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        expect(TownIconCache.townIconId, 'town_inland_64');
+        expect(TownIconCache.portIconId, 'port');
+        expect(TownIconCache.townIconSize, 64);
+        expect(TownIconCache.portIconSize, 32);
+        expect(kTownIconIds, containsAll(['town_inland_64', 'port']));
+        expect(kTownIconIds, isNot(contains('town_coastal')));
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
       'required town icon asset files are present in test asset bundle',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
