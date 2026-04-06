@@ -6,7 +6,7 @@ import '../order_validation_result.dart';
 
 /// Validates diplomatic orders for a single player in submission order.
 /// SPEC/program/orders.md § Diplomatic orders.
-class DiplomaticOrderValidator {
+class DiplomaticOrderValidator extends OrderValidator {
   final Game _game;
   final String _playerId;
 
@@ -20,27 +20,25 @@ class DiplomaticOrderValidator {
     required Game game,
     required String playerId,
     required int initialTreasury,
-  })  : _game = game,
-        _playerId = playerId,
-        _treasury = initialTreasury;
+  }) : _game = game,
+       _playerId = playerId,
+       _treasury = initialTreasury;
 
   int get treasury => _treasury;
 
-  ({OrderValidationResult result, int treasury}) _reject(String reason) => (
-        result: OrderValidationResult.rejected(reason),
-        treasury: _treasury,
-      );
+  ({OrderValidationResult result, int treasury}) _reject(String reason) =>
+      (result: OrderValidationResult.rejected(reason), treasury: _treasury);
 
-  ({OrderValidationResult result, int treasury}) _accept() => (
-        result: OrderValidationResult.accepted(),
-        treasury: _treasury,
-      );
+  ({OrderValidationResult result, int treasury}) _accept() =>
+      (result: OrderValidationResult.accepted(), treasury: _treasury);
 
   ({OrderValidationResult result, int treasury}) _acceptRecordingTarget(
     String targetId,
     DiplomaticOrderType type,
   ) {
-    _typesByTarget.putIfAbsent(targetId, () => <DiplomaticOrderType>{}).add(type);
+    _typesByTarget
+        .putIfAbsent(targetId, () => <DiplomaticOrderType>{})
+        .add(type);
     return _accept();
   }
 
@@ -62,10 +60,7 @@ class DiplomaticOrderValidator {
   /// for this player in this turn has already been rejected.
   ///
   /// Returns the [OrderValidationResult] and updated treasury.
-  ({
-    OrderValidationResult result,
-    int treasury,
-  }) validate(
+  ({OrderValidationResult result, int treasury}) validate(
     DiplomaticOrder order, {
     required bool previousRejected,
   }) {
@@ -121,18 +116,14 @@ class DiplomaticOrderValidator {
           return _reject('Alliance target must be a Great Power');
         }
         if (atWar) {
-          return _reject(
-            'Cannot form alliance while at war with that faction',
-          );
+          return _reject('Cannot form alliance while at war with that faction');
         }
         return _acceptRecordingTarget(targetId, order.type);
 
       case DiplomaticOrderType.establishOverture:
         final stage = order.overtureStage;
         if (stage == null || stage == OvertureStage.none) {
-          return _reject(
-            'Overture stage is required for establishOverture',
-          );
+          return _reject('Overture stage is required for establishOverture');
         }
         if (!isMinorOrTribe(_game, targetId) &&
             !isGreatPower(_game, targetId)) {
@@ -226,7 +217,9 @@ class DiplomaticOrderValidator {
               );
             }
           } else if (!isMinorOrTribe(_game, targetId)) {
-            return _reject('Join Empire target must be a Minor Nation, Tribe, or Great Power');
+            return _reject(
+              'Join Empire target must be a Minor Nation, Tribe, or Great Power',
+            );
           }
           final cost = joinEmpireCostForMinorOrTribe(_game, targetId);
           if (_treasury < cost) {
@@ -283,9 +276,7 @@ class DiplomaticOrderValidator {
           return _reject('Consulate or Embassy required for SetSubsidy');
         }
         if (_treasury < amount) {
-          return _reject(
-            'Insufficient treasury for SetSubsidy (need $amount)',
-          );
+          return _reject('Insufficient treasury for SetSubsidy (need $amount)');
         }
         _treasury -= amount;
         return _acceptRecordingTarget(targetId, order.type);
@@ -311,4 +302,3 @@ class DiplomaticOrderValidator {
     return false;
   }
 }
-

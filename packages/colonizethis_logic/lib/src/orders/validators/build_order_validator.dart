@@ -7,7 +7,7 @@ import '../order_validation_result.dart';
 /// Validates build unit orders for a single player in submission order.
 /// Mutates internal economy state (workers, stockpile, treasury) when an order
 /// is accepted. SPEC/program/orders.md § Build orders.
-class BuildOrderValidator {
+class BuildOrderValidator extends OrderValidator {
   final Game _game;
   final Player _player;
 
