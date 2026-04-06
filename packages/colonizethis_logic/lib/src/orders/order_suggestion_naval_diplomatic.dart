@@ -713,12 +713,12 @@ void _prefilterWorkTargetDefault(_WorkTilePrefilterCtx c) {
 
 final Map<String, _WorkTilePrefilterOp> _workTargetPrefilters =
     <String, _WorkTilePrefilterOp>{
-      'build_improvement': _prefilterWtBuildImprovement,
-      'build_road': _prefilterWtBuildRoad,
+      kWorkTargetBuildImprovement: _prefilterWtBuildImprovement,
+      kWorkTargetBuildRoad: _prefilterWtBuildRoad,
       'build_rail': _prefilterWtBuildRail,
-      'upgrade_town': _prefilterWtTownWork,
-      'build_fort': _prefilterWtTownWork,
-      'build_port': _prefilterWtOwnedProvinceTiles,
+      kWorkTargetUpgradeTown: _prefilterWtTownWork,
+      kWorkTargetBuildFort: _prefilterWtTownWork,
+      kWorkTargetBuildPort: _prefilterWtOwnedProvinceTiles,
       kWorkTargetCounterSpy: _prefilterWtOwnedProvinceTiles,
       kWorkTargetStealTech: _prefilterWtStealTech,
       kWorkTargetPurchaseLand: _prefilterWtPurchaseLand,

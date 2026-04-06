@@ -285,12 +285,12 @@ void _completedWorkNoop(
 /// Map-based work completion (Refs #1531). Unknown targets no-op.
 final Map<String, _CompletedWorkHandler> _completedWorkTargetHandlers =
     <String, _CompletedWorkHandler>{
-      'build_improvement': _completedWorkBuildImprovement,
-      'upgrade_town': _completedWorkUpgradeTown,
+      kWorkTargetBuildImprovement: _completedWorkBuildImprovement,
+      kWorkTargetUpgradeTown: _completedWorkUpgradeTown,
       kWorkTargetExplore: _completedWorkExplore,
-      'build_road': _completedWorkBuildRoad,
-      'build_port': _completedWorkBuildPort,
-      'build_fort': _completedWorkBuildFort,
+      kWorkTargetBuildRoad: _completedWorkBuildRoad,
+      kWorkTargetBuildPort: _completedWorkBuildPort,
+      kWorkTargetBuildFort: _completedWorkBuildFort,
       'build_rail': _completedWorkBuildRail,
       kWorkTargetStealTech: _completedWorkNoop,
       kWorkTargetCounterSpy: _completedWorkNoop,

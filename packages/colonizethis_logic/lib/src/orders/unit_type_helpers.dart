@@ -14,11 +14,11 @@ bool isDevExclusiveUnitType(String type) =>
 /// True for work targets that participate in per-tile exclusivity (one order per tile per player).
 /// Used with [isDevExclusiveUnitType] to enforce Builder/Engineer/Merchant tile exclusivity.
 bool isDevExclusiveWorkTarget(String target) =>
-    target == 'build_improvement' ||
-    target == 'upgrade_town' ||
-    target == 'build_road' ||
-    target == 'build_port' ||
-    target == 'build_fort' ||
+    target == kWorkTargetBuildImprovement ||
+    target == kWorkTargetUpgradeTown ||
+    target == kWorkTargetBuildRoad ||
+    target == kWorkTargetBuildPort ||
+    target == kWorkTargetBuildFort ||
     target == kWorkTargetPurchaseLand;
 
 /// Tile keys already reserved by [playerId]'s Builder/Engineer/Merchant currentWork.
