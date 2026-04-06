@@ -1,6 +1,7 @@
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_viewport_snapshot.dart';
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
@@ -78,6 +79,7 @@ void main() {
   setUpAll(() async {
     await terrainTilesetCache.load();
     await resourceIconCache.load();
+    await civilianIconCache.load();
     await townIconCache.load();
     await provinceLabelIconCache.load();
   });
