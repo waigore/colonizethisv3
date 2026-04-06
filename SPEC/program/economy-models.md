@@ -29,6 +29,21 @@ Turn economic phases (in order):
 
 ---
 
+## Research treasury debt (labour techs)
+
+**Scope:** Negative treasury allowed **only** as a result of **research funding** in the Research phase, and only within the cap below. Other phases keep their existing treasury rules unless a future spec extends debt.
+
+| Condition | Max debt (ducats) | Treasury floor |
+|-----------|-------------------|----------------|
+| `money_lending` not unlocked | 0 | 0 |
+| `money_lending` unlocked | 500 | −500 |
+
+**Implementation:** `maxDebtForPlayer(Player)` in `packages/colonizethis_logic/lib/src/turn/economy_debt_rules.dart`. The research resolver rejects a slot’s spend if `treasury - spend < -maxDebt`. **`banking`:** prerequisite-only for other techs in MVP; does not change `maxDebtForPlayer` until specified in GDD/TDD.
+
+**Game source of truth:** [tech-tree-labour-economy.md](../game/tech-tree-labour-economy.md) § Effect implementation status. **Resolution:** [research-resolution.md](research-resolution.md).
+
+---
+
 ## Integration
 
 | Aspect | Detail |
@@ -51,8 +66,9 @@ Turn economic phases (in order):
 - **Riches:** Conversion uses base price from colonizethis_data; riches are removed from stockpile; optional richesCashMultiplier scales treasury delta when provided. When no scenario override is active, the main game uses a multiplier of exactly 1.0.
 - **Consumption:** Land military fed first, then navy (per catalog food upkeep per ship), then workers (food priority Masters→Peasants; luxury for food-fed trained only). Workers are not removed for missing food (strike). Land and naval feeding coverage from `ConsumptionResult` feed land and sea combat (same multiplier tiers). `resolveConsumption` throws if a fleet references an unknown ship type id.
 - **Production:** Effective labour from `WorkerIdleCounts` after Consumption (workers-and-population.md). Inputs and labour consumed; outputs added to stockpile; insufficient input skips or partial per recipe spec.
+- **Research treasury debt:** `maxDebtForPlayer` returns 0 without `money_lending`, 500 with it; research resolver enforces treasury ≥ −`maxDebt` for research spending only (see [research-resolution.md](research-resolution.md)).
 
-Unit tests: Stockpile/WorkerPool serialization; resolveRichesToTreasury; resolveConsumption (military-first, navy-before-workers, worker food priority, strike / idle counts, unknown ship id error); resolveProduction (with `idleLabour`). Integration: turn resolver runs phases in order; consumption coverage flows to land and naval combat morale and production labour where applicable.
+Unit tests: Stockpile/WorkerPool serialization; resolveRichesToTreasury; resolveConsumption (military-first, navy-before-workers, worker food priority, strike / idle counts, unknown ship id error); resolveProduction (with `idleLabour`); `maxDebtForPlayer` (economy debt rules). Integration: turn resolver runs phases in order; consumption coverage flows to land and naval combat morale and production labour where applicable.
 
 ---
 

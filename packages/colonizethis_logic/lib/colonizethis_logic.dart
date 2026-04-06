@@ -21,6 +21,7 @@ export 'src/setup/gp_land_connectivity_repair.dart';
 export 'src/setup/province_name_fallback.dart';
 
 // Turn
+export 'src/turn/economy_debt_rules.dart';
 export 'src/turn/research_resolver.dart';
 export 'src/turn/turn_resolution_result.dart';
 export 'src/turn/turn_resolver.dart';

@@ -365,8 +365,8 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Enables Trained Journeymen and advanced tactics');
         break;
       case 'money_lending':
-        list.add('Improves borrowing: more credit at lower interest');
-        list.add('Prerequisite for National Bureaucracy');
+        list.add('Research funding may reduce treasury to −500');
+        list.add('General borrowing/interest not simulated yet');
         break;
       case 'apprentice_workers':
         list.add(
@@ -380,12 +380,11 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Unlocks Master Artisans (8× labour; consume fur hats)');
         break;
       case 'trade_fairs':
-        list.add('Can bid on 6 commodities instead of 3');
+        list.add('Planned: more trade commodity slots vs baseline (not active yet)');
         break;
       case 'banking':
-        list.add(
-          'Enables advanced banking: lower interest and larger negative spending',
-        );
+        list.add('Unlocks later military, diplomacy, and transport techs');
+        list.add('Extended banking rules not active yet');
         break;
       case 'diplomatic_expertise':
         list.add('Unlocks embassies with Minor Nations');
