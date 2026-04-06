@@ -81,6 +81,9 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       bus.on<ct_models.UnitsPanelClosedEvent>().listen((_) {
         ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(null);
       }),
+      bus.on<ct_models.OpenMapTileDetailEvent>().listen(
+        (e) => _openMapTileDetail(e.tileKey),
+      ),
     ]);
   }
 
@@ -190,6 +193,19 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _centerOnTileKey = null);
+    });
+  }
+
+  void _openMapTileDetail(String tileKey) {
+    final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
+    if (regionId == null) return;
+    ref.read(mapProvincePanelProvider.notifier).reportMapTileTapped(tileKey);
+    setState(() {
+      if (regionId == 'newWorld') {
+        _regionIndex = 1;
+      } else if (regionId == 'oldWorld') {
+        _regionIndex = 0;
+      }
     });
   }
 
@@ -369,9 +385,24 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                               })
                             : null,
                         onCivilianTileTapped: (tileKey) {
+                          String? initialSelectedUnitId;
+                          for (final marker in _currentRegion
+                              .civilianTileMarkers) {
+                            if (marker.tileKey == tileKey &&
+                                marker.unitIds.isNotEmpty) {
+                              initialSelectedUnitId = marker.unitIds.first;
+                              break;
+                            }
+                          }
                           setState(() {
                             _selectedCivilianTileKey = tileKey;
                           });
+                          ref.read(appEventBusProvider).emit(
+                            ct_models.OpenCivilianUnitsPanelEvent(
+                              tileScopeTileKey: tileKey,
+                              initialSelectedUnitId: initialSelectedUnitId,
+                            ),
+                          );
                         },
                         onCivilianTileSelectionCleared: () {
                           if (_selectedCivilianTileKey == null) return;
