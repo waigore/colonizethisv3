@@ -66,18 +66,9 @@ class CivilianIconCache {
 
   Future<ui.Image> _decodePng(String assetPath) async {
     final imageData = await rootBundle.load(assetPath);
-    final bytes = imageData.buffer.asUint8List();
-    final codec = await ui
-        .instantiateImageCodec(bytes)
-        .timeout(const Duration(seconds: 5));
-    try {
-      final frame = await codec.getNextFrame().timeout(
-        const Duration(seconds: 5),
-      );
-      return frame.image;
-    } finally {
-      codec.dispose();
-    }
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);
+    return completer.future;
   }
 
   String? _normalizeSlug(String unitType) {
