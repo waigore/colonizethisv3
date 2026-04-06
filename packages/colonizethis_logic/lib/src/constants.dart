@@ -16,6 +16,12 @@ const String kWorkTargetCounterSpy = 'counter_spy';
 const String kWorkTargetPurchaseLand = 'purchase_land';
 const String kWorkTargetExplore = 'explore';
 const String kWorkTargetProspect = 'prospect';
+const String kWorkTargetBuildImprovement = 'build_improvement';
+const String kWorkTargetBuildRoad = 'build_road';
+const String kWorkTargetBuildPort = 'build_port';
+const String kWorkTargetBuildFort = 'build_fort';
+const String kWorkTargetBuildRail = 'build_rail';
+const String kWorkTargetUpgradeTown = 'upgrade_town';
 
 /// Resource ids that count as minerals for work/purchase rules.
 /// Shared across extraction, work orders, and order application helpers.
