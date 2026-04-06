@@ -30,6 +30,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/routes.dart';
 import '../../config/constants.dart';
+import 'subscription_tracker.dart';
 import '../../features/game/widgets/civilian_units_panel.dart';
 import '../../features/game/widgets/military_units_panel.dart';
 import '../../features/game/widgets/naval_units_panel.dart';
@@ -73,20 +74,17 @@ class AppEventHandler {
   final void Function(DismissOverlayEvent)? _onDismissOverlay;
   final void Function(NotifyEvent)? _onNotify;
 
-  final List<StreamSubscription> _subscriptions = [];
+  final SubscriptionTracker _subscriptions = SubscriptionTracker();
 
   /// Start listening to the event bus. Call from StatefulWidget.initState or main.
   void bind() {
-    _subscriptions.add(_bus.on<UIActionEvent>().listen(_handleUIAction));
-    _subscriptions.add(_bus.on<UISystemEvent>().listen(_handleUISystem));
+    _subscriptions.track(_bus.on<UIActionEvent>().listen(_handleUIAction));
+    _subscriptions.track(_bus.on<UISystemEvent>().listen(_handleUISystem));
   }
 
   /// Stop listening. Call from StatefulWidget.dispose or when tearing down.
   void unbind() {
-    for (final s in _subscriptions) {
-      s.cancel();
-    }
-    _subscriptions.clear();
+    _subscriptions.cancelAll();
   }
 
   void _handleUIAction(UIActionEvent event) {
@@ -249,8 +247,7 @@ class AppEventHandler {
           final currentOrders = ref.watch(currentOrdersProvider);
           final availableWorkTargets = ref.watch(availableWorkTargetsProvider);
           final bus = ref.watch(appEventBusProvider);
-          final isNarrow =
-              MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
+          final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
           final maxHeight =
               MediaQuery.sizeOf(context).height * (isNarrow ? 0.33 : 0.5);
           return ConstrainedBox(
