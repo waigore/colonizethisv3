@@ -1,0 +1,88 @@
+import 'dart:async';
+
+import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/main.dart' as app_main;
+import 'package:flutter/widgets.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test('bootstrap initializes bindings and runApp in the same zone', () async {
+    Zone? bindingZone;
+    Zone? runAppZone;
+
+    final bootstrapFuture = runZonedGuarded<Future<void>>(
+      () async {
+        await app_main.bootstrapApp(
+          ensureBindingInitialized: () {
+            bindingZone = Zone.current;
+          },
+          initSessionLogBuffer: () {},
+          ensureMapTerrainLoaded: () async {},
+          initHive: () async {},
+          openHiveBoxSafely: (_) async {},
+          runAppFn: (_) {
+            runAppZone = Zone.current;
+          },
+        );
+      },
+      (Object error, StackTrace stackTrace) {
+        fail('unexpected zoned error: $error\n$stackTrace');
+      },
+    );
+
+    await bootstrapFuture;
+
+    expect(bindingZone, isNotNull);
+    expect(runAppZone, isNotNull);
+    expect(identical(bindingZone, runAppZone), isTrue);
+  });
+
+  test('bootstrap awaits startup initialization before runApp', () async {
+    final callOrder = <String>[];
+    final openedBoxes = <String>[];
+
+    await app_main.bootstrapApp(
+      ensureBindingInitialized: () {
+        callOrder.add('binding');
+      },
+      initSessionLogBuffer: () {
+        callOrder.add('session');
+      },
+      ensureMapTerrainLoaded: () async {
+        callOrder.add('terrain');
+      },
+      initHive: () async {
+        callOrder.add('hive');
+      },
+      openHiveBoxSafely: (name) async {
+        callOrder.add('box:$name');
+        openedBoxes.add(name);
+      },
+      runAppFn: (Widget app) {
+        callOrder.add('runApp');
+      },
+    );
+
+    expect(
+      callOrder,
+      equals([
+        'binding',
+        'session',
+        'terrain',
+        'hive',
+        'box:${HiveBoxNames.settings}',
+        'box:${HiveBoxNames.games}',
+        'box:${HiveBoxNames.offlineQueue}',
+        'runApp',
+      ]),
+    );
+    expect(
+      openedBoxes,
+      equals([
+        HiveBoxNames.settings,
+        HiveBoxNames.games,
+        HiveBoxNames.offlineQueue,
+      ]),
+    );
+  });
+}
