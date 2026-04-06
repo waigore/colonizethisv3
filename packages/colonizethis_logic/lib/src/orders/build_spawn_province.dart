@@ -31,7 +31,7 @@ String? resolveBuildSpawnProvinceId({
     return hasCapital ? capitalProvinceId : null;
   }
 
-  final province = tryGetProvince(worldState, requested);
+  final province = worldState.tryGetProvince(requested);
   if (province != null && province.ownerId == player.id) {
     return requested;
   }

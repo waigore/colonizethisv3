@@ -15,7 +15,7 @@ WorldState applyArmyMoveOrdersToRegion(
   Map<String, List<ArmyMoveOrder>> ordersByPlayerId, {
   required String regionId,
   bool Function(String playerId, String destFullProvinceId)?
-      isDestinationOwnedByPlayer,
+  isDestinationOwnedByPlayer,
 }) {
   if (ordersByPlayerId.isEmpty) {
     return worldState;
@@ -61,9 +61,11 @@ WorldState applyArmyMoveOrdersToRegion(
 
       final fromLocal = ProvinceId.localIdFrom(army.stationedProvinceId);
       final toLocal = ProvinceId.localIdFrom(destFullId);
-      final ownProvinceMove = isDestinationOwnedByPlayer != null &&
+      final ownProvinceMove =
+          isDestinationOwnedByPlayer != null &&
           isDestinationOwnedByPlayer(playerId, destFullId);
-      final valid = ownProvinceMove ||
+      final valid =
+          ownProvinceMove ||
           isValidLandMoveInRegion(topology, regionId, fromLocal, toLocal);
       if (!valid) {
         ignored++;
@@ -91,7 +93,8 @@ WorldState applyArmyMoveOrdersToRegion(
 ({
   WorldState worldState,
   Map<String, List<ArmyMoveOrder>> remainingArmyMoveOrdersByPlayerId,
-}) applyCrossRegionArmyMovesWithinOwnedProvinces({
+})
+applyCrossRegionArmyMovesWithinOwnedProvinces({
   required Game game,
   required WorldState worldState,
   required Map<String, List<ArmyMoveOrder>> armyMoveOrdersByPlayerId,
@@ -112,7 +115,7 @@ WorldState applyArmyMoveOrdersToRegion(
       final fromRegion = ProvinceId.regionIdFrom(army.stationedProvinceId);
       final destFull = resolveToFullProvinceId(ws, order.destinationProvinceId);
       final destRegion = ProvinceId.regionIdFrom(destFull);
-      final destProvince = tryGetProvince(ws, destFull);
+      final destProvince = ws.tryGetProvince(destFull);
       if (destProvince == null || destProvince.ownerId != playerId) {
         left.add(order);
         continue;
@@ -128,8 +131,5 @@ WorldState applyArmyMoveOrdersToRegion(
     }
   }
 
-  return (
-    worldState: ws,
-    remainingArmyMoveOrdersByPlayerId: remaining,
-  );
+  return (worldState: ws, remainingArmyMoveOrdersByPlayerId: remaining);
 }
