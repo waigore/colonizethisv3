@@ -662,6 +662,88 @@ void main() {
       },
     );
 
+    test('town markers include non-player provinces with townTileKey', () {
+      final owMap = TileMapResult(
+        width: 2,
+        height: 1,
+        grid: [
+          ['pPlayer', 'pMinor'],
+        ],
+      );
+      final nwMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: [
+          ['p1'],
+        ],
+      );
+      final owTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'pPlayer',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'pMinor',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [TopologyEdge(id1: 'pPlayer', id2: 'pMinor')],
+      );
+      final nwTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'town_non_player',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'oldWorld|pPlayer',
+                regionId: 'oldWorld',
+                ownerId: 'gp1',
+                townTileKey: 'oldWorld|pPlayer|0|0',
+              ),
+              Province(
+                id: 'oldWorld|pMinor',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+                townTileKey: 'oldWorld|pMinor|1|0',
+              ),
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(provinces: [], units: []),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
+        tribes: const [],
+      );
+
+      final viewData = buildInitGameMapViewData(
+        game: game,
+        tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
+        topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+        cellSize: 8,
+      );
+
+      expect(viewData.oldWorld.townMarkers, hasLength(2));
+      final ids = viewData.oldWorld.townMarkers
+          .map((m) => m.provinceId)
+          .toSet();
+      expect(ids, containsAll({'pPlayer', 'pMinor'}));
+    });
+
     test(
       'town markers include non-player provinces with valid townTileKey',
       () {
