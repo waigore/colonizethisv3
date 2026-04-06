@@ -214,7 +214,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
   );
   final out = <ArmyMovePickerDestination>[];
   for (final fullId in raw) {
-    final province = tryGetProvince(game.worldState, fullId);
+    final province = game.worldState.tryGetProvince(fullId);
     final ownerId = province?.ownerId ?? '';
     final move = ArmyMoveOrder(armyId: army.id, destinationProvinceId: fullId);
     final acceptedBase = _isArmyMoveOrderAccepted(

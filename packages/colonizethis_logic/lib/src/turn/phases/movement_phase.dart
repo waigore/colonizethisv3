@@ -62,7 +62,7 @@ applyCrossRegionOwnProvinceMoves(
         remainingForPlayer.add(o);
         continue;
       }
-      final destProvince = tryGetProvince(game.worldState, destFullId);
+      final destProvince = game.worldState.tryGetProvince(destFullId);
       if (destProvince == null || destProvince.ownerId != playerId) {
         remainingForPlayer.add(o);
         continue;
@@ -122,7 +122,7 @@ Game runMovementPhase(Game game, MapTopology topology, Orders orders) {
       String playerId,
       String destFullProvinceId,
     ) =>
-        tryGetProvince(state.worldState, destFullProvinceId)?.ownerId ==
+        state.worldState.tryGetProvince(destFullProvinceId)?.ownerId ==
         playerId;
 
     final originalOldWorld = state.worldState.oldWorld;
@@ -192,7 +192,7 @@ Game runMovementPhase(Game game, MapTopology topology, Orders orders) {
       String playerId,
       String destFullProvinceId,
     ) =>
-        tryGetProvince(state.worldState, destFullProvinceId)?.ownerId ==
+        state.worldState.tryGetProvince(destFullProvinceId)?.ownerId ==
         playerId;
 
     final cross = applyCrossRegionArmyMovesWithinOwnedProvinces(
