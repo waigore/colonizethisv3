@@ -96,7 +96,7 @@ The widget accepts an optional **base layer display mode** enumerating terrain, 
 
 **Base layer display mode** does not hide capitals, town/port icons, or warp zone indicators when switching among terrain vs resources vs labels — those markers are independent of `terrainOnly` / `terrainAndResources` / etc.
 
-**Player-constrained visibility** (fog of war) is separate: **capital markers** and **town/port icons** use the **host cell’s** `CellViewData.visibility` and are **not** drawn when that cell is `unrevealed`, so they do not leak positions in unknown territory. **Warp zone** glow borders are still drawn regardless of `baseLayerDisplayMode`; gating warp edges by fog is out of scope unless product extends this spec.
+**Player-constrained visibility** (fog of war) is separate: **capital markers** and **town/port icons** use the **host cell’s** `CellViewData.visibility` and are **not** drawn when that cell is `unrevealed`, so they do not leak positions in unknown territory. **Warp zone** glow borders are still drawn regardless of `baseLayerDisplayMode`; in player-constrained mode, each warp glow edge segment follows the same edge-gating predicate as province/political borders (draw only if at least one adjacent cell is not `unrevealed`).
 
 ---
 
@@ -158,7 +158,7 @@ Warp zone indicators are provided via `RegionMapViewData.warpMarkers` (list of `
   - Inner layer: 3px wide, bright yellow (`0xFFFFEA00`)
 - **Border Logic:** Edges are drawn where a warp sea zone tile is adjacent to a non-warp tile (different sea zone or land province), similar to province border rendering.
 - **Layer:** Rendered after the base terrain and overlays (after ports, same layer as capitals).
-- **Visibility:** Always visible regardless of `baseLayerDisplayMode` (independent of terrain vs resource vs label modes). Unlike capital and town/port markers, warp glow is **not** required to be suppressed on `unrevealed` sea cells unless this spec is extended.
+- **Visibility:** Always visible regardless of `baseLayerDisplayMode` (independent of terrain vs resource vs label modes). In **full** visibility mode, warp glow ignores `CellViewData.visibility`. In **player-constrained** visibility mode, each warp glow segment is drawn only when at least one of the two adjacent cells on that unit edge is not `unrevealed` (same predicate as province/political border strokes).
 
 The **in-game shell** (Empire overview) may overlay a cycle button that toggles this mode; see [empire-overview.md](empire-overview.md).
 
@@ -415,6 +415,9 @@ If a tileset fails to load, the widget falls back to solid color rendering using
 - **Given** a map widget rendering a tile with a resource on a **32px or smaller cell**, **when** the base layer display mode includes resources, **then** the resource icon is centered horizontally and positioned in the lower half of the cell.
 - **Given** a map widget rendering a tile with a resource on a **larger than 32px cell** (e.g. 64px), **when** the base layer display mode includes resources, **then** the resource icon is positioned in the **bottom-left corner** of the tile (x=0, y=tileSize-32) at native 32×32 resolution.
 - **Given** a map widget with `RegionMapViewData.warpMarkers` populated (non-empty), **when** the widget renders the map, **then** a glowing yellow border is drawn around each warp sea zone; warp zone indicators are rendered regardless of `baseLayerDisplayMode`.
+- **Given** a map widget in **player-constrained** visibility mode with `RegionMapViewData.warpMarkers` populated, **when** a warp perimeter unit edge has adjacent cells where both visibilities are `unrevealed`, **then** no warp glow segment is drawn on that edge.
+- **Given** a map widget in **player-constrained** visibility mode with `RegionMapViewData.warpMarkers` populated, **when** a warp perimeter unit edge has adjacent cells where at least one visibility is `visible` or `fogged`, **then** the warp glow segment is drawn on that edge.
+- **Given** a map widget in **full** visibility mode with `RegionMapViewData.warpMarkers` populated, **when** the widget renders warp perimeter edges, **then** warp glow segments are drawn regardless of `CellViewData.visibility` values.
 - **Given** a map widget with `RegionMapViewData.warpMarkers` populated, **when** the user hovers over a warp zone sea zone tile, **then** the province border glow is shown (same as any other sea zone).
 
 ---
