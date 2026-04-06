@@ -1,9 +1,9 @@
 import 'dart:async';
 
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/main.dart' as app_main;
 import 'package:flutter/widgets.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('bootstrap initializes bindings and runApp in the same zone', () async {
