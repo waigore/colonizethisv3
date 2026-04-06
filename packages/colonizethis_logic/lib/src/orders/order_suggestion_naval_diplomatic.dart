@@ -147,12 +147,14 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
     existingByFleet.add(o.fleetId);
   }
 
-  const missions = ['patrol', 'defend', 'none'];
   for (final fleet in game.worldState.fleets) {
     if (fleet.ownerId != playerId) continue;
     if (existingByFleet.contains(fleet.id)) continue;
-    for (final mission in missions) {
-      final candidate = NavalMissionOrder(fleetId: fleet.id, mission: mission);
+    for (final mission in FleetMission.values) {
+      final candidate = NavalMissionOrder(
+        fleetId: fleet.id,
+        mission: mission.name,
+      );
       if (_isNavalMissionOrderAccepted(
         game,
         topology,
