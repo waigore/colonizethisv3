@@ -2,7 +2,7 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show homeFleetIdFor, regionIdForSeaZone, tryGetProvince;
+    show homeFleetIdFor, regionIdForSeaZone;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../units/shared/units_panel_region_label.dart';
@@ -24,7 +24,7 @@ String? navalDraftMoveLineForFleet({
     if (o.fleetId != fleetId) continue;
     if (o.isDock) {
       final pid = o.destinationPortProvinceId!;
-      final p = tryGetProvince(game.worldState, pid);
+      final p = game.worldState.tryGetProvince(pid);
       final name = p?.displayName ?? p?.id ?? pid;
       return 'Moving to: $name (dock)';
     }

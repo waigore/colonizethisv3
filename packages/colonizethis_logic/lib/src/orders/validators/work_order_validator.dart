@@ -87,7 +87,7 @@ class WorkOrderValidator extends OrderValidator {
 
         final targetProvinceId = Unit.provinceIdFromTileKey(o.targetTileKey);
         final province = targetProvinceId != null
-            ? tryGetProvince(_context.game.worldState, targetProvinceId)
+            ? _context.game.worldState.tryGetProvince(targetProvinceId)
             : null;
         final ownerId = province?.ownerId;
 

@@ -46,7 +46,7 @@ class SplitArmyDialog extends StatelessWidget {
 
   String _locationLabel() {
     final pid = army.stationedProvinceId;
-    final province = tryGetProvince(game.worldState, pid);
+    final province = game.worldState.tryGetProvince(pid);
     final regionId = army.regionId;
     final regionLabel = regionDisplayLabel(regionId);
     final name = province?.displayName ?? pid;

@@ -7,8 +7,6 @@ import 'package:ctterm/screens/input_mode.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-
-
 /// Display info for a regiment type in the Academy.
 class RegimentDisplayInfo {
   final String id;
@@ -137,76 +135,45 @@ class _AcademyScreenState extends State<AcademyScreen> {
 
     final result = <RegimentDisplayInfo>[];
     for (final stats in regimentCatalog) {
-      final economy = _getEconomyForRegiment(stats.id);
+      final economy = RegimentEconomyCatalog.byId[stats.id];
       final requiredTech = unlockMap[stats.id];
-      final isAvailable = requiredTech == null ||
-          (techUnlocked?[requiredTech] ?? false);
+      final isAvailable =
+          requiredTech == null || (techUnlocked?[requiredTech] ?? false);
 
-      result.add(RegimentDisplayInfo(
-        id: stats.id,
-        name: _formatRegimentName(stats.id),
-        category: stats.category.name,
-        era: stats.era,
-        cost: economy?.buildTreasuryCost ?? 0,
-        inputs: economy?.buildInputs.map(
-              (key, value) => MapEntry(key, value),
-            ) ??
-            {},
-        foodUpkeep: economy?.foodUpkeep ?? 0,
-        fpn: stats.fpn,
-        fpm: stats.fpm,
-        rng: stats.rng,
-        def: stats.def,
-        mvr: stats.mvr,
-        requiredTech: requiredTech,
-        isAvailable: isAvailable,
-      ));
+      result.add(
+        RegimentDisplayInfo(
+          id: stats.id,
+          name: _formatRegimentName(stats.id),
+          category: stats.category.name,
+          era: stats.era,
+          cost: economy?.buildTreasuryCost ?? 0,
+          inputs:
+              economy?.buildInputs.map((key, value) => MapEntry(key, value)) ??
+              {},
+          foodUpkeep: economy?.foodUpkeep ?? 0,
+          fpn: stats.fpn,
+          fpm: stats.fpm,
+          rng: stats.rng,
+          def: stats.def,
+          mvr: stats.mvr,
+          requiredTech: requiredTech,
+          isAvailable: isAvailable,
+        ),
+      );
     }
     return result;
   }
 
-  /// Get economy for a regiment type.
-  RegimentEconomy? _getEconomyForRegiment(String id) {
-    switch (id) {
-      case 'peasant_levies':
-        return RegimentEconomyCatalog.peasantLevies;
-      case 'pikemen':
-        return RegimentEconomyCatalog.pikemen;
-      case 'arquebusiers':
-        return RegimentEconomyCatalog.arquebusiers;
-      case 'bowmen':
-        return RegimentEconomyCatalog.bowmen;
-      case 'squires':
-        return RegimentEconomyCatalog.squires;
-      case 'knights':
-        return RegimentEconomyCatalog.knights;
-      case 'culverin':
-        return RegimentEconomyCatalog.culverin;
-      case 'calivermen':
-        return RegimentEconomyCatalog.calivermen;
-      case 'halberdiers':
-        return RegimentEconomyCatalog.halberdiers;
-      case 'musketeers':
-        return RegimentEconomyCatalog.musketeers;
-      case 'cossacks':
-        return RegimentEconomyCatalog.cossacks;
-      case 'lancers':
-        return RegimentEconomyCatalog.lancers;
-      case 'harquebusiers':
-        return RegimentEconomyCatalog.harquebusiers;
-      case 'horse_artillery':
-        return RegimentEconomyCatalog.horseArtillery;
-      default:
-        return null;
-    }
-  }
-
   /// Format regiment ID to display name.
   String _formatRegimentName(String id) {
-    return id.replaceAll('_', ' ').split(' ').map((word) {
-      if (word.isEmpty) return word;
-      return word[0].toUpperCase() + word.substring(1);
-    }).join(' ');
+    return id
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1);
+        })
+        .join(' ');
   }
 
   /// Get the current training queue for the human player.
@@ -257,7 +224,10 @@ class _AcademyScreenState extends State<AcademyScreen> {
         if (key == LogicalKey.backspace) {
           setState(() {
             if (_provinceInput.isNotEmpty) {
-              _provinceInput = _provinceInput.substring(0, _provinceInput.length - 1);
+              _provinceInput = _provinceInput.substring(
+                0,
+                _provinceInput.length - 1,
+              );
             }
           });
         } else {
@@ -523,10 +493,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
                     ),
                   ),
                   // Training queue
-                  Expanded(
-                    flex: 2,
-                    child: _buildTrainingQueue(trainingQueue),
-                  ),
+                  Expanded(flex: 2, child: _buildTrainingQueue(trainingQueue)),
                 ],
               ),
             ),
@@ -564,7 +531,10 @@ class _AcademyScreenState extends State<AcademyScreen> {
       return Container(
         color: Colors.grey,
         child: const Center(
-          child: Text('No regiment types available', style: TextStyle(color: Colors.grey)),
+          child: Text(
+            'No regiment types available',
+            style: TextStyle(color: Colors.grey),
+          ),
         ),
       );
     }
@@ -596,43 +566,45 @@ class _AcademyScreenState extends State<AcademyScreen> {
                 final reg = regiments[index];
                 final isSelected = index == _selectedIndex;
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
-                  color: isSelected ? Colors.blue : (index % 2 == 0 ? Colors.black : Colors.grey),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 1,
+                    vertical: 1,
+                  ),
+                  color: isSelected
+                      ? Colors.blue
+                      : (index % 2 == 0 ? Colors.black : Colors.grey),
                   child: Row(
                     children: [
                       Text(
                         '${index + 1}'.padLeft(2),
                         style: TextStyle(
                           color: isSelected ? Colors.cyan : Colors.white,
-                          
                         ),
                       ),
                       Text(
-                        reg.name.substring(0, reg.name.length.clamp(0, 14)).padRight(14),
+                        reg.name
+                            .substring(0, reg.name.length.clamp(0, 14))
+                            .padRight(14),
                         style: TextStyle(
                           color: isSelected ? Colors.cyan : Colors.white,
-                          
                         ),
                       ),
                       Text(
                         '${reg.era}'.padLeft(3),
                         style: TextStyle(
                           color: isSelected ? Colors.cyan : Colors.white,
-                          
                         ),
                       ),
                       Text(
                         '${reg.cost}'.padLeft(5),
                         style: TextStyle(
                           color: isSelected ? Colors.cyan : Colors.white,
-                          
                         ),
                       ),
                       Text(
                         reg.isAvailable ? ' Available ' : ' Locked  ',
                         style: TextStyle(
                           color: reg.isAvailable ? Colors.green : Colors.red,
-                          
                         ),
                       ),
                     ],
@@ -658,7 +630,13 @@ class _AcademyScreenState extends State<AcademyScreen> {
             color: Colors.blue,
             child: const Row(
               children: [
-                Text(' TRAINING QUEUE ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                Text(
+                  ' TRAINING QUEUE ',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ),
@@ -680,15 +658,20 @@ class _AcademyScreenState extends State<AcademyScreen> {
           Expanded(
             child: queue.isEmpty
                 ? const Center(
-                    child: Text('No training orders',
-                        style: TextStyle(color: Colors.grey)),
+                    child: Text(
+                      'No training orders',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   )
                 : ListView.builder(
                     itemCount: queue.length,
                     itemBuilder: (context, index) {
                       final item = queue[index];
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 1,
+                          vertical: 1,
+                        ),
                         color: index % 2 == 0 ? Colors.black : Colors.grey,
                         child: Row(
                           children: [
@@ -697,7 +680,12 @@ class _AcademyScreenState extends State<AcademyScreen> {
                               style: const TextStyle(color: Colors.white),
                             ),
                             Text(
-                              item.regimentName.substring(0, item.regimentName.length.clamp(0, 10)).padRight(10),
+                              item.regimentName
+                                  .substring(
+                                    0,
+                                    item.regimentName.length.clamp(0, 10),
+                                  )
+                                  .padRight(10),
                               style: const TextStyle(color: Colors.white),
                             ),
                             Text(
@@ -734,7 +722,6 @@ class _AcademyScreenState extends State<AcademyScreen> {
             style: TextStyle(
               color: reg.isAvailable ? Colors.green : Colors.red,
               fontWeight: FontWeight.bold,
-              
             ),
           ),
           Text(
@@ -764,7 +751,6 @@ class _AcademyScreenState extends State<AcademyScreen> {
                   : ' Requires: ${reg.requiredTech} ',
               style: TextStyle(
                 color: reg.isAvailable ? Colors.green : Colors.red,
-                
               ),
             ),
         ],

@@ -63,7 +63,7 @@ Map<String, Set<String>> computeBlockadedPortProvincesByPlayer(
       targetProvinceId,
     );
     if (!adjacentSeaZones.contains(fleet.seaZoneId)) continue;
-    final province = tryGetProvince(game.worldState, targetProvinceId);
+    final province = game.worldState.tryGetProvince(targetProvinceId);
     final ownerId = province?.ownerId;
     if (ownerId == null) continue;
     final blockaderId = fleet.ownerId;
@@ -95,9 +95,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
   for (final player in game.players) {
     final capital = player.capitalTile;
     if (capital == null || player.capitalProvinceId == null) {
-      _log.d(
-        'connectivity resolve player=${player.id} skipped (no capital)',
-      );
+      _log.d('connectivity resolve player=${player.id} skipped (no capital)');
       result[player.id] = const ConnectivityResult(connected: {});
       continue;
     }
@@ -531,9 +529,7 @@ bool _isLandProvinceGridCell(
   Set<String> landProvinceNodeIds,
 ) {
   if (landProvinceNodeIds.contains(localCellId)) return true;
-  return landProvinceNodeIds.contains(
-    ProvinceId.full(regionId, localCellId),
-  );
+  return landProvinceNodeIds.contains(ProvinceId.full(regionId, localCellId));
 }
 
 /// Adjacent tile keys (4-neighbour). Includes tiles in same or neighbouring provinces (any land cell). Tile key uses neighbour's province id.

@@ -44,7 +44,7 @@ bool isGreatPowerNearlyDefeatedForJoinEmpire(Game game, String gpId) {
   final player = game.playerById(gpId);
   final capId = player?.capitalProvinceId;
   if (capId == null) return false;
-  final capProv = tryGetProvince(game.worldState, capId);
+  final capProv = game.worldState.tryGetProvince(capId);
   if (capProv == null) return false;
   if (capProv.ownerId == gpId) return false;
   final n = provinceCountOwnedBy(game, gpId);
