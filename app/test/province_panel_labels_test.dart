@@ -1,10 +1,13 @@
 import 'package:colonizethis_app/features/game/widgets/province_panel_labels.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' show UnitStatus;
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
+
   test('regimentTypeDisplayLabel uses l10n for catalog id', () {
     final l10n = lookupAppLocalizations(const Locale('en'));
     expect(regimentTypeDisplayLabel(l10n, 'peasant_levies'), 'Peasant levies');
