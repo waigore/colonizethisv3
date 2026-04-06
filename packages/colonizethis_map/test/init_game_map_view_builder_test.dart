@@ -102,6 +102,14 @@ void main() {
       expect(viewData.oldWorld.factionColors, isNotEmpty);
       expect(viewData.oldWorld.greatPowerFactionIds, {'gp1'});
       expect(viewData.newWorld.greatPowerFactionIds, {'gp1'});
+      expect(
+        viewData.oldWorld.provincePoliticalOwnerByPrefixedProvinceId['oldWorld|p1'],
+        'gp1',
+      );
+      expect(
+        viewData.newWorld.provincePoliticalOwnerByPrefixedProvinceId['newWorld|p1'],
+        isNull,
+      );
       expect(viewData.newWorld.cells.length, 4);
     });
 

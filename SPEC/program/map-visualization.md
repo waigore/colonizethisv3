@@ -58,6 +58,8 @@ For province-name overlays, `RegionMapViewData` may also carry province-level un
 - UI maps counts to icons using threshold `count > 0`; when `intelVisible = false`, UI renders no class icons for that province.
 - Values are refreshed at turn start after turn resolution and player-view rebuild.
 
+**Province-level political owner for label plates:** `provincePoliticalOwnerByPrefixedProvinceId[provinceId] = Province.ownerId` (nullable) for each land province in the region, populated from world state in `buildInitGameMapViewData`. The in-game map uses this map with per-cell `CellViewData.ownerFactionId` to choose a **GP-tinted** vs **neutral** semi-transparent name plate per [map-widget.md](../ui/map-widget.md) § Layer model (province names). This distinguishes Great Power–owned provinces from Minor/Tribe provinces where purchased tiles may assign a GP to individual cells.
+
 `InitGameMapViewData`: oldWorld, newWorld, metadata. `cellSize` = base logical px per map cell for Flame terrain/layout; for the shipped app init-game map it is taken from `assets/data/map_terrain_tilesets.json` (`map_cell_size_px`) via `MapTerrainConfig` so it matches Wang destination rects ([wang-tileset-and-assets.md](../ui/wang-tileset-and-assets.md) § App map runtime configuration). Zoom still scales the canvas in the parent; this is the unzoomed cell size.
 
 ---
