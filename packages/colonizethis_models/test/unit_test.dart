@@ -11,6 +11,8 @@ void main() {
         locationProvinceId: 'prov1',
         status: UnitStatus.working,
         medals: 2,
+        originTileKey: 'oldWorld|p1|0|0',
+        assignedTileKey: 'oldWorld|p1|1|0',
       );
       final u2 = Unit.fromJson(u.toJson());
       expect(u2.id, 'u1');
@@ -19,6 +21,8 @@ void main() {
       expect(u2.locationProvinceId, 'prov1');
       expect(u2.status, UnitStatus.working);
       expect(u2.medals, 2);
+      expect(u2.originTileKey, 'oldWorld|p1|0|0');
+      expect(u2.assignedTileKey, 'oldWorld|p1|1|0');
     });
     test('equality', () {
       final a = Unit(
