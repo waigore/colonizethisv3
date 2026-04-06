@@ -55,7 +55,7 @@ Base tiles are chained across tilesets to ensure consistent appearance.
 | `tile_mountain` | Rocky mountain default overlay | ✅ Generated (from mountain v2 art) |
 | `tile_swamp` | Murky swamp default overlay | ✅ Generated |
 
-**Note:** Desert is now a L1 terrain (not L2), so `tile_desert_standalone` is deprecated.
+**Note:** Desert is now a L1 terrain (not L2), so no desert L2 standalone overlay asset is used.
 
 ---
 
