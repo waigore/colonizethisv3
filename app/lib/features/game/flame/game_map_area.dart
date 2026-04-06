@@ -495,15 +495,24 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           onClose: () => setState(() => _sideMenuOpen = false),
                         ),
                       ],
-                      Positioned(
-                        right: 8,
-                        bottom: 8,
-                        child: GameRegionMinimap(
-                          region: _currentRegion,
-                          viewportSnapshot: _regionViewportSnapshot,
-                          bus: ref.read(appEventBusProvider),
-                          cellSizePx: _currentRegion.cellSize.toDouble(),
-                        ),
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final panelOpen =
+                              ref.watch(mapProvincePanelProvider).overlayOpen;
+                          final rightInset = (!isNarrow && panelOpen)
+                              ? 8.0 + 320.0
+                              : 8.0;
+                          return Positioned(
+                            right: rightInset,
+                            bottom: 8,
+                            child: GameRegionMinimap(
+                              region: _currentRegion,
+                              viewportSnapshot: _regionViewportSnapshot,
+                              bus: ref.read(appEventBusProvider),
+                              cellSizePx: _currentRegion.cellSize.toDouble(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
