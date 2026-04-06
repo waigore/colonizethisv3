@@ -301,6 +301,9 @@ void main() {
         await tester.pumpWidget(const SizedBox.shrink());
 
         const paths = [
+          'assets/images/terrain/tile_plains_grain.png',
+          'assets/images/terrain/tile_plains_meat.png',
+          'assets/images/terrain/tile_plains_horses.png',
           'assets/images/terrain/tile_forest.png',
           'assets/images/terrain/tile_forest_timber.png',
           'assets/images/terrain/tile_hills.png',
@@ -380,6 +383,19 @@ void main() {
         });
 
         final keys = <String>[
+          // Plains variants for supported plains resources.
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'grain',
+          )!,
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'meat',
+          )!,
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'horses',
+          )!,
           // Forest: non-timber should keep canonical default.
           featureOverlayTileKey(
             terrain: TerrainType.forest,

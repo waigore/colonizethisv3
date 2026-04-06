@@ -799,11 +799,13 @@ class CtRegionMapComponent extends PositionComponent {
     final left = cell.x * cellSize;
     final top = cell.y * cellSize;
     final terrain = cell.terrainType;
+    if (terrain == null) {
+      throw StateError('Cell has no terrain type: $cell');
+    }
 
     // Determine if this cell is plains or desert
     final isPlains =
-        terrain == TerrainType.plains ||
-        (terrain != null && _isFeatureTerrain(terrain));
+        terrain == TerrainType.plains || _isFeatureTerrain(terrain);
     final isDesert = terrain == TerrainType.desert;
 
     // Check for plains↔desert border
@@ -865,6 +867,41 @@ class CtRegionMapComponent extends PositionComponent {
       return;
     }
 
+    final variantTileKey = terrain == TerrainType.plains
+        ? terrainVariantTileKey(
+            terrain: terrain,
+            resourceId: cell.resourceId,
+            improvementLevel: cell.improvementLevel,
+          )
+        : null;
+    if (variantTileKey != null) {
+      final variantTile = terrainTilesetCache.getStandaloneTileByKey(
+        variantTileKey,
+      );
+      if (variantTile == null) {
+        throw StateError(
+          'Required plains terrain variant tile missing for key=$variantTileKey',
+        );
+      }
+      final srcRect = Rect.fromLTWH(
+        0,
+        0,
+        variantTile.image.width.toDouble(),
+        variantTile.image.height.toDouble(),
+      );
+      final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
+      final paint = Paint();
+      if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+          cell.visibility == TileVisibility.fogged) {
+        paint.colorFilter = ColorFilter.mode(
+          Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
+          BlendMode.darken,
+        );
+      }
+      canvas.drawImageRect(variantTile.image, srcRect, dstRect, paint);
+      return;
+    }
+
     // Interior cell - use base tile from sea tileset (cleaner with transition_size=0.5)
     // Plains uses sea_plains tileset, Desert uses sea_desert tileset
     // Note: In sea tilesets, 'lower'=sea, 'upper'=land
@@ -916,14 +953,15 @@ class CtRegionMapComponent extends PositionComponent {
     // If a standalone tile is missing (e.g. asset regression), skip drawing the
     // overlay rather than failing the entire map render. Wang tilesets remain
     // strict (they must exist), but L2+ overlays are best-effort.
-    final overlayTileKey = featureOverlayTileKey(
+    final overlayTileKey = terrainVariantTileKey(
       terrain: terrain,
       resourceId: cell.resourceId,
       improvementLevel: cell.improvementLevel,
     );
-    final standaloneTile =
-        terrainTilesetCache.getStandaloneTileByKey(overlayTileKey) ??
-        terrainTilesetCache.getStandaloneTile(terrain);
+    final standaloneTile = overlayTileKey == null
+        ? terrainTilesetCache.getStandaloneTile(terrain)
+        : (terrainTilesetCache.getStandaloneTileByKey(overlayTileKey) ??
+              terrainTilesetCache.getStandaloneTile(terrain));
     if (standaloneTile == null) {
       _log.w(
         'Feature overlay tile missing for key=$overlayTileKey terrain=$terrain; '
