@@ -14,10 +14,12 @@ import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_map/colonizethis_map.dart' show InitGameMapViewData;
+import 'package:colonizethis_map/colonizethis_map.dart'
+    show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -42,6 +44,23 @@ Future<void> _pumpUntilMinimapPaintVisible(WidgetTester tester) async {
   );
 }
 
+String _firstOldWorldTileKey(Game game) {
+  final m = game.worldState.tileKeysByRegionAndProvince['oldWorld'];
+  if (m == null) {
+    throw StateError('missing tileKeysByRegionAndProvince.oldWorld');
+  }
+  for (final keys in m.values) {
+    if (keys.isNotEmpty) return keys.first;
+  }
+  throw StateError('no tile keys under oldWorld');
+}
+
+/// [Positioned] wrapping [GameRegionMinimap] in [GameMapArea] (see `game_map_area.dart`).
+double? _minimapPositionedRight(WidgetTester tester) {
+  final ctx = tester.element(find.byType(GameRegionMinimap));
+  return ctx.findAncestorWidgetOfExactType<Positioned>()?.right;
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -56,19 +75,18 @@ void main() {
     required AppEventBus bus,
     required Game game,
     required InitGameMapViewData mapViewData,
-  }) =>
-      [
-        appEventBusProvider.overrideWith((ref) => bus),
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-        gamesBoxProvider.overrideWith((ref) => gamesBox),
-        gameServiceProvider.overrideWith(
-          (ref) => GameService(gamesBox, GameSaveAdapter()),
-        ),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
-        ),
-        mapViewDataProvider.overrideWith((ref) => mapViewData),
-      ];
+  }) => [
+    appEventBusProvider.overrideWith((ref) => bus),
+    currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+    gamesBoxProvider.overrideWith((ref) => gamesBox),
+    gameServiceProvider.overrideWith(
+      (ref) => GameService(gamesBox, GameSaveAdapter()),
+    ),
+    currentOrdersProvider.overrideWith(
+      () => CurrentOrdersNotifier(const Orders()),
+    ),
+    mapViewDataProvider.overrideWith((ref) => mapViewData),
+  ];
 
   testWidgets('region minimap: toggle visibility and minimap bus pan', (
     WidgetTester tester,
@@ -312,4 +330,49 @@ void main() {
       'oldWorld',
     );
   });
+
+  testWidgets(
+    'wide layout: minimap Positioned right inset clears province panel width when panel open',
+    (WidgetTester tester) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.binding.setSurfaceSize(const Size(900, 800));
+
+      final init = getDebugInitGameResult();
+      final game = init.game;
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: _mapAreaProviderOverrides(
+            bus: bus,
+            game: game,
+            mapViewData: init.mapViewData,
+          ),
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: GameMapArea(game: game, mapViewData: init.mapViewData),
+            ),
+          ),
+        ),
+      );
+      await _pumpUntilMinimapPaintVisible(tester);
+
+      expect(_minimapPositionedRight(tester), 8.0);
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(GameMapArea)),
+      );
+      container
+          .read(mapProvincePanelProvider.notifier)
+          .reportMapTileTapped(_firstOldWorldTileKey(game));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(_minimapPositionedRight(tester), 8.0 + 320.0);
+    },
+  );
 }

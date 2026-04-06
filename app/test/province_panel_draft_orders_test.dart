@@ -8,11 +8,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/l10n/app_localizations.dart';
 
 const _regionId = 'oldWorld';
 const _localProvinceId = 'pDraft';
+const _localDestProvinceId = 'pDest';
 String get _fullProvinceId => '$_regionId|$_localProvinceId';
+String get _fullDestProvinceId => '$_regionId|$_localDestProvinceId';
 String _tileKey(int x, int y) => '$_fullProvinceId|$x|$y';
+
+/// Bounded pumps only — avoid [pumpAndSettle] (animations / unbounded work).
+Future<void> _pumpOverlayLayout(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 16));
+}
 
 void main() {
   suppressLogsForTests();
@@ -47,7 +56,9 @@ void main() {
           ),
           newWorld: const RegionData(),
           tileKeysByRegionAndProvince: {
-            _regionId: {_fullProvinceId: [tk]},
+            _regionId: {
+              _fullProvinceId: [tk],
+            },
           },
         ),
         players: const [
@@ -103,6 +114,9 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
           home: Scaffold(
             body: ProvinceSeaZoneDetailOverlay(
               game: game,
@@ -116,7 +130,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await _pumpOverlayLayout(tester);
 
       expect(find.textContaining('build improvement'), findsOneWidget);
       expect(find.textContaining(': idle'), findsNothing);
@@ -150,7 +164,9 @@ void main() {
           ),
           newWorld: const RegionData(),
           tileKeysByRegionAndProvince: {
-            _regionId: {_fullProvinceId: [tk]},
+            _regionId: {
+              _fullProvinceId: [tk],
+            },
           },
         ),
         players: const [
@@ -195,6 +211,9 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
           home: Scaffold(
             body: ProvinceSeaZoneDetailOverlay(
               game: game,
@@ -207,10 +226,252 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await _pumpOverlayLayout(tester);
 
       expect(find.textContaining('Peasant levies'), findsOneWidget);
       expect(find.textContaining('peasant_levies:'), findsNothing);
     });
+
+    testWidgets(
+      'Military section shows pending regiment move line from draftOrders',
+      (WidgetTester tester) async {
+        final tk = _tileKey(0, 0);
+        final game = Game(
+          id: 'mil_pending_test',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: _fullProvinceId,
+                  regionId: _regionId,
+                  displayName: 'FromProv',
+                ),
+                Province(
+                  id: _fullDestProvinceId,
+                  regionId: _regionId,
+                  displayName: 'DestProv',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'r_move',
+                  type: 'peasant_levies',
+                  ownerId: 'gp1',
+                  locationProvinceId: _fullProvinceId,
+                  tileKey: tk,
+                  status: UnitStatus.idle,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            tileKeysByRegionAndProvince: {
+              _regionId: {
+                _fullProvinceId: [tk],
+              },
+            },
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+          ],
+        );
+        final region = RegionMapViewData(
+          regionId: _regionId,
+          width: 1,
+          height: 1,
+          cellSize: 32,
+          cells: const [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: _localProvinceId,
+              isSea: false,
+              terrainTypeId: 'plains',
+              visibility: TileVisibility.visible,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          factionColors: const {},
+          greatPowerFactionIds: const {'gp1'},
+          terrainColors: const {},
+        );
+        final view = PlayerView(
+          playerId: 'gp1',
+          player: const Player(
+            id: 'gp1',
+            displayName: 'Human',
+            isHuman: true,
+            treasury: 0,
+          ),
+          ownUnitsById: const {},
+          provincesById: const {},
+          visibilityByTile: {tk: VisibilityLevel.fullyVisible},
+          prospectedTiles: const {},
+          diplomacyByOtherId: const {},
+        );
+        final orders = Orders(
+          moveOrdersByPlayerId: {
+            'gp1': [
+              MoveOrder(
+                unitId: 'r_move',
+                destinationProvinceId: _fullDestProvinceId,
+              ),
+            ],
+          },
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: game,
+                region: region,
+                displayId: _fullProvinceId,
+                selectedTileKey: tk,
+                humanPlayerId: 'gp1',
+                playerView: view,
+                draftOrders: orders,
+              ),
+            ),
+          ),
+        );
+        await _pumpOverlayLayout(tester);
+
+        expect(
+          find.textContaining('Ordered: move regiment to'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('DestProv'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Naval section shows pending dock move and mission from draftOrders',
+      (WidgetTester tester) async {
+        final tk = _tileKey(0, 0);
+        final game = Game(
+          id: 'naval_pending_test',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: _fullProvinceId,
+                  regionId: _regionId,
+                  displayName: 'PortProv',
+                ),
+                Province(
+                  id: _fullDestProvinceId,
+                  regionId: _regionId,
+                  displayName: 'OtherPort',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: 'fleet_in_port',
+                ownerId: 'gp1',
+                regionId: _regionId,
+                inPortAtProvinceId: _fullProvinceId,
+                shipTypeIds: const ['sloop'],
+              ),
+            ],
+            tileKeysByRegionAndProvince: {
+              _regionId: {
+                _fullProvinceId: [tk],
+              },
+            },
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+          ],
+        );
+        final region = RegionMapViewData(
+          regionId: _regionId,
+          width: 1,
+          height: 1,
+          cellSize: 32,
+          cells: const [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: _localProvinceId,
+              isSea: false,
+              terrainTypeId: 'plains',
+              visibility: TileVisibility.visible,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          factionColors: const {},
+          greatPowerFactionIds: const {'gp1'},
+          terrainColors: const {},
+        );
+        final view = PlayerView(
+          playerId: 'gp1',
+          player: const Player(
+            id: 'gp1',
+            displayName: 'Human',
+            isHuman: true,
+            treasury: 0,
+          ),
+          ownUnitsById: const {},
+          provincesById: const {},
+          visibilityByTile: {tk: VisibilityLevel.fullyVisible},
+          prospectedTiles: const {},
+          diplomacyByOtherId: const {},
+        );
+        final orders = Orders(
+          navalMoveOrdersByPlayerId: {
+            'gp1': [
+              NavalMoveOrder(
+                fleetId: 'fleet_in_port',
+                destinationPortProvinceId: _fullDestProvinceId,
+              ),
+            ],
+          },
+          navalMissionOrdersByPlayerId: {
+            'gp1': [
+              const NavalMissionOrder(
+                fleetId: 'fleet_in_port',
+                mission: 'patrol',
+              ),
+            ],
+          },
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: game,
+                region: region,
+                displayId: _fullProvinceId,
+                selectedTileKey: tk,
+                humanPlayerId: 'gp1',
+                playerView: view,
+                draftOrders: orders,
+              ),
+            ),
+          ),
+        );
+        await _pumpOverlayLayout(tester);
+
+        expect(find.textContaining('Ordered: dock fleet at'), findsOneWidget);
+        expect(find.textContaining('OtherPort'), findsOneWidget);
+        expect(
+          find.textContaining('Ordered: fleet mission — patrol'),
+          findsOneWidget,
+        );
+      },
+    );
   });
 }
