@@ -449,22 +449,19 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   final otherGps = game.players
       .where((p) => p.id != playerId)
       .map((p) => p.id)
-      .toList();
-  final minorIds = game.minorNations.map((m) => m.id).toList();
-  final tribeIds = game.tribes.map((t) => t.id).toList();
-  final allTargets = <String>[...otherGps, ...minorIds, ...tribeIds];
-  final knownTargets = allTargets
-      .where((id) => knownFactionIds.contains(id))
-      .toList();
+      .toSet();
+  final minorIds = game.minorNations.map((m) => m.id).toSet();
+  final tribeIds = game.tribes.map((t) => t.id).toSet();
+  final knownTargets = <String>{
+    ...otherGps.where(knownFactionIds.contains),
+    ...minorIds.where(knownFactionIds.contains),
+    ...tribeIds.where(knownFactionIds.contains),
+  };
   final knownTargetIds = knownTargets.toSet();
 
   final unionTargets = <String>{
     ...knownTargets,
     ...otherGps,
-    for (final id in minorIds)
-      if (knownFactionIds.contains(id)) id,
-    for (final id in tribeIds)
-      if (knownFactionIds.contains(id)) id,
     for (final o in game.overtureStates)
       if (o.gpId == playerId) o.targetId,
   };

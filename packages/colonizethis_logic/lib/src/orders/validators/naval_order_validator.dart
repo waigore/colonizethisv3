@@ -9,7 +9,7 @@ import '../order_validation_result.dart';
 
 /// Validates naval move and naval mission orders for a single player.
 /// SPEC/program/orders.md § Naval orders; SPEC/game/capital-and-connectivity.md § Blockade.
-class NavalOrderValidator {
+class NavalOrderValidator extends OrderValidator {
   final Game _game;
   final MapTopology _topology;
   final String _playerId;

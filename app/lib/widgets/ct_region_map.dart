@@ -10,6 +10,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/services/subscription_tracker.dart';
 import '../features/game/flame/region_map_component.dart';
 import '../features/game/flame/region_map_viewport_snapshot.dart'
     show
@@ -603,10 +604,7 @@ class CtRegionMap extends StatefulWidget {
 
 class _CtRegionMapState extends State<CtRegionMap> {
   late _CtRegionMapGame _game;
-  StreamSubscription<RequestRegionMapCameraCenterWorldEvent>? _cameraCenterSub;
-  StreamSubscription<RequestRegionMapCameraPanWorldDeltaEvent>? _cameraPanSub;
-  StreamSubscription<RequestRegionMapSetZoomMultiplierEvent>?
-  _zoomMultiplierSub;
+  final SubscriptionTracker _subscriptions = SubscriptionTracker();
   double _scaleGestureStartMultiplier = 1.0;
 
   @override
@@ -618,39 +616,32 @@ class _CtRegionMapState extends State<CtRegionMap> {
 
   @override
   void dispose() {
-    _cameraCenterSub?.cancel();
-    _cameraPanSub?.cancel();
-    _zoomMultiplierSub?.cancel();
+    _subscriptions.cancelAll();
     super.dispose();
   }
 
   void _attachMinimapCameraBusSubscriptions() {
-    _cameraCenterSub?.cancel();
-    _cameraPanSub?.cancel();
-    _zoomMultiplierSub?.cancel();
-    _cameraCenterSub = null;
-    _cameraPanSub = null;
-    _zoomMultiplierSub = null;
+    _subscriptions.cancelAll();
     final b = widget.bus;
     if (b == null) return;
-    _cameraCenterSub = b.on<RequestRegionMapCameraCenterWorldEvent>().listen((
-      e,
-    ) {
-      if (!mounted || e.regionId != widget.region.regionId) return;
-      _game.setCameraCenterWorld(e.worldCenterX, e.worldCenterY);
-    });
-    _cameraPanSub = b.on<RequestRegionMapCameraPanWorldDeltaEvent>().listen((
-      e,
-    ) {
-      if (!mounted || e.regionId != widget.region.regionId) return;
-      _game.panCameraWorld(e.worldDx, e.worldDy);
-    });
-    _zoomMultiplierSub = b.on<RequestRegionMapSetZoomMultiplierEvent>().listen((
-      e,
-    ) {
-      if (!mounted || e.regionId != widget.region.regionId) return;
-      _game.setZoomMultiplierAbsolute(e.zoomMultiplier);
-    });
+    _subscriptions.track(
+      b.on<RequestRegionMapCameraCenterWorldEvent>().listen((e) {
+        if (!mounted || e.regionId != widget.region.regionId) return;
+        _game.setCameraCenterWorld(e.worldCenterX, e.worldCenterY);
+      }),
+    );
+    _subscriptions.track(
+      b.on<RequestRegionMapCameraPanWorldDeltaEvent>().listen((e) {
+        if (!mounted || e.regionId != widget.region.regionId) return;
+        _game.panCameraWorld(e.worldDx, e.worldDy);
+      }),
+    );
+    _subscriptions.track(
+      b.on<RequestRegionMapSetZoomMultiplierEvent>().listen((e) {
+        if (!mounted || e.regionId != widget.region.regionId) return;
+        _game.setZoomMultiplierAbsolute(e.zoomMultiplier);
+      }),
+    );
   }
 
   @override

@@ -97,33 +97,81 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
     return component.game.players.firstWhereOrNull((p) => p.id == playerId);
   }
 
+  String _displayNameForShip(String shipTypeId) {
+    return shipTypeId
+        .split('_')
+        .map(
+          (part) => part.isEmpty
+              ? part
+              : '${part[0].toUpperCase()}${part.substring(1)}',
+        )
+        .join(' ');
+  }
+
   List<ShipDisplayInfo> _getShipList() {
-    return const [
-      ShipDisplayInfo(id: 'carrack', name: 'Carrack', category: 'Merchant', cost: 80, inputs: {'lumber': 2, 'fabric': 1}, firepower: 2, range: 1, armour: 1, hull: 2, movement: 2, cargoHold: 3, isAvailable: true),
-      ShipDisplayInfo(id: 'fluyte', name: 'Fluyte', category: 'Merchant', cost: 60, inputs: {'lumber': 1, 'fabric': 1}, firepower: 1, range: 1, armour: 1, hull: 1, movement: 2, cargoHold: 4, isAvailable: true),
-      ShipDisplayInfo(id: 'sloop', name: 'Sloop', category: 'Warship', cost: 50, inputs: {'lumber': 1}, firepower: 1, range: 1, armour: 1, hull: 1, movement: 2, cargoHold: 0, isAvailable: true),
-      ShipDisplayInfo(id: 'frigate', name: 'Frigate', category: 'Warship', cost: 100, inputs: {'lumber': 2, 'iron': 1}, firepower: 2, range: 2, armour: 1, hull: 2, movement: 3, cargoHold: 0, isAvailable: true),
-    ];
+    final player = _getHumanPlayer();
+    final techUnlocked = player?.techUnlocked;
+    final unlockMap = unlockingTechByShipId;
+    return ShipEconomyCatalog.all.map((entry) {
+      final stats = NavalStatsCatalog.get(entry.shipTypeId);
+      final requiredTech = unlockMap[entry.shipTypeId];
+      final isAvailable =
+          requiredTech == null || (techUnlocked?[requiredTech] ?? false);
+      final category = stats.cargoHold > 0 ? 'Merchant' : 'Warship';
+      return ShipDisplayInfo(
+        id: entry.shipTypeId,
+        name: _displayNameForShip(entry.shipTypeId),
+        category: category,
+        cost: entry.buildTreasuryCost ~/ 100,
+        inputs: entry.buildInputs.map((key, value) => MapEntry(key, value)),
+        firepower: stats.firepower,
+        range: stats.range,
+        armour: stats.armour,
+        hull: stats.hull,
+        movement: stats.movement,
+        cargoHold: stats.cargoHold,
+        isAvailable: isAvailable,
+      );
+    }).toList();
   }
 
   List<BuildOrderInfo> _getBuildOrders() {
     final playerId = _getHumanPlayerId();
     if (playerId == null) return [];
-    final buildOrders = component.orders.buildUnitOrdersByPlayerId[playerId] ?? [];
+    final buildOrders =
+        component.orders.buildUnitOrdersByPlayerId[playerId] ?? [];
     final shipNames = {for (final s in _getShipList()) s.id: s.name};
-    return buildOrders.where((o) => ShipEconomyCatalog.byId.containsKey(o.unitType)).map((o) => BuildOrderInfo(shipTypeId: o.unitType, shipName: shipNames[o.unitType] ?? o.unitType, provinceId: o.spawnProvinceId, turnsRemaining: 2)).toList();
+    return buildOrders
+        .where((o) => ShipEconomyCatalog.byId.containsKey(o.unitType))
+        .map(
+          (o) => BuildOrderInfo(
+            shipTypeId: o.unitType,
+            shipName: shipNames[o.unitType] ?? o.unitType,
+            provinceId: o.spawnProvinceId,
+            turnsRemaining: 2,
+          ),
+        )
+        .toList();
   }
 
   List<Unit> _getHomeFleet() {
     final playerId = _getHumanPlayerId();
     if (playerId == null) return [];
-    return component.game.worldState.oldWorld.units.where((u) => u.ownerId == playerId && ShipEconomyCatalog.byId.containsKey(u.type)).toList();
+    return component.game.worldState.oldWorld.units
+        .where(
+          (u) =>
+              u.ownerId == playerId &&
+              ShipEconomyCatalog.byId.containsKey(u.type),
+        )
+        .toList();
   }
 
   List<Province> _getPortProvinces() {
     final playerId = _getHumanPlayerId();
     if (playerId == null) return [];
-    return component.game.worldState.oldWorld.provinces.where((p) => p.ownerId == playerId && p.townDevelopmentLevel >= 1).toList();
+    return component.game.worldState.oldWorld.provinces
+        .where((p) => p.ownerId == playerId && p.townDevelopmentLevel >= 1)
+        .toList();
   }
 
   int _getPlayerGold() => _getHumanPlayer()?.treasury ?? 0;
@@ -145,69 +193,168 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
 
   void _issueBuildOrder(String provinceId, ShipDisplayInfo ship) {
     final playerId = _getHumanPlayerId();
-    if (playerId == null) { setState(() { _feedbackMessage = 'Error: No human player'; _feedbackColor = Colors.red; }); return; }
-    if (!ship.isAvailable) { setState(() { _feedbackMessage = 'Ship not available'; _feedbackColor = Colors.red; }); return; }
+    if (playerId == null) {
+      setState(() {
+        _feedbackMessage = 'Error: No human player';
+        _feedbackColor = Colors.red;
+      });
+      return;
+    }
+    if (!ship.isAvailable) {
+      setState(() {
+        _feedbackMessage = 'Ship not available';
+        _feedbackColor = Colors.red;
+      });
+      return;
+    }
     final gold = _getPlayerGold();
-    if (gold < ship.cost) { setState(() { _feedbackMessage = 'Insufficient gold: need ${ship.cost}, have $gold'; _feedbackColor = Colors.red; }); return; }
+    if (gold < ship.cost) {
+      setState(() {
+        _feedbackMessage = 'Insufficient gold: need ${ship.cost}, have $gold';
+        _feedbackColor = Colors.red;
+      });
+      return;
+    }
     final hasPort = _getPortProvinces().any((p) => p.id == provinceId);
-    if (!hasPort) { setState(() { _feedbackMessage = 'Province has no port'; _feedbackColor = Colors.red; }); return; }
-    final newOrder = BuildUnitOrder(unitType: ship.id, isMilitary: false, spawnProvinceId: provinceId);
+    if (!hasPort) {
+      setState(() {
+        _feedbackMessage = 'Province has no port';
+        _feedbackColor = Colors.red;
+      });
+      return;
+    }
+    final newOrder = BuildUnitOrder(
+      unitType: ship.id,
+      isMilitary: false,
+      spawnProvinceId: provinceId,
+    );
     final existing = component.orders.buildUnitOrdersByPlayerId[playerId] ?? [];
     final newOrders = Orders(
       moveOrdersByPlayerId: component.orders.moveOrdersByPlayerId,
-      buildUnitOrdersByPlayerId: {...component.orders.buildUnitOrdersByPlayerId, playerId: [...existing, newOrder]},
+      buildUnitOrdersByPlayerId: {
+        ...component.orders.buildUnitOrdersByPlayerId,
+        playerId: [...existing, newOrder],
+      },
       workOrdersByPlayerId: component.orders.workOrdersByPlayerId,
       diplomaticOrdersByPlayerId: component.orders.diplomaticOrdersByPlayerId,
       researchOrdersByPlayerId: component.orders.researchOrdersByPlayerId,
       navalMoveOrdersByPlayerId: component.orders.navalMoveOrdersByPlayerId,
-      navalMissionOrdersByPlayerId: component.orders.navalMissionOrdersByPlayerId,
+      navalMissionOrdersByPlayerId:
+          component.orders.navalMissionOrdersByPlayerId,
     );
     component.onOrdersChanged(newOrders);
     _log.i('build order for ${ship.name} in $provinceId');
-    setState(() { _inputMode = InputMode.none; _provinceInput = ''; _feedbackMessage = 'Build order issued'; _feedbackColor = Colors.green; });
+    setState(() {
+      _inputMode = InputMode.none;
+      _provinceInput = '';
+      _feedbackMessage = 'Build order issued';
+      _feedbackColor = Colors.green;
+    });
   }
 
   void _cancelBuildOrder(int index) {
     final playerId = _getHumanPlayerId();
     if (playerId == null) return;
     final existing = component.orders.buildUnitOrdersByPlayerId[playerId] ?? [];
-    final shipOrders = existing.where((o) => ShipEconomyCatalog.byId.containsKey(o.unitType)).toList();
+    final shipOrders = existing
+        .where((o) => ShipEconomyCatalog.byId.containsKey(o.unitType))
+        .toList();
     if (index >= shipOrders.length) return;
     final toCancel = shipOrders[index];
     final updated = existing.where((o) => o != toCancel).toList();
     final newOrders = Orders(
       moveOrdersByPlayerId: component.orders.moveOrdersByPlayerId,
-      buildUnitOrdersByPlayerId: {...component.orders.buildUnitOrdersByPlayerId, playerId: updated},
+      buildUnitOrdersByPlayerId: {
+        ...component.orders.buildUnitOrdersByPlayerId,
+        playerId: updated,
+      },
       workOrdersByPlayerId: component.orders.workOrdersByPlayerId,
       diplomaticOrdersByPlayerId: component.orders.diplomaticOrdersByPlayerId,
       researchOrdersByPlayerId: component.orders.researchOrdersByPlayerId,
       navalMoveOrdersByPlayerId: component.orders.navalMoveOrdersByPlayerId,
-      navalMissionOrdersByPlayerId: component.orders.navalMissionOrdersByPlayerId,
+      navalMissionOrdersByPlayerId:
+          component.orders.navalMissionOrdersByPlayerId,
     );
     component.onOrdersChanged(newOrders);
-    setState(() { _inputMode = InputMode.none; _feedbackMessage = 'Order cancelled'; _feedbackColor = Colors.green; });
+    setState(() {
+      _inputMode = InputMode.none;
+      _feedbackMessage = 'Order cancelled';
+      _feedbackColor = Colors.green;
+    });
   }
 
   bool _handleKeyEvent(dynamic event) {
     final key = event.logicalKey;
     final c = event.character?.toLowerCase();
     if (key == LogicalKey.escape) {
-      if (_inputMode != InputMode.none) { setState(() { _inputMode = InputMode.none; _provinceInput = ''; _feedbackMessage = ''; }); return true; }
-      component.onNavigate(CttermRoute.inGameShell); return true;
+      if (_inputMode != InputMode.none) {
+        setState(() {
+          _inputMode = InputMode.none;
+          _provinceInput = '';
+          _feedbackMessage = '';
+        });
+        return true;
+      }
+      component.onNavigate(CttermRoute.inGameShell);
+      return true;
     }
     final ships = _getShipList();
     if (ships.isEmpty) return false;
     if (_inputMode == InputMode.province) {
-      if (key == LogicalKey.enter) { _issueBuildOrder(_provinceInput, ships[_selectedIndex]); return true; }
-      else if (key == LogicalKey.backspace) { setState(() { _provinceInput = _provinceInput.isNotEmpty ? _provinceInput.substring(0, _provinceInput.length - 1) : ''; }); return true; }
-      else if (c != null && (c == '|' || (c.codeUnitAt(0) >= 48 && c.codeUnitAt(0) <= 57))) { setState(() { _provinceInput += c; }); return true; }
+      if (key == LogicalKey.enter) {
+        _issueBuildOrder(_provinceInput, ships[_selectedIndex]);
+        return true;
+      } else if (key == LogicalKey.backspace) {
+        setState(() {
+          _provinceInput = _provinceInput.isNotEmpty
+              ? _provinceInput.substring(0, _provinceInput.length - 1)
+              : '';
+        });
+        return true;
+      } else if (c != null &&
+          (c == '|' || (c.codeUnitAt(0) >= 48 && c.codeUnitAt(0) <= 57))) {
+        setState(() {
+          _provinceInput += c;
+        });
+        return true;
+      }
       return false;
     }
-    if (key == LogicalKey.arrowUp || c == 'k') { setState(() { _selectedIndex = (_selectedIndex - 1).clamp(0, ships.length - 1); _feedbackMessage = ''; }); return true; }
-    if (key == LogicalKey.arrowDown || c == 'j') { setState(() { _selectedIndex = (_selectedIndex + 1).clamp(0, ships.length - 1); _feedbackMessage = ''; }); return true; }
-    if (c == 'b') { setState(() { _inputMode = InputMode.province; _provinceInput = ''; _feedbackMessage = 'Enter province ID:'; _feedbackColor = Colors.cyan; }); return true; }
-    if (c == 'c') { final orders = _getBuildOrders(); if (orders.isNotEmpty && _selectedIndex < orders.length) _cancelBuildOrder(_selectedIndex); return true; }
-    if (c == 'h') { setState(() { _showHomeFleet = !_showHomeFleet; }); return true; }
+    if (key == LogicalKey.arrowUp || c == 'k') {
+      setState(() {
+        _selectedIndex = (_selectedIndex - 1).clamp(0, ships.length - 1);
+        _feedbackMessage = '';
+      });
+      return true;
+    }
+    if (key == LogicalKey.arrowDown || c == 'j') {
+      setState(() {
+        _selectedIndex = (_selectedIndex + 1).clamp(0, ships.length - 1);
+        _feedbackMessage = '';
+      });
+      return true;
+    }
+    if (c == 'b') {
+      setState(() {
+        _inputMode = InputMode.province;
+        _provinceInput = '';
+        _feedbackMessage = 'Enter province ID:';
+        _feedbackColor = Colors.cyan;
+      });
+      return true;
+    }
+    if (c == 'c') {
+      final orders = _getBuildOrders();
+      if (orders.isNotEmpty && _selectedIndex < orders.length)
+        _cancelBuildOrder(_selectedIndex);
+      return true;
+    }
+    if (c == 'h') {
+      setState(() {
+        _showHomeFleet = !_showHomeFleet;
+      });
+      return true;
+    }
     return false;
   }
 
@@ -217,183 +364,236 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
     final buildOrders = _getBuildOrders();
     final homeFleet = _getHomeFleet();
     final ports = _getPortProvinces();
-    final selected = ships.isNotEmpty && _selectedIndex < ships.length ? ships[_selectedIndex] : null;
+    final selected = ships.isNotEmpty && _selectedIndex < ships.length
+        ? ships[_selectedIndex]
+        : null;
     return Focusable(
       focused: true,
       onKeyEvent: _handleKeyEvent,
       child: Container(
         color: Colors.black,
-        child: Column(children: [
-          Container(padding: const EdgeInsets.all(1), color: Colors.blue, child: Row(children: [
-            const Text(' Shipyard ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            const Text('[b]uild [c]ancel [h]ome [Esc]back', style: TextStyle(color: Colors.grey)),
-          ])),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    padding: const EdgeInsets.all(1),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'Available Ships:',
-                          style: TextStyle(
-                            color: Colors.yellow,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 1),
-                        Expanded(
-                          child: ListView(
-                            children: [
-                              for (var i = 0; i < ships.length; i++)
-                                _shipRow(ships[i], i == _selectedIndex),
-                            ],
-                          ),
-                        ),
-                      ],
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(1),
+              color: Colors.blue,
+              child: Row(
+                children: [
+                  const Text(
+                    ' Shipyard ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    padding: const EdgeInsets.all(1),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'Details:',
-                          style: TextStyle(
-                            color: Colors.yellow,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 1),
-                        if (selected != null) ...[
-                          Text(
-                            selected.name,
-                            style: const TextStyle(
-                              color: Colors.white,
+                  const Text(
+                    '[b]uild [c]ancel [h]ome [Esc]back',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      padding: const EdgeInsets.all(1),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Available Ships:',
+                            style: TextStyle(
+                              color: Colors.yellow,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Text(
-                            'Category: ${selected.category}',
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                          Text(
-                            'Cost: ${selected.cost}g',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          const Text(
-                            'Stats:',
-                            style: TextStyle(color: Colors.cyan),
-                          ),
-                          Text(
-                            '  FRP:${selected.firepower} RNG:${selected.range}',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            '  ARM:${selected.armour} HULL:${selected.hull}',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            '  MV:${selected.movement}',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            selected.isAvailable ? '[b]uild' : 'Locked',
-                            style: TextStyle(
-                              color: selected.isAvailable
-                                  ? Colors.green
-                                  : Colors.red,
+                          const SizedBox(height: 1),
+                          Expanded(
+                            child: ListView(
+                              children: [
+                                for (var i = 0; i < ships.length; i++)
+                                  _shipRow(ships[i], i == _selectedIndex),
+                              ],
                             ),
                           ),
-                        ] else
-                          const Text(
-                            'No selection',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    padding: const EdgeInsets.all(1),
-                    child: Column(
-                      children: [
-                        Text(
-                          _showHomeFleet ? 'Home Fleet:' : 'Build Queue:',
-                          style: const TextStyle(
-                            color: Colors.yellow,
-                            fontWeight: FontWeight.bold,
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      padding: const EdgeInsets.all(1),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Details:',
+                            style: TextStyle(
+                              color: Colors.yellow,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 1),
-                        if (_showHomeFleet) ...[
-                          if (homeFleet.isEmpty)
-                            const Text(
-                              'No ships',
-                              style: TextStyle(color: Colors.grey),
-                            )
-                          else
-                            ...homeFleet.map(
-                              (u) => Text(
-                                _fmtShip(u.type),
-                                style: const TextStyle(color: Colors.white),
+                          const SizedBox(height: 1),
+                          if (selected != null) ...[
+                            Text(
+                              selected.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          Text(
-                            'Ports: ${ports.length}',
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                        ] else ...[
-                          if (buildOrders.isEmpty)
+                            Text(
+                              'Category: ${selected.category}',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            Text(
+                              'Cost: ${selected.cost}g',
+                              style: const TextStyle(color: Colors.white),
+                            ),
                             const Text(
-                              'No orders',
-                              style: TextStyle(color: Colors.grey),
-                            )
-                          else
-                            ...buildOrders.asMap().entries.map(
-                              (e) => Text(
-                                '${e.key + 1}.${e.value.shipName}>${_provinceLabel(e.value.provinceId)}',
-                                style: TextStyle(
-                                  color: e.key == _selectedIndex
-                                      ? Colors.green
-                                      : Colors.white,
-                                ),
+                              'Stats:',
+                              style: TextStyle(color: Colors.cyan),
+                            ),
+                            Text(
+                              '  FRP:${selected.firepower} RNG:${selected.range}',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            Text(
+                              '  ARM:${selected.armour} HULL:${selected.hull}',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            Text(
+                              '  MV:${selected.movement}',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            Text(
+                              selected.isAvailable ? '[b]uild' : 'Locked',
+                              style: TextStyle(
+                                color: selected.isAvailable
+                                    ? Colors.green
+                                    : Colors.red,
                               ),
+                            ),
+                          ] else
+                            const Text(
+                              'No selection',
+                              style: TextStyle(color: Colors.grey),
                             ),
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      padding: const EdgeInsets.all(1),
+                      child: Column(
+                        children: [
+                          Text(
+                            _showHomeFleet ? 'Home Fleet:' : 'Build Queue:',
+                            style: const TextStyle(
+                              color: Colors.yellow,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          if (_showHomeFleet) ...[
+                            if (homeFleet.isEmpty)
+                              const Text(
+                                'No ships',
+                                style: TextStyle(color: Colors.grey),
+                              )
+                            else
+                              ...homeFleet.map(
+                                (u) => Text(
+                                  _fmtShip(u.type),
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            Text(
+                              'Ports: ${ports.length}',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ] else ...[
+                            if (buildOrders.isEmpty)
+                              const Text(
+                                'No orders',
+                                style: TextStyle(color: Colors.grey),
+                              )
+                            else
+                              ...buildOrders.asMap().entries.map(
+                                (e) => Text(
+                                  '${e.key + 1}.${e.value.shipName}>${_provinceLabel(e.value.provinceId)}',
+                                  style: TextStyle(
+                                    color: e.key == _selectedIndex
+                                        ? Colors.green
+                                        : Colors.white,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Container(padding: const EdgeInsets.all(1), color: Colors.grey, child: Row(children: [
-            if (_inputMode == InputMode.province) ...[
-              Text(_provinceInput.isEmpty ? 'Province: ' : _provinceInput, style: TextStyle(color: _feedbackColor)),
-              const Text('_', style: TextStyle(color: Colors.cyan)),
-            ] else Text(_feedbackMessage.isEmpty ? 'arrows/jk b c h' : _feedbackMessage, style: TextStyle(color: _feedbackColor)),
-          ])),
-        ]),
+            Container(
+              padding: const EdgeInsets.all(1),
+              color: Colors.grey,
+              child: Row(
+                children: [
+                  if (_inputMode == InputMode.province) ...[
+                    Text(
+                      _provinceInput.isEmpty ? 'Province: ' : _provinceInput,
+                      style: TextStyle(color: _feedbackColor),
+                    ),
+                    const Text('_', style: TextStyle(color: Colors.cyan)),
+                  ] else
+                    Text(
+                      _feedbackMessage.isEmpty
+                          ? 'arrows/jk b c h'
+                          : _feedbackMessage,
+                      style: TextStyle(color: _feedbackColor),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  String _fmtShip(String id) => id.replaceAll('_', ' ').split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');
+  String _fmtShip(String id) => id
+      .replaceAll('_', ' ')
+      .split(' ')
+      .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
+      .join(' ');
 
   Component _shipRow(ShipDisplayInfo ship, bool sel) {
-    return Container(color: sel ? Colors.blue : Colors.black, padding: const EdgeInsets.all(1), child: Row(children: [
-      Text(sel ? '> ' : '  ', style: const TextStyle(color: Colors.cyan)),
-      Expanded(child: Text('${ship.name.padRight(10)} ${ship.category.padRight(10)} ${ship.isAvailable?"Avail":"Lock"}', style: TextStyle(color: sel ? Colors.white : (ship.isAvailable ? Colors.green : Colors.red)))),
-      Text('${ship.cost}g', style: const TextStyle(color: Colors.yellow)),
-    ]));
+    return Container(
+      color: sel ? Colors.blue : Colors.black,
+      padding: const EdgeInsets.all(1),
+      child: Row(
+        children: [
+          Text(sel ? '> ' : '  ', style: const TextStyle(color: Colors.cyan)),
+          Expanded(
+            child: Text(
+              '${ship.name.padRight(10)} ${ship.category.padRight(10)} ${ship.isAvailable ? "Avail" : "Lock"}',
+              style: TextStyle(
+                color: sel
+                    ? Colors.white
+                    : (ship.isAvailable ? Colors.green : Colors.red),
+              ),
+            ),
+          ),
+          Text('${ship.cost}g', style: const TextStyle(color: Colors.yellow)),
+        ],
+      ),
+    );
   }
 }

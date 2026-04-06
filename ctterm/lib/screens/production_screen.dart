@@ -47,72 +47,33 @@ class ExtractionTileInfo {
   });
 }
 
-/// MVP production recipes (program-level constants per spec).
-const _productionRecipes = [
-  ProductionRecipe(
-    id: 'timber_to_lumber',
-    name: 'Timber to Lumber',
-    inputs: {'timber': 2},
-    outputs: {'lumber': 1},
-    labourRequired: 2,
-  ),
-  ProductionRecipe(
-    id: 'timber_iron_to_cast_iron',
-    name: 'Timber + Iron to Cast Iron',
-    inputs: {'timber': 2, 'iron': 2},
-    outputs: {'castIron': 1},
-    labourRequired: 5,
-  ),
-  ProductionRecipe(
-    id: 'wool_to_fabric',
-    name: 'Wool to Fabric',
-    inputs: {'wool': 2},
-    outputs: {'fabric': 1},
-    labourRequired: 2,
-  ),
-  ProductionRecipe(
-    id: 'cotton_to_fabric',
-    name: 'Cotton to Fabric',
-    inputs: {'cotton': 2},
-    outputs: {'fabric': 1},
-    labourRequired: 2,
-  ),
-  ProductionRecipe(
-    id: 'sugar_cane_to_refined_sugar',
-    name: 'Sugar Cane to Refined Sugar',
-    inputs: {'sugarCane': 2},
-    outputs: {'refinedSugar': 1},
-    labourRequired: 2,
-  ),
-  ProductionRecipe(
-    id: 'tobacco_to_cigars',
-    name: 'Tobacco to Cigars',
-    inputs: {'tobacco': 2},
-    outputs: {'cigars': 1},
-    labourRequired: 3,
-  ),
-  ProductionRecipe(
-    id: 'furs_to_fur_hats',
-    name: 'Furs to Fur Hats',
-    inputs: {'furs': 2},
-    outputs: {'furHats': 1},
-    labourRequired: 3,
-  ),
-  ProductionRecipe(
-    id: 'iron_coal_to_steel',
-    name: 'Iron + Coal to Steel',
-    inputs: {'iron': 2, 'coal': 2},
-    outputs: {'steel': 1},
-    labourRequired: 4,
-  ),
-  ProductionRecipe(
-    id: 'copper_tin_to_bronze',
-    name: 'Copper + Tin to Bronze',
-    inputs: {'copper': 1, 'tin': 1},
-    outputs: {'bronze': 1},
-    labourRequired: 2,
-  ),
-];
+String _commodityName(String id) =>
+    data.CommodityCatalog.byId[id]?.displayName ?? id;
+
+String _recipeName(data.ProductionRecipe recipe) {
+  final inputNames = recipe.inputQuantities.keys
+      .map(_commodityName)
+      .toList(growable: false);
+  final outputName = _commodityName(recipe.outputCommodityId);
+  if (inputNames.isEmpty) {
+    return outputName;
+  }
+  return '${inputNames.join(' + ')} to $outputName';
+}
+
+final List<ProductionRecipe> _productionRecipes = data
+    .ProductionRecipesCatalog
+    .all
+    .map(
+      (recipe) => ProductionRecipe(
+        id: recipe.id,
+        name: _recipeName(recipe),
+        inputs: recipe.inputQuantities,
+        outputs: {recipe.outputCommodityId: recipe.outputQuantity},
+        labourRequired: recipe.labourPerOutput,
+      ),
+    )
+    .toList(growable: false);
 
 /// Commodity ids from the canonical catalog (SPEC/game/commodity-catalog.md).
 List<String> _allCommodityIds() {
@@ -140,16 +101,16 @@ class ProductionScreen extends StatefulComponent {
 class _ProductionScreenState extends State<ProductionScreen> {
   /// Currently selected panel: 'extraction', 'stockpile', 'production'.
   String _selectedPanel = 'stockpile';
-  
+
   /// Selected index within the current panel.
   int _selectedIndex = 0;
-  
+
   /// Currently active production recipes (by recipe id).
   final Set<String> _activeRecipes = {};
-  
+
   /// Feedback message to display.
   String _feedbackMessage = '';
-  
+
   /// Color for feedback message.
   Color _feedbackColor = const Color(0xFFFFFFFF);
 
@@ -159,7 +120,9 @@ class _ProductionScreenState extends State<ProductionScreen> {
       if (!entry.value) return entry.key;
     }
     // Fallback: first player
-    return component.game.players.isNotEmpty ? component.game.players.first.id : null;
+    return component.game.players.isNotEmpty
+        ? component.game.players.first.id
+        : null;
   }
 
   /// Get the human player's data.
@@ -203,30 +166,38 @@ class _ProductionScreenState extends State<ProductionScreen> {
         final tileKey = province.townTileKey!;
         final parts = tileKey.split('|');
         final regionId = parts.isNotEmpty ? parts[0] : null;
-        
+
         // Get tile improvement and road level from tile state
         final improvement = tileState.improvementLevel(tileKey);
         final roadLevel = tileState.roadLevel(tileKey);
-        
+
         // Calculate yield per turn (simplified: min of improvement, town dev, 1)
         // Per spec: min(improvement, tech cap, transport, town development)
         final townDev = province.townDevelopmentLevel;
         final transportCap = roadLevel > 0 ? roadLevel : 1;
-        final yieldAmount = [improvement, townDev, transportCap].reduce((a, b) => a < b ? a : b);
-        
+        final yieldAmount = [
+          improvement,
+          townDev,
+          transportCap,
+        ].reduce((a, b) => a < b ? a : b);
+
         // Determine resource type from tile key (simplified - would need ruleset)
         // For MVP, derive from tile position
-        final coords = parts.length >= 4 ? parts.sublist(1) : <String>['', '', ''];
-        
-        tiles.add(ExtractionTileInfo(
-          tileKey: tileKey,
-          provinceId: province.id,
-          regionId: regionId,
-          resource: _deriveResourceType(tileKey, coords),
-          improvementLevel: improvement,
-          roadLevel: roadLevel,
-          yieldPerTurn: yieldAmount > 0 ? yieldAmount : 1,
-        ));
+        final coords = parts.length >= 4
+            ? parts.sublist(1)
+            : <String>['', '', ''];
+
+        tiles.add(
+          ExtractionTileInfo(
+            tileKey: tileKey,
+            provinceId: province.id,
+            regionId: regionId,
+            resource: _deriveResourceType(tileKey, coords),
+            improvementLevel: improvement,
+            roadLevel: roadLevel,
+            yieldPerTurn: yieldAmount > 0 ? yieldAmount : 1,
+          ),
+        );
       }
     }
 
@@ -237,7 +208,16 @@ class _ProductionScreenState extends State<ProductionScreen> {
   String _deriveResourceType(String tileKey, List<String> coords) {
     // Simplified: use hash of tile key to pick a resource
     final hash = tileKey.hashCode.abs();
-    final resources = <String>['timber', 'iron', 'coal', 'wool', 'cotton', 'grain', 'furs', 'horses'];
+    final resources = <String>[
+      'timber',
+      'iron',
+      'coal',
+      'wool',
+      'cotton',
+      'grain',
+      'furs',
+      'horses',
+    ];
     return resources[hash % resources.length];
   }
 
@@ -252,7 +232,9 @@ class _ProductionScreenState extends State<ProductionScreen> {
   }
 
   /// Check if a recipe can be activated (has enough inputs and labour).
-  (bool canActivate, String reason) _canActivateRecipe(ProductionRecipe recipe) {
+  (bool canActivate, String reason) _canActivateRecipe(
+    ProductionRecipe recipe,
+  ) {
     final player = _getHumanPlayer();
     if (player == null) return (false, 'No player');
 
@@ -267,7 +249,10 @@ class _ProductionScreenState extends State<ProductionScreen> {
     // Check labour availability
     final availableLabour = player.workerPool.totalWorkers;
     if (availableLabour < recipe.labourRequired) {
-      return (false, 'Need ${recipe.labourRequired} labour, have $availableLabour');
+      return (
+        false,
+        'Need ${recipe.labourRequired} labour, have $availableLabour',
+      );
     }
 
     return (true, 'Ready to produce');
@@ -365,7 +350,7 @@ class _ProductionScreenState extends State<ProductionScreen> {
     }
 
     // Enter/Space: select recipe (in production panel)
-    if (_selectedPanel == 'production' && 
+    if (_selectedPanel == 'production' &&
         (key == LogicalKey.enter || key == LogicalKey.space)) {
       final recipes = _productionRecipes;
       if (_selectedIndex < recipes.length) {
@@ -402,7 +387,7 @@ class _ProductionScreenState extends State<ProductionScreen> {
       }
       return true;
     }
-    
+
     return false;
   }
 
@@ -445,8 +430,8 @@ class _ProductionScreenState extends State<ProductionScreen> {
             child: _selectedPanel == 'extraction'
                 ? _buildExtractionPanel(extractionTiles)
                 : _selectedPanel == 'stockpile'
-                    ? _buildStockpilePanel(player)
-                    : _buildProductionPanel(player),
+                ? _buildStockpilePanel(player)
+                : _buildProductionPanel(player),
           ),
           // Feedback message
           if (_feedbackMessage.isNotEmpty)
@@ -507,7 +492,10 @@ class _ProductionScreenState extends State<ProductionScreen> {
             color: const Color(0xFF1a1a2e),
             child: const Text(
               ' CONNECTED EXTRACTION TILES ',
-              style: TextStyle(color: Color(0xFFFFFFFF), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Color(0xFFFFFFFF),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           Expanded(
@@ -515,13 +503,19 @@ class _ProductionScreenState extends State<ProductionScreen> {
               itemCount: tiles.length,
               itemBuilder: (context, index) {
                 final tile = tiles[index];
-                final isSelected = _selectedPanel == 'extraction' && _selectedIndex == index;
+                final isSelected =
+                    _selectedPanel == 'extraction' && _selectedIndex == index;
                 final bg = isSelected ? const Color(0xFF2a2a4e) : null;
-                final fg = isSelected ? const Color(0xFFFFFFFF) : const Color(0xFFAAAAAA);
-                
+                final fg = isSelected
+                    ? const Color(0xFFFFFFFF)
+                    : const Color(0xFFAAAAAA);
+
                 return Container(
                   color: bg,
-                  padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 1,
+                    vertical: 0,
+                  ),
                   child: Text(
                     '  ${_provinceLabel(tile.provinceId)}: ${tile.resource} (imp:${tile.improvementLevel}, road:${tile.roadLevel}) -> +${tile.yieldPerTurn}/turn',
                     style: TextStyle(color: fg),
@@ -558,7 +552,10 @@ class _ProductionScreenState extends State<ProductionScreen> {
             color: const Color(0xFF1a1a2e),
             child: const Text(
               ' STOCKPILE ',
-              style: TextStyle(color: Color(0xFFFFFFFF), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Color(0xFFFFFFFF),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           Expanded(
@@ -568,32 +565,35 @@ class _ProductionScreenState extends State<ProductionScreen> {
                 final leftIndex = rowIndex;
                 final rightIndex = rowIndex + half;
                 final leftId = commodities[leftIndex];
-                final rightId = rightIndex < commodities.length ? commodities[rightIndex] : null;
+                final rightId = rightIndex < commodities.length
+                    ? commodities[rightIndex]
+                    : null;
 
                 Component buildCell(String id, int globalIndex) {
                   final quantity = stockpile.quantityOf(id);
                   final isSelected =
-                      _selectedPanel == 'stockpile' && _selectedIndex == globalIndex;
+                      _selectedPanel == 'stockpile' &&
+                      _selectedIndex == globalIndex;
                   final isZero = quantity == 0;
                   final fg = isSelected
                       ? const Color(0xFFFFFFFF)
                       : (isZero
-                          ? const Color(0xFFFF6666)
-                          : const Color(0xFFAAAAAA));
+                            ? const Color(0xFFFF6666)
+                            : const Color(0xFFAAAAAA));
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 0),
-                    child: Text(
-                      '$id: $quantity',
-                      style: TextStyle(color: fg),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 1,
+                      vertical: 0,
                     ),
+                    child: Text('$id: $quantity', style: TextStyle(color: fg)),
                   );
                 }
 
-                final rowIsSelected = _selectedPanel == 'stockpile' &&
+                final rowIsSelected =
+                    _selectedPanel == 'stockpile' &&
                     (_selectedIndex == leftIndex ||
                         (rightId != null && _selectedIndex == rightIndex));
-                final rowBg =
-                    rowIsSelected ? const Color(0xFF2a2a4e) : null;
+                final rowBg = rowIsSelected ? const Color(0xFF2a2a4e) : null;
 
                 return Container(
                   color: rowBg,
@@ -635,7 +635,10 @@ class _ProductionScreenState extends State<ProductionScreen> {
             color: const Color(0xFF1a1a2e),
             child: const Text(
               ' PRODUCTION RECIPES ',
-              style: TextStyle(color: Color(0xFFFFFFFF), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Color(0xFFFFFFFF),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           Expanded(
@@ -644,9 +647,10 @@ class _ProductionScreenState extends State<ProductionScreen> {
               itemBuilder: (context, index) {
                 final recipe = _productionRecipes[index];
                 final isActive = _activeRecipes.contains(recipe.id);
-                final isSelected = _selectedPanel == 'production' && _selectedIndex == index;
+                final isSelected =
+                    _selectedPanel == 'production' && _selectedIndex == index;
                 final (canActivate, _) = _canActivateRecipe(recipe);
-                
+
                 final inputStr = recipe.inputs.entries
                     .map((e) => '${e.value} ${e.key}')
                     .join(', ');
@@ -655,15 +659,20 @@ class _ProductionScreenState extends State<ProductionScreen> {
                     .join(', ');
 
                 final bg = isSelected ? const Color(0xFF2a2a4e) : null;
-                final fg = isSelected 
-                    ? const Color(0xFFFFFFFF) 
-                    : (isActive 
-                        ? const Color(0xFF66FF66) 
-                        : (canActivate ? const Color(0xFFAAAAAA) : const Color(0xFFFF6666)));
-                
+                final fg = isSelected
+                    ? const Color(0xFFFFFFFF)
+                    : (isActive
+                          ? const Color(0xFF66FF66)
+                          : (canActivate
+                                ? const Color(0xFFAAAAAA)
+                                : const Color(0xFFFF6666)));
+
                 return Container(
                   color: bg,
-                  padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 1,
+                    vertical: 0,
+                  ),
                   child: Text(
                     '  ${isActive ? "[*] " : "[ ] "}${recipe.name}: $inputStr -> $outputStr (labour: ${recipe.labourRequired})${!canActivate ? " (N/A)" : ""}',
                     style: TextStyle(color: fg),
@@ -699,7 +708,10 @@ class _ProductionScreenState extends State<ProductionScreen> {
     );
   }
 
-  Component _buildExtractionSummary(List<ExtractionTileInfo> tiles, Map<String, int> totals) {
+  Component _buildExtractionSummary(
+    List<ExtractionTileInfo> tiles,
+    Map<String, int> totals,
+  ) {
     final tileCount = tiles.length;
     final landTotal = totals.entries.fold(0, (sum, e) => sum + e.value);
     // Simplified: no overseas extraction in MVP
