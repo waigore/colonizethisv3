@@ -79,6 +79,10 @@ class GameService {
 
   /// Returns map data for [gameId] from cache or storage.
   ///
+  /// When [_mapCache] already holds [gameId], returns immediately without reading game
+  /// JSON from Hive (avoids redundant adapter load on UI hot paths). Otherwise loads
+  /// game JSON to verify existence, then ensures map data is loaded.
+  ///
   /// Returns null only when no game exists for [gameId]. For existing games, map data
   /// is required and missing/invalid map data raises [StateError].
   ({
@@ -88,6 +92,15 @@ class GameService {
     List<WarpLink>? warpLinks,
   })?
   getMapData(String gameId) {
+    final cached = _mapCache[gameId];
+    if (cached != null) {
+      return (
+        combinedTopology: cached.combinedTopology,
+        tileMapByRegion: cached.tileMapByRegion,
+        topologyByRegion: cached.topologyByRegion,
+        warpLinks: cached.warpLinks,
+      );
+    }
     final gameExists = _adapter.load(_box, gameId) != null;
     if (!gameExists) return null;
     final cache = _requireMapData(gameId);
