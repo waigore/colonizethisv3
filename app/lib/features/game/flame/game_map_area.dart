@@ -51,6 +51,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   RegionMapViewportSnapshot? _pendingRegionViewport;
   bool _regionViewportFrameScheduled = false;
   String? _centerOnTileKey;
+  String? _selectedCivilianTileKey;
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
   Set<String>? _cachedValidTileKeys;
   bool _sideMenuOpen = false;
@@ -356,6 +357,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                         playerView: humanPlayerView,
                         centerOnTileKey: _centerOnTileKey,
                         validTileKeysForSelection: _validTileKeysForSelection,
+                        selectedCivilianTileKey: _selectedCivilianTileKey,
                         onTileSelectedForWork: _workTargetSelection != null
                             ? _onTileSelectedForWork
                             : null,
@@ -366,6 +368,17 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                 _cachedValidTileKeys = null;
                               })
                             : null,
+                        onCivilianTileTapped: (tileKey) {
+                          setState(() {
+                            _selectedCivilianTileKey = tileKey;
+                          });
+                        },
+                        onCivilianTileSelectionCleared: () {
+                          if (_selectedCivilianTileKey == null) return;
+                          setState(() {
+                            _selectedCivilianTileKey = null;
+                          });
+                        },
                         bus: ref.read(appEventBusProvider),
                         onRegionViewportSnapshot: _onRegionViewportSnapshot,
                       ),
@@ -421,8 +434,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                         children: [
                                           SwitchListTile(
                                             title: Text(
-                                              l10n
-                                                  .map_displayOptions_showProvinceOverlay,
+                                              l10n.map_displayOptions_showProvinceOverlay,
                                             ),
                                             value: provinceOverlayVisible,
                                             onChanged: (value) {
@@ -436,8 +448,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                           ),
                                           SwitchListTile(
                                             title: Text(
-                                              l10n
-                                                  .map_displayOptions_showProvinceOwnership,
+                                              l10n.map_displayOptions_showProvinceOwnership,
                                             ),
                                             value: ownershipTintVisible,
                                             onChanged: (value) {
@@ -451,8 +462,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                           ),
                                           SwitchListTile(
                                             title: Text(
-                                              l10n
-                                                  .map_displayOptions_showProvinceNames,
+                                              l10n.map_displayOptions_showProvinceNames,
                                             ),
                                             value: namesVisible,
                                             onChanged: (value) {
@@ -485,8 +495,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                         Positioned.fill(
                           child: GestureDetector(
                             behavior: HitTestBehavior.opaque,
-                            onTap: () =>
-                                setState(() => _sideMenuOpen = false),
+                            onTap: () => setState(() => _sideMenuOpen = false),
                             child: Container(color: Colors.black54),
                           ),
                         ),
@@ -497,8 +506,9 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                       ],
                       Consumer(
                         builder: (context, ref, _) {
-                          final panelOpen =
-                              ref.watch(mapProvincePanelProvider).overlayOpen;
+                          final panelOpen = ref
+                              .watch(mapProvincePanelProvider)
+                              .overlayOpen;
                           final rightInset = (!isNarrow && panelOpen)
                               ? 8.0 + 320.0
                               : 8.0;

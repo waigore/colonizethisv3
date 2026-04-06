@@ -41,7 +41,10 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required VoidCallback? onRegionViewChanged,
     required void Function(String? provinceId)? onProvinceHovered,
     required void Function(String? tileKey)? onTileHovered,
+    required void Function(String tileKey)? onCivilianTileTapped,
+    required VoidCallback? onCivilianTileSelectionCleared,
     required String? selectedTileKey,
+    required String? selectedCivilianTileKey,
     required String? secondaryHighlightTileKey,
     required Set<String>? validTileKeys,
     required void Function(String tileKey)? onTileSelected,
@@ -62,7 +65,10 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
        onRegionViewChanged = onRegionViewChanged,
        onProvinceHovered = onProvinceHovered,
        onTileHovered = onTileHovered,
+       onCivilianTileTapped = onCivilianTileTapped,
+       onCivilianTileSelectionCleared = onCivilianTileSelectionCleared,
        selectedTileKey = selectedTileKey,
+       selectedCivilianTileKey = selectedCivilianTileKey,
        secondaryHighlightTileKey = secondaryHighlightTileKey,
        validTileKeys = validTileKeys,
        onTileSelected = onTileSelected,
@@ -82,7 +88,10 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   VoidCallback? onRegionViewChanged;
   void Function(String? provinceId)? onProvinceHovered;
   void Function(String? tileKey)? onTileHovered;
+  void Function(String tileKey)? onCivilianTileTapped;
+  VoidCallback? onCivilianTileSelectionCleared;
   String? selectedTileKey;
+  String? selectedCivilianTileKey;
   String? secondaryHighlightTileKey;
   Set<String>? validTileKeys;
   void Function(String tileKey)? onTileSelected;
@@ -116,7 +125,10 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       onMapTileTappedForDetail: onMapTileTappedForDetail,
       onProvinceHovered: onProvinceHovered,
       onTileHovered: onTileHovered,
+      onCivilianTileTapped: onCivilianTileTapped,
+      onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
       selectedTileKey: selectedTileKey,
+      selectedCivilianTileKey: selectedCivilianTileKey,
       secondaryHighlightTileKey: secondaryHighlightTileKey,
       onTileTapped: (tileKey) {
         // Tap handler for work target selection mode.
@@ -229,13 +241,17 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     CtMapVisibilityMode? visibilityMode,
     BaseLayerDisplayMode? baseLayerDisplayMode,
     String? selectedTileKey,
+    String? selectedCivilianTileKey,
     String? secondaryHighlightTileKey,
     bool clearSelectedTileKey = false,
+    bool clearSelectedCivilianTileKey = false,
     bool clearSecondaryHighlightTileKey = false,
     Set<String>? validTileKeys,
     bool clearValidTileKeys = false,
     void Function(String tileKey)? onTileSelected,
     VoidCallback? onWorkTargetSelectionCancelled,
+    void Function(String tileKey)? onCivilianTileTapped,
+    VoidCallback? onCivilianTileSelectionCleared,
     required PlayerView? playerViewForResources,
     void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
   }) {
@@ -268,6 +284,11 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     } else if (selectedTileKey != null) {
       this.selectedTileKey = selectedTileKey;
     }
+    if (clearSelectedCivilianTileKey) {
+      this.selectedCivilianTileKey = null;
+    } else if (selectedCivilianTileKey != null) {
+      this.selectedCivilianTileKey = selectedCivilianTileKey;
+    }
     if (clearSecondaryHighlightTileKey) {
       this.secondaryHighlightTileKey = null;
     } else if (secondaryHighlightTileKey != null) {
@@ -281,6 +302,8 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     // Update callbacks (these may change when parent widget rebuilds).
     this.onTileSelected = onTileSelected;
     this.onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
+    this.onCivilianTileTapped = onCivilianTileTapped;
+    this.onCivilianTileSelectionCleared = onCivilianTileSelectionCleared;
     this.playerViewForResources = playerViewForResources;
     if (onViewportSnapshotChanged != null) {
       this.onViewportSnapshotChanged = onViewportSnapshotChanged;
@@ -302,6 +325,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         ..visibilityMode = this.visibilityMode
         ..baseLayerDisplayMode = this.baseLayerDisplayMode
         ..selectedTileKey = this.selectedTileKey
+        ..selectedCivilianTileKey = this.selectedCivilianTileKey
         ..secondaryHighlightTileKey = this.secondaryHighlightTileKey
         ..validTileKeys = this.validTileKeys
         ..playerViewForResources = this.playerViewForResources;
@@ -523,7 +547,10 @@ class CtRegionMap extends StatefulWidget {
     this.onRegionViewChanged,
     this.onProvinceHovered,
     this.onTileHovered,
+    this.onCivilianTileTapped,
+    this.onCivilianTileSelectionCleared,
     this.selectedTileKey,
+    this.selectedCivilianTileKey,
     this.secondaryHighlightTileKey,
     this.centerOnTileKey,
     this.validTileKeys,
@@ -549,7 +576,10 @@ class CtRegionMap extends StatefulWidget {
   final VoidCallback? onRegionViewChanged;
   final void Function(String? provinceId)? onProvinceHovered;
   final void Function(String? tileKey)? onTileHovered;
+  final void Function(String tileKey)? onCivilianTileTapped;
+  final VoidCallback? onCivilianTileSelectionCleared;
   final String? selectedTileKey;
+  final String? selectedCivilianTileKey;
   final String? secondaryHighlightTileKey;
   final String? centerOnTileKey;
   final Set<String>? validTileKeys;
@@ -565,7 +595,7 @@ class CtRegionMap extends StatefulWidget {
 
   /// Optional: notified when the camera viewport changes (for region minimap sync).
   final void Function(RegionMapViewportSnapshot viewport)?
-      onViewportSnapshotChanged;
+  onViewportSnapshotChanged;
 
   @override
   State<CtRegionMap> createState() => _CtRegionMapState();
@@ -575,7 +605,8 @@ class _CtRegionMapState extends State<CtRegionMap> {
   late _CtRegionMapGame _game;
   StreamSubscription<RequestRegionMapCameraCenterWorldEvent>? _cameraCenterSub;
   StreamSubscription<RequestRegionMapCameraPanWorldDeltaEvent>? _cameraPanSub;
-  StreamSubscription<RequestRegionMapSetZoomMultiplierEvent>? _zoomMultiplierSub;
+  StreamSubscription<RequestRegionMapSetZoomMultiplierEvent>?
+  _zoomMultiplierSub;
   double _scaleGestureStartMultiplier = 1.0;
 
   @override
@@ -628,12 +659,17 @@ class _CtRegionMapState extends State<CtRegionMap> {
     if (widget.region != oldWidget.region ||
         widget.showPoliticalOverlay != oldWidget.showPoliticalOverlay ||
         widget.showProvinceOverlay != oldWidget.showProvinceOverlay ||
-        widget.showProvinceOwnershipTint != oldWidget.showProvinceOwnershipTint ||
+        widget.showProvinceOwnershipTint !=
+            oldWidget.showProvinceOwnershipTint ||
         widget.showProvinceNamesLayer != oldWidget.showProvinceNamesLayer ||
         widget.visibilityMode != oldWidget.visibilityMode ||
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
         widget.validTileKeys != oldWidget.validTileKeys ||
+        widget.onCivilianTileTapped != oldWidget.onCivilianTileTapped ||
+        widget.onCivilianTileSelectionCleared !=
+            oldWidget.onCivilianTileSelectionCleared ||
         widget.selectedTileKey != oldWidget.selectedTileKey ||
+        widget.selectedCivilianTileKey != oldWidget.selectedCivilianTileKey ||
         widget.secondaryHighlightTileKey !=
             oldWidget.secondaryHighlightTileKey ||
         widget.onTileSelected != oldWidget.onTileSelected ||
@@ -654,6 +690,8 @@ class _CtRegionMapState extends State<CtRegionMap> {
             BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
         selectedTileKey: widget.selectedTileKey,
         clearSelectedTileKey: widget.selectedTileKey == null,
+        selectedCivilianTileKey: widget.selectedCivilianTileKey,
+        clearSelectedCivilianTileKey: widget.selectedCivilianTileKey == null,
         secondaryHighlightTileKey: widget.secondaryHighlightTileKey,
         clearSecondaryHighlightTileKey:
             widget.secondaryHighlightTileKey == null,
@@ -662,6 +700,8 @@ class _CtRegionMapState extends State<CtRegionMap> {
             widget.validTileKeys == null && oldWidget.validTileKeys != null,
         onTileSelected: widget.onTileSelected,
         onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
+        onCivilianTileTapped: widget.onCivilianTileTapped,
+        onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
         playerViewForResources: widget.playerViewForResources,
         onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
       );
@@ -694,7 +734,10 @@ class _CtRegionMapState extends State<CtRegionMap> {
       onRegionViewChanged: widget.onRegionViewChanged,
       onProvinceHovered: widget.onProvinceHovered,
       onTileHovered: widget.onTileHovered,
+      onCivilianTileTapped: widget.onCivilianTileTapped,
+      onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
       selectedTileKey: widget.selectedTileKey,
+      selectedCivilianTileKey: widget.selectedCivilianTileKey,
       secondaryHighlightTileKey: widget.secondaryHighlightTileKey,
       validTileKeys: widget.validTileKeys,
       onTileSelected: widget.onTileSelected,
