@@ -726,6 +726,57 @@ void main() {
         expect(find.textContaining('(pending)'), findsAtLeastNWidgets(1));
       },
     );
+
+    testWidgets(
+      'tile-scoped mode shows Tile action for selected civilian',
+      (WidgetTester tester) async {
+        final units = [
+          ...game.worldState.oldWorld.units,
+          ...game.worldState.newWorld.units,
+        ];
+        final civilianWithTile = units.where(
+          (u) =>
+              u.ownerId == humanPlayerIdWithUnits &&
+              u.tileKey != null &&
+              _isCivilian(u),
+        );
+        if (civilianWithTile.isEmpty) return;
+        final scopedTileKey = civilianWithTile.first.tileKey!;
+        final scopedUnitId = civilianWithTile.first.id;
+        final bus = AppEventBus.create();
+
+        await tester.pumpWidget(
+          buildPanel(
+            game: game,
+            humanPlayerId: humanPlayerIdWithUnits,
+            bus: bus,
+            currentOrders: const Orders(),
+            availableWorkTargets: const {},
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: CivilianUnitsPanel(
+                game: game,
+                humanPlayerId: humanPlayerIdWithUnits,
+                currentOrders: const Orders(),
+                availableWorkTargets: const {},
+                bus: bus,
+                tileScopeTileKey: scopedTileKey,
+                initialSelectedUnitId: scopedUnitId,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Civilian Units (Tile)'), findsOneWidget);
+        expect(find.text('Tile'), findsAtLeastNWidgets(1));
+      },
+    );
   });
 }
 

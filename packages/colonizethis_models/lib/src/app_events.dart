@@ -97,7 +97,17 @@ class OpenPauseMenuPanelEvent extends UIActionEvent {
 /// Pending work removal and in-progress cancel use [SessionCommandEvent]s (bus), not
 /// closures on this event — see SPEC/program/app-event-bus.md.
 class OpenCivilianUnitsPanelEvent extends UIActionEvent {
-  const OpenCivilianUnitsPanelEvent();
+  const OpenCivilianUnitsPanelEvent({
+    this.tileScopeTileKey,
+    this.initialSelectedUnitId,
+  });
+
+  /// Optional tile-scope key (`regionId|provinceId|x|y`) used to show only
+  /// civilians currently rendered on that tile.
+  final String? tileScopeTileKey;
+
+  /// Optional initial selected unit id when opening in tile scope.
+  final String? initialSelectedUnitId;
 }
 
 /// Military units bottom sheet.
@@ -120,6 +130,13 @@ class LocateMapTileEvent extends UIActionEvent {
 
   final String tileKey;
   final String regionId;
+}
+
+/// Request to open the province/tile detail panel for a concrete map tile key.
+class OpenMapTileDetailEvent extends UIActionEvent {
+  const OpenMapTileDetailEvent({required this.tileKey});
+
+  final String tileKey;
 }
 
 /// In-game region minimap requests the Flame map camera center at world coordinates (after clamp).

@@ -21,6 +21,7 @@ The civilian units panel gives the player a single place to see every civilian u
 ## Panel placement and opening
 
 - **Access:** The panel is opened from the in-game shell **toolbar**, in the same way as the Production panel (e.g. a toolbar button such as "Civilian Units" or "Units" that opens the panel).
+- **Map tile access (tile scope):** The panel may also be opened from a **civilian map marker tap** (see [map-widget.md](map-widget.md)). In this mode the panel is scoped to one tile key (`regionId|provinceId|x|y`) and shows only player-owned civilians whose **rendered tile** equals that tile key (assigned civilians use `assignedTileKey` when present; otherwise `tileKey`).
 - **Presentation:** The panel **appears from the bottom** as a **bottom sheet** that slides up from the bottom edge (same pattern as the province/sea zone detail overlay on narrow viewports; see [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md)). This applies on both desktop and narrow viewports so behaviour is consistent and the map remains visible above.
 - **Max height:** Bottom sheet is constrained (e.g. up to one-third of screen height on narrow, or similar cap on wide) so the map stays visible; content scrolls inside the sheet.
 - **Mobile / narrow viewport:** Same bottom-sheet presentation; touch targets per [mobile-adaptation.md](mobile-adaptation.md).
@@ -56,6 +57,13 @@ For each civilian unit, the panel shows:
 - **When** the user clicks a unit row in the civilian units panel, **then** the UI layer: (1) sets the map's **highlighted tile** to that unit's `tileKey`; (2) **pans and centers** the map viewport so that the unit's tile is visible and centered; (3) **switches the active region tab** to the unit's region if it differs from the current tab.
 - **Contract:** The map widget supports `highlightedTileKey` per [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md) and an optional "center on tile" (e.g. `centerOnTileKey` or callback) so the shell can request pan/center when a unit is selected from the panel.
 - **Clearing:** Highlight remains until the user selects another unit, selects a province/tile elsewhere, or closes the panel (implementation may keep or clear highlight on panel close).
+
+### Tile-scoped panel behavior
+
+- **Selection model:** In tile scope, the panel keeps one selected unit id. Initial selection is the unit id provided by the map marker tap; if missing, the first row in deterministic list order is selected.
+- **Selection swap:** In tile scope, tapping a different row changes selected unit id immediately.
+- **Action target:** In tile scope, row actions (Assign, Cancel, Tile) apply to the selected row only.
+- **Tile button:** In tile scope, the selected row includes a **Tile** button that opens province/tile detail for that selected row’s rendered tile (`assignedTileKey` when present, otherwise `tileKey`).
 
 ---
 
@@ -106,6 +114,12 @@ For each civilian unit, the panel shows:
 - **Given** the Civilian Units panel is open and a unit has a pending work order this turn or has `Unit.status == working` with `Unit.currentWork != null`, **when** the user views that unit's row, **then** the UI layer shows a **Cancel** control.
 
 - **Given** the user clicked **Cancel** for a unit with work (pending or in-progress), **when** the UI layer responds, **then** it first shows a confirm dialog (e.g. "Cancel this work order?"); on confirm, pending work is removed from orders and in-progress work is cleared (unit status idle, currentWork cleared; no refund); on dismiss, no change.
+
+- **Given** the user taps a civilian map marker for tile key `T`, **when** the civilian units panel opens in tile scope, **then** the UI layer lists only player-owned civilian units whose rendered tile equals `T`.
+
+- **Given** the civilian units panel is open in tile scope with selected unit `A`, **when** the user taps row `B`, **then** the UI layer updates selection to `B` and uses `B` as the target for panel actions.
+
+- **Given** the civilian units panel is open in tile scope and a unit row is selected, **when** the user presses **Tile**, **then** the UI layer opens province/tile detail for the selected row’s rendered tile key.
 
 ---
 
