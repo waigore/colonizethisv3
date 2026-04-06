@@ -29,6 +29,9 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.validTileKeysForSelection,
     required this.onTileSelectedForWork,
     required this.onWorkTargetSelectionCancelled,
+    required this.selectedCivilianTileKey,
+    required this.onCivilianTileTapped,
+    required this.onCivilianTileSelectionCleared,
     required this.onRegionViewportSnapshot,
     this.bus,
     super.key,
@@ -48,7 +51,11 @@ class GameMapCanvasStack extends ConsumerWidget {
 
   final void Function(String tileKey)? onTileSelectedForWork;
   final VoidCallback? onWorkTargetSelectionCancelled;
-  final void Function(RegionMapViewportSnapshot snapshot) onRegionViewportSnapshot;
+  final String? selectedCivilianTileKey;
+  final void Function(String tileKey)? onCivilianTileTapped;
+  final VoidCallback? onCivilianTileSelectionCleared;
+  final void Function(RegionMapViewportSnapshot snapshot)
+  onRegionViewportSnapshot;
   final ct_models.AppEventBus? bus;
 
   @override
@@ -78,7 +85,11 @@ class GameMapCanvasStack extends ConsumerWidget {
                             .reportMapTileTapped(tk),
                   onProvinceHovered: (_) {},
                   onTileHovered: (_) {},
+                  onCivilianTileTapped: onCivilianTileTapped,
+                  onCivilianTileSelectionCleared:
+                      onCivilianTileSelectionCleared,
                   selectedTileKey: panel.selectedTileKey,
+                  selectedCivilianTileKey: selectedCivilianTileKey,
                   secondaryHighlightTileKey: panel.secondaryHighlightTileKey,
                   centerOnTileKey: centerOnTileKey,
                   validTileKeys: validTileKeysForSelection,
