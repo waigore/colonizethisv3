@@ -17,35 +17,37 @@ import 'work_order_target_prechecks.dart';
 /// Validates work orders for a single player in submission order.
 /// Mutates internal economy state (stockpile, treasury) and [devExclusiveTiles]
 /// when an order is accepted. SPEC/program/orders.md § Work orders.
-class WorkOrderValidator {
-  final Game _game;
-  final Player _player;
-  final String _playerId;
-  final PlayerView _view;
-  final Map<String, Unit> _unitsById;
-  final Set<String> _devExclusiveTiles;
-  final Map<String, TileMapResult>? _tileMapByRegion;
+class WorkOrderValidationContext {
+  const WorkOrderValidationContext({
+    required this.game,
+    required this.player,
+    required this.playerId,
+    required this.view,
+    required this.unitsById,
+    required this.devExclusiveTiles,
+    this.tileMapByRegion,
+  });
+
+  final Game game;
+  final Player player;
+  final String playerId;
+  final PlayerView view;
+  final Map<String, Unit> unitsById;
+  final Set<String> devExclusiveTiles;
+  final Map<String, TileMapResult>? tileMapByRegion;
+}
+
+class WorkOrderValidator extends OrderValidator {
+  final WorkOrderValidationContext _context;
 
   Stockpile _stockpile;
   int _treasury;
 
   WorkOrderValidator({
-    required Game game,
-    required Player player,
-    required String playerId,
-    required PlayerView view,
-    required Map<String, Unit> unitsById,
-    required Set<String> devExclusiveTiles,
+    required WorkOrderValidationContext context,
     required Stockpile stockpile,
     required int treasury,
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) : _game = game,
-       _player = player,
-       _playerId = playerId,
-       _view = view,
-       _unitsById = unitsById,
-       _devExclusiveTiles = devExclusiveTiles,
-       _tileMapByRegion = tileMapByRegion,
+  }) : _context = context,
        _stockpile = stockpile,
        _treasury = treasury;
 
@@ -62,8 +64,8 @@ class WorkOrderValidator {
     return shortCircuitIfPreviousRejected(
       previousRejected: previousRejected,
       body: () {
-        final unit = _unitsById[o.unitId];
-        if (unit == null || unit.ownerId != _playerId) {
+        final unit = _context.unitsById[o.unitId];
+        if (unit == null || unit.ownerId != _context.playerId) {
           return OrderValidationResult.rejected('Unit not found');
         }
         if (unit.currentWork != null) {
@@ -85,14 +87,14 @@ class WorkOrderValidator {
 
         final targetProvinceId = Unit.provinceIdFromTileKey(o.targetTileKey);
         final province = targetProvinceId != null
-            ? tryGetProvince(_game.worldState, targetProvinceId)
+            ? tryGetProvince(_context.game.worldState, targetProvinceId)
             : null;
         final ownerId = province?.ownerId;
 
         final preCtx = WorkOrderTargetPrecheckContext(
-          game: _game,
-          player: _player,
-          playerId: _playerId,
+          game: _context.game,
+          player: _context.player,
+          playerId: _context.playerId,
           treasury: _treasury,
           civilianEmbassyWorkAllowed: _civilianWorkAllowedInMinorTribeProvince,
         );
@@ -112,8 +114,8 @@ class WorkOrderValidator {
               o.target,
             )) {
           final controlled = isTileControlledByPlayer(
-            _game,
-            _playerId,
+            _context.game,
+            _context.playerId,
             o.targetTileKey,
           );
           final embassyWork = _civilianWorkAllowedInMinorTribeProvince(
@@ -129,7 +131,7 @@ class WorkOrderValidator {
 
         if (isDevExclusiveUnitType(type) &&
             isDevExclusiveWorkTarget(o.target) &&
-            _devExclusiveTiles.contains(o.targetTileKey)) {
+            _context.devExclusiveTiles.contains(o.targetTileKey)) {
           return OrderValidationResult.rejected(
             'Tile already has development or purchase work for this player',
           );
@@ -139,15 +141,17 @@ class WorkOrderValidator {
             o.target != kWorkTargetCounterSpy &&
             o.target != kWorkTargetPurchaseLand) {
           final improvementLevel = o.target == kWorkTargetBuildImprovement
-              ? _game.worldState.tileState.improvementLevel(o.targetTileKey)
+              ? _context.game.worldState.tileState.improvementLevel(
+                  o.targetTileKey,
+                )
               : 0;
           final fortLevel = province?.fortLevel ?? 0;
-          final roadLevel = _game.worldState.tileState.roadLevel(
+          final roadLevel = _context.game.worldState.tileState.roadLevel(
             o.targetTileKey,
           );
           if (o.target == kWorkTargetBuildRoad && roadLevel >= 1) {
             final hasRoadConstruction =
-                _player.techUnlocked?['road_construction'] == true;
+                _context.player.techUnlocked?['road_construction'] == true;
             if (!hasRoadConstruction) {
               return OrderValidationResult.rejected(
                 'Road Construction tech required for transport level 2',
@@ -156,13 +160,13 @@ class WorkOrderValidator {
           }
           if (o.target == kWorkTargetBuildFort) {
             if (fortLevel == 1 &&
-                _player.techUnlocked?['mine_engineering'] != true) {
+                _context.player.techUnlocked?['mine_engineering'] != true) {
               return OrderValidationResult.rejected(
                 'Mine Engineering tech required for fort level 2',
               );
             }
             if (fortLevel == 2 &&
-                _player.techUnlocked?['modern_forts'] != true) {
+                _context.player.techUnlocked?['modern_forts'] != true) {
               return OrderValidationResult.rejected(
                 'Modern Forts tech required for fort level 3',
               );
@@ -170,11 +174,11 @@ class WorkOrderValidator {
           }
           if (o.target == 'build_rail') {
             final terrain = terrainTypeForTileKey(
-              _tileMapByRegion,
+              _context.tileMapByRegion,
               o.targetTileKey,
             );
             final reason = rejectionReasonForBuildRailOrder(
-              techUnlocked: _player.techUnlocked,
+              techUnlocked: _context.player.techUnlocked,
               roadLevel: roadLevel,
               terrain: terrain,
             );
@@ -182,7 +186,7 @@ class WorkOrderValidator {
               return OrderValidationResult.rejected(reason);
             }
           }
-          final costMap = WorkOrderCostCalculator(_game).calculateCost(
+          final costMap = WorkOrderCostCalculator(_context.game).calculateCost(
             o.target,
             o.targetTileKey,
             improvementLevel: improvementLevel,
@@ -200,7 +204,12 @@ class WorkOrderValidator {
           }
         }
 
-        if (!workOrderVisibilityOk(_view, unit, o.target, o.targetTileKey)) {
+        if (!workOrderVisibilityOk(
+          _context.view,
+          unit,
+          o.target,
+          o.targetTileKey,
+        )) {
           return OrderValidationResult.rejected(
             'Province or tile not visible for this work',
           );
@@ -208,8 +217,8 @@ class WorkOrderValidator {
 
         if (o.target == kWorkTargetProspect) {
           if (!isMineralEligibleTile(
-            _game,
-            _tileMapByRegion,
+            _context.game,
+            _context.tileMapByRegion,
             o.targetTileKey,
           )) {
             return OrderValidationResult.rejected(
@@ -217,7 +226,8 @@ class WorkOrderValidator {
             );
           }
           final prospected =
-              _game.worldState.playerProspectedTiles[_playerId] ??
+              _context.game.worldState.playerProspectedTiles[_context
+                  .playerId] ??
               const <String>{};
           if (prospected.contains(o.targetTileKey)) {
             return OrderValidationResult.rejected('Tile already prospected');
@@ -226,13 +236,13 @@ class WorkOrderValidator {
 
         if (isDevExclusiveUnitType(type) &&
             isDevExclusiveWorkTarget(o.target)) {
-          _devExclusiveTiles.add(o.targetTileKey);
+          _context.devExclusiveTiles.add(o.targetTileKey);
         }
 
         // Apply projected cost so subsequent work orders see updated state.
         if (o.target == kWorkTargetPurchaseLand) {
           final resourceId =
-              _game.worldState.resourceByTileKey[o.targetTileKey];
+              _context.game.worldState.resourceByTileKey[o.targetTileKey];
           if (resourceId != null && resourceId.isNotEmpty) {
             final cost = purchaseLandCost(resourceId);
             _treasury -= cost;
@@ -240,9 +250,11 @@ class WorkOrderValidator {
         } else if (o.target != kWorkTargetStealTech &&
             o.target != kWorkTargetCounterSpy) {
           final improvementLevel = o.target == kWorkTargetBuildImprovement
-              ? _game.worldState.tileState.improvementLevel(o.targetTileKey)
+              ? _context.game.worldState.tileState.improvementLevel(
+                  o.targetTileKey,
+                )
               : 0;
-          final costMap = WorkOrderCostCalculator(_game).calculateCost(
+          final costMap = WorkOrderCostCalculator(_context.game).calculateCost(
             o.target,
             o.targetTileKey,
             improvementLevel: improvementLevel,
@@ -266,7 +278,7 @@ class WorkOrderValidator {
     String unitType,
     String? provinceOwnerId,
   ) {
-    if (provinceOwnerId == null || provinceOwnerId == _playerId) {
+    if (provinceOwnerId == null || provinceOwnerId == _context.playerId) {
       return false;
     }
     if (unitType != 'Builder' &&
@@ -274,11 +286,15 @@ class WorkOrderValidator {
         unitType != 'Merchant') {
       return false;
     }
-    if (!isMinorOrTribe(_game, provinceOwnerId)) return false;
-    final rel = getRelation(_game, _playerId, provinceOwnerId);
+    if (!isMinorOrTribe(_context.game, provinceOwnerId)) return false;
+    final rel = getRelation(_context.game, _context.playerId, provinceOwnerId);
     if (rel?.atWar == true) return false;
-    final overture = getOverture(_game, _playerId, provinceOwnerId);
+    final overture = getOverture(
+      _context.game,
+      _context.playerId,
+      provinceOwnerId,
+    );
     if (overture == null || !overture.hasEmbassy) return false;
-    return _player.techUnlocked?[kTechIdDiplomaticExpertise] == true;
+    return _context.player.techUnlocked?[kTechIdDiplomaticExpertise] == true;
   }
 }

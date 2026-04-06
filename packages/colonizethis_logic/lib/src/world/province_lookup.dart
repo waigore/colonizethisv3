@@ -10,12 +10,17 @@ RegionData? _regionForId(WorldState world, String regionId) {
 }
 
 Province? _findProvinceInRegion(
-    RegionData region, String regionId, String localId) {
+  RegionData region,
+  String regionId,
+  String localId,
+) {
   final fullId = ProvinceId.full(regionId, localId);
-  final idx = region.provinces.indexWhere((p) =>
-      p.id == fullId ||
-      (p.regionId == regionId &&
-          (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)));
+  final idx = region.provinces.indexWhere(
+    (p) =>
+        p.id == fullId ||
+        (p.regionId == regionId &&
+            (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)),
+  );
   if (idx < 0) return null;
   return region.provinces[idx];
 }
@@ -45,31 +50,46 @@ Iterable<Province> allProvinces(WorldState world) sync* {
 String resolveToFullProvinceId(WorldState world, String provinceId) {
   if (ProvinceId.isPrefixed(provinceId)) return provinceId;
   throw StateError(
-      'Province id must be prefixed (regionId|localId); short id not allowed: $provinceId');
+    'Province id must be prefixed (regionId|localId); short id not allowed: $provinceId',
+  );
 }
 
 /// Returns [provinceId] if already prefixed, otherwise [ProvinceId.full](regionId, provinceId).
 /// Use when keying or looking up by an id that may be local or full (e.g. player view).
 String toFullProvinceId(String regionId, String provinceId) {
-  return ProvinceId.isPrefixed(provinceId) ? provinceId : ProvinceId.full(regionId, provinceId);
+  return ProvinceId.isPrefixed(provinceId)
+      ? provinceId
+      : ProvinceId.full(regionId, provinceId);
 }
 
 /// Region-scoped lookup: returns the province in [regionId] with local id [localId]. Looks only in that region.
 /// Throws [StateError] if the region is unknown or the province is not found.
-Province getProvinceByRegion(WorldState world, String regionId, String localId) {
+Province getProvinceByRegion(
+  WorldState world,
+  String regionId,
+  String localId,
+) {
   final region = _regionForId(world, regionId);
   if (region == null) {
-    throw StateError('Unknown region "$regionId" for province $regionId|$localId');
+    throw StateError(
+      'Unknown region "$regionId" for province $regionId|$localId',
+    );
   }
   final p = _findProvinceInRegion(region, regionId, localId);
   if (p == null) {
-    throw StateError('Province not found: $regionId|$localId in region "$regionId"');
+    throw StateError(
+      'Province not found: $regionId|$localId in region "$regionId"',
+    );
   }
   return p;
 }
 
 /// Optional region-scoped lookup: province in [regionId] with local id [localId], or null.
-Province? tryGetProvinceByRegion(WorldState world, String regionId, String localId) {
+Province? tryGetProvinceByRegion(
+  WorldState world,
+  String regionId,
+  String localId,
+) {
   final region = _regionForId(world, regionId);
   if (region == null) return null;
   return _findProvinceInRegion(region, regionId, localId);
@@ -79,12 +99,79 @@ Province? tryGetProvinceByRegion(WorldState world, String regionId, String local
 /// resolution is region-scoped. Throws [StateError] if id is not prefixed or province is not found.
 Province getProvince(WorldState world, String fullProvinceId) {
   final resolved = resolveToFullProvinceId(world, fullProvinceId);
-  return getProvinceByRegion(world, ProvinceId.regionIdFrom(resolved), ProvinceId.localIdFrom(resolved));
+  return getProvinceByRegion(
+    world,
+    ProvinceId.regionIdFrom(resolved),
+    ProvinceId.localIdFrom(resolved),
+  );
 }
 
 /// Optional lookup by full id. Requires prefixed id; non-prefixed returns null. Region-scoped.
 Province? tryGetProvince(WorldState world, String fullProvinceId) {
   if (!ProvinceId.isPrefixed(fullProvinceId)) return null;
   return tryGetProvinceByRegion(
-      world, ProvinceId.regionIdFrom(fullProvinceId), ProvinceId.localIdFrom(fullProvinceId));
+    world,
+    ProvinceId.regionIdFrom(fullProvinceId),
+    ProvinceId.localIdFrom(fullProvinceId),
+  );
+}
+
+/// Province lookup helpers on [WorldState] to avoid repeatedly passing the world state.
+extension WorldStateProvinceLookup on WorldState {
+  RegionData? regionDataForId(String regionId) => _regionForId(this, regionId);
+
+  Iterable<Province> allProvinces() sync* {
+    yield* oldWorld.provinces;
+    yield* newWorld.provinces;
+  }
+
+  String resolveToFullProvinceId(String provinceId) =>
+      ProvinceId.isPrefixed(provinceId)
+      ? provinceId
+      : (throw StateError(
+          'Province id must be prefixed (regionId|localId); short id not allowed: $provinceId',
+        ));
+
+  String toFullProvinceId(String regionId, String provinceId) =>
+      ProvinceId.isPrefixed(provinceId)
+      ? provinceId
+      : ProvinceId.full(regionId, provinceId);
+
+  Province getProvinceByRegion(String regionId, String localId) {
+    final region = _regionForId(this, regionId);
+    if (region == null) {
+      throw StateError(
+        'Unknown region "$regionId" for province $regionId|$localId',
+      );
+    }
+    final p = _findProvinceInRegion(region, regionId, localId);
+    if (p == null) {
+      throw StateError(
+        'Province not found: $regionId|$localId in region "$regionId"',
+      );
+    }
+    return p;
+  }
+
+  Province? tryGetProvinceByRegion(String regionId, String localId) {
+    final region = _regionForId(this, regionId);
+    if (region == null) return null;
+    return _findProvinceInRegion(region, regionId, localId);
+  }
+
+  Province getProvince(String fullProvinceId) {
+    final resolved = resolveToFullProvinceId(fullProvinceId);
+    return getProvinceByRegion(
+      ProvinceId.regionIdFrom(resolved),
+      ProvinceId.localIdFrom(resolved),
+    );
+  }
+
+  Province? tryGetProvince(String fullProvinceId) {
+    if (!ProvinceId.isPrefixed(fullProvinceId)) return null;
+    return tryGetProvinceByRegion(
+      ProvinceId.regionIdFrom(fullProvinceId),
+      ProvinceId.localIdFrom(fullProvinceId),
+    );
+  }
 }
