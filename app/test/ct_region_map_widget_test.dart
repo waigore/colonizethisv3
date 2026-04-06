@@ -12,6 +12,7 @@ import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show
         resolveProvinceLabelPresenceIconIds,
+        shouldApplyFogToFeatureOverlay,
         shouldApplyFogToLandBase,
         shouldWrapProvinceLabelPresenceIcons;
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
@@ -70,6 +71,15 @@ void main() {
           reason: 'Fogged feature tiles darken in overlay pass only',
         );
         expect(
+          shouldApplyFogToFeatureOverlay(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.swamp,
+          ),
+          isTrue,
+          reason: 'Fogged feature tiles should darken in overlay pass',
+        );
+        expect(
           shouldApplyFogToLandBase(
             visibilityMode: CtMapVisibilityMode.playerConstrained,
             tileVisibility: TileVisibility.fogged,
@@ -78,10 +88,36 @@ void main() {
           isFalse,
         );
         expect(
+          shouldApplyFogToFeatureOverlay(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.forest,
+          ),
+          isTrue,
+        );
+        expect(
+          shouldApplyFogToFeatureOverlay(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.plains,
+          ),
+          isFalse,
+          reason: 'Fogged non-feature tiles darken in land-base pass only',
+        );
+        expect(
           shouldApplyFogToLandBase(
             visibilityMode: CtMapVisibilityMode.full,
             tileVisibility: TileVisibility.fogged,
             terrain: TerrainType.plains,
+          ),
+          isFalse,
+          reason: 'Full visibility mode must not apply fog',
+        );
+        expect(
+          shouldApplyFogToFeatureOverlay(
+            visibilityMode: CtMapVisibilityMode.full,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.swamp,
           ),
           isFalse,
           reason: 'Full visibility mode must not apply fog',
