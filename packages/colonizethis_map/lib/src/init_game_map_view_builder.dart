@@ -394,6 +394,10 @@ RegionMapViewData _buildRegionViewData({
     if (x == null || y == null) {
       continue;
     }
+    final representativeUnit = units.first;
+    final representativeIsAssigned =
+        representativeUnit.assignedTileKey == tileKey &&
+        representativeUnit.status == UnitStatus.working;
     playerOwnedCivilianTileMarkers.add(
       CivilianTileMarkerView(
         tileKey: tileKey,
@@ -402,8 +406,9 @@ RegionMapViewData _buildRegionViewData({
         localProvinceId: parts[1],
         unitIds: units.map((unit) => unit.id).toList(),
         unitTypes: {for (final unit in units) unit.id: unit.type},
-        representativeUnitType: units.first.type,
+        representativeUnitType: representativeUnit.type,
         stackCount: units.length,
+        representativeIsAssigned: representativeIsAssigned,
       ),
     );
   }

@@ -296,6 +296,14 @@ class CtRegionMapComponent extends PositionComponent {
     }
   }
 
+  Color _toGrayscale(Color color) {
+    final luminance =
+        (0.299 * color.red + 0.587 * color.green + 0.114 * color.blue)
+            .round()
+            .clamp(0, 255);
+    return Color.fromARGB(color.alpha, luminance, luminance, luminance);
+  }
+
   String _civilianMarkerGlyph(String unitType) {
     final normalized = unitType.trim().toLowerCase();
     switch (normalized) {
@@ -338,11 +346,13 @@ class CtRegionMapComponent extends PositionComponent {
                     )
           : 1.0;
 
+      final baseColor = _civilianMarkerColor(marker.representativeUnitType);
+      final displayColor = marker.representativeIsAssigned
+          ? _toGrayscale(baseColor)
+          : baseColor;
       final fill = Paint()
         ..style = PaintingStyle.fill
-        ..color = _civilianMarkerColor(
-          marker.representativeUnitType,
-        ).withValues(alpha: blinkAlpha.clamp(0.35, 1.0));
+        ..color = displayColor.withValues(alpha: blinkAlpha.clamp(0.35, 1.0));
       final stroke = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2
