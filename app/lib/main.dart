@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -17,21 +18,42 @@ Future<void> _openHiveBoxSafely(String name) async {
     await Hive.openBox<dynamic>(name);
   } catch (e, st) {
     // Boxes may be locked (e.g. another instance) or corrupt; app still runs where possible.
-    dataLogger('hive').w('failed to open box "$name"', error: e, stackTrace: st);
+    dataLogger(
+      'hive',
+    ).w('failed to open box "$name"', error: e, stackTrace: st);
   }
 }
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  SessionLogBuffer.init();
-  await MapTerrainConfig.ensureLoaded();
-  await Hive.initFlutter();
-  await _openHiveBoxSafely(HiveBoxNames.settings);
-  await _openHiveBoxSafely(HiveBoxNames.games);
-  await _openHiveBoxSafely(HiveBoxNames.offlineQueue);
+@visibleForTesting
+Future<void> bootstrapApp({
+  required void Function() ensureBindingInitialized,
+  required void Function() initSessionLogBuffer,
+  required Future<void> Function() ensureMapTerrainLoaded,
+  required Future<void> Function() initHive,
+  required Future<void> Function(String name) openHiveBoxSafely,
+  required void Function(Widget app) runAppFn,
+}) async {
+  ensureBindingInitialized();
+  initSessionLogBuffer();
+  await ensureMapTerrainLoaded();
+  await initHive();
+  await openHiveBoxSafely(HiveBoxNames.settings);
+  await openHiveBoxSafely(HiveBoxNames.games);
+  await openHiveBoxSafely(HiveBoxNames.offlineQueue);
+  runAppFn(const ProviderScope(child: AppEventHandlerScope(child: App())));
+}
+
+void main() {
   runZonedGuarded(
-    () {
-      runApp(const ProviderScope(child: AppEventHandlerScope(child: App())));
+    () async {
+      await bootstrapApp(
+        ensureBindingInitialized: WidgetsFlutterBinding.ensureInitialized,
+        initSessionLogBuffer: SessionLogBuffer.init,
+        ensureMapTerrainLoaded: MapTerrainConfig.ensureLoaded,
+        initHive: Hive.initFlutter,
+        openHiveBoxSafely: _openHiveBoxSafely,
+        runAppFn: runApp,
+      );
     },
     (Object error, StackTrace stackTrace) {
       appLogger().e(
