@@ -1450,15 +1450,12 @@ class CtRegionMapComponent extends PositionComponent {
         continue;
       }
 
-      final String townIconId = town.touchesSea
-          ? 'town_coastal'
-          : 'town_inland';
       _paintTownIconAt(
         canvas,
         cell: cell,
         cx: town.x,
         cy: town.y,
-        icon: townIconId,
+        icon: TownIconCache.townIconId,
       );
     }
 
@@ -1475,7 +1472,13 @@ class CtRegionMapComponent extends PositionComponent {
       )) {
         continue;
       }
-      _paintTownIconAt(canvas, cell: portCell, cx: px, cy: py, icon: 'port');
+      _paintTownIconAt(
+        canvas,
+        cell: portCell,
+        cx: px,
+        cy: py,
+        icon: TownIconCache.portIconId,
+      );
     }
   }
 
@@ -1491,19 +1494,22 @@ class CtRegionMapComponent extends PositionComponent {
 
     final centerX = cx * cellSize + cellSize / 2;
     final centerY = cy * cellSize + cellSize / 2;
-    final halfIcon = TownIconCache.iconSize / 2;
+    final iconSize = icon == TownIconCache.portIconId
+        ? TownIconCache.portIconSize
+        : TownIconCache.townIconSize;
+    final halfIcon = iconSize / 2;
 
     final srcRect = Rect.fromLTWH(
       0,
       0,
-      TownIconCache.iconSize,
-      TownIconCache.iconSize,
+      uiImage.width.toDouble(),
+      uiImage.height.toDouble(),
     );
     final dstRect = Rect.fromLTWH(
       centerX - halfIcon,
       centerY - halfIcon,
-      TownIconCache.iconSize,
-      TownIconCache.iconSize,
+      iconSize,
+      iconSize,
     );
 
     var paint = Paint();
