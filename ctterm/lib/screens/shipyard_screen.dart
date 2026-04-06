@@ -1,6 +1,7 @@
 // Shipyard Screen: construct naval units. SPEC/tui/screens/shipyard.md.
 
 import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:collection/collection.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
@@ -9,13 +10,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 final _log = tuiLogger();
-
-T? _firstWhereOrNull<T>(Iterable<T> items, bool Function(T) test) {
-  for (final item in items) {
-    if (test(item)) return item;
-  }
-  return null;
-}
 
 /// Display info for a ship type in the Shipyard.
 class ShipDisplayInfo {
@@ -100,7 +94,7 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
   Player? _getHumanPlayer() {
     final playerId = _getHumanPlayerId();
     if (playerId == null) return null;
-    return _firstWhereOrNull(component.game.players, (p) => p.id == playerId);
+    return component.game.players.firstWhereOrNull((p) => p.id == playerId);
   }
 
   List<ShipDisplayInfo> _getShipList() {
