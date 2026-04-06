@@ -89,9 +89,13 @@ Game clearUnitCurrentWork(Game game, String unitId) {
   final inNew = newUnits.where((u) => u.id == unitId).firstOrNull;
   final unit = inOld ?? inNew;
   if (unit == null || unit.currentWork == null) return game;
+  final restoredTile = unit.originTileKey ?? unit.tileKey;
   final cleared = unit.copyWith(
     clearCurrentWork: true,
     status: UnitStatus.idle,
+    tileKey: restoredTile,
+    clearOriginTileKey: true,
+    clearAssignedTileKey: true,
   );
   if (inOld != null) {
     final list = oldUnits.map((u) => u.id == unitId ? cleared : u).toList();
@@ -399,9 +403,13 @@ Game applyBuildAndWorkOrders(
       final purchasedByTile = s.game.worldState.purchasedTilesByTileKey;
       if (purchasedByTile.containsKey(cw.tileKey) &&
           purchasedByTile[cw.tileKey] != u.ownerId) {
+        final restoredTile = u.originTileKey ?? u.tileKey;
         unitsById[entry.key] = u.copyWith(
           status: UnitStatus.idle,
+          tileKey: restoredTile,
           clearCurrentWork: true,
+          clearOriginTileKey: true,
+          clearAssignedTileKey: true,
         );
         _log.d(
           'work cancelled unit=${u.id} reason=tile no longer owned tileKey=${cw.tileKey}',
@@ -413,9 +421,13 @@ Game applyBuildAndWorkOrders(
       if (cw.workTarget != kWorkTargetCounterSpy &&
           cw.workTarget != kWorkTargetStealTech) {
         if (!isTileControlledByPlayer(s.game, u.ownerId, cw.tileKey)) {
+          final restoredTile = u.originTileKey ?? u.tileKey;
           unitsById[entry.key] = u.copyWith(
             status: UnitStatus.idle,
+            tileKey: restoredTile,
             clearCurrentWork: true,
+            clearOriginTileKey: true,
+            clearAssignedTileKey: true,
           );
           _log.d(
             'work cancelled unit=${u.id} reason=tile no longer under control tileKey=${cw.tileKey}',
@@ -514,6 +526,8 @@ Game applyBuildAndWorkOrders(
         }
         unitsById[entry.key] = u.copyWith(
           status: UnitStatus.idle,
+          clearOriginTileKey: true,
+          clearAssignedTileKey: true,
           clearCurrentWork: true,
         );
       } else {

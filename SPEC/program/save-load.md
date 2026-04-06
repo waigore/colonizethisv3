@@ -68,6 +68,7 @@
 - **Required map data missing.** Given a Hive box and a `gameId` for which any required map-data key is missing, when the system calls `loadMapData` for that `gameId`, then `loadMapData` fails with an explicit error that identifies missing required map data.
 - **Delete.** Given a Hive box and a `gameId`, when the system deletes the game, then the system removes the key `gameId` and the three map-data keys (`gameId + _tileMapByRegion`, etc.); no-op if the game key is not present.
 - **Round-trip Game fields.** Given a Game with worldState, players, greatPowerColorOverride, turnTimeMapping, and other serialized fields, when the system saves and then loads by the same game id, then the loaded Game equals the original for all fields covered by `Game.toJson()`/`fromJson()` (as covered by existing game_save_adapter_test.dart).
+- **Round-trip civilian assignment placement fields.** Given a Game where a civilian `Unit` has `tileKey`, `originTileKey`, and `assignedTileKey` set while work is in progress, when the system saves and then loads by the same game id, then the loaded unit preserves those three fields exactly.
 - **Logging.** Save/load operations use the `save:` prefix and log gameId and success or failure per [ctdev-logging.md](ctdev-logging.md).
 
 - **Auto-save round-trip.** Given a Hive box, when the system writes `saveAutoSave` with a valid `Game` and map data for stem `kAutoSaveSlotId`, then `load` with that stem returns an equal `Game` and `loadMapData` returns the same map bundle (as exercised in `game_save_adapter_test.dart`).
