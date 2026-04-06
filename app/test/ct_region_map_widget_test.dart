@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show TerrainType;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
     show AppEventBus, OpenProvinceDetailPanelEvent;
@@ -312,6 +313,79 @@ void main() {
         await tester.pump();
 
         expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'canonical L2 default overlays are findable by terrain type',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+        });
+
+        expect(
+          terrainTilesetCache.getStandaloneTile(TerrainType.forest),
+          isNotNull,
+        );
+        expect(
+          terrainTilesetCache.getStandaloneTile(TerrainType.hills),
+          isNotNull,
+        );
+        expect(
+          terrainTilesetCache.getStandaloneTile(TerrainType.mountain),
+          isNotNull,
+        );
+        expect(
+          terrainTilesetCache.getStandaloneTile(TerrainType.swamp),
+          isNotNull,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'terrain situations resolve to findable canonical defaults',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+        });
+
+        final keys = <String>[
+          // Forest: non-timber should keep canonical default.
+          featureOverlayTileKey(
+            terrain: TerrainType.forest,
+            resourceId: 'furs',
+          ),
+          featureOverlayTileKey(terrain: TerrainType.forest, resourceId: null),
+          // Hills: non-mine and non-wool should keep canonical default.
+          featureOverlayTileKey(
+            terrain: TerrainType.hills,
+            resourceId: 'iron',
+            improvementLevel: 0,
+          ),
+          featureOverlayTileKey(
+            terrain: TerrainType.hills,
+            resourceId: null,
+            improvementLevel: 0,
+          ),
+          // Mountain/swamp always canonical defaults.
+          featureOverlayTileKey(
+            terrain: TerrainType.mountain,
+            resourceId: 'gold',
+          ),
+          featureOverlayTileKey(terrain: TerrainType.swamp, resourceId: 'tin'),
+        ];
+
+        for (final key in keys) {
+          expect(
+            terrainTilesetCache.getStandaloneTileByKey(key),
+            isNotNull,
+            reason: 'Overlay key $key should be available in cache',
+          );
+        }
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
