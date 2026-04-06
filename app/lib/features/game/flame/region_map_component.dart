@@ -1404,68 +1404,92 @@ class CtRegionMapComponent extends PositionComponent {
       if (x + 1 < region.width) {
         final right = region.cellAt(x + 1, y);
         if (!warpSeaZoneIds.contains(right.regionCellId)) {
-          final xEdge = (x + 1) * cellSize;
-          canvas.drawLine(
-            Offset(xEdge, y * cellSize),
-            Offset(xEdge, (y + 1) * cellSize),
-            glowOuter,
-          );
-          canvas.drawLine(
-            Offset(xEdge, y * cellSize),
-            Offset(xEdge, (y + 1) * cellSize),
-            glowInner,
-          );
+          if (regionMapDrawBoundaryBetweenAdjacentCells(
+            gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+            visibilityA: cell.visibility,
+            visibilityB: right.visibility,
+          )) {
+            final xEdge = (x + 1) * cellSize;
+            canvas.drawLine(
+              Offset(xEdge, y * cellSize),
+              Offset(xEdge, (y + 1) * cellSize),
+              glowOuter,
+            );
+            canvas.drawLine(
+              Offset(xEdge, y * cellSize),
+              Offset(xEdge, (y + 1) * cellSize),
+              glowInner,
+            );
+          }
         }
       }
       // Check bottom neighbor.
       if (y + 1 < region.height) {
         final bottom = region.cellAt(x, y + 1);
         if (!warpSeaZoneIds.contains(bottom.regionCellId)) {
-          final yEdge = (y + 1) * cellSize;
-          canvas.drawLine(
-            Offset(x * cellSize, yEdge),
-            Offset((x + 1) * cellSize, yEdge),
-            glowOuter,
-          );
-          canvas.drawLine(
-            Offset(x * cellSize, yEdge),
-            Offset((x + 1) * cellSize, yEdge),
-            glowInner,
-          );
+          if (regionMapDrawBoundaryBetweenAdjacentCells(
+            gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+            visibilityA: cell.visibility,
+            visibilityB: bottom.visibility,
+          )) {
+            final yEdge = (y + 1) * cellSize;
+            canvas.drawLine(
+              Offset(x * cellSize, yEdge),
+              Offset((x + 1) * cellSize, yEdge),
+              glowOuter,
+            );
+            canvas.drawLine(
+              Offset(x * cellSize, yEdge),
+              Offset((x + 1) * cellSize, yEdge),
+              glowInner,
+            );
+          }
         }
       }
       // Check left neighbor (for left edge of warp zone).
       if (x > 0) {
         final left = region.cellAt(x - 1, y);
         if (!warpSeaZoneIds.contains(left.regionCellId)) {
-          final xEdge = x * cellSize;
-          canvas.drawLine(
-            Offset(xEdge, y * cellSize),
-            Offset(xEdge, (y + 1) * cellSize),
-            glowOuter,
-          );
-          canvas.drawLine(
-            Offset(xEdge, y * cellSize),
-            Offset(xEdge, (y + 1) * cellSize),
-            glowInner,
-          );
+          if (regionMapDrawBoundaryBetweenAdjacentCells(
+            gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+            visibilityA: cell.visibility,
+            visibilityB: left.visibility,
+          )) {
+            final xEdge = x * cellSize;
+            canvas.drawLine(
+              Offset(xEdge, y * cellSize),
+              Offset(xEdge, (y + 1) * cellSize),
+              glowOuter,
+            );
+            canvas.drawLine(
+              Offset(xEdge, y * cellSize),
+              Offset(xEdge, (y + 1) * cellSize),
+              glowInner,
+            );
+          }
         }
       }
       // Check top neighbor (for top edge of warp zone).
       if (y > 0) {
         final top = region.cellAt(x, y - 1);
         if (!warpSeaZoneIds.contains(top.regionCellId)) {
-          final yEdge = y * cellSize;
-          canvas.drawLine(
-            Offset(x * cellSize, yEdge),
-            Offset((x + 1) * cellSize, yEdge),
-            glowOuter,
-          );
-          canvas.drawLine(
-            Offset(x * cellSize, yEdge),
-            Offset((x + 1) * cellSize, yEdge),
-            glowInner,
-          );
+          if (regionMapDrawBoundaryBetweenAdjacentCells(
+            gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+            visibilityA: cell.visibility,
+            visibilityB: top.visibility,
+          )) {
+            final yEdge = y * cellSize;
+            canvas.drawLine(
+              Offset(x * cellSize, yEdge),
+              Offset((x + 1) * cellSize, yEdge),
+              glowOuter,
+            );
+            canvas.drawLine(
+              Offset(x * cellSize, yEdge),
+              Offset((x + 1) * cellSize, yEdge),
+              glowInner,
+            );
+          }
         }
       }
     }
