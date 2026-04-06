@@ -9,6 +9,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import 'gp_ownership_tint_layer.dart';
+import 'civilian_icon_cache.dart';
 import 'region_map_boundary_visibility.dart';
 import 'region_map_province_overlay_geometry.dart';
 import 'resource_icon_cache.dart';
@@ -106,6 +107,7 @@ class CtRegionMapComponent extends PositionComponent {
     await Future.wait([
       terrainTilesetCache.load(),
       resourceIconCache.load(),
+      civilianIconCache.load(),
       townIconCache.load(),
       provinceLabelIconCache.load(),
     ]);
@@ -115,6 +117,7 @@ class CtRegionMapComponent extends PositionComponent {
       'sea_desert: ${terrainTilesetCache.getSeaDesertTileset() != null}, '
       'plains_desert: ${terrainTilesetCache.getPlainsDesertTileset() != null}. '
       'ResourceIconCache loaded: ${resourceIconCache.isLoaded}. '
+      'CivilianIconCache loaded: ${civilianIconCache.isLoaded}. '
       'TownIconCache loaded: ${townIconCache.isLoaded}. '
       'ProvinceLabelIconCache loaded: ${provinceLabelIconCache.isLoaded}',
     );

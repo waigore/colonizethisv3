@@ -13,6 +13,7 @@ import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show
         resolveProvinceLabelPresenceIconIds,
         shouldWrapProvinceLabelPresenceIcons;
+import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
@@ -30,9 +31,34 @@ void main() {
       // pump() is not enough when tests run alone (e.g. CI --total-shards).
       await terrainTilesetCache.load();
       await resourceIconCache.load();
+      await civilianIconCache.load();
       await townIconCache.load();
       await provinceLabelIconCache.load();
     });
+
+    testWidgets(
+      'required civilian map icon assets exist and are non-empty',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        for (final slug in kCivilianIconSlugs) {
+          final colorPath = 'assets/icons/ui_icon_civ_$slug.png';
+          final grayPath = 'assets/icons/ui_icon_civ_${slug}_gray.png';
+          final colorData = await rootBundle.load(colorPath);
+          final grayData = await rootBundle.load(grayPath);
+          expect(
+            colorData.lengthInBytes,
+            greaterThan(0),
+            reason: 'Civilian icon $colorPath is empty',
+          );
+          expect(
+            grayData.lengthInBytes,
+            greaterThan(0),
+            reason: 'Civilian grayscale icon $grayPath is empty',
+          );
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
 
     testWidgets(
       'throws StateError when playerConstrained without playerViewForResources',

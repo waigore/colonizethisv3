@@ -37,49 +37,6 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     }
   }
 
-  Color _civilianMarkerColor(String unitType) {
-    switch (unitType.trim().toLowerCase()) {
-      case 'builder':
-        return const Color(0xFFC57B39);
-      case 'engineer':
-        return const Color(0xFF3A86C6);
-      case 'rail builder':
-      case 'rail_builder':
-      case 'railbuilder':
-        return const Color(0xFF6C757D);
-      case 'explorer':
-        return const Color(0xFF2F9E44);
-      case 'merchant':
-        return const Color(0xFF8D6E63);
-      case 'spy':
-        return const Color(0xFF6F42C1);
-      default:
-        return const Color(0xFF495057);
-    }
-  }
-
-  Color _toGrayscale(Color color) {
-    final luminance =
-        (0.299 * color.red + 0.587 * color.green + 0.114 * color.blue)
-            .round()
-            .clamp(0, 255);
-    return Color.fromARGB(color.alpha, luminance, luminance, luminance);
-  }
-
-  String _civilianMarkerGlyph(String unitType) {
-    final normalized = unitType.trim().toLowerCase();
-    switch (normalized) {
-      case 'rail builder':
-      case 'rail_builder':
-      case 'railbuilder':
-        return 'RB';
-      default:
-        return unitType.trim().isEmpty
-            ? '?'
-            : unitType.trim().substring(0, 1).toUpperCase();
-    }
-  }
-
   void _paintCivilianTileMarkers(Canvas canvas) {
     if (region.civilianTileMarkers.isEmpty) return;
     for (final marker in region.civilianTileMarkers) {
@@ -108,44 +65,56 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
                     )
           : 1.0;
 
-      final baseColor = _civilianMarkerColor(marker.representativeUnitType);
-      final displayColor = marker.representativeIsAssigned
-          ? _toGrayscale(baseColor)
-          : baseColor;
-      final fill = Paint()
-        ..style = PaintingStyle.fill
-        ..color = displayColor.withValues(alpha: blinkAlpha.clamp(0.35, 1.0));
-      final stroke = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..color = Colors.black.withValues(alpha: 0.7);
-      final rect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(left, top, cellSize, cellSize),
-        Radius.circular(math.max(2, cellSize * 0.12)),
+      final icon = civilianIconCache.getIcon(
+        unitType: marker.representativeUnitType,
+        grayscale: marker.representativeIsAssigned,
       );
-      canvas.drawRRect(rect, fill);
-      canvas.drawRRect(rect, stroke);
-
-      final glyph = _civilianMarkerGlyph(marker.representativeUnitType);
-      final fontSize = math.max(8.0, cellSize * 0.36);
-      final tp = TextPainter(
-        text: TextSpan(
-          text: glyph,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: fontSize,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tp.paint(
-        canvas,
-        Offset(
-          left + (cellSize - tp.width) / 2,
-          top + (cellSize - tp.height) / 2,
-        ),
-      );
+      if (icon != null) {
+        final srcRect = Rect.fromLTWH(
+          0,
+          0,
+          CivilianIconCache.iconSize,
+          CivilianIconCache.iconSize,
+        );
+        final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
+        final paint = Paint();
+        final alpha = blinkAlpha.clamp(0.35, 1.0);
+        if (marker.representativeIsAssigned) {
+          paint.colorFilter = const ColorFilter.matrix(<double>[
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+          ]);
+        }
+        paint
+          ..color = Colors.white.withValues(alpha: alpha)
+          ..blendMode = BlendMode.modulate;
+        canvas.drawImageRect(icon, srcRect, dstRect, paint);
+      } else {
+        final fallback = Paint()
+          ..style = PaintingStyle.fill
+          ..color = const Color(
+            0xFF495057,
+          ).withValues(alpha: blinkAlpha.clamp(0.35, 1.0));
+        canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), fallback);
+      }
 
       if (marker.stackCount <= 1) continue;
       final badgeRadius = math.max(7.0, cellSize * 0.2);
@@ -1195,15 +1164,12 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       )) {
         continue;
       }
-      final String townIconId = town.touchesSea
-          ? 'town_coastal'
-          : 'town_inland';
       _paintTownIconAt(
         canvas,
         cell: cell,
         cx: town.x,
         cy: town.y,
-        icon: townIconId,
+        icon: TownIconCache.townIconId,
       );
     }
 
@@ -1220,7 +1186,13 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       )) {
         continue;
       }
-      _paintTownIconAt(canvas, cell: portCell, cx: px, cy: py, icon: 'port');
+      _paintTownIconAt(
+        canvas,
+        cell: portCell,
+        cx: px,
+        cy: py,
+        icon: TownIconCache.portIconId,
+      );
     }
   }
 
@@ -1236,19 +1208,22 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
 
     final centerX = cx * cellSize + cellSize / 2;
     final centerY = cy * cellSize + cellSize / 2;
-    final halfIcon = TownIconCache.iconSize / 2;
+    final iconSize = icon == TownIconCache.portIconId
+        ? TownIconCache.portIconSize
+        : TownIconCache.townIconSize;
+    final halfIcon = iconSize / 2;
 
     final srcRect = Rect.fromLTWH(
       0,
       0,
-      TownIconCache.iconSize,
-      TownIconCache.iconSize,
+      uiImage.width.toDouble(),
+      uiImage.height.toDouble(),
     );
     final dstRect = Rect.fromLTWH(
       centerX - halfIcon,
       centerY - halfIcon,
-      TownIconCache.iconSize,
-      TownIconCache.iconSize,
+      iconSize,
+      iconSize,
     );
 
     var paint = Paint();
