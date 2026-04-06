@@ -45,7 +45,7 @@ const Set<String> kWorkTargetsSkippingDefaultForeignProvinceCheck = {
   kWorkTargetStealTech,
   kWorkTargetCounterSpy,
   kWorkTargetPurchaseLand,
-  'build_improvement',
+  kWorkTargetBuildImprovement,
 };
 
 OrderValidationResult? precheckUpgradeTown(
@@ -213,11 +213,11 @@ OrderValidationResult? precheckBuildImprovement(
 
 /// Map dispatch for target-specific validation before generic work rules.
 final Map<String, WorkOrderTargetPrecheck> workOrderTargetPrechecks = {
-  'upgrade_town': precheckUpgradeTown,
+  kWorkTargetUpgradeTown: precheckUpgradeTown,
   kWorkTargetStealTech: precheckStealTech,
   kWorkTargetCounterSpy: precheckCounterSpy,
   kWorkTargetPurchaseLand: precheckPurchaseLand,
-  'build_improvement': precheckBuildImprovement,
+  kWorkTargetBuildImprovement: precheckBuildImprovement,
 };
 
 /// Runs the precheck registered for [order.target], if any.

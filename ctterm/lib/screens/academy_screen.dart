@@ -3,6 +3,7 @@
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:ctterm/screens/input_mode.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -81,8 +82,8 @@ class _AcademyScreenState extends State<AcademyScreen> {
   /// Currently selected regiment index in the list.
   int _selectedIndex = 0;
 
-  /// Current input mode: 'none', 'train', 'cancel'.
-  String _inputMode = 'none';
+  /// Current input mode.
+  InputMode _inputMode = InputMode.none;
 
   /// Feedback message to display.
   String _feedbackMessage = '';
@@ -232,9 +233,9 @@ class _AcademyScreenState extends State<AcademyScreen> {
     final c = event.character?.toLowerCase();
 
     if (key == LogicalKey.escape) {
-      if (_inputMode != 'none') {
+      if (_inputMode != InputMode.none) {
         setState(() {
-          _inputMode = 'none';
+          _inputMode = InputMode.none;
           _provinceInput = '';
           _feedbackMessage = '';
         });
@@ -247,7 +248,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
     final regimentList = _getRegimentList();
     if (regimentList.isEmpty) return false;
 
-    if (_inputMode == 'train') {
+    if (_inputMode == InputMode.train) {
       // Province ID input mode
       if (key == LogicalKey.enter || c == 'y') {
         _confirmTraining(regimentList[_selectedIndex]);
@@ -262,7 +263,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
         } else {
           // 'n' to cancel
           setState(() {
-            _inputMode = 'none';
+            _inputMode = InputMode.none;
             _provinceInput = '';
             _feedbackMessage = 'Cancelled';
             _feedbackColor = Colors.gray;
@@ -278,7 +279,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
       return true;
     }
 
-    if (_inputMode == 'cancel') {
+    if (_inputMode == InputMode.cancel) {
       if (key == LogicalKey.enter || key == LogicalKey.space) {
         _confirmCancel();
         return true;
@@ -314,7 +315,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
         return true;
       }
       setState(() {
-        _inputMode = 'train';
+        _inputMode = InputMode.train;
         _provinceInput = '';
         _feedbackMessage = 'Enter province ID for training:';
         _feedbackColor = Colors.cyan;
@@ -332,7 +333,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
         return true;
       }
       setState(() {
-        _inputMode = 'cancel';
+        _inputMode = InputMode.cancel;
         _feedbackMessage = 'Cancel training? Press Enter to confirm';
         _feedbackColor = Colors.cyan;
       });
@@ -349,7 +350,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
       setState(() {
         _feedbackMessage = 'Error: no human player found';
         _feedbackColor = Colors.red;
-        _inputMode = 'none';
+        _inputMode = InputMode.none;
       });
       return;
     }
@@ -368,7 +369,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
       setState(() {
         _feedbackMessage = 'Province not found: $_provinceInput';
         _feedbackColor = Colors.red;
-        _inputMode = 'none';
+        _inputMode = InputMode.none;
       });
       return;
     }
@@ -399,7 +400,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
       _feedbackMessage =
           'Training ordered: ${regiment.name} in $_provinceInput';
       _feedbackColor = Colors.green;
-      _inputMode = 'none';
+      _inputMode = InputMode.none;
       _provinceInput = '';
     });
   }
@@ -425,7 +426,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
     final queue = _getTrainingQueue();
     if (queue.isEmpty) {
       setState(() {
-        _inputMode = 'none';
+        _inputMode = InputMode.none;
         _feedbackMessage = 'No training orders to cancel';
         _feedbackColor = Colors.yellow;
       });
@@ -439,7 +440,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
 
     if (playerOrders.isEmpty) {
       setState(() {
-        _inputMode = 'none';
+        _inputMode = InputMode.none;
         _feedbackMessage = 'No training orders to cancel';
         _feedbackColor = Colors.yellow;
       });
@@ -469,7 +470,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
     component.onOrdersChanged(updatedOrders);
 
     setState(() {
-      _inputMode = 'none';
+      _inputMode = InputMode.none;
       _feedbackMessage = 'Training order cancelled';
       _feedbackColor = Colors.green;
     });
@@ -541,7 +542,7 @@ class _AcademyScreenState extends State<AcademyScreen> {
                         : ' $_feedbackMessage ',
                     style: TextStyle(color: _feedbackColor),
                   ),
-                  if (_inputMode == 'train') ...[
+                  if (_inputMode == InputMode.train) ...[
                     const Text(' > ', style: TextStyle(color: Colors.cyan)),
                     Text(
                       _provinceInput.isEmpty ? '_' : _provinceInput,

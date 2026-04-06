@@ -72,7 +72,7 @@ void _runWorkPhase(
       })
       workTargetConfig(String target) {
         switch (target) {
-          case 'build_improvement':
+          case kWorkTargetBuildImprovement:
             return (
               target: target,
               allowedForUnitType: (t) =>
@@ -86,7 +86,7 @@ void _runWorkPhase(
                 improvementLevel: tileState.improvementLevel(targetTileKey),
               ),
             );
-          case 'build_road':
+          case kWorkTargetBuildRoad:
             return (
               target: target,
               allowedForUnitType: (t) =>
@@ -94,7 +94,7 @@ void _runWorkPhase(
               costFn: () => workOrderMaterialCost(target),
               totalTurnsFn: () => totalTurnsForWork(target),
             );
-          case 'build_port':
+          case kWorkTargetBuildPort:
             return (
               target: target,
               allowedForUnitType: (t) =>
@@ -102,7 +102,7 @@ void _runWorkPhase(
               costFn: () => workOrderMaterialCost(target),
               totalTurnsFn: () => totalTurnsForWork(target),
             );
-          case 'build_fort':
+          case kWorkTargetBuildFort:
             return (
               target: target,
               allowedForUnitType: (t) =>
@@ -126,7 +126,7 @@ void _runWorkPhase(
               costFn: () => workOrderMaterialCost(target),
               totalTurnsFn: () => totalTurnsForWork(target),
             );
-          case 'upgrade_town':
+          case kWorkTargetUpgradeTown:
             return (
               target: target,
               allowedForUnitType: (t) =>
@@ -302,8 +302,8 @@ void _runWorkPhase(
           ),
         );
       }
-      if (order.target == 'build_improvement') {
-        if (applyStandardWorkOrder('build_improvement')) continue;
+      if (order.target == kWorkTargetBuildImprovement) {
+        if (applyStandardWorkOrder(kWorkTargetBuildImprovement)) continue;
       }
       if (order.target == kWorkTargetExplore &&
           isExplorerUnit(u.type) &&
@@ -344,13 +344,13 @@ void _runWorkPhase(
         }
       }
       final workTarget = order.target;
-      if (workTarget == 'build_road') {
-        if (applyStandardWorkOrder('build_road')) continue;
+      if (workTarget == kWorkTargetBuildRoad) {
+        if (applyStandardWorkOrder(kWorkTargetBuildRoad)) continue;
       }
-      if (workTarget == 'build_port') {
-        if (applyStandardWorkOrder('build_port')) continue;
+      if (workTarget == kWorkTargetBuildPort) {
+        if (applyStandardWorkOrder(kWorkTargetBuildPort)) continue;
       }
-      if (workTarget == 'build_fort') {
+      if (workTarget == kWorkTargetBuildFort) {
         final prov = provinceById(u.locationProvinceId);
         final fortLevel = prov?.fortLevel ?? 0;
         if (fortLevel == 1 &&
@@ -364,7 +364,7 @@ void _runWorkPhase(
           _log.d('build_fort skipped - Modern Forts required for fort level 3');
           continue;
         }
-        if (applyStandardWorkOrder('build_fort')) continue;
+        if (applyStandardWorkOrder(kWorkTargetBuildFort)) continue;
       }
       if (workTarget == 'build_rail') {
         final terrain = terrainTypeForTileKey(
@@ -382,8 +382,8 @@ void _runWorkPhase(
         }
         if (applyStandardWorkOrder('build_rail')) continue;
       }
-      if (workTarget == 'upgrade_town') {
-        if (applyStandardWorkOrder('upgrade_town')) continue;
+      if (workTarget == kWorkTargetUpgradeTown) {
+        if (applyStandardWorkOrder(kWorkTargetUpgradeTown)) continue;
       }
     }
 
