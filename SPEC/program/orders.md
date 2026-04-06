@@ -4,6 +4,8 @@
 
 **Province identity:** Province ids in order payloads (e.g. destination province, spawn province, tile keys) use the **prefixed** form `regionId|localId` and must be resolved per [world-model-identity.md](../game/world-model-identity.md). Do not use bare province ids for lookup.
 
+**Implementation (structure, not extra rules):** Work-order **visibility** checks use a target→handler map in `order_visibility.dart`; **work completion** on build phase uses a target→handler map in `orders_application.dart`. Behavior matches the per-target rules below; refactors must preserve the same outcomes as existing tests.
+
 ---
 
 ## Order Types (Current Scope)
