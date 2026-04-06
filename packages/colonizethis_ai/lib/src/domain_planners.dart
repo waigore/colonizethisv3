@@ -3,7 +3,8 @@ import 'dart:math' as math;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'goal_manager.dart';
 import 'hidden_agenda.dart';

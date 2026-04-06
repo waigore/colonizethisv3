@@ -27,7 +27,7 @@ Five shared Dart packages under `packages/`. TDD 15 allows merging _models and _
 | **colonizethis_map** | Topology and tile map **generation** (tile-based map generator), topology inference from tile map, tile map topology validation, and tile map **PNG visualization**. Implements TDD map generation algorithms; consumed by tools and loaders. | colonizethis_data |
 | **colonizethis_save** | Save format, schema, migrations | colonizethis_models |
 | **colonizethis_logic** | Turn resolution, combat, economy, diplomacy, victory checks, order validation (uses map topology for movement). Extraction, production, stockpile, worker models; tile map or terrain data for costs/combat. | colonizethis_models, colonizethis_data |
-| **colonizethis_ai** | AI behavior, planning, personalities | colonizethis_logic |
+| **colonizethis_ai** | AI behavior, planning, personalities | colonizethis_logic (narrow AI-facing contracts only: `order_suggestion_api.dart`, `ai_api.dart`) |
 
 **Config consumers:** colonizethis_logic and colonizethis_ai consume resolved config; app receives config at game load. See [ruleset-config.md](ruleset-config.md). Flutter does not perform merge or file parsing.
 
@@ -55,6 +55,14 @@ colonizethis_save
 colonizethis_models  (no package deps)
 colonizethis_data    (no package deps)
 ```
+
+`colonizethis_logic` must not depend on `colonizethis_ai` in either `dependencies` or
+`dev_dependencies`; tests that exercise AI behavior belong in `colonizethis_ai/test`.
+
+### Dependency boundary acceptance criteria
+
+- **Given** package metadata for `colonizethis_logic`, **when** dependency analysis reads `dependencies` and `dev_dependencies`, **then** no `colonizethis_ai` entry exists.
+- **Given** `colonizethis_ai` imports logic interfaces, **when** static analysis inspects imports under `packages/colonizethis_ai/lib`, **then** imports use narrow logic contract libraries (`order_suggestion_api.dart`, `ai_api.dart`) and do not import `package:colonizethis_logic/colonizethis_logic.dart`.
 
 ---
 
