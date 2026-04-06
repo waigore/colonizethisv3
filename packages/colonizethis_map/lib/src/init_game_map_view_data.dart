@@ -108,6 +108,7 @@ class CivilianTileMarkerView {
     required this.unitTypes,
     required this.representativeUnitType,
     required this.stackCount,
+    this.representativeIsAssigned = false,
   });
 
   /// Canonical tile key `regionId|provinceId|x|y`.
@@ -130,6 +131,10 @@ class CivilianTileMarkerView {
 
   /// Number of player-owned civilians on this tile.
   final int stackCount;
+
+  /// True when the representative unit is rendered on an assigned work tile.
+  /// Used for grayscale map marker rendering in glyph-marker slices.
+  final bool representativeIsAssigned;
 }
 
 /// Province-level unit-presence counts for map labels.
