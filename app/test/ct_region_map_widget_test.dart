@@ -830,6 +830,153 @@ void main() {
     );
 
     testWidgets(
+      'tap on civilian marker tile invokes civilian callback and suppresses detail tap callback',
+      (WidgetTester tester) async {
+        final base = ctRegionMapTestOldWorldRegion();
+        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
+        const markerTileKey = 'oldWorld|pMarker|0|0';
+        final region = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 1,
+          height: 1,
+          cellSize: 24,
+          cells: [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'pMarker',
+              isSea: false,
+              terrainTypeId: landTemplate.terrainTypeId,
+              terrainType: landTemplate.terrainType,
+              ownerFactionId: landTemplate.ownerFactionId,
+              provinceDisplayName: 'Marker Province',
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          townMarkers: const [],
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+          unitMarkers: const [],
+          civilianTileMarkers: [
+            CivilianTileMarkerView(
+              tileKey: markerTileKey,
+              x: 0,
+              y: 0,
+              localProvinceId: 'pMarker',
+              unitIds: const ['u_builder'],
+              unitTypes: const {'u_builder': 'Builder'},
+              representativeUnitType: 'Builder',
+              stackCount: 1,
+            ),
+          ],
+          warpMarkers: const [],
+        );
+        String? tappedCivilianTileKey;
+        String? detailTileKey;
+        String? selectedProvinceId;
+
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            width: 64,
+            height: 64,
+            cellSizePx: 32,
+            onCivilianTileTapped: (tileKey) => tappedCivilianTileKey = tileKey,
+            onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
+            onProvinceSelected: (id) => selectedProvinceId = id,
+          ),
+        );
+        await tester.pump();
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+        await tester.tap(mapFinder);
+        await tester.pump();
+
+        expect(tappedCivilianTileKey, equals(markerTileKey));
+        expect(detailTileKey, isNull);
+        expect(selectedProvinceId, isNull);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'tapping non-civilian tile clears civilian selection and still opens tile detail',
+      (WidgetTester tester) async {
+        final base = ctRegionMapTestOldWorldRegion();
+        final selectedMarkerCell = base.cells.firstWhere((c) => !c.isSea);
+        final otherCell = base.cells.firstWhere(
+          (c) =>
+              !c.isSea &&
+              (c.x != selectedMarkerCell.x || c.y != selectedMarkerCell.y),
+        );
+        final selectedMarkerTileKey =
+            '${base.regionId}|${selectedMarkerCell.regionCellId}|${selectedMarkerCell.x}|${selectedMarkerCell.y}';
+        final region = RegionMapViewData(
+          regionId: base.regionId,
+          width: base.width,
+          height: base.height,
+          cellSize: base.cellSize,
+          cells: base.cells,
+          capitalMarkers: base.capitalMarkers,
+          portMarkers: base.portMarkers,
+          townMarkers: base.townMarkers,
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+          unitMarkers: base.unitMarkers,
+          civilianTileMarkers: [
+            CivilianTileMarkerView(
+              tileKey: selectedMarkerTileKey,
+              x: selectedMarkerCell.x,
+              y: selectedMarkerCell.y,
+              localProvinceId: selectedMarkerCell.regionCellId,
+              unitIds: const ['u_builder'],
+              unitTypes: const {'u_builder': 'Builder'},
+              representativeUnitType: 'Builder',
+              stackCount: 1,
+            ),
+          ],
+          warpMarkers: base.warpMarkers,
+          provinceUnitPresenceByProvinceId:
+              base.provinceUnitPresenceByProvinceId,
+          provincePoliticalOwnerByPrefixedProvinceId:
+              base.provincePoliticalOwnerByPrefixedProvinceId,
+        );
+        var clearCount = 0;
+        String? detailTileKey;
+
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            cellSizePx: region.cellSize.toDouble(),
+            selectedCivilianTileKey: selectedMarkerTileKey,
+            onCivilianTileSelectionCleared: () => clearCount++,
+            onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        final topLeft = tester.getTopLeft(mapFinder);
+        final tapOffset =
+            topLeft +
+            Offset(
+              (otherCell.x + 0.5) * region.cellSize.toDouble(),
+              (otherCell.y + 0.5) * region.cellSize.toDouble(),
+            );
+        await tester.tapAt(tapOffset);
+        await tester.pump();
+
+        expect(clearCount, equals(1));
+        expect(detailTileKey, isNotNull);
+        expect(detailTileKey, isNot(equals(selectedMarkerTileKey)));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
       'tap on a town tile still invokes map tile and province selection callbacks',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();

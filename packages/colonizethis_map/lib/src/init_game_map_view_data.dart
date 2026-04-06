@@ -97,6 +97,41 @@ class UnitMarkerView {
   final String ownerFactionId;
 }
 
+/// Tile-scoped player civilian marker payload for interactive map icons.
+class CivilianTileMarkerView {
+  const CivilianTileMarkerView({
+    required this.tileKey,
+    required this.x,
+    required this.y,
+    required this.localProvinceId,
+    required this.unitIds,
+    required this.unitTypes,
+    required this.representativeUnitType,
+    required this.stackCount,
+  });
+
+  /// Canonical tile key `regionId|provinceId|x|y`.
+  final String tileKey;
+  final int x;
+  final int y;
+
+  /// Local province id from the tile key (`provinceId` segment).
+  final String localProvinceId;
+
+  /// Unit ids on this tile in deterministic order:
+  /// icon-priority order first, then unit id lexical tie-break.
+  final List<String> unitIds;
+
+  /// Unit type keyed by unit id for tile-scoped civilian dialogs.
+  final Map<String, String> unitTypes;
+
+  /// Icon representative unit type for this tile stack.
+  final String representativeUnitType;
+
+  /// Number of player-owned civilians on this tile.
+  final int stackCount;
+}
+
 /// Province-level unit-presence counts for map labels.
 class ProvinceUnitPresenceView {
   const ProvinceUnitPresenceView({
@@ -199,6 +234,7 @@ class RegionMapViewData {
     required this.greatPowerFactionIds,
     required this.terrainColors,
     this.unitMarkers = const [],
+    this.civilianTileMarkers = const [],
     this.warpMarkers = const [],
     this.townMarkers = const [],
     this.provinceUnitPresenceByProvinceId = const {},
@@ -238,6 +274,9 @@ class RegionMapViewData {
 
   /// Unit/army markers (province→representative tile) for Units overlay.
   final List<UnitMarkerView> unitMarkers;
+
+  /// Tile-scoped player civilian markers for interactive map civilian icons.
+  final List<CivilianTileMarkerView> civilianTileMarkers;
 
   /// Province full id -> class presence counts/intel gate for map labels.
   final Map<String, ProvinceUnitPresenceView> provinceUnitPresenceByProvinceId;

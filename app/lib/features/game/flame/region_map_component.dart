@@ -38,7 +38,10 @@ class CtRegionMapComponent extends PositionComponent {
     this.onProvinceHovered,
     this.onTileHovered,
     this.onTileTapped,
+    this.onCivilianTileTapped,
+    this.onCivilianTileSelectionCleared,
     this.selectedTileKey,
+    this.selectedCivilianTileKey,
     this.secondaryHighlightTileKey,
     this.validTileKeys,
     this.onTownIconTapped,
@@ -66,7 +69,10 @@ class CtRegionMapComponent extends PositionComponent {
   void Function(String? provinceId)? onProvinceHovered;
   void Function(String? tileKey)? onTileHovered;
   void Function(String? tileKey)? onTileTapped;
+  void Function(String tileKey)? onCivilianTileTapped;
+  VoidCallback? onCivilianTileSelectionCleared;
   String? selectedTileKey;
+  String? selectedCivilianTileKey;
   String? secondaryHighlightTileKey;
   Set<String>? validTileKeys;
   void Function(String provinceId)? onTownIconTapped;
@@ -180,6 +186,14 @@ class CtRegionMapComponent extends PositionComponent {
       }
       return;
     }
+    final tappedCivilian = _getCivilianMarkerAtTile(x, y);
+    if (tappedCivilian != null) {
+      onCivilianTileTapped?.call(tappedCivilian.tileKey);
+      return;
+    }
+    if (selectedCivilianTileKey != null) {
+      onCivilianTileSelectionCleared?.call();
+    }
     // Not in work target mode: allow province selection.
     // Town or port icon hit (port may be on an adjacent sea tile). SPEC/ui/town-port-icons.md.
     final tappedTown = _getTownAtTile(x, y);
@@ -190,6 +204,21 @@ class CtRegionMapComponent extends PositionComponent {
     final provinceId = '${region.regionId}|${cell.regionCellId}';
     onMapTileTappedForDetail?.call(tileKey);
     onProvinceSelected?.call(provinceId);
+  }
+
+  CivilianTileMarkerView? _getCivilianMarkerAtTile(int x, int y) {
+    for (final marker in region.civilianTileMarkers) {
+      if (marker.x != x || marker.y != y) continue;
+      final cell = region.cellAt(x, y);
+      final isUnrevealed =
+          visibilityMode == CtMapVisibilityMode.playerConstrained &&
+          cell.visibility == TileVisibility.unrevealed;
+      if (isUnrevealed) {
+        return null;
+      }
+      return marker;
+    }
+    return null;
   }
 
   TownMarkerView? _getTownAtTile(int x, int y) {
@@ -231,6 +260,7 @@ class CtRegionMapComponent extends PositionComponent {
     _paintCapitals(canvas);
     _paintTowns(canvas);
     _paintWarpZones(canvas);
+    _paintCivilianTileMarkers(canvas);
     if (_hoveredTileX != null && _hoveredTileY != null) {
       _paintSelector(canvas);
     }
@@ -242,6 +272,132 @@ class CtRegionMapComponent extends PositionComponent {
     }
     if (validTileKeys != null && validTileKeys!.isNotEmpty) {
       _paintValidTilesGlow(canvas);
+    }
+  }
+
+  Color _civilianMarkerColor(String unitType) {
+    switch (unitType.trim().toLowerCase()) {
+      case 'builder':
+        return const Color(0xFFC57B39);
+      case 'engineer':
+        return const Color(0xFF3A86C6);
+      case 'rail builder':
+      case 'rail_builder':
+      case 'railbuilder':
+        return const Color(0xFF6C757D);
+      case 'explorer':
+        return const Color(0xFF2F9E44);
+      case 'merchant':
+        return const Color(0xFF8D6E63);
+      case 'spy':
+        return const Color(0xFF6F42C1);
+      default:
+        return const Color(0xFF495057);
+    }
+  }
+
+  String _civilianMarkerGlyph(String unitType) {
+    final normalized = unitType.trim().toLowerCase();
+    switch (normalized) {
+      case 'rail builder':
+      case 'rail_builder':
+      case 'railbuilder':
+        return 'RB';
+      default:
+        return unitType.trim().isEmpty
+            ? '?'
+            : unitType.trim().substring(0, 1).toUpperCase();
+    }
+  }
+
+  void _paintCivilianTileMarkers(Canvas canvas) {
+    if (region.civilianTileMarkers.isEmpty) return;
+    for (final marker in region.civilianTileMarkers) {
+      if (marker.x < 0 ||
+          marker.x >= region.width ||
+          marker.y < 0 ||
+          marker.y >= region.height) {
+        continue;
+      }
+      final cell = region.cellAt(marker.x, marker.y);
+      if (regionMapSkipPointMarkerOnCell(
+        playerConstrainedVisibility:
+            visibilityMode == CtMapVisibilityMode.playerConstrained,
+        cellVisibility: cell.visibility,
+      )) {
+        continue;
+      }
+      final left = marker.x * cellSize;
+      final top = marker.y * cellSize;
+      final selected = selectedCivilianTileKey == marker.tileKey;
+      final blinkAlpha = selected
+          ? _kHoveredProvinceGlowOpacityMid +
+                _kHoveredProvinceGlowOpacityAmplitude *
+                    math.sin(
+                      _hoverAnimationT * _kHoveredProvinceGlowAngularFrequency,
+                    )
+          : 1.0;
+
+      final fill = Paint()
+        ..style = PaintingStyle.fill
+        ..color = _civilianMarkerColor(
+          marker.representativeUnitType,
+        ).withValues(alpha: blinkAlpha.clamp(0.35, 1.0));
+      final stroke = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = Colors.black.withValues(alpha: 0.7);
+      final rect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(left, top, cellSize, cellSize),
+        Radius.circular(math.max(2, cellSize * 0.12)),
+      );
+      canvas.drawRRect(rect, fill);
+      canvas.drawRRect(rect, stroke);
+
+      final glyph = _civilianMarkerGlyph(marker.representativeUnitType);
+      final fontSize = math.max(8.0, cellSize * 0.36);
+      final tp = TextPainter(
+        text: TextSpan(
+          text: glyph,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: fontSize,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(
+        canvas,
+        Offset(
+          left + (cellSize - tp.width) / 2,
+          top + (cellSize - tp.height) / 2,
+        ),
+      );
+
+      if (marker.stackCount <= 1) continue;
+      final badgeRadius = math.max(7.0, cellSize * 0.2);
+      final badgeCx = left + cellSize - badgeRadius;
+      final badgeCy = top + cellSize - badgeRadius;
+      final badgeFill = Paint()
+        ..style = PaintingStyle.fill
+        ..color = Colors.black.withValues(alpha: blinkAlpha.clamp(0.35, 1.0));
+      canvas.drawCircle(Offset(badgeCx, badgeCy), badgeRadius, badgeFill);
+      final badgeText = TextPainter(
+        text: TextSpan(
+          text: '${marker.stackCount}',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: math.max(8.0, cellSize * 0.24),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      badgeText.paint(
+        canvas,
+        Offset(badgeCx - badgeText.width / 2, badgeCy - badgeText.height / 2),
+      );
     }
   }
 
