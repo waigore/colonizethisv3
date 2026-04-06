@@ -107,6 +107,68 @@ void main() {
         'tile_swamp',
       );
     });
+
+    test('throws for non-feature terrains', () {
+      expect(
+        () => featureOverlayTileKey(
+          terrain: TerrainType.plains,
+          resourceId: 'grain',
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        () => featureOverlayTileKey(
+          terrain: TerrainType.desert,
+          resourceId: 'diamonds',
+        ),
+        throwsArgumentError,
+      );
+    });
+  });
+
+  group('terrainVariantTileKey', () {
+    test('plains selects resource variants for grain, meat, horses', () {
+      expect(
+        terrainVariantTileKey(terrain: TerrainType.plains, resourceId: 'grain'),
+        'tile_plains_grain',
+      );
+      expect(
+        terrainVariantTileKey(terrain: TerrainType.plains, resourceId: 'meat'),
+        'tile_plains_meat',
+      );
+      expect(
+        terrainVariantTileKey(
+          terrain: TerrainType.plains,
+          resourceId: 'horses',
+        ),
+        'tile_plains_horses',
+      );
+    });
+
+    test('plains returns null for other resources and no resource', () {
+      expect(
+        terrainVariantTileKey(
+          terrain: TerrainType.plains,
+          resourceId: 'sugarCane',
+        ),
+        isNull,
+      );
+      expect(terrainVariantTileKey(terrain: TerrainType.plains), isNull);
+    });
+
+    test('desert never selects plains variants', () {
+      expect(
+        terrainVariantTileKey(terrain: TerrainType.desert, resourceId: 'grain'),
+        isNull,
+      );
+      expect(
+        terrainVariantTileKey(
+          terrain: TerrainType.desert,
+          resourceId: 'diamonds',
+        ),
+        isNull,
+      );
+    });
   });
 
   group('WangTile', () {

@@ -31,6 +31,9 @@ const String _tileHillsMine = 'tile_hills_mine';
 const String _tileHillsWool = 'tile_hills_wool';
 const String _tileMountain = 'tile_mountain';
 const String _tileSwamp = 'tile_swamp';
+const String _tilePlainsGrain = 'tile_plains_grain';
+const String _tilePlainsMeat = 'tile_plains_meat';
+const String _tilePlainsHorses = 'tile_plains_horses';
 
 /// Determines the rendering layer for a terrain type.
 /// Desert is L1 (land base alongside plains), not L2.
@@ -131,12 +134,25 @@ class StandaloneTile {
   StandaloneTile({required this.tileId, required this.image});
 }
 
-String featureOverlayTileKey({
+String? terrainVariantTileKey({
   required TerrainType terrain,
   String? resourceId,
   int? improvementLevel,
 }) {
   switch (terrain) {
+    case TerrainType.plains:
+      switch (resourceId) {
+        case 'grain':
+          return _tilePlainsGrain;
+        case 'meat':
+          return _tilePlainsMeat;
+        case 'horses':
+          return _tilePlainsHorses;
+        default:
+          return null;
+      }
+    case TerrainType.desert:
+      return null;
     case TerrainType.forest:
       return resourceId == 'timber' ? _tileForestTimber : _tileForest;
     case TerrainType.hills:
@@ -148,12 +164,30 @@ String featureOverlayTileKey({
       return _tileMountain;
     case TerrainType.swamp:
       return _tileSwamp;
-    case TerrainType.plains:
-    case TerrainType.desert:
-      throw ArgumentError(
-        'featureOverlayTileKey only supports L2+ feature terrains',
-      );
   }
+}
+
+String featureOverlayTileKey({
+  required TerrainType terrain,
+  String? resourceId,
+  int? improvementLevel,
+}) {
+  if (terrain == TerrainType.plains || terrain == TerrainType.desert) {
+    throw ArgumentError(
+      'featureOverlayTileKey only supports L2+ feature terrains',
+    );
+  }
+  final key = terrainVariantTileKey(
+    terrain: terrain,
+    resourceId: resourceId,
+    improvementLevel: improvementLevel,
+  );
+  if (key == null) {
+    throw ArgumentError(
+      'featureOverlayTileKey only supports L2+ feature terrains',
+    );
+  }
+  return key;
 }
 
 bool _isMineResourceId(String? resourceId) {
@@ -215,6 +249,12 @@ class TerrainTilesetCache {
 
       // L2+ feature overlays are best-effort and loaded in the background.
       // Failures must not block base terrain or map rendering. Desert is now L1.
+      await Future.wait([
+        _loadStandaloneTileRequired(_tilePlainsGrain, 'plains_grain'),
+        _loadStandaloneTileRequired(_tilePlainsMeat, 'plains_meat'),
+        _loadStandaloneTileRequired(_tilePlainsHorses, 'plains_horses'),
+      ]);
+
       for (final item in const <(String tileId, String assetStem)>[
         (_tileForest, 'forest'),
         (_tileForestTimber, 'forest_timber'),
@@ -359,6 +399,18 @@ class TerrainTilesetCache {
         stackTrace: stackTrace,
       );
     }
+  }
+
+  Future<void> _loadStandaloneTileRequired(
+    String tileId,
+    String assetStem,
+  ) async {
+    final pngPath = 'assets/images/terrain/tile_$assetStem.png';
+    final imageData = await rootBundle.load(pngPath);
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);
+    final image = await completer.future;
+    _standaloneTiles[tileId] = StandaloneTile(tileId: tileId, image: image);
   }
 
   // L0/L1 Wang tileset getters
