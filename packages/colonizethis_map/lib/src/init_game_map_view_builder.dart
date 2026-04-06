@@ -126,7 +126,9 @@ RegionMapViewData _buildRegionViewData({
   final provinces = isOldWorld
       ? game.worldState.oldWorld.provinces
       : game.worldState.newWorld.provinces;
+  final provincePoliticalOwnerByPrefixedProvinceId = <String, String?>{};
   for (final p in provinces) {
+    provincePoliticalOwnerByPrefixedProvinceId[p.id] = p.ownerId;
     if (p.ownerId != null && p.ownerId!.isNotEmpty) {
       ownerByProvinceId[p.id] = p.ownerId!;
     }
@@ -515,5 +517,7 @@ RegionMapViewData _buildRegionViewData({
     warpMarkers: warpMarkers,
     townMarkers: towns,
     provinceUnitPresenceByProvinceId: provincePresenceById,
+    provincePoliticalOwnerByPrefixedProvinceId:
+        provincePoliticalOwnerByPrefixedProvinceId,
   );
 }

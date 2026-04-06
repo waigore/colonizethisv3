@@ -274,7 +274,9 @@ class CtRegionMapComponent extends PositionComponent {
   RegionMapViewData? _provinceLabelsRegionRef;
   double? _provinceLabelsCellSize;
   CtMapVisibilityMode? _provinceLabelsVisibilityMode;
-  List<({double cx, double cy, String text, String provinceId})>?
+  List<
+    ({double cx, double cy, String text, String provinceId, Color plateColor})
+  >?
   _provinceLabelsCached;
 
   @override
@@ -514,7 +516,26 @@ class CtRegionMapComponent extends PositionComponent {
     _provinceLabelsCached = _computeProvinceLabels();
   }
 
-  List<({double cx, double cy, String text, String provinceId})>
+  Color _provinceNamePlateColor({
+    required String prefixedProvinceId,
+    required List<CellViewData> qualifyingLandCells,
+  }) {
+    final rgb = resolveProvinceLabelPlateTintRgb(
+      prefixedProvinceId: prefixedProvinceId,
+      qualifyingLandCells: qualifyingLandCells,
+      region: region,
+      honorUnrevealedTiles:
+          visibilityMode == CtMapVisibilityMode.playerConstrained,
+    );
+    if (rgb == null) {
+      return _provinceLabelPlateColor;
+    }
+    return Color.fromRGBO(rgb.$1, rgb.$2, rgb.$3, kProvinceLabelPlateTintAlpha);
+  }
+
+  List<
+    ({double cx, double cy, String text, String provinceId, Color plateColor})
+  >
   _computeProvinceLabels() {
     final byLocalId = <String, List<CellViewData>>{};
     for (final cell in region.cells) {
@@ -525,7 +546,16 @@ class CtRegionMapComponent extends PositionComponent {
       }
       byLocalId.putIfAbsent(cell.regionCellId, () => []).add(cell);
     }
-    final out = <({double cx, double cy, String text, String provinceId})>[];
+    final out =
+        <
+          ({
+            double cx,
+            double cy,
+            String text,
+            String provinceId,
+            Color plateColor,
+          })
+        >[];
     for (final e in byLocalId.entries) {
       final cells = e.value;
       if (cells.isEmpty) continue;
@@ -547,11 +577,16 @@ class CtRegionMapComponent extends PositionComponent {
         }
       }
       final text = name ?? e.key;
+      final prefixedId = '${region.regionId}|${e.key}';
       out.add((
         cx: cx,
         cy: cy,
         text: text,
-        provinceId: '${region.regionId}|${e.key}',
+        provinceId: prefixedId,
+        plateColor: _provinceNamePlateColor(
+          prefixedProvinceId: prefixedId,
+          qualifyingLandCells: cells,
+        ),
       ));
     }
     return out;
@@ -577,9 +612,8 @@ class CtRegionMapComponent extends PositionComponent {
         ),
       ],
     );
-    final platePaint = Paint()..color = _provinceLabelPlateColor;
-
     for (final item in labels) {
+      final platePaint = Paint()..color = item.plateColor;
       final presence = region.provinceUnitPresenceByProvinceId[item.provinceId];
       final iconIds = resolveProvinceLabelPresenceIconIds(presence);
       final iconCount = iconIds.length;

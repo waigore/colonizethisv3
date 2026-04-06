@@ -202,6 +202,7 @@ class RegionMapViewData {
     this.warpMarkers = const [],
     this.townMarkers = const [],
     this.provinceUnitPresenceByProvinceId = const {},
+    this.provincePoliticalOwnerByPrefixedProvinceId = const {},
   });
 
   /// Region identifier, e.g. 'oldWorld' or 'newWorld'.
@@ -240,6 +241,12 @@ class RegionMapViewData {
 
   /// Province full id -> class presence counts/intel gate for map labels.
   final Map<String, ProvinceUnitPresenceView> provinceUnitPresenceByProvinceId;
+
+  /// Prefixed province id (`regionId|localId`) -> province-level [Province.ownerId]
+  /// from world state (`null` if unowned). Used for province name label plate tint
+  /// vs neutral (Minor/Tribe provinces with GP-purchased tiles). See
+  /// SPEC/program/map-visualization.md § Map view model.
+  final Map<String, String?> provincePoliticalOwnerByPrefixedProvinceId;
 
   /// Convenience accessor for cell at (x, y).
   CellViewData cellAt(int x, int y) => cells[y * width + x];
