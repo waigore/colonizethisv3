@@ -206,6 +206,7 @@ The **logic** (which tileset applies per corner pattern) is fixed by terrain typ
 - Given a plains cell adjacent to desert, when rendering, then the `plains_desert` Wang tileset is used.
 - Given a desert cell adjacent to plains, when rendering, then the `plains_desert` Wang tileset is used.
 - Given a feature cell (forest/hills/mountain/swamp), when rendering, then the appropriate land base (plains or desert) is drawn first, then the selected feature overlay tile on top.
+- Given a fogged feature cell (forest/hills/mountain/swamp), when rendering completes, then fog attenuation is applied exactly once for that tile (single-pass), matching the intended fog darkness level used for other fogged land tiles.
 - Given a plains tile with `resourceId = grain`, when rendering L1, then the renderer selects `tile_plains_grain` for that tile.
 - Given a plains tile with `resourceId = meat`, when rendering L1, then the renderer selects `tile_plains_meat` for that tile.
 - Given a plains tile with `resourceId = horses`, when rendering L1, then the renderer selects `tile_plains_horses` for that tile.
