@@ -8,7 +8,7 @@ import '../../../config/app_assets.dart';
 
 final _log = gameLogger();
 
-const Set<String> kTownIconIds = {'port', 'town_inland', 'town_coastal'};
+const Set<String> kTownIconIds = {'port', 'town_inland'};
 
 class TownIconCache {
   final Map<String, ui.Image> _icons = {};
@@ -17,7 +17,8 @@ class TownIconCache {
 
   bool get isLoaded => _isLoaded;
 
-  static const double iconSize = 32.0;
+  static const double townRenderSize = 64.0;
+  static const double portRenderSize = 32.0;
 
   Future<void> load() async {
     if (_isLoaded || _isLoading) return;

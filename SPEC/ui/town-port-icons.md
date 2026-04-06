@@ -6,13 +6,12 @@
 
 ## Overview
 
-Towns and ports are displayed as distinct 32×32 pixel art icons on the map when the province has a `townTileKey`. Port provinces render **two** icons: the town glyph on the canonical town tile and the port glyph on a computed drawable cell (see below).
+Towns and ports are displayed as distinct pixel art icons on the map when the province has a `townTileKey`. Port provinces render **two** icons: the town glyph on the canonical town tile and the port glyph on a computed drawable cell (see below). Town icons are rendered at **64×64** destination size on the map widget.
 
 | Icon Type | Description | Asset File |
 |-----------|-------------|------------|
 | **Port** | Harbor/port icon | `ui_icon_com_port.png` |
 | **Inland Town** | Town/village icon (no port access) | `ui_icon_com_town_inland.png` |
-| **Coastal Town** | Town with port access | `ui_icon_com_town_coastal.png` |
 
 ---
 
@@ -24,14 +23,14 @@ Icons are stored in `app/assets/icons/` following the existing resource icon nam
 |------|------|-------------|
 | Port | `ui_icon_com_port.png` | Harbor with ships/anchors |
 | Inland Town | `ui_icon_com_town_inland.png` | Village/house cluster |
-| Coastal Town | `ui_icon_com_town_coastal.png` | Town with port/water indication |
 
-### Asset Requirements
+### Asset and Render Requirements
 
-- **Format:** 32×32 PNG with RGBA transparency
+- **Source format:** 32×32 PNG with RGBA transparency
 - **Style:** Colonial-era pixel art matching `ui_icon_com_*.png` resource icons
 - **Background:** Transparent (no circular badge or background shape)
-- **Positioning:** Icons render at native 32×32 resolution, positioned at the town's tile center
+- **Town render size:** town glyph renders at **64×64 destination size** centered on the town tile
+- **Port render size:** port glyph remains at **32×32 destination size**
 
 ---
 
@@ -43,7 +42,7 @@ On the tile from `province.townTileKey` (same centering as before):
 - `cx = townTileX * cellSize + cellSize / 2`
 - `cy = townTileY * cellSize + cellSize / 2`
 
-**Town glyph:** `town_coastal` if the province has a land↔sea topology edge (`touchesSea` in view data); otherwise `town_inland`. This applies even when the province is a port (port uses a separate icon).
+**Town glyph:** always `town_inland`, including inland, coastal, and port provinces. Coastal/non-coastal distinction does not change the town glyph. Port markers still use the separate `port` icon.
 
 ### Position — port icon (drawable cell)
 
@@ -68,7 +67,7 @@ Implementation populates `TownMarkerView.portIconX` / `portIconY` when `isPort` 
 
 ### Visibility
 
-- Town icon uses visibility of the **town** cell.
+- Town icon uses visibility of the **town** cell and applies regardless of province ownership (player, AI, unowned), subject only to visibility/fog rules.
 - Port icon uses visibility of the **port drawable** cell (typically sea when offset).
 - Fogged tiles render icons at reduced opacity; unrevealed tiles show no icon.
 
@@ -165,10 +164,11 @@ ProvinceSeaZoneDetailOverlay shown
 - **Given** a province with `townTileKey` and a port whose tile differs from town and capital, **when** the map renders, **then** the `port` icon is at `portIconX/portIconY` matching that port tile and the town glyph is on the town tile.
 - **Given** a port whose tile equals **town** or **capital** and an orthogonal sea cell exists in N→E→S→W order from the town tile, **when** the map renders, **then** `portIconX/portIconY` is that sea cell.
 - **Given** that co-location case with **no** qualifying sea neighbor, **when** the map renders, **then** `portIconX/portIconY` fall back to the port tile.
-- **Given** a province with `townTileKey` that **touches sea** (topology), **when** the map renders, **then** the `town_coastal` glyph is on the town tile (including port provinces).
-- **Given** a province with `townTileKey` that does **not** touch sea, **when** the map renders, **then** the `town_inland` glyph is on the town tile.
+- **Given** a province with `townTileKey` (including coastal and port provinces), **when** the map renders, **then** the `town_inland` glyph is used on the town tile.
 - **Given** a province with `townTileKey` set that is coastal **non-port**, **when** the map renders, **then** `isCoastal` is true on `TownMarkerView` and only the town icon is shown (no port sprite).
 - **Given** a province without a town (`townTileKey` is null), **when** the map renders, **then** no town icon is displayed for that province.
+- **Given** a non-player province with `townTileKey` in full visibility mode, **when** the map renders, **then** its town icon is displayed.
+- **Given** player-constrained visibility mode for a non-player province with `townTileKey`, **when** the town tile visibility is `visible` or `fogged`, **then** the town icon is displayed (fogged styling applies); **when** `unrevealed`, **then** no icon is shown.
 - **Given** a map widget in player-constrained visibility mode, **when** a town icon is on a fogged tile, **then** the icon is rendered at reduced opacity.
 - **Given** a map widget in player-constrained visibility mode, **when** a town icon is on an unrevealed tile, **then** no icon is rendered.
 
@@ -176,7 +176,7 @@ ProvinceSeaZoneDetailOverlay shown
 
 - **Given** the map renders a port marker, **when** the new pixel art icons are implemented, **then** the legacy blue square port marker is no longer rendered for provinces with ports.
 - **Given** the map renders a port, **when** the icon is rendered, **then** the `port` icon visually identifies it as a trade hub.
-- **Given** the map renders a coastal town (non-port coastal province), **when** the icon is rendered, **then** the `town_coastal` icon visually distinguishes it from an inland town.
+- **Given** the map renders inland and coastal towns, **when** the icon is rendered, **then** both use the same inland town icon art style.
 
 ### Interactivity
 
@@ -198,7 +198,7 @@ ProvinceSeaZoneDetailOverlay shown
 Icons are loaded via the existing `ResourceIconCache` pattern:
 - `TownIconCache` singleton for town/coastal icons
 - Icons loaded in `onLoad()` of `CtRegionMapComponent`
-- Cache stores `Map<String, Image>` keyed by icon type (`port`, `town_inland`, `town_coastal`)
+- Cache stores `Map<String, Image>` keyed by icon type (`port`, `town_inland`)
 
 ### Existing Code Changes
 
@@ -230,5 +230,4 @@ Icons are loaded via the existing `ResourceIconCache` pattern:
 
 - `app/assets/icons/ui_icon_com_port.png`
 - `app/assets/icons/ui_icon_com_town_inland.png`
-- `app/assets/icons/ui_icon_com_town_coastal.png`
 - `AppEventBus` from `colonizethis_models`
