@@ -97,3 +97,8 @@ Flame owns game canvas and in-game pixel-art UI; Flutter owns app shell, routes,
 - **Given** map data is simply missing for the current game id (no throw), **when** the provider evaluates, **then** it returns used `0` with `isCargoUsedReliable` **true** (expected empty state, not a computation failure).
 
 **Rationale:** GitHub #1531; SPEC/program/logging — avoid silent `catch` in providers; align with core logging principles.
+
+### App `GameService` — `getMapData` and in-memory map cache
+
+- **Given** a `GameService` instance has already populated its in-memory map cache for `gameId` (for example after `loadGame`, `createNewGame`, or an earlier `getMapData` that loaded map data from storage), **when** the app calls `getMapData(gameId)` again, **then** the service returns the cached topology and tile maps **without** invoking `GameSaveAdapter.load` for that call (no redundant read of the game JSON from Hive solely to re-check existence). **Rationale:** GitHub #1560; avoids save-adapter info spam on UI hot paths (map pan/zoom rebuilds).
+- **Given** no in-memory map cache entry exists for `gameId`, **when** `getMapData(gameId)` runs, **then** the service follows the usual save/load checks: it returns `null` when the game key is missing or the game JSON does not load, and otherwise returns map data from storage or cache per [save-load.md](save-load.md).
