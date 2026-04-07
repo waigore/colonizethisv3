@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart' show CellViewData;
 
 void main() {
   suppressLogsForTests();
@@ -165,6 +166,65 @@ void main() {
         terrainVariantTileKey(
           terrain: TerrainType.desert,
           resourceId: 'diamonds',
+        ),
+        isNull,
+      );
+    });
+  });
+
+  group('landInteriorPlainsVariantTileKey', () {
+    CellViewData landPlains({
+      String? resourceId,
+      TerrainType? terrainType,
+    }) =>
+        CellViewData(
+          x: 0,
+          y: 0,
+          regionCellId: 'p0',
+          isSea: false,
+          terrainType: terrainType ?? TerrainType.plains,
+          resourceId: resourceId,
+        );
+
+    test('returns variant keys only for plains with grain, meat, horses', () {
+      expect(
+        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'grain')),
+        'tile_plains_grain',
+      );
+      expect(
+        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'meat')),
+        'tile_plains_meat',
+      );
+      expect(
+        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'horses')),
+        'tile_plains_horses',
+      );
+    });
+
+    test('returns null for plains without mapped resource', () {
+      expect(
+        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'sugarCane')),
+        isNull,
+      );
+      expect(landInteriorPlainsVariantTileKey(landPlains()), isNull);
+    });
+
+    test('returns null for desert even if resource would map on plains', () {
+      expect(
+        landInteriorPlainsVariantTileKey(
+          landPlains(
+            terrainType: TerrainType.desert,
+            resourceId: 'grain',
+          ),
+        ),
+        isNull,
+      );
+    });
+
+    test('returns null for feature terrain with grain (not L1 plains)', () {
+      expect(
+        landInteriorPlainsVariantTileKey(
+          landPlains(terrainType: TerrainType.forest, resourceId: 'grain'),
         ),
         isNull,
       );
@@ -340,15 +400,14 @@ void main() {
     });
 
     test(
-      'load() sets isLoaded to false when standalone tile fails to load (no silent fallback)',
+      'fresh cache load() completes and exposes required plains standalone tiles',
       () async {
         final cache = TerrainTilesetCache();
         await cache.load();
-        // After load, isLoaded reflects whether all assets loaded successfully.
-        // If any standalone tile failed to load, isLoaded will be false.
-        // Note: The global terrainTilesetCache uses real asset paths, so this
-        // test verifies the behavior when loading fails - the cache does NOT
-        // silently swallow errors but propagates them, resulting in isLoaded=false.
+        expect(cache.isLoaded, isTrue);
+        expect(cache.getStandaloneTileByKey('tile_plains_grain'), isNotNull);
+        expect(cache.getStandaloneTileByKey('tile_plains_meat'), isNotNull);
+        expect(cache.getStandaloneTileByKey('tile_plains_horses'), isNotNull);
       },
     );
   });
