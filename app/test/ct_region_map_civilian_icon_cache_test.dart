@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -19,6 +23,32 @@ void main() {
           colorData.lengthInBytes,
           greaterThan(0),
           reason: 'Asset $colorPath is empty',
+        );
+      }
+    });
+
+    testWidgets('color civilian icons preserve transparent pixels', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      for (final slug in kCivilianIconSlugs) {
+        final colorPath = 'assets/icons/ui_icon_civ_$slug.png';
+        var hasTransparentPixel = false;
+        await tester.runAsync(() async {
+          final data = await rootBundle.load(colorPath);
+          final image = await _decodePng(data.buffer.asUint8List());
+          final pixels = await image.toByteData(
+            format: ui.ImageByteFormat.rawRgba,
+          );
+          if (pixels != null) {
+            hasTransparentPixel = _hasTransparentPixel(pixels);
+          }
+          image.dispose();
+        });
+        expect(
+          hasTransparentPixel,
+          isTrue,
+          reason: 'Civilian icon $colorPath must keep transparent background',
         );
       }
     });
@@ -47,4 +77,17 @@ void main() {
       );
     });
   });
+}
+
+Future<ui.Image> _decodePng(Uint8List bytes) {
+  final completer = Completer<ui.Image>();
+  ui.decodeImageFromList(bytes, completer.complete);
+  return completer.future;
+}
+
+bool _hasTransparentPixel(ByteData pixels) {
+  for (var i = 3; i < pixels.lengthInBytes; i += 4) {
+    if (pixels.getUint8(i) < 255) return true;
+  }
+  return false;
 }
