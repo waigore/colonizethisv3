@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../economy/build_cost.dart';
@@ -35,6 +36,19 @@ class BuildOrderValidator extends OrderValidator {
     return shortCircuitIfPreviousRejected(
       previousRejected: previousRejected,
       body: () {
+        final category = buildUnitCategoryForUnitType(o.unitType);
+        if (category == BuildUnitCategory.civilian) {
+          final civilianTileKey = resolveCivilianSpawnTileKey(
+            player: _player,
+            worldState: _game.worldState,
+          );
+          if (civilianTileKey == null) {
+            return OrderValidationResult.rejected(
+              kCivilianCapitalTileMissingReason,
+            );
+          }
+        }
+
         final resolvedSpawnProvinceId = resolveBuildSpawnProvinceId(
           player: _player,
           worldState: _game.worldState,

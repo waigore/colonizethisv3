@@ -236,12 +236,17 @@ void _runBuildPhase(_BuildWorkState state) {
       );
       if (spawnProvinceId == null) continue;
       final regionId = ProvinceId.regionIdFrom(spawnProvinceId);
-      final tileKeysByRegion =
-          state.game.worldState.tileKeysByRegionAndProvince;
-      final firstTileInSpawn =
-          tileKeysByRegion[regionId]?[spawnProvinceId]?.isNotEmpty == true
-          ? tileKeysByRegion[regionId]![spawnProvinceId]!.first
+      final civilianTileKey = category == BuildUnitCategory.civilian
+          ? resolveCivilianSpawnTileKey(
+              player: player,
+              worldState: state.game.worldState,
+            )
           : null;
+      if (category == BuildUnitCategory.civilian && civilianTileKey == null) {
+        throw StateError(
+          '$kCivilianCapitalTileMissingReason: player=${player.id}',
+        );
+      }
 
       final newUnit = Unit(
         id: _buildUnitId(player.id, order, spawnProvinceId),
@@ -249,7 +254,7 @@ void _runBuildPhase(_BuildWorkState state) {
         ownerId: player.id,
         locationProvinceId: spawnProvinceId,
         tileKey: category == BuildUnitCategory.civilian
-            ? firstTileInSpawn
+            ? civilianTileKey
             : null,
       );
 

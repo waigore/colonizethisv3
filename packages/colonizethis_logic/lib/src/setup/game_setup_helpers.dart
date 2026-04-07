@@ -586,21 +586,27 @@ Game _applyNaming({
 
 /// Adds starting civilian units for each Great Power in their capital provinces.
 Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
-  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
   var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
   var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
 
   for (final player in game.players) {
     final capitalProvinceId = player.capitalProvinceId;
-    if (capitalProvinceId == null) continue;
-
+    final capitalTile = player.capitalTile;
+    if (capitalProvinceId == null || capitalTile == null) {
+      throw StateError(
+        'Cannot spawn starting civilians without capital tile: player=${player.id}',
+      );
+    }
+    final capitalTileKey = capitalTile.toTileKey();
+    final tileProvinceId = Unit.provinceIdFromTileKey(capitalTileKey);
+    if (tileProvinceId == null || tileProvinceId != capitalProvinceId) {
+      throw StateError(
+        'Capital tile/province mismatch for starting civilians: '
+        'player=${player.id} capitalProvinceId=$capitalProvinceId '
+        'capitalTileKey=$capitalTileKey',
+      );
+    }
     final capitalRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
-    final tilesInCapital =
-        tileKeysByRegion[capitalRegionId]?[capitalProvinceId];
-    final firstTileInCapital =
-        (tilesInCapital != null && tilesInCapital.isNotEmpty)
-        ? tilesInCapital.first
-        : null;
 
     final unitConfig = config.startingResources.startingCivilianUnits;
     for (final entry in unitConfig.entries) {
@@ -615,7 +621,7 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
           ownerId: player.id,
           locationProvinceId: capitalProvinceId,
           status: UnitStatus.idle,
-          tileKey: firstTileInCapital,
+          tileKey: capitalTileKey,
         );
         if (capitalRegionId == kRegionOldWorld) {
           oldWorldUnits.add(unit);
