@@ -100,8 +100,9 @@ Game applyNavalMissionOrders(
             .map((p) => p.capitalProvinceId)
             .firstOrNull;
         if (capitalProvinceId == null ||
-            fleet.inPortAtProvinceId != capitalProvinceId)
+            fleet.inPortAtProvinceId != capitalProvinceId) {
           continue;
+        }
         if (fleet.shipTypeIds.isEmpty) continue;
         final updatedHome = homeFleet.copyWith(
           ships: [...homeFleet.ships, ...fleet.ships],

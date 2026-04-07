@@ -1,4 +1,5 @@
 /// AIPlanner: generates orders for AI-controlled GPs. SPEC/program/ai-planner.md.
+library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

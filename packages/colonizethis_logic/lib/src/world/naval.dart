@@ -273,8 +273,9 @@ Set<String> provinceIdsAdjacentToSeaZone(
         : (e.id2 == seaZoneId ? e.id1 : null);
     if (otherId != null) {
       final node = regionNodes[otherId];
-      if (node != null && node.type == TopologyNodeType.province)
+      if (node != null && node.type == TopologyNodeType.province) {
         out.add(otherId);
+      }
     }
   }
   return out;

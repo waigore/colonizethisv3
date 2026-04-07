@@ -8,7 +8,7 @@ void main() {
     group('validateDiplomatic', () {
       final emptyTopology = MapTopology(nodes: const [], edges: const []);
 
-      Game _gpMinorBaseGame({
+      Game gpMinorBaseGame({
         RelationState relationState = RelationState.atPeace,
         int relationScore = 50,
         OvertureStage overtureStage = OvertureStage.none,
@@ -54,7 +54,7 @@ void main() {
       }
 
       test('declareWar rejected when already at war', () {
-        final game = _gpMinorBaseGame(relationState: RelationState.atWar);
+        final game = gpMinorBaseGame(relationState: RelationState.atWar);
         final engine = OrderEngine();
         final result = engine.addDiplomaticOrderWithContext(
           game,
@@ -70,7 +70,7 @@ void main() {
       });
 
       test('offerPeace rejected when not at war', () {
-        final game = _gpMinorBaseGame(relationState: RelationState.atPeace);
+        final game = gpMinorBaseGame(relationState: RelationState.atPeace);
         final engine = OrderEngine();
         final result = engine.addDiplomaticOrderWithContext(
           game,
@@ -86,7 +86,7 @@ void main() {
       });
 
       test('establishOverture rejected when target is at war with GP', () {
-        final game = _gpMinorBaseGame(
+        final game = gpMinorBaseGame(
           relationState: RelationState.atWar,
           overtureStage: OvertureStage.none,
           treasury: overtureConsulateCost + 100,
@@ -109,7 +109,7 @@ void main() {
       test(
         'establishOverture trade consulate rejected without diplomatic_expertise',
         () {
-          final game = _gpMinorBaseGame(
+          final game = gpMinorBaseGame(
             relationState: RelationState.atPeace,
             overtureStage: OvertureStage.none,
             treasury: overtureConsulateCost + 100,
@@ -132,7 +132,7 @@ void main() {
       );
 
       test('establishOverture consulate rejected when treasury too low', () {
-        final game = _gpMinorBaseGame(
+        final game = gpMinorBaseGame(
           relationState: RelationState.atPeace,
           overtureStage: OvertureStage.none,
           treasury: overtureConsulateCost - 1,
@@ -153,7 +153,7 @@ void main() {
       });
 
       test('establishOverture embassy requires existing consulate', () {
-        final game = _gpMinorBaseGame(
+        final game = gpMinorBaseGame(
           relationState: RelationState.atPeace,
           overtureStage: OvertureStage.none,
           treasury: overtureEmbassyCost + 1000,
@@ -176,7 +176,7 @@ void main() {
       test(
         'establishOverture second order for same faction in same turn rejected',
         () {
-          final game = _gpMinorBaseGame(
+          final game = gpMinorBaseGame(
             relationState: RelationState.atPeace,
             overtureStage: OvertureStage.none,
             treasury: overtureConsulateCost * 3,
@@ -265,7 +265,7 @@ void main() {
       );
 
       test('grantAid requires embassy and sufficient treasury', () {
-        final game = _gpMinorBaseGame(
+        final game = gpMinorBaseGame(
           relationState: RelationState.atPeace,
           overtureStage: OvertureStage.tradeConsulate,
           treasury: 5000,
@@ -285,7 +285,7 @@ void main() {
         expect(noEmbassy.reason, contains('Embassy required'));
 
         // With embassy but insufficient treasury.
-        final gameWithEmbassy = _gpMinorBaseGame(
+        final gameWithEmbassy = gpMinorBaseGame(
           relationState: RelationState.atPeace,
           overtureStage: OvertureStage.embassy,
           treasury: 500,
@@ -305,7 +305,7 @@ void main() {
       });
 
       test('grantAid rejects amounts not a multiple of £1000', () {
-        final game = _gpMinorBaseGame(
+        final game = gpMinorBaseGame(
           relationState: RelationState.atPeace,
           overtureStage: OvertureStage.embassy,
           treasury: 5000,
@@ -325,7 +325,7 @@ void main() {
       });
 
       test('grantAid then setSubsidy toward same target both accepted', () {
-        final game = _gpMinorBaseGame(
+        final game = gpMinorBaseGame(
           relationState: RelationState.atPeace,
           overtureStage: OvertureStage.embassy,
           treasury: 5000,
@@ -358,7 +358,7 @@ void main() {
       test(
         'setSubsidy requires consulate or embassy and sufficient treasury',
         () {
-          final gameNoOverture = _gpMinorBaseGame(
+          final gameNoOverture = gpMinorBaseGame(
             relationState: RelationState.atPeace,
             overtureStage: OvertureStage.none,
             treasury: 100,
@@ -376,7 +376,7 @@ void main() {
           expect(noConsulate.status, OrderValidationStatus.rejected);
           expect(noConsulate.reason, contains('Consulate or Embassy required'));
 
-          final gameLowTreasury = _gpMinorBaseGame(
+          final gameLowTreasury = gpMinorBaseGame(
             relationState: RelationState.atPeace,
             overtureStage: OvertureStage.tradeConsulate,
             treasury: 10,
@@ -397,7 +397,7 @@ void main() {
       );
 
       test('grantAid rejects amount not a multiple of 1000', () {
-        final game = _gpMinorBaseGame(
+        final game = gpMinorBaseGame(
           relationState: RelationState.atPeace,
           overtureStage: OvertureStage.embassy,
           treasury: 5000,
@@ -418,7 +418,7 @@ void main() {
       });
 
       test('setSubsidy rejects amount not a multiple of 100', () {
-        final game = _gpMinorBaseGame(
+        final game = gpMinorBaseGame(
           relationState: RelationState.atPeace,
           overtureStage: OvertureStage.tradeConsulate,
           treasury: 5000,
@@ -439,7 +439,7 @@ void main() {
       });
 
       test('grantAid and setSubsidy toward same target accepted in one turn', () {
-        final game = _gpMinorBaseGame(
+        final game = gpMinorBaseGame(
           relationState: RelationState.atPeace,
           overtureStage: OvertureStage.embassy,
           treasury: 5000,
@@ -470,7 +470,7 @@ void main() {
       });
 
       test('second grantAid toward same target rejected', () {
-        final game = _gpMinorBaseGame(
+        final game = gpMinorBaseGame(
           relationState: RelationState.atPeace,
           overtureStage: OvertureStage.embassy,
           treasury: 5000,
@@ -500,7 +500,7 @@ void main() {
       });
 
       test('declareWar then grantAid toward same target rejected', () {
-        final game = _gpMinorBaseGame(
+        final game = gpMinorBaseGame(
           relationState: RelationState.atPeace,
           overtureStage: OvertureStage.embassy,
           treasury: 5000,

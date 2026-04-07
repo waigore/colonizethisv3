@@ -192,7 +192,7 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
         child: entries.isEmpty
             ? const Text('No valid destinations.')
             : DropdownButtonFormField<String>(
-                value: _selected,
+                initialValue: _selected,
                 isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Destination province',

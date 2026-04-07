@@ -17,8 +17,9 @@ String formatDiplomaticEvent(
 ) {
   String name(String factionId) {
     if (factionId == humanPlayerId) return 'We';
-    if (getRelation(game, humanPlayerId, factionId) == null)
+    if (getRelation(game, humanPlayerId, factionId) == null) {
       return 'Unknown faction';
+    }
     final p = game.playerById(factionId);
     if (p != null) return p.displayName;
     for (final m in game.minorNations) {
@@ -108,7 +109,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bus = ref.watch(appEventBusProvider);
     final history = diplomaticHistoryForPair(game, humanPlayerId, factionId);
-    final year = (int turn) => turnToYear(turn, game.turnTimeMapping);
+    int year(int turn) => turnToYear(turn, game.turnTimeMapping);
 
     return Scaffold(
       appBar: AppBar(

@@ -1,5 +1,6 @@
 /// Province name label plate tint (Great Power colour vs neutral).
 /// SPEC/ui/map-widget.md § Layer model (province names).
+library;
 
 import 'init_game_map_view_data.dart';
 

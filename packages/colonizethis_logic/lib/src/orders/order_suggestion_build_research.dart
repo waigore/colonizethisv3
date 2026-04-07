@@ -67,8 +67,9 @@ List<BuildUnitOrder> suggestBuildOrders(
   _log.d(
     'suggestBuildOrders full list ${suggestions.map((o) => o.unitType).join(", ")}',
   );
-  if (suggestions.isEmpty)
+  if (suggestions.isEmpty) {
     _log.w('suggestBuildOrders no candidates player=$playerId');
+  }
   return suggestions;
 }
 

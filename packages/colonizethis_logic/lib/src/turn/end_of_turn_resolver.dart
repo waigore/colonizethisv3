@@ -82,7 +82,9 @@ void _emitEraChangeDialogue(
   if (previousEra == newEra) return;
   final seed = (game.globalGameSeed ?? 0) ^ (nextTurn * 0x9E3779B1);
   final events = dialogueEventsForEraChange(game, previousEra, newEra, seed);
-  for (final e in events) onDialogue(e);
+  for (final e in events) {
+    onDialogue(e);
+  }
 }
 
 /// Returns the id of a Great Power that controls 31+ Old World provinces, or null.

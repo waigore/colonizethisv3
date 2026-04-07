@@ -149,7 +149,7 @@ void main() {
 
     test('NW tile map uses effectiveSeed + 1 (OW uses effective seed)', () {
       final seedsByRegion = <String, int>{};
-      TileMapRegionGenerator captureSeeds = ({
+      (TileMapResult, MapTopology) captureSeeds({
         required TileMapParams params,
         required int numProvinces,
         required int numContinents,
@@ -173,7 +173,7 @@ void main() {
           onLandSeedsPlaced: onLandSeedsPlaced,
           onContinentSeedsPlaced: onContinentSeedsPlaced,
         );
-      };
+      }
 
       const k = 77_777;
       final base = GameSetupConfig.defaultConfig;
@@ -222,7 +222,7 @@ void main() {
 
     test('generateRegion injection is used for OW and NW map generation', () {
       var callCount = 0;
-      final TileMapRegionGenerator countingGen = ({
+      (TileMapResult, MapTopology) countingGen({
         required TileMapParams params,
         required int numProvinces,
         required int numContinents,
@@ -246,7 +246,7 @@ void main() {
           onLandSeedsPlaced: onLandSeedsPlaced,
           onContinentSeedsPlaced: onContinentSeedsPlaced,
         );
-      };
+      }
 
       final config = GameSetupConfig.defaultConfig;
       final result = runInitGame(

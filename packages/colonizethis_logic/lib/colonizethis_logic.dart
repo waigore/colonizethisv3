@@ -1,5 +1,5 @@
 /// Game rules, turn resolution, victory, validation. SPEC/program/turn-resolution.
-library colonizethis_logic;
+library;
 
 // Root
 export 'package:colonizethis_models/colonizethis_models.dart'

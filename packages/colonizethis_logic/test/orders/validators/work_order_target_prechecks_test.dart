@@ -1,6 +1,5 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_logic/src/orders/validators/work_order_target_prechecks.dart';
-import 'package:colonizethis_logic/src/orders/order_validation_result.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -44,7 +43,7 @@ void main() {
         player: player,
         playerId: 'p1',
         treasury: 0,
-        civilianEmbassyWorkAllowed: (_, __) => false,
+        civilianEmbassyWorkAllowed: (_, _) => false,
       );
       final order = WorkOrder(
         unitId: 'u1',
@@ -86,7 +85,7 @@ void main() {
         player: player,
         playerId: 'p1',
         treasury: 0,
-        civilianEmbassyWorkAllowed: (_, __) => false,
+        civilianEmbassyWorkAllowed: (_, _) => false,
       );
       final order = WorkOrder(
         unitId: 'b1',
@@ -145,7 +144,7 @@ void main() {
         player: p1,
         playerId: 'p1',
         treasury: 0,
-        civilianEmbassyWorkAllowed: (_, __) => false,
+        civilianEmbassyWorkAllowed: (_, _) => false,
       );
       final order = WorkOrder(
         unitId: 'spy1',

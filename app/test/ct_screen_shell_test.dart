@@ -86,9 +86,8 @@ void main() {
                 ),
               ),
             ],
-            onPopPage: (route, result) {
+            onDidRemovePage: (_) {
               popped = true;
-              return false;
             },
           ),
         ),

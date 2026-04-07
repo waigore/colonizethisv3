@@ -14,7 +14,7 @@ void main() {
     final view = CtDialogueView(logger: appLogger('dialogue'));
 
     var stateCalls = 0;
-    view.onStateChanged = (_, __) => stateCalls++;
+    view.onStateChanged = (_, _) => stateCalls++;
 
     final line = DialogueLine(
       content: LineContent('Hello world'),
@@ -38,13 +38,6 @@ void main() {
   test('CtDialogueView selectOption completes choice future with index',
       () async {
     final view = CtDialogueView(logger: appLogger('dialogue'));
-
-    var lastIndex = -1;
-    view.onStateChanged = (line, choice) {
-      if (choice != null && choice.options.isNotEmpty) {
-        lastIndex = 0;
-      }
-    };
 
     final choice = DialogueChoice([
       DialogueOption(content: LineContent('Option A')),

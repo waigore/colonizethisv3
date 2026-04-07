@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
@@ -54,7 +53,7 @@ void main() {
         .setMockMessageHandler('flutter/assets', null);
   });
 
-  Widget _buildShell({
+  Widget buildShell({
     required Game game,
     required Game? currentGame,
     required bool attachGameToUiListener,
@@ -85,7 +84,7 @@ void main() {
 
   testWidgets('uses currentGameProvider game when ids match', (tester) async {
     await tester.pumpWidget(
-      _buildShell(
+      buildShell(
         game: routeGame,
         currentGame: liveSameIdGame,
         attachGameToUiListener: true,
@@ -98,7 +97,7 @@ void main() {
 
   testWidgets('uses route game when current game id differs', (tester) async {
     await tester.pumpWidget(
-      _buildShell(
+      buildShell(
         game: routeGame,
         currentGame: differentIdGame,
         attachGameToUiListener: true,
@@ -114,7 +113,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      _buildShell(
+      buildShell(
         game: routeGame,
         currentGame: liveSameIdGame,
         attachGameToUiListener: true,
@@ -124,7 +123,7 @@ void main() {
     expect(find.byType(GameToUIBusListener), findsOneWidget);
 
     await tester.pumpWidget(
-      _buildShell(
+      buildShell(
         game: routeGame,
         currentGame: liveSameIdGame,
         attachGameToUiListener: false,

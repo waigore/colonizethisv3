@@ -9,7 +9,6 @@ import '../economy/economy_riches_to_treasury.dart';
 import '../economy/resource_extractor.dart';
 import '../economy/sea_transport.dart';
 import '../world/connectivity_resolver.dart';
-import '../world/naval.dart';
 import '../world/unit_lookup.dart';
 
 /// Builds production assignments from desired output map (recipe id -> units).

@@ -1,6 +1,7 @@
 /// Deterministic mixing and LCG parameters for turn-resolution sub-seeds.
 /// Used with [Game.globalGameSeed] and turn number so previews and full
 /// resolution stay aligned (e.g. overseas interception, combat dialogue).
+library;
 
 /// Golden-ratio–derived 32-bit mix constant; common in hash / PRNG mixing.
 const int kTurnResolutionSeedMix = 0x9E3779B1;

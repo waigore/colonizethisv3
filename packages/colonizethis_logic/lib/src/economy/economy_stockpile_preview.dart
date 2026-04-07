@@ -4,7 +4,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../turn/turn_resolver.dart';
 import 'economy_preview_stockpile_phase.dart';
-import 'economy_production.dart';
 
 /// Preview net stockpile change for one player after economy phases that feed
 /// the production panel. SPEC/ui/production-panel.md.

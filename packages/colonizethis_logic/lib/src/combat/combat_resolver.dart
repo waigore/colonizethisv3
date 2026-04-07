@@ -193,7 +193,7 @@ Game resolveBattleContext(
           generalId: currentDefenderGeneralId,
         );
         if (currentDefenderGeneralId != null) {
-          final updated = generalsById[currentDefenderGeneralId!];
+          final updated = generalsById[currentDefenderGeneralId];
           if (updated != null) currentDefenderMedals = updated.medals;
         }
         survivingAttackerFactionId = null;

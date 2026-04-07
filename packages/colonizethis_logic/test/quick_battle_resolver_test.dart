@@ -642,7 +642,7 @@ void main() {
           regionId: ow,
           defenderFactionId: 'def',
           defenderUnitIds: ['u1'],
-          attackers: const [
+          attackers: [
             AttackingSide(factionId: 'att', unitIds: ['x1']),
           ],
           fortLevel: 2,

@@ -125,8 +125,9 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
         }
 
         if (neighbouringContinents.isEmpty) continue;
-        if (neighbouringContinents.length > 1)
+        if (neighbouringContinents.length > 1) {
           continue; // multi-continent strait, keep as sea
+        }
 
         final c = neighbouringContinents.single;
         final dirCount = sameContinentDirectionCounts[c] ?? 0;
@@ -214,8 +215,9 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
         for (final (x, y) in shuffled) {
           if (used.any(
             (p) => (p.$1 - x).abs() < minDist && (p.$2 - y).abs() < minDist,
-          ))
+          )) {
             continue;
+          }
           seeds[provinceId] = (x, y);
           used.add((x, y));
           break;

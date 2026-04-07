@@ -1,5 +1,7 @@
 // Move fleet dialog. SPEC/ui/naval-units-panel.md, SPEC/program/app-ui-wiring.md.
 
+// ignore_for_file: deprecated_member_use
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

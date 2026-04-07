@@ -41,7 +41,6 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
 
   bool _introDone = false;
   CtDialogueView? _view;
-  DialogueRunner? _runner;
   Object? _loadError;
   late List<bool> _accepted;
 
@@ -77,7 +76,6 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
       if (!mounted) return;
       setState(() {
         _view = view;
-        _runner = runner;
       });
       await runner.startDialogue(_kOvertureNode);
       if (!mounted) return;

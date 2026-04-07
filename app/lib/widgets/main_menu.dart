@@ -143,7 +143,7 @@ class CtMainMenu extends StatelessWidget {
                 _kAssetBackground,
                 fit: BoxFit.cover,
                 filterQuality: FilterQuality.none,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   color: const Color(0xFF5D3A1A),
                 ),
               ),
@@ -175,7 +175,7 @@ class CtMainMenu extends StatelessWidget {
         _kAssetLogo,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.none,
-        errorBuilder: (_, __, ___) {
+        errorBuilder: (_, _, _) {
           return const SizedBox.shrink();
         },
       ),

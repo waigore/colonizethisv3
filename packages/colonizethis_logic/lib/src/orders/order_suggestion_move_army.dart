@@ -120,8 +120,9 @@ List<MoveOrder> suggestMoveOrders(
   _log.d(
     'suggestMoveOrders full list ${suggestions.map((m) => "${m.unitId}->${m.destinationProvinceId}").toList()}',
   );
-  if (suggestions.isEmpty)
+  if (suggestions.isEmpty) {
     _log.w('suggestMoveOrders no candidates player=$playerId');
+  }
   return suggestions;
 }
 

@@ -198,8 +198,9 @@ WorldState applyCapitalPortAndRoad(
     topology,
     localProvinceId,
   ).toList()..sort();
-  if (seaZoneIds.isEmpty)
+  if (seaZoneIds.isEmpty) {
     throw ArgumentError('Province $provinceId has no sea zone in topology');
+  }
 
   for (final seaZoneId in seaZoneIds) {
     final portKeyProvSea = '$provinceId|$seaZoneId';
@@ -527,32 +528,6 @@ bool _isTileAdjacentToOtherProvince(
     if (cellId != provinceId) return true;
   }
   return false;
-}
-
-(int, int)? _nearestCoastalTileInProvince(
-  TileMapResult map,
-  String provinceId,
-  int fromX,
-  int fromY,
-  MapTopology topology,
-) {
-  int? bestDist;
-  int? bestX;
-  int? bestY;
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      if (map.cell(x, y) != provinceId) continue;
-      if (!_isTileAdjacentToSea(x, y, map, topology)) continue;
-      final dist = (x - fromX).abs() + (y - fromY).abs();
-      if (bestDist == null || dist < bestDist) {
-        bestDist = dist;
-        bestX = x;
-        bestY = y;
-      }
-    }
-  }
-  if (bestX == null || bestY == null) return null;
-  return (bestX, bestY);
 }
 
 (int, int)? _nearestCoastalTileInProvinceForSeaZone(

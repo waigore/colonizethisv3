@@ -5,7 +5,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
@@ -315,7 +314,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
       bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
         final current = ref.read(currentOrdersProvider);
         final updated = removePendingWorkOrderAt(current, e.playerId, e.index);
-        ref.read(currentOrdersProvider.notifier).state = updated;
+        ref.read(currentOrdersProvider.notifier).replaceAll(updated);
       }),
       bus.on<CancelInProgressCivilianWorkRequestedEvent>().listen((e) {
         final game = ref.read(currentGameProvider);
@@ -340,11 +339,11 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
       }),
       bus.on<NavalMoveFleetRequestedEvent>().listen((e) {
         final o = ref.read(currentOrdersProvider);
-        ref.read(currentOrdersProvider.notifier).state = applyNavalMoveOrderForPlayer(
+        ref.read(currentOrdersProvider.notifier).replaceAll(applyNavalMoveOrderForPlayer(
           o,
           e.humanPlayerId,
           e.moveOrder,
-        );
+        ));
       }),
       bus.on<LandArmiesUpdatedEvent>().listen((e) {
         ref.read(currentGameProvider.notifier).setGame(e.game);
@@ -420,7 +419,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
           );
           return;
         }
-        ref.read(currentOrdersProvider.notifier).state = next;
+        ref.read(currentOrdersProvider.notifier).replaceAll(next);
       }),
       bus.on<TrainCivilianBuildOrdersCommittedEvent>().listen((e) {
         final g = ref.read(currentGameProvider);
@@ -429,12 +428,12 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
         final o = ref.read(currentOrdersProvider);
         ref
             .read(currentOrdersProvider.notifier)
-            .state = _mergeTrainCivilianOrdersForPlayer(
+            .replaceAll(_mergeTrainCivilianOrdersForPlayer(
           current: o,
           game: g,
           humanPlayerId: pid,
           newFromDialog: e.orders,
-        );
+        ));
       }),
       bus.on<TrainMilitaryBuildOrdersCommittedEvent>().listen((e) {
         final g = ref.read(currentGameProvider);
@@ -443,26 +442,28 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
         final o = ref.read(currentOrdersProvider);
         ref
             .read(currentOrdersProvider.notifier)
-            .state = _mergeTrainMilitaryOrdersForPlayer(
+            .replaceAll(_mergeTrainMilitaryOrdersForPlayer(
           current: o,
           game: g,
           humanPlayerId: pid,
           newFromDialog: e.orders,
-        );
+        ));
       }),
       bus.on<AppendDiplomaticOrderRequestedEvent>().listen((e) {
         final current = ref.read(currentOrdersProvider);
-        ref.read(currentOrdersProvider.notifier).state = current
-            .appendDiplomaticOrderForPlayer(e.playerId, e.order);
+        ref.read(currentOrdersProvider.notifier).replaceAll(
+          current.appendDiplomaticOrderForPlayer(e.playerId, e.order),
+        );
       }),
       bus.on<RemoveDiplomaticOrderRequestedEvent>().listen((e) {
         final current = ref.read(currentOrdersProvider);
-        ref.read(currentOrdersProvider.notifier).state = current
-            .removeDiplomaticOrderForPlayer(
+        ref.read(currentOrdersProvider.notifier).replaceAll(
+          current.removeDiplomaticOrderForPlayer(
               e.playerId,
               type: e.type,
               targetFactionId: e.targetFactionId,
-            );
+            ),
+        );
       }),
       bus.on<CombatModeChosenEvent>().listen((e) {
         final g = ref.read(currentGameProvider);

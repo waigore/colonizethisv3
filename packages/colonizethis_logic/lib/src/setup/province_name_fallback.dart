@@ -1,5 +1,6 @@
 /// Deterministic procedural fallback for province/capital names when naming
 /// config is missing or empty. SPEC/game/naming.md § Fallback.
+library;
 import 'dart:math';
 
 const List<String> _stubs = [

@@ -222,6 +222,8 @@ void _emitLandBattleDialogue(
     dialogueSeed,
   );
   if (events.isNotEmpty) {
-    for (final e in events) onDialogue(e);
+    for (final e in events) {
+      onDialogue(e);
+    }
   }
 }

@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('resolveDiplomacyPhase', () {
-    Game _baseGame() {
+    Game baseGame() {
       return Game(
         id: 'g1',
         worldState: WorldState(
@@ -26,7 +26,7 @@ void main() {
     }
 
     test('overture payments create consulate and embassy when treasury allows', () {
-      final game = _baseGame();
+      final game = baseGame();
       final orders = Orders(
         diplomaticOrdersByPlayerId: {
           'gp1': const [
@@ -84,7 +84,7 @@ void main() {
     });
 
     test('declare war and offer peace update relation state', () {
-      final game = _baseGame();
+      final game = baseGame();
       final declareOrders = Orders(
         diplomaticOrdersByPlayerId: {
           'gp1': const [
@@ -116,7 +116,7 @@ void main() {
     });
 
     test('declare war when already at peace updates existing relation', () {
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         diplomacyRelations: [
           DiplomacyRelation(
             factionId1: 'gp1',
@@ -141,7 +141,7 @@ void main() {
     });
 
     test('grantAid requires embassy and improves relations', () {
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -179,7 +179,7 @@ void main() {
     });
 
     test('grantAid at resolution with wrong multiple throws StateError', () {
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -217,7 +217,7 @@ void main() {
     });
 
     test('setSubsidy at resolution with wrong multiple throws StateError', () {
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -256,7 +256,7 @@ void main() {
 
     test('join empire absorbs minor: provinces transfer, minor removed, cost deducted', () {
       const ow = 'oldWorld';
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         players: const [
           Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 15000),
         ],
@@ -318,7 +318,7 @@ void main() {
       const ow = 'oldWorld';
       // gp1 has an active Spy timer for minor-owned province m1; after Join Empire,
       // gp1 owns m1 and the timer must be cleared without changing visibility.
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         players: const [
           Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 15000),
         ],
@@ -394,7 +394,7 @@ void main() {
 
     test('join empire not applied when treasury below cost: minor unchanged', () {
       const ow = 'oldWorld';
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         players: const [
           Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 5000),
         ],
@@ -447,7 +447,7 @@ void main() {
     });
 
     test('grantAid without embassy does not change relation or treasury', () {
-      final game = _baseGame().copyWith(
+      final game = baseGame().copyWith(
         diplomacyRelations: [
           DiplomacyRelation(
             factionId1: 'gp1',
@@ -475,7 +475,7 @@ void main() {
     });
 
     test('setSubsidy to Minor creates ongoing subsidy and deducts initial payment', () {
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -558,7 +558,7 @@ void main() {
 
     test('ongoing subsidy processes each turn: deducts payment and improves relation', () {
       // Turn 1: Create subsidy
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -590,7 +590,7 @@ void main() {
     });
 
     test('ongoing subsidy cancels when payer has insufficient funds', () {
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         players: const [
           Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 400), // Less than 500
         ],
@@ -614,7 +614,7 @@ void main() {
     });
 
     test('ongoing subsidy cancels when war declared', () {
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -657,7 +657,7 @@ void main() {
     });
 
     test('relation convergence: scores drift toward 50 each turn', () {
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         diplomacyRelations: [
           DiplomacyRelation(
             factionId1: 'gp1',
@@ -676,7 +676,7 @@ void main() {
     });
 
     test('relation convergence: scores below 50 increase toward neutral', () {
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         diplomacyRelations: [
           DiplomacyRelation(
             factionId1: 'gp1',
@@ -695,7 +695,7 @@ void main() {
     });
 
     test('war relations do not converge: scores stay fixed', () {
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         diplomacyRelations: [
           DiplomacyRelation(
             factionId1: 'gp1',
@@ -715,7 +715,7 @@ void main() {
     });
 
     test('war declaration resets both sides to score 20', () {
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         diplomacyRelations: [
           DiplomacyRelation(
             factionId1: 'gp1',
@@ -745,7 +745,7 @@ void main() {
     });
 
     test('setSubsidy without consulate does not deduct treasury', () {
-      final game = _baseGame().copyWith(
+      final game = baseGame().copyWith(
         diplomacyRelations: [
           DiplomacyRelation(
             factionId1: 'gp1',
@@ -771,7 +771,7 @@ void main() {
     });
 
     test('game treasury unchanged before diplomacy phase; grant applies on resolve', () {
-      var game = _baseGame().copyWith(
+      var game = baseGame().copyWith(
         overtureStates: const [
           OvertureState(
             gpId: 'gp1',
@@ -808,7 +808,7 @@ void main() {
     test(
       'grantAid at resolution throws StateError when amount is not a multiple of £1000',
       () {
-        var game = _baseGame().copyWith(
+        var game = baseGame().copyWith(
           overtureStates: const [
             OvertureState(
               gpId: 'gp1',
@@ -853,7 +853,7 @@ void main() {
     test(
       'setSubsidy at resolution throws StateError when amount is not a multiple of £100',
       () {
-        var game = _baseGame().copyWith(
+        var game = baseGame().copyWith(
           overtureStates: const [
             OvertureState(
               gpId: 'gp1',

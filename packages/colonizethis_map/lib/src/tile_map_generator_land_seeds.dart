@@ -6,11 +6,13 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
     Map<String, int> provinceToContinent,
     Random rnd,
   ) {
-    if (provinceToContinent.isEmpty)
+    if (provinceToContinent.isEmpty) {
       return (<(int x, int y)>[], <(int x, int y)>[], <int>[]);
+    }
     final numContinents = provinceToContinent.values.toSet().length;
-    if (numContinents < 1)
+    if (numContinents < 1) {
       return (<(int x, int y)>[], <(int x, int y)>[], <int>[]);
+    }
     final provincesByContinent = <int, List<String>>{};
     for (final e in provinceToContinent.entries) {
       provincesByContinent.putIfAbsent(e.value, () => []).add(e.key);
@@ -90,11 +92,13 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
     String seaZoneId,
     Random rnd,
   ) {
-    if (provinceToContinent.isEmpty)
+    if (provinceToContinent.isEmpty) {
       return (<(int x, int y)>[], <(int x, int y)>[], <int>[], grid);
+    }
     final numContinents = provinceToContinent.values.toSet().length;
-    if (numContinents < 1)
+    if (numContinents < 1) {
       return (<(int x, int y)>[], <(int x, int y)>[], <int>[], grid);
+    }
 
     final provincesByContinent = <int, List<String>>{};
     for (final e in provinceToContinent.entries) {
@@ -117,8 +121,9 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
 
     final landBudgetTotal =
         ((1 - params.seaFraction) * params.width * params.height).round();
-    if (landBudgetTotal <= 0)
+    if (landBudgetTotal <= 0) {
       return (<(int x, int y)>[], <(int x, int y)>[], <int>[], grid);
+    }
 
     // Step 0: Place continent seeds
     final continentSeeds = <(int x, int y)>[];
@@ -437,7 +442,9 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
     var g = grid.map((row) => row.toList()).toList();
     var cg = continentGrid.map((row) => row.toList()).toList();
     final coastalByContinent = <int, List<(int x, int y)>>{};
-    for (var c = 0; c < numContinents; c++) coastalByContinent[c] = [];
+    for (var c = 0; c < numContinents; c++) {
+      coastalByContinent[c] = [];
+    }
 
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
@@ -467,8 +474,9 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
               .round();
       allocated += budgetPerContinent[c];
     }
-    if (allocated < remaining && numContinents > 0)
+    if (allocated < remaining && numContinents > 0) {
       budgetPerContinent[0] += remaining - allocated;
+    }
 
     // Radius for local land-neighbour scoring when picking coastal cells.
     const scoreRadius = 3;
@@ -590,7 +598,9 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
   double _nextGaussian(Random rnd) {
     var u1 = rnd.nextDouble();
     var u2 = rnd.nextDouble();
-    while (u1 <= 0) u1 = rnd.nextDouble();
+    while (u1 <= 0) {
+      u1 = rnd.nextDouble();
+    }
     return sqrt(-2 * log(u1)) * cos(2 * pi * u2);
   }
 

@@ -141,7 +141,7 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
   }
 
   /// Computes a short resources summary string for the HUD (grain, lumber, castIron).
-  /// Format: g:<grain> L:<lumber> CI:<castIron>. Returns empty string when no resources.
+  /// Format: `g:<grain> L:<lumber> CI:<castIron>`. Returns empty string when no resources.
   String inGameShellHudResourceSummary(Game? game) {
     if (game == null) return '';
 

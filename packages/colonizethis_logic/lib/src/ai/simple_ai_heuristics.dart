@@ -1,5 +1,6 @@
 /// Shared simple heuristics for AI order generation. SPEC/program/ai-planner.md,
 /// sim-game-default-ai.md. Used by AIPlanner and defaultSimGameAi.
+library;
 
 import 'dart:math' as math;
 

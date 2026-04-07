@@ -4,7 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('call to arms (alliance mutual defence)', () {
-    Game _threePowerGame({
+    Game threePowerGame({
       required bool gp1Human,
       required bool gp2Human,
       required int gp1gp2Score,
@@ -67,7 +67,7 @@ void main() {
     }
 
     test('human ally gets pending call to arms when ally GP is declared upon', () {
-      final game = _threePowerGame(gp1Human: true, gp2Human: true, gp1gp2Score: 80);
+      final game = threePowerGame(gp1Human: true, gp2Human: true, gp1gp2Score: 80);
       final orders = Orders(
         diplomaticOrdersByPlayerId: {
           'gp3': const [
@@ -88,7 +88,7 @@ void main() {
     });
 
     test('AI ally accepts when B–A score >= 50: enters war with aggressor', () {
-      final game = _threePowerGame(gp1Human: false, gp2Human: true, gp1gp2Score: 80);
+      final game = threePowerGame(gp1Human: false, gp2Human: true, gp1gp2Score: 80);
       final orders = Orders(
         diplomaticOrdersByPlayerId: {
           'gp3': const [
@@ -106,7 +106,7 @@ void main() {
     });
 
     test('AI ally refuses when B–A score < 50 (allied level edge): no war with aggressor', () {
-      final game = _threePowerGame(
+      final game = threePowerGame(
         gp1Human: false,
         gp2Human: true,
         gp1gp2Score: 40,
@@ -134,7 +134,7 @@ void main() {
     });
 
     test('human accept on resume: at war with aggressor', () {
-      final game = _threePowerGame(gp1Human: true, gp2Human: true, gp1gp2Score: 80);
+      final game = threePowerGame(gp1Human: true, gp2Human: true, gp1gp2Score: 80);
       final orders = Orders(
         diplomaticOrdersByPlayerId: {
           'gp3': const [
@@ -164,7 +164,7 @@ void main() {
     });
 
     test('human refuse on resume: score drops by 20 and leaves Allied band', () {
-      final game = _threePowerGame(gp1Human: true, gp2Human: true, gp1gp2Score: 80);
+      final game = threePowerGame(gp1Human: true, gp2Human: true, gp1gp2Score: 80);
       final orders = Orders(
         diplomaticOrdersByPlayerId: {
           'gp3': const [

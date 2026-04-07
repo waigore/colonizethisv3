@@ -1,5 +1,6 @@
 /// View models for init_game map visualization (PNG and ctdev debug app).
 /// SPEC/program/map-visualization.md § Tile map visualizers, Map view model for tools.
+library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 

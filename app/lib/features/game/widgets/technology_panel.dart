@@ -89,7 +89,7 @@ class TechnologyPanel extends StatelessWidget {
                   title: Text('Slot ${index + 1}'),
                   subtitle: hasTech
                       ? Text(
-                          '$displayName · ${techProgress}/${cost > 0 ? cost : '—'} RP',
+                          '$displayName · $techProgress/${cost > 0 ? cost : '—'} RP',
                         )
                       : const Text('No tech assigned'),
                   trailing: canEdit

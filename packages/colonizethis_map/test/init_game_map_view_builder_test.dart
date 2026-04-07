@@ -908,7 +908,7 @@ void main() {
               displayName: 'GP',
               isHuman: true,
               capitalProvinceId: 'oldWorld|p1',
-              capitalTile: const CapitalTile(
+              capitalTile: CapitalTile(
                 regionId: 'oldWorld',
                 provinceId: 'oldWorld|p1',
                 x: 0,

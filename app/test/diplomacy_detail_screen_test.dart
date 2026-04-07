@@ -1,6 +1,5 @@
 import 'package:colonizethis_app/features/game/widgets/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
-import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -28,7 +27,7 @@ void main() {
     }
   });
 
-  Game _minimalGame({
+  Game minimalGame({
     required String humanPlayerId,
     required String otherFactionId,
     required DiplomaticEventType eventType,
@@ -267,7 +266,7 @@ void main() {
       const humanPlayerId = 'gp1';
       const otherFactionId = 'gp2';
 
-      final game = _minimalGame(
+      final game = minimalGame(
         humanPlayerId: humanPlayerId,
         otherFactionId: otherFactionId,
         eventType: DiplomaticEventType.declareWar,
@@ -310,7 +309,7 @@ void main() {
     const humanPlayerId = 'gp1';
     const otherFactionId = 'gp2';
 
-    final game = _minimalGame(
+    final game = minimalGame(
       humanPlayerId: humanPlayerId,
       otherFactionId: otherFactionId,
       eventType: DiplomaticEventType.peace,
@@ -347,7 +346,7 @@ void main() {
       const humanPlayerId = 'gp1';
       const otherFactionId = 'gp2';
 
-      final game = _minimalGame(
+      final game = minimalGame(
         humanPlayerId: humanPlayerId,
         otherFactionId: otherFactionId,
         eventType: DiplomaticEventType.peace,
@@ -392,7 +391,7 @@ void main() {
       const humanPlayerId = 'gp1';
       const otherFactionId = 'gp2';
 
-      final game = _minimalGame(
+      final game = minimalGame(
         humanPlayerId: humanPlayerId,
         otherFactionId: otherFactionId,
         eventType: DiplomaticEventType.declareWar,
@@ -437,7 +436,7 @@ void main() {
       const humanPlayerId = 'gp1';
       const otherFactionId = 'gp2';
 
-      final game = _minimalGame(
+      final game = minimalGame(
         humanPlayerId: humanPlayerId,
         otherFactionId: otherFactionId,
         eventType: DiplomaticEventType.declareWar,

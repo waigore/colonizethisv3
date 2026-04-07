@@ -625,8 +625,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     final terrain = terrainNullable;
 
     final isPlains =
-        terrain == TerrainType.plains ||
-        (terrain != null && _isFeatureTerrain(terrain));
+        terrain == TerrainType.plains || _isFeatureTerrain(terrain);
     final isDesert = terrain == TerrainType.desert;
 
     final nearDesertCorner = _getCornerValues(

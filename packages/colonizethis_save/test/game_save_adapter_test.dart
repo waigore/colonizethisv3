@@ -221,7 +221,7 @@ void main() {
       );
       final loaded = adapter.loadMapData(box, 'mapGame');
       expect(loaded, isNotNull);
-      expect(loaded!.tileMapByRegion['oldWorld']!.width, 2);
+      expect(loaded.tileMapByRegion['oldWorld']!.width, 2);
       expect(loaded.tileMapByRegion['oldWorld']!.height, 2);
       expect(loaded.tileMapByRegion['oldWorld']!.cell(0, 0), 'p1');
       expect(

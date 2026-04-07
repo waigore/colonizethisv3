@@ -193,8 +193,9 @@ List<WorkOrder> suggestWorkOrders(
   _log.d(
     'suggestWorkOrders full list ${suggestions.map((o) => "${o.unitId}:${o.target}").toList()}',
   );
-  if (suggestions.isEmpty)
+  if (suggestions.isEmpty) {
     _log.w('suggestWorkOrders no candidates player=$playerId');
+  }
   return suggestions;
 }
 

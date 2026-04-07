@@ -116,8 +116,9 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
           if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
           if (grid[ny][nx] != entry.key) continue; // same province only
           final nt = terrainGrid[ny][nx];
-          if (nt == null || nt == dominant || nt == TerrainType.mountain)
+          if (nt == null || nt == dominant || nt == TerrainType.mountain) {
             continue;
+          }
           neighborCounts[nt] = (neighborCounts[nt] ?? 0) + 1;
         }
 
@@ -149,17 +150,14 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
     ResourceRules? resourceRules,
     Random rnd,
   ) {
-    if (provinceToContinent.isEmpty)
+    if (provinceToContinent.isEmpty) {
       return (grid, terrainGrid, resourceGrid, false);
+    }
     final numContinents = provinceToContinent.values.toSet().length;
     var didJoin = false;
     var g = grid.map((row) => row.toList()).toList();
-    var tg = terrainGrid != null
-        ? terrainGrid.map((row) => row.toList()).toList()
-        : null;
-    var rg = resourceGrid != null
-        ? resourceGrid.map((row) => row.toList()).toList()
-        : null;
+    var tg = terrainGrid?.map((row) => row.toList()).toList();
+    var rg = resourceGrid?.map((row) => row.toList()).toList();
     final ocean = _oceanCells(g, seaZoneId);
     // Upper bound so we cannot spin forever if sea-fraction preservation undoes a bridge.
     final maxJoinIterationsPerContinent = params.width * params.height;
@@ -397,8 +395,9 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
       for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
         final nx = x + dx;
         final ny = y + dy;
-        if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height)
+        if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
           continue;
+        }
         if (grid[ny][nx] != seaZoneId) continue;
         final n = (nx, ny);
         if (prev.containsKey(n)) continue;

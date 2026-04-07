@@ -3,7 +3,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../economy/economy_preview_stockpile_phase.dart';
-import '../economy/economy_production.dart';
 import 'phases/consumption_phase.dart';
 import 'phases/extraction_phase.dart';
 import 'phases/production_phase.dart';

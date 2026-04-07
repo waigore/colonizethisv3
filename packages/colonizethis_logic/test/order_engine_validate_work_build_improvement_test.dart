@@ -17,7 +17,7 @@ void main() {
         edges: const [],
       );
 
-      Game _baseGame({
+      Game baseGame({
         Map<String, String>? resourceByTileKey,
         TileMapState tileState = const TileMapState(),
         Map<String, bool>? techUnlocked,
@@ -71,7 +71,7 @@ void main() {
       }
 
       test('rejects build_improvement when tile has no resource', () {
-        final game = _baseGame(resourceByTileKey: {});
+        final game = baseGame(resourceByTileKey: {});
         final engine = OrderEngine();
         engine.addWorkOrder(
           'p1',
@@ -91,7 +91,7 @@ void main() {
       });
 
       test('rejects build_improvement when improvement level already 4', () {
-        final game = _baseGame(
+        final game = baseGame(
           tileState: const TileMapState(
             improvementByTile: {'oldWorld|P1|0|0': 4},
           ),
@@ -119,7 +119,7 @@ void main() {
 
       test('rejects build_improvement when tech cap would be exceeded', () {
         // saw_mill gives cap 2; tile at level 2 → next would be 3 > 2
-        final game = _baseGame(
+        final game = baseGame(
           techUnlocked: const {'saw_mill': true},
           tileState: const TileMapState(
             improvementByTile: {'oldWorld|P1|0|0': 2},
@@ -150,7 +150,7 @@ void main() {
       test(
         'accepts build_improvement when tile has resource, level < 4, tech cap allows',
         () {
-          final game = _baseGame(
+          final game = baseGame(
             resourceByTileKey: {tileKey: 'grain'},
             tileState: const TileMapState(),
             techUnlocked: const {'circular_saw': true},

@@ -1,5 +1,6 @@
 /// Shared map formatting utilities for tile keys and game-derived view options.
 /// Used by ctdev and other map frontends.
+library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 

@@ -3,7 +3,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -502,8 +501,9 @@ void main() {
                 '${capitalProvince.regionId}|${capitalProvince.id}';
             final tiles =
                 byProvince?[prefixedId] ?? byProvince?[capitalProvince.id];
-            if (tiles != null && tiles.isNotEmpty)
+            if (tiles != null && tiles.isNotEmpty) {
               expectedTileKey = tiles.first;
+            }
           }
         }
 

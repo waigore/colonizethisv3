@@ -1,6 +1,7 @@
 /// Validation result for one order. First invalid + all subsequent rejected.
 /// Used by OrderEngine and extracted validators (MoveValidator, etc.).
 /// SPEC/program/order-engine.md.
+library;
 
 enum OrderValidationStatus { accepted, rejected }
 
