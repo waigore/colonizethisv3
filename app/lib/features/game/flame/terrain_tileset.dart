@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:colonizethis_app/config/map_terrain_config.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_map/colonizethis_map.dart' show CellViewData;
 import 'package:flutter/services.dart';
 
 final _log = gameLogger();
@@ -167,6 +168,18 @@ String? terrainVariantTileKey({
   }
 }
 
+/// L1 interior plains cells only: standalone tile key when a resource variant
+/// applies. Caller must not use this on plains↔desert transition cells (Wang).
+/// Returns null when the canonical plains Wang base should be drawn.
+String? landInteriorPlainsVariantTileKey(CellViewData cell) {
+  if (cell.terrainType != TerrainType.plains) return null;
+  return terrainVariantTileKey(
+    terrain: TerrainType.plains,
+    resourceId: cell.resourceId,
+    improvementLevel: cell.improvementLevel,
+  );
+}
+
 String featureOverlayTileKey({
   required TerrainType terrain,
   String? resourceId,
@@ -270,9 +283,18 @@ class TerrainTilesetCache {
       }
 
       _isLoaded = true;
-    } catch (e) {
-      _log.e('One or more terrain tilesets failed to load', error: e);
+    } catch (e, stackTrace) {
+      _log.e(
+        'One or more terrain tilesets failed to load',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      _seaPlainsTileset = null;
+      _seaDesertTileset = null;
+      _plainsDesertTileset = null;
+      _standaloneTiles.clear();
       _isLoaded = false;
+      rethrow;
     } finally {
       _isLoading = false;
     }
