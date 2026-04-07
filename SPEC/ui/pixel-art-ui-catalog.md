@@ -42,6 +42,11 @@ Any new UI component must either:
 - Whenever the UI shows a **resource or commodity** by id or human-readable name (lists, province overlay, production, tooltips, etc.), show the **pixel commodity icon** (`ResourceIcon` / `ResourceLabelInline` in app widgets) **immediately to the left** of the text, with a small gap (e.g. 4 logical px). If no icon asset exists for that id, keep the reserved icon width (empty box) so layout stays aligned.
 - Do not show resource/commodity names as plain text-only rows in new shell UI unless the spec explicitly exempts that surface.
 
+## Map label capital icon
+
+- The map province-label capital indicator uses `app/assets/icons/ui_icon_map_capital_star.png`.
+- The icon is generated via PixelLab and must keep transparent background plus recognizable gold-star silhouette at map-label scale.
+
 ---
 
 ## References

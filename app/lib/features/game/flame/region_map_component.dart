@@ -93,7 +93,14 @@ class CtRegionMapComponent extends PositionComponent {
   double? _provinceLabelsCellSize;
   CtMapVisibilityMode? _provinceLabelsVisibilityMode;
   List<
-    ({double cx, double cy, String text, String provinceId, Color plateColor})
+    ({
+      double cx,
+      double cy,
+      String text,
+      String provinceId,
+      Color plateColor,
+      bool isCapital,
+    })
   >?
   _provinceLabelsCached;
 
