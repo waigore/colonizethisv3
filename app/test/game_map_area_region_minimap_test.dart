@@ -70,7 +70,7 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  _mapAreaProviderOverrides({
+  mapAreaProviderOverrides({
     required AppEventBus bus,
     required Game game,
     required InitGameMapViewData mapViewData,
@@ -96,7 +96,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _mapAreaProviderOverrides(
+        overrides: mapAreaProviderOverrides(
           bus: bus,
           game: game,
           mapViewData: init.mapViewData,
@@ -169,7 +169,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _mapAreaProviderOverrides(
+        overrides: mapAreaProviderOverrides(
           bus: bus,
           game: init.game,
           mapViewData: init.mapViewData,
@@ -221,7 +221,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _mapAreaProviderOverrides(
+        overrides: mapAreaProviderOverrides(
           bus: bus,
           game: init.game,
           mapViewData: init.mapViewData,
@@ -281,7 +281,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _mapAreaProviderOverrides(
+        overrides: mapAreaProviderOverrides(
           bus: bus,
           game: init.game,
           mapViewData: init.mapViewData,
@@ -343,7 +343,7 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: _mapAreaProviderOverrides(
+          overrides: mapAreaProviderOverrides(
             bus: bus,
             game: game,
             mapViewData: init.mapViewData,

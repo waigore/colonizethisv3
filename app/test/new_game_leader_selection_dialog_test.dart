@@ -66,7 +66,7 @@ void main() {
 
     testWidgets('shows six GP colour swatches and default nation labels',
         (WidgetTester tester) async {
-      await pumpDialog(tester, onConfirmed: (_, __, ___) {});
+      await pumpDialog(tester, onConfirmed: (_, _, _) {});
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
@@ -117,7 +117,7 @@ void main() {
       var confirmed = false;
       await pumpDialog(
         tester,
-        onConfirmed: (_, __, ___) {
+        onConfirmed: (_, _, _) {
           confirmed = true;
         },
       );
@@ -138,7 +138,7 @@ void main() {
       bool? gotFair;
       await pumpDialog(
         tester,
-        onConfirmed: (_, __, fair) {
+        onConfirmed: (_, _, fair) {
           gotFair = fair;
         },
       );

@@ -14,8 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
 class _FakeGameService extends GameService {
-  _FakeGameService(Box<dynamic> box, GameSaveAdapter adapter)
-    : super(box, adapter);
+  _FakeGameService(super.box, super.adapter);
 
   @override
   getMapData(String gameId) {
@@ -25,8 +24,7 @@ class _FakeGameService extends GameService {
 
 /// Minimal OW/NW tile maps + topology for [mapViewDataProvider] integration tests.
 class _GameServiceWithMinimalMap extends GameService {
-  _GameServiceWithMinimalMap(Box<dynamic> box, GameSaveAdapter adapter)
-    : super(box, adapter);
+  _GameServiceWithMinimalMap(super.box, super.adapter);
 
   static final Map<String, MapTopology> _topologyByRegion = {
     'oldWorld': MapTopology(

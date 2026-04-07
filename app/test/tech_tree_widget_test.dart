@@ -27,7 +27,7 @@ void main() {
     player = game.players.isNotEmpty ? game.players.first : _dummyPlayer();
   });
 
-  Widget _scopedTechnology(Game g, Widget child) {
+  Widget scopedTechnology(Game g, Widget child) {
     return ProviderScope(
       overrides: [
         currentGameProvider.overrideWith(() => CurrentGameNotifier(g)),
@@ -87,7 +87,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      _scopedTechnology(
+      scopedTechnology(
         game,
         MaterialApp(
           home: Scaffold(
@@ -106,7 +106,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      _scopedTechnology(
+      scopedTechnology(
         game,
         MaterialApp(
           home: Navigator(
@@ -131,7 +131,7 @@ void main() {
   ) async {
     await tester.pumpWidget(MaterialApp(home: const Text('Home')));
     await tester.pumpWidget(
-      _scopedTechnology(
+      scopedTechnology(
         game,
         MaterialApp(
           home: Navigator(
@@ -161,7 +161,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      _scopedTechnology(
+      scopedTechnology(
         game,
         MaterialApp(
           home: Scaffold(

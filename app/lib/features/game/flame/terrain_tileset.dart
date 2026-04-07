@@ -331,7 +331,7 @@ class TerrainTilesetCache {
       final th = (tileSizeJson['height'] as num).toInt();
       if (tw != assetCfg.tilePx || th != assetCfg.tilePx) {
         throw StateError(
-          'map: $name tile_px ${assetCfg.tilePx} does not match JSON tile_size ${tw}×$th',
+          'map: $name tile_px ${assetCfg.tilePx} does not match JSON tile_size $tw×$th',
         );
       }
 

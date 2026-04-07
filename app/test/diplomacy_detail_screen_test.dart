@@ -27,7 +27,7 @@ void main() {
     }
   });
 
-  Game _minimalGame({
+  Game minimalGame({
     required String humanPlayerId,
     required String otherFactionId,
     required DiplomaticEventType eventType,
@@ -266,7 +266,7 @@ void main() {
       const humanPlayerId = 'gp1';
       const otherFactionId = 'gp2';
 
-      final game = _minimalGame(
+      final game = minimalGame(
         humanPlayerId: humanPlayerId,
         otherFactionId: otherFactionId,
         eventType: DiplomaticEventType.declareWar,
@@ -309,7 +309,7 @@ void main() {
     const humanPlayerId = 'gp1';
     const otherFactionId = 'gp2';
 
-    final game = _minimalGame(
+    final game = minimalGame(
       humanPlayerId: humanPlayerId,
       otherFactionId: otherFactionId,
       eventType: DiplomaticEventType.peace,
@@ -346,7 +346,7 @@ void main() {
       const humanPlayerId = 'gp1';
       const otherFactionId = 'gp2';
 
-      final game = _minimalGame(
+      final game = minimalGame(
         humanPlayerId: humanPlayerId,
         otherFactionId: otherFactionId,
         eventType: DiplomaticEventType.peace,
@@ -391,7 +391,7 @@ void main() {
       const humanPlayerId = 'gp1';
       const otherFactionId = 'gp2';
 
-      final game = _minimalGame(
+      final game = minimalGame(
         humanPlayerId: humanPlayerId,
         otherFactionId: otherFactionId,
         eventType: DiplomaticEventType.declareWar,
@@ -436,7 +436,7 @@ void main() {
       const humanPlayerId = 'gp1';
       const otherFactionId = 'gp2';
 
-      final game = _minimalGame(
+      final game = minimalGame(
         humanPlayerId: humanPlayerId,
         otherFactionId: otherFactionId,
         eventType: DiplomaticEventType.declareWar,

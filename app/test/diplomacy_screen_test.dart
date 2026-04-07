@@ -33,7 +33,7 @@ void main() {
               child: DiplomacyScreen(game: game, humanPlayerId: humanPlayerId),
             ),
           ],
-          onPopPage: (_, __) => false,
+          onDidRemovePage: (_) {},
         ),
       ),
     );

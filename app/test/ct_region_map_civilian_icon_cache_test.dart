@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';

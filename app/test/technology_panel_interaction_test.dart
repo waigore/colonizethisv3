@@ -76,7 +76,7 @@ void main() {
               .map((e) => e.key)
               .toList()
             ..sort();
-      final techA = rootIds.length > 0 ? rootIds[0] : techCatalog.keys.first;
+      final techA = rootIds.isNotEmpty ? rootIds[0] : techCatalog.keys.first;
       final seeded = Orders(
         researchOrdersByPlayerId: {
           player.id: [

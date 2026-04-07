@@ -62,7 +62,7 @@ InitGameMapViewData debugMapViewDataWithVisibilityForFirstPlayer() {
 
 /// Stateful Widgetbook story for the debug map with a visibility mode toggle.
 class DebugMapVisibilityStory extends StatefulWidget {
-  const DebugMapVisibilityStory({
+  const DebugMapVisibilityStory({super.key, 
     required this.showPoliticalOverlay,
   });
 

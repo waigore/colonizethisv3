@@ -3,7 +3,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
@@ -69,7 +68,7 @@ void main() {
   });
 
   group('OvertureDialogueOverlay — SPEC/ui/dialogue-presentation.md AC', () {
-    Game _minimalGame() {
+    Game minimalGame() {
       return Game(
         id: 'test',
         worldState: const WorldState(
@@ -91,7 +90,7 @@ void main() {
     testWidgets('AC: modal with CtDialogShell; Accept/Reject per offer; Submit calls onDecisions with OvertureDecision list',
         (WidgetTester tester) async {
       List<OvertureDecision>? captured;
-      final game = _minimalGame();
+      final game = minimalGame();
       final offers = [
         const OvertureOffer(
           offererGpId: 'gp1',
@@ -130,7 +129,7 @@ void main() {
 
     testWidgets('AC: pixel-art — CtDialogShell and CtNinePatchButton used',
         (WidgetTester tester) async {
-      final game = _minimalGame();
+      final game = minimalGame();
       final offers = [
         const OvertureOffer(
           offererGpId: 'gp1',

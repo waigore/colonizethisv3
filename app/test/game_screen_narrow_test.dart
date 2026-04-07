@@ -7,7 +7,6 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
@@ -39,7 +38,7 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  _gameShellOverrides({
+  gameShellOverrides({
     required Game game,
     required InitGameMapViewData? mapViewData,
   }) =>
@@ -68,7 +67,7 @@ void main() {
 
   Widget buildGameScreen({required double width, required double height}) {
     return ProviderScope(
-      overrides: _gameShellOverrides(
+      overrides: gameShellOverrides(
         game: debugResult.game,
         mapViewData: debugResult.mapViewData,
       ),
@@ -91,7 +90,7 @@ void main() {
     TargetPlatform platform = TargetPlatform.android,
   }) {
     return ProviderScope(
-      overrides: _gameShellOverrides(
+      overrides: gameShellOverrides(
         game: debugResult.game,
         mapViewData: debugResult.mapViewData,
       ),
@@ -481,7 +480,7 @@ void main() {
   });
 
   group('GameScreen — pause menu and victory overlay', () {
-    Widget _buildGameScreenWithPauseMenu({required Game game}) {
+    Widget buildGameScreenWithPauseMenu({required Game game}) {
       return ProviderScope(
         overrides: [
           currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
@@ -515,7 +514,7 @@ void main() {
       'pause menu opens bottom sheet and shows debug log entry',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _buildGameScreenWithPauseMenu(game: debugResult.game),
+          buildGameScreenWithPauseMenu(game: debugResult.game),
         );
         await tester.pump();
 
@@ -541,7 +540,7 @@ void main() {
 
         await tester.pumpWidget(
           ProviderScope(
-            overrides: _gameShellOverrides(
+            overrides: gameShellOverrides(
               game: victoryGame,
               mapViewData: debugResult.mapViewData,
             ),

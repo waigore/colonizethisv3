@@ -20,7 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
 class _DummyGameService extends GameService {
-  _DummyGameService(Box<dynamic> box, GameSaveAdapter adapter) : super(box, adapter);
+  _DummyGameService(super.box, super.adapter);
 
   Game? _loadedGame;
   List<String> _ids = const [];
@@ -85,7 +85,7 @@ void main() {
     dummyService = _DummyGameService(gamesBox, GameSaveAdapter());
   });
 
-  Widget _buildApp() {
+  Widget buildApp() {
     return ProviderScope(
       overrides: [
         gamesBoxProvider.overrideWith((ref) => gamesBox),
@@ -107,7 +107,7 @@ void main() {
 
   testWidgets('ShellScreen New Game flow starts a game and navigates to game route',
       (WidgetTester tester) async {
-    await tester.pumpWidget(_buildApp());
+    await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
 
     expect(find.text('New Game'), findsOneWidget);
@@ -137,7 +137,7 @@ void main() {
     // Seed the dummy service with a pre-existing game.
     dummyService.createNewGame(id: 'saved_game');
 
-    await tester.pumpWidget(_buildApp());
+    await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
 
     expect(find.text('Load Game'), findsOneWidget);

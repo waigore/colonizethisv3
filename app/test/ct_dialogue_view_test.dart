@@ -14,7 +14,7 @@ void main() {
     final view = CtDialogueView(logger: appLogger('dialogue'));
 
     var stateCalls = 0;
-    view.onStateChanged = (_, __) => stateCalls++;
+    view.onStateChanged = (_, _) => stateCalls++;
 
     final line = DialogueLine(
       content: LineContent('Hello world'),

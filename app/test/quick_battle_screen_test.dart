@@ -9,7 +9,7 @@ import 'package:colonizethis_app/features/game/combat/quick_battle_screen.dart';
 void main() {
   suppressLogsForTests();
 
-  QuickBattleInput _input() {
+  QuickBattleInput input() {
     return const QuickBattleInput(
       attackerFactionId: 'gp1',
       defenderFactionId: 'gp2',
@@ -47,7 +47,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: QuickBattleScreen(
-              input: _input(),
+              input: input(),
               onComplete: (r) => completed = r,
             ),
           ),
@@ -70,7 +70,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: QuickBattleScreen(
-              input: _input(),
+              input: input(),
               onComplete: (_) {},
               interactive: true,
             ),

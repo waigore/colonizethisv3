@@ -46,7 +46,7 @@ void main() {
     );
   });
 
-  Widget _buildScreen({
+  Widget buildScreen({
     Map<String, int>? initialDesiredOutput,
     double width = 800,
     double height = 500,
@@ -86,7 +86,7 @@ void main() {
       'preseeded provider state is reflected in Available net changes',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _buildScreen(initialDesiredOutput: {'lumber_from_timber': 5}),
+          buildScreen(initialDesiredOutput: {'lumber_from_timber': 5}),
         );
         await pumpSettleCapped(tester);
 
@@ -100,7 +100,7 @@ void main() {
     testWidgets(
       'moving a slider updates derived values via provider rebuild',
       (WidgetTester tester) async {
-        await tester.pumpWidget(_buildScreen());
+        await tester.pumpWidget(buildScreen());
         await pumpSettleCapped(tester);
 
         expect(find.textContaining('Timber:'), findsOneWidget);
@@ -119,7 +119,7 @@ void main() {
     testWidgets('Breakdown dialog shows phase columns and live-updates from provider', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(_buildScreen());
+      await tester.pumpWidget(buildScreen());
       await pumpSettleCapped(tester);
 
       await tester.tap(find.text('Breakdown'));
