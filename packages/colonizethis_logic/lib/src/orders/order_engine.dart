@@ -493,18 +493,6 @@ class OrderEngine {
     const _moveValidator = MoveValidator();
     const _armyMoveValidator = ArmyMoveValidator();
 
-    OrderValidationResult validateMove(MoveOrder o) {
-      return _moveValidator.validate(
-        o,
-        game,
-        playerId,
-        unitsById,
-        diplomatic,
-        view,
-        topology,
-      );
-    }
-
     OrderValidationResult validateArmyMove(ArmyMoveOrder o) {
       return _armyMoveValidator.validate(
         o,
@@ -520,7 +508,16 @@ class OrderEngine {
       results,
       moves,
       rejected,
-      (o, prev) => prev ? previousInvalidOrderResult : validateMove(o),
+      (o, prev) => _moveValidator.validate(
+        o,
+        game,
+        playerId,
+        unitsById,
+        diplomatic,
+        view,
+        topology,
+        previousRejected: prev,
+      ),
     );
 
     rejected = _appendValidationResults(
