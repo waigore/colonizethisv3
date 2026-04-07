@@ -604,7 +604,7 @@ void _prefilterWtBuildRoad(_WorkTilePrefilterCtx c) {
 }
 
 void _prefilterWtBuildRail(_WorkTilePrefilterCtx c) {
-  final player = c.game.players.where((p) => p.id == c.playerId).firstOrNull;
+  final player = c.game.playerById(c.playerId);
   if (player == null) return;
   final tech = player.techUnlocked;
   final tileState = c.game.worldState.tileState;

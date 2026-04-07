@@ -212,7 +212,7 @@ DialogueEvent dialogueEventForNegotiation({
 }
 
 bool _isHumanGp(Game game, String factionId) {
-  final player = game.players.where((p) => p.id == factionId).firstOrNull;
+  final player = game.playerById(factionId);
   return player?.isHuman == true;
 }
 
