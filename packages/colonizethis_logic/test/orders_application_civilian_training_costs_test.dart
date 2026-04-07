@@ -20,6 +20,12 @@ void main() {
         displayName: 'Player 1',
         isHuman: true,
         capitalProvinceId: 'oldWorld|P1',
+        capitalTile: const CapitalTile(
+          regionId: 'oldWorld',
+          provinceId: 'P1',
+          x: 0,
+          y: 0,
+        ),
         stockpile: stockpile,
         workerPool: const WorkerPool(peasants: 0),
         treasury: treasury,
@@ -29,7 +35,7 @@ void main() {
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
         oldWorld: const RegionData(
           provinces: [
-            Province(id: 'P1', regionId: 'oldWorld', ownerId: playerId),
+            Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: playerId),
           ],
           units: [],
         ),
