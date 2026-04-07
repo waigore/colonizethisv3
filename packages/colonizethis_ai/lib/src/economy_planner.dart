@@ -2,30 +2,10 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'ai_config.dart';
-import 'seed_bundle.dart';
-
 final _log = aiLogger('economy_planner');
-
-/// Cargo preference for naval/build planners. SPEC/ai/economy-planner.md.
-enum CargoPreference { none, preferCargo, strongCargo }
-
-/// Result of the economy planner for one AI player.
-class EconomyPlan {
-  const EconomyPlan({
-    required this.productionAssignments,
-    required this.cargoPreference,
-  });
-
-  /// Labour assignments per recipe for the Production phase.
-  final List<AssignedRecipe> productionAssignments;
-
-  /// Preference for cargo capacity (join home fleet / build merchants).
-  final CargoPreference cargoPreference;
-}
 
 /// Shortage target below which we consider a commodity "needed".
 const int _kShortageThreshold = 8;
@@ -59,8 +39,10 @@ EconomyPlan runEconomyPlanner({
 
   final stockpile = player.stockpile;
   final workers = player.workerPool;
-  final regimentCounts =
-      regimentTypeCountsForPlayer(game.worldState, view.playerId);
+  final regimentCounts = regimentTypeCountsForPlayer(
+    game.worldState,
+    view.playerId,
+  );
   final shipCounts = shipTypeCountsForPlayer(game.worldState, view.playerId);
   final effectiveLabour = effectiveLabourForWorkers(
     workers: workers,
@@ -101,9 +83,7 @@ CargoPreference _cargoPreference(Game game, String playerId, AIConfig config) {
   // Trade-oriented agendas/personalities favour cargo.
   final economyWeight = domainWeights.economy;
   if (economyWeight < 30) {
-    _log.d(
-      'cargoPreference none economyWeight=$economyWeight',
-    );
+    _log.d('cargoPreference none economyWeight=$economyWeight');
     return CargoPreference.none;
   }
   // Strong when economy is high and agenda is trade-related.

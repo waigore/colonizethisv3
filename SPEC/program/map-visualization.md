@@ -58,6 +58,17 @@ For province-name overlays, `RegionMapViewData` may also carry province-level un
 - UI maps counts to icons using threshold `count > 0`; when `intelVisible = false`, UI renders no class icons for that province.
 - Values are refreshed at turn start after turn resolution and player-view rebuild.
 
+For interactive civilian map icons, `RegionMapViewData` may also carry tile-scoped player-civilian marker data:
+
+- `civilianTileMarkers[] = { tileKey, x, y, localProvinceId, unitIds, unitTypes, representativeUnitType, stackCount }`.
+- The view builder includes only civilians owned by human players (`Game.players.where(isHuman)`), and only when `Unit.tileKey` belongs to the current region.
+- `unitIds` order is deterministic: icon-priority by unit type, then lexical `unit.id` tie-break. Icon priority is: `Builder > Engineer > Rail Builder > Explorer > Merchant > Spy`.
+- `representativeUnitType` is the first `unitIds` entry’s type and drives single-icon rendering for mixed stacks.
+- `stackCount` equals the number of included civilians on that tile and supports tile stack badges.
+- This payload is view-only and does not mutate unit placement or save semantics.
+
+**Province-level political owner for label plates:** `provincePoliticalOwnerByPrefixedProvinceId[provinceId] = Province.ownerId` (nullable) for each land province in the region, populated from world state in `buildInitGameMapViewData`. The in-game map uses this map with per-cell `CellViewData.ownerFactionId` to choose a **GP-tinted** vs **neutral** semi-transparent name plate per [map-widget.md](../ui/map-widget.md) § Layer model (province names). This distinguishes Great Power–owned provinces from Minor/Tribe provinces where purchased tiles may assign a GP to individual cells.
+
 `InitGameMapViewData`: oldWorld, newWorld, metadata. `cellSize` = base logical px per map cell for Flame terrain/layout; for the shipped app init-game map it is taken from `assets/data/map_terrain_tilesets.json` (`map_cell_size_px`) via `MapTerrainConfig` so it matches Wang destination rects ([wang-tileset-and-assets.md](../ui/wang-tileset-and-assets.md) § App map runtime configuration). Zoom still scales the canvas in the parent; this is the unzoomed cell size.
 
 ---
@@ -130,3 +141,6 @@ Implemented in colonizethis_map. Consumed by generate_map, init_game, ctdev.
 - **Given** a player-constrained `RegionMapViewData` includes `provinceUnitPresenceByProvinceId` for province `P` with `intelVisible = true`, **when** UI consumers evaluate map label presence icons, **then** they treat each class as present iff its count (`civilianCount`, `regimentCount`, `shipCount`) is greater than zero.
 - **Given** a player-constrained `RegionMapViewData` includes `provinceUnitPresenceByProvinceId` for province `P` with `intelVisible = false`, **when** UI consumers evaluate map label presence icons, **then** they treat all classes as not renderable for `P` regardless of stored counts.
 - **Given** turn resolution completes and the game advances to a new turn, **when** the view builder produces the next turn's `RegionMapViewData`, **then** `provinceUnitPresenceByProvinceId` values are recomputed from post-resolution state and the active player's fog/intel constraints.
+- **Given** a region has two or more human-player civilian units on the same tile and their types are mixed, **when** `buildInitGameMapViewData` builds `RegionMapViewData.civilianTileMarkers`, **then** the tile has one marker with `stackCount` equal to the number of units and `representativeUnitType` set by priority `Builder > Engineer > Rail Builder > Explorer > Merchant > Spy`.
+- **Given** a region contains civilian units not owned by a human player, **when** `buildInitGameMapViewData` builds `RegionMapViewData.civilianTileMarkers`, **then** those non-player civilians are excluded from `civilianTileMarkers`.
+- **Given** a human-player civilian has a `tileKey` whose region segment differs from the region currently being built, **when** `buildInitGameMapViewData` builds `RegionMapViewData.civilianTileMarkers`, **then** the builder excludes that civilian from that region’s marker list.

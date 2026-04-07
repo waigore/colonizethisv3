@@ -35,7 +35,7 @@ Signature (conceptual): `WorldState resolve(WorldState current)` or `Game resolv
 ## Responsibilities
 
 - **colonizethis_logic** owns TurnResolver and phase sequence. Stub: no game rules beyond turn advance until full phases are implemented.
-- **App** (or a service) calls TurnResolver when user (or AI) commits “next turn”; then persists the returned state via colonizethis_save.
+- **App** (or a service) calls TurnResolver when user (or AI) commits “next turn”; then persists the returned state via colonizethis_save. After each **completed** resolution, the Flutter app also mirrors the same playable state into the **auto-save** slot ([save-load.md](save-load.md) § Auto-save slot).
 - **Load game** restores Game/WorldState from storage; “next turn” runs on that state and overwrites or replaces the saved state after resolve.
 
 ---

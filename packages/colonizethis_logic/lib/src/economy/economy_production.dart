@@ -8,14 +8,6 @@ final _log = logicLogger();
 /// SPEC/game/production-recipes.md
 /// SPEC/game/workers-and-population.md
 
-class AssignedRecipe {
-  const AssignedRecipe({required this.recipeId, required this.assignedLabour})
-    : assert(assignedLabour >= 0, 'assignedLabour must be non-negative');
-
-  final String recipeId;
-  final int assignedLabour;
-}
-
 /// Builds production assignments from the production panel’s desired output
 /// per recipe (units of output). SPEC/ui/production-panel.md.
 List<AssignedRecipe> assignedRecipesFromDesiredOutput(

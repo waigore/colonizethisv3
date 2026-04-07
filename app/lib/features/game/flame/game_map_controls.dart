@@ -17,6 +17,7 @@ class GameMapControls extends StatelessWidget {
     required this.nextTurnText,
     required this.cargoUsed,
     required this.cargoCapacity,
+    this.isCargoUsedReliable = true,
     super.key,
   });
 
@@ -28,6 +29,7 @@ class GameMapControls extends StatelessWidget {
   final String nextTurnText;
   final int cargoUsed;
   final int cargoCapacity;
+  final bool isCargoUsedReliable;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +84,9 @@ class GameMapControls extends StatelessWidget {
                       height: 16,
                     ),
                     const SizedBox(width: 4),
-                    Text('$cargoUsed/$cargoCapacity'),
+                    Text(
+                      '${isCargoUsedReliable ? '$cargoUsed' : '—'}/$cargoCapacity',
+                    ),
                   ],
                 ),
               ),

@@ -14,6 +14,7 @@ export 'src/tile_map_visualization_shared.dart'
 export 'src/init_game_map_view_data.dart';
 export 'src/port_icon_placement.dart';
 export 'src/gp_ownership_tint.dart';
+export 'src/province_label_plate_tint.dart';
 export 'src/init_game_map_view_builder.dart';
 export 'src/game_world_state_map_visualizer.dart';
 export 'src/multi_region_map_rendering.dart';

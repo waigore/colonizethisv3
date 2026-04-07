@@ -38,15 +38,22 @@ class CtMainMenu extends StatelessWidget {
     required this.state,
     required this.version,
     required this.onNewGame,
+    this.resumeGameVisible = false,
+    this.onResumeGame,
     required this.onLoadGame,
     required this.onSettings,
     required this.onQuit,
-  });
+  }) : assert(
+          !resumeGameVisible || onResumeGame != null,
+          'onResumeGame is required when resumeGameVisible is true',
+        );
 
   final MainMenuVariant variant;
   final MainMenuState state;
   final String version;
   final VoidCallback onNewGame;
+  final bool resumeGameVisible;
+  final VoidCallback? onResumeGame;
   final VoidCallback onLoadGame;
   final VoidCallback onSettings;
   final VoidCallback onQuit;
@@ -86,6 +93,14 @@ class CtMainMenu extends StatelessWidget {
                   variant: variant,
                   onPressed: onNewGame,
                 ),
+                if (resumeGameVisible) ...[
+                  const SizedBox(height: 12),
+                  _MenuButton(
+                    label: l10n.mainMenu_resumeGame,
+                    variant: variant,
+                    onPressed: onResumeGame!,
+                  ),
+                ],
                 const SizedBox(height: 12),
                 _LoadGameButton(
                   enabled: _loadGameEnabled,

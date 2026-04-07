@@ -1,3 +1,5 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show ordersWithAppendedDiplomaticOrder;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Shared short label for diplomacy action buttons and confirmation prompts.
@@ -37,17 +39,8 @@ extension DiplomacyOrderMutations on Orders {
   Orders appendDiplomaticOrderForPlayer(
     String playerId,
     DiplomaticOrder order,
-  ) {
-    final list = List<DiplomaticOrder>.from(
-      diplomaticOrdersByPlayerId[playerId] ?? const <DiplomaticOrder>[],
-    )..add(order);
-    return copyWith(
-      diplomaticOrdersByPlayerId: {
-        ...diplomaticOrdersByPlayerId,
-        playerId: list,
-      },
-    );
-  }
+  ) =>
+      ordersWithAppendedDiplomaticOrder(this, playerId, order);
 
   Orders removeDiplomaticOrderForPlayer(
     String playerId, {

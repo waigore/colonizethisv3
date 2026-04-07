@@ -1,0 +1,287 @@
+part of 'tile_map_generator.dart';
+
+mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
+  /// Fill lakes: convert lake (sea not in ocean) to land; skip lakes that border 2+ continents (straits).
+  List<List<String>> _fillLakes(
+    List<List<String>> grid,
+    String seaZoneId,
+    List<(int x, int y)> landSeeds,
+    List<int> continentBySeedIndex,
+  ) {
+    final ocean = _oceanCells(grid, seaZoneId);
+    final next = grid.map((row) => row.toList()).toList();
+    final lakeCells = <(int x, int y)>[];
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (grid[y][x] != seaZoneId) continue;
+        if (ocean.contains((x, y))) continue;
+        lakeCells.add((x, y));
+      }
+    }
+    final lakeComponents = _connectedComponentsOfLand(lakeCells.toSet());
+    var lakesFilled = 0;
+    final coastalLandCandidates = <(int x, int y)>{};
+    for (final component in lakeComponents) {
+      final borderingLand = <(int x, int y)>{};
+      for (final (x, y) in component) {
+        for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+          final nx = x + dx;
+          final ny = y + dy;
+          if (nx >= 0 &&
+              nx < params.width &&
+              ny >= 0 &&
+              ny < params.height &&
+              grid[ny][nx] != seaZoneId) {
+            borderingLand.add((nx, ny));
+          }
+        }
+      }
+      final continentsBordering = <int>{};
+      for (final (lx, ly) in borderingLand) {
+        continentsBordering.add(
+          _continentForLandCell(lx, ly, landSeeds, continentBySeedIndex),
+        );
+      }
+      if (continentsBordering.length >= 2) continue;
+      for (final (x, y) in component) {
+        next[y][x] = _landSentinel;
+        lakesFilled++;
+        for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+          final nx = x + dx;
+          final ny = y + dy;
+          if (nx >= 0 &&
+              nx < params.width &&
+              ny >= 0 &&
+              ny < params.height &&
+              next[ny][nx] == seaZoneId &&
+              _oceanNeighbourCount(next, nx, ny, seaZoneId, ocean) >= 1) {
+            coastalLandCandidates.add((nx, ny));
+          }
+        }
+      }
+    }
+    final sorted = coastalLandCandidates.toList()
+      ..sort((a, b) {
+        final na = _oceanNeighbourCount(next, a.$1, a.$2, seaZoneId, ocean);
+        final nb = _oceanNeighbourCount(next, b.$1, b.$2, seaZoneId, ocean);
+        return nb.compareTo(na);
+      });
+    for (final (fx, fy) in sorted.take(lakesFilled)) {
+      next[fy][fx] = seaZoneId;
+    }
+    return next;
+  }
+
+  /// Collapse narrow ocean moats: convert ocean cells that are effectively
+  /// thin moats around a single continent into land, then preserve overall sea
+  /// fraction by converting an equal number of coastal land tiles back to sea.
+  ///
+  /// A moat candidate is an ocean cell whose 4-neighbourhood contains land
+  /// belonging to the **same** continent in at least two directions and no
+  /// land from any other continent.
+  List<List<String>> _fillMoats(
+    List<List<String>> grid,
+    String seaZoneId,
+    List<(int x, int y)> landSeeds,
+    List<int> continentBySeedIndex,
+    Random rnd,
+  ) {
+    final ocean = _oceanCells(grid, seaZoneId);
+    if (ocean.isEmpty) return grid;
+
+    final next = grid.map((row) => row.toList()).toList();
+    final moatCells = <(int x, int y)>[];
+
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (next[y][x] != seaZoneId) continue;
+        if (!ocean.contains((x, y))) continue;
+
+        // Examine 4-neighbourhood for bordering land.
+        final neighbouringContinents = <int>{};
+        final sameContinentDirectionCounts = <int, int>{};
+
+        for (final (dx, dy) in const <(int, int)>[
+          (0, -1), // N
+          (1, 0), // E
+          (0, 1), // S
+          (-1, 0), // W
+        ]) {
+          final nx = x + dx;
+          final ny = y + dy;
+          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+            continue;
+          }
+          if (next[ny][nx] == seaZoneId) continue;
+          final continent = _continentForLandCell(
+            nx,
+            ny,
+            landSeeds,
+            continentBySeedIndex,
+          );
+          neighbouringContinents.add(continent);
+          sameContinentDirectionCounts[continent] =
+              (sameContinentDirectionCounts[continent] ?? 0) + 1;
+        }
+
+        if (neighbouringContinents.isEmpty) continue;
+        if (neighbouringContinents.length > 1)
+          continue; // multi-continent strait, keep as sea
+
+        final c = neighbouringContinents.single;
+        final dirCount = sameContinentDirectionCounts[c] ?? 0;
+        if (dirCount < 2) continue; // not strongly enclosed by that continent
+
+        moatCells.add((x, y));
+      }
+    }
+
+    if (moatCells.isEmpty) return grid;
+
+    for (final (x, y) in moatCells) {
+      next[y][x] = _landSentinel;
+    }
+
+    // Preserve overall sea fraction by converting an equal number of coastal
+    // land tiles back to sea, using the existing helper.
+    _preserveSeaFraction(next, null, null, seaZoneId, ocean, moatCells.length);
+
+    return next;
+  }
+
+  /// Land cells grouped by continent (nearest land seed → continent via continentBySeedIndex).
+  Map<int, List<(int x, int y)>> _landCellsByContinent(
+    List<List<String>> grid,
+    List<(int x, int y)> landSeeds,
+    List<int> continentBySeedIndex,
+  ) {
+    final numContinents = continentBySeedIndex.isEmpty
+        ? 0
+        : continentBySeedIndex.reduce((a, b) => a > b ? a : b) + 1;
+    final byContinent = <int, List<(int x, int y)>>{
+      for (var c = 0; c < numContinents; c++) c: [],
+    };
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (grid[y][x] != _landSentinel) continue;
+        var bestSeedIndex = 0;
+        var bestD2 = 0x7fffffff;
+        for (var i = 0; i < landSeeds.length; i++) {
+          final (sx, sy) = landSeeds[i];
+          final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
+          if (d2 < bestD2) {
+            bestD2 = d2;
+            bestSeedIndex = i;
+          }
+        }
+        final c = continentBySeedIndex[bestSeedIndex];
+        byContinent[c]!.add((x, y));
+      }
+    }
+    return byContinent;
+  }
+
+  /// Place one province seed per province on that continent's land cells; min spacing.
+  Map<String, (int x, int y)> _placeProvinceSeedsOnLand(
+    List<List<String>> grid,
+    Map<String, int> provinceToContinent,
+    List<(int x, int y)> landSeeds,
+    List<int> continentBySeedIndex,
+    String seaZoneId,
+    Random rnd,
+  ) {
+    if (provinceToContinent.isEmpty) return {};
+    final numContinents = provinceToContinent.values.toSet().length;
+    final byContinent = _landCellsByContinent(
+      grid,
+      landSeeds,
+      continentBySeedIndex,
+    );
+    final seeds = <String, (int x, int y)>{};
+    const minDist = 3;
+    for (var c = 0; c < numContinents; c++) {
+      final cells = byContinent[c] ?? [];
+      if (cells.isEmpty) continue;
+      final provinceIds =
+          provinceToContinent.entries
+              .where((e) => e.value == c)
+              .map((e) => e.key)
+              .toList()
+            ..sort();
+      final used = <(int x, int y)>{};
+      for (final provinceId in provinceIds) {
+        final shuffled = List<(int x, int y)>.from(cells)..shuffle(rnd);
+        for (final (x, y) in shuffled) {
+          if (used.any(
+            (p) => (p.$1 - x).abs() < minDist && (p.$2 - y).abs() < minDist,
+          ))
+            continue;
+          seeds[provinceId] = (x, y);
+          used.add((x, y));
+          break;
+        }
+        if (!seeds.containsKey(provinceId) && cells.isNotEmpty) {
+          final (x, y) = cells[rnd.nextInt(cells.length)];
+          seeds[provinceId] = (x, y);
+          used.add((x, y));
+        }
+      }
+    }
+    return seeds;
+  }
+
+  /// Replace each _landSentinel cell with nearest province seed id. Uses generic Voronoi.
+  List<List<String>> _assignProvincesFromSeeds(
+    List<List<String>> grid,
+    Map<String, (int x, int y)> provinceSeeds,
+    String seaZoneId,
+  ) {
+    if (provinceSeeds.isEmpty) return grid;
+    final landCells = <(int x, int y)>[];
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (grid[y][x] == _landSentinel) landCells.add((x, y));
+      }
+    }
+    final assignment = assignCellsToNearestSeed(
+      landCells,
+      provinceSeeds,
+      noiseScale: 0,
+      noiseSeed: params.seed,
+    );
+    final next = grid.map((row) => row.toList()).toList();
+    for (final entry in assignment.entries) {
+      final (x, y) = entry.key;
+      next[y][x] = entry.value;
+    }
+    return next;
+  }
+
+  /// Border noise: swap only at land/sea boundary (sentinel vs seaZoneId).
+  List<List<String>> _borderNoise(
+    List<List<String>> grid,
+    String seaZoneId,
+    Random rnd,
+  ) {
+    final next = grid.map((row) => row.toList()).toList();
+    for (var y = 1; y < params.height - 1; y++) {
+      for (var x = 1; x < params.width - 1; x++) {
+        if (rnd.nextDouble() >= params.borderNoise) continue;
+        final id = grid[y][x];
+        final neighbors = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)];
+        for (final (nx, ny) in neighbors) {
+          final nid = grid[ny][nx];
+          final atBoundary =
+              (id == _landSentinel && nid == seaZoneId) ||
+              (id == seaZoneId && nid == _landSentinel);
+          if (atBoundary) {
+            next[ny][nx] = id;
+            next[y][x] = nid;
+            break;
+          }
+        }
+      }
+    }
+    return next;
+  }
+}

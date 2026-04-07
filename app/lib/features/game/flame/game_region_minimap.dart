@@ -6,7 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/app_assets.dart';
 import '../../../providers/region_minimap_provider.dart';
-import 'region_map_viewport_snapshot.dart';
+import 'region_map_viewport_snapshot.dart'
+    show
+        RegionMapViewportSnapshot,
+        kRegionMapZoomMultiplierMax,
+        kRegionMapZoomMultiplierMin;
+import '../../../widgets/ct_slider.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'game_screen_shared.dart';
 import 'region_minimap_math.dart';
@@ -28,6 +33,9 @@ const Color kRegionMinimapSeaColor = Color(0xFF0D47A1);
 const double kRegionMinimapFoggedAlpha = 0.55;
 
 /// Dismissible region minimap (Empire overview). SPEC/ui/empire-overview.md § Region minimap.
+///
+/// [cellSizePx] must match [RegionMapViewData.cellSize] used by the Flame-backed region map for this
+/// region so world↔minimap math matches [RegionMapViewportSnapshot] (see SPEC/ui/map-widget.md).
 class GameRegionMinimap extends ConsumerWidget {
   const GameRegionMinimap({
     required this.region,
@@ -47,8 +55,9 @@ class GameRegionMinimap extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final visible = ref.watch(regionMinimapVisibleProvider);
-    final viewport =
-        viewportSnapshot?.regionId == region.regionId ? viewportSnapshot : null;
+    final viewport = viewportSnapshot?.regionId == region.regionId
+        ? viewportSnapshot
+        : null;
     final aspect = region.width / region.height;
     late final Size mapSize;
     if (aspect >= 1) {
@@ -56,6 +65,13 @@ class GameRegionMinimap extends ConsumerWidget {
     } else {
       mapSize = Size(_maxExtent * aspect, _maxExtent);
     }
+
+    final zoomMultiplier = viewport == null
+        ? 1.0
+        : viewport.zoomMultiplier.clamp(
+            kRegionMapZoomMultiplierMin,
+            kRegionMapZoomMultiplierMax,
+          );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -65,28 +81,32 @@ class GameRegionMinimap extends ConsumerWidget {
           Material(
             color: Colors.black.withValues(alpha: 0.45),
             elevation: 2,
-            child: GestureDetector(
-              key: kRegionMinimapGestureKey,
+            child: Listener(
               behavior: HitTestBehavior.opaque,
-              onTapDown: (d) => _onTap(
-                local: d.localPosition,
-                mapSize: mapSize,
-              ),
-              onPanUpdate: (details) => _onPan(
-                delta: details.delta,
-                mapSize: mapSize,
-              ),
-              child: SizedBox(
-                width: mapSize.width,
-                height: mapSize.height,
-                child: CustomPaint(
-                  key: kRegionMinimapCustomPaintKey,
-                  painter: _RegionMinimapPainter(
-                    region: region,
-                    cellSizePx: cellSizePx,
-                    viewport: viewport?.regionId == region.regionId
-                        ? viewport
-                        : null,
+              onPointerMove: (event) {
+                if (!event.down || event.delta == Offset.zero) {
+                  return;
+                }
+                _onPan(delta: event.delta, mapSize: mapSize);
+              },
+              child: GestureDetector(
+                key: kRegionMinimapGestureKey,
+                behavior: HitTestBehavior.opaque,
+                // Tap-up avoids a center event at pointer-down (which interfered with drags).
+                onTapUp: (d) =>
+                    _onTap(local: d.localPosition, mapSize: mapSize),
+                child: SizedBox(
+                  width: mapSize.width,
+                  height: mapSize.height,
+                  child: CustomPaint(
+                    key: kRegionMinimapCustomPaintKey,
+                    painter: _RegionMinimapPainter(
+                      region: region,
+                      cellSizePx: cellSizePx,
+                      viewport: viewport?.regionId == region.regionId
+                          ? viewport
+                          : null,
+                    ),
                   ),
                 ),
               ),
@@ -94,22 +114,30 @@ class GameRegionMinimap extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
         ],
-        Material(
-          key: kRegionMinimapToggleKey,
-          color: Colors.white.withValues(alpha: 0.9),
-          child: Tooltip(
-            message: visible ? 'Hide region minimap' : 'Show region minimap',
-            child: InkWell(
-              onTap: () => ref
-                  .read(regionMinimapVisibleProvider.notifier)
-                  .toggle(),
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: StrictAssetIcon(
-                  assetPath:
-                      '${kAppIconAssetPrefix}ui_icon_region_minimap.png',
-                  width: 20,
-                  height: 20,
+        _MinimapZoomControls(
+          regionId: region.regionId,
+          bus: bus,
+          viewportMultiplier: zoomMultiplier,
+          trackWidth: mapSize.width,
+          theme: Theme.of(context),
+          trailing: Material(
+            key: kRegionMinimapToggleKey,
+            color: Colors.white.withValues(alpha: 0.9),
+            child: Tooltip(
+              message: visible
+                  ? 'Hide region minimap'
+                  : 'Show region minimap',
+              child: InkWell(
+                onTap: () =>
+                    ref.read(regionMinimapVisibleProvider.notifier).toggle(),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: StrictAssetIcon(
+                    assetPath:
+                        '${kAppIconAssetPrefix}ui_icon_region_minimap.png',
+                    width: 20,
+                    height: 20,
+                  ),
                 ),
               ),
             ),
@@ -156,6 +184,120 @@ class GameRegionMinimap extends ConsumerWidget {
   }
 }
 
+/// Minimap zoom label + [CtSlider] (non-Material), with local value during drag so
+/// the thumb and % label track the gesture before the viewport snapshot catches up.
+class _MinimapZoomControls extends StatefulWidget {
+  const _MinimapZoomControls({
+    required this.regionId,
+    required this.bus,
+    required this.viewportMultiplier,
+    required this.trackWidth,
+    required this.theme,
+    required this.trailing,
+  });
+
+  final String regionId;
+  final AppEventBus bus;
+  final double viewportMultiplier;
+  final double trackWidth;
+  final ThemeData theme;
+  final Widget trailing;
+
+  @override
+  State<_MinimapZoomControls> createState() => _MinimapZoomControlsState();
+}
+
+class _MinimapZoomControlsState extends State<_MinimapZoomControls> {
+  double? _dragMultiplier;
+  bool _dragging = false;
+
+  @override
+  void didUpdateWidget(covariant _MinimapZoomControls oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.regionId != widget.regionId) {
+      _dragMultiplier = null;
+      _dragging = false;
+    }
+  }
+
+  double get _displayMultiplier {
+    final v = _dragMultiplier ?? widget.viewportMultiplier;
+    return v.clamp(
+      kRegionMapZoomMultiplierMin,
+      kRegionMapZoomMultiplierMax,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (_displayMultiplier * 100).round();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        SizedBox(
+          width: widget.trackWidth,
+          child: Text(
+            '$pct%',
+            textAlign: TextAlign.center,
+            style: widget.theme.textTheme.labelSmall,
+          ),
+        ),
+        const SizedBox(height: 2),
+        SizedBox(
+          width: widget.trackWidth,
+          height: 48,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Semantics(
+                  label: 'Map zoom',
+                  value: '$pct percent',
+                  slider: true,
+                  child: Tooltip(
+                    message: 'Map zoom',
+                    child: Center(
+                      child: CtSlider(
+                        key: kRegionMinimapZoomSliderKey,
+                        value: _displayMultiplier,
+                        min: kRegionMapZoomMultiplierMin,
+                        max: kRegionMapZoomMultiplierMax,
+                        divisions: 0,
+                        onDragStart: () {
+                          setState(() => _dragging = true);
+                        },
+                        onChanged: (v) {
+                          widget.bus.emit(
+                            RequestRegionMapSetZoomMultiplierEvent(
+                              regionId: widget.regionId,
+                              zoomMultiplier: v,
+                            ),
+                          );
+                          if (_dragging) {
+                            setState(() => _dragMultiplier = v);
+                          }
+                        },
+                        onDragEnd: () {
+                          setState(() {
+                            _dragging = false;
+                            _dragMultiplier = null;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              widget.trailing,
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _RegionMinimapPainter extends CustomPainter {
   _RegionMinimapPainter({
     required this.region,
@@ -184,7 +326,8 @@ class _RegionMinimapPainter extends CustomPainter {
         }
         final base = cell.isSea
             ? kRegionMinimapSeaColor
-            : kRegionMinimapTerrainColors[cell.terrainType ?? TerrainType.plains]!;
+            : kRegionMinimapTerrainColors[cell.terrainType ??
+                  TerrainType.plains]!;
         if (cell.visibility == TileVisibility.fogged) {
           paint.color = base.withValues(alpha: kRegionMinimapFoggedAlpha);
         } else {

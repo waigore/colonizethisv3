@@ -12,7 +12,6 @@ dependencies:
   logger: ^2.0.2
   riverpod: ^3.2.1
   colonizethis_logger:
-  colonizethis_ai:
   colonizethis_data:
   colonizethis_map:
   colonizethis_models:

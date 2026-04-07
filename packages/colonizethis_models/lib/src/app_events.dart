@@ -97,7 +97,17 @@ class OpenPauseMenuPanelEvent extends UIActionEvent {
 /// Pending work removal and in-progress cancel use [SessionCommandEvent]s (bus), not
 /// closures on this event — see SPEC/program/app-event-bus.md.
 class OpenCivilianUnitsPanelEvent extends UIActionEvent {
-  const OpenCivilianUnitsPanelEvent();
+  const OpenCivilianUnitsPanelEvent({
+    this.tileScopeTileKey,
+    this.initialSelectedUnitId,
+  });
+
+  /// Optional tile-scope key (`regionId|provinceId|x|y`) used to show only
+  /// civilians currently rendered on that tile.
+  final String? tileScopeTileKey;
+
+  /// Optional initial selected unit id when opening in tile scope.
+  final String? initialSelectedUnitId;
 }
 
 /// Military units bottom sheet.
@@ -120,6 +130,13 @@ class LocateMapTileEvent extends UIActionEvent {
 
   final String tileKey;
   final String regionId;
+}
+
+/// Request to open the province/tile detail panel for a concrete map tile key.
+class OpenMapTileDetailEvent extends UIActionEvent {
+  const OpenMapTileDetailEvent({required this.tileKey});
+
+  final String tileKey;
 }
 
 /// In-game region minimap requests the Flame map camera center at world coordinates (after clamp).
@@ -147,6 +164,20 @@ class RequestRegionMapCameraPanWorldDeltaEvent extends UIActionEvent {
   final String regionId;
   final double worldDx;
   final double worldDy;
+}
+
+/// In-game shell requests an absolute fit-relative zoom multiplier `m` (`zoom = m × z_fit`).
+/// The map clamps [zoomMultiplier] to **[0.5, 4.0]** before applying. SPEC/ui/map-widget.md.
+class RequestRegionMapSetZoomMultiplierEvent extends UIActionEvent {
+  const RequestRegionMapSetZoomMultiplierEvent({
+    required this.regionId,
+    required this.zoomMultiplier,
+  });
+
+  final String regionId;
+
+  /// Target `m` vs fit-map baseline; host clamps to [0.5, 4.0].
+  final double zoomMultiplier;
 }
 
 /// Request to start civilian target-selection mode from the units panel.
@@ -312,14 +343,22 @@ class ArmySplitRequestedEvent extends SessionCommandEvent {
 }
 
 /// Move army dialog confirm: merges [moveOrder] into current-turn draft orders.
+///
+/// When [declareWarTargetFactionId] is set, the shell appends a same-turn
+/// `declareWar` on that faction before applying [moveOrder] (invasion path).
 class ArmyMoveRequestedEvent extends SessionCommandEvent {
   ArmyMoveRequestedEvent({
     required this.humanPlayerId,
     required this.moveOrder,
+    this.declareWarTargetFactionId,
   });
 
   final String humanPlayerId;
   final ArmyMoveOrder moveOrder;
+
+  /// Great Power / Minor / Tribe id to declare war on when the move required
+  /// the invasion confirmation flow. Null for normal moves and when already at war.
+  final String? declareWarTargetFactionId;
 }
 
 /// Train civilians dialog close: shell merges into current-turn orders draft.

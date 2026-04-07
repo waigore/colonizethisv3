@@ -6,6 +6,23 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 const String kRegionOldWorld = 'oldWorld';
 const String kRegionNewWorld = 'newWorld';
 
+/// Default sea fraction for map generation (0.6 = 60% sea, 40% land).
+const double kDefaultSeaFraction = 0.6;
+
+/// Work target string constants for work orders. Used across order suggestion,
+/// validation, and application to avoid hardcoded string literals.
+const String kWorkTargetStealTech = 'steal_tech';
+const String kWorkTargetCounterSpy = 'counter_spy';
+const String kWorkTargetPurchaseLand = 'purchase_land';
+const String kWorkTargetExplore = 'explore';
+const String kWorkTargetProspect = 'prospect';
+const String kWorkTargetBuildImprovement = 'build_improvement';
+const String kWorkTargetBuildRoad = 'build_road';
+const String kWorkTargetBuildPort = 'build_port';
+const String kWorkTargetBuildFort = 'build_fort';
+const String kWorkTargetBuildRail = 'build_rail';
+const String kWorkTargetUpgradeTown = 'upgrade_town';
+
 /// Resource ids that count as minerals for work/purchase rules.
 /// Shared across extraction, work orders, and order application helpers.
 const Set<String> kMineralResourceIds = {

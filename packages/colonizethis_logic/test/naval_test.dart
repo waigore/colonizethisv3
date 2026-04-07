@@ -40,6 +40,18 @@ void main() {
       );
     });
 
+    group('indexTopologyNodesByRegion', () {
+      test('groups nodes by regionId and id', () {
+        final idx = indexTopologyNodesByRegion(topology);
+        expect(idx.keys, contains('oldWorld'));
+        expect(
+          idx['oldWorld']!.keys,
+          containsAll(['p1', 'p2', 'sea1', 'sea2']),
+        );
+        expect(idx['oldWorld']!['p1']!.type, TopologyNodeType.province);
+      });
+    });
+
     group('isAdjacentSeaZone', () {
       test('returns true when sea zones are connected by edge', () {
         expect(isAdjacentSeaZone(topology, 'sea1', 'sea2'), isTrue);

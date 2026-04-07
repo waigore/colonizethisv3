@@ -2,6 +2,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:logger/logger.dart';
 
 void main() {
   group('ResourceExtractor', () {
@@ -22,7 +23,7 @@ void main() {
       );
       final cap = CapitalTile(
         regionId: 'oldWorld',
-        provinceId: 'p1',
+        provinceId: 'oldWorld|p1',
         x: 0,
         y: 0,
       );
@@ -37,7 +38,7 @@ void main() {
         id: 'pl1',
         displayName: 'Spain',
         isHuman: true,
-        capitalProvinceId: 'p1',
+        capitalProvinceId: 'oldWorld|p1',
         capitalTile: cap,
       );
       final game = Game(
@@ -47,7 +48,12 @@ void main() {
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'pl1',
+                townDevelopmentLevel: 4,
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -93,10 +99,10 @@ void main() {
         id: 'pl1',
         displayName: 'Spain',
         isHuman: true,
-        capitalProvinceId: 'p1',
+        capitalProvinceId: 'oldWorld|p1',
         capitalTile: CapitalTile(
           regionId: 'oldWorld',
-          provinceId: 'p1',
+          provinceId: 'oldWorld|p1',
           x: 0,
           y: 0,
         ),
@@ -108,7 +114,12 @@ void main() {
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'pl1',
+                townDevelopmentLevel: 4,
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -147,10 +158,10 @@ void main() {
         id: 'pl1',
         displayName: 'Spain',
         isHuman: true,
-        capitalProvinceId: 'p1',
+        capitalProvinceId: 'oldWorld|p1',
         capitalTile: CapitalTile(
           regionId: 'oldWorld',
-          provinceId: 'p1',
+          provinceId: 'oldWorld|p1',
           x: 0,
           y: 0,
         ),
@@ -162,7 +173,12 @@ void main() {
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'pl1',
+                townDevelopmentLevel: 4,
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -212,10 +228,10 @@ void main() {
           id: 'pl1',
           displayName: 'Spain',
           isHuman: true,
-          capitalProvinceId: 'p1',
+          capitalProvinceId: 'oldWorld|p1',
           capitalTile: CapitalTile(
             regionId: 'oldWorld',
-            provinceId: 'p1',
+            provinceId: 'oldWorld|p1',
             x: 0,
             y: 0,
           ),
@@ -228,7 +244,12 @@ void main() {
             turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
             oldWorld: RegionData(
               provinces: [
-                Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: 'pl1',
+                  townDevelopmentLevel: 4,
+                ),
               ],
             ),
             newWorld: const RegionData(),
@@ -280,10 +301,10 @@ void main() {
         id: 'pl1',
         displayName: 'Spain',
         isHuman: true,
-        capitalProvinceId: 'p1',
+        capitalProvinceId: 'oldWorld|p1',
         capitalTile: CapitalTile(
           regionId: 'oldWorld',
-          provinceId: 'p1',
+          provinceId: 'oldWorld|p1',
           x: 0,
           y: 0,
         ),
@@ -301,7 +322,12 @@ void main() {
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'pl1',
+                townDevelopmentLevel: 4,
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -343,10 +369,10 @@ void main() {
         id: 'pl1',
         displayName: 'Spain',
         isHuman: true,
-        capitalProvinceId: 'p1',
+        capitalProvinceId: 'oldWorld|p1',
         capitalTile: CapitalTile(
           regionId: 'oldWorld',
-          provinceId: 'p1',
+          provinceId: 'oldWorld|p1',
           x: 0,
           y: 0,
         ),
@@ -358,7 +384,12 @@ void main() {
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'pl1',
+                townDevelopmentLevel: 4,
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -397,10 +428,10 @@ void main() {
         id: 'pl1',
         displayName: 'Spain',
         isHuman: true,
-        capitalProvinceId: 'p1',
+        capitalProvinceId: 'oldWorld|p1',
         capitalTile: CapitalTile(
           regionId: 'oldWorld',
-          provinceId: 'p1',
+          provinceId: 'oldWorld|p1',
           x: 0,
           y: 0,
         ),
@@ -412,7 +443,12 @@ void main() {
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'pl1',
+                townDevelopmentLevel: 4,
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -456,7 +492,7 @@ void main() {
         capitalProvinceId: 'oldWorld|p1',
         capitalTile: CapitalTile(
           regionId: 'oldWorld',
-          provinceId: 'p1',
+          provinceId: 'oldWorld|p1',
           x: 0,
           y: 0,
         ),
@@ -511,7 +547,7 @@ void main() {
       );
       final cap = CapitalTile(
         regionId: 'oldWorld',
-        provinceId: 'p1',
+        provinceId: 'oldWorld|p1',
         x: 0,
         y: 0,
       );
@@ -593,7 +629,7 @@ void main() {
       );
       final cap = CapitalTile(
         regionId: 'oldWorld',
-        provinceId: 'p1',
+        provinceId: 'oldWorld|p1',
         x: 0,
         y: 0,
       );
@@ -678,10 +714,10 @@ void main() {
         id: 'pl1',
         displayName: 'Spain',
         isHuman: true,
-        capitalProvinceId: 'p1',
+        capitalProvinceId: 'oldWorld|p1',
         capitalTile: CapitalTile(
           regionId: 'oldWorld',
-          provinceId: 'p1',
+          provinceId: 'oldWorld|p1',
           x: 0,
           y: 0,
         ),
@@ -693,12 +729,17 @@ void main() {
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'pl1',
+                townDevelopmentLevel: 4,
+              ),
             ],
           ),
           newWorld: RegionData(
             provinces: [
-              Province(id: 'n1', regionId: 'newWorld', ownerId: 'pl1'),
+              Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'pl1'),
             ],
           ),
           tileState: tileState,
@@ -805,7 +846,14 @@ void main() {
           worldState: WorldState(
             turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
             oldWorld: RegionData(
-              provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1')],
+              provinces: [
+                Province(
+                  id: '$ow|p1',
+                  regionId: ow,
+                  ownerId: 'pl1',
+                  townDevelopmentLevel: 4,
+                ),
+              ],
             ),
             newWorld: RegionData(
               provinces: [
@@ -886,7 +934,12 @@ void main() {
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'pl1',
+                townDevelopmentLevel: 4,
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -897,10 +950,10 @@ void main() {
             id: 'pl1',
             displayName: 'Spain',
             isHuman: true,
-            capitalProvinceId: 'p1',
+            capitalProvinceId: 'oldWorld|p1',
             capitalTile: CapitalTile(
               regionId: 'oldWorld',
-              provinceId: 'p1',
+              provinceId: 'oldWorld|p1',
               x: 0,
               y: 0,
             ),
@@ -943,10 +996,10 @@ void main() {
           id: 'pl1',
           displayName: 'Spain',
           isHuman: true,
-          capitalProvinceId: 'p1',
+          capitalProvinceId: 'oldWorld|p1',
           capitalTile: CapitalTile(
             regionId: 'oldWorld',
-            provinceId: 'p1',
+            provinceId: 'oldWorld|p1',
             x: 0,
             y: 0,
           ),
@@ -958,7 +1011,12 @@ void main() {
             turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
             oldWorld: RegionData(
               provinces: [
-                Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: 'pl1',
+                  townDevelopmentLevel: 4,
+                ),
               ],
             ),
             newWorld: const RegionData(),
@@ -976,6 +1034,74 @@ void main() {
       },
     );
 
+    test(
+      'skips connected tile and logs when province missing from region (world-model)',
+      () {
+        final captured = <LogEvent>[];
+        void listener(LogEvent e) => captured.add(e);
+        Logger.addLogListener(listener);
+        addTearDown(() {
+          Logger.removeLogListener(listener);
+          captured.clear();
+        });
+        Logger.level = Level.error;
+        addTearDown(() => Logger.level = Level.off);
+
+        final grid = [
+          ['p1'],
+        ];
+        final tileMap = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: grid,
+          resourceGrid: [
+            [Resource.grain],
+          ],
+        );
+        final tileState = TileMapState()
+            .setImprovement('oldWorld|p1|0|0', 2)
+            .setRoadLevel('oldWorld|p1|0|0', 2);
+        final player = Player(
+          id: 'pl1',
+          displayName: 'Spain',
+          isHuman: true,
+          capitalProvinceId: 'oldWorld|p1',
+          capitalTile: const CapitalTile(
+            regionId: 'oldWorld',
+            provinceId: 'oldWorld|p1',
+            x: 0,
+            y: 0,
+          ),
+        );
+        final game = Game(
+          id: 'g1',
+          capitalTileGrainBonusPerTurn: 0,
+          worldState: WorldState(
+            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
+            oldWorld: const RegionData(provinces: []),
+            newWorld: const RegionData(),
+            tileState: tileState,
+          ),
+          players: [player],
+        );
+        final result = computeExtraction(
+          game: game,
+          tileMapByRegion: {'oldWorld': tileMap},
+          connectivityResult: {
+            'pl1': ConnectivityResult(connected: {'oldWorld|p1|0|0'}),
+          },
+          techCapForPlayer: (_) => 4,
+        );
+        expect(result['pl1']!.land['grain'], isNull);
+        expect(
+          captured.any(
+            (e) => e.message.contains('extraction province missing'),
+          ),
+          isTrue,
+        );
+      },
+    );
+
     test('capital tile grain bonus is unconditional on connectivity', () {
       final player = Player(
         id: 'pl1',
@@ -984,7 +1110,7 @@ void main() {
         capitalProvinceId: 'oldWorld|p1',
         capitalTile: const CapitalTile(
           regionId: 'oldWorld',
-          provinceId: 'p1',
+          provinceId: 'oldWorld|p1',
           x: 0,
           y: 0,
         ),
@@ -995,7 +1121,12 @@ void main() {
           turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'pl1',
+                townDevelopmentLevel: 4,
+              ),
             ],
           ),
           newWorld: const RegionData(),

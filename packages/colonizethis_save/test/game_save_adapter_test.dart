@@ -309,6 +309,51 @@ void main() {
       expect(loaded.players.single.capitalTile?.y, 0);
     });
 
+    test(
+      'save/load round-trip preserves civilian origin/assigned tile fields',
+      () {
+        final unit = Unit(
+          id: 'civ1',
+          type: 'Builder',
+          ownerId: 'pl1',
+          locationProvinceId: 'oldWorld|p1',
+          tileKey: 'oldWorld|p1|1|0',
+          originTileKey: 'oldWorld|p1|0|0',
+          assignedTileKey: 'oldWorld|p1|1|0',
+          status: UnitStatus.working,
+          currentWork: const CurrentWork(
+            workTarget: 'build_improvement',
+            tileKey: 'oldWorld|p1|1|0',
+            totalTurns: 2,
+            remainingTurns: 1,
+          ),
+        );
+        final game = Game(
+          id: 'withCivilianAssignment',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              ],
+              units: [unit],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'pl1', displayName: 'Spain', isHuman: true),
+          ],
+        );
+        adapter.save(box, game);
+        final loaded = adapter.load(box, 'withCivilianAssignment');
+        expect(loaded, isNotNull);
+        final loadedUnit = loaded!.worldState.oldWorld.units.single;
+        expect(loadedUnit.originTileKey, 'oldWorld|p1|0|0');
+        expect(loadedUnit.assignedTileKey, 'oldWorld|p1|1|0');
+        expect(loadedUnit.tileKey, 'oldWorld|p1|1|0');
+      },
+    );
+
     test('save/load round-trip includes Phase 3 combat state', () {
       final game = Game(
         id: 'phase3',
@@ -406,6 +451,38 @@ void main() {
       expect(loaded.turnTimeMapping!.yearsPerTurnAfterCutoff, 2);
     });
 
+    test(
+      'load succeeds when turnTimeMapping is Map<dynamic,dynamic> (Hive typing)',
+      () {
+        final turnMap = <dynamic, dynamic>{
+          'startYear': 1600,
+          'cutoffYear': 1750,
+          'yearsPerTurnBeforeCutoff': 3,
+          'yearsPerTurnAfterCutoff': 2,
+        };
+        final gameJson = <String, dynamic>{
+          'id': 'hiveTurnMap',
+          'worldState': {
+            'turnState': {'phase': 'orders', 'turnNumber': 1},
+            'oldWorld': {'provinces': []},
+            'newWorld': {'provinces': []},
+          },
+          'players': [
+            {'id': 'pl1', 'displayName': 'Spain', 'isHuman': true},
+          ],
+          'turnTimeMapping': turnMap,
+        };
+        box.put('hiveTurnMap', gameJson);
+        final loaded = adapter.load(box, 'hiveTurnMap');
+        expect(loaded, isNotNull);
+        expect(loaded!.turnTimeMapping, isNotNull);
+        expect(loaded.turnTimeMapping!.startYear, 1600);
+        expect(loaded.turnTimeMapping!.cutoffYear, 1750);
+        expect(loaded.turnTimeMapping!.yearsPerTurnBeforeCutoff, 3);
+        expect(loaded.turnTimeMapping!.yearsPerTurnAfterCutoff, 2);
+      },
+    );
+
     test('loadMapData throws for invalid map data JSON', () {
       // Manually insert invalid map data to simulate corrupted save
       box.put('invalidMap_tileMapByRegion', {'invalid': 'data'});
@@ -439,6 +516,185 @@ void main() {
         expect(loaded!.greatPowerColorOverride, isNull);
       },
     );
+
+    group('Auto-save slot (kAutoSaveSlotId)', () {
+      Game minimalGame(String logicalId) {
+        return Game(
+          id: logicalId,
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'player1', displayName: 'Spain', isHuman: true),
+          ],
+        );
+      }
+
+      (TileMapResult, MapTopology) minimalMap() {
+        final tileMap = TileMapResult(
+          width: 2,
+          height: 2,
+          grid: [
+            ['p1', 'p1'],
+            ['p2', 's1'],
+          ],
+        );
+        final topo = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'p2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 's1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [],
+        );
+        return (tileMap, topo);
+      }
+
+      test('saveAutoSave then load round-trip preserves logical game id', () {
+        final game = minimalGame('session_abc');
+        final (tileMap, topo) = minimalMap();
+        adapter.saveAutoSave(
+          box,
+          game,
+          tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+          topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+          combinedTopology: topo,
+        );
+        expect(adapter.hasValidAutoSave(box), isTrue);
+        final loaded = adapter.load(box, kAutoSaveSlotId);
+        expect(loaded, isNotNull);
+        expect(loaded!.id, 'session_abc');
+        expect(loaded.worldState.turnState.turnNumber, 3);
+        final md = adapter.loadMapData(box, kAutoSaveSlotId);
+        expect(md.tileMapByRegion['oldWorld']!.width, 2);
+      });
+
+      test(
+        'hasValidAutoSave true when turnTimeMapping is Map<dynamic,dynamic>',
+        () {
+          final game = minimalGame('session_abc').copyWith(
+            turnTimeMapping: const TurnTimeMapping(
+              startYear: 1600,
+              cutoffYear: 1750,
+              yearsPerTurnBeforeCutoff: 3,
+              yearsPerTurnAfterCutoff: 2,
+            ),
+          );
+          final (tileMap, topo) = minimalMap();
+          final slotJson = Map<String, dynamic>.from(game.toJson());
+          slotJson['turnTimeMapping'] = <dynamic, dynamic>{
+            'startYear': 1600,
+            'cutoffYear': 1750,
+            'yearsPerTurnBeforeCutoff': 3,
+            'yearsPerTurnAfterCutoff': 2,
+          };
+          box.put(kAutoSaveSlotId, slotJson);
+          adapter.saveMapData(
+            box,
+            kAutoSaveSlotId,
+            tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+            topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+            combinedTopology: topo,
+          );
+          expect(adapter.hasValidAutoSave(box), isTrue);
+          final loaded = adapter.load(box, kAutoSaveSlotId);
+          expect(loaded, isNotNull);
+          expect(loaded!.turnTimeMapping!.startYear, 1600);
+        },
+      );
+
+      test(
+        'listGameIds excludes auto-save stem even when slot is populated',
+        () {
+          final game = minimalGame('only_logical');
+          final (tileMap, topo) = minimalMap();
+          adapter.saveAutoSave(
+            box,
+            game,
+            tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+            topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+            combinedTopology: topo,
+          );
+          expect(adapter.listGameIds(box), isEmpty);
+        },
+      );
+
+      test('listGameIds excludes stem when user game also exists', () {
+        final userGame = minimalGame('user_slot');
+        adapter.save(box, userGame);
+        final (tileMap, topo) = minimalMap();
+        adapter.saveMapData(
+          box,
+          'user_slot',
+          tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+          topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+          combinedTopology: topo,
+        );
+        adapter.saveAutoSave(
+          box,
+          userGame,
+          tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+          topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+          combinedTopology: topo,
+        );
+        expect(adapter.listGameIds(box), ['user_slot']);
+      });
+
+      test('hasValidAutoSave is false when slot empty', () {
+        expect(adapter.hasValidAutoSave(box), isFalse);
+      });
+
+      test('hasValidAutoSave clears slot when game JSON is corrupt', () {
+        box.put(kAutoSaveSlotId, 'not-json');
+        expect(adapter.hasValidAutoSave(box), isFalse);
+        expect(box.containsKey(kAutoSaveSlotId), isFalse);
+      });
+
+      test('hasValidAutoSave clears slot when map data missing', () {
+        final game = minimalGame('g');
+        box.put(kAutoSaveSlotId, game.toJson());
+        expect(adapter.hasValidAutoSave(box), isFalse);
+        expect(box.containsKey(kAutoSaveSlotId), isFalse);
+      });
+
+      test('hasValidAutoSave clears slot when map data invalid', () {
+        final game = minimalGame('g');
+        box.put(kAutoSaveSlotId, game.toJson());
+        box.put('${kAutoSaveSlotId}_tileMapByRegion', {'bad': 'data'});
+        box.put('${kAutoSaveSlotId}_topologyByRegion', {'bad': 'data'});
+        box.put('${kAutoSaveSlotId}_combinedTopology', 'x');
+        expect(adapter.hasValidAutoSave(box), isFalse);
+        expect(box.containsKey(kAutoSaveSlotId), isFalse);
+      });
+
+      test('clears orphan auto-save map keys when game key missing', () {
+        final (tileMap, topo) = minimalMap();
+        adapter.saveMapData(
+          box,
+          kAutoSaveSlotId,
+          tileMapByRegion: {'oldWorld': tileMap, 'newWorld': tileMap},
+          topologyByRegion: {'oldWorld': topo, 'newWorld': topo},
+          combinedTopology: topo,
+        );
+        expect(box.containsKey('${kAutoSaveSlotId}_tileMapByRegion'), isTrue);
+        expect(adapter.hasValidAutoSave(box), isFalse);
+        expect(box.containsKey('${kAutoSaveSlotId}_tileMapByRegion'), isFalse);
+      });
+    });
 
     test('backward compatibility - turnTimeMapping missing yields null', () {
       // Simulate legacy save where turnTimeMapping field is missing

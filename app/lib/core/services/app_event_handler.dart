@@ -29,7 +29,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/routes.dart';
-import '../../features/game/flame/game_screen_shared.dart';
+import '../../config/constants.dart';
+import 'subscription_tracker.dart';
 import '../../features/game/widgets/civilian_units_panel.dart';
 import '../../features/game/widgets/military_units_panel.dart';
 import '../../features/game/widgets/naval_units_panel.dart';
@@ -73,20 +74,17 @@ class AppEventHandler {
   final void Function(DismissOverlayEvent)? _onDismissOverlay;
   final void Function(NotifyEvent)? _onNotify;
 
-  final List<StreamSubscription> _subscriptions = [];
+  final SubscriptionTracker _subscriptions = SubscriptionTracker();
 
   /// Start listening to the event bus. Call from StatefulWidget.initState or main.
   void bind() {
-    _subscriptions.add(_bus.on<UIActionEvent>().listen(_handleUIAction));
-    _subscriptions.add(_bus.on<UISystemEvent>().listen(_handleUISystem));
+    _subscriptions.track(_bus.on<UIActionEvent>().listen(_handleUIAction));
+    _subscriptions.track(_bus.on<UISystemEvent>().listen(_handleUISystem));
   }
 
   /// Stop listening. Call from StatefulWidget.dispose or when tearing down.
   void unbind() {
-    for (final s in _subscriptions) {
-      s.cancel();
-    }
-    _subscriptions.clear();
+    _subscriptions.cancelAll();
   }
 
   void _handleUIAction(UIActionEvent event) {
@@ -204,6 +202,20 @@ class AppEventHandler {
 
   void _navigateToShell(NavigatorState? nav) {
     if (nav == null) return;
+    final ctx = nav.context;
+    if (ctx.mounted) {
+      try {
+        final container = ProviderScope.containerOf(ctx, listen: false);
+        container.read(currentGameProvider.notifier).clear();
+        container.read(currentOrdersProvider.notifier).clear();
+      } catch (e, st) {
+        _log.d(
+          'navigateToShell: skipped in-memory game clear (no ProviderScope)',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }
     var foundShellRoute = false;
     nav.popUntil((route) {
       final matches = route.settings.name == Routes.shell;
@@ -235,8 +247,7 @@ class AppEventHandler {
           final currentOrders = ref.watch(currentOrdersProvider);
           final availableWorkTargets = ref.watch(availableWorkTargetsProvider);
           final bus = ref.watch(appEventBusProvider);
-          final isNarrow =
-              MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
+          final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
           final maxHeight =
               MediaQuery.sizeOf(context).height * (isNarrow ? 0.33 : 0.5);
           return ConstrainedBox(
@@ -247,6 +258,8 @@ class AppEventHandler {
               bus: bus,
               currentOrders: currentOrders,
               availableWorkTargets: availableWorkTargets,
+              tileScopeTileKey: event.tileScopeTileKey,
+              initialSelectedUnitId: event.initialSelectedUnitId,
             ),
           );
         },
@@ -270,11 +283,13 @@ class AppEventHandler {
           final humanPlayerId = _humanPlayerId(game);
           final bus = ref.watch(appEventBusProvider);
           final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
+          final draftOrders = ref.watch(currentOrdersProvider);
           return MilitaryUnitsPanel(
             game: game,
             humanPlayerId: humanPlayerId,
             bus: bus,
             topology: mapData?.combinedTopology ?? const MapTopology(),
+            draftOrders: draftOrders,
           );
         },
       ),

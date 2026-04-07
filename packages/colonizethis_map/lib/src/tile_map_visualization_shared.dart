@@ -132,7 +132,7 @@ String? resourceIdToLegendLetter(String? resourceId) {
   if (resourceId == null || resourceId.isEmpty) return null;
   try {
     return resourceToLegendLetter(Resource.values.byName(resourceId));
-  } catch (_) {
+  } on ArgumentError {
     return null;
   }
 }

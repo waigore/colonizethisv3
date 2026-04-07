@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show TerrainType;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
     show AppEventBus, OpenProvinceDetailPanelEvent;
@@ -11,7 +12,10 @@ import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show
         resolveProvinceLabelPresenceIconIds,
+        shouldApplyFogToFeatureOverlay,
+        shouldApplyFogToLandBase,
         shouldWrapProvinceLabelPresenceIcons;
+import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
@@ -29,9 +33,122 @@ void main() {
       // pump() is not enough when tests run alone (e.g. CI --total-shards).
       await terrainTilesetCache.load();
       await resourceIconCache.load();
+      await civilianIconCache.load();
       await townIconCache.load();
       await provinceLabelIconCache.load();
     });
+
+    testWidgets(
+      'land-base fog application skips feature terrains to prevent double darkening',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(
+          shouldApplyFogToLandBase(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.plains,
+          ),
+          isTrue,
+          reason: 'Fogged plains should darken in land-base pass',
+        );
+        expect(
+          shouldApplyFogToLandBase(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.desert,
+          ),
+          isTrue,
+          reason: 'Fogged desert should darken in land-base pass',
+        );
+        expect(
+          shouldApplyFogToLandBase(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.swamp,
+          ),
+          isFalse,
+          reason: 'Fogged feature tiles darken in overlay pass only',
+        );
+        expect(
+          shouldApplyFogToFeatureOverlay(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.swamp,
+          ),
+          isTrue,
+          reason: 'Fogged feature tiles should darken in overlay pass',
+        );
+        expect(
+          shouldApplyFogToLandBase(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.forest,
+          ),
+          isFalse,
+        );
+        expect(
+          shouldApplyFogToFeatureOverlay(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.forest,
+          ),
+          isTrue,
+        );
+        expect(
+          shouldApplyFogToFeatureOverlay(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.plains,
+          ),
+          isFalse,
+          reason: 'Fogged non-feature tiles darken in land-base pass only',
+        );
+        expect(
+          shouldApplyFogToLandBase(
+            visibilityMode: CtMapVisibilityMode.full,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.plains,
+          ),
+          isFalse,
+          reason: 'Full visibility mode must not apply fog',
+        );
+        expect(
+          shouldApplyFogToFeatureOverlay(
+            visibilityMode: CtMapVisibilityMode.full,
+            tileVisibility: TileVisibility.fogged,
+            terrain: TerrainType.swamp,
+          ),
+          isFalse,
+          reason: 'Full visibility mode must not apply fog',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'required civilian map icon assets exist and are non-empty',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        for (final slug in kCivilianIconSlugs) {
+          final colorPath = 'assets/icons/ui_icon_civ_$slug.png';
+          final grayPath = 'assets/icons/ui_icon_civ_${slug}_gray.png';
+          final colorData = await rootBundle.load(colorPath);
+          final grayData = await rootBundle.load(grayPath);
+          expect(
+            colorData.lengthInBytes,
+            greaterThan(0),
+            reason: 'Civilian icon $colorPath is empty',
+          );
+          expect(
+            grayData.lengthInBytes,
+            greaterThan(0),
+            reason: 'Civilian grayscale icon $grayPath is empty',
+          );
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
 
     testWidgets(
       'throws StateError when playerConstrained without playerViewForResources',
@@ -155,7 +272,9 @@ void main() {
       'didUpdateWidget refreshes map region presence data after rebuild',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();
-        final localProvinceId = base.cells.firstWhere((c) => !c.isSea).regionCellId;
+        final localProvinceId = base.cells
+            .firstWhere((c) => !c.isSea)
+            .regionCellId;
         final fullProvinceId = '${base.regionId}|$localProvinceId';
 
         RegionMapViewData withPresence({
@@ -211,8 +330,10 @@ void main() {
         );
         expect(gameWidgetFinder, findsOneWidget);
         final beforeWidget = tester.widget(gameWidgetFinder);
-        final beforeRegion = (beforeWidget as dynamic).game.region as RegionMapViewData;
-        final beforePresence = beforeRegion.provinceUnitPresenceByProvinceId[fullProvinceId];
+        final beforeRegion =
+            (beforeWidget as dynamic).game.region as RegionMapViewData;
+        final beforePresence =
+            beforeRegion.provinceUnitPresenceByProvinceId[fullProvinceId];
         expect(beforePresence, isNotNull);
         expect(beforePresence!.civilianCount, 0);
         expect(beforePresence.regimentCount, 0);
@@ -222,8 +343,10 @@ void main() {
         await tester.pump();
 
         final afterWidget = tester.widget(gameWidgetFinder);
-        final afterRegion = (afterWidget as dynamic).game.region as RegionMapViewData;
-        final afterPresence = afterRegion.provinceUnitPresenceByProvinceId[fullProvinceId];
+        final afterRegion =
+            (afterWidget as dynamic).game.region as RegionMapViewData;
+        final afterPresence =
+            afterRegion.provinceUnitPresenceByProvinceId[fullProvinceId];
         expect(afterPresence, isNotNull);
         expect(afterPresence!.civilianCount, 1);
         expect(afterPresence.regimentCount, 1);
@@ -263,6 +386,36 @@ void main() {
     );
 
     testWidgets(
+      'required canonical and variant L2 overlay PNGs exist in bundle',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        const paths = [
+          'assets/images/terrain/tile_plains_grain.png',
+          'assets/images/terrain/tile_plains_meat.png',
+          'assets/images/terrain/tile_plains_horses.png',
+          'assets/images/terrain/tile_forest.png',
+          'assets/images/terrain/tile_forest_timber.png',
+          'assets/images/terrain/tile_hills.png',
+          'assets/images/terrain/tile_hills_mine.png',
+          'assets/images/terrain/tile_hills_wool.png',
+          'assets/images/terrain/tile_mountain.png',
+          'assets/images/terrain/tile_swamp.png',
+        ];
+
+        for (final path in paths) {
+          final data = await rootBundle.load(path);
+          expect(
+            data.lengthInBytes,
+            greaterThan(0),
+            reason: 'Asset $path is empty',
+          );
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
       'loads required Wang tilesets before rendering map',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
@@ -279,6 +432,92 @@ void main() {
         await tester.pump();
 
         expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'canonical L2 default overlays are findable by terrain type',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+        });
+
+        expect(
+          terrainTilesetCache.getStandaloneTile(TerrainType.forest),
+          isNotNull,
+        );
+        expect(
+          terrainTilesetCache.getStandaloneTile(TerrainType.hills),
+          isNotNull,
+        );
+        expect(
+          terrainTilesetCache.getStandaloneTile(TerrainType.mountain),
+          isNotNull,
+        );
+        expect(
+          terrainTilesetCache.getStandaloneTile(TerrainType.swamp),
+          isNotNull,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'terrain situations resolve to findable canonical defaults',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+        });
+
+        final keys = <String>[
+          // Plains variants for supported plains resources.
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'grain',
+          )!,
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'meat',
+          )!,
+          terrainVariantTileKey(
+            terrain: TerrainType.plains,
+            resourceId: 'horses',
+          )!,
+          // Forest: non-timber should keep canonical default.
+          featureOverlayTileKey(
+            terrain: TerrainType.forest,
+            resourceId: 'furs',
+          ),
+          featureOverlayTileKey(terrain: TerrainType.forest, resourceId: null),
+          // Hills: non-mine and non-wool should keep canonical default.
+          featureOverlayTileKey(
+            terrain: TerrainType.hills,
+            resourceId: 'iron',
+            improvementLevel: 0,
+          ),
+          featureOverlayTileKey(
+            terrain: TerrainType.hills,
+            resourceId: null,
+            improvementLevel: 0,
+          ),
+          // Mountain/swamp always canonical defaults.
+          featureOverlayTileKey(
+            terrain: TerrainType.mountain,
+            resourceId: 'gold',
+          ),
+          featureOverlayTileKey(terrain: TerrainType.swamp, resourceId: 'tin'),
+        ];
+
+        for (final key in keys) {
+          expect(
+            terrainTilesetCache.getStandaloneTileByKey(key),
+            isNotNull,
+            reason: 'Overlay key $key should be available in cache',
+          );
+        }
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
@@ -718,6 +957,153 @@ void main() {
         expect(parts[1], selectedId!.split('|').last);
         expect(int.tryParse(parts[2]), isNotNull);
         expect(int.tryParse(parts[3]), isNotNull);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'tap on civilian marker tile invokes civilian callback and suppresses detail tap callback',
+      (WidgetTester tester) async {
+        final base = ctRegionMapTestOldWorldRegion();
+        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
+        const markerTileKey = 'oldWorld|pMarker|0|0';
+        final region = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 1,
+          height: 1,
+          cellSize: 24,
+          cells: [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'pMarker',
+              isSea: false,
+              terrainTypeId: landTemplate.terrainTypeId,
+              terrainType: landTemplate.terrainType,
+              ownerFactionId: landTemplate.ownerFactionId,
+              provinceDisplayName: 'Marker Province',
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          townMarkers: const [],
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+          unitMarkers: const [],
+          civilianTileMarkers: [
+            CivilianTileMarkerView(
+              tileKey: markerTileKey,
+              x: 0,
+              y: 0,
+              localProvinceId: 'pMarker',
+              unitIds: const ['u_builder'],
+              unitTypes: const {'u_builder': 'Builder'},
+              representativeUnitType: 'Builder',
+              stackCount: 1,
+            ),
+          ],
+          warpMarkers: const [],
+        );
+        String? tappedCivilianTileKey;
+        String? detailTileKey;
+        String? selectedProvinceId;
+
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            width: 64,
+            height: 64,
+            cellSizePx: 32,
+            onCivilianTileTapped: (tileKey) => tappedCivilianTileKey = tileKey,
+            onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
+            onProvinceSelected: (id) => selectedProvinceId = id,
+          ),
+        );
+        await tester.pump();
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+        await tester.tap(mapFinder);
+        await tester.pump();
+
+        expect(tappedCivilianTileKey, equals(markerTileKey));
+        expect(detailTileKey, isNull);
+        expect(selectedProvinceId, isNull);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'tapping non-civilian tile clears civilian selection and still opens tile detail',
+      (WidgetTester tester) async {
+        final base = ctRegionMapTestOldWorldRegion();
+        final selectedMarkerCell = base.cells.firstWhere((c) => !c.isSea);
+        final otherCell = base.cells.firstWhere(
+          (c) =>
+              !c.isSea &&
+              (c.x != selectedMarkerCell.x || c.y != selectedMarkerCell.y),
+        );
+        final selectedMarkerTileKey =
+            '${base.regionId}|${selectedMarkerCell.regionCellId}|${selectedMarkerCell.x}|${selectedMarkerCell.y}';
+        final region = RegionMapViewData(
+          regionId: base.regionId,
+          width: base.width,
+          height: base.height,
+          cellSize: base.cellSize,
+          cells: base.cells,
+          capitalMarkers: base.capitalMarkers,
+          portMarkers: base.portMarkers,
+          townMarkers: base.townMarkers,
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+          unitMarkers: base.unitMarkers,
+          civilianTileMarkers: [
+            CivilianTileMarkerView(
+              tileKey: selectedMarkerTileKey,
+              x: selectedMarkerCell.x,
+              y: selectedMarkerCell.y,
+              localProvinceId: selectedMarkerCell.regionCellId,
+              unitIds: const ['u_builder'],
+              unitTypes: const {'u_builder': 'Builder'},
+              representativeUnitType: 'Builder',
+              stackCount: 1,
+            ),
+          ],
+          warpMarkers: base.warpMarkers,
+          provinceUnitPresenceByProvinceId:
+              base.provinceUnitPresenceByProvinceId,
+          provincePoliticalOwnerByPrefixedProvinceId:
+              base.provincePoliticalOwnerByPrefixedProvinceId,
+        );
+        var clearCount = 0;
+        String? detailTileKey;
+
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            cellSizePx: region.cellSize.toDouble(),
+            selectedCivilianTileKey: selectedMarkerTileKey,
+            onCivilianTileSelectionCleared: () => clearCount++,
+            onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        final topLeft = tester.getTopLeft(mapFinder);
+        final tapOffset =
+            topLeft +
+            Offset(
+              (otherCell.x + 0.5) * region.cellSize.toDouble(),
+              (otherCell.y + 0.5) * region.cellSize.toDouble(),
+            );
+        await tester.tapAt(tapOffset);
+        await tester.pump();
+
+        expect(clearCount, equals(1));
+        expect(detailTileKey, isNotNull);
+        expect(detailTileKey, isNot(equals(selectedMarkerTileKey)));
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );

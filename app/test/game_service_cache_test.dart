@@ -10,6 +10,16 @@ import 'package:hive/hive.dart';
 
 import 'package:colonizethis_app/core/services/game_service.dart';
 
+class _CountingGameSaveAdapter extends GameSaveAdapter {
+  int loadCallCount = 0;
+
+  @override
+  Game? load(Box<dynamic> box, String gameId) {
+    loadCallCount++;
+    return super.load(box, gameId);
+  }
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -80,6 +90,37 @@ void main() {
         final freshForLoad = GameService(box, GameSaveAdapter());
         final loaded = freshForLoad.loadGame(gameId);
         expect(loaded, isNotNull);
+      },
+    );
+
+    test(
+      'getMapData does not call GameSaveAdapter.load when map cache already warm',
+      () {
+        const gameId = 'counting_loads';
+        final config = GameSetupConfig(
+          selectedGreatPowerIds: ['england'],
+          continentCount: 1,
+          minorNationCount: 0,
+          tribeCount: 1,
+          numProvincesOldWorld: 3,
+          numProvincesNewWorld: 2,
+        );
+        final adapter = _CountingGameSaveAdapter();
+        final writer = GameService(box, adapter);
+        writer.createNewGame(id: gameId, config: config);
+        expect(adapter.loadCallCount, 0);
+
+        writer.getMapData(gameId);
+        expect(adapter.loadCallCount, 0);
+        writer.getMapData(gameId);
+        expect(adapter.loadCallCount, 0);
+
+        final readerAdapter = _CountingGameSaveAdapter();
+        final reader = GameService(box, readerAdapter);
+        reader.getMapData(gameId);
+        expect(readerAdapter.loadCallCount, 1);
+        reader.getMapData(gameId);
+        expect(readerAdapter.loadCallCount, 1);
       },
     );
 

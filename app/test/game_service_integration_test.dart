@@ -4,7 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
+import 'package:colonizethis_save/colonizethis_save.dart'
+    show GameSaveAdapter, kAutoSaveSlotId;
 import 'package:hive/hive.dart';
 
 import 'package:colonizethis_app/core/services/game_service.dart';
@@ -120,6 +121,49 @@ void main() {
       expect(asyncGame.worldState.oldWorld, syncGame.worldState.oldWorld);
       expect(asyncGame.worldState.newWorld, syncGame.worldState.newWorld);
       expect(asyncGame.players.length, syncGame.players.length);
+    });
+
+    test('createNewGame mirrors auto-save; loadAutoSaveGame round-trip', () {
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england'],
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 3,
+        numProvincesNewWorld: 2,
+      );
+      final game = service.createNewGame(id: 'g_autosave', config: config);
+      expect(service.hasValidAutoSave(), isTrue);
+      expect(service.listGameIds(), contains('g_autosave'));
+      expect(service.listGameIds(), isNot(contains(kAutoSaveSlotId)));
+
+      final fromSlot = service.loadAutoSaveGame();
+      expect(fromSlot, isNotNull);
+      expect(fromSlot!.id, game.id);
+      expect(
+        fromSlot.worldState.turnState.turnNumber,
+        game.worldState.turnState.turnNumber,
+      );
+    });
+
+    test('nextTurn updates mirrored auto-save', () {
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england'],
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 3,
+        numProvincesNewWorld: 2,
+      );
+      final game = service.createNewGame(id: 'g_autosave_turn', config: config);
+      final updated = service.nextTurn(game, orders: const Orders());
+      expect(service.hasValidAutoSave(), isTrue);
+      final fromSlot = service.loadAutoSaveGame();
+      expect(fromSlot, isNotNull);
+      expect(
+        fromSlot!.worldState.turnState.turnNumber,
+        updated.worldState.turnState.turnNumber,
+      );
     });
   });
 }

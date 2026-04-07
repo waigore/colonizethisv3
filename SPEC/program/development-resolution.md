@@ -11,6 +11,7 @@
 - Each **civilian unit** that is working has:
   - `status`: `idle | working` only (on completion, status is set to idle).
   - `currentWork` (optional): `(target: WorkTarget, tileKey, totalTurns, remainingTurns)`.
+  - assignment placement tracking: optional `originTileKey` and `assignedTileKey`.
 - `WorkTarget` values and allowed unit types/tiles are defined in [orders.md](orders.md) (`explore`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, `build_rail`, `steal_tech`, `counter_spy`, `purchase_land`). **Builder upgrade_town tech gate (MVP):** The requirement for `national_bureaucracy` in `techUnlocked` for Builder `upgrade_town` work is **deferred** in MVP; currently all Builders may submit and complete `upgrade_town`. When enforced, validation will require `techUnlocked['national_bureaucracy']` per [tech-tree-diplomacy-civilian.md](../game/tech-tree-diplomacy-civilian.md).
 - Costs (lumber, castIron, bronze, steel, etc.) and max levels come from program-level config in `colonizethis_data`, mirroring Imperialism II tables.
 - **Per-player tile exclusivity:** For each **player** and **tile** (`tileKey`), at most one Builder/Engineer/Merchant work stream may target that tile at any time. The development resolver assumes the order engine has already enforced that no two Builder/Engineer/Merchant units owned by the same player have `currentWork.tileKey` equal to the same value.
@@ -30,6 +31,7 @@
     - **Deduct materials when work is assigned** (during Build/Work phase application of WorkOrder; atomic per action; no refund if later cancelled).
     - Enforce **per-player tile exclusivity** for development and purchase work: if another Builder, Engineer, or Merchant unit owned by the same player already has `currentWork` targeting that `targetTileKey`, the new work order must have been rejected earlier and is not applied here.
     - Set unit `status = working`, `currentWork = (target, targetTileKey, totalTurns, remainingTurns = totalTurns)`, and **unit.tileKey = targetTileKey** (civilian unit is considered on the target tile for the turn).
+    - Persist assignment placement: set `originTileKey` to the unit tile before assignment and set `assignedTileKey = targetTileKey`.
   - Durations are code-defined in `totalTurnsForWork` (and the `explore` formula where applicable); `build_fort` scales with current fort level (e.g. longer builds for higher fort levels).
 
 ---
@@ -52,6 +54,8 @@ During the **Build / Work** phase (see [turn-resolution-phases.md](turn-resoluti
    - `counter_spy`: ongoing; each turn, in that province, probability to kill one enemy Spy = min(30%, 5% × number of friendly Spies with counter_spy there); resolve kills then continue (no completion).
    - `purchase_land`: applied when order is accepted (single-turn): deduct treasury (15 × resource base price), record purchased tile for the GP; extraction/connectivity treat that tile as GP-owned for extraction.
 3. After applying effects (or when work is cancelled), set unit `status = idle` and clear `currentWork`.
+   - On completion: clear `originTileKey` and `assignedTileKey`; keep `tileKey` at the resolved target tile.
+   - On cancellation: restore `tileKey` from `originTileKey`, then clear `originTileKey` and `assignedTileKey`.
 
 Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md); they share the same `status` and `currentWork` shape but operate on visibility and prospected state instead of terrain.
 
@@ -59,7 +63,7 @@ Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-
 
 ### Player-initiated cancel of in-progress work
 
-- The player may request to **cancel** a civilian unit's **in-progress** work (unit has `status == working` and `currentWork != null`). On confirm, the system produces a game state in which that unit has `currentWork` cleared and `status = idle`. **Materials are not refunded.**
+- The player may request to **cancel** a civilian unit's **in-progress** work (unit has `status == working` and `currentWork != null`). On confirm, the system produces a game state in which that unit has `currentWork` cleared, `status = idle`, and `tileKey` restored from `originTileKey`; the system then clears `originTileKey` and `assignedTileKey`. **Materials are not refunded.**
 - **Implementation:** Either (a) a **cancel-work order** (e.g. unit id) applied at the **start** of the Build/Work phase (before processing work and new WorkOrders), or (b) a **direct game-state update** (e.g. game service method that returns an updated `Game` with that unit's work cleared). TDD and [order-engine.md](order-engine.md) / [orders.md](orders.md) specify which. Pending work orders for the same unit are cancelled by removing them from the current turn's orders (order engine `removeWorkOrder`); no separate spec for that.
 
 ---
@@ -104,7 +108,7 @@ Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-
 
 - **Player-initiated cancel:** Given a unit with in-progress work  
   When the player confirms cancel  
-  Then the system clears that unit's `currentWork`, sets `status = idle`, and does not refund materials; pending work orders for that unit are removed from the current turn's orders. Implementation may use a cancel-work order at the start of Build/Work phase or a direct game-state update per TDD.
+  Then the system clears that unit's `currentWork`, sets `status = idle`, restores `tileKey` from `originTileKey`, clears `originTileKey` and `assignedTileKey`, and does not refund materials; pending work orders for that unit are removed from the current turn's orders. Implementation may use a cancel-work order at the start of Build/Work phase or a direct game-state update per TDD.
 
 - **build_port:** Given `build_port` work completes  
   When topology is `null`  

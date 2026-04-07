@@ -131,7 +131,7 @@ Game applyNavalMissionOrders(
             targetProvinceId != null &&
                 targetProvinceId.isNotEmpty &&
                 ProvinceId.isPrefixed(targetProvinceId)
-            ? tryGetProvince(game.worldState, targetProvinceId)
+            ? game.worldState.tryGetProvince(targetProvinceId)
             : null;
         final ownerId = province?.ownerId;
         final atWar =
@@ -172,7 +172,7 @@ Game applyNavalMissionOrders(
     final targetProvinceId = f.targetProvinceId;
     if (targetProvinceId == null || targetProvinceId.isEmpty) continue;
     final province = ProvinceId.isPrefixed(targetProvinceId)
-        ? tryGetProvince(game.worldState, targetProvinceId)
+        ? game.worldState.tryGetProvince(targetProvinceId)
         : null;
     final ownerId = province?.ownerId;
     final atWar =
@@ -218,7 +218,7 @@ Game applyNavalMovesAndShipReveal(
         final portProvinceId = order.destinationPortProvinceId!;
         if (!fleet.isAtSea || fleet.seaZoneId == null) continue;
         final fullProvinceId = toFullProvinceId(fleet.regionId, portProvinceId);
-        final province = tryGetProvince(game.worldState, fullProvinceId);
+        final province = game.worldState.tryGetProvince(fullProvinceId);
         if (province == null || province.ownerId != playerId) continue;
         final adjacentSeaZones = seaZoneIdsAdjacentToProvince(
           topology,

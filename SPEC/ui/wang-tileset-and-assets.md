@@ -47,12 +47,15 @@ Base tiles are chained across tilesets to ensure consistent appearance.
 
 | Tile ID | Description | Status |
 |---------|-------------|--------|
-| `tile_forest_standalone` | Dense forest with trees overlay | ✅ Generated |
-| `tile_hills_standalone` | Rolling hills overlay | ✅ Generated |
-| `tile_mountain_standalone` | Rocky mountain overlay | ✅ Generated |
-| `tile_swamp_standalone` | Murky swamp overlay | ✅ Generated |
+| `tile_forest` | Dense forest default overlay | ✅ Generated (from forest v2 art) |
+| `tile_forest_timber` | Forest overlay for timber tiles | ✅ Generated |
+| `tile_hills` | Rolling hills default overlay | ✅ Generated (from hills v2 art) |
+| `tile_hills_mine` | Hills overlay for mine-case tiles | ✅ Generated |
+| `tile_hills_wool` | Hills overlay for wool tiles | ✅ Generated |
+| `tile_mountain` | Rocky mountain default overlay | ✅ Generated (from mountain v2 art) |
+| `tile_swamp` | Murky swamp default overlay | ✅ Generated |
 
-**Note:** Desert is now a L1 terrain (not L2), so `tile_desert_standalone` is deprecated.
+**Note:** Desert is now a L1 terrain (not L2), so no desert L2 standalone overlay asset is used.
 
 ---
 

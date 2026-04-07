@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart' show CellViewData;
 
 void main() {
   suppressLogsForTests();
@@ -32,6 +33,201 @@ void main() {
 
     test('swamp is layer2Features', () {
       expect(terrainLayer(TerrainType.swamp), TerrainLayer.layer2Features);
+    });
+  });
+
+  group('featureOverlayTileKey', () {
+    test('forest uses timber variant only for timber resource', () {
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.forest,
+          resourceId: 'timber',
+        ),
+        'tile_forest_timber',
+      );
+      expect(
+        featureOverlayTileKey(terrain: TerrainType.forest, resourceId: 'furs'),
+        'tile_forest',
+      );
+      expect(featureOverlayTileKey(terrain: TerrainType.forest), 'tile_forest');
+    });
+
+    test('hills uses mine variant only for improved mineral resources', () {
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.hills,
+          resourceId: 'iron',
+          improvementLevel: 1,
+        ),
+        'tile_hills_mine',
+      );
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.hills,
+          resourceId: 'silver',
+          improvementLevel: 2,
+        ),
+        'tile_hills_mine',
+      );
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.hills,
+          resourceId: 'iron',
+          improvementLevel: 0,
+        ),
+        'tile_hills',
+      );
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.hills,
+          resourceId: 'wool',
+          improvementLevel: 2,
+        ),
+        'tile_hills_wool',
+      );
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.hills,
+          resourceId: null,
+          improvementLevel: 0,
+        ),
+        'tile_hills',
+      );
+    });
+
+    test('mountain and swamp always use canonical defaults', () {
+      expect(
+        featureOverlayTileKey(
+          terrain: TerrainType.mountain,
+          resourceId: 'gold',
+        ),
+        'tile_mountain',
+      );
+      expect(
+        featureOverlayTileKey(terrain: TerrainType.swamp, resourceId: 'tin'),
+        'tile_swamp',
+      );
+    });
+
+    test('throws for non-feature terrains', () {
+      expect(
+        () => featureOverlayTileKey(
+          terrain: TerrainType.plains,
+          resourceId: 'grain',
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        () => featureOverlayTileKey(
+          terrain: TerrainType.desert,
+          resourceId: 'diamonds',
+        ),
+        throwsArgumentError,
+      );
+    });
+  });
+
+  group('terrainVariantTileKey', () {
+    test('plains selects resource variants for grain, meat, horses', () {
+      expect(
+        terrainVariantTileKey(terrain: TerrainType.plains, resourceId: 'grain'),
+        'tile_plains_grain',
+      );
+      expect(
+        terrainVariantTileKey(terrain: TerrainType.plains, resourceId: 'meat'),
+        'tile_plains_meat',
+      );
+      expect(
+        terrainVariantTileKey(
+          terrain: TerrainType.plains,
+          resourceId: 'horses',
+        ),
+        'tile_plains_horses',
+      );
+    });
+
+    test('plains returns null for other resources and no resource', () {
+      expect(
+        terrainVariantTileKey(
+          terrain: TerrainType.plains,
+          resourceId: 'sugarCane',
+        ),
+        isNull,
+      );
+      expect(terrainVariantTileKey(terrain: TerrainType.plains), isNull);
+    });
+
+    test('desert never selects plains variants', () {
+      expect(
+        terrainVariantTileKey(terrain: TerrainType.desert, resourceId: 'grain'),
+        isNull,
+      );
+      expect(
+        terrainVariantTileKey(
+          terrain: TerrainType.desert,
+          resourceId: 'diamonds',
+        ),
+        isNull,
+      );
+    });
+  });
+
+  group('landInteriorPlainsVariantTileKey', () {
+    CellViewData landPlains({
+      String? resourceId,
+      TerrainType? terrainType,
+    }) =>
+        CellViewData(
+          x: 0,
+          y: 0,
+          regionCellId: 'p0',
+          isSea: false,
+          terrainType: terrainType ?? TerrainType.plains,
+          resourceId: resourceId,
+        );
+
+    test('returns variant keys only for plains with grain, meat, horses', () {
+      expect(
+        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'grain')),
+        'tile_plains_grain',
+      );
+      expect(
+        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'meat')),
+        'tile_plains_meat',
+      );
+      expect(
+        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'horses')),
+        'tile_plains_horses',
+      );
+    });
+
+    test('returns null for plains without mapped resource', () {
+      expect(
+        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'sugarCane')),
+        isNull,
+      );
+      expect(landInteriorPlainsVariantTileKey(landPlains()), isNull);
+    });
+
+    test('returns null for desert even if resource would map on plains', () {
+      expect(
+        landInteriorPlainsVariantTileKey(
+          landPlains(
+            terrainType: TerrainType.desert,
+            resourceId: 'grain',
+          ),
+        ),
+        isNull,
+      );
+    });
+
+    test('returns null for feature terrain with grain (not L1 plains)', () {
+      expect(
+        landInteriorPlainsVariantTileKey(
+          landPlains(terrainType: TerrainType.forest, resourceId: 'grain'),
+        ),
+        isNull,
+      );
     });
   });
 
@@ -204,15 +400,14 @@ void main() {
     });
 
     test(
-      'load() sets isLoaded to false when standalone tile fails to load (no silent fallback)',
+      'fresh cache load() completes and exposes required plains standalone tiles',
       () async {
         final cache = TerrainTilesetCache();
         await cache.load();
-        // After load, isLoaded reflects whether all assets loaded successfully.
-        // If any standalone tile failed to load, isLoaded will be false.
-        // Note: The global terrainTilesetCache uses real asset paths, so this
-        // test verifies the behavior when loading fails - the cache does NOT
-        // silently swallow errors but propagates them, resulting in isLoaded=false.
+        expect(cache.isLoaded, isTrue);
+        expect(cache.getStandaloneTileByKey('tile_plains_grain'), isNotNull);
+        expect(cache.getStandaloneTileByKey('tile_plains_meat'), isNotNull);
+        expect(cache.getStandaloneTileByKey('tile_plains_horses'), isNotNull);
       },
     );
   });

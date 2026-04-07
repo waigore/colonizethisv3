@@ -4,6 +4,7 @@ import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
+import 'package:ctterm/screens/input_mode.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -40,8 +41,8 @@ class _UnitsScreenState extends State<UnitsScreen> {
   /// Currently selected unit index in the list.
   int _selectedIndex = 0;
   
-  /// Current input mode: none, moveTarget, attackTarget.
-  String _inputMode = 'none';
+  /// Current input mode.
+  InputMode _inputMode = InputMode.none;
   
   /// Feedback message to display (e.g., order accepted/rejected).
   String _feedbackMessage = '';
@@ -140,9 +141,9 @@ class _UnitsScreenState extends State<UnitsScreen> {
 
     // Escape: back to shell or cancel input mode
     if (key == LogicalKey.escape) {
-      if (_inputMode != 'none') {
+      if (_inputMode != InputMode.none) {
         setState(() {
-          _inputMode = 'none';
+          _inputMode = InputMode.none;
           _feedbackMessage = '';
         });
         _log.d('cancelled input mode');
@@ -153,7 +154,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
     }
 
     // Navigation in input modes
-    if (_inputMode == 'moveTarget' || _inputMode == 'attackTarget') {
+    if (_inputMode == InputMode.moveTarget || _inputMode == InputMode.attackTarget) {
       if (key == LogicalKey.arrowUp || c == 'k') {
         _selectAdjacentProvince(-1);
         return true;
@@ -168,7 +169,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
       }
       if (c == 'n') {
         setState(() {
-          _inputMode = 'none';
+          _inputMode = InputMode.none;
           _feedbackMessage = 'Cancelled';
         });
         return true;
@@ -294,7 +295,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
 
   /// Get the list of adjacent provinces based on current input mode.
   List<String> _getAdjacentProvincesForMode(Unit unit) {
-    if (_inputMode == 'attackTarget') {
+    if (_inputMode == InputMode.attackTarget) {
       return _getAdjacentEnemyProvinces(unit);
     }
     return _getAdjacentProvinces(unit);
@@ -318,14 +319,14 @@ class _UnitsScreenState extends State<UnitsScreen> {
     
     final targetProvince = adj[_selectedAdjacentIndex];
     
-    if (_inputMode == 'moveTarget') {
+    if (_inputMode == InputMode.moveTarget) {
       _issueMoveOrder(unit, targetProvince);
-    } else if (_inputMode == 'attackTarget') {
+    } else if (_inputMode == InputMode.attackTarget) {
       _issueAttackOrder(unit, targetProvince);
     }
     
     setState(() {
-      _inputMode = 'none';
+      _inputMode = InputMode.none;
     });
   }
 
@@ -339,7 +340,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
       return;
     }
     setState(() {
-      _inputMode = 'moveTarget';
+      _inputMode = InputMode.moveTarget;
       _selectedAdjacentIndex = 0;
       _feedbackMessage = 'Move to province:';
       _feedbackColor = Colors.yellow;
@@ -366,7 +367,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
       return;
     }
     setState(() {
-      _inputMode = 'attackTarget';
+      _inputMode = InputMode.attackTarget;
       _selectedAdjacentIndex = 0;
       _feedbackMessage = 'Select enemy province to attack:';
       _feedbackColor = Colors.yellow;
@@ -671,7 +672,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
   }
 
   Component _buildCommandBar(List<Unit> units, Unit? selectedUnit) {
-    final isInputMode = _inputMode != 'none';
+    final isInputMode = _inputMode != InputMode.none;
     final canAttack = selectedUnit != null && canUnitInitiateCombat(selectedUnit.type);
     
     return Container(

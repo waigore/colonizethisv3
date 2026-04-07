@@ -1,0 +1,724 @@
+part of 'order_suggestion.dart';
+
+/// Suggests naval move orders for fleets owned by [view.playerId]. SPEC/program/naval-movement-resolution.md.
+List<NavalMoveOrder> suggestNavalMoveOrders(
+  PlayerView view,
+  Game game,
+  MapTopology topology,
+  Orders currentOrders,
+) {
+  _log.d('suggestNavalMoveOrders player=${view.playerId}');
+  final playerId = view.playerId;
+  final suggestions = <NavalMoveOrder>[];
+  final existingByFleet = <String, Set<String>>{};
+  for (final o
+      in currentOrders.navalMoveOrdersByPlayerId[playerId] ?? const []) {
+    final key = o.isDock
+        ? 'port:${o.destinationPortProvinceId}'
+        : (o.destinationSeaZoneId ?? '');
+    if (key.isNotEmpty) {
+      existingByFleet.putIfAbsent(o.fleetId, () => <String>{}).add(key);
+    }
+  }
+
+  final homeFleetId = homeFleetIdFor(playerId);
+  for (final fleet in game.worldState.fleets) {
+    if (fleet.ownerId != playerId || fleet.id == homeFleetId) continue;
+    if (fleet.isAtSea) {
+      final cur = fleet.seaZoneId;
+      if (cur == null) continue;
+
+      // Suggest S–S moves only (direct sea-zone edges).
+      for (final node in topology.nodes) {
+        if (node.type != TopologyNodeType.seaZone) continue;
+        final destId = node.id;
+        if (cur != destId && !isAdjacentSeaSeaZone(topology, cur, destId)) {
+          continue;
+        }
+        if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
+        final candidate = NavalMoveOrder(
+          fleetId: fleet.id,
+          destinationSeaZoneId: destId,
+        );
+        if (_isNavalMoveOrderAccepted(
+          game,
+          topology,
+          playerId,
+          currentOrders,
+          candidate,
+        )) {
+          suggestions.add(candidate);
+        }
+      }
+
+      // Suggest dock at adjacent owned provinces (S–P). SPEC/game/ships-and-naval.md.
+      final zoneRegionId = regionIdForSeaZone(topology, cur);
+      if (zoneRegionId != null) {
+        final adjacentLocalIds = provinceIdsAdjacentToSeaZone(
+          topology,
+          cur,
+          regionId: zoneRegionId,
+        );
+        for (final localId in adjacentLocalIds) {
+          final fullProvinceId = ProvinceId.isPrefixed(localId)
+              ? localId
+              : ProvinceId.full(zoneRegionId, localId);
+          if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ??
+              false)
+            continue;
+          final province = game.worldState.tryGetProvince(fullProvinceId);
+          if (province?.ownerId != playerId) continue;
+          final candidate = NavalMoveOrder(
+            fleetId: fleet.id,
+            destinationPortProvinceId: fullProvinceId,
+          );
+          if (_isNavalMoveOrderAccepted(
+            game,
+            topology,
+            playerId,
+            currentOrders,
+            candidate,
+          )) {
+            suggestions.add(candidate);
+          }
+        }
+      }
+    } else {
+      final inPortProvinceId = fleet.inPortAtProvinceId;
+      if (inPortProvinceId == null) continue;
+      final rl = regionAndLocalProvinceForFleetInPort(
+        inPortProvinceId,
+        fleet.regionId,
+      );
+      final pNode = provinceTopologyNodeId(topology, rl.localId, rl.regionId);
+      if (pNode == null) continue;
+      for (final destId in seaZonesAdjacentToProvince(topology, pNode)) {
+        if (existingByFleet[fleet.id]?.contains(destId) ?? false) continue;
+        final candidate = NavalMoveOrder(
+          fleetId: fleet.id,
+          destinationSeaZoneId: destId,
+        );
+        if (_isNavalMoveOrderAccepted(
+          game,
+          topology,
+          playerId,
+          currentOrders,
+          candidate,
+        )) {
+          suggestions.add(candidate);
+        }
+      }
+    }
+  }
+
+  suggestions.sort((a, b) {
+    final c = a.fleetId.compareTo(b.fleetId);
+    if (c != 0) return c;
+    final keyA = a.isDock
+        ? 'port:${a.destinationPortProvinceId}'
+        : (a.destinationSeaZoneId ?? '');
+    final keyB = b.isDock
+        ? 'port:${b.destinationPortProvinceId}'
+        : (b.destinationSeaZoneId ?? '');
+    return keyA.compareTo(keyB);
+  });
+  _log.d(
+    'suggestNavalMoveOrders player=$playerId candidates=${suggestions.length}',
+  );
+  _log.d(
+    'suggestNavalMoveOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} destSea=${o.destinationSeaZoneId} destPort=${o.destinationPortProvinceId}").join(", ")}',
+  );
+  return suggestions;
+}
+
+/// Suggests naval mission orders for fleets owned by [view.playerId]. Phase 6.
+List<NavalMissionOrder> suggestNavalMissionOrders(
+  PlayerView view,
+  Game game,
+  MapTopology topology,
+  Orders currentOrders,
+) {
+  _log.d('suggestNavalMissionOrders player=${view.playerId}');
+  final playerId = view.playerId;
+  final suggestions = <NavalMissionOrder>[];
+  final existingByFleet = <String>{};
+  for (final o
+      in currentOrders.navalMissionOrdersByPlayerId[playerId] ?? const []) {
+    existingByFleet.add(o.fleetId);
+  }
+
+  for (final fleet in game.worldState.fleets) {
+    if (fleet.ownerId != playerId) continue;
+    if (existingByFleet.contains(fleet.id)) continue;
+    for (final mission in FleetMission.values) {
+      final candidate = NavalMissionOrder(
+        fleetId: fleet.id,
+        mission: mission.name,
+      );
+      if (_isNavalMissionOrderAccepted(
+        game,
+        topology,
+        playerId,
+        currentOrders,
+        candidate,
+      )) {
+        suggestions.add(candidate);
+      }
+    }
+  }
+
+  suggestions.sort((a, b) {
+    final c = a.fleetId.compareTo(b.fleetId);
+    if (c != 0) return c;
+    return a.mission.compareTo(b.mission);
+  });
+  _log.d(
+    'suggestNavalMissionOrders player=$playerId candidates=${suggestions.length}',
+  );
+  _log.d(
+    'suggestNavalMissionOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} mission=${o.mission}").join(", ")}',
+  );
+  return suggestions;
+}
+
+bool _isNavalMoveOrderAccepted(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  Orders baseOrders,
+  NavalMoveOrder candidate,
+) {
+  final engine = OrderEngine(initialOrders: baseOrders);
+  final result = engine.addNavalMoveOrderWithContext(
+    game,
+    topology,
+    playerId,
+    candidate,
+  );
+  return result.isAccepted;
+}
+
+bool _isNavalMissionOrderAccepted(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  Orders baseOrders,
+  NavalMissionOrder candidate,
+) {
+  final engine = OrderEngine(initialOrders: baseOrders);
+  final result = engine.addNavalMissionOrderWithContext(
+    game,
+    topology,
+    playerId,
+    candidate,
+  );
+  return result.isAccepted;
+}
+
+bool _isDiplomaticOrderAccepted(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  Orders baseOrders,
+  DiplomaticOrder candidate, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  final engine = OrderEngine(initialOrders: baseOrders);
+  final result = engine.addDiplomaticOrderWithContext(
+    game,
+    topology,
+    playerId,
+    candidate,
+    tileMapByRegion: tileMapByRegion,
+  );
+  return result.isAccepted;
+}
+
+/// Trial append for suggestion enumeration. SPEC/program/order-suggestions.md.
+Orders _appendDiplomaticOrderForTrial(
+  Orders orders,
+  String playerId,
+  DiplomaticOrder order,
+) {
+  final prev =
+      orders.diplomaticOrdersByPlayerId[playerId] ?? const <DiplomaticOrder>[];
+  return orders.copyWith(
+    diplomaticOrdersByPlayerId: {
+      ...orders.diplomaticOrdersByPlayerId,
+      playerId: [...prev, order],
+    },
+  );
+}
+
+/// Next overture stage for suggestion (none→tradeConsulate→embassy→nap→joinEmpire).
+OvertureStage? _nextOvertureStage(OvertureStage current) {
+  switch (current) {
+    case OvertureStage.none:
+      return OvertureStage.tradeConsulate;
+    case OvertureStage.tradeConsulate:
+      return OvertureStage.embassy;
+    case OvertureStage.embassy:
+      return OvertureStage.nap;
+    case OvertureStage.nap:
+      return OvertureStage.joinEmpire;
+    case OvertureStage.joinEmpire:
+      return null;
+  }
+}
+
+/// Per-target suggestion order: first candidate that passes the order engine wins.
+/// SPEC/program/order-suggestions.md § Diplomatic orders.
+List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
+  required Game game,
+  required String playerId,
+  required Player player,
+  required String targetId,
+  required Set<String> knownTargetIds,
+  required Set<String> knownFactionIds,
+}) {
+  final treasury = player.treasury;
+  final out = <DiplomaticOrder>[];
+  if (targetId == playerId) return out;
+
+  final rel = getRelation(game, playerId, targetId);
+  final atWar = rel?.atWar ?? false;
+  final atPeace = rel == null || rel.atPeace;
+  final isGpTarget = game.players.any((p) => p.id == targetId);
+  final isMinorOrTribe =
+      game.minorNations.any((m) => m.id == targetId) ||
+      game.tribes.any((t) => t.id == targetId);
+
+  if (knownTargetIds.contains(targetId) && atWar) {
+    out.add(
+      DiplomaticOrder(
+        type: DiplomaticOrderType.offerPeace,
+        targetFactionId: targetId,
+      ),
+    );
+  }
+  if (isGpTarget &&
+      rel != null &&
+      rel.atPeace &&
+      rel.level != RelationLevel.allied) {
+    out.add(
+      DiplomaticOrder(
+        type: DiplomaticOrderType.alliance,
+        targetFactionId: targetId,
+      ),
+    );
+  }
+  if (isMinorOrTribe && knownFactionIds.contains(targetId)) {
+    final overtureOrder = _establishOvertureSuggestionOrder(
+      game: game,
+      playerId: playerId,
+      targetId: targetId,
+      treasury: treasury,
+    );
+    if (overtureOrder != null) out.add(overtureOrder);
+  }
+
+  OvertureState? overtureRow;
+  for (final o in game.overtureStates) {
+    if (o.gpId == playerId && o.targetId == targetId) {
+      overtureRow = o;
+      break;
+    }
+  }
+  if (overtureRow != null) {
+    if (overtureRow.hasEmbassy && treasury >= grantAidDefaultAmount) {
+      out.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.grantAid,
+          targetFactionId: targetId,
+          amount: grantAidDefaultAmount,
+        ),
+      );
+    }
+    if (overtureRow.hasConsulate && treasury >= setSubsidyDefaultAmount) {
+      out.add(
+        DiplomaticOrder(
+          type: DiplomaticOrderType.setSubsidy,
+          targetFactionId: targetId,
+          amount: setSubsidyDefaultAmount,
+        ),
+      );
+    }
+  }
+
+  if (knownTargetIds.contains(targetId) && atPeace) {
+    out.add(
+      DiplomaticOrder(
+        type: DiplomaticOrderType.declareWar,
+        targetFactionId: targetId,
+      ),
+    );
+  }
+
+  return out;
+}
+
+DiplomaticOrder? _establishOvertureSuggestionOrder({
+  required Game game,
+  required String playerId,
+  required String targetId,
+  required int treasury,
+}) {
+  final rel = getRelation(game, playerId, targetId);
+  final atWar = rel?.atWar ?? false;
+  if (atWar) return null;
+
+  final existing = getOverture(game, playerId, targetId);
+  final current = existing?.stage ?? OvertureStage.none;
+  final next = _nextOvertureStage(current);
+  if (next == null) return null;
+  if (next == OvertureStage.tradeConsulate || next == OvertureStage.embassy) {
+    final cost = next == OvertureStage.tradeConsulate
+        ? overtureConsulateCost
+        : overtureEmbassyCost;
+    if (treasury < cost) return null;
+  }
+  if (next == OvertureStage.tradeConsulate ||
+      next == OvertureStage.embassy ||
+      next == OvertureStage.nap) {
+    Player? submitter;
+    for (final p in game.players) {
+      if (p.id == playerId) {
+        submitter = p;
+        break;
+      }
+    }
+    if (submitter?.techUnlocked?[kTechIdDiplomaticExpertise] != true) {
+      return null;
+    }
+  }
+  if (next == OvertureStage.joinEmpire) {
+    final score = rel?.score ?? relationScoreNeutral;
+    if (score < relationScoreMinFriendly) return null;
+    final cost = joinEmpireCostForMinorOrTribe(game, targetId);
+    if (treasury < cost) return null;
+  }
+  return DiplomaticOrder(
+    type: DiplomaticOrderType.establishOverture,
+    targetFactionId: targetId,
+    overtureStage: next,
+  );
+}
+
+/// Suggests candidate diplomatic orders that are valid and visible for [view.playerId].
+/// SPEC/program/order-suggestions.md; SPEC/program/ai-systems-impl.md.
+List<DiplomaticOrder> suggestDiplomaticOrders(
+  PlayerView view,
+  Game game,
+  MapTopology topology,
+  Orders currentOrders, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  _log.d('suggestDiplomaticOrders player=${view.playerId}');
+  final playerId = view.playerId;
+  final suggestions = <DiplomaticOrder>[];
+  final player = view.player;
+
+  // Determine which factions are actually "known" to this player per SPEC:
+  // - Any faction with an existing DiplomacyRelation to the player.
+  // - Any faction that owns at least one province with a tile visible to the player.
+  // Self is never a diplomatic target.
+  final knownFactionIds = <String>{};
+
+  for (final rel in game.diplomacyRelations) {
+    if (rel.factionId1 == playerId) {
+      knownFactionIds.add(rel.factionId2);
+    } else if (rel.factionId2 == playerId) {
+      knownFactionIds.add(rel.factionId1);
+    }
+  }
+
+  for (final entry in view.visibilityByTile.entries) {
+    if (entry.value == VisibilityLevel.unknown) continue;
+    final parts = entry.key.split('|');
+    if (parts.length != 4) continue;
+    final regionId = parts[0];
+    final provinceLocalId = parts[1];
+    final provinceId = ProvinceId.full(regionId, provinceLocalId);
+    final province = view.provinceByRegionAndId(regionId, provinceId);
+    final ownerId = province?.ownerId;
+    if (ownerId != null && ownerId != playerId) {
+      knownFactionIds.add(ownerId);
+    }
+  }
+
+  final otherGps = game.players
+      .where((p) => p.id != playerId)
+      .map((p) => p.id)
+      .toSet();
+  final minorIds = game.minorNations.map((m) => m.id).toSet();
+  final tribeIds = game.tribes.map((t) => t.id).toSet();
+  final knownTargets = <String>{
+    ...otherGps.where(knownFactionIds.contains),
+    ...minorIds.where(knownFactionIds.contains),
+    ...tribeIds.where(knownFactionIds.contains),
+  };
+  final knownTargetIds = knownTargets.toSet();
+
+  final unionTargets = <String>{
+    ...knownTargets,
+    ...otherGps,
+    for (final o in game.overtureStates)
+      if (o.gpId == playerId) o.targetId,
+  };
+
+  final sortedTargetIds = unionTargets.toList()..sort();
+  var workingOrders = currentOrders;
+  for (final targetId in sortedTargetIds) {
+    if (targetId == playerId) continue;
+
+    final candidates = _diplomaticCandidatesForTargetOrdered(
+      game: game,
+      playerId: playerId,
+      player: player,
+      targetId: targetId,
+      knownTargetIds: knownTargetIds,
+      knownFactionIds: knownFactionIds,
+    );
+    var trialOrders = workingOrders;
+
+    for (final candidate in candidates) {
+      if (candidate.type == DiplomaticOrderType.grantAid ||
+          candidate.type == DiplomaticOrderType.setSubsidy) {
+        continue;
+      }
+      if (!_isDiplomaticOrderAccepted(
+        game,
+        topology,
+        playerId,
+        trialOrders,
+        candidate,
+        tileMapByRegion: tileMapByRegion,
+      )) {
+        continue;
+      }
+      suggestions.add(candidate);
+      trialOrders = _appendDiplomaticOrderForTrial(
+        trialOrders,
+        playerId,
+        candidate,
+      );
+      break;
+    }
+
+    for (final candidate in candidates) {
+      if (candidate.type != DiplomaticOrderType.grantAid &&
+          candidate.type != DiplomaticOrderType.setSubsidy) {
+        continue;
+      }
+      if (!_isDiplomaticOrderAccepted(
+        game,
+        topology,
+        playerId,
+        trialOrders,
+        candidate,
+        tileMapByRegion: tileMapByRegion,
+      )) {
+        continue;
+      }
+      suggestions.add(candidate);
+      trialOrders = _appendDiplomaticOrderForTrial(
+        trialOrders,
+        playerId,
+        candidate,
+      );
+    }
+
+    workingOrders = trialOrders;
+  }
+
+  suggestions.sort((a, b) {
+    final t = a.type.index.compareTo(b.type.index);
+    if (t != 0) return t;
+    final idCmp = a.targetFactionId.compareTo(b.targetFactionId);
+    if (idCmp != 0) return idCmp;
+    final stageCmp = (a.overtureStage?.index ?? -1).compareTo(
+      b.overtureStage?.index ?? -1,
+    );
+    if (stageCmp != 0) return stageCmp;
+    return (a.amount ?? 0).compareTo(b.amount ?? 0);
+  });
+  _log.d(
+    'suggestDiplomaticOrders player=$playerId candidates=${suggestions.length}',
+  );
+  _log.d(
+    'suggestDiplomaticOrders full list ${suggestions.map((o) => "${o.type.name}:${o.targetFactionId}").join(", ")}',
+  );
+  return suggestions;
+}
+
+/// Context for [_workTargetPrefilters] map dispatch (work-target tile pre-filter).
+class _WorkTilePrefilterCtx {
+  _WorkTilePrefilterCtx({
+    required this.game,
+    required this.playerId,
+    required this.tileKeysByRegion,
+    required this.resourceByTile,
+    required this.purchasedTiles,
+    required this.ownedProvinceIds,
+    required this.tileMapByRegion,
+    required this.result,
+  });
+
+  final Game game;
+  final String playerId;
+  final Map<String, Map<String, List<String>>> tileKeysByRegion;
+  final Map<String, String> resourceByTile;
+  final Map<String, String> purchasedTiles;
+  final Set<String> ownedProvinceIds;
+  final Map<String, TileMapResult>? tileMapByRegion;
+  final Set<String> result;
+}
+
+typedef _WorkTilePrefilterOp = void Function(_WorkTilePrefilterCtx c);
+
+void _prefilterWtBuildImprovement(_WorkTilePrefilterCtx c) {
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      final resourceId = c.resourceByTile[tileKey];
+      if (resourceId == null || resourceId.isEmpty) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtBuildRoad(_WorkTilePrefilterCtx c) {
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtBuildRail(_WorkTilePrefilterCtx c) {
+  final player = c.game.players.where((p) => p.id == c.playerId).firstOrNull;
+  if (player == null) return;
+  final tech = player.techUnlocked;
+  final tileState = c.game.worldState.tileState;
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      final roadLevel = tileState.roadLevel(tileKey);
+      if (roadLevel != 1 && roadLevel != 2) return;
+      final terrain = terrainTypeForTileKey(c.tileMapByRegion, tileKey);
+      if (rejectionReasonForBuildRailOrder(
+            techUnlocked: tech,
+            roadLevel: roadLevel,
+            terrain: terrain,
+          ) !=
+          null) {
+        return;
+      }
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtTownWork(_WorkTilePrefilterCtx c) {
+  _addCandidateTilesForTownWork(
+    game: c.game,
+    ownedProvinceIds: c.ownedProvinceIds,
+    result: c.result,
+  );
+}
+
+void _prefilterWtOwnedProvinceTiles(_WorkTilePrefilterCtx c) {
+  _addAllTilesInOwnedPrefixedProvinces(
+    tileKeysByRegion: c.tileKeysByRegion,
+    ownedProvinceIds: c.ownedProvinceIds,
+    result: c.result,
+  );
+}
+
+void _prefilterWtStealTech(_WorkTilePrefilterCtx c) {
+  _addCandidateTilesForStealTech(
+    game: c.game,
+    playerId: c.playerId,
+    result: c.result,
+  );
+}
+
+void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
+  final gpIds = c.game.players.map((p) => p.id).toSet();
+  final minorIds = c.game.minorNations.map((m) => m.id).toSet();
+  final tribeIds = c.game.tribes.map((t) => t.id).toSet();
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final province = c.game.worldState.tryGetProvince(provinceId);
+      if (province == null) return;
+      final ownerId = province.ownerId;
+      if (ownerId == null) return;
+      if (gpIds.contains(ownerId)) return;
+      if (!minorIds.contains(ownerId) && !tribeIds.contains(ownerId)) {
+        return;
+      }
+      final resourceId = c.resourceByTile[tileKey];
+      if (resourceId == null || resourceId.isEmpty) return;
+      final existingBuyer = c.game.worldState.purchasedTilesByTileKey[tileKey];
+      if (existingBuyer != null) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtExplore(_WorkTilePrefilterCtx c) {
+  for (final regionEntry in c.tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      c.result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+void _prefilterWtProspect(_WorkTilePrefilterCtx c) {
+  final prospected =
+      c.game.worldState.playerProspectedTiles[c.playerId] ?? const <String>{};
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      if (prospected.contains(tileKey)) return;
+      if (!isMineralEligibleTile(c.game, c.tileMapByRegion, tileKey)) {
+        return;
+      }
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWorkTargetDefault(_WorkTilePrefilterCtx c) {
+  for (final regionEntry in c.tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      c.result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+final Map<String, _WorkTilePrefilterOp> _workTargetPrefilters =
+    <String, _WorkTilePrefilterOp>{
+      kWorkTargetBuildImprovement: _prefilterWtBuildImprovement,
+      kWorkTargetBuildRoad: _prefilterWtBuildRoad,
+      'build_rail': _prefilterWtBuildRail,
+      kWorkTargetUpgradeTown: _prefilterWtTownWork,
+      kWorkTargetBuildFort: _prefilterWtTownWork,
+      kWorkTargetBuildPort: _prefilterWtOwnedProvinceTiles,
+      kWorkTargetCounterSpy: _prefilterWtOwnedProvinceTiles,
+      kWorkTargetStealTech: _prefilterWtStealTech,
+      kWorkTargetPurchaseLand: _prefilterWtPurchaseLand,
+      kWorkTargetExplore: _prefilterWtExplore,
+      kWorkTargetProspect: _prefilterWtProspect,
+    };

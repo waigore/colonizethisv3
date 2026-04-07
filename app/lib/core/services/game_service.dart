@@ -79,6 +79,10 @@ class GameService {
 
   /// Returns map data for [gameId] from cache or storage.
   ///
+  /// When [_mapCache] already holds [gameId], returns immediately without reading game
+  /// JSON from Hive (avoids redundant adapter load on UI hot paths). Otherwise loads
+  /// game JSON to verify existence, then ensures map data is loaded.
+  ///
   /// Returns null only when no game exists for [gameId]. For existing games, map data
   /// is required and missing/invalid map data raises [StateError].
   ({
@@ -88,6 +92,15 @@ class GameService {
     List<WarpLink>? warpLinks,
   })?
   getMapData(String gameId) {
+    final cached = _mapCache[gameId];
+    if (cached != null) {
+      return (
+        combinedTopology: cached.combinedTopology,
+        tileMapByRegion: cached.tileMapByRegion,
+        topologyByRegion: cached.topologyByRegion,
+        warpLinks: cached.warpLinks,
+      );
+    }
     final gameExists = _adapter.load(_box, gameId) != null;
     if (!gameExists) return null;
     final cache = _requireMapData(gameId);
@@ -121,6 +134,58 @@ class GameService {
   /// Lists all saved game ids.
   List<String> listGameIds() => _adapter.listGameIds(_box);
 
+  /// Whether the Hive auto-save slot is playable. Clears invalid slots. SPEC/program/save-load.md.
+  bool hasValidAutoSave() => _adapter.hasValidAutoSave(_box);
+
+  /// Loads the auto-save slot into memory cache under [Game.id]. Returns null if missing/invalid.
+  Game? loadAutoSaveGame() {
+    if (!_adapter.hasValidAutoSave(_box)) {
+      return null;
+    }
+    final game = _adapter.load(_box, kAutoSaveSlotId);
+    if (game == null) {
+      return null;
+    }
+    try {
+      final mapData = _adapter.loadMapData(_box, kAutoSaveSlotId);
+      _mapCache[game.id] = _GameMapCache(
+        combinedTopology: mapData.combinedTopology,
+        tileMapByRegion: mapData.tileMapByRegion,
+        topologyByRegion: mapData.topologyByRegion,
+        warpLinks: mapData.warpLinks,
+      );
+      return game;
+    } catch (e, st) {
+      saveLogger().e(
+        'save: loadAutoSaveGame failed',
+        error: e,
+        stackTrace: st,
+      );
+      _adapter.delete(_box, kAutoSaveSlotId);
+      return null;
+    }
+  }
+
+  void _mirrorAutoSave(Game game) {
+    try {
+      final md = _requiredMapDataView(game.id);
+      _adapter.saveAutoSave(
+        _box,
+        game,
+        tileMapByRegion: md.tileMapByRegion,
+        topologyByRegion: md.topologyByRegion,
+        combinedTopology: md.combinedTopology,
+        warpLinks: md.warpLinks,
+      );
+    } catch (e, st) {
+      saveLogger().e(
+        'save: auto-save mirror failed',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
+
   /// Resolves one turn. Returns [TurnResolutionComplete] with new game (and persists),
   /// or a pending result: [TurnResolutionPendingOvertures], [TurnResolutionPendingIntervention],
   /// or [TurnResolutionPendingCallToArms].
@@ -151,27 +216,7 @@ class GameService {
       eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
-    if (result is TurnResolutionComplete) {
-      final complete = result;
-      saveGame(complete.game);
-      eventBus?.emit(
-        TurnResolutionCompleteEvent(
-          gameId: complete.game.id,
-          turnNumber: complete.game.worldState.turnState.turnNumber,
-          turnNewsDigest: complete.turnNewsDigest,
-        ),
-      );
-    } else if (result is TurnResolutionPendingOvertures) {
-      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
-    } else if (result is TurnResolutionPendingIntervention) {
-      eventBus?.emit(
-        InterventionRequiredEvent(prompts: result.pendingInterventions),
-      );
-    } else if (result is TurnResolutionPendingCallToArms) {
-      eventBus?.emit(
-        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
-      );
-    }
+    _emitTurnResolutionEvents(result);
     return result;
   }
 
@@ -194,27 +239,7 @@ class GameService {
       eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
-    if (result is TurnResolutionComplete) {
-      final complete = result;
-      saveGame(complete.game);
-      eventBus?.emit(
-        TurnResolutionCompleteEvent(
-          gameId: complete.game.id,
-          turnNumber: complete.game.worldState.turnState.turnNumber,
-          turnNewsDigest: complete.turnNewsDigest,
-        ),
-      );
-    } else if (result is TurnResolutionPendingOvertures) {
-      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
-    } else if (result is TurnResolutionPendingIntervention) {
-      eventBus?.emit(
-        InterventionRequiredEvent(prompts: result.pendingInterventions),
-      );
-    } else if (result is TurnResolutionPendingCallToArms) {
-      eventBus?.emit(
-        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
-      );
-    }
+    _emitTurnResolutionEvents(result);
     return result;
   }
 
@@ -241,27 +266,7 @@ class GameService {
       eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
-    if (result is TurnResolutionComplete) {
-      final complete = result;
-      saveGame(complete.game);
-      eventBus?.emit(
-        TurnResolutionCompleteEvent(
-          gameId: complete.game.id,
-          turnNumber: complete.game.worldState.turnState.turnNumber,
-          turnNewsDigest: complete.turnNewsDigest,
-        ),
-      );
-    } else if (result is TurnResolutionPendingOvertures) {
-      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
-    } else if (result is TurnResolutionPendingIntervention) {
-      eventBus?.emit(
-        InterventionRequiredEvent(prompts: result.pendingInterventions),
-      );
-    } else if (result is TurnResolutionPendingCallToArms) {
-      eventBus?.emit(
-        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
-      );
-    }
+    _emitTurnResolutionEvents(result);
     return result;
   }
 
@@ -284,27 +289,7 @@ class GameService {
       eventBus: logicEventBus,
       onGameEvent: onGameEvent,
     );
-    if (result is TurnResolutionComplete) {
-      final complete = result;
-      saveGame(complete.game);
-      eventBus?.emit(
-        TurnResolutionCompleteEvent(
-          gameId: complete.game.id,
-          turnNumber: complete.game.worldState.turnState.turnNumber,
-          turnNewsDigest: complete.turnNewsDigest,
-        ),
-      );
-    } else if (result is TurnResolutionPendingOvertures) {
-      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
-    } else if (result is TurnResolutionPendingIntervention) {
-      eventBus?.emit(
-        InterventionRequiredEvent(prompts: result.pendingInterventions),
-      );
-    } else if (result is TurnResolutionPendingCallToArms) {
-      eventBus?.emit(
-        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
-      );
-    }
+    _emitTurnResolutionEvents(result);
     return result;
   }
 
@@ -413,7 +398,7 @@ class GameService {
     final mapGenParams = MapGenerationParams(
       numContinents: cfg.continentCount,
       seed: cfg.seed,
-      seaFraction: 0.6,
+      seaFraction: kDefaultSeaFraction,
     );
     final sizeOW = computeGridSizeFromParams(
       cfg.numProvincesOldWorld,
@@ -423,7 +408,7 @@ class GameService {
       width: sizeOW.width,
       height: sizeOW.height,
       seed: cfg.seed,
-      seaFraction: 0.6,
+      seaFraction: kDefaultSeaFraction,
     );
     return TileMapGenerator(params: paramsOW).generate(
       numProvinces: cfg.numProvincesOldWorld,
@@ -438,7 +423,7 @@ class GameService {
     final mapGenParams = MapGenerationParams(
       numContinents: cfg.continentCount,
       seed: cfg.seed,
-      seaFraction: 0.6,
+      seaFraction: kDefaultSeaFraction,
     );
     final sizeNW = computeGridSizeFromParams(
       cfg.numProvincesNewWorld,
@@ -448,7 +433,7 @@ class GameService {
       width: sizeNW.width,
       height: sizeNW.height,
       seed: cfg.seed + 1,
-      seaFraction: 0.6,
+      seaFraction: kDefaultSeaFraction,
     );
     return TileMapGenerator(params: paramsNW).generate(
       numProvinces: cfg.numProvincesNewWorld,
@@ -496,6 +481,34 @@ class GameService {
       warpLinks: result.warpLinks,
     );
     saveGame(result.game);
+    _mirrorAutoSave(result.game);
     eventBus?.emit(NewGameCreatedEvent(gameId: result.game.id));
+  }
+
+  /// Maps [TurnResolutionResult] to app-level bus events and persists when complete.
+  /// SPEC/program/app-event-bus.md.
+  void _emitTurnResolutionEvents(TurnResolutionResult result) {
+    if (result is TurnResolutionComplete) {
+      final complete = result;
+      saveGame(complete.game);
+      _mirrorAutoSave(complete.game);
+      eventBus?.emit(
+        TurnResolutionCompleteEvent(
+          gameId: complete.game.id,
+          turnNumber: complete.game.worldState.turnState.turnNumber,
+          turnNewsDigest: complete.turnNewsDigest,
+        ),
+      );
+    } else if (result is TurnResolutionPendingOvertures) {
+      eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
+    } else if (result is TurnResolutionPendingIntervention) {
+      eventBus?.emit(
+        InterventionRequiredEvent(prompts: result.pendingInterventions),
+      );
+    } else if (result is TurnResolutionPendingCallToArms) {
+      eventBus?.emit(
+        CallToArmsRequiredEvent(pending: result.pendingCallToArms),
+      );
+    }
   }
 }

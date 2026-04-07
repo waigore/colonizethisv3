@@ -9,7 +9,7 @@ import '../order_validation_result.dart';
 
 /// Validates naval move and naval mission orders for a single player.
 /// SPEC/program/orders.md § Naval orders; SPEC/game/capital-and-connectivity.md § Blockade.
-class NavalOrderValidator {
+class NavalOrderValidator extends OrderValidator {
   final Game _game;
   final MapTopology _topology;
   final String _playerId;
@@ -54,7 +54,7 @@ class NavalOrderValidator {
             fleet.regionId,
             portProvinceId,
           );
-          final province = tryGetProvince(_game.worldState, fullProvinceId);
+          final province = _game.worldState.tryGetProvince(fullProvinceId);
           if (province == null) {
             return OrderValidationResult.rejected('Port province not found');
           }
@@ -145,7 +145,7 @@ class NavalOrderValidator {
             valid = false;
             rejectReason = 'Blockade requires a target province';
           } else {
-            final province = tryGetProvince(_game.worldState, targetProvinceId);
+            final province = _game.worldState.tryGetProvince(targetProvinceId);
             final ownerId = province?.ownerId;
             if (province == null || ownerId == null || ownerId.isEmpty) {
               valid = false;

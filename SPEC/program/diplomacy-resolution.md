@@ -64,7 +64,7 @@ At the same hook points where relation state, overtures, or economic diplomacy a
 | Upstream | Player orders, world state (relations, overtures, treasury) |
 | Downstream | Relation state → combat/movement validation; AI evidence/dossier pipeline |
 
-**Economy:** GrantAid and SetSubsidy deduct payer treasury; SetSubsidy transfers to target GP or improves relation with Minor/Tribe. Trade agreement slots gated by embassy level. War terminates trade agreements with target.
+**Economy:** GrantAid and SetSubsidy deduct payer treasury; SetSubsidy transfers to target GP or improves relation with Minor/Tribe. Trade agreement slots gated by embassy level. War terminates trade agreements with target. **`trade_fairs` (GDD “6 vs 3 commodities”)** is **not** implemented here yet; `tradeSlotsForGp` is a **stub** (0 / 1 by embassy). When trade commodities are modeled, align caps with [tech-tree-labour-economy.md](../game/tech-tree-labour-economy.md) § trade_fairs.
 
 **Combat/movement:** Before military move into a foreign province or naval **Blockade** against a province owner, require `AT_WAR` or same-turn `Declare War` on that owner (Great Power, Minor, or Tribe). Enforced by order validation and turn resolver. **Intervention** is evaluated only in the Diplomacy phase (step 5b), not during Combat; it may set `AT_WAR` between an intervening GP and the declaring GP before Movement.
 

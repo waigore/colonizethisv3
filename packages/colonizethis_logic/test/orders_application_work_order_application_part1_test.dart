@@ -21,6 +21,7 @@ void main() {
         ],
       );
     }
+
     test(
       'prospect adds tile to playerProspectedTiles when terrain eligible',
       () {
@@ -305,6 +306,8 @@ void main() {
           totalTurnsForWork('build_fort', fortLevel: 1),
         );
         expect(u.currentWork!.remainingTurns, 1);
+        expect(u.originTileKey, tileKey);
+        expect(u.assignedTileKey, tileKey);
         expect(next.worldState.oldWorld.provinces.single.fortLevel, 1);
       },
     );

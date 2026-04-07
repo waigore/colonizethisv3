@@ -44,6 +44,39 @@ final _log = mapLogger();
 const String _regionOldWorld = 'oldWorld';
 const String _regionNewWorld = 'newWorld';
 
+String _normalizeCivilianTypeForPriority(String type) {
+  return type.toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '');
+}
+
+int _civilianIconPriorityForType(String type) {
+  final normalized = _normalizeCivilianTypeForPriority(type);
+  // Lower number = higher icon priority.
+  switch (normalized) {
+    case 'builder':
+      return 0;
+    case 'engineer':
+      return 1;
+    case 'railbuilder':
+      return 2;
+    case 'explorer':
+      return 3;
+    case 'merchant':
+      return 4;
+    case 'spy':
+      return 5;
+    default:
+      return 999;
+  }
+}
+
+bool _isCivilianUnitType(String unitType) {
+  final role = unitRoleForType(unitType);
+  if (role == null) {
+    return false;
+  }
+  return role != UnitRole.military && role != UnitRole.naval;
+}
+
 InitGameMapViewData buildInitGameMapViewData({
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
@@ -126,7 +159,9 @@ RegionMapViewData _buildRegionViewData({
   final provinces = isOldWorld
       ? game.worldState.oldWorld.provinces
       : game.worldState.newWorld.provinces;
+  final provincePoliticalOwnerByPrefixedProvinceId = <String, String?>{};
   for (final p in provinces) {
+    provincePoliticalOwnerByPrefixedProvinceId[p.id] = p.ownerId;
     if (p.ownerId != null && p.ownerId!.isNotEmpty) {
       ownerByProvinceId[p.id] = p.ownerId!;
     }
@@ -268,6 +303,12 @@ RegionMapViewData _buildRegionViewData({
 
   // Unit markers: one per unit, placed at province representative tile.
   final unitMarkers = <UnitMarkerView>[];
+  final civilianUnitsByTileKey = <String, List<Unit>>{};
+  final playerOwnedCivilianTileMarkers = <CivilianTileMarkerView>[];
+  final humanPlayerIds = game.players
+      .where((player) => player.isHuman)
+      .map((player) => player.id)
+      .toSet();
   final provincePresenceById = <String, ProvinceUnitPresenceView>{};
   for (final p in provinces) {
     provincePresenceById[p.id] = const ProvinceUnitPresenceView(
@@ -300,6 +341,18 @@ RegionMapViewData _buildRegionViewData({
       ? game.worldState.oldWorld.units
       : game.worldState.newWorld.units;
   for (final u in regionUnits) {
+    final isPlayerOwnedCivilian =
+        humanPlayerIds.contains(u.ownerId) && _isCivilianUnitType(u.type);
+    if (isPlayerOwnedCivilian) {
+      final tileKey = u.tileKey;
+      if (tileKey != null && tileKey.isNotEmpty) {
+        final parts = tileKey.split('|');
+        if (parts.length >= 4 && parts[0] == regionId) {
+          civilianUnitsByTileKey.putIfAbsent(tileKey, () => []).add(u);
+        }
+      }
+    }
+
     final tile = provinceToTile[u.locationProvinceId];
     if (tile != null) {
       unitMarkers.add(
@@ -319,6 +372,57 @@ RegionMapViewData _buildRegionViewData({
       intelVisible: current.intelVisible,
     );
   }
+
+  for (final entry in civilianUnitsByTileKey.entries) {
+    final tileKey = entry.key;
+    final units = entry.value.toList()
+      ..sort((a, b) {
+        final priorityCompare = _civilianIconPriorityForType(
+          a.type,
+        ).compareTo(_civilianIconPriorityForType(b.type));
+        if (priorityCompare != 0) {
+          return priorityCompare;
+        }
+        return a.id.compareTo(b.id);
+      });
+    final parts = tileKey.split('|');
+    if (parts.length < 4) {
+      continue;
+    }
+    final x = int.tryParse(parts[2]);
+    final y = int.tryParse(parts[3]);
+    if (x == null || y == null) {
+      continue;
+    }
+    final representativeUnit = units.first;
+    final representativeIsAssigned =
+        representativeUnit.assignedTileKey == tileKey &&
+        representativeUnit.status == UnitStatus.working;
+    playerOwnedCivilianTileMarkers.add(
+      CivilianTileMarkerView(
+        tileKey: tileKey,
+        x: x,
+        y: y,
+        localProvinceId: parts[1],
+        unitIds: units.map((unit) => unit.id).toList(),
+        unitTypes: {for (final unit in units) unit.id: unit.type},
+        representativeUnitType: representativeUnit.type,
+        stackCount: units.length,
+        representativeIsAssigned: representativeIsAssigned,
+      ),
+    );
+  }
+  playerOwnedCivilianTileMarkers.sort((a, b) {
+    final yCompare = a.y.compareTo(b.y);
+    if (yCompare != 0) {
+      return yCompare;
+    }
+    final xCompare = a.x.compareTo(b.x);
+    if (xCompare != 0) {
+      return xCompare;
+    }
+    return a.tileKey.compareTo(b.tileKey);
+  });
 
   // Port markers from world state.
   final ports = <PortMarkerView>[];
@@ -512,8 +616,11 @@ RegionMapViewData _buildRegionViewData({
     greatPowerFactionIds: greatPowerFactionIds,
     terrainColors: terrainColors,
     unitMarkers: unitMarkers,
+    civilianTileMarkers: playerOwnedCivilianTileMarkers,
     warpMarkers: warpMarkers,
     townMarkers: towns,
     provinceUnitPresenceByProvinceId: provincePresenceById,
+    provincePoliticalOwnerByPrefixedProvinceId:
+        provincePoliticalOwnerByPrefixedProvinceId,
   );
 }

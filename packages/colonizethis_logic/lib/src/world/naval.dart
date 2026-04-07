@@ -44,6 +44,17 @@ String homeFleetIdFor(String playerId) => 'fleet_$playerId';
   return (regionId: fleetRegionId, localId: inPortProvinceId);
 }
 
+/// Indexes [topology] nodes by region id, then by node id (province/sea endpoints).
+Map<String, Map<String, TopologyNode>> indexTopologyNodesByRegion(
+  MapTopology topology,
+) {
+  final nodesByRegionAndId = <String, Map<String, TopologyNode>>{};
+  for (final n in topology.nodes) {
+    nodesByRegionAndId.putIfAbsent(n.regionId, () => {})[n.id] = n;
+  }
+  return nodesByRegionAndId;
+}
+
 /// True if there is an edge between [fromSeaZoneId] and [toSeaZoneId] (S<->S or P<->S).
 bool isAdjacentSeaZone(
   MapTopology topology,
@@ -86,11 +97,7 @@ String? provinceTopologyNodeId(
   String provinceId,
   String regionId,
 ) {
-  final nodesByRegionAndId = <String, Map<String, TopologyNode>>{};
-  for (final n in topology.nodes) {
-    nodesByRegionAndId.putIfAbsent(n.regionId, () => {})[n.id] = n;
-  }
-  final regionNodes = nodesByRegionAndId[regionId];
+  final regionNodes = indexTopologyNodesByRegion(topology)[regionId];
   if (regionNodes == null) return null;
   final primaryProvinceKey = ProvinceId.isPrefixed(provinceId)
       ? provinceId
@@ -204,11 +211,7 @@ String? seaZoneIdForProvince(
   String? regionId,
 }) {
   if (regionId != null) {
-    final nodesByRegionAndId = <String, Map<String, TopologyNode>>{};
-    for (final n in topology.nodes) {
-      nodesByRegionAndId.putIfAbsent(n.regionId, () => {})[n.id] = n;
-    }
-    final regionNodes = nodesByRegionAndId[regionId];
+    final regionNodes = indexTopologyNodesByRegion(topology)[regionId];
     if (regionNodes == null) return null;
     final primaryProvinceKey = ProvinceId.isPrefixed(provinceId)
         ? provinceId
@@ -254,10 +257,7 @@ Set<String> provinceIdsAdjacentToSeaZone(
   String seaZoneId, {
   String? regionId,
 }) {
-  final nodesByRegionAndId = <String, Map<String, TopologyNode>>{};
-  for (final n in topology.nodes) {
-    nodesByRegionAndId.putIfAbsent(n.regionId, () => {})[n.id] = n;
-  }
+  final nodesByRegionAndId = indexTopologyNodesByRegion(topology);
   String? effectiveRegion = regionId;
   if (effectiveRegion == null) {
     final seaNodes = topology.nodes.where((n) => n.id == seaZoneId).toList();

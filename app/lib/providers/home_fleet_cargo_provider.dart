@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,11 +7,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
+final _homeFleetCargoLog = appLogger('home_fleet_cargo');
+
 class HomeFleetCargoSummary {
-  const HomeFleetCargoSummary({required this.used, required this.capacity});
+  const HomeFleetCargoSummary({
+    required this.used,
+    required this.capacity,
+    this.isCargoUsedReliable = true,
+  });
 
   final int used;
   final int capacity;
+
+  /// False when overseas cargo usage could not be computed (e.g. unexpected
+  /// failure); [used] is then 0 and the UI should not treat it as authoritative.
+  final bool isCargoUsedReliable;
 }
 
 final homeFleetCargoSummaryProvider = Provider<HomeFleetCargoSummary>((ref) {
@@ -54,8 +65,17 @@ final homeFleetCargoSummaryProvider = Provider<HomeFleetCargoSummary>((ref) {
     final used = overseas.values.fold<int>(0, (sum, value) => sum + value);
 
     return HomeFleetCargoSummary(used: used, capacity: capacity);
-  } catch (_) {
-    return HomeFleetCargoSummary(used: 0, capacity: capacity);
+  } catch (e, stackTrace) {
+    _homeFleetCargoLog.w(
+      'summary_failed gameId=${game.id}',
+      error: e,
+      stackTrace: stackTrace,
+    );
+    return HomeFleetCargoSummary(
+      used: 0,
+      capacity: capacity,
+      isCargoUsedReliable: false,
+    );
   }
 });
 
