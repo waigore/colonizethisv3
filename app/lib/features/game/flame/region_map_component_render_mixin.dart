@@ -596,6 +596,39 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       return;
     }
 
+    if (terrain == TerrainType.plains) {
+      final plainsVariantKey = landInteriorPlainsVariantTileKey(cell);
+      if (plainsVariantKey != null) {
+        final standaloneTile =
+            terrainTilesetCache.getStandaloneTileByKey(plainsVariantKey);
+        if (standaloneTile == null) {
+          throw StateError(
+            'Missing required plains terrain variant tile: $plainsVariantKey',
+          );
+        }
+        final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
+        final paint = Paint();
+        if (shouldApplyFogToLandBase(
+          visibilityMode: visibilityMode,
+          tileVisibility: cell.visibility,
+          terrain: terrain,
+        )) {
+          paint.colorFilter = ColorFilter.mode(
+            Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
+            BlendMode.darken,
+          );
+        }
+        final srcRect = Rect.fromLTWH(
+          0,
+          0,
+          standaloneTile.image.width.toDouble(),
+          standaloneTile.image.height.toDouble(),
+        );
+        canvas.drawImageRect(standaloneTile.image, srcRect, dstRect, paint);
+        return;
+      }
+    }
+
     final interiorTileset = terrain == TerrainType.desert
         ? terrainTilesetCache.getSeaDesertTileset()
         : terrainTilesetCache.getSeaPlainsTileset();
