@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:io' show Directory;
-
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +10,7 @@ import 'app.dart';
 import 'config/constants.dart';
 import 'config/ct_e2e.dart';
 import 'config/map_terrain_config.dart';
+import 'core/platform/e2e_hive_path.dart';
 import 'core/services/app_event_handler_scope.dart';
 
 /// Opens one Hive box; failures are isolated so another box (e.g. games) still opens.
@@ -57,8 +56,11 @@ Future<void> bootstrapForIntegrationTest() async {
     ensureMapTerrainLoaded: MapTerrainConfig.ensureLoaded,
     initHive: () async {
       if (kCtE2EEnabled) {
-        final tmp = Directory.systemTemp.createTempSync('ct_e2e_hive_');
-        Hive.init(tmp.path);
+        if (!kIsWeb) {
+          Hive.init(createE2eHivePath());
+          return;
+        }
+        await Hive.initFlutter();
         return;
       }
       await Hive.initFlutter();

@@ -1,7 +1,6 @@
 # End-to-end tests (`integration_test`)
 
-**SPEC/program** — Flutter **Linux desktop** integration tests on **`ubuntu-latest`** under **Xvfb** (headless), separate from widget/unit coverage under `app/test/`.  
-(`flutter test … -d chrome` is **not** used: `integration_test` does not support web targets on current stable; CI uses **`linux`**.)
+**SPEC/program** — Flutter **web** integration tests on **`ubuntu-latest`** with **Chrome headless**, separate from widget/unit coverage under `app/test/`.
 
 ## Compile-time flag: `CT_E2E`
 
@@ -27,22 +26,22 @@
 
 ## Local run
 
-**Linux** (matches CI; needs GTK dev packages per [Flutter Linux setup](https://docs.flutter.dev/platform-integration/linux/setup)):
+**Web (Chrome)** (matches CI):
 
 ```bash
 cd app
-flutter config --enable-linux-desktop
+flutter config --enable-web
 flutter test integration_test/new_game_capital_panel_e2e_test.dart \
-  -d linux \
+  -d chrome \
   --dart-define=CT_E2E=true
 ```
 
-Headed desktop on a dev machine without Xvfb: use **`-d macos`** or **`-d linux`** from a normal graphical session.
+On CI, `flutter test -d chrome` runs headless.
 
 ## CI
 
-- Job **`app_e2e_linux`** in `.github/workflows/quality.yml` runs after **`app_tests_shard`** and does **not** block **`quality_app_coverage`**.
-- Ubuntu installs **clang / cmake / ninja / GTK** deps, enables **linux** desktop, then runs the test under **[GabrielBB/xvfb-action](https://github.com/GabrielBB/xvfb-action)** (Xvfb + `DISPLAY`).
+- Job **`app_e2e_web`** in `.github/workflows/quality.yml` runs after **`app_tests_shard`** and does **not** block **`quality_app_coverage`**.
+- Ubuntu installs Chrome and runs the integration test on **`-d chrome`** with headless browser flags.
 - Widget/coverage jobs use **`flutter test test/`** only so `integration_test/` is not executed on the VM shard runner.
 
 ## Expectations helper
