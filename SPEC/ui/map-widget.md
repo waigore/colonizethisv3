@@ -316,12 +316,14 @@ Hover, selection, and overlay behavior:
 
 The map widget renders terrain using **Wang tilesets** for seamless terrain transitions. Each tileset is a 4×4 grid (16 tiles) that covers all corner combinations for transitions between two terrain types.
 
-For L1 plains cells, the renderer may apply resource-specific plains terrain variants selected by terrain/resource id:
+For L1 **interior** plains cells, the renderer may apply resource-specific plains terrain variants selected by terrain/resource id. Assets `tile_plains_grain`, `tile_plains_meat`, and `tile_plains_horses` use **transparent regions** around the drawn resource detail; the renderer **must** draw the **canonical interior plains** base (same `sea_plains` upper-base tile as non-resource interior plains) **before** compositing the variant PNG so transparency shows grass, not the blank canvas.
+
+Variant keys:
 - `tile_plains_grain` for `resourceId = grain`
 - `tile_plains_meat` for `resourceId = meat`
 - `tile_plains_horses` for `resourceId = horses`
 
-These variants apply only to plains cells and do not alter desert rendering rules.
+These variants apply only to plains cells (not desert) and do not alter desert rendering rules.
 
 ### Runtime configuration (Flutter app)
 
@@ -398,6 +400,7 @@ Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_m
 - **Given** a tile with `terrainType = plains` and `resourceId = grain`, **when** the map renders the terrain layer, **then** it selects plains terrain variant `tile_plains_grain` for that tile.
 - **Given** a tile with `terrainType = plains` and `resourceId = meat`, **when** the map renders the terrain layer, **then** it selects plains terrain variant `tile_plains_meat` for that tile.
 - **Given** a tile with `terrainType = plains` and `resourceId = horses`, **when** the map renders the terrain layer, **then** it selects plains terrain variant `tile_plains_horses` for that tile.
+- **Given** an **interior** plains tile with `resourceId` in `{grain, meat, horses}`, **when** the map renders the L1 terrain layer, **then** it draws the canonical interior plains base and composites the selected `tile_plains_*` on top so pixels transparent in the PNG show the same plains base as neighboring non-resource plains (no spurious solid black from an undrawn background).
 - **Given** a tile with `terrainType = desert` and any `resourceId`, **when** the map renders the terrain layer, **then** it does not select a plains terrain variant.
 - **Given** terrain asset initialization and one required plains variant PNG is missing or fails decode, **when** map terrain assets are loaded, **then** initialization fails with an error instead of silently skipping that asset.
 - **Given** only a change to `map_terrain_tilesets.json` (paths, `tile_px`, and/or `map_cell_size_px`) plus matching atlas/JSON assets declared in `pubspec.yaml`, **when** the app runs, **then** the map uses the new files and cell size without Dart code edits (same loader contract).
