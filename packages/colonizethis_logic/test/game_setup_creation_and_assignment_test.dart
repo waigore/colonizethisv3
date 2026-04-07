@@ -111,6 +111,19 @@ void main() {
         expect(result.game.tribes.first.id, 'tribe1');
         expect(result.game.tribes.first.capitalProvinceId, 'newWorld|nw1');
         expect(result.game.tribes.first.capitalTile?.regionId, 'newWorld');
+        final tribeCapitalTile = result.game.tribes.first.capitalTile;
+        expect(tribeCapitalTile, isNotNull);
+        final tribeCivilianUnits = result.game.worldState.newWorld.units
+            .where((u) => u.ownerId == 'tribe1' && u.tileKey != null)
+            .toList();
+        expect(tribeCivilianUnits, isNotEmpty);
+        for (final u in tribeCivilianUnits) {
+          expect(
+            u.tileKey,
+            tribeCapitalTile!.toTileKey(),
+            reason: 'starting civilian ${u.id} must spawn on capital tile',
+          );
+        }
 
         expect(result.game.worldState.oldWorld.provinces.length, 2);
         expect(result.game.worldState.newWorld.provinces.length, 1);
@@ -702,6 +715,17 @@ void main() {
 
         expect(gpOwned, availableForGps);
         expect(minorOwned, totalOw - availableForGps);
+        for (final minor in result.game.minorNations) {
+          final minorCapitalTile = minor.capitalTile;
+          expect(minorCapitalTile, isNotNull);
+          final minorUnits = result.game.worldState.oldWorld.units
+              .where((u) => u.ownerId == minor.id && u.tileKey != null)
+              .toList();
+          expect(minorUnits, isNotEmpty);
+          for (final unit in minorUnits) {
+            expect(unit.tileKey, minorCapitalTile!.toTileKey());
+          }
+        }
       },
     );
 
