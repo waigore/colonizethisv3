@@ -434,6 +434,62 @@ void main() {
     expect(find.text('Effects'), findsOneWidget);
   });
 
+  testWidgets(
+    'Batch-1 tech descriptions are concrete and avoid generic fallback text',
+    (WidgetTester tester) async {
+      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+      final gameWithEmptyPlayer = game.copyWith(
+        players: [emptyPlayer, ...game.players.skip(1)],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TechTreeWidget(
+              game: gameWithEmptyPlayer,
+              player: emptyPlayer,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expectedByTech = <String, String>{
+        'Crop Rotation':
+            'Unlocks: Sheep Ranching, Animal Husbandry, and Steppe Horsemen research paths',
+        'Saw Mill': 'Improves: Timber extraction cap to 2 (forested provinces)',
+        'Land Enclosure': 'Improves: Grain extraction cap to 2',
+        'Mine Engineering': 'Enables: Builder upgrades to Fort Level 2',
+        'Iron Mining': 'Improves: Iron extraction cap to 2',
+        'Copper and Tin Mining': 'Improves: Copper/Tin extraction cap to 2',
+        'Coal Mining': 'Enables: Coal extraction (cap 1)',
+        'Wind Saw Mill': 'Improves: Timber extraction cap to 3',
+        'Seed Drill': 'Improves: Grain extraction cap to 3',
+        'Sheep Ranching': 'Improves: Wool extraction cap to 2',
+      };
+
+      for (final entry in expectedByTech.entries) {
+        final techNode = find.text(entry.key).first;
+        await tester.ensureVisible(techNode);
+        await tester.tap(techNode);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(
+          find.textContaining('Improves gathering capabilities'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves labour and economy output'),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
   test(
     'Column rule: A→B→C and A→C places B between A and C (gap between A and C)',
     () {
