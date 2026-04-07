@@ -588,7 +588,6 @@ Game _applyNaming({
 Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
   var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
   var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
-  var ownerOrdinal = 0;
 
   Iterable<
     ({
@@ -626,7 +625,6 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
   }
 
   for (final owner in civilianOwners()) {
-    ownerOrdinal++;
     final ownerId = owner.id;
     final capitalProvinceId = owner.capitalProvinceId;
     final capitalTile = owner.capitalTile;
@@ -655,8 +653,7 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
       final count = entry.value;
 
       for (var k = 1; k <= count; k++) {
-        final unitId =
-            '${ownerId}_${unitType.toLowerCase()}_${ownerOrdinal}_$k';
+        final unitId = '${ownerId}_${unitType.toLowerCase()}_$k';
         final unit = Unit(
           id: unitId,
           type: unitType,
