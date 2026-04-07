@@ -738,23 +738,34 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
           );
         }
         final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
-        final paint = _landBaseImagePaint(
-          terrain: terrain,
-          tileVisibility: cell.visibility,
-        );
         _drawLandInteriorUpperBaseForTerrain(
           canvas,
           landTerrain: TerrainType.plains,
           dstRect: dstRect,
-          paint: paint,
+          paint: Paint(),
         );
+        final overlayPaint = Paint();
+        if (shouldApplyFogToInteriorPlainsVariantOverlay(
+          visibilityMode: visibilityMode,
+          tileVisibility: cell.visibility,
+        )) {
+          overlayPaint.colorFilter = ColorFilter.mode(
+            Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
+            BlendMode.darken,
+          );
+        }
         final srcRect = Rect.fromLTWH(
           0,
           0,
           standaloneTile.image.width.toDouble(),
           standaloneTile.image.height.toDouble(),
         );
-        canvas.drawImageRect(standaloneTile.image, srcRect, dstRect, paint);
+        canvas.drawImageRect(
+          standaloneTile.image,
+          srcRect,
+          dstRect,
+          overlayPaint,
+        );
         return;
       }
     }
