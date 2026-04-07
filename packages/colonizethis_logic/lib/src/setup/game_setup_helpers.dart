@@ -590,13 +590,21 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
   var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
   var ownerOrdinal = 0;
 
-  Iterable<({String id, String? capitalProvinceId, CapitalTile? capitalTile})>
+  Iterable<
+    ({
+      String id,
+      String? capitalProvinceId,
+      CapitalTile? capitalTile,
+      bool requireCapitalTile,
+    })
+  >
   civilianOwners() sync* {
     for (final player in game.players) {
       yield (
         id: player.id,
         capitalProvinceId: player.capitalProvinceId,
         capitalTile: player.capitalTile,
+        requireCapitalTile: true,
       );
     }
     for (final minor in game.minorNations) {
@@ -604,6 +612,7 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
         id: minor.id,
         capitalProvinceId: minor.capitalProvinceId,
         capitalTile: minor.capitalTile,
+        requireCapitalTile: false,
       );
     }
     for (final tribe in game.tribes) {
@@ -611,6 +620,7 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
         id: tribe.id,
         capitalProvinceId: tribe.capitalProvinceId,
         capitalTile: tribe.capitalTile,
+        requireCapitalTile: false,
       );
     }
   }
@@ -621,6 +631,9 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
     final capitalProvinceId = owner.capitalProvinceId;
     final capitalTile = owner.capitalTile;
     if (capitalProvinceId == null || capitalTile == null) {
+      if (!owner.requireCapitalTile) {
+        continue;
+      }
       throw StateError(
         'Cannot spawn starting civilians without capital tile: owner=$ownerId',
       );
