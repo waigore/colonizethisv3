@@ -1,3 +1,4 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
@@ -58,6 +59,7 @@ void _collectTextPreorder(Element element, List<String> out) {
 }
 
 void main() {
+  suppressLogsForTests();
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('new game → capital province panel matches model (wide layout)',
