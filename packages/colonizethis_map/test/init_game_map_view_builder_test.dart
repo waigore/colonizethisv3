@@ -1491,6 +1491,114 @@ void main() {
       },
     );
 
+    test(
+      'capital marker and stacked civilian marker can co-exist on same tile key',
+      () {
+        final owMap = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: [
+            ['p1'],
+          ],
+        );
+        final nwMap = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: [
+            ['p1'],
+          ],
+        );
+        final owTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final nwTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final game = Game(
+          id: 'capital_civilian_overlap',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp1',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'u_builder',
+                  type: 'Builder',
+                  ownerId: 'gp1',
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: 'oldWorld|p1|0|0',
+                ),
+                Unit(
+                  id: 'u_explorer',
+                  type: 'Explorer',
+                  ownerId: 'gp1',
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: 'oldWorld|p1|0|0',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(
+              provinces: [Province(id: 'newWorld|p1', regionId: 'newWorld')],
+              units: [],
+            ),
+          ),
+          players: const [
+            Player(
+              id: 'gp1',
+              displayName: 'Human',
+              isHuman: true,
+              capitalProvinceId: 'oldWorld|p1',
+              capitalTile: CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: 'oldWorld|p1',
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+          minorNations: const [],
+          tribes: const [],
+        );
+
+        final viewData = buildInitGameMapViewData(
+          game: game,
+          tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
+          topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+          cellSize: 8,
+        );
+
+        expect(viewData.oldWorld.capitalMarkers, hasLength(1));
+        final cap = viewData.oldWorld.capitalMarkers.single;
+        expect(cap.x, 0);
+        expect(cap.y, 0);
+
+        expect(viewData.oldWorld.civilianTileMarkers, hasLength(1));
+        final marker = viewData.oldWorld.civilianTileMarkers.single;
+        expect(marker.tileKey, 'oldWorld|p1|0|0');
+        expect(marker.stackCount, 2);
+      },
+    );
+
     test('includes warp zone markers from warpLinks (bidirectional)', () {
       final owMap = TileMapResult(
         width: 3,

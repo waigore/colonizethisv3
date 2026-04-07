@@ -92,6 +92,19 @@ void main() {
           result.game.players.first.capitalTile?.provinceId,
           'oldWorld|p1',
         );
+        final gpCapitalTile = result.game.players.first.capitalTile;
+        expect(gpCapitalTile, isNotNull);
+        final gpCivilianUnits = result.game.worldState.oldWorld.units
+            .where((u) => u.ownerId == 'gp1' && u.tileKey != null)
+            .toList();
+        expect(gpCivilianUnits, isNotEmpty);
+        for (final u in gpCivilianUnits) {
+          expect(
+            u.tileKey,
+            gpCapitalTile!.toTileKey(),
+            reason: 'starting civilian ${u.id} must spawn on capital tile',
+          );
+        }
 
         expect(result.game.minorNations, isEmpty);
         expect(result.game.tribes.length, 1);
@@ -405,101 +418,95 @@ void main() {
         expect(p2.townTileKey, isNotNull);
         expect(
           p2.townTileKey,
-          anyOf(
-            equals('oldWorld|p2|2|1'),
-            equals('oldWorld|p2|2|2'),
-          ),
+          anyOf(equals('oldWorld|p2|2|1'), equals('oldWorld|p2|2|2')),
           reason:
               'sea-bound province town must be adjacent to its seaboard sea zone',
         );
       },
     );
 
-    test(
-      'sea-bound mismatch falls back to shortest-path town selection',
-      () {
-        final owGrid = [
-          ['p1', 'p1', 'sea1'],
-          ['p1', 'p2', 'p1'],
-          ['p1', 'p1', 'p1'],
-        ];
-        final owTopology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'p1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'p2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'sea1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: [
-            TopologyEdge(id1: 'p1', id2: 'sea1'),
-            TopologyEdge(id1: 'p2', id2: 'sea1'),
-            TopologyEdge(id1: 'p1', id2: 'p2'),
-          ],
-        );
-        final owTileMap = TileMapResult(width: 3, height: 3, grid: owGrid);
+    test('sea-bound mismatch falls back to shortest-path town selection', () {
+      final owGrid = [
+        ['p1', 'p1', 'sea1'],
+        ['p1', 'p2', 'p1'],
+        ['p1', 'p1', 'p1'],
+      ];
+      final owTopology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'sea1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [
+          TopologyEdge(id1: 'p1', id2: 'sea1'),
+          TopologyEdge(id1: 'p2', id2: 'sea1'),
+          TopologyEdge(id1: 'p1', id2: 'p2'),
+        ],
+      );
+      final owTileMap = TileMapResult(width: 3, height: 3, grid: owGrid);
 
-        final nwGrid = [
-          ['nw1', 'sea1'],
-          ['nw1', 'nw1'],
-        ];
-        final nwTopology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'nw1',
-              regionId: 'newWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'sea1',
-              regionId: 'newWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: [TopologyEdge(id1: 'nw1', id2: 'sea1')],
-        );
-        final nwTileMap = TileMapResult(width: 2, height: 2, grid: nwGrid);
+      final nwGrid = [
+        ['nw1', 'sea1'],
+        ['nw1', 'nw1'],
+      ];
+      final nwTopology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'nw1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'sea1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [TopologyEdge(id1: 'nw1', id2: 'sea1')],
+      );
+      final nwTileMap = TileMapResult(width: 2, height: 2, grid: nwGrid);
 
-        final config = GameSetupConfig(
-          selectedGreatPowerIds: ['england'],
-          continentCount: 1,
-          minorNationCount: 0,
-          tribeCount: 1,
-          numProvincesOldWorld: 2,
-          numProvincesNewWorld: 1,
-          minProvincesPerMinor: 0,
-        );
+      final config = GameSetupConfig(
+        selectedGreatPowerIds: ['england'],
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 2,
+        numProvincesNewWorld: 1,
+        minProvincesPerMinor: 0,
+      );
 
-        final result = createGameFromGeneratedMaps(
-          config: config,
-          tileMapOldWorld: owTileMap,
-          topologyOldWorld: owTopology,
-          tileMapNewWorld: nwTileMap,
-          topologyNewWorld: nwTopology,
-          gameId: 'test-seaboard-town-fallback',
-        );
+      final result = createGameFromGeneratedMaps(
+        config: config,
+        tileMapOldWorld: owTileMap,
+        topologyOldWorld: owTopology,
+        tileMapNewWorld: nwTileMap,
+        topologyNewWorld: nwTopology,
+        gameId: 'test-seaboard-town-fallback',
+      );
 
-        final p2 = result.game.worldState.oldWorld.provinces.firstWhere(
-          (p) => p.id == 'oldWorld|p2',
-        );
-        expect(
-          p2.townTileKey,
-          'oldWorld|p2|1|1',
-          reason:
-              'when no sea-zone-adjacent tile exists, seaboard town selection falls back deterministically',
-        );
-      },
-    );
+      final p2 = result.game.worldState.oldWorld.provinces.firstWhere(
+        (p) => p.id == 'oldWorld|p2',
+      );
+      expect(
+        p2.townTileKey,
+        'oldWorld|p2|1|1',
+        reason:
+            'when no sea-zone-adjacent tile exists, seaboard town selection falls back deterministically',
+      );
+    });
 
     test(
       'each Great Power has enough resources to build 5 improvements (bootstrap)',

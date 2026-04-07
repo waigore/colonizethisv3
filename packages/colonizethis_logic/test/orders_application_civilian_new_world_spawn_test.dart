@@ -6,11 +6,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 void main() {
   group('applyBuildAndWorkOrders civilian and New World spawn', () {
     test(
-      'civilian spawn gets firstTileInSpawn when tileKeysByRegionAndProvince has tile',
+      'civilian spawn uses capitalTile key even when spawnProvinceId is different owned province',
       () {
         const ow = 'oldWorld';
-        const provinceId = 'oldWorld|P1';
-        const firstTile = 'oldWorld|P1|0|0';
+        const capitalProvinceId = 'oldWorld|P1';
+        const otherOwnedProvinceId = 'oldWorld|P2';
+        const capitalTileKey = 'oldWorld|P1|0|1';
         final explorerEcon = CivilianEconomyCatalog.byId['Explorer']!;
         var stockpile = const Stockpile();
         for (final e in explorerEcon.buildInputs.entries) {
@@ -22,14 +23,16 @@ void main() {
             turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
             oldWorld: RegionData(
               provinces: [
-                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+                Province(id: capitalProvinceId, regionId: ow, ownerId: 'p1'),
+                Province(id: otherOwnedProvinceId, regionId: ow, ownerId: 'p1'),
               ],
               units: [],
             ),
             newWorld: const RegionData(),
             tileKeysByRegionAndProvince: {
               ow: {
-                provinceId: [firstTile, 'oldWorld|P1|1|0'],
+                capitalProvinceId: ['oldWorld|P1|0|0', capitalTileKey],
+                otherOwnedProvinceId: ['oldWorld|P2|0|0'],
               },
             },
           ),
@@ -38,7 +41,13 @@ void main() {
               id: 'p1',
               displayName: 'P1',
               isHuman: true,
-              capitalProvinceId: provinceId,
+              capitalProvinceId: capitalProvinceId,
+              capitalTile: const CapitalTile(
+                regionId: ow,
+                provinceId: capitalProvinceId,
+                x: 0,
+                y: 1,
+              ),
               stockpile: stockpile,
               workerPool: const WorkerPool(peasants: 1),
               treasury: explorerEcon.buildTreasuryCost + 100,
@@ -53,21 +62,91 @@ void main() {
                 isMilitary:
                     buildUnitCategoryForUnitType('Explorer') ==
                     BuildUnitCategory.military,
-                spawnProvinceId: provinceId,
+                spawnProvinceId: otherOwnedProvinceId,
               ),
             ],
           },
         );
         final next = applyBuildAndWorkOrders(game, orders);
         expect(next.worldState.oldWorld.units.length, 1);
-        expect(next.worldState.oldWorld.units.single.tileKey, firstTile);
+        expect(next.worldState.oldWorld.units.single.tileKey, capitalTileKey);
+        expect(
+          next.worldState.oldWorld.units.single.locationProvinceId,
+          capitalProvinceId,
+        );
       },
     );
 
-    test('civilian build with empty spawnProvinceId falls back to capital', () {
+    test(
+      'civilian build with empty spawnProvinceId uses capital tile and province',
+      () {
+        const ow = 'oldWorld';
+        const capitalProvinceId = 'oldWorld|P1';
+        const capitalTileKey = 'oldWorld|P1|0|1';
+        final explorerEcon = CivilianEconomyCatalog.byId['Explorer']!;
+        var stockpile = const Stockpile();
+        for (final e in explorerEcon.buildInputs.entries) {
+          stockpile = stockpile.applyDelta(e.key, e.value + 1);
+        }
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: capitalProvinceId, regionId: ow, ownerId: 'p1'),
+              ],
+              units: [],
+            ),
+            newWorld: const RegionData(),
+            tileKeysByRegionAndProvince: {
+              ow: {
+                capitalProvinceId: ['oldWorld|P1|0|0', capitalTileKey],
+              },
+            },
+          ),
+          players: [
+            Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              capitalProvinceId: capitalProvinceId,
+              capitalTile: const CapitalTile(
+                regionId: ow,
+                provinceId: capitalProvinceId,
+                x: 0,
+                y: 1,
+              ),
+              stockpile: stockpile,
+              treasury: explorerEcon.buildTreasuryCost + 100,
+            ),
+          ],
+        );
+        final orders = Orders(
+          buildUnitOrdersByPlayerId: {
+            'p1': [
+              BuildUnitOrder(
+                unitType: 'Explorer',
+                isMilitary: false,
+                spawnProvinceId: '',
+              ),
+            ],
+          },
+        );
+
+        final next = applyBuildAndWorkOrders(game, orders);
+        expect(next.worldState.oldWorld.units.length, 1);
+        expect(
+          next.worldState.oldWorld.units.single.locationProvinceId,
+          capitalProvinceId,
+        );
+        expect(next.worldState.oldWorld.units.single.tileKey, capitalTileKey);
+      },
+    );
+
+    test('civilian build with missing capital tile throws explicit error', () {
       const ow = 'oldWorld';
       const capitalProvinceId = 'oldWorld|P1';
-      const firstTile = 'oldWorld|P1|0|0';
       final explorerEcon = CivilianEconomyCatalog.byId['Explorer']!;
       var stockpile = const Stockpile();
       for (final e in explorerEcon.buildInputs.entries) {
@@ -86,7 +165,7 @@ void main() {
           newWorld: const RegionData(),
           tileKeysByRegionAndProvince: {
             ow: {
-              capitalProvinceId: [firstTile],
+              capitalProvinceId: ['oldWorld|P1|0|0'],
             },
           },
         ),
@@ -107,84 +186,23 @@ void main() {
             BuildUnitOrder(
               unitType: 'Explorer',
               isMilitary: false,
-              spawnProvinceId: '',
+              spawnProvinceId: capitalProvinceId,
             ),
           ],
         },
       );
 
-      final next = applyBuildAndWorkOrders(game, orders);
-      expect(next.worldState.oldWorld.units.length, 1);
       expect(
-        next.worldState.oldWorld.units.single.locationProvinceId,
-        capitalProvinceId,
-      );
-      expect(next.worldState.oldWorld.units.single.tileKey, firstTile);
-    });
-
-    test(
-      'civilian build with foreign spawnProvinceId falls back to capital',
-      () {
-        const ow = 'oldWorld';
-        const capitalProvinceId = 'oldWorld|P1';
-        const foreignProvinceId = 'oldWorld|P2';
-        const firstTile = 'oldWorld|P1|0|0';
-        final explorerEcon = CivilianEconomyCatalog.byId['Explorer']!;
-        var stockpile = const Stockpile();
-        for (final e in explorerEcon.buildInputs.entries) {
-          stockpile = stockpile.applyDelta(e.key, e.value + 1);
-        }
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: capitalProvinceId, regionId: ow, ownerId: 'p1'),
-                Province(id: foreignProvinceId, regionId: ow, ownerId: 'p2'),
-              ],
-              units: [],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: {
-              ow: {
-                capitalProvinceId: [firstTile],
-                foreignProvinceId: ['oldWorld|P2|0|0'],
-              },
-            },
+        () => applyBuildAndWorkOrders(game, orders),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('No capital tile to spawn civilian unit'),
           ),
-          players: [
-            Player(
-              id: 'p1',
-              displayName: 'P1',
-              isHuman: true,
-              capitalProvinceId: capitalProvinceId,
-              stockpile: stockpile,
-              treasury: explorerEcon.buildTreasuryCost + 100,
-            ),
-          ],
-        );
-        final orders = Orders(
-          buildUnitOrdersByPlayerId: {
-            'p1': [
-              BuildUnitOrder(
-                unitType: 'Explorer',
-                isMilitary: false,
-                spawnProvinceId: foreignProvinceId,
-              ),
-            ],
-          },
-        );
-
-        final next = applyBuildAndWorkOrders(game, orders);
-        expect(next.worldState.oldWorld.units.length, 1);
-        expect(
-          next.worldState.oldWorld.units.single.locationProvinceId,
-          capitalProvinceId,
-        );
-        expect(next.worldState.oldWorld.units.single.tileKey, firstTile);
-      },
-    );
+        ),
+      );
+    });
 
     test('New World spawn adds unit to newWorld', () {
       const nw = 'newWorld';
