@@ -10,6 +10,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         isProspectableTerrainId,
         kProspectRequiredResourceIds,
         PlayerView,
+        provincePanelShowsFullTileDerivedIntel,
         resourceIdVisibleInPlayerView,
         VisibilityLevel;
 import 'package:colonizethis_map/colonizethis_map.dart';
@@ -91,6 +92,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final String displayId;
   final String? selectedTileKey;
   final String humanPlayerId;
+
   /// Current-turn draft orders (session). Used for Civilian/Military/Naval preview.
   final Orders draftOrders;
   final void Function(String? tileKey)? onHighlightTile;
@@ -240,9 +242,7 @@ String _economicTerrainTitle(String raw) {
   if (raw.isEmpty || raw == '—') return raw;
   return raw
       .split('_')
-      .map(
-        (w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}',
-      )
+      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
       .join(' ');
 }
 
@@ -385,6 +385,13 @@ _OverlayContent _provinceContent({
       game.worldState.tileKeysByRegionAndProvince[region
           .regionId]?[provinceId] ??
       [];
+  final showsFullIntel = provincePanelShowsFullTileDerivedIntel(
+    game: game,
+    view: playerView,
+    humanPlayerId: humanPlayerId,
+    provinceId: provinceId,
+    provinceTileKeys: tileKeys,
+  );
   final resourceByTile = game.worldState.resourceByTileKey;
   final tileState = game.worldState.tileState;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
@@ -402,7 +409,8 @@ _OverlayContent _provinceContent({
     final imp = tileState.improvementLevel(tk);
     final visLevel = playerView.visibilityForTile(tk);
 
-    final needsProspect = res != null &&
+    final needsProspect =
+        res != null &&
         kProspectRequiredResourceIds.contains(res) &&
         !prospected.contains(tk);
     if (needsProspect) {
@@ -421,15 +429,15 @@ _OverlayContent _provinceContent({
         visibleResourceId: visibleRes,
       );
       byResImproved.putIfAbsent(visibleRes, () => []).add((
-            tileKey: tk,
-            terrain: terrain,
-            impBase: impBase,
-          ));
+        tileKey: tk,
+        terrain: terrain,
+        impBase: impBase,
+      ));
     } else if (res != null && imp < 4) {
       byResImprovable.putIfAbsent(visibleRes, () => []).add((
-            tileKey: tk,
-            terrain: terrain,
-          ));
+        tileKey: tk,
+        terrain: terrain,
+      ));
     }
   }
 
@@ -444,8 +452,7 @@ _OverlayContent _provinceContent({
   final resourceKeysSorted = {
     ...byResImproved.keys,
     ...byResImprovable.keys,
-  }.toList()
-    ..sort();
+  }.toList()..sort();
 
   final tileSection = _buildTileSection(
     context: context,
@@ -461,38 +468,46 @@ _OverlayContent _provinceContent({
     name: province?.displayName ?? provinceId,
     ownerName: _ownerName(game, province?.ownerId),
   );
-  final economic = _buildEconomicSection(
-    l10n: l10n,
-    resourceKeysSorted: resourceKeysSorted,
-    byResImproved: byResImproved,
-    byResImprovable: byResImprovable,
-    prospectRows: prospectRows,
-    onHighlightTile: onHighlightTile,
-  );
-  final militarySection = _buildMilitarySectionByOwner(
-    l10n: l10n,
-    game: game,
-    military: military,
-    humanPlayerId: humanPlayerId,
-    provinceId: provinceId,
-    draftOrders: draftOrders,
-  );
-  final civilianSection = _buildCivilianSectionFiltered(
-    l10n: l10n,
-    game: game,
-    civilian: civilian,
-    humanPlayerId: humanPlayerId,
-    playerView: playerView,
-    draftOrders: draftOrders,
-  );
-  final naval = _buildNavalSection(
-    l10n: l10n,
-    game: game,
-    fleets: fleetsInPort,
-    humanPlayerId: humanPlayerId,
-    draftOrders: draftOrders,
-    pendingNavalPortProvinceId: provinceId,
-  );
+  final economic = showsFullIntel
+      ? _buildEconomicSection(
+          l10n: l10n,
+          resourceKeysSorted: resourceKeysSorted,
+          byResImproved: byResImproved,
+          byResImprovable: byResImprovable,
+          prospectRows: prospectRows,
+          onHighlightTile: onHighlightTile,
+        )
+      : _buildSection('Economic', const Text('???'));
+  final militarySection = showsFullIntel
+      ? _buildMilitarySectionByOwner(
+          l10n: l10n,
+          game: game,
+          military: military,
+          humanPlayerId: humanPlayerId,
+          provinceId: provinceId,
+          draftOrders: draftOrders,
+        )
+      : _buildSection('Military', const Text('???'));
+  final civilianSection = showsFullIntel
+      ? _buildCivilianSectionFiltered(
+          l10n: l10n,
+          game: game,
+          civilian: civilian,
+          humanPlayerId: humanPlayerId,
+          playerView: playerView,
+          draftOrders: draftOrders,
+        )
+      : _buildSection('Civilian', const Text('???'));
+  final naval = showsFullIntel
+      ? _buildNavalSection(
+          l10n: l10n,
+          game: game,
+          fleets: fleetsInPort,
+          humanPlayerId: humanPlayerId,
+          draftOrders: draftOrders,
+          pendingNavalPortProvinceId: provinceId,
+        )
+      : _buildSection('Naval', const Text('???'));
 
   const tabLabels = [
     'Political',
@@ -826,7 +841,8 @@ Widget _buildEconomicSection({
   required List<String> resourceKeysSorted,
   required Map<String, List<({String tileKey, String terrain, String impBase})>>
   byResImproved,
-  required Map<String, List<({String tileKey, String terrain})>> byResImprovable,
+  required Map<String, List<({String tileKey, String terrain})>>
+  byResImprovable,
   required List<({String tileKey, String terrain})> prospectRows,
   void Function(String?)? onHighlightTile,
 }) {
@@ -974,10 +990,12 @@ Widget _buildMilitarySectionByOwner({
         }),
         if (pending.isNotEmpty) ...[
           const SizedBox(height: 4),
-          ...pending.map((line) => Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(line),
-              )),
+          ...pending.map(
+            (line) => Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(line),
+            ),
+          ),
         ],
       ],
     ),
@@ -1020,8 +1038,10 @@ Widget _buildCivilianSectionFiltered({
             }
           }
           if (pending != null) {
-            final targetLabel =
-                workOrderTargetDisplayLabel(l10n, pending.target);
+            final targetLabel = workOrderTargetDisplayLabel(
+              l10n,
+              pending.target,
+            );
             return Text('${u.type} (${u.id}): $targetLabel');
           }
           return Text(
@@ -1043,6 +1063,7 @@ Widget _buildNavalSection({
   required List<Fleet> fleets,
   required String humanPlayerId,
   required Orders draftOrders,
+
   /// When set, append draft naval move/mission lines for fleets in port there.
   String? pendingNavalPortProvinceId,
 }) {
@@ -1072,18 +1093,22 @@ Widget _buildNavalSection({
             final fleetLabel = f.id == homeFleetIdFor(f.ownerId)
                 ? 'Home fleet'
                 : 'Fleet ${f.id}';
-            final shipParts = byType.entries.map((e) {
-              final label = shipTypeDisplayLabel(l10n, e.key);
-              return '$label×${e.value}';
-            }).join(', ');
+            final shipParts = byType.entries
+                .map((e) {
+                  final label = shipTypeDisplayLabel(l10n, e.key);
+                  return '$label×${e.value}';
+                })
+                .join(', ');
             return Text('$ownerName — $fleetLabel: $shipParts');
           }),
         if (pending.isNotEmpty) ...[
           const SizedBox(height: 4),
-          ...pending.map((line) => Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(line),
-              )),
+          ...pending.map(
+            (line) => Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(line),
+            ),
+          ),
         ],
       ],
     ),
