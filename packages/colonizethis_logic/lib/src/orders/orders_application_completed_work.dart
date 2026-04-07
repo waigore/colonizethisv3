@@ -165,7 +165,7 @@ void _completedWorkBuildRoad(
   void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final roadLevel = s.tileState.roadLevel(cw.tileKey);
-  final player = s.game.players.where((p) => p.id == u.ownerId).firstOrNull;
+  final player = s.game.playerById(u.ownerId);
   final hasRoadConstruction =
       player?.techUnlocked?['road_construction'] == true;
   final nextLevel = (roadLevel + 1).clamp(0, hasRoadConstruction ? 2 : 1);
@@ -258,7 +258,7 @@ void _completedWorkBuildRail(
   void Function(List<Province>) setProvinces,
   void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
-  final player = s.game.players.where((p) => p.id == u.ownerId).firstOrNull;
+  final player = s.game.playerById(u.ownerId);
   final roadLevel = s.tileState.roadLevel(cw.tileKey);
   final terrain = terrainTypeForTileKey(s.tileMapByRegion, cw.tileKey);
   final reason = rejectionReasonForBuildRailOrder(
