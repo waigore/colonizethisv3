@@ -64,6 +64,20 @@ colonizethis_data    (no package deps)
 - **Given** package metadata for `colonizethis_logic`, **when** dependency analysis reads `dependencies` and `dev_dependencies`, **then** no `colonizethis_ai` entry exists.
 - **Given** `colonizethis_ai` imports logic interfaces, **when** static analysis inspects imports under `packages/colonizethis_ai/lib`, **then** imports use narrow logic contract libraries (`order_suggestion_api.dart`, `ai_api.dart`) and do not import `package:colonizethis_logic/colonizethis_logic.dart`.
 
+### Automated guard gate (CI)
+
+The repository enforces this boundary in CI via:
+
+- `tool/check_logic_ai_decoupling.sh`
+- `.github/workflows/quality.yml` step: `Check logic/ai decoupling convention (SPEC/program/repo-and-packages.md)`
+
+Guard behavior:
+
+- Fails if `packages/colonizethis_logic/pubspec.yaml` declares `colonizethis_ai` under `dependencies` or `dev_dependencies`.
+- Fails if `packages/colonizethis_ai/lib/**` imports `package:colonizethis_logic/colonizethis_logic.dart`.
+- Fails if `packages/colonizethis_ai/lib/**` imports logic from any path other than `ai_api.dart` or `order_suggestion_api.dart`.
+- Fails if `packages/colonizethis_logic/test/**` imports `package:colonizethis_ai/...`.
+
 ---
 
 ## Flutter app `lib/` structure (TDD 15)

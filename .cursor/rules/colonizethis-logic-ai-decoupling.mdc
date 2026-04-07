@@ -1,0 +1,36 @@
+---
+description: Enforce one-way logic/ai package decoupling
+alwaysApply: true
+---
+
+# Logic/AI Package Decoupling
+
+Enforce a strict one-way architecture boundary between `colonizethis_logic` and `colonizethis_ai`.
+
+## Dependency Direction (authoritative)
+
+- Allowed: `colonizethis_ai` -> `colonizethis_logic` (narrow contracts only).
+- Forbidden: any `colonizethis_logic` -> `colonizethis_ai` dependency (including `dev_dependencies`).
+- `colonizethis_logic/pubspec.yaml` must never contain `colonizethis_ai` in `dependencies` or `dev_dependencies`.
+
+## Import Surface Rules
+
+- In `packages/colonizethis_ai/lib/**`, import logic through explicit contract entrypoints only:
+  - `package:colonizethis_logic/ai_api.dart`
+  - `package:colonizethis_logic/order_suggestion_api.dart`
+- Do not import broad logic barrels for AI integration:
+  - Forbidden: `package:colonizethis_logic/colonizethis_logic.dart` (or equivalent broad exports).
+- If AI needs new capabilities from logic, add/extend a narrow contract in logic first, then consume that contract from AI.
+
+## Test Boundary Rules
+
+- Tests that exercise AI behavior/planning belong in `packages/colonizethis_ai/test/**`.
+- `packages/colonizethis_logic/test/**` must not require `colonizethis_ai` as a test-time dependency.
+
+## Change Review Checklist
+
+- Before finalizing changes touching AI/logic boundaries, verify:
+  - `colonizethis_logic/pubspec.yaml` has no `colonizethis_ai` dependency.
+  - AI imports use only allowed contract files.
+  - Static analysis remains clean for touched packages.
+  - Dependency direction remains consistent with `SPEC/program/repo-and-packages.md`.
