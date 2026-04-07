@@ -108,7 +108,7 @@ void _logExtractionAutoTransportInterception(
 
 /// Total cargo holds for [playerId] based on ships in the home fleet at the capital port.
 ///
-/// Home fleet convention: fleet id = 'fleet_<playerId>'. Each ship's cargoHold is read from
+/// Home fleet convention: fleet id = `fleet_<playerId>`. Each ship's cargoHold is read from
 /// NavalStatsCatalog; if no such fleet exists or the sum of cargoHold values is zero, this
 /// falls back to [defaultCargoHoldsStub] per SPEC/program/extraction-pipeline.md § Cargo holds.
 int cargoHoldsForHomeFleet(Game game, String playerId) {
@@ -183,11 +183,13 @@ Set<String> _enemiesAtWar(Game game, String playerId) {
   var sum = 0;
   var hasBlockade = false;
   for (final f in fleets) {
-    if (!f.isAtSea)
+    if (!f.isAtSea) {
       continue; // Only fleets at sea can intercept. SPEC/game/ships-and-naval.md.
+    }
     if (!enemyIds.contains(f.ownerId)) continue;
-    if (f.mission != FleetMission.patrol && f.mission != FleetMission.blockade)
+    if (f.mission != FleetMission.patrol && f.mission != FleetMission.blockade) {
       continue;
+    }
     if (f.mission == FleetMission.blockade) hasBlockade = true;
     for (final typeId in f.shipTypeIds) {
       sum += NavalStatsCatalog.get(typeId).interceptRating;

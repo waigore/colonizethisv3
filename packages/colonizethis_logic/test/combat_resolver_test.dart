@@ -639,7 +639,7 @@ void main() {
     });
 
     test('battle tie-break is deterministic for same seed and context', () {
-      final makeGame = () => Game(
+      Game makeGame() => Game(
         id: 'g1',
         globalGameSeed: 1234,
         worldState: WorldState(

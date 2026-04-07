@@ -1,6 +1,6 @@
 /// Topology and tile map generation and visualization.
 /// SPEC/program/tile-map-gen-algorithm.md, SPEC/program/tile-map-gen-resources.md, SPEC/program/map-data.md.
-library colonizethis_map;
+library;
 
 export 'src/grid_voronoi.dart';
 export 'src/topology_generator.dart';

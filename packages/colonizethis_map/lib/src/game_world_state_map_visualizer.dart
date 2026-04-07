@@ -296,7 +296,7 @@ Uint8List renderInitGameMapToPngFromViewData({
   final ow = viewData.oldWorld;
   final nw = viewData.newWorld;
 
-  Uint8List _renderRegion(RegionMapViewData region) {
+  Uint8List renderRegion(RegionMapViewData region) {
     final mapW = region.width * region.cellSize;
     final mapH = region.height * region.cellSize;
 
@@ -473,8 +473,8 @@ Uint8List renderInitGameMapToPngFromViewData({
     return img.encodePng(image);
   }
 
-  final owPng = _renderRegion(ow);
-  final nwPng = _renderRegion(nw);
+  final owPng = renderRegion(ow);
+  final nwPng = renderRegion(nw);
 
   return composeMultiRegionMapPng(
     oldWorldPng: owPng,

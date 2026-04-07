@@ -198,8 +198,9 @@ WorldState applyCapitalPortAndRoad(
     topology,
     localProvinceId,
   ).toList()..sort();
-  if (seaZoneIds.isEmpty)
+  if (seaZoneIds.isEmpty) {
     throw ArgumentError('Province $provinceId has no sea zone in topology');
+  }
 
   for (final seaZoneId in seaZoneIds) {
     final portKeyProvSea = '$provinceId|$seaZoneId';

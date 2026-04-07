@@ -166,8 +166,9 @@ class OrderEngine {
       return OrderValidationResult.accepted();
     }
     final r = results.last;
-    if (!r.isAccepted)
+    if (!r.isAccepted) {
       _log.w('$orderLabel order rejected player=$playerId reason=${r.reason}');
+    }
     return r;
   }
 
@@ -490,11 +491,22 @@ class OrderEngine {
       playerId,
     );
 
-    const _moveValidator = MoveValidator();
-    const _armyMoveValidator = ArmyMoveValidator();
+    const moveValidator = MoveValidator();
+    const armyMoveValidator = ArmyMoveValidator();
 
+    OrderValidationResult validateMove(MoveOrder o) {
+      return moveValidator.validate(
+        o,
+        game,
+        playerId,
+        unitsById,
+        diplomatic,
+        view,
+        topology,
+      );
+    }
     OrderValidationResult validateArmyMove(ArmyMoveOrder o) {
-      return _armyMoveValidator.validate(
+      return armyMoveValidator.validate(
         o,
         game,
         playerId,
@@ -508,16 +520,7 @@ class OrderEngine {
       results,
       moves,
       rejected,
-      (o, prev) => _moveValidator.validate(
-        o,
-        game,
-        playerId,
-        unitsById,
-        diplomatic,
-        view,
-        topology,
-        previousRejected: prev,
-      ),
+      (o, prev) => prev ? previousInvalidOrderResult : validateMove(o),
     );
 
     rejected = _appendValidationResults(

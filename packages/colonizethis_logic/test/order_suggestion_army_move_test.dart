@@ -12,7 +12,7 @@ void main() {
     const p1 = 'oldWorld|p1';
     const nw = 'newWorld|col';
 
-    Game _game({String? extraNeighborProvinceId}) {
+    Game game0({String? extraNeighborProvinceId}) {
       final provinces = <Province>[
         Province(
           id: cap,
@@ -98,7 +98,7 @@ void main() {
       );
     }
 
-    MapTopology _topology({bool includeP2 = false}) {
+    MapTopology topology0({bool includeP2 = false}) {
       final nodes = <TopologyNode>[
         const TopologyNode(
           id: 'oldWorld|cap',
@@ -133,8 +133,8 @@ void main() {
     }
 
     test('includes cross-region player-owned province as destination', () {
-      final game = _game();
-      final topology = _topology();
+      final game = game0();
+      final topology = topology0();
       final view = buildPlayerView(game, topology, gp);
       final suggestions = suggestArmyMoveOrders(
         view,
@@ -152,8 +152,8 @@ void main() {
 
     test('still proposes alternate destination when draft has prior army move', () {
       const p2 = 'oldWorld|p2';
-      final game = _game(extraNeighborProvinceId: p2);
-      final topology = _topology(includeP2: true);
+      final game = game0(extraNeighborProvinceId: p2);
+      final topology = topology0(includeP2: true);
       final tileKeys = Map<String, List<String>>.from(
         game.worldState.tileKeysByRegionAndProvince['oldWorld']!,
       );

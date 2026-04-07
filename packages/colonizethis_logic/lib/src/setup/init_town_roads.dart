@@ -129,7 +129,7 @@ Game applyInitTownRoadsToCapitals({
   }
 
   _log.i(
-    'init town roads raised ${_initTownRoadLevel} on ${toRaise.length} tile(s)',
+    'init town roads raised $_initTownRoadLevel on ${toRaise.length} tile(s)',
   );
   return game.copyWith(worldState: ws.copyWith(tileState: tileState));
 }

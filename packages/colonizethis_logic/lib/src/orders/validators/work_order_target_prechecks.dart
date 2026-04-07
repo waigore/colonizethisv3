@@ -50,10 +50,10 @@ const Set<String> kWorkTargetsSkippingDefaultForeignProvinceCheck = {
 
 OrderValidationResult? precheckUpgradeTown(
   WorkOrderTargetPrecheckContext ctx,
-  WorkOrder _order,
-  String? _targetProvinceId,
-  String? _provinceOwnerId,
-  String _unitType,
+  WorkOrder order,
+  String? targetProvinceId,
+  String? provinceOwnerId,
+  String unitType,
 ) {
   if (ctx.player.techUnlocked?[kTechIdNationalBureaucracy] != true) {
     return OrderValidationResult.rejected(
@@ -65,10 +65,10 @@ OrderValidationResult? precheckUpgradeTown(
 
 OrderValidationResult? precheckStealTech(
   WorkOrderTargetPrecheckContext ctx,
-  WorkOrder _order,
+  WorkOrder order,
   String? targetProvinceId,
-  String? _provinceOwnerId,
-  String _unitType,
+  String? provinceOwnerId,
+  String unitType,
 ) {
   if (targetProvinceId == null) {
     return OrderValidationResult.rejected('Invalid target for steal_tech');
@@ -96,10 +96,10 @@ OrderValidationResult? precheckStealTech(
 
 OrderValidationResult? precheckCounterSpy(
   WorkOrderTargetPrecheckContext ctx,
-  WorkOrder _order,
-  String? _targetProvinceId,
+  WorkOrder order,
+  String? targetProvinceId,
   String? provinceOwnerId,
-  String _unitType,
+  String unitType,
 ) {
   if (provinceOwnerId != ctx.playerId) {
     return OrderValidationResult.rejected(
@@ -112,9 +112,9 @@ OrderValidationResult? precheckCounterSpy(
 OrderValidationResult? precheckPurchaseLand(
   WorkOrderTargetPrecheckContext ctx,
   WorkOrder o,
-  String? _targetProvinceId,
+  String? targetProvinceId,
   String? ownerId,
-  String _unitType,
+  String unitType,
 ) {
   if (ownerId == null || ownerId == ctx.playerId) {
     return OrderValidationResult.rejected(
@@ -173,7 +173,7 @@ OrderValidationResult? precheckPurchaseLand(
 OrderValidationResult? precheckBuildImprovement(
   WorkOrderTargetPrecheckContext ctx,
   WorkOrder o,
-  String? _targetProvinceId,
+  String? targetProvinceId,
   String? ownerId,
   String unitType,
 ) {

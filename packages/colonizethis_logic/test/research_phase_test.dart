@@ -5,7 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('Research phase', () {
-    Game _baseGame({
+    Game baseGame({
       required int treasury,
       Map<String, bool>? techUnlocked,
       Map<String, int>? progress,
@@ -29,13 +29,13 @@ void main() {
     }
 
     test('resolveResearchPhase returns game unchanged when no research orders', () {
-      final game = _baseGame(treasury: 1000);
+      final game = baseGame(treasury: 1000);
       final result = resolveResearchPhase(game, const Orders());
       expect(identical(result, game), isTrue);
     });
 
     test('resolveResearchPhase skips player when researchSlots is zero', () {
-      final game = _baseGame(treasury: 2000, researchSlots: 0);
+      final game = baseGame(treasury: 2000, researchSlots: 0);
       final orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
@@ -56,7 +56,7 @@ void main() {
         'resolveResearchPhase clears progress when slot canceled (empty techId)',
         () {
       const initialTreasury = 500;
-      final game = _baseGame(
+      final game = baseGame(
         treasury: initialTreasury,
         techUnlocked: const {},
         progress: const {'crop_rotation': 10},
@@ -83,7 +83,7 @@ void main() {
         'resolveResearchPhase keeps progress for tech still assigned in another slot',
         () {
       const initialTreasury = 500;
-      final game = _baseGame(
+      final game = baseGame(
         treasury: initialTreasury,
         techUnlocked: const {'saw_mill': true},
         progress: const {'wind_saw_mill': 80},
@@ -157,7 +157,7 @@ void main() {
         () {
       final tech = techById('crop_rotation')!;
       // Maximum funding costs 1000 gold/turn (per SPEC/game/tech-tree.md)
-      final game = _baseGame(
+      final game = baseGame(
         treasury: 2000,
         techUnlocked: const {},
       );
@@ -200,7 +200,7 @@ void main() {
 
     test('applies prerequisite rule: cannot research tech without prereqs', () {
       // No spend when prereq not met; use enough treasury in case logic ever applied
-      final game = _baseGame(
+      final game = baseGame(
         treasury: 2000,
         techUnlocked: const {}, // saw_mill not researched
       );
@@ -232,7 +232,7 @@ void main() {
 
     test('research with funding none does not spend treasury or add progress',
         () {
-      final game = _baseGame(treasury: 100, techUnlocked: const {});
+      final game = baseGame(treasury: 100, techUnlocked: const {});
       final orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
@@ -256,7 +256,7 @@ void main() {
     test('research with low funding deducts treasury and adds progress', () {
       // Use wind_saw_mill (cost 160) with prereq so 100 RP does not complete in one turn.
       final game =
-          _baseGame(treasury: 100, techUnlocked: const {'saw_mill': true});
+          baseGame(treasury: 100, techUnlocked: const {'saw_mill': true});
       final orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
@@ -282,7 +282,7 @@ void main() {
     });
 
     test('research with maximum funding has efficiency bonus', () {
-      final game = _baseGame(treasury: 2000, techUnlocked: const {});
+      final game = baseGame(treasury: 2000, techUnlocked: const {});
       final orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
@@ -310,7 +310,7 @@ void main() {
       const prereqMet = {'saw_mill': true};
 
       // Low: 50 gold, 100 RP (no unlock; 100 < 160)
-      var game = _baseGame(treasury: 100, techUnlocked: prereqMet);
+      var game = baseGame(treasury: 100, techUnlocked: prereqMet);
       var orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
@@ -330,7 +330,7 @@ void main() {
           100);
 
       // Medium: 150 gold, 300 RP (unlocks wind_saw_mill)
-      game = _baseGame(treasury: 200, techUnlocked: prereqMet);
+      game = baseGame(treasury: 200, techUnlocked: prereqMet);
       orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
@@ -347,7 +347,7 @@ void main() {
       expect(next.players.single.techUnlocked!['wind_saw_mill'], isTrue);
 
       // High: 400 gold, 800 RP (unlocks)
-      game = _baseGame(treasury: 500, techUnlocked: prereqMet);
+      game = baseGame(treasury: 500, techUnlocked: prereqMet);
       orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
@@ -364,7 +364,7 @@ void main() {
       expect(next.players.single.techUnlocked!['wind_saw_mill'], isTrue);
 
       // Maximum: 1000 gold, 2500 RP (2.5x efficiency, unlocks)
-      game = _baseGame(treasury: 1500, techUnlocked: prereqMet);
+      game = baseGame(treasury: 1500, techUnlocked: prereqMet);
       orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
@@ -384,7 +384,7 @@ void main() {
     test('completing University sets researchSlots to 4', () {
       // SPEC/game/tech-tree.md: 3 slots by default, 4 with University tech.
       // University requires: money_lending, apprentice_workers, printing_press
-      final game = _baseGame(
+      final game = baseGame(
         treasury: 3000,
         techUnlocked: const {
           'money_lending': true,
@@ -418,7 +418,7 @@ void main() {
       final tech = techById('crop_rotation')!;
       expect(tech.cost, lessThan(2500)); // sanity: one turn of max funding can complete
 
-      final game = _baseGame(
+      final game = baseGame(
         treasury: 500,
         techUnlocked: const {
           'land_enclosure': true,
@@ -458,7 +458,7 @@ void main() {
         'duplicate slotIndex: only one order per slot applied (last wins), no double spend',
         () {
       // SPEC: one assignment per slot. If list has two orders for same slot, resolver uses one (last wins).
-      final game = _baseGame(treasury: 2000, techUnlocked: const {});
+      final game = baseGame(treasury: 2000, techUnlocked: const {});
       final orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [

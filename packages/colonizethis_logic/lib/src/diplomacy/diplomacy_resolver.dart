@@ -3,6 +3,7 @@
 /// Join Empire/Colony, alliance proposals, Declare War/Peace, intervention
 /// (GP embassy or purchased land when a GP declares war on a Minor/Tribe),
 /// relation modifiers, score update.
+library;
 
 import 'dart:math' show Random;
 

@@ -10,10 +10,10 @@ void main() {
     const provinceId = 'oldWorld|P1';
 
     // Non-empty orders so applyBuildAndWorkOrders does not return early (empty build list still counts).
-    Orders _ordersToTriggerProcessWork() =>
+    Orders ordersToTriggerProcessWork() =>
         Orders(buildUnitOrdersByPlayerId: {'p1': <BuildUnitOrder>[]});
 
-    TileMapResult _simpleTileMap() {
+    TileMapResult simpleTileMap() {
       return TileMapResult(
         width: 3,
         height: 3,
@@ -62,7 +62,7 @@ void main() {
         );
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
         );
         expect(next.worldState.tileState.improvementLevel(tileKey), 1);
         final after = next.worldState.oldWorld.units.single;
@@ -110,7 +110,7 @@ void main() {
         );
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
         );
         expect(next.worldState.tileState.improvementLevel(tileKey), 4);
       },
@@ -163,7 +163,7 @@ void main() {
         );
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
         );
         expect(next.worldState.tileState.improvementLevel(tileKey), 4);
       },
@@ -211,7 +211,7 @@ void main() {
         );
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
         );
         final uAfter = next.worldState.oldWorld.units.single;
         expect(uAfter.status, UnitStatus.idle);
@@ -259,14 +259,14 @@ void main() {
         );
         final afterFirst = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
         );
         expect(afterFirst.worldState.tileState.improvementLevel(tileKey), 0);
         final uAfterFirst = afterFirst.worldState.oldWorld.units.single;
         expect(uAfterFirst.currentWork!.remainingTurns, 1);
         final afterSecond = applyBuildAndWorkOrders(
           afterFirst,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
         );
         expect(afterSecond.worldState.tileState.improvementLevel(tileKey), 1);
       },
@@ -304,7 +304,7 @@ void main() {
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
-      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      final next = applyBuildAndWorkOrders(game, ordersToTriggerProcessWork());
       expect(
         next.worldState.playerVisibilityByTile['p1']?[tileKey],
         VisibilityLevel.fullyVisible.name,
@@ -342,7 +342,7 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(
         game,
-        _ordersToTriggerProcessWork(),
+        ordersToTriggerProcessWork(),
         tileMapByRegion: const {},
       );
       expect(next.worldState.tileState.roadLevel(tileKey), 1);
@@ -398,8 +398,8 @@ void main() {
         );
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
-          tileMapByRegion: {ow: _simpleTileMap()},
+          ordersToTriggerProcessWork(),
+          tileMapByRegion: {ow: simpleTileMap()},
         );
 
         // Road built on target tile.
@@ -451,8 +451,8 @@ void main() {
 
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
-          tileMapByRegion: {ow: _simpleTileMap()},
+          ordersToTriggerProcessWork(),
+          tileMapByRegion: {ow: simpleTileMap()},
         );
 
         // Road on target tile upgraded from 1 -> 2.
@@ -510,7 +510,7 @@ void main() {
         );
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
           topology: topology,
         );
         expect(next.worldState.tileState.roadLevel(tileKey), 4);
@@ -557,7 +557,7 @@ void main() {
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
-      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      final next = applyBuildAndWorkOrders(game, ordersToTriggerProcessWork());
       expect(next.worldState.oldWorld.provinces.single.fortLevel, 1);
     });
 
@@ -609,7 +609,7 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(
         game,
-        _ordersToTriggerProcessWork(),
+        ordersToTriggerProcessWork(),
         tileMapByRegion: {ow: railMap},
       );
       expect(next.worldState.tileState.roadLevel(tileKey), 0);
@@ -663,7 +663,7 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(
         game,
-        _ordersToTriggerProcessWork(),
+        ordersToTriggerProcessWork(),
         tileMapByRegion: {ow: railMap},
       );
       expect(next.worldState.tileState.roadLevel(tileKey), 4);

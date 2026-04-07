@@ -1,5 +1,6 @@
 /// Builder for InitGameMapViewData from game + tile maps + topology.
 /// SPEC/program/map-visualization.md § Map view model for tools.
+library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';

@@ -6,6 +6,7 @@
 /// [TurnResolutionPendingIntervention] and blocks until [resumeTurnResolutionWithInterventionDecisions].
 /// When call to arms requires a human ally, resolution returns
 /// [TurnResolutionPendingCallToArms].
+library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 

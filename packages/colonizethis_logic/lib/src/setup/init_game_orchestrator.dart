@@ -227,9 +227,7 @@ InitGameResult runInitGame({
 
   // Phase 4: set AI seeds and GP colour override for determinism / display
   var game = setupResult.game;
-  final gpColorOverrideList = mapColorTuples == null
-      ? null
-      : mapColorTuples.map((k, v) => MapEntry(k, [v.$1, v.$2, v.$3]));
+  final gpColorOverrideList = mapColorTuples?.map((k, v) => MapEntry(k, [v.$1, v.$2, v.$3]));
   game = game.copyWith(
     globalGameSeed: effectiveSeed,
     aiSeedByGpId: {

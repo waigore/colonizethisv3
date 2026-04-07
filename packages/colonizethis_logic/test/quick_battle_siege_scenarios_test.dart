@@ -1,6 +1,7 @@
 /// Combat-style scenarios for siege Quick Battle: virtual emplaced guns absorb
 /// defender-side damage before/during regiment losses; fort may downgrade when
 /// all guns are destroyed. SPEC/game/quick-battle.md, SPEC/program/quick-battle-resolution.md.
+library;
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

@@ -64,8 +64,9 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
               ? localId
               : ProvinceId.full(zoneRegionId, localId);
           if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ??
-              false)
+              false) {
             continue;
+          }
           final province = game.worldState.tryGetProvince(fullProvinceId);
           if (province?.ownerId != playerId) continue;
           final candidate = NavalMoveOrder(
