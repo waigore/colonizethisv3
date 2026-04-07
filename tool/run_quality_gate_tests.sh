@@ -49,7 +49,7 @@ echo "=== Test app (Flutter) ==="
 # CI runs sharded app tests with a shared deps artifact (.github/workflows/quality.yml).
 # Locally: single process is enough; use the same flags as shards for parity.
 if [ -d app ]; then
-  (cd app && flutter test --coverage --reporter=compact -j 1 --no-track-widget-creation)
+  (cd app && flutter test test/ --coverage --reporter=compact -j 1 --no-track-widget-creation)
   echo ""
   echo "=== App coverage gate (>= 80% for app/lib/) ==="
   "$ROOT/tool/check_coverage_threshold.sh" 80 app
