@@ -35,11 +35,12 @@ The map renderer draws terrain in **three passes**:
 - **Tilesets**:
   - `plains_desert` — Wang tileset with plains (lower) and desert (upper)
 - **Mechanism**: When a cell is desert, it clips the plains layer, and desert is drawn instead. The plains↔desert transition is handled by the `plains_desert` Wang tileset.
-- **Plains resource variants (L1)**: For plains cells only, terrain variant keys may override the default plains base art:
+- **Plains resource variants (L1)**: For **interior** plains cells only, the renderer selects standalone overlay assets with **RGBA transparency** (transparent “background” around the resource-specific art):
   - `resourceId = grain` → `tile_plains_grain`
   - `resourceId = meat` → `tile_plains_meat`
   - `resourceId = horses` → `tile_plains_horses`
-  - Any other `resourceId` (or null) keeps the canonical plains base tile.
+  - **Draw order:** L1 **first** draws the **same canonical interior plains** Wang upper-base tile used for a non-resource interior plains cell (`sea_plains` atlas), **then** draws the selected `tile_plains_*` image with normal alpha blending (`srcOver`). Transparent pixels in the overlay must reveal that plains base—not the empty canvas (which would read as black).
+  - Any other `resourceId` (or null) keeps a single draw of the canonical plains base tile (no overlay variant).
   - Desert never uses these plains variant keys.
 
 ### Layer 2+: Terrain Features (Overlay)
@@ -210,6 +211,8 @@ The **logic** (which tileset applies per corner pattern) is fixed by terrain typ
 - Given a plains tile with `resourceId = grain`, when rendering L1, then the renderer selects `tile_plains_grain` for that tile.
 - Given a plains tile with `resourceId = meat`, when rendering L1, then the renderer selects `tile_plains_meat` for that tile.
 - Given a plains tile with `resourceId = horses`, when rendering L1, then the renderer selects `tile_plains_horses` for that tile.
+- Given an **interior** plains cell with `resourceId` in `{grain, meat, horses}`, when rendering L1, then the renderer draws the canonical interior plains base, then the corresponding `tile_plains_*` overlay so transparent overlay pixels show plains grass (not an empty/black canvas).
+- Given an **interior** plains cell with `resourceId` in `{grain, meat, horses}` and player-constrained **fogged** visibility, when rendering L1 completes, then fog attenuation for that cell matches other interior plains land-base tiles (no unintended double-darkening from separate base vs overlay passes).
 - Given a plains tile with `resourceId` not in `{grain, meat, horses}` (or null), when rendering L1, then the renderer keeps the canonical plains base tile.
 - Given a desert tile with any `resourceId`, when rendering L1, then the renderer does not select any plains resource variant tile key.
 - Given a forest tile with `resourceId = timber`, when rendering L2+, then the renderer selects `tile_forest_timber`; otherwise for forest it selects `tile_forest`.
