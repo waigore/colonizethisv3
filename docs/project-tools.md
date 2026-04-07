@@ -278,7 +278,7 @@ melos run check_gdd_coverage
 
 ## test_app (Melos)
 
-Runs Flutter widget tests for the **app** package. Use this (or `cd app && flutter test`) when running app tests. Do **not** run app tests with `dart test app/test/...` from the repo root — that uses the Dart test runner and fails with Flutter binding errors (Size/Rect/invalid-type). See .cursor/rules/colonizethis-testing.mdc.
+Runs Flutter widget tests for the **app** package (`app/test/` only). Use this (or `cd app && flutter test test/`) when running app widget tests; Linux desktop e2e (`integration_test/`, CI: xvfb) is documented in `SPEC/program/e2e-integration-tests.md`. Do **not** run app tests with `dart test app/test/...` from the repo root — that uses the Dart test runner and fails with Flutter binding errors (Size/Rect/invalid-type). See .cursor/rules/colonizethis-testing.mdc.
 
 **Invocation**
 
