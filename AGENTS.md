@@ -14,6 +14,7 @@ Cursor rules are the source of truth for implementation and review behavior.
 | `colonizethis-spec-required.mdc` | SPEC-first workflow and source-of-truth boundaries |
 | `colonizethis-core-principles.mdc` | Dart/Flutter/Flame coding principles and architecture boundaries |
 | `colonizethis-logging-file.mdc` | Required file logging approach (`basic_logger_file`) |
+| `colonizethis-logic-ai-decoupling.mdc` | Enforces one-way architecture boundary between `colonizethis_logic` and `colonizethis_ai` |
 
 ## Context-specific rules
 

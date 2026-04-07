@@ -288,6 +288,9 @@ jobs:
       - name: Check test import convention (SPEC/program/test-logging.md)
         run: tool/check_test_imports.sh
 
+      - name: Check logic/ai decoupling convention (SPEC/program/repo-and-packages.md)
+        run: tool/check_logic_ai_decoupling.sh
+
       - name: Wang incremental assets gate (Python)
         run: |
           set -euo pipefail
