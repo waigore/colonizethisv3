@@ -235,6 +235,13 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: flutter config --enable-linux-desktop
 
+      - name: Resolve app dependencies for Linux plugin generation
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          cd app
+          flutter pub get
+
       # Headless DISPLAY for integration_test (-d linux). Same idea as community xvfb wrapper actions
       # (e.g. GabrielBB/xvfb-action; pin here for a maintained installer + cleanup).
       - name: Run Linux integration tests (xvfb)

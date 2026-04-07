@@ -167,7 +167,7 @@ class RequestRegionMapCameraPanWorldDeltaEvent extends UIActionEvent {
 }
 
 /// In-game shell requests an absolute fit-relative zoom multiplier `m` (`zoom = m × z_fit`).
-/// The map clamps [zoomMultiplier] to **[0.5, 4.0]** before applying. SPEC/ui/map-widget.md.
+/// The map clamps [zoomMultiplier] to **[0.5, 8.0]** before applying. SPEC/ui/map-widget.md.
 class RequestRegionMapSetZoomMultiplierEvent extends UIActionEvent {
   const RequestRegionMapSetZoomMultiplierEvent({
     required this.regionId,
@@ -176,7 +176,7 @@ class RequestRegionMapSetZoomMultiplierEvent extends UIActionEvent {
 
   final String regionId;
 
-  /// Target `m` vs fit-map baseline; host clamps to [0.5, 4.0].
+  /// Target `m` vs fit-map baseline; host clamps to [0.5, 8.0].
   final double zoomMultiplier;
 }
 

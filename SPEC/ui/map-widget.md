@@ -1,6 +1,6 @@
 # Map Widget (reusable)
 
-**SPEC/ui** — Reusable 2D tile-map component for the Flutter app. Renders one region's map with a base tile layer and optional overlays; viewport sized to the widget; pan and zoom on a **fit-map baseline** with a unified **0.5×–4×** multiplier band (see § Viewport, scale, pan, zoom). Tap/click exposes province selection via callbacks. Implemented as a **Flame** component to support animation of individual tiles and other assets. Data and events align with shared packages and event systems (same as ctterm); this spec is for the app only.
+**SPEC/ui** — Reusable 2D tile-map component for the Flutter app. Renders one region's map with a base tile layer and optional overlays; viewport sized to the widget; pan and zoom on a **fit-map baseline** with a unified **0.5×–8×** multiplier band (see § Viewport, scale, pan, zoom). Tap/click exposes province selection via callbacks. Implemented as a **Flame** component to support animation of individual tiles and other assets. Data and events align with shared packages and event systems (same as ctterm); this spec is for the app only.
 
 ---
 
@@ -198,8 +198,8 @@ The **in-game shell** (Empire overview) may overlay a cycle button that toggles 
 
 - **Viewport:** Exactly the size of the map widget in the layout. No intrinsic minimum; parent constrains the widget.
 - **Fit-map baseline (`z_fit`):** For the active region and current logical viewport size, `z_fit = min(viewportWidth / mapWidthWorld, viewportHeight / mapHeightWorld)` (same world units as the Flame map). At camera zoom `z_fit`, the entire region map is visible (tight fit on the limiting axis). When the map is smaller than the viewport in world space, `z_fit` is the zoom that fills the viewport with that map extent (centering applies per `_clampCameraToMap`).
-- **Fit-relative multiplier:** `m = zoom / z_fit` where `zoom` is the Flame viewfinder zoom. User-facing **percent = 100 × m** (display range **50%–400%** corresponds to **`m ∈ [0.5, 4]`**). **100% = fit the full map** in the current viewport.
-- **Unified clamp:** **Pinch**, **scroll wheel**, **keyboard zoom shortcuts**, and the **in-game minimap zoom slider** all use the **same** limits on **`m`**: **`[0.5, 4]`** (no separate clamps per input). Effective camera zoom is **`m × z_fit`** after clamping **`m`**.
+- **Fit-relative multiplier:** `m = zoom / z_fit` where `zoom` is the Flame viewfinder zoom. User-facing **percent = 100 × m** (display range **50%–800%** corresponds to **`m ∈ [0.5, 8]`**). **100% = fit the full map** in the current viewport.
+- **Unified clamp:** **Pinch**, **scroll wheel**, **keyboard zoom shortcuts**, and the **in-game minimap zoom slider** all use the **same** limits on **`m`**: **`[0.5, 8]`** (no separate clamps per input). Effective camera zoom is **`m × z_fit`** after clamping **`m`**.
 - **Pan:** User can pan to move the visible region over the full map (drag or gesture). Map is larger than viewport when zoomed in; **dragging** on the map surface pans the camera.
 - **Zoom:** **Continuous** zoom within the band above; scroll, pinch, keys, and shell slider update **`m`** smoothly. **`z_fit`** is recomputed when the widget resizes or the displayed region changes; **the implementation preserves `m` across viewport resize** so the on-screen zoom feel stays consistent; **when the `regionId` of the map instance changes**, **`m` resets to `1.0`** (100% fit) for that instance.
 - **Full map:** The component always has the full region map in memory/logic; viewport is a window over it.
@@ -316,12 +316,14 @@ Hover, selection, and overlay behavior:
 
 The map widget renders terrain using **Wang tilesets** for seamless terrain transitions. Each tileset is a 4×4 grid (16 tiles) that covers all corner combinations for transitions between two terrain types.
 
-For L1 plains cells, the renderer may apply resource-specific plains terrain variants selected by terrain/resource id:
+For L1 **interior** plains cells, the renderer may apply resource-specific plains terrain variants selected by terrain/resource id. Assets `tile_plains_grain`, `tile_plains_meat`, and `tile_plains_horses` use **transparent regions** around the drawn resource detail; the renderer **must** draw the **canonical interior plains** base (same `sea_plains` upper-base tile as non-resource interior plains) **before** compositing the variant PNG so transparency shows grass, not the blank canvas.
+
+Variant keys:
 - `tile_plains_grain` for `resourceId = grain`
 - `tile_plains_meat` for `resourceId = meat`
 - `tile_plains_horses` for `resourceId = horses`
 
-These variants apply only to plains cells and do not alter desert rendering rules.
+These variants apply only to plains cells (not desert) and do not alter desert rendering rules.
 
 ### Runtime configuration (Flutter app)
 
@@ -398,6 +400,7 @@ Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_m
 - **Given** a tile with `terrainType = plains` and `resourceId = grain`, **when** the map renders the terrain layer, **then** it selects plains terrain variant `tile_plains_grain` for that tile.
 - **Given** a tile with `terrainType = plains` and `resourceId = meat`, **when** the map renders the terrain layer, **then** it selects plains terrain variant `tile_plains_meat` for that tile.
 - **Given** a tile with `terrainType = plains` and `resourceId = horses`, **when** the map renders the terrain layer, **then** it selects plains terrain variant `tile_plains_horses` for that tile.
+- **Given** an **interior** plains tile with `resourceId` in `{grain, meat, horses}`, **when** the map renders the L1 terrain layer, **then** it draws the canonical interior plains base and composites the selected `tile_plains_*` on top so pixels transparent in the PNG show the same plains base as neighboring non-resource plains (no spurious solid black from an undrawn background).
 - **Given** a tile with `terrainType = desert` and any `resourceId`, **when** the map renders the terrain layer, **then** it does not select a plains terrain variant.
 - **Given** terrain asset initialization and one required plains variant PNG is missing or fails decode, **when** map terrain assets are loaded, **then** initialization fails with an error instead of silently skipping that asset.
 - **Given** only a change to `map_terrain_tilesets.json` (paths, `tile_px`, and/or `map_cell_size_px`) plus matching atlas/JSON assets declared in `pubspec.yaml`, **when** the app runs, **then** the map uses the new files and cell size without Dart code edits (same loader contract).
@@ -436,7 +439,7 @@ Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_m
 - **Given** the political overlay is enabled while the province overlay is enabled and visibility mode is **full**, **when** two adjacent land tiles belong to different owning factions, **then** a thicker political border stroke is drawn between them regardless of `CellViewData.visibility`.
 - **Given** the political overlay is disabled, **when** the map renders adjacent land tiles with different owning factions, **then** no political border stroke is drawn between them regardless of the province overlay setting.
 - **When** the user pans, **then** the visible portion of the map updates; the full map remains pannable within the fixed scale.
-- **When** the user zooms via scroll, pinch, keyboard, or shell slider, **then** the fit-relative multiplier `m` stays within **[0.5, 4]** and camera zoom equals **`m × z_fit`** after each update.
+- **When** the user zooms via scroll, pinch, keyboard, or shell slider, **then** the fit-relative multiplier `m` stays within **[0.5, 8]** and camera zoom equals **`m × z_fit`** after each update.
 - **When** the user taps/clicks a province, **then** the widget invokes the provided province-selection callback with an identifier (e.g. prefixed province id); the widget does not render province details itself.
 - **When** the user hovers over a tile, **then** a selector (e.g. simple square) is shown on that tile with a subtle bouncing animation.
 - **When** the user hovers over a tile that is not `unrevealed`, **then** the borders of that tile's province (or sea zone) glow and have a subtle animation, and each glowing segment follows the same visibility predicate as province topology strokes in player-constrained mode; when hover leaves, the highlight is removed.

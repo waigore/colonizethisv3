@@ -528,10 +528,67 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     _paintLandBaseTile(canvas, cell);
   }
 
+  /// Wang interior upper-base tile for land: `sea_plains` for plains (and
+  /// feature terrains on plains) or `sea_desert` for desert. Used for L1 cells
+  /// and for the opaque grass under transparent `tile_plains_*` overlays.
+  void _drawLandInteriorUpperBaseForTerrain(
+    Canvas canvas, {
+    required TerrainType landTerrain,
+    required Rect dstRect,
+    required Paint paint,
+  }) {
+    final interiorTileset = landTerrain == TerrainType.desert
+        ? terrainTilesetCache.getSeaDesertTileset()
+        : terrainTilesetCache.getSeaPlainsTileset();
+    if (interiorTileset == null) {
+      throw StateError(
+        'Interior tileset is null for terrain=$landTerrain - '
+        'terrain tileset failed to load',
+      );
+    }
+    final tile = interiorTileset.upperBaseTileId != null
+        ? interiorTileset.findTileById(interiorTileset.upperBaseTileId!)
+        : null;
+    if (tile == null) {
+      throw StateError(
+        'Base tile not found for terrain=$landTerrain - '
+        'upperBaseTileId=${interiorTileset.upperBaseTileId}',
+      );
+    }
+    canvas.drawImageRect(
+      interiorTileset.image,
+      tile.boundingBox,
+      dstRect,
+      paint,
+    );
+  }
+
+  Paint _landBaseImagePaint({
+    required TerrainType terrain,
+    required TileVisibility tileVisibility,
+  }) {
+    final paint = Paint();
+    if (shouldApplyFogToLandBase(
+      visibilityMode: visibilityMode,
+      tileVisibility: tileVisibility,
+      terrain: terrain,
+    )) {
+      paint.colorFilter = ColorFilter.mode(
+        Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
+        BlendMode.darken,
+      );
+    }
+    return paint;
+  }
+
   void _paintLandBaseTile(Canvas canvas, CellViewData cell) {
     final left = cell.x * cellSize;
     final top = cell.y * cellSize;
-    final terrain = cell.terrainType;
+    final terrainNullable = cell.terrainType;
+    if (terrainNullable == null) {
+      throw StateError('Cell has no terrain type: $cell');
+    }
+    final terrain = terrainNullable;
 
     final isPlains =
         terrain == TerrainType.plains ||
@@ -597,25 +654,25 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     if (terrain == TerrainType.plains) {
       final plainsVariantKey = landInteriorPlainsVariantTileKey(cell);
       if (plainsVariantKey != null) {
-        final standaloneTile =
-            terrainTilesetCache.getStandaloneTileByKey(plainsVariantKey);
+        final standaloneTile = terrainTilesetCache.getStandaloneTileByKey(
+          plainsVariantKey,
+        );
         if (standaloneTile == null) {
           throw StateError(
             'Missing required plains terrain variant tile: $plainsVariantKey',
           );
         }
         final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
-        final paint = Paint();
-        if (shouldApplyFogToLandBase(
-          visibilityMode: visibilityMode,
-          tileVisibility: cell.visibility,
+        final paint = _landBaseImagePaint(
           terrain: terrain,
-        )) {
-          paint.colorFilter = ColorFilter.mode(
-            Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
-            BlendMode.darken,
-          );
-        }
+          tileVisibility: cell.visibility,
+        );
+        _drawLandInteriorUpperBaseForTerrain(
+          canvas,
+          landTerrain: TerrainType.plains,
+          dstRect: dstRect,
+          paint: paint,
+        );
         final srcRect = Rect.fromLTWH(
           0,
           0,
@@ -627,38 +684,17 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       }
     }
 
-    final interiorTileset = terrain == TerrainType.desert
-        ? terrainTilesetCache.getSeaDesertTileset()
-        : terrainTilesetCache.getSeaPlainsTileset();
-    if (interiorTileset == null) {
-      throw StateError(
-        'Interior tileset is null for terrain=$terrain - '
-        'terrain tileset failed to load',
-      );
-    }
-    final tile = interiorTileset.upperBaseTileId != null
-        ? interiorTileset.findTileById(interiorTileset.upperBaseTileId!)
-        : null;
-    if (tile == null) {
-      throw StateError(
-        'Base tile not found for terrain=$terrain - '
-        'upperBaseTileId=${interiorTileset.upperBaseTileId}',
-      );
-    }
-    final srcRect = tile.boundingBox;
     final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
-    final paint = Paint();
-    if (shouldApplyFogToLandBase(
-      visibilityMode: visibilityMode,
-      tileVisibility: cell.visibility,
+    final paint = _landBaseImagePaint(
       terrain: terrain,
-    )) {
-      paint.colorFilter = ColorFilter.mode(
-        Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
-        BlendMode.darken,
-      );
-    }
-    canvas.drawImageRect(interiorTileset.image, srcRect, dstRect, paint);
+      tileVisibility: cell.visibility,
+    );
+    _drawLandInteriorUpperBaseForTerrain(
+      canvas,
+      landTerrain: terrain,
+      dstRect: dstRect,
+      paint: paint,
+    );
   }
 
   void _paintFeatureCell(Canvas canvas, CellViewData cell) {
