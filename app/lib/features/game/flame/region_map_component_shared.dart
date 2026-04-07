@@ -172,6 +172,32 @@ bool shouldApplyFogToFeatureOverlay({
   return _isFeatureTerrain(terrain);
 }
 
+/// Returns true when the interior-plains variant base draw should apply fog.
+///
+/// For `tile_plains_*` composition, fog must be applied once across the final
+/// composed result. The base pass intentionally stays un-fogged, and the
+/// variant overlay pass receives fog attenuation when needed.
+bool shouldApplyFogToInteriorPlainsVariantBase({
+  required CtMapVisibilityMode visibilityMode,
+  required TileVisibility tileVisibility,
+}) {
+  return false;
+}
+
+/// Returns true when the interior-plains variant overlay draw should apply fog.
+///
+/// This is the single fog attenuation point for fogged interior-plains
+/// `tile_plains_*` composition to avoid double darkening.
+bool shouldApplyFogToInteriorPlainsVariantOverlay({
+  required CtMapVisibilityMode visibilityMode,
+  required TileVisibility tileVisibility,
+}) {
+  if (visibilityMode != CtMapVisibilityMode.playerConstrained) {
+    return false;
+  }
+  return tileVisibility == TileVisibility.fogged;
+}
+
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
 /// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
 bool _isFeatureTerrain(TerrainType terrain) {
