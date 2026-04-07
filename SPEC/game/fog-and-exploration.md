@@ -21,6 +21,10 @@ Four levels per player per tile. Visibility state is keyed by player and by prov
 
 Own provinces are always fully visible and never decay. Fogged applies only to other factions' provinces.
 
+### Province ownership intel
+
+Province ownership shown in UI (Political sections, labels, ownership metadata) is always authoritative from `Province.ownerId` for every player and is not obfuscated by fog states.
+
 ### Coastal sea zone visibility
 
 For each **Great Power** (including the human player), all tiles in sea zones that are **immediately adjacent** (P–S edge in topology) to a province that player **fully owns** are **fully visible** to that player. Unknown or fogged tiles in those sea zones are overridden to fully visible.
