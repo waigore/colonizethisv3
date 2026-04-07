@@ -351,7 +351,10 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Railroads');
         break;
       case 'mine_engineering':
-        list.add('Fort level 2');
+        list.add('Enables: Builder upgrades to Fort Level 2');
+        list.add(
+          'Unlocks: Iron Mining, Copper and Tin Mining, and Coal Mining',
+        );
         break;
       case 'national_bureaucracy':
         list.add('Builders can upgrade provincial towns');
@@ -380,7 +383,9 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Unlocks Master Artisans (8× labour; consume fur hats)');
         break;
       case 'trade_fairs':
-        list.add('Planned: more trade commodity slots vs baseline (not active yet)');
+        list.add(
+          'Planned: more trade commodity slots vs baseline (not active yet)',
+        );
         break;
       case 'banking':
         list.add('Unlocks later military, diplomacy, and transport techs');
@@ -401,8 +406,45 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Allows asking Great Powers to join your empire peacefully');
         break;
       case 'land_enclosure':
+        list.add('Improves: Grain extraction cap to 2');
+        list.add('Unlocks: Seed Drill, Money Lending, and Organised Regiments');
+        break;
+      case 'crop_rotation':
+        list.add(
+          'Unlocks: Sheep Ranching, Animal Husbandry, and Steppe Horsemen research paths',
+        );
+        break;
+      case 'saw_mill':
+        list.add('Improves: Timber extraction cap to 2 (forested provinces)');
+        list.add('Unlocks: Wind Saw Mill');
+        break;
+      case 'iron_mining':
+        list.add('Improves: Iron extraction cap to 2');
+        list.add('Unlocks: Steam in Mining');
+        break;
+      case 'copper_and_tin_mining':
+        list.add('Improves: Copper/Tin extraction cap to 2');
+        list.add('Unlocks: Large Copper and Tin Mines');
+        list.add('Enables: Military branches that require this tech');
+        break;
+      case 'coal_mining':
+        list.add('Enables: Coal extraction (cap 1)');
+        list.add('Unlocks: Square-set Timbering');
+        break;
+      case 'wind_saw_mill':
+        list.add('Improves: Timber extraction cap to 3');
+        list.add('Unlocks: Circular Saw');
+        break;
+      case 'seed_drill':
+        list.add('Improves: Grain extraction cap to 3');
+        list.add('Unlocks: Moldboard Plow');
+        break;
+      case 'sheep_ranching':
+        list.add('Improves: Wool extraction cap to 2');
+        list.add('Unlocks: Scientific Sheep Breeding');
+        break;
       case 'hat_production':
-        list.add('Improves labour and economy output');
+        list.add('Improves: Enables fur hats luxury production');
         break;
       default:
         if (list.isEmpty) {
