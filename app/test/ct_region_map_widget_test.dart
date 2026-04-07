@@ -17,6 +17,8 @@ import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
         resolveProvinceLabelPresenceIconIds,
         shouldEllipsizeProvinceLabelText,
         shouldApplyFogToFeatureOverlay,
+        shouldApplyFogToInteriorPlainsVariantBase,
+        shouldApplyFogToInteriorPlainsVariantOverlay,
         shouldApplyFogToLandBase,
         shouldWrapProvinceLabelPresenceIcons;
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
@@ -125,6 +127,53 @@ void main() {
           ),
           isFalse,
           reason: 'Full visibility mode must not apply fog',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'fogged interior plains variants apply fog exactly once on overlay pass',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(
+          shouldApplyFogToInteriorPlainsVariantBase(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+          ),
+          isFalse,
+          reason:
+              'Variant base must remain un-fogged to avoid double darkening',
+        );
+        expect(
+          shouldApplyFogToInteriorPlainsVariantOverlay(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+          ),
+          isTrue,
+          reason: 'Variant overlay is the single fog attenuation pass',
+        );
+        expect(
+          shouldApplyFogToInteriorPlainsVariantBase(
+            visibilityMode: CtMapVisibilityMode.full,
+            tileVisibility: TileVisibility.fogged,
+          ),
+          isFalse,
+        );
+        expect(
+          shouldApplyFogToInteriorPlainsVariantOverlay(
+            visibilityMode: CtMapVisibilityMode.full,
+            tileVisibility: TileVisibility.fogged,
+          ),
+          isFalse,
+        );
+        expect(
+          shouldApplyFogToInteriorPlainsVariantOverlay(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.visible,
+          ),
+          isFalse,
         );
       },
       timeout: const Timeout(Duration(seconds: 5)),
