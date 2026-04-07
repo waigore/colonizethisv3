@@ -69,7 +69,7 @@ Game resolveBattleContext(
   var currentDefenderGeneralId = ctx.defenderGeneralId;
   var currentDefenderMedals = ctx.defenderGeneralMedals;
 
-  final allCasualties = <String>[];
+  final allCasualties = <String>{};
   String? survivingAttackerFactionId;
 
   final initialDefenderCount = ctx.defenderUnitIds.length;
@@ -298,7 +298,7 @@ Game resolveBattleContext(
 ({RegionData region, bool provinceChangedOwner}) _buildPostBattleRegion({
   required RegionData region,
   required BattleContext ctx,
-  required List<String> allCasualties,
+  required Set<String> allCasualties,
   required Map<String, Unit> unitsById,
   required String provinceOwnerId,
   required String defenderFactionId,
