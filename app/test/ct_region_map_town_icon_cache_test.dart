@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -82,6 +86,32 @@ void main() {
       timeout: const Timeout(Duration(seconds: 10)),
     );
 
+    testWidgets('town 64 icon preserves transparent background', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      var hasTransparentPixel = false;
+      await tester.runAsync(() async {
+        final data = await rootBundle.load(
+          'assets/icons/ui_icon_com_town_inland_64.png',
+        );
+        final image = await _decodePng(data.buffer.asUint8List());
+        final pixels = await image.toByteData(
+          format: ui.ImageByteFormat.rawRgba,
+        );
+        if (pixels != null) {
+          hasTransparentPixel = _hasTransparentPixel(pixels);
+        }
+        image.dispose();
+      });
+      expect(
+        hasTransparentPixel,
+        isTrue,
+        reason:
+            'Town map icon must keep transparent background so terrain stays visible around the glyph',
+      );
+    });
+
     testWidgets(
       'town markers exist in Old World region data',
       (WidgetTester tester) async {
@@ -95,4 +125,17 @@ void main() {
       timeout: const Timeout(Duration(seconds: 10)),
     );
   });
+}
+
+Future<ui.Image> _decodePng(Uint8List bytes) {
+  final completer = Completer<ui.Image>();
+  ui.decodeImageFromList(bytes, completer.complete);
+  return completer.future;
+}
+
+bool _hasTransparentPixel(ByteData pixels) {
+  for (var i = 3; i < pixels.lengthInBytes; i += 4) {
+    if (pixels.getUint8(i) < 255) return true;
+  }
+  return false;
 }

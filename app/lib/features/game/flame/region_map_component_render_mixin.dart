@@ -103,9 +103,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
             0,
           ]);
         }
-        paint
-          ..color = Colors.white.withValues(alpha: alpha)
-          ..blendMode = BlendMode.modulate;
+        paint.color = Colors.white.withValues(alpha: alpha);
         canvas.drawImageRect(icon, srcRect, dstRect, paint);
       } else {
         final fallback = Paint()
