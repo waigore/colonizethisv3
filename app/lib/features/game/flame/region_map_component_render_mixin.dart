@@ -237,7 +237,14 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
   }
 
   List<
-    ({double cx, double cy, String text, String provinceId, Color plateColor})
+    ({
+      double cx,
+      double cy,
+      String text,
+      String provinceId,
+      Color plateColor,
+      bool isCapital,
+    })
   >
   _computeProvinceLabels() {
     final byLocalId = <String, List<CellViewData>>{};
@@ -257,8 +264,23 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
             String text,
             String provinceId,
             Color plateColor,
+            bool isCapital,
           })
         >[];
+    final capitalProvinceIds = <String>{};
+    for (final cap in region.capitalMarkers) {
+      if (cap.x < 0 ||
+          cap.x >= region.width ||
+          cap.y < 0 ||
+          cap.y >= region.height) {
+        continue;
+      }
+      final capCell = region.cellAt(cap.x, cap.y);
+      if (capCell.isSea) {
+        continue;
+      }
+      capitalProvinceIds.add('${region.regionId}|${capCell.regionCellId}');
+    }
     for (final e in byLocalId.entries) {
       final cells = e.value;
       if (cells.isEmpty) continue;
@@ -290,6 +312,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
           prefixedProvinceId: prefixedId,
           qualifyingLandCells: cells,
         ),
+        isCapital: capitalProvinceIds.contains(prefixedId),
       ));
     }
     return out;
@@ -318,18 +341,29 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     for (final item in labels) {
       final platePaint = Paint()..color = item.plateColor;
       final presence = region.provinceUnitPresenceByProvinceId[item.provinceId];
-      final iconIds = resolveProvinceLabelPresenceIconIds(presence);
+      final iconIds = resolveProvinceLabelIconIds(
+        isCapital: item.isCapital,
+        presence: presence,
+      );
       final iconCount = iconIds.length;
       final iconsWidth = iconCount > 0
           ? (iconCount * _provinceLabelIconRenderedPx) +
                 ((iconCount - 1) * _provinceLabelIconGapPx)
           : 0.0;
-      final tp = TextPainter(
-        text: TextSpan(text: item.text, style: textStyle),
-        textDirection: TextDirection.ltr,
-        maxLines: 3,
-        ellipsis: '…',
-      )..layout(maxWidth: _provinceLabelMaxWidthPx);
+      final shouldEllipsize = shouldEllipsizeProvinceLabelText(
+        isCapital: item.isCapital,
+      );
+      final tp =
+          TextPainter(
+            text: TextSpan(text: item.text, style: textStyle),
+            textDirection: TextDirection.ltr,
+            maxLines: shouldEllipsize ? 3 : null,
+            ellipsis: shouldEllipsize ? '…' : null,
+          )..layout(
+            maxWidth: shouldEllipsize
+                ? _provinceLabelMaxWidthPx
+                : double.infinity,
+          );
 
       final tw = tp.width;
       final th = tp.height;

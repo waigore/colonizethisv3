@@ -9,6 +9,7 @@ import '../../../config/app_assets.dart';
 final _log = gameLogger();
 
 const Set<String> kProvinceLabelIconIds = {
+  'map_capital_star',
   'map_presence_civilian',
   'map_presence_regiment',
   'map_presence_ship',

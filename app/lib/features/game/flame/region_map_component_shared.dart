@@ -74,6 +74,19 @@ const Color _provinceLabelPlateColor = Color.fromRGBO(0, 0, 0, 0.55);
 const double _provinceLabelIconRenderedPx = 12;
 const double _provinceLabelIconGapPx = 3;
 const double _provinceLabelTextIconGapPx = 4;
+const String _provinceLabelCapitalIconId = 'map_capital_star';
+
+/// Resolves map province-label icon ids.
+///
+/// Capital icon is prepended, then optional presence icons follow.
+List<String> resolveProvinceLabelIconIds({
+  required bool isCapital,
+  ProvinceUnitPresenceView? presence,
+}) {
+  final ids = <String>[if (isCapital) _provinceLabelCapitalIconId];
+  ids.addAll(resolveProvinceLabelPresenceIconIds(presence));
+  return ids;
+}
 
 /// Resolves map province-label presence icon ids from province presence data.
 ///
@@ -109,6 +122,11 @@ bool shouldWrapProvinceLabelPresenceIcons({
       (iconCount * iconRenderedPx) + ((iconCount - 1) * iconGapPx);
   final singleLineContentWidth = textWidthPx + textIconGapPx + iconsWidth;
   return singleLineContentWidth > maxWidthPx;
+}
+
+/// Capital labels must keep full text + star visible; do not ellipsize.
+bool shouldEllipsizeProvinceLabelText({required bool isCapital}) {
+  return !isCapital;
 }
 
 /// Returns true when the land-base pass should apply fog darkening.

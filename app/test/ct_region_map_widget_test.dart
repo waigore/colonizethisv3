@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +13,9 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show
+        resolveProvinceLabelIconIds,
         resolveProvinceLabelPresenceIconIds,
+        shouldEllipsizeProvinceLabelText,
         shouldApplyFogToFeatureOverlay,
         shouldApplyFogToLandBase,
         shouldWrapProvinceLabelPresenceIcons;
@@ -193,6 +197,93 @@ void main() {
     );
 
     testWidgets(
+      'capital star icon asset resembles a gold star silhouette',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.runAsync(() async {
+          final data = await rootBundle.load(
+            'assets/icons/ui_icon_map_capital_star.png',
+          );
+          expect(data.lengthInBytes, greaterThan(0));
+          final codec = await ui.instantiateImageCodec(
+            data.buffer.asUint8List(),
+          );
+          final frame = await codec.getNextFrame();
+          final image = frame.image;
+          final bytes = await image.toByteData(
+            format: ui.ImageByteFormat.rawRgba,
+          );
+          expect(bytes, isNotNull);
+          final rgba = bytes!.buffer.asUint8List();
+          expect(rgba.length, image.width * image.height * 4);
+
+          var opaqueCount = 0;
+          var goldCount = 0;
+          var minX = image.width;
+          var minY = image.height;
+          var maxX = -1;
+          var maxY = -1;
+          for (var y = 0; y < image.height; y++) {
+            for (var x = 0; x < image.width; x++) {
+              final i = (y * image.width + x) * 4;
+              final r = rgba[i];
+              final g = rgba[i + 1];
+              final b = rgba[i + 2];
+              final a = rgba[i + 3];
+              if (a < 200) continue;
+              opaqueCount++;
+              if (r >= 150 && g >= 110 && b <= 120 && r >= g) {
+                goldCount++;
+              }
+              if (x < minX) minX = x;
+              if (y < minY) minY = y;
+              if (x > maxX) maxX = x;
+              if (y > maxY) maxY = y;
+            }
+          }
+
+          expect(opaqueCount, greaterThan(20));
+          expect(
+            goldCount / opaqueCount,
+            greaterThan(0.20),
+            reason: 'Capital icon should be dominantly gold/yellow',
+          );
+
+          final boxWidth = (maxX - minX + 1).toDouble();
+          final boxHeight = (maxY - minY + 1).toDouble();
+          expect(boxWidth, greaterThan(6));
+          expect(boxHeight, greaterThan(6));
+          final bboxArea = boxWidth * boxHeight;
+          final fillRatio = opaqueCount / bboxArea;
+          expect(
+            fillRatio,
+            lessThan(0.75),
+            reason:
+                'Star silhouette should not fill a rectangular bounding box',
+          );
+
+          final rowCounts = List<int>.filled(image.height, 0);
+          final colCounts = List<int>.filled(image.width, 0);
+          for (var y = minY; y <= maxY; y++) {
+            for (var x = minX; x <= maxX; x++) {
+              final i = (y * image.width + x) * 4;
+              if (rgba[i + 3] < 200) continue;
+              rowCounts[y]++;
+              colCounts[x]++;
+            }
+          }
+          final midRow = (minY + maxY) ~/ 2;
+          final midCol = (minX + maxX) ~/ 2;
+          expect(rowCounts[midRow], greaterThan(rowCounts[minY] * 2));
+          expect(rowCounts[midRow], greaterThan(rowCounts[maxY] * 2));
+          expect(colCounts[midCol], greaterThan(colCounts[minX] * 2));
+          expect(colCounts[midCol], greaterThan(colCounts[maxX] * 2));
+        });
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
       'province presence icon resolver enforces intel gate, zero suppression, and class order',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
@@ -241,6 +332,47 @@ void main() {
           const ['map_presence_regiment'],
           reason: 'Only >0 classes should render',
         );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'province label icon resolver prepends capital icon before presence icons',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(
+          resolveProvinceLabelIconIds(isCapital: true, presence: null),
+          const ['map_capital_star'],
+        );
+        expect(
+          resolveProvinceLabelIconIds(
+            isCapital: true,
+            presence: const ProvinceUnitPresenceView(
+              civilianCount: 1,
+              regimentCount: 2,
+              shipCount: 3,
+              intelVisible: true,
+            ),
+          ),
+          const [
+            'map_capital_star',
+            'map_presence_civilian',
+            'map_presence_regiment',
+            'map_presence_ship',
+          ],
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'capital province labels disable ellipsis while non-capitals retain ellipsis',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(shouldEllipsizeProvinceLabelText(isCapital: true), isFalse);
+        expect(shouldEllipsizeProvinceLabelText(isCapital: false), isTrue);
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );
