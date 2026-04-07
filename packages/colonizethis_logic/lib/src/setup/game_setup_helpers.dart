@@ -584,17 +584,45 @@ Game _applyNaming({
   );
 }
 
-/// Adds starting civilian units for each Great Power in their capital provinces.
+/// Adds starting civilian units for each civilian-owning faction at its capital tile.
 Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
   var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
   var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
+  var ownerOrdinal = 0;
 
-  for (final player in game.players) {
-    final capitalProvinceId = player.capitalProvinceId;
-    final capitalTile = player.capitalTile;
+  Iterable<({String id, String? capitalProvinceId, CapitalTile? capitalTile})>
+  civilianOwners() sync* {
+    for (final player in game.players) {
+      yield (
+        id: player.id,
+        capitalProvinceId: player.capitalProvinceId,
+        capitalTile: player.capitalTile,
+      );
+    }
+    for (final minor in game.minorNations) {
+      yield (
+        id: minor.id,
+        capitalProvinceId: minor.capitalProvinceId,
+        capitalTile: minor.capitalTile,
+      );
+    }
+    for (final tribe in game.tribes) {
+      yield (
+        id: tribe.id,
+        capitalProvinceId: tribe.capitalProvinceId,
+        capitalTile: tribe.capitalTile,
+      );
+    }
+  }
+
+  for (final owner in civilianOwners()) {
+    ownerOrdinal++;
+    final ownerId = owner.id;
+    final capitalProvinceId = owner.capitalProvinceId;
+    final capitalTile = owner.capitalTile;
     if (capitalProvinceId == null || capitalTile == null) {
       throw StateError(
-        'Cannot spawn starting civilians without capital tile: player=${player.id}',
+        'Cannot spawn starting civilians without capital tile: owner=$ownerId',
       );
     }
     final capitalTileKey = capitalTile.toTileKey();
@@ -602,7 +630,7 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
     if (tileProvinceId == null || tileProvinceId != capitalProvinceId) {
       throw StateError(
         'Capital tile/province mismatch for starting civilians: '
-        'player=${player.id} capitalProvinceId=$capitalProvinceId '
+        'owner=$ownerId capitalProvinceId=$capitalProvinceId '
         'capitalTileKey=$capitalTileKey',
       );
     }
@@ -614,11 +642,12 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
       final count = entry.value;
 
       for (var k = 1; k <= count; k++) {
-        final unitId = '${player.id}_${unitType.toLowerCase()}_$k';
+        final unitId =
+            '${ownerId}_${unitType.toLowerCase()}_${ownerOrdinal}_$k';
         final unit = Unit(
           id: unitId,
           type: unitType,
-          ownerId: player.id,
+          ownerId: ownerId,
           locationProvinceId: capitalProvinceId,
           status: UnitStatus.idle,
           tileKey: capitalTileKey,
