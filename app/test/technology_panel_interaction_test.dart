@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/features/game/widgets/technology_panel.dart';
@@ -78,12 +77,6 @@ void main() {
               .toList()
             ..sort();
       final techA = rootIds.length > 0 ? rootIds[0] : techCatalog.keys.first;
-      final techB = rootIds.length > 1
-          ? rootIds[1]
-          : (rootIds.length > 0
-                ? techCatalog.keys.firstWhere((k) => k != techA)
-                : techCatalog.keys.first);
-
       final seeded = Orders(
         researchOrdersByPlayerId: {
           player.id: [

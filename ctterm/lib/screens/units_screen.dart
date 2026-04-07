@@ -452,28 +452,29 @@ class _UnitsScreenState extends State<UnitsScreen> {
         _feedbackMessage = 'Invalid: cannot attack your own province';
         _feedbackColor = Colors.red;
       });
-      _log.w('attack rejected - target ${targetProvince} owned by player ${playerId}');
+      _log.w('attack rejected - target $targetProvince owned by player $playerId');
       return;
     }
 
     // Get current orders and add new one
     final currentOrders = component.orders;
     final playerMoveOrders = List<MoveOrder>.from(
-        currentOrders.moveOrdersByPlayerId[playerId] ?? []);
-    
+      currentOrders.moveOrdersByPlayerId[playerId] ?? [],
+    );
+
     // Remove any existing order for this unit
     playerMoveOrders.removeWhere((o) => o.unitId == unit.id);
     
     // Add new order (attack is represented as move in MVP)
-    playerMoveOrders.add(MoveOrder(
-      unitId: unit.id,
-      destinationProvinceId: targetProvince,
-    ));
+    playerMoveOrders.add(
+      MoveOrder(unitId: unit.id, destinationProvinceId: targetProvince),
+    );
 
     // Create updated orders
     final updatedOrders = currentOrders.copyWith(
       moveOrdersByPlayerId: Map<String, List<MoveOrder>>.from(
-          currentOrders.moveOrdersByPlayerId)
+        currentOrders.moveOrdersByPlayerId,
+      )
         ..[playerId] = playerMoveOrders,
     );
 
@@ -493,19 +494,21 @@ class _UnitsScreenState extends State<UnitsScreen> {
 
     final currentOrders = component.orders;
     final playerMoveOrders = List<MoveOrder>.from(
-        currentOrders.moveOrdersByPlayerId[playerId] ?? []);
-    
+      currentOrders.moveOrdersByPlayerId[playerId] ?? [],
+    );
+
     final hadOrders = playerMoveOrders.any((o) => o.unitId == unit.id);
     playerMoveOrders.removeWhere((o) => o.unitId == unit.id);
 
     if (hadOrders) {
       final updatedOrders = currentOrders.copyWith(
         moveOrdersByPlayerId: Map<String, List<MoveOrder>>.from(
-            currentOrders.moveOrdersByPlayerId)
+          currentOrders.moveOrdersByPlayerId,
+        )
           ..[playerId] = playerMoveOrders,
       );
       component.onOrdersChanged(updatedOrders);
-      
+
       setState(() {
         _feedbackMessage = 'Orders cleared';
         _feedbackColor = Colors.cyan;
@@ -522,8 +525,8 @@ class _UnitsScreenState extends State<UnitsScreen> {
   @override
   Component build(BuildContext context) {
     final units = _playerUnits;
-    final selectedUnit = units.isNotEmpty && _selectedIndex < units.length 
-        ? units[_selectedIndex] 
+    final selectedUnit = units.isNotEmpty && _selectedIndex < units.length
+        ? units[_selectedIndex]
         : null;
 
     return Focusable(
@@ -562,7 +565,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
               color: const Color(0xFF1a1a2e),
               padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
               child: Text(
-                ' ${_feedbackMessage}',
+                ' $_feedbackMessage',
                 style: TextStyle(color: _feedbackColor),
               ),
             ),

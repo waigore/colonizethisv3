@@ -9,19 +9,6 @@ void main() {
     const provinceId = 'oldWorld|P1';
     const tileKey = 'oldWorld|P1|0|0';
 
-    TileMapResult _tileMapWithTerrain(TerrainType terrain) {
-      return TileMapResult(
-        width: 1,
-        height: 1,
-        grid: const [
-          ['P1'],
-        ],
-        terrainGrid: [
-          [terrain],
-        ],
-      );
-    }
-
     test('unknown work target is skipped and unit stays idle', () {
       final unit = Unit(
         id: 'u1',

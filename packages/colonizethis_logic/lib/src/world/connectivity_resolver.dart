@@ -119,13 +119,6 @@ Map<String, ConnectivityResult> resolveConnectivity({
   return result;
 }
 
-Set<String> _provinceIdsFromTopology(MapTopology topology) {
-  return topology.nodes
-      .where((n) => n.type == TopologyNodeType.province)
-      .map((n) => n.id)
-      .toSet();
-}
-
 bool _topologyUsesPrefixedIds(MapTopology topology) {
   return topology.nodes.any((n) => n.id.contains('|'));
 }

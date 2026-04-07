@@ -2,7 +2,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../economy/economy_production.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
 import '../orders/order_engine.dart';

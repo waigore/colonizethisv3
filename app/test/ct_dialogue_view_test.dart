@@ -39,13 +39,6 @@ void main() {
       () async {
     final view = CtDialogueView(logger: appLogger('dialogue'));
 
-    var lastIndex = -1;
-    view.onStateChanged = (line, choice) {
-      if (choice != null && choice.options.isNotEmpty) {
-        lastIndex = 0;
-      }
-    };
-
     final choice = DialogueChoice([
       DialogueOption(content: LineContent('Option A')),
       DialogueOption(content: LineContent('Option B')),

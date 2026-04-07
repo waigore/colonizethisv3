@@ -17,7 +17,6 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';

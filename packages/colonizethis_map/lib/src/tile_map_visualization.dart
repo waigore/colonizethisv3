@@ -10,8 +10,8 @@ import 'tile_map_visualization_shared.dart'
     show colorMapFromIds, continentSeedMarkerRgb, drawBorders,
         drawLegendContinentSeedMarker, drawLegendLandSeedMarker,
         drawLegendSwatch, landSeedMarkerRgb, legendLineHeight, legendPadding,
-        regionPalette, resourceToLegendLabel, resourceToLegendLetter,
-        seaColorRgb, seaZoneBorderRgb, swatchGap, swatchSize, terrainColorRgb;
+        regionPalette, resourceToLegendLabel, resourceToLegendLetter, swatchGap,
+        swatchSize, terrainColorRgb;
 
 /// Deep blue for sea zones. SPEC/program/map-visualization.md § Tile map PNG export.
 const (int, int, int) seaColorRgb = (20, 60, 140);

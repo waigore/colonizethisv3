@@ -92,7 +92,7 @@ Map<String, ExtractionTotals> computeExtraction({
         continue;
       }
       final townDevelopmentCap = province.townDevelopmentLevel;
-      final townTileKey = province?.townTileKey;
+      final townTileKey = province.townTileKey;
       final townTileIsPort =
           townTileKey != null && portTileKeys.contains(townTileKey);
 

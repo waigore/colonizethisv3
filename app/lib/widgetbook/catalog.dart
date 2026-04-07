@@ -1163,24 +1163,6 @@ class _CivilianPanelWithMapStoryState
     return filtered;
   }
 
-  void _onLocateUnit(Unit unit) {
-    final tileKey = unit.tileKey;
-    if (tileKey == null) return;
-    final regionId = Unit.regionIdFromTileKey(tileKey);
-    setState(() {
-      _secondaryHighlightTileKey = tileKey;
-      _centerOnTileKey = tileKey;
-      if (regionId == 'newWorld') {
-        _regionIndex = 1;
-      } else if (regionId == 'oldWorld') {
-        _regionIndex = 0;
-      }
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() => _centerOnTileKey = null);
-    });
-  }
-
   void _onTileSelectedForWork(String tileKey) {
     final sel = _workTargetSelection;
     if (sel == null) {
@@ -1396,21 +1378,6 @@ class _MilitaryPanelWithMapStoryState
   String? _centerOnTileKey;
   bool _showProvinceNames = true;
 
-  void _onLocateTile(String tileKey, String regionId) {
-    setState(() {
-      _secondaryHighlightTileKey = tileKey;
-      _centerOnTileKey = tileKey;
-      if (regionId == 'newWorld') {
-        _regionIndex = 1;
-      } else if (regionId == 'oldWorld') {
-        _regionIndex = 0;
-      }
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() => _centerOnTileKey = null);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final result = getDebugInitGameResult();
@@ -1592,21 +1559,6 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
     _navalSub?.cancel();
     _navalSplitSub?.cancel();
     super.dispose();
-  }
-
-  void _onLocateFleet(String tileKey, String regionId) {
-    setState(() {
-      _secondaryHighlightTileKey = tileKey;
-      _centerOnTileKey = tileKey;
-      if (regionId == 'newWorld') {
-        _regionIndex = 1;
-      } else if (regionId == 'oldWorld') {
-        _regionIndex = 0;
-      }
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() => _centerOnTileKey = null);
-    });
   }
 
   @override

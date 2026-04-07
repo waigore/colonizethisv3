@@ -280,65 +280,6 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     return false;
   }
 
-  bool _handleEscapeKey(LogicalKey key) {
-    // Escape: back to shell or cancel input mode
-    if (key != LogicalKey.escape) {
-      return false;
-    }
-
-    if (_inputMode == _DevelopmentInputMode.selectingTile) {
-      // Step back to province selection.
-      setState(() {
-        _inputMode = _DevelopmentInputMode.selectingProvince;
-        _feedbackMessage =
-            'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
-        _feedbackColor = Colors.cyan;
-      });
-      return true;
-    }
-    if (_inputMode == _DevelopmentInputMode.selectingProvince) {
-      // Step back to idle navigation.
-      setState(() {
-        _inputMode = _DevelopmentInputMode.idle;
-        _pendingWorkTarget = null;
-        _candidateProvinces = const [];
-        _candidateTilesByProvince = const {};
-        _selectedProvinceIndex = 0;
-        _selectedTileIndexWithinProvince = 0;
-        _provinceWindowStart = 0;
-        _tileWindowStart = 0;
-        _feedbackMessage = '';
-      });
-      _log.d('cancelled development input mode');
-      return true;
-    }
-    // Idle: leave Development screen back to in-game shell.
-    component.onNavigate(CttermRoute.inGameShell);
-    return true;
-  }
-
-  bool _handleUnitNavigationKey(
-    LogicalKey key,
-    String? c,
-    int unitCount,
-  ) {
-    // Navigation: arrow keys / j/k to navigate unit list
-    if (key == LogicalKey.arrowUp || c == 'k') {
-      setState(
-        () => _selectedIndex = (_selectedIndex - 1).clamp(0, unitCount - 1),
-      );
-      return true;
-    }
-    if (key == LogicalKey.arrowDown || c == 'j') {
-      setState(
-        () => _selectedIndex = (_selectedIndex + 1).clamp(0, unitCount - 1),
-      );
-      return true;
-    }
-
-    return false;
-  }
-
   bool _handleIdleActionKey(
     String? c,
     String? rawChar,
@@ -735,13 +676,13 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     final reservedTiles = <String>{};
 
     // Existing multi-turn work (currentWork) for Builder/Engineer/Merchant units.
-    bool _isDevExclusiveUnitType(String type) =>
+    bool isDevExclusiveUnitType(String type) =>
         type == 'Builder' || type == 'Engineer' || type == 'Merchant';
 
     for (final u in world.oldWorld.units) {
       final w = u.currentWork;
       if (u.ownerId == playerId &&
-          _isDevExclusiveUnitType(u.type) &&
+          isDevExclusiveUnitType(u.type) &&
           w != null &&
           w.tileKey.isNotEmpty) {
         reservedTiles.add(w.tileKey);
@@ -750,7 +691,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     for (final u in world.newWorld.units) {
       final w = u.currentWork;
       if (u.ownerId == playerId &&
-          _isDevExclusiveUnitType(u.type) &&
+          isDevExclusiveUnitType(u.type) &&
           w != null &&
           w.tileKey.isNotEmpty) {
         reservedTiles.add(w.tileKey);
@@ -758,7 +699,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     }
 
     // Pending work orders for this player for dev-exclusive targets.
-    bool _isDevExclusiveTarget(String t) =>
+    bool isDevExclusiveTarget(String t) =>
         t == 'build_improvement' ||
         t == 'upgrade_town' ||
         t == 'build_road' ||
@@ -769,7 +710,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     final existingOrders =
         component.orders.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
     for (final w in existingOrders) {
-      if (_isDevExclusiveTarget(w.target)) {
+      if (isDevExclusiveTarget(w.target)) {
         reservedTiles.add(w.targetTileKey);
       }
     }

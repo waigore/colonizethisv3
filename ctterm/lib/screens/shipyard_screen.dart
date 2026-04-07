@@ -345,8 +345,9 @@ class _ShipyardScreenState extends State<ShipyardScreen> {
     }
     if (c == 'c') {
       final orders = _getBuildOrders();
-      if (orders.isNotEmpty && _selectedIndex < orders.length)
+      if (orders.isNotEmpty && _selectedIndex < orders.length) {
         _cancelBuildOrder(_selectedIndex);
+      }
       return true;
     }
     if (c == 'h') {
