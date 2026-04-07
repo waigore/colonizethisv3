@@ -11,6 +11,7 @@ import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData, RegionMapViewData;
 import 'package:colonizethis_app/l10n/l10n.dart';
 
+import '../../../config/ct_e2e.dart';
 import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
 
 import '../../../../providers/app_event_bus_provider.dart';
@@ -207,6 +208,18 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         _regionIndex = 0;
       }
     });
+  }
+
+  /// Integration tests only ([kCtE2EEnabled]). Same effect as tapping the capital map cell.
+  void _e2eOpenHumanCapitalTileDetail() {
+    final player =
+        widget.game.players.where((p) => p.isHuman).firstOrNull ??
+        widget.game.players.first;
+    final capital = player.capitalTile;
+    if (capital == null) {
+      return;
+    }
+    _openMapTileDetail(capital.toTileKey());
   }
 
   ct_models.Unit? _findUnitById(String unitId) {
@@ -522,6 +535,22 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           },
                         ),
                       ),
+                      if (kCtE2EEnabled)
+                        Positioned(
+                          right: kMapOverlayEdgeInset,
+                          top: kMapOverlayEdgeInset,
+                          child: SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                key: kCtE2EOpenCapitalProvinceDetailKey,
+                                onTap: _e2eOpenHumanCapitalTileDetail,
+                              ),
+                            ),
+                          ),
+                        ),
                       if (_sideMenuOpen) ...[
                         Positioned.fill(
                           child: GestureDetector(
