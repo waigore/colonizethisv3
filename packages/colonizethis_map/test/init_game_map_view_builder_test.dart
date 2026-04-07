@@ -102,6 +102,18 @@ void main() {
       expect(viewData.oldWorld.factionColors, isNotEmpty);
       expect(viewData.oldWorld.greatPowerFactionIds, {'gp1'});
       expect(viewData.newWorld.greatPowerFactionIds, {'gp1'});
+      expect(
+        viewData
+            .oldWorld
+            .provincePoliticalOwnerByPrefixedProvinceId['oldWorld|p1'],
+        'gp1',
+      );
+      expect(
+        viewData
+            .newWorld
+            .provincePoliticalOwnerByPrefixedProvinceId['newWorld|p1'],
+        isNull,
+      );
       expect(viewData.newWorld.cells.length, 4);
     });
 
@@ -650,6 +662,185 @@ void main() {
       },
     );
 
+    test('town markers include non-player provinces with townTileKey', () {
+      final owMap = TileMapResult(
+        width: 2,
+        height: 1,
+        grid: [
+          ['pPlayer', 'pMinor'],
+        ],
+      );
+      final nwMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: [
+          ['p1'],
+        ],
+      );
+      final owTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'pPlayer',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'pMinor',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [TopologyEdge(id1: 'pPlayer', id2: 'pMinor')],
+      );
+      final nwTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'town_non_player',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'oldWorld|pPlayer',
+                regionId: 'oldWorld',
+                ownerId: 'gp1',
+                townTileKey: 'oldWorld|pPlayer|0|0',
+              ),
+              Province(
+                id: 'oldWorld|pMinor',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+                townTileKey: 'oldWorld|pMinor|1|0',
+              ),
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(provinces: [], units: []),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor')],
+        tribes: const [],
+      );
+
+      final viewData = buildInitGameMapViewData(
+        game: game,
+        tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
+        topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+        cellSize: 8,
+      );
+
+      expect(viewData.oldWorld.townMarkers, hasLength(2));
+      final ids = viewData.oldWorld.townMarkers
+          .map((m) => m.provinceId)
+          .toSet();
+      expect(ids, containsAll({'pPlayer', 'pMinor'}));
+    });
+
+    test(
+      'town markers include non-player provinces with valid townTileKey',
+      () {
+        final owMap = TileMapResult(
+          width: 2,
+          height: 1,
+          grid: [
+            ['p1', 'p2'],
+          ],
+        );
+        final nwMap = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: [
+            ['p1'],
+          ],
+        );
+        final owTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'p2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final nwTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final game = Game(
+          id: 'towns_non_player',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: 'gp1',
+                  townTileKey: 'oldWorld|p1|0|0',
+                ),
+                Province(
+                  id: 'oldWorld|p2',
+                  regionId: 'oldWorld',
+                  ownerId: 'ai_minor',
+                  townTileKey: 'oldWorld|p2|1|0',
+                ),
+              ],
+              units: const [],
+            ),
+            newWorld: const RegionData(provinces: [], units: []),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'Player GP', isHuman: true),
+          ],
+          minorNations: const [
+            MinorNation(id: 'ai_minor', displayName: 'AI Minor Nation'),
+          ],
+          tribes: const [],
+        );
+
+        final viewData = buildInitGameMapViewData(
+          game: game,
+          tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
+          topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+          cellSize: 8,
+        );
+
+        expect(viewData.oldWorld.townMarkers.length, equals(2));
+        expect(
+          viewData.oldWorld.townMarkers.any(
+            (m) => m.provinceId == 'p1' && m.x == 0 && m.y == 0,
+          ),
+          isTrue,
+        );
+        expect(
+          viewData.oldWorld.townMarkers.any(
+            (m) => m.provinceId == 'p2' && m.x == 1 && m.y == 0,
+          ),
+          isTrue,
+        );
+      },
+    );
+
     test(
       'town markers: port on capital tile places port drawable on sea by town',
       () {
@@ -1142,6 +1333,161 @@ void main() {
         expect(other.civilianCount, 1);
         expect(other.regimentCount, 1);
         expect(other.shipCount, 1);
+      },
+    );
+
+    test(
+      'builds deterministic player-owned civilian tile markers with priority and stack counts',
+      () {
+        final owMap = TileMapResult(
+          width: 3,
+          height: 1,
+          grid: [
+            ['p1', 'p2', 'p3'],
+          ],
+        );
+        final nwMap = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: [
+            ['p1'],
+          ],
+        );
+        final owTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'p2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'p3',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final nwTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final game = Game(
+          id: 'civilian_markers',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
+                Province(id: 'oldWorld|p2', regionId: 'oldWorld'),
+                Province(id: 'oldWorld|p3', regionId: 'oldWorld'),
+              ],
+              units: [
+                // Same tile; representative should be Builder by priority.
+                Unit(
+                  id: 'u_builder',
+                  type: 'Builder',
+                  ownerId: 'gp_human',
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: 'oldWorld|p1|0|0',
+                  status: UnitStatus.working,
+                  assignedTileKey: 'oldWorld|p1|0|0',
+                ),
+                Unit(
+                  id: 'u_spy',
+                  type: 'Spy',
+                  ownerId: 'gp_human',
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: 'oldWorld|p1|0|0',
+                  status: UnitStatus.idle,
+                ),
+                Unit(
+                  id: 'u_engineer',
+                  type: 'Engineer',
+                  ownerId: 'gp_human',
+                  locationProvinceId: 'oldWorld|p2',
+                  tileKey: 'oldWorld|p2|1|0',
+                  status: UnitStatus.idle,
+                ),
+                // Non-human civilian is excluded.
+                Unit(
+                  id: 'u_ai_builder',
+                  type: 'Builder',
+                  ownerId: 'gp_ai',
+                  locationProvinceId: 'oldWorld|p3',
+                  tileKey: 'oldWorld|p3|2|0',
+                  status: UnitStatus.idle,
+                ),
+                // Human military is excluded.
+                Unit(
+                  id: 'u_human_military',
+                  type: 'pikemen',
+                  ownerId: 'gp_human',
+                  locationProvinceId: 'oldWorld|p1',
+                  status: UnitStatus.idle,
+                ),
+                // Human civilian in other region is excluded from OW marker set.
+                Unit(
+                  id: 'u_other_region',
+                  type: 'Merchant',
+                  ownerId: 'gp_human',
+                  locationProvinceId: 'newWorld|p1',
+                  tileKey: 'newWorld|p1|0|0',
+                  status: UnitStatus.idle,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(
+              provinces: [Province(id: 'newWorld|p1', regionId: 'newWorld')],
+              units: [],
+            ),
+          ),
+          players: const [
+            Player(id: 'gp_human', displayName: 'Human', isHuman: true),
+            Player(id: 'gp_ai', displayName: 'AI', isHuman: false),
+          ],
+          minorNations: const [],
+          tribes: const [],
+        );
+
+        final viewData = buildInitGameMapViewData(
+          game: game,
+          tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
+          topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+          cellSize: 8,
+        );
+
+        final markers = viewData.oldWorld.civilianTileMarkers;
+        expect(markers, hasLength(2));
+
+        final tile00 = markers.singleWhere(
+          (m) => m.tileKey == 'oldWorld|p1|0|0',
+        );
+        expect(tile00.stackCount, 2);
+        expect(tile00.representativeUnitType, 'Builder');
+        expect(tile00.representativeIsAssigned, isTrue);
+        expect(tile00.unitIds, equals(['u_builder', 'u_spy']));
+        expect(tile00.unitTypes['u_builder'], 'Builder');
+        expect(tile00.unitTypes['u_spy'], 'Spy');
+
+        final tile10 = markers.singleWhere(
+          (m) => m.tileKey == 'oldWorld|p2|1|0',
+        );
+        expect(tile10.stackCount, 1);
+        expect(tile10.representativeUnitType, 'Engineer');
+        expect(tile10.representativeIsAssigned, isFalse);
+        expect(tile10.unitIds, equals(['u_engineer']));
       },
     );
 

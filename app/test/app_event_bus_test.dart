@@ -173,6 +173,15 @@ void main() {
       expect(e.regionId, 'oldWorld');
     });
 
+    test('RequestRegionMapSetZoomMultiplierEvent carries region and multiplier', () {
+      const e = RequestRegionMapSetZoomMultiplierEvent(
+        regionId: 'oldWorld',
+        zoomMultiplier: 2.25,
+      );
+      expect(e.regionId, 'oldWorld');
+      expect(e.zoomMultiplier, 2.25);
+    });
+
     test('StartTargetSelectionEvent equal for same params', () {
       expect(
         const StartTargetSelectionEvent(unitId: 'u1', action: 'move'),

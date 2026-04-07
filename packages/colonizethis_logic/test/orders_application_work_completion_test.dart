@@ -35,6 +35,8 @@ void main() {
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
+          originTileKey: 'oldWorld|P1|1|0',
+          assignedTileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
             workTarget: 'build_improvement',
@@ -63,6 +65,10 @@ void main() {
           _ordersToTriggerProcessWork(),
         );
         expect(next.worldState.tileState.improvementLevel(tileKey), 1);
+        final after = next.worldState.oldWorld.units.single;
+        expect(after.tileKey, tileKey);
+        expect(after.originTileKey, isNull);
+        expect(after.assignedTileKey, isNull);
       },
     );
 
@@ -76,6 +82,8 @@ void main() {
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
+          originTileKey: 'oldWorld|P1|1|0',
+          assignedTileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
             workTarget: 'build_improvement',
@@ -120,6 +128,8 @@ void main() {
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
+          originTileKey: 'oldWorld|P1|1|0',
+          assignedTileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
             workTarget: 'build_improvement',
@@ -170,6 +180,8 @@ void main() {
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
+          originTileKey: 'oldWorld|P1|1|0',
+          assignedTileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
             workTarget: 'build_improvement',
@@ -204,6 +216,9 @@ void main() {
         final uAfter = next.worldState.oldWorld.units.single;
         expect(uAfter.status, UnitStatus.idle);
         expect(uAfter.currentWork, isNull);
+        expect(uAfter.tileKey, 'oldWorld|P1|1|0');
+        expect(uAfter.originTileKey, isNull);
+        expect(uAfter.assignedTileKey, isNull);
         // Improvement not applied (work was cancelled).
         expect(next.worldState.tileState.improvementLevel(tileKey), 0);
       },

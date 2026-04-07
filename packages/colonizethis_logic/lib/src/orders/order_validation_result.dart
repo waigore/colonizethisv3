@@ -5,10 +5,7 @@
 enum OrderValidationStatus { accepted, rejected }
 
 class OrderValidationResult {
-  const OrderValidationResult({
-    required this.status,
-    this.reason,
-  });
+  const OrderValidationResult({required this.status, this.reason});
 
   final OrderValidationStatus status;
   final String? reason;
@@ -17,13 +14,17 @@ class OrderValidationResult {
 
   /// Factory for rejected result with optional reason.
   factory OrderValidationResult.rejected(String reason) =>
-      OrderValidationResult(status: OrderValidationStatus.rejected, reason: reason);
+      OrderValidationResult(
+        status: OrderValidationStatus.rejected,
+        reason: reason,
+      );
 
   /// Factory for accepted result.
   factory OrderValidationResult.accepted() => _accepted;
 
-  static const _accepted =
-      OrderValidationResult(status: OrderValidationStatus.accepted);
+  static const _accepted = OrderValidationResult(
+    status: OrderValidationStatus.accepted,
+  );
 }
 
 /// Shared constant result used when a previous order in the sequence
@@ -32,6 +33,30 @@ const OrderValidationResult previousInvalidOrderResult = OrderValidationResult(
   status: OrderValidationStatus.rejected,
   reason: 'Previous invalid',
 );
+
+/// Base helper for validators that short-circuit after the first rejected order.
+abstract class OrderValidator {
+  const OrderValidator();
+
+  OrderValidationResult shortCircuitIfPreviousRejected({
+    required bool previousRejected,
+    required OrderValidationResult Function() body,
+  }) {
+    return previousRejected ? previousInvalidOrderResult : body();
+  }
+
+  ({OrderValidationResult result, int treasury})
+  shortCircuitIfPreviousRejectedWithTreasury({
+    required bool previousRejected,
+    required int currentTreasury,
+    required ({OrderValidationResult result, int treasury}) Function() body,
+  }) {
+    if (previousRejected) {
+      return (result: previousInvalidOrderResult, treasury: currentTreasury);
+    }
+    return body();
+  }
+}
 
 /// Helper for validators that use a [previousRejected] flag.
 /// If [previousRejected] is true, returns [previousInvalidOrderResult] and skips [body].
@@ -48,7 +73,8 @@ OrderValidationResult shortCircuitIfPreviousRejected({
 
 /// Like [shortCircuitIfPreviousRejected] for validators that also return updated treasury.
 /// When [previousRejected], returns (previousInvalidOrderResult, currentTreasury); else [body]().
-({OrderValidationResult result, int treasury}) shortCircuitIfPreviousRejectedWithTreasury({
+({OrderValidationResult result, int treasury})
+shortCircuitIfPreviousRejectedWithTreasury({
   required bool previousRejected,
   required int currentTreasury,
   required ({OrderValidationResult result, int treasury}) Function() body,

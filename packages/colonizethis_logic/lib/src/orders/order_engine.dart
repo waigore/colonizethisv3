@@ -2,7 +2,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../economy/economy_production.dart';
 import 'order_projections.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
@@ -10,12 +9,7 @@ import '../constants.dart';
 import 'projected_effects.dart';
 import 'order_validation_result.dart';
 export 'order_validation_result.dart';
-import 'validators/move_validator.dart';
-import 'validators/army_move_validator.dart';
-import 'validators/diplomatic_order_validator.dart';
-import 'validators/build_order_validator.dart';
-import 'validators/work_order_validator.dart';
-import 'validators/naval_order_validator.dart';
+import 'order_validators.dart';
 import 'unit_type_helpers.dart';
 
 final _log = logicLogger();
@@ -118,8 +112,7 @@ class OrderEngine {
 
   Orders _copyOrders(Orders o) => Orders(
     moveOrdersByPlayerId: _copyMapOfOrderLists(o.moveOrdersByPlayerId),
-    armyMoveOrdersByPlayerId:
-        _copyMapOfOrderLists(o.armyMoveOrdersByPlayerId),
+    armyMoveOrdersByPlayerId: _copyMapOfOrderLists(o.armyMoveOrdersByPlayerId),
     buildUnitOrdersByPlayerId: _copyMapOfOrderLists(
       o.buildUnitOrdersByPlayerId,
     ),
@@ -174,9 +167,7 @@ class OrderEngine {
     }
     final r = results.last;
     if (!r.isAccepted)
-      _log.w(
-        '$orderLabel order rejected player=$playerId reason=${r.reason}',
-      );
+      _log.w('$orderLabel order rejected player=$playerId reason=${r.reason}');
     return r;
   }
 
@@ -205,8 +196,7 @@ class OrderEngine {
   static Orders _withArmyMoveOrders(
     Orders o,
     Map<String, List<ArmyMoveOrder>> m,
-  ) =>
-      o.copyWith(armyMoveOrdersByPlayerId: m);
+  ) => o.copyWith(armyMoveOrdersByPlayerId: m);
 
   static Map<String, List<BuildUnitOrder>> _buildOrders(Orders o) =>
       o.buildUnitOrdersByPlayerId;
@@ -251,10 +241,10 @@ class OrderEngine {
 
   static const _OrderSlot<ArmyMoveOrder> _armyMoveSlot =
       _OrderSlot<ArmyMoveOrder>(
-    getter: _armyMoveOrders,
-    updater: _withArmyMoveOrders,
-    label: 'army move',
-  );
+        getter: _armyMoveOrders,
+        updater: _withArmyMoveOrders,
+        label: 'army move',
+      );
 
   static const _OrderSlot<BuildUnitOrder> _buildSlot =
       _OrderSlot<BuildUnitOrder>(
@@ -326,8 +316,10 @@ class OrderEngine {
   OrderValidationResult addMoveOrder(String playerId, MoveOrder order) =>
       _addOrder(playerId, order, _moveSlot);
 
-  OrderValidationResult addArmyMoveOrder(String playerId, ArmyMoveOrder order) =>
-      _addOrder(playerId, order, _armyMoveSlot);
+  OrderValidationResult addArmyMoveOrder(
+    String playerId,
+    ArmyMoveOrder order,
+  ) => _addOrder(playerId, order, _armyMoveSlot);
 
   OrderValidationResult addMoveOrderWithContext(
     Game game,
@@ -335,15 +327,14 @@ class OrderEngine {
     String playerId,
     MoveOrder order, {
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      _addOrderWithContextSlot(
-        game,
-        topology,
-        playerId,
-        order,
-        _moveSlot,
-        tileMapByRegion: tileMapByRegion,
-      );
+  }) => _addOrderWithContextSlot(
+    game,
+    topology,
+    playerId,
+    order,
+    _moveSlot,
+    tileMapByRegion: tileMapByRegion,
+  );
 
   OrderValidationResult addArmyMoveOrderWithContext(
     Game game,
@@ -351,15 +342,14 @@ class OrderEngine {
     String playerId,
     ArmyMoveOrder order, {
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      _addOrderWithContextSlot(
-        game,
-        topology,
-        playerId,
-        order,
-        _armyMoveSlot,
-        tileMapByRegion: tileMapByRegion,
-      );
+  }) => _addOrderWithContextSlot(
+    game,
+    topology,
+    playerId,
+    order,
+    _armyMoveSlot,
+    tileMapByRegion: tileMapByRegion,
+  );
 
   OrderValidationResult addBuildOrder(String playerId, BuildUnitOrder order) =>
       _addOrder(playerId, order, _buildSlot);
@@ -370,15 +360,14 @@ class OrderEngine {
     String playerId,
     BuildUnitOrder order, {
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      _addOrderWithContextSlot(
-        game,
-        topology,
-        playerId,
-        order,
-        _buildSlot,
-        tileMapByRegion: tileMapByRegion,
-      );
+  }) => _addOrderWithContextSlot(
+    game,
+    topology,
+    playerId,
+    order,
+    _buildSlot,
+    tileMapByRegion: tileMapByRegion,
+  );
 
   OrderValidationResult addWorkOrder(String playerId, WorkOrder order) =>
       _addOrder(playerId, order, _workSlot);
@@ -389,15 +378,14 @@ class OrderEngine {
     String playerId,
     WorkOrder order, {
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      _addOrderWithContextSlot(
-        game,
-        topology,
-        playerId,
-        order,
-        _workSlot,
-        tileMapByRegion: tileMapByRegion,
-      );
+  }) => _addOrderWithContextSlot(
+    game,
+    topology,
+    playerId,
+    order,
+    _workSlot,
+    tileMapByRegion: tileMapByRegion,
+  );
 
   OrderValidationResult addDiplomaticOrder(
     String playerId,
@@ -410,15 +398,14 @@ class OrderEngine {
     String playerId,
     DiplomaticOrder order, {
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      _addOrderWithContextSlot(
-        game,
-        topology,
-        playerId,
-        order,
-        _diplomaticSlot,
-        tileMapByRegion: tileMapByRegion,
-      );
+  }) => _addOrderWithContextSlot(
+    game,
+    topology,
+    playerId,
+    order,
+    _diplomaticSlot,
+    tileMapByRegion: tileMapByRegion,
+  );
 
   OrderValidationResult addNavalMoveOrder(
     String playerId,
@@ -431,15 +418,14 @@ class OrderEngine {
     String playerId,
     NavalMoveOrder order, {
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      _addOrderWithContextSlot(
-        game,
-        topology,
-        playerId,
-        order,
-        _navalMoveSlot,
-        tileMapByRegion: tileMapByRegion,
-      );
+  }) => _addOrderWithContextSlot(
+    game,
+    topology,
+    playerId,
+    order,
+    _navalMoveSlot,
+    tileMapByRegion: tileMapByRegion,
+  );
 
   OrderValidationResult addNavalMissionOrder(
     String playerId,
@@ -452,15 +438,14 @@ class OrderEngine {
     String playerId,
     NavalMissionOrder order, {
     Map<String, TileMapResult>? tileMapByRegion,
-  }) =>
-      _addOrderWithContextSlot(
-        game,
-        topology,
-        playerId,
-        order,
-        _navalMissionSlot,
-        tileMapByRegion: tileMapByRegion,
-      );
+  }) => _addOrderWithContextSlot(
+    game,
+    topology,
+    playerId,
+    order,
+    _navalMissionSlot,
+    tileMapByRegion: tileMapByRegion,
+  );
 
   void removeMoveOrder(String playerId, int index) =>
       _removeOrderAtSlot(playerId, index, _moveSlot);
@@ -558,16 +543,19 @@ class OrderEngine {
     stockpile = buildValidator.stockpile;
     treasury = buildValidator.treasury;
 
-    final workValidator = WorkOrderValidator(
+    final workContext = WorkOrderValidationContext(
       game: game,
       player: player,
       playerId: playerId,
       view: view,
       unitsById: unitsById,
       devExclusiveTiles: devExclusiveTiles,
+      tileMapByRegion: tileMapByRegion,
+    );
+    final workValidator = WorkOrderValidator(
+      context: workContext,
       stockpile: stockpile,
       treasury: treasury,
-      tileMapByRegion: tileMapByRegion,
     );
     rejected = _appendValidationResults(
       results,

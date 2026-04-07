@@ -2,8 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
+import '../config/constants.dart';
 import 'game_service_provider.dart';
 
 /// List of saved game ids. Refreshed by reading from GameService.
@@ -33,6 +34,17 @@ class CurrentGameNotifier extends Notifier<Game?> {
 final currentGameProvider = NotifierProvider<CurrentGameNotifier, Game?>(
   CurrentGameNotifier.new,
 );
+
+/// True when the auto-save slot is valid. Rebuilds when [currentGameProvider] changes
+/// so the main menu updates immediately after exiting to menu. SPEC/ui/main-menu.md.
+final mainMenuAutoSaveAvailableProvider = Provider<bool>((ref) {
+  ref.watch(currentGameProvider);
+  if (!Hive.isBoxOpen(HiveBoxNames.games)) {
+    return false;
+  }
+  final service = ref.watch(gameServiceProvider);
+  return service.hasValidAutoSave();
+});
 
 /// Current-turn orders for the human player (work orders, move orders, etc.).
 /// Updated when the player assigns/cancels work in the civilian panel; passed to nextTurn and reset after resolution.

@@ -10,6 +10,12 @@ const int kGameEventLogSummaryMaxChars = 500;
 
 final _gameEventLog = logicLogger();
 
+extension _GameEventStreamWhereType on Stream<GameEvent> {
+  Stream<T> whereType<T extends GameEvent>() {
+    return where((event) => event is T).map((event) => event as T);
+  }
+}
+
 String _gameEventPayloadSummary(GameEvent event) {
   return switch (event) {
     CombatResultEvent e =>
@@ -82,7 +88,7 @@ class DefaultGameEventBus implements GameEventBus {
   @override
   void Function() subscribe<T extends GameEvent>(void Function(T) handler) {
     late final StreamSubscription<GameEvent> sub;
-    sub = _controller.stream.where((e) => e is T).cast<T>().listen(handler);
+    sub = _controller.stream.whereType<T>().listen(handler);
     return () => sub.cancel();
   }
 

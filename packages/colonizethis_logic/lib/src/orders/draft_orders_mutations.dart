@@ -1,5 +1,23 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+/// Appends one [DiplomaticOrder] for [playerId] to the turn draft.
+/// SPEC/program/orders.md.
+Orders ordersWithAppendedDiplomaticOrder(
+  Orders orders,
+  String playerId,
+  DiplomaticOrder order,
+) {
+  final list = List<DiplomaticOrder>.from(
+    orders.diplomaticOrdersByPlayerId[playerId] ?? const <DiplomaticOrder>[],
+  )..add(order);
+  return orders.copyWith(
+    diplomaticOrdersByPlayerId: {
+      ...orders.diplomaticOrdersByPlayerId,
+      playerId: list,
+    },
+  );
+}
+
 /// Applies a human naval move to the turn draft: replaces any prior naval move for
 /// the same [fleetId] and removes naval mission orders for that fleet.
 /// SPEC/program/naval-movement-resolution.md.

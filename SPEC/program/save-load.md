@@ -7,7 +7,7 @@
 ## Responsibility
 
 - Define the save/load contract implemented by `colonizethis_save` (GameSaveAdapter): storage backend, key convention, schema, required map data, and behaviour on load for the current schema.
-- Cross-referenced by: [world-model.md](../game/world-model.md) (serialization), [ctdev-app.md](ctdev-app.md) (Load Savegame flow), [init-game-tool.md](init-game-tool.md) (save output), [turn-resolution.md](turn-resolution.md) (persist after resolve), [game-setup-pipeline.md](game-setup-pipeline.md) (persist or pass), [plan-update-gp-colours-save-load.md](../project/plan-update-gp-colours-save-load.md) (GP colour override persisted on Game).
+- Cross-referenced by: [world-model.md](../game/world-model.md) (serialization), [ctdev-app.md](ctdev-app.md) (Load Savegame flow), [init-game-tool.md](init-game-tool.md) (save output), [turn-resolution.md](turn-resolution.md) (persist after resolve; auto-save mirror on complete), [game-setup-pipeline.md](game-setup-pipeline.md) (persist or pass), [plan-update-gp-colours-save-load.md](../project/plan-update-gp-colours-save-load.md) (GP colour override persisted on Game), [main-menu.md](../ui/main-menu.md) (Resume game).
 
 ---
 
@@ -19,6 +19,14 @@
   - **gameId constraints:** The `gameId` must be a non-empty string. It may contain any characters except those that would create ambiguity with map-data keys (see below). For clarity, avoid gameIds that end with `_tileMapByRegion`, `_topologyByRegion`, or `_combinedTopology` unless you intentionally want the game to be treated as a potential map-data key (see listGameIds behavior).
   - **Required map data:** keys = `gameId + suffix`; suffixes: `_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`. Values = JSON produced by the respective model `toJson()` (e.g. `TileMapResult`, `MapTopology`).
 - **Province/region identity:** Province and region ids stored in the saved payload are whatever the model stores; for consistency with [world-model-identity.md](../game/world-model-identity.md), any province or region id in saved state follows the same prefixed form and lookup rules as at runtime (no separate serialization format).
+
+### Auto-save slot (Flutter app)
+
+- **Purpose:** One **crash-recovery** slot written in addition to the normal game entry. The in-memory `Game.id` inside the JSON is the real session id; Hive keys for the slot use a **fixed stem** only for storage.
+- **Stem:** Constant `kAutoSaveSlotId` = `__colonizethis_autosave` (implementation in `colonizethis_save`). Same layout as a normal game: one JSON key = stem, plus `stem +` map suffixes (`_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`, optional `_warpLinks`).
+- **Listing:** `listGameIds` **never** returns the auto-save stem. Orphan-detection for map suffixes **ignores** keys whose prefix equals `kAutoSaveSlotId` so map-data keys for the slot are never mistaken for user saves.
+- **When written:** After a **playable** state is persisted at **turn boundary**: immediately after new-game setup save, and after each **completed** turn resolution (`TurnResolutionComplete`). The app also saves the real `gameId` entry as today; auto-save **mirrors** that state into the slot.
+- **Validation / corruption:** If the slot is unreadable (bad JSON, missing map data, or invalid map JSON), the implementation **clears** the slot (all stem keys) and logs with prefix `save:` at warning (or error where appropriate). The main-menu **Resume game** control is hidden until a valid slot exists again.
 
 ---
 
@@ -60,4 +68,11 @@
 - **Required map data missing.** Given a Hive box and a `gameId` for which any required map-data key is missing, when the system calls `loadMapData` for that `gameId`, then `loadMapData` fails with an explicit error that identifies missing required map data.
 - **Delete.** Given a Hive box and a `gameId`, when the system deletes the game, then the system removes the key `gameId` and the three map-data keys (`gameId + _tileMapByRegion`, etc.); no-op if the game key is not present.
 - **Round-trip Game fields.** Given a Game with worldState, players, greatPowerColorOverride, turnTimeMapping, and other serialized fields, when the system saves and then loads by the same game id, then the loaded Game equals the original for all fields covered by `Game.toJson()`/`fromJson()` (as covered by existing game_save_adapter_test.dart).
+- **Round-trip civilian assignment placement fields.** Given a Game where a civilian `Unit` has `tileKey`, `originTileKey`, and `assignedTileKey` set while work is in progress, when the system saves and then loads by the same game id, then the loaded unit preserves those three fields exactly.
 - **Logging.** Save/load operations use the `save:` prefix and log gameId and success or failure per [ctdev-logging.md](ctdev-logging.md).
+
+- **Auto-save round-trip.** Given a Hive box, when the system writes `saveAutoSave` with a valid `Game` and map data for stem `kAutoSaveSlotId`, then `load` with that stem returns an equal `Game` and `loadMapData` returns the same map bundle (as exercised in `game_save_adapter_test.dart`).
+
+- **Auto-save excluded from list.** Given a Hive box that contains only the auto-save stem and its map keys, when the system lists game ids, then the returned list is empty.
+
+- **Auto-save corrupt cleared.** Given a Hive box where the auto-save stem key holds invalid JSON or map data is missing/invalid, when the system validates the slot (e.g. `hasValidAutoSave`), then the system removes all keys for that stem and logs with prefix `save:`; subsequent listing still excludes the stem.

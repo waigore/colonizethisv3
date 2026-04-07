@@ -23,11 +23,12 @@ typedef _BuildDeductionPlan = ({
   switch (category) {
     case BuildUnitCategory.civilian:
       final econ = CivilianEconomyCatalog.byId[order.unitType];
-      if (econ == null) return (failReason: 'Insufficient resources', plan: null);
+      if (econ == null)
+        return (failReason: 'Insufficient resources', plan: null);
       final unlockingTechId = unlockingTechByCivilianId[order.unitType];
       if (unlockingTechId != null &&
           (player.techUnlocked?[unlockingTechId] != true)) {
-        return (failReason: 'Insufficient resources', plan: null);
+        return (failReason: 'Required technology not unlocked', plan: null);
       }
       if (treasury < econ.buildTreasuryCost) {
         return (failReason: 'Insufficient treasury', plan: null);
@@ -48,14 +49,15 @@ typedef _BuildDeductionPlan = ({
 
     case BuildUnitCategory.military:
       final econ = RegimentEconomyCatalog.byId[order.unitType];
-      if (econ == null) return (failReason: 'Insufficient resources', plan: null);
+      if (econ == null)
+        return (failReason: 'Insufficient resources', plan: null);
       final regimentUnlockTech = unlockingTechByRegimentId[order.unitType];
       if (regimentUnlockTech != null &&
           (player.techUnlocked?[regimentUnlockTech] != true)) {
-        return (failReason: 'Insufficient resources', plan: null);
+        return (failReason: 'Required technology not unlocked', plan: null);
       }
       if (workers.peasants <= 0) {
-        return (failReason: 'Insufficient resources', plan: null);
+        return (failReason: 'Insufficient workers', plan: null);
       }
       if (treasury < econ.buildTreasuryCost) {
         return (failReason: 'Insufficient treasury', plan: null);
@@ -76,14 +78,15 @@ typedef _BuildDeductionPlan = ({
 
     case BuildUnitCategory.naval:
       final shipEcon = ShipEconomyCatalog.byId[order.unitType];
-      if (shipEcon == null) return (failReason: 'Insufficient resources', plan: null);
+      if (shipEcon == null)
+        return (failReason: 'Insufficient resources', plan: null);
       final shipUnlockTech = unlockingTechByShipId[order.unitType];
       if (shipUnlockTech != null &&
           (player.techUnlocked?[shipUnlockTech] != true)) {
-        return (failReason: 'Insufficient tech', plan: null);
+        return (failReason: 'Required technology not unlocked', plan: null);
       }
       if (workers.peasants <= 0) {
-        return (failReason: 'Insufficient resources', plan: null);
+        return (failReason: 'Insufficient workers', plan: null);
       }
       if (treasury < shipEcon.buildTreasuryCost) {
         return (failReason: 'Insufficient treasury', plan: null);
@@ -115,7 +118,13 @@ typedef _BuildDeductionPlan = ({
   Stockpile stockpile,
   int treasury,
 ) {
-  final r = _resolveBuildDeductionPlan(player, order, workers, stockpile, treasury);
+  final r = _resolveBuildDeductionPlan(
+    player,
+    order,
+    workers,
+    stockpile,
+    treasury,
+  );
   if (r.failReason != null) {
     return (canAfford: false, reason: r.failReason);
   }
@@ -124,14 +133,21 @@ typedef _BuildDeductionPlan = ({
 
 /// Applies cost deduction for [order]. Call only when [canAffordBuild] returned true.
 /// Returns updated workers, stockpile, and treasury.
-({WorkerPool workers, Stockpile stockpile, int treasury}) applyBuildCostDeduction(
+({WorkerPool workers, Stockpile stockpile, int treasury})
+applyBuildCostDeduction(
   Player player,
   BuildUnitOrder order,
   WorkerPool workers,
   Stockpile stockpile,
   int treasury,
 ) {
-  final r = _resolveBuildDeductionPlan(player, order, workers, stockpile, treasury);
+  final r = _resolveBuildDeductionPlan(
+    player,
+    order,
+    workers,
+    stockpile,
+    treasury,
+  );
   final plan = r.plan;
   if (plan == null) {
     return (workers: workers, stockpile: stockpile, treasury: treasury);

@@ -2,6 +2,12 @@ import 'dart:async';
 
 import '../ai_events.dart';
 
+extension _DialogueEventStreamWhereType on Stream<DialogueEvent> {
+  Stream<T> whereType<T extends DialogueEvent>() {
+    return where((event) => event is T).map((event) => event as T);
+  }
+}
+
 abstract class DialogueEventBus {
   void publish(DialogueEvent event);
 
@@ -24,7 +30,7 @@ class DefaultDialogueEventBus implements DialogueEventBus {
   @override
   void Function() subscribe<T extends DialogueEvent>(void Function(T) handler) {
     late final StreamSubscription<DialogueEvent> sub;
-    sub = _controller.stream.where((e) => e is T).cast<T>().listen(handler);
+    sub = _controller.stream.whereType<T>().listen(handler);
     return () => sub.cancel();
   }
 

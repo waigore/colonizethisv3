@@ -35,17 +35,27 @@ The map renderer draws terrain in **three passes**:
 - **Tilesets**:
   - `plains_desert` — Wang tileset with plains (lower) and desert (upper)
 - **Mechanism**: When a cell is desert, it clips the plains layer, and desert is drawn instead. The plains↔desert transition is handled by the `plains_desert` Wang tileset.
+- **Plains resource variants (L1)**: For plains cells only, terrain variant keys may override the default plains base art:
+  - `resourceId = grain` → `tile_plains_grain`
+  - `resourceId = meat` → `tile_plains_meat`
+  - `resourceId = horses` → `tile_plains_horses`
+  - Any other `resourceId` (or null) keeps the canonical plains base tile.
+  - Desert never uses these plains variant keys.
 
 ### Layer 2+: Terrain Features (Overlay)
 
 - **Purpose**: Draws feature overlays on top of land base.
 - **Terrain types**: Forest, Hills, Mountain, Swamp.
 - **Rendering**: Each feature cell draws its land base first (plains or desert, determined by L1), then overlays the feature standalone tile.
-- **Standalone tiles**:
-  - `forest_standalone` — Dense forest with trees
-  - `hills_standalone` — Rolling hills
-  - `mountain_standalone` — Rocky mountain peak
-  - `swamp_standalone` — Murky swamp
+- **Overlay tile IDs**:
+  - `tile_forest` — Default forest overlay
+  - `tile_forest_timber` — Forest overlay variant for timber resource tiles
+  - `tile_hills` — Default hills overlay
+  - `tile_hills_mine` — Hills overlay variant for mine-case tiles
+  - `tile_hills_wool` — Hills overlay variant for wool resource tiles
+  - `tile_mountain` — Default mountain overlay
+  - `tile_swamp` — Default swamp overlay
+- **Selection API note**: Terrain variant key selection is shared across L1 and L2+ terrain rendering so plains, forest, and hills variants follow one deterministic selector.
 
 ---
 
@@ -123,10 +133,16 @@ for each cell:
 
 | Tile ID | Description |
 |---------|-------------|
-| `forest_standalone` | Dense forest with tree canopies, overlay on land base |
-| `hills_standalone` | Rolling hills, overlay on land base |
-| `mountain_standalone` | Rocky mountain peak, overlay on land base |
-| `swamp_standalone` | Murky swamp, overlay on land base |
+| `tile_forest` | Default dense forest canopy overlay on land base |
+| `tile_forest_timber` | Forest overlay variant for `resourceId = timber` |
+| `tile_hills` | Default rolling hills overlay on land base |
+| `tile_hills_mine` | Hills overlay variant for mine-case tiles |
+| `tile_hills_wool` | Hills overlay variant for `resourceId = wool` |
+| `tile_mountain` | Rocky mountain overlay on land base |
+| `tile_swamp` | Murky swamp overlay on land base |
+| `tile_plains_grain` | Plains terrain variant for `resourceId = grain` |
+| `tile_plains_meat` | Plains terrain variant for `resourceId = meat` |
+| `tile_plains_horses` | Plains terrain variant for `resourceId = horses` |
 
 ---
 
@@ -189,7 +205,16 @@ The **logic** (which tileset applies per corner pattern) is fixed by terrain typ
 - Given a sea cell adjacent to desert, when rendering, then the `sea_desert` Wang tileset is used.
 - Given a plains cell adjacent to desert, when rendering, then the `plains_desert` Wang tileset is used.
 - Given a desert cell adjacent to plains, when rendering, then the `plains_desert` Wang tileset is used.
-- Given a feature cell (forest/hills/mountain/swamp), when rendering, then the appropriate land base (plains or desert) is drawn first, then the feature standalone tile on top.
+- Given a feature cell (forest/hills/mountain/swamp), when rendering, then the appropriate land base (plains or desert) is drawn first, then the selected feature overlay tile on top.
+- Given a fogged feature cell (forest/hills/mountain/swamp), when rendering completes, then fog attenuation is applied exactly once for that tile (single-pass), matching the intended fog darkness level used for other fogged land tiles.
+- Given a plains tile with `resourceId = grain`, when rendering L1, then the renderer selects `tile_plains_grain` for that tile.
+- Given a plains tile with `resourceId = meat`, when rendering L1, then the renderer selects `tile_plains_meat` for that tile.
+- Given a plains tile with `resourceId = horses`, when rendering L1, then the renderer selects `tile_plains_horses` for that tile.
+- Given a plains tile with `resourceId` not in `{grain, meat, horses}` (or null), when rendering L1, then the renderer keeps the canonical plains base tile.
+- Given a desert tile with any `resourceId`, when rendering L1, then the renderer does not select any plains resource variant tile key.
+- Given a forest tile with `resourceId = timber`, when rendering L2+, then the renderer selects `tile_forest_timber`; otherwise for forest it selects `tile_forest`.
+- Given a hills tile where `improvementLevel > 0` and the `resourceId` is a mineral resource, when rendering L2+, then the renderer selects `tile_hills_mine`; otherwise if `resourceId = wool`, then it selects `tile_hills_wool`; otherwise it selects `tile_hills`.
+- Given terrain asset loading and any required plains variant PNG (`tile_plains_grain`, `tile_plains_meat`, `tile_plains_horses`) is missing or fails decode, when map terrain assets initialize, then initialization fails fast with an error instead of silently skipping that variant.
 - Given fog-of-war visibility, when rendering, then appropriate darkening is applied to obscured cells.
 
 ---

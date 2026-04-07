@@ -7,16 +7,19 @@ void main() {
   suppressLogsForTests();
 
   group('regionMapDrawBoundaryBetweenAdjacentCells', () {
-    test('full visibility mode does not gate (gateByUnrevealedTiles false)', () {
-      expect(
-        regionMapDrawBoundaryBetweenAdjacentCells(
-          gateByUnrevealedTiles: false,
-          visibilityA: TileVisibility.unrevealed,
-          visibilityB: TileVisibility.unrevealed,
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'full visibility mode does not gate (gateByUnrevealedTiles false)',
+      () {
+        expect(
+          regionMapDrawBoundaryBetweenAdjacentCells(
+            gateByUnrevealedTiles: false,
+            visibilityA: TileVisibility.unrevealed,
+            visibilityB: TileVisibility.unrevealed,
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('both adjacent unrevealed when gated yields no stroke', () {
       expect(
@@ -29,24 +32,27 @@ void main() {
       );
     });
 
-    test('one visible when gated yields stroke (partially known province edge)', () {
-      expect(
-        regionMapDrawBoundaryBetweenAdjacentCells(
-          gateByUnrevealedTiles: true,
-          visibilityA: TileVisibility.unrevealed,
-          visibilityB: TileVisibility.visible,
-        ),
-        isTrue,
-      );
-      expect(
-        regionMapDrawBoundaryBetweenAdjacentCells(
-          gateByUnrevealedTiles: true,
-          visibilityA: TileVisibility.visible,
-          visibilityB: TileVisibility.unrevealed,
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'one visible when gated yields stroke (partially known province edge)',
+      () {
+        expect(
+          regionMapDrawBoundaryBetweenAdjacentCells(
+            gateByUnrevealedTiles: true,
+            visibilityA: TileVisibility.unrevealed,
+            visibilityB: TileVisibility.visible,
+          ),
+          isTrue,
+        );
+        expect(
+          regionMapDrawBoundaryBetweenAdjacentCells(
+            gateByUnrevealedTiles: true,
+            visibilityA: TileVisibility.visible,
+            visibilityB: TileVisibility.unrevealed,
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('fogged counts as known for boundary (coastal reveal / decay)', () {
       expect(
@@ -72,14 +78,42 @@ void main() {
       );
     });
 
-    test('entire province unknown vs revealed neighbor: border segment draws', () {
-      const u = TileVisibility.unrevealed;
-      const v = TileVisibility.visible;
+    test(
+      'entire province unknown vs revealed neighbor: border segment draws',
+      () {
+        const u = TileVisibility.unrevealed;
+        const v = TileVisibility.visible;
+        expect(
+          regionMapDrawBoundaryBetweenAdjacentCells(
+            gateByUnrevealedTiles: true,
+            visibilityA: u,
+            visibilityB: v,
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'warp edge in player-constrained mode is hidden when both sides unrevealed',
+      () {
+        expect(
+          regionMapDrawBoundaryBetweenAdjacentCells(
+            gateByUnrevealedTiles: true,
+            visibilityA: TileVisibility.unrevealed,
+            visibilityB: TileVisibility.unrevealed,
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test('warp edge in full visibility mode ignores unrevealed gating', () {
       expect(
         regionMapDrawBoundaryBetweenAdjacentCells(
-          gateByUnrevealedTiles: true,
-          visibilityA: u,
-          visibilityB: v,
+          gateByUnrevealedTiles: false,
+          visibilityA: TileVisibility.unrevealed,
+          visibilityB: TileVisibility.unrevealed,
         ),
         isTrue,
       );

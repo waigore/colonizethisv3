@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart'
     show Game, Orders, WorldState;
 
+import '../constants.dart';
 import '../world/unit_lookup.dart' show allUnitsFromWorld;
 
 /// Shared unit-type and work-target predicates for orders. SPEC/program/orders.md § Work orders.
@@ -13,12 +14,12 @@ bool isDevExclusiveUnitType(String type) =>
 /// True for work targets that participate in per-tile exclusivity (one order per tile per player).
 /// Used with [isDevExclusiveUnitType] to enforce Builder/Engineer/Merchant tile exclusivity.
 bool isDevExclusiveWorkTarget(String target) =>
-    target == 'build_improvement' ||
-    target == 'upgrade_town' ||
-    target == 'build_road' ||
-    target == 'build_port' ||
-    target == 'build_fort' ||
-    target == 'purchase_land';
+    target == kWorkTargetBuildImprovement ||
+    target == kWorkTargetUpgradeTown ||
+    target == kWorkTargetBuildRoad ||
+    target == kWorkTargetBuildPort ||
+    target == kWorkTargetBuildFort ||
+    target == kWorkTargetPurchaseLand;
 
 /// Tile keys already reserved by [playerId]'s Builder/Engineer/Merchant currentWork.
 /// Used for per-player tile exclusivity (SPEC/game/civilian-units.md, SPEC/program/orders.md).

@@ -14,6 +14,8 @@ The CtMainMenu widget is presentational and accepts the following parameters. Th
 | `state` | `default` \| `afterVictory` \| `noSaves` | **default:** no subtitle; Load Game enabled when saves exist. **afterVictory:** show subtitle "Congratulations, you won your last game." **noSaves:** Load Game disabled with explanatory tooltip/helper text. |
 | `version` | string | Version text shown in footer (e.g. `v1.0.0`). |
 | `onNewGame` | callback | Invoked when user taps New Game. |
+| `resumeGameVisible` | bool | When true, show **Resume game** between New Game and Load Game. When false, omit the control entirely (not disabled). |
+| `onResumeGame` | callback | Invoked when user taps **Resume game** (only when `resumeGameVisible` is true). |
 | `onLoadGame` | callback | Invoked when user taps Load Game (when enabled). |
 | `onSettings` | callback | Invoked when user taps Settings. |
 | `onQuit` | callback | Invoked when user taps Quit. |
@@ -24,13 +26,13 @@ The CtMainMenu widget is presentational and accepts the following parameters. Th
 
 **User stories.** The main menu supports: single tap **New Game** (one action to start fresh); **Load Game** (continue or pick a save); **Settings** (open from menu); **Quit** (exit app). Return-from-in-game is satisfied by the shell/navigation: pause and Victory Screen (03l) navigate back to this screen, which is the destination.
 
-**Acceptance criteria.** (1) **Visibility:** The app shell shows the Main Menu as the first screen after any splash; the widget displays New Game, Load Game, Settings, and Quit. (2) **Load Game:** When no saves exist, Load Game is disabled and shows explanatory tooltip or helper text; when saves exist, it is enabled. (3) **Navigation:** The widget does not perform routing; it exposes callbacks (`onNewGame`, `onLoadGame`, `onSettings`, `onQuit`). The shell wires: New Game → **combined nation & leader dialog** (`OpenDialogEvent` id `new_game_leader_selection`, `NewGameLeaderSelectionDialog`; same six-slot rules as [Game Setup](game-setup.md) § Shell new game dialog) → [Game Initializing](game-initializing.md) → [Empire overview](empire-overview.md); Load Game → Load list (03b) → Empire overview on load; Settings → Settings (03c); Quit → app exit. (4) **Return from game:** Pause "Exit to Main Menu" and Victory "Return to Main Menu" both navigate to this screen; the shell clears in-memory game state as needed.
+**Acceptance criteria.** (1) **Visibility:** The app shell shows the Main Menu as the first screen after any splash; the widget displays New Game, Load Game, Settings, and Quit, and optionally **Resume game** (see below). (2) **Resume game:** When a valid auto-save exists (`SPEC/program/save-load.md` § Auto-save slot), the shell sets `resumeGameVisible` to true; the widget shows **Resume game** **below New Game** and above Load Game. When no valid auto-save exists, `resumeGameVisible` is false and the widget does not show **Resume game**. (3) **Load Game:** When no manual saves exist, Load Game is disabled and shows explanatory tooltip or helper text; when saves exist, it is enabled. **Resume game** visibility is independent of manual saves. (4) **Navigation:** The widget does not perform routing; it exposes callbacks (`onNewGame`, `onResumeGame`, `onLoadGame`, `onSettings`, `onQuit`). The shell wires: New Game → **combined nation & leader dialog** (`OpenDialogEvent` id `new_game_leader_selection`, `NewGameLeaderSelectionDialog`; same six-slot rules as [Game Setup](game-setup.md) § Shell new game dialog) → [Game Initializing](game-initializing.md) → [Empire overview](empire-overview.md); **Resume game** → load auto-save slot → Empire overview (same entry conditions as a normal load); Load Game → Load list (03b) → Empire overview on load; Settings → Settings (03c); Quit → app exit. (5) **Return from game:** Pause "Exit to Main Menu" and Victory "Return to Main Menu" both navigate to this screen; the shell clears in-memory game state as needed. The shell re-evaluates `resumeGameVisible` when the menu is shown so **Resume game** appears immediately if an auto-save was written during play (no app restart).
 
 **Shell behaviour.** Shell responsibility (first screen after splash, callback wiring, clear in-memory game state on return from game) is defined in the app TDD: [ctdev-app.md](../program/ctdev-app.md) (app screens and navigation). For Flutter shell and route ownership see [repo-and-packages.md](../program/repo-and-packages.md).
 
-**Interaction.** The main menu widget is presentational: it receives callbacks for each action. The shell (or parent) supplies `onNewGame`, `onLoadGame`, `onSettings`, `onQuit` and handles navigation and app exit. No routing logic lives in the widget.
+**Interaction.** The main menu widget is presentational: it receives callbacks for each action. The shell (or parent) supplies `onNewGame`, `onResumeGame` (when resume is shown), `onLoadGame`, `onSettings`, `onQuit` and handles navigation and app exit. No routing logic lives in the widget.
 
-**Automated tests.** Widget tests in `app/test/screen_spec_acceptance_test.dart` assert the acceptance criteria above (visibility, Load Game state/tooltip, callbacks). Run: `flutter test test/screen_spec_acceptance_test.dart` from the app package.
+**Automated tests.** Widget tests in `app/test/screen_spec_acceptance_test.dart` assert the acceptance criteria above (visibility, Load Game state/tooltip, Resume visibility, callbacks). Run: `flutter test test/screen_spec_acceptance_test.dart` from the app package.
 
 ---
 
@@ -46,6 +48,7 @@ Positions, layout, and hierarchy (per UXD 03a; 44dp min touch targets).
 |                "ColonizeThis V3"                     |
 |                                                      |
 |  [ New Game ]                                        |
+|  [ Resume game ]  (only if auto-save exists)         |
 |  [ Load Game ]    (disabled if no saves)             |
 |  [ Settings ]                                        |
 |                                                      |

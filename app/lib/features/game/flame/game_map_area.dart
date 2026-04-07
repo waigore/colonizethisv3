@@ -11,6 +11,7 @@ import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData, RegionMapViewData;
 import 'package:colonizethis_app/l10n/l10n.dart';
 
+import '../../../config/ct_e2e.dart';
 import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
 
 import '../../../../providers/app_event_bus_provider.dart';
@@ -22,10 +23,12 @@ import '../../../../providers/region_minimap_provider.dart';
 import 'region_map_viewport_snapshot.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
 
+import '../../../config/constants.dart';
 import 'game_screen_shared.dart';
 import 'game_side_menu.dart';
 import 'game_map_controls.dart';
 import 'game_map_corner_controls.dart';
+import 'game_map_empire_left_rail.dart';
 import 'game_map_canvas_stack.dart';
 import 'game_region_minimap.dart';
 import 'game_map_narrow_detail_overlay.dart';
@@ -49,6 +52,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   RegionMapViewportSnapshot? _pendingRegionViewport;
   bool _regionViewportFrameScheduled = false;
   String? _centerOnTileKey;
+  String? _selectedCivilianTileKey;
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
   Set<String>? _cachedValidTileKeys;
   bool _sideMenuOpen = false;
@@ -78,6 +82,9 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       bus.on<ct_models.UnitsPanelClosedEvent>().listen((_) {
         ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(null);
       }),
+      bus.on<ct_models.OpenMapTileDetailEvent>().listen(
+        (e) => _openMapTileDetail(e.tileKey),
+      ),
     ]);
   }
 
@@ -190,6 +197,31 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     });
   }
 
+  void _openMapTileDetail(String tileKey) {
+    final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
+    if (regionId == null) return;
+    ref.read(mapProvincePanelProvider.notifier).reportMapTileTapped(tileKey);
+    setState(() {
+      if (regionId == 'newWorld') {
+        _regionIndex = 1;
+      } else if (regionId == 'oldWorld') {
+        _regionIndex = 0;
+      }
+    });
+  }
+
+  /// Integration tests only ([kCtE2EEnabled]). Same effect as tapping the capital map cell.
+  void _e2eOpenHumanCapitalTileDetail() {
+    final player =
+        widget.game.players.where((p) => p.isHuman).firstOrNull ??
+        widget.game.players.first;
+    final capital = player.capitalTile;
+    if (capital == null) {
+      return;
+    }
+    _openMapTileDetail(capital.toTileKey());
+  }
+
   ct_models.Unit? _findUnitById(String unitId) {
     for (final unit in widget.game.worldState.oldWorld.units) {
       if (unit.id == unitId) return unit;
@@ -293,7 +325,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       mapProvinceOwnershipTintVisibleProvider,
     );
     final showProvinceNames = ref.watch(mapProvinceNamesVisibleProvider);
-    final isNarrow = MediaQuery.sizeOf(context).width < kInGameNarrowBreakpoint;
+    final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     final mapTopology = widget.mapViewData.combinedTopology;
     final humanPlayerView = buildPlayerView(
       widget.game,
@@ -322,181 +354,253 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
           nextTurnText: nextTurnText,
           cargoUsed: cargoSummary.used,
           cargoCapacity: cargoSummary.capacity,
+          isCargoUsedReliable: cargoSummary.isCargoUsedReliable,
         ),
         Expanded(
-          child: Focus(
-            autofocus: true,
-            onKeyEvent: (node, event) {
-              if (_sideMenuOpen &&
-                  event is KeyDownEvent &&
-                  event.logicalKey == LogicalKeyboardKey.escape) {
-                setState(() => _sideMenuOpen = false);
-                return KeyEventResult.handled;
-              }
-              return KeyEventResult.ignored;
-            },
-            child: Stack(
-              children: [
-                GameMapCanvasStack(
-                  isNarrow: isNarrow,
-                  game: widget.game,
-                  region: _currentRegion,
-                  baseLayerDisplayMode: _baseLayerDisplayMode,
-                  showProvinceOverlay: showProvinceOverlay,
-                  showProvinceOwnershipTint: showProvinceOwnershipTint,
-                  showProvinceNamesLayer: showProvinceNames,
-                  humanPlayerId: _humanPlayerId,
-                  playerView: humanPlayerView,
-                  centerOnTileKey: _centerOnTileKey,
-                  validTileKeysForSelection: _validTileKeysForSelection,
-                  onTileSelectedForWork: _workTargetSelection != null
-                      ? _onTileSelectedForWork
-                      : null,
-                  onWorkTargetSelectionCancelled: _workTargetSelection != null
-                      ? () => setState(() {
-                          _workTargetSelection = null;
-                          _cachedValidTileKeys = null;
-                        })
-                      : null,
-                  bus: ref.read(appEventBusProvider),
-                  onRegionViewportSnapshot: _onRegionViewportSnapshot,
-                ),
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  child: GameMapCornerControls(
-                    onCycleBaseLayerDisplayMode: _cycleBaseLayerDisplayMode,
-                    onCenterOnHomeCapital: _centerOnHumanCapital,
-                    onOpenMapDisplayOptions: () {
-                      showDialog<void>(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: Text(l10n.map_displayOptions_title),
-                            content: Consumer(
-                              builder: (context, ref, _) {
-                                final provinceOverlayVisible = ref.watch(
-                                  mapProvinceOverlayVisibleProvider,
-                                );
-                                final ownershipTintVisible = ref.watch(
-                                  mapProvinceOwnershipTintVisibleProvider,
-                                );
-                                final namesVisible = ref.watch(
-                                  mapProvinceNamesVisibleProvider,
-                                );
-                                return Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SwitchListTile(
-                                      title: Text(
-                                        l10n.map_displayOptions_showProvinceOverlay,
-                                      ),
-                                      value: provinceOverlayVisible,
-                                      onChanged: (value) {
-                                        ref
-                                            .read(
-                                              mapProvinceOverlayVisibleProvider
-                                                  .notifier,
-                                            )
-                                            .set(value);
-                                      },
-                                    ),
-                                    SwitchListTile(
-                                      title: Text(
-                                        l10n.map_displayOptions_showProvinceOwnership,
-                                      ),
-                                      value: ownershipTintVisible,
-                                      onChanged: (value) {
-                                        ref
-                                            .read(
-                                              mapProvinceOwnershipTintVisibleProvider
-                                                  .notifier,
-                                            )
-                                            .set(value);
-                                      },
-                                    ),
-                                    SwitchListTile(
-                                      title: Text(
-                                        l10n.map_displayOptions_showProvinceNames,
-                                      ),
-                                      value: namesVisible,
-                                      onChanged: (value) {
-                                        ref
-                                            .read(
-                                              mapProvinceNamesVisibleProvider
-                                                  .notifier,
-                                            )
-                                            .set(value);
-                                      },
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Positioned.fill(
+                child: Focus(
+                  autofocus: true,
+                  onKeyEvent: (node, event) {
+                    if (_sideMenuOpen &&
+                        event is KeyDownEvent &&
+                        event.logicalKey == LogicalKeyboardKey.escape) {
+                      setState(() => _sideMenuOpen = false);
+                      return KeyEventResult.handled;
+                    }
+                    return KeyEventResult.ignored;
+                  },
+                  child: Stack(
+                    children: [
+                      GameMapCanvasStack(
+                        isNarrow: isNarrow,
+                        game: widget.game,
+                        region: _currentRegion,
+                        baseLayerDisplayMode: _baseLayerDisplayMode,
+                        showProvinceOverlay: showProvinceOverlay,
+                        showProvinceOwnershipTint: showProvinceOwnershipTint,
+                        showProvinceNamesLayer: showProvinceNames,
+                        humanPlayerId: _humanPlayerId,
+                        playerView: humanPlayerView,
+                        centerOnTileKey: _centerOnTileKey,
+                        validTileKeysForSelection: _validTileKeysForSelection,
+                        selectedCivilianTileKey: _selectedCivilianTileKey,
+                        onTileSelectedForWork: _workTargetSelection != null
+                            ? _onTileSelectedForWork
+                            : null,
+                        onWorkTargetSelectionCancelled:
+                            _workTargetSelection != null
+                            ? () => setState(() {
+                                _workTargetSelection = null;
+                                _cachedValidTileKeys = null;
+                              })
+                            : null,
+                        onCivilianTileTapped: (tileKey) {
+                          String? initialSelectedUnitId;
+                          for (final marker in _currentRegion
+                              .civilianTileMarkers) {
+                            if (marker.tileKey == tileKey &&
+                                marker.unitIds.isNotEmpty) {
+                              initialSelectedUnitId = marker.unitIds.first;
+                              break;
+                            }
+                          }
+                          setState(() {
+                            _selectedCivilianTileKey = tileKey;
+                          });
+                          ref.read(appEventBusProvider).emit(
+                            ct_models.OpenCivilianUnitsPanelEvent(
+                              tileScopeTileKey: tileKey,
+                              initialSelectedUnitId: initialSelectedUnitId,
+                            ),
+                          );
+                        },
+                        onCivilianTileSelectionCleared: () {
+                          if (_selectedCivilianTileKey == null) return;
+                          setState(() {
+                            _selectedCivilianTileKey = null;
+                          });
+                        },
+                        bus: ref.read(appEventBusProvider),
+                        onRegionViewportSnapshot: _onRegionViewportSnapshot,
+                      ),
+                      if (!_sideMenuOpen)
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: kEdgeSwipeStripWidth,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onHorizontalDragUpdate: (details) {
+                              if (details.delta.dx > 20) {
+                                setState(() => _sideMenuOpen = true);
+                              }
+                            },
+                          ),
+                        ),
+                      Positioned(
+                        left: kEdgeSwipeStripWidth,
+                        top: 0,
+                        child: GameMapEmpireLeftRail(
+                          game: widget.game,
+                          humanPlayerId: _humanPlayerId,
+                        ),
+                      ),
+                      Positioned(
+                        left: kMapOverlayEdgeInset,
+                        bottom: kMapOverlayEdgeInset,
+                        child: GameMapCornerControls(
+                          onCycleBaseLayerDisplayMode:
+                              _cycleBaseLayerDisplayMode,
+                          onCenterOnHomeCapital: _centerOnHumanCapital,
+                          onOpenMapDisplayOptions: () {
+                            showDialog<void>(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text(l10n.map_displayOptions_title),
+                                  content: Consumer(
+                                    builder: (context, ref, _) {
+                                      final provinceOverlayVisible = ref.watch(
+                                        mapProvinceOverlayVisibleProvider,
+                                      );
+                                      final ownershipTintVisible = ref.watch(
+                                        mapProvinceOwnershipTintVisibleProvider,
+                                      );
+                                      final namesVisible = ref.watch(
+                                        mapProvinceNamesVisibleProvider,
+                                      );
+                                      return Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          SwitchListTile(
+                                            title: Text(
+                                              l10n.map_displayOptions_showProvinceOverlay,
+                                            ),
+                                            value: provinceOverlayVisible,
+                                            onChanged: (value) {
+                                              ref
+                                                  .read(
+                                                    mapProvinceOverlayVisibleProvider
+                                                        .notifier,
+                                                  )
+                                                  .set(value);
+                                            },
+                                          ),
+                                          SwitchListTile(
+                                            title: Text(
+                                              l10n.map_displayOptions_showProvinceOwnership,
+                                            ),
+                                            value: ownershipTintVisible,
+                                            onChanged: (value) {
+                                              ref
+                                                  .read(
+                                                    mapProvinceOwnershipTintVisibleProvider
+                                                        .notifier,
+                                                  )
+                                                  .set(value);
+                                            },
+                                          ),
+                                          SwitchListTile(
+                                            title: Text(
+                                              l10n.map_displayOptions_showProvinceNames,
+                                            ),
+                                            value: namesVisible,
+                                            onChanged: (value) {
+                                              ref
+                                                  .read(
+                                                    mapProvinceNamesVisibleProvider
+                                                        .notifier,
+                                                  )
+                                                  .set(value);
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).maybePop(),
+                                      child: Text(l10n.common_close),
                                     ),
                                   ],
                                 );
                               },
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).maybePop(),
-                                child: Text(l10n.common_close),
+                            );
+                          },
+                        ),
+                      ),
+                      if (kCtE2EEnabled)
+                        Positioned(
+                          right: kMapOverlayEdgeInset,
+                          top: kMapOverlayEdgeInset,
+                          child: SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                key: kCtE2EOpenCapitalProvinceDetailKey,
+                                onTap: _e2eOpenHumanCapitalTileDetail,
                               ),
-                            ],
+                            ),
+                          ),
+                        ),
+                      if (_sideMenuOpen) ...[
+                        Positioned.fill(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => setState(() => _sideMenuOpen = false),
+                            child: Container(color: Colors.black54),
+                          ),
+                        ),
+                        GameSideMenu(
+                          sideMenuOpen: _sideMenuOpen,
+                          onClose: () => setState(() => _sideMenuOpen = false),
+                        ),
+                      ],
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final panelOpen = ref
+                              .watch(mapProvincePanelProvider)
+                              .overlayOpen;
+                          final rightInset = (!isNarrow && panelOpen)
+                              ? 8.0 + 320.0
+                              : 8.0;
+                          return Positioned(
+                            right: rightInset,
+                            bottom: 8,
+                            child: GameRegionMinimap(
+                              region: _currentRegion,
+                              viewportSnapshot: _regionViewportSnapshot,
+                              bus: ref.read(appEventBusProvider),
+                              cellSizePx: _currentRegion.cellSize.toDouble(),
+                            ),
                           );
                         },
-                      );
-                    },
+                      ),
+                    ],
                   ),
                 ),
-                if (!_sideMenuOpen)
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: 20,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onHorizontalDragUpdate: (details) {
-                        if (details.delta.dx > 20) {
-                          setState(() => _sideMenuOpen = true);
-                        }
-                      },
-                    ),
-                  ),
-                if (_sideMenuOpen) ...[
-                  Positioned.fill(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => setState(() => _sideMenuOpen = false),
-                      child: Container(color: Colors.black54),
-                    ),
-                  ),
-                  GameSideMenu(
+              ),
+              if (isNarrow)
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: GameMapNarrowDetailOverlaySlot(
                     game: widget.game,
-                    humanPlayerId: _humanPlayerId,
-                    sideMenuOpen: _sideMenuOpen,
-                    onClose: () => setState(() => _sideMenuOpen = false),
-                  ),
-                ],
-                Positioned(
-                  right: 8,
-                  bottom: 8,
-                  child: GameRegionMinimap(
                     region: _currentRegion,
-                    viewportSnapshot: _regionViewportSnapshot,
-                    bus: ref.read(appEventBusProvider),
-                    cellSizePx: 24,
+                    humanPlayerId: _humanPlayerId,
+                    playerView: humanPlayerView,
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
         ),
-        if (isNarrow)
-          GameMapNarrowDetailOverlaySlot(
-            game: widget.game,
-            region: _currentRegion,
-            humanPlayerId: _humanPlayerId,
-            playerView: humanPlayerView,
-          ),
       ],
     );
   }

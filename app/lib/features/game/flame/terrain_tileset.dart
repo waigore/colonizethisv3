@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:colonizethis_app/config/map_terrain_config.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_map/colonizethis_map.dart' show CellViewData;
 import 'package:flutter/services.dart';
 
 final _log = gameLogger();
@@ -23,6 +24,17 @@ const String desertTerrainId = 'desert';
 /// L1: Plains and Desert (Wang tilesets for land transitions).
 /// L2+: Features (standalone overlay tiles).
 enum TerrainLayer { layer0Sea, layer1LandBase, layer2Features }
+
+const String _tileForest = 'tile_forest';
+const String _tileForestTimber = 'tile_forest_timber';
+const String _tileHills = 'tile_hills';
+const String _tileHillsMine = 'tile_hills_mine';
+const String _tileHillsWool = 'tile_hills_wool';
+const String _tileMountain = 'tile_mountain';
+const String _tileSwamp = 'tile_swamp';
+const String _tilePlainsGrain = 'tile_plains_grain';
+const String _tilePlainsMeat = 'tile_plains_meat';
+const String _tilePlainsHorses = 'tile_plains_horses';
 
 /// Determines the rendering layer for a terrain type.
 /// Desert is L1 (land base alongside plains), not L2.
@@ -117,10 +129,94 @@ class WangTileset {
 
 /// Standalone tile for terrain features (forest, hills, mountain, swamp).
 class StandaloneTile {
-  final String terrainId;
+  final String tileId;
   final ui.Image image;
 
-  StandaloneTile({required this.terrainId, required this.image});
+  StandaloneTile({required this.tileId, required this.image});
+}
+
+String? terrainVariantTileKey({
+  required TerrainType terrain,
+  String? resourceId,
+  int? improvementLevel,
+}) {
+  switch (terrain) {
+    case TerrainType.plains:
+      switch (resourceId) {
+        case 'grain':
+          return _tilePlainsGrain;
+        case 'meat':
+          return _tilePlainsMeat;
+        case 'horses':
+          return _tilePlainsHorses;
+        default:
+          return null;
+      }
+    case TerrainType.desert:
+      return null;
+    case TerrainType.forest:
+      return resourceId == 'timber' ? _tileForestTimber : _tileForest;
+    case TerrainType.hills:
+      if ((improvementLevel ?? 0) > 0 && _isMineResourceId(resourceId)) {
+        return _tileHillsMine;
+      }
+      return resourceId == 'wool' ? _tileHillsWool : _tileHills;
+    case TerrainType.mountain:
+      return _tileMountain;
+    case TerrainType.swamp:
+      return _tileSwamp;
+  }
+}
+
+/// L1 interior plains cells only: standalone tile key when a resource variant
+/// applies. Caller must not use this on plains↔desert transition cells (Wang).
+/// Returns null when the canonical plains Wang base should be drawn.
+String? landInteriorPlainsVariantTileKey(CellViewData cell) {
+  if (cell.terrainType != TerrainType.plains) return null;
+  return terrainVariantTileKey(
+    terrain: TerrainType.plains,
+    resourceId: cell.resourceId,
+    improvementLevel: cell.improvementLevel,
+  );
+}
+
+String featureOverlayTileKey({
+  required TerrainType terrain,
+  String? resourceId,
+  int? improvementLevel,
+}) {
+  if (terrain == TerrainType.plains || terrain == TerrainType.desert) {
+    throw ArgumentError(
+      'featureOverlayTileKey only supports L2+ feature terrains',
+    );
+  }
+  final key = terrainVariantTileKey(
+    terrain: terrain,
+    resourceId: resourceId,
+    improvementLevel: improvementLevel,
+  );
+  if (key == null) {
+    throw ArgumentError(
+      'featureOverlayTileKey only supports L2+ feature terrains',
+    );
+  }
+  return key;
+}
+
+bool _isMineResourceId(String? resourceId) {
+  switch (resourceId) {
+    case 'iron':
+    case 'copper':
+    case 'coal':
+    case 'silver':
+    case 'gold':
+    case 'gems':
+    case 'diamonds':
+    case 'tin':
+      return true;
+    default:
+      return false;
+  }
 }
 
 /// Cache for loaded tilesets.
@@ -164,23 +260,41 @@ class TerrainTilesetCache {
         ),
       ]);
 
-      // L2+ standalone feature tiles are best-effort and loaded in the background.
+      // L2+ feature overlays are best-effort and loaded in the background.
       // Failures must not block base terrain or map rendering. Desert is now L1.
-      for (final feature in [
-        TerrainType.forest,
-        TerrainType.hills,
-        TerrainType.mountain,
-        TerrainType.swamp,
+      await Future.wait([
+        _loadStandaloneTileRequired(_tilePlainsGrain, 'plains_grain'),
+        _loadStandaloneTileRequired(_tilePlainsMeat, 'plains_meat'),
+        _loadStandaloneTileRequired(_tilePlainsHorses, 'plains_horses'),
+      ]);
+
+      for (final item in const <(String tileId, String assetStem)>[
+        (_tileForest, 'forest'),
+        (_tileForestTimber, 'forest_timber'),
+        (_tileHills, 'hills'),
+        (_tileHillsMine, 'hills_mine'),
+        (_tileHillsWool, 'hills_wool'),
+        (_tileMountain, 'mountain'),
+        (_tileSwamp, 'swamp'),
       ]) {
         // Intentionally not awaited; errors are logged inside _loadStandaloneTile.
         // ignore: discarded_futures
-        _loadStandaloneTile('${feature.name}_standalone', feature.name);
+        _loadStandaloneTile(item.$1, item.$2);
       }
 
       _isLoaded = true;
-    } catch (e) {
-      _log.e('One or more terrain tilesets failed to load', error: e);
+    } catch (e, stackTrace) {
+      _log.e(
+        'One or more terrain tilesets failed to load',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      _seaPlainsTileset = null;
+      _seaDesertTileset = null;
+      _plainsDesertTileset = null;
+      _standaloneTiles.clear();
       _isLoaded = false;
+      rethrow;
     } finally {
       _isLoading = false;
     }
@@ -194,7 +308,9 @@ class TerrainTilesetCache {
   ) async {
     final assetCfg = MapTerrainConfig.instance.wangTilesets[name];
     if (assetCfg == null) {
-      throw StateError('map: missing wang_tilesets.$name in map terrain config');
+      throw StateError(
+        'map: missing wang_tilesets.$name in map terrain config',
+      );
     }
     final jsonPath = assetCfg.specJsonPath;
     final pngPath = assetCfg.atlasPngPath;
@@ -285,8 +401,8 @@ class TerrainTilesetCache {
     }
   }
 
-  Future<void> _loadStandaloneTile(String name, String terrainId) async {
-    final pngPath = 'assets/images/terrain/tile_$name.png';
+  Future<void> _loadStandaloneTile(String tileId, String assetStem) async {
+    final pngPath = 'assets/images/terrain/tile_$assetStem.png';
 
     try {
       final imageData = await rootBundle.load(pngPath);
@@ -297,17 +413,26 @@ class TerrainTilesetCache {
       );
       final image = await completer.future;
 
-      _standaloneTiles[terrainId] = StandaloneTile(
-        terrainId: terrainId,
-        image: image,
-      );
+      _standaloneTiles[tileId] = StandaloneTile(tileId: tileId, image: image);
     } catch (e, stackTrace) {
       _log.w(
-        'Failed to load standalone tile (non-fatal): $name',
+        'Failed to load feature overlay tile (non-fatal): $tileId',
         error: e,
         stackTrace: stackTrace,
       );
     }
+  }
+
+  Future<void> _loadStandaloneTileRequired(
+    String tileId,
+    String assetStem,
+  ) async {
+    final pngPath = 'assets/images/terrain/tile_$assetStem.png';
+    final imageData = await rootBundle.load(pngPath);
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);
+    final image = await completer.future;
+    _standaloneTiles[tileId] = StandaloneTile(tileId: tileId, image: image);
   }
 
   // L0/L1 Wang tileset getters
@@ -320,7 +445,10 @@ class TerrainTilesetCache {
 
   // L2+ Standalone feature tiles
   StandaloneTile? getStandaloneTile(TerrainType terrain) =>
-      _standaloneTiles[terrain.name];
+      _standaloneTiles['tile_${terrain.name}'];
+
+  StandaloneTile? getStandaloneTileByKey(String tileKey) =>
+      _standaloneTiles[tileKey];
 }
 
 /// Global tileset cache instance.

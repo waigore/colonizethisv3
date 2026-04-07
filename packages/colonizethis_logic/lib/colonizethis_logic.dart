@@ -2,6 +2,9 @@
 library colonizethis_logic;
 
 // Root
+export 'package:colonizethis_models/colonizethis_models.dart'
+    show AssignedRecipe;
+export 'order_suggestion_api.dart';
 export 'src/constants.dart';
 export 'src/event_bus/game_event_bus.dart';
 export 'src/game_events.dart';
@@ -19,6 +22,7 @@ export 'src/setup/gp_land_connectivity_repair.dart';
 export 'src/setup/province_name_fallback.dart';
 
 // Turn
+export 'src/turn/economy_debt_rules.dart';
 export 'src/turn/research_resolver.dart';
 export 'src/turn/turn_resolution_result.dart';
 export 'src/turn/turn_resolver.dart';
@@ -27,7 +31,8 @@ export 'src/turn/turn_news_digest.dart';
 // Combat
 export 'src/combat/battle_general_assignment.dart';
 export 'src/combat/combat_mode_selection.dart';
-export 'src/combat/leader_bonus_helpers.dart' show fallbackGeneralMedalsFromLeader;
+export 'src/combat/leader_bonus_helpers.dart'
+    show fallbackGeneralMedalsFromLeader;
 export 'src/combat/combat_resolver.dart';
 export 'src/combat/combat_resolver_probabilistic.dart';
 export 'src/combat/conflict_detection.dart';
@@ -49,22 +54,15 @@ export 'src/economy/sea_transport.dart';
 export 'src/economy/worker_economy.dart';
 
 // Orders
-export 'src/orders/order_engine.dart';
-export 'src/orders/order_merge.dart';
-export 'src/orders/projected_effects.dart';
-export 'src/orders/order_projections.dart';
-export 'src/orders/order_suggestion.dart';
+export 'src/orders/orders.dart';
 export 'src/orders/order_suggestion.dart'
     show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;
-export 'src/orders/order_suggestion_api_impl.dart';
-export 'src/orders/order_visibility.dart';
-export 'src/orders/draft_orders_mutations.dart';
-export 'src/orders/orders_application.dart';
-export 'src/orders/unit_type_helpers.dart' show
-    devExclusiveReservedTileKeysForPlayer,
-    devExclusiveTilesFromWorld,
-    isDevExclusiveUnitType,
-    isDevExclusiveWorkTarget;
+export 'src/orders/unit_type_helpers.dart'
+    show
+        devExclusiveReservedTileKeysForPlayer,
+        devExclusiveTilesFromWorld,
+        isDevExclusiveUnitType,
+        isDevExclusiveWorkTarget;
 
 // Diplomacy
 export 'src/diplomacy/diplomacy_resolver.dart';
@@ -74,6 +72,7 @@ export 'src/dossier/evidence_rules.dart';
 export 'src/dossier/event_dialogue.dart';
 
 // AI
+export 'src/ai/hidden_agenda_assignment.dart';
 export 'src/ai/ai_planner.dart';
 export 'src/ai/ai_control.dart';
 export 'src/ai/sim_game_ai.dart';

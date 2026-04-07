@@ -103,6 +103,12 @@ const int callToArmsRefusalScorePenalty = 20;
 /// AI ally joins the war if B–A relation score is at least this (inclusive). SPEC/game/diplomacy.md.
 const int callToArmsAiAcceptMinRelationScore = 50;
 
+/// AI intervention probability by relation level (0–1). SPEC/game/diplomacy.md § Intervention.
+/// Relation score 0–25 (Hostile) → 0%, 26–50 (Neutral) → 25%, 51–75 (Friendly) → 50%, 76–100 (Allied) → 80%.
+const double kInterventionProbabilityNeutral = 0.25;
+const double kInterventionProbabilityFriendly = 0.5;
+const double kInterventionProbabilityAllied = 0.8;
+
 /// Default Grant Aid amount (UI + suggestions). Positive multiples of [grantAidAmountStep].
 const int grantAidDefaultAmount = 1000;
 
@@ -139,12 +145,14 @@ String relationScoreToDisplayLabel(int score) {
 }
 
 /// Normalizes faction pair for lookup (consistent ordering).
-String pairKey(String a, String b) =>
-    a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
+String pairKey(String a, String b) => a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
 
 /// Returns relation for faction pair, or null if not found.
 DiplomacyRelation? getRelation(
-    Game game, String factionId1, String factionId2) {
+  Game game,
+  String factionId1,
+  String factionId2,
+) {
   final key = pairKey(factionId1, factionId2);
   for (final r in game.diplomacyRelations) {
     if (pairKey(r.factionId1, r.factionId2) == key) return r;
@@ -160,8 +168,9 @@ List<DiplomacyRelation> upsertRelation(
   DiplomacyRelation Function(DiplomacyRelation?) updater,
 ) {
   final key = pairKey(factionId1, factionId2);
-  final idx =
-      relations.indexWhere((r) => pairKey(r.factionId1, r.factionId2) == key);
+  final idx = relations.indexWhere(
+    (r) => pairKey(r.factionId1, r.factionId2) == key,
+  );
   final existing = idx >= 0 ? relations[idx] : null;
   final updated = updater(existing);
   final result = List<DiplomacyRelation>.from(relations);
@@ -197,9 +206,11 @@ bool canAttackWithWarOrDeclaring(
 ) {
   final rel = getRelation(game, playerId, targetOwnerId);
   final atWar = rel?.atWar ?? false;
-  final declaringWarThisTurn = diplomaticOrders.any((o) =>
-      o.type == DiplomaticOrderType.declareWar &&
-      o.targetFactionId == targetOwnerId);
+  final declaringWarThisTurn = diplomaticOrders.any(
+    (o) =>
+        o.type == DiplomaticOrderType.declareWar &&
+        o.targetFactionId == targetOwnerId,
+  );
   return atWar || declaringWarThisTurn;
 }
 
@@ -211,8 +222,11 @@ List<DiplomaticEvent> diplomaticHistoryForPair(
   String factionB,
 ) {
   final list = game.diplomaticHistoryEvents
-      .where((e) =>
-          e.participants.contains(factionA) && e.participants.contains(factionB))
+      .where(
+        (e) =>
+            e.participants.contains(factionA) &&
+            e.participants.contains(factionB),
+      )
       .toList();
   list.sort((a, b) {
     final turnCmp = b.turn.compareTo(a.turn);

@@ -136,6 +136,20 @@ List<WidgetbookNode> get mainMenuDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'With resume game',
+        builder: (context) => CtMainMenu(
+          variant: MainMenuVariant.plain,
+          state: MainMenuState.default_,
+          version: 'v1.0.0',
+          onNewGame: () {},
+          resumeGameVisible: true,
+          onResumeGame: () {},
+          onLoadGame: () {},
+          onSettings: () {},
+          onQuit: () {},
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'After victory',
         builder: (context) => CtMainMenu(
           variant: MainMenuVariant.plain,
@@ -336,6 +350,12 @@ class _RegionMinimapWidgetbookStoryState
     final region = result.mapViewData.oldWorld;
     final w = region.width * 24.0;
     final h = region.height * 24.0;
+    final zFit = computeRegionMapFitMapZoom(
+      viewportWidthLogical: 320,
+      viewportHeightLogical: 240,
+      mapWidthWorld: w,
+      mapHeightWorld: h,
+    );
     final viewport = RegionMapViewportSnapshot(
       regionId: region.regionId,
       cellSizePx: 24,
@@ -343,7 +363,8 @@ class _RegionMinimapWidgetbookStoryState
       mapHeightWorld: h,
       cameraCenterX: w / 2,
       cameraCenterY: h / 2,
-      zoom: 1.0,
+      zoom: zFit,
+      fitMapZoom: zFit,
       viewportWidthLogical: 320,
       viewportHeightLogical: 240,
     );
@@ -631,6 +652,7 @@ List<WidgetbookNode> get militaryUnitsPanelDirectories => [
               humanPlayerId: humanPlayerId,
               bus: AppEventBus.create(),
               topology: result.combinedTopology,
+              draftOrders: const Orders(),
             ),
           );
         },
@@ -1339,6 +1361,7 @@ class _MilitaryPanelWithMapStoryState
               humanPlayerId: humanPlayerId,
               bus: AppEventBus.create(),
               topology: result.combinedTopology,
+              draftOrders: const Orders(),
             ),
           ),
         ],

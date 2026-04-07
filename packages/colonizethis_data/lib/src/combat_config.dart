@@ -51,7 +51,7 @@ enum RegimentCategory {
   heavyArtillery,
 }
 
-/// Full regiment table: 28 types across 8 categories and 4 eras.
+/// Full regiment table: 29 types across 8 categories and 4 eras.
 /// SPEC/game/military-units.md.
 const List<RegimentStats> regimentCatalog = [
   RegimentStats(

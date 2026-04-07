@@ -78,8 +78,16 @@ List<Unit> _civilianUnitsInRegion(
   return list;
 }
 
+String? _renderedTileKey(Unit unit) {
+  final assigned = unit.assignedTileKey;
+  if (assigned != null && assigned.isNotEmpty) {
+    return assigned;
+  }
+  return unit.tileKey;
+}
+
 /// Panel that lists all civilian units for the human player. SPEC/ui/civilian-units-panel.md.
-class CivilianUnitsPanel extends StatelessWidget {
+class CivilianUnitsPanel extends StatefulWidget {
   const CivilianUnitsPanel({
     super.key,
     required this.game,
@@ -87,6 +95,8 @@ class CivilianUnitsPanel extends StatelessWidget {
     required this.bus,
     this.currentOrders = const Orders(),
     this.availableWorkTargets = const {},
+    this.tileScopeTileKey,
+    this.initialSelectedUnitId,
   });
 
   final Game game;
@@ -99,29 +109,70 @@ class CivilianUnitsPanel extends StatelessWidget {
   /// Available work targets per unit (computed at turn start). Work targets not in this list are grayed out.
   final Map<String, List<String>> availableWorkTargets;
 
+  /// Optional tile key (`regionId|provinceId|x|y`) for tile-scoped mode.
+  final String? tileScopeTileKey;
+
+  /// Optional initial selected unit in tile-scoped mode.
+  final String? initialSelectedUnitId;
+
+  @override
+  State<CivilianUnitsPanel> createState() => _CivilianUnitsPanelState();
+}
+
+class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
+  String? _selectedUnitId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedUnitId = widget.initialSelectedUnitId;
+  }
+
+  @override
+  void didUpdateWidget(covariant CivilianUnitsPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialSelectedUnitId != widget.initialSelectedUnitId) {
+      _selectedUnitId = widget.initialSelectedUnitId;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final provinceNames = _provinceNamesByPrefixedId(game);
+    final provinceNames = _provinceNamesByPrefixedId(widget.game);
     final ow = _civilianUnitsInRegion(
-      game.worldState.oldWorld.units,
-      humanPlayerId,
+      widget.game.worldState.oldWorld.units,
+      widget.humanPlayerId,
       provinceNames,
     );
     final nw = _civilianUnitsInRegion(
-      game.worldState.newWorld.units,
-      humanPlayerId,
+      widget.game.worldState.newWorld.units,
+      widget.humanPlayerId,
       provinceNames,
     );
-    final hasAny = ow.isNotEmpty || nw.isNotEmpty;
+    List<Unit> scopedOw = ow;
+    List<Unit> scopedNw = nw;
+    final tileScopeTileKey = widget.tileScopeTileKey;
+    if (tileScopeTileKey != null && tileScopeTileKey.isNotEmpty) {
+      scopedOw = ow.where((u) => _renderedTileKey(u) == tileScopeTileKey).toList();
+      scopedNw = nw.where((u) => _renderedTileKey(u) == tileScopeTileKey).toList();
+    }
+    final hasAny = scopedOw.isNotEmpty || scopedNw.isNotEmpty;
+    final allScopedUnits = <Unit>[...scopedOw, ...scopedNw];
+    final selectedUnitId = _selectedUnitId;
+    final resolvedSelectedUnitId =
+        selectedUnitId != null &&
+            allScopedUnits.any((u) => u.id == selectedUnitId)
+        ? selectedUnitId
+        : (allScopedUnits.isNotEmpty ? allScopedUnits.first.id : null);
 
     return UnitsPanelShell(
-      title: 'Civilian Units',
+      title: tileScopeTileKey != null ? 'Civilian Units (Tile)' : 'Civilian Units',
       actions: [
         CtNinePatchButton(
           onPressed: () {
-            bus.emit(const ClosePanelEvent());
+            widget.bus.emit(const ClosePanelEvent());
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              bus.emit(OpenDialogEvent(trainCiviliansDialogId));
+              widget.bus.emit(OpenDialogEvent(trainCiviliansDialogId));
             });
           },
           child: const Text('Train'),
@@ -129,29 +180,35 @@ class CivilianUnitsPanel extends StatelessWidget {
       ],
       hasContent: hasAny,
       listChildren: [
-        if (ow.isNotEmpty) ...[
+        if (scopedOw.isNotEmpty) ...[
           RegionSectionHeader(label: unitsPanelRegionLabel('oldWorld')),
-          ...ow.map(
+          ...scopedOw.map(
             (u) => _UnitRow(
               unit: u,
               provinceNames: provinceNames,
-              currentOrders: currentOrders,
-              availableWorkTargets: availableWorkTargets,
-              humanPlayerId: humanPlayerId,
-              bus: bus,
+              currentOrders: widget.currentOrders,
+              availableWorkTargets: widget.availableWorkTargets,
+              humanPlayerId: widget.humanPlayerId,
+              bus: widget.bus,
+              isTileScope: tileScopeTileKey != null,
+              isSelectedInTileScope: resolvedSelectedUnitId == u.id,
+              onSelectInTileScope: () => setState(() => _selectedUnitId = u.id),
             ),
           ),
         ],
-        if (nw.isNotEmpty) ...[
+        if (scopedNw.isNotEmpty) ...[
           RegionSectionHeader(label: unitsPanelRegionLabel('newWorld')),
-          ...nw.map(
+          ...scopedNw.map(
             (u) => _UnitRow(
               unit: u,
               provinceNames: provinceNames,
-              currentOrders: currentOrders,
-              availableWorkTargets: availableWorkTargets,
-              humanPlayerId: humanPlayerId,
-              bus: bus,
+              currentOrders: widget.currentOrders,
+              availableWorkTargets: widget.availableWorkTargets,
+              humanPlayerId: widget.humanPlayerId,
+              bus: widget.bus,
+              isTileScope: tileScopeTileKey != null,
+              isSelectedInTileScope: resolvedSelectedUnitId == u.id,
+              onSelectInTileScope: () => setState(() => _selectedUnitId = u.id),
             ),
           ),
         ],
@@ -169,6 +226,9 @@ class _UnitRow extends StatelessWidget {
     required this.availableWorkTargets,
     required this.humanPlayerId,
     required this.bus,
+    required this.isTileScope,
+    required this.isSelectedInTileScope,
+    required this.onSelectInTileScope,
   });
 
   final Unit unit;
@@ -177,6 +237,9 @@ class _UnitRow extends StatelessWidget {
   final Map<String, List<String>> availableWorkTargets;
   final String humanPlayerId;
   final AppEventBus bus;
+  final bool isTileScope;
+  final bool isSelectedInTileScope;
+  final VoidCallback onSelectInTileScope;
 
   List<WorkOrder> get _pendingForPlayer =>
       currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
@@ -331,7 +394,9 @@ class _UnitRow extends StatelessWidget {
       UnitStatus.working => 'Working',
       UnitStatus.done => 'Done',
     };
+    final showActions = !isTileScope || isSelectedInTileScope;
     return ListTile(
+      selected: isTileScope && isSelectedInTileScope,
       title: Text(unit.type),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,37 +408,56 @@ class _UnitRow extends StatelessWidget {
         ],
       ),
       dense: true,
-      onTap: unit.tileKey == null
-          ? null
-          : () {
-              final tileKey = unit.tileKey!;
-              final regionId = Unit.regionIdFromTileKey(tileKey);
-              if (regionId == null) return;
-              bus.emit(const ClosePanelEvent());
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                bus.emit(
-                  LocateMapTileEvent(
-                    tileKey: tileKey,
-                    regionId: regionId,
+      onTap: () {
+        if (isTileScope) {
+          onSelectInTileScope();
+          return;
+        }
+        final tileKey = unit.tileKey;
+        if (tileKey == null) return;
+        final regionId = Unit.regionIdFromTileKey(tileKey);
+        if (regionId == null) return;
+        bus.emit(const ClosePanelEvent());
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          bus.emit(
+            LocateMapTileEvent(
+              tileKey: tileKey,
+              regionId: regionId,
+            ),
+          );
+        });
+      },
+      trailing: showActions
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isTileScope)
+                  CtNinePatchButton(
+                    onPressed: () {
+                      final renderedTileKey = _renderedTileKey(unit);
+                      if (renderedTileKey == null) return;
+                      bus.emit(const ClosePanelEvent());
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        bus.emit(
+                          OpenMapTileDetailEvent(tileKey: renderedTileKey),
+                        );
+                      });
+                    },
+                    child: const Text('Tile'),
                   ),
-                );
-              });
-            },
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_isIdleNoPending)
-            CtNinePatchButton(
-              onPressed: () => _showOrderMenu(context),
-              child: const Text('Assign'),
-            ),
-          if (_hasWork)
-            CtNinePatchButton(
-              onPressed: () => _confirmCancel(context),
-              child: const Text('Cancel'),
-            ),
-        ],
-      ),
+                if (_isIdleNoPending)
+                  CtNinePatchButton(
+                    onPressed: () => _showOrderMenu(context),
+                    child: const Text('Assign'),
+                  ),
+                if (_hasWork)
+                  CtNinePatchButton(
+                    onPressed: () => _confirmCancel(context),
+                    child: const Text('Cancel'),
+                  ),
+              ],
+            )
+          : null,
     );
   }
 }

@@ -35,11 +35,14 @@ class MoveValidator {
     final unitRegion = unit.tileKey != null && unit.tileKey!.isNotEmpty
         ? Unit.requireRegionIdFromTileKey(unit.tileKey)
         : ProvinceId.regionIdFrom(
-            resolveToFullProvinceId(game.worldState, unit.locationProvinceId));
-    final destFullId =
-        resolveToFullProvinceId(game.worldState, order.destinationProvinceId);
+            resolveToFullProvinceId(game.worldState, unit.locationProvinceId),
+          );
+    final destFullId = resolveToFullProvinceId(
+      game.worldState,
+      order.destinationProvinceId,
+    );
     final destRegion = ProvinceId.regionIdFrom(destFullId);
-    final destProvince = tryGetProvince(game.worldState, destFullId);
+    final destProvince = game.worldState.tryGetProvince(destFullId);
     final destOwnerId = destProvince?.ownerId;
     // Movement within own provinces: always allowed. SPEC/program/movement.md.
     final moveToOwnProvince = destOwnerId == playerId;
@@ -50,7 +53,11 @@ class MoveValidator {
       final unitLocalId = ProvinceId.localIdFrom(unit.locationProvinceId);
       final destLocalId = ProvinceId.localIdFrom(destFullId);
       if (!isValidLandMoveInRegion(
-          topology, unitRegion, unitLocalId, destLocalId)) {
+        topology,
+        unitRegion,
+        unitLocalId,
+        destLocalId,
+      )) {
         return OrderValidationResult.rejected('Invalid move');
       }
     }
@@ -61,14 +68,16 @@ class MoveValidator {
         destOwnerId != playerId) {
       if (isGreatPower(game, destOwnerId) && !isSpyUnit(unit.type)) {
         return OrderValidationResult.rejected(
-            'Civilian cannot enter other Great Power territory');
+          'Civilian cannot enter other Great Power territory',
+        );
       }
       if (isMinorOrTribe(game, destOwnerId) &&
           !isExplorerUnit(unit.type) &&
           !isMerchantUnit(unit.type) &&
           !isSpyUnit(unit.type)) {
         return OrderValidationResult.rejected(
-            'Civilian cannot enter Minor/Tribe territory');
+          'Civilian cannot enter Minor/Tribe territory',
+        );
       }
     }
 
@@ -76,7 +85,12 @@ class MoveValidator {
     if (destOwnerId != null &&
         destOwnerId != playerId &&
         isGreatPower(game, destOwnerId) &&
-        !canAttackWithWarOrDeclaring(game, playerId, destOwnerId, diplomaticOrders)) {
+        !canAttackWithWarOrDeclaring(
+          game,
+          playerId,
+          destOwnerId,
+          diplomaticOrders,
+        )) {
       return OrderValidationResult.rejected(
         'Must declare war before attacking Great Power province',
       );
@@ -87,7 +101,12 @@ class MoveValidator {
         destOwnerId != playerId &&
         isMinorOrTribe(game, destOwnerId) &&
         isMilitaryUnit(unit.type) &&
-        !canAttackWithWarOrDeclaring(game, playerId, destOwnerId, diplomaticOrders)) {
+        !canAttackWithWarOrDeclaring(
+          game,
+          playerId,
+          destOwnerId,
+          diplomaticOrders,
+        )) {
       return OrderValidationResult.rejected(
         'Must declare war before attacking Minor Nation or Tribe province',
       );
@@ -95,9 +114,14 @@ class MoveValidator {
 
     if (!moveSourceVisibilityOk(view, unitRegion, unit.locationProvinceId) ||
         !moveDestVisibilityOk(
-            view, destRegion, order.destinationProvinceId, unit.type)) {
+          view,
+          destRegion,
+          order.destinationProvinceId,
+          unit.type,
+        )) {
       return OrderValidationResult.rejected(
-          'Source or destination not visible');
+        'Source or destination not visible',
+      );
     }
     return OrderValidationResult.accepted();
   }
