@@ -1,6 +1,6 @@
 /// Fit-relative zoom band vs [computeRegionMapFitMapZoom] (`z_fit`). SPEC/ui/map-widget.md.
 const double kRegionMapZoomMultiplierMin = 0.5;
-const double kRegionMapZoomMultiplierMax = 4.0;
+const double kRegionMapZoomMultiplierMax = 8.0;
 
 /// Read-only viewport state for the in-game region map (Flame world space + zoom).
 /// Published into Riverpod by the map host for the region minimap. SPEC/ui/empire-overview.md.

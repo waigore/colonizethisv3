@@ -166,12 +166,12 @@ void main() {
       bus.emit(
         RequestRegionMapSetZoomMultiplierEvent(
           regionId: region.regionId,
-          zoomMultiplier: 4.0,
+          zoomMultiplier: 8.0,
         ),
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
-      expect(snap!.zoomMultiplier, closeTo(4.0, 0.06));
+      expect(snap!.zoomMultiplier, closeTo(kRegionMapZoomMultiplierMax, 0.06));
 
       bus.emit(
         RequestRegionMapSetZoomMultiplierEvent(
@@ -186,7 +186,7 @@ void main() {
       bus.emit(
         const RequestRegionMapSetZoomMultiplierEvent(
           regionId: 'newWorld',
-          zoomMultiplier: 4.0,
+          zoomMultiplier: 8.0,
         ),
       );
       await tester.pump();
