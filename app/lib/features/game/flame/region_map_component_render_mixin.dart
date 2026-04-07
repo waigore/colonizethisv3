@@ -341,14 +341,16 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     for (final item in labels) {
       final platePaint = Paint()..color = item.plateColor;
       final presence = region.provinceUnitPresenceByProvinceId[item.provinceId];
-      final iconIds = resolveProvinceLabelIconIds(
-        isCapital: item.isCapital,
-        presence: presence,
-      );
-      final iconCount = iconIds.length;
-      final iconsWidth = iconCount > 0
-          ? (iconCount * _provinceLabelIconRenderedPx) +
-                ((iconCount - 1) * _provinceLabelIconGapPx)
+      final hasCapitalIcon = item.isCapital;
+      const capitalIconIds = <String>[_provinceLabelCapitalIconId];
+      final presenceIconIds = resolveProvinceLabelPresenceIconIds(presence);
+      final presenceIconCount = presenceIconIds.length;
+      final presenceIconsWidth = presenceIconCount > 0
+          ? (presenceIconCount * _provinceLabelIconRenderedPx) +
+                ((presenceIconCount - 1) * _provinceLabelIconGapPx)
+          : 0.0;
+      final capitalInlineWidth = hasCapitalIcon
+          ? _provinceLabelIconRenderedPx + _provinceLabelTextIconGapPx
           : 0.0;
       final shouldEllipsize = shouldEllipsizeProvinceLabelText(
         isCapital: item.isCapital,
@@ -367,18 +369,30 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
 
       final tw = tp.width;
       final th = tp.height;
+      final singleLinePresenceWidth = presenceIconCount > 0
+          ? _provinceLabelTextIconGapPx + presenceIconsWidth
+          : 0.0;
       final singleLineContentWidth =
-          tw + (iconCount > 0 ? _provinceLabelTextIconGapPx + iconsWidth : 0);
+          capitalInlineWidth + tw + singleLinePresenceWidth;
       final wrapIconsToSecondLine = shouldWrapProvinceLabelPresenceIcons(
         textWidthPx: tw,
-        iconCount: iconCount,
+        iconCount: presenceIconCount,
       );
+      final lineOneWidth = capitalInlineWidth + tw;
+      final lineOneHeight = hasCapitalIcon
+          ? math.max(th, _provinceLabelIconRenderedPx)
+          : th;
       final contentWidth = wrapIconsToSecondLine
-          ? math.max(tw, iconsWidth)
+          ? math.max(lineOneWidth, presenceIconsWidth)
           : singleLineContentWidth;
       final contentHeight = wrapIconsToSecondLine
-          ? th + _provinceLabelTextIconGapPx + _provinceLabelIconRenderedPx
-          : math.max(th, _provinceLabelIconRenderedPx);
+          ? lineOneHeight +
+                _provinceLabelTextIconGapPx +
+                _provinceLabelIconRenderedPx
+          : math.max(
+              lineOneHeight,
+              presenceIconCount > 0 ? _provinceLabelIconRenderedPx : 0,
+            );
       const pad = _provinceLabelPlatePaddingPx;
       final bw = contentWidth + pad * 2;
       final bh = contentHeight + pad * 2;
@@ -393,28 +407,56 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       canvas.drawRRect(rect, platePaint);
 
       if (wrapIconsToSecondLine) {
-        tp.paint(canvas, Offset(-tw / 2, -contentHeight / 2));
-        final iconTop = -contentHeight / 2 + th + _provinceLabelTextIconGapPx;
+        final lineOneLeft = -lineOneWidth / 2;
+        final lineOneTop = -contentHeight / 2;
+        if (hasCapitalIcon) {
+          _paintProvinceLabelIconsRow(
+            canvas: canvas,
+            iconIds: capitalIconIds,
+            left: lineOneLeft,
+            top:
+                lineOneTop + (lineOneHeight - _provinceLabelIconRenderedPx) / 2,
+            rowWidth: _provinceLabelIconRenderedPx,
+          );
+        }
+        tp.paint(
+          canvas,
+          Offset(
+            lineOneLeft + capitalInlineWidth,
+            lineOneTop + (lineOneHeight - th) / 2,
+          ),
+        );
+        final iconTop =
+            lineOneTop + lineOneHeight + _provinceLabelTextIconGapPx;
         _paintProvinceLabelIconsRow(
           canvas: canvas,
-          iconIds: iconIds,
+          iconIds: presenceIconIds,
           top: iconTop,
-          rowWidth: iconsWidth,
+          rowWidth: presenceIconsWidth,
         );
       } else {
-        final textLeft = iconCount > 0
-            ? -(singleLineContentWidth / 2)
-            : -tw / 2;
-        final textTop = -th / 2;
+        final rowLeft = -singleLineContentWidth / 2;
+        final rowTop = -contentHeight / 2;
+        if (hasCapitalIcon) {
+          _paintProvinceLabelIconsRow(
+            canvas: canvas,
+            iconIds: capitalIconIds,
+            left: rowLeft,
+            top: rowTop + (contentHeight - _provinceLabelIconRenderedPx) / 2,
+            rowWidth: _provinceLabelIconRenderedPx,
+          );
+        }
+        final textLeft = rowLeft + capitalInlineWidth;
+        final textTop = rowTop + (contentHeight - th) / 2;
         tp.paint(canvas, Offset(textLeft, textTop));
-        if (iconCount > 0) {
+        if (presenceIconCount > 0) {
           final iconLeft = textLeft + tw + _provinceLabelTextIconGapPx;
           _paintProvinceLabelIconsRow(
             canvas: canvas,
-            iconIds: iconIds,
+            iconIds: presenceIconIds,
             left: iconLeft,
-            top: -_provinceLabelIconRenderedPx / 2,
-            rowWidth: iconsWidth,
+            top: rowTop + (contentHeight - _provinceLabelIconRenderedPx) / 2,
+            rowWidth: presenceIconsWidth,
           );
         }
       }
