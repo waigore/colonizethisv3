@@ -385,9 +385,7 @@ Game applyBuildAndWorkOrders(
                 .toList();
             if (missing.isNotEmpty && rand.nextDouble() < spyTechStealChance) {
               final granted = missing[rand.nextInt(missing.length)];
-              final player = s.game.players
-                  .where((p) => p.id == u.ownerId)
-                  .firstOrNull;
+              final player = s.game.playerById(u.ownerId);
               if (player != null) {
                 final updated = Map<String, bool>.from(
                   player.techUnlocked ?? {},
