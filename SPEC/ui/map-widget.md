@@ -115,6 +115,19 @@ The widget accepts an optional **base layer display mode** enumerating terrain, 
 
 Resources are displayed as 64×64 pixel-art icons rendered on tiles, centered within the cell. Icons are drawn instead of the legacy single-letter glyphs (g, t, i, …).
 
+### Map tile icon inventory (64 policy)
+
+The following map-rendered icon families are governed by the 64×64 tile icon policy and are loaded from `app/assets/icons/64/`:
+
+| Family | Files |
+|---|---|
+| Town / port | `ui_icon_com_town_inland_64.png`, `ui_icon_com_port.png` |
+| Resource tile icons | `ui_icon_com_<resource_id>.png` (all `kResourceIconIds`) |
+| Civilian tile markers | `ui_icon_civ_builder.png`, `ui_icon_civ_engineer.png`, `ui_icon_civ_rail_builder.png`, `ui_icon_civ_explorer.png`, `ui_icon_civ_merchant.png`, `ui_icon_civ_spy.png` |
+| Province label row icons | `ui_icon_map_capital_star.png`, `ui_icon_map_presence_civilian.png`, `ui_icon_map_presence_regiment.png`, `ui_icon_map_presence_ship.png` |
+
+Non-map UI glyphs remain outside this map tile inventory and use their own UI contracts.
+
 ### Asset Files
 
 Resource icons are stored in `app/assets/icons/64/` with naming convention `ui_icon_com_<resource_id>.png`:
