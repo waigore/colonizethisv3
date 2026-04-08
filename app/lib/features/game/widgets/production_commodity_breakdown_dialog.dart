@@ -30,8 +30,8 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
 
   static String _phaseColumnLabel(EconomyPreviewStockpilePhase phase) {
     return switch (phase) {
-      EconomyPreviewStockpilePhase.extraction => 'Extraction',
       EconomyPreviewStockpilePhase.pendingBuildCosts => 'Pending build costs',
+      EconomyPreviewStockpilePhase.extraction => 'Extraction',
       EconomyPreviewStockpilePhase.richesToTreasury => 'Riches to treasury',
       EconomyPreviewStockpilePhase.consumption => 'Consumption',
       EconomyPreviewStockpilePhase.production => 'Production',
