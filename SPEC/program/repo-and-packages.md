@@ -63,13 +63,17 @@ colonizethis_data    (no package deps)
 
 - **Given** package metadata for `colonizethis_logic`, **when** dependency analysis reads `dependencies` and `dev_dependencies`, **then** no `colonizethis_ai` entry exists.
 - **Given** `colonizethis_ai` imports logic interfaces, **when** static analysis inspects imports under `packages/colonizethis_ai/lib`, **then** imports use narrow logic contract libraries (`order_suggestion_api.dart`, `ai_api.dart`) and do not import `package:colonizethis_logic/colonizethis_logic.dart`.
+- **Given** Dart source under `app/lib` except `app/lib/config/app_assets.dart`, **when** static analysis inspects string literals, **then** direct asset path literals matching `assets/...` or `packages/<pkg>/assets/...` are rejected and diagnostics include file, line, and reason.
+- **Given** an app runtime asset reference in `app/lib`, **when** the code compiles, **then** the reference uses constants or helper builders defined in `app/lib/config/app_assets.dart`.
 
 ### Automated guard gate (CI)
 
 The repository enforces this boundary in CI via:
 
 - `tool/check_logic_ai_decoupling.sh`
+- `tool/check_asset_path_constants.sh`
 - `.github/workflows/quality.yml` step: `Check logic/ai decoupling convention (SPEC/program/repo-and-packages.md)`
+- `.github/workflows/quality.yml` step: `Check asset path constants convention (SPEC/program/repo-and-packages.md)`
 
 Guard behavior:
 
@@ -77,6 +81,13 @@ Guard behavior:
 - Fails if `packages/colonizethis_ai/lib/**` imports `package:colonizethis_logic/colonizethis_logic.dart`.
 - Fails if `packages/colonizethis_ai/lib/**` imports logic from any path other than `ai_api.dart` or `order_suggestion_api.dart`.
 - Fails if `packages/colonizethis_logic/test/**` imports `package:colonizethis_ai/...`.
+- Fails if `app/lib/**` contains direct `assets/...` or `packages/<pkg>/assets/...` string literals outside `app/lib/config/app_assets.dart`.
+
+Asset-path guard remediation:
+
+- Add new runtime asset constants (or helper path builders) in `app/lib/config/app_assets.dart`.
+- Replace direct string literals in `app/lib/**` with those constants/helpers.
+- Keep exclusions explicit and minimal; current exclusion is only the constants source file itself.
 
 ---
 

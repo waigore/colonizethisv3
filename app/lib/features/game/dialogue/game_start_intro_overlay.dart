@@ -1,4 +1,5 @@
 import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:jenny/jenny.dart';
@@ -15,6 +16,7 @@ class GameStartIntroOverlay extends StatefulWidget {
     required this.onDismissed,
     required this.child,
     this.logger,
+
     /// When set (e.g. in tests), used to load the Yarn asset instead of [rootBundle].
     this.assetBundle,
   });
@@ -29,7 +31,6 @@ class GameStartIntroOverlay extends StatefulWidget {
 }
 
 class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
-  static const String _kIntroAsset = 'assets/dialogue/game_intro.yarn';
   static const String _kIntroNode = 'game_start_intro';
 
   CtDialogueView? _view;
@@ -47,11 +48,13 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
     final log = widget.logger ?? appLogger('dialogue');
     try {
       final bundle = widget.assetBundle ?? rootBundle;
-      final text = await bundle.loadString(_kIntroAsset);
+      final text = await bundle.loadString(kDialogueGameIntroAsset);
       final project = YarnProject();
       project.parse(text);
       if (!project.nodes.containsKey(_kIntroNode)) {
-        throw StateError('Intro node "$_kIntroNode" not found in $_kIntroAsset');
+        throw StateError(
+          'Intro node "$_kIntroNode" not found in $kDialogueGameIntroAsset',
+        );
       }
       final view = CtDialogueView(logger: log);
       final runner = DialogueRunner(
@@ -71,7 +74,11 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
       setState(() => _dialogueFinished = true);
       widget.onDismissed();
     } catch (e, st) {
-      log.e('ui:dialogue: failed to load or run intro', error: e, stackTrace: st);
+      log.e(
+        'ui:dialogue: failed to load or run intro',
+        error: e,
+        stackTrace: st,
+      );
       if (mounted) {
         setState(() => _loadError = e);
       }

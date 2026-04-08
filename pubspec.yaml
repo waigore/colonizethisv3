@@ -28,7 +28,9 @@ workspace:
   - tool/check_gdd_coverage
 
 dev_dependencies:
+  analyzer: ^8.4.0
   melos: ^7.0.0
+  path: ^1.9.1
 
 melos:
   scripts:

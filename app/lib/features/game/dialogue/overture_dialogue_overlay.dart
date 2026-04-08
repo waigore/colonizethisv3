@@ -1,5 +1,6 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:colonizethis_logger/colonizethis_logger.dart';
@@ -19,6 +20,7 @@ class OvertureDialogueOverlay extends StatefulWidget {
     required this.onDecisions,
     required this.child,
     this.logger,
+
     /// When true, skip Jenny intro and show list immediately. For tests only.
     this.skipIntroForTest = false,
   });
@@ -36,7 +38,6 @@ class OvertureDialogueOverlay extends StatefulWidget {
 }
 
 class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
-  static const String _kOvertureAsset = 'assets/dialogue/overture.yarn';
   static const String _kOvertureNode = 'DialoguePoint/overture_target_response';
 
   bool _introDone = false;
@@ -58,12 +59,13 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
   Future<void> _loadAndRunIntro() async {
     final log = widget.logger ?? appLogger('dialogue');
     try {
-      final text = await rootBundle.loadString(_kOvertureAsset);
+      final text = await rootBundle.loadString(kDialogueOvertureAsset);
       final project = YarnProject();
       project.parse(text);
       if (!project.nodes.containsKey(_kOvertureNode)) {
         throw StateError(
-            'Overture node "$_kOvertureNode" not found in $_kOvertureAsset');
+          'Overture node "$_kOvertureNode" not found in $kDialogueOvertureAsset',
+        );
       }
       final view = CtDialogueView(logger: log);
       final runner = DialogueRunner(
@@ -81,7 +83,11 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
       if (!mounted) return;
       setState(() => _introDone = true);
     } catch (e, st) {
-      log.e('ui:dialogue: failed to load overture intro', error: e, stackTrace: st);
+      log.e(
+        'ui:dialogue: failed to load overture intro',
+        error: e,
+        stackTrace: st,
+      );
       if (mounted) setState(() => _loadError = e);
     }
   }
@@ -112,12 +118,14 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
     final decisions = <OvertureDecision>[];
     for (var i = 0; i < widget.pendingOvertures.length; i++) {
       final offer = widget.pendingOvertures[i];
-      decisions.add(OvertureDecision(
-        offererGpId: offer.offererGpId,
-        targetFactionId: offer.targetFactionId,
-        stage: offer.stage,
-        accepted: _accepted[i],
-      ));
+      decisions.add(
+        OvertureDecision(
+          offererGpId: offer.offererGpId,
+          targetFactionId: offer.targetFactionId,
+          stage: offer.stage,
+          accepted: _accepted[i],
+        ),
+      );
     }
     widget.onDecisions(decisions);
   }
@@ -188,8 +196,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
                           (entry) => Padding(
                             padding: const EdgeInsets.only(bottom: 8),
                             child: CtNinePatchButton(
-                              onPressed: () =>
-                                  _view!.selectOption(entry.key),
+                              onPressed: () => _view!.selectOption(entry.key),
                               child: Text(entry.value.text),
                             ),
                           ),
