@@ -48,9 +48,9 @@ Optionally, when feasible (currently deferred; fields exist on `ProjectedEffects
 
 - `extractionByCommodity` — projected extraction per commodity
 
-**Production panel stockpile preview (implemented):** `colonizethis_logic` exposes `previewStockpileNetDeltaByCommodityForPlayer` and `applyEconomyPhasesForPreview`, which run Extraction → Riches-to-treasury → Consumption → Production on a copy of the passed `Game` (no turn advance). Used by the Flutter production panel per [production-panel.md](../ui/production-panel.md).
+**Production panel stockpile preview (implemented):** `colonizethis_logic` exposes `previewStockpileNetDeltaByCommodityForPlayer` and `applyEconomyPhasesForPreview`, which first apply pending build-order costs from unresolved `Orders.buildUnitOrdersByPlayerId` (affordability-checked) and then run Extraction → Riches-to-treasury → Consumption → Production on a copy of the passed `Game` (no turn advance). Used by the Flutter production panel per [production-panel.md](../ui/production-panel.md).
 
-**Phased breakdown (implemented):** `EconomyPreviewStockpilePhase` enum (`extraction`, `richesToTreasury`, `consumption`, `production`) and `previewStockpilePhaseDeltasByCommodityForPlayer` with the **same parameters** as `previewStockpileNetDeltaByCommodityForPlayer`. Returns a map from each phase to per-commodity deltas (zeros omitted). Implementation runs the same private preview steps as `applyEconomyPhasesForPreview` in `turn_resolver.dart` (`economyPreviewStockpilePhaseDeltasForPlayer`). **Invariant:** for every commodity id, the sum of the four phase deltas equals the net delta from `previewStockpileNetDeltaByCommodityForPlayer` for the same inputs.
+**Phased breakdown (implemented):** `EconomyPreviewStockpilePhase` enum (`pendingBuildCosts`, `extraction`, `richesToTreasury`, `consumption`, `production`) and `previewStockpilePhaseDeltasByCommodityForPlayer` with the **same parameters** as `previewStockpileNetDeltaByCommodityForPlayer`. Returns a map from each phase to per-commodity deltas (zeros omitted). Implementation runs the same private preview steps as `applyEconomyPhasesForPreview` in `turn_resolver.dart` (`economyPreviewStockpilePhaseDeltasForPlayer`). **Invariant:** for every commodity id, the sum of the phase deltas equals the net delta from `previewStockpileNetDeltaByCommodityForPlayer` for the same inputs.
 
 ---
 
@@ -64,7 +64,9 @@ When projecting for a single player: merge that player's orders with empty or pl
 
 ## Production panel stockpile preview phases
 
-For the production-panel Available-grid parenthetical deltas, the projection is not allocation-only arithmetic. The projection runs the same economy semantics as live resolver for these phases and order:
+For the production-panel Available-grid parenthetical deltas, the projection is not allocation-only arithmetic. The projection runs the same build-cost and economy semantics as live resolver for these phases and order:
+
+0. `Pending build costs` (only unresolved `buildUnitOrdersByPlayerId`; affordability checked with sequential deduction)
 
 1. `Extraction` (land + overseas delivered by cargo/interception ordering)
 2. `Riches-to-treasury`
@@ -83,7 +85,7 @@ Same inputs → same outputs. No RNG in the projection path unless the turn reso
 
 ## Acceptance Criteria
 
-- Given a loaded game, topology, and `tileMapByRegion` (or an explicit `extractedByPlayerId` override), when `previewStockpileNetDeltaByCommodityForPlayer` runs for player `P`, then for every commodity id `c`, the returned delta equals `stockpileAfter[c] - stockpileBefore[c]` where `stockpileAfter` is from applying exactly `Extraction -> Riches-to-treasury -> Consumption -> Production` preview phases for `P`.
+- Given a loaded game, topology, unresolved `Orders`, and `tileMapByRegion` (or an explicit `extractedByPlayerId` override), when `previewStockpileNetDeltaByCommodityForPlayer` runs for player `P`, then for every commodity id `c`, the returned delta equals `stockpileAfter[c] - stockpileBefore[c]` where `stockpileAfter` is from applying exactly `Pending build costs -> Extraction -> Riches-to-treasury -> Consumption -> Production` preview phases for `P`.
 - Given `desiredOutputByRecipe` for player `P`, when `assignedRecipesFromDesiredOutput` runs, then it returns only assignments with positive labour and known recipe ids, with `assignedLabour = desiredOutput * labourPerOutput` for each returned recipe.
 - Given a game with multiple players and only player `P` has desired output entries, when `previewStockpileNetDeltaByCommodityForPlayer` runs, then production assignments for every non-`P` player are treated as empty for this preview.
 - Given fixed `Game`, topology, tile maps (or `extractedByPlayerId`), and assignments for player `P`, when `previewStockpilePhaseDeltasByCommodityForPlayer` runs, then for every commodity id `c`, the sum of deltas over `EconomyPreviewStockpilePhase.values` equals the value returned by `previewStockpileNetDeltaByCommodityForPlayer` for `c`, or zero if that key is omitted from the net map.
