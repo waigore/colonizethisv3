@@ -1,13 +1,8 @@
 import 'ship_instance.dart';
+import 'model_validation_exception.dart';
 
 /// Fleet mission. SPEC/game/ships-and-naval.md, naval-movement-resolution.md.
-enum FleetMission {
-  none,
-  patrol,
-  blockade,
-  beachhead,
-  defend,
-}
+enum FleetMission { none, patrol, blockade, beachhead, defend }
 
 /// Next `ship_<n>` id is [n] where n >= this value. SPEC/game/ships-and-naval.md.
 int inferNextShipInstanceSeqFromFleets(Iterable<Fleet> fleets) {
@@ -48,7 +43,7 @@ class Fleet {
   ) {
     if (ships.isNotEmpty) {
       if (shipTypeIds != null && shipTypeIds.isNotEmpty) {
-        throw ArgumentError(
+        throw ModelValidationException(
           'Fleet $fleetId: pass only ships or shipTypeIds, not both',
         );
       }
@@ -62,11 +57,14 @@ class Fleet {
 
   final String id;
   final String ownerId;
+
   /// When non-null, fleet is at sea in this sea zone. When null, fleet is in port ([inPortAtProvinceId] set).
   final String? seaZoneId;
+
   /// When non-null, fleet is in port at this province (prefixed id). When null, fleet is at sea ([seaZoneId] set).
   final String? inPortAtProvinceId;
   final String regionId;
+
   /// Ship instances (unique [ShipInstance.id] per hull). Order is significant for display.
   final List<ShipInstance> ships;
 
@@ -79,20 +77,21 @@ class Fleet {
 
   /// True if this fleet is at sea (has seaZoneId). False when in port.
   bool get isAtSea => seaZoneId != null;
+
   /// True if this fleet is in port (has inPortAtProvinceId).
   bool get isInPort => inPortAtProvinceId != null;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'ownerId': ownerId,
-        if (seaZoneId != null) 'seaZoneId': seaZoneId,
-        if (inPortAtProvinceId != null) 'inPortAtProvinceId': inPortAtProvinceId,
-        'regionId': regionId,
-        'ships': ships.map((s) => s.toJson()).toList(),
-        'mission': mission.name,
-        if (targetPortId != null) 'targetPortId': targetPortId,
-        if (targetProvinceId != null) 'targetProvinceId': targetProvinceId,
-      };
+    'id': id,
+    'ownerId': ownerId,
+    if (seaZoneId != null) 'seaZoneId': seaZoneId,
+    if (inPortAtProvinceId != null) 'inPortAtProvinceId': inPortAtProvinceId,
+    'regionId': regionId,
+    'ships': ships.map((s) => s.toJson()).toList(),
+    'mission': mission.name,
+    if (targetPortId != null) 'targetPortId': targetPortId,
+    if (targetProvinceId != null) 'targetProvinceId': targetProvinceId,
+  };
 
   static Fleet fromJson(Map<String, dynamic> json) {
     final fleetId = json['id'] as String;
@@ -100,7 +99,9 @@ class Fleet {
     if (json.containsKey('ships')) {
       final shipsRaw = json['ships'] as List<dynamic>? ?? [];
       ships = shipsRaw
-          .map((e) => ShipInstance.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => ShipInstance.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
           .toList();
     } else {
       final legacy = json['shipTypeIds'] as List<dynamic>? ?? [];
@@ -168,16 +169,16 @@ class Fleet {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        ownerId,
-        seaZoneId,
-        inPortAtProvinceId,
-        regionId,
-        Object.hashAll(ships),
-        mission,
-        targetPortId,
-        targetProvinceId,
-      );
+    id,
+    ownerId,
+    seaZoneId,
+    inPortAtProvinceId,
+    regionId,
+    Object.hashAll(ships),
+    mission,
+    targetPortId,
+    targetProvinceId,
+  );
 
   static bool _listEqualsShips(List<ShipInstance> a, List<ShipInstance> b) {
     if (a.length != b.length) return false;

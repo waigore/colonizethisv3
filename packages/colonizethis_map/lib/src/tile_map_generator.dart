@@ -6,6 +6,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/package_logger.dart';
 
 import 'grid_voronoi.dart';
+import 'map_validation_exception.dart';
 import 'topology_inference.dart';
 
 part 'tile_map_generator_types.dart';
@@ -49,12 +50,7 @@ class _LandSeedService {
     String seaZoneId,
     Random rnd,
   ) =>
-      _kernel._placeLandSeedsOrganic(
-        grid,
-        provinceToContinent,
-        seaZoneId,
-        rnd,
-      );
+      _kernel._placeLandSeedsOrganic(grid, provinceToContinent, seaZoneId, rnd);
 
   List<List<String>> assignLandByLandSeeds(
     List<List<String>> grid,
@@ -88,13 +84,8 @@ class _LakeAndProvinceService {
     List<(int x, int y)> landSeeds,
     List<int> continentBySeedIndex,
     Random rnd,
-  ) => _kernel._fillMoats(
-    grid,
-    seaZoneId,
-    landSeeds,
-    continentBySeedIndex,
-    rnd,
-  );
+  ) =>
+      _kernel._fillMoats(grid, seaZoneId, landSeeds, continentBySeedIndex, rnd);
 
   List<List<String>> borderNoise(
     List<List<String>> grid,
@@ -237,10 +228,10 @@ class TileMapGenerator extends _TileMapGeneratorShell {
       'TileMapGenerator.generate start regionId=$regionId numProvinces=$numProvinces seed=${params.seed}',
     );
     if (numProvinces < 1) {
-      throw ArgumentError('numProvinces must be at least 1');
+      throw MapValidationException('numProvinces must be at least 1');
     }
     if (numContinents < 1) {
-      throw ArgumentError('numContinents must be at least 1');
+      throw MapValidationException('numContinents must be at least 1');
     }
     _log.i(
       'generation_params '
@@ -438,11 +429,8 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     // Pass 11: Sea zone subdivision with size cap (max fraction of total sea per zone).
     final totalSea = _joinAndSeaService.countSeaCells(grid, seaZoneId);
     if (totalSea > 0) {
-      final (newGrid, numSeaZones) = _joinAndSeaService.subdivideSeaZonesWithCap(
-        grid,
-        seaZoneId,
-        totalSea,
-      );
+      final (newGrid, numSeaZones) = _joinAndSeaService
+          .subdivideSeaZonesWithCap(grid, seaZoneId, totalSea);
       grid = newGrid;
       onLog?.call(
         'Pass 11: Sea zone subdivision ($numSeaZones sea zones, cap ${(params.maxSeaZoneFraction * 100).toInt()}% of sea)',

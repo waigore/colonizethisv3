@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import 'setup_validation_exception.dart';
 
 /// Capital-choice phase stub. SPEC/game/capital-choice-phase.
 ///
@@ -54,7 +55,7 @@ TopologyNode? _nodeById(MapTopology topology, String id) {
   final provinceId = seaBound.isNotEmpty
       ? seaBound.first
       : (requireSeaBound
-            ? (throw ArgumentError(
+            ? (throw SetupValidationException(
                 'No sea-bound province among $ownedProvinceIds; setup must assign at least one sea-bound per faction',
               ))
             : (List<String>.from(ownedProvinceIds)..sort()).first);
@@ -126,7 +127,7 @@ TopologyNode? _nodeById(MapTopology topology, String id) {
       x = classCCoastalX;
       y = classCCoastalY;
     } else {
-      throw ArgumentError(
+      throw SetupValidationException(
         'no_coastal_capital_tile_for_gp: No coastal tile found in sea-bound province $provinceId in region $regionId',
       );
     }
@@ -139,7 +140,7 @@ TopologyNode? _nodeById(MapTopology topology, String id) {
   }
 
   if (x == null || y == null) {
-    throw ArgumentError(
+    throw SetupValidationException(
       'No tile found in province $provinceId in region $regionId',
     );
   }
@@ -161,7 +162,7 @@ String pickCapitalProvinceIdForReassignment(
   MapTopology topology,
 ) {
   if (ownedProvinceIds.isEmpty) {
-    throw ArgumentError.value(
+    throw SetupValidationException.value(
       ownedProvinceIds,
       'ownedProvinceIds',
       'must be non-empty',
@@ -169,9 +170,7 @@ String pickCapitalProvinceIdForReassignment(
   }
   final sorted = List<String>.from(ownedProvinceIds)..sort();
   final seaBound = sorted
-      .where(
-        (id) => isProvinceSeaBound(topology, ProvinceId.localIdFrom(id)),
-      )
+      .where((id) => isProvinceSeaBound(topology, ProvinceId.localIdFrom(id)))
       .toList();
   if (seaBound.isNotEmpty) return seaBound.first;
   return sorted.first;
@@ -187,7 +186,9 @@ WorldState applyCapitalPortAndRoad(
 ) {
   final regionId = tile.regionId;
   final map = tileMapByRegion[regionId];
-  if (map == null) throw ArgumentError('No tile map for region $regionId');
+  if (map == null) {
+    throw SetupValidationException('No tile map for region $regionId');
+  }
   final localProvinceId = ProvinceId.localIdFrom(provinceId);
 
   var tileState = worldState.tileState;
@@ -199,7 +200,9 @@ WorldState applyCapitalPortAndRoad(
     localProvinceId,
   ).toList()..sort();
   if (seaZoneIds.isEmpty) {
-    throw ArgumentError('Province $provinceId has no sea zone in topology');
+    throw SetupValidationException(
+      'Province $provinceId has no sea zone in topology',
+    );
   }
 
   for (final seaZoneId in seaZoneIds) {
@@ -226,7 +229,7 @@ WorldState applyCapitalPortAndRoad(
       seaZoneId,
     );
     if (coastal == null) {
-      throw ArgumentError(
+      throw SetupValidationException(
         'No coastal tile in province $provinceId for sea zone $seaZoneId',
       );
     }
@@ -277,8 +280,7 @@ WorldState applyGreatPowerCapitalProvinceTownDevelopment(
     final region = worldState.oldWorld;
     final provinces = region.provinces
         .map(
-          (p) =>
-              ProvinceId.localIdFrom(p.id) == localTarget
+          (p) => ProvinceId.localIdFrom(p.id) == localTarget
               ? p.copyWith(townDevelopmentLevel: 4)
               : p,
         )
@@ -291,8 +293,7 @@ WorldState applyGreatPowerCapitalProvinceTownDevelopment(
     final region = worldState.newWorld;
     final provinces = region.provinces
         .map(
-          (p) =>
-              ProvinceId.localIdFrom(p.id) == localTarget
+          (p) => ProvinceId.localIdFrom(p.id) == localTarget
               ? p.copyWith(townDevelopmentLevel: 4)
               : p,
         )
@@ -326,10 +327,10 @@ Game setCapital({
   required Map<String, TileMapResult> tileMapByRegion,
 }) {
   if (!isProvinceSeaBound(topology, ProvinceId.localIdFrom(provinceId))) {
-    throw ArgumentError('Province $provinceId is not sea-bound');
+    throw SetupValidationException('Province $provinceId is not sea-bound');
   }
   if (tile.provinceId != provinceId) {
-    throw ArgumentError(
+    throw SetupValidationException(
       'Capital tile province ${tile.provinceId} does not match $provinceId',
     );
   }
@@ -365,7 +366,7 @@ Game setCapitalForReassignment({
   required CapitalTile tile,
 }) {
   if (tile.provinceId != provinceId) {
-    throw ArgumentError(
+    throw SetupValidationException(
       'Capital tile province ${tile.provinceId} does not match $provinceId',
     );
   }
@@ -387,7 +388,7 @@ Game setCapitalForMinorNation({
   required Map<String, TileMapResult> tileMapByRegion,
 }) {
   if (tile.provinceId != provinceId) {
-    throw ArgumentError(
+    throw SetupValidationException(
       'Capital tile province ${tile.provinceId} does not match $provinceId',
     );
   }
@@ -422,7 +423,7 @@ Game setCapitalForTribe({
   required Map<String, TileMapResult> tileMapByRegion,
 }) {
   if (tile.provinceId != provinceId) {
-    throw ArgumentError(
+    throw SetupValidationException(
       'Capital tile province ${tile.provinceId} does not match $provinceId',
     );
   }

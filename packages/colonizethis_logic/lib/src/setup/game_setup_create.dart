@@ -53,7 +53,7 @@ GameSetupResult createGameFromGeneratedMaps({
   final nwProvinceIds = _provinceIdsFromTopology(topologyNewWorld);
 
   if (owProvinceIds.length < config.greatPowerCount) {
-    throw ArgumentError(
+    throw SetupValidationException(
       'Old World has ${owProvinceIds.length} provinces but ${config.greatPowerCount} Great Powers need at least one each',
     );
   }
@@ -64,7 +64,7 @@ GameSetupResult createGameFromGeneratedMaps({
           .toList()
         ..sort();
   if (seaBoundOW.length < config.greatPowerCount) {
-    throw ArgumentError(
+    throw SetupValidationException(
       'Old World has ${seaBoundOW.length} sea-bound provinces but ${config.greatPowerCount} Great Powers need one each',
     );
   }
