@@ -757,6 +757,7 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
                               player: player,
                               topology: const MapTopology(),
                               tileMapByRegion: null,
+                              currentOrders: const Orders(),
                             ),
                           );
                         },
@@ -924,6 +925,7 @@ class _ProductionPanelStoryBody extends ConsumerWidget {
               player: player,
               topology: const MapTopology(),
               tileMapByRegion: null,
+              currentOrders: const Orders(),
             ),
           );
         },
