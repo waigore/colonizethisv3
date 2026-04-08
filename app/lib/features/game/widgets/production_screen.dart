@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/game_service_provider.dart';
+import '../../../providers/games_provider.dart';
 import '../../../providers/production_allocation_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import 'production_commodity_breakdown_dialog.dart';
@@ -46,6 +47,7 @@ class ProductionScreen extends ConsumerWidget {
         final desiredOutputByRecipe = shellRef.watch(
           productionDesiredOutputProvider,
         );
+        final currentOrders = shellRef.watch(currentOrdersProvider);
         var topology = MapTopology();
         Map<String, TileMapResult> tileMapByRegion = const {};
         try {
@@ -70,15 +72,19 @@ class ProductionScreen extends ConsumerWidget {
           panelTopology = topology;
           panelTileMaps = tileMapByRegion;
         }
-        final netDeltasByCommodity = previewStockpileNetDeltaByCommodityForPlayer(
-          game: displayGame,
-          topology: panelTopology,
-          playerId: displayPlayer.id,
-          tileMapByRegion: panelTileMaps,
-          defaultAssignmentsByPlayerId: {
-            displayPlayer.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
-          },
-        );
+        final netDeltasByCommodity =
+            previewStockpileNetDeltaByCommodityForPlayer(
+              game: displayGame,
+              topology: panelTopology,
+              playerId: displayPlayer.id,
+              pendingOrders: currentOrders,
+              tileMapByRegion: panelTileMaps,
+              defaultAssignmentsByPlayerId: {
+                displayPlayer.id: assignedRecipesFromDesiredOutput(
+                  desiredOutputByRecipe,
+                ),
+              },
+            );
         return ProductionPanel(
           game: displayGame,
           player: displayPlayer,
@@ -91,6 +97,7 @@ class ProductionScreen extends ConsumerWidget {
                 game: displayGame,
                 player: displayPlayer,
                 topology: panelTopology,
+                pendingOrders: currentOrders,
                 tileMapByRegion: panelTileMaps,
               ),
             );

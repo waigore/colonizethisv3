@@ -18,16 +18,20 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
     required this.game,
     required this.player,
     required this.topology,
+    required this.pendingOrders,
     required this.tileMapByRegion,
   });
 
   final Game game;
   final Player player;
   final MapTopology topology;
+  final Orders pendingOrders;
   final Map<String, TileMapResult>? tileMapByRegion;
 
   static String _phaseColumnLabel(EconomyPreviewStockpilePhase phase) {
     return switch (phase) {
+      EconomyPreviewStockpilePhase.pendingBuildTrainCosts =>
+        'Pending build/train costs',
       EconomyPreviewStockpilePhase.extraction => 'Extraction',
       EconomyPreviewStockpilePhase.richesToTreasury => 'Riches to treasury',
       EconomyPreviewStockpilePhase.consumption => 'Consumption',
@@ -51,6 +55,7 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
       game: game,
       topology: topology,
       playerId: player.id,
+      pendingOrders: pendingOrders,
       tileMapByRegion: tileMapByRegion,
       defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
     );
@@ -120,8 +125,9 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
               ),
             ),
             ...EconomyPreviewStockpilePhase.values.map(
-              (p) =>
-                  DataCell(Text(_formatDelta(phaseValue(c.id, p)), maxLines: 1)),
+              (p) => DataCell(
+                Text(_formatDelta(phaseValue(c.id, p)), maxLines: 1),
+              ),
             ),
             DataCell(Text(_formatDelta(total), maxLines: 1)),
           ],
@@ -166,10 +172,7 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
                           DataRow(
                             cells: [
                               DataCell(
-                                Text(
-                                  label,
-                                  style: theme.textTheme.titleSmall,
-                                ),
+                                Text(label, style: theme.textTheme.titleSmall),
                               ),
                               ...List<DataCell>.generate(
                                 phaseColCount + 1,

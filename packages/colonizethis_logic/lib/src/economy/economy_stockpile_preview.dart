@@ -8,8 +8,9 @@ import 'economy_preview_stockpile_phase.dart';
 /// Preview net stockpile change for one player after economy phases that feed
 /// the production panel. SPEC/ui/production-panel.md.
 ///
-/// Phases: Extraction → Riches-to-treasury → Consumption → Production, using
-/// the same rules as [applyEconomyPhasesForPreview]. Other players are
+/// Phases: Pending build/train costs → Extraction → Riches-to-treasury →
+/// Consumption → Production, using the same rules as
+/// [applyEconomyPhasesForPreview]. Other players are
 /// simulated in lockstep so extraction ordering (e.g. fleet updates from
 /// trade interception) matches a full turn.
 ///
@@ -18,6 +19,7 @@ Map<String, int> previewStockpileNetDeltaByCommodityForPlayer({
   required Game game,
   required MapTopology topology,
   required String playerId,
+  Orders pendingOrders = const Orders(),
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
@@ -31,6 +33,7 @@ Map<String, int> previewStockpileNetDeltaByCommodityForPlayer({
   final afterGame = applyEconomyPhasesForPreview(
     game: game,
     topology: topology,
+    pendingOrders: pendingOrders,
     tileMapByRegion: tileMapByRegion,
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
@@ -59,6 +62,7 @@ previewStockpilePhaseDeltasByCommodityForPlayer({
   required Game game,
   required MapTopology topology,
   required String playerId,
+  Orders pendingOrders = const Orders(),
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
   List<AssignedRecipe> defaultAssignments = const [],
@@ -68,6 +72,7 @@ previewStockpilePhaseDeltasByCommodityForPlayer({
     game: game,
     topology: topology,
     playerId: playerId,
+    pendingOrders: pendingOrders,
     tileMapByRegion: tileMapByRegion,
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
