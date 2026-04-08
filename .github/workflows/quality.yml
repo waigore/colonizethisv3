@@ -294,6 +294,9 @@ jobs:
       - name: Check asset path constants convention (SPEC/program/repo-and-packages.md)
         run: tool/check_asset_path_constants.sh
 
+      - name: Check tech ID constants convention (SPEC/program/repo-and-packages.md)
+        run: tool/check_tech_id_constants.sh
+
       - name: Check package logger API convention (SPEC/program/logging/logging.md)
         run: tool/check_naked_logger_usage.sh
 

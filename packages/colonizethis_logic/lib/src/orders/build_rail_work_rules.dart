@@ -37,9 +37,9 @@ String? rejectionReasonForBuildRailOrder({
   }
 
   final t = techUnlocked ?? const <String, bool>{};
-  final early = t['early_steam_engine'] == true;
-  final later = t['later_steam_engine'] == true;
-  final dynamite = t['dynamite'] == true;
+  final early = t[kTechIdEarlySteamEngine] == true;
+  final later = t[kTechIdLaterSteamEngine] == true;
+  final dynamite = t[kTechIdDynamite] == true;
 
   switch (terrain) {
     case TerrainType.plains:
