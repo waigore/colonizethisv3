@@ -987,6 +987,163 @@ void main() {
     },
   );
 
+  testWidgets(
+    'Batch-10 tech descriptions are concrete and avoid generic fallback text (Refs #1634)',
+    (WidgetTester tester) async {
+      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+      final gameWithEmptyPlayer = game.copyWith(
+        players: [emptyPlayer, ...game.players.skip(1)],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TechTreeWidget(
+              game: gameWithEmptyPlayer,
+              player: emptyPlayer,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expectedByTech = <String, String>{
+        'Industrial Machinery':
+            'Unlocks: Explosives, Improved Cavalry Weapons, Industrial Funding of Research (as prerequisite)',
+        'Explosives': 'Improves: Musketeers regiment upgrade path',
+        'Early Rifles': 'Improves: Calivermen regiment upgrade path',
+        'Long Range Rifles': 'Improves: Skirmishers regiment upgrade path',
+        'Needle Guns': 'Improves: Regulars regiment upgrade path',
+        'Elite Military Training': 'Improves: Grenadiers regiment upgrade path',
+        'Recruit Steppe Horsemen': 'Improves: Squires regiment upgrade path',
+        'Improved Cavalry Tactics':
+            'Prerequisite for: Hussars and Improved Cavalry Weapons',
+        'Hussars': 'Improves: Cossacks regiment upgrade path',
+        'Improved Cavalry Weapons':
+            'Improves: Harquebusiers regiment upgrade path',
+      };
+
+      for (final entry in expectedByTech.entries) {
+        final techNode = find.text(entry.key).first;
+        await tester.ensureVisible(techNode);
+        await tester.tap(techNode);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(
+          find.textContaining('Improves Military capabilities'),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
+  testWidgets(
+    'Batch-11 tech descriptions are concrete and avoid generic fallback text (Refs #1635)',
+    (WidgetTester tester) async {
+      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+      final gameWithEmptyPlayer = game.copyWith(
+        players: [emptyPlayer, ...game.players.skip(1)],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TechTreeWidget(
+              game: gameWithEmptyPlayer,
+              player: emptyPlayer,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expectedByTech = <String, String>{
+        'Scouting': 'Improves: Hussars regiment upgrade path',
+        'Repeating Cavalry Carbine':
+            'Improves: Cuirassiers regiment upgrade path',
+        'Horse Artillery': 'Prerequisite for: Light Artillery Tactics',
+        'Siege Engineering': 'Improves: Culverin regiment upgrade path',
+        'Light Artillery Tactics':
+            'Improves: Horse Artillery regiment upgrade path',
+        'Modern Forts':
+            'Enables: Builder fort upgrades to level 3 (Modern: 3 emplaced guns, strongest walls)',
+        'Heavy Artillery': 'Improves: Royal Artillery regiment upgrade path',
+        'Heavy Emplaced Artillery':
+            'Improves: defender emplaced fort batteries to Heavy quality (Royal → Heavy line)',
+        'Field Artillery Tactics':
+            'Improves: Light Artillery regiment upgrade path',
+        'High Grade Steel': 'Improves: Heavy Artillery regiment upgrade path',
+      };
+
+      for (final entry in expectedByTech.entries) {
+        final techNode = find.text(entry.key).first;
+        await tester.ensureVisible(techNode);
+        await tester.tap(techNode);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(
+          find.textContaining('Improves Military capabilities'),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
+  testWidgets(
+    'Batch-12 tech descriptions are concrete and avoid generic fallback text (Refs #1636)',
+    (WidgetTester tester) async {
+      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+      final gameWithEmptyPlayer = game.copyWith(
+        players: [emptyPlayer, ...game.players.skip(1)],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TechTreeWidget(
+              game: gameWithEmptyPlayer,
+              player: emptyPlayer,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expectedByTech = <String, String>{
+        'Emplaced Siege Guns':
+            'Improves: defender emplaced fort batteries to Siege Gun quality (final emplaced tier)',
+        'Modern Military Funding':
+            'Unlocks: Field Artillery Tactics, High Grade Steel, Elite Military Training stack',
+        'Industrial Funding of Research':
+            'Unlocks: Needle Guns, Repeating Cavalry Carbine, High Grade Steel, Advanced Iron Working (as prerequisite)',
+      };
+
+      for (final entry in expectedByTech.entries) {
+        final techNode = find.text(entry.key).first;
+        await tester.ensureVisible(techNode);
+        await tester.tap(techNode);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(
+          find.textContaining('Improves Military capabilities'),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
   test(
     'Column rule: A→B→C and A→C places B between A and C (gap between A and C)',
     () {
