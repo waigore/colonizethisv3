@@ -9,6 +9,7 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
 
 import 'scenario.dart';
+import 'sim_scenarios_validation_exception.dart';
 
 /// Result of creating a game for a scenario.
 /// Includes the game and supporting data for turn resolution.
@@ -60,7 +61,7 @@ class GameFactory {
   /// oldWorld: { grid: List<List<String>>, nodes: [...], edges: [...] }, and optional newWorld.
   Future<GameInitResult> createFromTopology(ScenarioInit init) async {
     if (init.type != 'fromTopology' || init.oldWorld == null) {
-      throw ArgumentError(
+      throw SimScenariosValidationException(
         'createFromTopology requires init.type==fromTopology and init.oldWorld',
       );
     }
@@ -289,7 +290,7 @@ class GameFactory {
       return GameSetupConfig.defaultConfig.initTownRoadWiringRegionIds;
     }
     if (raw is! List<dynamic>) {
-      throw ArgumentError(
+      throw SimScenariosValidationException(
         'initTownRoadWiringRegionIds must be a JSON array of region id strings',
       );
     }
