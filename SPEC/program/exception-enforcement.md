@@ -48,17 +48,16 @@ The repository uses an AST-based checker that:
 
 ## Rollout Model
 
-### Phase 1 (this issue slice)
+### Phase 1 (implemented)
 
 - Introduce checker and CI hook.
 - Migrate setup domain (`packages/colonizethis_logic/lib/src/setup/**`) to `SetupValidationException`.
-- Keep a temporary allowlist for legacy violations in other domains so new violations are still blocked.
+- Add package-local validation exception types in map/data/models/ui/ctterm/tool runtime code and migrate existing generic throws in those domains.
 
 ### Phase 2+
 
-- Remove allowlist entries incrementally by domain/package.
-- Add domain-root exception families where missing.
-- Keep checker mandatory in CI.
+- Expand from constructor-only detection to broader thrown-type validation policy per domain.
+- Keep checker mandatory in CI and apply the same migration pattern to any newly introduced runtime packages.
 
 ## Acceptance Criteria
 

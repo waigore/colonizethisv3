@@ -16,18 +16,6 @@ final _domainRoots = <String>[
 
 final _forbiddenExceptionTypes = <String>{'ArgumentError', 'Exception'};
 
-// Temporary rollout allowlist for known legacy generic throws outside the setup
-// domain migration in issue #1615.
-final _legacyAllowlist = <String>{
-  'app/lib/features/game/flame/terrain_tileset.dart',
-  'ctterm/lib/screens/pending_intervention_screen.dart',
-  'packages/colonizethis_data/lib/src/map_topology.dart',
-  'packages/colonizethis_map/lib/src/tile_map_generator.dart',
-  'packages/colonizethis_models/lib/src/fleet.dart',
-  'packages/colonizethis_models/lib/src/orders.dart',
-  'tool/sim_scenarios/lib/game_factory.dart',
-};
-
 void main() {
   final repoRoot = Directory.current.path;
   final dartFiles = _collectDomainDartFiles(repoRoot);
@@ -35,9 +23,6 @@ void main() {
 
   for (final file in dartFiles) {
     final relativePath = p.relative(file.path, from: repoRoot);
-    if (_legacyAllowlist.contains(relativePath)) {
-      continue;
-    }
     final content = file.readAsStringSync();
     final parsed = parseString(
       content: content,
