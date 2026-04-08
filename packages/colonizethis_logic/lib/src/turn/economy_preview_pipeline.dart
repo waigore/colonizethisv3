@@ -2,8 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../economy/economy_preview_stockpile_phase.dart';
 import '../economy/build_cost.dart';
+import '../economy/economy_preview_stockpile_phase.dart';
 import 'phases/consumption_phase.dart';
 import 'phases/extraction_phase.dart';
 import 'phases/production_phase.dart';
@@ -25,29 +25,25 @@ Map<String, int> _stockpileCommodityDeltaMap(
   return out;
 }
 
-Game _applyPendingBuildTrainCostsPreview({
+Game _applyPendingBuildOrderCostsForPreview({
   required Game game,
-  required Orders pendingOrders,
+  required Orders currentOrders,
 }) {
-  if (pendingOrders.buildUnitOrdersByPlayerId.isEmpty) {
+  if (currentOrders.buildUnitOrdersByPlayerId.isEmpty) {
     return game;
   }
-  var nextGame = game;
-  for (final player in nextGame.players) {
+  final updatedPlayers = game.players.map((player) {
     var workers = player.workerPool;
     var stockpile = player.stockpile;
     var treasury = player.treasury;
-    final buildOrders =
-        pendingOrders.buildUnitOrdersByPlayerId[player.id] ?? const [];
-    for (final order in buildOrders) {
-      final afford = canAffordBuild(
-        player,
-        order,
-        workers,
-        stockpile,
-        treasury,
-      );
-      if (!afford.canAfford) {
+    final orders =
+        currentOrders.buildUnitOrdersByPlayerId[player.id] ?? const [];
+    if (orders.isEmpty) {
+      return player;
+    }
+    for (final order in orders) {
+      final check = canAffordBuild(player, order, workers, stockpile, treasury);
+      if (!check.canAfford) {
         continue;
       }
       final after = applyBuildCostDeduction(
@@ -61,21 +57,13 @@ Game _applyPendingBuildTrainCostsPreview({
       stockpile = after.stockpile;
       treasury = after.treasury;
     }
-    nextGame = nextGame.copyWith(
-      players: nextGame.players
-          .map(
-            (p) => p.id == player.id
-                ? p.copyWith(
-                    workerPool: workers,
-                    stockpile: stockpile,
-                    treasury: treasury,
-                  )
-                : p,
-          )
-          .toList(),
+    return player.copyWith(
+      workerPool: workers,
+      stockpile: stockpile,
+      treasury: treasury,
     );
-  }
-  return nextGame;
+  }).toList();
+  return game.copyWith(players: updatedPlayers);
 }
 
 /// Per-phase stockpile commodity deltas for [playerId] when running the same
@@ -85,9 +73,9 @@ economyPreviewStockpilePhaseDeltasForPlayer({
   required Game game,
   required MapTopology topology,
   required String playerId,
-  Orders pendingOrders = const Orders(),
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  Orders currentOrders = const Orders(),
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
 }) {
@@ -105,15 +93,15 @@ economyPreviewStockpilePhaseDeltasForPlayer({
 
   var acc = TurnPipelineState(game: game);
 
-  final beforePendingBuildTrainCosts = stockpileForViewed(acc.game);
+  final beforePendingBuildCosts = stockpileForViewed(acc.game);
   acc = acc.copyWith(
-    game: _applyPendingBuildTrainCostsPreview(
+    game: _applyPendingBuildOrderCostsForPreview(
       game: acc.game,
-      pendingOrders: pendingOrders,
+      currentOrders: currentOrders,
     ),
   );
-  final pendingBuildTrainCosts = _stockpileCommodityDeltaMap(
-    beforePendingBuildTrainCosts,
+  final pendingBuildCosts = _stockpileCommodityDeltaMap(
+    beforePendingBuildCosts,
     stockpileForViewed(acc.game),
   );
 
@@ -158,7 +146,7 @@ economyPreviewStockpilePhaseDeltasForPlayer({
   );
 
   return {
-    EconomyPreviewStockpilePhase.pendingBuildTrainCosts: pendingBuildTrainCosts,
+    EconomyPreviewStockpilePhase.pendingBuildCosts: pendingBuildCosts,
     EconomyPreviewStockpilePhase.extraction: extraction,
     EconomyPreviewStockpilePhase.richesToTreasury: richesToTreasury,
     EconomyPreviewStockpilePhase.consumption: consumption,
@@ -170,17 +158,17 @@ economyPreviewStockpilePhaseDeltasForPlayer({
 Game applyEconomyPhasesForPreview({
   required Game game,
   required MapTopology topology,
-  Orders pendingOrders = const Orders(),
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  Orders currentOrders = const Orders(),
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
 }) {
   var acc = TurnPipelineState(game: game);
   acc = acc.copyWith(
-    game: _applyPendingBuildTrainCostsPreview(
+    game: _applyPendingBuildOrderCostsForPreview(
       game: acc.game,
-      pendingOrders: pendingOrders,
+      currentOrders: currentOrders,
     ),
   );
   acc = acc.copyWith(

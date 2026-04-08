@@ -77,8 +77,8 @@ class ProductionScreen extends ConsumerWidget {
               game: displayGame,
               topology: panelTopology,
               playerId: displayPlayer.id,
-              pendingOrders: currentOrders,
               tileMapByRegion: panelTileMaps,
+              currentOrders: currentOrders,
               defaultAssignmentsByPlayerId: {
                 displayPlayer.id: assignedRecipesFromDesiredOutput(
                   desiredOutputByRecipe,
@@ -97,8 +97,8 @@ class ProductionScreen extends ConsumerWidget {
                 game: displayGame,
                 player: displayPlayer,
                 topology: panelTopology,
-                pendingOrders: currentOrders,
                 tileMapByRegion: panelTileMaps,
+                currentOrders: currentOrders,
               ),
             );
           },

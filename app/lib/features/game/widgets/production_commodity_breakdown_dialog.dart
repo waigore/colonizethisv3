@@ -18,20 +18,19 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
     required this.game,
     required this.player,
     required this.topology,
-    required this.pendingOrders,
     required this.tileMapByRegion,
+    required this.currentOrders,
   });
 
   final Game game;
   final Player player;
   final MapTopology topology;
-  final Orders pendingOrders;
   final Map<String, TileMapResult>? tileMapByRegion;
+  final Orders currentOrders;
 
   static String _phaseColumnLabel(EconomyPreviewStockpilePhase phase) {
     return switch (phase) {
-      EconomyPreviewStockpilePhase.pendingBuildTrainCosts =>
-        'Pending build/train costs',
+      EconomyPreviewStockpilePhase.pendingBuildCosts => 'Pending build costs',
       EconomyPreviewStockpilePhase.extraction => 'Extraction',
       EconomyPreviewStockpilePhase.richesToTreasury => 'Riches to treasury',
       EconomyPreviewStockpilePhase.consumption => 'Consumption',
@@ -55,8 +54,8 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
       game: game,
       topology: topology,
       playerId: player.id,
-      pendingOrders: pendingOrders,
       tileMapByRegion: tileMapByRegion,
+      currentOrders: currentOrders,
       defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
     );
 

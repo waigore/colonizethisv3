@@ -119,6 +119,30 @@ void main() {
       expect(find.textContaining(RegExp(r'\(|\+|-')), findsWidgets);
     });
 
+    testWidgets('pending build orders affect Available net deltas', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildScreen(
+          initialOrders: const Orders(
+            buildUnitOrdersByPlayerId: {
+              'test_gp_full': [
+                BuildUnitOrder(
+                  unitType: 'Builder',
+                  isMilitary: false,
+                  spawnProvinceId: 'ow|prov-1',
+                ),
+              ],
+            },
+          ),
+        ),
+      );
+      await pumpSettleCapped(tester);
+
+      expect(find.textContaining('Paper:'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'\(-2\)')), findsOneWidget);
+    });
+
     testWidgets(
       'Breakdown dialog shows phase columns and live-updates from provider',
       (WidgetTester tester) async {
@@ -141,7 +165,7 @@ void main() {
         expect(
           find.descendant(
             of: tableFinder,
-            matching: find.text('Pending build/train costs'),
+            matching: find.text('Pending build costs'),
           ),
           findsOneWidget,
         );
@@ -183,28 +207,6 @@ void main() {
 
         expect(find.text('Commodity breakdown'), findsOneWidget);
         expect(find.text('+2'), findsWidgets);
-      },
-    );
-
-    testWidgets(
-      'pending build orders reduce Available stockpile preview before economy phases',
-      (WidgetTester tester) async {
-        final orders = Orders(
-          buildUnitOrdersByPlayerId: {
-            fullPlayer.id: const [
-              BuildUnitOrder(
-                unitType: 'Builder',
-                isMilitary: false,
-                spawnProvinceId: 'oldWorld|p1',
-              ),
-            ],
-          },
-        );
-        await tester.pumpWidget(buildScreen(initialOrders: orders));
-        await pumpSettleCapped(tester);
-
-        expect(find.textContaining('Paper:'), findsOneWidget);
-        expect(find.textContaining(RegExp(r'\(-2\)')), findsOneWidget);
       },
     );
   });
