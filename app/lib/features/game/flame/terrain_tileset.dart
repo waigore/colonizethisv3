@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/config/map_terrain_config.dart';
+import 'package:colonizethis_app/core/errors/ui_validation_exception.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart' show CellViewData;
@@ -187,7 +188,7 @@ String featureOverlayTileKey({
   int? improvementLevel,
 }) {
   if (terrain == TerrainType.plains || terrain == TerrainType.desert) {
-    throw ArgumentError(
+    throw UiValidationException(
       'featureOverlayTileKey only supports L2+ feature terrains',
     );
   }
@@ -197,7 +198,7 @@ String featureOverlayTileKey({
     improvementLevel: improvementLevel,
   );
   if (key == null) {
-    throw ArgumentError(
+    throw UiValidationException(
       'featureOverlayTileKey only supports L2+ feature terrains',
     );
   }

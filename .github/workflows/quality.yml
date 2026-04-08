@@ -300,6 +300,9 @@ jobs:
       - name: Check package logger API convention (SPEC/program/logging/logging.md)
         run: tool/check_naked_logger_usage.sh
 
+      - name: Check custom exception enforcement (SPEC/program/exception-enforcement.md)
+        run: dart run tool/check_custom_exceptions.dart
+
       - name: Wang incremental assets gate (Python)
         run: |
           set -euo pipefail

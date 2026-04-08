@@ -61,6 +61,9 @@ melos:
     check_gdd_coverage:
       description: Report which GDD specs (SPEC/game) are covered by sim_scenarios. SPEC/project/gdd-scenario-coverage.md.
       run: dart run check_gdd_coverage
+    check_custom_exceptions:
+      description: AST check that forbids generic exceptions in runtime domain code. SPEC/program/exception-enforcement.md.
+      run: dart run tool/check_custom_exceptions.dart
     ctterm:
       description: Terminal UI for full single-player ColonizeThis. SPEC/tui/ctterm.md.
       run: dart run ctterm

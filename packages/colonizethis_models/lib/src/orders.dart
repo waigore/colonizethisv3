@@ -1,4 +1,5 @@
 import 'diplomacy.dart';
+import 'model_validation_exception.dart';
 
 /// Per-player orders for the current turn.
 /// SPEC/game/world-model.
@@ -17,79 +18,71 @@ class Orders {
 
   /// Player id -> list of move orders.
   final Map<String, List<MoveOrder>> moveOrdersByPlayerId;
+
   /// Player id -> land army move orders. SPEC/game/military-armies.md.
   final Map<String, List<ArmyMoveOrder>> armyMoveOrdersByPlayerId;
+
   /// Player id -> list of build-unit orders.
   final Map<String, List<BuildUnitOrder>> buildUnitOrdersByPlayerId;
+
   /// Player id -> list of work orders.
   final Map<String, List<WorkOrder>> workOrdersByPlayerId;
+
   /// Player id -> list of diplomatic orders. Phase 4.
   final Map<String, List<DiplomaticOrder>> diplomaticOrdersByPlayerId;
+
   /// Player id -> list of research orders. Phase 5.
   final Map<String, List<ResearchOrder>> researchOrdersByPlayerId;
+
   /// Player id -> list of naval move orders. Phase 5. SPEC/program/naval-movement-resolution.md.
   final Map<String, List<NavalMoveOrder>> navalMoveOrdersByPlayerId;
+
   /// Player id -> list of naval mission orders. Phase 6.
   final Map<String, List<NavalMissionOrder>> navalMissionOrdersByPlayerId;
 
   Map<String, dynamic> toJson() => {
-        'moveOrdersByPlayerId': moveOrdersByPlayerId.map(
-          (playerId, orders) => MapEntry(
-            playerId,
-            orders.map((o) => o.toJson()).toList(),
-          ),
-        ),
-        if (armyMoveOrdersByPlayerId.isNotEmpty)
-          'armyMoveOrdersByPlayerId': armyMoveOrdersByPlayerId.map(
-            (playerId, orders) => MapEntry(
-              playerId,
-              orders.map((o) => o.toJson()).toList(),
-            ),
-          ),
-        'buildUnitOrdersByPlayerId': buildUnitOrdersByPlayerId.map(
-          (playerId, orders) => MapEntry(
-            playerId,
-            orders.map((o) => o.toJson()).toList(),
-          ),
-        ),
-        'workOrdersByPlayerId': workOrdersByPlayerId.map(
-          (playerId, orders) => MapEntry(
-            playerId,
-            orders.map((o) => o.toJson()).toList(),
-          ),
-        ),
-        if (diplomaticOrdersByPlayerId.isNotEmpty)
-          'diplomaticOrdersByPlayerId': diplomaticOrdersByPlayerId.map(
-            (playerId, orders) => MapEntry(
-              playerId,
-              orders.map((o) => o.toJson()).toList(),
-            ),
-          ),
-        if (researchOrdersByPlayerId.isNotEmpty)
-          'researchOrdersByPlayerId': researchOrdersByPlayerId.map(
-            (playerId, orders) => MapEntry(
-              playerId,
-              orders.map((o) => o.toJson()).toList(),
-            ),
-          ),
-        if (navalMoveOrdersByPlayerId.isNotEmpty)
-          'navalMoveOrdersByPlayerId': navalMoveOrdersByPlayerId.map(
-            (playerId, orders) => MapEntry(
-              playerId,
-              orders.map((o) => o.toJson()).toList(),
-            ),
-          ),
-        if (navalMissionOrdersByPlayerId.isNotEmpty)
-          'navalMissionOrdersByPlayerId': navalMissionOrdersByPlayerId.map(
-            (playerId, orders) => MapEntry(
-              playerId,
-              orders.map((o) => o.toJson()).toList(),
-            ),
-          ),
-      };
+    'moveOrdersByPlayerId': moveOrdersByPlayerId.map(
+      (playerId, orders) =>
+          MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
+    ),
+    if (armyMoveOrdersByPlayerId.isNotEmpty)
+      'armyMoveOrdersByPlayerId': armyMoveOrdersByPlayerId.map(
+        (playerId, orders) =>
+            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
+      ),
+    'buildUnitOrdersByPlayerId': buildUnitOrdersByPlayerId.map(
+      (playerId, orders) =>
+          MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
+    ),
+    'workOrdersByPlayerId': workOrdersByPlayerId.map(
+      (playerId, orders) =>
+          MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
+    ),
+    if (diplomaticOrdersByPlayerId.isNotEmpty)
+      'diplomaticOrdersByPlayerId': diplomaticOrdersByPlayerId.map(
+        (playerId, orders) =>
+            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
+      ),
+    if (researchOrdersByPlayerId.isNotEmpty)
+      'researchOrdersByPlayerId': researchOrdersByPlayerId.map(
+        (playerId, orders) =>
+            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
+      ),
+    if (navalMoveOrdersByPlayerId.isNotEmpty)
+      'navalMoveOrdersByPlayerId': navalMoveOrdersByPlayerId.map(
+        (playerId, orders) =>
+            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
+      ),
+    if (navalMissionOrdersByPlayerId.isNotEmpty)
+      'navalMissionOrdersByPlayerId': navalMissionOrdersByPlayerId.map(
+        (playerId, orders) =>
+            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
+      ),
+  };
 
   static Orders fromJson(Map<String, dynamic> json) {
-    final moveRaw = json['moveOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final moveRaw =
+        json['moveOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
     final moveByPlayerId = <String, List<MoveOrder>>{};
     moveRaw.forEach((key, value) {
       final playerId = key.toString();
@@ -99,27 +92,34 @@ class Orders {
       moveByPlayerId[playerId] = list;
     });
 
-    final armyMoveRaw = json['armyMoveOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final armyMoveRaw =
+        json['armyMoveOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
     final armyMoveByPlayerId = <String, List<ArmyMoveOrder>>{};
     armyMoveRaw.forEach((key, value) {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
-          .map((e) => ArmyMoveOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => ArmyMoveOrder.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
           .toList();
       armyMoveByPlayerId[playerId] = list;
     });
 
-    final buildRaw = json['buildUnitOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final buildRaw =
+        json['buildUnitOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
     final buildByPlayerId = <String, List<BuildUnitOrder>>{};
     buildRaw.forEach((key, value) {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
-          .map((e) => BuildUnitOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => BuildUnitOrder.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
           .toList();
       buildByPlayerId[playerId] = list;
     });
 
-    final workRaw = json['workOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final workRaw =
+        json['workOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
     final workByPlayerId = <String, List<WorkOrder>>{};
     workRaw.forEach((key, value) {
       final playerId = key.toString();
@@ -129,42 +129,56 @@ class Orders {
       workByPlayerId[playerId] = list;
     });
 
-    final diploRaw = json['diplomaticOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final diploRaw =
+        json['diplomaticOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
     final diploByPlayerId = <String, List<DiplomaticOrder>>{};
     diploRaw.forEach((key, value) {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
-          .map((e) => DiplomaticOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) =>
+                DiplomaticOrder.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
           .toList();
       diploByPlayerId[playerId] = list;
     });
 
-    final researchRaw = json['researchOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final researchRaw =
+        json['researchOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
     final researchByPlayerId = <String, List<ResearchOrder>>{};
     researchRaw.forEach((key, value) {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
-          .map((e) => ResearchOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => ResearchOrder.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
           .toList();
       researchByPlayerId[playerId] = list;
     });
 
-    final navalRaw = json['navalMoveOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final navalRaw =
+        json['navalMoveOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
     final navalByPlayerId = <String, List<NavalMoveOrder>>{};
     navalRaw.forEach((key, value) {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
-          .map((e) => NavalMoveOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => NavalMoveOrder.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
           .toList();
       navalByPlayerId[playerId] = list;
     });
 
-    final missionRaw = json['navalMissionOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
+    final missionRaw =
+        json['navalMissionOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
     final missionByPlayerId = <String, List<NavalMissionOrder>>{};
     missionRaw.forEach((key, value) {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
-          .map((e) => NavalMissionOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) =>
+                NavalMissionOrder.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
           .toList();
       missionByPlayerId[playerId] = list;
     });
@@ -187,58 +201,60 @@ class Orders {
       other is Orders &&
           runtimeType == other.runtimeType &&
           _mapEquals(moveOrdersByPlayerId, other.moveOrdersByPlayerId) &&
-          _mapEquals(armyMoveOrdersByPlayerId, other.armyMoveOrdersByPlayerId) &&
-          _mapEquals(buildUnitOrdersByPlayerId, other.buildUnitOrdersByPlayerId) &&
+          _mapEquals(
+            armyMoveOrdersByPlayerId,
+            other.armyMoveOrdersByPlayerId,
+          ) &&
+          _mapEquals(
+            buildUnitOrdersByPlayerId,
+            other.buildUnitOrdersByPlayerId,
+          ) &&
           _mapEquals(workOrdersByPlayerId, other.workOrdersByPlayerId) &&
-          _mapEquals(diplomaticOrdersByPlayerId, other.diplomaticOrdersByPlayerId) &&
-          _mapEquals(researchOrdersByPlayerId, other.researchOrdersByPlayerId) &&
-          _mapEquals(navalMoveOrdersByPlayerId, other.navalMoveOrdersByPlayerId) &&
-          _mapEquals(navalMissionOrdersByPlayerId, other.navalMissionOrdersByPlayerId);
+          _mapEquals(
+            diplomaticOrdersByPlayerId,
+            other.diplomaticOrdersByPlayerId,
+          ) &&
+          _mapEquals(
+            researchOrdersByPlayerId,
+            other.researchOrdersByPlayerId,
+          ) &&
+          _mapEquals(
+            navalMoveOrdersByPlayerId,
+            other.navalMoveOrdersByPlayerId,
+          ) &&
+          _mapEquals(
+            navalMissionOrdersByPlayerId,
+            other.navalMissionOrdersByPlayerId,
+          );
 
   @override
   int get hashCode => Object.hash(
-        runtimeType,
-        Object.hashAll(
-          moveOrdersByPlayerId.entries.map(
-            (e) => Object.hashAll(e.value),
-          ),
-        ),
-        Object.hashAll(
-          armyMoveOrdersByPlayerId.entries.map(
-            (e) => Object.hashAll(e.value),
-          ),
-        ),
-        Object.hashAll(
-          buildUnitOrdersByPlayerId.entries.map(
-            (e) => Object.hashAll(e.value),
-          ),
-        ),
-        Object.hashAll(
-          workOrdersByPlayerId.entries.map(
-            (e) => Object.hashAll(e.value),
-          ),
-        ),
-        Object.hashAll(
-          diplomaticOrdersByPlayerId.entries.map(
-            (e) => Object.hashAll(e.value),
-          ),
-        ),
-        Object.hashAll(
-          researchOrdersByPlayerId.entries.map(
-            (e) => Object.hashAll(e.value),
-          ),
-        ),
-        Object.hashAll(
-          navalMoveOrdersByPlayerId.entries.map(
-            (e) => Object.hashAll(e.value),
-          ),
-        ),
-        Object.hashAll(
-          navalMissionOrdersByPlayerId.entries.map(
-            (e) => Object.hashAll(e.value),
-          ),
-        ),
-      );
+    runtimeType,
+    Object.hashAll(
+      moveOrdersByPlayerId.entries.map((e) => Object.hashAll(e.value)),
+    ),
+    Object.hashAll(
+      armyMoveOrdersByPlayerId.entries.map((e) => Object.hashAll(e.value)),
+    ),
+    Object.hashAll(
+      buildUnitOrdersByPlayerId.entries.map((e) => Object.hashAll(e.value)),
+    ),
+    Object.hashAll(
+      workOrdersByPlayerId.entries.map((e) => Object.hashAll(e.value)),
+    ),
+    Object.hashAll(
+      diplomaticOrdersByPlayerId.entries.map((e) => Object.hashAll(e.value)),
+    ),
+    Object.hashAll(
+      researchOrdersByPlayerId.entries.map((e) => Object.hashAll(e.value)),
+    ),
+    Object.hashAll(
+      navalMoveOrdersByPlayerId.entries.map((e) => Object.hashAll(e.value)),
+    ),
+    Object.hashAll(
+      navalMissionOrdersByPlayerId.entries.map((e) => Object.hashAll(e.value)),
+    ),
+  );
 
   Orders copyWith({
     Map<String, List<MoveOrder>>? moveOrdersByPlayerId,
@@ -249,23 +265,22 @@ class Orders {
     Map<String, List<ResearchOrder>>? researchOrdersByPlayerId,
     Map<String, List<NavalMoveOrder>>? navalMoveOrdersByPlayerId,
     Map<String, List<NavalMissionOrder>>? navalMissionOrdersByPlayerId,
-  }) =>
-      Orders(
-        moveOrdersByPlayerId: moveOrdersByPlayerId ?? this.moveOrdersByPlayerId,
-        armyMoveOrdersByPlayerId:
-            armyMoveOrdersByPlayerId ?? this.armyMoveOrdersByPlayerId,
-        buildUnitOrdersByPlayerId:
-            buildUnitOrdersByPlayerId ?? this.buildUnitOrdersByPlayerId,
-        workOrdersByPlayerId: workOrdersByPlayerId ?? this.workOrdersByPlayerId,
-        diplomaticOrdersByPlayerId:
-            diplomaticOrdersByPlayerId ?? this.diplomaticOrdersByPlayerId,
-        researchOrdersByPlayerId:
-            researchOrdersByPlayerId ?? this.researchOrdersByPlayerId,
-        navalMoveOrdersByPlayerId:
-            navalMoveOrdersByPlayerId ?? this.navalMoveOrdersByPlayerId,
-        navalMissionOrdersByPlayerId:
-            navalMissionOrdersByPlayerId ?? this.navalMissionOrdersByPlayerId,
-      );
+  }) => Orders(
+    moveOrdersByPlayerId: moveOrdersByPlayerId ?? this.moveOrdersByPlayerId,
+    armyMoveOrdersByPlayerId:
+        armyMoveOrdersByPlayerId ?? this.armyMoveOrdersByPlayerId,
+    buildUnitOrdersByPlayerId:
+        buildUnitOrdersByPlayerId ?? this.buildUnitOrdersByPlayerId,
+    workOrdersByPlayerId: workOrdersByPlayerId ?? this.workOrdersByPlayerId,
+    diplomaticOrdersByPlayerId:
+        diplomaticOrdersByPlayerId ?? this.diplomaticOrdersByPlayerId,
+    researchOrdersByPlayerId:
+        researchOrdersByPlayerId ?? this.researchOrdersByPlayerId,
+    navalMoveOrdersByPlayerId:
+        navalMoveOrdersByPlayerId ?? this.navalMoveOrdersByPlayerId,
+    navalMissionOrdersByPlayerId:
+        navalMissionOrdersByPlayerId ?? this.navalMissionOrdersByPlayerId,
+  );
 
   static bool _mapEquals<K, V>(Map<K, List<V>> a, Map<K, List<V>> b) {
     if (a.length != b.length) return false;
@@ -285,18 +300,15 @@ class Orders {
 /// Move a unit to an adjacent province.
 /// SPEC/program/orders.md
 class MoveOrder {
-  const MoveOrder({
-    required this.unitId,
-    required this.destinationProvinceId,
-  });
+  const MoveOrder({required this.unitId, required this.destinationProvinceId});
 
   final String unitId;
   final String destinationProvinceId;
 
   Map<String, dynamic> toJson() => {
-        'unitId': unitId,
-        'destinationProvinceId': destinationProvinceId,
-      };
+    'unitId': unitId,
+    'destinationProvinceId': destinationProvinceId,
+  };
 
   static MoveOrder fromJson(Map<String, dynamic> json) {
     return MoveOrder(
@@ -328,9 +340,9 @@ class ArmyMoveOrder {
   final String destinationProvinceId;
 
   Map<String, dynamic> toJson() => {
-        'armyId': armyId,
-        'destinationProvinceId': destinationProvinceId,
-      };
+    'armyId': armyId,
+    'destinationProvinceId': destinationProvinceId,
+  };
 
   static ArmyMoveOrder fromJson(Map<String, dynamic> json) {
     return ArmyMoveOrder(
@@ -364,20 +376,25 @@ class NavalMoveOrder {
   });
 
   final String fleetId;
+
   /// Non-null for "move to sea zone". Null when [destinationPortProvinceId] is set (dock).
   final String? destinationSeaZoneId;
+
   /// Non-null for "dock at province". Null when [destinationSeaZoneId] is set.
   final String? destinationPortProvinceId;
 
   /// True when this order is a dock (destination is a port province).
   bool get isDock =>
-      destinationPortProvinceId != null && destinationPortProvinceId!.isNotEmpty;
+      destinationPortProvinceId != null &&
+      destinationPortProvinceId!.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
-        'fleetId': fleetId,
-        if (destinationSeaZoneId != null) 'destinationSeaZoneId': destinationSeaZoneId,
-        if (destinationPortProvinceId != null) 'destinationPortProvinceId': destinationPortProvinceId,
-      };
+    'fleetId': fleetId,
+    if (destinationSeaZoneId != null)
+      'destinationSeaZoneId': destinationSeaZoneId,
+    if (destinationPortProvinceId != null)
+      'destinationPortProvinceId': destinationPortProvinceId,
+  };
 
   static NavalMoveOrder fromJson(Map<String, dynamic> json) {
     final portId = json['destinationPortProvinceId'] as String?;
@@ -390,7 +407,9 @@ class NavalMoveOrder {
       destPort = portId;
     } else {
       if (seaId == null || seaId.isEmpty) {
-        throw ArgumentError('destinationSeaZoneId required for move to sea');
+        throw ModelValidationException(
+          'destinationSeaZoneId required for move to sea',
+        );
       }
       destSea = seaId;
       destPort = null;
@@ -412,7 +431,8 @@ class NavalMoveOrder {
           destinationPortProvinceId == other.destinationPortProvinceId;
 
   @override
-  int get hashCode => Object.hash(fleetId, destinationSeaZoneId, destinationPortProvinceId);
+  int get hashCode =>
+      Object.hash(fleetId, destinationSeaZoneId, destinationPortProvinceId);
 }
 
 /// Assign a mission to a fleet (patrol, blockade, beachhead, defend). SPEC/program/naval-movement-resolution.md.
@@ -430,11 +450,11 @@ class NavalMissionOrder {
   final String? targetProvinceId;
 
   Map<String, dynamic> toJson() => {
-        'fleetId': fleetId,
-        'mission': mission,
-        if (targetPortId != null) 'targetPortId': targetPortId,
-        if (targetProvinceId != null) 'targetProvinceId': targetProvinceId,
-      };
+    'fleetId': fleetId,
+    'mission': mission,
+    if (targetPortId != null) 'targetPortId': targetPortId,
+    if (targetProvinceId != null) 'targetProvinceId': targetProvinceId,
+  };
 
   static NavalMissionOrder fromJson(Map<String, dynamic> json) {
     return NavalMissionOrder(
@@ -456,7 +476,8 @@ class NavalMissionOrder {
           targetProvinceId == other.targetProvinceId;
 
   @override
-  int get hashCode => Object.hash(fleetId, mission, targetPortId, targetProvinceId);
+  int get hashCode =>
+      Object.hash(fleetId, mission, targetPortId, targetProvinceId);
 }
 
 /// Build a new unit for a player.
@@ -473,10 +494,10 @@ class BuildUnitOrder {
   final String spawnProvinceId;
 
   Map<String, dynamic> toJson() => {
-        'unitType': unitType,
-        'isMilitary': isMilitary,
-        'spawnProvinceId': spawnProvinceId,
-      };
+    'unitType': unitType,
+    'isMilitary': isMilitary,
+    'spawnProvinceId': spawnProvinceId,
+  };
 
   static BuildUnitOrder fromJson(Map<String, dynamic> json) {
     return BuildUnitOrder(
@@ -515,10 +536,10 @@ class WorkOrder {
   final String targetTileKey;
 
   Map<String, dynamic> toJson() => {
-        'unitId': unitId,
-        'target': target,
-        'targetTileKey': targetTileKey,
-      };
+    'unitId': unitId,
+    'target': target,
+    'targetTileKey': targetTileKey,
+  };
 
   static WorkOrder fromJson(Map<String, dynamic> json) {
     return WorkOrder(
@@ -543,13 +564,7 @@ class WorkOrder {
 
 /// Funding level for research per slot. Maps to treasury cost and research
 /// points per turn. SPEC/program/research-resolution.md
-enum ResearchFundingLevel {
-  none,
-  low,
-  medium,
-  high,
-  maximum,
-}
+enum ResearchFundingLevel { none, low, medium, high, maximum }
 
 /// Per-slot research assignment. Phase 5.
 class ResearchOrder {
@@ -569,13 +584,14 @@ class ResearchOrder {
   final ResearchFundingLevel funding;
 
   Map<String, dynamic> toJson() => {
-        'slotIndex': slotIndex,
-        'techId': techId,
-        'funding': funding.name,
-      };
+    'slotIndex': slotIndex,
+    'techId': techId,
+    'funding': funding.name,
+  };
 
   static ResearchOrder fromJson(Map<String, dynamic> json) {
-    final fundingRaw = json['funding'] as String? ?? ResearchFundingLevel.none.name;
+    final fundingRaw =
+        json['funding'] as String? ?? ResearchFundingLevel.none.name;
     final funding = ResearchFundingLevel.values.firstWhere(
       (e) => e.name == fundingRaw,
       orElse: () => ResearchFundingLevel.none,
