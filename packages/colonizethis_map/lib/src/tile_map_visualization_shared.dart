@@ -4,6 +4,8 @@
 import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'init_game_map_view_data.dart';
+
 /// Legend layout constants. Shared by base and game-state visualizers.
 const int legendPadding = 12;
 const int legendLineHeight = 20;
@@ -12,14 +14,14 @@ const int swatchGap = 8;
 
 /// Distinct RGB colors for region/faction assignment. Deterministic order.
 const List<(int r, int g, int b)> regionPalette = [
-  (180, 80, 80),   // red
-  (80, 140, 200),  // blue
-  (90, 160, 90),   // green
-  (220, 180, 60),  // yellow
+  (180, 80, 80), // red
+  (80, 140, 200), // blue
+  (90, 160, 90), // green
+  (220, 180, 60), // yellow
   (160, 100, 180), // purple
-  (60, 180, 180),  // cyan
+  (60, 180, 180), // cyan
   (220, 140, 100), // orange
-  (140, 100, 60),  // brown
+  (140, 100, 60), // brown
   (200, 100, 160), // pink
   (100, 120, 200), // lighter blue
   (120, 200, 120), // light green
@@ -163,6 +165,30 @@ String? geographicGameWorldResourceGlyphLetter(String? resourceId) {
   }
 }
 
+/// Returns tile positions + glyph letters for non-null tile-map resources.
+Iterable<({int x, int y, String letter})> tileMapResourceGlyphs(
+  TileMapResult result,
+) sync* {
+  for (var y = 0; y < result.height; y++) {
+    for (var x = 0; x < result.width; x++) {
+      final resource = result.resourceAt(x, y);
+      if (resource == null) continue;
+      yield (x: x, y: y, letter: resourceToLegendLetter(resource));
+    }
+  }
+}
+
+/// Returns cell positions + glyph letters for valid geographic game-world resources.
+Iterable<({int x, int y, String letter})> geographicGameWorldResourceGlyphs(
+  Iterable<CellViewData> cells,
+) sync* {
+  for (final cell in cells) {
+    final letter = geographicGameWorldResourceGlyphLetter(cell.resourceId);
+    if (letter == null) continue;
+    yield (x: cell.x, y: cell.y, letter: letter);
+  }
+}
+
 /// Draws a single-letter resource glyph at cell centre (PNG map export). Shared by tile map and game-world geographic renderers.
 void drawResourceLetterAtCellCenter(
   img.Image image, {
@@ -214,7 +240,8 @@ Map<String, (int r, int g, int b)> factionOwnershipColorMap({
     final id = gps[i];
     final override = greatPowerColorOverride?[id];
     final defaultColor = greatPowerDefaultColorRgb[id];
-    map[id] = override ?? defaultColor ?? regionPalette[i % regionPalette.length];
+    map[id] =
+        override ?? defaultColor ?? regionPalette[i % regionPalette.length];
   }
   for (var i = 0; i < minors.length; i++) {
     map[minors[i]] = minorNationPalette[i % minorNationPalette.length];
@@ -253,8 +280,8 @@ void drawBorders(
         if (id != other) {
           final borderColor =
               (seaZoneIds.contains(id) && seaZoneIds.contains(other))
-                  ? seaZoneBorderColor
-                  : black;
+              ? seaZoneBorderColor
+              : black;
           final xEdge = (x + 1) * cellSize;
           img.drawLine(
             image,
@@ -272,8 +299,8 @@ void drawBorders(
         if (id != other) {
           final borderColor =
               (seaZoneIds.contains(id) && seaZoneIds.contains(other))
-                  ? seaZoneBorderColor
-                  : black;
+              ? seaZoneBorderColor
+              : black;
           final yEdge = (y + 1) * cellSize;
           img.drawLine(
             image,
@@ -405,25 +432,12 @@ void drawCapitalMarkersOnImage(
       radius: capitalRadius,
       color: capitalColor,
     );
-    img.drawCircle(
-      image,
-      x: cx,
-      y: cy,
-      radius: capitalRadius,
-      color: black,
-    );
+    img.drawCircle(image, x: cx, y: cy, radius: capitalRadius, color: black);
   }
 }
 
 /// Draws one legend line: swatch (r,g,b) + label at [y]. Returns y + legendLineHeight.
-int drawLegendLine(
-  img.Image image,
-  int y,
-  int r,
-  int g,
-  int b,
-  String label,
-) {
+int drawLegendLine(img.Image image, int y, int r, int g, int b, String label) {
   drawLegendSwatch(image, y, r, g, b);
   final black = image.getColor(0, 0, 0);
   img.drawString(
