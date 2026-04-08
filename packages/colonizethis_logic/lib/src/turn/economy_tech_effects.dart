@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'research_rules.dart';
@@ -13,15 +14,11 @@ import 'research_rules.dart';
 ///
 /// The base number of slots comes from `defaultResearchSlots`; labour/economy
 /// techs such as `university` may add additional slots.
-int researchSlotsForUnlockedTechs(
-  Player player,
-  Map<String, bool> unlocked,
-) {
+int researchSlotsForUnlockedTechs(Player player, Map<String, bool> unlocked) {
   final baseSlots = player.researchSlots ?? defaultResearchSlots;
-  if (unlocked['university'] == true) {
+  if (unlocked[kTechIdUniversity] == true) {
     // University: fourth research slot (SPEC/game/tech-tree-labour-economy.md).
     return baseSlots < 4 ? 4 : baseSlots;
   }
   return baseSlots;
 }
-

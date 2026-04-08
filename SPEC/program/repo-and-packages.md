@@ -65,6 +65,8 @@ colonizethis_data    (no package deps)
 - **Given** `colonizethis_ai` imports logic interfaces, **when** static analysis inspects imports under `packages/colonizethis_ai/lib`, **then** imports use narrow logic contract libraries (`order_suggestion_api.dart`, `ai_api.dart`) and do not import `package:colonizethis_logic/colonizethis_logic.dart`.
 - **Given** Dart source under `app/lib` except `app/lib/config/app_assets.dart`, **when** static analysis inspects string literals, **then** direct asset path literals matching `assets/...` or `packages/<pkg>/assets/...` are rejected and diagnostics include file, line, and reason.
 - **Given** an app runtime asset reference in `app/lib`, **when** the code compiles, **then** the reference uses constants or helper builders defined in `app/lib/config/app_assets.dart`.
+- **Given** Dart source under `app/`, `ctterm/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical tech IDs are rejected outside allowlisted declaration/config and fixture paths.
+- **Given** the tech-ID convention gate reports a violation, **when** a developer inspects the output, **then** each violation includes file path, line, column, and the offending tech ID literal for direct remediation.
 
 ### Automated guard gate (CI)
 
@@ -72,8 +74,10 @@ The repository enforces this boundary in CI via:
 
 - `tool/check_logic_ai_decoupling.sh`
 - `tool/check_asset_path_constants.sh`
+- `tool/check_tech_id_constants.sh`
 - `.github/workflows/quality.yml` step: `Check logic/ai decoupling convention (SPEC/program/repo-and-packages.md)`
 - `.github/workflows/quality.yml` step: `Check asset path constants convention (SPEC/program/repo-and-packages.md)`
+- `.github/workflows/quality.yml` step: `Check tech ID constants convention (SPEC/program/repo-and-packages.md)`
 
 Guard behavior:
 
@@ -82,6 +86,7 @@ Guard behavior:
 - Fails if `packages/colonizethis_ai/lib/**` imports logic from any path other than `ai_api.dart` or `order_suggestion_api.dart`.
 - Fails if `packages/colonizethis_logic/test/**` imports `package:colonizethis_ai/...`.
 - Fails if `app/lib/**` contains direct `assets/...` or `packages/<pkg>/assets/...` string literals outside `app/lib/config/app_assets.dart`.
+- Fails if executable `StringLiteral` AST nodes equal to canonical tech IDs appear outside allowlisted tech declaration/config files and approved fixture/test-data paths.
 
 Asset-path guard remediation:
 
