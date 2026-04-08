@@ -1,12 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/connectivity_resolver.dart';
 import '../world/province_lookup.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Per-player extraction totals: land (same region as capital) vs overseas.
 class ExtractionTotals {

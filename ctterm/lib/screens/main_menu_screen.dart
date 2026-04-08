@@ -1,12 +1,12 @@
 // Main Menu. SPEC/ui/main-menu.md, SPEC/tui/ctterm.md.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/menu_logic.dart';
 import 'package:ctterm/save_service.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Main menu: New Game, Load Game (L always navigates; list empty when no saves), Settings, Debug log, Quit.
 class MainMenuScreen extends StatefulComponent {

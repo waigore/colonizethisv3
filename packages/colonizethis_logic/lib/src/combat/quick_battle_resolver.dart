@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -9,7 +9,7 @@ import '../world/army_migration.dart';
 import '../world/fog_resolution.dart';
 import 'conflict_detection.dart';
 
-final _qbLog = logicLogger();
+final _qbLog = packageLogger();
 
 /// Quick Battle resolution pipeline. SPEC/program/quick-battle-resolution.md.
 /// Deterministic for given seed; output feeds same casualty/flip pipeline as auto-resolve.

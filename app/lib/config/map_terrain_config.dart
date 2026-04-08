@@ -1,11 +1,11 @@
 import 'dart:convert';
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'app_assets.dart';
 
-final _log = gameLogger();
+final _log = packageLogger();
 
 /// Paths + expected tile pixel size for one Wang tileset (PixelLab JSON + PNG atlas).
 class WangTilesetAssetConfig {

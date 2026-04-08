@@ -1,6 +1,6 @@
 // Navigation shell: switches on route and shows Main Menu or stub. SPEC/tui/ctterm.md.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
@@ -31,7 +31,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Displays the current route (Main Menu or a stub) and handles back/exit.
 class ShellScreen extends StatefulComponent {

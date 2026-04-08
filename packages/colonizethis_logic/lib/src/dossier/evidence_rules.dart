@@ -2,13 +2,13 @@
 // When diplomatic (or other) actions are applied, evidence rules add suspicion points per agenda type.
 // Evidence is stored per (observer, subject, agenda type); only human observers receive entries.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Human Great Power ids (observers for whom we store evidence).
 List<String> _humanObserverIds(Game game) {

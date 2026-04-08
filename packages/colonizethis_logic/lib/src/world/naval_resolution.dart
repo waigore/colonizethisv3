@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../combat/naval_combat_resolver.dart';
@@ -14,7 +14,7 @@ import 'player_view.dart';
 import 'province_lookup.dart';
 import 'topology_helpers.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 Map<String, Map<String, String>> _revealProvinceTilesForPlayer(
   Game game,

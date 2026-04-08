@@ -4,7 +4,7 @@
 import 'dart:typed_data';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -14,7 +14,7 @@ import '../world/unit_lookup.dart';
 import 'game_setup.dart';
 import 'warp_zone_generator.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Result of running init game.
 class InitGameResult {

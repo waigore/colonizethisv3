@@ -1,11 +1,11 @@
 // Load Game screen. SPEC/tui/screens/load-game.md, SPEC/tui/ctterm.md.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/save_service.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Load Game: lists saved games, allows load or delete.
 class LoadGameScreen extends StatefulComponent {

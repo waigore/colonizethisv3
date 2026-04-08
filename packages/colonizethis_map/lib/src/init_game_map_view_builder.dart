@@ -3,7 +3,7 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_map/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'combine_region_topologies.dart';
@@ -40,7 +40,7 @@ String? _capitalTileKeyForProvince({
   return null;
 }
 
-final _log = mapLogger();
+final _log = packageLogger();
 
 const String _regionOldWorld = 'oldWorld';
 const String _regionNewWorld = 'newWorld';

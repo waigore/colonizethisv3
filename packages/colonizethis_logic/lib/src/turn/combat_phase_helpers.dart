@@ -1,7 +1,7 @@
 // Helpers for the combat phase: apply one land battle (quick or auto-resolve), evidence, dialogue.
 // SPEC/program/turn-resolution-phase-details.md § Combat. Called from turn_resolver._runCombatPhase.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../combat/battle_general_assignment.dart';
@@ -15,7 +15,7 @@ import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
 
-final _combatPhaseLog = logicLogger();
+final _combatPhaseLog = packageLogger();
 
 /// Runs one land battle: applies result (quick battle or auto-resolve), evidence, and dialogue.
 Game runOneLandBattle(

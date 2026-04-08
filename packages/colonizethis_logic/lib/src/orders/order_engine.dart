@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'order_projections.dart';
@@ -12,7 +12,7 @@ export 'order_validation_result.dart';
 import 'order_validators.dart';
 import 'unit_type_helpers.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Order engine: current-turn orders per player, validation, projected effects.
 /// SPEC/program/order-engine.md. Does not mutate world state.

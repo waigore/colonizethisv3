@@ -1,8 +1,8 @@
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_data/package_logger.dart';
 
 import 'starting_resources_config.dart';
 
-final _log = dataLogger();
+final _log = packageLogger();
 
 /// Game setup parameters. SPEC/game/game-setup.md, SPEC/game/ruleset-config.md,
 /// SPEC/program/game-setup-pipeline.md.

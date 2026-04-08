@@ -1,11 +1,11 @@
 // Pause/Options screen. SPEC/tui/screens/pause-options.md.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Pause menu with exit to main menu and settings options.
 class PauseOptionsScreen extends StatefulComponent {

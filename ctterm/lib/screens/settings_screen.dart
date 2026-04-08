@@ -1,9 +1,9 @@
 // Settings screen. SPEC/tui/ctterm.md, SPEC/tui/screens/settings.md.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Available terminal themes.
 enum TerminalTheme {

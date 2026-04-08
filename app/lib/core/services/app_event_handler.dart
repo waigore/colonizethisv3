@@ -23,7 +23,7 @@
 import 'dart:async';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,7 +42,7 @@ import '../../providers/games_provider.dart';
 typedef DialogBuilder =
     Widget Function(BuildContext context, Map<String, Object?>? params);
 
-final _log = appLogger('event');
+final _log = packageLogger('event');
 
 class AppEventHandler {
   AppEventHandler({

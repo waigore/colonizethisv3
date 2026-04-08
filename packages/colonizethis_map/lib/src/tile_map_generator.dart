@@ -3,7 +3,7 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_map/package_logger.dart';
 
 import 'grid_voronoi.dart';
 import 'topology_inference.dart';
@@ -20,7 +20,7 @@ abstract class _TileMapGeneratorShell {
   _TileMapGeneratorShell({this.params = const TileMapParams()});
 
   final TileMapParams params;
-  final _log = mapLogger();
+  final _log = packageLogger();
 }
 
 /// Generates a per-region tile map from province/continent params. SPEC/program/tile-map-gen-algorithm.md, tile-map-gen-resources.md, tile-map-gen-config.md.

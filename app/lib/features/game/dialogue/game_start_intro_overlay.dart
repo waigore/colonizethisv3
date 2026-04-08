@@ -1,5 +1,5 @@
-import 'package:colonizethis_logger/colonizethis_logger.dart';
 import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:jenny/jenny.dart';
@@ -45,7 +45,7 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
   }
 
   Future<void> _loadAndRun() async {
-    final log = widget.logger ?? appLogger('dialogue');
+    final log = widget.logger ?? packageLogger('dialogue');
     try {
       final bundle = widget.assetBundle ?? rootBundle;
       final text = await bundle.loadString(kDialogueGameIntroAsset);

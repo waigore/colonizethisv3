@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:jenny/jenny.dart';
 
 import '../../../../widgets/ct_dialog_shell.dart';
@@ -57,7 +57,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
   }
 
   Future<void> _loadAndRunIntro() async {
-    final log = widget.logger ?? appLogger('dialogue');
+    final log = widget.logger ?? packageLogger('dialogue');
     try {
       final text = await rootBundle.loadString(kDialogueOvertureAsset);
       final project = YarnProject();
