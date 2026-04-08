@@ -13,6 +13,7 @@ export 'src/turn_to_year.dart';
 // Setup
 export 'src/setup/capital_choice.dart';
 export 'src/setup/game_setup.dart';
+export 'src/setup/setup_validation_exception.dart';
 export 'src/setup/gp_starting_grain.dart';
 export 'src/setup/town_capital_occupancy.dart';
 export 'src/setup/init_game_orchestrator.dart';

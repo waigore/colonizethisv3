@@ -6,6 +6,7 @@ import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import '../errors/ctterm_validation_exception.dart';
 
 final _log = packageLogger();
 
@@ -16,7 +17,7 @@ List<InterventionDecision> buildInterventionDecisionsForSubmit({
   required List<InterventionChoice> choices,
 }) {
   if (prompts.length != choices.length) {
-    throw ArgumentError(
+    throw CttermValidationException(
       'prompts (${prompts.length}) and choices (${choices.length}) length mismatch',
     );
   }
