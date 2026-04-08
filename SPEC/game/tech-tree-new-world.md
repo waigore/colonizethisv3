@@ -8,10 +8,10 @@
 
 | id | name | era | prerequisites | effects |
 |----|------|-----|---------------|--------|
-| discovery_of_sugar | Discovery of Sugar | 1 | (Explorer finds sugar) | Sugar plantations; sugar refining |
-| sugar_planting | Sugar Planting | 1 | discovery_of_sugar | Sugar 2 |
-| sugar_refining | Sugar Refining | 1 | discovery_of_sugar | Refined sugar (apprentice luxury) |
-| large_sugar_plantations | Large Sugar Plantations | 2 | sugar_planting | Sugar 3 |
+| discovery_of_sugar | Discovery of Sugar | 1 | (Explorer finds sugar) | Enables: researchable only when the player has revealed sugar cane per the discovery rule in this doc. Unlocks: `sugar_planting` and `sugar_refining`. |
+| sugar_planting | Sugar Planting | 1 | discovery_of_sugar | Improves: sugar cane extraction cap to **2**. Unlocks: prerequisite for `large_sugar_plantations`. |
+| sugar_refining | Sugar Refining | 1 | discovery_of_sugar | Enables: refined sugar luxury production consumed by Apprentice-tier workers per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `apprentice_workers` (with Land Enclosure) and `trade_fairs` (with Merchant Companies). |
+| large_sugar_plantations | Large Sugar Plantations | 2 | sugar_planting | Improves: sugar cane extraction cap to **3**. Unlocks: prerequisite for `sugar_industry`. |
 | sugar_industry | Sugar Industry | 3 | large_sugar_plantations | Sugar 4 |
 | discovery_of_tobacco | Discovery of Tobacco | 1 | (Explorer finds tobacco) | Tobacco plantations |
 | tobacco_planting | Tobacco Planting | 1 | discovery_of_tobacco | Tobacco 2 |
@@ -66,3 +66,7 @@ A tech whose prerequisite is "(Explorer finds X)" is researchable **only if** th
 - Given a player has unlocked `sugar_refining`, `cigar_production`, or `hat_production` as listed in this table  
   When the System computes which luxuries can be consumed by Apprentices, Journeymen, and Masters during the Consumption phase per [workers-and-population.md](workers-and-population.md)  
   Then the System allows the corresponding luxury commodities (refined sugar, cigars, fur hats) to be produced via recipes and consumed by the appropriate worker tiers, and does not allow those luxuries to be consumed before the relevant tech has been unlocked.
+
+- Given the `discovery_of_sugar`, `sugar_planting`, `sugar_refining`, and `large_sugar_plantations` rows in this tech table  
+  When the System or UI layer renders their design descriptions from SPEC-authorized wording  
+  Then each row includes at least one fixed-field phrase (`Unlocks:`, `Improves:`, `Enables:`, or `Prerequisite-only:`), names concrete mechanics (extraction caps, discovery gating, luxury consumption, or explicit unlock targets), and does not use generic fallback wording.
