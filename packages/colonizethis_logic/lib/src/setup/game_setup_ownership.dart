@@ -226,7 +226,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
   final reservedForMinors = minorCount * minProvincesPerMinor;
   final availableForGps = totalOw - reservedForMinors;
   if (availableForGps < gpCount) {
-    throw ArgumentError(
+    throw SetupValidationException(
       'Old World has $totalOw provinces but after reserving $reservedForMinors '
       'for $minorCount minors only $availableForGps remain for $gpCount Great Powers',
     );
@@ -257,7 +257,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     gpCount: gpCount,
   );
   if (maxGpProvincesByTopology < gpCount) {
-    throw ArgumentError(
+    throw SetupValidationException(
       'Old World GP assignment infeasible: topology allows at most '
       '$maxGpProvincesByTopology province(s) for $gpCount Great Power(s) under the '
       'one-landmass-per-GP rule (sea-bound slots per landmass: $seaBoundCountByLandmass)',
@@ -277,7 +277,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
     seaBoundCountByLandmass: seaBoundCountByLandmass,
   );
   if (gpProvinceBudget < gpCount) {
-    throw ArgumentError(
+    throw SetupValidationException(
       'Old World GP landmass packing failed: no feasible fair target budget for '
       '$gpCount Great Power(s) within cap $cap. Landmass sizes: $landmassSizes, '
       'sea-bound per landmass: $seaBoundCountByLandmass',
@@ -396,13 +396,13 @@ Map<String, String> _selectGpSeedsForLandmass({
   for (final gpId in gpIdsInAssignmentOrder) {
     final assignedLandmass = gpLandmassAssignments[gpId];
     if (assignedLandmass == null) {
-      throw ArgumentError(
+      throw SetupValidationException(
         'Great Power $gpId has no landmass assignment; cannot pick sea-bound seed',
       );
     }
     final seaBoundOnLandmass = seaBoundByLandmass[assignedLandmass];
     if (seaBoundOnLandmass == null || seaBoundOnLandmass.isEmpty) {
-      throw ArgumentError(
+      throw SetupValidationException(
         'No sea-bound province left on landmass $assignedLandmass for Great Power $gpId',
       );
     }
@@ -411,7 +411,7 @@ Map<String, String> _selectGpSeedsForLandmass({
   }
 
   if (gpSeeds.length != gpCount) {
-    throw ArgumentError(
+    throw SetupValidationException(
       'Not enough sea-bound provinces to seed all Great Powers on their landmasses: '
       'have ${gpSeeds.length}, need $gpCount',
     );
