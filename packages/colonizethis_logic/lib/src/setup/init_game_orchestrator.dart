@@ -12,6 +12,7 @@ import '../ai/hidden_agenda_assignment.dart';
 import '../constants.dart';
 import '../world/unit_lookup.dart';
 import 'game_setup.dart';
+import 'setup_validation_exception.dart';
 import 'warp_zone_generator.dart';
 
 final _log = packageLogger();
@@ -83,7 +84,7 @@ InitGameResult runInitGame({
   TileMapRegionGenerator? generateRegion,
 }) {
   if (config.numProvincesOldWorld < config.greatPowerCount) {
-    throw ArgumentError(
+    throw SetupValidationException(
       'Config requests ${config.numProvincesOldWorld} Old World provinces but '
       '${config.greatPowerCount} Great Powers need at least one each',
     );
@@ -227,7 +228,9 @@ InitGameResult runInitGame({
 
   // Phase 4: set AI seeds and GP colour override for determinism / display
   var game = setupResult.game;
-  final gpColorOverrideList = mapColorTuples?.map((k, v) => MapEntry(k, [v.$1, v.$2, v.$3]));
+  final gpColorOverrideList = mapColorTuples?.map(
+    (k, v) => MapEntry(k, [v.$1, v.$2, v.$3]),
+  );
   game = game.copyWith(
     globalGameSeed: effectiveSeed,
     aiSeedByGpId: {
