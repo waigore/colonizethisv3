@@ -12,6 +12,7 @@ void main() {
     required Game game,
     required String playerId,
     Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+    Orders currentOrders = const Orders(),
     List<AssignedRecipe> defaultAssignments = const [],
     Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
   }) {
@@ -20,6 +21,7 @@ void main() {
       topology: const MapTopology(),
       playerId: playerId,
       extractedByPlayerId: extractedByPlayerId,
+      currentOrders: currentOrders,
       defaultAssignments: defaultAssignments,
       defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
     );
@@ -28,6 +30,7 @@ void main() {
       topology: const MapTopology(),
       playerId: playerId,
       extractedByPlayerId: extractedByPlayerId,
+      currentOrders: currentOrders,
       defaultAssignments: defaultAssignments,
       defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
     );
@@ -63,7 +66,6 @@ void main() {
         expect(m, isEmpty);
       }
     });
-
   });
 
   group('previewStockpileNetDeltaByCommodityForPlayer', () {
@@ -94,32 +96,35 @@ void main() {
       );
     });
 
-    test('riches only: riches commodities removed, no production assignments', () {
-      final player = Player(
-        id: 'p1',
-        displayName: 'A',
-        isHuman: true,
-        stockpile: const Stockpile().applyDelta(CommodityCatalog.gold.id, 2),
-      );
-      final game = _singlePlayerGame(player);
-      final delta = previewStockpileNetDeltaByCommodityForPlayer(
-        game: game,
-        topology: const MapTopology(),
-        playerId: 'p1',
-      );
-      expect(delta[CommodityCatalog.gold.id], -2);
-      final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
-        game: game,
-        topology: const MapTopology(),
-        playerId: 'p1',
-      );
-      expect(
-        phases[EconomyPreviewStockpilePhase.richesToTreasury]![
-            CommodityCatalog.gold.id],
-        -2,
-      );
-      expectPhaseDeltasSumToNet(game: game, playerId: 'p1');
-    });
+    test(
+      'riches only: riches commodities removed, no production assignments',
+      () {
+        final player = Player(
+          id: 'p1',
+          displayName: 'A',
+          isHuman: true,
+          stockpile: const Stockpile().applyDelta(CommodityCatalog.gold.id, 2),
+        );
+        final game = _singlePlayerGame(player);
+        final delta = previewStockpileNetDeltaByCommodityForPlayer(
+          game: game,
+          topology: const MapTopology(),
+          playerId: 'p1',
+        );
+        expect(delta[CommodityCatalog.gold.id], -2);
+        final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
+          game: game,
+          topology: const MapTopology(),
+          playerId: 'p1',
+        );
+        expect(
+          phases[EconomyPreviewStockpilePhase
+              .richesToTreasury]![CommodityCatalog.gold.id],
+          -2,
+        );
+        expectPhaseDeltasSumToNet(game: game, playerId: 'p1');
+      },
+    );
 
     test('consumption only: military food reduces grain', () {
       final player = Player(
@@ -175,10 +180,7 @@ void main() {
         playerId: 'p1',
         defaultAssignmentsByPlayerId: {
           'p1': const [
-            AssignedRecipe(
-              recipeId: 'lumber_from_timber',
-              assignedLabour: 10,
-            ),
+            AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 10),
           ],
         },
       );
@@ -190,12 +192,64 @@ void main() {
         playerId: 'p1',
         defaultAssignmentsByPlayerId: {
           'p1': const [
-            AssignedRecipe(
-              recipeId: 'lumber_from_timber',
-              assignedLabour: 10,
+            AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 10),
+          ],
+        },
+      );
+    });
+
+    test('pending build orders are included before economy phases', () {
+      final player = Player(
+        id: 'p1',
+        displayName: 'A',
+        isHuman: true,
+        stockpile: const Stockpile()
+            .applyDelta(CommodityCatalog.paper.id, 6)
+            .applyDelta(CommodityCatalog.grain.id, 50)
+            .applyDelta(CommodityCatalog.meat.id, 50),
+        workerPool: const WorkerPool(peasants: 2),
+        treasury: 5000,
+      );
+      final game = _singlePlayerGame(player);
+      const currentOrders = Orders(
+        buildUnitOrdersByPlayerId: {
+          'p1': [
+            BuildUnitOrder(
+              unitType: 'Builder',
+              isMilitary: false,
+              spawnProvinceId: 'ow|p1',
+            ),
+            BuildUnitOrder(
+              unitType: 'Builder',
+              isMilitary: false,
+              spawnProvinceId: 'ow|p1',
             ),
           ],
         },
+      );
+      final delta = previewStockpileNetDeltaByCommodityForPlayer(
+        game: game,
+        topology: const MapTopology(),
+        playerId: 'p1',
+        currentOrders: currentOrders,
+      );
+      final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
+        game: game,
+        topology: const MapTopology(),
+        playerId: 'p1',
+        currentOrders: currentOrders,
+      );
+      expect(delta[CommodityCatalog.paper.id], -4);
+      expect(
+        phases[EconomyPreviewStockpilePhase.pendingBuildCosts]![CommodityCatalog
+            .paper
+            .id],
+        -4,
+      );
+      expectPhaseDeltasSumToNet(
+        game: game,
+        playerId: 'p1',
+        currentOrders: currentOrders,
       );
     });
 
@@ -240,10 +294,7 @@ void main() {
         },
         defaultAssignmentsByPlayerId: {
           'p1': const [
-            AssignedRecipe(
-              recipeId: 'lumber_from_timber',
-              assignedLabour: 4,
-            ),
+            AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 4),
           ],
         },
       );
@@ -259,10 +310,7 @@ void main() {
         },
         defaultAssignmentsByPlayerId: {
           'p1': const [
-            AssignedRecipe(
-              recipeId: 'lumber_from_timber',
-              assignedLabour: 4,
-            ),
+            AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 4),
           ],
         },
       );
