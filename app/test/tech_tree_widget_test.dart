@@ -491,6 +491,62 @@ void main() {
   );
 
   testWidgets(
+    'Batch-2 tech descriptions are concrete and avoid generic fallback text (Refs #1626)',
+    (WidgetTester tester) async {
+      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+      final gameWithEmptyPlayer = game.copyWith(
+        players: [emptyPlayer, ...game.players.skip(1)],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TechTreeWidget(
+              game: gameWithEmptyPlayer,
+              player: emptyPlayer,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expectedByTech = <String, String>{
+        'Animal Husbandry': 'Improves: Meat extraction cap to 3',
+        'Square-set Timbering': 'Improves: Coal extraction cap to 2',
+        'Steam in Mining': 'Improves: Iron extraction cap to 3',
+        'Large Coal Mines': 'Improves: Coal extraction cap to 3',
+        'Large Copper and Tin Mines':
+            'Improves: Copper/Tin extraction cap to 3',
+        'Circular Saw': 'Improves: Timber extraction cap to 4',
+        'Scientific Sheep Breeding': 'Improves: Wool extraction cap to 3',
+        'Scientific Cattle Breeding': 'Improves: Meat extraction cap to 4',
+        'Moldboard Plow': 'Improves: Grain extraction cap to 4',
+        'Safety Lamp': 'Improves: Coal extraction cap to 4',
+      };
+
+      for (final entry in expectedByTech.entries) {
+        final techNode = find.text(entry.key).first;
+        await tester.ensureVisible(techNode);
+        await tester.tap(techNode);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(
+          find.textContaining('Improves gathering capabilities'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves labour and economy output'),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
+  testWidgets(
     'Batch-3 tech descriptions are concrete and avoid generic fallback text (Refs #1627)',
     (WidgetTester tester) async {
       final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});

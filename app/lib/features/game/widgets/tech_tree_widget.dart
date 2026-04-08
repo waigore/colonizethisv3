@@ -443,6 +443,55 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Improves: Wool extraction cap to 2');
         list.add('Unlocks: Scientific Sheep Breeding');
         break;
+      case 'animal_husbandry':
+        list.add('Improves: Meat extraction cap to 3');
+        list.add('Unlocks: Scientific Cattle Breeding (with University)');
+        list.add('Enables: Military branches that require this tech');
+        break;
+      case 'square_set_timbering':
+        list.add('Improves: Coal extraction cap to 2');
+        list.add('Unlocks: Large Coal Mines (requires Steam in Mining)');
+        list.add('Prerequisite for: Early Steam Engine and Crucible Process');
+        break;
+      case 'steam_in_mining':
+        list.add('Improves: Iron extraction cap to 3');
+        list.add('Unlocks: Large Coal Mines (with Square-set Timbering)');
+        list.add(
+          'Prerequisite for: Industrial Iron Mining, Early Steam Engine, Crucible Process, Industrial Machinery',
+        );
+        break;
+      case 'large_coal_mines':
+        list.add('Improves: Coal extraction cap to 3');
+        list.add('Unlocks: Safety Lamp (with Dynamite)');
+        list.add('Unlocks: Efficient Extraction of Copper & Tin');
+        break;
+      case 'large_copper_and_tin_mines':
+        list.add('Improves: Copper/Tin extraction cap to 3');
+        list.add(
+          'Unlocks: Efficient Extraction of Copper & Tin (with Large Coal Mines)',
+        );
+        list.add('Prerequisite for: Ship of the Line');
+        break;
+      case 'circular_saw':
+        list.add('Improves: Timber extraction cap to 4');
+        list.add('Unlocks: Clipper Ships (with Advanced Hull Design)');
+        break;
+      case 'scientific_sheep_breeding':
+        list.add('Improves: Wool extraction cap to 3');
+        list.add('Terminal in MVP catalog: no other tech requires this');
+        break;
+      case 'scientific_cattle_breeding':
+        list.add('Improves: Meat extraction cap to 4');
+        list.add('Terminal in MVP catalog: no other tech requires this');
+        break;
+      case 'moldboard_plow':
+        list.add('Improves: Grain extraction cap to 4');
+        list.add('Terminal in MVP catalog: no other tech requires this');
+        break;
+      case 'safety_lamp':
+        list.add('Improves: Coal extraction cap to 4');
+        list.add('Terminal in MVP catalog: no other tech requires this');
+        break;
       case 'large_precious_stone_mines':
         list.add('Improves: Gems/diamonds extraction cap to 3');
         list.add(
