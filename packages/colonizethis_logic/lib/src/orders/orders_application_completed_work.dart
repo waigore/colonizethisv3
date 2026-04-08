@@ -170,7 +170,7 @@ void _completedWorkBuildRoad(
   final roadLevel = s.work.tileState.roadLevel(cw.tileKey);
   final player = s.game.playerById(u.ownerId);
   final hasRoadConstruction =
-      player?.techUnlocked?['road_construction'] == true;
+      player?.techUnlocked?[kTechIdRoadConstruction] == true;
   final nextLevel = (roadLevel + 1).clamp(0, hasRoadConstruction ? 2 : 1);
   s.work.tileState = s.work.tileState.setRoadLevel(cw.tileKey, nextLevel);
 
