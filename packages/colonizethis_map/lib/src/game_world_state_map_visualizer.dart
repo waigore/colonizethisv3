@@ -310,7 +310,11 @@ Uint8List renderInitGameMapToPngFromViewData({
 
     // Legend height: geographic = title + Sea + terrains + "Resources:" + g/t/i + ports; else title + factions + ports.
     final legendLines = geographicMode
-        ? (1 + 1 + region.terrainColors.length + 1 + 3 +
+        ? (1 +
+            1 +
+            region.terrainColors.length +
+            1 +
+            geographicGameWorldLegendResources.length +
             (region.portMarkers.isNotEmpty ? 1 : 0))
         : (2 + region.factionColors.length +
             (region.portMarkers.isNotEmpty ? 1 : 0));
@@ -361,21 +365,17 @@ Uint8List renderInitGameMapToPngFromViewData({
 
     // Resource glyphs (geographic mode): g/t/i only per SPEC/program/map-visualization.md § Geographic legend scope.
     if (geographicMode) {
-      const geographicLegendResources = {'grain': 'g', 'timber': 't', 'iron': 'i'};
       for (final cell in region.cells) {
-        final letter = cell.resourceId != null ? geographicLegendResources[cell.resourceId] : null;
+        final letter = geographicGameWorldResourceGlyphLetter(cell.resourceId);
         if (letter == null) continue;
-        final cx = cell.x * region.cellSize + region.cellSize ~/ 2;
-        final cy = cell.y * region.cellSize + region.cellSize ~/ 2;
-        const letterOffsetX = 4;
-        const letterOffsetY = 6;
-        img.drawString(
+        drawResourceLetterAtCellCenter(
           image,
-          letter,
-          font: img.arial14,
-          x: cx - letterOffsetX,
-          y: cy - letterOffsetY,
+          letter: letter,
+          cellX: cell.x,
+          cellY: cell.y,
+          cellSize: region.cellSize,
           color: black,
+          offsetY: 6,
         );
       }
     }
@@ -430,11 +430,9 @@ Uint8List renderInitGameMapToPngFromViewData({
         color: black,
       );
       legendY += legendLineHeight;
-      for (final (letter, label) in [
-        ('g', 'Grain'),
-        ('t', 'Timber'),
-        ('i', 'Iron'),
-      ]) {
+      for (final r in geographicGameWorldLegendResources) {
+        final letter = resourceToLegendLetter(r);
+        final label = resourceToLegendLabel(r);
         img.drawString(
           image,
           '$letter  $label',
