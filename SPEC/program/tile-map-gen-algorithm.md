@@ -53,6 +53,20 @@ Used for land (Pass 3), province (Pass 9), and sea zone (Pass 11):
 
 ---
 
+## Implementation Structure (Orchestrator + Services)
+
+The implementation SHOULD keep `TileMapGenerator` as an orchestration layer and extract pass-family logic into focused services with explicit inputs/outputs rather than hidden inheritance state. A compliant moderate extraction groups responsibilities as:
+
+- `LandSeedService`: Pass 2-3 seed placement and land-shape assignment.
+- `LakeAndProvinceService`: Pass 4, Pass 5, and Pass 8-9 lake/moat, border noise, and province assignment.
+- `TerrainResourceService`: Pass 6-7 terrain and resource assignment helpers.
+- `JoinAndSeaService`: Pass 10-11 join, terrain jitter, sea-zone subdivision.
+- Shared graph/connectivity helpers used by services.
+
+The orchestration contract remains unchanged: pass ordering, pass semantics, and observable outputs must match this spec and [tile-map-gen-resources.md](tile-map-gen-resources.md).
+
+---
+
 ## Constraints
 
 - Grid dimensions derived; no topology input. Province identity assigned in later passes.
