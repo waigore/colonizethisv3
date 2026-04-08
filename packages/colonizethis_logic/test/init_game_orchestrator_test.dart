@@ -9,61 +9,66 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 void main() {
   group('runInitGame', () {
     test(
-        'renderPng=false skips PNG bytes but still returns game and view data',
-        () {
-      final config = GameSetupConfig.defaultConfig;
+      'renderPng=false skips PNG bytes but still returns game and view data',
+      () {
+        final config = GameSetupConfig.defaultConfig;
 
-      final result = runInitGame(
-        config: config,
-        options: const InitGameOptions(
-          cellSize: 8,
-          renderPng: false,
-        ),
-      );
+        final result = runInitGame(
+          config: config,
+          options: const InitGameOptions(cellSize: 8, renderPng: false),
+        );
 
-      expect(result.game, isNotNull);
-      expect(result.mapViewData, isNotNull);
-      expect(result.markdown, isNotEmpty);
-      expect(result.mapPngBytes, isA<Uint8List>());
-      expect(result.mapPngBytes, isEmpty);
-    });
+        expect(result.game, isNotNull);
+        expect(result.mapViewData, isNotNull);
+        expect(result.markdown, isNotEmpty);
+        expect(result.mapPngBytes, isA<Uint8List>());
+        expect(result.mapPngBytes, isEmpty);
+      },
+    );
 
     test(
-        'greatPowerColorOverride from semantic ids is applied to runtime player ids',
-        () {
-      // Use default config so selectedGreatPowerIds and players are created
-      // in a consistent order; the first selected GP becomes the first Player.
-      final config = GameSetupConfig.defaultConfig;
+      'greatPowerColorOverride from semantic ids is applied to runtime player ids',
+      () {
+        // Use default config so selectedGreatPowerIds and players are created
+        // in a consistent order; the first selected GP becomes the first Player.
+        final config = GameSetupConfig.defaultConfig;
 
-      const overrideSemanticId = 'england';
-      const overrideColor = (200, 10, 150);
+        const overrideSemanticId = 'england';
+        const overrideColor = (200, 10, 150);
 
-      final result = runInitGame(
-        config: config,
-        options: const InitGameOptions(
-          cellSize: 8,
-          renderPng: false,
-          greatPowerColorOverride: {overrideSemanticId: overrideColor},
-        ),
-      );
+        final result = runInitGame(
+          config: config,
+          options: const InitGameOptions(
+            cellSize: 8,
+            renderPng: false,
+            greatPowerColorOverride: {overrideSemanticId: overrideColor},
+          ),
+        );
 
-      final game = result.game;
+        final game = result.game;
 
-      // Find the player that corresponds to the overridden semantic id by
-      // using the resolved display name from naming (e.g. "England").
-      final overriddenPlayer = game.players.firstWhere(
-        (p) => p.displayName == defaultNamingConfig.gpById(overrideSemanticId)!.countryName,
-        orElse: () => game.players.first,
-      );
+        // Find the player that corresponds to the overridden semantic id by
+        // using the resolved display name from naming (e.g. "England").
+        final overriddenPlayer = game.players.firstWhere(
+          (p) =>
+              p.displayName ==
+              defaultNamingConfig.gpById(overrideSemanticId)!.countryName,
+          orElse: () => game.players.first,
+        );
 
-      final gpOverride = game.greatPowerColorOverride;
-      expect(gpOverride, isNotNull);
-      expect(gpOverride![overriddenPlayer.id], [overrideColor.$1, overrideColor.$2, overrideColor.$3]);
+        final gpOverride = game.greatPowerColorOverride;
+        expect(gpOverride, isNotNull);
+        expect(gpOverride![overriddenPlayer.id], [
+          overrideColor.$1,
+          overrideColor.$2,
+          overrideColor.$3,
+        ]);
 
-      final viewOverride = result.greatPowerColorOverride;
-      expect(viewOverride, isNotNull);
-      expect(viewOverride![overriddenPlayer.id], overrideColor);
-    });
+        final viewOverride = result.greatPowerColorOverride;
+        expect(viewOverride, isNotNull);
+        expect(viewOverride![overriddenPlayer.id], overrideColor);
+      },
+    );
 
     test('markdown contains Faction Setup and Starting State tables', () {
       final config = GameSetupConfig.defaultConfig;
@@ -73,8 +78,14 @@ void main() {
       );
       expect(result.markdown, contains('## Faction Setup'));
       expect(result.markdown, contains('## Faction Starting State'));
-      expect(result.markdown, contains('| Faction | Type | Capital Province | Provinces Owned |'));
-      expect(result.markdown, contains('| Faction | Stockpile | Workers | Treasury | Units |'));
+      expect(
+        result.markdown,
+        contains('| Faction | Type | Capital Province | Provinces Owned |'),
+      );
+      expect(
+        result.markdown,
+        contains('| Faction | Stockpile | Workers | Treasury | Units |'),
+      );
     });
 
     test('skipFillLakes=true runs without throwing', () {
@@ -91,29 +102,46 @@ void main() {
       expect(result.markdown, isNotEmpty);
     });
 
-    test('result includes warpLinks and combinedTopology has prefixed node ids', () {
-      final config = GameSetupConfig.defaultConfig;
-      final result = runInitGame(
-        config: config,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
-      );
-      expect(result.warpLinks, isA<List<WarpLink>>());
-      final combined = result.combinedTopology;
-      expect(combined.nodes, isNotEmpty);
-      for (final n in combined.nodes) {
-        expect(n.id.contains('|'), isTrue, reason: 'combined topology node id must be prefixed (regionId|localId)');
-      }
-      if (result.warpLinks.isNotEmpty) {
-        expect(result.warpLinks.first.regionId, anyOf('oldWorld', 'newWorld'));
-        expect(result.warpLinks.first.otherRegionId, anyOf('oldWorld', 'newWorld'));
-      }
-    });
+    test(
+      'result includes warpLinks and combinedTopology has prefixed node ids',
+      () {
+        final config = GameSetupConfig.defaultConfig;
+        final result = runInitGame(
+          config: config,
+          options: const InitGameOptions(cellSize: 8, renderPng: false),
+        );
+        expect(result.warpLinks, isA<List<WarpLink>>());
+        final combined = result.combinedTopology;
+        expect(combined.nodes, isNotEmpty);
+        for (final n in combined.nodes) {
+          expect(
+            n.id.contains('|'),
+            isTrue,
+            reason:
+                'combined topology node id must be prefixed (regionId|localId)',
+          );
+        }
+        if (result.warpLinks.isNotEmpty) {
+          expect(
+            result.warpLinks.first.regionId,
+            anyOf('oldWorld', 'newWorld'),
+          );
+          expect(
+            result.warpLinks.first.otherRegionId,
+            anyOf('oldWorld', 'newWorld'),
+          );
+        }
+      },
+    );
 
     test('seed=0 uses time-based effective seed', () {
       final config = GameSetupConfig(
-        selectedGreatPowerIds: GameSetupConfig.defaultConfig.selectedGreatPowerIds,
-        numProvincesOldWorld: GameSetupConfig.defaultConfig.numProvincesOldWorld,
-        numProvincesNewWorld: GameSetupConfig.defaultConfig.numProvincesNewWorld,
+        selectedGreatPowerIds:
+            GameSetupConfig.defaultConfig.selectedGreatPowerIds,
+        numProvincesOldWorld:
+            GameSetupConfig.defaultConfig.numProvincesOldWorld,
+        numProvincesNewWorld:
+            GameSetupConfig.defaultConfig.numProvincesNewWorld,
         seed: 0,
       );
       final result = runInitGame(
@@ -157,9 +185,13 @@ void main() {
         String seaZoneId = 's1',
         ResourceRules? resourceRules,
         void Function(String)? onLog,
-        void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)?
-            onLandSeedsPlaced,
-        void Function(List<(int x, int y)> continentSeeds)? onContinentSeedsPlaced,
+        void Function(
+          List<(int x, int y)> landSeeds,
+          List<int> continentIndices,
+        )?
+        onLandSeedsPlaced,
+        void Function(List<(int x, int y)> continentSeeds)?
+        onContinentSeedsPlaced,
       }) {
         seedsByRegion[regionId] = params.seed;
         return defaultTileMapRegionGenerator(
@@ -230,9 +262,13 @@ void main() {
         String seaZoneId = 's1',
         ResourceRules? resourceRules,
         void Function(String)? onLog,
-        void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)?
-            onLandSeedsPlaced,
-        void Function(List<(int x, int y)> continentSeeds)? onContinentSeedsPlaced,
+        void Function(
+          List<(int x, int y)> landSeeds,
+          List<int> continentIndices,
+        )?
+        onLandSeedsPlaced,
+        void Function(List<(int x, int y)> continentSeeds)?
+        onContinentSeedsPlaced,
       }) {
         callCount++;
         return defaultTileMapRegionGenerator(
@@ -295,8 +331,7 @@ void main() {
         final nbr = _provincePpNeighboursForInitGameTest(topo);
         final owners = <String, String>{
           for (final p in game.worldState.oldWorld.provinces)
-            if (p.ownerId != null)
-              ProvinceId.localIdFrom(p.id): p.ownerId!,
+            if (p.ownerId != null) ProvinceId.localIdFrom(p.id): p.ownerId!,
         };
         for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6']) {
           expect(
@@ -308,27 +343,34 @@ void main() {
       },
     );
 
-    test('throws ArgumentError when OW provinces fewer than Great Powers', () {
-      // Config with 6 GPs but only 2 OW provinces: createGameFromGeneratedMaps throws
-      // (either "provinces" or "sea-bound provinces" check). Accept either message.
-      final config = GameSetupConfig(
-        selectedGreatPowerIds: GameSetupConfig.defaultConfig.selectedGreatPowerIds,
-        numProvincesOldWorld: 2,
-        numProvincesNewWorld: 5,
-      );
-      expect(
-        () => runInitGame(
-          config: config,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
-        ),
-        throwsA(predicate<ArgumentError>((e) {
-          final msg = e.message ?? '';
-          return msg.contains('Great Powers') &&
-              (msg.contains('need at least one each') ||
-                  msg.contains('need one each'));
-        })),
-      );
-    });
+    test(
+      'throws setup config exception when OW provinces fewer than Great Powers',
+      () {
+        // Config with 6 GPs but only 2 OW provinces: createGameFromGeneratedMaps throws
+        // (either "provinces" or "sea-bound provinces" check). Accept either message.
+        final config = GameSetupConfig(
+          selectedGreatPowerIds:
+              GameSetupConfig.defaultConfig.selectedGreatPowerIds,
+          numProvincesOldWorld: 2,
+          numProvincesNewWorld: 5,
+        );
+        expect(
+          () => runInitGame(
+            config: config,
+            options: const InitGameOptions(cellSize: 8, renderPng: false),
+          ),
+          throwsA(
+            isA<SetupConfigConstraintException>()
+                .having(
+                  (e) => e.code,
+                  'code',
+                  'insufficient_old_world_provinces_for_great_powers',
+                )
+                .having((e) => e.message, 'message', contains('Great Powers')),
+          ),
+        );
+      },
+    );
   });
 }
 
@@ -351,4 +393,3 @@ Map<String, Set<String>> _provincePpNeighboursForInitGameTest(
   }
   return neighbours;
 }
-
