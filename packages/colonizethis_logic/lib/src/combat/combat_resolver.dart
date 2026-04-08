@@ -15,6 +15,24 @@ import 'military_strength.dart';
 
 final _combatLog = packageLogger();
 
+const String kRecoveryUnitPrefix = 'recover_';
+const double kGarrisonRecoveryFraction = 0.2;
+const double kNoDefenderRatioFallback = 10.0;
+const double kStrongAttackerRatioThreshold = 1.5;
+const double kBluntAttackerVictoryUpperRatio = 4.0;
+const double kStrongDefenderRatioThreshold = 0.67;
+const double kAttackerEdgeRatioThreshold = 1.0;
+const double kBluntAttackerLossFraction = 0.6;
+const double kBluntDefenderLossFraction = 0.4;
+const double kStrongAttackerLossFraction = 0.15;
+const double kStrongDefenderLossFraction = 1.0;
+const double kStrongDefenderAttackerLossFraction = 1.0;
+const double kStrongDefenderDefenderLossFraction = 0.15;
+const double kAttackerEdgeAttackerLossFraction = 0.3;
+const double kAttackerEdgeDefenderLossFraction = 0.6;
+const double kDefaultAttackerLossFraction = 0.5;
+const double kDefaultDefenderLossFraction = 0.4;
+
 /// Result of one engagement. SPEC/game/combat.md.
 enum EngagementResult {
   attackerVictory,
@@ -207,10 +225,11 @@ Game resolveBattleContext(
             .skip(attackerIndex + 1)
             .toList();
         if (remainingAttackers.isNotEmpty) {
-          final recoverCount = (initialDefenderCount * 0.2).ceil().clamp(
-            1,
-            initialDefenderCount,
-          );
+          final recoverCount =
+              (initialDefenderCount * kGarrisonRecoveryFraction).ceil().clamp(
+                1,
+                initialDefenderCount,
+              );
           final recoveryType = garrisonRecoveryRegimentTypeForEra(
             defenderEffectiveLevel,
           );
@@ -220,7 +239,7 @@ Game resolveBattleContext(
             i++
           ) {
             final type = recoveryType;
-            final id = 'recover_${ctx.provinceId}_$i';
+            final id = '${kRecoveryUnitPrefix}${ctx.provinceId}_$i';
             defenderUnitIds.add(id);
             final stubUnit = Unit(
               id: id,
@@ -325,7 +344,9 @@ Game resolveBattleContext(
 
   final recoveredUnits = unitsById.values
       .where(
-        (u) => u.id.startsWith('recover_') && !allCasualties.contains(u.id),
+        (u) =>
+            u.id.startsWith(kRecoveryUnitPrefix) &&
+            !allCasualties.contains(u.id),
       )
       .toList();
   var finalUnits = [...survivingUnits, ...recoveredUnits];
@@ -505,7 +526,7 @@ EngagementOutcome resolveEngagement({
     );
   }
 
-  final ratio = effDef > 0 ? effAttForRatio / effDef : 10.0;
+  final ratio = effDef > 0 ? effAttForRatio / effDef : kNoDefenderRatioFallback;
   final attackerLowMorale = attackerMoraleMultiplier < defenderMoraleMultiplier;
 
   return _resolveByRatio(
@@ -532,25 +553,27 @@ EngagementOutcome _resolveByRatio({
 
   EngagementResult bothDeadResult = EngagementResult.mutualAnnihilation;
 
-  if (ratio >= 1.5 && attackerLowMorale && ratio < 4.0) {
-    attLossFrac = 0.6;
-    defLossFrac = 0.4;
+  if (ratio >= kStrongAttackerRatioThreshold &&
+      attackerLowMorale &&
+      ratio < kBluntAttackerVictoryUpperRatio) {
+    attLossFrac = kBluntAttackerLossFraction;
+    defLossFrac = kBluntDefenderLossFraction;
     bluntAttackerVictory = true;
-  } else if (ratio >= 1.5) {
-    attLossFrac = 0.15;
-    defLossFrac = 1.0;
+  } else if (ratio >= kStrongAttackerRatioThreshold) {
+    attLossFrac = kStrongAttackerLossFraction;
+    defLossFrac = kStrongDefenderLossFraction;
     bothDeadResult = EngagementResult.attackerVictory;
-  } else if (ratio <= 0.67) {
-    attLossFrac = 1.0;
-    defLossFrac = 0.15;
+  } else if (ratio <= kStrongDefenderRatioThreshold) {
+    attLossFrac = kStrongDefenderAttackerLossFraction;
+    defLossFrac = kStrongDefenderDefenderLossFraction;
     bothDeadResult = EngagementResult.defenderVictory;
-  } else if (ratio >= 1.0) {
-    attLossFrac = 0.3;
-    defLossFrac = 0.6;
+  } else if (ratio >= kAttackerEdgeRatioThreshold) {
+    attLossFrac = kAttackerEdgeAttackerLossFraction;
+    defLossFrac = kAttackerEdgeDefenderLossFraction;
     bothDeadResult = EngagementResult.attackerVictory;
   } else {
-    attLossFrac = 0.5;
-    defLossFrac = 0.4;
+    attLossFrac = kDefaultAttackerLossFraction;
+    defLossFrac = kDefaultDefenderLossFraction;
   }
 
   return _buildOutcome(
