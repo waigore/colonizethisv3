@@ -70,6 +70,10 @@ These criteria are implemented and covered by automated tests where noted.
   When initialization completes  
   Then `result.game.globalGameSeed` equals `K` (colonizethis_logic `init_game_orchestrator_test.dart`).
 
+- Given setup validation fails while `runInitGame` or `createGameFromGeneratedMaps` checks Great Power province requirements or capital sea-bound requirements  
+  When the setup code throws the validation error  
+  Then The System throws a `SetupValidationException` subtype with a stable `code` string (for example `insufficient_old_world_provinces_for_great_powers` or `no_sea_bound_capital_province`) instead of a generic `ArgumentError`.
+
 - Given `runInitGame` uses the default tile-map generator and `GameSetupConfig.seed` equals non-zero `K`  
   When Old World and New World maps are generated  
   Then Old World `TileMapParams.seed` equals `K` and New World `TileMapParams.seed` equals `K + 1` (same test file, injected generator).
