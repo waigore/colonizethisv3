@@ -60,7 +60,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Flutter
-        if: needs.changes.outputs.tests == 'true'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -282,7 +281,6 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y lcov
 
       - name: Resolve dependencies
-        if: needs.changes.outputs.tests == 'true'
         run: dart pub get
 
       - name: Check test import convention (SPEC/program/test-logging.md)
