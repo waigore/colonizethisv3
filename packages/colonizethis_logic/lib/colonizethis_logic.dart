@@ -21,6 +21,7 @@ export 'src/setup/warp_zone_generator.dart';
 export 'src/setup/province_assignment.dart';
 export 'src/setup/gp_land_connectivity_repair.dart';
 export 'src/setup/province_name_fallback.dart';
+export 'src/setup/setup_exceptions.dart';
 
 // Turn
 export 'src/turn/economy_debt_rules.dart';
