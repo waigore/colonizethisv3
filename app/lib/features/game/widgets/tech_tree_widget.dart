@@ -430,11 +430,93 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Unlocks: Nationalism');
         break;
       case 'nationalism':
-        list.add('Increases battle deployment limit to 12 regiments');
-        list.add('Helps raise general cap');
+        list.add('Improves: Battle deployment base limit to 12 regiments (vs 10)');
+        list.add('Improves: General cap floor to at least 4');
+        list.add('Unlocks: Empire Building (with Banking)');
         break;
       case 'empire_building':
-        list.add('Allows asking Great Powers to join your empire peacefully');
+        list.add(
+          'Enables: Join Empire overture toward nearly-defeated Great Powers',
+        );
+        list.add(
+          'Requires: Target owns ≤3 provinces and lost original capital',
+        );
+        break;
+      case 'superior_hull_design':
+        list.add('Unlocks: Improved Sail Design and Navigation hull paths');
+        break;
+      case 'improved_sail_design':
+        list.add('Unlocks: Advanced Hull Design path (University + Privateering)');
+        break;
+      case 'convoying':
+        list.add('Unlocks: Large Hulls (with Wind Saw Mill + Navigation)');
+        break;
+      case 'navigation':
+        list.add('Unlocks: Large Hulls and Privateering Companies');
+        break;
+      case 'large_hulls':
+        list.add('Unlocks: Ship of the Line (with Large Copper and Tin Mines)');
+        break;
+      case 'clipper_ships':
+        list.add('Improves: Late-era fast merchant Clipper cargo line');
+        break;
+      case 'paddlewheels':
+        list.add('Unlocks: Merchant Steamships (with Riverboats)');
+        break;
+      case 'merchant_steamships':
+        list.add('Enables: Steam-powered merchant hull for seagoing trade');
+        break;
+      case 'advanced_hull_design':
+        list.add(
+          'Improves: Frigate — high intercept, moderate flee (patrol/blockade)',
+        );
+        list.add('Unlocks: Clipper Ships and Paddlewheels hull paths');
+        break;
+      case 'ship_of_the_line':
+        list.add(
+          'Improves: Battle-line capital ship for decisive fleet engagements',
+        );
+        list.add(
+          'Unlocks: Advanced Iron Working (with Industrial Funding + Paddlewheels)',
+        );
+        break;
+      case 'privateering_companies':
+        list.add(
+          'Improves: Patrol/Blockade interception and trade-raid effectiveness',
+        );
+        list.add('Unlocks: Advanced Hull Design (frigate doctrine prerequisite)');
+        break;
+      case 'advanced_iron_working':
+        list.add('Improves: Ironclad armored steam combat hull');
+        break;
+      case 'organised_regiments':
+        list.add('Improves: General cap floor to at least 2');
+        list.add(
+          'Unlocks: Improved Iron/Infantry/Weapon Craftsmanship doctrine paths',
+        );
+        break;
+      case 'improved_iron_weapons':
+        list.add('Unlocks: Bayonet (with Crucible Process)');
+        break;
+      case 'improved_infantry_tactics':
+        list.add(
+          'Improves: General cap floor to at least 3 (or National Bureaucracy)',
+        );
+        list.add('Unlocks: Early Rifles (with Crucible Process)');
+        break;
+      case 'crucible_process':
+        list.add(
+          'Prerequisite-only: Steel chain for Bayonet, rifles, steam, and cannons',
+        );
+        list.add('Unlocks: No regiment from this tech alone');
+        break;
+      case 'bayonet':
+        list.add('Unlocks: Needle Guns (with Industrial Funding + Early Rifles)');
+        break;
+      case 'weapon_craftsmanship':
+        list.add(
+          'Unlocks: Explosives and Grenadiers (with Industrial Machinery)',
+        );
         break;
       case 'land_enclosure':
         list.add('Improves: Grain extraction cap to 2');
