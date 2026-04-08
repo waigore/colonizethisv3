@@ -184,19 +184,12 @@ void main() {
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
         for (final slug in kCivilianIconSlugs) {
-          final colorPath = 'assets/icons/ui_icon_civ_$slug.png';
-          final grayPath = 'assets/icons/ui_icon_civ_${slug}_gray.png';
+          final colorPath = 'assets/icons/64/ui_icon_civ_$slug.png';
           final colorData = await rootBundle.load(colorPath);
-          final grayData = await rootBundle.load(grayPath);
           expect(
             colorData.lengthInBytes,
             greaterThan(0),
             reason: 'Civilian icon $colorPath is empty',
-          );
-          expect(
-            grayData.lengthInBytes,
-            greaterThan(0),
-            reason: 'Civilian grayscale icon $grayPath is empty',
           );
         }
       },
@@ -233,7 +226,7 @@ void main() {
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
         for (final iconId in kProvinceLabelIconIds) {
-          final path = 'assets/icons/ui_icon_$iconId.png';
+          final path = 'assets/icons/64/ui_icon_$iconId.png';
           final data = await rootBundle.load(path);
           expect(
             data.lengthInBytes,
@@ -251,7 +244,7 @@ void main() {
         await tester.pumpWidget(const SizedBox.shrink());
         await tester.runAsync(() async {
           final data = await rootBundle.load(
-            'assets/icons/ui_icon_map_capital_star.png',
+            'assets/icons/64/ui_icon_map_capital_star.png',
           );
           expect(data.lengthInBytes, greaterThan(0));
           final codec = await ui.instantiateImageCodec(
@@ -1468,7 +1461,7 @@ void main() {
 
         // Verify all resource icon assets exist and are non-empty
         for (final resourceId in kResourceIconIds) {
-          final path = 'assets/icons/ui_icon_com_$resourceId.png';
+          final path = 'assets/icons/64/ui_icon_com_$resourceId.png';
           final data = await rootBundle.load(path);
           expect(
             data.lengthInBytes,
@@ -1489,7 +1482,7 @@ void main() {
         var loadedCount = 0;
         await tester.runAsync(() async {
           for (final resourceId in kResourceIconIds) {
-            final path = 'assets/icons/ui_icon_com_$resourceId.png';
+            final path = 'assets/icons/64/ui_icon_com_$resourceId.png';
             try {
               final data = await rootBundle.load(path);
               if (data.lengthInBytes > 0) {
@@ -1663,7 +1656,7 @@ void main() {
     );
 
     testWidgets(
-      'resource icons render at 32x32 native size for 64px tiles (SPEC/ui/map-widget.md § Resource Icons)',
+      'resource icons render at 64x64 native size for 64px tiles (SPEC/ui/map-widget.md § Resource Icons)',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
@@ -1686,7 +1679,7 @@ void main() {
     );
 
     testWidgets(
-      'map renders correctly with 32px tile size (SPEC/ui/map-widget.md § Resource Icons)',
+      'map renders correctly with 64px tile size (SPEC/ui/map-widget.md § Resource Icons)',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
@@ -1697,7 +1690,7 @@ void main() {
         await tester.pumpWidget(
           ctRegionMapTestHarness(
             region: region,
-            cellSizePx: 32,
+            cellSizePx: 64,
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
           ),
         );

@@ -43,7 +43,7 @@ Province-name overlays on the main app map may render decorative unit-presence i
 
 Asset and style contract:
 
-- 32x32 full-color pixel-art PNG icons in `app/assets/icons/`.
+- 64x64 full-color pixel-art PNG icons in `app/assets/icons/64/`.
 - Distinct visual identity:
   - civilian: person with 16th-century hat
   - regiment: tent
@@ -70,7 +70,7 @@ Render and data rules:
 Province-name overlays on the main app map render a decorative capital icon for capital provinces:
 
 - **Scope:** applies to all faction types with capitals represented in `RegionMapViewData.capitalMarkers` (Great Powers, Minor Nations, Tribes).
-- **Asset:** 32x32 full-color PNG in `app/assets/icons/ui_icon_map_capital_star.png` generated via PixelLab.
+- **Asset:** 64x64 full-color PNG in `app/assets/icons/64/ui_icon_map_capital_star.png` generated via PixelLab.
 - **Visual contract:** icon is recognizable as a gold five-point star in the project’s pixel-art style; transparent background.
 - **Placement:** icon appears immediately to the **left** of the province name text inside the same label plate.
 - **Layout guarantee:** for capital labels, both the star icon and full province name remain visible (no ellipsis or truncation that hides either). Increased overlap with nearby labels is acceptable.
@@ -113,11 +113,24 @@ The widget accepts an optional **base layer display mode** enumerating terrain, 
 
 ## Resource Icons
 
-Resources are displayed as 32×32 pixel-art icons rendered on tiles, centered within the cell. Icons are drawn instead of the legacy single-letter glyphs (g, t, i, …).
+Resources are displayed as 64×64 pixel-art icons rendered on tiles, centered within the cell. Icons are drawn instead of the legacy single-letter glyphs (g, t, i, …).
+
+### Map tile icon inventory (64 policy)
+
+The following map-rendered icon families are governed by the 64×64 tile icon policy and are loaded from `app/assets/icons/64/`:
+
+| Family | Files |
+|---|---|
+| Town / port | `ui_icon_com_town_inland_64.png`, `ui_icon_com_port.png` |
+| Resource tile icons | `ui_icon_com_<resource_id>.png` (all `kResourceIconIds`) |
+| Civilian tile markers | `ui_icon_civ_builder.png`, `ui_icon_civ_engineer.png`, `ui_icon_civ_rail_builder.png`, `ui_icon_civ_explorer.png`, `ui_icon_civ_merchant.png`, `ui_icon_civ_spy.png` |
+| Province label row icons | `ui_icon_map_capital_star.png`, `ui_icon_map_presence_civilian.png`, `ui_icon_map_presence_regiment.png`, `ui_icon_map_presence_ship.png` |
+
+Non-map UI glyphs remain outside this map tile inventory and use their own UI contracts.
 
 ### Asset Files
 
-Resource icons are stored in `app/assets/icons/` with naming convention `ui_icon_com_<resource_id>.png`:
+Resource icons are stored in `app/assets/icons/64/` with naming convention `ui_icon_com_<resource_id>.png`:
 
 | Resource ID | Icon File | Resource ID | Icon File |
 |-------------|-----------|-------------|-----------|
@@ -136,22 +149,22 @@ Resource icons are stored in `app/assets/icons/` with naming convention `ui_icon
 | gems | ui_icon_com_gems.png | diamonds | ui_icon_com_diamonds.png |
 | spices | ui_icon_com_spices.png | | |
 
-All icons are 32×32 PNG with RGBA transparency, colonial-era pixel art style matching `ui_main_menu_button.png`.
+All icons are 64×64 PNG with RGBA transparency, colonial-era pixel art style matching `ui_main_menu_button.png`.
 
 ### Rendering
 
-- **Icon size:** Resource icons are always 32×32 pixels, regardless of the tile cell size. Icons are never scaled up; they render at native 32×32 resolution.
+- **Icon size:** Resource icons are always 64×64 pixels, regardless of the tile cell size. Icons are never scaled up; they render at native 64×64 resolution.
 - **Position:** Position depends on the tile cell size:
-  - **For tiles &lt;32px:** Icon is centered horizontally; vertically **bottom-aligned** to the tile (top may extend above the cell) so the visible footprint sits toward the lower part of the cell.
-  - **For tiles exactly 32px:** Icon is **centered** in the cell (same width and height as the icon).
-  - **For tiles >32px:** Icon is placed in the **bottom-left corner** of the tile cell (at x=0, y=tileSize-32). This ensures the icon remains visible and readable at native resolution without being obscured or requiring upscaling.
+  - **For tiles &lt;64px:** Icon is centered horizontally; vertically **bottom-aligned** to the tile (top may extend above the cell) so the visible footprint sits toward the lower part of the cell.
+  - **For tiles exactly 64px:** Icon is **centered** in the cell (same width and height as the icon).
+  - **For tiles >64px:** Icon is placed in the **bottom-left corner** of the tile cell (at x=0, y=tileSize-64). This ensures the icon remains visible and readable at native resolution without being obscured or requiring upscaling.
 - **Visibility:** Icons are subject to the same visibility rules as terrain (visible/fogged/unrevealed). Fogged tiles render icons with reduced opacity; unrevealed tiles show nothing.
 
 ---
 
 ## Civilian Marker Icons
 
-Interactive civilian tile markers use per-type color icon assets in `assets/icons/`:
+Interactive civilian tile markers use per-type color icon assets in `assets/icons/64/`:
 
 - `ui_icon_civ_builder.png`
 - `ui_icon_civ_engineer.png`
@@ -160,19 +173,19 @@ Interactive civilian tile markers use per-type color icon assets in `assets/icon
 - `ui_icon_civ_merchant.png`
 - `ui_icon_civ_spy.png`
 
-All assets are 32×32 PNG with transparency. The map draws these icons tile-sized in world space so marker occupancy scales with zoom. Assigned-state rendering is achieved by applying a grayscale color filter at paint time, not by loading separate grayscale runtime assets.
+All assets are 64×64 PNG with transparency. The map draws these icons tile-sized in world space so marker occupancy scales with zoom. Assigned-state rendering is achieved by applying a grayscale color filter at paint time, not by loading separate grayscale runtime assets.
 
 ### PixelLab generation prompts (this slice)
 
 - Generator: `pixellab-generate_image_pixflux`
-- Shared settings: `width=32`, `height=32`, `no_background=true`, `outline='single color outline'`, `shading='medium shading'`, `detail='medium detail'`
+- Shared settings: `width=64`, `height=64`, `no_background=true`, `outline='single color outline'`, `shading='medium shading'`, `detail='medium detail'`
 - Color prompts:
-  - `pixel art builder civilian with hammer and tool belt, full body, colonial era style, readable 32x32 unit marker icon`
-  - `pixel art engineer civilian with wrench and measuring tools, full body, colonial era style, readable 32x32 unit marker icon`
-  - `pixel art rail builder civilian with pickaxe and rail spike hammer, full body, colonial era style, readable 32x32 unit marker icon`
-  - `pixel art explorer civilian with compass and satchel, full body, colonial era style, readable 32x32 unit marker icon`
-  - `pixel art trader merchant civilian holding visible coin pouch and ledger, full body, colonial era clothing, readable 32x32 unit marker icon`
-  - `pixel art spy civilian cloaked with dagger and covert posture, full body, colonial era style, readable 32x32 unit marker icon`
+  - `pixel art builder civilian with hammer and tool belt, full body, colonial era style, readable 64x64 unit marker icon`
+  - `pixel art engineer civilian with wrench and measuring tools, full body, colonial era style, readable 64x64 unit marker icon`
+  - `pixel art rail builder civilian with pickaxe and rail spike hammer, full body, colonial era style, readable 64x64 unit marker icon`
+  - `pixel art explorer civilian with compass and satchel, full body, colonial era style, readable 64x64 unit marker icon`
+  - `pixel art trader merchant civilian holding visible coin pouch and ledger, full body, colonial era clothing, readable 64x64 unit marker icon`
+  - `pixel art spy civilian cloaked with dagger and covert posture, full body, colonial era style, readable 64x64 unit marker icon`
 - Grayscale assets:
   - Runtime assigned-state rendering is paint-time grayscale filtering of color icons.
   - Compatibility `_gray` files are generated from approved color icons via deterministic grayscale conversion.
@@ -445,7 +458,7 @@ Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_m
 - **Given** the map cannot fit province name text and class icons on one line at the label position, **when** label layout is computed, **then** the map renders icons on a second line under the province name while preserving class order.
 - **Given** player-constrained visibility/intel for province `P` does not expose class-presence knowledge to the current player, **when** the map renders `P`'s province name label, **then** no class presence icons are shown for `P`.
 - **Given** turn resolution has completed and a new turn starts, **when** map label view data is refreshed, **then** class-presence icons are recomputed from the post-resolution province unit-presence state.
-- **Given** `ui_icon_map_capital_star.png` is generated for the map label capital indicator, **when** asset checks run, **then** the icon passes: (a) human visual review confirming a recognizable gold star silhouette at map-label render scale and (b) deterministic checks confirming dominant yellow/gold hue and a non-rectangular opaque pixel cluster.
+- **Given** `assets/icons/64/ui_icon_map_capital_star.png` is generated for the map label capital indicator, **when** asset checks run, **then** the icon passes: (a) human visual review confirming a recognizable gold star silhouette at map-label render scale and (b) deterministic checks confirming dominant yellow/gold hue and a non-rectangular opaque pixel cluster.
 - **Given** the province names layer is disabled, **when** the map renders, **then** no province name labels are drawn.
 - **Given** the province names layer is enabled and the province overlay (boundaries) is disabled, **when** the map renders, **then** province name labels are still drawn (no dependency on the province overlay).
 - **Given** the province names layer is enabled and the province ownership layer is disabled, **when** the map renders, **then** province name labels are still drawn (no dependency on the ownership tint).
@@ -474,21 +487,21 @@ Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_m
 - **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` and the map is not in work target selection mode, **when** the map renders tile `T`, **then** it draws one tile-sized civilian marker with a stack badge when `stackCount > 1`.
 - **Given** the user assigns a civilian work order in the current turn and that unit has a pending draft `WorkOrder` with target tile key `T`, **when** the map renders before turn resolution, **then** the civilian marker projection includes that unit at tile `T` in the same turn (using the current draft order), instead of waiting for post-resolution unit movement.
 - **Given** a civilian marker tile `T` is the same tile as a capital marker tile, **when** the map renders both markers, **then** the civilian marker is painted above the capital marker and any civilian stack badge remains legible.
-- **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` with representative unit type `U` and `representativeIsAssigned = false`, **when** the map renders tile `T`, **then** the UI layer draws `assets/icons/ui_icon_civ_<slug(U)>.png` mapped by unit type.
-- **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` with representative unit type `U` and `representativeIsAssigned = true`, **when** the map renders tile `T`, **then** the UI layer draws `assets/icons/ui_icon_civ_<slug(U)>.png` mapped by unit type and applies grayscale via paint-time color filtering.
+- **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` with representative unit type `U` and `representativeIsAssigned = false`, **when** the map renders tile `T`, **then** the UI layer draws `assets/icons/64/ui_icon_civ_<slug(U)>.png` mapped by unit type.
+- **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` with representative unit type `U` and `representativeIsAssigned = true`, **when** the map renders tile `T`, **then** the UI layer draws `assets/icons/64/ui_icon_civ_<slug(U)>.png` mapped by unit type and applies grayscale via paint-time color filtering.
 - **Given** a selected civilian marker tile key and a map frame render, **when** the selected marker is painted, **then** only that marker (including its badge) uses blink modulation; unselected civilian markers remain steady.
 - **Given** a civilian assignment flow completes and the previously selected civilian marker tile key differs from the newly assigned marker tile, **when** the shell exits work-target selection mode, **then** the shell clears the stale selected marker key so only an actively selected marker can blink.
 - **Given** the map is not in work target selection mode and tile `T` contains a civilian marker, **when** the user taps tile `T`, **then** `onCivilianTileTapped` is invoked and default province/tile-detail tap handling for that tap is suppressed.
 - **Given** a civilian marker is selected and the map is not in work target selection mode, **when** the user taps a non-civilian tile, **then** `onCivilianTileSelectionCleared` is invoked and regular map detail/province tap handling still runs.
 - **Given** the map widget is given **base layer display mode** `terrainOnly`, **when** the widget renders the base layer, **then** terrain is drawn and no resource icons or improvement or road labels are drawn on tiles; capitals, town/port icons, and warp indicators are drawn subject to [base layer display mode](#base-layer-display-mode) (always, for mode switching) and, in player-constrained mode, capital/town/port markers additionally respect per-cell visibility as above.
-- **Given** the map widget is given **base layer display mode** `terrainAndResources`, **when** the widget renders the base layer, **then** terrain and resource icons (32×32 pixel art) are drawn per cell where present, and no improvement or road labels are drawn.
+- **Given** the map widget is given **base layer display mode** `terrainAndResources`, **when** the widget renders the base layer, **then** terrain and resource icons (64×64 pixel art) are drawn per cell where present, and no improvement or road labels are drawn.
 - **Given** the map widget is given **base layer display mode** `terrainAndResourcesImprovementLabels`, **when** the widget renders the base layer, **then** terrain and resource icons are drawn, and improvement labels `I{n}` are drawn only when `improvementLevel > 0` (top-left of cell); no road labels are drawn.
 - **Given** the map widget is given **base layer display mode** `terrainAndResourcesImprovementsRoads`, **when** the widget renders the base layer, **then** terrain and resource icons are drawn, improvement labels when `improvementLevel > 0`, and road labels `R{n}` when `roadLevel > 0` (top-right), with **roads painted after improvements** in Z-order.
 - **Given** the map widget omits **base layer display mode** (null), **when** the widget renders the base layer, **then** behavior matches `terrainAndResourcesImprovementsRoads` (full detail).
 - **Given** the map widget uses a mode that draws improvement or road labels, **when** a tile has `improvementLevel == 0` or `roadLevel == 0`, **then** no `I0` or `R0` label is drawn for that level.
-- **Given** a map widget rendering a tile with a resource, **when** the base layer display mode includes resources, **then** the resource icon matching the resource ID is loaded from `assets/icons/ui_icon_com_<resource_id>.png` and rendered at native 32×32 resolution (never upscaled). **Loading failures** (missing file, decode error) must propagate: `ResourceIconCache` does not swallow per-icon errors; a failed load aborts cache initialization so the problem surfaces immediately.
-- **Given** a map widget rendering a tile with a resource on a **32px or smaller cell**, **when** the base layer display mode includes resources, **then** the resource icon is centered horizontally and positioned in the lower half of the cell.
-- **Given** a map widget rendering a tile with a resource on a **larger than 32px cell** (e.g. 64px), **when** the base layer display mode includes resources, **then** the resource icon is positioned in the **bottom-left corner** of the tile (x=0, y=tileSize-32) at native 32×32 resolution.
+- **Given** a map widget rendering a tile with a resource, **when** the base layer display mode includes resources, **then** the resource icon matching the resource ID is loaded from `assets/icons/64/ui_icon_com_<resource_id>.png` and rendered at native 64×64 resolution (never upscaled). **Loading failures** (missing file, decode error) must propagate: `ResourceIconCache` does not swallow per-icon errors; a failed load aborts cache initialization so the problem surfaces immediately.
+- **Given** a map widget rendering a tile with a resource on a **64px or smaller cell**, **when** the base layer display mode includes resources, **then** the resource icon is centered horizontally and positioned in the lower half of the cell.
+- **Given** a map widget rendering a tile with a resource on a **larger than 64px cell** (e.g. 128px), **when** the base layer display mode includes resources, **then** the resource icon is positioned in the **bottom-left corner** of the tile (x=0, y=tileSize-64) at native 64×64 resolution.
 - **Given** a map widget with `RegionMapViewData.warpMarkers` populated (non-empty), **when** the widget renders the map, **then** a glowing yellow border is drawn around each warp sea zone; warp zone indicators are rendered regardless of `baseLayerDisplayMode`.
 - **Given** a map widget in **player-constrained** visibility mode with `RegionMapViewData.warpMarkers` populated, **when** a warp perimeter unit edge has adjacent cells where both visibilities are `unrevealed`, **then** no warp glow segment is drawn on that edge.
 - **Given** a map widget in **player-constrained** visibility mode with `RegionMapViewData.warpMarkers` populated, **when** a warp perimeter unit edge has adjacent cells where at least one visibility is `visible` or `fogged`, **then** the warp glow segment is drawn on that edge.
