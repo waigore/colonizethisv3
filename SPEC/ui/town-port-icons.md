@@ -6,18 +6,18 @@
 
 ## Overview
 
-Towns and ports are displayed as distinct pixel art icons on the map when the province has a `townTileKey`. Town markers use a dedicated 64×64 inland icon, while port markers remain 32×32. Port provinces render **two** icons: the town glyph on the canonical town tile and the port glyph on a computed drawable cell (see below).
+Towns and ports are displayed as distinct pixel art icons on the map when the province has a `townTileKey`. Town and port markers both use 64×64 assets. Port provinces render **two** icons: the town glyph on the canonical town tile and the port glyph on a computed drawable cell (see below).
 
 | Icon Type | Description | Asset File |
 |-----------|-------------|------------|
-| **Port** | Harbor/port icon | `ui_icon_com_port.png` |
+| **Port** | Harbor/port icon | `ui_icon_com_port.png` (64 folder) |
 | **Town (all towns)** | Town/village icon for inland and coastal towns | `ui_icon_com_town_inland_64.png` |
 
 ---
 
 ## Asset Files
 
-Icons are stored in `app/assets/icons/` following the existing resource icon naming convention.
+Icons are stored in `app/assets/icons/64/` following the existing resource icon naming convention.
 
 | Icon | File | Description |
 |------|------|-------------|
@@ -26,10 +26,10 @@ Icons are stored in `app/assets/icons/` following the existing resource icon nam
 
 ### Asset and Render Requirements
 
-- **Format:** Town icon is 64×64 PNG with RGBA transparency; port icon is 32×32 PNG.
+- **Format:** Town icon is 64×64 PNG with RGBA transparency; port icon is 64×64 PNG.
 - **Style:** Colonial-era pixel art matching `ui_icon_com_*.png` resource icons
 - **Background:** Transparent (no circular badge or background shape)
-- **Positioning:** Town icon renders at 64×64 centered on the town tile; port icon renders at native 32×32.
+- **Positioning:** Town icon renders at 64×64 centered on the town tile; port icon renders at native 64×64.
 
 ---
 
@@ -229,6 +229,6 @@ Icons are loaded via the existing `ResourceIconCache` pattern:
 
 ## Dependencies
 
-- `app/assets/icons/ui_icon_com_port.png`
-- `app/assets/icons/ui_icon_com_town_inland_64.png`
+- `app/assets/icons/64/ui_icon_com_port.png`
+- `app/assets/icons/64/ui_icon_com_town_inland_64.png`
 - `AppEventBus` from `colonizethis_models`

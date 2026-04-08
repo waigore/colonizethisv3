@@ -43,6 +43,8 @@ flutter:
   assets:
     - assets/data/
     - assets/icons/
+    - assets/icons/32/
+    - assets/icons/64/
     - assets/images/
     - assets/images/terrain/
     - assets/images/terrain/base_64/
