@@ -734,6 +734,135 @@ void main() {
     },
   );
 
+  testWidgets(
+    'Batch-6 tech descriptions are concrete and avoid generic fallback text (Refs #1630)',
+    (WidgetTester tester) async {
+      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+      final gameWithEmptyPlayer = game.copyWith(
+        players: [emptyPlayer, ...game.players.skip(1)],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TechTreeWidget(
+              game: gameWithEmptyPlayer,
+              player: emptyPlayer,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expectedByTech = <String, String>{
+        'Discovery of Gold or Silver':
+            'Enables: Research when player has revealed and prospected gold/silver',
+        'Precious Metals Mining': 'Improves: Gold/silver extraction cap to 2',
+        'Discovery of Gems or Diamonds':
+            'Enables: Research when player has revealed and prospected gems/diamonds',
+        'Precious Stone Mining': 'Improves: Gems/diamonds extraction cap to 2',
+        'Road Construction':
+            'Enables: Engineer road upgrades to transport level 2',
+        'Early Steam Engine':
+            'Enables: Rail Builder and railroads on flat terrain',
+        'Later Steam Engine': 'Enables: Railroads on hills and swamps',
+        'Dynamite': 'Enables: Railroads on mountains',
+        'Printing Press':
+            'Unlocks: Trained Journeymen, University, and military doctrine paths',
+        'Apprentice Workers':
+            'Enables: Apprentice tier (4x labour; consumes refined sugar)',
+      };
+
+      for (final entry in expectedByTech.entries) {
+        final techNode = find.text(entry.key).first;
+        await tester.ensureVisible(techNode);
+        await tester.tap(techNode);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(
+          find.textContaining('Improves new-world capabilities'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves transport capabilities'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves labour capabilities'),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
+  testWidgets(
+    'Batch-7 tech descriptions are concrete and avoid generic fallback text (Refs #1631)',
+    (WidgetTester tester) async {
+      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+      final gameWithEmptyPlayer = game.copyWith(
+        players: [emptyPlayer, ...game.players.skip(1)],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TechTreeWidget(
+              game: gameWithEmptyPlayer,
+              player: emptyPlayer,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expectedByTech = <String, String>{
+        'Trained Journeymen':
+            'Enables: Journeyman tier (6x labour; consumes cigars)',
+        'Master Artisans':
+            'Enables: Master tier (8x labour; consumes fur hats)',
+        'Money Lending': 'Enables: Research-phase treasury floor to -500',
+        'Banking':
+            'Unlocks: Dynamite, Empire Building, Modern Military Funding',
+        'Trade Fairs':
+            'Enables: Planned increase to trade commodity slots (deferred in MVP)',
+        'University': 'Enables: Fourth active research slot (3 -> 4)',
+        'Diplomatic Expertise': 'Enables: Embassy overtures with Minor Nations',
+        'Merchant Companies': 'Enables: Merchant civilian unit construction',
+        'National Bureaucracy': 'Enables: Builder upgrade_town work order',
+        'Propaganda':
+            'Improves: Diplomatic protest war penalty against aggressor (-10 -> -5)',
+      };
+
+      for (final entry in expectedByTech.entries) {
+        final techNode = find.text(entry.key).first;
+        await tester.ensureVisible(techNode);
+        await tester.tap(techNode);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(
+          find.textContaining('Improves labour capabilities'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves diplomacy capabilities'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves civilian capabilities'),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
   test(
     'Column rule: A→B→C and A→C places B between A and C (gap between A and C)',
     () {

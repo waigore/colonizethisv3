@@ -8,13 +8,13 @@
 
 | id | name | era | prerequisites | effects |
 |----|------|-----|---------------|--------|
-| printing_press | Printing Press | 1 | — | Leads to Journeymen, tactics, siege engineering |
-| apprentice_workers | Apprentice Workers | 2 | land_enclosure, sugar_refining | 4× labour; consume refined sugar |
-| trained_journeymen | Trained Journeymen | 2 | cigar_production, printing_press | 6× labour; consume cigars |
-| master_artisans | Master Artisans | 3 | apprentice_workers, university, hat_production | 8× labour; consume fur hats |
+| printing_press | Printing Press | 1 | — | Unlocks: prerequisite for `trained_journeymen`, `university`, `improved_infantry_tactics`, `siege_engineering`, and `national_bureaucracy`. Prerequisite-only: no direct production or treasury modifier in MVP. |
+| apprentice_workers | Apprentice Workers | 2 | land_enclosure, sugar_refining | Enables: Apprentice worker tier with **4x labour output** and refined sugar luxury consumption per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `master_artisans` and `university`. |
+| trained_journeymen | Trained Journeymen | 2 | cigar_production, printing_press | Enables: Journeyman worker tier with **6x labour output** and cigar luxury consumption per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `cotton_gin` and `steppe_horsemen` recruitment path. |
+| master_artisans | Master Artisans | 3 | apprentice_workers, university, hat_production | Enables: Master worker tier with **8x labour output** and fur hat luxury consumption per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `banking`, `nationalism`, and `scientific_cattle_breeding`. |
 | money_lending | Money Lending | 1 | land_enclosure | Research treasury floor −500 (see below); borrowing/interest deferred |
-| banking | Banking | 3 | master_artisans, trade_fairs | Prereq for other techs; extended debt/interest/military-treasury links deferred |
-| trade_fairs | Trade Fairs | 2 | merchant_companies, sugar_refining | Forward-looking: more trade commodity slots vs baseline (not wired in MVP; see below) |
+| banking | Banking | 3 | master_artisans, trade_fairs | Unlocks: prerequisite for `dynamite`, `empire_building`, and `modern_military_funding`. Prerequisite-only in MVP for economy mechanics: extended debt/interest and military-treasury links remain deferred (see status below). |
+| trade_fairs | Trade Fairs | 2 | merchant_companies, sugar_refining | Enables: planned increase in trade commodity slots versus baseline (**deferred in MVP**; see status below). Unlocks: prerequisite for `banking`. |
 | university | University | 3 | money_lending, apprentice_workers, printing_press | Increases research slots from 3 to 4 (permanent per player); leads to many advances |
 
 ---

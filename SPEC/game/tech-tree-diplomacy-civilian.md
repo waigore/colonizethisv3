@@ -14,10 +14,10 @@ The **diplomacy and civilian tech table in this doc is the GDD source of truth**
 
 | id | name | era | prerequisites | effects |
 |----|------|-----|---------------|--------|
-| diplomatic_expertise | Diplomatic Expertise | 1 | — | Offer embassies to Minor Nations; Merchants, Engineers, Builders may work there |
-| merchant_companies | Merchant Companies | 1 | — | Construct Merchant units; buy land in Minor Nations |
-| national_bureaucracy | National Bureaucracy | 2 | printing_press, money_lending, diplomatic_expertise | Builders may upgrade provincial towns; contributes to raising general cap to at least 3 per [military-generals.md](military-generals.md) |
-| propaganda | Propaganda | 3 | national_bureaucracy, university | Decreases diplomatic penalties for declaring war |
+| diplomatic_expertise | Diplomatic Expertise | 1 | — | Enables: embassy overture to Minor Nations and civilian work access in embassy-linked Minor Nations (Merchants, Engineers, Builders). Unlocks: prerequisite for `national_bureaucracy`. |
+| merchant_companies | Merchant Companies | 1 | — | Enables: Merchant civilian unit construction and `purchase_land` work orders in Minor Nations/Tribes when an embassy exists and the parties are not at war. Unlocks: prerequisite for `trade_fairs`. |
+| national_bureaucracy | National Bureaucracy | 2 | printing_press, money_lending, diplomatic_expertise | Enables: Builder `upgrade_town` work order for provincial towns. Improves: general cap floor to at least **3** per [military-generals.md](military-generals.md). Unlocks: prerequisite for `propaganda`. |
+| propaganda | Propaganda | 3 | national_bureaucracy, university | Improves: third-party diplomatic protest penalty against a war aggressor from **-10** to **-5** relation score when the aggressor has `propaganda` (per diplomacy lookup constants). Unlocks: prerequisite for `nationalism`. |
 | nationalism | Nationalism | 3 | propaganda, master_artisans, modern_forts | Deployment limit 12 regiments (vs 10); general adds more; raises general cap to at least 4 per [military-generals.md](military-generals.md) |
 | empire_building | Empire Building | 4 | nationalism, banking | Ask Great Powers to join your empire peacefully |
 
