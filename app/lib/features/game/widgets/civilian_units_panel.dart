@@ -151,10 +151,11 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
     );
     List<Unit> scopedOw = ow;
     List<Unit> scopedNw = nw;
-    final tileScopeTileKey = widget.tileScopeTileKey;
-    if (tileScopeTileKey != null && tileScopeTileKey.isNotEmpty) {
-      scopedOw = ow.where((u) => _renderedTileKey(u) == tileScopeTileKey).toList();
-      scopedNw = nw.where((u) => _renderedTileKey(u) == tileScopeTileKey).toList();
+    final scopeTileKey = widget.tileScopeTileKey;
+    final tileScopeActive = scopeTileKey != null && scopeTileKey.isNotEmpty;
+    if (tileScopeActive) {
+      scopedOw = ow.where((u) => _renderedTileKey(u) == scopeTileKey).toList();
+      scopedNw = nw.where((u) => _renderedTileKey(u) == scopeTileKey).toList();
     }
     final hasAny = scopedOw.isNotEmpty || scopedNw.isNotEmpty;
     final allScopedUnits = <Unit>[...scopedOw, ...scopedNw];
@@ -164,10 +165,37 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
             allScopedUnits.any((u) => u.id == selectedUnitId)
         ? selectedUnitId
         : (allScopedUnits.isNotEmpty ? allScopedUnits.first.id : null);
+    Unit? resolvedSelectedUnit;
+    if (resolvedSelectedUnitId != null) {
+      for (final u in allScopedUnits) {
+        if (u.id == resolvedSelectedUnitId) {
+          resolvedSelectedUnit = u;
+          break;
+        }
+      }
+    }
+    final headerTileKey = resolvedSelectedUnit == null
+        ? null
+        : _renderedTileKey(resolvedSelectedUnit);
 
     return UnitsPanelShell(
-      title: tileScopeTileKey != null ? 'Civilian Units (Tile)' : 'Civilian Units',
+      title: tileScopeActive ? 'Civilian Units (Tile)' : 'Civilian Units',
       actions: [
+        if (tileScopeActive)
+          CtNinePatchButton(
+            enabled: headerTileKey != null && headerTileKey.isNotEmpty,
+            onPressed: () {
+              final key = headerTileKey;
+              if (key == null || key.isEmpty) {
+                return;
+              }
+              widget.bus.emit(const ClosePanelEvent());
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                widget.bus.emit(OpenMapTileDetailEvent(tileKey: key));
+              });
+            },
+            child: const Text('Tile'),
+          ),
         CtNinePatchButton(
           onPressed: () {
             widget.bus.emit(const ClosePanelEvent());
@@ -190,7 +218,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
               availableWorkTargets: widget.availableWorkTargets,
               humanPlayerId: widget.humanPlayerId,
               bus: widget.bus,
-              isTileScope: tileScopeTileKey != null,
+              isTileScope: tileScopeActive,
               isSelectedInTileScope: resolvedSelectedUnitId == u.id,
               onSelectInTileScope: () => setState(() => _selectedUnitId = u.id),
             ),
@@ -206,7 +234,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
               availableWorkTargets: widget.availableWorkTargets,
               humanPlayerId: widget.humanPlayerId,
               bus: widget.bus,
-              isTileScope: tileScopeTileKey != null,
+              isTileScope: tileScopeActive,
               isSelectedInTileScope: resolvedSelectedUnitId == u.id,
               onSelectInTileScope: () => setState(() => _selectedUnitId = u.id),
             ),
@@ -419,32 +447,13 @@ class _UnitRow extends StatelessWidget {
         if (regionId == null) return;
         bus.emit(const ClosePanelEvent());
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          bus.emit(
-            LocateMapTileEvent(
-              tileKey: tileKey,
-              regionId: regionId,
-            ),
-          );
+          bus.emit(LocateMapTileEvent(tileKey: tileKey, regionId: regionId));
         });
       },
       trailing: showActions
           ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (isTileScope)
-                  CtNinePatchButton(
-                    onPressed: () {
-                      final renderedTileKey = _renderedTileKey(unit);
-                      if (renderedTileKey == null) return;
-                      bus.emit(const ClosePanelEvent());
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        bus.emit(
-                          OpenMapTileDetailEvent(tileKey: renderedTileKey),
-                        );
-                      });
-                    },
-                    child: const Text('Tile'),
-                  ),
                 if (_isIdleNoPending)
                   CtNinePatchButton(
                     onPressed: () => _showOrderMenu(context),

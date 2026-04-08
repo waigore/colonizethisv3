@@ -62,8 +62,8 @@ For each civilian unit, the panel shows:
 
 - **Selection model:** In tile scope, the panel keeps one selected unit id. Initial selection is the unit id provided by the map marker tap; if missing, the first row in deterministic list order is selected.
 - **Selection swap:** In tile scope, tapping a different row changes selected unit id immediately.
-- **Action target:** In tile scope, row actions (Assign, Cancel, Tile) apply to the selected row only.
-- **Tile button:** In tile scope, the selected row includes a **Tile** button that opens province/tile detail for that selected row’s rendered tile (`assignedTileKey` when present, otherwise `tileKey`).
+- **Action target:** In tile scope, row actions (**Assign**, **Cancel**) apply to the selected row only.
+- **Header actions (tile scope only):** The panel title row includes **Tile** then **Train** (left to right after the title). **Tile** opens province/tile detail for the **currently selected** unit’s **rendered tile** (`assignedTileKey` when present, otherwise `tileKey`). When there is no selected unit or no rendered tile key, **Tile** is disabled (or equivalent). **Full-list mode** (panel opened from the rail, no tile scope): the title row has **Train** only—no **Tile** in the header.
 
 ---
 
@@ -117,9 +117,13 @@ For each civilian unit, the panel shows:
 
 - **Given** the user taps a civilian map marker for tile key `T`, **when** the civilian units panel opens in tile scope, **then** the UI layer lists only player-owned civilian units whose rendered tile equals `T`.
 
-- **Given** the civilian units panel is open in tile scope with selected unit `A`, **when** the user taps row `B`, **then** the UI layer updates selection to `B` and uses `B` as the target for panel actions.
+- **Given** the civilian units panel is open in tile scope with selected unit `A`, **when** the user taps row `B`, **then** the UI layer updates selection to `B` and uses `B` as the target for row actions and for the header **Tile** action.
 
-- **Given** the civilian units panel is open in tile scope and a unit row is selected, **when** the user presses **Tile**, **then** the UI layer opens province/tile detail for the selected row’s rendered tile key.
+- **Given** the civilian units panel is open in tile scope and a unit row is selected, **when** the user presses **Tile** in the panel header, **then** the UI layer opens province/tile detail for the selected row’s rendered tile key.
+
+- **Given** the civilian units panel is open in **full-list** mode (no tile scope), **when** the panel is displayed, **then** the title row shows **Train** only and does not show a header **Tile** button.
+
+- **Given** the civilian units panel is open in tile scope with **no** listed units for that tile (empty scoped list), **when** the panel is displayed, **then** the header **Tile** control does not open detail incorrectly (disabled or non-actionable).
 
 ---
 
