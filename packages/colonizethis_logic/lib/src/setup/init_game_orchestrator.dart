@@ -12,7 +12,7 @@ import '../ai/hidden_agenda_assignment.dart';
 import '../constants.dart';
 import '../world/unit_lookup.dart';
 import 'game_setup.dart';
-import 'setup_validation_exception.dart';
+import 'setup_exceptions.dart';
 import 'warp_zone_generator.dart';
 
 final _log = packageLogger();
@@ -84,9 +84,11 @@ InitGameResult runInitGame({
   TileMapRegionGenerator? generateRegion,
 }) {
   if (config.numProvincesOldWorld < config.greatPowerCount) {
-    throw SetupValidationException(
-      'Config requests ${config.numProvincesOldWorld} Old World provinces but '
-      '${config.greatPowerCount} Great Powers need at least one each',
+    throw SetupConfigConstraintException(
+      code: 'insufficient_old_world_provinces_for_great_powers',
+      details:
+          'Config requests ${config.numProvincesOldWorld} Old World provinces but '
+          '${config.greatPowerCount} Great Powers need at least one each',
     );
   }
 

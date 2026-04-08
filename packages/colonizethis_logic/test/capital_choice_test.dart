@@ -154,7 +154,13 @@ void main() {
             topology,
             tileMap,
           ),
-          throwsA(isA<SetupValidationException>()),
+          throwsA(
+            isA<NoSeaBoundCapitalProvinceException>().having(
+              (e) => e.code,
+              'code',
+              'no_sea_bound_capital_province',
+            ),
+          ),
         );
       },
     );
@@ -273,11 +279,13 @@ void main() {
       expect(
         () => pickCapitalForFaction(['p1'], 'oldWorld', topology, tileMap),
         throwsA(
-          isA<SetupValidationException>().having(
-            (e) => e.message.toString(),
-            'message',
-            contains('no_coastal_capital_tile_for_gp'),
-          ),
+          isA<NoCoastalCapitalTileForGpException>()
+              .having((e) => e.code, 'code', 'no_coastal_capital_tile_for_gp')
+              .having(
+                (e) => e.message,
+                'message',
+                contains('No coastal tile found'),
+              ),
         ),
       );
     });
