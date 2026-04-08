@@ -21,7 +21,7 @@ if [ "$SEARCH_TOOL" = "rg" ]; then
   )"
 else
   matches="$(
-    grep -RIn --include='*.dart' --exclude-dir='.dart_tool' --exclude-dir='build' --exclude='package_logger.dart' --exclude-dir='test' 'Logger(' . || true
+    grep -RInE --include='*.dart' --exclude-dir='.dart_tool' --exclude-dir='build' --exclude='package_logger.dart' --exclude-dir='test' '(^|[^[:alnum:]_])Logger\(' . || true
   )"
 fi
 
