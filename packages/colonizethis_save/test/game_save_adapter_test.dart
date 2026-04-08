@@ -472,7 +472,10 @@ void main() {
           ],
           'turnTimeMapping': turnMap,
         };
-        box.put('hiveTurnMap', gameJson);
+        box.put('hiveTurnMap', {
+          'saveFormatVersion': kSaveFormatVersion,
+          'game': gameJson,
+        });
         final loaded = adapter.load(box, 'hiveTurnMap');
         expect(loaded, isNotNull);
         expect(loaded!.turnTimeMapping, isNotNull);
@@ -495,9 +498,9 @@ void main() {
     });
 
     test(
-      'backward compatibility - greatPowerColorOverride missing yields null',
+      'load supports missing greatPowerColorOverride within current envelope',
       () {
-        // Simulate legacy save where greatPowerColorOverride field is missing
+        // Simulate a current-version payload where this optional field is absent.
         final gameJson = {
           'id': 'legacyGame',
           'worldState': {
@@ -510,7 +513,10 @@ void main() {
           ],
           // Note: greatPowerColorOverride is intentionally missing
         };
-        box.put('legacyGame', gameJson);
+        box.put('legacyGame', {
+          'saveFormatVersion': kSaveFormatVersion,
+          'game': gameJson,
+        });
         final loaded = adapter.load(box, 'legacyGame');
         expect(loaded, isNotNull);
         expect(loaded!.greatPowerColorOverride, isNull);
@@ -595,14 +601,17 @@ void main() {
             ),
           );
           final (tileMap, topo) = minimalMap();
-          final slotJson = Map<String, dynamic>.from(game.toJson());
-          slotJson['turnTimeMapping'] = <dynamic, dynamic>{
+          final slotGameJson = Map<String, dynamic>.from(game.toJson());
+          slotGameJson['turnTimeMapping'] = <dynamic, dynamic>{
             'startYear': 1600,
             'cutoffYear': 1750,
             'yearsPerTurnBeforeCutoff': 3,
             'yearsPerTurnAfterCutoff': 2,
           };
-          box.put(kAutoSaveSlotId, slotJson);
+          box.put(kAutoSaveSlotId, {
+            'saveFormatVersion': kSaveFormatVersion,
+            'game': slotGameJson,
+          });
           adapter.saveMapData(
             box,
             kAutoSaveSlotId,
@@ -666,14 +675,20 @@ void main() {
 
       test('hasValidAutoSave clears slot when map data missing', () {
         final game = minimalGame('g');
-        box.put(kAutoSaveSlotId, game.toJson());
+        box.put(kAutoSaveSlotId, {
+          'saveFormatVersion': kSaveFormatVersion,
+          'game': game.toJson(),
+        });
         expect(adapter.hasValidAutoSave(box), isFalse);
         expect(box.containsKey(kAutoSaveSlotId), isFalse);
       });
 
       test('hasValidAutoSave clears slot when map data invalid', () {
         final game = minimalGame('g');
-        box.put(kAutoSaveSlotId, game.toJson());
+        box.put(kAutoSaveSlotId, {
+          'saveFormatVersion': kSaveFormatVersion,
+          'game': game.toJson(),
+        });
         box.put('${kAutoSaveSlotId}_tileMapByRegion', {'bad': 'data'});
         box.put('${kAutoSaveSlotId}_topologyByRegion', {'bad': 'data'});
         box.put('${kAutoSaveSlotId}_combinedTopology', 'x');
@@ -696,8 +711,8 @@ void main() {
       });
     });
 
-    test('backward compatibility - turnTimeMapping missing yields null', () {
-      // Simulate legacy save where turnTimeMapping field is missing
+    test('load supports missing turnTimeMapping within current envelope', () {
+      // Simulate a current-version payload where this optional field is absent.
       final gameJson = {
         'id': 'legacyGame2',
         'worldState': {
@@ -710,10 +725,46 @@ void main() {
         ],
         // Note: turnTimeMapping is intentionally missing
       };
-      box.put('legacyGame2', gameJson);
+      box.put('legacyGame2', {
+        'saveFormatVersion': kSaveFormatVersion,
+        'game': gameJson,
+      });
       final loaded = adapter.load(box, 'legacyGame2');
       expect(loaded, isNotNull);
       expect(loaded!.turnTimeMapping, isNull);
+    });
+
+    test('load returns null for unsupported saveFormatVersion', () {
+      final game = Game(
+        id: 'unsupportedVersion',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+      );
+      box.put('unsupportedVersion', {
+        'saveFormatVersion': 999,
+        'game': game.toJson(),
+      });
+      final loaded = adapter.load(box, 'unsupportedVersion');
+      expect(loaded, isNull);
+    });
+
+    test('load returns null when saveFormatVersion is missing', () {
+      final game = Game(
+        id: 'missingVersion',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+      );
+      box.put('missingVersion', {'game': game.toJson()});
+      final loaded = adapter.load(box, 'missingVersion');
+      expect(loaded, isNull);
     });
   });
 }
