@@ -78,6 +78,7 @@ extractionAutoTransportFixture({
   List<Fleet> extraFleets = const [],
   int globalGameSeed = 0,
   RelationState relationWithP2 = RelationState.atPeace,
+  Map<String, bool> techUnlocked = const {},
 }) {
   const ow = 'oldWorld', nw = 'newWorld';
   final tileMapNw = TileMapResult(
@@ -148,6 +149,7 @@ extractionAutoTransportFixture({
           CommodityCatalog.grain.id,
           1000,
         ),
+        techUnlocked: techUnlocked,
       ),
       const Player(id: 'p2', displayName: 'Rival', isHuman: false),
     ],
