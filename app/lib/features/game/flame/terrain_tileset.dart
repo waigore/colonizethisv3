@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 
+import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/config/map_terrain_config.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/package_logger.dart';
@@ -402,7 +403,7 @@ class TerrainTilesetCache {
   }
 
   Future<void> _loadStandaloneTile(String tileId, String assetStem) async {
-    final pngPath = 'assets/images/terrain/tile_$assetStem.png';
+    final pngPath = terrainTileAssetPath(assetStem);
 
     try {
       final imageData = await rootBundle.load(pngPath);
@@ -427,7 +428,7 @@ class TerrainTilesetCache {
     String tileId,
     String assetStem,
   ) async {
-    final pngPath = 'assets/images/terrain/tile_$assetStem.png';
+    final pngPath = terrainTileAssetPath(assetStem);
     final imageData = await rootBundle.load(pngPath);
     final completer = Completer<ui.Image>();
     ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);

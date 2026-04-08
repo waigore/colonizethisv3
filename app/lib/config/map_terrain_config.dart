@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'app_assets.dart';
 
 final _log = packageLogger();
 
@@ -42,13 +43,10 @@ class WangTilesetAssetConfig {
 ///
 /// Edit [kDefaultMapTerrainTilesetsAsset] only to switch tilesets or cell size.
 class MapTerrainConfig {
-  MapTerrainConfig._({
-    required this.mapCellSizePx,
-    required this.wangTilesets,
-  });
+  MapTerrainConfig._({required this.mapCellSizePx, required this.wangTilesets});
 
   static const String kDefaultMapTerrainTilesetsAsset =
-      'assets/data/map_terrain_tilesets.json';
+      kMapTerrainTilesetsAsset;
 
   static MapTerrainConfig? _instance;
 
