@@ -34,12 +34,12 @@ The **gathering table below is the GDD source of truth** for ids, effects, and p
 | scientific_cattle_breeding | Scientific Cattle Breeding | 3 | animal_husbandry, university | Meat 4 |
 | moldboard_plow | Moldboard Plow | 3 | seed_drill | Grain 4 |
 | safety_lamp | Safety Lamp | 4 | large_coal_mines, dynamite | Coal 4 |
-| large_precious_stone_mines | Large Precious Stone Mines | 3 | precious_stone_mining, university | Gems/diamonds 3 |
-| extraction_of_precious_metals | Extraction of Precious Metals | 3 | precious_metals_mining, university | Gold/silver 3 |
-| geological_prospecting | Geological Prospecting | 4 | large_precious_stone_mines, dynamite | Gems/diamonds 4 |
-| amalgamation_process | Amalgamation Process | 4 | dynamite, extraction_of_precious_metals | Gold/silver 4 |
-| industrial_iron_mining | Industrial Iron Mining | 4 | industrial_funding_of_research, steam_in_mining | Iron 4 |
-| efficient_extraction_of_copper_and_tin | Efficient Extraction of Copper & Tin | 4 | large_coal_mines, large_copper_and_tin_mines | Copper/tin 4 |
+| large_precious_stone_mines | Large Precious Stone Mines | 3 | precious_stone_mining, university | Improves: gems/diamonds extraction cap to **3**. Unlocks: prerequisite for `geological_prospecting` (with Dynamite) and `modern_military_funding` (with Banking and Modern Forts). |
+| extraction_of_precious_metals | Extraction of Precious Metals | 3 | precious_metals_mining, university | Improves: gold/silver extraction cap to **3**. Unlocks: prerequisite for `amalgamation_process` (with Dynamite). |
+| geological_prospecting | Geological Prospecting | 4 | large_precious_stone_mines, dynamite | Improves: gems/diamonds extraction cap to **4**. Prerequisite-only in MVP catalog: no other tech lists this id as a prerequisite; cap increase is the active benefit. |
+| amalgamation_process | Amalgamation Process | 4 | dynamite, extraction_of_precious_metals | Improves: gold/silver extraction cap to **4**. Prerequisite-only in MVP catalog: no other tech lists this id as a prerequisite; cap increase is the active benefit. |
+| industrial_iron_mining | Industrial Iron Mining | 4 | industrial_funding_of_research, steam_in_mining | Improves: iron extraction cap to **4**. Prerequisite-only in MVP catalog: no other tech lists this id as a prerequisite; cap increase is the active benefit. |
+| efficient_extraction_of_copper_and_tin | Efficient Extraction of Copper & Tin | 4 | large_coal_mines, large_copper_and_tin_mines | Improves: copper/tin extraction cap to **4**. Prerequisite-only in MVP catalog: no other tech lists this id as a prerequisite; cap increase is the active benefit. |
 
 ---
 
@@ -55,6 +55,10 @@ The **gathering table below is the GDD source of truth** for ids, effects, and p
 - Given the `crop_rotation`, `saw_mill`, `land_enclosure`, `mine_engineering`, `iron_mining`, `copper_and_tin_mining`, `coal_mining`, `wind_saw_mill`, `seed_drill`, and `sheep_ranching` rows in this tech table  
   When the System or UI layer renders their design descriptions from SPEC-authorized wording  
   Then each row includes at least one fixed-field phrase (`Unlocks:`, `Improves:`, `Enables:`, or `Prerequisite-only:`), names concrete mechanics or explicit unlock targets, and does not use generic fallback wording.
+
+- Given the `large_precious_stone_mines`, `extraction_of_precious_metals`, `geological_prospecting`, `amalgamation_process`, `industrial_iron_mining`, and `efficient_extraction_of_copper_and_tin` rows in this tech table  
+  When the System or UI layer renders their design descriptions from SPEC-authorized wording  
+  Then each row includes at least one fixed-field phrase (`Unlocks:`, `Improves:`, `Enables:`, or `Prerequisite-only:`), states extraction caps with explicit numeric levels where applicable, names concrete unlock targets or explicitly states that the MVP catalog has no dependent techs, and does not use generic fallback wording.
 
 - **Table:** Each row has a unique id; prerequisite ids reference techs defined in this doc or other category docs.
 - **Extraction cap:** In the full model, per-resource cap is derived from unlocked gathering techs (max level per resource from the table). MVP uses a single scalar cap; see [tech-and-extraction-cap.md](tech-and-extraction-cap.md).

@@ -443,6 +443,62 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Improves: Wool extraction cap to 2');
         list.add('Unlocks: Scientific Sheep Breeding');
         break;
+      case 'large_precious_stone_mines':
+        list.add('Improves: Gems/diamonds extraction cap to 3');
+        list.add(
+          'Unlocks: Geological Prospecting (with Dynamite); Modern Military Funding (with Banking and Modern Forts)',
+        );
+        break;
+      case 'extraction_of_precious_metals':
+        list.add('Improves: Gold/silver extraction cap to 3');
+        list.add('Unlocks: Amalgamation Process (with Dynamite)');
+        break;
+      case 'geological_prospecting':
+        list.add('Improves: Gems/diamonds extraction cap to 4');
+        list.add(
+          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+        );
+        break;
+      case 'amalgamation_process':
+        list.add('Improves: Gold/silver extraction cap to 4');
+        list.add(
+          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+        );
+        break;
+      case 'industrial_iron_mining':
+        list.add('Improves: Iron extraction cap to 4');
+        list.add(
+          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+        );
+        break;
+      case 'efficient_extraction_of_copper_and_tin':
+        list.add('Improves: Copper/Tin extraction cap to 4');
+        list.add(
+          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+        );
+        break;
+      case 'discovery_of_sugar':
+        list.add(
+          'Enables: Research when player has revealed sugar cane (discovery rule)',
+        );
+        list.add('Unlocks: Sugar Planting and Sugar Refining');
+        break;
+      case 'sugar_planting':
+        list.add('Improves: Sugar cane extraction cap to 2');
+        list.add('Unlocks: Large Sugar Plantations');
+        break;
+      case 'sugar_refining':
+        list.add(
+          'Enables: Refined sugar luxury for Apprentice-tier worker consumption',
+        );
+        list.add(
+          'Unlocks: Apprentice Workers (with Land Enclosure); Trade Fairs (with Merchant Companies)',
+        );
+        break;
+      case 'large_sugar_plantations':
+        list.add('Improves: Sugar cane extraction cap to 3');
+        list.add('Unlocks: Sugar Industry');
+        break;
       case 'hat_production':
         list.add('Improves: Enables fur hats luxury production');
         break;

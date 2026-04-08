@@ -490,6 +490,70 @@ void main() {
     },
   );
 
+  testWidgets(
+    'Batch-3 tech descriptions are concrete and avoid generic fallback text (Refs #1627)',
+    (WidgetTester tester) async {
+      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+      final gameWithEmptyPlayer = game.copyWith(
+        players: [emptyPlayer, ...game.players.skip(1)],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TechTreeWidget(
+              game: gameWithEmptyPlayer,
+              player: emptyPlayer,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expectedByTech = <String, String>{
+        'Large Precious Stone Mines':
+            'Improves: Gems/diamonds extraction cap to 3',
+        'Extraction of Precious Metals':
+            'Improves: Gold/silver extraction cap to 3',
+        'Geological Prospecting': 'Improves: Gems/diamonds extraction cap to 4',
+        'Amalgamation Process': 'Improves: Gold/silver extraction cap to 4',
+        'Industrial Iron Mining': 'Improves: Iron extraction cap to 4',
+        'Efficient Extraction of Copper & Tin':
+            'Improves: Copper/Tin extraction cap to 4',
+        'Discovery of Sugar':
+            'Enables: Research when player has revealed sugar cane (discovery rule)',
+        'Sugar Planting': 'Improves: Sugar cane extraction cap to 2',
+        'Sugar Refining':
+            'Enables: Refined sugar luxury for Apprentice-tier worker consumption',
+        'Large Sugar Plantations': 'Improves: Sugar cane extraction cap to 3',
+      };
+
+      for (final entry in expectedByTech.entries) {
+        final techNode = find.text(entry.key).first;
+        await tester.ensureVisible(techNode);
+        await tester.tap(techNode);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(
+          find.textContaining('Improves gathering capabilities'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves labour and economy output'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves new-world capabilities'),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
   test(
     'Column rule: A→B→C and A→C places B between A and C (gap between A and C)',
     () {
