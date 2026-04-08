@@ -1,13 +1,133 @@
-import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter_test/flutter_test.dart';
-
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area_state_logic.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   suppressLogsForTests();
   group('GameMapAreaStateLogic', () {
+    test(
+      'projectCivilianMarkersForHumanDraft projects pending assignment tile in same turn',
+      () {
+        const sourceTile = 'oldWorld|p1|0|0';
+        const targetTile = 'oldWorld|p1|1|0';
+        const unitId = 'u_builder';
+        const humanPlayerId = 'gp1';
+
+        final region = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 2,
+          height: 1,
+          cellSize: 16,
+          cells: const [
+            CellViewData(x: 0, y: 0, regionCellId: 'p1', isSea: false),
+            CellViewData(x: 1, y: 0, regionCellId: 'p1', isSea: false),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          factionColors: const {},
+          greatPowerFactionIds: const {},
+          terrainColors: const {},
+          unitMarkers: const [],
+          civilianTileMarkers: const [
+            CivilianTileMarkerView(
+              tileKey: sourceTile,
+              x: 0,
+              y: 0,
+              localProvinceId: 'p1',
+              unitIds: [unitId],
+              unitTypes: {unitId: 'Builder'},
+              representativeUnitType: 'Builder',
+              stackCount: 1,
+              representativeIsAssigned: false,
+            ),
+          ],
+        );
+        final game = ct_models.Game(
+          id: 'g',
+          worldState: ct_models.WorldState(
+            turnState: ct_models.TurnState(
+              phase: ct_models.TurnPhase.orders,
+              turnNumber: 1,
+            ),
+            oldWorld: ct_models.RegionData(
+              provinces: [
+                ct_models.Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
+              ],
+              units: [
+                ct_models.Unit(
+                  id: unitId,
+                  type: 'Builder',
+                  ownerId: humanPlayerId,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: sourceTile,
+                  status: ct_models.UnitStatus.idle,
+                ),
+              ],
+            ),
+            newWorld: ct_models.RegionData(provinces: [], units: []),
+          ),
+          players: const [
+            ct_models.Player(
+              id: humanPlayerId,
+              displayName: 'Human',
+              isHuman: true,
+            ),
+          ],
+          minorNations: const [],
+          tribes: const [],
+        );
+        final orders = const ct_models.Orders(
+          workOrdersByPlayerId: {
+            humanPlayerId: [
+              ct_models.WorkOrder(
+                unitId: unitId,
+                target: 'build_improvement',
+                targetTileKey: targetTile,
+              ),
+            ],
+          },
+        );
+
+        final projected =
+            GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+              region: region,
+              game: game,
+              orders: orders,
+              humanPlayerId: humanPlayerId,
+            );
+
+        expect(projected.civilianTileMarkers, hasLength(1));
+        final marker = projected.civilianTileMarkers.single;
+        expect(marker.tileKey, targetTile);
+        expect(marker.x, 1);
+        expect(marker.y, 0);
+        expect(marker.representativeIsAssigned, isTrue);
+      },
+    );
+
+    test('selectionAfterWorkAssignment clears stale selected marker tile', () {
+      final next = GameMapAreaStateLogic.selectionAfterWorkAssignment(
+        currentSelectedCivilianTileKey: 'oldWorld|p1|0|0',
+        assignedTileKey: 'oldWorld|p1|1|0',
+      );
+      expect(next, isNull);
+    });
+
+    test(
+      'selectionAfterWorkAssignment preserves selection on assigned tile',
+      () {
+        final next = GameMapAreaStateLogic.selectionAfterWorkAssignment(
+          currentSelectedCivilianTileKey: 'oldWorld|p1|1|0',
+          assignedTileKey: 'oldWorld|p1|1|0',
+        );
+        expect(next, 'oldWorld|p1|1|0');
+      },
+    );
+
     group('displayProvinceOrSeaIdFromTileKey', () {
       test('extracts region and province from full tile key', () {
         expect(
@@ -64,8 +184,7 @@ void main() {
 
     group('translateWorkTargetTileKey', () {
       test('province-based work targets rewrite tile coords to x=0,y=0', () {
-        final translated =
-            GameMapAreaStateLogic.translateWorkTargetTileKey(
+        final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1|10|20',
           workTarget: 'explore',
         );
@@ -73,8 +192,7 @@ void main() {
       });
 
       test('non-province-based work targets return tileKey unchanged', () {
-        final translated =
-            GameMapAreaStateLogic.translateWorkTargetTileKey(
+        final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1|10|20',
           workTarget: 'move',
         );
@@ -82,8 +200,7 @@ void main() {
       });
 
       test('short tile keys return tileKey unchanged', () {
-        final translated =
-            GameMapAreaStateLogic.translateWorkTargetTileKey(
+        final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1',
           workTarget: 'explore',
         );
@@ -95,12 +212,10 @@ void main() {
     group('addHumanWorkOrder', () {
       test('appends work order under given humanPlayerId', () {
         const humanPlayerId = 'gp1';
-        final orders = Orders(
-          workOrdersByPlayerId: const {
-            humanPlayerId: [],
-          },
+        final orders = ct_models.Orders(
+          workOrdersByPlayerId: const {humanPlayerId: []},
         );
-        final workOrder = WorkOrder(
+        final workOrder = ct_models.WorkOrder(
           unitId: 'u1',
           target: 'explore',
           targetTileKey: 'oldWorld|p1|0|0',
@@ -112,12 +227,8 @@ void main() {
           workOrder: workOrder,
         );
 
-        expect(
-          updated.workOrdersByPlayerId[humanPlayerId],
-          [workOrder],
-        );
+        expect(updated.workOrdersByPlayerId[humanPlayerId], [workOrder]);
       });
     });
   });
 }
-
