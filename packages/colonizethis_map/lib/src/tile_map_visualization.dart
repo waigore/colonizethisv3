@@ -9,9 +9,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'tile_map_visualization_shared.dart'
     show colorMapFromIds, continentSeedMarkerRgb, drawBorders,
         drawLegendContinentSeedMarker, drawLegendLandSeedMarker,
-        drawLegendSwatch, landSeedMarkerRgb, legendLineHeight, legendPadding,
-        regionPalette, resourceToLegendLabel, resourceToLegendLetter, swatchGap,
-        swatchSize, terrainColorRgb;
+        drawLegendSwatch, drawResourceLetterAtCellCenter, landSeedMarkerRgb,
+        legendLineHeight, legendPadding, regionPalette, resourceToLegendLabel,
+        resourceToLegendLetter, swatchGap, swatchSize, terrainColorRgb;
 
 /// Deep blue for sea zones. SPEC/program/map-visualization.md § Tile map PNG export.
 const (int, int, int) seaColorRgb = (20, 60, 140);
@@ -255,18 +255,19 @@ Uint8List renderTileMapToPng(
 
   // Resource letters (drawn last on map so visible).
   if (result.resourceGrid != null) {
-    const letterOffsetX = 4;
-    const letterOffsetY = 7;
     for (var y = 0; y < result.height; y++) {
       for (var x = 0; x < result.width; x++) {
         final r = result.resourceAt(x, y);
         if (r == null) continue;
         final letter = resourceToLegendLetter(r);
-        final cx = x * cellSize + cellSize ~/ 2;
-        final cy = y * cellSize + cellSize ~/ 2;
-        final px = cx - letterOffsetX;
-        final py = cy - letterOffsetY;
-        img.drawString(image, letter, font: img.arial14, x: px, y: py, color: black);
+        drawResourceLetterAtCellCenter(
+          image,
+          letter: letter,
+          cellX: x,
+          cellY: y,
+          cellSize: cellSize,
+          color: black,
+        );
       }
     }
   }
