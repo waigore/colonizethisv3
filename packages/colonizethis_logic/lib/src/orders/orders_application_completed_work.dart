@@ -120,8 +120,11 @@ void _completedWorkBuildImprovement(
   void Function(List<Province>) setProvinces,
   void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
-  final level = s.tileState.improvementLevel(cw.tileKey);
-  s.tileState = s.tileState.setImprovement(cw.tileKey, (level + 1).clamp(0, 4));
+  final level = s.work.tileState.improvementLevel(cw.tileKey);
+  s.work.tileState = s.work.tileState.setImprovement(
+    cw.tileKey,
+    (level + 1).clamp(0, 4),
+  );
 }
 
 void _completedWorkUpgradeTown(
@@ -164,12 +167,12 @@ void _completedWorkBuildRoad(
   void Function(List<Province>) setProvinces,
   void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
-  final roadLevel = s.tileState.roadLevel(cw.tileKey);
+  final roadLevel = s.work.tileState.roadLevel(cw.tileKey);
   final player = s.game.playerById(u.ownerId);
   final hasRoadConstruction =
       player?.techUnlocked?['road_construction'] == true;
   final nextLevel = (roadLevel + 1).clamp(0, hasRoadConstruction ? 2 : 1);
-  s.tileState = s.tileState.setRoadLevel(cw.tileKey, nextLevel);
+  s.work.tileState = s.work.tileState.setRoadLevel(cw.tileKey, nextLevel);
 
   final tileMap = s.tileMapByRegion;
   if (tileMap != null) {
@@ -179,8 +182,8 @@ void _completedWorkBuildRoad(
       player: player,
       worldState: s.game.worldState,
       tileMapByRegion: tileMap,
-      tileState: s.tileState,
-      setTileState: (newTileState) => s.tileState = newTileState,
+      tileState: s.work.tileState,
+      setTileState: (newTileState) => s.work.tileState = newTileState,
     );
   }
 }
@@ -210,8 +213,8 @@ void _completedWorkBuildPort(
     regionId: regionIdFromTile,
   );
   if (seaZoneId != null) {
-    s.portsByProvinceSeaboard['$fullProvinceId|$seaZoneId'] = cw.tileKey;
-    s.tileState = s.tileState.setRoadLevel(cw.tileKey, 4);
+    s.work.portsByProvinceSeaboard['$fullProvinceId|$seaZoneId'] = cw.tileKey;
+    s.work.tileState = s.work.tileState.setRoadLevel(cw.tileKey, 4);
   }
 }
 
@@ -259,7 +262,7 @@ void _completedWorkBuildRail(
   void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final player = s.game.playerById(u.ownerId);
-  final roadLevel = s.tileState.roadLevel(cw.tileKey);
+  final roadLevel = s.work.tileState.roadLevel(cw.tileKey);
   final terrain = terrainTypeForTileKey(s.tileMapByRegion, cw.tileKey);
   final reason = rejectionReasonForBuildRailOrder(
     techUnlocked: player?.techUnlocked,
@@ -267,7 +270,7 @@ void _completedWorkBuildRail(
     terrain: terrain,
   );
   if (reason == null) {
-    s.tileState = s.tileState.setRoadLevel(cw.tileKey, 4);
+    s.work.tileState = s.work.tileState.setRoadLevel(cw.tileKey, 4);
   } else {
     _log.d('build_rail completion skipped unit=${u.id} reason=$reason');
   }

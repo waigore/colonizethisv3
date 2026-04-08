@@ -13,10 +13,10 @@ void _runWorkPhase(
   applyCompletedWorkTarget,
 ) {
   final workOrders = state.workOrders;
-  final tileState = state.tileState;
-  final oldUnitsById = state.oldUnitsById;
-  final newUnitsById = state.newUnitsById;
-  final purchasedTilesByTileKey = state.purchasedTilesByTileKey;
+  final tileState = state.work.tileState;
+  final oldUnitsById = state.work.oldUnitsById;
+  final newUnitsById = state.work.newUnitsById;
+  final purchasedTilesByTileKey = state.work.purchasedTilesByTileKey;
 
   for (final player in state.game.players) {
     var stockpile = player.stockpile;
@@ -387,7 +387,7 @@ void _runWorkPhase(
       }
     }
 
-    state.updatedPlayers.add(
+    state.work.updatedPlayers.add(
       player.copyWith(
         stockpile: stockpile,
         workerPool: workers,
