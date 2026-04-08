@@ -12,6 +12,7 @@ export 'src/naming_rules.dart';
 export 'src/sea_zone_naming.dart';
 export 'src/map_topology.dart';
 export 'src/tech_definition.dart';
+export 'src/tech_ids.dart';
 export 'src/tech_extraction.dart';
 export 'src/riches_prices.dart';
 export 'src/production_recipes.dart';

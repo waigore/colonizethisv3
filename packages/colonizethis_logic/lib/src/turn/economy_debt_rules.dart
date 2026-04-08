@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Debt rules for labour/economy techs (Money Lending, Banking).
@@ -12,9 +13,8 @@ int maxDebtForPlayer(Player player) {
   final unlocked = player.techUnlocked ?? const <String, bool>{};
   // Money Lending: allow moderate research debt. Banking may extend this in a
   // future change.
-  if (unlocked['money_lending'] == true) {
+  if (unlocked[kTechIdMoneyLending] == true) {
     return 500;
   }
   return 0;
 }
-

@@ -151,7 +151,7 @@ class WorkOrderValidator extends OrderValidator {
           );
           if (o.target == kWorkTargetBuildRoad && roadLevel >= 1) {
             final hasRoadConstruction =
-                _context.player.techUnlocked?['road_construction'] == true;
+                _context.player.techUnlocked?[kTechIdRoadConstruction] == true;
             if (!hasRoadConstruction) {
               return OrderValidationResult.rejected(
                 'Road Construction tech required for transport level 2',
@@ -160,13 +160,13 @@ class WorkOrderValidator extends OrderValidator {
           }
           if (o.target == kWorkTargetBuildFort) {
             if (fortLevel == 1 &&
-                _context.player.techUnlocked?['mine_engineering'] != true) {
+                _context.player.techUnlocked?[kTechIdMineEngineering] != true) {
               return OrderValidationResult.rejected(
                 'Mine Engineering tech required for fort level 2',
               );
             }
             if (fortLevel == 2 &&
-                _context.player.techUnlocked?['modern_forts'] != true) {
+                _context.player.techUnlocked?[kTechIdModernForts] != true) {
               return OrderValidationResult.rejected(
                 'Modern Forts tech required for fort level 3',
               );
