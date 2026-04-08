@@ -548,8 +548,111 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Improves: Sugar cane extraction cap to 3');
         list.add('Unlocks: Sugar Industry');
         break;
+      case 'sugar_industry':
+        list.add('Improves: Sugar cane extraction cap to 4');
+        list.add(
+          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+        );
+        break;
+      case 'discovery_of_tobacco':
+        list.add(
+          'Enables: Research when player has revealed tobacco (discovery rule)',
+        );
+        list.add('Unlocks: Tobacco Planting and Cigar Production');
+        break;
+      case 'tobacco_planting':
+        list.add('Improves: Tobacco extraction cap to 2');
+        list.add('Unlocks: Large Tobacco Plantations');
+        break;
+      case 'cigar_production':
+        list.add(
+          'Enables: Cigar luxury production for Journeyman-tier worker consumption',
+        );
+        list.add('Unlocks: Trained Journeymen');
+        break;
+      case 'large_tobacco_plantations':
+        list.add('Improves: Tobacco extraction cap to 3');
+        list.add('Unlocks: Tobacco Industry');
+        break;
+      case 'tobacco_industry':
+        list.add('Improves: Tobacco extraction cap to 4');
+        list.add(
+          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+        );
+        break;
+      case 'discovery_of_cotton':
+        list.add(
+          'Enables: Research when player has revealed cotton (discovery rule)',
+        );
+        list.add('Unlocks: Cotton Planting and Cotton Weaving');
+        break;
+      case 'cotton_planting':
+        list.add('Improves: Cotton extraction cap to 2');
+        list.add('Unlocks: Large Cotton Plantations');
+        break;
+      case 'cotton_weaving':
+        list.add('Enables: Cloth production from cotton');
+        list.add(
+          'Prerequisite-only in MVP catalog: no other tech requires this; recipe unlock is the active benefit',
+        );
+        break;
+      case 'large_cotton_plantations':
+        list.add('Improves: Cotton extraction cap to 3');
+        list.add('Unlocks: Cotton Gin');
+        break;
+      case 'cotton_gin':
+        list.add('Improves: Cotton extraction cap to 4');
+        list.add(
+          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+        );
+        break;
+      case 'discovery_of_furs':
+        list.add(
+          'Enables: Research when player has revealed furs (discovery rule)',
+        );
+        list.add('Unlocks: Improved Trapping Techniques and Hat Production');
+        break;
+      case 'improved_trapping_techniques':
+        list.add('Improves: Furs extraction cap to 2');
+        list.add('Unlocks: Riverboats');
+        break;
       case 'hat_production':
-        list.add('Improves: Enables fur hats luxury production');
+        list.add(
+          'Enables: Fur hats luxury production for Master-tier worker consumption',
+        );
+        list.add('Unlocks: Master Artisans');
+        break;
+      case 'riverboats':
+        list.add('Improves: Furs extraction cap to 3');
+        list.add(
+          'Unlocks: Excessive Fur Harvesting and Merchant Steamships research paths',
+        );
+        break;
+      case 'excessive_fur_harvesting':
+        list.add('Improves: Furs extraction cap to 4');
+        list.add(
+          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+        );
+        break;
+      case 'discovery_of_spices':
+        list.add(
+          'Enables: Research when player has revealed spices (discovery rule)',
+        );
+        list.add('Unlocks: Improved Sea Routes');
+        break;
+      case 'improved_sea_routes':
+        list.add('Improves: Spices extraction cap to 2');
+        list.add('Unlocks: Large Spice Plantations');
+        break;
+      case 'large_spice_plantations':
+        list.add('Improves: Spices extraction cap to 3');
+        list.add('Unlocks: Improved Food Preservation');
+        break;
+      case 'improved_food_preservation':
+        list.add('Improves: Spices extraction cap to 4');
+        list.add(
+          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+        );
         break;
       default:
         if (list.isEmpty) {
