@@ -95,10 +95,7 @@ Game applyNavalMissionOrders(
         final homeFleet = fleetById[homeFleetId];
         if (homeFleet == null) continue;
         // Only fleets in port at the player's capital province can join home fleet. SPEC/game/ships-and-naval.md.
-        final capitalProvinceId = game.players
-            .where((p) => p.id == playerId)
-            .map((p) => p.capitalProvinceId)
-            .firstOrNull;
+        final capitalProvinceId = game.playerById(playerId)?.capitalProvinceId;
         if (capitalProvinceId == null ||
             fleet.inPortAtProvinceId != capitalProvinceId) {
           continue;

@@ -154,9 +154,7 @@ List<DialogueEvent> dialogueEventsForReactiveFortsOnBorder(
   String provinceId,
   int seed,
 ) {
-  final builder = game.players
-      .where((p) => p.id == builderPlayerId)
-      .firstOrNull;
+  final builder = game.playerById(builderPlayerId);
   if (builder == null || builder.isHuman != true) return [];
   final regionId = ProvinceId.regionIdFrom(provinceId);
   final localId = ProvinceId.localIdFrom(provinceId);
