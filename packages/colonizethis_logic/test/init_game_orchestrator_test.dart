@@ -344,7 +344,7 @@ void main() {
     );
 
     test(
-      'throws SetupValidationException when OW provinces fewer than Great Powers',
+      'throws setup config exception when OW provinces fewer than Great Powers',
       () {
         // Config with 6 GPs but only 2 OW provinces: createGameFromGeneratedMaps throws
         // (either "provinces" or "sea-bound provinces" check). Accept either message.
@@ -360,12 +360,13 @@ void main() {
             options: const InitGameOptions(cellSize: 8, renderPng: false),
           ),
           throwsA(
-            predicate<SetupValidationException>((e) {
-              final msg = e.message ?? '';
-              return msg.contains('Great Powers') &&
-                  (msg.contains('need at least one each') ||
-                      msg.contains('need one each'));
-            }),
+            isA<SetupConfigConstraintException>()
+                .having(
+                  (e) => e.code,
+                  'code',
+                  'insufficient_old_world_provinces_for_great_powers',
+                )
+                .having((e) => e.message, 'message', contains('Great Powers')),
           ),
         );
       },
