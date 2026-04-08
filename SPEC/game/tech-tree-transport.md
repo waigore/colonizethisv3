@@ -8,10 +8,10 @@
 
 | id | name | era | prerequisites | effects |
 |----|------|-----|---------------|--------|
-| road_construction | Road Construction | 1 | saw_mill, land_enclosure, iron_mining | Allows building transport level 2 (2 units/tile); leads to railroads |
-| early_steam_engine | Early Steam Engine | 2 | road_construction, square_set_timbering, steam_in_mining | Railroads in flat terrain; 4 units/tile; unlocks Rail Builder |
-| later_steam_engine | Later Steam Engine | 3 | early_steam_engine, crucible_process | Rail through hills and swamps |
-| dynamite | Dynamite | 4 | later_steam_engine, banking, explosives | Railroads through mountains |
+| road_construction | Road Construction | 1 | saw_mill, land_enclosure, iron_mining | Enables: Engineer build orders that set transport level **2** roads (capacity **2 units/tile**). Unlocks: prerequisite for `early_steam_engine`. |
+| early_steam_engine | Early Steam Engine | 2 | road_construction, square_set_timbering, steam_in_mining | Enables: Rail Builder unit and railroad build orders on flat terrain only (transport level **4**, capacity **4 units/tile**). Unlocks: prerequisite for `later_steam_engine`, `tobacco_industry`, and `riverboats`. |
+| later_steam_engine | Later Steam Engine | 3 | early_steam_engine, crucible_process | Enables: railroad build orders on hills and swamps in addition to flat terrain (transport level **4**). Unlocks: prerequisite for `dynamite` and `excessive_fur_harvesting`. |
+| dynamite | Dynamite | 4 | later_steam_engine, banking, explosives | Enables: railroad build orders on mountains (completes flat/hill/swamp/mountain rail coverage at transport level **4**). Unlocks: prerequisite for `safety_lamp`, `geological_prospecting`, and `amalgamation_process`. |
 
 ---
 

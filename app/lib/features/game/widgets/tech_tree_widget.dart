@@ -342,13 +342,28 @@ class TechTreeWidget extends StatelessWidget {
     }
     switch (tech.id) {
       case 'university':
-        list.add('Fourth research slot');
+        list.add('Enables: Fourth active research slot (3 -> 4)');
+        list.add(
+          'Unlocks: Master Artisans, Propaganda, Scientific Cattle Breeding',
+        );
         break;
       case 'road_construction':
-        list.add('Road level 2');
+        list.add('Enables: Engineer road upgrades to transport level 2');
+        list.add('Unlocks: Early Steam Engine');
         break;
       case 'early_steam_engine':
-        list.add('Railroads');
+        list.add('Enables: Rail Builder and railroads on flat terrain');
+        list.add('Unlocks: Later Steam Engine, Riverboats, Tobacco Industry');
+        break;
+      case 'later_steam_engine':
+        list.add('Enables: Railroads on hills and swamps');
+        list.add('Unlocks: Dynamite and Excessive Fur Harvesting');
+        break;
+      case 'dynamite':
+        list.add('Enables: Railroads on mountains');
+        list.add(
+          'Unlocks: Safety Lamp, Geological Prospecting, Amalgamation Process',
+        );
         break;
       case 'mine_engineering':
         list.add('Enables: Builder upgrades to Fort Level 2');
@@ -357,46 +372,62 @@ class TechTreeWidget extends StatelessWidget {
         );
         break;
       case 'national_bureaucracy':
-        list.add('Builders can upgrade provincial towns');
-        list.add('Helps increase general cap');
+        list.add('Enables: Builder upgrade_town work order');
+        list.add('Improves: General cap floor to at least 3');
+        list.add('Unlocks: Propaganda');
         break;
       case 'merchant_companies':
-        list.add('Unlocks Merchant civilian unit');
-        list.add('Allows purchasing land in Minor Nations (with embassy)');
+        list.add('Enables: Merchant civilian unit construction');
+        list.add(
+          'Enables: purchase_land in Minor Nations/Tribes (requires embassy, not at war)',
+        );
+        list.add('Unlocks: Trade Fairs');
         break;
       case 'printing_press':
-        list.add('Enables Trained Journeymen and advanced tactics');
+        list.add(
+          'Unlocks: Trained Journeymen, University, and military doctrine paths',
+        );
+        list.add('Prerequisite-only in MVP: no direct economy modifier');
         break;
       case 'money_lending':
-        list.add('Research funding may reduce treasury to −500');
-        list.add('General borrowing/interest not simulated yet');
+        list.add('Enables: Research-phase treasury floor to -500');
+        list.add('Prerequisite for: University, National Bureaucracy');
+        list.add('Deferred: General borrowing/interest not simulated yet');
         break;
       case 'apprentice_workers':
         list.add(
-          'Unlocks Apprentice Workers (4× labour; consume refined sugar)',
+          'Enables: Apprentice tier (4x labour; consumes refined sugar)',
         );
+        list.add('Unlocks: University and Master Artisans');
         break;
       case 'trained_journeymen':
-        list.add('Unlocks Trained Journeymen (6× labour; consume cigars)');
+        list.add('Enables: Journeyman tier (6x labour; consumes cigars)');
+        list.add('Unlocks: Cotton Gin and Recruit Steppe Horsemen');
         break;
       case 'master_artisans':
-        list.add('Unlocks Master Artisans (8× labour; consume fur hats)');
+        list.add('Enables: Master tier (8x labour; consumes fur hats)');
+        list.add('Unlocks: Banking, Nationalism, Scientific Cattle Breeding');
         break;
       case 'trade_fairs':
         list.add(
-          'Planned: more trade commodity slots vs baseline (not active yet)',
+          'Enables: Planned increase to trade commodity slots (deferred in MVP)',
         );
+        list.add('Unlocks: Banking');
         break;
       case 'banking':
-        list.add('Unlocks later military, diplomacy, and transport techs');
-        list.add('Extended banking rules not active yet');
+        list.add('Unlocks: Dynamite, Empire Building, Modern Military Funding');
+        list.add('Prerequisite-only in MVP: extended banking rules deferred');
         break;
       case 'diplomatic_expertise':
-        list.add('Unlocks embassies with Minor Nations');
-        list.add('Civilian units may work in Minors with an embassy');
+        list.add('Enables: Embassy overtures with Minor Nations');
+        list.add('Enables: civilian work in embassy-linked Minor Nations');
+        list.add('Unlocks: National Bureaucracy');
         break;
       case 'propaganda':
-        list.add('Decreases diplomatic penalties for declaring war');
+        list.add(
+          'Improves: Diplomatic protest war penalty against aggressor (-10 -> -5)',
+        );
+        list.add('Unlocks: Nationalism');
         break;
       case 'nationalism':
         list.add('Increases battle deployment limit to 12 regiments');
@@ -639,6 +670,26 @@ class TechTreeWidget extends StatelessWidget {
           'Enables: Research when player has revealed spices (discovery rule)',
         );
         list.add('Unlocks: Improved Sea Routes');
+        break;
+      case 'discovery_of_gold_or_silver':
+        list.add(
+          'Enables: Research when player has revealed and prospected gold/silver',
+        );
+        list.add('Unlocks: Precious Metals Mining');
+        break;
+      case 'precious_metals_mining':
+        list.add('Improves: Gold/silver extraction cap to 2');
+        list.add('Unlocks: Extraction of Precious Metals');
+        break;
+      case 'discovery_of_gems_or_diamonds':
+        list.add(
+          'Enables: Research when player has revealed and prospected gems/diamonds',
+        );
+        list.add('Unlocks: Precious Stone Mining');
+        break;
+      case 'precious_stone_mining':
+        list.add('Improves: Gems/diamonds extraction cap to 2');
+        list.add('Unlocks: Large Precious Stone Mines (with Modern Forts)');
         break;
       case 'improved_sea_routes':
         list.add('Improves: Spices extraction cap to 2');

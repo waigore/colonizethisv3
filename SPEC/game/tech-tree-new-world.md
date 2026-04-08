@@ -32,10 +32,10 @@
 | improved_sea_routes | Improved Sea Routes | 1 | discovery_of_spices | Improves: spices extraction cap to **2**. Unlocks: prerequisite for `large_spice_plantations`. |
 | large_spice_plantations | Large Spice Plantations | 2 | seed_drill, improved_sea_routes | Improves: spices extraction cap to **3**. Unlocks: prerequisite for `improved_food_preservation`. |
 | improved_food_preservation | Improved Food Preservation | 3 | large_spice_plantations | Improves: spices extraction cap to **4**. Prerequisite-only: no additional techs currently depend on this in the MVP catalog. |
-| discovery_of_gold_or_silver | Discovery of Gold or Silver | 1 | (Explorer finds gold/silver) | Precious metal mines |
-| precious_metals_mining | Precious Metals Mining | 1 | discovery_of_gold_or_silver, mine_engineering | Gold/silver 2 |
-| discovery_of_gems_or_diamonds | Discovery of Gems or Diamonds | 1 | (Explorer finds gems/diamonds) | Precious stone mines |
-| precious_stone_mining | Precious Stone Mining | 1 | discovery_of_gems_or_diamonds | Gems/diamonds 2 |
+| discovery_of_gold_or_silver | Discovery of Gold or Silver | 1 | (Explorer finds gold/silver) | Enables: researchable only when the player has revealed and prospected a tile with gold or silver per the discovery rule in this doc. Unlocks: `precious_metals_mining` and `extraction_of_precious_metals` (with `university`). |
+| precious_metals_mining | Precious Metals Mining | 1 | discovery_of_gold_or_silver, mine_engineering | Improves: gold/silver extraction cap to **2**. Unlocks: prerequisite for `extraction_of_precious_metals`. |
+| discovery_of_gems_or_diamonds | Discovery of Gems or Diamonds | 1 | (Explorer finds gems/diamonds) | Enables: researchable only when the player has revealed and prospected a tile with gems or diamonds per the discovery rule in this doc. Unlocks: `precious_stone_mining` and `large_precious_stone_mines` (with `modern_forts`). |
+| precious_stone_mining | Precious Stone Mining | 1 | discovery_of_gems_or_diamonds | Improves: gems/diamonds extraction cap to **2**. Unlocks: prerequisite for `large_precious_stone_mines`. |
 
 ---
 
