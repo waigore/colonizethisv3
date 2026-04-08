@@ -1,6 +1,6 @@
 // Root ctterm app: navigation shell and main menu. SPEC/tui/ctterm.md. /// CTTerm application entry point
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart';
 
 import 'package:ctterm/ctterm_routes.dart';
@@ -12,7 +12,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Pending setup data when user has completed Game Setup and we are about to generate the world.
 class _PendingNewGameConfig {

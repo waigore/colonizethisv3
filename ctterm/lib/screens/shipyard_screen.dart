@@ -1,6 +1,6 @@
 // Shipyard Screen: construct naval units. SPEC/tui/screens/shipyard.md.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:collection/collection.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
@@ -9,7 +9,7 @@ import 'package:ctterm/screens/input_mode.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Display info for a ship type in the Shipyard.
 class ShipDisplayInfo {

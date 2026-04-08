@@ -1,10 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/naval.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Sea transport: allocate overseas extraction to stockpile by priority. SPEC/program/auto-transport.
 /// Trade/transport interception: SPEC/program/naval-movement-resolution.md (P_cargo_intercept, P_ship_sunk).

@@ -1,11 +1,11 @@
 // Dossier projection: PlayerView-safe read API. SPEC/ai/ai-dossier.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = aiLogger();
+final _log = packageLogger();
 
 /// Suspicion band for display. Never exposes true agenda.
 /// Bands defined by [dossierScoreUnknownMax], [dossierScorePossibleMax], etc. SPEC/ai/ai-dossier.md.

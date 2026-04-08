@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/app.dart';
@@ -41,8 +41,8 @@ const String combatModeChoiceDialogId = 'combat_mode_choice';
 /// [OpenDialogEvent] id for [QuickBattleResultDialog]. SPEC/program/app-ui-wiring.md.
 const String quickBattleResultDialogId = 'quick_battle_result';
 
-final _logShell = appLogger('shell');
-final _logEvent = appLogger('event');
+final _logShell = packageLogger('shell');
+final _logEvent = packageLogger('event');
 
 /// Applies a chosen combat mode to the current game session state.
 @visibleForTesting

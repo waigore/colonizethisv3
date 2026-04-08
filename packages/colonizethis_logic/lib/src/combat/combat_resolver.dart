@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -13,7 +13,7 @@ import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';
 import 'military_strength.dart';
 
-final _combatLog = logicLogger();
+final _combatLog = packageLogger();
 
 /// Result of one engagement. SPEC/game/combat.md.
 enum EngagementResult {

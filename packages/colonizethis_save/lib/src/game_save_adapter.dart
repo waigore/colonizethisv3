@@ -1,9 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_save/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:hive/hive.dart';
 
-final _log = saveLogger();
+final _log = packageLogger();
 
 const String _suffixTileMapByRegion = '_tileMapByRegion';
 const String _suffixTopologyByRegion = '_topologyByRegion';

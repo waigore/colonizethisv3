@@ -3,12 +3,12 @@
 import 'dart:collection';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 const int _initTownRoadLevel = 1;
 

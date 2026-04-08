@@ -2,12 +2,12 @@
 // SPEC/tui/ctterm.md, SPEC/tui/screens/map-context.md
 
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Map context screen showing detailed province information, map layers, and region navigation.
 class MapContextScreen extends StatefulComponent {

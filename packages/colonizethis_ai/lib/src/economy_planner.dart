@@ -1,11 +1,11 @@
 // Economy planner: worker allocation and cargo preference. SPEC/ai/economy-planner.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = aiLogger('economy_planner');
+final _log = packageLogger('economy_planner');
 
 /// Shortage target below which we consider a commodity "needed".
 const int _kShortageThreshold = 8;

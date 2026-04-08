@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'naval.dart';
@@ -7,7 +7,7 @@ import 'province_lookup.dart';
 import 'topology_helpers.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Result of connectivity resolution: connected tile set and per-tile path transport cap.
 /// SPEC/game/capital-and-connectivity, extraction-and-improvements: effective yield is

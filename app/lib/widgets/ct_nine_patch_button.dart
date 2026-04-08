@@ -1,4 +1,4 @@
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:flame/widgets.dart';
 import 'package:flutter/material.dart';
 
@@ -84,7 +84,7 @@ class CtNinePatchButton extends StatelessWidget {
               child: child,
             ),
             errorBuilder: (_) {
-              appLogger('ui').w(
+              packageLogger('ui').w(
                 'nine-patch button asset not found, using fallback',
               );
               return _FallbackButton(

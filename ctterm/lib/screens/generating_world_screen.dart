@@ -2,10 +2,10 @@
 
 import 'dart:async';
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Screen shown while the game world is being generated.
 /// SPEC/tui/screens/generating-world.md.

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 
 import '../game_events.dart';
 
@@ -8,7 +8,7 @@ import '../game_events.dart';
 /// SPEC/program/logging/events.md — truncate with `…` and `truncated=true` when exceeded.
 const int kGameEventLogSummaryMaxChars = 500;
 
-final _gameEventLog = logicLogger();
+final _gameEventLog = packageLogger();
 
 extension _GameEventStreamWhereType on Stream<GameEvent> {
   Stream<T> whereType<T extends GameEvent>() {

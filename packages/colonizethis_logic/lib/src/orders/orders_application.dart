@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -22,7 +22,7 @@ part 'orders_application_work_phase.dart';
 part 'orders_application_completed_work.dart';
 part 'orders_application_build_phase.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 void _appendMilitaryRegimentToArmy(
   _BuildWorkState state,

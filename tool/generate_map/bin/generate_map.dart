@@ -6,11 +6,11 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:generate_map/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = mapLogger();
+final _log = packageLogger();
 
 void _errExit(String message) {
   stderr.writeln(message);

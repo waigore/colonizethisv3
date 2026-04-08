@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show PlayerView, resourceIdVisibleInPlayerView;
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +20,7 @@ import 'town_icon_cache.dart';
 part 'region_map_component_shared.dart';
 part 'region_map_component_render_mixin.dart';
 
-final _log = gameLogger();
+final _log = packageLogger();
 
 /// Flame-based region map component. Renders one RegionMapViewData and exposes
 /// hover/selection state via callbacks. SPEC/ui/map-widget.md.

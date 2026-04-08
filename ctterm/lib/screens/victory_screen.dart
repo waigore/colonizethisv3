@@ -1,11 +1,11 @@
 // Victory screen: shown when human player wins. SPEC/tui/ctterm.md, SPEC/game/victory.md.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Victory screen: shown when human player wins the game.
 /// 

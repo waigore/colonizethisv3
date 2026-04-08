@@ -1,11 +1,11 @@
 // Victory/Progress screen: shows progress toward victory. SPEC/tui/ctterm.md, SPEC/tui/screens/victory-progress.md.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Victory/Progress screen: shows progress toward victory condition.
 /// 
