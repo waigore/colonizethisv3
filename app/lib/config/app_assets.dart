@@ -1,5 +1,7 @@
 /// Root-relative prefix for UI icon PNGs in the Flutter asset bundle (see pubspec `assets:`).
 const String kAppIconAssetPrefix = 'assets/icons/';
+const String kAppIcon32AssetPrefix = 'assets/icons/32/';
+const String kAppIcon64AssetPrefix = 'assets/icons/64/';
 
 /// Root-relative prefix for terrain tile PNGs.
 const String kTerrainTileAssetPrefix = 'assets/images/terrain/tile_';

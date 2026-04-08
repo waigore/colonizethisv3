@@ -49,7 +49,7 @@ class ResourceIconCache {
   bool get isLoaded => _isLoaded;
 
   /// Size of resource icons in pixels.
-  static const double iconSize = 32.0;
+  static const double iconSize = 64.0;
 
   /// Loads all resource icons asynchronously.
   Future<void> load() async {
@@ -71,13 +71,10 @@ class ResourceIconCache {
   }
 
   Future<void> _loadIcon(String resourceId) async {
-    final pngPath = '${kAppIconAssetPrefix}ui_icon_com_$resourceId.png';
+    final pngPath = '${kAppIcon64AssetPrefix}ui_icon_com_$resourceId.png';
     final imageData = await rootBundle.load(pngPath);
     final completer = Completer<ui.Image>();
-    ui.decodeImageFromList(
-      imageData.buffer.asUint8List(),
-      completer.complete,
-    );
+    ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);
     final image = await completer.future;
     _icons[resourceId] = image;
   }
