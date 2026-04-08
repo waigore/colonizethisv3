@@ -610,6 +610,130 @@ void main() {
     },
   );
 
+  testWidgets(
+    'Batch-4 tech descriptions are concrete and avoid generic fallback text (Refs #1628)',
+    (WidgetTester tester) async {
+      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+      final gameWithEmptyPlayer = game.copyWith(
+        players: [emptyPlayer, ...game.players.skip(1)],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TechTreeWidget(
+              game: gameWithEmptyPlayer,
+              player: emptyPlayer,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expectedByTech = <String, String>{
+        'Sugar Industry': 'Improves: Sugar cane extraction cap to 4',
+        'Discovery of Tobacco':
+            'Enables: Research when player has revealed tobacco (discovery rule)',
+        'Tobacco Planting': 'Improves: Tobacco extraction cap to 2',
+        'Cigar Production':
+            'Enables: Cigar luxury production for Journeyman-tier worker consumption',
+        'Large Tobacco Plantations': 'Improves: Tobacco extraction cap to 3',
+        'Tobacco Industry': 'Improves: Tobacco extraction cap to 4',
+        'Discovery of Cotton':
+            'Enables: Research when player has revealed cotton (discovery rule)',
+        'Cotton Planting': 'Improves: Cotton extraction cap to 2',
+        'Cotton Weaving': 'Enables: Cloth production from cotton',
+        'Large Cotton Plantations': 'Improves: Cotton extraction cap to 3',
+      };
+
+      for (final entry in expectedByTech.entries) {
+        final techNode = find.text(entry.key).first;
+        await tester.ensureVisible(techNode);
+        await tester.tap(techNode);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(
+          find.textContaining('Improves gathering capabilities'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves labour and economy output'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves new-world capabilities'),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
+  testWidgets(
+    'Batch-5 tech descriptions are concrete and avoid generic fallback text (Refs #1629)',
+    (WidgetTester tester) async {
+      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+      final gameWithEmptyPlayer = game.copyWith(
+        players: [emptyPlayer, ...game.players.skip(1)],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TechTreeWidget(
+              game: gameWithEmptyPlayer,
+              player: emptyPlayer,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expectedByTech = <String, String>{
+        'Cotton Gin': 'Improves: Cotton extraction cap to 4',
+        'Discovery of Furs':
+            'Enables: Research when player has revealed furs (discovery rule)',
+        'Improved Trapping Techniques': 'Improves: Furs extraction cap to 2',
+        'Hat Production':
+            'Enables: Fur hats luxury production for Master-tier worker consumption',
+        'Riverboats': 'Improves: Furs extraction cap to 3',
+        'Excessive Fur Harvesting': 'Improves: Furs extraction cap to 4',
+        'Discovery of Spices':
+            'Enables: Research when player has revealed spices (discovery rule)',
+        'Improved Sea Routes': 'Improves: Spices extraction cap to 2',
+        'Large Spice Plantations': 'Improves: Spices extraction cap to 3',
+        'Improved Food Preservation': 'Improves: Spices extraction cap to 4',
+      };
+
+      for (final entry in expectedByTech.entries) {
+        final techNode = find.text(entry.key).first;
+        await tester.ensureVisible(techNode);
+        await tester.tap(techNode);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(
+          find.textContaining('Improves gathering capabilities'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves labour and economy output'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves new-world capabilities'),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
   test(
     'Column rule: A→B→C and A→C places B between A and C (gap between A and C)',
     () {

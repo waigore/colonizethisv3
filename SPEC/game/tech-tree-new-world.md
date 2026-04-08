@@ -12,26 +12,26 @@
 | sugar_planting | Sugar Planting | 1 | discovery_of_sugar | Improves: sugar cane extraction cap to **2**. Unlocks: prerequisite for `large_sugar_plantations`. |
 | sugar_refining | Sugar Refining | 1 | discovery_of_sugar | Enables: refined sugar luxury production consumed by Apprentice-tier workers per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `apprentice_workers` (with Land Enclosure) and `trade_fairs` (with Merchant Companies). |
 | large_sugar_plantations | Large Sugar Plantations | 2 | sugar_planting | Improves: sugar cane extraction cap to **3**. Unlocks: prerequisite for `sugar_industry`. |
-| sugar_industry | Sugar Industry | 3 | large_sugar_plantations | Sugar 4 |
-| discovery_of_tobacco | Discovery of Tobacco | 1 | (Explorer finds tobacco) | Tobacco plantations |
-| tobacco_planting | Tobacco Planting | 1 | discovery_of_tobacco | Tobacco 2 |
-| cigar_production | Cigar Production | 1 | discovery_of_tobacco | Cigars (journeyman luxury) |
-| large_tobacco_plantations | Large Tobacco Plantations | 2 | tobacco_planting, seed_drill | Tobacco 3 |
-| tobacco_industry | Tobacco Industry | 3 | early_steam_engine, large_tobacco_plantations | Tobacco 4 |
-| discovery_of_cotton | Discovery of Cotton | 1 | (Explorer finds cotton) | Cotton plantations |
-| cotton_planting | Cotton Planting | 1 | discovery_of_cotton | Cotton 2 |
-| cotton_weaving | Cotton Weaving | 1 | discovery_of_cotton | Fabric from cotton |
-| large_cotton_plantations | Large Cotton Plantations | 2 | cotton_planting | Cotton 3 |
-| cotton_gin | Cotton Gin | 3 | large_cotton_plantations, trained_journeymen | Cotton 4 |
-| discovery_of_furs | Discovery of Furs | 1 | (Explorer finds furs) | Fur trapping |
-| improved_trapping_techniques | Improved Trapping Techniques | 1 | discovery_of_furs | Furs 2 |
-| hat_production | Hat Production | 1 | discovery_of_furs | Fur hats (master artisan luxury) |
-| riverboats | Riverboats | 3 | improved_trapping_techniques, early_steam_engine | Furs 3 (trapper camps) |
-| excessive_fur_harvesting | Excessive Fur Harvesting | 4 | later_steam_engine, riverboats | Furs 4 |
-| discovery_of_spices | Discovery of Spices | 1 | (Explorer finds spices) | Spice orchards |
-| improved_sea_routes | Improved Sea Routes | 1 | discovery_of_spices | Spices from upgraded farms |
-| large_spice_plantations | Large Spice Plantations | 2 | seed_drill, improved_sea_routes | Spices 3 |
-| improved_food_preservation | Improved Food Preservation | 3 | large_spice_plantations | Spices 4 |
+| sugar_industry | Sugar Industry | 3 | large_sugar_plantations | Improves: sugar cane extraction cap to **4**. Prerequisite-only: no additional techs currently depend on this in the MVP catalog. |
+| discovery_of_tobacco | Discovery of Tobacco | 1 | (Explorer finds tobacco) | Enables: researchable only when the player has revealed tobacco per the discovery rule in this doc. Unlocks: `tobacco_planting` and `cigar_production`. |
+| tobacco_planting | Tobacco Planting | 1 | discovery_of_tobacco | Improves: tobacco extraction cap to **2**. Unlocks: prerequisite for `large_tobacco_plantations`. |
+| cigar_production | Cigar Production | 1 | discovery_of_tobacco | Enables: cigar luxury production consumed by Journeyman-tier workers per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `trained_journeymen`. |
+| large_tobacco_plantations | Large Tobacco Plantations | 2 | tobacco_planting, seed_drill | Improves: tobacco extraction cap to **3**. Unlocks: prerequisite for `tobacco_industry`. |
+| tobacco_industry | Tobacco Industry | 3 | early_steam_engine, large_tobacco_plantations | Improves: tobacco extraction cap to **4**. Prerequisite-only: no additional techs currently depend on this in the MVP catalog. |
+| discovery_of_cotton | Discovery of Cotton | 1 | (Explorer finds cotton) | Enables: researchable only when the player has revealed cotton per the discovery rule in this doc. Unlocks: `cotton_planting` and `cotton_weaving`. |
+| cotton_planting | Cotton Planting | 1 | discovery_of_cotton | Improves: cotton extraction cap to **2**. Unlocks: prerequisite for `large_cotton_plantations`. |
+| cotton_weaving | Cotton Weaving | 1 | discovery_of_cotton | Enables: cloth production from cotton via labour/industry recipes. Unlocks: prerequisite-only in MVP catalog (no direct downstream tech dependency yet). |
+| large_cotton_plantations | Large Cotton Plantations | 2 | cotton_planting | Improves: cotton extraction cap to **3**. Unlocks: prerequisite for `cotton_gin`. |
+| cotton_gin | Cotton Gin | 3 | large_cotton_plantations, trained_journeymen | Improves: cotton extraction cap to **4**. Prerequisite-only: no additional techs currently depend on this in the MVP catalog. |
+| discovery_of_furs | Discovery of Furs | 1 | (Explorer finds furs) | Enables: researchable only when the player has revealed furs per the discovery rule in this doc. Unlocks: `improved_trapping_techniques` and `hat_production`. |
+| improved_trapping_techniques | Improved Trapping Techniques | 1 | discovery_of_furs | Improves: furs extraction cap to **2**. Unlocks: prerequisite for `riverboats`. |
+| hat_production | Hat Production | 1 | discovery_of_furs | Enables: fur hats luxury production consumed by Master-tier workers per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `master_artisans`. |
+| riverboats | Riverboats | 3 | improved_trapping_techniques, early_steam_engine | Improves: furs extraction cap to **3**. Unlocks: prerequisite for `excessive_fur_harvesting` and `merchant_steamships`. |
+| excessive_fur_harvesting | Excessive Fur Harvesting | 4 | later_steam_engine, riverboats | Improves: furs extraction cap to **4**. Prerequisite-only: no additional techs currently depend on this in the MVP catalog. |
+| discovery_of_spices | Discovery of Spices | 1 | (Explorer finds spices) | Enables: researchable only when the player has revealed spices per the discovery rule in this doc. Unlocks: `improved_sea_routes`. |
+| improved_sea_routes | Improved Sea Routes | 1 | discovery_of_spices | Improves: spices extraction cap to **2**. Unlocks: prerequisite for `large_spice_plantations`. |
+| large_spice_plantations | Large Spice Plantations | 2 | seed_drill, improved_sea_routes | Improves: spices extraction cap to **3**. Unlocks: prerequisite for `improved_food_preservation`. |
+| improved_food_preservation | Improved Food Preservation | 3 | large_spice_plantations | Improves: spices extraction cap to **4**. Prerequisite-only: no additional techs currently depend on this in the MVP catalog. |
 | discovery_of_gold_or_silver | Discovery of Gold or Silver | 1 | (Explorer finds gold/silver) | Precious metal mines |
 | precious_metals_mining | Precious Metals Mining | 1 | discovery_of_gold_or_silver, mine_engineering | Gold/silver 2 |
 | discovery_of_gems_or_diamonds | Discovery of Gems or Diamonds | 1 | (Explorer finds gems/diamonds) | Precious stone mines |
