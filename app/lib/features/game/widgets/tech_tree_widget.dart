@@ -787,6 +787,111 @@ class TechTreeWidget extends StatelessWidget {
           'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
         );
         break;
+      case 'industrial_machinery':
+        list.add(
+          'Unlocks: Explosives, Improved Cavalry Weapons, Industrial Funding of Research (as prerequisite)',
+        );
+        list.add(
+          'Improves (deferred in MVP): military attack treasury cost by 25% once application point is fixed per SPEC',
+        );
+        break;
+      case 'explosives':
+        list.add('Improves: Musketeers regiment upgrade path');
+        list.add('Prerequisite for: Elite Military Training');
+        break;
+      case 'early_rifles':
+        list.add('Improves: Calivermen regiment upgrade path');
+        list.add(
+          'Prerequisite for: Long Range Rifles, Scouting, and Needle Guns',
+        );
+        break;
+      case 'long_range_rifles':
+        list.add('Improves: Skirmishers regiment upgrade path');
+        break;
+      case 'needle_guns':
+        list.add('Improves: Regulars regiment upgrade path');
+        list.add('Prerequisite for: Elite Military Training');
+        break;
+      case 'elite_military_training':
+        list.add('Improves: Grenadiers regiment upgrade path');
+        break;
+      case 'recruit_steppe_horsemen':
+        list.add('Improves: Squires regiment upgrade path');
+        list.add('Prerequisite for: Hussars');
+        break;
+      case 'improved_cavalry_tactics':
+        list.add('Prerequisite for: Hussars and Improved Cavalry Weapons');
+        break;
+      case 'hussars':
+        list.add('Improves: Cossacks regiment upgrade path');
+        list.add('Prerequisite for: Scouting');
+        break;
+      case 'improved_cavalry_weapons':
+        list.add('Improves: Harquebusiers regiment upgrade path');
+        list.add('Prerequisite for: Repeating Cavalry Carbine');
+        break;
+      case 'scouting':
+        list.add('Improves: Hussars regiment upgrade path');
+        break;
+      case 'repeating_cavalry_carbine':
+        list.add('Improves: Cuirassiers regiment upgrade path');
+        break;
+      case 'horse_artillery':
+        list.add('Prerequisite for: Light Artillery Tactics');
+        break;
+      case 'siege_engineering':
+        list.add('Improves: Culverin regiment upgrade path');
+        list.add('Prerequisite for: Modern Forts and Heavy Emplaced Artillery');
+        break;
+      case 'light_artillery_tactics':
+        list.add('Improves: Horse Artillery regiment upgrade path');
+        list.add('Prerequisite for: Field Artillery Tactics');
+        break;
+      case 'modern_forts':
+        list.add(
+          'Enables: Builder fort upgrades to level 3 (Modern: 3 emplaced guns, strongest walls)',
+        );
+        list.add(
+          'Unlocks: Heavy Artillery and Modern Military Funding (as prerequisite)',
+        );
+        break;
+      case 'heavy_artillery':
+        list.add('Improves: Royal Artillery regiment upgrade path');
+        list.add('Prerequisite for: High Grade Steel and Emplaced Siege Guns');
+        break;
+      case 'heavy_emplaced_artillery':
+        list.add(
+          'Improves: defender emplaced fort batteries to Heavy quality (Royal → Heavy line)',
+        );
+        list.add('Prerequisite for: Emplaced Siege Guns');
+        break;
+      case 'field_artillery_tactics':
+        list.add('Improves: Light Artillery regiment upgrade path');
+        break;
+      case 'high_grade_steel':
+        list.add('Improves: Heavy Artillery regiment upgrade path');
+        break;
+      case 'emplaced_siege_guns':
+        list.add(
+          'Improves: defender emplaced fort batteries to Siege Gun quality (final emplaced tier)',
+        );
+        break;
+      case 'modern_military_funding':
+        list.add(
+          'Unlocks: Field Artillery Tactics, High Grade Steel, Elite Military Training stack',
+        );
+        list.add(
+          'Improves (deferred in MVP): cheaper military attack once application point is fixed per SPEC',
+        );
+        break;
+      case 'industrial_funding_of_research':
+        list.add(
+          'Unlocks: Needle Guns, Repeating Cavalry Carbine, High Grade Steel, Advanced Iron Working (as prerequisite)',
+        );
+        list.add(
+          'Improves (deferred in MVP): research efficiency for military/naval tech per SPEC',
+        );
+        break;
       default:
         if (list.isEmpty) {
           list.add('Improves ${_categoryLabel(tech.category)} capabilities');
