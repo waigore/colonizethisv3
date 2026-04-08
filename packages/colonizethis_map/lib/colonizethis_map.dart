@@ -10,7 +10,9 @@ export 'src/tile_map_generator.dart';
 export 'src/tile_map_generation_fn.dart';
 export 'src/tile_map_visualization.dart';
 export 'src/tile_map_visualization_shared.dart'
-    show landSeedMarkerRgb, continentSeedMarkerRgb, resourceIdToLegendLetter;
+    show continentSeedMarkerRgb, geographicGameWorldLegendResources,
+        geographicGameWorldResourceGlyphLetter, landSeedMarkerRgb,
+        resourceIdToLegendLetter;
 export 'src/init_game_map_view_data.dart';
 export 'src/port_icon_placement.dart';
 export 'src/gp_ownership_tint.dart';

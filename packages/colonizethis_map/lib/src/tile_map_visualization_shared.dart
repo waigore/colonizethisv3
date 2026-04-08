@@ -137,6 +137,55 @@ String? resourceIdToLegendLetter(String? resourceId) {
   }
 }
 
+/// Resources shown as glyphs and legend rows in game-world geographic PNG (view-data path only).
+/// SPEC/program/map-visualization.md § Geographic legend scope (subset g, t, i).
+const List<Resource> geographicGameWorldLegendResources = [
+  Resource.grain,
+  Resource.timber,
+  Resource.iron,
+];
+
+/// Single-letter glyph for [resourceId] in geographic game-world map mode, or null if not in the g/t/i subset or unknown id.
+String? geographicGameWorldResourceGlyphLetter(String? resourceId) {
+  if (resourceId == null || resourceId.isEmpty) return null;
+  try {
+    final r = Resource.values.byName(resourceId);
+    switch (r) {
+      case Resource.grain:
+      case Resource.timber:
+      case Resource.iron:
+        return resourceToLegendLetter(r);
+      default:
+        return null;
+    }
+  } on ArgumentError {
+    return null;
+  }
+}
+
+/// Draws a single-letter resource glyph at cell centre (PNG map export). Shared by tile map and game-world geographic renderers.
+void drawResourceLetterAtCellCenter(
+  img.Image image, {
+  required String letter,
+  required int cellX,
+  required int cellY,
+  required int cellSize,
+  required img.Color color,
+  int offsetX = 4,
+  int offsetY = 7,
+}) {
+  final cx = cellX * cellSize + cellSize ~/ 2;
+  final cy = cellY * cellSize + cellSize ~/ 2;
+  img.drawString(
+    image,
+    letter,
+    font: img.arial14,
+    x: cx - offsetX,
+    y: cy - offsetY,
+    color: color,
+  );
+}
+
 /// Grey shades for minor nations (distinct from vibrant GP colours). Deterministic order.
 const List<(int r, int g, int b)> minorNationPalette = [
   (70, 70, 70),

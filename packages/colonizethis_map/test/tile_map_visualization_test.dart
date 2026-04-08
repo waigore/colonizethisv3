@@ -353,6 +353,31 @@ void main() {
     });
   });
 
+  group('geographicGameWorldResourceGlyphLetter', () {
+    test('returns letters only for grain, timber, iron resource ids', () {
+      expect(geographicGameWorldResourceGlyphLetter('grain'), 'g');
+      expect(geographicGameWorldResourceGlyphLetter('timber'), 't');
+      expect(geographicGameWorldResourceGlyphLetter('iron'), 'i');
+    });
+
+    test('returns null for ids outside geographic subset, empty, or invalid', () {
+      expect(geographicGameWorldResourceGlyphLetter('gold'), isNull);
+      expect(geographicGameWorldResourceGlyphLetter('notAResource'), isNull);
+      expect(geographicGameWorldResourceGlyphLetter(null), isNull);
+      expect(geographicGameWorldResourceGlyphLetter(''), isNull);
+    });
+  });
+
+  group('geographicGameWorldLegendResources', () {
+    test('is grain, timber, iron per SPEC geographic legend scope', () {
+      expect(geographicGameWorldLegendResources, const [
+        Resource.grain,
+        Resource.timber,
+        Resource.iron,
+      ]);
+    });
+  });
+
   group('openInDefaultViewer', () {
     test('does not throw; returns bool', () {
       final path = writeTileMapImageToTempFile(smallResult, topology);
