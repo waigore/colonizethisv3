@@ -864,6 +864,130 @@ void main() {
   );
 
   testWidgets(
+    'Batch-8 tech descriptions are concrete and avoid generic fallback text (Refs #1632)',
+    (WidgetTester tester) async {
+      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+      final gameWithEmptyPlayer = game.copyWith(
+        players: [emptyPlayer, ...game.players.skip(1)],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TechTreeWidget(
+              game: gameWithEmptyPlayer,
+              player: emptyPlayer,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expectedByTech = <String, String>{
+        'Nationalism':
+            'Improves: Battle deployment base limit to 12 regiments (vs 10)',
+        'Empire Building':
+            'Enables: Join Empire overture toward nearly-defeated Great Powers',
+        'Superior Hull Design':
+            'Unlocks: Improved Sail Design and Navigation hull paths',
+        'Improved Sail Design':
+            'Unlocks: Advanced Hull Design path (University + Privateering)',
+        'Convoying': 'Unlocks: Large Hulls (with Wind Saw Mill + Navigation)',
+        'Navigation': 'Unlocks: Large Hulls and Privateering Companies',
+        'Large Hulls':
+            'Unlocks: Ship of the Line (with Large Copper and Tin Mines)',
+        'Clipper Ships': 'Improves: Late-era fast merchant Clipper cargo line',
+        'Paddlewheels': 'Unlocks: Merchant Steamships (with Riverboats)',
+        'Merchant Steamships':
+            'Enables: Steam-powered merchant hull for seagoing trade',
+      };
+
+      for (final entry in expectedByTech.entries) {
+        final techNode = find.text(entry.key).first;
+        await tester.ensureVisible(techNode);
+        await tester.tap(techNode);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(
+          find.textContaining('Improves naval capabilities'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves diplomacy capabilities'),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
+  testWidgets(
+    'Batch-9 tech descriptions are concrete and avoid generic fallback text (Refs #1633)',
+    (WidgetTester tester) async {
+      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
+      final gameWithEmptyPlayer = game.copyWith(
+        players: [emptyPlayer, ...game.players.skip(1)],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TechTreeWidget(
+              game: gameWithEmptyPlayer,
+              player: emptyPlayer,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final expectedByTech = <String, String>{
+        'Advanced Hull Design':
+            'Improves: Frigate — high intercept, moderate flee (patrol/blockade)',
+        'Ship of the Line':
+            'Improves: Battle-line capital ship for decisive fleet engagements',
+        'Privateering Companies':
+            'Improves: Patrol/Blockade interception and trade-raid effectiveness',
+        'Advanced Iron Working':
+            'Improves: Ironclad armored steam combat hull',
+        'Organised Regiments': 'Improves: General cap floor to at least 2',
+        'Improved Iron Weapons': 'Unlocks: Bayonet (with Crucible Process)',
+        'Improved Infantry Tactics':
+            'Improves: General cap floor to at least 3 (or National Bureaucracy)',
+        'Crucible Process':
+            'Prerequisite-only: Steel chain for Bayonet, rifles, steam, and cannons',
+        'Bayonet':
+            'Unlocks: Needle Guns (with Industrial Funding + Early Rifles)',
+        'Weapon Craftsmanship':
+            'Unlocks: Explosives and Grenadiers (with Industrial Machinery)',
+      };
+
+      for (final entry in expectedByTech.entries) {
+        final techNode = find.text(entry.key).first;
+        await tester.ensureVisible(techNode);
+        await tester.tap(techNode);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.textContaining(entry.value), findsOneWidget);
+        expect(
+          find.textContaining('Improves naval capabilities'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Improves military capabilities'),
+          findsNothing,
+        );
+
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+
+  testWidgets(
     'Batch-10 tech descriptions are concrete and avoid generic fallback text (Refs #1634)',
     (WidgetTester tester) async {
       final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
