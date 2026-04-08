@@ -1,5 +1,6 @@
 import 'package_log_prefix.dart';
-import 'package:sim_scenarios/package_logger.dart';
+export 'package:colonizethis_logger/colonizethis_logger.dart' show CtLogger;
+import 'package:colonizethis_logger/colonizethis_logger.dart';
 
 CtLogger packageLogger([String? subPrefix]) {
   if (subPrefix == null || subPrefix.isEmpty) {

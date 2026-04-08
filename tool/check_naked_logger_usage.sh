@@ -4,43 +4,28 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-matches="$(
-  rg --line-number "\\bLogger\\(" \
-    --glob '*.dart' \
-    --glob '!**/.dart_tool/**' \
-    --glob '!**/build/**' \
-    --glob '!**/package_logger.dart' \
-    --glob '!**/test/**' \
-    . || true
-)"
-
-matches="$(printf '%s\n' "$matches" | rg -v 'packages/colonizethis_logger/lib/src/ct_logger.dart' || true)"
-
-if [[ -n "$matches" ]]; then
-  printf '%s\n' "$matches"
-  echo
-  echo "Naked Logger(...) usage detected. Use package-local packageLogger() API."
-  exit 1
+SEARCH_TOOL=rg
+if ! command -v rg >/dev/null 2>&1; then
+  SEARCH_TOOL=grep
 fi
 
-echo "No naked Logger(...) usage detected."
-#!/usr/bin/env bash
-set -euo pipefail
+if [ "$SEARCH_TOOL" = "rg" ]; then
+  matches="$(
+    rg --line-number '\bLogger\(' \
+      --glob '*.dart' \
+      --glob '!**/.dart_tool/**' \
+      --glob '!**/build/**' \
+      --glob '!**/package_logger.dart' \
+      --glob '!**/test/**' \
+      . || true
+  )"
+else
+  matches="$(
+    grep -RIn --include='*.dart' --exclude-dir='.dart_tool' --exclude-dir='build' --exclude='package_logger.dart' --exclude-dir='test' 'Logger(' . || true
+  )"
+fi
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$ROOT_DIR"
-
-matches="$(
-  rg --line-number "\\bLogger\\(" \
-    --glob '*.dart' \
-    --glob '!**/.dart_tool/**' \
-    --glob '!**/build/**' \
-    --glob '!**/package_logger.dart' \
-    --glob '!**/test/**' \
-    . || true
-)"
-
-matches="$(printf '%s\n' "$matches" | rg -v 'packages/colonizethis_logger/lib/src/ct_logger.dart' || true)"
+matches="$(printf '%s\n' "$matches" | grep -v 'packages/colonizethis_logger/lib/src/ct_logger.dart' || true)"
 
 if [[ -n "$matches" ]]; then
   printf '%s\n' "$matches"
