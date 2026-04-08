@@ -144,8 +144,11 @@ List<_CapIncreaseCase> _capIncreaseCases() {
   for (final tech in techCatalog.values) {
     final prerequisites = tech.prerequisiteIds.toSet();
     final unlockedBefore = {for (final id in prerequisites) id: true};
-    final before = extractionCapForUnlocked(unlockedBefore);
-    final after = extractionCapForUnlocked({...unlockedBefore, tech.id: true});
+    final before = extractionCapForResourceForUnlocked(unlockedBefore, 'grain');
+    final after = extractionCapForResourceForUnlocked({
+      ...unlockedBefore,
+      tech.id: true,
+    }, 'grain');
     if (after > before) {
       out.add(
         _CapIncreaseCase(

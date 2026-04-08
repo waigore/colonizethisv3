@@ -2,63 +2,88 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 void main() {
-  group('extractionCapForUnlocked', () {
-    test('null returns defaultExtractionCap (4)', () {
-      expect(extractionCapForUnlocked(null), equals(defaultExtractionCap));
-    });
-
-    test('empty map returns defaultExtractionCap (4)', () {
-      expect(extractionCapForUnlocked({}), equals(defaultExtractionCap));
-    });
-
-    test('only non-gathering techs returns defaultExtractionCap (4)', () {
+  group('extractionCapForResourceForUnlocked', () {
+    test('null tech returns default cap 1 for grain', () {
       expect(
-        extractionCapForUnlocked({'organised_regiments': true}),
+        extractionCapForResourceForUnlocked(null, 'grain'),
+        equals(defaultExtractionCap),
+      );
+    });
+
+    test('empty tech returns default cap 1 for grain', () {
+      expect(
+        extractionCapForResourceForUnlocked({}, 'grain'),
+        equals(defaultExtractionCap),
+      );
+    });
+
+    test('only non-gathering techs keep default cap for grain', () {
+      expect(
+        extractionCapForResourceForUnlocked({
+          'organised_regiments': true,
+        }, 'grain'),
         equals(defaultExtractionCap),
       );
       expect(
-        extractionCapForUnlocked({
+        extractionCapForResourceForUnlocked({
           'road_construction': true,
           'early_steam_engine': true,
           'improved_iron_weapons': true,
-        }),
+        }, 'grain'),
         equals(defaultExtractionCap),
       );
     });
 
-    test('saw_mill gives cap 2', () {
+    test('land_enclosure gives grain cap 2', () {
       expect(
-        extractionCapForUnlocked({'saw_mill': true}),
+        extractionCapForResourceForUnlocked({'land_enclosure': true}, 'grain'),
         equals(2),
       );
     });
 
-    test('seed_drill gives cap 3', () {
+    test('seed_drill gives grain cap 3', () {
       expect(
-        extractionCapForUnlocked({'saw_mill': true, 'seed_drill': true}),
+        extractionCapForResourceForUnlocked({
+          'land_enclosure': true,
+          'seed_drill': true,
+        }, 'grain'),
         equals(3),
       );
     });
 
-    test('circular_saw gives cap 4', () {
+    test('moldboard_plow gives grain cap 4', () {
       expect(
-        extractionCapForUnlocked({
-          'saw_mill': true,
+        extractionCapForResourceForUnlocked({
+          'land_enclosure': true,
           'seed_drill': true,
-          'circular_saw': true,
-        }),
+          'moldboard_plow': true,
+        }, 'grain'),
         equals(4),
       );
     });
 
-    test('gathering with other techs still uses gathering level', () {
+    test('timber tech does not raise grain cap', () {
       expect(
-        extractionCapForUnlocked({
+        extractionCapForResourceForUnlocked({
           'saw_mill': true,
           'organised_regiments': true,
-        }),
-        equals(2),
+        }, 'grain'),
+        equals(1),
       );
+    });
+
+    test('wool design cap chain tops at 3', () {
+      expect(
+        extractionCapForResourceForUnlocked({
+          'sheep_ranching': true,
+          'scientific_sheep_breeding': true,
+        }, 'wool'),
+        equals(3),
+      );
+    });
+
+    test('horses uses explicit design exception cap 1', () {
+      expect(extractionCapForResourceForUnlocked({}, 'horses'), equals(1));
     });
   });
 
@@ -82,15 +107,18 @@ void main() {
   });
 
   group('researchableTechIds', () {
-    test('empty unlocked returns all root techs (no tech prereqs; discovery techs included when callback null)', () {
-      final r = researchableTechIds({});
-      expect(r, isNotEmpty);
-      for (final id in r) {
-        final tech = techById(id);
-        expect(tech, isNotNull);
-        expect(tech!.prerequisiteIds, isEmpty);
-      }
-    });
+    test(
+      'empty unlocked returns all root techs (no tech prereqs; discovery techs included when callback null)',
+      () {
+        final r = researchableTechIds({});
+        expect(r, isNotEmpty);
+        for (final id in r) {
+          final tech = techById(id);
+          expect(tech, isNotNull);
+          expect(tech!.prerequisiteIds, isEmpty);
+        }
+      },
+    );
     test('all unlocked returns empty', () {
       final unlocked = {for (final id in techCatalog.keys) id: true};
       expect(researchableTechIds(unlocked), isEmpty);
@@ -104,19 +132,36 @@ void main() {
       expect(researchableTechIds(null), researchableTechIds({}));
     });
 
-    test('discovery tech with null callback is researchable when prereqs met', () {
-      final r = researchableTechIds({});
-      expect(r.contains('discovery_of_sugar'), isTrue, reason: 'Discovery techs are researchable when hasDiscoveredResource is null');
-    });
+    test(
+      'discovery tech with null callback is researchable when prereqs met',
+      () {
+        final r = researchableTechIds({});
+        expect(
+          r.contains('discovery_of_sugar'),
+          isTrue,
+          reason:
+              'Discovery techs are researchable when hasDiscoveredResource is null',
+        );
+      },
+    );
 
-    test('discovery tech with hasDiscoveredResource always false is not researchable', () {
-      final r = researchableTechIds({}, hasDiscoveredResource: (_) => false);
-      expect(r.contains('discovery_of_sugar'), isFalse);
-    });
+    test(
+      'discovery tech with hasDiscoveredResource always false is not researchable',
+      () {
+        final r = researchableTechIds({}, hasDiscoveredResource: (_) => false);
+        expect(r.contains('discovery_of_sugar'), isFalse);
+      },
+    );
 
-    test('discovery tech with hasDiscoveredResource true for sugarCane is researchable', () {
-      final r = researchableTechIds({}, hasDiscoveredResource: (rid) => rid == 'sugarCane');
-      expect(r.contains('discovery_of_sugar'), isTrue);
-    });
+    test(
+      'discovery tech with hasDiscoveredResource true for sugarCane is researchable',
+      () {
+        final r = researchableTechIds(
+          {},
+          hasDiscoveredResource: (rid) => rid == 'sugarCane',
+        );
+        expect(r.contains('discovery_of_sugar'), isTrue);
+      },
+    );
   });
 }

@@ -31,6 +31,7 @@ Map<String, ExtractionTotals> computeExtraction({
   required Map<String, TileMapResult> tileMapByRegion,
   required Map<String, ConnectivityResult> connectivityResult,
   int Function(String playerId) techCapForPlayer = _defaultTechCap,
+  int Function(String playerId, String resourceId)? techCapForPlayerAndResource,
 
   /// When set, only these tile keys contribute (must still be in [ConnectivityResult.connected]).
   /// Used by tests (e.g. Great Power bootstrap farms) without duplicating extraction rules.
@@ -46,7 +47,6 @@ Map<String, ExtractionTotals> computeExtraction({
     final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
     final cap = player.capitalTile;
     final capitalRegionId = cap?.regionId;
-    final techCap = techCapForPlayer(player.id);
 
     final landTotals = <CommodityId, int>{};
     final overseasTotals = <CommodityId, int>{};
@@ -72,6 +72,9 @@ Map<String, ExtractionTotals> computeExtraction({
       if (resource == null) continue;
 
       final commodityId = _resourceToCommodityId(resource);
+      final techCap =
+          techCapForPlayerAndResource?.call(player.id, commodityId) ??
+          techCapForPlayer(player.id);
       final isMineral = kMineralResourceIds.contains(commodityId);
 
       // Minerals only from prospected tiles. SPEC/program/fog-and-exploration-resolution.md.

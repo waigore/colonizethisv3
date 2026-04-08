@@ -118,11 +118,11 @@ void main() {
       });
 
       test('rejects build_improvement when tech cap would be exceeded', () {
-        // saw_mill gives cap 2; tile at level 2 → next would be 3 > 2
+        // With no grain-cap tech, grain stays at cap 1; tile at level 1 cannot upgrade.
         final game = baseGame(
           techUnlocked: const {'saw_mill': true},
           tileState: const TileMapState(
-            improvementByTile: {'oldWorld|P1|0|0': 2},
+            improvementByTile: {'oldWorld|P1|0|0': 1},
           ),
           stockpile: Stockpile()
               .applyDelta(CommodityCatalog.lumber.id, 10)
@@ -144,8 +144,38 @@ void main() {
         );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('Insufficient tech'));
-        expect(results.single.reason, contains('cap 2'));
+        expect(results.single.reason, contains('cap 1'));
       });
+
+      test(
+        'accepts grain upgrade when exact next-level grain tech is unlocked',
+        () {
+          final game = baseGame(
+            techUnlocked: const {'land_enclosure': true},
+            tileState: const TileMapState(
+              improvementByTile: {'oldWorld|P1|0|0': 1},
+            ),
+            stockpile: Stockpile()
+                .applyDelta(CommodityCatalog.lumber.id, 10)
+                .applyDelta(CommodityCatalog.castIron.id, 10),
+          );
+          final engine = OrderEngine();
+          engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.accepted);
+        },
+      );
 
       test(
         'accepts build_improvement when tile has resource, level < 4, tech cap allows',
