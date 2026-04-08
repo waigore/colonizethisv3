@@ -16,7 +16,7 @@ void main() {
     ) async {
       await tester.pumpWidget(const SizedBox.shrink());
       for (final slug in kCivilianIconSlugs) {
-        final colorPath = 'assets/icons/ui_icon_civ_$slug.png';
+        final colorPath = 'assets/icons/64/ui_icon_civ_$slug.png';
         final colorData = await rootBundle.load(colorPath);
         expect(
           colorData.lengthInBytes,
@@ -31,7 +31,7 @@ void main() {
     ) async {
       await tester.pumpWidget(const SizedBox.shrink());
       for (final slug in kCivilianIconSlugs) {
-        final colorPath = 'assets/icons/ui_icon_civ_$slug.png';
+        final colorPath = 'assets/icons/64/ui_icon_civ_$slug.png';
         var hasTransparentPixel = false;
         await tester.runAsync(() async {
           final data = await rootBundle.load(colorPath);

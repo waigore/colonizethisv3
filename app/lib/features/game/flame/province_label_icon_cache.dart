@@ -22,7 +22,7 @@ class ProvinceLabelIconCache {
 
   bool get isLoaded => _isLoaded;
 
-  static const double iconSize = 32.0;
+  static const double iconSize = 64.0;
 
   Future<void> load() async {
     if (_isLoaded || _isLoading) return;
@@ -46,7 +46,7 @@ class ProvinceLabelIconCache {
   }
 
   Future<void> _loadIcon(String iconId) async {
-    final pngPath = '${kAppIconAssetPrefix}ui_icon_$iconId.png';
+    final pngPath = '${kAppIcon64AssetPrefix}ui_icon_$iconId.png';
     final imageData = await rootBundle.load(pngPath);
     final completer = Completer<ui.Image>();
     ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);

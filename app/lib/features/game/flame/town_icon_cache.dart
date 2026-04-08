@@ -19,7 +19,7 @@ class TownIconCache {
 
   static const String portIconId = 'port';
   static const String townIconId = 'town_inland_64';
-  static const double portIconSize = 32.0;
+  static const double portIconSize = 64.0;
   static const double townIconSize = 64.0;
 
   Future<void> load() async {
@@ -45,7 +45,7 @@ class TownIconCache {
   }
 
   Future<void> _loadIcon(String iconId) async {
-    final pngPath = '${kAppIconAssetPrefix}ui_icon_com_$iconId.png';
+    final pngPath = '${kAppIcon64AssetPrefix}ui_icon_com_$iconId.png';
     final imageData = await rootBundle.load(pngPath);
     final completer = Completer<ui.Image>();
     ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);
