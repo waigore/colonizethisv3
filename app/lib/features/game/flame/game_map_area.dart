@@ -265,6 +265,11 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
           ),
         );
     setState(() {
+      _selectedCivilianTileKey =
+          GameMapAreaStateLogic.selectionAfterWorkAssignment(
+            currentSelectedCivilianTileKey: _selectedCivilianTileKey,
+            assignedTileKey: targetTileKey,
+          );
       _workTargetSelection = null;
       _cachedValidTileKeys = null;
     });
@@ -320,6 +325,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
 
   @override
   Widget build(BuildContext context) {
+    final currentOrders = ref.watch(currentOrdersProvider);
     final showProvinceOverlay = ref.watch(mapProvinceOverlayVisibleProvider);
     final showProvinceOwnershipTint = ref.watch(
       mapProvinceOwnershipTintVisibleProvider,
@@ -333,6 +339,13 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       _humanPlayerId,
     );
     final l10n = appL10n(context);
+    final projectedRegion =
+        GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+          region: _currentRegion,
+          game: widget.game,
+          orders: currentOrders,
+          humanPlayerId: _humanPlayerId,
+        );
     final nextTurnText = l10n.game_nextTurnButton(
       widget.game.worldState.turnState.turnNumber,
       turnToYear(
@@ -377,7 +390,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                       GameMapCanvasStack(
                         isNarrow: isNarrow,
                         game: widget.game,
-                        region: _currentRegion,
+                        region: projectedRegion,
                         baseLayerDisplayMode: _baseLayerDisplayMode,
                         showProvinceOverlay: showProvinceOverlay,
                         showProvinceOwnershipTint: showProvinceOwnershipTint,
@@ -399,8 +412,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                             : null,
                         onCivilianTileTapped: (tileKey) {
                           String? initialSelectedUnitId;
-                          for (final marker in _currentRegion
-                              .civilianTileMarkers) {
+                          for (final marker
+                              in projectedRegion.civilianTileMarkers) {
                             if (marker.tileKey == tileKey &&
                                 marker.unitIds.isNotEmpty) {
                               initialSelectedUnitId = marker.unitIds.first;
@@ -410,12 +423,14 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           setState(() {
                             _selectedCivilianTileKey = tileKey;
                           });
-                          ref.read(appEventBusProvider).emit(
-                            ct_models.OpenCivilianUnitsPanelEvent(
-                              tileScopeTileKey: tileKey,
-                              initialSelectedUnitId: initialSelectedUnitId,
-                            ),
-                          );
+                          ref
+                              .read(appEventBusProvider)
+                              .emit(
+                                ct_models.OpenCivilianUnitsPanelEvent(
+                                  tileScopeTileKey: tileKey,
+                                  initialSelectedUnitId: initialSelectedUnitId,
+                                ),
+                              );
                         },
                         onCivilianTileSelectionCleared: () {
                           if (_selectedCivilianTileKey == null) return;
@@ -576,7 +591,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                             right: rightInset,
                             bottom: 8,
                             child: GameRegionMinimap(
-                              region: _currentRegion,
+                              region: projectedRegion,
                               viewportSnapshot: _regionViewportSnapshot,
                               bus: ref.read(appEventBusProvider),
                               cellSizePx: _currentRegion.cellSize.toDouble(),
@@ -593,7 +608,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   alignment: Alignment.bottomCenter,
                   child: GameMapNarrowDetailOverlaySlot(
                     game: widget.game,
-                    region: _currentRegion,
+                    region: projectedRegion,
                     humanPlayerId: _humanPlayerId,
                     playerView: humanPlayerView,
                   ),
