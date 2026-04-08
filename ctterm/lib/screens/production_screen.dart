@@ -1,13 +1,13 @@
 // Production Screen: manage resource extraction, stockpile, and production. SPEC/tui/screens/production.md.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Production recipe definition for display.
 class ProductionRecipe {

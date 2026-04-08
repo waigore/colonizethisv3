@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctdev/package_logger.dart';
 import 'package:flutter/material.dart';
 
 import 'ctdev_log.dart';
@@ -12,7 +12,7 @@ void main() {
   runZonedGuarded(
     () => runApp(const CtDevApp()),
     (Object error, StackTrace stackTrace) {
-      ctdevLogger().e('uncaught error', error: error, stackTrace: stackTrace);
+      packageLogger().e('uncaught error', error: error, stackTrace: stackTrace);
     },
   );
 }

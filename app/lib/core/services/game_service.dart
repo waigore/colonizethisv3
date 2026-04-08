@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -21,7 +21,7 @@ class _GameMapCache {
 }
 
 /// Pass milestones for in-app tile map generation (SPEC/program/logging/map-generation.md).
-final _mapGenPassLog = mapLogger('tile_map');
+final _mapGenPassLog = packageLogger('tile_map');
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
 /// Phase 2: createNewGame uses full game-setup pipeline; nextTurn requires cached/persisted map data.
@@ -68,7 +68,7 @@ class GameService {
       _requireMapData(gameId);
       return game;
     } catch (e, st) {
-      saveLogger().e(
+      packageLogger().e(
         'required map data missing/invalid for gameId=$gameId',
         error: e,
         stackTrace: st,
@@ -156,7 +156,7 @@ class GameService {
       );
       return game;
     } catch (e, st) {
-      saveLogger().e(
+      packageLogger().e(
         'save: loadAutoSaveGame failed',
         error: e,
         stackTrace: st,
@@ -178,7 +178,7 @@ class GameService {
         warpLinks: md.warpLinks,
       );
     } catch (e, st) {
-      saveLogger().e(
+      packageLogger().e(
         'save: auto-save mirror failed',
         error: e,
         stackTrace: st,

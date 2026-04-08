@@ -7,10 +7,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:path/path.dart' as path;
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 String? _initDataDir;
 Box<dynamic>? _box;

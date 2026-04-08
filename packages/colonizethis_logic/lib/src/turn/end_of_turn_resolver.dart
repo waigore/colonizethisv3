@@ -3,13 +3,13 @@
 // Called from turn_resolver.resolveTurnForGame.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../dossier/event_dialogue.dart';
 import '../world/fog_resolution.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Runs the end-of-turn phase: victory check, era-change dialogue, Spy timers, fog decay,
 /// coastal sea zone full visibility, advance turn.

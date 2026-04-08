@@ -8,6 +8,7 @@ environment:
   sdk: ">=3.11.0 <4.0.0"
 
 dependencies:
+  colonizethis_logger: any
   colonizethis_data:
 
 dev_dependencies:

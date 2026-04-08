@@ -27,9 +27,18 @@
 
 ---
 
-## Prefixes
+## Prefixes and package ownership
 
-Use **`colonizethis_logger`** (`logicLogger`, `aiLogger`, `mapLogger`, etc.). Message text must **not** repeat the top-level prefix (avoid `logic: logic: …`).
+Each package is the owner of its own logging prefix and must define exactly one
+package-local constant file at `lib/package_log_prefix.dart` containing
+`kPackageLogPrefix`.
+
+Each package must expose exactly one package-local logging API at
+`lib/package_logger.dart` with signature `CtLogger packageLogger([String? subPrefix])`.
+Package code must use this API for all logger acquisition. Direct/naked
+`Logger(...)` construction in package code is forbidden.
+
+Message text must **not** repeat the top-level prefix (avoid `logic: logic: …`).
 
 | Prefix | Typical ownership |
 |--------|-------------------|
@@ -42,8 +51,12 @@ Use **`colonizethis_logger`** (`logicLogger`, `aiLogger`, `mapLogger`, etc.). Me
 | `game` | Flame / in-game components |
 | `ctdev` | Ctdev app lifecycle, sim controller |
 | `tui` | Ctterm (see [ctterm.md](../../tui/ctterm.md)) |
+| package-defined | Any other first-party package not listed above must define its own package prefix in `lib/package_log_prefix.dart` |
 
-Sub-areas may use **dot** sub-prefixes via factories (e.g. `logicLogger('combat')` → `logic.combat` in logger naming; message body still uses stable **tokens** such as `combat battle_start` for grep). Align **session log filter** lists with [session_log_buffer](../../../packages/session_log_buffer/lib/session_log_buffer.dart) `knownPrefixes`.
+Sub-areas may use dot sub-prefixes via package-local `packageLogger` factories
+(e.g. `packageLogger('combat')` -> `logic.combat` in logger naming; message body
+still uses stable tokens such as `combat battle_start` for grep). Align session
+log filter lists with [session_log_buffer](../../../packages/session_log_buffer/lib/session_log_buffer.dart) `knownPrefixes`.
 
 ---
 
@@ -68,6 +81,8 @@ All hosts consume the **same** `Logger` stream from packages; hosts only differ 
 
 - **Given** code in packages, app, ctdev, or ctterm that implements a feature described in an annex, **when** that feature runs in a dev configuration with file/debug logging enabled, **then** emitted lines follow the **info vs debug** split and **prefix** rules in this document and the relevant annex.
 - **Given** a new PR that touches logging behavior, **when** reviewers use [CONTRIBUTING.md](../../../CONTRIBUTING.md) checklist, **then** they confirm alignment with **SPEC/program/logging/** and linked sink specs.
+- **Given** any first-party package in this repository, **when** package logging setup is reviewed, **then** the package contains `lib/package_log_prefix.dart` defining `kPackageLogPrefix` and `lib/package_logger.dart` defining `packageLogger`.
+- **Given** CI quality checks run for a pull request, **when** any package code uses naked `Logger(...)` instead of the package API, **then** CI fails with a blocking convention error.
 
 ---
 

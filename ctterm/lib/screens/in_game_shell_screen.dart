@@ -2,7 +2,7 @@
 // SPEC/tui/ctterm.md, SPEC/tui/screens/in-game-shell.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
@@ -11,7 +11,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:ctterm/map_tui_mapping.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// In-game shell: topology graph map, HUD, province info panel, navigation to panels.
 class InGameShellScreen extends StatefulComponent {

@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart' show PlayerView;
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -10,7 +10,7 @@ import 'goal_manager.dart';
 import 'mood_state_machine.dart';
 import 'perception.dart';
 
-final _log = aiLogger();
+final _log = packageLogger();
 
 /// Strategic order generation for full AI. SPEC/program/ai-systems-impl.md.
 ///

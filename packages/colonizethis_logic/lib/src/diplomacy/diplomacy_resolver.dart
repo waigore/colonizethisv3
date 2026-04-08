@@ -8,7 +8,7 @@ library;
 import 'dart:math' show Random;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../ai/ai_control.dart';
@@ -28,7 +28,7 @@ part 'intervention_resolver.dart';
 part 'overture_resolver.dart';
 part 'war_resolver.dart';
 
-final _diploLog = logicLogger();
+final _diploLog = packageLogger();
 
 bool isMinorOrTribe(Game game, String factionId) {
   return game.minorNations.any((m) => m.id == factionId) ||

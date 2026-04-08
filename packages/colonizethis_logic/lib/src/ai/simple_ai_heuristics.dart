@@ -5,7 +5,7 @@ library;
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -14,7 +14,7 @@ import '../orders/order_suggestion.dart';
 import '../world/army_migration.dart';
 import '../world/player_view.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Derives turn seed per ai-planner: turnSeed = hash(globalGameSeed, aiSeed[P], T).
 /// When [fallbackAiSeed] is provided and [game.aiSeedByGpId] has no entry for

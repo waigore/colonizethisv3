@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/services.dart';
 import 'package:jenny/jenny.dart';
 
@@ -67,7 +67,7 @@ class _InterventionDialogueOverlayState extends State<InterventionDialogueOverla
   }
 
   Future<void> _runFlow() async {
-    final log = widget.logger ?? appLogger('dialogue');
+    final log = widget.logger ?? packageLogger('dialogue');
     try {
       final bundle = widget.assetBundle ?? rootBundle;
       final text = await bundle.loadString(_kAsset);

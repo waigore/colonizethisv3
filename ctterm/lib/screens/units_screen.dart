@@ -1,6 +1,6 @@
 // Units Screen: manage military and civilian unit orders. SPEC/tui/screens/units.md.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_routes.dart';
@@ -10,7 +10,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show neighborProvinceIdsInRegion;
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Units screen for managing unit stacks and issuing orders.
 class UnitsScreen extends StatefulComponent {

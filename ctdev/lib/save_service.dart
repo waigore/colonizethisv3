@@ -4,11 +4,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctdev/package_logger.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
-final _log = ctdevLogger('save');
+final _log = packageLogger('save');
 
 Box<dynamic>? _box;
 

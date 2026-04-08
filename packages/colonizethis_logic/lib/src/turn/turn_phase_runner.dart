@@ -1,4 +1,4 @@
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../diplomacy/diplomacy_resolver.dart';
@@ -12,7 +12,7 @@ import 'turn_resolution_sequence.dart';
 import 'turn_resolver_config.dart';
 import 'phases.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Runs full turn phase sequence; may return early for pending diplomacy.
 TurnResolutionResult runTurnResolutionPipeline({

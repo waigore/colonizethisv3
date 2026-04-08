@@ -1,4 +1,4 @@
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:flame/widgets.dart';
 import 'package:flutter/material.dart';
 
@@ -74,7 +74,7 @@ class CtDialogShell extends StatelessWidget {
                   child: child,
                 ),
                 errorBuilder: (_) {
-                  appLogger('ui').w(
+                  packageLogger('ui').w(
                     'dialog nine-patch asset not found, using fallback frame',
                   );
                   return _FallbackDialogFrame(

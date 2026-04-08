@@ -1,12 +1,12 @@
 // Pending call to arms: join or refuse when an ally is declared upon. SPEC/game/diplomacy.md.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Screen when turn resolution blocks on human ally call to arms.
 class PendingCallToArmsScreen extends StatefulComponent {

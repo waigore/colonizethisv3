@@ -2,7 +2,7 @@
 
 import 'dart:async';
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:ctterm/ctterm_app.dart';
@@ -10,7 +10,7 @@ import 'package:ctterm/ctterm_log.dart';
 import 'package:ctterm/save_service.dart';
 import 'package:session_log_buffer/session_log_buffer.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 void main(List<String> args) async {
   String? dataDirOverride;
@@ -48,7 +48,7 @@ void main(List<String> args) async {
       ));
     },
     (Object error, StackTrace stackTrace) {
-      tuiLogger().e(
+      packageLogger().e(
         'uncaught async error',
         error: error,
         stackTrace: stackTrace,

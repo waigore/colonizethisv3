@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io' show Directory;
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -19,7 +19,7 @@ Future<void> _openHiveBoxSafely(String name) async {
     await Hive.openBox<dynamic>(name);
   } catch (e, st) {
     // Boxes may be locked (e.g. another instance) or corrupt; app still runs where possible.
-    dataLogger(
+    packageLogger(
       'hive',
     ).w('failed to open box "$name"', error: e, stackTrace: st);
   }
@@ -80,7 +80,7 @@ void main() {
       );
     },
     (Object error, StackTrace stackTrace) {
-      appLogger().e(
+      packageLogger().e(
         'uncaught async error',
         error: error,
         stackTrace: stackTrace,

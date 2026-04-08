@@ -1,13 +1,13 @@
 // Pending overtures: accept/reject diplomatic offers during turn resolution.
 // SPEC/program/turn-resolution-phases.md, SPEC/game/diplomacy.md.
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Screen shown when turn resolution blocks on the human player accepting or
 /// rejecting diplomatic overtures from other players.

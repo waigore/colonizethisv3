@@ -1,10 +1,10 @@
 // Game Setup screen. SPEC/tui/screens/game-setup.md, SPEC/tui/ctterm.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctterm/package_logger.dart';
 import 'package:nocterm/nocterm.dart' hide Logger;
 
-final _log = tuiLogger();
+final _log = packageLogger();
 
 /// Number of player slots: 1 human + 5 AI.
 const int _kNumSlots = 6;
