@@ -1198,7 +1198,7 @@
       "target": {"type": "String"}
     }
   },
-  "provinceOverlay_foreignUnitStatus": "{owner} - {type} ({id}): {status}",
+  "provinceOverlay_foreignUnitStatus": "{owner} — {type} ({id}): {status}",
   "@provinceOverlay_foreignUnitStatus": {
     "description": "Civilian section line for foreign-unit status.",
     "placeholders": {
@@ -1208,7 +1208,7 @@
       "status": {"type": "String"}
     }
   },
-  "provinceOverlay_fleetSummary": "{owner} - {fleetLabel}: {shipParts}",
+  "provinceOverlay_fleetSummary": "{owner} — {fleetLabel}: {shipParts}",
   "@provinceOverlay_fleetSummary": {
     "description": "Naval section fleet summary line.",
     "placeholders": {
