@@ -202,7 +202,10 @@ OrderValidationResult? precheckBuildImprovement(
       'Improvement level already at maximum (4)',
     );
   }
-  final techCap = extractionCapForUnlocked(ctx.player.techUnlocked);
+  final techCap = extractionCapForResourceForUnlocked(
+    ctx.player.techUnlocked,
+    resourceId,
+  );
   if (currentLevel + 1 > techCap) {
     return OrderValidationResult.rejected(
       'Insufficient tech to build next improvement level (cap $techCap)',
