@@ -53,7 +53,7 @@ static const Map<String, String> _categoryIcons = {
 };
 ```
 
-If no icon exists for a category, omit the icon (backwards compatible).
+Each tech category in the catalog must have a mapped icon asset. Missing or invalid icon assets are contract violations and must fail during development/test rendering.
 
 ### Legend
 
@@ -82,7 +82,7 @@ States are mutually exclusive; “in progress” takes precedence over “availa
 ## Data
 
 - **Catalog:** `techCatalog` from colonizethis_data (id, era, category, cost, prerequisiteIds, regimentUnlockIds, shipUnlockIds, etc.). Display name: humanized from id (e.g. `road_construction` → “Road Construction”) unless a display-name map is added.
-- **Player:** `Player.techUnlocked`, `Player.researchProgressByTechId`, `Player.researchSlots`. **Researchable** set: derived as techs whose prerequisites are all in `techUnlocked`, tech not in `techUnlocked`, and not already in `researchProgressByTechId` (optional; “available” can mean “all prereqs met” only).
+- **Player:** `Player.techUnlocked`, `Player.researchProgressByTechId`, `Player.researchSlots`. **Researchable** set is required: techs whose prerequisites are all in `techUnlocked`, tech not in `techUnlocked`, and not already in `researchProgressByTechId`.
 
 ## Acceptance criteria
 
@@ -105,7 +105,7 @@ States are mutually exclusive; “in progress” takes precedence over “availa
 ## Integration
 
 - **Source of truth:** [tech-tree.md](../game/tech-tree.md), [research-state.md](../game/research-state.md). Research resolution: [research-resolution.md](../program/research-resolution.md).
-- **Widgetbook:** At least one story that simulates a **mid-game scenario**: roughly half of techs researched, half still to go, and optionally one or two techs in progress. This story uses a mock or real `Game` / `Player` with `techUnlocked` and `researchProgressByTechId` set accordingly.
+- **Widgetbook:** At least one story that simulates a **mid-game scenario**: roughly half of techs researched, half still to go, and one or two techs in progress. This story uses a mock or real `Game` / `Player` with `techUnlocked` and `researchProgressByTechId` set accordingly.
 - **App:** Technology entry opens full-screen with tabs (e.g. “Slots”, “Tree”). Tree tab hosts this widget. Register in widget catalog.
 
 ## Out of scope
@@ -113,4 +113,3 @@ States are mutually exclusive; “in progress” takes precedence over “availa
 - Assigning research from the tree (slots only).
 - Zoom or pan of the graph (scroll only).
 - Filtering by category (one graph, colour only).
-- Prerequisite list in the description dialog.
