@@ -955,9 +955,26 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     return resourceIdVisibleInPlayerView(view, tileKey, raw);
   }
 
+  Paint _resourceOverlayPaintForCell(CellViewData cell) {
+    final paint = Paint();
+    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        cell.visibility == TileVisibility.fogged) {
+      paint.colorFilter = ColorFilter.mode(
+        _kMapHoverSelectorIdle.withValues(
+          alpha: _kFoggedResourceIconModulateAlpha,
+        ),
+        BlendMode.modulate,
+      );
+    }
+    return paint;
+  }
+
   void _paintOverlay(Canvas canvas) {
     final showResources =
         baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
+    final showExtractionDiscs = shouldShowExtractionUnitDiscs(
+      baseLayerDisplayMode: baseLayerDisplayMode,
+    );
     final showImprovementLabels =
         baseLayerDisplayMode ==
             BaseLayerDisplayMode.terrainAndResourcesImprovementLabels ||
@@ -996,17 +1013,22 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
 
           final dstRect = Rect.fromLTWH(iconX, iconY, iconSize, iconSize);
           final srcRect = Rect.fromLTWH(0, 0, iconSize, iconSize);
-          final paint = Paint();
-          if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-              cell.visibility == TileVisibility.fogged) {
-            paint.colorFilter = ColorFilter.mode(
-              _kMapHoverSelectorIdle.withValues(
-                alpha: _kFoggedResourceIconModulateAlpha,
-              ),
-              BlendMode.modulate,
-            );
-          }
+          final paint = _resourceOverlayPaintForCell(cell);
           canvas.drawImageRect(icon, srcRect, dstRect, paint);
+          final extractionUnits = cell.resourceExtractionUnits ?? 0;
+          if (showExtractionDiscs && extractionUnits > 0) {
+            final discColor = discColorForResourceId(resourceForIcon);
+            final discPaint = _resourceOverlayPaintForCell(cell)
+              ..style = PaintingStyle.fill
+              ..color = discColor;
+            final centers = extractionDiscCentersForIconRect(
+              iconRect: dstRect,
+              units: extractionUnits,
+            );
+            for (final center in centers) {
+              canvas.drawCircle(center, _kExtractionDiscRadiusPx, discPaint);
+            }
+          }
         }
       }
     }

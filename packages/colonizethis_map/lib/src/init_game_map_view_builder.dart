@@ -94,6 +94,10 @@ InitGameMapViewData buildInitGameMapViewData({
 
   /// Optional warp links for rendering warp zone indicators.
   List<WarpLink>? warpLinks,
+
+  /// Optional per-tile extraction units for map overlays, keyed by tile key
+  /// `regionId|provinceId|x|y`.
+  Map<String, int>? resourceExtractionUnitsByTile,
 }) {
   _log.i('buildInitGameMapViewData start gameId=${game.id}');
   final owTileMap = tileMapByRegion[_regionOldWorld]!;
@@ -111,6 +115,7 @@ InitGameMapViewData buildInitGameMapViewData({
     greatPowerColorOverride: greatPowerColorOverride,
     visibilityByTile: visibilityByTile,
     warpLinks: warpLinks,
+    resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
   );
   final nwRegion = _buildRegionViewData(
     regionId: _regionNewWorld,
@@ -122,6 +127,7 @@ InitGameMapViewData buildInitGameMapViewData({
     greatPowerColorOverride: greatPowerColorOverride,
     visibilityByTile: visibilityByTile,
     warpLinks: warpLinks,
+    resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
   );
 
   _log.i('buildInitGameMapViewData end');
@@ -148,6 +154,7 @@ RegionMapViewData _buildRegionViewData({
   Map<String, (int r, int g, int b)>? greatPowerColorOverride,
   Map<String, TileVisibility>? visibilityByTile,
   List<WarpLink>? warpLinks,
+  Map<String, int>? resourceExtractionUnitsByTile,
 }) {
   final seaZoneIds = {
     for (final n in topology.nodes)
@@ -219,6 +226,9 @@ RegionMapViewData _buildRegionViewData({
       final visibility = visibilityByTile != null
           ? (visibilityByTile[tileKey] ?? TileVisibility.visible)
           : TileVisibility.visible;
+      final extractionUnits = isSea
+          ? null
+          : resourceExtractionUnitsByTile?[tileKey];
       final fullProvinceId = isSea ? null : ProvinceId.full(regionId, localId);
       cells.add(
         CellViewData(
@@ -239,6 +249,7 @@ RegionMapViewData _buildRegionViewData({
                     : null),
           improvementLevel: isSea ? null : improvement,
           roadLevel: isSea ? null : road,
+          resourceExtractionUnits: extractionUnits,
           visibility: visibility,
         ),
       );

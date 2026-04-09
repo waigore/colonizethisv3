@@ -13,6 +13,7 @@ import 'civilian_icon_cache.dart';
 import 'region_map_boundary_visibility.dart';
 import 'region_map_province_overlay_geometry.dart';
 import 'resource_icon_cache.dart';
+import 'resource_icon_disc_palette.dart';
 import 'province_label_icon_cache.dart';
 import 'terrain_tileset.dart';
 import 'town_icon_cache.dart';

@@ -62,6 +62,9 @@ const Color _kProvinceLabelShadowColor = Color(0x8A000000);
 
 /// Fogged land tiles: modulate alpha for resource icons (linear 0–1).
 const double _kFoggedResourceIconModulateAlpha = 0.6;
+const double _kExtractionDiscRadiusPx = 3.0;
+const double _kExtractionDiscStepXPx = 2.5;
+const double _kExtractionDiscStartInsetXPx = 2.0;
 
 /// Political (faction) border stroke — indigo, visible over terrain.
 const Color _kFactionPoliticalBorderColor = Color(0xFF1A237E);
@@ -277,4 +280,31 @@ enum BaseLayerDisplayMode {
   /// Terrain + resource icons + improvement labels + road/rail labels (`R{n}` when n > 0).
   /// Roads are painted after improvements (on top). Road labels require improvement mode on.
   terrainAndResourcesImprovementsRoads,
+}
+
+/// Returns true when extraction unit discs are allowed for the current base mode.
+bool shouldShowExtractionUnitDiscs({
+  required BaseLayerDisplayMode baseLayerDisplayMode,
+}) {
+  return baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
+}
+
+/// Returns circle centers for a right-fan extraction-disc layout.
+List<Offset> extractionDiscCentersForIconRect({
+  required Rect iconRect,
+  required int units,
+  double radius = _kExtractionDiscRadiusPx,
+  double stepX = _kExtractionDiscStepXPx,
+  double startInsetX = _kExtractionDiscStartInsetXPx,
+}) {
+  if (units <= 0) {
+    return const <Offset>[];
+  }
+  final centerY = iconRect.center.dy;
+  final startX = iconRect.right + startInsetX + radius;
+  return List<Offset>.generate(
+    units,
+    (i) => Offset(startX + (i * stepX), centerY),
+    growable: false,
+  );
 }
