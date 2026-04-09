@@ -63,11 +63,11 @@ When the game or AI performs an action, **evidence rules** (defined per agenda) 
 **Evidence rule coverage (current product)**  
 Evidence rules are evaluated during turn resolution (see [ai-events-and-dossier.md](../program/ai-events-and-dossier.md)) with deterministic, PlayerView-safe deltas:
 
-- **War declaration** — Warmonger when the AI attacks a weaker Great Power (+2) or another Great Power that is not weaker (+1 path per implementation). **Backstabber** when the AI declared war on a prior ally (+3), or when the AI declares war on a Great Power toward whom it had **`callToArmsRefused`** in the same turn or within the prior **3** turns (+3; obligation break then strike). Implementation: `evidenceForDeclareWar`, diplomatic history.
+- **War declaration** — Warmonger when the target is a weaker Great Power (+2) or any GP target (+1 battle-oriented signal as implemented). **Backstabber** when the AI declared war on a prior ally (+3), or when the AI declared war on a Great Power toward whom it had **`callToArmsRefused`** in the same turn or within the prior **3** turns (+3; obligation break then strike). Implementation: `evidenceForDeclareWar`, diplomatic history.
 - **Peace offer** — Peacemaker (+1).
 - **Land / naval battle victory (attacker)** — Warmonger per implemented rules.
 - **Isolationist** — AI refuses **call to arms** while still at peace with the defender (+2). `evidenceForIsolationistCallToArmsRefuse`.
-- **Tech thief** — Resolved **`steal_tech`**: **+1** per attempt, **+2** additional on success (**+3** total on success). `evidenceForAiStealTechResolved`.
+- **Tech thief** — Resolved **`steal_tech`** spy work: **+1** per attempt, **+2** additional on success (**+3** total on success). `evidenceForAiStealTechResolved`.
 - **Envy** — AI completes a tech in the **same catalog category** the human most recently completed via research, within **2** turns after that human completion (same turn counts): **+1** per qualifying completion, **max +3** total envy suspicion for that AI subject in that turn. Tracking: `Game.lastHumanCompletedResearchCategory` / `lastHumanResearchCategoryCompletionTurn`; research phase calls `evidenceForEnvyResearchMirror`. **Build/improvement** mirroring is out of scope until a single category model is defined for builds.
 
 ---
@@ -78,7 +78,7 @@ Evidence rules are evaluated during turn resolution (see [ai-events-and-dossier.
 - **Determinism:** Same global game seed and `aiSeed[P]` yield the same agenda. Same observable actions yield the same evidence points (replay- and save/load-consistent).
 - **Behavior modifiers:** Each agenda type has defined effects in the spec categories: war declaration, peace acceptance, alliance acceptance, build/order choice, treaty breaking. Expressed as weights or thresholds in config.
 - **War declaration (relation threshold and target scoring):** Declare-war candidates are scored only when relation score ≤ agenda’s `declareWarMaxRelationScore` (default 50; warmonger 70; peacemaker 30). When scoring declare-war, warmonger receives bonus for target in weakNeighbors; backstabber receives bonus for allied target. Implementation uses config for thresholds and bonuses; diplomacy planner filters or zero-scores out-of-threshold declare-war and applies target bonuses.
-- **Evidence and suspicion:** Evidence rules add points per (observer nation, subject AI, agenda type). Suspicion bands (Unknown, Possible, Likely, Almost certain, Confirmed) map total evidence score; display uses bands only. True agenda is never exposed to the player. Evidence rule coverage matches **Evidence rule coverage (current product)** above.
+- **Evidence and suspicion:** Evidence rules add points per (observer nation, subject AI, agenda type). Suspicion bands (Unknown, Possible, Likely, Almost certain, Confirmed) map total evidence score; display uses bands only. True agenda is never exposed to the player. Evidence rule coverage matches **Evidence rule coverage (current product)** above (including spy, call-to-arms refuse, treaty-break attack window, and research-category envy).
 - **Dossier contract:** Only suspicion scores and capped evidence log are exposed (PlayerView-safe). See [ai-dossier.md](ai-dossier.md) and [ai-events-and-dossier.md](../program/ai-events-and-dossier.md).
 
 ## Implementation

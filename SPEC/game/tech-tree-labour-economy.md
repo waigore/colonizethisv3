@@ -53,7 +53,7 @@ This section resolves ambiguity called out for **#145**: which table rows are **
 
 - Given the Labour and Economy tech table in this doc and the global tech catalog built from all tech-tree docs  
   When the System validates the catalog at startup  
-  Then the System ensures that each id in this table is unique, that its prerequisites refer to techs present in the global catalog, and that **implemented** effects (worker tiers, research slots, Money Lending research debt floor) match [economy-models.md](../program/economy-models.md) and [research-resolution.md](../program/research-resolution.md). **Deferred** rows (`banking` economy effects, `trade_fairs` commodity counts) must remain explicitly marked as deferred in this doc until wired.
+  Then the System ensures that each id in this table is unique, that its prerequisites refer to techs present in the global catalog, and that **implemented** effects (worker tiers, research slots, Money Lending research debt floor, **Banking** extended research debt floor with Money Lending, **Trade Fairs** commodity-slot capacity per [diplomacy-resolution.md](../program/diplomacy-resolution.md)) match [economy-models.md](../program/economy-models.md) and [research-resolution.md](../program/research-resolution.md). General borrowing / interest outside the research-phase floor remains explicitly out of scope in this doc.
 
 - Given a player does **not** have `money_lending` in `techUnlocked`  
   When the Research phase applies research funding that would spend treasury  
@@ -65,7 +65,7 @@ This section resolves ambiguity called out for **#145**: which table rows are **
 
 - Given a player has `banking` in `techUnlocked` but **not** `money_lending`  
   When the System computes the research treasury floor for the Research phase  
-  Then the System uses a floor of **0** (Banking does not extend research debt until specified in a future spec change).
+  Then the System uses a floor of **0** (Banking extends the floor only when `money_lending` is also unlocked).
 
 - Given the global tech catalog  
   When a designer reads a “Leads to …” cell in this doc’s table  

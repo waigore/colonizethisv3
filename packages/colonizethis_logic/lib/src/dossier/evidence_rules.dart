@@ -289,7 +289,7 @@ int _envyScoreAccumulatedForSubjectAndTurn(
 
 /// Envy agenda: AI completed research in the same category the human most recently
 /// completed, within **2 turns** after that human completion (same turn counts).
-/// **+1** per qualifying completion, **max +3** total envy suspicion for the
+/// **+1** per qualifying tech completion, **max +3** total envy suspicion for the
 /// subject AI in that turn. SPEC/ai/hidden-agendas.md.
 List<DossierEvidenceEntry> evidenceForEnvyResearchMirror(
   Game game,
