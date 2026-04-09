@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 
@@ -20,10 +21,13 @@ class QuickBattleResultDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final winnerText = switch (result.winner) {
-      QuickBattleWinner.attacker => '$attackerName wins',
-      QuickBattleWinner.defender => '$defenderName holds',
-      QuickBattleWinner.mutualExhaustion => 'Mutual exhaustion',
+      QuickBattleWinner.attacker => l10n.quickBattle_attackerWins(attackerName),
+      QuickBattleWinner.defender => l10n.quickBattle_defenderHolds(
+        defenderName,
+      ),
+      QuickBattleWinner.mutualExhaustion => l10n.quickBattle_mutualExhaustion,
     };
     return CtDialogShell(
       child: Column(
@@ -31,28 +35,34 @@ class QuickBattleResultDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Battle Result: $winnerText',
+            l10n.quickBattle_battleResult(winnerText),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           if (result.provinceFlips)
-            const Text(
-              'Province captured.',
+            Text(
+              l10n.quickBattle_provinceCaptured,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           const SizedBox(height: 8),
           Text(
-            '$attackerName casualties: ${result.attackerCasualties.length}',
+            l10n.quickBattle_casualties(
+              attackerName,
+              result.attackerCasualties.length,
+            ),
           ),
           Text(
-            '$defenderName casualties: ${result.defenderCasualties.length}',
+            l10n.quickBattle_casualties(
+              defenderName,
+              result.defenderCasualties.length,
+            ),
           ),
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
+              child: Text(l10n.quickBattle_ok),
             ),
           ),
         ],

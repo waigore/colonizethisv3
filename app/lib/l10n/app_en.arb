@@ -581,6 +581,96 @@
   "province_ship_merchant_steamship": "Merchant Steamship",
   "@province_ship_merchant_steamship": {"description": "Ship type display name."},
   "province_ship_ironclad": "Ironclad",
-  "@province_ship_ironclad": {"description": "Ship type display name."}
+  "@province_ship_ironclad": {"description": "Ship type display name."},
+
+  "quickBattle_commandPoints": "Command Points: {cp}",
+  "@quickBattle_commandPoints": {
+    "description": "Quick battle action selector command points header.",
+    "placeholders": {
+      "cp": {"type": "int"}
+    }
+  },
+  "quickBattle_action_volleyFire": "Volley Fire",
+  "@quickBattle_action_volleyFire": {"description": "Quick battle action label."},
+  "quickBattle_action_defend": "Defend",
+  "@quickBattle_action_defend": {"description": "Quick battle action label."},
+  "quickBattle_action_maneuver": "Maneuver",
+  "@quickBattle_action_maneuver": {"description": "Quick battle action label."},
+  "quickBattle_action_fallBack": "Fall Back",
+  "@quickBattle_action_fallBack": {"description": "Quick battle action label."},
+  "quickBattle_action_assault": "Assault",
+  "@quickBattle_action_assault": {"description": "Quick battle action label."},
+  "quickBattle_actionWithCost": "{label} ({cost} CP)",
+  "@quickBattle_actionWithCost": {
+    "description": "Quick battle action button label with command point cost.",
+    "placeholders": {
+      "label": {"type": "String"},
+      "cost": {"type": "int"}
+    }
+  },
+  "quickBattle_combatAt": "Combat at {provinceName}",
+  "@quickBattle_combatAt": {
+    "description": "Combat mode dialog title for a province.",
+    "placeholders": {
+      "provinceName": {"type": "String"}
+    }
+  },
+  "quickBattle_capitalSiegeQuickBattleOnly": "Capital siege — Quick Battle only (no auto-resolve).",
+  "@quickBattle_capitalSiegeQuickBattleOnly": {"description": "Combat mode guidance for capital sieges."},
+  "quickBattle_chooseCombatMode": "Choose combat mode:",
+  "@quickBattle_chooseCombatMode": {"description": "Combat mode choice prompt."},
+  "quickBattle_autoResolve": "Auto-Resolve",
+  "@quickBattle_autoResolve": {"description": "Combat mode button label."},
+  "quickBattle_quickBattle": "Quick Battle",
+  "@quickBattle_quickBattle": {"description": "Combat mode button label."},
+  "quickBattle_attackerWins": "{name} wins",
+  "@quickBattle_attackerWins": {
+    "description": "Quick battle winner line when attacker wins.",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "quickBattle_defenderHolds": "{name} holds",
+  "@quickBattle_defenderHolds": {
+    "description": "Quick battle winner line when defender holds.",
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "quickBattle_mutualExhaustion": "Mutual exhaustion",
+  "@quickBattle_mutualExhaustion": {"description": "Quick battle winner line for tie exhaustion state."},
+  "quickBattle_battleResult": "Battle Result: {winnerText}",
+  "@quickBattle_battleResult": {
+    "description": "Quick battle result heading.",
+    "placeholders": {
+      "winnerText": {"type": "String"}
+    }
+  },
+  "quickBattle_provinceCaptured": "Province captured.",
+  "@quickBattle_provinceCaptured": {"description": "Quick battle note when province ownership flips."},
+  "quickBattle_casualties": "{name} casualties: {count}",
+  "@quickBattle_casualties": {
+    "description": "Quick battle casualties summary line.",
+    "placeholders": {
+      "name": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "quickBattle_ok": "OK",
+  "@quickBattle_ok": {"description": "Quick battle result dialog close button label."},
+  "quickBattle_round": "Quick Battle — Round {round} / {maxRounds}",
+  "@quickBattle_round": {
+    "description": "Quick battle screen heading with current and max rounds.",
+    "placeholders": {
+      "round": {"type": "int"},
+      "maxRounds": {"type": "int"}
+    }
+  },
+  "quickBattle_resolveAuto": "Resolve (Auto)",
+  "@quickBattle_resolveAuto": {"description": "Quick battle auto resolve button label."},
+  "quickBattle_attackerDefaultName": "Attacker",
+  "@quickBattle_attackerDefaultName": {"description": "Fallback attacker label in quick battle UI."},
+  "quickBattle_defenderDefaultName": "Defender",
+  "@quickBattle_defenderDefaultName": {"description": "Fallback defender label in quick battle UI."}
 }
 
