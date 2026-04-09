@@ -12,7 +12,7 @@ Define topology format, tile map data structures, province identity, and tile ke
 
 ## Scope (current product)
 
-For current product, map topology and tile maps are **produced in-memory** by the map generation tool (`generate_map`) and/or by init_game when creating a new game. **Loading from static files** (e.g. hand-edited topology or tile-map JSON for custom scenarios) is **deferred**; when added, it will be tracked as a separate feature and this spec will define the loading API (file layout, schema, error handling). Optional map data stored **in saves** (round-trip with game save) is defined in [save-load.md](save-load.md); that path uses the same JSON structures and is for ctdev/init tooling, not standalone file load.
+For current product, map topology and tile maps are **produced only in-memory** by the map generation tool (`generate_map`) and/or by init_game when creating a new game. **Hand-crafted or static file loading** of topology/tile maps for gameplay is **out of scope**; there is no supported path to load arbitrary map files into a running session. Persisted map data exists **only** as part of the Hive save bundle (same JSON structures; round-trip with [save-load.md](save-load.md)) for resume/playable sessions and tooling—not as a standalone map import feature.
 
 ---
 

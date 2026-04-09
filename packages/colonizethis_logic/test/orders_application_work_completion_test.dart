@@ -73,6 +73,107 @@ void main() {
     );
 
     test(
+      'build_improvement completion sets envy mirror hint for human on extraction tile',
+      () {
+        final tileState = TileMapState().setImprovement(tileKey, 0);
+        final unit = Unit(
+          id: 'u1',
+          type: 'Builder',
+          ownerId: 'p1',
+          locationProvinceId: provinceId,
+          tileKey: tileKey,
+          originTileKey: 'oldWorld|P1|1|0',
+          assignedTileKey: tileKey,
+          status: UnitStatus.working,
+          currentWork: const CurrentWork(
+            workTarget: 'build_improvement',
+            tileKey: tileKey,
+            totalTurns: 1,
+            remainingTurns: 1,
+          ),
+        );
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+              ],
+              units: [unit],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: const {tileKey: 'grain'},
+            tileState: tileState,
+          ),
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        );
+        final next = applyBuildAndWorkOrders(
+          game,
+          ordersToTriggerProcessWork(),
+        );
+        expect(next.lastHumanCompletedResearchCategory, 'gathering');
+        expect(next.lastHumanResearchCategoryCompletionTurn, 2);
+      },
+    );
+
+    test(
+      'build_improvement completion adds envy evidence when AI mirrors human gathering hint',
+      () {
+        const aiId = 'ai1';
+        final tileState = TileMapState().setImprovement(tileKey, 0);
+        final unit = Unit(
+          id: 'u1',
+          type: 'Builder',
+          ownerId: aiId,
+          locationProvinceId: provinceId,
+          tileKey: tileKey,
+          originTileKey: 'oldWorld|P1|1|0',
+          assignedTileKey: tileKey,
+          status: UnitStatus.working,
+          currentWork: const CurrentWork(
+            workTarget: 'build_improvement',
+            tileKey: tileKey,
+            totalTurns: 1,
+            remainingTurns: 1,
+          ),
+        );
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: ow, ownerId: aiId),
+              ],
+              units: [unit],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: const {tileKey: 'coal'},
+            tileState: tileState,
+          ),
+          players: const [
+            Player(id: 'human', displayName: 'H', isHuman: true),
+            Player(id: aiId, displayName: 'AI', isHuman: false),
+          ],
+          aiControlByGpId: const {aiId: true},
+          lastHumanCompletedResearchCategory: 'gathering',
+          lastHumanResearchCategoryCompletionTurn: 0,
+        );
+        final next = applyBuildAndWorkOrders(
+          game,
+          ordersToTriggerProcessWork(),
+        );
+        final envy = next.dossierEvidenceEntries
+            .where((e) => e.agendaType == 'envy')
+            .toList();
+        expect(envy, isNotEmpty);
+        expect(envy.single.subjectId, aiId);
+        expect(envy.single.scoreDelta, 1);
+      },
+    );
+
+    test(
       'build_improvement completion raises stored level from 3 to 4 (global max)',
       () {
         final tileState = TileMapState().setImprovement(tileKey, 3);

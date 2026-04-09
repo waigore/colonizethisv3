@@ -91,6 +91,20 @@ const Map<String, Map<String, int>> _extractionCapByResourceByTechId = {
 /// Keep in sync with SPEC/game/tech-and-extraction-cap.md.
 const Map<String, int> extractionCapDesignExceptions = {'horses': 1, 'wool': 3};
 
+/// Tech catalog category used for Envy hidden-agenda mirror scoring when a player
+/// completes an extraction [build_improvement] on a tile whose [resourceId] is in
+/// the extraction-cap map. All such improvements map to **gathering** (tech tree).
+/// Returns null when the tile has no extraction resource or an unlisted resource.
+String? envyMirrorTechCategoryForExtractionResource(String? resourceId) {
+  if (resourceId == null || resourceId.isEmpty) {
+    return null;
+  }
+  if (!_extractionCapByResourceByTechId.containsKey(resourceId)) {
+    return null;
+  }
+  return 'gathering';
+}
+
 TechDefinition? techById(String id) => techCatalog[id];
 
 /// Humanized display name for a tech id. Uses catalog displayName when set; otherwise

@@ -6,7 +6,7 @@
 
 ## Catalog and implementation
 
-The **military tech table in this doc is the GDD source of truth** for tech id, name, era, prerequisites, and regiment/effect mapping. **Implementation:** The program-level tech catalog in `colonizethis_data` (`buildTechCatalog()`) **must list the same tech ids** as this table for the military category; build and research order validation use that catalog per [orders.md](../program/orders.md) and the order engine. Ruleset-driven catalog overlays remain out of scope until specified in [ruleset-config.md](../program/ruleset-config.md).
+The **military tech table in this doc is the GDD source of truth** for tech id, name, era, prerequisites, and regiment/effect mapping. **Implementation:** The program-level tech catalog in `colonizethis_data` (`buildTechCatalog()`) **must include every military-row id from this doc** with matching prerequisites and categories—**no program-only subset** of the GDD table. Build and research order validation use that catalog per [orders.md](../program/orders.md) and the order engine. Catalog parity is enforced in code and tests; JSON ruleset overlays for tech definitions are out of scope unless [ruleset-config.md](../program/ruleset-config.md) explicitly adds them.
 
 ---
 
