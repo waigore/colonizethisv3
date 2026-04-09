@@ -24,6 +24,27 @@ bool isAiControlledForEvidence(Game game, String playerId) {
   return p != null && !p.isHuman;
 }
 
+/// True when [actorGpId] refused call-to-arms toward [targetGpId] in the same
+/// turn as [warTurn] or within the prior [window] turns (treaty strain then attack).
+/// SPEC/ai/hidden-agendas.md (Backstabber evidence).
+bool hadCallToArmsRefusedWithTargetInAttackWindow(
+  Game game,
+  String actorGpId,
+  String targetGpId,
+  int warTurn, {
+  int window = 3,
+}) {
+  for (final e in game.diplomaticHistoryEvents) {
+    if (e.type != DiplomaticEventType.callToArmsRefused) continue;
+    if (e.fromFactionId != actorGpId || e.toFactionId != targetGpId) continue;
+    final delta = warTurn - e.turn;
+    if (delta >= 0 && delta <= window) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Returns true if [targetId] is a weaker GP than [actorId] by military level (for warmonger evidence).
 bool _isWeakerGp(Game game, String actorId, String targetId) {
   final actor = game.playerById(actorId);
@@ -50,6 +71,15 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
   final targetIsGp = game.playerById(targetFactionId) != null;
   final weaker = targetIsGp && _isWeakerGp(game, actorGpId, targetFactionId);
 
+  final treatyBreakAttack =
+      !wasAllied &&
+      hadCallToArmsRefusedWithTargetInAttackWindow(
+        game,
+        actorGpId,
+        targetFactionId,
+        turnNumber,
+      );
+
   final entries = <DossierEvidenceEntry>[];
   for (final observerId in observers) {
     if (wasAllied) {
@@ -60,6 +90,17 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
           agendaType: 'backstabber',
           turnNumber: turnNumber,
           description: 'declared war on ally',
+          scoreDelta: 3,
+        ),
+      );
+    } else if (treatyBreakAttack) {
+      entries.add(
+        DossierEvidenceEntry(
+          observerId: observerId,
+          subjectId: actorGpId,
+          agendaType: 'backstabber',
+          turnNumber: turnNumber,
+          description: 'declared war soon after breaking alliance obligation',
           scoreDelta: 3,
         ),
       );
@@ -222,7 +263,82 @@ List<DossierEvidenceEntry> evidenceForIsolationistCallToArmsRefuse(
   return entries;
 }
 
+int _envyScoreAccumulatedForSubjectAndTurn(
+  Game game,
+  String subjectId,
+  int turnNumber,
+  List<DossierEvidenceEntry> pendingSameTurn,
+) {
+  var sum = 0;
+  for (final e in game.dossierEvidenceEntries) {
+    if (e.subjectId == subjectId &&
+        e.agendaType == 'envy' &&
+        e.turnNumber == turnNumber) {
+      sum += e.scoreDelta;
+    }
+  }
+  for (final e in pendingSameTurn) {
+    if (e.subjectId == subjectId &&
+        e.agendaType == 'envy' &&
+        e.turnNumber == turnNumber) {
+      sum += e.scoreDelta;
+    }
+  }
+  return sum;
+}
+
+/// Envy agenda: AI completed research in the same category the human most recently
+/// completed, within **2 turns** after that human completion (same turn counts).
+/// **+1** per qualifying completion, **max +3** total envy suspicion for the
+/// subject AI in that turn. SPEC/ai/hidden-agendas.md.
+List<DossierEvidenceEntry> evidenceForEnvyResearchMirror(
+  Game game,
+  String aiGpId,
+  String completedCategory,
+  int turnNumber,
+  List<DossierEvidenceEntry> pendingSameTurn,
+) {
+  if (!isAiControlledForEvidence(game, aiGpId)) return [];
+  final observers = _humanObserverIds(game);
+  if (observers.isEmpty) return [];
+
+  final refCat = game.lastHumanCompletedResearchCategory;
+  final refTurn = game.lastHumanResearchCategoryCompletionTurn;
+  if (refCat == null || refTurn == null) return [];
+  if (completedCategory != refCat) return [];
+  if (turnNumber < refTurn || turnNumber > refTurn + 2) return [];
+
+  final already = _envyScoreAccumulatedForSubjectAndTurn(
+    game,
+    aiGpId,
+    turnNumber,
+    pendingSameTurn,
+  );
+  if (already >= 3) return [];
+
+  final entries = <DossierEvidenceEntry>[];
+  for (final observerId in observers) {
+    entries.add(
+      DossierEvidenceEntry(
+        observerId: observerId,
+        subjectId: aiGpId,
+        agendaType: 'envy',
+        turnNumber: turnNumber,
+        description: 'mirrored human research category shortly after human',
+        scoreDelta: 1,
+      ),
+    );
+  }
+  if (entries.isNotEmpty) {
+    _log.d(
+      'evidence envy mirror ai=$aiGpId category=$completedCategory turn=$turnNumber',
+    );
+  }
+  return entries;
+}
+
 /// Tech Thief agenda: resolved steal_tech spy work against another Great Power.
+/// **+1** per attempt, **+2** additional on success (**+3** total on success).
 /// SPEC/ai/hidden-agendas.md.
 List<DossierEvidenceEntry> evidenceForAiStealTechResolved(
   Game game,

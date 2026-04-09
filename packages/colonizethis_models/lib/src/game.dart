@@ -87,6 +87,8 @@ class Game {
     this.richesCashMultiplier = 1.0,
     this.capitalTileGrainBonusPerTurn = 5,
     this.politicalGlyphByPlayerId = const {},
+    this.lastHumanCompletedResearchCategory,
+    this.lastHumanResearchCategoryCompletionTurn,
   });
 
   final String id;
@@ -152,6 +154,13 @@ class Game {
   /// UIs for the political ownership layer. SPEC/tui/map-tui-mapping.md.
   final Map<String, String> politicalGlyphByPlayerId;
 
+  /// Last tech **category** a human Great Power completed via research (most recent).
+  /// Used for Envy hidden-agenda evidence. SPEC/ai/hidden-agendas.md.
+  final String? lastHumanCompletedResearchCategory;
+
+  /// Turn number when [lastHumanCompletedResearchCategory] was set.
+  final int? lastHumanResearchCategoryCompletionTurn;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'worldState': worldState.toJson(),
@@ -195,6 +204,11 @@ class Game {
       'generals': generals.map((e) => e.toJson()).toList(),
     if (politicalGlyphByPlayerId.isNotEmpty)
       'politicalGlyphByPlayerId': politicalGlyphByPlayerId,
+    if (lastHumanCompletedResearchCategory != null)
+      'lastHumanCompletedResearchCategory': lastHumanCompletedResearchCategory,
+    if (lastHumanResearchCategoryCompletionTurn != null)
+      'lastHumanResearchCategoryCompletionTurn':
+          lastHumanResearchCategoryCompletionTurn,
   };
 
   static Game fromJson(Map<String, dynamic> json) {
@@ -202,10 +216,9 @@ class Game {
     final minorNationsList = json['minorNations'] as List<dynamic>? ?? [];
     final tribesList = json['tribes'] as List<dynamic>? ?? [];
     final turnTimeMappingRaw = json['turnTimeMapping'];
-    final Map<String, dynamic>? turnTimeMappingJson =
-        turnTimeMappingRaw is Map
-            ? Map<String, dynamic>.from(turnTimeMappingRaw)
-            : null;
+    final Map<String, dynamic>? turnTimeMappingJson = turnTimeMappingRaw is Map
+        ? Map<String, dynamic>.from(turnTimeMappingRaw)
+        : null;
     final defaultCombatModeRaw = json['defaultCombatMode'] as String?;
     final defaultCombatMode = defaultCombatModeRaw != null
         ? CombatMode.values.firstWhere(
@@ -332,6 +345,10 @@ class Game {
       richesCashMultiplier: richesCashMultiplier,
       capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
       politicalGlyphByPlayerId: politicalGlyphByPlayerId,
+      lastHumanCompletedResearchCategory:
+          json['lastHumanCompletedResearchCategory'] as String?,
+      lastHumanResearchCategoryCompletionTurn:
+          (json['lastHumanResearchCategoryCompletionTurn'] as num?)?.toInt(),
     );
   }
 
@@ -359,6 +376,8 @@ class Game {
     double? richesCashMultiplier,
     int? capitalTileGrainBonusPerTurn,
     Map<String, String>? politicalGlyphByPlayerId,
+    String? lastHumanCompletedResearchCategory,
+    int? lastHumanResearchCategoryCompletionTurn,
   }) {
     return Game(
       id: id ?? this.id,
@@ -390,6 +409,12 @@ class Game {
           capitalTileGrainBonusPerTurn ?? this.capitalTileGrainBonusPerTurn,
       politicalGlyphByPlayerId:
           politicalGlyphByPlayerId ?? this.politicalGlyphByPlayerId,
+      lastHumanCompletedResearchCategory:
+          lastHumanCompletedResearchCategory ??
+          this.lastHumanCompletedResearchCategory,
+      lastHumanResearchCategoryCompletionTurn:
+          lastHumanResearchCategoryCompletionTurn ??
+          this.lastHumanResearchCategoryCompletionTurn,
     );
   }
 
@@ -423,7 +448,14 @@ class Game {
           victory == other.victory &&
           richesCashMultiplier == other.richesCashMultiplier &&
           capitalTileGrainBonusPerTurn == other.capitalTileGrainBonusPerTurn &&
-          _mapEquals(politicalGlyphByPlayerId, other.politicalGlyphByPlayerId);
+          _mapEquals(
+            politicalGlyphByPlayerId,
+            other.politicalGlyphByPlayerId,
+          ) &&
+          lastHumanCompletedResearchCategory ==
+              other.lastHumanCompletedResearchCategory &&
+          lastHumanResearchCategoryCompletionTurn ==
+              other.lastHumanResearchCategoryCompletionTurn;
 
   @override
   int get hashCode => Object.hash(
@@ -455,6 +487,8 @@ class Game {
       richesCashMultiplier,
       capitalTileGrainBonusPerTurn,
       Object.hashAll(politicalGlyphByPlayerId.entries),
+      lastHumanCompletedResearchCategory,
+      lastHumanResearchCategoryCompletionTurn,
     ),
   );
 

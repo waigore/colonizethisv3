@@ -784,7 +784,7 @@ Game _addStartingMilitaryAndNaval({
 
 /// Chooses the regiment type used for starting armies.
 String _startingRegimentTypeForPlayer(Player player) {
-  // MVP: low-upkeep starting regiment (ruleset-config / game-setup-pipeline 7f).
+  // Bootstrap default: low-upkeep regiment (SPEC/program/game-setup-pipeline.md §7f).
   const fallbackId = 'peasant_levies';
   final stats = regimentStatsById(fallbackId);
   if (stats != null) return stats.id;
