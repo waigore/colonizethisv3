@@ -81,14 +81,6 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
       );
 
   final entries = <DossierEvidenceEntry>[];
-  final treatyBreakAttack =
-      !wasAllied &&
-      hadCallToArmsRefusedWithTargetInAttackWindow(
-        game,
-        actorGpId,
-        targetFactionId,
-        turnNumber,
-      );
   for (final observerId in observers) {
     if (wasAllied) {
       entries.add(
