@@ -6,6 +6,7 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:path/path.dart' as p;
 
 const _scanRoots = <String>['app', 'ctterm', 'packages', 'tool'];
+const _argFiles = '--files';
 
 const _excludedPaths = <String>{
   'packages/colonizethis_data/lib/src/tech_catalog.dart',
@@ -25,7 +26,8 @@ const _excludedDirMarkers = <String>[
   '/goldens/',
 ];
 
-void main() {
+void main(List<String> args) {
+  final parsedArgs = _parseArgs(args);
   final root = p.normalize(Directory.current.path);
   final techIds = _loadCanonicalTechIds(root);
   if (techIds.isEmpty) {
@@ -35,36 +37,29 @@ void main() {
     );
     exit(1);
   }
+  final constantNameByTechId = _loadTechIdConstantNames(root);
+  final candidateFiles = _collectCandidateFiles(root, parsedArgs.files);
 
   final violations = <_Violation>[];
-  for (final relRoot in _scanRoots) {
-    final absRoot = p.join(root, relRoot);
-    final dir = Directory(absRoot);
-    if (!dir.existsSync()) {
+  for (final file in candidateFiles) {
+    final relPath = p.normalize(p.relative(file.path, from: root));
+    if (_shouldSkipFile(relPath)) {
       continue;
     }
-    for (final entity in dir.listSync(recursive: true, followLinks: false)) {
-      if (entity is! File || !entity.path.endsWith('.dart')) {
-        continue;
-      }
-      final relPath = p.normalize(p.relative(entity.path, from: root));
-      if (_shouldSkipFile(relPath)) {
-        continue;
-      }
-      final source = entity.readAsStringSync();
-      final parsed = parseString(
-        content: source,
-        path: entity.path,
-        throwIfDiagnostics: false,
-      );
-      final visitor = _TechIdLiteralVisitor(
-        path: relPath,
-        unit: parsed.unit,
-        techIds: techIds,
-      );
-      parsed.unit.visitChildren(visitor);
-      violations.addAll(visitor.violations);
-    }
+    final source = file.readAsStringSync();
+    final parsed = parseString(
+      content: source,
+      path: file.path,
+      throwIfDiagnostics: false,
+    );
+    final visitor = _TechIdLiteralVisitor(
+      path: relPath,
+      unit: parsed.unit,
+      techIds: techIds,
+      constantNameByTechId: constantNameByTechId,
+    );
+    parsed.unit.visitChildren(visitor);
+    violations.addAll(visitor.violations);
   }
 
   if (violations.isEmpty) {
@@ -83,6 +78,91 @@ void main() {
     );
   }
   exit(1);
+}
+
+_ParsedArgs _parseArgs(List<String> args) {
+  String? filesArgValue;
+  for (var i = 0; i < args.length; i++) {
+    final arg = args[i];
+    if (arg == _argFiles) {
+      if (i + 1 >= args.length) {
+        stderr.writeln('ERROR: Missing value for $_argFiles.');
+        exit(2);
+      }
+      filesArgValue = args[i + 1];
+      i++;
+      continue;
+    }
+    if (arg.startsWith('$_argFiles=')) {
+      filesArgValue = arg.substring('$_argFiles='.length);
+      continue;
+    }
+    stderr.writeln(
+      'ERROR: Unsupported argument "$arg". Supported: $_argFiles '
+      '(comma-separated or newline-separated relative paths).',
+    );
+    exit(2);
+  }
+  return _ParsedArgs(
+    files: filesArgValue == null ? const [] : _splitFileArg(filesArgValue),
+  );
+}
+
+List<String> _splitFileArg(String value) {
+  if (value.trim().isEmpty) {
+    return const [];
+  }
+  final normalized = value.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+  return normalized
+      .split(RegExp('[,\n]'))
+      .map((entry) => entry.trim())
+      .where((entry) => entry.isNotEmpty)
+      .toList(growable: false);
+}
+
+List<File> _collectCandidateFiles(String root, List<String> requestedPaths) {
+  if (requestedPaths.isEmpty) {
+    final files = <File>[];
+    for (final relRoot in _scanRoots) {
+      final absRoot = p.join(root, relRoot);
+      final dir = Directory(absRoot);
+      if (!dir.existsSync()) {
+        continue;
+      }
+      for (final entity in dir.listSync(recursive: true, followLinks: false)) {
+        if (entity is File && entity.path.endsWith('.dart')) {
+          files.add(entity);
+        }
+      }
+    }
+    return files;
+  }
+
+  final files = <File>[];
+  for (final relPath in requestedPaths) {
+    if (!relPath.endsWith('.dart')) {
+      continue;
+    }
+    final normalizedRelPath = p.normalize(relPath);
+    if (!_isInScanRoots(normalizedRelPath)) {
+      continue;
+    }
+    final file = File(p.join(root, normalizedRelPath));
+    if (file.existsSync()) {
+      files.add(file);
+    }
+  }
+  return files;
+}
+
+bool _isInScanRoots(String relPath) {
+  final normalized = relPath.replaceAll('\\', '/');
+  for (final root in _scanRoots) {
+    if (normalized == root || normalized.startsWith('$root/')) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool _shouldSkipFile(String relPath) {
@@ -125,6 +205,24 @@ Set<String> _loadCanonicalTechIds(String root) {
   return collector.ids;
 }
 
+Map<String, String> _loadTechIdConstantNames(String root) {
+  final constantsRelPath = 'packages/colonizethis_data/lib/src/tech_ids.dart';
+  final constantsAbsPath = p.join(root, constantsRelPath);
+  final file = File(constantsAbsPath);
+  if (!file.existsSync()) {
+    return const {};
+  }
+  final source = file.readAsStringSync();
+  final parsed = parseString(
+    content: source,
+    path: constantsAbsPath,
+    throwIfDiagnostics: false,
+  );
+  final collector = _TechIdConstantCollector();
+  parsed.unit.visitChildren(collector);
+  return collector.constantNameByTechId;
+}
+
 class _TechCatalogIdCollector extends RecursiveAstVisitor<void> {
   final Set<String> ids = <String>{};
 
@@ -147,16 +245,41 @@ class _TechCatalogIdCollector extends RecursiveAstVisitor<void> {
   }
 }
 
+class _TechIdConstantCollector extends RecursiveAstVisitor<void> {
+  final Map<String, String> constantNameByTechId = <String, String>{};
+
+  @override
+  void visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
+    for (final variable in node.variables.variables) {
+      final initializer = variable.initializer;
+      if (initializer is! SimpleStringLiteral) {
+        continue;
+      }
+      if (initializer.value.isEmpty) {
+        continue;
+      }
+      final variableName = variable.name.lexeme;
+      if (!variableName.startsWith('kTechId')) {
+        continue;
+      }
+      constantNameByTechId[initializer.value] = variableName;
+    }
+    super.visitTopLevelVariableDeclaration(node);
+  }
+}
+
 class _TechIdLiteralVisitor extends RecursiveAstVisitor<void> {
   _TechIdLiteralVisitor({
     required this.path,
     required this.unit,
     required this.techIds,
+    required this.constantNameByTechId,
   });
 
   final String path;
   final CompilationUnit unit;
   final Set<String> techIds;
+  final Map<String, String> constantNameByTechId;
   final List<_Violation> violations = <_Violation>[];
 
   @override
@@ -169,12 +292,16 @@ class _TechIdLiteralVisitor extends RecursiveAstVisitor<void> {
       return;
     }
     final location = unit.lineInfo.getLocation(node.offset);
+    final suggestedConstant = constantNameByTechId[value];
+    final suggestion = suggestedConstant == null
+        ? 'Use a kTechId* constant from colonizethis_data.'
+        : 'Use $suggestedConstant from colonizethis_data.';
     violations.add(
       _Violation(
         path: path,
         line: location.lineNumber,
         column: location.columnNumber,
-        message: 'raw tech ID literal "$value"',
+        message: 'raw tech ID literal "$value". $suggestion',
       ),
     );
   }
@@ -212,4 +339,10 @@ class _Violation {
   final int line;
   final int column;
   final String message;
+}
+
+class _ParsedArgs {
+  const _ParsedArgs({required this.files});
+
+  final List<String> files;
 }
