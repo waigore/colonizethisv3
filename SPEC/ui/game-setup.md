@@ -89,9 +89,9 @@ Positions, layout, and hierarchy (per UXD 03b; 44 dp min touch targets).
 
 When the user has selected a nation and leader for every slot, Start Game becomes enabled. Nation dropdown for a slot lists "Select nation" (empty) plus GPs not selected in other slots. Leader dropdown lists "Select leader" (empty) until a nation is chosen, then that nation’s variants. When nation changes, leader resets to that nation’s default.
 
-**Loading:** Same layout; Start Game disabled; optional "Starting…" or spinner; Back enabled.
+**Loading:** Same layout; Start Game disabled; a visible loading indicator ("Starting…" label and/or spinner) is required; Back enabled.
 
-**Regions (UXD 07–style):** canvas full-screen; title_region ("Game Setup"); slots_region (scrollable: six rows, each with slot label, nation dropdown, leader dropdown); buttons_region (Start Game, Back); optional loading_region when state is loading.
+**Regions (UXD 07–style):** canvas full-screen; title_region ("Game Setup"); slots_region (scrollable: six rows, each with slot label, nation dropdown, leader dropdown); buttons_region (Start Game, Back); loading_region is present in `loading` state.
 
 **Layout (pixel-art variant):** Content column constrained to **max width 400 dp**; Start/Back use main menu button asset. Content centered. Slots may scroll on small screens.
 
@@ -101,7 +101,7 @@ When the user has selected a nation and leader for every slot, Start Game become
 
 ## Pixel-art assets
 
-For current product, reuse main menu assets: `ui_main_menu_button.png` for Start Game and Back. Dropdowns and list use theme styling. If a dedicated game-setup panel is added later, add a row here and PixelLab prompts. Style lock: UXD 02.
+For current product, reuse main menu assets: `ui_main_menu_button.png` for Start Game and Back. Dropdowns and list use theme styling. Style lock: UXD 02.
 
 ---
 
