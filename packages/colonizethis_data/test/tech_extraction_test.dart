@@ -164,4 +164,17 @@ void main() {
       },
     );
   });
+
+  group('envyMirrorTechCategoryForExtractionResource', () {
+    test('returns gathering for extraction-cap resources', () {
+      expect(envyMirrorTechCategoryForExtractionResource('grain'), 'gathering');
+      expect(envyMirrorTechCategoryForExtractionResource('iron'), 'gathering');
+    });
+
+    test('returns null for unknown or empty resource id', () {
+      expect(envyMirrorTechCategoryForExtractionResource(null), isNull);
+      expect(envyMirrorTechCategoryForExtractionResource(''), isNull);
+      expect(envyMirrorTechCategoryForExtractionResource('unknown'), isNull);
+    });
+  });
 }

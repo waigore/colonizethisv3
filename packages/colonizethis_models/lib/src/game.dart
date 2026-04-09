@@ -154,11 +154,13 @@ class Game {
   /// UIs for the political ownership layer. SPEC/tui/map-tui-mapping.md.
   final Map<String, String> politicalGlyphByPlayerId;
 
-  /// Last tech **category** a human Great Power completed via research (most recent).
-  /// Used for Envy hidden-agenda evidence. SPEC/ai/hidden-agendas.md.
+  /// Last tech-catalog **category** a human Great Power set for Envy mirror tracking
+  /// (most recent): either a completed **research** tech’s `category`, or **gathering**
+  /// from a completed extraction **build_improvement** on a tracked resource tile.
+  /// JSON keys retain the historical `…Research…` names. SPEC/ai/hidden-agendas.md.
   final String? lastHumanCompletedResearchCategory;
 
-  /// Turn number when [lastHumanCompletedResearchCategory] was set.
+  /// Turn number when [lastHumanCompletedResearchCategory] was last updated.
   final int? lastHumanResearchCategoryCompletionTurn;
 
   Map<String, dynamic> toJson() => {
