@@ -2,7 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/routes.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 
 /// Pause menu content for [OpenPauseMenuPanelEvent]. Emits bus follow-up events only.
 class PauseMenuPanel extends StatelessWidget {
@@ -12,7 +12,7 @@ class PauseMenuPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,

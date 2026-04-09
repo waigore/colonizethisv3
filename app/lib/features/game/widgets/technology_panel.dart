@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 
@@ -24,7 +24,7 @@ class TechnologyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final techUnlocked = player.techUnlocked ?? {};
     final researchedIds = techUnlocked.entries
         .where((e) => e.value)
@@ -195,7 +195,7 @@ void _showAssignDialog({
   required Player player,
   required void Function(Orders orders) onOrdersChanged,
 }) {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = appL10n(context);
   final techUnlocked = player.techUnlocked ?? {};
   final existingOrders =
       currentOrders.researchOrdersByPlayerId[humanPlayerId] ??
@@ -301,7 +301,7 @@ void _cancelSlot({
   required Orders currentOrders,
   required void Function(Orders orders) onOrdersChanged,
 }) {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = appL10n(context);
   final existingOrders =
       currentOrders.researchOrdersByPlayerId[humanPlayerId] ??
           const <ResearchOrder>[];

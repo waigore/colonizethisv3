@@ -1,7 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 
@@ -22,7 +22,7 @@ class CombatModeChoiceDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     return CtDialogShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,

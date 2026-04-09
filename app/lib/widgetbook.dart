@@ -21,7 +21,7 @@ import 'features/game/widgets/province_overlay_demo_data.dart';
 import 'features/game/widgets/tech_tree_widget.dart';
 import 'features/game/widgets/technology_screen.dart';
 import 'features/game/widgets/train_civilians_dialog.dart';
-import 'l10n/app_localizations.dart';
+import 'l10n/l10n.dart';
 import 'providers/production_allocation_provider.dart';
 import 'features/game/widgets/train_military_dialog.dart';
 import 'widgets/debug_init_game.dart';
@@ -94,20 +94,20 @@ List<WidgetbookNode> get buttonDirectories => [
               children: [
                 CtNinePatchButton(
                   onPressed: () {},
-                  child: Text(AppLocalizations.of(context)?.widgetbook_primaryAction ?? ''),
+                  child: Text(appL10n(context).widgetbook_primaryAction),
                 ),
                 const SizedBox(height: 12),
                 CtNinePatchButton(
                   onPressed: null,
                   enabled: false,
-                  child: Text(AppLocalizations.of(context)?.widgetbook_disabled ?? ''),
+                  child: Text(appL10n(context).widgetbook_disabled),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: 200,
                   child: CtNinePatchButton(
                     onPressed: () {},
-                    child: Text(AppLocalizations.of(context)?.widgetbook_fixedWidth ?? ''),
+                    child: Text(appL10n(context).widgetbook_fixedWidth),
                   ),
                 ),
               ],
@@ -572,7 +572,7 @@ List<WidgetbookNode> get techTreeDirectories => [
           final result = getDebugInitGameResult();
           final game = result.game;
           if (game.players.isEmpty) {
-            return Center(child: Text(AppLocalizations.of(context)?.widgetbook_noPlayers ?? ''));
+            return Center(child: Text(appL10n(context).widgetbook_noPlayers));
           }
           final basePlayer = game.players.first;
           // Unlock roughly half of all techs (first 22 from catalog order).
@@ -608,7 +608,7 @@ List<WidgetbookNode> get techTreeDirectories => [
           final result = getDebugInitGameResult();
           final game = result.game;
           if (game.players.isEmpty) {
-            return Center(child: Text(AppLocalizations.of(context)?.widgetbook_noPlayers ?? ''));
+            return Center(child: Text(appL10n(context).widgetbook_noPlayers));
           }
           final basePlayer = game.players.first;
           final allIds = techCatalog.keys.toList()..sort();
@@ -624,7 +624,7 @@ List<WidgetbookNode> get techTreeDirectories => [
             theme: AppThemes.colonial,
             home: Scaffold(
               appBar: AppBar(
-                title: Text(AppLocalizations.of(context)?.widgetbook_techTreeTitle ?? ''),
+                title: Text(appL10n(context).widgetbook_techTreeTitle),
               ),
               body: TechTreeWidget(game: midGame, player: midGamePlayer),
             ),
@@ -765,7 +765,7 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
                           );
                         },
                         child: Text(
-                          AppLocalizations.of(ctx)?.widgetbook_openBreakdownDialog ?? '',
+                          appL10n(ctx).widgetbook_openBreakdownDialog,
                         ),
                       ),
                     );
@@ -1106,24 +1106,24 @@ class _CivilianPanelWithMapStoryState
               runSpacing: 4,
               children: [
                 CtChoiceChip(
-                  label: Text(AppLocalizations.of(context)?.region_oldWorld ?? ''),
+                  label: Text(appL10n(context).region_oldWorld),
                   selected: _regionIndex == 0,
                   onSelected: (_) => setState(() => _regionIndex = 0),
                 ),
                 CtChoiceChip(
-                  label: Text(AppLocalizations.of(context)?.region_newWorld ?? ''),
+                  label: Text(appL10n(context).region_newWorld),
                   selected: _regionIndex == 1,
                   onSelected: (_) => setState(() => _regionIndex = 1),
                 ),
                 CtChoiceChip(
-                  label: Text(AppLocalizations.of(context)?.mapDebug_fullVisibility ?? ''),
+                  label: Text(appL10n(context).mapDebug_fullVisibility),
                   selected: _visibilityMode == CtMapVisibilityMode.full,
                   onSelected: (_) => setState(
                     () => _visibilityMode = CtMapVisibilityMode.full,
                   ),
                 ),
                 CtChoiceChip(
-                  label: Text(AppLocalizations.of(context)?.mapDebug_playerConstrained ?? ''),
+                  label: Text(appL10n(context).mapDebug_playerConstrained),
                   selected:
                       _visibilityMode == CtMapVisibilityMode.playerConstrained,
                   onSelected: (_) => setState(
@@ -1133,13 +1133,13 @@ class _CivilianPanelWithMapStoryState
                 ),
                 CtChoiceChip(
                   label: Text(
-                    AppLocalizations.of(context)?.map_displayOptions_showProvinceNames ?? '',
+                    appL10n(context).map_displayOptions_showProvinceNames,
                   ),
                   selected: _showProvinceNames,
                   onSelected: (_) => setState(() => _showProvinceNames = true),
                 ),
                 CtChoiceChip(
-                  label: Text(AppLocalizations.of(context)?.mapDebug_hideProvinceNames ?? ''),
+                  label: Text(appL10n(context).mapDebug_hideProvinceNames),
                   selected: !_showProvinceNames,
                   onSelected: (_) => setState(() => _showProvinceNames = false),
                 ),
@@ -1227,7 +1227,7 @@ class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
                 children: [
                   const Icon(Icons.people_outline, size: 20),
                   const SizedBox(width: 8),
-                  Text(AppLocalizations.of(context)?.civilian_units_title ?? ''),
+                  Text(appL10n(context).civilian_units_title),
                 ],
               ),
             ),
@@ -1291,27 +1291,27 @@ class _MilitaryPanelWithMapStoryState
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ChoiceChip(
-                        label: Text(AppLocalizations.of(context)?.region_oldWorld ?? ''),
+                        label: Text(appL10n(context).region_oldWorld),
                         selected: _regionIndex == 0,
                         onSelected: (_) => setState(() => _regionIndex = 0),
                       ),
                       const SizedBox(width: 8),
                       ChoiceChip(
-                        label: Text(AppLocalizations.of(context)?.region_newWorld ?? ''),
+                        label: Text(appL10n(context).region_newWorld),
                         selected: _regionIndex == 1,
                         onSelected: (_) => setState(() => _regionIndex = 1),
                       ),
                       const SizedBox(width: 8),
                       ChoiceChip(
                         label: Text(
-                          AppLocalizations.of(context)?.map_displayOptions_showProvinceNames ?? '',
+                          appL10n(context).map_displayOptions_showProvinceNames,
                         ),
                         selected: _showProvinceNames,
                         onSelected: (_) =>
                             setState(() => _showProvinceNames = true),
                       ),
                       ChoiceChip(
-                        label: Text(AppLocalizations.of(context)?.mapDebug_noNames ?? ''),
+                        label: Text(appL10n(context).mapDebug_noNames),
                         selected: !_showProvinceNames,
                         onSelected: (_) =>
                             setState(() => _showProvinceNames = false),
@@ -1475,27 +1475,27 @@ class _NavalPanelWithMapStoryState extends State<_NavalPanelWithMapStory> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ChoiceChip(
-                        label: Text(AppLocalizations.of(context)?.region_oldWorld ?? ''),
+                        label: Text(appL10n(context).region_oldWorld),
                         selected: _regionIndex == 0,
                         onSelected: (_) => setState(() => _regionIndex = 0),
                       ),
                       const SizedBox(width: 8),
                       ChoiceChip(
-                        label: Text(AppLocalizations.of(context)?.region_newWorld ?? ''),
+                        label: Text(appL10n(context).region_newWorld),
                         selected: _regionIndex == 1,
                         onSelected: (_) => setState(() => _regionIndex = 1),
                       ),
                       const SizedBox(width: 8),
                       ChoiceChip(
                         label: Text(
-                          AppLocalizations.of(context)?.map_displayOptions_showProvinceNames ?? '',
+                          appL10n(context).map_displayOptions_showProvinceNames,
                         ),
                         selected: _showProvinceNames,
                         onSelected: (_) =>
                             setState(() => _showProvinceNames = true),
                       ),
                       ChoiceChip(
-                        label: Text(AppLocalizations.of(context)?.mapDebug_noNames ?? ''),
+                        label: Text(appL10n(context).mapDebug_noNames),
                         selected: !_showProvinceNames,
                         onSelected: (_) =>
                             setState(() => _showProvinceNames = false),
@@ -1628,7 +1628,7 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ChoiceChip(
-                      label: Text(AppLocalizations.of(context)?.mapDebug_fullVisibility ?? ''),
+                      label: Text(appL10n(context).mapDebug_fullVisibility),
                       selected: _visibilityMode == CtMapVisibilityMode.full,
                       onSelected: (_) {
                         setState(() {
@@ -1638,7 +1638,7 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                     ),
                     const SizedBox(width: 8),
                     ChoiceChip(
-                      label: Text(AppLocalizations.of(context)?.mapDebug_playerConstrained ?? ''),
+                      label: Text(appL10n(context).mapDebug_playerConstrained),
                       selected:
                           _visibilityMode ==
                           CtMapVisibilityMode.playerConstrained,
@@ -1652,14 +1652,14 @@ class _MapWithOverlayStoryState extends State<_MapWithOverlayStory> {
                     const SizedBox(width: 8),
                     ChoiceChip(
                       label: Text(
-                        AppLocalizations.of(context)?.map_displayOptions_showProvinceNames ?? '',
+                        appL10n(context).map_displayOptions_showProvinceNames,
                       ),
                       selected: _showProvinceNames,
                       onSelected: (_) =>
                           setState(() => _showProvinceNames = true),
                     ),
                     ChoiceChip(
-                      label: Text(AppLocalizations.of(context)?.mapDebug_noNames ?? ''),
+                      label: Text(appL10n(context).mapDebug_noNames),
                       selected: !_showProvinceNames,
                       onSelected: (_) =>
                           setState(() => _showProvinceNames = false),

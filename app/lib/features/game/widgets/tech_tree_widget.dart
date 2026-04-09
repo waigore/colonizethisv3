@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -70,7 +71,7 @@ class TechTreeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final positions = TechTreeWidget.computeLayout(techCatalog);
     if (positions.isEmpty) {
       return Center(child: Text(l10n.techTree_noTechsInCatalog));
@@ -249,7 +250,7 @@ class TechTreeWidget extends StatelessWidget {
   }
 
   void _showTechDialog(BuildContext context, TechDefinition tech) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final effects = _effectSummary(tech);
     final theme = Theme.of(context);
     showDialog<void>(
@@ -1178,7 +1179,7 @@ class _StateLegendSample extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     // Use a dummy tech with neutral category just to render the style.
     const dummyTech = TechDefinition(
       id: 'legend_dummy',

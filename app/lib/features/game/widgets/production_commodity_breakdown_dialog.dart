@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../providers/production_allocation_provider.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
@@ -54,7 +55,7 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final theme = Theme.of(context);
     final desiredOutputByRecipe = ref.watch(productionDesiredOutputProvider);
     final defaultAssignmentsByPlayerId = {

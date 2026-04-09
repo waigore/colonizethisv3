@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 
@@ -61,7 +61,7 @@ class VictoryPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final winner = game.players.firstWhere(
       (p) => p.id == victory.winnerPlayerId,
       orElse: () => game.players.first,

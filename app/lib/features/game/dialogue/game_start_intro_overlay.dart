@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:jenny/jenny.dart';
 
-import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import 'ct_dialogue_view.dart';
@@ -88,7 +88,7 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     if (_loadError != null) {
       return Stack(
         children: [

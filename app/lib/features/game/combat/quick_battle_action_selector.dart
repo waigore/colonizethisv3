@@ -1,7 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 
 /// CP-based action selector for Quick Battle. SPEC/game/quick-battle.md.
@@ -17,7 +17,7 @@ class QuickBattleActionSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -77,7 +77,7 @@ class QuickBattleActionSelector extends StatelessWidget {
     return CtNinePatchButton(
       onPressed: enabled ? () => onActionSelected(action) : null,
       child: Text(
-        AppLocalizations.of(context)!.quickBattle_actionWithCost(label, cost),
+        appL10n(context).quickBattle_actionWithCost(label, cost),
       ),
     );
   }

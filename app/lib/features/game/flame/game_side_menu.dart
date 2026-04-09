@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/routes.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
@@ -24,7 +24,7 @@ class GameSideMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     return TweenAnimationBuilder<Offset>(
       key: ValueKey(sideMenuOpen),
       tween: Tween<Offset>(

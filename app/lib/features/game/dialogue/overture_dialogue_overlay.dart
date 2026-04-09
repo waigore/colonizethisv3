@@ -7,6 +7,7 @@ import 'package:colonizethis_app/package_logger.dart';
 import 'package:jenny/jenny.dart';
 
 import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import 'ct_dialogue_view.dart';
@@ -133,7 +134,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     if (_loadError != null) {
       return Stack(
         children: [

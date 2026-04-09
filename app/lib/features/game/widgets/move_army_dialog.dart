@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 
 String moveArmyFactionGroupHeaderLabel(
   Game game,
@@ -129,7 +130,7 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
     final entries = _destinationEntries();
     final entry = _selectedEntry(entries);
     if (entry == null) return;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
 
     if (!entry.requiresDeclareWarOnConfirm) {
       _emitAndClose(entry);
@@ -188,7 +189,7 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final entries = _destinationEntries();
     final items = _groupedDropdownItems(entries, l10n);
 

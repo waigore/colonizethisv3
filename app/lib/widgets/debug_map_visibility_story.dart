@@ -2,7 +2,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
-import '../l10n/app_localizations.dart';
+import '../l10n/l10n.dart';
 import 'ct_choice_chip.dart';
 import 'ct_region_map.dart';
 import 'debug_init_game.dart';
@@ -80,7 +80,7 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
     final region = mapViewData.oldWorld;
 

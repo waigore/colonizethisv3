@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/constants.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_slider.dart';
@@ -45,7 +46,7 @@ class ProductionPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final regimentCounts = regimentTypeCountsForPlayer(
       game.worldState,
       player.id,

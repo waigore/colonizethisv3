@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../core/services/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import 'utils/military_tree_builder.dart';
 import 'move_army_dialog.dart';
@@ -114,7 +115,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final groups = buildMilitaryGroups(widget.game, widget.humanPlayerId);
     final flat = flattenMilitaryArmyBlocks(groups);
     final hasAny = groups.isNotEmpty;

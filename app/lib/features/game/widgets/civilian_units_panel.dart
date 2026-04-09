@@ -7,7 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/services/app_event_handler_scope.dart';
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_panel_region_label.dart';
@@ -139,7 +139,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final provinceNames = _provinceNamesByPrefixedId(widget.game);
     final ow = _civilianUnitsInRegion(
       widget.game.worldState.oldWorld.units,
@@ -421,7 +421,7 @@ class _UnitRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final statusLabel = switch (unit.status) {
       UnitStatus.idle => l10n.province_unitStatus_idle,
       UnitStatus.working => l10n.province_unitStatus_working,

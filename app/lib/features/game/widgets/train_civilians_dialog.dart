@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -147,7 +148,7 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, _) {

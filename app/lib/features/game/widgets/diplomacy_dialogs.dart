@@ -4,7 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 
@@ -34,7 +34,7 @@ class GrantOrSubsidyDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     return CtDialogShell(
       child: _GrantSubsidyAmountBody(
         title: isSubsidy ? l10n.diplomacy_setSubsidy : l10n.diplomacy_grantAid,
@@ -130,7 +130,7 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final maxA = _maxAffordable();
     final canAdjust = maxA >= _step;
 
