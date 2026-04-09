@@ -308,6 +308,13 @@ jobs:
             exit 0
           fi
 
+          merge_base="$(git merge-base "origin/$base_ref" HEAD 2>/dev/null || true)"
+          if [ -z "$merge_base" ]; then
+            echo "No merge base between origin/$base_ref and HEAD in this checkout; running full tech-id scan."
+            tool/check_tech_id_constants.sh
+            exit 0
+          fi
+
           changed_files="$(
             git diff --name-only "origin/$base_ref"...HEAD -- '*.dart' \
               | tr '\n' ',' \
