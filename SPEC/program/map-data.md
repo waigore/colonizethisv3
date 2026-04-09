@@ -1,6 +1,6 @@
 # Map Data: Topology and Tile Maps
 
-**SPEC/program** — Data model for static map data (topology, tile maps). Visualization: [map-visualization.md](map-visualization.md). Game semantics: [SPEC/game/world-model.md](../game/world-model.md), [SPEC/game/map-topology.md](../game/map-topology.md). Tile map generation: [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md), [tile-map-gen-resources.md](tile-map-gen-resources.md), [tile-map-gen-config.md](tile-map-gen-config.md).
+**SPEC/program** — Data model for runtime map data (topology, tile maps). Visualization: [map-visualization.md](map-visualization.md). Game semantics: [SPEC/game/world-model.md](../game/world-model.md), [SPEC/game/map-topology.md](../game/map-topology.md). Tile map generation: [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md), [tile-map-gen-resources.md](tile-map-gen-resources.md), [tile-map-gen-config.md](tile-map-gen-config.md).
 
 ---
 
@@ -25,7 +25,7 @@ For current product, map topology and tile maps are **produced only in-memory** 
 - **Nodes:** List with id, region id, and type (province | sea zone). All nodes in a region graph belong to that region.
 - **Edges:** Undirected (id1, id2). Semantics: P↔P (contiguous land), P↔S (province–sea), S↔S (sea paths). All edges are **within** the same region.
 - **Warp zones:** Separate structure (warp links) that pairs a sea zone in one region with exactly one sea zone in another. Each link is 1:1; a sea zone can be a warp zone to one or more other maps (one link per other map). **Generation:** On each map, aim for **one warp zone per map edge**, each using a sea zone on the edge (tiles on the grid boundary); if not possible, the number of warp zones on each map must still be **equal** so every warp zone has exactly one counterpart on each linked map. **Warp links are produced during world generation** (after OW and NW topology are generated) per [game-setup-pipeline.md](game-setup-pipeline.md) step 4; they are stored with the init result and used when building combined topology / connectivity.
-- **Storage (current product):** Topology is **not** loaded from standalone files in current product; it is **inferred** from the tile map during generation (see Map generation tool). File-per-region storage and a colonizethis_data API to load topology/tile maps from static files are **deferred**. colonizethis_data owns the data structures and JSON (de)serialization; when static-file loading is added, this spec will define the loading contract (file layout, schema, error handling). When generating maps, topology is inferred from the tile map per region; warp zones are **generated** and linked in the setup pipeline.
+- **Storage (current product):** Topology is **not** loaded from standalone files. It is inferred from the tile map during generation (see Map generation tool) and persisted only through save/load envelopes. `colonizethis_data` owns the topology/tile-map data structures and JSON (de)serialization used by runtime generation and save round-trip flows.
 
 ### JSON schema and loading contract
 
@@ -81,19 +81,10 @@ For current product, map topology and tile maps are **produced only in-memory** 
 - **`terrainGrid`**: Optional 2D array of terrain names (e.g. `"plains"`, `"forest"`, `"hills"`). `null` = water or not set. Must match `grid` dimensions.
 - **`resourceGrid`**: Optional 2D array of resource names (e.g. `"gold"`, `"spices"`). `null` = no resource. Must match `grid` dimensions.
 
-#### Loading from static files (deferred)
-
-For current product, loading topology/tile maps from static JSON files is **deferred**. When implemented, the expected file layout is:
-
-- **Per-region topology:** `topology_{regionId}.json` (e.g., `topology_oldWorld.json`).
-- **Per-region tile map:** `tilemap_{regionId}.json` (e.g., `tilemap_oldWorld.json`).
-
-The loading API (file layout, error handling) will be defined in a future spec update. Until then, map data is produced in-memory by generation tools.
-
 #### Testing guidance
 
 - **Round-trip tests:** Serialize → deserialize → compare for `MapTopology` and `TileMapResult` with small hand-crafted examples.
-- **Failure mode tests:** When file loading is added, test missing file, malformed JSON, and inconsistent dimensions.
+- **Failure mode tests:** Validate malformed JSON payloads and inconsistent dimensions for runtime JSON parsing paths used by generation/save round-trip.
 
 ---
 
@@ -107,7 +98,7 @@ The loading API (file layout, error handling) will be defined in a future spec u
 
 ## Tile map format
 
-**Per-region 2D grid (static per scenario).** Each cell: region id (province or sea zone), type (land/water), **terrain type** (land), **resource** (optional; at most one). Resource must be allowed for region and terrain; rules in colonizethis_data. Extraction level and road are **mutable** game state (keyed by tile), not part of static tile map. For current product, produced by [tile-map-gen-*](tile-map-gen-algorithm.md) or supplied from init_game; required save payload map data is specified in [save-load.md](save-load.md). Loading from static tile-map files is deferred.
+**Per-region 2D grid (runtime generation + save payload).** Each cell: region id (province or sea zone), type (land/water), **terrain type** (land), **resource** (optional; at most one). Resource must be allowed for region and terrain; rules in colonizethis_data. Extraction level and road are **mutable** game state (keyed by tile), not part of tile map topology data. For current product, tile maps are produced by [tile-map-gen-*](tile-map-gen-algorithm.md) or supplied from `init_game`; required save payload map data is specified in [save-load.md](save-load.md). There is no supported gameplay path that loads tile maps from standalone static files.
 
 **Persistence (current product):** The tile map is part of the required playable save payload together with topology and combined topology per [save-load.md](save-load.md) (keys `_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`). Saves missing required map data are invalid for gameplay load. Format and semantics of the tile map are defined in this spec; the save/load contract is in save-load.md.
 
@@ -178,7 +169,7 @@ There is no separate `--tile-map` flag: topology and map summary are always prod
 
 ## Integration
 
-colonizethis_data owns the data structures and (de)serialization for topology and tile maps. For current product, map data is produced by **generation** (colonizethis_map per [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md)) or supplied from init_game; loading from static files is deferred. Consumed by App, init_game, ctdev.
+colonizethis_data owns the data structures and (de)serialization for topology and tile maps. For current product, map data is produced by **generation** (colonizethis_map per [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md)) or supplied from init_game, then persisted only via save/load round-trip. Static standalone map-file loading is not part of the product contract. Consumed by App, init_game, ctdev.
 
 ---
 
