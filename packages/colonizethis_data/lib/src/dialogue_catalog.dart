@@ -20,7 +20,7 @@ const List<String> kDialogueEras = [
   'industrial',
 ];
 
-/// Strategic AI agenda/comment cadence in turns (MVP).
+/// Strategic AI agenda/comment cadence in turns (current product).
 ///
 /// SPEC/ai/dialogue-and-mood.md § When to emit:
 /// Strategic AI may emit optional agenda-flavoured commentary and a matching

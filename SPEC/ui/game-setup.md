@@ -11,7 +11,7 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `variant` | `plain` \| `pixelArt` | Both variants use the **same pixel-art component catalog** (CtNinePatchButton, CtDropdown, CtScreenShell). **plain:** colonial colour theme only (no background illustration). **pixelArt:** reuses main menu pixel-art background and button assets per UXD 02/03a. |
-| `state` | `default` \| `loading` | **default:** Start Game and dropdowns enabled. **loading:** Start disabled, optional loading indicator; Back remains enabled. |
+| `state` | `default` \| `loading` | **default:** Start Game and dropdowns enabled. **loading:** Start Game disabled; nation and leader dropdowns **disabled**; a loading indicator **must** be visible; Back remains enabled. |
 | `naming` | `ResolvedNamingConfig` | All GP country names and leader variants (colonizethis_data). Used to populate nation and leader dropdowns. |
 | `initialOrderedGpIds` | `List<String>` | Length 6. Initial nation (gpId) per slot; **empty string denotes unselected**. When the screen loads with all entries empty (e.g. `["", "", "", "", "", ""]`), all nation/leader choices are unselected; the shell should pass this for a fresh setup. |
 | `initialLeaderVariantByGpId` | `Map<String, String>` | Initial leader variant per gpId (gpId → variantId). When the screen loads with all choices unselected, this is empty. When a slot’s nation changes, leader resets to default for that nation. |
@@ -34,7 +34,7 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 - **Leader uniqueness:** Leaders are per nation; once a nation is assigned to a slot, the leader dropdown for that slot shows only that nation’s variants. No separate “leader taken” rule across slots because each slot has a distinct nation.
 - **Start:** Given state is default and **all six slots have both a nation and a leader selected**, when the user taps Start Game, the widget invokes `onStartGame` once with (1) a list of six gpIds in slot order (index 0 = human, 1–5 = AI) and (2) a map gpId → leaderVariantId for each of those gpIds. The shell builds GameSetupConfig (e.g. selectedGreatPowerIds = that list, leaderVariantByGpId = that map), creates the game, and navigates.
 - **Back:** When the user taps Back, the widget invokes `onBack` once; the shell navigates to Main Menu.
-- **Loading:** Given state is loading, the Start Game control is disabled and (optionally) a loading indicator is visible; nation and leader dropdowns may be disabled; tapping Back remains enabled.
+- **Loading:** Given state is loading, the Start Game control is disabled; a loading indicator is visible; nation and leader dropdowns are disabled; tapping Back remains enabled.
 
 **Interaction.** The widget holds per-slot state (ordered list of six gpIds and leader variant per gpId) and exposes it via `onStartGame(orderedGpIdsForSlots, leaderVariantByGpId)`. No routing logic lives in the widget.
 

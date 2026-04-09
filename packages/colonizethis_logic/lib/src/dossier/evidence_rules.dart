@@ -71,6 +71,15 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
   final targetIsGp = game.playerById(targetFactionId) != null;
   final weaker = targetIsGp && _isWeakerGp(game, actorGpId, targetFactionId);
 
+  final treatyBreakAttack =
+      !wasAllied &&
+      hadCallToArmsRefusedWithTargetInAttackWindow(
+        game,
+        actorGpId,
+        targetFactionId,
+        turnNumber,
+      );
+
   final entries = <DossierEvidenceEntry>[];
   final treatyBreakAttack =
       !wasAllied &&

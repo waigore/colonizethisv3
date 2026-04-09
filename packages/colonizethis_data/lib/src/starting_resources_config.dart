@@ -46,7 +46,7 @@ class StartingResourcesConfig {
   final int initialPaper;
 
   /// Number of starting land regiments to spawn in each Great Power's capital.
-  /// Default type is `peasant_levies` (MVP). See game setup in `colonizethis_logic`.
+  /// Default type is `peasant_levies` (bootstrap per SPEC/program/game-setup-pipeline.md §7f).
   final int initialMilitaryRegiments;
 
   /// Number of starting merchant ships to place in each Great Power's home fleet.

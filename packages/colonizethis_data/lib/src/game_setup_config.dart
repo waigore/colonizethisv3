@@ -7,7 +7,7 @@ final _log = packageLogger();
 /// Game setup parameters. SPEC/game/game-setup.md, SPEC/game/ruleset-config.md,
 /// SPEC/program/game-setup-pipeline.md.
 ///
-/// **MVP:** Program-level defaults and constructor/CLI fields only; no Base →
+/// **Current product:** Program-level defaults and constructor/CLI fields only; no Base →
 /// Difficulty → Scenario JSON merge (see ruleset-config.md, GitHub #57 / #58).
 class GameSetupConfig {
   GameSetupConfig({
