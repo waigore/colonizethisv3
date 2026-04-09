@@ -33,6 +33,7 @@ class CellViewData {
     this.provinceDisplayName,
     this.improvementLevel,
     this.roadLevel,
+    this.resourceExtractionUnits,
     this.visibility = TileVisibility.visible,
   });
 
@@ -65,6 +66,10 @@ class CellViewData {
 
   /// Road level 0/1/2/4 for land tiles. From WorldState.tileState.roadLevelByTile. Null for sea or when not populated.
   final int? roadLevel;
+
+  /// Human-player per-tile extraction units (integer >= 0) used by map
+  /// extraction-disc overlays. Null for sea or when not populated.
+  final int? resourceExtractionUnits;
 
   /// Per-tile visibility for the current player view. Defaults to [TileVisibility.visible].
   final TileVisibility visibility;

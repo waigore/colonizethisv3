@@ -13,14 +13,17 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show
+        extractionDiscCentersForIconRect,
         resolveProvinceLabelIconIds,
         resolveProvinceLabelPresenceIconIds,
         shouldEllipsizeProvinceLabelText,
+        shouldShowExtractionUnitDiscs,
         shouldApplyFogToFeatureOverlay,
         shouldApplyFogToInteriorPlainsVariantBase,
         shouldApplyFogToInteriorPlainsVariantOverlay,
         shouldApplyFogToLandBase,
         shouldWrapProvinceLabelPresenceIcons;
+import 'package:colonizethis_app/features/game/flame/resource_icon_disc_palette.dart';
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
@@ -794,6 +797,70 @@ void main() {
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'extraction disc visibility follows base-layer resource visibility mode',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(
+          shouldShowExtractionUnitDiscs(
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
+          ),
+          isFalse,
+        );
+        expect(
+          shouldShowExtractionUnitDiscs(
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+          ),
+          isTrue,
+        );
+        expect(
+          shouldShowExtractionUnitDiscs(
+            baseLayerDisplayMode:
+                BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
+          ),
+          isTrue,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'extraction disc fan layout advances right with overlap',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        final centers = extractionDiscCentersForIconRect(
+          iconRect: const Rect.fromLTWH(10, 20, 64, 64),
+          units: 3,
+        );
+        expect(centers, hasLength(3));
+        expect(centers[1].dx, greaterThan(centers[0].dx));
+        expect(centers[2].dx, greaterThan(centers[1].dx));
+        expect(centers[0].dy, equals(centers[1].dy));
+        expect(centers[1].dy, equals(centers[2].dy));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resource extraction disc palette is fixed and complete for icon ids',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        for (final resourceId in kResourceIconIds) {
+          expect(
+            kResourceIconDiscPalette.containsKey(resourceId),
+            isTrue,
+            reason: 'Missing extraction disc palette entry for $resourceId',
+          );
+          final color = discColorForResourceId(resourceId);
+          expect(color.opacity, equals(1.0));
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
     );
 
     testWidgets(

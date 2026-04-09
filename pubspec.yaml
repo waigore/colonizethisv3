@@ -29,6 +29,7 @@ workspace:
 
 dev_dependencies:
   analyzer: ^8.4.0
+  image: ^4.5.4
   melos: ^7.0.0
   path: ^1.9.1
 

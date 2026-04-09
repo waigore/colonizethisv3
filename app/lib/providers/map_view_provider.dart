@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,6 +67,9 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       game.players.first.id;
   final topology = mapData.combinedTopology;
   final view = buildPlayerView(game, topology, humanPlayerId);
+  final humanPlayer =
+      game.players.where((p) => p.id == humanPlayerId).firstOrNull ??
+      game.players.first;
 
   final visibilityByTile = <String, TileVisibility>{};
   view.visibilityByTile.forEach((tileKey, level) {
@@ -85,6 +89,42 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
     visibilityByTile[tileKey] = visibility;
   });
 
+  final connectivity = resolveConnectivity(
+    game: game,
+    tileMapByRegion: mapData.tileMapByRegion,
+    topology: topology,
+  );
+  final connectivityForHuman = connectivity[humanPlayer.id];
+  final resourceExtractionUnitsByTile = <String, int>{};
+  if (connectivityForHuman != null) {
+    final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
+    final prospected =
+        game.worldState.playerProspectedTiles[humanPlayer.id] ??
+        const <String>{};
+    for (final tileKey in connectivityForHuman.connected) {
+      final contribution = computeTileExtractionContributionForPlayer(
+        game: game,
+        tileMapByRegion: mapData.tileMapByRegion,
+        player: humanPlayer,
+        tileKey: tileKey,
+        connectedTileKeys: connectivityForHuman.connected,
+        pathTransportCap: connectivityForHuman.pathTransportCap,
+        connectedByRoadRule: connectivityForHuman.connectedByRoadRule,
+        portTileKeys: portTileKeys,
+        prospectedTileKeys: prospected,
+        capitalRegionId: humanPlayer.capitalTile?.regionId,
+        techCapForPlayer: (id) {
+          final player = game.playerById(id);
+          return extractionCapForUnlocked(player?.techUnlocked);
+        },
+      );
+      if (contribution == null) {
+        continue;
+      }
+      resourceExtractionUnitsByTile[tileKey] = contribution.units;
+    }
+  }
+
   return buildInitGameMapViewData(
     game: game,
     tileMapByRegion: mapData.tileMapByRegion,
@@ -93,5 +133,6 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
     greatPowerColorOverride: colorOverride,
     visibilityByTile: visibilityByTile,
     warpLinks: mapData.warpLinks,
+    resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
   );
 });

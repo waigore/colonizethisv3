@@ -48,7 +48,14 @@ Render tile maps and topology to PNG; provide view models for tools. Two visuali
 
 ## Map view model
 
-`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the **province ownership** (GP land tint) layer to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model).
+`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel, **`resourceExtractionUnits`**); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the **province ownership** (GP land tint) layer to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model).
+
+`CellViewData.resourceExtractionUnits` semantics:
+
+- Nullable integer for **land** cells only; `null` for sea cells.
+- Value is the **human-player** per-tile extraction units used by map extraction-disc overlays.
+- Value is derived from the same extraction pipeline branch as `computeExtraction` tile `effectiveCapped` (improvement, tech cap, path/tile transport cap, town-development branch rules), and excludes economy-wide aggregate-only lines not attributable to a tile.
+- The extraction-disc count path does **not** include `Game.capitalTileGrainBonusPerTurn` (or equivalent aggregate-only adjustments).
 
 For province-name overlays, `RegionMapViewData` may also carry province-level unit-presence data keyed by full province id:
 
@@ -146,3 +153,5 @@ Implemented in colonizethis_map. Consumed by generate_map, init_game, ctdev.
 - **Given** a human-player civilian has a `tileKey` whose region segment differs from the region currently being built, **when** `buildInitGameMapViewData` builds `RegionMapViewData.civilianTileMarkers`, **then** the builder excludes that civilian from that region’s marker list.
 - **Given** a tile-map export where `TileMapResult.resourceGrid` has nullable entries, **when** `renderTileMapToPng` renders map glyphs, **then** the system draws resource letters only for non-null `Resource` entries and skips null entries without throwing.
 - **Given** game-world geographic map rendering where `CellViewData.resourceId` may be null, empty, unknown, or outside the geographic subset, **when** `renderInitGameMapToPngFromViewData(geographicMode: true)` renders map glyphs, **then** the system draws letters only for resource ids mapped to the geographic subset (`grain`, `timber`, `iron`) and skips all other values without throwing.
+- **Given** `buildInitGameMapViewData` builds a region for a game with human player id `H`, **when** a land tile `T` belongs to `H`’s connected extraction graph and has effective per-tile extraction `N` under the same rule branch as `computeExtraction` tile `effectiveCapped`, **then** `CellViewData.resourceExtractionUnits` for `T` is set to integer `N` where `N >= 0`.
+- **Given** `Game.capitalTileGrainBonusPerTurn` is greater than zero, **when** `buildInitGameMapViewData` computes `CellViewData.resourceExtractionUnits`, **then** no tile’s `resourceExtractionUnits` includes any portion of that aggregate-only bonus.
