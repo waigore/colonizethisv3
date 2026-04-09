@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 
@@ -23,6 +24,7 @@ class TechnologyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final techUnlocked = player.techUnlocked ?? {};
     final researchedIds = techUnlocked.entries
         .where((e) => e.value)
@@ -53,14 +55,14 @@ class TechnologyPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Technology — ${player.displayName}',
+              l10n.technologyPanel_title(player.displayName),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            Text('Research slots: $slots'),
+            Text(l10n.technologyPanel_researchSlotsCount(slots)),
             const SizedBox(height: 8),
             Text(
-              'Research slots',
+              l10n.technologyPanel_researchSlots,
               style: Theme.of(context).textTheme.labelLarge,
             ),
             const SizedBox(height: 4),
@@ -78,7 +80,7 @@ class TechnologyPanel extends StatelessWidget {
                 final tech = techId != null ? techById(techId) : null;
                 final displayName = techId != null
                     ? techDisplayName(techId)
-                    : 'Empty';
+                    : l10n.technologyPanel_empty;
                 final techProgress =
                     techId != null ? (progress[techId] ?? 0) : 0;
                 final cost = tech?.cost ?? 0;
@@ -86,12 +88,16 @@ class TechnologyPanel extends StatelessWidget {
                 final canEdit = onOrdersChanged != null;
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text('Slot ${index + 1}'),
+                  title: Text(l10n.technologyPanel_slot(index + 1)),
                   subtitle: hasTech
                       ? Text(
-                          '$displayName · $techProgress/${cost > 0 ? cost : '—'} RP',
+                          l10n.technologyPanel_slotSubtitle(
+                            displayName,
+                            techProgress,
+                            cost > 0 ? '$cost' : '—',
+                          ),
                         )
-                      : const Text('No tech assigned'),
+                      : Text(l10n.technologyPanel_noTechAssigned),
                   trailing: canEdit
                       ? Row(
                           mainAxisSize: MainAxisSize.min,
@@ -107,7 +113,7 @@ class TechnologyPanel extends StatelessWidget {
                                     onOrdersChanged: onOrdersChanged!,
                                   );
                                 },
-                                child: const Text('Cancel'),
+                                child: Text(l10n.common_cancel),
                               ),
                             const SizedBox(width: 4),
                             CtNinePatchButton(
@@ -122,7 +128,7 @@ class TechnologyPanel extends StatelessWidget {
                                   onOrdersChanged: onOrdersChanged!,
                                 );
                               },
-                              child: const Text('Choose tech'),
+                              child: Text(l10n.technologyPanel_chooseTech),
                             ),
                           ],
                         )
@@ -134,12 +140,12 @@ class TechnologyPanel extends StatelessWidget {
             Divider(color: Theme.of(context).dividerColor),
             const SizedBox(height: 8),
             Text(
-              'Researched (${researchedIds.length}):',
+              l10n.technologyPanel_researched(researchedIds.length),
               style: Theme.of(context).textTheme.labelLarge,
             ),
             const SizedBox(height: 4),
             if (researchedIds.isEmpty)
-              const Text('None yet')
+              Text(l10n.technologyPanel_noneYet)
             else
               Wrap(
                 spacing: 4,
@@ -156,7 +162,7 @@ class TechnologyPanel extends StatelessWidget {
             if (progress.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(
-                'In progress:',
+                l10n.technologyPanel_inProgress,
                 style: Theme.of(context).textTheme.labelLarge,
               ),
               const SizedBox(height: 4),
@@ -164,7 +170,10 @@ class TechnologyPanel extends StatelessWidget {
                 (e) => Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
-                    '${techDisplayName(e.key)}: ${e.value} RP',
+                    l10n.technologyPanel_progressLine(
+                      techDisplayName(e.key),
+                      e.value,
+                    ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
@@ -186,6 +195,7 @@ void _showAssignDialog({
   required Player player,
   required void Function(Orders orders) onOrdersChanged,
 }) {
+  final l10n = AppLocalizations.of(context)!;
   final techUnlocked = player.techUnlocked ?? {};
   final existingOrders =
       currentOrders.researchOrdersByPlayerId[humanPlayerId] ??
@@ -217,9 +227,9 @@ void _showAssignDialog({
     context: context,
     builder: (ctx) {
       if (availableTechs.isEmpty) {
-        return const Padding(
+        return Padding(
           padding: EdgeInsets.all(16),
-          child: Text('No techs available to research'),
+          child: Text(l10n.technologyPanel_noTechsAvailable),
         );
       }
       return ListView.builder(
@@ -229,7 +239,11 @@ void _showAssignDialog({
           return ListTile(
             title: Text(techDisplayName(tech.id)),
             subtitle: Text(
-              'Era ${_eraRoman(tech.era)} · ${_categoryLabel(tech.category)} · ${tech.cost} RP',
+              l10n.technologyPanel_pickSubtitle(
+                _eraRoman(tech.era),
+                _categoryLabel(tech.category),
+                tech.cost,
+              ),
             ),
             onTap: () {
               final updatedOrders = _assignTechToSlot(
@@ -287,6 +301,7 @@ void _cancelSlot({
   required Orders currentOrders,
   required void Function(Orders orders) onOrdersChanged,
 }) {
+  final l10n = AppLocalizations.of(context)!;
   final existingOrders =
       currentOrders.researchOrdersByPlayerId[humanPlayerId] ??
           const <ResearchOrder>[];
@@ -302,7 +317,7 @@ void _cancelSlot({
   );
   final messenger = ScaffoldMessenger.maybeOf(context);
   messenger?.showSnackBar(
-    const SnackBar(content: Text('Research slot cancelled')),
+    SnackBar(content: Text(l10n.technologyPanel_slotCancelled)),
   );
   onOrdersChanged(updated);
 }

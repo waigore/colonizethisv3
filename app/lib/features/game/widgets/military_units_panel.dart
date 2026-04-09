@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/services/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
+import '../../../l10n/app_localizations.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import 'utils/military_tree_builder.dart';
 import 'move_army_dialog.dart';
@@ -113,6 +114,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final groups = buildMilitaryGroups(widget.game, widget.humanPlayerId);
     final flat = flattenMilitaryArmyBlocks(groups);
     final hasAny = groups.isNotEmpty;
@@ -120,13 +122,13 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
     final headerCheckbox = _headerSelectAllValue(flat);
 
     return UnitsPanelShell(
-      title: 'Military Units',
+      title: l10n.military_units_title,
       actions: [
         if (hasAny && flat.isNotEmpty) ...[
           Tooltip(
             message: headerCheckbox == true
-                ? 'Deselect all armies'
-                : 'Select all armies',
+                ? l10n.military_units_deselectAllArmies
+                : l10n.military_units_selectAllArmies,
             child: Checkbox(
               tristate: true,
               value: headerCheckbox,
@@ -141,7 +143,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
             enabled: canCombine,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             minHeight: 32,
-            child: const Text('Combine'),
+            child: Text(l10n.common_combine),
           ),
         ],
         CtNinePatchButton(
@@ -151,7 +153,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
               widget.bus.emit(OpenDialogEvent(trainMilitaryDialogId));
             });
           },
-          child: const Text('Train'),
+          child: Text(l10n.common_train),
         ),
       ],
       hasContent: hasAny,
@@ -166,6 +168,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
             for (final block in loc.armies)
               _ArmyExpansionTile(
                 block: block,
+                l10n: l10n,
                 stationedProvinceDisplayLabel:
                     armyStationedProvinceDisplayLabel(widget.game, block.army),
                 draftArmyMoveLine: armyDraftMoveLineForArmy(
@@ -209,6 +212,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
             for (final row in loc.rows)
               _ShipRow(
                 row: row,
+                l10n: l10n,
                 onTap: row.tileKey == null
                     ? null
                     : () {
@@ -226,7 +230,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
           ],
         ],
       ],
-      emptyMessage: 'No military units',
+      emptyMessage: l10n.military_units_empty,
     );
   }
 }
@@ -234,6 +238,7 @@ class _MilitaryUnitsPanelState extends State<MilitaryUnitsPanel> {
 class _ArmyExpansionTile extends StatelessWidget {
   const _ArmyExpansionTile({
     required this.block,
+    required this.l10n,
     required this.stationedProvinceDisplayLabel,
     this.draftArmyMoveLine,
     required this.isSelectedForCombine,
@@ -244,6 +249,7 @@ class _ArmyExpansionTile extends StatelessWidget {
   });
 
   final ArmyBlock block;
+  final AppLocalizations l10n;
   final String stationedProvinceDisplayLabel;
   final String? draftArmyMoveLine;
   final bool isSelectedForCombine;
@@ -253,8 +259,8 @@ class _ArmyExpansionTile extends StatelessWidget {
   final VoidCallback? onMove;
 
   String _armyTitle() {
-    if (block.army.isHomeArmy) return 'Home Army';
-    return 'Army ${block.army.id}';
+    if (block.army.isHomeArmy) return l10n.military_units_homeArmy;
+    return l10n.military_units_army(block.army.id);
   }
 
   @override
@@ -277,7 +283,7 @@ class _ArmyExpansionTile extends StatelessWidget {
             if (onLocate != null) ...[
               const SizedBox(width: 4),
               IconButton(
-                tooltip: 'Locate',
+                tooltip: l10n.common_locate,
                 onPressed: onLocate,
                 icon: const Icon(Icons.my_location),
                 iconSize: 18,
@@ -287,16 +293,27 @@ class _ArmyExpansionTile extends StatelessWidget {
           ],
         ),
         subtitle: Text(
-          '${block.army.regimentUnitIds.length} regiments · '
-          '$stationedProvinceDisplayLabel'
-          '${draftArmyMoveLine != null ? '\n$draftArmyMoveLine' : ''}',
+          draftArmyMoveLine == null
+              ? l10n.military_units_armySubtitle(
+                  block.army.regimentUnitIds.length,
+                  stationedProvinceDisplayLabel,
+                )
+              : l10n.military_units_armySubtitleWithDraft(
+                  block.army.regimentUnitIds.length,
+                  stationedProvinceDisplayLabel,
+                  draftArmyMoveLine!,
+                ),
         ),
         dense: true,
         children: [
           if (block.rows.isEmpty)
-            const ListTile(title: Text('No regiments assigned'), dense: true)
+            ListTile(
+              title: Text(l10n.military_units_noRegimentsAssigned),
+              dense: true,
+            )
           else ...[
-            for (final row in block.rows) _RegimentRow(row: row, onTap: null),
+            for (final row in block.rows)
+              _RegimentRow(row: row, l10n: l10n, onTap: null),
           ],
           Padding(
             padding: const EdgeInsets.all(8),
@@ -311,7 +328,7 @@ class _ArmyExpansionTile extends StatelessWidget {
                       vertical: 8,
                     ),
                     minHeight: 36,
-                    child: const Text('Move'),
+                    child: Text(l10n.common_move),
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -323,7 +340,7 @@ class _ArmyExpansionTile extends StatelessWidget {
                       vertical: 8,
                     ),
                     minHeight: 36,
-                    child: const Text('Split'),
+                    child: Text(l10n.common_split),
                   ),
               ],
             ),
@@ -335,9 +352,10 @@ class _ArmyExpansionTile extends StatelessWidget {
 }
 
 class _RegimentRow extends StatelessWidget {
-  const _RegimentRow({required this.row, this.onTap});
+  const _RegimentRow({required this.row, required this.l10n, this.onTap});
 
   final RegimentTypeRow row;
+  final AppLocalizations l10n;
   final VoidCallback? onTap;
 
   @override
@@ -345,9 +363,17 @@ class _RegimentRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 8),
       child: ListTile(
-        title: Text('${regimentTypeDisplayName(row.typeId)}: ${row.count}'),
+        title: Text(
+          l10n.military_units_typeCount(
+            regimentTypeDisplayName(row.typeId),
+            row.count,
+          ),
+        ),
         subtitle: Text(
-          'Medals: ${row.medalsSummary} · Status: ${row.statusLabel}',
+          l10n.military_units_regimentSubtitle(
+            row.medalsSummary,
+            row.statusLabel,
+          ),
         ),
         dense: true,
         onTap: onTap,
@@ -357,9 +383,10 @@ class _RegimentRow extends StatelessWidget {
 }
 
 class _ShipRow extends StatelessWidget {
-  const _ShipRow({required this.row, this.onTap});
+  const _ShipRow({required this.row, required this.l10n, this.onTap});
 
   final MilitarySeaShipRow row;
+  final AppLocalizations l10n;
   final VoidCallback? onTap;
 
   @override
@@ -367,8 +394,13 @@ class _ShipRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 8),
       child: ListTile(
-        title: Text('${shipTypeDisplayName(row.typeId)}: ${row.count}'),
-        subtitle: Text('Status: ${row.statusLabel}'),
+        title: Text(
+          l10n.military_units_typeCount(
+            shipTypeDisplayName(row.typeId),
+            row.count,
+          ),
+        ),
+        subtitle: Text(l10n.military_units_status(row.statusLabel)),
         dense: true,
         onTap: onTap,
       ),

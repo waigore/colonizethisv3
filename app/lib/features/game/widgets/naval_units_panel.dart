@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import 'utils/naval_tree_builder.dart';
 import 'move_fleet_dialog.dart';
@@ -261,6 +262,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final tree = buildNavalTree(
       widget.game,
       widget.humanPlayerId,
@@ -275,13 +277,13 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     final headerCheckbox = _headerSelectAllValue(flat);
 
     return UnitsPanelShell(
-      title: 'Naval Units',
+      title: l10n.naval_units_title,
       actions: [
         if (hasAny && flat.isNotEmpty) ...[
           Tooltip(
             message: headerCheckbox == true
-                ? 'Deselect all fleets'
-                : 'Select all fleets',
+                ? l10n.naval_units_deselectAllFleets
+                : l10n.naval_units_selectAllFleets,
             child: Checkbox(
               tristate: true,
               value: headerCheckbox,
@@ -296,7 +298,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
             enabled: canCombine,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             minHeight: 32,
-            child: const Text('Combine'),
+            child: Text(l10n.common_combine),
           ),
         ],
       ],
@@ -307,6 +309,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
           if (group.homeFleet != null)
             _FleetExpansionTile(
               row: group.homeFleet!,
+              l10n: l10n,
               onTap: group.homeFleet!.tileKey != null
                   ? () => widget.bus.emit(
                       LocateMapTileEvent(
@@ -332,6 +335,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
             for (final row in loc.fleets)
               _FleetExpansionTile(
                 row: row,
+                l10n: l10n,
                 onTap: row.tileKey != null
                     ? () => widget.bus.emit(
                         LocateMapTileEvent(
@@ -351,7 +355,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
           ],
         ],
       ],
-      emptyMessage: 'No naval units',
+      emptyMessage: l10n.naval_units_empty,
     );
   }
 }
@@ -359,6 +363,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
 class _FleetExpansionTile extends StatelessWidget {
   const _FleetExpansionTile({
     required this.row,
+    required this.l10n,
     this.onTap,
     required this.isSelectedForCombine,
     required this.onCombineSelectionToggle,
@@ -368,6 +373,7 @@ class _FleetExpansionTile extends StatelessWidget {
   });
 
   final FleetRow row;
+  final AppLocalizations l10n;
   final VoidCallback? onTap;
   final bool isSelectedForCombine;
   final VoidCallback onCombineSelectionToggle;
@@ -377,13 +383,13 @@ class _FleetExpansionTile extends StatelessWidget {
 
   String _summary() {
     final parts = <String>[];
-    parts.add('Total ships: ${row.totalShips}');
-    parts.add('Strength: ${row.strength.toStringAsFixed(1)}');
+    parts.add(l10n.naval_units_totalShips(row.totalShips));
+    parts.add(l10n.naval_units_strength(row.strength.toStringAsFixed(1)));
     if (row.warshipCount > 0) {
-      parts.add('${row.warshipCount} warships');
+      parts.add(l10n.naval_units_warships(row.warshipCount));
     }
     if (row.merchantCount > 0) {
-      parts.add('${row.merchantCount} merchants');
+      parts.add(l10n.naval_units_merchants(row.merchantCount));
     }
     return parts.join(' · ');
   }
@@ -406,7 +412,7 @@ class _FleetExpansionTile extends StatelessWidget {
             if (onTap != null) ...[
               const SizedBox(width: 4),
               IconButton(
-                tooltip: 'Locate fleet',
+                tooltip: l10n.naval_units_locateFleet,
                 onPressed: onTap,
                 icon: const Icon(Icons.my_location),
                 iconSize: 18,
@@ -416,13 +422,13 @@ class _FleetExpansionTile extends StatelessWidget {
           ],
         ),
         subtitle: Text(
-          '${row.locationLabel}\nMission: ${row.missionLabel} · ${_summary()}'
+          '${row.locationLabel}\n${l10n.naval_units_mission(row.missionLabel)} · ${_summary()}'
           '${row.draftNavalMoveLine != null ? '\n${row.draftNavalMoveLine}' : ''}',
         ),
         dense: true,
         children: [
           if (row.shipCountsByType.isEmpty)
-            const ListTile(title: Text('No ships in this fleet'), dense: true)
+            ListTile(title: Text(l10n.naval_units_noShipsInFleet), dense: true)
           else ...[
             for (final entry in row.shipCountsByType.entries)
               ListTile(
@@ -433,14 +439,16 @@ class _FleetExpansionTile extends StatelessWidget {
               ),
           ],
           ListTile(
-            title: Text('Strength: ${row.strength.toStringAsFixed(1)}'),
+            title: Text(
+              l10n.naval_units_strength(row.strength.toStringAsFixed(1)),
+            ),
             dense: true,
           ),
           ListTile(
             title: Text(
               row.isHomeFleet
-                  ? 'Cargo capacity: ${row.cargoCapacity}'
-                  : 'Cargo capacity (if assigned): ${row.cargoCapacity}',
+                  ? l10n.naval_units_cargoCapacity(row.cargoCapacity)
+                  : l10n.naval_units_cargoCapacityIfAssigned(row.cargoCapacity),
             ),
             dense: true,
           ),
@@ -458,7 +466,7 @@ class _FleetExpansionTile extends StatelessWidget {
                         vertical: 8,
                       ),
                       minHeight: 36,
-                      child: const Text('Move'),
+                      child: Text(l10n.common_move),
                     ),
                     const SizedBox(width: 8),
                   ],
@@ -469,7 +477,7 @@ class _FleetExpansionTile extends StatelessWidget {
                       vertical: 8,
                     ),
                     minHeight: 36,
-                    child: const Text('Split'),
+                    child: Text(l10n.common_split),
                   ),
                 ],
               ),

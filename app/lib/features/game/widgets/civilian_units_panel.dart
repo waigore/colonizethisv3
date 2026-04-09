@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/services/app_event_handler_scope.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_panel_region_label.dart';
@@ -138,6 +139,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final provinceNames = _provinceNamesByPrefixedId(widget.game);
     final ow = _civilianUnitsInRegion(
       widget.game.worldState.oldWorld.units,
@@ -179,7 +181,9 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
         : _renderedTileKey(resolvedSelectedUnit);
 
     return UnitsPanelShell(
-      title: tileScopeActive ? 'Civilian Units (Tile)' : 'Civilian Units',
+      title: tileScopeActive
+          ? l10n.civilian_units_title_tile
+          : l10n.civilian_units_title,
       actions: [
         if (tileScopeActive)
           CtNinePatchButton(
@@ -194,7 +198,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
                 widget.bus.emit(OpenMapTileDetailEvent(tileKey: key));
               });
             },
-            child: const Text('Tile'),
+            child: Text(l10n.civilian_units_tile),
           ),
         CtNinePatchButton(
           onPressed: () {
@@ -203,7 +207,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
               widget.bus.emit(OpenDialogEvent(trainCiviliansDialogId));
             });
           },
-          child: const Text('Train'),
+          child: Text(l10n.common_train),
         ),
       ],
       hasContent: hasAny,
@@ -241,7 +245,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
           ),
         ],
       ],
-      emptyMessage: 'No civilian units',
+      emptyMessage: l10n.civilian_units_empty,
     );
   }
 }
@@ -417,10 +421,11 @@ class _UnitRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final statusLabel = switch (unit.status) {
-      UnitStatus.idle => 'Idle',
-      UnitStatus.working => 'Working',
-      UnitStatus.done => 'Done',
+      UnitStatus.idle => l10n.province_unitStatus_idle,
+      UnitStatus.working => l10n.province_unitStatus_working,
+      UnitStatus.done => l10n.province_unitStatus_done,
     };
     final showActions = !isTileScope || isSelectedInTileScope;
     return ListTile(
@@ -430,9 +435,9 @@ class _UnitRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Status: $statusLabel'),
-          Text('Location: ${_locationLabel()}'),
-          Text('Assigned to: ${_assignedToLabel()}'),
+          Text(l10n.civilian_units_status(statusLabel)),
+          Text(l10n.civilian_units_location(_locationLabel())),
+          Text(l10n.civilian_units_assignedTo(_assignedToLabel())),
         ],
       ),
       dense: true,
@@ -457,12 +462,12 @@ class _UnitRow extends StatelessWidget {
                 if (_isIdleNoPending)
                   CtNinePatchButton(
                     onPressed: () => _showOrderMenu(context),
-                    child: const Text('Assign'),
+                    child: Text(l10n.civilian_units_assign),
                   ),
                 if (_hasWork)
                   CtNinePatchButton(
                     onPressed: () => _confirmCancel(context),
-                    child: const Text('Cancel'),
+                    child: Text(l10n.common_cancel),
                   ),
               ],
             )

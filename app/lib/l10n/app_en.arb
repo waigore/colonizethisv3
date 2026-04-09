@@ -131,6 +131,34 @@
   "@common_yes": {
     "description": "Generic 'Yes' button label."
   },
+  "common_confirm": "Confirm",
+  "@common_confirm": {
+    "description": "Generic confirm button label."
+  },
+  "common_combine": "Combine",
+  "@common_combine": {
+    "description": "Generic combine action label."
+  },
+  "common_train": "Train",
+  "@common_train": {
+    "description": "Generic train action label."
+  },
+  "common_move": "Move",
+  "@common_move": {
+    "description": "Generic move action label."
+  },
+  "common_split": "Split",
+  "@common_split": {
+    "description": "Generic split action label."
+  },
+  "common_locate": "Locate",
+  "@common_locate": {
+    "description": "Generic locate action label."
+  },
+  "common_reset": "Reset",
+  "@common_reset": {
+    "description": "Generic reset action label."
+  },
 
   "map_displayOptions_title": "Map display options",
   "@map_displayOptions_title": {
@@ -671,6 +699,535 @@
   "quickBattle_attackerDefaultName": "Attacker",
   "@quickBattle_attackerDefaultName": {"description": "Fallback attacker label in quick battle UI."},
   "quickBattle_defenderDefaultName": "Defender",
-  "@quickBattle_defenderDefaultName": {"description": "Fallback defender label in quick battle UI."}
+  "@quickBattle_defenderDefaultName": {"description": "Fallback defender label in quick battle UI."},
+
+  "game_intro_loadError": "Could not load intro dialogue: {error}",
+  "@game_intro_loadError": {
+    "description": "Error shown when intro dialogue fails to load.",
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "game_overture_loadError": "Could not load overture dialogue: {error}",
+  "@game_overture_loadError": {
+    "description": "Error shown when overture dialogue fails to load.",
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "game_overture_title": "Diplomatic overtures",
+  "@game_overture_title": {"description": "Title for overture decisions panel."},
+  "game_overture_intro": "Accept or reject each offer.",
+  "@game_overture_intro": {"description": "Overture panel intro text."},
+  "game_overture_offerLine": "{offerer}: {stage}",
+  "@game_overture_offerLine": {
+    "description": "One-line overture offer summary.",
+    "placeholders": {
+      "offerer": {"type": "String"},
+      "stage": {"type": "String"}
+    }
+  },
+  "game_overture_accept": "Accept",
+  "@game_overture_accept": {"description": "Accept overture button label."},
+  "game_overture_reject": "Reject",
+  "@game_overture_reject": {"description": "Reject overture button label."},
+  "victory_military": "Military victory",
+  "@victory_military": {"description": "Victory type label."},
+  "victory_winnerOnTurn": "{winner} wins on turn {turn}.",
+  "@victory_winnerOnTurn": {
+    "description": "Victory sentence with winner and turn number.",
+    "placeholders": {
+      "winner": {"type": "String"},
+      "turn": {"type": "int"}
+    }
+  },
+  "victory_returnToMainMenu": "Return to main menu",
+  "@victory_returnToMainMenu": {"description": "Victory overlay button label."},
+  "victory_viewFinalState": "View final state",
+  "@victory_viewFinalState": {"description": "Victory overlay button label."},
+  "moveArmy_groupYourProvinces": "Your provinces",
+  "@moveArmy_groupYourProvinces": {"description": "Header label for player-owned province destinations in move army dialog."},
+  "moveArmy_groupUnowned": "Unowned",
+  "@moveArmy_groupUnowned": {"description": "Header label for unowned province destinations in move army dialog."},
+  "moveArmy_invadeProvinceTitle": "Invade province?",
+  "@moveArmy_invadeProvinceTitle": {"description": "Confirm dialog title for entering hostile territory with army movement."},
+  "moveArmy_invadeProvinceBody": "Moving into {ownerLabel} territory will declare war this turn and then move the army. Continue?",
+  "@moveArmy_invadeProvinceBody": {
+    "description": "Confirm dialog text for hostile army movement.",
+    "placeholders": {
+      "ownerLabel": {"type": "String"}
+    }
+  },
+  "moveArmy_declareWarAndMove": "Declare war and move",
+  "@moveArmy_declareWarAndMove": {"description": "Confirm action label for hostile army movement."},
+  "moveArmy_title": "Move army {armyId}",
+  "@moveArmy_title": {
+    "description": "Move army dialog title with army id.",
+    "placeholders": {
+      "armyId": {"type": "String"}
+    }
+  },
+  "moveArmy_noValidDestinations": "No valid destinations.",
+  "@moveArmy_noValidDestinations": {"description": "Empty-state text for move army dialog."},
+  "moveArmy_destinationProvince": "Destination province",
+  "@moveArmy_destinationProvince": {"description": "Field label for destination province picker in move army dialog."},
+  "moveFleet_title": "Move fleet — {fleetLabel}",
+  "@moveFleet_title": {
+    "description": "Move fleet dialog title.",
+    "placeholders": {"fleetLabel": {"type": "String"}}
+  },
+  "moveFleet_titleWithDestinations": "Move fleet — {fleetLabel} ({count} destinations)",
+  "@moveFleet_titleWithDestinations": {
+    "description": "Move fleet dialog title with destination count.",
+    "placeholders": {
+      "fleetLabel": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "moveFleet_noAdjacentSeaZones": "No adjacent sea zones (check map topology).",
+  "@moveFleet_noAdjacentSeaZones": {"description": "Empty-state message in move fleet dialog."},
+  "moveFleet_seaZonesSection": "Sea zones",
+  "@moveFleet_seaZonesSection": {"description": "Section heading for sea zone destinations in move fleet dialog."},
+  "moveFleet_provincesDockSection": "Provinces (dock)",
+  "@moveFleet_provincesDockSection": {"description": "Section heading for dock destinations in move fleet dialog."},
+  "moveFleet_locateOnMap": "Locate on map",
+  "@moveFleet_locateOnMap": {"description": "Tooltip for locate action in move fleet dialog."},
+  "military_units_title": "Military Units",
+  "@military_units_title": {"description": "Military units panel title."},
+  "military_units_deselectAllArmies": "Deselect all armies",
+  "@military_units_deselectAllArmies": {"description": "Tooltip for deselecting all armies in military panel."},
+  "military_units_selectAllArmies": "Select all armies",
+  "@military_units_selectAllArmies": {"description": "Tooltip for selecting all armies in military panel."},
+  "military_units_empty": "No military units",
+  "@military_units_empty": {"description": "Empty message in military units panel."},
+  "military_units_homeArmy": "Home Army",
+  "@military_units_homeArmy": {"description": "Label for home army."},
+  "military_units_army": "Army {armyId}",
+  "@military_units_army": {
+    "description": "Label for numbered army.",
+    "placeholders": {"armyId": {"type": "String"}}
+  },
+  "military_units_armySubtitle": "{regiments} regiments · {location}",
+  "@military_units_armySubtitle": {
+    "description": "Army subtitle showing regiment count and location.",
+    "placeholders": {
+      "regiments": {"type": "int"},
+      "location": {"type": "String"}
+    }
+  },
+  "military_units_armySubtitleWithDraft": "{regiments} regiments · {location}\n{draftLine}",
+  "@military_units_armySubtitleWithDraft": {
+    "description": "Army subtitle showing regiment count, location, and a draft move line.",
+    "placeholders": {
+      "regiments": {"type": "int"},
+      "location": {"type": "String"},
+      "draftLine": {"type": "String"}
+    }
+  },
+  "military_units_noRegimentsAssigned": "No regiments assigned",
+  "@military_units_noRegimentsAssigned": {"description": "Empty-state line for army with no regiments."},
+  "military_units_typeCount": "{typeName}: {count}",
+  "@military_units_typeCount": {
+    "description": "Type/count line used in military/naval row labels.",
+    "placeholders": {
+      "typeName": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "military_units_regimentSubtitle": "Medals: {medals} · Status: {status}",
+  "@military_units_regimentSubtitle": {
+    "description": "Regiment subtitle row.",
+    "placeholders": {
+      "medals": {"type": "String"},
+      "status": {"type": "String"}
+    }
+  },
+  "military_units_status": "Status: {status}",
+  "@military_units_status": {
+    "description": "Status line label.",
+    "placeholders": {"status": {"type": "String"}}
+  },
+  "naval_units_title": "Naval Units",
+  "@naval_units_title": {"description": "Naval units panel title."},
+  "naval_units_deselectAllFleets": "Deselect all fleets",
+  "@naval_units_deselectAllFleets": {"description": "Tooltip for deselecting all fleets in naval panel."},
+  "naval_units_selectAllFleets": "Select all fleets",
+  "@naval_units_selectAllFleets": {"description": "Tooltip for selecting all fleets in naval panel."},
+  "naval_units_empty": "No naval units",
+  "@naval_units_empty": {"description": "Empty message in naval units panel."},
+  "naval_units_totalShips": "Total ships: {count}",
+  "@naval_units_totalShips": {
+    "description": "Fleet summary total ships.",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "naval_units_strength": "Strength: {value}",
+  "@naval_units_strength": {
+    "description": "Fleet strength summary line.",
+    "placeholders": {"value": {"type": "String"}}
+  },
+  "naval_units_warships": "{count} warships",
+  "@naval_units_warships": {
+    "description": "Fleet summary warship count.",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "naval_units_merchants": "{count} merchants",
+  "@naval_units_merchants": {
+    "description": "Fleet summary merchant count.",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "naval_units_locateFleet": "Locate fleet",
+  "@naval_units_locateFleet": {"description": "Tooltip for fleet locate action."},
+  "naval_units_mission": "Mission: {mission}",
+  "@naval_units_mission": {
+    "description": "Fleet mission label.",
+    "placeholders": {"mission": {"type": "String"}}
+  },
+  "naval_units_noShipsInFleet": "No ships in this fleet",
+  "@naval_units_noShipsInFleet": {"description": "Empty-state line for fleet with no ships."},
+  "naval_units_cargoCapacity": "Cargo capacity: {capacity}",
+  "@naval_units_cargoCapacity": {
+    "description": "Cargo capacity line for home fleet.",
+    "placeholders": {"capacity": {"type": "int"}}
+  },
+  "naval_units_cargoCapacityIfAssigned": "Cargo capacity (if assigned): {capacity}",
+  "@naval_units_cargoCapacityIfAssigned": {
+    "description": "Cargo capacity line for non-home fleet.",
+    "placeholders": {"capacity": {"type": "int"}}
+  },
+  "diplomacy_setSubsidy": "Set subsidy",
+  "@diplomacy_setSubsidy": {"description": "Diplomacy dialog title for setting subsidy amount."},
+  "diplomacy_grantAid": "Grant aid",
+  "@diplomacy_grantAid": {"description": "Diplomacy dialog title for granting aid amount."},
+  "diplomacy_treasuryStep": "Treasury: £{treasury}. Step: £{step}.",
+  "@diplomacy_treasuryStep": {
+    "description": "Treasury and step line in diplomacy amount dialog.",
+    "placeholders": {
+      "treasury": {"type": "int"},
+      "step": {"type": "int"}
+    }
+  },
+  "diplomacy_currencyAmount": "£{amount}",
+  "@diplomacy_currencyAmount": {
+    "description": "Currency amount display in diplomacy amount dialog.",
+    "placeholders": {"amount": {"type": "int"}}
+  },
+  "diplomacy_treasuryBelowMinimum": "Treasury is below the minimum valid amount (£{step}).",
+  "@diplomacy_treasuryBelowMinimum": {
+    "description": "Validation text when treasury is below minimum adjustable amount.",
+    "placeholders": {"step": {"type": "int"}}
+  },
+  "trainCivilians_title": "Train Civilians",
+  "@trainCivilians_title": {"description": "Train civilians dialog title."},
+  "trainMilitary_title": "Train Military",
+  "@trainMilitary_title": {"description": "Train military dialog title."},
+  "trainUnits_noCapital": "No capital set — cannot train units",
+  "@trainUnits_noCapital": {"description": "Error text when player has no capital in train dialogs."},
+  "trainUnits_treasury": "Treasury: {value}",
+  "@trainUnits_treasury": {
+    "description": "Treasury summary line in train dialogs.",
+    "placeholders": {"value": {"type": "String"}}
+  },
+  "trainUnits_paper": "Paper: {value}",
+  "@trainUnits_paper": {
+    "description": "Paper summary line in civilian train dialog.",
+    "placeholders": {"value": {"type": "int"}}
+  },
+  "trainUnits_peasants": "Peasants: {value}",
+  "@trainUnits_peasants": {
+    "description": "Peasants summary line in military train dialog.",
+    "placeholders": {"value": {"type": "int"}}
+  },
+  "civilian_units_title": "Civilian Units",
+  "@civilian_units_title": {"description": "Civilian units panel title."},
+  "civilian_units_title_tile": "Civilian Units (Tile)",
+  "@civilian_units_title_tile": {"description": "Tile-scoped civilian units panel title."},
+  "civilian_units_tile": "Tile",
+  "@civilian_units_tile": {"description": "Action label for opening tile details from civilian panel."},
+  "civilian_units_empty": "No civilian units",
+  "@civilian_units_empty": {"description": "Empty message in civilian units panel."},
+  "civilian_units_status": "Status: {status}",
+  "@civilian_units_status": {
+    "description": "Unit status line in civilian unit row.",
+    "placeholders": {"status": {"type": "String"}}
+  },
+  "civilian_units_location": "Location: {location}",
+  "@civilian_units_location": {
+    "description": "Unit location line in civilian unit row.",
+    "placeholders": {"location": {"type": "String"}}
+  },
+  "civilian_units_assignedTo": "Assigned to: {target}",
+  "@civilian_units_assignedTo": {
+    "description": "Assigned-work line in civilian unit row.",
+    "placeholders": {"target": {"type": "String"}}
+  },
+  "civilian_units_assign": "Assign",
+  "@civilian_units_assign": {"description": "Assign action button in civilian units panel."},
+  "production_breakdown_title": "Commodity breakdown",
+  "@production_breakdown_title": {"description": "Production commodity breakdown dialog title."},
+  "production_breakdown_commodity": "Commodity",
+  "@production_breakdown_commodity": {"description": "Commodity column heading in breakdown table."},
+  "production_breakdown_total": "Total",
+  "@production_breakdown_total": {"description": "Total column heading in breakdown table."},
+  "production_breakdown_phase_pendingBuildCosts": "Pending build costs",
+  "@production_breakdown_phase_pendingBuildCosts": {"description": "Phase heading in production breakdown table."},
+  "production_breakdown_phase_extraction": "Extraction",
+  "@production_breakdown_phase_extraction": {"description": "Phase heading in production breakdown table."},
+  "production_breakdown_phase_richesToTreasury": "Riches to treasury",
+  "@production_breakdown_phase_richesToTreasury": {"description": "Phase heading in production breakdown table."},
+  "production_breakdown_phase_consumption": "Consumption",
+  "@production_breakdown_phase_consumption": {"description": "Phase heading in production breakdown table."},
+  "production_breakdown_phase_production": "Production",
+  "@production_breakdown_phase_production": {"description": "Phase heading in production breakdown table."},
+  "production_breakdown": "Breakdown",
+  "@production_breakdown": {"description": "Button label to open production commodity breakdown."},
+  "production_available": "Available",
+  "@production_available": {"description": "Production panel subheader for available resources."},
+  "production_food": "Food",
+  "@production_food": {"description": "Production panel category heading."},
+  "production_rawMaterials": "Raw Materials",
+  "@production_rawMaterials": {"description": "Production panel category heading."},
+  "production_manufactured": "Manufactured",
+  "@production_manufactured": {"description": "Production panel category heading."},
+  "production_workers": "Workers",
+  "@production_workers": {"description": "Production panel category heading."},
+  "production_workers_peasants": "Peasants",
+  "@production_workers_peasants": {"description": "Worker label in production panel."},
+  "production_workers_apprentices": "Apprentices",
+  "@production_workers_apprentices": {"description": "Worker label in production panel."},
+  "production_workers_journeymen": "Journeymen",
+  "@production_workers_journeymen": {"description": "Worker label in production panel."},
+  "production_workers_masters": "Masters",
+  "@production_workers_masters": {"description": "Worker label in production panel."},
+  "production_allocation": "Allocation",
+  "@production_allocation": {"description": "Production panel subheader for allocation controls."},
+  "splitArmy_title": "Split Army",
+  "@splitArmy_title": {"description": "Split army dialog title."},
+  "technologyPanel_title": "Technology - {playerName}",
+  "@technologyPanel_title": {
+    "description": "Technology panel title with player display name.",
+    "placeholders": {"playerName": {"type": "String"}}
+  },
+  "technologyPanel_researchSlotsCount": "Research slots: {slots}",
+  "@technologyPanel_researchSlotsCount": {
+    "description": "Research slot count line in technology panel.",
+    "placeholders": {"slots": {"type": "int"}}
+  },
+  "technologyPanel_researchSlots": "Research slots",
+  "@technologyPanel_researchSlots": {"description": "Technology panel section label for slot list."},
+  "technologyPanel_empty": "Empty",
+  "@technologyPanel_empty": {"description": "Placeholder label for an empty research slot."},
+  "technologyPanel_slot": "Slot {slot}",
+  "@technologyPanel_slot": {
+    "description": "Research slot title label.",
+    "placeholders": {"slot": {"type": "int"}}
+  },
+  "technologyPanel_slotSubtitle": "{name} - {progress}/{costLabel} RP",
+  "@technologyPanel_slotSubtitle": {
+    "description": "Research slot subtitle with tech name, progress, and cost label.",
+    "placeholders": {
+      "name": {"type": "String"},
+      "progress": {"type": "int"},
+      "costLabel": {"type": "String"}
+    }
+  },
+  "technologyPanel_noTechAssigned": "No tech assigned",
+  "@technologyPanel_noTechAssigned": {"description": "Empty-state subtitle when no tech is assigned to a slot."},
+  "technologyPanel_chooseTech": "Choose tech",
+  "@technologyPanel_chooseTech": {"description": "Action label to open tech selection for a research slot."},
+  "technologyPanel_researched": "Researched ({count}):",
+  "@technologyPanel_researched": {
+    "description": "Technology panel heading for researched techs.",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "technologyPanel_noneYet": "None yet",
+  "@technologyPanel_noneYet": {"description": "Technology panel empty-state text when no techs are researched."},
+  "technologyPanel_inProgress": "In progress:",
+  "@technologyPanel_inProgress": {"description": "Technology panel section heading for active progress entries."},
+  "technologyPanel_progressLine": "{name}: {points} RP",
+  "@technologyPanel_progressLine": {
+    "description": "Technology panel progress line for one tech.",
+    "placeholders": {
+      "name": {"type": "String"},
+      "points": {"type": "int"}
+    }
+  },
+  "technologyPanel_noTechsAvailable": "No techs available to research",
+  "@technologyPanel_noTechsAvailable": {"description": "Bottom-sheet empty-state when no selectable technologies exist."},
+  "technologyPanel_pickSubtitle": "Era {era} - {category} - {cost} RP",
+  "@technologyPanel_pickSubtitle": {
+    "description": "Bottom-sheet row subtitle for selectable technology.",
+    "placeholders": {
+      "era": {"type": "String"},
+      "category": {"type": "String"},
+      "cost": {"type": "int"}
+    }
+  },
+  "technologyPanel_slotCancelled": "Research slot cancelled",
+  "@technologyPanel_slotCancelled": {"description": "Snackbar shown when a research slot assignment is removed."},
+  "techTree_noTechsInCatalog": "No techs in catalog",
+  "@techTree_noTechsInCatalog": {"description": "Tech tree empty-state text."},
+  "techTree_eraCategory": "Era {era} - {category}",
+  "@techTree_eraCategory": {
+    "description": "Tech dialog subtitle showing era and category.",
+    "placeholders": {
+      "era": {"type": "String"},
+      "category": {"type": "String"}
+    }
+  },
+  "techTree_researchPoints": "{points} RP",
+  "@techTree_researchPoints": {
+    "description": "Tech cost display in research points.",
+    "placeholders": {"points": {"type": "int"}}
+  },
+  "techTree_prerequisites": "Prerequisites",
+  "@techTree_prerequisites": {"description": "Tech dialog section heading for prerequisites."},
+  "techTree_effects": "Effects",
+  "@techTree_effects": {"description": "Tech dialog section heading for effects."},
+  "techTree_legendTitle": "Technology tree legend",
+  "@techTree_legendTitle": {"description": "Tech tree legend title."},
+  "techTree_stateResearched": "Researched",
+  "@techTree_stateResearched": {"description": "Legend state label for researched techs."},
+  "techTree_stateInProgress": "In progress",
+  "@techTree_stateInProgress": {"description": "Legend state label for in-progress techs."},
+  "techTree_stateAvailable": "Available",
+  "@techTree_stateAvailable": {"description": "Legend state label for available techs."},
+  "techTree_stateLocked": "Locked",
+  "@techTree_stateLocked": {"description": "Legend state label for locked techs."},
+  "mapDebug_fullVisibility": "Full visibility",
+  "@mapDebug_fullVisibility": {"description": "Map debug/story toggle label for full map visibility."},
+  "mapDebug_playerConstrained": "Player-constrained",
+  "@mapDebug_playerConstrained": {"description": "Map debug/story toggle label for player-constrained visibility."},
+  "mapDebug_hideProvinceNames": "No province names",
+  "@mapDebug_hideProvinceNames": {"description": "Map debug/story toggle label to hide province names."},
+  "mapDebug_noNames": "No names",
+  "@mapDebug_noNames": {"description": "Map debug/story compact toggle label to hide names."},
+  "widgetbook_primaryAction": "Primary action",
+  "@widgetbook_primaryAction": {"description": "Widgetbook button label for enabled primary action sample."},
+  "widgetbook_disabled": "Disabled",
+  "@widgetbook_disabled": {"description": "Widgetbook button label for disabled sample."},
+  "widgetbook_fixedWidth": "Fixed width",
+  "@widgetbook_fixedWidth": {"description": "Widgetbook button label for fixed-width sample."},
+  "widgetbook_noPlayers": "No players",
+  "@widgetbook_noPlayers": {"description": "Widgetbook placeholder when sample game has no players."},
+  "widgetbook_techTreeTitle": "Tech Tree",
+  "@widgetbook_techTreeTitle": {"description": "Widgetbook app bar title for tech tree story."},
+  "widgetbook_openBreakdownDialog": "Open breakdown dialog",
+  "@widgetbook_openBreakdownDialog": {"description": "Widgetbook action label to open production breakdown demo dialog."},
+  "widgetbook_gameShell": "Game shell",
+  "@widgetbook_gameShell": {"description": "Widgetbook placeholder text for game shell container in dialogue stories."},
+  "techTree_bulletItem": "- {text}",
+  "@techTree_bulletItem": {
+    "description": "Bullet line item in tech-tree detail dialog.",
+    "placeholders": {"text": {"type": "String"}}
+  },
+  "provinceOverlay_unknown": "???",
+  "@provinceOverlay_unknown": {"description": "Obfuscated placeholder text shown when section intel is unavailable."},
+  "provinceOverlay_clickTileForDetails": "Click a tile to see details.",
+  "@provinceOverlay_clickTileForDetails": {"description": "Tile section prompt when no map tile is selected."},
+  "provinceOverlay_tileCoordinatesUnknown": "Coordinates: ???",
+  "@provinceOverlay_tileCoordinatesUnknown": {"description": "Tile section obfuscated coordinates row."},
+  "provinceOverlay_tileTerrainUnknown": "Terrain: ???",
+  "@provinceOverlay_tileTerrainUnknown": {"description": "Tile section obfuscated terrain row."},
+  "provinceOverlay_tileResourceUnknown": "Resource: ???",
+  "@provinceOverlay_tileResourceUnknown": {"description": "Tile section obfuscated resource row."},
+  "provinceOverlay_tileProspectedUnknown": "Prospected: ???",
+  "@provinceOverlay_tileProspectedUnknown": {"description": "Tile section obfuscated prospecting row."},
+  "provinceOverlay_tileImprovementUnknown": "Improvement: ???",
+  "@provinceOverlay_tileImprovementUnknown": {"description": "Tile section obfuscated improvement row."},
+  "provinceOverlay_tileRoadUnknown": "Road / railroad: ???",
+  "@provinceOverlay_tileRoadUnknown": {"description": "Tile section obfuscated road/rail row."},
+  "provinceOverlay_tileCivilianUnitsUnknown": "Civilian units (province): ???",
+  "@provinceOverlay_tileCivilianUnitsUnknown": {"description": "Tile section obfuscated civilian units row."},
+  "provinceOverlay_tileCoordinates": "Coordinates: ({x}, {y})",
+  "@provinceOverlay_tileCoordinates": {
+    "description": "Tile section coordinates row.",
+    "placeholders": {
+      "x": {"type": "int"},
+      "y": {"type": "int"}
+    }
+  },
+  "provinceOverlay_tileTerrain": "Terrain: {terrain}",
+  "@provinceOverlay_tileTerrain": {
+    "description": "Tile section terrain row.",
+    "placeholders": {"terrain": {"type": "String"}}
+  },
+  "provinceOverlay_tileResourcePrefix": "Resource: ",
+  "@provinceOverlay_tileResourcePrefix": {"description": "Tile section resource label prefix before inline icon/name."},
+  "provinceOverlay_tileProspected": "Prospected: {value}",
+  "@provinceOverlay_tileProspected": {
+    "description": "Tile section prospecting state row.",
+    "placeholders": {"value": {"type": "String"}}
+  },
+  "provinceOverlay_tileImprovement": "Improvement: {value}",
+  "@provinceOverlay_tileImprovement": {
+    "description": "Tile section improvement row.",
+    "placeholders": {"value": {"type": "String"}}
+  },
+  "provinceOverlay_tileRoadNone": "Road / railroad: -",
+  "@provinceOverlay_tileRoadNone": {"description": "Tile section road/rail row when not applicable."},
+  "provinceOverlay_tileCivilianUnits": "Civilian units (province): {count}",
+  "@provinceOverlay_tileCivilianUnits": {
+    "description": "Tile section civilian unit count row.",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "provinceOverlay_seaZone": "Sea zone: {name}",
+  "@provinceOverlay_seaZone": {
+    "description": "Political section row for a sea-zone overlay.",
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "provinceOverlay_name": "Name: {name}",
+  "@provinceOverlay_name": {
+    "description": "Political section province name row.",
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "provinceOverlay_owner": "Owner: {owner}",
+  "@provinceOverlay_owner": {
+    "description": "Political section owner row.",
+    "placeholders": {"owner": {"type": "String"}}
+  },
+  "provinceOverlay_indentedCount": "  {label}: {count}",
+  "@provinceOverlay_indentedCount": {
+    "description": "Indented count line used in military summary lists.",
+    "placeholders": {
+      "label": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "provinceOverlay_unitTarget": "{type} ({id}): {target}",
+  "@provinceOverlay_unitTarget": {
+    "description": "Civilian section line for unit target or status.",
+    "placeholders": {
+      "type": {"type": "String"},
+      "id": {"type": "String"},
+      "target": {"type": "String"}
+    }
+  },
+  "provinceOverlay_foreignUnitStatus": "{owner} - {type} ({id}): {status}",
+  "@provinceOverlay_foreignUnitStatus": {
+    "description": "Civilian section line for foreign-unit status.",
+    "placeholders": {
+      "owner": {"type": "String"},
+      "type": {"type": "String"},
+      "id": {"type": "String"},
+      "status": {"type": "String"}
+    }
+  },
+  "provinceOverlay_fleetSummary": "{owner} - {fleetLabel}: {shipParts}",
+  "@provinceOverlay_fleetSummary": {
+    "description": "Naval section fleet summary line.",
+    "placeholders": {
+      "owner": {"type": "String"},
+      "fleetLabel": {"type": "String"},
+      "shipParts": {"type": "String"}
+    }
+  },
+  "provinceOverlay_sectionPolitical": "Political",
+  "@provinceOverlay_sectionPolitical": {"description": "Province overlay section heading for political details."},
+  "provinceOverlay_sectionTile": "Tile",
+  "@provinceOverlay_sectionTile": {"description": "Province overlay section heading for tile details."},
+  "provinceOverlay_sectionEconomic": "Economic",
+  "@provinceOverlay_sectionEconomic": {"description": "Province overlay section heading for economic details."},
+  "provinceOverlay_sectionMilitary": "Military",
+  "@provinceOverlay_sectionMilitary": {"description": "Province overlay section heading for military details."},
+  "provinceOverlay_sectionCivilian": "Civilian",
+  "@provinceOverlay_sectionCivilian": {"description": "Province overlay section heading for civilian details."},
+  "provinceOverlay_sectionNaval": "Naval",
+  "@provinceOverlay_sectionNaval": {"description": "Province overlay section heading for naval details."}
 }
 

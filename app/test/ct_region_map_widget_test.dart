@@ -857,7 +857,7 @@ void main() {
             reason: 'Missing extraction disc palette entry for $resourceId',
           );
           final color = discColorForResourceId(resourceId);
-          expect(color.opacity, equals(1.0));
+          expect(color.a, equals(1.0));
         }
       },
       timeout: const Timeout(Duration(seconds: 5)),

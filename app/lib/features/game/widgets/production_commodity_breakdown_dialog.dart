@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../providers/production_allocation_provider.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
@@ -28,13 +29,21 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
   final Map<String, TileMapResult>? tileMapByRegion;
   final Orders currentOrders;
 
-  static String _phaseColumnLabel(EconomyPreviewStockpilePhase phase) {
+  static String _phaseColumnLabel(
+    AppLocalizations l10n,
+    EconomyPreviewStockpilePhase phase,
+  ) {
     return switch (phase) {
-      EconomyPreviewStockpilePhase.pendingBuildCosts => 'Pending build costs',
-      EconomyPreviewStockpilePhase.extraction => 'Extraction',
-      EconomyPreviewStockpilePhase.richesToTreasury => 'Riches to treasury',
-      EconomyPreviewStockpilePhase.consumption => 'Consumption',
-      EconomyPreviewStockpilePhase.production => 'Production',
+      EconomyPreviewStockpilePhase.pendingBuildCosts =>
+        l10n.production_breakdown_phase_pendingBuildCosts,
+      EconomyPreviewStockpilePhase.extraction =>
+        l10n.production_breakdown_phase_extraction,
+      EconomyPreviewStockpilePhase.richesToTreasury =>
+        l10n.production_breakdown_phase_richesToTreasury,
+      EconomyPreviewStockpilePhase.consumption =>
+        l10n.production_breakdown_phase_consumption,
+      EconomyPreviewStockpilePhase.production =>
+        l10n.production_breakdown_phase_production,
     };
   }
 
@@ -45,6 +54,7 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final desiredOutputByRecipe = ref.watch(productionDesiredOutputProvider);
     final defaultAssignmentsByPlayerId = {
@@ -78,15 +88,18 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
     }
 
     final sections = <(String, List<Commodity>)>[
-      ('Food', commoditiesForCategory(CommodityCategory.food)),
+      (l10n.production_food, commoditiesForCategory(CommodityCategory.food)),
       (
-        'Raw Materials',
+        l10n.production_rawMaterials,
         commoditiesForCategory(
           CommodityCategory.rawMaterial,
           restrictToInputs: inputCommodityIds,
         ),
       ),
-      ('Manufactured', commoditiesForCategory(CommodityCategory.manufactured)),
+      (
+        l10n.production_manufactured,
+        commoditiesForCategory(CommodityCategory.manufactured),
+      ),
     ];
 
     int phaseValue(String commodityId, EconomyPreviewStockpilePhase phase) {
@@ -144,7 +157,10 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Commodity breakdown', style: theme.textTheme.titleMedium),
+          Text(
+            l10n.production_breakdown_title,
+            style: theme.textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           Flexible(
             child: Scrollbar(
@@ -157,13 +173,18 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
                     dataRowMinHeight: 32,
                     dataRowMaxHeight: 48,
                     columns: [
-                      const DataColumn(label: Text('Commodity')),
+                      DataColumn(
+                        label: Text(l10n.production_breakdown_commodity),
+                      ),
                       ...EconomyPreviewStockpilePhase.values.map(
                         (p) => DataColumn(
-                          label: Text(_phaseColumnLabel(p), softWrap: true),
+                          label: Text(
+                            _phaseColumnLabel(l10n, p),
+                            softWrap: true,
+                          ),
                         ),
                       ),
-                      const DataColumn(label: Text('Total')),
+                      DataColumn(label: Text(l10n.production_breakdown_total)),
                     ],
                     rows: [
                       for (final (label, commodities) in sections)
@@ -192,7 +213,7 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
             alignment: Alignment.centerRight,
             child: CtNinePatchButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
+              child: Text(l10n.common_close),
             ),
           ),
         ],

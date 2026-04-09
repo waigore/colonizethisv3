@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
+import '../../../l10n/app_localizations.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 
@@ -60,12 +61,13 @@ class VictoryPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final winner = game.players.firstWhere(
       (p) => p.id == victory.winnerPlayerId,
       orElse: () => game.players.first,
     );
     final victoryLabel = switch (victory.type) {
-      ct_models.VictoryType.military => 'Military victory',
+      ct_models.VictoryType.military => l10n.victory_military,
     };
 
     return Padding(
@@ -81,7 +83,7 @@ class VictoryPanel extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '${winner.displayName} wins on turn ${victory.turnNumber}.',
+              l10n.victory_winnerOnTurn(winner.displayName, victory.turnNumber),
               style: Theme.of(context).textTheme.bodyLarge,
               textAlign: TextAlign.center,
             ),
@@ -90,15 +92,16 @@ class VictoryPanel extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CtNinePatchButton(
-                  onPressed: () => bus.emit(const ct_models.NavigateToShellEvent()),
-                  child: const Text('Return to main menu'),
+                  onPressed: () =>
+                      bus.emit(const ct_models.NavigateToShellEvent()),
+                  child: Text(l10n.victory_returnToMainMenu),
                 ),
                 const SizedBox(width: 12),
                 CtNinePatchButton(
                   onPressed: () {
                     onViewFinalState?.call();
                   },
-                  child: const Text('View final state'),
+                  child: Text(l10n.victory_viewFinalState),
                 ),
               ],
             ),
@@ -108,4 +111,3 @@ class VictoryPanel extends StatelessWidget {
     );
   }
 }
-

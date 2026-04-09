@@ -5,7 +5,6 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 /// Pure-ish helpers for `GameMapArea` state translation.
 class GameMapAreaStateLogic {
   static const String _regionOldWorld = 'oldWorld';
-  static const String _regionNewWorld = 'newWorld';
 
   static int regionIndexFromWorldRegionId(String regionId) {
     if (regionId == 'newWorld') return 1;

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:jenny/jenny.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import 'ct_dialogue_view.dart';
@@ -99,18 +100,18 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
     return offererGpId;
   }
 
-  static String _stageLabel(OvertureStage stage) {
+  static String _stageLabel(AppLocalizations l10n, OvertureStage stage) {
     switch (stage) {
       case OvertureStage.tradeConsulate:
-        return 'Trade Consulate';
+        return l10n.turnNews_stage_tradeConsulate;
       case OvertureStage.embassy:
-        return 'Embassy';
+        return l10n.turnNews_stage_embassy;
       case OvertureStage.nap:
-        return 'Non-Aggression Pact';
+        return l10n.turnNews_stage_nap;
       case OvertureStage.joinEmpire:
-        return 'Join Empire';
+        return l10n.turnNews_stage_joinEmpire;
       case OvertureStage.none:
-        return 'None';
+        return l10n.province_fleetMission_none;
     }
   }
 
@@ -132,6 +133,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (_loadError != null) {
       return Stack(
         children: [
@@ -145,11 +147,11 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Could not load overture dialogue: $_loadError'),
+                      Text(l10n.game_overture_loadError('$_loadError')),
                       const SizedBox(height: 16),
                       CtNinePatchButton(
                         onPressed: () => _submit(),
-                        child: const Text('Continue'),
+                        child: Text(l10n.game_intervention_continue),
                       ),
                     ],
                   ),
@@ -188,7 +190,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
                           alignment: Alignment.centerRight,
                           child: CtNinePatchButton(
                             onPressed: () => _view!.advanceLine(),
-                            child: const Text('Continue'),
+                            child: Text(l10n.game_intervention_continue),
                           ),
                         ),
                       ] else if (choice != null) ...[
@@ -231,12 +233,12 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Diplomatic overtures',
+                      l10n.game_overture_title,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Accept or reject each offer.',
+                      l10n.game_overture_intro,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 16),
@@ -253,21 +255,24 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    '${_offererDisplayName(offer.offererGpId)}: ${_stageLabel(offer.stage)}',
+                                    l10n.game_overture_offerLine(
+                                      _offererDisplayName(offer.offererGpId),
+                                      _stageLabel(l10n, offer.stage),
+                                    ),
                                   ),
                                 ),
                                 CtNinePatchButton(
                                   onPressed: () {
                                     setState(() => _accepted[i] = true);
                                   },
-                                  child: const Text('Accept'),
+                                  child: Text(l10n.game_overture_accept),
                                 ),
                                 const SizedBox(width: 8),
                                 CtNinePatchButton(
                                   onPressed: () {
                                     setState(() => _accepted[i] = false);
                                   },
-                                  child: const Text('Reject'),
+                                  child: Text(l10n.game_overture_reject),
                                 ),
                               ],
                             ),
@@ -280,7 +285,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
                       alignment: Alignment.centerRight,
                       child: CtNinePatchButton(
                         onPressed: _submit,
-                        child: const Text('Submit'),
+                        child: Text(l10n.game_callToArms_submit),
                       ),
                     ),
                   ],
