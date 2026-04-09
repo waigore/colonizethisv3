@@ -46,7 +46,7 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 
 ## Shell new game dialog (`NewGameLeaderSelectionDialog`)
 
-**Flutter app shell** implements the same **six-slot** nation/leader semantics as `CtGameSetup` inside a **modal dialog** opened from Main Menu (bus id `new_game_leader_selection`). Full-screen `CtGameSetup` remains the catalog/widget contract for UXD 03b and tests; the shell path is dialog-based for MVP.
+**Flutter app shell** implements the same **six-slot** nation/leader semantics as `CtGameSetup` inside a **modal dialog** opened from Main Menu (bus id `new_game_leader_selection`). Full-screen `CtGameSetup` remains the catalog/widget contract for UXD 03b and tests; the shell path is dialog-based for current product.
 
 | Element | Requirement |
 |--------|-------------|
@@ -101,7 +101,7 @@ When the user has selected a nation and leader for every slot, Start Game become
 
 ## Pixel-art assets
 
-For MVP, reuse main menu assets: `ui_main_menu_button.png` for Start Game and Back. Dropdowns and list use theme styling. If a dedicated game-setup panel is added later, add a row here and PixelLab prompts. Style lock: UXD 02.
+For current product, reuse main menu assets: `ui_main_menu_button.png` for Start Game and Back. Dropdowns and list use theme styling. If a dedicated game-setup panel is added later, add a row here and PixelLab prompts. Style lock: UXD 02.
 
 ---
 

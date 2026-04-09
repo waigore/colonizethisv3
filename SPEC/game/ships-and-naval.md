@@ -217,9 +217,9 @@ missionFactor = 0.5 for Patrol, 0.9 for Blockade
 interceptChance = clamp(missionFactor × ratio, 0.05, 0.85)
 ```
 
-MVP contract: these interception factors are hardcoded in logic (`patrol=0.5`, `blockade=0.9`, clamp `0.05..0.85`) and are not loaded from ruleset configuration.
+current product contract: these interception factors are hardcoded in logic (`patrol=0.5`, `blockade=0.9`, clamp `0.05..0.85`) and are not loaded from ruleset configuration.
 
-Interception tech/composition bonus is not applied as a separate path in MVP; this is deferred.
+Interception tech/composition bonus is not applied as a separate path in current product; this is deferred.
 
 
 ---
@@ -255,7 +255,7 @@ civilianPenalty = 2.0 # Civilian ships twice as vulnerable
 raidEfficiency = 0.3 to 0.7 depending on relative strength
 ```
 
-MVP contract: trade/transport interception uses hardcoded constants in logic for these terms (including civilian penalty and raid-efficiency bounds), not ruleset-config values.
+current product contract: trade/transport interception uses hardcoded constants in logic for these terms (including civilian penalty and raid-efficiency bounds), not ruleset-config values.
 
 ---
 
@@ -301,7 +301,7 @@ MVP contract: trade/transport interception uses hardcoded constants in logic for
   When the System resolves overseas transport and trade for that turn  
   Then the System uses the interception probabilities and escort protection formulas in this document (including the definitions of `escortStrength` and `cargoStrength`) to determine whether cargo and civilian ships are lost, reduces delivered quantities and ship counts accordingly, and applies at most the documented maximum loss reduction from escorts.
 
-- Given naval interception probability is resolved in MVP for identical fleet stats and identical seed  
+- Given naval interception probability is resolved in current product for identical fleet stats and identical seed  
   When the System evaluates mission-based interception and trade/transport interception  
   Then the System uses the hardcoded constants documented in this specification, performs no ruleset lookup for those constants, applies no separate interception tech/composition bonus path, and returns deterministic outputs.
 

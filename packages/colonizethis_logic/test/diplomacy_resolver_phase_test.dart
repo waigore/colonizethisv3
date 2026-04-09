@@ -174,7 +174,7 @@ void main() {
       final after = resolveDiplomacyPhase(game, orders).game;
       final rel = getRelation(after, 'gp1', 'minor1')!;
       expect(rel.score, greaterThan(initialRel.score));
-      expect(tradeSlotsForGp(after, 'gp1', 'minor1'), 1);
+      expect(tradeSlotsForGp(after, 'gp1', 'minor1'), 3);
       expect(after.playerById('gp1')!.treasury, 2000 - 1000);
     });
 

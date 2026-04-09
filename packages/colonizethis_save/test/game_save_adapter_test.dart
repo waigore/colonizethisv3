@@ -734,6 +734,27 @@ void main() {
       expect(loaded!.turnTimeMapping, isNull);
     });
 
+    test('loadStrict throws IncompatibleSaveFormatException for unsupported version',
+        () {
+      final game = Game(
+        id: 'unsupportedVersion',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+      );
+      box.put('badVer', {
+        'saveFormatVersion': 999,
+        'game': game.toJson(),
+      });
+      expect(
+        () => adapter.loadStrict(box, 'badVer'),
+        throwsA(isA<IncompatibleSaveFormatException>()),
+      );
+    });
+
     test('load returns null for unsupported saveFormatVersion', () {
       final game = Game(
         id: 'unsupportedVersion',

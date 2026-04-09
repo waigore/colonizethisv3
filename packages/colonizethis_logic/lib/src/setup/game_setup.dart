@@ -22,7 +22,6 @@ import '../world/naval.dart';
 import '../world/ship_instance_allocate.dart';
 import 'province_assignment.dart';
 import 'province_name_fallback.dart';
-import 'setup_validation_exception.dart';
 
 part 'game_setup_create.dart';
 part 'game_setup_helpers.dart';

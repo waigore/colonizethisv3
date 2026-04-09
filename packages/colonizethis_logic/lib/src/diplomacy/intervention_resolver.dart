@@ -384,7 +384,19 @@ Game _applyCallToArmsRefuse(
       lastInteractionTurn: turn,
     );
   });
-  var g = game.copyWith(diplomacyRelations: relations);
+  final refuseEvidence = evidenceForIsolationistCallToArmsRefuse(
+    game,
+    allyGpId,
+    defenderGpId,
+    turn,
+  );
+  var g = game.copyWith(
+    diplomacyRelations: relations,
+    dossierEvidenceEntries: [
+      ...game.dossierEvidenceEntries,
+      ...refuseEvidence,
+    ],
+  );
   g = _appendDiplomaticEvent(
     g,
     turn,

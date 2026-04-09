@@ -9,3 +9,9 @@ const String kTechIdLaterSteamEngine = 'later_steam_engine';
 const String kTechIdDynamite = 'dynamite';
 const String kTechIdMoneyLending = 'money_lending';
 const String kTechIdUniversity = 'university';
+const String kTechIdBanking = 'banking';
+const String kTechIdTradeFairs = 'trade_fairs';
+const String kTechIdIndustrialMachinery = 'industrial_machinery';
+const String kTechIdModernMilitaryFunding = 'modern_military_funding';
+const String kTechIdIndustrialFundingOfResearch =
+    'industrial_funding_of_research';

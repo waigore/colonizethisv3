@@ -2,3 +2,4 @@
 library;
 
 export 'src/game_save_adapter.dart';
+export 'src/incompatible_save_format_exception.dart';

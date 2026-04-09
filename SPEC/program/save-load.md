@@ -38,6 +38,7 @@
 - **Compatibility check before deserialize:** Load must validate `saveFormatVersion` before calling `Game.fromJson`.
 - **Incompatible version behavior:** If `saveFormatVersion` is missing, malformed, or unsupported, load must fail with an explicit incompatibility error outcome and must not return a partially loaded `Game`.
 - **Supported versions policy:** `colonizethis_save` owns a hardcoded supported-version set. Versions outside that set are incompatible by definition.
+- **Strict API:** `GameSaveAdapter.loadStrict` throws `IncompatibleSaveFormatException` when `saveFormatVersion` is missing or unsupported (or the payload is not a map); it returns null only when the Hive key is absent. Callers that need a typed failure path use `loadStrict`; `load` continues to return null and log for backward compatibility.
 
 ---
 

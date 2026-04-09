@@ -454,6 +454,38 @@ void main() {
       expect(unlocked['crop_rotation'] == true || progress['crop_rotation'] != null, isTrue);
     });
 
+    test('Banking extends research debt floor to -1000 with Money Lending', () {
+      final game = baseGame(
+        treasury: 0,
+        techUnlocked: const {
+          'land_enclosure': true,
+          'money_lending': true,
+          'trade_fairs': true,
+          'banking': true,
+        },
+      );
+      final orders = Orders(
+        researchOrdersByPlayerId: {
+          'p1': const [
+            ResearchOrder(
+              slotIndex: 0,
+              techId: 'crop_rotation',
+              funding: ResearchFundingLevel.maximum,
+            ),
+          ],
+        },
+      );
+
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
+        game: game,
+        topology: const MapTopology(),
+        orders: orders,
+      ));
+      final player = next.players.single;
+      expect(player.treasury, greaterThanOrEqualTo(-1000));
+      expect(player.treasury, -1000);
+    });
+
     test(
         'duplicate slotIndex: only one order per slot applied (last wins), no double spend',
         () {

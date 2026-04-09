@@ -40,15 +40,15 @@ Spy reports (if in scope) add evidence or special entries; format TBD in impleme
 
 Storage:
 
-- **MVP:** Evidence entries are stored in **game state** as part of the dossier data (e.g. `game.dossierEvidenceEntries`), so that evidence and dossier contents persist across save/load and are available for deterministic replay.
-- **Post-MVP:** On-demand computation from game state and evidence logs is allowed as an alternative implementation, provided it produces the same observable dossier sections and respects the PlayerView safety rules above. The GDD does not mandate a single storage format beyond these logical and safety requirements.
+- **current product:** Evidence entries are stored in **game state** as part of the dossier data (e.g. `game.dossierEvidenceEntries`), so that evidence and dossier contents persist across save/load and are available for deterministic replay.
+- **Post-current product:** On-demand computation from game state and evidence logs is allowed as an alternative implementation, provided it produces the same observable dossier sections and respects the PlayerView safety rules above. The GDD does not mandate a single storage format beyond these logical and safety requirements.
 
 ---
 
 ## Evidence list cap
 
-- **MVP cap:** The maximum number of evidence entries kept per dossier (per `(observerId, subjectId)` pair) is defined by a program-level constant in `colonizethis_data` (`kMaxDossierEvidenceEntries`, default `50`). When the list would exceed this cap, the system drops the oldest entries so that the list remains capped and chronological.
-- **Post-MVP ruleset:** Future releases may promote this cap to a ruleset-configurable value (for example per scenario or difficulty). When that happens, this document and the TDD implementation spec (`ai-events-and-dossier.md` § Evidence and Dossier) are the source of truth for how the cap is read and applied.
+- **current product cap:** The maximum number of evidence entries kept per dossier (per `(observerId, subjectId)` pair) is defined by a program-level constant in `colonizethis_data` (`kMaxDossierEvidenceEntries`, default `50`). When the list would exceed this cap, the system drops the oldest entries so that the list remains capped and chronological.
+- **Post-current product ruleset:** Future releases may promote this cap to a ruleset-configurable value (for example per scenario or difficulty). When that happens, this document and the TDD implementation spec (`ai-events-and-dossier.md` § Evidence and Dossier) are the source of truth for how the cap is read and applied.
 
 ---
 

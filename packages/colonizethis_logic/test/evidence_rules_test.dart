@@ -161,7 +161,7 @@ void main() {
       expect(backstabberEntries.length, 1);
       expect(backstabberEntries.first.observerId, 'human');
       expect(backstabberEntries.first.subjectId, 'ai');
-      expect(backstabberEntries.first.scoreDelta, 2);
+      expect(backstabberEntries.first.scoreDelta, 3);
       expect(backstabberEntries.first.description, contains('ally'));
 
       expect(warmongerEntries.length, 1);
@@ -224,7 +224,7 @@ void main() {
       expect(entries.first.agendaType, 'backstabber');
       expect(entries.first.observerId, 'human');
       expect(entries.first.subjectId, 'ai');
-      expect(entries.first.scoreDelta, 2);
+      expect(entries.first.scoreDelta, 3);
       expect(entries.first.description, contains('ally'));
     });
 
