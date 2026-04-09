@@ -28,10 +28,70 @@ void main() {
       return Game(id: 'g', worldState: world, players: [player]);
     }
 
-    test('resolveResearchPhase returns game unchanged when no research orders', () {
-      final game = baseGame(treasury: 1000);
-      final result = resolveResearchPhase(game, const Orders());
-      expect(identical(result, game), isTrue);
+    test(
+      'resolveResearchPhase returns game unchanged when no research orders',
+      () {
+        final game = baseGame(treasury: 1000);
+        final result = resolveResearchPhase(game, const Orders());
+        expect(identical(result, game), isTrue);
+      },
+    );
+
+    test('resolveResearchPhase adds envy evidence when AI mirrors human '
+        'research category same turn', () {
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+      );
+      final human = Player(
+        id: 'h1',
+        displayName: 'Human',
+        isHuman: true,
+        treasury: 10000,
+        researchSlots: 1,
+        techUnlocked: const {},
+      );
+      final ai = Player(
+        id: 'a1',
+        displayName: 'AI',
+        isHuman: false,
+        treasury: 10000,
+        researchSlots: 1,
+        techUnlocked: const {},
+      );
+      final game = Game(
+        id: 'g',
+        worldState: world,
+        players: [human, ai],
+        aiControlByGpId: const {'a1': true},
+      );
+      final orders = Orders(
+        researchOrdersByPlayerId: {
+          'h1': const [
+            ResearchOrder(
+              slotIndex: 0,
+              techId: 'crop_rotation',
+              funding: ResearchFundingLevel.maximum,
+            ),
+          ],
+          'a1': const [
+            ResearchOrder(
+              slotIndex: 0,
+              techId: 'crop_rotation',
+              funding: ResearchFundingLevel.maximum,
+            ),
+          ],
+        },
+      );
+      final next = resolveResearchPhase(game, orders);
+      final envy = next.dossierEvidenceEntries
+          .where((e) => e.agendaType == 'envy')
+          .toList();
+      expect(envy, isNotEmpty);
+      expect(envy.every((e) => e.subjectId == 'a1'), isTrue);
+      expect(next.lastHumanCompletedResearchCategory, 'gathering');
+      expect(next.lastHumanResearchCategoryCompletionTurn, 2);
     });
 
     test('resolveResearchPhase skips player when researchSlots is zero', () {
@@ -49,118 +109,122 @@ void main() {
       );
       final result = resolveResearchPhase(game, orders);
       expect(result.players.single.treasury, 2000);
-      expect(result.players.single.researchProgressByTechId ?? const {}, isEmpty);
+      expect(
+        result.players.single.researchProgressByTechId ?? const {},
+        isEmpty,
+      );
     });
 
     test(
-        'resolveResearchPhase clears progress when slot canceled (empty techId)',
-        () {
-      const initialTreasury = 500;
-      final game = baseGame(
-        treasury: initialTreasury,
-        techUnlocked: const {},
-        progress: const {'crop_rotation': 10},
-        researchSlots: 1,
-      );
-      final orders = Orders(
-        researchOrdersByPlayerId: {
-          'p1': const [
-            ResearchOrder(
-              slotIndex: 0,
-              techId: '',
-              funding: ResearchFundingLevel.none,
-            ),
-          ],
-        },
-      );
-      final result = resolveResearchPhase(game, orders);
-      final player = result.players.single;
-      expect(player.treasury, initialTreasury);
-      expect(player.researchProgressByTechId ?? const {}, isEmpty);
-    });
+      'resolveResearchPhase clears progress when slot canceled (empty techId)',
+      () {
+        const initialTreasury = 500;
+        final game = baseGame(
+          treasury: initialTreasury,
+          techUnlocked: const {},
+          progress: const {'crop_rotation': 10},
+          researchSlots: 1,
+        );
+        final orders = Orders(
+          researchOrdersByPlayerId: {
+            'p1': const [
+              ResearchOrder(
+                slotIndex: 0,
+                techId: '',
+                funding: ResearchFundingLevel.none,
+              ),
+            ],
+          },
+        );
+        final result = resolveResearchPhase(game, orders);
+        final player = result.players.single;
+        expect(player.treasury, initialTreasury);
+        expect(player.researchProgressByTechId ?? const {}, isEmpty);
+      },
+    );
 
     test(
-        'resolveResearchPhase keeps progress for tech still assigned in another slot',
-        () {
-      const initialTreasury = 500;
-      final game = baseGame(
-        treasury: initialTreasury,
-        techUnlocked: const {'saw_mill': true},
-        progress: const {'wind_saw_mill': 80},
-        researchSlots: 2,
-      );
-      final orders = Orders(
-        researchOrdersByPlayerId: {
-          'p1': const [
-            ResearchOrder(
-              slotIndex: 0,
-              techId: '',
-              funding: ResearchFundingLevel.none,
-            ),
-            ResearchOrder(
-              slotIndex: 1,
-              techId: 'wind_saw_mill',
-              funding: ResearchFundingLevel.none,
-            ),
-          ],
-        },
-      );
-      final result = resolveResearchPhase(game, orders);
-      final player = result.players.single;
-      expect(player.treasury, initialTreasury);
-      expect(player.researchProgressByTechId, {'wind_saw_mill': 80});
-    });
+      'resolveResearchPhase keeps progress for tech still assigned in another slot',
+      () {
+        const initialTreasury = 500;
+        final game = baseGame(
+          treasury: initialTreasury,
+          techUnlocked: const {'saw_mill': true},
+          progress: const {'wind_saw_mill': 80},
+          researchSlots: 2,
+        );
+        final orders = Orders(
+          researchOrdersByPlayerId: {
+            'p1': const [
+              ResearchOrder(
+                slotIndex: 0,
+                techId: '',
+                funding: ResearchFundingLevel.none,
+              ),
+              ResearchOrder(
+                slotIndex: 1,
+                techId: 'wind_saw_mill',
+                funding: ResearchFundingLevel.none,
+              ),
+            ],
+          },
+        );
+        final result = resolveResearchPhase(game, orders);
+        final player = result.players.single;
+        expect(player.treasury, initialTreasury);
+        expect(player.researchProgressByTechId, {'wind_saw_mill': 80});
+      },
+    );
 
-    test('resolveResearchPhase skips player when that player has no research orders', () {
-      final p1 = Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        treasury: 2000,
-        researchSlots: 1,
-      );
-      final p2 = Player(
-        id: 'p2',
-        displayName: 'P2',
-        isHuman: true,
-        treasury: 500,
-        researchSlots: 1,
-      );
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: [p1, p2],
-      );
-      final orders = Orders(
-        researchOrdersByPlayerId: {
-          'p1': const [
-            ResearchOrder(
-              slotIndex: 0,
-              techId: 'crop_rotation',
-              funding: ResearchFundingLevel.maximum,
-            ),
-          ],
-        },
-      );
-      final result = resolveResearchPhase(game, orders);
-      expect(result.players.length, 2);
-      final rp2 = result.players.where((p) => p.id == 'p2').single;
-      expect(rp2.treasury, 500);
-      expect(rp2.researchProgressByTechId ?? const {}, isEmpty);
-    });
+    test(
+      'resolveResearchPhase skips player when that player has no research orders',
+      () {
+        final p1 = Player(
+          id: 'p1',
+          displayName: 'P1',
+          isHuman: true,
+          treasury: 2000,
+          researchSlots: 1,
+        );
+        final p2 = Player(
+          id: 'p2',
+          displayName: 'P2',
+          isHuman: true,
+          treasury: 500,
+          researchSlots: 1,
+        );
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: [p1, p2],
+        );
+        final orders = Orders(
+          researchOrdersByPlayerId: {
+            'p1': const [
+              ResearchOrder(
+                slotIndex: 0,
+                techId: 'crop_rotation',
+                funding: ResearchFundingLevel.maximum,
+              ),
+            ],
+          },
+        );
+        final result = resolveResearchPhase(game, orders);
+        expect(result.players.length, 2);
+        final rp2 = result.players.where((p) => p.id == 'p2').single;
+        expect(rp2.treasury, 500);
+        expect(rp2.researchProgressByTechId ?? const {}, isEmpty);
+      },
+    );
 
-    test('accumulates research progress and unlocks tech when cost reached',
-        () {
+    test('accumulates research progress and unlocks tech when cost reached', () {
       final tech = techById('crop_rotation')!;
       // Maximum funding costs 1000 gold/turn (per SPEC/game/tech-tree.md)
-      final game = baseGame(
-        treasury: 2000,
-        techUnlocked: const {},
-      );
+      final game = baseGame(treasury: 2000, techUnlocked: const {});
 
       final orders = Orders(
         researchOrdersByPlayerId: {
@@ -175,11 +239,9 @@ void main() {
       );
 
       final topology = const MapTopology();
-      final next = requireTurnResolutionComplete(resolveTurnForGame(
-        game: game,
-        topology: topology,
-        orders: orders,
-      ));
+      final next = requireTurnResolutionComplete(
+        resolveTurnForGame(game: game, topology: topology, orders: orders),
+      );
       final player = next.players.single;
 
       // One turn of maximum funding should make progress > 0 and reduce treasury.
@@ -217,11 +279,13 @@ void main() {
         },
       );
 
-      final next = requireTurnResolutionComplete(resolveTurnForGame(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      ));
+      final next = requireTurnResolutionComplete(
+        resolveTurnForGame(
+          game: game,
+          topology: const MapTopology(),
+          orders: orders,
+        ),
+      );
       final player = next.players.single;
 
       // Treasury unchanged and no progress recorded because prerequisite not met.
@@ -230,33 +294,42 @@ void main() {
       expect(player.techUnlocked?['wind_saw_mill'], isNot(true));
     });
 
-    test('research with funding none does not spend treasury or add progress',
-        () {
-      final game = baseGame(treasury: 100, techUnlocked: const {});
-      final orders = Orders(
-        researchOrdersByPlayerId: {
-          'p1': const [
-            ResearchOrder(
-              slotIndex: 0,
-              techId: 'crop_rotation',
-              funding: ResearchFundingLevel.none,
-            ),
-          ],
-        },
-      );
-      final next = requireTurnResolutionComplete(resolveTurnForGame(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      ));
-      expect(next.players.single.treasury, 100);
-      expect(next.players.single.researchProgressByTechId ?? const {}, isEmpty);
-    });
+    test(
+      'research with funding none does not spend treasury or add progress',
+      () {
+        final game = baseGame(treasury: 100, techUnlocked: const {});
+        final orders = Orders(
+          researchOrdersByPlayerId: {
+            'p1': const [
+              ResearchOrder(
+                slotIndex: 0,
+                techId: 'crop_rotation',
+                funding: ResearchFundingLevel.none,
+              ),
+            ],
+          },
+        );
+        final next = requireTurnResolutionComplete(
+          resolveTurnForGame(
+            game: game,
+            topology: const MapTopology(),
+            orders: orders,
+          ),
+        );
+        expect(next.players.single.treasury, 100);
+        expect(
+          next.players.single.researchProgressByTechId ?? const {},
+          isEmpty,
+        );
+      },
+    );
 
     test('research with low funding deducts treasury and adds progress', () {
       // Use wind_saw_mill (cost 160) with prereq so 100 RP does not complete in one turn.
-      final game =
-          baseGame(treasury: 100, techUnlocked: const {'saw_mill': true});
+      final game = baseGame(
+        treasury: 100,
+        techUnlocked: const {'saw_mill': true},
+      );
       final orders = Orders(
         researchOrdersByPlayerId: {
           'p1': const [
@@ -268,17 +341,20 @@ void main() {
           ],
         },
       );
-      final next = requireTurnResolutionComplete(resolveTurnForGame(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      ));
+      final next = requireTurnResolutionComplete(
+        resolveTurnForGame(
+          game: game,
+          topology: const MapTopology(),
+          orders: orders,
+        ),
+      );
       // Low funding: 50 gold cost, 100 RP per turn (per SPEC/game/tech-tree.md)
       expect(next.players.single.treasury, 50);
       expect(
-          (next.players.single.researchProgressByTechId ??
-              const {})['wind_saw_mill'],
-          100);
+        (next.players.single.researchProgressByTechId ??
+            const {})['wind_saw_mill'],
+        100,
+      );
     });
 
     test('research with maximum funding has efficiency bonus', () {
@@ -294,11 +370,13 @@ void main() {
           ],
         },
       );
-      final next = requireTurnResolutionComplete(resolveTurnForGame(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      ));
+      final next = requireTurnResolutionComplete(
+        resolveTurnForGame(
+          game: game,
+          topology: const MapTopology(),
+          orders: orders,
+        ),
+      );
       // Maximum funding: 1000 gold cost, 2500 RP per turn (2.5x efficiency).
       // crop_rotation cost is 120, so tech unlocks and progress is cleared.
       expect(next.players.single.treasury, 1000);
@@ -315,19 +393,26 @@ void main() {
         researchOrdersByPlayerId: {
           'p1': const [
             ResearchOrder(
-                slotIndex: 0,
-                techId: 'wind_saw_mill',
-                funding: ResearchFundingLevel.low),
+              slotIndex: 0,
+              techId: 'wind_saw_mill',
+              funding: ResearchFundingLevel.low,
+            ),
           ],
         },
       );
-      var next = requireTurnResolutionComplete(resolveTurnForGame(
-          game: game, topology: const MapTopology(), orders: orders));
+      var next = requireTurnResolutionComplete(
+        resolveTurnForGame(
+          game: game,
+          topology: const MapTopology(),
+          orders: orders,
+        ),
+      );
       expect(next.players.single.treasury, 50);
       expect(
-          (next.players.single.researchProgressByTechId ??
-              const {})['wind_saw_mill'],
-          100);
+        (next.players.single.researchProgressByTechId ??
+            const {})['wind_saw_mill'],
+        100,
+      );
 
       // Medium: 150 gold, 300 RP (unlocks wind_saw_mill)
       game = baseGame(treasury: 200, techUnlocked: prereqMet);
@@ -335,14 +420,20 @@ void main() {
         researchOrdersByPlayerId: {
           'p1': const [
             ResearchOrder(
-                slotIndex: 0,
-                techId: 'wind_saw_mill',
-                funding: ResearchFundingLevel.medium),
+              slotIndex: 0,
+              techId: 'wind_saw_mill',
+              funding: ResearchFundingLevel.medium,
+            ),
           ],
         },
       );
-      next = requireTurnResolutionComplete(resolveTurnForGame(
-          game: game, topology: const MapTopology(), orders: orders));
+      next = requireTurnResolutionComplete(
+        resolveTurnForGame(
+          game: game,
+          topology: const MapTopology(),
+          orders: orders,
+        ),
+      );
       expect(next.players.single.treasury, 50);
       expect(next.players.single.techUnlocked!['wind_saw_mill'], isTrue);
 
@@ -352,14 +443,20 @@ void main() {
         researchOrdersByPlayerId: {
           'p1': const [
             ResearchOrder(
-                slotIndex: 0,
-                techId: 'wind_saw_mill',
-                funding: ResearchFundingLevel.high),
+              slotIndex: 0,
+              techId: 'wind_saw_mill',
+              funding: ResearchFundingLevel.high,
+            ),
           ],
         },
       );
-      next = requireTurnResolutionComplete(resolveTurnForGame(
-          game: game, topology: const MapTopology(), orders: orders));
+      next = requireTurnResolutionComplete(
+        resolveTurnForGame(
+          game: game,
+          topology: const MapTopology(),
+          orders: orders,
+        ),
+      );
       expect(next.players.single.treasury, 100);
       expect(next.players.single.techUnlocked!['wind_saw_mill'], isTrue);
 
@@ -369,14 +466,20 @@ void main() {
         researchOrdersByPlayerId: {
           'p1': const [
             ResearchOrder(
-                slotIndex: 0,
-                techId: 'wind_saw_mill',
-                funding: ResearchFundingLevel.maximum),
+              slotIndex: 0,
+              techId: 'wind_saw_mill',
+              funding: ResearchFundingLevel.maximum,
+            ),
           ],
         },
       );
-      next = requireTurnResolutionComplete(resolveTurnForGame(
-          game: game, topology: const MapTopology(), orders: orders));
+      next = requireTurnResolutionComplete(
+        resolveTurnForGame(
+          game: game,
+          topology: const MapTopology(),
+          orders: orders,
+        ),
+      );
       expect(next.players.single.treasury, 500);
       expect(next.players.single.techUnlocked!['wind_saw_mill'], isTrue);
     });
@@ -403,11 +506,13 @@ void main() {
           ],
         },
       );
-      final next = requireTurnResolutionComplete(resolveTurnForGame(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      ));
+      final next = requireTurnResolutionComplete(
+        resolveTurnForGame(
+          game: game,
+          topology: const MapTopology(),
+          orders: orders,
+        ),
+      );
       final player = next.players.single;
       expect(player.techUnlocked!['university'], isTrue);
       expect(player.researchSlots, 4);
@@ -416,14 +521,14 @@ void main() {
     test('Money Lending allows limited negative treasury for research', () {
       // Money Lending: allow research spending to drive treasury down to -500.
       final tech = techById('crop_rotation')!;
-      expect(tech.cost, lessThan(2500)); // sanity: one turn of max funding can complete
+      expect(
+        tech.cost,
+        lessThan(2500),
+      ); // sanity: one turn of max funding can complete
 
       final game = baseGame(
         treasury: 500,
-        techUnlocked: const {
-          'land_enclosure': true,
-          'money_lending': true,
-        },
+        techUnlocked: const {'land_enclosure': true, 'money_lending': true},
       );
       final orders = Orders(
         researchOrdersByPlayerId: {
@@ -437,11 +542,13 @@ void main() {
         },
       );
 
-      final next = requireTurnResolutionComplete(resolveTurnForGame(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      ));
+      final next = requireTurnResolutionComplete(
+        resolveTurnForGame(
+          game: game,
+          topology: const MapTopology(),
+          orders: orders,
+        ),
+      );
       final player = next.players.single;
 
       // With Money Lending, treasury may go as low as -500; maximum funding
@@ -451,7 +558,10 @@ void main() {
       expect(player.treasury, greaterThanOrEqualTo(-500));
       final unlocked = player.techUnlocked ?? const {};
       final progress = player.researchProgressByTechId ?? const {};
-      expect(unlocked['crop_rotation'] == true || progress['crop_rotation'] != null, isTrue);
+      expect(
+        unlocked['crop_rotation'] == true || progress['crop_rotation'] != null,
+        isTrue,
+      );
     });
 
     test('Banking extends research debt floor to -1000 with Money Lending', () {
@@ -476,45 +586,52 @@ void main() {
         },
       );
 
-      final next = requireTurnResolutionComplete(resolveTurnForGame(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      ));
+      final next = requireTurnResolutionComplete(
+        resolveTurnForGame(
+          game: game,
+          topology: const MapTopology(),
+          orders: orders,
+        ),
+      );
       final player = next.players.single;
       expect(player.treasury, greaterThanOrEqualTo(-1000));
       expect(player.treasury, -1000);
     });
 
     test(
-        'duplicate slotIndex: only one order per slot applied (last wins), no double spend',
-        () {
-      // SPEC: one assignment per slot. If list has two orders for same slot, resolver uses one (last wins).
-      final game = baseGame(treasury: 2000, techUnlocked: const {});
-      final orders = Orders(
-        researchOrdersByPlayerId: {
-          'p1': const [
-            ResearchOrder(
+      'duplicate slotIndex: only one order per slot applied (last wins), no double spend',
+      () {
+        // SPEC: one assignment per slot. If list has two orders for same slot, resolver uses one (last wins).
+        final game = baseGame(treasury: 2000, techUnlocked: const {});
+        final orders = Orders(
+          researchOrdersByPlayerId: {
+            'p1': const [
+              ResearchOrder(
                 slotIndex: 0,
                 techId: 'crop_rotation',
-                funding: ResearchFundingLevel.low),
-            ResearchOrder(
+                funding: ResearchFundingLevel.low,
+              ),
+              ResearchOrder(
                 slotIndex: 0,
                 techId: 'crop_rotation',
-                funding: ResearchFundingLevel.maximum),
-          ],
-        },
-      );
-      final next = requireTurnResolutionComplete(resolveTurnForGame(
-        game: game,
-        topology: const MapTopology(),
-        orders: orders,
-      ));
-      final player = next.players.single;
-      // Last wins => maximum only: 1000 spent, 2500 RP => crop_rotation (cost 120) unlocks.
-      expect(player.treasury, 1000);
-      expect(player.techUnlocked!['crop_rotation'], isTrue);
-      // If both were applied we would have 1050 spent and dual progress; so no double spend.
-    });
+                funding: ResearchFundingLevel.maximum,
+              ),
+            ],
+          },
+        );
+        final next = requireTurnResolutionComplete(
+          resolveTurnForGame(
+            game: game,
+            topology: const MapTopology(),
+            orders: orders,
+          ),
+        );
+        final player = next.players.single;
+        // Last wins => maximum only: 1000 spent, 2500 RP => crop_rotation (cost 120) unlocks.
+        expect(player.treasury, 1000);
+        expect(player.techUnlocked!['crop_rotation'], isTrue);
+        // If both were applied we would have 1050 spent and dual progress; so no double spend.
+      },
+    );
   });
 }

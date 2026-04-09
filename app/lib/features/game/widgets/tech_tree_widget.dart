@@ -387,7 +387,9 @@ class TechTreeWidget extends StatelessWidget {
         list.add(
           'Unlocks: Trained Journeymen, University, and military doctrine paths',
         );
-        list.add('Prerequisite-only in MVP: no direct economy modifier');
+        list.add(
+          'Prerequisite-only: unlock paths only; no direct economy modifier',
+        );
         break;
       case 'money_lending':
         list.add('Enables: Research-phase treasury floor to -500');
@@ -410,13 +412,15 @@ class TechTreeWidget extends StatelessWidget {
         break;
       case 'trade_fairs':
         list.add(
-          'Enables: Planned increase to trade commodity slots (deferred in MVP)',
+          'Enables: 6 commodity slots per embassy trade agreement (3 baseline without this tech)',
         );
         list.add('Unlocks: Banking');
         break;
       case 'banking':
         list.add('Unlocks: Dynamite, Empire Building, Modern Military Funding');
-        list.add('Prerequisite-only in MVP: extended banking rules deferred');
+        list.add(
+          'With Money Lending: extends research-phase treasury floor to −£1000',
+        );
         break;
       case 'diplomatic_expertise':
         list.add('Enables: Embassy overtures with Minor Nations');
@@ -430,7 +434,9 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Unlocks: Nationalism');
         break;
       case 'nationalism':
-        list.add('Improves: Battle deployment base limit to 12 regiments (vs 10)');
+        list.add(
+          'Improves: Battle deployment base limit to 12 regiments (vs 10)',
+        );
         list.add('Improves: General cap floor to at least 4');
         list.add('Unlocks: Empire Building (with Banking)');
         break;
@@ -446,7 +452,9 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Unlocks: Improved Sail Design and Navigation hull paths');
         break;
       case 'improved_sail_design':
-        list.add('Unlocks: Advanced Hull Design path (University + Privateering)');
+        list.add(
+          'Unlocks: Advanced Hull Design path (University + Privateering)',
+        );
         break;
       case 'convoying':
         list.add('Unlocks: Large Hulls (with Wind Saw Mill + Navigation)');
@@ -484,7 +492,9 @@ class TechTreeWidget extends StatelessWidget {
         list.add(
           'Improves: Patrol/Blockade interception and trade-raid effectiveness',
         );
-        list.add('Unlocks: Advanced Hull Design (frigate doctrine prerequisite)');
+        list.add(
+          'Unlocks: Advanced Hull Design (frigate doctrine prerequisite)',
+        );
         break;
       case 'advanced_iron_working':
         list.add('Improves: Ironclad armored steam combat hull');
@@ -511,7 +521,9 @@ class TechTreeWidget extends StatelessWidget {
         list.add('Unlocks: No regiment from this tech alone');
         break;
       case 'bayonet':
-        list.add('Unlocks: Needle Guns (with Industrial Funding + Early Rifles)');
+        list.add(
+          'Unlocks: Needle Guns (with Industrial Funding + Early Rifles)',
+        );
         break;
       case 'weapon_craftsmanship':
         list.add(
@@ -591,19 +603,19 @@ class TechTreeWidget extends StatelessWidget {
         break;
       case 'scientific_sheep_breeding':
         list.add('Improves: Wool extraction cap to 3');
-        list.add('Terminal in MVP catalog: no other tech requires this');
+        list.add('Terminal tech: nothing else in the catalog requires this');
         break;
       case 'scientific_cattle_breeding':
         list.add('Improves: Meat extraction cap to 4');
-        list.add('Terminal in MVP catalog: no other tech requires this');
+        list.add('Terminal tech: nothing else in the catalog requires this');
         break;
       case 'moldboard_plow':
         list.add('Improves: Grain extraction cap to 4');
-        list.add('Terminal in MVP catalog: no other tech requires this');
+        list.add('Terminal tech: nothing else in the catalog requires this');
         break;
       case 'safety_lamp':
         list.add('Improves: Coal extraction cap to 4');
-        list.add('Terminal in MVP catalog: no other tech requires this');
+        list.add('Terminal tech: nothing else in the catalog requires this');
         break;
       case 'large_precious_stone_mines':
         list.add('Improves: Gems/diamonds extraction cap to 3');
@@ -618,25 +630,25 @@ class TechTreeWidget extends StatelessWidget {
       case 'geological_prospecting':
         list.add('Improves: Gems/diamonds extraction cap to 4');
         list.add(
-          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
         );
         break;
       case 'amalgamation_process':
         list.add('Improves: Gold/silver extraction cap to 4');
         list.add(
-          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
         );
         break;
       case 'industrial_iron_mining':
         list.add('Improves: Iron extraction cap to 4');
         list.add(
-          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
         );
         break;
       case 'efficient_extraction_of_copper_and_tin':
         list.add('Improves: Copper/Tin extraction cap to 4');
         list.add(
-          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
         );
         break;
       case 'discovery_of_sugar':
@@ -664,7 +676,7 @@ class TechTreeWidget extends StatelessWidget {
       case 'sugar_industry':
         list.add('Improves: Sugar cane extraction cap to 4');
         list.add(
-          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
         );
         break;
       case 'discovery_of_tobacco':
@@ -690,7 +702,7 @@ class TechTreeWidget extends StatelessWidget {
       case 'tobacco_industry':
         list.add('Improves: Tobacco extraction cap to 4');
         list.add(
-          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
         );
         break;
       case 'discovery_of_cotton':
@@ -706,7 +718,7 @@ class TechTreeWidget extends StatelessWidget {
       case 'cotton_weaving':
         list.add('Enables: Cloth production from cotton');
         list.add(
-          'Prerequisite-only in MVP catalog: no other tech requires this; recipe unlock is the active benefit',
+          'Prerequisite-only: catalog leaf; recipe unlock is the active benefit',
         );
         break;
       case 'large_cotton_plantations':
@@ -716,7 +728,7 @@ class TechTreeWidget extends StatelessWidget {
       case 'cotton_gin':
         list.add('Improves: Cotton extraction cap to 4');
         list.add(
-          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
         );
         break;
       case 'discovery_of_furs':
@@ -744,7 +756,7 @@ class TechTreeWidget extends StatelessWidget {
       case 'excessive_fur_harvesting':
         list.add('Improves: Furs extraction cap to 4');
         list.add(
-          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
         );
         break;
       case 'discovery_of_spices':
@@ -784,7 +796,7 @@ class TechTreeWidget extends StatelessWidget {
       case 'improved_food_preservation':
         list.add('Improves: Spices extraction cap to 4');
         list.add(
-          'Prerequisite-only in MVP catalog: no other tech requires this; cap increase is the active benefit',
+          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
         );
         break;
       case 'industrial_machinery':
@@ -792,7 +804,7 @@ class TechTreeWidget extends StatelessWidget {
           'Unlocks: Explosives, Improved Cavalry Weapons, Industrial Funding of Research (as prerequisite)',
         );
         list.add(
-          'Improves (deferred in MVP): military attack treasury cost by 25% once application point is fixed per SPEC',
+          'Improves: ×0.75 multiplicative on per-land-battle attack treasury cost at combat resolution',
         );
         break;
       case 'explosives':
@@ -881,7 +893,7 @@ class TechTreeWidget extends StatelessWidget {
           'Unlocks: Field Artillery Tactics, High Grade Steel, Elite Military Training stack',
         );
         list.add(
-          'Improves (deferred in MVP): cheaper military attack once application point is fixed per SPEC',
+          'Improves: ×0.85 multiplicative on per-land-battle attack treasury cost (stacks with Industrial Machinery)',
         );
         break;
       case 'industrial_funding_of_research':
@@ -889,7 +901,7 @@ class TechTreeWidget extends StatelessWidget {
           'Unlocks: Needle Guns, Repeating Cavalry Carbine, High Grade Steel, Advanced Iron Working (as prerequisite)',
         );
         list.add(
-          'Improves (deferred in MVP): research efficiency for military/naval tech per SPEC',
+          'Improves: +20% effective RP (floor) for military and naval category research allocations',
         );
         break;
       default:

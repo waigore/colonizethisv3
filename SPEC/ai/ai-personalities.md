@@ -43,7 +43,7 @@ Each personality defines **domain weights** (economy, military, diplomacy, resea
 
 Exact numbers live in config data; SPEC does not mandate values, only that each leader has a defined vector and that it biases goal selection and utility scores.
 
-**Config source:** Personality config (domain weights, goal weights, behavioral thresholds) lives in program-level config (`colonizethis_data/lib/src/ai_personality_config.dart`) per [ruleset-config.md](../program/ruleset-config.md). Ruleset-configurable personality bundles are deferred to a future phase when the ruleset loader supports JSON merge. The `personalityId` field in AIConfig is reserved for future ruleset-driven personality overrides.
+**Config source:** Personality config (domain weights, goal weights, behavioral thresholds) lives in program-level config (`colonizethis_data/lib/src/ai_personality_config.dart`). Lookup order for weights/thresholds: **`personalityId`** when it names a known archetype key in that config; otherwise **canonical `leaderId`** derived from `Player.leaderKey`; if still unknown, **neutral defaults** are used. Ruleset-driven JSON overlays for this table remain out of scope until specified in [ruleset-config.md](../program/ruleset-config.md).
 
 ---
 
@@ -73,8 +73,8 @@ Personality is loaded as config and supplied via **AIConfig** when the AI genera
 
 In current product, **AIConfig** fields related to personality have the following contract:
 
-- `leaderId` — canonical leader id (e.g. `victoria`, `napoleon`). This is the **only** id used by `colonizethis_ai` for personality lookups: domain weights, goal weights, and behavioral thresholds in `colonizethis_data/lib/src/ai_personality_config.dart` are all keyed by canonical leader id. Dossier/archetype display also derives from `leaderId` via that config.
-- `personalityId` — optional personality archetype id (e.g. an archetype handle in future rulesets). In current product, `colonizethis_ai` does **not** read this field; callers SHOULD pass the same canonical id as `leaderId`. Future ruleset-configurable personality bundles may use `personalityId` as an override handle; when that happens, this spec and [ruleset-config.md](../program/ruleset-config.md) must be updated first.
+- `leaderId` — canonical leader id (e.g. `victoria`, `napoleon`) from `Player.leaderKey` / scenario mapping. Used as **identity** and as the **fallback** personality key when `personalityId` is absent or unknown.
+- `personalityId` — **active** archetype key for domain/goal/threshold lookups when it matches a key in `ai_personality_config.dart`; otherwise resolution falls back to **`leaderId`**, then to neutral defaults. Implementation: `personalityLookupKeyForAi` + `getDomainWeightsForLeader` / `getGoalWeightsForLeader` / `getThresholdsForLeader` in `colonizethis_data`. `colonizethis_ai` reads **`personalityId`** from scenario/`Player` via `AIConfig.personalityId` (see `full_ai_planner.dart`).
 
 ### Leader identity and `Player.leaderKey` (current product)
 

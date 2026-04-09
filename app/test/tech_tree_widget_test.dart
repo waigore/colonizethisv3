@@ -827,7 +827,7 @@ void main() {
         'Banking':
             'Unlocks: Dynamite, Empire Building, Modern Military Funding',
         'Trade Fairs':
-            'Enables: Planned increase to trade commodity slots (deferred in MVP)',
+            'Enables: 6 commodity slots per embassy trade agreement (3 baseline without this tech)',
         'University': 'Enables: Fourth active research slot (3 -> 4)',
         'Diplomatic Expertise': 'Enables: Embassy overtures with Minor Nations',
         'Merchant Companies': 'Enables: Merchant civilian unit construction',
@@ -950,8 +950,7 @@ void main() {
             'Improves: Battle-line capital ship for decisive fleet engagements',
         'Privateering Companies':
             'Improves: Patrol/Blockade interception and trade-raid effectiveness',
-        'Advanced Iron Working':
-            'Improves: Ironclad armored steam combat hull',
+        'Advanced Iron Working': 'Improves: Ironclad armored steam combat hull',
         'Organised Regiments': 'Improves: General cap floor to at least 2',
         'Improved Iron Weapons': 'Unlocks: Bayonet (with Crucible Process)',
         'Improved Infantry Tactics':
