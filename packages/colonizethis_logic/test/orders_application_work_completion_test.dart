@@ -120,7 +120,12 @@ void main() {
       'build_improvement completion does not re-apply extraction tech cap (#1291)',
       () {
         // Assign-time would reject 3→4 with extraction cap 2; completion still applies +1 to stored level.
-        expect(extractionCapForUnlocked(const {'saw_mill': true}), 2);
+        expect(
+          extractionCapForResourceForUnlocked(const {
+            'saw_mill': true,
+          }, 'grain'),
+          1,
+        );
         final tileState = TileMapState().setImprovement(tileKey, 3);
         final unit = Unit(
           id: 'u1',
