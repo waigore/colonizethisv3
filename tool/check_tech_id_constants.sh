@@ -5,4 +5,4 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-dart run tool/check_tech_id_constants.dart
+dart run tool/check_tech_id_constants.dart "$@"

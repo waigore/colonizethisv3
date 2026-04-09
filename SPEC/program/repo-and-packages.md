@@ -87,6 +87,7 @@ Guard behavior:
 - Fails if `packages/colonizethis_logic/test/**` imports `package:colonizethis_ai/...`.
 - Fails if `app/lib/**` contains direct `assets/...` or `packages/<pkg>/assets/...` string literals outside `app/lib/config/app_assets.dart`.
 - Fails if executable `StringLiteral` AST nodes equal to canonical tech IDs appear outside allowlisted tech declaration/config files and approved fixture/test-data paths.
+- In PR CI, the tech-ID guard may scan only changed Dart files for faster feedback; if PR diff context is unavailable, it falls back to a full repository scan with the same violation rules.
 
 Asset-path guard remediation:
 
