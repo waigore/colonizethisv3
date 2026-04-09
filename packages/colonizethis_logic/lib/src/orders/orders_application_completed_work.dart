@@ -125,6 +125,35 @@ void _completedWorkBuildImprovement(
     cw.tileKey,
     (level + 1).clamp(0, 4),
   );
+
+  final resourceId = s.game.worldState.resourceByTileKey[cw.tileKey];
+  final mirrorCat = envyMirrorTechCategoryForExtractionResource(resourceId);
+  if (mirrorCat == null) {
+    return;
+  }
+  final turn = s.game.worldState.turnState.turnNumber;
+  final owner = s.game.playerById(u.ownerId);
+  if (owner != null && owner.isHuman) {
+    s.game = s.game.copyWith(
+      lastHumanCompletedResearchCategory: mirrorCat,
+      lastHumanResearchCategoryCompletionTurn: turn,
+    );
+    return;
+  }
+  if (isAiControlledForEvidence(s.game, u.ownerId)) {
+    final ev = evidenceForEnvyResearchMirror(
+      s.game,
+      u.ownerId,
+      mirrorCat,
+      turn,
+      const [],
+    );
+    if (ev.isNotEmpty) {
+      s.game = s.game.copyWith(
+        dossierEvidenceEntries: [...s.game.dossierEvidenceEntries, ...ev],
+      );
+    }
+  }
 }
 
 void _completedWorkUpgradeTown(
