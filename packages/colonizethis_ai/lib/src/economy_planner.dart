@@ -78,7 +78,7 @@ EconomyPlan runEconomyPlanner({
 }
 
 CargoPreference _cargoPreference(Game game, String playerId, AIConfig config) {
-  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final agendaId = config.hiddenAgendaId;
   // Trade-oriented agendas/personalities favour cargo.
   final economyWeight = domainWeights.economy;

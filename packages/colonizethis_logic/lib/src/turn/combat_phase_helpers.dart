@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../combat/battle_general_assignment.dart';
 import '../combat/combat_resolver.dart';
 import '../combat/conflict_detection.dart';
+import '../combat/military_attack_economy.dart';
 import '../combat/quick_battle_input_builder.dart';
 import '../combat/quick_battle_resolver.dart';
 import '../constants.dart';
@@ -30,6 +31,8 @@ Game runOneLandBattle(
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
 }) {
+  state = applyLandBattleAttackTreasuryCosts(state, ctx);
+
   final attackerUnitsTotal = ctx.attackers.fold<int>(
     0,
     (s, a) => s + a.unitIds.length,

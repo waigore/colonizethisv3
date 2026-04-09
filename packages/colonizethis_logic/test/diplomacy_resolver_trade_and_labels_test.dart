@@ -19,7 +19,7 @@ void main() {
       );
       expect(tradeSlotsForGp(game, 'gp1', 'minor1'), 0);
     });
-    test('returns 1 with embassy', () {
+    test('returns 3 commodity slots with embassy (baseline)', () {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -34,7 +34,35 @@ void main() {
           OvertureState(gpId: 'gp1', targetId: 'minor1', stage: OvertureStage.embassy, sinceTurn: 0),
         ],
       );
-      expect(tradeSlotsForGp(game, 'gp1', 'minor1'), 1);
+      expect(tradeSlotsForGp(game, 'gp1', 'minor1'), 3);
+    });
+
+    test('returns 6 with embassy and trade_fairs', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'GP1',
+            isHuman: true,
+            techUnlocked: {'trade_fairs': true},
+          ),
+        ],
+        overtureStates: const [
+          OvertureState(
+            gpId: 'gp1',
+            targetId: 'minor1',
+            stage: OvertureStage.embassy,
+            sinceTurn: 0,
+          ),
+        ],
+      );
+      expect(tradeSlotsForGp(game, 'gp1', 'minor1'), 6);
     });
   });
 

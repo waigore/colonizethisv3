@@ -6,7 +6,7 @@
 
 ## Catalog and implementation
 
-The **military tech table in this doc is the GDD source of truth** for tech id, name, era, prerequisites, and regiment/effect mapping. **Implementation:** The program-level tech catalog lives in code (e.g. `colonizethis_data`); build and research order validation use the catalog per [orders.md](../program/orders.md) and the order engine. The program-level catalog may be an **MVP subset** of the full GDD table; migration to a full catalog is a design target. Future ruleset-driven catalog per [ruleset-config.md](../program/ruleset-config.md).
+The **military tech table in this doc is the GDD source of truth** for tech id, name, era, prerequisites, and regiment/effect mapping. **Implementation:** The program-level tech catalog in `colonizethis_data` (`buildTechCatalog()`) **must list the same tech ids** as this table for the military category; build and research order validation use that catalog per [orders.md](../program/orders.md) and the order engine. Ruleset-driven catalog overlays remain out of scope until specified in [ruleset-config.md](../program/ruleset-config.md).
 
 ---
 
@@ -20,7 +20,7 @@ The **military tech table in this doc is the GDD source of truth** for tech id, 
 | crucible_process | Crucible Process | 2 | square_set_timbering, steam_in_mining | **Prerequisite-only:** gates **steel** chain for `bayonet`, `early_rifles`, `long_range_rifles`, `improved_cavalry_weapons`, `heavy_artillery`, `later_steam_engine`, `industrial_machinery`, and `industrial_funding_of_research`; **no regiment** unlocked by this tech alone. |
 | bayonet | Bayonet | 2 | improved_iron_weapons, crucible_process | **Unlocks:** **Regulars** regiment; **Halberdiers** upgrade path. **Unlocks:** prerequisite for `needle_guns` (with `industrial_funding_of_research` and `early_rifles`). |
 | weapon_craftsmanship | Weapon Craftsmanship | 2 | organised_regiments, copper_and_tin_mining | **Unlocks:** **Musketeers** regiment; **Arquebusiers** upgrade path. **Unlocks:** prerequisite for `explosives` (with `industrial_machinery`). |
-| industrial_machinery | Industrial Machinery | 3 | trained_journeymen, steam_in_mining, university | Improves (deferred in MVP): military attack treasury cost by **25%** once the application point is chosen per **Deferred effect types** below. Unlocks: prerequisite for `explosives`, `improved_cavalry_weapons`, and `industrial_funding_of_research`. |
+| industrial_machinery | Industrial Machinery | 3 | trained_journeymen, steam_in_mining, university | Improves: multiplicative **×0.75** on per-land-battle attack treasury cost (stacks with `modern_military_funding`). Application: [combat-resolution.md](../program/combat-resolution.md) / `military_attack_economy.dart`. Unlocks: prerequisite for `explosives`, `improved_cavalry_weapons`, and `industrial_funding_of_research`. |
 | explosives | Explosives | 3 | weapon_craftsmanship, industrial_machinery | Unlocks: **Grenadiers** regiment. Improves: **Musketeers** upgrade path. Prerequisite for: `elite_military_training`. |
 | early_rifles | Early Rifles | 3 | improved_infantry_tactics, crucible_process | Unlocks: **Skirmishers** regiment. Improves: **Calivermen** upgrade path. Prerequisite for: `long_range_rifles`, `scouting`, `needle_guns`. |
 | long_range_rifles | Long Range Rifles | 3 | early_rifles, crucible_process | Unlocks: **Sharpshooters** regiment. Improves: **Skirmishers** upgrade path. |
@@ -55,8 +55,8 @@ The **military tech table in this doc is the GDD source of truth** for tech id, 
 | field_artillery_tactics | Field Artillery Tactics | 4 | light_artillery_tactics, modern_military_funding | Unlocks: **Field Artillery** regiment. Improves: **Light Artillery** upgrade path. |
 | high_grade_steel | High Grade Steel | 4 | heavy_artillery, industrial_funding_of_research, modern_military_funding | Unlocks: **Siege Guns** regiment (field). Improves: **Heavy Artillery** upgrade path. |
 | emplaced_siege_guns | Emplaced Siege Guns | 4 | heavy_artillery, heavy_emplaced_artillery | Improves: defender **emplaced fort batteries** to **Siege Gun** quality (final emplaced tier per [siege-mechanics.md](siege-mechanics.md)). |
-| modern_military_funding | Modern Military Funding | 3 | banking, large_precious_stone_mines, modern_forts | Improves (deferred in MVP): cheaper military attack once the application point is fixed per **Deferred effect types** below. Unlocks: prerequisite for `field_artillery_tactics`, `high_grade_steel`, and `elite_military_training`. |
-| industrial_funding_of_research | Industrial Funding of Research | 3 | industrial_machinery, crucible_process | Improves (deferred in MVP): research efficiency for military/naval tech per [research-resolution.md](../program/research-resolution.md) and **Deferred effect types** below. Unlocks: prerequisite for `needle_guns`, `repeating_cavalry_carbine`, `high_grade_steel`, and `advanced_iron_working`. |
+| modern_military_funding | Modern Military Funding | 3 | banking, large_precious_stone_mines, modern_forts | Improves: multiplicative **×0.85** on per-land-battle attack treasury cost (stacks multiplicatively with `industrial_machinery`). Application: `military_attack_economy.dart`. Unlocks: prerequisite for `field_artillery_tactics`, `high_grade_steel`, and `elite_military_training`. |
+| industrial_funding_of_research | Industrial Funding of Research | 3 | industrial_machinery, crucible_process | Improves: **+20%** effective research points per turn for tech rows whose category is **military** or **naval** (floor). Application: [research-resolution.md](../program/research-resolution.md) / `economy_tech_effects.dart`. Unlocks: prerequisite for `needle_guns`, `repeating_cavalry_carbine`, `high_grade_steel`, and `advanced_iron_working`. |
 
 ---
 
@@ -67,24 +67,10 @@ The **military tech table in this doc is the GDD source of truth** for tech id, 
 
 ---
 
-## Deferred effect types (MVP)
+## Economy modifiers (attack treasury and military/naval research)
 
-The following effect types appear in the tech table above but are **deferred** for MVP: no implementation applies them in the current codebase.
-
-| Tech id | Effect text | Where it would apply when implemented |
-|---------|-------------|----------------------------------------|
-| industrial_machinery | 25% cheaper military attack | See **Cheaper attack (owner decision)** below. |
-| modern_military_funding | Cheaper attack | Same as above. |
-| industrial_funding_of_research | Research efficiency; military/naval tech | Research points or cost modifier for military/naval tech per [research-resolution.md](../program/research-resolution.md). |
-
-**Cheaper attack (owner decision):** The exact application point for *industrial_machinery* (25% cheaper military attack) and *modern_military_funding* (Cheaper attack) is **not yet decided**. Candidate application points:
-
-- **Treasury cost** when issuing an attack order (e.g. declaring war, launching attack) — modifier would apply in order validation or cost resolution per [orders.md](../program/orders.md).
-- **Combat strength or damage** in auto-resolve / Quick Battle — modifier would apply in [combat-resolution.md](../program/combat-resolution.md) or [quick-battle-resolution.md](../program/quick-battle-resolution.md).
-
-The magnitude (e.g. 25% for industrial_machinery, and the value for modern_military_funding) may be fixed in design or configurable via ruleset per [ruleset-config.md](../program/ruleset-config.md); owner decision required. Once decided, document the chosen application point and configurability here and in the relevant TDD.
-
-**Implementation status:** No TDD or code path currently applies these modifiers. The table in this doc remains the GDD source of truth for tech id, prerequisites, and regiment unlocks; the deferred effects are documented here so contributors can distinguish implemented behaviour (regiment/fort unlocks) from deferred behaviour (cost/efficiency modifiers). See [tech-tree.md](tech-tree.md) § Effect Types for the general effect taxonomy.
+- **Per-land-battle attack treasury:** Base cost **100** per Great Power attacker per battle context (`kLandBattleAttackTreasuryCostBase`); `industrial_machinery` applies **×0.75**, `modern_military_funding` applies **×0.85**, multiplied together when both unlocked. Deducted at combat resolution before battle outcome (see `military_attack_economy.dart`).
+- **Industrial funding of research:** **+20%** RP (floor) for allocations toward tech definitions whose `category` is `military` or `naval` when this tech is unlocked.
 
 ---
 

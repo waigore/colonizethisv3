@@ -52,7 +52,7 @@ Supports a **dry-run**: apply orders via the resolver (which returns **new** sta
 
 ### ProjectedEffects fields
 
-| Field | Required for MVP | Implemented |
+| Field | Required for current product | Implemented |
 |-------|------------------|-------------|
 | `workerCount` | Yes | Yes |
 | `treasuryDelta` | Yes | Yes |
@@ -122,7 +122,7 @@ The OrderEngine validates and stores **move (civilian), army move, build, work, 
 - **Research orders:** Research orders are **not** added to OrderEngine; they are supplied separately via `Orders.researchOrdersByPlayerId` and validated/applied in the Research phase (TurnResolver).
 - **Caller contract:** The caller (app or ctdev) supplies civilian move, army move, build, work, diplomatic, and naval orders via OrderEngine methods; research orders are collected separately and passed to the resolver via `Orders.researchOrdersByPlayerId`.
 - **Merge:** Human + AI orders merged with human over AI for conflicts; ordering is stable for deterministic replay (player id, then conflict key / order type as specified).
-- **Projected effects:** Dry-run returns `ProjectedEffects` with worker count, treasury delta, unit locations, and stockpile deltas (all required for MVP and implemented); no mutation of the passed-in game from the caller's perspective. See § ProjectedEffects fields for the full list and implementation status.
+- **Projected effects:** Dry-run returns `ProjectedEffects` with worker count, treasury delta, unit locations, and stockpile deltas (all required for current product and implemented); no mutation of the passed-in game from the caller's perspective. See § ProjectedEffects fields for the full list and implementation status.
 - **No application:** Order engine does not apply orders to world state; TurnResolver applies after merge.
 - **Move validation (extracted):** Given a move order that violates civilian-into-GP or civilian-into-Minor/Tribe rules (per [orders.md](orders.md)), when validated with context, the result is rejected with reason "Civilian cannot enter other Great Power territory" or "Civilian cannot enter Minor/Tribe territory" as applicable. Military moves into GP or Minor/Tribe provinces without war (or same-turn declareWar) are rejected with the appropriate "Must declare war before attacking..." reason.
 - **Work order cost (single source):** Given work orders with material costs, when validated and when projecting effects in the same pass, the same cost calculation is used via WorkOrderCostCalculator (single source of truth).

@@ -1,6 +1,6 @@
 # AI Architecture (Phase 6)
 
-**SPEC/ai** — Hybrid AI stack for MVP. Source: GDD 10b.
+**SPEC/ai** — Hybrid AI stack for current product. Source: GDD 10b.
 
 ---
 

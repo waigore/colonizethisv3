@@ -22,8 +22,8 @@ StrategicGoal selectPrimaryGoal(
   int goalSeed,
   {required String nationId, required int turn}
 ) {
-  final weights = getGoalWeightsForLeader(config.leaderId);
-  final thresholds = getThresholdsForLeader(config.leaderId);
+  final weights = getGoalWeightsForLeader(config.personalityId);
+  final thresholds = getThresholdsForLeader(config.personalityId);
 
   // Situational modifiers from snapshot.
   int defend = weights.defend;

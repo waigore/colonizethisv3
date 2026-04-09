@@ -20,13 +20,14 @@ Game resolveResearchPhase(Game game, Orders orders) {
     return game;
   }
 
-  final playersWithOrders = researchByPlayer.values.where((o) => o.isNotEmpty).length;
+  final playersWithOrders = researchByPlayer.values
+      .where((o) => o.isNotEmpty)
+      .length;
   final updatedPlayers = <Player>[];
 
   for (final p in game.players) {
     final player = p;
-    final playerOrders =
-        researchByPlayer[player.id] ?? const <ResearchOrder>[];
+    final playerOrders = researchByPlayer[player.id] ?? const <ResearchOrder>[];
     if (playerOrders.isEmpty) {
       updatedPlayers.add(player);
       continue;
@@ -129,7 +130,12 @@ Game resolveResearchPhase(Game game, Orders orders) {
         continue;
       }
 
-      final points = pointsForFunding(order.funding);
+      final basePoints = pointsForFunding(order.funding);
+      final points = effectiveResearchPointsForTechAllocation(
+        player,
+        tech,
+        basePoints,
+      );
       if (points <= 0) {
         continue;
       }
@@ -159,13 +165,14 @@ Game resolveResearchPhase(Game game, Orders orders) {
 
     final nextUnlockedForLevel = nextUnlocked ?? workingUnlocked;
     final militaryLevel = militaryLevelForUnlocked(nextUnlockedForLevel);
-    final nextResearchSlots =
-        researchSlotsForUnlockedTechs(player, nextUnlockedForLevel);
+    final nextResearchSlots = researchSlotsForUnlockedTechs(
+      player,
+      nextUnlockedForLevel,
+    );
 
     // `Player.copyWith` treats null map fields as "keep previous"; use an explicit
     // empty map when there is no in-progress research so clears persist (e.g. cancel slot).
-    final nextProgress =
-        progress.isNotEmpty ? progress : const <String, int>{};
+    final nextProgress = progress.isNotEmpty ? progress : const <String, int>{};
 
     final treasuryDelta = treasury - player.treasury;
     _log.i(
@@ -185,9 +192,6 @@ Game resolveResearchPhase(Game game, Orders orders) {
     );
   }
 
-  _log.i(
-    'research phase end turn=$turn playersWithOrders=$playersWithOrders',
-  );
+  _log.i('research phase end turn=$turn playersWithOrders=$playersWithOrders');
   return game.copyWith(players: updatedPlayers);
 }
-

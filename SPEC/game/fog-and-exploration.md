@@ -112,7 +112,7 @@ Per [world-model-identity.md](world-model-identity.md):
 |---|---|---|
 | Explore max turns | 3 | Scaled by province size |
 | Prospect turns per tile | 1 | |
-| Spy fog decay turns | 5 | **Fixed constant for MVP** (not ruleset-configurable). When Spy leaves other-faction province, turns until that province's tiles revert to fogged |
+| Spy fog decay turns | 5 | **Fixed constant for current product** (not ruleset-configurable). When Spy leaves other-faction province, turns until that province's tiles revert to fogged |
 | Old World initial visibility | fogged | Own = fully visible |
 | New World initial visibility | unknown | |
 
