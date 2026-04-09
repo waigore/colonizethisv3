@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
+import '../dossier/evidence_rules.dart';
 import '../world/player_view.dart';
 import 'economy_debt_rules.dart';
 import 'economy_tech_effects.dart';
@@ -23,10 +25,12 @@ Game resolveResearchPhase(Game game, Orders orders) {
   final playersWithOrders = researchByPlayer.values
       .where((o) => o.isNotEmpty)
       .length;
+  var state = game;
+  final extraEvidence = <DossierEvidenceEntry>[];
   final updatedPlayers = <Player>[];
 
   for (final p in game.players) {
-    final player = p;
+    final player = state.playerById(p.id)!;
     final playerOrders = researchByPlayer[player.id] ?? const <ResearchOrder>[];
     if (playerOrders.isEmpty) {
       updatedPlayers.add(player);
@@ -158,6 +162,35 @@ Game resolveResearchPhase(Game game, Orders orders) {
       progress.remove(techId);
     }
 
+    for (final techId in toUnlock) {
+      final techMeta = techById(techId);
+      final cat = techMeta?.category;
+      if (cat != null && cat.isNotEmpty && player.isHuman) {
+        state = state.copyWith(
+          lastHumanCompletedResearchCategory: cat,
+          lastHumanResearchCategoryCompletionTurn: turn,
+        );
+      }
+    }
+    for (final techId in toUnlock) {
+      final techMeta = techById(techId);
+      final cat = techMeta?.category;
+      if (cat != null &&
+          cat.isNotEmpty &&
+          !player.isHuman &&
+          isAiControlledForEvidence(state, player.id)) {
+        extraEvidence.addAll(
+          evidenceForEnvyResearchMirror(
+            state,
+            player.id,
+            cat,
+            turn,
+            extraEvidence,
+          ),
+        );
+      }
+    }
+
     Map<String, bool>? nextUnlocked;
     if (workingUnlocked.isNotEmpty) {
       nextUnlocked = workingUnlocked;
@@ -193,5 +226,8 @@ Game resolveResearchPhase(Game game, Orders orders) {
   }
 
   _log.i('research phase end turn=$turn playersWithOrders=$playersWithOrders');
-  return game.copyWith(players: updatedPlayers);
+  return state.copyWith(
+    players: updatedPlayers,
+    dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...extraEvidence],
+  );
 }
