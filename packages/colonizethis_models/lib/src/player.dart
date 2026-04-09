@@ -16,6 +16,7 @@ class Player {
     this.techUnlocked,
     this.militaryLevel,
     this.leaderKey,
+    this.personalityId,
     this.researchProgressByTechId,
     this.researchSlots,
   });
@@ -45,6 +46,9 @@ class Player {
   /// Leader variant key for bonus lookups (combat, economy). Set during game setup. GDD 09.
   final String? leaderKey;
 
+  /// Optional archetype id for AI personality weights; when null, lookups use [leaderKey].
+  final String? personalityId;
+
   /// Accumulated research progress per tech id (research points).
   /// Phase 5: used by research resolution. Null/empty = no progress tracked yet.
   final Map<String, int>? researchProgressByTechId;
@@ -54,22 +58,25 @@ class Player {
   final int? researchSlots;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'displayName': displayName,
-        'isHuman': isHuman,
-        'stockpile': stockpile.toJson(),
-        'workerPool': workerPool.toJson(),
-        'treasury': treasury,
-        if (capitalProvinceId != null) 'capitalProvinceId': capitalProvinceId,
-        if (capitalTile != null) 'capitalTile': capitalTile!.toJson(),
-        if (techUnlocked != null && techUnlocked!.isNotEmpty)
-          'techUnlocked': techUnlocked,
-        if (militaryLevel != null) 'militaryLevel': militaryLevel,
-        if (leaderKey != null && leaderKey!.isNotEmpty) 'leaderKey': leaderKey,
-        if (researchProgressByTechId != null && researchProgressByTechId!.isNotEmpty)
-          'researchProgressByTechId': researchProgressByTechId,
-        if (researchSlots != null) 'researchSlots': researchSlots,
-      };
+    'id': id,
+    'displayName': displayName,
+    'isHuman': isHuman,
+    'stockpile': stockpile.toJson(),
+    'workerPool': workerPool.toJson(),
+    'treasury': treasury,
+    if (capitalProvinceId != null) 'capitalProvinceId': capitalProvinceId,
+    if (capitalTile != null) 'capitalTile': capitalTile!.toJson(),
+    if (techUnlocked != null && techUnlocked!.isNotEmpty)
+      'techUnlocked': techUnlocked,
+    if (militaryLevel != null) 'militaryLevel': militaryLevel,
+    if (leaderKey != null && leaderKey!.isNotEmpty) 'leaderKey': leaderKey,
+    if (personalityId != null && personalityId!.isNotEmpty)
+      'personalityId': personalityId,
+    if (researchProgressByTechId != null &&
+        researchProgressByTechId!.isNotEmpty)
+      'researchProgressByTechId': researchProgressByTechId,
+    if (researchSlots != null) 'researchSlots': researchSlots,
+  };
 
   static Player fromJson(Map<String, dynamic> json) {
     Stockpile _readStockpile() {
@@ -103,7 +110,8 @@ class Player {
     CapitalTile? _readCapitalTile() {
       final raw = json['capitalTile'];
       if (raw is Map<String, dynamic>) return CapitalTile.fromJson(raw);
-      if (raw is Map) return CapitalTile.fromJson(Map<String, dynamic>.from(raw));
+      if (raw is Map)
+        return CapitalTile.fromJson(Map<String, dynamic>.from(raw));
       return null;
     }
 
@@ -119,9 +127,7 @@ class Player {
       final raw = json['researchProgressByTechId'];
       if (raw is! Map) return null;
       return Map<String, int>.from(
-        raw.map(
-          (k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0),
-        ),
+        raw.map((k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0)),
       );
     }
 
@@ -137,6 +143,7 @@ class Player {
       techUnlocked: _readTechUnlocked(),
       militaryLevel: (json['militaryLevel'] as int?),
       leaderKey: json['leaderKey'] as String?,
+      personalityId: json['personalityId'] as String?,
       researchProgressByTechId: _readResearchProgress(),
       researchSlots: (json['researchSlots'] as num?)?.toInt(),
     );
@@ -154,6 +161,7 @@ class Player {
     Map<String, bool>? techUnlocked,
     int? militaryLevel,
     String? leaderKey,
+    String? personalityId,
     Map<String, int>? researchProgressByTechId,
     int? researchSlots,
   }) {
@@ -169,6 +177,7 @@ class Player {
       techUnlocked: techUnlocked ?? this.techUnlocked,
       militaryLevel: militaryLevel ?? this.militaryLevel,
       leaderKey: leaderKey ?? this.leaderKey,
+      personalityId: personalityId ?? this.personalityId,
       researchProgressByTechId:
           researchProgressByTechId ?? this.researchProgressByTechId,
       researchSlots: researchSlots ?? this.researchSlots,
@@ -191,27 +200,32 @@ class Player {
           _mapEquals(techUnlocked, other.techUnlocked) &&
           militaryLevel == other.militaryLevel &&
           leaderKey == other.leaderKey &&
-          _intMapEquals(researchProgressByTechId, other.researchProgressByTechId) &&
+          personalityId == other.personalityId &&
+          _intMapEquals(
+            researchProgressByTechId,
+            other.researchProgressByTechId,
+          ) &&
           researchSlots == other.researchSlots;
 
   @override
   int get hashCode => Object.hash(
-        id,
-        displayName,
-        isHuman,
-        stockpile,
-        workerPool,
-        treasury,
-        capitalProvinceId,
-        capitalTile,
-        techUnlocked == null ? null : Object.hashAll(techUnlocked!.entries),
-        militaryLevel,
-        leaderKey,
-        researchProgressByTechId == null
-            ? null
-            : Object.hashAll(researchProgressByTechId!.entries),
-        researchSlots,
-      );
+    id,
+    displayName,
+    isHuman,
+    stockpile,
+    workerPool,
+    treasury,
+    capitalProvinceId,
+    capitalTile,
+    techUnlocked == null ? null : Object.hashAll(techUnlocked!.entries),
+    militaryLevel,
+    leaderKey,
+    personalityId,
+    researchProgressByTechId == null
+        ? null
+        : Object.hashAll(researchProgressByTechId!.entries),
+    researchSlots,
+  );
 
   static bool _mapEquals(Map<String, bool>? a, Map<String, bool>? b) {
     if (a == b) return true;

@@ -8,35 +8,33 @@
 
 | id | name | era | prerequisites | effects |
 |----|------|-----|---------------|--------|
-| printing_press | Printing Press | 1 | — | Unlocks: prerequisite for `trained_journeymen`, `university`, `improved_infantry_tactics`, `siege_engineering`, and `national_bureaucracy`. Prerequisite-only: no direct production or treasury modifier in MVP. |
+| printing_press | Printing Press | 1 | — | Unlocks: prerequisite for `trained_journeymen`, `university`, `improved_infantry_tactics`, `siege_engineering`, and `national_bureaucracy`. Prerequisite-only: no direct production or treasury modifier in current product. |
 | apprentice_workers | Apprentice Workers | 2 | land_enclosure, sugar_refining | Enables: Apprentice worker tier with **4x labour output** and refined sugar luxury consumption per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `master_artisans` and `university`. |
 | trained_journeymen | Trained Journeymen | 2 | cigar_production, printing_press | Enables: Journeyman worker tier with **6x labour output** and cigar luxury consumption per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `cotton_gin` and `steppe_horsemen` recruitment path. |
 | master_artisans | Master Artisans | 3 | apprentice_workers, university, hat_production | Enables: Master worker tier with **8x labour output** and fur hat luxury consumption per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `banking`, `nationalism`, and `scientific_cattle_breeding`. |
-| money_lending | Money Lending | 1 | land_enclosure | Research treasury floor −500 (see below); borrowing/interest deferred |
-| banking | Banking | 3 | master_artisans, trade_fairs | Unlocks: prerequisite for `dynamite`, `empire_building`, and `modern_military_funding`. Prerequisite-only in MVP for economy mechanics: extended debt/interest and military-treasury links remain deferred (see status below). |
-| trade_fairs | Trade Fairs | 2 | merchant_companies, sugar_refining | Enables: planned increase in trade commodity slots versus baseline (**deferred in MVP**; see status below). Unlocks: prerequisite for `banking`. |
+| money_lending | Money Lending | 1 | land_enclosure | Research treasury floor **−500** (see below); general borrowing/interest remains deferred |
+| banking | Banking | 3 | master_artisans, trade_fairs | Extends research treasury floor to **−1000** when combined with `money_lending` (see below). Unlocks: prerequisite for `dynamite`, `empire_building`, and `modern_military_funding`. |
+| trade_fairs | Trade Fairs | 2 | merchant_companies, sugar_refining | Diplomacy trade agreements use **6** commodity slots (vs baseline **3**) when the GP has embassy access; see [diplomacy-resolution.md](../program/diplomacy-resolution.md). Unlocks: prerequisite for `banking`. |
 | university | University | 3 | money_lending, apprentice_workers, printing_press | Increases research slots from 3 to 4 (permanent per player); leads to many advances |
 
 ---
 
-## Effect implementation status (MVP)
+## Effect implementation status (current product)
 
 This section resolves ambiguity called out for **#145**: which table rows are **live rules** vs **prerequisite-only** vs **deferred**.
 
 ### money_lending
 
-- **Implemented:** During the **Research phase** only, research funding may reduce treasury to a floor of **−500** ducats (inclusive). Without `money_lending`, the floor is **0** (research spending cannot make treasury negative). Numeric owner: `maxDebtForPlayer` in `packages/colonizethis_logic/lib/src/turn/economy_debt_rules.dart`, applied by the research resolver (`research_resolver.dart`). Program contract: [research-resolution.md](../program/research-resolution.md), [economy-models.md](../program/economy-models.md) § Research treasury debt.
-- **Deferred:** General borrowing, loans, and interest rates are **not** simulated in MVP. Flavor text may mention “borrow” or “interest”; there is no separate banking UI or formula until a future economy spec.
+- **Implemented:** During the **Research phase** only, research funding may reduce treasury to a floor of **−500** ducats (inclusive) when `money_lending` is unlocked and `banking` is not. Without `money_lending`, the floor is **0**. Owner: `maxDebtForPlayer` in `economy_debt_rules.dart`. [research-resolution.md](../program/research-resolution.md).
+- **Deferred:** General borrowing, loans, and interest rates outside the research-phase debt floor.
 
 ### banking
 
-- **Implemented in MVP:** Unlock graph only — `banking` is a **prerequisite** in the global tech catalog for other techs (e.g. `modern_military_funding`, `empire_building`, `dynamite` per their tables).
-- **Deferred:** “Lower interest”, “larger negative spending” beyond Money Lending, and any treasury-linked “military funding” effect from this row are **not** implemented. **`banking` alone does not change** `maxDebtForPlayer` today; only `money_lending` does. When extended debt or interest is added, update this doc and program specs with exact formulas, phase ownership, and tests.
+- **Implemented:** With **`money_lending` + `banking`**, the research treasury floor extends to **−1000** ducats. `banking` without `money_lending` does not change the floor. Unlock graph: prerequisite for `modern_military_funding`, `empire_building`, `dynamite`, etc.
 
 ### trade_fairs
 
-- **Deferred:** “Bid on 6 commodities (vs 3)” is **not** connected to diplomacy trade or any market/auction in MVP. Diplomacy uses a **stub** trade-slot helper (`tradeSlotsForGp`: 0 without embassy, 1 with embassy) that does **not** model commodity counts; see [diplomacy-resolution.md](../program/diplomacy-resolution.md).
-- **Design contract when implemented:** The baseline **3** and **6 with Trade Fairs** refer to **maximum distinct commodities** (or equivalent slots) per **trade agreement** or trade UI — **not** a separate mechanic from trade agreements unless GDD explicitly splits them. Until that feature ships, treat the table line as forward-looking flavor; the authoritative behavior is the stub above.
+- **Implemented:** `tradeSlotsForGp` returns **0** without embassy toward the target, **3** with embassy (baseline commodity capacity), **6** with embassy when `trade_fairs` is unlocked on the ordering GP. See [diplomacy-resolution.md](../program/diplomacy-resolution.md).
 
 ### “Leads to” wording (e.g. Printing Press, University)
 

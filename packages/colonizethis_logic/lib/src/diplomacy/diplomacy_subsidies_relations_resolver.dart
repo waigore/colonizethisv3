@@ -313,9 +313,17 @@ Game _applyRelationConvergence(Game game, int turn) {
   return game.copyWith(diplomacyRelations: relations);
 }
 
-/// Trade slots gated by embassy. Stub: 0 without embassy, 1 with embassy.
-/// Per diplomacy-resolution: trade slots gated by embassy level.
+/// Commodity slots for trade agreements: 0 without embassy; baseline **3** with
+/// embassy; **6** when [kTechIdTradeFairs] is unlocked. SPEC/program/diplomacy-resolution.md.
 int tradeSlotsForGp(Game game, String gpId, String targetFactionId) {
   final o = getOverture(game, gpId, targetFactionId);
-  return o != null && o.hasEmbassy ? 1 : 0;
+  if (o == null || !o.hasEmbassy) {
+    return 0;
+  }
+  final p = game.playerById(gpId);
+  if (p == null) {
+    return 0;
+  }
+  final u = p.techUnlocked ?? const <String, bool>{};
+  return u[kTechIdTradeFairs] == true ? 6 : 3;
 }

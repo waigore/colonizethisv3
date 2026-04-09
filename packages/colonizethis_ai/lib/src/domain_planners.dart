@@ -31,7 +31,7 @@ Orders runDomainPlanners({
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   var orders = const Orders();
-  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final domainWeights = getDomainWeightsForLeader(config.personalityId);
 
   // Economy: build/work suggestions weighted by economy domain.
   final workCandidates = suggestionAPI.suggestWorkOrders(
@@ -165,7 +165,7 @@ Orders runDomainPlanners({
   if (researchCandidates.isNotEmpty &&
       (primaryGoal == StrategicGoal.tech ||
           domainWeights.research >= researchThreshold)) {
-    final thresholds = getThresholdsForLeader(config.leaderId);
+    final thresholds = getThresholdsForLeader(config.personalityId);
     final scores = researchCandidates.map((o) {
       final tech = techById(o.techId);
       final category = tech?.category ?? '';
@@ -225,7 +225,7 @@ Orders _runMovePlanner({
   if (moveCandidates.isEmpty) return orders;
   final filtered = filterMoveOrdersByDiplomacy(game, nationId, moveCandidates);
   if (filtered.isEmpty) return orders;
-  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final weight =
       primaryGoal == StrategicGoal.conquer ||
           primaryGoal == StrategicGoal.defend
@@ -298,7 +298,7 @@ Orders _runArmyMovePlanner({
     _log.d('army move filtered empty nationId=$nationId');
     return orders;
   }
-  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final weight =
       primaryGoal == StrategicGoal.conquer ||
           primaryGoal == StrategicGoal.defend
@@ -375,7 +375,7 @@ BuildUnitOrder? _pickBuildOrder({
   required String nationId,
 }) {
   if (buildCandidates.isEmpty) return null;
-  final thresholds = getThresholdsForLeader(config.leaderId);
+  final thresholds = getThresholdsForLeader(config.personalityId);
   final scores = buildCandidates.map((o) {
     final unitType = o.unitType;
     final isShip = ShipEconomyCatalog.byId.containsKey(unitType);
@@ -468,7 +468,7 @@ Orders _runNavalPlanner({
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
 }) {
-  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final weight =
       primaryGoal == StrategicGoal.conquer ||
           primaryGoal == StrategicGoal.defend ||
@@ -570,7 +570,7 @@ Orders _runDiplomacyPlanner({
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
 }) {
-  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final weight =
       primaryGoal == StrategicGoal.diplomacy ||
           primaryGoal == StrategicGoal.conquer ||
@@ -636,7 +636,7 @@ List<int> computeDiplomaticCandidateScores({
   required AIConfig config,
 }) {
   final agendaId = config.hiddenAgendaId;
-  final thresholds = getThresholdsForLeader(config.leaderId);
+  final thresholds = getThresholdsForLeader(config.personalityId);
   final maxRelationForDeclareWar = getDeclareWarMaxRelationScore(agendaId);
   const warCooldownTurns = 4;
   const improveRelationsCooldownTurns = 2;

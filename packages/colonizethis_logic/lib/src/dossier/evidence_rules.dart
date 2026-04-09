@@ -60,7 +60,7 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
           agendaType: 'backstabber',
           turnNumber: turnNumber,
           description: 'declared war on ally',
-          scoreDelta: 2,
+          scoreDelta: 3,
         ),
       );
     }
@@ -181,6 +181,76 @@ List<DossierEvidenceEntry> evidenceForNavalBattleVictory(
   if (entries.isNotEmpty) {
     _log.d(
       'evidence for naval battle victory victor=$victorOwnerId loser=$loserOwnerId entries=${entries.length}',
+    );
+  }
+  return entries;
+}
+
+/// Isolationist agenda: AI declines call to arms while still at peace with defender.
+/// SPEC/ai/hidden-agendas.md.
+List<DossierEvidenceEntry> evidenceForIsolationistCallToArmsRefuse(
+  Game game,
+  String allyGpId,
+  String defenderGpId,
+  int turnNumber,
+) {
+  if (!isAiControlledForEvidence(game, allyGpId)) {
+    return [];
+  }
+  final observers = _humanObserverIds(game);
+  if (observers.isEmpty) {
+    return [];
+  }
+  final rel = getRelation(game, allyGpId, defenderGpId);
+  if (rel == null || !rel.atPeace) {
+    return [];
+  }
+
+  final entries = <DossierEvidenceEntry>[];
+  for (final observerId in observers) {
+    entries.add(
+      DossierEvidenceEntry(
+        observerId: observerId,
+        subjectId: allyGpId,
+        agendaType: 'isolationist',
+        turnNumber: turnNumber,
+        description: 'declined call to arms while at peace',
+        scoreDelta: 2,
+      ),
+    );
+  }
+  return entries;
+}
+
+/// Tech Thief agenda: resolved steal_tech spy work against another Great Power.
+/// SPEC/ai/hidden-agendas.md.
+List<DossierEvidenceEntry> evidenceForAiStealTechResolved(
+  Game game,
+  String aiSpyOwnerGpId,
+  int turnNumber, {
+  required bool success,
+}) {
+  if (!isAiControlledForEvidence(game, aiSpyOwnerGpId)) {
+    return [];
+  }
+  final observers = _humanObserverIds(game);
+  if (observers.isEmpty) {
+    return [];
+  }
+  final scoreDelta = success ? 3 : 1;
+  final entries = <DossierEvidenceEntry>[];
+  for (final observerId in observers) {
+    entries.add(
+      DossierEvidenceEntry(
+        observerId: observerId,
+        subjectId: aiSpyOwnerGpId,
+        agendaType: 'tech_thief',
+        turnNumber: turnNumber,
+        description: success
+            ? 'spy steal tech succeeded'
+            : 'spy steal tech attempt',
+        scoreDelta: scoreDelta,
+      ),
     );
   }
   return entries;

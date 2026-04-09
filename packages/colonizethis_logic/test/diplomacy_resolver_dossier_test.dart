@@ -75,7 +75,7 @@ void main() {
       final after = resolveDiplomacyPhase(game, orders).game;
       final evidence = after.dossierEvidenceEntries;
       expect(evidence.any((e) =>
-          e.observerId == 'gp1' && e.subjectId == 'gp2' && e.agendaType == 'backstabber' && e.scoreDelta == 2),
+          e.observerId == 'gp1' && e.subjectId == 'gp2' && e.agendaType == 'backstabber' && e.scoreDelta == 3),
           isTrue);
       expect(evidence.any((e) => e.description.contains('ally')), isTrue);
     });

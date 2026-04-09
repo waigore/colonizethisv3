@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../world/army_ids.dart';
 import '../dossier/event_dialogue.dart';
+import '../dossier/evidence_rules.dart';
 import '../economy/build_cost.dart';
 import 'build_rail_work_rules.dart';
 import 'build_spawn_province.dart';
@@ -376,6 +377,7 @@ Game applyBuildAndWorkOrders(
                     p.capitalProvinceId == targetProvinceId,
               )
               .firstOrNull;
+          var stealSuccess = false;
           if (otherPlayer != null) {
             final ourTech = s.game.playerById(u.ownerId)?.techUnlocked ?? {};
             final theirTech = otherPlayer.techUnlocked ?? {};
@@ -384,6 +386,7 @@ Game applyBuildAndWorkOrders(
                 .map((e) => e.key)
                 .toList();
             if (missing.isNotEmpty && rand.nextDouble() < spyTechStealChance) {
+              stealSuccess = true;
               final granted = missing[rand.nextInt(missing.length)];
               final player = s.game.playerById(u.ownerId);
               if (player != null) {
@@ -400,6 +403,21 @@ Game applyBuildAndWorkOrders(
                       .toList(),
                 );
               }
+            }
+            final turn = s.game.worldState.turnState.turnNumber;
+            final spyEvidence = evidenceForAiStealTechResolved(
+              s.game,
+              u.ownerId,
+              turn,
+              success: stealSuccess,
+            );
+            if (spyEvidence.isNotEmpty) {
+              s.game = s.game.copyWith(
+                dossierEvidenceEntries: [
+                  ...s.game.dossierEvidenceEntries,
+                  ...spyEvidence,
+                ],
+              );
             }
           }
         } else {

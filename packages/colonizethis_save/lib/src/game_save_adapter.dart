@@ -3,6 +3,8 @@ import 'package:colonizethis_save/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:hive/hive.dart';
 
+import 'incompatible_save_format_exception.dart';
+
 final _log = packageLogger();
 
 const String _suffixTileMapByRegion = '_tileMapByRegion';
@@ -114,13 +116,15 @@ class GameSaveAdapter {
       final versionRaw = envelope[_saveFormatVersionKey];
       if (versionRaw is! int ||
           !_supportedSaveFormatVersions.contains(versionRaw)) {
-        throw StateError(
+        throw IncompatibleSaveFormatException(
           'Incompatible save format for gameId=$gameId version=$versionRaw',
         );
       }
       final gameRaw = envelope[_saveGamePayloadKey];
       if (gameRaw is! Map) {
-        throw StateError('Invalid save payload for gameId=$gameId');
+        throw IncompatibleSaveFormatException(
+          'Invalid save payload for gameId=$gameId',
+        );
       }
       final game = Game.fromJson(Map<String, dynamic>.from(gameRaw));
       _log.i('loaded gameId=$gameId');
@@ -129,6 +133,35 @@ class GameSaveAdapter {
       _log.e('load failed gameId=$gameId', error: e, stackTrace: st);
       return null;
     }
+  }
+
+  /// Loads [gameId] or throws [IncompatibleSaveFormatException] when the stored
+  /// [saveFormatVersion] is missing or unsupported, or the payload is not a map.
+  /// Returns null only when [gameId] is absent from [box].
+  Game? loadStrict(Box<dynamic> box, String gameId) {
+    _log.i('loading strict gameId=$gameId');
+    final raw = box.get(gameId);
+    if (raw == null) {
+      _log.w('gameId=$gameId not found');
+      return null;
+    }
+    final envelope = Map<String, dynamic>.from(raw as Map);
+    final versionRaw = envelope[_saveFormatVersionKey];
+    if (versionRaw is! int ||
+        !_supportedSaveFormatVersions.contains(versionRaw)) {
+      throw IncompatibleSaveFormatException(
+        'Incompatible save format for gameId=$gameId version=$versionRaw',
+      );
+    }
+    final gameRaw = envelope[_saveGamePayloadKey];
+    if (gameRaw is! Map) {
+      throw IncompatibleSaveFormatException(
+        'Invalid save payload for gameId=$gameId',
+      );
+    }
+    final game = Game.fromJson(Map<String, dynamic>.from(gameRaw));
+    _log.i('loaded strict gameId=$gameId');
+    return game;
   }
 
   /// Lists all game ids stored in [box]. Excludes internal map-data keys.

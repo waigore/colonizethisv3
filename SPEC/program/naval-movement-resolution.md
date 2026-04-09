@@ -40,14 +40,14 @@ Only fleets **at sea** on Patrol or Blockade mission participate. For each such 
 5. `P_intercept = clamp(missionFactor × ratio, 0.05, 0.85)`.
 6. On success, create a BattleContextSea and invoke [naval-combat-resolution.md](naval-combat-resolution.md).
 
-For MVP, interception uses hardcoded constants in logic code (no ruleset lookup):
+For current product, interception uses hardcoded constants in logic code (no ruleset lookup):
 
 - Patrol mission factor: `0.5` (`kNavalInterceptMissionFactorPatrol`).
 - Blockade mission factor: `0.9` (`kNavalInterceptMissionFactorBlockade`).
 - Clamp bounds: `[0.05, 0.85]`.
 - Formula: `P_intercept = clamp(missionFactor × ratio, 0.05, 0.85)`.
 
-No additional interception tech/composition bonus path is applied in MVP; any such bonus is deferred.
+No additional interception tech/composition bonus path is applied in current product; any such bonus is deferred.
 
 **Trade/Transport Interception:**
 
@@ -60,7 +60,7 @@ During Extraction/Trade phase, overseas cargo on home-fleet ships may be raided.
 5. `P_ship_sunk = clamp(0.4 × base × (1 - escortFactor), 0.02, 0.5)`.
 6. Reduce delivered quantities; remove sunk merchant ships from home fleet.
 
-For MVP, trade/transport interception also uses hardcoded constants in logic code (no ruleset lookup), including:
+For current product, trade/transport interception also uses hardcoded constants in logic code (no ruleset lookup), including:
 
 - `civilianTargetBonus = 1.25`
 - `actionFactorPatrol = 0.5`
@@ -96,10 +96,10 @@ BuildUnitOrder for naval type; spawns in home fleet (in port at capital). Costs 
 ## Acceptance Criteria
 
 - Given naval interception probability is computed for a fleet on `patrol` or `blockade` with fixed intercept and flee scores  
-  When the System resolves interception in MVP  
+  When the System resolves interception in current product  
   Then the System uses hardcoded mission factors (`patrol=0.5`, `blockade=0.9`) and computes `P_intercept = clamp(missionFactor × ratio, 0.05, 0.85)` with no ruleset lookup.
 
-- Given interception modifiers are evaluated in MVP  
+- Given interception modifiers are evaluated in current product  
   When the System computes interception probability for fleet movement resolution  
   Then the System does not apply any separate interception tech/composition bonus path, and treats those bonuses as deferred behavior.
 

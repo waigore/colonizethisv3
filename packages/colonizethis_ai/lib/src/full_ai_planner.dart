@@ -35,10 +35,14 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
   final seeds = AISeedBundle.fromTurnSeed(turnSeed);
   final leaderKeyOrId = player.leaderKey ?? player.id;
   final leaderId = canonicalLeaderIdForPersonality(leaderKeyOrId);
+  final personalityKey = personalityLookupKeyForAi(
+    leaderKeyOrId: leaderKeyOrId,
+    personalityId: player.personalityId,
+  );
   final agendaId = game.hiddenAgendaByGpId[playerId] ?? 'peacemaker';
   final config = AIConfig(
     leaderId: leaderId,
-    personalityId: leaderId,
+    personalityId: personalityKey,
     hiddenAgendaId: agendaId,
   );
   final suggestionAPI = orderSuggestionApi ?? const DefaultOrderSuggestionAPI();

@@ -77,7 +77,7 @@ For each civilian unit, the panel shows:
 
 - **Province lookup:** Always use prefixed province id (`regionId|provinceId`) derived from `Unit.tileKey` per [world-model-identity.md](../game/world-model-identity.md). Never use bare province id alone. **Display:** Use province **name** only (e.g. `Province.displayName` from the game's region data); do not show raw province id or prefixed id to the user.
 - **Region display:** When showing location, always include the region (e.g. "Old World", "New World") so the player can correlate with the map tabs.
-- **Work target labels:** Work targets come from `CurrentWork.workTarget` (e.g. `build_improvement`, `explore`). UI may show human-readable labels (e.g. "Build improvement", "Explore") from a small mapping; raw id is acceptable for MVP.
+- **Work target labels:** Work targets come from `CurrentWork.workTarget` (e.g. `build_improvement`, `explore`). The UI **must** display a **localized human-readable label** for every known `workTarget` id via a fixed mapping table; unknown ids fall back to the id string only for diagnostics.
 
 ---
 
