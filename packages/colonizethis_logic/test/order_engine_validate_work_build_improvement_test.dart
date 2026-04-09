@@ -117,6 +117,39 @@ void main() {
         expect(results.single.reason, contains('maximum'));
       });
 
+      test(
+        'rejects build_improvement when tech cap would be exceeded (empty tech)',
+        () {
+          final game = baseGame(
+            techUnlocked: const {},
+            tileState: const TileMapState(
+              improvementByTile: {'oldWorld|P1|0|0': 1},
+            ),
+            stockpile: Stockpile()
+                .applyDelta(CommodityCatalog.lumber.id, 10)
+                .applyDelta(CommodityCatalog.castIron.id, 10),
+          );
+          final engine = OrderEngine();
+          engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.rejected);
+          expect(results.single.reason, contains('Insufficient tech'));
+          expect(results.single.reason, contains('grain'));
+          expect(results.single.reason, contains('cap 1'));
+        },
+      );
+
       test('rejects build_improvement when tech cap would be exceeded', () {
         // With no grain-cap tech, grain stays at cap 1; tile at level 1 cannot upgrade.
         final game = baseGame(
