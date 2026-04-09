@@ -1,8 +1,13 @@
 part of 'tile_map_generator.dart';
 
-mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
+/// Pass 2–3: land seed placement and assignment (organic and seed-before-assignment).
+class _TileMapGenLandSeeds {
+  _TileMapGenLandSeeds(this.params);
+
+  final TileMapParams params;
+
   /// One continent seed per continent; then a cluster of land-shape seeds per continent (K from province count). No province seeds yet.
-  (List<(int x, int y)>, List<(int x, int y)>, List<int>) _placeLandSeeds(
+  (List<(int x, int y)>, List<(int x, int y)>, List<int>) placeLandSeeds(
     Map<String, int> provinceToContinent,
     Random rnd,
   ) {
@@ -86,7 +91,7 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
   /// Organic land growing: interleaved seed placement + small Voronoi + coastline growth.
   /// Returns (continentSeeds, landSeeds, continentBySeedIndex, grid).
   (List<(int x, int y)>, List<(int x, int y)>, List<int>, List<List<String>>)
-  _placeLandSeedsOrganic(
+  placeLandSeedsOrganic(
     List<List<String>> grid,
     Map<String, int> provinceToContinent,
     String seaZoneId,
@@ -605,7 +610,7 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
   }
 
   /// Per-continent land budget; assign to _landSentinel by smallest effective distance (with optional Voronoi noise). Each cell at most one continent.
-  List<List<String>> _assignLandByLandSeeds(
+  List<List<String>> assignLandByLandSeeds(
     List<List<String>> grid,
     List<(int x, int y)> landSeeds,
     List<int> continentBySeedIndex,
