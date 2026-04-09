@@ -47,8 +47,7 @@ Storage:
 
 ## Evidence list cap
 
-- **current product cap:** The maximum number of evidence entries kept per dossier (per `(observerId, subjectId)` pair) is defined by a program-level constant in `colonizethis_data` (`kMaxDossierEvidenceEntries`, default `50`). When the list would exceed this cap, the system drops the oldest entries so that the list remains capped and chronological.
-- **Post-current product ruleset:** Future releases may promote this cap to a ruleset-configurable value (for example per scenario or difficulty). When that happens, this document and the TDD implementation spec (`ai-events-and-dossier.md` § Evidence and Dossier) are the source of truth for how the cap is read and applied.
+- **current product cap:** The maximum number of evidence entries kept per dossier (per `(observerId, subjectId)` pair) is defined by the program-level constant `kMaxDossierEvidenceEntries` in `colonizethis_data` (default **50**). The cap is **not** read from ruleset JSON or scenario overlays in current product. When the list would exceed this cap, the system drops the oldest entries so that the list remains capped and chronological. Promoting the cap to ruleset-driven configuration requires an explicit SPEC change in this document and in [ai-events-and-dossier.md](../program/ai-events-and-dossier.md) **before** implementation.
 
 ---
 

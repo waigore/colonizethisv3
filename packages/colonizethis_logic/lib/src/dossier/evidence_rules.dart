@@ -71,7 +71,6 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
   final targetIsGp = game.playerById(targetFactionId) != null;
   final weaker = targetIsGp && _isWeakerGp(game, actorGpId, targetFactionId);
 
-  final entries = <DossierEvidenceEntry>[];
   final treatyBreakAttack =
       !wasAllied &&
       hadCallToArmsRefusedWithTargetInAttackWindow(
@@ -80,6 +79,8 @@ List<DossierEvidenceEntry> evidenceForDeclareWar(
         targetFactionId,
         turnNumber,
       );
+
+  final entries = <DossierEvidenceEntry>[];
   for (final observerId in observers) {
     if (wasAllied) {
       entries.add(

@@ -103,6 +103,7 @@ void main() {
       expect(restored.lastHumanCompletedResearchCategory, 'gathering');
       expect(restored.lastHumanResearchCategoryCompletionTurn, 2);
     });
+
     test('copyWith id and players', () {
       final game = Game(
         id: 'g1',

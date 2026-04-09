@@ -63,12 +63,12 @@ When the game or AI performs an action, **evidence rules** (defined per agenda) 
 **Evidence rule coverage (current product)**  
 Evidence rules are evaluated during turn resolution (see [ai-events-and-dossier.md](../program/ai-events-and-dossier.md)) with deterministic, PlayerView-safe deltas:
 
-- **War declaration** — Warmonger when the target is a weaker Great Power (+2) or any GP target (+1 battle-oriented signal as implemented). **Backstabber** when the AI declared war on a prior ally (+3), or when the AI declared war on a Great Power toward whom it had **`callToArmsRefused`** in the same turn or within the prior **3** turns (+3; “broke obligation then struck”).
+- **War declaration** — Warmonger when the target is a weaker Great Power (+2) or any GP target (+1 battle-oriented signal as implemented). **Backstabber** when the AI declared war on a prior ally (+3), or when the AI declared war on a Great Power toward whom it had **`callToArmsRefused`** in the same turn or within the prior **3** turns (+3; obligation break then strike). Implementation: `evidenceForDeclareWar`, diplomatic history.
 - **Peace offer** — Peacemaker (+1).
 - **Land / naval battle victory (attacker)** — Warmonger per implemented rules.
-- **Isolationist** — AI refuses **call to arms** while still at peace with the defender (+2).
-- **Tech thief** — Resolved **`steal_tech`** spy work: **+1** per attempt, **+2** additional on success (**+3** total on success). Implementation: `evidenceForAiStealTechResolved`.
-- **Envy** — AI completes a tech in the **same catalog category** the human most recently completed via research, within **2** turns after that human completion (same turn counts): **+1** per qualifying completion, **max +3** total envy suspicion for that AI subject in that turn. Mirror tracking uses `Game.lastHumanCompletedResearchCategory` / `lastHumanResearchCategoryCompletionTurn`; build/improvement mirroring is out of scope until a single category model is defined for builds.
+- **Isolationist** — AI refuses **call to arms** while still at peace with the defender (+2). `evidenceForIsolationistCallToArmsRefuse`.
+- **Tech thief** — Resolved **`steal_tech`** spy work: **+1** per attempt, **+2** additional on success (**+3** total on success). `evidenceForAiStealTechResolved`.
+- **Envy** — AI completes a tech in the **same catalog category** the human most recently completed via research, within **2** turns after that human completion (same turn counts): **+1** per qualifying completion, **max +3** total envy suspicion for that AI subject in that turn. Tracking: `Game.lastHumanCompletedResearchCategory` / `lastHumanResearchCategoryCompletionTurn`; research phase calls `evidenceForEnvyResearchMirror`. **Build/improvement** mirroring is out of scope until a single category model is defined for builds.
 
 ---
 

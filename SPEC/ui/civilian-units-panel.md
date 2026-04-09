@@ -43,7 +43,7 @@ For each civilian unit, the panel shows:
 |-------------|--------|--------|
 | **Status**  | `Unit.status` | One of: `idle`, `working`, `done`. Display as short label (e.g. "Idle", "Working", "Done"). |
 | **Location**| `Unit.tileKey` | **Province name only** (no raw id). Province name from game data (e.g. `Province.displayName` for the province derived from `tileKey`). **Always show the region** with the location (e.g. "Old World — London" or "New World — Mexica") so the player knows which map tab the unit is in. |
-| **Assigned to** | `Unit.currentWork` when `status == working` | If idle or done: show "—" or "Idle". If working: show work target (e.g. `build_improvement`, `explore`, `prospect`) and target location (province name + region); optionally progress (e.g. "2/5 turns") from `currentWork.remainingTurns` / `totalTurns`. |
+| **Assigned to** | `Unit.currentWork` when `status == working` | If idle or done: show "—" or "Idle". If working: show work target (e.g. `build_improvement`, `explore`, `prospect`) and target location (province name + region). When `currentWork.remainingTurns` / `totalTurns` are present, the UI **must** show progress (e.g. `2/5 turns`); when absent, omit the progress segment. |
 
 - **Unit identity:** Each row is associated with one `Unit` (e.g. `unit.id`). Show unit type (Explorer, Builder, etc.) and a short id or label so the player can tell units apart.
 - **Clickable row:** The entire row (or a dedicated "Locate" control) is the click target for "highlight this unit's tile on the map and pan/center to it".
