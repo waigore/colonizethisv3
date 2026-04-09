@@ -1,8 +1,13 @@
 part of 'tile_map_generator.dart';
 
-/// Grid / connectivity helpers shared by map-generation passes (mixin order: before join/sea and lakes).
-mixin _TileMapGeneratorGraph on _TileMapGeneratorShell {
-  List<Set<(int x, int y)>> _connectedComponentsOfLand(
+/// Grid and connectivity helpers shared by tile map generation passes.
+/// SPEC/program/tile-map-gen-algorithm.md
+class TileMapGridGraph {
+  TileMapGridGraph(this.params);
+
+  final TileMapParams params;
+
+  List<Set<(int x, int y)>> connectedComponentsOfLand(
     Set<(int x, int y)> landCells,
   ) {
     if (landCells.isEmpty) return [];
@@ -29,7 +34,7 @@ mixin _TileMapGeneratorGraph on _TileMapGeneratorShell {
   }
 
   /// Pass 11: 4-connected components of sea cells (grid cells with seaZoneId).
-  List<Set<(int x, int y)>> _connectedComponentsOfSea(
+  List<Set<(int x, int y)>> connectedComponentsOfSea(
     List<List<String>> grid,
     String seaZoneId,
   ) {
@@ -39,10 +44,10 @@ mixin _TileMapGeneratorGraph on _TileMapGeneratorShell {
         if (grid[y][x] == seaZoneId) seaCells.add((x, y));
       }
     }
-    return _connectedComponentsOfLand(seaCells);
+    return connectedComponentsOfLand(seaCells);
   }
 
-  (int, int) _minYx(Set<(int x, int y)> cells) {
+  (int, int) minYx(Set<(int x, int y)> cells) {
     var minY = params.height;
     var minX = params.width;
     for (final (x, y) in cells) {
@@ -54,7 +59,7 @@ mixin _TileMapGeneratorGraph on _TileMapGeneratorShell {
     return (minY, minX);
   }
 
-  int _countSeaCells(List<List<String>> grid, String seaZoneId) {
+  int countSeaCells(List<List<String>> grid, String seaZoneId) {
     var n = 0;
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
@@ -65,7 +70,7 @@ mixin _TileMapGeneratorGraph on _TileMapGeneratorShell {
   }
 
   /// Ocean = sea cells reachable from grid boundary. Lake = sea not in ocean.
-  Set<(int x, int y)> _oceanCells(List<List<String>> grid, String seaZoneId) {
+  Set<(int x, int y)> oceanCells(List<List<String>> grid, String seaZoneId) {
     final ocean = <(int x, int y)>{};
     final queue = <(int x, int y)>[];
     for (var x = 0; x < params.width; x++) {
@@ -108,7 +113,7 @@ mixin _TileMapGeneratorGraph on _TileMapGeneratorShell {
   }
 
   /// Continent index for a land cell from nearest land seed. Returns 0 when seeds empty.
-  int _continentForLandCell(
+  int continentForLandCell(
     int x,
     int y,
     List<(int x, int y)> landSeeds,
@@ -128,7 +133,7 @@ mixin _TileMapGeneratorGraph on _TileMapGeneratorShell {
     return continentBySeedIndex[bestSeedIndex];
   }
 
-  int _oceanNeighbourCount(
+  int oceanNeighbourCount(
     List<List<String>> grid,
     int x,
     int y,
