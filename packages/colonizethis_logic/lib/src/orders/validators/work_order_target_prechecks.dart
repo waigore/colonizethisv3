@@ -208,7 +208,8 @@ OrderValidationResult? precheckBuildImprovement(
   );
   if (currentLevel + 1 > techCap) {
     return OrderValidationResult.rejected(
-      'Insufficient tech to build next improvement level (cap $techCap)',
+      'Insufficient tech for next improvement level on $resourceId '
+      '(extraction cap $techCap; unlock gathering tech to raise the cap)',
     );
   }
   return null;

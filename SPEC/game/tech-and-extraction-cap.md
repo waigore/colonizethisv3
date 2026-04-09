@@ -30,7 +30,7 @@ Static catalog validation must enforce extraction cap coverage:
 
 - Given a player has no grain-cap tech unlocked and a grain tile at improvement level 1  
   When the player submits `build_improvement` on that tile  
-  Then the System rejects the order with a reason that includes missing tech and cap 1 for grain.
+  Then the System rejects the order with a reason that includes `grain`, insufficient tech for the next level, and extraction cap **1**.
 
 - Given a player has unlocked `land_enclosure` and has a grain tile at improvement level 1  
   When the player submits `build_improvement` on that tile  
