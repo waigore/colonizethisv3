@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/resource_icon.dart';
@@ -175,6 +177,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, _) {
@@ -193,7 +196,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Train Military',
+                      l10n.trainMilitary_title,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
@@ -209,7 +212,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'No capital set — cannot train units',
+                  l10n.trainUnits_noCapital,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.error,
                   ),
@@ -221,6 +224,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
                 peasants: _peasants,
                 stockpile: _player?.stockpile ?? const Stockpile(),
                 deficitHint: _deficitHint,
+                l10n: l10n,
               ),
               const Divider(height: 1),
               Flexible(
@@ -251,7 +255,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
                   children: [
                     CtNinePatchButton(
                       onPressed: _reset,
-                      child: const Text('Reset'),
+                      child: Text(l10n.common_reset),
                     ),
                   ],
                 ),
@@ -270,12 +274,14 @@ class _MilitaryResourceBar extends StatelessWidget {
     required this.peasants,
     required this.stockpile,
     required this.deficitHint,
+    required this.l10n,
   });
 
   final int treasury;
   final int peasants;
   final Stockpile stockpile;
   final String? deficitHint;
+  final AppLocalizations l10n;
 
   static const _militaryCommodityIds = <String>[
     'fabric',
@@ -297,14 +303,14 @@ class _MilitaryResourceBar extends StatelessWidget {
             spacing: 10,
             runSpacing: 6,
             children: [
-              _ResourceChip(child: Text('Treasury: $treasury')),
+              _ResourceChip(child: Text(l10n.trainUnits_treasury('$treasury'))),
               _ResourceChip(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const WorkerIcon(workerType: 'peasant', size: 14),
                     const SizedBox(width: 4),
-                    Text('Peasants: $peasants'),
+                    Text(l10n.trainUnits_peasants(peasants)),
                   ],
                 ),
               ),

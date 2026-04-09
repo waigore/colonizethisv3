@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:jenny/jenny.dart';
 
+import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import 'ct_dialogue_view.dart';
@@ -87,6 +88,7 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     if (_loadError != null) {
       return Stack(
         children: [
@@ -100,14 +102,14 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Could not load intro dialogue: $_loadError'),
+                      Text(l10n.game_intro_loadError('$_loadError')),
                       const SizedBox(height: 16),
                       CtNinePatchButton(
                         onPressed: () {
                           setState(() => _loadError = null);
                           widget.onDismissed();
                         },
-                        child: const Text('Continue'),
+                        child: Text(l10n.game_intervention_continue),
                       ),
                     ],
                   ),
@@ -150,7 +152,7 @@ class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
                         alignment: Alignment.centerRight,
                         child: CtNinePatchButton(
                           onPressed: () => _view!.advanceLine(),
-                          child: const Text('Continue'),
+                          child: Text(l10n.game_intervention_continue),
                         ),
                       ),
                     ] else if (choice != null) ...[

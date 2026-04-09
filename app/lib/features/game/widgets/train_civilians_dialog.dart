@@ -5,6 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -146,6 +148,7 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, _) {
@@ -164,7 +167,7 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Train Civilians',
+                      l10n.trainCivilians_title,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
@@ -180,7 +183,7 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'No capital set — cannot train units',
+                  l10n.trainUnits_noCapital,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.error,
                   ),
@@ -191,6 +194,7 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
                 treasury: _treasury,
                 paperStockpile: _paperStockpile,
                 deficitHint: _deficitHint,
+                l10n: l10n,
               ),
               const Divider(height: 1),
               Flexible(
@@ -221,7 +225,7 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
                   children: [
                     CtNinePatchButton(
                       onPressed: _reset,
-                      child: const Text('Reset'),
+                      child: Text(l10n.common_reset),
                     ),
                   ],
                 ),
@@ -239,11 +243,13 @@ class _ResourceBar extends StatelessWidget {
     required this.treasury,
     required this.paperStockpile,
     required this.deficitHint,
+    required this.l10n,
   });
 
   final int treasury;
   final int paperStockpile;
   final String? deficitHint;
+  final AppLocalizations l10n;
 
   String _formatNumber(int n) {
     if (n >= 1000) {
@@ -262,12 +268,12 @@ class _ResourceBar extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Treasury: ${_formatNumber(treasury)}',
+                l10n.trainUnits_treasury(_formatNumber(treasury)),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(width: 16),
               Text(
-                'Paper: $paperStockpile',
+                l10n.trainUnits_paper(paperStockpile),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],

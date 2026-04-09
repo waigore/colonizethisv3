@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 
@@ -33,9 +34,10 @@ class GrantOrSubsidyDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return CtDialogShell(
       child: _GrantSubsidyAmountBody(
-        title: isSubsidy ? 'Set subsidy' : 'Grant aid',
+        title: isSubsidy ? l10n.diplomacy_setSubsidy : l10n.diplomacy_grantAid,
         treasury: _treasury,
         isSubsidy: isSubsidy,
         onCancel: () => Navigator.of(context).pop(),
@@ -77,8 +79,7 @@ class _GrantSubsidyAmountBody extends StatefulWidget {
 class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
   late int _amount;
 
-  int get _step =>
-      widget.isSubsidy ? setSubsidyAmountStep : grantAidAmountStep;
+  int get _step => widget.isSubsidy ? setSubsidyAmountStep : grantAidAmountStep;
 
   int _maxAffordable() {
     final t = widget.treasury;
@@ -90,8 +91,9 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
   int _initialAmount() {
     final maxA = _maxAffordable();
     if (maxA < _step) return 0;
-    final d =
-        widget.isSubsidy ? setSubsidyDefaultAmount : grantAidDefaultAmount;
+    final d = widget.isSubsidy
+        ? setSubsidyDefaultAmount
+        : grantAidDefaultAmount;
     final capped = d > maxA ? maxA : d;
     final snapped = (capped ~/ _step) * _step;
     if (snapped >= _step) return snapped;
@@ -99,9 +101,7 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
   }
 
   bool get _canSubmit =>
-      _amount >= _step &&
-      _amount <= widget.treasury &&
-      _amount % _step == 0;
+      _amount >= _step && _amount <= widget.treasury && _amount % _step == 0;
 
   @override
   void initState() {
@@ -130,6 +130,7 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final maxA = _maxAffordable();
     final canAdjust = maxA >= _step;
 
@@ -140,7 +141,7 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
         Text(widget.title, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         Text(
-          'Treasury: £${widget.treasury}. Step: £$_step.',
+          l10n.diplomacy_treasuryStep(widget.treasury, _step),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 12),
@@ -155,7 +156,7 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                '£$_amount',
+                l10n.diplomacy_currencyAmount(_amount),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
@@ -170,10 +171,10 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              'Treasury is below the minimum valid amount (£$_step).',
+              l10n.diplomacy_treasuryBelowMinimum(_step),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                color: Theme.of(context).colorScheme.error,
+              ),
             ),
           ),
         const SizedBox(height: 16),
@@ -182,13 +183,13 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
           children: [
             CtNinePatchButton(
               onPressed: widget.onCancel,
-              child: const Text('Cancel'),
+              child: Text(l10n.common_cancel),
             ),
             const SizedBox(width: 8),
             CtNinePatchButton(
               enabled: _canSubmit,
               onPressed: () => widget.onSubmit(_amount),
-              child: const Text('Submit'),
+              child: Text(l10n.game_callToArms_submit),
             ),
           ],
         ),
@@ -196,4 +197,3 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
     );
   }
 }
-

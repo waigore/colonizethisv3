@@ -1,6 +1,5 @@
 import 'package:colonizethis_app/features/game/flame/game_map_area_state_logic.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

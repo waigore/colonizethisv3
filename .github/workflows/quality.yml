@@ -441,6 +441,10 @@ jobs:
             fi
           fi
 
+      - name: App hardcoded UI string gate (app/lib/** -> l10n)
+        if: needs.changes.outputs.tests == 'true'
+        run: python3 tool/check_app_hardcoded_ui_strings.py
+
       - name: Coverage gate (logic/map/ai >= 90%)
         if: needs.changes.outputs.tests == 'true'
         run: tool/check_coverage_threshold.sh 90 packages/colonizethis_logic packages/colonizethis_map packages/colonizethis_ai

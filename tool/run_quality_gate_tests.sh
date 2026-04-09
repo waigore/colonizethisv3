@@ -45,6 +45,10 @@ if [ -d app ]; then
 fi
 
 echo ""
+echo "=== App hardcoded UI string gate (app/lib/** -> l10n) ==="
+python3 "$ROOT/tool/check_app_hardcoded_ui_strings.py"
+
+echo ""
 echo "=== Test app (Flutter) ==="
 # CI runs sharded app tests with a shared deps artifact (.github/workflows/quality.yml).
 # Locally: single process is enough; use the same flags as shards for parity.

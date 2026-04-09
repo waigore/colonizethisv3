@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
 import '../utils/map_location_resolver.dart';
 import '../utils/sea_zone_name_resolver.dart';
 import 'units/shared/units_panel_region_label.dart';
@@ -177,37 +178,38 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final picks = _picks;
     final seaPicks = picks.whereType<_PickSeaZone>().toList();
     final portPicks = picks.whereType<_PickPort>().toList();
     final fleetLabel = _fleetMoveDialogTitleLabel(widget.fleet);
     final titleText = picks.isEmpty
-        ? 'Move fleet — $fleetLabel'
-        : 'Move fleet — $fleetLabel (${picks.length} destinations)';
+        ? l10n.moveFleet_title(fleetLabel)
+        : l10n.moveFleet_titleWithDestinations(fleetLabel, picks.length);
 
     return AlertDialog(
       title: Text(titleText),
       content: SizedBox(
         width: 420,
         child: picks.isEmpty
-            ? const Text('No adjacent sea zones (check map topology).')
+            ? Text(l10n.moveFleet_noAdjacentSeaZones)
             : SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (seaPicks.isNotEmpty) ...[
-                      const Text(
-                        'Sea zones',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      Text(
+                        l10n.moveFleet_seaZonesSection,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       ...seaPicks.map(_row),
                     ],
                     if (portPicks.isNotEmpty) ...[
                       if (seaPicks.isNotEmpty) const SizedBox(height: 12),
-                      const Text(
-                        'Provinces (dock)',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      Text(
+                        l10n.moveFleet_provincesDockSection,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       ...portPicks.map(_row),
                     ],
@@ -218,7 +220,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l10n.common_cancel),
         ),
         TextButton(
           onPressed: _selected == null
@@ -232,7 +234,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
                   );
                   Navigator.pop(context);
                 },
-          child: const Text('Confirm'),
+          child: Text(l10n.common_confirm),
         ),
       ],
     );
@@ -247,7 +249,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
         children: [
           Expanded(child: Text(pick.rowLabel)),
           IconButton(
-            tooltip: 'Locate on map',
+            tooltip: appL10n(context).moveFleet_locateOnMap,
             icon: const Icon(Icons.my_location, size: 18),
             onPressed: () => pick.emitLocate(widget.bus, widget.game),
             visualDensity: VisualDensity.compact,

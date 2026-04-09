@@ -5,12 +5,16 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
+
 String moveArmyFactionGroupHeaderLabel(
   Game game,
   ArmyMovePickerDestination entry,
+  AppLocalizations l10n,
 ) {
-  if (entry.isPlayerOwned) return 'Your provinces';
-  if (entry.ownerFactionId == '__unowned__') return 'Unowned';
+  if (entry.isPlayerOwned) return l10n.moveArmy_groupYourProvinces;
+  if (entry.ownerFactionId == '__unowned__') return l10n.moveArmy_groupUnowned;
   final gp = game.playerById(entry.ownerFactionId);
   if (gp != null) return gp.displayName;
   for (final m in game.minorNations) {
@@ -66,6 +70,7 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
 
   List<DropdownMenuItem<String>> _groupedDropdownItems(
     List<ArmyMovePickerDestination> entries,
+    AppLocalizations l10n,
   ) {
     final items = <DropdownMenuItem<String>>[];
     String? currentGroup;
@@ -78,7 +83,7 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
             enabled: false,
             value: '__header__$g',
             child: Text(
-              moveArmyFactionGroupHeaderLabel(widget.game, entry),
+              moveArmyFactionGroupHeaderLabel(widget.game, entry, l10n),
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
@@ -125,29 +130,31 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
     final entries = _destinationEntries();
     final entry = _selectedEntry(entries);
     if (entry == null) return;
+    final l10n = appL10n(context);
 
     if (!entry.requiresDeclareWarOnConfirm) {
       _emitAndClose(entry);
       return;
     }
 
-    final ownerLabel = moveArmyFactionGroupHeaderLabel(widget.game, entry);
+    final ownerLabel = moveArmyFactionGroupHeaderLabel(
+      widget.game,
+      entry,
+      l10n,
+    );
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Invade province?'),
-        content: Text(
-          'Moving into $ownerLabel territory will declare war this turn '
-          'and then move the army. Continue?',
-        ),
+        title: Text(l10n.moveArmy_invadeProvinceTitle),
+        content: Text(l10n.moveArmy_invadeProvinceBody(ownerLabel)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.common_cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Declare war and move'),
+            child: Text(l10n.moveArmy_declareWarAndMove),
           ),
         ],
       ),
@@ -182,20 +189,21 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final entries = _destinationEntries();
-    final items = _groupedDropdownItems(entries);
+    final items = _groupedDropdownItems(entries, l10n);
 
     return AlertDialog(
-      title: Text('Move army ${widget.army.id}'),
+      title: Text(l10n.moveArmy_title(widget.army.id)),
       content: SizedBox(
         width: 320,
         child: entries.isEmpty
-            ? const Text('No valid destinations.')
+            ? Text(l10n.moveArmy_noValidDestinations)
             : DropdownButtonFormField<String>(
                 initialValue: _selected,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Destination province',
+                decoration: InputDecoration(
+                  labelText: l10n.moveArmy_destinationProvince,
                 ),
                 items: items,
                 onChanged: (v) => setState(() => _selected = v),
@@ -204,11 +212,11 @@ class _MoveArmyDialogState extends State<MoveArmyDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l10n.common_cancel),
         ),
         TextButton(
           onPressed: _selected == null ? null : _onConfirmPressed,
-          child: const Text('Confirm'),
+          child: Text(l10n.common_confirm),
         ),
       ],
     );

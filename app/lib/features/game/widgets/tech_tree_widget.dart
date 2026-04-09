@@ -8,6 +8,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -69,9 +71,10 @@ class TechTreeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final positions = TechTreeWidget.computeLayout(techCatalog);
     if (positions.isEmpty) {
-      return const Center(child: Text('No techs in catalog'));
+      return Center(child: Text(l10n.techTree_noTechsInCatalog));
     }
     final width = positions.map((p) => p.x).reduce(math.max) + _nodeWidth + 48;
     final height =
@@ -89,7 +92,7 @@ class TechTreeWidget extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: _TechTreeLegend(),
+          child: _TechTreeLegend(l10n: l10n),
         ),
         const Divider(height: 1),
         Expanded(
@@ -247,6 +250,7 @@ class TechTreeWidget extends StatelessWidget {
   }
 
   void _showTechDialog(BuildContext context, TechDefinition tech) {
+    final l10n = appL10n(context);
     final effects = _effectSummary(tech);
     final theme = Theme.of(context);
     showDialog<void>(
@@ -267,14 +271,23 @@ class TechTreeWidget extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Era ${_eraRoman(tech.era)} · ${_categoryLabel(tech.category)}',
+                      l10n.techTree_eraCategory(
+                        _eraRoman(tech.era),
+                        _categoryLabel(tech.category),
+                      ),
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 4),
-                    Text('${tech.cost} RP', style: theme.textTheme.bodyMedium),
+                    Text(
+                      l10n.techTree_researchPoints(tech.cost),
+                      style: theme.textTheme.bodyMedium,
+                    ),
                     if (tech.prerequisiteIds.isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      Text('Prerequisites', style: theme.textTheme.labelLarge),
+                      Text(
+                        l10n.techTree_prerequisites,
+                        style: theme.textTheme.labelLarge,
+                      ),
                       ...tech.prerequisiteIds.map(
                         (id) => Padding(
                           padding: const EdgeInsets.only(top: 2),
@@ -287,11 +300,14 @@ class TechTreeWidget extends StatelessWidget {
                     ],
                     if (effects.isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      Text('Effects', style: theme.textTheme.labelLarge),
+                      Text(l10n.techTree_effects, style: theme.textTheme.labelLarge),
                       ...effects.map(
                         (e) => Padding(
                           padding: const EdgeInsets.only(top: 2),
-                          child: Text('• $e', style: theme.textTheme.bodySmall),
+                          child: Text(
+                            l10n.techTree_bulletItem(e),
+                            style: theme.textTheme.bodySmall,
+                          ),
                         ),
                       ),
                     ],
@@ -304,7 +320,7 @@ class TechTreeWidget extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: CtNinePatchButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Close'),
+                child: Text(l10n.common_close),
               ),
             ),
           ],
@@ -1068,13 +1084,17 @@ class _TechNode extends StatelessWidget {
 }
 
 class _TechTreeLegend extends StatelessWidget {
+  const _TechTreeLegend({required this.l10n});
+
+  final AppLocalizations l10n;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Technology tree legend', style: theme.textTheme.labelLarge),
+        Text(l10n.techTree_legendTitle, style: theme.textTheme.labelLarge),
         const SizedBox(height: 4),
         Wrap(
           spacing: 8,
@@ -1094,7 +1114,7 @@ class _TechTreeLegend extends StatelessWidget {
           runSpacing: 4,
           children: const [
             _StateLegendSample(
-              label: 'Researched',
+              label: 'researched',
               state: _TechNodeState(
                 researched: true,
                 inProgress: false,
@@ -1102,7 +1122,7 @@ class _TechTreeLegend extends StatelessWidget {
               ),
             ),
             _StateLegendSample(
-              label: 'In progress',
+              label: 'in_progress',
               state: _TechNodeState(
                 researched: false,
                 inProgress: true,
@@ -1110,7 +1130,7 @@ class _TechTreeLegend extends StatelessWidget {
               ),
             ),
             _StateLegendSample(
-              label: 'Available',
+              label: 'available',
               state: _TechNodeState(
                 researched: false,
                 inProgress: false,
@@ -1118,7 +1138,7 @@ class _TechTreeLegend extends StatelessWidget {
               ),
             ),
             _StateLegendSample(
-              label: 'Locked',
+              label: 'locked',
               state: _TechNodeState(
                 researched: false,
                 inProgress: false,
@@ -1159,6 +1179,7 @@ class _StateLegendSample extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     // Use a dummy tech with neutral category just to render the style.
     const dummyTech = TechDefinition(
       id: 'legend_dummy',
@@ -1179,8 +1200,26 @@ class _StateLegendSample extends StatelessWidget {
           child: _TechNode(tech: dummyTech, state: state, onTap: () {}),
         ),
         const SizedBox(width: 4),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          _localizedLabel(l10n),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ],
     );
+  }
+
+  String _localizedLabel(AppLocalizations l10n) {
+    switch (label) {
+      case 'researched':
+        return l10n.techTree_stateResearched;
+      case 'in_progress':
+        return l10n.techTree_stateInProgress;
+      case 'available':
+        return l10n.techTree_stateAvailable;
+      case 'locked':
+        return l10n.techTree_stateLocked;
+      default:
+        return label;
+    }
   }
 }
