@@ -84,11 +84,7 @@ class DevelopmentScreen extends StatefulComponent {
   State<DevelopmentScreen> createState() => _DevelopmentScreenState();
 }
 
-enum _DevelopmentInputMode {
-  idle,
-  selectingProvince,
-  selectingTile,
-}
+enum _DevelopmentInputMode { idle, selectingProvince, selectingTile }
 
 class _DevelopmentScreenState extends State<DevelopmentScreen> {
   static const int _maxProvincesVisible = 5;
@@ -142,10 +138,16 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
 
     // Civilian units are Builders and Engineers
     final allUnits = <Unit>[];
-    allUnits.addAll(component.game.worldState.oldWorld.units
-        .where((u) => u.ownerId == humanPlayerId && _isCivilianUnit(u)));
-    allUnits.addAll(component.game.worldState.newWorld.units
-        .where((u) => u.ownerId == humanPlayerId && _isCivilianUnit(u)));
+    allUnits.addAll(
+      component.game.worldState.oldWorld.units.where(
+        (u) => u.ownerId == humanPlayerId && _isCivilianUnit(u),
+      ),
+    );
+    allUnits.addAll(
+      component.game.worldState.newWorld.units.where(
+        (u) => u.ownerId == humanPlayerId && _isCivilianUnit(u),
+      ),
+    );
     return allUnits;
   }
 
@@ -177,7 +179,16 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
 
   /// Get province name for a unit using its effective location province id.
   String _getProvinceName(Unit unit) {
-    final fullProvinceId = unit.locationProvinceId;
+    final playerId = _getHumanPlayerId();
+    final projected = playerId == null
+        ? unit.tileKey
+        : projectedCivilianTileKey(
+            unit: unit,
+            playerId: playerId,
+            orders: component.orders,
+          );
+    final fullProvinceId =
+        Unit.provinceIdFromTileKey(projected) ?? unit.locationProvinceId;
     return _provinceLabel(fullProvinceId);
   }
 
@@ -263,13 +274,15 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
 
     // Navigation: arrow keys / j/k to navigate unit list
     if (key == LogicalKey.arrowUp || c == 'k') {
-      setState(() =>
-          _selectedIndex = (_selectedIndex - 1).clamp(0, units.length - 1));
+      setState(
+        () => _selectedIndex = (_selectedIndex - 1).clamp(0, units.length - 1),
+      );
       return true;
     }
     if (key == LogicalKey.arrowDown || c == 'j') {
-      setState(() =>
-          _selectedIndex = (_selectedIndex + 1).clamp(0, units.length - 1));
+      setState(
+        () => _selectedIndex = (_selectedIndex + 1).clamp(0, units.length - 1),
+      );
       return true;
     }
 
@@ -280,11 +293,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     return false;
   }
 
-  bool _handleIdleActionKey(
-    String? c,
-    String? rawChar,
-    List<Unit> units,
-  ) {
+  bool _handleIdleActionKey(String? c, String? rawChar, List<Unit> units) {
     // Enter/Space: soft hint only; actual work-type choice is via hotkeys
     // tied to Available Work. Do not change mode here.
     if (_inputMode == _DevelopmentInputMode.idle &&
@@ -338,8 +347,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
             'No eligible tiles for ${_getWorkTargetName(target)}';
         _feedbackColor = Colors.yellow;
       });
-      _log.d(
-          'no eligible tiles for $target and unit ${unit.id}');
+      _log.d('no eligible tiles for $target and unit ${unit.id}');
       return;
     }
 
@@ -366,8 +374,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       _feedbackMessage = 'Select province [↑/↓/j/k]nav [Enter]tiles [Esc]back';
       _feedbackColor = Colors.cyan;
     });
-    _log.d(
-        'selecting province/tile for $target and unit ${unit.id}');
+    _log.d('selecting province/tile for $target and unit ${unit.id}');
   }
 
   /// Ensure the province sliding window keeps the selected province visible.
@@ -399,8 +406,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       _tileWindowStart = 0;
       return;
     }
-    final provinceIndex =
-        _selectedProvinceIndex.clamp(0, _candidateProvinces.length - 1);
+    final provinceIndex = _selectedProvinceIndex.clamp(
+      0,
+      _candidateProvinces.length - 1,
+    );
     final provinceId = _candidateProvinces[provinceIndex];
     final tiles = _candidateTilesByProvince[provinceId] ?? const <String>[];
     if (tiles.isEmpty) {
@@ -409,8 +418,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     }
     final total = tiles.length;
     final maxStart = (total - windowSize) < 0 ? 0 : (total - windowSize);
-    final clampedSelected =
-        _selectedTileIndexWithinProvince.clamp(0, total - 1);
+    final clampedSelected = _selectedTileIndexWithinProvince.clamp(
+      0,
+      total - 1,
+    );
 
     if (clampedSelected < _tileWindowStart) {
       _tileWindowStart = clampedSelected;
@@ -444,8 +455,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     // Navigation within province list.
     if (key == LogicalKey.arrowUp || c == 'k') {
       setState(() {
-        _selectedProvinceIndex =
-            (_selectedProvinceIndex - 1).clamp(0, lastIndex);
+        _selectedProvinceIndex = (_selectedProvinceIndex - 1).clamp(
+          0,
+          lastIndex,
+        );
         _selectedTileIndexWithinProvince = 0;
         _updateProvinceWindow(_maxProvincesVisible);
         _updateTileWindowForCurrentProvince(_maxTilesVisible);
@@ -454,8 +467,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     }
     if (key == LogicalKey.arrowDown || c == 'j') {
       setState(() {
-        _selectedProvinceIndex =
-            (_selectedProvinceIndex + 1).clamp(0, lastIndex);
+        _selectedProvinceIndex = (_selectedProvinceIndex + 1).clamp(
+          0,
+          lastIndex,
+        );
         _selectedTileIndexWithinProvince = 0;
         _updateProvinceWindow(_maxProvincesVisible);
         _updateTileWindowForCurrentProvince(_maxTilesVisible);
@@ -498,8 +513,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       return true;
     }
 
-    final provinceIndex =
-        _selectedProvinceIndex.clamp(0, _candidateProvinces.length - 1);
+    final provinceIndex = _selectedProvinceIndex.clamp(
+      0,
+      _candidateProvinces.length - 1,
+    );
     final provinceId = _candidateProvinces[provinceIndex];
     final tiles = _candidateTilesByProvince[provinceId] ?? const <String>[];
     if (tiles.isEmpty) {
@@ -561,7 +578,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     // Add to existing orders
     final existingOrders =
         component.orders.workOrdersByPlayerId[playerId] ?? [];
-    final updatedOrders = [...existingOrders, order];
+    final updatedOrders = <WorkOrder>[
+      ...existingOrders..removeWhere((o) => o.unitId == unit.id),
+      order,
+    ];
 
     final newOrders = Orders(
       moveOrdersByPlayerId: component.orders.moveOrdersByPlayerId,
@@ -605,8 +625,9 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
 
     final existingOrders =
         component.orders.workOrdersByPlayerId[playerId] ?? [];
-    final updatedOrders =
-        existingOrders.where((o) => o.unitId != unitId).toList();
+    final updatedOrders = existingOrders
+        .where((o) => o.unitId != unitId)
+        .toList();
     final newOrders = Orders(
       moveOrdersByPlayerId: component.orders.moveOrdersByPlayerId,
       buildUnitOrdersByPlayerId: component.orders.buildUnitOrdersByPlayerId,
@@ -787,13 +808,17 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     if (_inputMode == _DevelopmentInputMode.selectingTile &&
         _candidateProvinces.isNotEmpty &&
         _candidateTilesByProvince.isNotEmpty) {
-      final provinceIndex =
-          _selectedProvinceIndex.clamp(0, _candidateProvinces.length - 1);
+      final provinceIndex = _selectedProvinceIndex.clamp(
+        0,
+        _candidateProvinces.length - 1,
+      );
       final provinceId = _candidateProvinces[provinceIndex];
       final tiles = _candidateTilesByProvince[provinceId];
       if (tiles != null && tiles.isNotEmpty) {
-        final tileIndex =
-            _selectedTileIndexWithinProvince.clamp(0, tiles.length - 1);
+        final tileIndex = _selectedTileIndexWithinProvince.clamp(
+          0,
+          tiles.length - 1,
+        );
         return tiles[tileIndex];
       }
     }
@@ -802,8 +827,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     if (_inputMode == _DevelopmentInputMode.selectingProvince &&
         _candidateProvinces.isNotEmpty &&
         _candidateTilesByProvince.isNotEmpty) {
-      final provinceIndex =
-          _selectedProvinceIndex.clamp(0, _candidateProvinces.length - 1);
+      final provinceIndex = _selectedProvinceIndex.clamp(
+        0,
+        _candidateProvinces.length - 1,
+      );
       final provinceId = _candidateProvinces[provinceIndex];
       final tiles = _candidateTilesByProvince[provinceId];
       if (tiles != null && tiles.isNotEmpty) {
@@ -817,7 +844,13 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     if (unit.currentWork != null && unit.currentWork!.tileKey.isNotEmpty) {
       return unit.currentWork!.tileKey;
     }
-    return null;
+    final playerId = _getHumanPlayerId();
+    if (playerId == null) return null;
+    return projectedCivilianTileKey(
+      unit: unit,
+      playerId: playerId,
+      orders: component.orders,
+    );
   }
 
   /// Build a small resources-layer mini map centered on [tileKey] when tile maps
@@ -886,8 +919,9 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
   Component build(BuildContext context) {
     final units = _playerCivilianUnits;
     final selectedUnit = units.isNotEmpty ? units[_selectedIndex] : null;
-    final workOrder =
-        selectedUnit != null ? _getWorkOrderForUnit(selectedUnit.id) : null;
+    final workOrder = selectedUnit != null
+        ? _getWorkOrderForUnit(selectedUnit.id)
+        : null;
 
     return Focusable(
       focused: true,
@@ -908,8 +942,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const Text(' | Civilian Units | ',
-                    style: TextStyle(color: Colors.gray)),
+                const Text(
+                  ' | Civilian Units | ',
+                  style: TextStyle(color: Colors.gray),
+                ),
                 _buildHelpText(),
               ],
             ),
@@ -927,10 +963,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Unit list
-                      Expanded(
-                        flex: 2,
-                        child: _buildUnitList(units),
-                      ),
+                      Expanded(flex: 2, child: _buildUnitList(units)),
                       const SizedBox(width: 1),
                       // Detail panel
                       Expanded(
@@ -988,8 +1021,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
             color: const Color(0xFF1a1a2e),
             child: const Text(
               ' UNIT ',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           Expanded(
@@ -1003,8 +1038,8 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                 final workTargetName = workOrder != null
                     ? _getWorkTargetName(workOrder.target)
                     : (unit.currentWork != null
-                        ? _getWorkTargetName(unit.currentWork!.workTarget)
-                        : null);
+                          ? _getWorkTargetName(unit.currentWork!.workTarget)
+                          : null);
 
                 final status = workTargetName ?? 'idle';
 
@@ -1013,8 +1048,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
 
                 return Container(
                   color: bg,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 1, vertical: 0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 1,
+                    vertical: 0,
+                  ),
                   child: Row(
                     children: [
                       if (isSelected)
@@ -1088,22 +1125,29 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
           _buildDetailRow('Unit ID', unit.id),
           _buildDetailRow('Location', _getProvinceName(unit)),
           _buildDetailRow(
-              'Type', _isCivilianUnit(unit) ? 'Civilian' : 'Military'),
+            'Type',
+            _isCivilianUnit(unit) ? 'Civilian' : 'Military',
+          ),
           _buildDetailRow(
-              'Status',
-              (workOrder != null || unit.currentWork != null)
-                  ? 'Working'
-                  : 'Idle'),
+            'Status',
+            (workOrder != null || unit.currentWork != null)
+                ? 'Working'
+                : 'Idle',
+          ),
           if (workOrder != null || unit.currentWork != null) ...[
             const SizedBox(height: 1),
             _buildDetailRow(
-                'Work Target',
-                _getWorkTargetName(
-                    workOrder?.target ?? unit.currentWork!.workTarget)),
+              'Work Target',
+              _getWorkTargetName(
+                workOrder?.target ?? unit.currentWork!.workTarget,
+              ),
+            ),
             _buildDetailRow(
-                'Target Tile',
-                _formatTileLabel(
-                    workOrder?.targetTileKey ?? unit.currentWork!.tileKey)),
+              'Target Tile',
+              _formatTileLabel(
+                workOrder?.targetTileKey ?? unit.currentWork!.tileKey,
+              ),
+            ),
           ],
           const SizedBox(height: 1),
           // Lower area: split horizontally between text lists (available work
@@ -1120,8 +1164,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (workOrder == null) ...[
-                        const Text(' Available Work: ',
-                            style: TextStyle(color: Colors.white)),
+                        const Text(
+                          ' Available Work: ',
+                          style: TextStyle(color: Colors.white),
+                        ),
                         for (final entry in _validWorkTargets.entries)
                           Padding(
                             padding: const EdgeInsets.only(left: 1),
@@ -1140,8 +1186,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                                 _inputMode ==
                                     _DevelopmentInputMode.selectingTile) &&
                             _candidateProvinces.isNotEmpty) ...[
-                          const Text(' Provinces: ',
-                              style: TextStyle(color: Colors.white)),
+                          const Text(
+                            ' Provinces: ',
+                            style: TextStyle(color: Colors.white),
+                          ),
                           const SizedBox(height: 1),
                           ...() {
                             final total = _candidateProvinces.length;
@@ -1149,8 +1197,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                             final maxStart = (total - windowSize) < 0
                                 ? 0
                                 : (total - windowSize);
-                            final start =
-                                _provinceWindowStart.clamp(0, maxStart);
+                            final start = _provinceWindowStart.clamp(
+                              0,
+                              maxStart,
+                            );
                             final end = (start + windowSize) > total
                                 ? total
                                 : (start + windowSize);
@@ -1201,8 +1251,10 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                             return components;
                           }(),
                           const SizedBox(height: 1),
-                          const Text(' Tiles: ',
-                              style: TextStyle(color: Colors.white)),
+                          const Text(
+                            ' Tiles: ',
+                            style: TextStyle(color: Colors.white),
+                          ),
                           const SizedBox(height: 1),
                           if (_candidateProvinces.isNotEmpty)
                             ...() {
@@ -1212,7 +1264,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                                   _candidateProvinces[provinceIndex];
                               final tiles =
                                   _candidateTilesByProvince[provinceId] ??
-                                      const <String>[];
+                                  const <String>[];
                               if (tiles.isEmpty) return <Component>[];
                               final totalTiles = tiles.length;
                               final windowSize = _maxTilesVisible;
@@ -1225,7 +1277,9 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
                                   : (start + windowSize);
                               final selectedTileIndex =
                                   _selectedTileIndexWithinProvince.clamp(
-                                      0, totalTiles - 1);
+                                    0,
+                                    totalTiles - 1,
+                                  );
 
                               final components = <Component>[];
 
@@ -1320,14 +1374,8 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
       padding: const EdgeInsets.only(left: 1),
       child: Row(
         children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(color: Colors.gray),
-          ),
-          Text(
-            value,
-            style: const TextStyle(color: Colors.white),
-          ),
+          Text('$label: ', style: const TextStyle(color: Colors.gray)),
+          Text(value, style: const TextStyle(color: Colors.white)),
         ],
       ),
     );

@@ -146,13 +146,10 @@ List<RegimentTypeRow> rowsForArmyUnits(
         : '${medals.reduce((a, b) => a < b ? a : b)}–${medals.reduce((a, b) => a > b ? a : b)}';
     final status = list.any((u) => u.status == UnitStatus.working)
         ? UnitStatus.working
-        : list.any((u) => u.status == UnitStatus.done)
-        ? UnitStatus.done
         : UnitStatus.idle;
     final statusLabel = switch (status) {
       UnitStatus.idle => 'Idle',
       UnitStatus.working => 'Working',
-      UnitStatus.done => 'Done',
     };
     rows.add(
       RegimentTypeRow(

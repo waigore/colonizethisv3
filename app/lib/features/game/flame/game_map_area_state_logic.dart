@@ -35,14 +35,15 @@ class GameMapAreaStateLogic {
     required String humanPlayerId,
     required ct_models.WorkOrder workOrder,
   }) {
-    final list = <ct_models.WorkOrder>[
-      ...(orders.workOrdersByPlayerId[humanPlayerId] ?? const []),
-      workOrder,
-    ];
+    final prior = List<ct_models.WorkOrder>.from(
+      orders.workOrdersByPlayerId[humanPlayerId] ??
+          const <ct_models.WorkOrder>[],
+    )..removeWhere((o) => o.unitId == workOrder.unitId);
+    prior.add(workOrder);
     return orders.copyWith(
       workOrdersByPlayerId: {
         ...orders.workOrdersByPlayerId,
-        humanPlayerId: list,
+        humanPlayerId: prior,
       },
     );
   }
@@ -99,8 +100,12 @@ class GameMapAreaStateLogic {
         final unit = unitsById[unitId];
         if (unit == null) continue;
         final projectedTile =
-            pendingByUnitId[unitId] ??
-            _firstNonEmpty(unit.assignedTileKey, marker.tileKey);
+            projectedCivilianTileKey(
+              unit: unit,
+              playerId: humanPlayerId,
+              orders: orders,
+            ) ??
+            marker.tileKey;
         final parts = projectedTile.split('|');
         if (parts.length < 4 || parts[0] != region.regionId) continue;
         projectedByTile
@@ -182,13 +187,6 @@ class GameMapAreaStateLogic {
       provincePoliticalOwnerByPrefixedProvinceId:
           region.provincePoliticalOwnerByPrefixedProvinceId,
     );
-  }
-
-  static String _firstNonEmpty(String? first, String fallback) {
-    if (first != null && first.isNotEmpty) {
-      return first;
-    }
-    return fallback;
   }
 
   static bool _isCivilianUnitType(String unitType) {
