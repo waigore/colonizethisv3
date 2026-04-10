@@ -58,6 +58,7 @@ export 'src/economy/worker_economy.dart';
 
 // Orders
 export 'src/orders/orders.dart';
+export 'src/orders/civilian_projected_tile.dart';
 export 'src/orders/order_suggestion.dart'
     show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;
 export 'src/orders/unit_type_helpers.dart'

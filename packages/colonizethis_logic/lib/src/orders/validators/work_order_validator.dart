@@ -42,14 +42,17 @@ class WorkOrderValidator extends OrderValidator {
 
   Stockpile _stockpile;
   int _treasury;
+  final Set<String> _seenUnitIds;
 
   WorkOrderValidator({
     required WorkOrderValidationContext context,
     required Stockpile stockpile,
     required int treasury,
+    Set<String> initialSeenUnitIds = const <String>{},
   }) : _context = context,
        _stockpile = stockpile,
-       _treasury = treasury;
+       _treasury = treasury,
+       _seenUnitIds = {...initialSeenUnitIds};
 
   Stockpile get stockpile => _stockpile;
   int get treasury => _treasury;
@@ -68,6 +71,12 @@ class WorkOrderValidator extends OrderValidator {
         if (unit == null || unit.ownerId != _context.playerId) {
           return OrderValidationResult.rejected('Unit not found');
         }
+        if (_seenUnitIds.contains(o.unitId)) {
+          return OrderValidationResult.rejected(
+            'Only one work order per unit is allowed each turn',
+          );
+        }
+        _seenUnitIds.add(o.unitId);
         if (unit.currentWork != null) {
           return OrderValidationResult.rejected(
             'Unit already has a work order; cancel first',

@@ -228,6 +228,35 @@ void main() {
 
         expect(updated.workOrdersByPlayerId[humanPlayerId], [workOrder]);
       });
+
+      test('replaces existing pending work order for same unit', () {
+        const humanPlayerId = 'gp1';
+        const unitId = 'u1';
+        final orders = ct_models.Orders(
+          workOrdersByPlayerId: const {
+            humanPlayerId: [
+              ct_models.WorkOrder(
+                unitId: unitId,
+                target: 'build_improvement',
+                targetTileKey: 'oldWorld|p1|0|0',
+              ),
+            ],
+          },
+        );
+        const replacement = ct_models.WorkOrder(
+          unitId: unitId,
+          target: 'build_road',
+          targetTileKey: 'oldWorld|p1|1|0',
+        );
+
+        final updated = GameMapAreaStateLogic.addHumanWorkOrder(
+          orders: orders,
+          humanPlayerId: humanPlayerId,
+          workOrder: replacement,
+        );
+
+        expect(updated.workOrdersByPlayerId[humanPlayerId], [replacement]);
+      });
     });
   });
 }
