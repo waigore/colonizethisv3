@@ -24,7 +24,10 @@ dependencies:
   colonizethis_save: any
 
 dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../packages/colonizethis_exception_lint
   colonizethis_test:
+  custom_lint: ^0.8.1
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0

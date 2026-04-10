@@ -36,9 +36,14 @@ Enforcement applies to runtime code across:
 
 Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) are excluded.
 
-## Implementation Contract (AST checker)
+## Implementation Contract (AST checker + custom_lint)
 
-The repository uses an AST-based checker that:
+The repository enforces the same policy in two places (shared implementation in `packages/colonizethis_exception_lint`):
+
+1. **CI / CLI:** `dart run tool/check_custom_exceptions.dart` from the repository root (also `melos run check_custom_exceptions`). Scans runtime domain files under the roots listed in that tool.
+2. **IDE / analyzer:** `custom_lint` with package `colonizethis_exception_lint`, wired in every workspace package that contains scoped runtime `lib/` code (see each package `pubspec.yaml` + `analysis_options.yaml`). Run locally per package via `dart run custom_lint`, or `bash tool/run_custom_lint_domain_exceptions.sh` for all wired packages. CI runs the same script after the root checker.
+
+The checker:
 
 1. Parses Dart files with analyzer.
 2. Visits `ThrowExpression` nodes.
@@ -51,6 +56,7 @@ The repository uses an AST-based checker that:
 ### Phase 1 (implemented)
 
 - Introduce checker and CI hook.
+- Add `colonizethis_exception_lint` (`custom_lint` plugin) for in-editor diagnostics aligned with the checker.
 - Migrate setup domain (`packages/colonizethis_logic/lib/src/setup/**`) to `SetupValidationException`.
 - Add package-local validation exception types in map/data/models/ui/ctterm/tool runtime code and migrate existing generic throws in those domains.
 
@@ -62,6 +68,7 @@ The repository uses an AST-based checker that:
 ## Acceptance Criteria
 
 - AST checker exists and runs from repository root.
+- The same rules are available as a `custom_lint` rule (`colonizethis_exception_lint`) in scoped packages so IDEs surface violations during normal analysis.
 - Checker scans all runtime domains listed above.
 - New generic exception throws fail checks unless explicitly allowlisted.
 - Setup domain migration uses `SetupValidationException` for validation failures.

@@ -25,7 +25,10 @@ dependencies:
   colonizethis_save: any
 
 dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../packages/colonizethis_exception_lint
   colonizethis_test:
+  custom_lint: ^0.8.1
   test: ^1.24.0
 
 executables:
