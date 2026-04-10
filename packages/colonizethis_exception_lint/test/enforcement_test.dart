@@ -1,5 +1,5 @@
 import 'package:colonizethis_exception_lint/exception_enforcement.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('findCustomExceptionViolations', () {

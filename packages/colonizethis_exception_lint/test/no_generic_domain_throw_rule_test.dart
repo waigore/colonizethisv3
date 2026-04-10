@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:colonizethis_exception_lint/exception_enforcement.dart';
+import 'package:colonizethis_test/test.dart';
 import 'package:path/path.dart' as p;
-import 'package:test/test.dart';
 
 void main() {
   test('lint reports error when path matches domain packages/', () async {
