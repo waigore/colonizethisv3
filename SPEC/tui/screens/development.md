@@ -22,7 +22,7 @@ Development screen for managing civilian unit work orders (Builders, Engineers).
 - **Given** the user opens the Development screen
 - **When** viewing the civilian unit list
 - **Then** display each civilian unit showing:
-  - Province location (using prefixed province id per SPEC/game/world-model-identity.md)
+  - Province location from the same projected civilian location rule used by map/panel (pending `WorkOrder.targetTileKey`, else `assignedTileKey`, else standing `tileKey`; province-level targets use canonical `regionId|provinceId|0|0`)
   - Unit type (Builder, Engineer)
   - Current status (idle/working)
   - Current work target and progress (if working)

@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -52,6 +53,7 @@ List<Unit> _civilianUnitsInRegion(
   List<Unit> units,
   String humanPlayerId,
   Map<String, String> provinceNames,
+  Orders currentOrders,
 ) {
   final list = units
       .where(
@@ -62,10 +64,20 @@ List<Unit> _civilianUnitsInRegion(
       )
       .toList();
   list.sort((a, b) {
-    final provA = Unit.provinceIdFromTileKey(a.tileKey);
-    final provB = Unit.provinceIdFromTileKey(b.tileKey);
-    final regionA = Unit.regionIdFromTileKey(a.tileKey) ?? '';
-    final regionB = Unit.regionIdFromTileKey(b.tileKey) ?? '';
+    final tileA = projectedCivilianTileKey(
+      unit: a,
+      playerId: humanPlayerId,
+      orders: currentOrders,
+    );
+    final tileB = projectedCivilianTileKey(
+      unit: b,
+      playerId: humanPlayerId,
+      orders: currentOrders,
+    );
+    final provA = Unit.provinceIdFromTileKey(tileA);
+    final provB = Unit.provinceIdFromTileKey(tileB);
+    final regionA = Unit.regionIdFromTileKey(tileA) ?? '';
+    final regionB = Unit.regionIdFromTileKey(tileB) ?? '';
     final prefixedA = '$regionA|$provA';
     final prefixedB = '$regionB|$provB';
     final nameA = provinceNames[prefixedA] ?? prefixedA;
@@ -77,14 +89,6 @@ List<Unit> _civilianUnitsInRegion(
     return a.id.compareTo(b.id);
   });
   return list;
-}
-
-String? _renderedTileKey(Unit unit) {
-  final assigned = unit.assignedTileKey;
-  if (assigned != null && assigned.isNotEmpty) {
-    return assigned;
-  }
-  return unit.tileKey;
 }
 
 /// Panel that lists all civilian units for the human player. SPEC/ui/civilian-units-panel.md.
@@ -145,19 +149,41 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
       widget.game.worldState.oldWorld.units,
       widget.humanPlayerId,
       provinceNames,
+      widget.currentOrders,
     );
     final nw = _civilianUnitsInRegion(
       widget.game.worldState.newWorld.units,
       widget.humanPlayerId,
       provinceNames,
+      widget.currentOrders,
     );
     List<Unit> scopedOw = ow;
     List<Unit> scopedNw = nw;
     final scopeTileKey = widget.tileScopeTileKey;
     final tileScopeActive = scopeTileKey != null && scopeTileKey.isNotEmpty;
     if (tileScopeActive) {
-      scopedOw = ow.where((u) => _renderedTileKey(u) == scopeTileKey).toList();
-      scopedNw = nw.where((u) => _renderedTileKey(u) == scopeTileKey).toList();
+      scopedOw = ow
+          .where(
+            (u) =>
+                projectedCivilianTileKey(
+                  unit: u,
+                  playerId: widget.humanPlayerId,
+                  orders: widget.currentOrders,
+                ) ==
+                scopeTileKey,
+          )
+          .toList();
+      scopedNw = nw
+          .where(
+            (u) =>
+                projectedCivilianTileKey(
+                  unit: u,
+                  playerId: widget.humanPlayerId,
+                  orders: widget.currentOrders,
+                ) ==
+                scopeTileKey,
+          )
+          .toList();
     }
     final hasAny = scopedOw.isNotEmpty || scopedNw.isNotEmpty;
     final allScopedUnits = <Unit>[...scopedOw, ...scopedNw];
@@ -178,7 +204,11 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
     }
     final headerTileKey = resolvedSelectedUnit == null
         ? null
-        : _renderedTileKey(resolvedSelectedUnit);
+        : projectedCivilianTileKey(
+            unit: resolvedSelectedUnit,
+            playerId: widget.humanPlayerId,
+            orders: widget.currentOrders,
+          );
 
     return UnitsPanelShell(
       title: tileScopeActive
@@ -225,6 +255,11 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
               isTileScope: tileScopeActive,
               isSelectedInTileScope: resolvedSelectedUnitId == u.id,
               onSelectInTileScope: () => setState(() => _selectedUnitId = u.id),
+              projectedTileKey: projectedCivilianTileKey(
+                unit: u,
+                playerId: widget.humanPlayerId,
+                orders: widget.currentOrders,
+              ),
             ),
           ),
         ],
@@ -241,6 +276,11 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
               isTileScope: tileScopeActive,
               isSelectedInTileScope: resolvedSelectedUnitId == u.id,
               onSelectInTileScope: () => setState(() => _selectedUnitId = u.id),
+              projectedTileKey: projectedCivilianTileKey(
+                unit: u,
+                playerId: widget.humanPlayerId,
+                orders: widget.currentOrders,
+              ),
             ),
           ),
         ],
@@ -261,6 +301,7 @@ class _UnitRow extends StatelessWidget {
     required this.isTileScope,
     required this.isSelectedInTileScope,
     required this.onSelectInTileScope,
+    required this.projectedTileKey,
   });
 
   final Unit unit;
@@ -272,6 +313,7 @@ class _UnitRow extends StatelessWidget {
   final bool isTileScope;
   final bool isSelectedInTileScope;
   final VoidCallback onSelectInTileScope;
+  final String? projectedTileKey;
 
   List<WorkOrder> get _pendingForPlayer =>
       currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
@@ -294,8 +336,8 @@ class _UnitRow extends StatelessWidget {
   bool get _hasWork => unit.currentWork != null || _hasPending;
 
   String _locationLabel() {
-    final regionId = Unit.regionIdFromTileKey(unit.tileKey);
-    final provinceId = Unit.provinceIdFromTileKey(unit.tileKey);
+    final regionId = Unit.regionIdFromTileKey(projectedTileKey);
+    final provinceId = Unit.provinceIdFromTileKey(projectedTileKey);
     if (regionId == null || provinceId == null) return '—';
     final prefixed = '$regionId|$provinceId';
     final name = provinceNames[prefixed] ?? prefixed;
@@ -425,7 +467,6 @@ class _UnitRow extends StatelessWidget {
     final statusLabel = switch (unit.status) {
       UnitStatus.idle => l10n.province_unitStatus_idle,
       UnitStatus.working => l10n.province_unitStatus_working,
-      UnitStatus.done => l10n.province_unitStatus_done,
     };
     final showActions = !isTileScope || isSelectedInTileScope;
     return ListTile(
@@ -446,7 +487,7 @@ class _UnitRow extends StatelessWidget {
           onSelectInTileScope();
           return;
         }
-        final tileKey = unit.tileKey;
+        final tileKey = projectedTileKey;
         if (tileKey == null) return;
         final regionId = Unit.regionIdFromTileKey(tileKey);
         if (regionId == null) return;
