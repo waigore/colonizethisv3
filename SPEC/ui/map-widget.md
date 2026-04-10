@@ -113,7 +113,7 @@ The widget accepts an optional **base layer display mode** enumerating terrain, 
 
 ## Resource Icons
 
-Resources are displayed as 64×64 pixel-art icons rendered on tiles, centered within the cell. Icons are drawn instead of the legacy single-letter glyphs (g, t, i, …).
+Resources are displayed as 64×64 pixel-art icons rendered on tiles, **anchored to the bottom-left of the cell** (native resolution; the sprite may extend left/up when `cellSize` &lt; 64). Icons are drawn instead of the legacy single-letter glyphs (g, t, i, …).
 
 ### Map tile icon inventory (64 policy)
 
@@ -154,10 +154,7 @@ All icons are 64×64 PNG with RGBA transparency, colonial-era pixel art style ma
 ### Rendering
 
 - **Icon size:** Resource icons are always 64×64 pixels, regardless of the tile cell size. Icons are never scaled up; they render at native 64×64 resolution.
-- **Position:** Position depends on the tile cell size:
-  - **For tiles &lt;64px:** Icon is centered horizontally; vertically **bottom-aligned** to the tile (top may extend above the cell) so the visible footprint sits toward the lower part of the cell.
-  - **For tiles exactly 64px:** Icon is **centered** in the cell (same width and height as the icon).
-  - **For tiles >64px:** Icon is placed in the **bottom-left corner** of the tile cell (at x=0, y=tileSize-64). This ensures the icon remains visible and readable at native resolution without being obscured or requiring upscaling.
+- **Position:** For **every** tile cell size, the icon’s painted `Rect` uses the **bottom-left anchor** in tile/world coordinates: `iconX = tileLeft`, `iconY = tileTop + cellSize - 64` (where `tileLeft` / `tileTop` are the cell’s top-left in the same coordinate space as `cellSize`). When `cellSize` &lt; 64, the 64×64 sprite extends **left of** `tileLeft` and **above** `tileTop` as needed; the bottom-left corner of the icon still aligns with the cell’s bottom-left corner.
 - **Visibility:** Icons are subject to the same visibility rules as terrain (visible/fogged/unrevealed). Fogged tiles render icons with reduced opacity; unrevealed tiles show nothing.
 
 ### Per-tile extraction unit discs
@@ -513,8 +510,7 @@ Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_m
 - **Given** the map widget omits **base layer display mode** (null), **when** the widget renders the base layer, **then** behavior matches `terrainAndResourcesImprovementsRoads` (full detail).
 - **Given** the map widget uses a mode that draws improvement or road labels, **when** a tile has `improvementLevel == 0` or `roadLevel == 0`, **then** no `I0` or `R0` label is drawn for that level.
 - **Given** a map widget rendering a tile with a resource, **when** the base layer display mode includes resources, **then** the resource icon matching the resource ID is loaded from `assets/icons/64/ui_icon_com_<resource_id>.png` and rendered at native 64×64 resolution (never upscaled). **Loading failures** (missing file, decode error) must propagate: `ResourceIconCache` does not swallow per-icon errors; a failed load aborts cache initialization so the problem surfaces immediately.
-- **Given** a map widget rendering a tile with a resource on a **64px or smaller cell**, **when** the base layer display mode includes resources, **then** the resource icon is centered horizontally and positioned in the lower half of the cell.
-- **Given** a map widget rendering a tile with a resource on a **larger than 64px cell** (e.g. 128px), **when** the base layer display mode includes resources, **then** the resource icon is positioned in the **bottom-left corner** of the tile (x=0, y=tileSize-64) at native 64×64 resolution.
+- **Given** a map widget rendering a tile with a resource, **when** the base layer display mode includes resources, **then** the resource icon is drawn at native 64×64 with **bottom-left placement** in the cell (`iconX = tileLeft`, `iconY = tileTop + cellSize - 64` in tile coordinates) for **all** `cellSize` values; extraction-unit discs remain anchored to that painted `Rect` and fan to the right.
 - **Given** `baseLayerDisplayMode` is `terrainOnly`, **when** the map renders tiles, **then** the UI layer draws no extraction-unit discs on any tile.
 - **Given** a land tile renders a resource icon and `CellViewData.resourceExtractionUnits` equals integer `N` where `N >= 1`, **when** the map renders that tile, **then** the UI layer draws exactly `N` extraction discs immediately to the right of the icon in a horizontal right fan.
 - **Given** `CellViewData.resourceExtractionUnits` is `0` or `null`, **when** the map renders that tile, **then** the UI layer draws no extraction discs on that tile.

@@ -11,33 +11,33 @@ void main() {
         cellSize: 16.0,
         tileX: 0,
         tileY: 0,
-        expectedIconX: -24.0,
+        expectedIconX: 0.0,
         expectedIconY: -48.0,
-        description: '16px tile: 64px icon centered and bottom-aligned',
+        description: '16px tile: 64px icon bottom-left anchored',
       ),
       (
         cellSize: 24.0,
         tileX: 0,
         tileY: 0,
-        expectedIconX: -20.0,
+        expectedIconX: 0.0,
         expectedIconY: -40.0,
-        description: '24px tile: 64px icon centered and bottom-aligned',
+        description: '24px tile: 64px icon bottom-left anchored',
       ),
       (
         cellSize: 32.0,
         tileX: 0,
         tileY: 0,
-        expectedIconX: -16.0,
+        expectedIconX: 0.0,
         expectedIconY: -32.0,
-        description: '32px tile: 64px icon centered and bottom-aligned',
+        description: '32px tile: 64px icon bottom-left anchored',
       ),
       (
         cellSize: 48.0,
         tileX: 0,
         tileY: 0,
-        expectedIconX: -8.0,
+        expectedIconX: 0.0,
         expectedIconY: -16.0,
-        description: '48px tile: 64px icon centered and bottom-aligned',
+        description: '48px tile: 64px icon bottom-left anchored',
       ),
       (
         cellSize: 64.0,
@@ -45,7 +45,7 @@ void main() {
         tileY: 0,
         expectedIconX: 0.0,
         expectedIconY: 0.0,
-        description: '64px tile: 64px icon centered',
+        description: '64px tile: 64px icon fills cell from bottom-left',
       ),
       (
         cellSize: 128.0,
@@ -59,10 +59,9 @@ void main() {
         cellSize: 32.0,
         tileX: 1,
         tileY: 1,
-        expectedIconX: 16.0,
+        expectedIconX: 32.0,
         expectedIconY: 0.0,
-        description:
-            'tile at (1,1) with 32px: 64px icon centered and bottom-aligned',
+        description: 'tile at (1,1) with 32px: 64px icon bottom-left anchored',
       ),
       (
         cellSize: 64.0,
@@ -70,7 +69,7 @@ void main() {
         tileY: 1,
         expectedIconX: 64.0,
         expectedIconY: 64.0,
-        description: 'tile at (1,1) with 64px: 64px icon centered',
+        description: 'tile at (1,1) with 64px: icon bottom-left at cell origin',
       ),
     ];
 
@@ -79,17 +78,8 @@ void main() {
         final tileLeft = tc.tileX * tc.cellSize;
         final tileTop = tc.tileY * tc.cellSize;
 
-        double iconX;
-        double iconY;
-        if (tc.cellSize > iconSize) {
-          iconX = tileLeft;
-          iconY = tileTop + tc.cellSize - iconSize;
-        } else {
-          iconX = tileLeft + (tc.cellSize - iconSize) / 2;
-          iconY = tc.cellSize < iconSize
-              ? tileTop + tc.cellSize - iconSize
-              : tileTop + (tc.cellSize - iconSize) / 2;
-        }
+        final iconX = tileLeft;
+        final iconY = tileTop + tc.cellSize - iconSize;
 
         expect(iconX, equals(tc.expectedIconX), reason: tc.description);
         expect(iconY, equals(tc.expectedIconY), reason: tc.description);
