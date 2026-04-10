@@ -5,7 +5,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:path/path.dart' as p;
 
-const _scanRoots = <String>['app', 'ctterm', 'packages', 'tool'];
+import 'ct_repo_lint_scan_contract.dart';
+
 const _argFiles = '--files';
 
 const _workTargetConstantsRelPath =
@@ -19,15 +20,6 @@ const _excludedPaths = <String>{
   'ctterm/lib/screens/development_screen.dart',
   'packages/colonizethis_data/lib/src/work_order_costs.dart',
 };
-
-const _excludedDirMarkers = <String>[
-  '/test_data/',
-  '/testdata/',
-  '/fixtures/',
-  '/fixture/',
-  '/golden/',
-  '/goldens/',
-];
 
 void main(List<String> args) {
   final parsedArgs = _parseArgs(args);
@@ -46,7 +38,7 @@ void main(List<String> args) {
   final violations = <WorkTargetConstantViolation>[];
   for (final file in candidateFiles) {
     final relPath = p.normalize(p.relative(file.path, from: root));
-    if (_shouldSkipFile(relPath)) {
+    if (repoLintIdentifierLiteralShouldSkipFile(relPath, _excludedPaths)) {
       continue;
     }
     final source = file.readAsStringSync();
@@ -87,7 +79,7 @@ List<WorkTargetConstantViolation> findWorkTargetConstantViolations({
   if (!relativePath.endsWith('.dart')) {
     return const [];
   }
-  if (_shouldSkipFile(relativePath)) {
+  if (repoLintIdentifierLiteralShouldSkipFile(relativePath, _excludedPaths)) {
     return const [];
   }
   final parsed = parseString(
@@ -147,20 +139,10 @@ List<String> _splitFileArg(String value) {
 
 List<File> _collectCandidateFiles(String root, List<String> requestedPaths) {
   if (requestedPaths.isEmpty) {
-    final files = <File>[];
-    for (final relRoot in _scanRoots) {
-      final absRoot = p.join(root, relRoot);
-      final dir = Directory(absRoot);
-      if (!dir.existsSync()) {
-        continue;
-      }
-      for (final entity in dir.listSync(recursive: true, followLinks: false)) {
-        if (entity is File && entity.path.endsWith('.dart')) {
-          files.add(entity);
-        }
-      }
-    }
-    return files;
+    return collectRepoLintDartFilesUnderRelativeRoots(
+      root,
+      repoLintIdentifierLiteralScanRoots,
+    );
   }
 
   final files = <File>[];
@@ -169,7 +151,10 @@ List<File> _collectCandidateFiles(String root, List<String> requestedPaths) {
       continue;
     }
     final normalizedRelPath = p.normalize(relPath);
-    if (!_isInScanRoots(normalizedRelPath)) {
+    if (!repoLintPathIsUnderLiteralScanRoots(
+      normalizedRelPath,
+      repoLintIdentifierLiteralScanRoots,
+    )) {
       continue;
     }
     final file = File(p.join(root, normalizedRelPath));
@@ -178,38 +163,6 @@ List<File> _collectCandidateFiles(String root, List<String> requestedPaths) {
     }
   }
   return files;
-}
-
-bool _isInScanRoots(String relPath) {
-  final normalized = relPath.replaceAll('\\', '/');
-  for (final root in _scanRoots) {
-    if (normalized == root || normalized.startsWith('$root/')) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool _shouldSkipFile(String relPath) {
-  final normalized = '/${relPath.replaceAll('\\', '/')}';
-  if (!normalized.contains('/lib/')) {
-    return true;
-  }
-  if (_excludedPaths.contains(relPath)) {
-    return true;
-  }
-  if (relPath.endsWith('.g.dart') ||
-      relPath.endsWith('.freezed.dart') ||
-      relPath.endsWith('.mocks.dart') ||
-      relPath.endsWith('.gen.dart')) {
-    return true;
-  }
-  for (final marker in _excludedDirMarkers) {
-    if (normalized.contains(marker)) {
-      return true;
-    }
-  }
-  return false;
 }
 
 Set<String> _loadCanonicalWorkTargets(String root) {

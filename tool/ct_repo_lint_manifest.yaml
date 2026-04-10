@@ -2,8 +2,8 @@
 # SPEC: SPEC/program/repo-lint.md
 version: 1
 
-# Domain lib scan roots / excludes for AST rules aligned with exception-enforcement:
-# see tool/ct_repo_lint_scan_contract.dart (single source of truth).
+# Scan contract (Dart): domain lib trees + identifier-literal roots/skip helpers —
+# tool/ct_repo_lint_scan_contract.dart
 shared_scan_notes:
   dart_contract: tool/ct_repo_lint_scan_contract.dart
   exclude_path_globs:

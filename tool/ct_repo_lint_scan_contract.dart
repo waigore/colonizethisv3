@@ -65,3 +65,88 @@ List<File> collectRepoLintDomainDartFiles(String repoRoot) {
   }
   return files;
 }
+
+// --- Identifier-literal checkers (tech / work-target / civilian unit type) ---
+
+/// Scan roots for tech / work-target / civilian literal checkers (historical
+/// layout: top-level `app`, `ctterm`, `packages`, `tool` — not `ctdev/lib`).
+const List<String> repoLintIdentifierLiteralScanRoots = <String>[
+  'app',
+  'ctterm',
+  'packages',
+  'tool',
+];
+
+/// Path fragments that mark fixture / golden trees excluded from scans.
+const List<String> repoLintFixtureDirPathMarkers = <String>[
+  '/test_data/',
+  '/testdata/',
+  '/fixtures/',
+  '/fixture/',
+  '/golden/',
+  '/goldens/',
+];
+
+/// True when [relativePathFromRepo] lies under one of [roots] (POSIX-style
+/// segments after normalizing backslashes).
+bool repoLintPathIsUnderLiteralScanRoots(
+  String relativePathFromRepo,
+  List<String> roots,
+) {
+  final normalized = relativePathFromRepo.replaceAll('\\', '/');
+  for (final root in roots) {
+    if (normalized == root || normalized.startsWith('$root/')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Collects every `.dart` file under [roots]; callers filter with
+/// [repoLintIdentifierLiteralShouldSkipFile].
+List<File> collectRepoLintDartFilesUnderRelativeRoots(
+  String repoRoot,
+  List<String> roots,
+) {
+  final files = <File>[];
+  for (final relRoot in roots) {
+    final absRoot = p.join(repoRoot, relRoot);
+    final dir = Directory(absRoot);
+    if (!dir.existsSync()) {
+      continue;
+    }
+    for (final entity in dir.listSync(recursive: true, followLinks: false)) {
+      if (entity is File && entity.path.endsWith('.dart')) {
+        files.add(entity);
+      }
+    }
+  }
+  return files;
+}
+
+/// Shared skip logic for identifier literal checkers: must live under `lib/`,
+/// not be generated, not match [excludedPaths], and not sit under fixture dirs.
+bool repoLintIdentifierLiteralShouldSkipFile(
+  String relativePathFromRepo,
+  Set<String> excludedPaths,
+) {
+  final slashPath = '/${relativePathFromRepo.replaceAll('\\', '/')}';
+  if (!slashPath.contains('/lib/')) {
+    return true;
+  }
+  if (excludedPaths.contains(relativePathFromRepo)) {
+    return true;
+  }
+  if (relativePathFromRepo.endsWith('.g.dart') ||
+      relativePathFromRepo.endsWith('.freezed.dart') ||
+      relativePathFromRepo.endsWith('.mocks.dart') ||
+      relativePathFromRepo.endsWith('.gen.dart')) {
+    return true;
+  }
+  for (final marker in repoLintFixtureDirPathMarkers) {
+    if (slashPath.contains(marker)) {
+      return true;
+    }
+  }
+  return false;
+}
