@@ -9,7 +9,9 @@ import '../world/unit_lookup.dart' show allUnitsFromWorld;
 
 /// True for Builder, Engineer, Merchant: at most one work order per tile per player.
 bool isDevExclusiveUnitType(String type) =>
-    type == 'Builder' || type == 'Engineer' || type == 'Merchant';
+    type == kUnitTypeBuilder ||
+    type == kUnitTypeEngineer ||
+    type == kUnitTypeMerchant;
 
 /// True for work targets that participate in per-tile exclusivity (one order per tile per player).
 /// Used with [isDevExclusiveUnitType] to enforce Builder/Engineer/Merchant tile exclusivity.

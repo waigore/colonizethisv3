@@ -69,6 +69,8 @@ colonizethis_data    (no package deps)
 - **Given** the tech-ID convention gate reports a violation, **when** a developer inspects the output, **then** each violation includes file path, line, column, and the offending tech ID literal for direct remediation.
 - **Given** Dart source under `app/`, `ctterm/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical work target IDs are rejected outside the allowlisted work-target declaration file and fixture paths.
 - **Given** the work-target convention gate reports a violation, **when** a developer inspects the output, **then** each violation includes file path, line, column, and the offending work target literal with a suggested `kWorkTarget*` constant when available.
+- **Given** Dart source under `app/`, `ctterm/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical civilian unit type ids (`Explorer`, `Builder`, `Engineer`, `Spy`, `Merchant`, `Rail Builder` per `SPEC/game/civilian-units.md`) are rejected outside `packages/colonizethis_models/lib/src/civilian_unit_type_ids.dart`, approved fixture/test-data paths, and an explicit allowlist for ambiguous spellings (e.g. naval ship category vs civilian `Merchant`, personality archetype display strings).
+- **Given** the civilian unit type convention gate reports a violation, **when** a developer inspects the output, **then** each violation includes file path, line, column, and the offending literal with a suggested `kUnitType*` constant when available.
 
 ### Automated guard gate (CI)
 
@@ -78,10 +80,12 @@ The repository enforces this boundary in CI via:
 - `tool/check_asset_path_constants.sh`
 - `tool/check_tech_id_constants.sh`
 - `tool/check_work_target_constants.sh`
+- `tool/check_civilian_unit_type_constants.sh`
 - `.github/workflows/quality.yml` step: `Check logic/ai decoupling convention (SPEC/program/repo-and-packages.md)`
 - `.github/workflows/quality.yml` step: `Check asset path constants convention (SPEC/program/repo-and-packages.md)`
 - `.github/workflows/quality.yml` step: `Check tech ID constants convention (SPEC/program/repo-and-packages.md)`
 - `.github/workflows/quality.yml` step: `Check work target constants convention (SPEC/program/repo-and-packages.md)`
+- `.github/workflows/quality.yml` step: `Check civilian unit type constants convention (SPEC/program/repo-and-packages.md)`
 
 Guard behavior:
 
@@ -94,6 +98,13 @@ Guard behavior:
 - Fails if executable `StringLiteral` AST nodes equal to canonical work target IDs appear outside `packages/colonizethis_logic/lib/src/constants.dart`, approved fixture/test-data paths, and an explicit temporary allowlist for generated/legacy surfaces pending migration.
 - In PR CI, the tech-ID guard may scan only changed Dart files for faster feedback; if PR diff context is unavailable, it falls back to a full repository scan with the same violation rules.
 - In PR CI, the work-target guard may scan only changed Dart files for faster feedback; if PR diff context is unavailable, it falls back to a full repository scan with the same violation rules.
+- Fails if executable `StringLiteral` AST nodes equal to canonical civilian unit type ids appear outside `packages/colonizethis_models/lib/src/civilian_unit_type_ids.dart`, approved fixture/test-data paths, and the explicit allowlist in `tool/check_civilian_unit_type_constants.dart`.
+- In PR CI, the civilian unit type guard may scan only changed Dart files for faster feedback; if PR diff context is unavailable, it falls back to a full repository scan with the same violation rules.
+
+Civilian unit type guard remediation:
+
+- Add or reuse `kUnitType*` constants in `packages/colonizethis_models/lib/src/civilian_unit_type_ids.dart` (also re-exported from `packages/colonizethis_logic/lib/src/constants.dart` for logic consumers).
+- Replace direct string literals in executable code with those constants; extend the tool allowlist only for documented ambiguous literals.
 
 Asset-path guard remediation:
 

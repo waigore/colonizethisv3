@@ -1,3 +1,5 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
+
 /// Starting resources and units per Great Power at game start.
 /// TDD 09 (Great Powers), GDD 05 (Units). Scenario overlay may override per TDD 19.
 class StartingResourcesConfig {
@@ -61,9 +63,9 @@ class StartingResourcesConfig {
   final Map<String, int> startingCivilianUnits;
 
   static const Map<String, int> _defaultStartingCivilianUnits = {
-    'Explorer': 2,
-    'Builder': 2,
-    'Engineer': 1,
+    kUnitTypeExplorer: 2,
+    kUnitTypeBuilder: 2,
+    kUnitTypeEngineer: 1,
   };
 
   /// Default config for Phase 2+.

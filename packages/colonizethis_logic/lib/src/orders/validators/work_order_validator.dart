@@ -290,9 +290,9 @@ class WorkOrderValidator extends OrderValidator {
     if (provinceOwnerId == null || provinceOwnerId == _context.playerId) {
       return false;
     }
-    if (unitType != 'Builder' &&
-        unitType != 'Engineer' &&
-        unitType != 'Merchant') {
+    if (unitType != kUnitTypeBuilder &&
+        unitType != kUnitTypeEngineer &&
+        unitType != kUnitTypeMerchant) {
       return false;
     }
     if (!isMinorOrTribe(_context.game, provinceOwnerId)) return false;
