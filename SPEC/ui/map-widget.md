@@ -113,7 +113,7 @@ The widget accepts an optional **base layer display mode** enumerating terrain, 
 
 ## Resource Icons
 
-Resources are displayed as 64×64 pixel-art icons rendered on tiles, **anchored to the bottom-left of the cell** (native resolution; the sprite may extend left/up when `cellSize` &lt; 64). Icons are drawn instead of the legacy single-letter glyphs (g, t, i, …).
+Resources are displayed as 64×64 pixel-art icons rendered on tiles, **anchored to the bottom-left of the cell** (native resolution; when `cellSize` &lt; 64 the sprite extends **above** the cell top and **to the right** past the cell’s right edge, but its bottom-left corner still meets the cell’s bottom-left corner). Icons are drawn instead of the legacy single-letter glyphs (g, t, i, …).
 
 ### Map tile icon inventory (64 policy)
 
@@ -154,7 +154,7 @@ All icons are 64×64 PNG with RGBA transparency, colonial-era pixel art style ma
 ### Rendering
 
 - **Icon size:** Resource icons are always 64×64 pixels, regardless of the tile cell size. Icons are never scaled up; they render at native 64×64 resolution.
-- **Position:** For **every** tile cell size, the icon’s painted `Rect` uses the **bottom-left anchor** in tile/world coordinates: `iconX = tileLeft`, `iconY = tileTop + cellSize - 64` (where `tileLeft` / `tileTop` are the cell’s top-left in the same coordinate space as `cellSize`). When `cellSize` &lt; 64, the 64×64 sprite extends **left of** `tileLeft` and **above** `tileTop` as needed; the bottom-left corner of the icon still aligns with the cell’s bottom-left corner.
+- **Position:** For **every** tile cell size, the icon’s painted `Rect` uses the **bottom-left anchor** in tile/world coordinates: `iconX = tileLeft`, `iconY = tileTop + cellSize - 64` (where `tileLeft` / `tileTop` are the cell’s top-left in the same coordinate space as `cellSize`). When `cellSize` &lt; 64, the 64×64 sprite extends **above** `tileTop` and **past** the cell’s right edge (`tileLeft + cellSize`); the icon’s **left** edge stays aligned with `tileLeft` (no horizontal extension past the cell to the **left**).
 - **Visibility:** Icons are subject to the same visibility rules as terrain (visible/fogged/unrevealed). Fogged tiles render icons with reduced opacity; unrevealed tiles show nothing.
 
 ### Per-tile extraction unit discs
