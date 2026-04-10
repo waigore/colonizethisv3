@@ -144,5 +144,95 @@ class M extends StatelessWidget {
         isEmpty,
       );
     });
+
+    test('flags Semantics label literal', () {
+      const src = r'''
+import 'package:flutter/material.dart';
+
+class M extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Tap me',
+      child: SizedBox(),
+    );
+  }
+}
+''';
+      expect(findHardcodedUiViolations('app/lib/x.dart', src), isNotEmpty);
+    });
+
+    test('allows Semantics label from expression', () {
+      const src = r'''
+import 'package:flutter/material.dart';
+
+class M extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final l10n = 'x';
+    return Semantics(
+      label: l10n,
+      child: SizedBox(),
+    );
+  }
+}
+''';
+      expect(findHardcodedUiViolations('app/lib/x.dart', src), isEmpty);
+    });
+
+    test('flags SnackBarAction label literal', () {
+      const src = r'''
+import 'package:flutter/material.dart';
+
+class M extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SnackBar(
+      content: Text('x'),
+      action: SnackBarAction(label: 'Undo', onPressed: () {}),
+    );
+  }
+}
+''';
+      final v = findHardcodedUiViolations('app/lib/x.dart', src);
+      expect(v, isNotEmpty);
+      expect(v.any((e) => e.snippet.contains('Undo')), isTrue);
+    });
+
+    test('allows SnackBarAction label from variable', () {
+      const src = r'''
+import 'package:flutter/material.dart';
+
+class M extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final lbl = 'Undo';
+    return SnackBar(
+      content: Text('x'),
+      action: SnackBarAction(label: lbl, onPressed: () {}),
+    );
+  }
+}
+''';
+      expect(findHardcodedUiViolations('app/lib/x.dart', src), isEmpty);
+    });
+
+    test('respects ignore for Semantics value', () {
+      const src = r'''
+import 'package:flutter/material.dart';
+
+class M extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      // ignore: avoid_hardcoded_strings_in_widgets
+      value: 'Hidden from checker',
+      child: SizedBox(),
+    );
+  }
+}
+''';
+      expect(findHardcodedUiViolations('app/lib/x.dart', src), isEmpty);
+    });
   });
 }
