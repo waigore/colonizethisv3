@@ -15,11 +15,11 @@ All user-visible copy in the Flutter app is localized via Flutter’s built-in i
 - **Excludes:** internal logs, debug-only developer diagnostics not shown to the user (unless they are displayed in UI).
 
 ## Usage rules
-- **No hard-coded UI copy** in widgets: do not write string literals directly into `Text(...)`, `Tooltip.message`, `AlertDialog` titles/actions, etc.
+- **No hard-coded UI copy** in widgets: do not write string literals directly into the slots visited by the CI gate (`SPEC/program/localization.md`): `Text` / `SelectableText`, `Tooltip.message`, `InputDecoration` `labelText` / `hintText`, `Semantics` `label` / `value` / `hint` / `tooltip`, and `SnackBarAction.label`. Dialogs and other composites should use localized children (e.g. `Text(l10n.…)`), which the gate catches via those nested slots.
 - UI copy must come from `AppLocalizations` methods/getters.
 - Dynamic UI copy must be localized using parameterized messages (e.g. `endTurnConfirm(turnNumber)`), not string interpolation in the widget.
 - Where the same phrasing appears in multiple places, reuse the same localization key.
-- **CI / PR gate:** `dart run tool/check_app_hardcoded_ui_strings.dart` (see `SPEC/program/localization.md`) is the authoritative check: AST-based, includes multiline `Text`/`Tooltip`/input decoration strings, and aligns suppressions with `// ignore: avoid_hardcoded_strings_in_widgets`.
+- **CI / PR gate:** `dart run tool/check_app_hardcoded_ui_strings.dart` (see `SPEC/program/localization.md`) is the authoritative check: AST-based, includes multiline `Text` / `Tooltip` / input decoration / `Semantics` / `SnackBarAction` string slots listed there, and aligns suppressions with `// ignore: avoid_hardcoded_strings_in_widgets`.
 - **IDE:** `hardcoded_strings_lint` remains configured for editor feedback; do not rely on it alone as the merge gate.
 - Do not use broad suppressions such as `ignore_for_file` for hardcoded-string lint in UI files.
 

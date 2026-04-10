@@ -225,6 +225,13 @@ class _HardcodedUiVisitor extends RecursiveAstVisitor<void> {
   /// [MethodInvocation]; `const Widget(` is [InstanceCreationExpression].
   /// Matches the historical Python gate surface (`tool/check_app_hardcoded_ui_strings.py`)
   /// plus multiline arguments; keep this list aligned with `SPEC/ui/localization.md`.
+  ///
+  /// **Adding a slot:** In [_checkWidgetConstructor], add a `case 'WidgetName':`
+  /// that calls [_reportIfBad] on the positional arg ([_firstPositionalArgument])
+  /// or each relevant named arg ([_namedArgumentExpression]). Reuse the same
+  /// suppression and [_isDisallowedStringExpression] rules; extend
+  /// `SPEC/program/localization.md` and `SPEC/ui/localization.md`, and add
+  /// positive/negative tests in `test/check_app_hardcoded_ui_strings_test.dart`.
   void _checkWidgetConstructor(String typeName, ArgumentList args) {
     switch (typeName) {
       case 'Text':
@@ -237,6 +244,15 @@ class _HardcodedUiVisitor extends RecursiveAstVisitor<void> {
       case 'InputDecoration':
         _reportIfBad(_namedArgumentExpression(args, 'labelText'));
         _reportIfBad(_namedArgumentExpression(args, 'hintText'));
+        break;
+      case 'Semantics':
+        _reportIfBad(_namedArgumentExpression(args, 'label'));
+        _reportIfBad(_namedArgumentExpression(args, 'value'));
+        _reportIfBad(_namedArgumentExpression(args, 'hint'));
+        _reportIfBad(_namedArgumentExpression(args, 'tooltip'));
+        break;
+      case 'SnackBarAction':
+        _reportIfBad(_namedArgumentExpression(args, 'label'));
         break;
       default:
         break;
