@@ -82,3 +82,9 @@ melos:
     ctterm:
       description: Terminal UI for full single-player ColonizeThis. SPEC/tui/ctterm.md.
       run: dart run ctterm
+    codegen_order_engine:
+      description: Regenerate OrderEngine slot wiring from order_engine_manifest.yaml. SPEC/program/order-engine.md.
+      run: dart run tool/generate_order_engine_slots.dart
+    codegen_verify:
+      description: Regenerate OrderEngine slots and fail if order_engine.g.dart is out of sync (CI gate).
+      run: bash tool/verify_order_engine_codegen.sh
