@@ -9,6 +9,7 @@
 | `tool/ct_repo_lint_manifest.yaml` | Lists **rules** with stable **`rule_id`**, **group**, human title, SPEC path, and how to invoke the checker |
 | `tool/ct_repo_lint.dart` | Orchestrator: loads manifest, runs rules in order, stops on first failure |
 | `tool/ct_repo_lint_lib.dart` | Parse/execute helpers (also covered by `test/ct_repo_lint_test.dart`) |
+| `tool/ct_repo_lint_scan_contract.dart` | **Shared domain scan contract:** roots, test/generated filters, and `collectRepoLintDomainDartFiles` for AST checkers that share the exception-enforcement coverage shape (`test/ct_repo_lint_scan_contract_test.dart`) |
 
 ## Rule IDs and groups
 
@@ -29,7 +30,8 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 
 1. Add a row under `rules:` in `tool/ct_repo_lint_manifest.yaml` with a new stable `rule_id`.
 2. Implement or extend logic in a **library** or existing checker module; keep a single `main()` wrapper only if required for `dart run`, and wire it from the manifest.
-3. Align wording with `colonizethis_exception_lint` (and similar) when the same policy exists in the analyzer.
+3. When a new checker scans the **same domain `lib/` tree** as exception / disallowed-AST enforcement, reuse **`tool/ct_repo_lint_scan_contract.dart`** instead of duplicating roots and exclude predicates.
+4. Align wording with `colonizethis_exception_lint` (and similar) when the same policy exists in the analyzer.
 
 ## CLI options
 
@@ -38,7 +40,7 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 ## Follow-ups (out of scope for initial landing)
 
 - SARIF output for GitHub annotations.
-- Optional shared exclude lists applied uniformly across rules (today each checker owns excludes).
+- Extend the shared scan contract to other checkers that still duplicate roots/excludes (identifier literal checkers, canonical tile keys, etc.), or lift shared pieces into the manifest once all consumers read it.
 
 ## Acceptance criteria
 

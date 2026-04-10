@@ -3,20 +3,14 @@ import 'dart:io';
 import 'package:colonizethis_exception_lint/exception_enforcement.dart';
 import 'package:path/path.dart' as p;
 
-final _domainRoots = <String>[
-  'packages',
-  'app/lib',
-  'ctdev/lib',
-  'ctterm/lib',
-  'tool',
-];
+import 'ct_repo_lint_scan_contract.dart';
 
 /// PR-blocking check for generic exception throws in runtime domain code.
 ///
 /// SPEC: SPEC/program/exception-enforcement.md
 void main() {
   final repoRoot = Directory.current.path;
-  final dartFiles = _collectDomainDartFiles(repoRoot);
+  final dartFiles = collectRepoLintDomainDartFiles(repoRoot);
   final violations = <CustomExceptionViolation>[];
 
   for (final file in dartFiles) {
@@ -40,36 +34,4 @@ void main() {
     );
   }
   exitCode = 1;
-}
-
-List<File> _collectDomainDartFiles(String repoRoot) {
-  final files = <File>[];
-  for (final domainRoot in _domainRoots) {
-    final base = Directory(p.join(repoRoot, domainRoot));
-    if (!base.existsSync()) {
-      continue;
-    }
-    for (final entity in base.listSync(recursive: true, followLinks: false)) {
-      if (entity is! File) {
-        continue;
-      }
-      if (!entity.path.endsWith('.dart')) {
-        continue;
-      }
-      final rel = p.relative(entity.path, from: repoRoot);
-      if (rel.contains('/test/') || rel.endsWith('_test.dart')) {
-        continue;
-      }
-      if (!rel.contains('/lib/')) {
-        continue;
-      }
-      if (rel.endsWith('.g.dart') ||
-          rel.endsWith('.freezed.dart') ||
-          rel.endsWith('.mocks.dart')) {
-        continue;
-      }
-      files.add(entity);
-    }
-  }
-  return files;
 }

@@ -19,7 +19,7 @@ Rationale: `clear()` returns `void`; the cascade form suggests chaining a result
 
 ### Coverage
 
-Enforcement uses the same runtime roots as `SPEC/program/exception-enforcement.md`:
+Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
 
 - `packages/**/lib/**`
 - `app/lib/**`

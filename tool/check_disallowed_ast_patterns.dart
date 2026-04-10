@@ -8,6 +8,8 @@ import 'package:analyzer/source/line_info.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
+import 'ct_repo_lint_scan_contract.dart';
+
 /// PR-blocking structural AST checks driven by [tool/disallowed_ast_patterns.yaml].
 ///
 /// SPEC: SPEC/program/disallowed-ast-patterns.md
@@ -31,7 +33,7 @@ void main() {
     return;
   }
 
-  final dartFiles = _collectDomainDartFiles(repoRoot);
+  final dartFiles = collectRepoLintDomainDartFiles(repoRoot);
   final violations = <DisallowedAstViolation>[];
 
   for (final file in dartFiles) {
@@ -65,15 +67,7 @@ List<DisallowedAstViolation> findDisallowedAstViolations(
   if (rules.isEmpty) {
     return const [];
   }
-  if (!relativePath.endsWith('.dart')) {
-    return const [];
-  }
-  if (relativePath.contains('/test/') || relativePath.endsWith('_test.dart')) {
-    return const [];
-  }
-  if (relativePath.endsWith('.g.dart') ||
-      relativePath.endsWith('.freezed.dart') ||
-      relativePath.endsWith('.mocks.dart')) {
+  if (repoLintPathIsExcludedTestOrGeneratedDart(relativePath)) {
     return const [];
   }
 
@@ -170,45 +164,6 @@ bool _isSuppressedAtLine(String source, int lineNumber1Based, String ruleId) {
     return true;
   }
   return false;
-}
-
-List<File> _collectDomainDartFiles(String repoRoot) {
-  final domainRoots = <String>[
-    'packages',
-    'app/lib',
-    'ctdev/lib',
-    'ctterm/lib',
-    'tool',
-  ];
-  final files = <File>[];
-  for (final domainRoot in domainRoots) {
-    final base = Directory(p.join(repoRoot, domainRoot));
-    if (!base.existsSync()) {
-      continue;
-    }
-    for (final entity in base.listSync(recursive: true, followLinks: false)) {
-      if (entity is! File) {
-        continue;
-      }
-      if (!entity.path.endsWith('.dart')) {
-        continue;
-      }
-      final rel = p.relative(entity.path, from: repoRoot);
-      if (rel.contains('/test/') || rel.endsWith('_test.dart')) {
-        continue;
-      }
-      if (!rel.contains('/lib/')) {
-        continue;
-      }
-      if (rel.endsWith('.g.dart') ||
-          rel.endsWith('.freezed.dart') ||
-          rel.endsWith('.mocks.dart')) {
-        continue;
-      }
-      files.add(entity);
-    }
-  }
-  return files;
 }
 
 class DisallowedPatternRule {

@@ -40,7 +40,7 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) are excluded.
 
 The repository enforces the same policy in two places (shared implementation in `packages/colonizethis_exception_lint`):
 
-1. **CI / CLI:** Quality runs `dart run tool/ct_repo_lint.dart` (rule `repo.custom_exceptions`; see [repo-lint.md](repo-lint.md)), which invokes `tool/check_custom_exceptions.dart`. Direct run: `dart run tool/check_custom_exceptions.dart` (also `melos run check_custom_exceptions`). Scans runtime domain files under the roots listed in that tool.
+1. **CI / CLI:** Quality runs `dart run tool/ct_repo_lint.dart` (rule `repo.custom_exceptions`; see [repo-lint.md](repo-lint.md)), which invokes `tool/check_custom_exceptions.dart`. Direct run: `dart run tool/check_custom_exceptions.dart` (also `melos run check_custom_exceptions`). File discovery uses `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), same as the disallowed-AST checker.
 2. **IDE / analyzer:** `custom_lint` with package `colonizethis_exception_lint`, wired in every workspace package that contains scoped runtime `lib/` code (see each package `pubspec.yaml` + `analysis_options.yaml`). Run locally per package via `dart run custom_lint`, or `bash tool/run_custom_lint_domain_exceptions.sh` for all wired packages. CI runs the same script after the root checker.
 
 The checker:
