@@ -288,143 +288,16 @@ jobs:
       - name: Verify OrderEngine codegen (SPEC/program/order-engine.md)
         run: bash tool/verify_order_engine_codegen.sh
 
-      - name: Check test import convention (SPEC/program/test-logging.md)
-        run: tool/check_test_imports.sh
-
-      - name: Check logic/ai decoupling convention (SPEC/program/repo-and-packages.md)
-        run: tool/check_logic_ai_decoupling.sh
-
-      - name: Check asset path constants convention (SPEC/program/repo-and-packages.md)
-        run: tool/check_asset_path_constants.sh
-
-      - name: Check tech ID constants convention (SPEC/program/repo-and-packages.md)
-        run: |
-          set -euo pipefail
-          base_ref="${GITHUB_BASE_REF:-}"
-          if [ -z "$base_ref" ]; then
-            echo "No GITHUB_BASE_REF in context; running full tech-id scan."
-            tool/check_tech_id_constants.sh
-            exit 0
-          fi
-
-          if ! git fetch --no-tags --depth=1 origin "$base_ref"; then
-            echo "Could not fetch origin/$base_ref; running full tech-id scan."
-            tool/check_tech_id_constants.sh
-            exit 0
-          fi
-
-          merge_base="$(git merge-base "origin/$base_ref" HEAD 2>/dev/null || true)"
-          if [ -z "$merge_base" ]; then
-            echo "No merge base between origin/$base_ref and HEAD in this checkout; running full tech-id scan."
-            tool/check_tech_id_constants.sh
-            exit 0
-          fi
-
-          changed_files="$(
-            git diff --name-only "origin/$base_ref"...HEAD -- '*.dart' \
-              | tr '\n' ',' \
-              | sed 's/,$//'
-          )"
-
-          if [ -z "$changed_files" ]; then
-            echo "No changed Dart files detected in PR diff; running full tech-id scan."
-            tool/check_tech_id_constants.sh
-            exit 0
-          fi
-
-          echo "Running tech-id convention check on changed Dart files only."
-          tool/check_tech_id_constants.sh --files "$changed_files"
-
-      - name: Check work target constants convention (SPEC/program/repo-and-packages.md)
-        run: |
-          set -euo pipefail
-          base_ref="${GITHUB_BASE_REF:-}"
-          if [ -z "$base_ref" ]; then
-            echo "No GITHUB_BASE_REF in context; running full work-target scan."
-            tool/check_work_target_constants.sh
-            exit 0
-          fi
-
-          if ! git fetch --no-tags --depth=1 origin "$base_ref"; then
-            echo "Could not fetch origin/$base_ref; running full work-target scan."
-            tool/check_work_target_constants.sh
-            exit 0
-          fi
-
-          merge_base="$(git merge-base "origin/$base_ref" HEAD 2>/dev/null || true)"
-          if [ -z "$merge_base" ]; then
-            echo "No merge base between origin/$base_ref and HEAD in this checkout; running full work-target scan."
-            tool/check_work_target_constants.sh
-            exit 0
-          fi
-
-          changed_files="$(
-            git diff --name-only "origin/$base_ref"...HEAD -- '*.dart' \
-              | tr '\n' ',' \
-              | sed 's/,$//'
-          )"
-
-          if [ -z "$changed_files" ]; then
-            echo "No changed Dart files detected in PR diff; running full work-target scan."
-            tool/check_work_target_constants.sh
-            exit 0
-          fi
-
-          echo "Running work-target convention check on changed Dart files only."
-          tool/check_work_target_constants.sh --files "$changed_files"
-
-      - name: Check civilian unit type constants convention (SPEC/program/repo-and-packages.md)
-        run: |
-          set -euo pipefail
-          base_ref="${GITHUB_BASE_REF:-}"
-          if [ -z "$base_ref" ]; then
-            echo "No GITHUB_BASE_REF in context; running full civilian unit type scan."
-            tool/check_civilian_unit_type_constants.sh
-            exit 0
-          fi
-
-          if ! git fetch --no-tags --depth=1 origin "$base_ref"; then
-            echo "Could not fetch origin/$base_ref; running full civilian unit type scan."
-            tool/check_civilian_unit_type_constants.sh
-            exit 0
-          fi
-
-          merge_base="$(git merge-base "origin/$base_ref" HEAD 2>/dev/null || true)"
-          if [ -z "$merge_base" ]; then
-            echo "No merge base between origin/$base_ref and HEAD in this checkout; running full civilian unit type scan."
-            tool/check_civilian_unit_type_constants.sh
-            exit 0
-          fi
-
-          changed_files="$(
-            git diff --name-only "origin/$base_ref"...HEAD -- '*.dart' \
-              | tr '\n' ',' \
-              | sed 's/,$//'
-          )"
-
-          if [ -z "$changed_files" ]; then
-            echo "No changed Dart files detected in PR diff; running full civilian unit type scan."
-            tool/check_civilian_unit_type_constants.sh
-            exit 0
-          fi
-
-          echo "Running civilian unit type convention check on changed Dart files only."
-          tool/check_civilian_unit_type_constants.sh --files "$changed_files"
-
-      - name: Check package logger API convention (SPEC/program/logging/logging.md)
-        run: tool/check_naked_logger_usage.sh
-
-      - name: Check custom exception enforcement (SPEC/program/exception-enforcement.md)
-        run: dart run tool/check_custom_exceptions.dart
+      - name: Repo convention lint (unified manifest, SPEC/program/repo-lint.md)
+        env:
+          CT_REPO_LINT_INCLUDE_APP: ${{ needs.changes.outputs.tests }}
+        run: dart run tool/ct_repo_lint.dart
 
       - name: Run domain exception custom_lint (SPEC/program/exception-enforcement.md)
         run: bash tool/run_custom_lint_domain_exceptions.sh
 
       - name: Test colonizethis_exception_lint (SPEC/program/exception-enforcement.md)
         run: dart test packages/colonizethis_exception_lint/test --reporter=compact
-
-      - name: Check disallowed AST patterns (SPEC/program/disallowed-ast-patterns.md)
-        run: dart run tool/check_disallowed_ast_patterns.dart
 
       - name: Test disallowed AST patterns checker (SPEC/program/disallowed-ast-patterns.md)
         run: dart test test/check_disallowed_ast_patterns_test.dart --reporter=compact
@@ -440,9 +313,6 @@ jobs:
 
       - name: Test civilian unit type constants checker (SPEC/program/repo-and-packages.md)
         run: dart test test/check_civilian_unit_type_constants_test.dart --reporter=compact
-
-      - name: Check canonical province tile-key literals (SPEC/game/world-model-identity.md)
-        run: dart run tool/check_canonical_province_tile_keys.dart
 
       - name: Test canonical province tile-key checker (SPEC/game/world-model-identity.md)
         run: dart test test/check_canonical_province_tile_keys_test.dart --reporter=compact
@@ -551,10 +421,6 @@ jobs:
               fi
             fi
           fi
-
-      - name: App hardcoded UI string gate (AST, app/lib/** -> l10n)
-        if: needs.changes.outputs.tests == 'true'
-        run: dart run tool/check_app_hardcoded_ui_strings.dart
 
       - name: Coverage gate (logic/map/ai >= 90%)
         if: needs.changes.outputs.tests == 'true'

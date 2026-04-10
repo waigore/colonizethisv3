@@ -1,0 +1,95 @@
+# Unified repo convention checks — manifest for `dart run tool/ct_repo_lint.dart`.
+# SPEC: SPEC/program/repo-lint.md
+version: 1
+
+# Shared defaults (documentation for Phase 2+; individual runners apply their own excludes today).
+shared_scan_notes:
+  exclude_path_globs:
+    - "**/test/**"
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.mocks.dart"
+
+rules:
+  - rule_id: repo.test_imports
+    group: structure
+    title: Test import convention (colonizethis_test first)
+    spec: SPEC/program/test-logging.md
+    runner: shell
+    argv: [tool/check_test_imports.sh]
+
+  - rule_id: repo.logic_ai_decoupling
+    group: architecture
+    title: colonizethis_logic / colonizethis_ai dependency boundary
+    spec: SPEC/program/repo-and-packages.md
+    runner: shell
+    argv: [tool/check_logic_ai_decoupling.sh]
+
+  - rule_id: repo.asset_path_constants
+    group: identifiers
+    title: Asset path constants in app runtime code
+    spec: SPEC/program/repo-and-packages.md
+    runner: shell
+    argv: [tool/check_asset_path_constants.sh]
+
+  - rule_id: repo.tech_id_constants
+    group: identifiers
+    title: Tech ID literals must use generated constants
+    spec: SPEC/program/repo-and-packages.md
+    runner: dart
+    script: tool/check_tech_id_constants.dart
+    pr_incremental: true
+
+  - rule_id: repo.work_target_constants
+    group: identifiers
+    title: Work target literals must use WorkTargetIds constants
+    spec: SPEC/program/repo-and-packages.md
+    runner: dart
+    script: tool/check_work_target_constants.dart
+    pr_incremental: true
+
+  - rule_id: repo.civilian_unit_type_constants
+    group: identifiers
+    title: Civilian unit type literals must use constants
+    spec: SPEC/program/repo-and-packages.md
+    runner: dart
+    script: tool/check_civilian_unit_type_constants.dart
+    pr_incremental: true
+
+  - rule_id: repo.naked_logger_usage
+    group: structure
+    title: No naked Logger( construction outside allowed files
+    spec: SPEC/program/logging/logging.md
+    runner: shell
+    argv: [tool/check_naked_logger_usage.sh]
+
+  - rule_id: repo.custom_exceptions
+    group: exceptions
+    title: Domain code must not throw generic exceptions
+    spec: SPEC/program/exception-enforcement.md
+    runner: dart
+    script: tool/check_custom_exceptions.dart
+
+  - rule_id: repo.disallowed_ast_patterns
+    group: structure
+    title: Disallowed AST patterns (manifest-driven)
+    spec: SPEC/program/disallowed-ast-patterns.md
+    runner: dart
+    script: tool/check_disallowed_ast_patterns.dart
+
+  - rule_id: repo.canonical_province_tile_keys
+    group: game_invariants
+    title: Canonical province WorkOrder targetTileKey literals
+    spec: SPEC/game/world-model-identity.md
+    runner: dart
+    script: tool/check_canonical_province_tile_keys.dart
+
+  - rule_id: repo.app_hardcoded_ui_strings
+    group: ui_i18n
+    title: No hardcoded user-visible UI strings in app/lib (AST gate)
+    spec: SPEC/program/localization.md
+    runner: dart
+    script: tool/check_app_hardcoded_ui_strings.dart
+    include_only_when_env:
+      name: CT_REPO_LINT_INCLUDE_APP
+      value: "true"

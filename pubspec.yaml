@@ -88,3 +88,6 @@ melos:
     codegen_verify:
       description: Regenerate OrderEngine slots and fail if order_engine.g.dart is out of sync (CI gate).
       run: bash tool/verify_order_engine_codegen.sh
+    ct_repo_lint:
+      description: Unified manifest-driven repo convention checks. SPEC/program/repo-lint.md.
+      run: dart run tool/ct_repo_lint.dart
