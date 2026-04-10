@@ -32,6 +32,7 @@ dev_dependencies:
   image: ^4.5.4
   melos: ^7.0.0
   path: ^1.9.1
+  test: ^1.24.0
 
 melos:
   scripts:
@@ -65,6 +66,9 @@ melos:
     check_custom_exceptions:
       description: AST check that forbids generic exceptions in runtime domain code. SPEC/program/exception-enforcement.md.
       run: dart run tool/check_custom_exceptions.dart
+    check_app_hardcoded_ui_strings:
+      description: AST check that forbids hardcoded user-visible UI strings in app/lib. SPEC/program/localization.md.
+      run: dart run tool/check_app_hardcoded_ui_strings.dart
     ctterm:
       description: Terminal UI for full single-player ColonizeThis. SPEC/tui/ctterm.md.
       run: dart run ctterm

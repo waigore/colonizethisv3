@@ -85,7 +85,12 @@ class GameMapControls extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${isCargoUsedReliable ? '$cargoUsed' : '—'}/$cargoCapacity',
+                      l10n.map_cargoFraction(
+                        isCargoUsedReliable
+                            ? '$cargoUsed'
+                            : l10n.common_emDash,
+                        '$cargoCapacity',
+                      ),
                     ),
                   ],
                 ),

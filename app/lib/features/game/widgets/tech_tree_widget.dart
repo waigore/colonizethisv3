@@ -292,7 +292,7 @@ class TechTreeWidget extends StatelessWidget {
                         (id) => Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
-                            '• ${techDisplayName(id)}',
+                            l10n.techTree_prerequisiteBullet(techDisplayName(id)),
                             style: theme.textTheme.bodySmall,
                           ),
                         ),

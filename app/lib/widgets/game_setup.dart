@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/l10n/l10n.dart';
 import '../config/constants.dart';
 import 'ct_dropdown.dart';
 import 'ct_nine_patch_button.dart';
@@ -103,6 +104,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final bool narrow =
         MediaQuery.sizeOf(context).width < kGameSetupNarrowBreakpoint;
     return Scaffold(
@@ -118,7 +120,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
                   children: [
                     const SizedBox(height: 24),
                     Text(
-                      'Game Setup',
+                      l10n.gameSetup_title,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 24),
@@ -137,7 +139,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Starting…',
+                              l10n.gameSetup_loading,
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],

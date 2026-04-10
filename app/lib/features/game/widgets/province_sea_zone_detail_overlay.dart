@@ -896,7 +896,11 @@ Widget _buildEconomicSection({
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  '${row.terrain}/$resId ${l10n.province_economic_withImprovement(row.impBase)}',
+                  l10n.province_economic_tileLine(
+                    row.terrain,
+                    resId,
+                    l10n.province_economic_withImprovement(row.impBase),
+                  ),
                 ),
               ),
             ],
@@ -917,7 +921,11 @@ Widget _buildEconomicSection({
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  '${row.terrain}/$resId ${l10n.province_economic_improvableSuffix}',
+                  l10n.province_economic_tileLine(
+                    row.terrain,
+                    resId,
+                    l10n.province_economic_improvableSuffix,
+                  ),
                 ),
               ),
             ],

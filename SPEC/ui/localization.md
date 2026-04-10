@@ -19,7 +19,8 @@ All user-visible copy in the Flutter app is localized via Flutter’s built-in i
 - UI copy must come from `AppLocalizations` methods/getters.
 - Dynamic UI copy must be localized using parameterized messages (e.g. `endTurnConfirm(turnNumber)`), not string interpolation in the widget.
 - Where the same phrasing appears in multiple places, reuse the same localization key.
-- Analyzer enforcement for `app/lib/**` uses `hardcoded_strings_lint` (rule: `avoid_hardcoded_strings_in_widgets`) as the primary hard gate.
+- **CI / PR gate:** `dart run tool/check_app_hardcoded_ui_strings.dart` (see `SPEC/program/localization.md`) is the authoritative check: AST-based, includes multiline `Text`/`Tooltip`/input decoration strings, and aligns suppressions with `// ignore: avoid_hardcoded_strings_in_widgets`.
+- **IDE:** `hardcoded_strings_lint` remains configured for editor feedback; do not rely on it alone as the merge gate.
 - Do not use broad suppressions such as `ignore_for_file` for hardcoded-string lint in UI files.
 
 ## Allowed literal exceptions (narrow)

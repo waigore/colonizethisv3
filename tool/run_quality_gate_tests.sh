@@ -45,8 +45,8 @@ if [ -d app ]; then
 fi
 
 echo ""
-echo "=== App hardcoded UI string gate (app/lib/** -> l10n) ==="
-python3 "$ROOT/tool/check_app_hardcoded_ui_strings.py"
+echo "=== App hardcoded UI string gate (AST, app/lib/** -> l10n) ==="
+dart run "$ROOT/tool/check_app_hardcoded_ui_strings.dart"
 
 echo ""
 echo "=== Test app (Flutter) ==="

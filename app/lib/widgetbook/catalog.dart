@@ -1352,12 +1352,12 @@ class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
               ),
             ),
           ),
-          const Expanded(
+          Expanded(
             child: ColoredBox(
               color: Color(0xFFE0E0E0),
               child: Center(
                 child: Text(
-                  'Tap button to open panel from bottom',
+                  appL10n(context).widgetbook_bottomSheetHint,
                   style: TextStyle(color: Color(0xFF616161)),
                 ),
               ),

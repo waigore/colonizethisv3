@@ -322,7 +322,10 @@ class _MilitaryResourceBar extends StatelessWidget {
                       ResourceIcon(commodityId: commodityId, size: 14),
                       const SizedBox(width: 4),
                       Text(
-                        '${_label(commodityId)}: ${stockpile.quantityOf(commodityId)}',
+                        l10n.trainMilitary_commodityStock(
+                          _label(commodityId),
+                          stockpile.quantityOf(commodityId),
+                        ),
                       ),
                     ],
                   ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 
 import '../../../config/app_assets.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -20,6 +21,7 @@ class GameMapCornerControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -27,7 +29,7 @@ class GameMapCornerControls extends StatelessWidget {
           key: kBaseLayerCycleButtonKey,
           color: Colors.white.withValues(alpha: 0.9),
           child: Tooltip(
-            message: 'Base layer: terrain / +resources / +improvements',
+            message: l10n.map_tooltip_baseLayer,
             child: InkWell(
               onTap: onCycleBaseLayerDisplayMode,
               child: Padding(
@@ -46,7 +48,7 @@ class GameMapCornerControls extends StatelessWidget {
           key: kHomeToCapitalButtonKey,
           color: Colors.white.withValues(alpha: 0.9),
           child: Tooltip(
-            message: 'Center on capital',
+            message: l10n.map_tooltip_centerCapital,
             child: InkWell(
               onTap: onCenterOnHomeCapital,
               child: Padding(
@@ -65,7 +67,7 @@ class GameMapCornerControls extends StatelessWidget {
           key: kMapDisplayOptionsButtonKey,
           color: Colors.white.withValues(alpha: 0.9),
           child: Tooltip(
-            message: 'Map display options',
+            message: l10n.map_tooltip_displayOptions,
             child: InkWell(
               onTap: onOpenMapDisplayOptions,
               child: Padding(

@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../widgets/ct_panel.dart';
 import 'diplomacy_panel.dart';
@@ -110,6 +111,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
     final bus = ref.watch(appEventBusProvider);
     final history = diplomaticHistoryForPair(game, humanPlayerId, factionId);
     int year(int turn) => turnToYear(turn, game.turnTimeMapping);
+    final l10n = appL10n(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -125,7 +127,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
           _relationSummary(context),
           const SizedBox(height: 16),
           Text(
-            'Diplomatic history',
+            l10n.diplomacy_historyHeading,
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -135,7 +137,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(
-                'No recorded events with this faction.',
+                l10n.diplomacy_historyEmpty,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -152,7 +154,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${year(e.turn)} (Turn ${e.turn})',
+                          l10n.diplomacy_historyTurnLine(year(e.turn), e.turn),
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
@@ -172,7 +174,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
           if (kind == FactionKind.greatPower) ...[
             const SizedBox(height: 24),
             Text(
-              'Dossier',
+              l10n.diplomacy_dossierHeading,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -190,8 +192,9 @@ class DiplomacyDetailScreen extends ConsumerWidget {
   }
 
   Widget _relationSummary(BuildContext context) {
+    final l10n = appL10n(context);
     final stateLabel = relation == null
-        ? '—'
+        ? l10n.common_emDash
         : relation!.atWar
         ? 'War'
         : 'Peace';
@@ -204,7 +207,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Current relation',
+            l10n.diplomacy_relationCurrent,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -233,6 +236,7 @@ class _DossierSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final entries = game.dossierEvidenceEntries
         .where((e) => e.observerId == observerId && e.subjectId == subjectId)
         .toList();
@@ -246,7 +250,7 @@ class _DossierSection extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: Text(
-          'No dossier evidence yet.',
+          l10n.diplomacy_dossierEmpty,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -266,7 +270,7 @@ class _DossierSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Turn ${e.turnNumber}:',
+                      l10n.diplomacy_dossierTurnLine(e.turnNumber),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),

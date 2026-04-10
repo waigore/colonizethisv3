@@ -1228,6 +1228,151 @@
   "provinceOverlay_sectionCivilian": "Civilian",
   "@provinceOverlay_sectionCivilian": {"description": "Province overlay section heading for civilian details."},
   "provinceOverlay_sectionNaval": "Naval",
-  "@provinceOverlay_sectionNaval": {"description": "Province overlay section heading for naval details."}
+  "@provinceOverlay_sectionNaval": {"description": "Province overlay section heading for naval details."},
+  "common_emDash": "—",
+  "@common_emDash": {"description": "Placeholder when a map/UI value is unavailable (cargo used, relation state)."},
+  "map_cargoFraction": "{used}/{capacity}",
+  "@map_cargoFraction": {
+    "description": "Cargo used versus capacity in map top bar.",
+    "placeholders": {"used": {"type": "String"}, "capacity": {"type": "String"}}
+  },
+  "map_tooltip_baseLayer": "Base layer: terrain / +resources / +improvements",
+  "@map_tooltip_baseLayer": {"description": "Tooltip for cycling base map layer display."},
+  "map_tooltip_centerCapital": "Center on capital",
+  "@map_tooltip_centerCapital": {"description": "Tooltip for center-on-capital control."},
+  "map_tooltip_displayOptions": "Map display options",
+  "@map_tooltip_displayOptions": {"description": "Tooltip for opening map display options."},
+  "map_zoom_percent": "{pct}%",
+  "@map_zoom_percent": {
+    "description": "Region minimap zoom percentage label.",
+    "placeholders": {"pct": {"type": "int"}}
+  },
+  "map_zoom_tooltip": "Map zoom",
+  "@map_zoom_tooltip": {"description": "Tooltip for region minimap zoom slider."},
+  "gameSetup_title": "Game Setup",
+  "@gameSetup_title": {"description": "Title on the game setup screen."},
+  "gameSetup_loading": "Starting…",
+  "@gameSetup_loading": {"description": "Status text while game setup is loading."},
+  "fleet_split_dialogTitle": "Split Fleet",
+  "@fleet_split_dialogTitle": {"description": "Title for split fleet dialog."},
+  "widgetbook_bottomSheetHint": "Tap button to open panel from bottom",
+  "@widgetbook_bottomSheetHint": {"description": "Placeholder in widgetbook bottom-sheet layout mock."},
+  "diplomacy_historyHeading": "Diplomatic history",
+  "@diplomacy_historyHeading": {"description": "Section heading on diplomacy detail screen."},
+  "diplomacy_historyEmpty": "No recorded events with this faction.",
+  "@diplomacy_historyEmpty": {"description": "Empty state when there is no diplomatic history."},
+  "diplomacy_historyTurnLine": "{year} (Turn {turn})",
+  "@diplomacy_historyTurnLine": {
+    "description": "History card subtitle with calendar year and turn number.",
+    "placeholders": {"year": {"type": "int"}, "turn": {"type": "int"}}
+  },
+  "diplomacy_dossierHeading": "Dossier",
+  "@diplomacy_dossierHeading": {"description": "Dossier section heading on diplomacy detail."},
+  "diplomacy_relationCurrent": "Current relation",
+  "@diplomacy_relationCurrent": {"description": "Label for current diplomatic relation summary."},
+  "diplomacy_dossierEmpty": "No dossier evidence yet.",
+  "@diplomacy_dossierEmpty": {"description": "Empty state for dossier evidence list."},
+  "diplomacy_dossierTurnLine": "Turn {turn}:",
+  "@diplomacy_dossierTurnLine": {
+    "description": "Prefix before a dossier evidence line.",
+    "placeholders": {"turn": {"type": "int"}}
+  },
+  "diplomacy_listEmpty": "No other factions discovered yet.",
+  "@diplomacy_listEmpty": {"description": "Empty state on diplomacy panel when no factions are known."},
+  "diplomacy_rowPower": "Power: {score}",
+  "@diplomacy_rowPower": {
+    "description": "Power score label on a diplomacy row.",
+    "placeholders": {"score": {"type": "int"}}
+  },
+  "diplomacy_rowOutgoingSubsidy": "Outgoing subsidy: £{amount}/turn to {name}",
+  "@diplomacy_rowOutgoingSubsidy": {
+    "description": "Active subsidy line on diplomacy row.",
+    "placeholders": {"amount": {"type": "int"}, "name": {"type": "String"}}
+  },
+  "diplomacy_rowPendingGrant": "Pending grant aid: £{amount} (resolves end of turn)",
+  "@diplomacy_rowPendingGrant": {
+    "description": "Pending grant aid line on diplomacy row.",
+    "placeholders": {"amount": {"type": "int"}}
+  },
+  "diplomacy_rowPendingSubsidy": "Pending subsidy: £{amount}/turn (resolves end of turn)",
+  "@diplomacy_rowPendingSubsidy": {
+    "description": "Pending subsidy line on diplomacy row.",
+    "placeholders": {"amount": {"type": "int"}}
+  },
+  "civilian_assignWorkTitle": "Assign work: {unitType}",
+  "@civilian_assignWorkTitle": {
+    "description": "Bottom sheet title when choosing work assignment for a civilian unit.",
+    "placeholders": {"unitType": {"type": "String"}}
+  },
+  "production_commodityLine": "{name}: {qty}{change}",
+  "@production_commodityLine": {
+    "description": "Stockpile commodity line with optional change in parentheses.",
+    "placeholders": {
+      "name": {"type": "String"},
+      "qty": {"type": "int"},
+      "change": {"type": "String"}
+    }
+  },
+  "production_workerLine": "{name}: {count}",
+  "@production_workerLine": {
+    "description": "Worker pool count line in production panel.",
+    "placeholders": {"name": {"type": "String"}, "count": {"type": "int"}}
+  },
+  "production_effectiveLabour": "Effective labour: {n}",
+  "@production_effectiveLabour": {
+    "description": "Effective labour summary in production panel.",
+    "placeholders": {"n": {"type": "int"}}
+  },
+  "production_affordanceLine": "{max} · {label}",
+  "@production_affordanceLine": {
+    "description": "Recipe affordance cap and limiting factor in allocation panel.",
+    "placeholders": {"max": {"type": "int"}, "label": {"type": "String"}}
+  },
+  "production_totalLabour": "Total labour: {required} / {effective}",
+  "@production_totalLabour": {
+    "description": "Total labour required versus effective in allocation panel.",
+    "placeholders": {"required": {"type": "int"}, "effective": {"type": "int"}}
+  },
+  "production_labourInsufficient": "Insufficient labour — production will be capped next turn",
+  "@production_labourInsufficient": {"description": "Warning when allocated production exceeds labour."},
+  "province_economic_tileLine": "{terrain}/{resId} {suffix}",
+  "@province_economic_tileLine": {
+    "description": "Economic hover line: terrain, resource id, and localized suffix.",
+    "placeholders": {
+      "terrain": {"type": "String"},
+      "resId": {"type": "String"},
+      "suffix": {"type": "String"}
+    }
+  },
+  "naval_units_shipTypeCount": "{typeName}: {count}",
+  "@naval_units_shipTypeCount": {
+    "description": "Ship type and count in fleet expansion list.",
+    "placeholders": {"typeName": {"type": "String"}, "count": {"type": "int"}}
+  },
+  "techTree_prerequisiteBullet": "• {name}",
+  "@techTree_prerequisiteBullet": {
+    "description": "Bullet line for a tech prerequisite name.",
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "trainCivilians_economyCost": "{treasury} + {paper} Paper",
+  "@trainCivilians_economyCost": {
+    "description": "Treasury cost plus paper requirement for training economy.",
+    "placeholders": {"treasury": {"type": "String"}, "paper": {"type": "int"}}
+  },
+  "trainMilitary_commodityStock": "{label}: {qty}",
+  "@trainMilitary_commodityStock": {
+    "description": "Military training resource chip stock line.",
+    "placeholders": {"label": {"type": "String"}, "qty": {"type": "int"}}
+  },
+  "units_location_header": "{label} — {region}",
+  "@units_location_header": {
+    "description": "Location sub-header combining province/sea label and region.",
+    "placeholders": {"label": {"type": "String"}, "region": {"type": "String"}}
+  },
+  "transfer_list_itemCount": "{item} ({count})",
+  "@transfer_list_itemCount": {
+    "description": "Transfer list row label with item name and quantity.",
+    "placeholders": {"item": {"type": "String"}, "count": {"type": "int"}}
+  }
 }
 

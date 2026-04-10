@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../config/routes.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
@@ -258,6 +259,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final rows = buildDiplomacyRows(
       widget.game,
       widget.topology,
@@ -305,7 +307,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
           Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'No other factions discovered yet.',
+              l10n.diplomacy_listEmpty,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
           ),
@@ -507,9 +509,10 @@ class _DiplomacyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final rel = data.relation;
     final stateLabel = rel == null
-        ? '—'
+        ? l10n.common_emDash
         : rel.atWar
         ? 'War'
         : 'Peace';
@@ -542,7 +545,7 @@ class _DiplomacyRow extends StatelessWidget {
                   if (data.powerScore != null) ...[
                     const SizedBox(width: 8),
                     Text(
-                      'Power: ${data.powerScore}',
+                      l10n.diplomacy_rowPower(data.powerScore!),
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color:
                             data.playerPowerScore != null &&
@@ -565,7 +568,10 @@ class _DiplomacyRow extends StatelessWidget {
               if (data.activeSubsidyPerTurn != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Outgoing subsidy: £${data.activeSubsidyPerTurn}/turn to ${data.displayName}',
+                  l10n.diplomacy_rowOutgoingSubsidy(
+                    data.activeSubsidyPerTurn!,
+                    data.displayName,
+                  ),
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
@@ -574,7 +580,7 @@ class _DiplomacyRow extends StatelessWidget {
               if (data.pendingGrantAmount != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Pending grant aid: £${data.pendingGrantAmount} (resolves end of turn)',
+                  l10n.diplomacy_rowPendingGrant(data.pendingGrantAmount!),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: Theme.of(context).colorScheme.tertiary,
@@ -584,7 +590,7 @@ class _DiplomacyRow extends StatelessWidget {
               if (data.pendingSubsidyAmount != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Pending subsidy: £${data.pendingSubsidyAmount}/turn (resolves end of turn)',
+                  l10n.diplomacy_rowPendingSubsidy(data.pendingSubsidyAmount!),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: Theme.of(context).colorScheme.tertiary,

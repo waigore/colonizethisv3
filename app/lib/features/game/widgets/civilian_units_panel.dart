@@ -355,7 +355,7 @@ class _UnitRow extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(12),
               child: Text(
-                'Assign work: ${unit.type}',
+                appL10n(ctx).civilian_assignWorkTitle(unit.type),
                 style: Theme.of(context).textTheme.titleSmall,
               ),
             ),

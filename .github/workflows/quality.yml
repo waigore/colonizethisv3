@@ -336,6 +336,9 @@ jobs:
       - name: Check custom exception enforcement (SPEC/program/exception-enforcement.md)
         run: dart run tool/check_custom_exceptions.dart
 
+      - name: Test app hardcoded UI string checker (SPEC/program/localization.md)
+        run: dart test test/check_app_hardcoded_ui_strings_test.dart --reporter=compact
+
       - name: Wang incremental assets gate (Python)
         run: |
           set -euo pipefail
@@ -441,9 +444,9 @@ jobs:
             fi
           fi
 
-      - name: App hardcoded UI string gate (app/lib/** -> l10n)
+      - name: App hardcoded UI string gate (AST, app/lib/** -> l10n)
         if: needs.changes.outputs.tests == 'true'
-        run: python3 tool/check_app_hardcoded_ui_strings.py
+        run: dart run tool/check_app_hardcoded_ui_strings.dart
 
       - name: Coverage gate (logic/map/ai >= 90%)
         if: needs.changes.outputs.tests == 'true'

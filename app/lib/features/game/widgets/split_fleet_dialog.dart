@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_transfer_list.dart';
 import '../utils/region_labels.dart';
@@ -82,6 +83,7 @@ class SplitFleetDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return CtDialogShell(
       maxWidth: 520,
       maxHeight: 500,
@@ -93,7 +95,7 @@ class SplitFleetDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Split Fleet',
+                l10n.fleet_split_dialogTitle,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
