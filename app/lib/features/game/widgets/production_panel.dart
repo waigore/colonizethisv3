@@ -144,6 +144,10 @@ class _AvailableSubpanel extends StatelessWidget {
   final VoidCallback? onOpenCommodityBreakdown;
 
   Widget _buildCommodityRow(Commodity c, int qty, int change, ThemeData theme) {
+    final name = c.displayName ?? c.id;
+    final changeSeg = change == 0
+        ? ''
+        : ' (${change > 0 ? '+' : ''}$change)';
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -151,7 +155,7 @@ class _AvailableSubpanel extends StatelessWidget {
         const SizedBox(width: 4),
         Flexible(
           child: Text(
-            '${c.displayName ?? c.id}: $qty${change != 0 ? ' (${change > 0 ? '+' : ''}$change)' : ''}',
+            l10n.production_commodityStock(name, qty, changeSeg),
             style: theme.textTheme.bodySmall,
             overflow: TextOverflow.ellipsis,
           ),
@@ -189,7 +193,10 @@ class _AvailableSubpanel extends StatelessWidget {
         const SizedBox(width: 4),
         Flexible(
           child: Text(
-            '${_workerDisplayName(workerType)}: $count',
+            l10n.production_workerCount(
+              _workerDisplayName(workerType),
+              count,
+            ),
             style: theme.textTheme.bodySmall,
             overflow: TextOverflow.ellipsis,
           ),
@@ -302,7 +309,7 @@ class _AvailableSubpanel extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Effective labour: $effectiveLabour',
+              l10n.production_effectiveLabour(effectiveLabour),
               style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -437,7 +444,10 @@ class _AllocationSubpanel extends StatelessWidget {
                         Expanded(
                           flex: 1,
                           child: Text(
-                            '${affordance.maxDesiredOutput} · ${affordance.limitingLabel}',
+                            l10n.production_recipeAffordance(
+                              affordance.maxDesiredOutput,
+                              affordance.limitingLabel,
+                            ),
                             textAlign: TextAlign.right,
                             style: theme.textTheme.labelSmall,
                             overflow: TextOverflow.ellipsis,
@@ -476,7 +486,7 @@ class _AllocationSubpanel extends StatelessWidget {
                         SizedBox(
                           width: 36,
                           child: Text(
-                            '$desired',
+                            desired.toString(),
                             textAlign: TextAlign.right,
                             style: theme.textTheme.bodySmall,
                           ),
@@ -489,7 +499,10 @@ class _AllocationSubpanel extends StatelessWidget {
             }),
             const SizedBox(height: 8),
             Text(
-              'Total labour: $totalRequiredLabour / $effectiveLabour',
+              l10n.production_totalLabour(
+                totalRequiredLabour,
+                effectiveLabour,
+              ),
               style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: labourInsufficient ? theme.colorScheme.error : null,
@@ -499,7 +512,7 @@ class _AllocationSubpanel extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  'Insufficient labour — production will be capped next turn',
+                  l10n.production_labourInsufficient,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.error,
                   ),

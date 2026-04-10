@@ -292,7 +292,9 @@ class TechTreeWidget extends StatelessWidget {
                         (id) => Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
-                            '• ${techDisplayName(id)}',
+                            l10n.techTree_prerequisiteBullet(
+                              techDisplayName(id),
+                            ),
                             style: theme.textTheme.bodySmall,
                           ),
                         ),
@@ -1083,6 +1085,9 @@ class _TechNode extends StatelessWidget {
   }
 }
 
+/// Row label for tech tree legend samples (maps to [AppLocalizations] state strings).
+enum _TechLegendStateKind { researched, inProgress, available, locked }
+
 class _TechTreeLegend extends StatelessWidget {
   const _TechTreeLegend({required this.l10n});
 
@@ -1112,9 +1117,9 @@ class _TechTreeLegend extends StatelessWidget {
         Wrap(
           spacing: 8,
           runSpacing: 4,
-          children: const [
+          children: [
             _StateLegendSample(
-              label: 'researched',
+              kind: _TechLegendStateKind.researched,
               state: _TechNodeState(
                 researched: true,
                 inProgress: false,
@@ -1122,7 +1127,7 @@ class _TechTreeLegend extends StatelessWidget {
               ),
             ),
             _StateLegendSample(
-              label: 'in_progress',
+              kind: _TechLegendStateKind.inProgress,
               state: _TechNodeState(
                 researched: false,
                 inProgress: true,
@@ -1130,7 +1135,7 @@ class _TechTreeLegend extends StatelessWidget {
               ),
             ),
             _StateLegendSample(
-              label: 'available',
+              kind: _TechLegendStateKind.available,
               state: _TechNodeState(
                 researched: false,
                 inProgress: false,
@@ -1138,7 +1143,7 @@ class _TechTreeLegend extends StatelessWidget {
               ),
             ),
             _StateLegendSample(
-              label: 'locked',
+              kind: _TechLegendStateKind.locked,
               state: _TechNodeState(
                 researched: false,
                 inProgress: false,
@@ -1172,9 +1177,9 @@ class _LegendChip extends StatelessWidget {
 }
 
 class _StateLegendSample extends StatelessWidget {
-  const _StateLegendSample({required this.label, required this.state});
+  const _StateLegendSample({required this.kind, required this.state});
 
-  final String label;
+  final _TechLegendStateKind kind;
   final _TechNodeState state;
 
   @override
@@ -1209,17 +1214,11 @@ class _StateLegendSample extends StatelessWidget {
   }
 
   String _localizedLabel(AppLocalizations l10n) {
-    switch (label) {
-      case 'researched':
-        return l10n.techTree_stateResearched;
-      case 'in_progress':
-        return l10n.techTree_stateInProgress;
-      case 'available':
-        return l10n.techTree_stateAvailable;
-      case 'locked':
-        return l10n.techTree_stateLocked;
-      default:
-        return label;
-    }
+    return switch (kind) {
+      _TechLegendStateKind.researched => l10n.techTree_stateResearched,
+      _TechLegendStateKind.inProgress => l10n.techTree_stateInProgress,
+      _TechLegendStateKind.available => l10n.techTree_stateAvailable,
+      _TechLegendStateKind.locked => l10n.techTree_stateLocked,
+    };
   }
 }

@@ -5,6 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../widgets/ct_panel.dart';
 import 'diplomacy_panel.dart';
@@ -107,6 +109,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = appL10n(context);
     final bus = ref.watch(appEventBusProvider);
     final history = diplomaticHistoryForPair(game, humanPlayerId, factionId);
     int year(int turn) => turnToYear(turn, game.turnTimeMapping);
@@ -122,10 +125,10 @@ class DiplomacyDetailScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
-          _relationSummary(context),
+          _relationSummary(context, l10n),
           const SizedBox(height: 16),
           Text(
-            'Diplomatic history',
+            l10n.diplomacy_detail_historyTitle,
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -135,7 +138,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(
-                'No recorded events with this faction.',
+                l10n.diplomacy_detail_noEvents,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -152,7 +155,10 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${year(e.turn)} (Turn ${e.turn})',
+                          l10n.diplomacy_detail_yearTurn(
+                            year(e.turn),
+                            e.turn,
+                          ),
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
@@ -172,7 +178,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
           if (kind == FactionKind.greatPower) ...[
             const SizedBox(height: 24),
             Text(
-              'Dossier',
+              l10n.diplomacy_detail_dossierTitle,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -182,6 +188,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
               game: game,
               observerId: humanPlayerId,
               subjectId: factionId,
+              l10n: l10n,
             ),
           ],
         ],
@@ -189,12 +196,12 @@ class DiplomacyDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _relationSummary(BuildContext context) {
+  Widget _relationSummary(BuildContext context, AppLocalizations l10n) {
     final stateLabel = relation == null
         ? '—'
         : relation!.atWar
-        ? 'War'
-        : 'Peace';
+        ? l10n.diplomacy_relationState_war
+        : l10n.diplomacy_relationState_peace;
     final relationLabel = relation == null
         ? ''
         : relationScoreToDisplayLabel(relation!.score);
@@ -204,7 +211,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Current relation',
+            l10n.diplomacy_detail_currentRelation,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -225,11 +232,13 @@ class _DossierSection extends StatelessWidget {
     required this.game,
     required this.observerId,
     required this.subjectId,
+    required this.l10n,
   });
 
   final Game game;
   final String observerId;
   final String subjectId;
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +255,7 @@ class _DossierSection extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: Text(
-          'No dossier evidence yet.',
+          l10n.diplomacy_detail_noDossier,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -266,7 +275,7 @@ class _DossierSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Turn ${e.turnNumber}:',
+                      l10n.diplomacy_detail_turnEvidence(e.turnNumber),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
