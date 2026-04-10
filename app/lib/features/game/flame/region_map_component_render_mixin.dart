@@ -999,17 +999,8 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
           final tileLeft = cell.x * cellSize;
           final tileTop = cell.y * cellSize;
 
-          final double iconX;
-          final double iconY;
-          if (cellSize > iconSize) {
-            iconX = tileLeft;
-            iconY = tileTop + cellSize - iconSize;
-          } else {
-            iconX = tileLeft + (cellSize - iconSize) / 2;
-            iconY = cellSize < iconSize
-                ? tileTop + cellSize - iconSize
-                : tileTop + (cellSize - iconSize) / 2;
-          }
+          final iconX = tileLeft;
+          final iconY = tileTop + cellSize - iconSize;
 
           final dstRect = Rect.fromLTWH(iconX, iconY, iconSize, iconSize);
           final srcRect = Rect.fromLTWH(0, 0, iconSize, iconSize);
