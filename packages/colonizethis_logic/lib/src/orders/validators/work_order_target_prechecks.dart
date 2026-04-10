@@ -194,6 +194,16 @@ OrderValidationResult? precheckBuildImprovement(
       'Tile has no resource; build_improvement requires a resource on the tile',
     );
   }
+  if (kMineralResourceIds.contains(resourceId)) {
+    final prospected =
+        ctx.game.worldState.playerProspectedTiles[ctx.playerId] ??
+        const <String>{};
+    if (!prospected.contains(o.targetTileKey)) {
+      return OrderValidationResult.rejected(
+        'Mineral tile must be prospected first',
+      );
+    }
+  }
   final currentLevel = ctx.game.worldState.tileState.improvementLevel(
     o.targetTileKey,
   );

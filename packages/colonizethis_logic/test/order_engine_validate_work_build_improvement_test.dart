@@ -22,6 +22,7 @@ void main() {
         TileMapState tileState = const TileMapState(),
         Map<String, bool>? techUnlocked,
         Stockpile? stockpile,
+        Map<String, Set<String>>? playerProspectedTiles,
       }) {
         return Game(
           id: 'g1',
@@ -52,6 +53,7 @@ void main() {
             playerVisibilityByTile: const {
               'p1': {tileKey: 'fullyVisible'},
             },
+            playerProspectedTiles: playerProspectedTiles ?? const {},
           ),
           players: [
             Player(
@@ -69,6 +71,80 @@ void main() {
           ],
         );
       }
+
+      test(
+        'rejects build_improvement on mineral tile when not prospected',
+        () {
+          final game = baseGame(
+            resourceByTileKey: {tileKey: 'iron'},
+          );
+          final engine = OrderEngine();
+          engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.rejected);
+          expect(results.single.reason, contains('prospected'));
+        },
+      );
+
+      test(
+        'accepts build_improvement on mineral tile after prospected',
+        () {
+          final game = baseGame(
+            resourceByTileKey: {tileKey: 'iron'},
+            playerProspectedTiles: {
+              'p1': {tileKey},
+            },
+          );
+          final engine = OrderEngine();
+          engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.accepted);
+        },
+      );
+
+      test(
+        'accepts build_improvement on grain when tile not prospected',
+        () {
+          final game = baseGame(resourceByTileKey: {tileKey: 'grain'});
+          final engine = OrderEngine();
+          engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.accepted);
+        },
+      );
 
       test('rejects build_improvement when tile has no resource', () {
         final game = baseGame(resourceByTileKey: {});
