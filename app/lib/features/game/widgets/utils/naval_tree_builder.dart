@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show homeFleetIdFor, regionIdForSeaZone, tryGetProvince;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../units/shared/units_panel_region_label.dart';
 import '../../utils/map_location_resolver.dart';
 import '../../utils/sea_zone_name_resolver.dart';
@@ -157,6 +158,7 @@ buildNavalTree(
   String humanPlayerId,
   MapTopology topology,
   Orders draftOrders,
+  AppLocalizations l10n,
 ) {
   final player = game.players.firstWhere(
     (p) => p.id == humanPlayerId,
@@ -275,7 +277,7 @@ buildNavalTree(
         locationKey = 'sea:$zoneKey';
         final row = FleetRow(
           fleetId: fleet.id,
-          label: 'Fleet ${fleet.id}',
+          label: l10n.naval_fleetLabel(fleet.id),
           locationLabel: locationLabel,
           regionId: regionId,
           missionLabel: fleetMissionDisplayLabel(fleet.mission),
@@ -311,7 +313,9 @@ buildNavalTree(
         locationKey = 'port:${province.regionId}|${province.id}';
         final row = FleetRow(
           fleetId: fleet.id,
-          label: isHomeFleet ? 'Home Fleet' : 'Fleet ${fleet.id}',
+          label: isHomeFleet
+              ? l10n.naval_homeFleetLabel
+              : l10n.naval_fleetLabel(fleet.id),
           locationLabel: locationLabel,
           regionId: regionId,
           missionLabel: fleetMissionDisplayLabel(fleet.mission),
@@ -359,7 +363,7 @@ buildNavalTree(
             '${unitsPanelRegionLabel(regionId)} — ${province.displayName ?? province.id}';
         homeFleetRow = FleetRow(
           fleetId: homeFleetIdFor(humanPlayerId),
-          label: 'Home Fleet',
+          label: l10n.naval_homeFleetLabel,
           locationLabel: locationLabel,
           regionId: regionId,
           missionLabel: fleetMissionDisplayLabel(FleetMission.none),

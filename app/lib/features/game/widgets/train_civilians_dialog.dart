@@ -344,7 +344,10 @@ class _UnitTypeRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${_formatTreasury(econ.buildTreasuryCost)} + $paperQty Paper',
+                  appL10n(context).trainCivilians_costLine(
+                    _formatTreasury(econ.buildTreasuryCost),
+                    paperQty.toString(),
+                  ),
                   style: theme.textTheme.bodyMedium,
                 ),
               ],
@@ -370,7 +373,7 @@ class _UnitTypeRow extends StatelessWidget {
                 SizedBox(
                   width: 32,
                   child: Text(
-                    '$count',
+                    count.toString(),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge,
                   ),

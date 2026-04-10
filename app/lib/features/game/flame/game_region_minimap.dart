@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -230,6 +231,7 @@ class _MinimapZoomControlsState extends State<_MinimapZoomControls> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final pct = (_displayMultiplier * 100).round();
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -238,7 +240,7 @@ class _MinimapZoomControlsState extends State<_MinimapZoomControls> {
         SizedBox(
           width: widget.trackWidth,
           child: Text(
-            '$pct%',
+            l10n.common_percent(pct),
             textAlign: TextAlign.center,
             style: widget.theme.textTheme.labelSmall,
           ),
@@ -252,11 +254,11 @@ class _MinimapZoomControlsState extends State<_MinimapZoomControls> {
             children: [
               Expanded(
                 child: Semantics(
-                  label: 'Map zoom',
-                  value: '$pct percent',
+                  label: l10n.regionMinimap_mapZoom,
+                  value: l10n.regionMinimap_zoomSemanticsValue(pct),
                   slider: true,
                   child: Tooltip(
-                    message: 'Map zoom',
+                    message: l10n.regionMinimap_mapZoom,
                     child: Center(
                       child: CtSlider(
                         key: kRegionMinimapZoomSliderKey,

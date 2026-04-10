@@ -6,30 +6,11 @@
 - Primary lint: `hardcoded_strings_lint` (`avoid_hardcoded_strings_in_widgets`)
 
 ## Findings
-- Running `dart run custom_lint` in `app/` returns no violations.
-- Running `flutter analyze` in `app/` also shows no hardcoded-string findings.
-- A direct code scan still shows user-visible string literals in multiple UI files (for example combat and panel/dialog widgets).
+- `dart run custom_lint` / `flutter analyze` may still report no hardcoded-string findings for some real literals (package coverage varies by pattern and version).
+- **CI enforcement:** `tool/check_app_hardcoded_ui_strings.py` runs in the Quality workflow and in `tool/run_quality_gate_tests.sh`, with multiline-safe patterns for `Text`/`SelectableText`, dialog `title`/`content`, `Tooltip.message`, `Semantics.label`, `labelText`/`hintText`, named `label:` string parameters, and `_buildSection` titles. Generated `app/lib/l10n/app_localizations*.dart` files are excluded.
 
-## Gap classification
-- **False-negative gap:** Primary lint currently does not report expected violations for this codebase configuration.
-- **Coverage risk:** Relying only on this lint does not satisfy zero-tolerance localization enforcement for `app/lib/**`.
+## Regression tests
+- `pytool/test_check_app_hardcoded_ui_strings.py` exercises the script via `CT_HARDCODE_UI_CHECK_WORKSPACE` (run: `python3 pytool/test_check_app_hardcoded_ui_strings.py`).
 
-## First migration slice completed
-- Combat UI literals were migrated to ARB/AppLocalizations in:
-  - `app/lib/features/game/combat/quick_battle_action_selector.dart`
-  - `app/lib/features/game/combat/combat_mode_choice_dialog.dart`
-  - `app/lib/features/game/combat/quick_battle_result_dialog.dart`
-  - `app/lib/features/game/combat/quick_battle_screen.dart`
-
-## Remaining likely-affected slices (from code scan)
-- Game widgets/panels and dialogs under:
-  - `app/lib/features/game/widgets/**`
-  - `app/lib/features/game/dialogue/**`
-  - `app/lib/features/game/flame/**` (Flutter-widget overlays/dialog shells)
-- App/menu/debug UI under:
-  - `app/lib/widgets/**`
-  - `app/lib/widgetbook/**`
-
-## Decision for follow-up
-- Keep `hardcoded_strings_lint` as primary configured lint (`S2` satisfied).
-- Treat this document as evidence for `S4`: custom project checks are required to close lint coverage gaps and enforce zero tolerance.
+## Decision
+- Keep `hardcoded_strings_lint` as the primary analyzer plugin; extend the Python gate when new UI literal shapes appear that must be zero-tolerance.

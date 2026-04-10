@@ -24,7 +24,8 @@
 - The Quality workflow must run `flutter gen-l10n` for `app/` and produce an **untranslated / missing messages report** via `untranslated-messages-file`.
 - CI **fails** if the untranslated report contains **any** missing/untranslated messages for any locale.
 - CI runs this gate when the existing Quality workflow is already running tests for `app/**` changes.
-- The `app/` analyzer gate must enable `custom_lint` with `hardcoded_strings_lint` and fail PRs on `avoid_hardcoded_strings_in_widgets` violations.
+- The `app/` analyzer gate must enable `custom_lint` with `hardcoded_strings_lint` and surface `avoid_hardcoded_strings_in_widgets` where the package reports violations.
+- The Quality workflow must also run `tool/check_app_hardcoded_ui_strings.py` (and `tool/run_quality_gate_tests.sh` locally) so multiline widgets, `Semantics`/`Tooltip` ordering, `_buildSection` titles, and other known lint gaps still fail CI when user-visible literals remain in `app/lib/**`.
 - Enforcement applies to `app/lib/**` user-visible UI copy with only narrow technical exceptions defined by `SPEC/ui/localization.md`.
 
 ## Acceptance criteria
@@ -33,5 +34,5 @@
 - **AC3:** All user-visible UI copy in `app/lib/**` is sourced from `AppLocalizations` (including dynamic strings and tooltips).
 - **AC4:** The Quality workflow fails if the untranslated report produced by `untranslated-messages-file` contains any entries.
 - **AC5:** `en` is the default/fallback locale.
-- **AC6:** Given a hardcoded user-visible string in `app/lib/**`, when `flutter analyze` runs in the Quality workflow, then the PR fails with `avoid_hardcoded_strings_in_widgets`.
+- **AC6:** Given a hardcoded user-visible string in `app/lib/**` that matches the enforced patterns in `tool/check_app_hardcoded_ui_strings.py`, when the Quality workflow runs that script (with `app/**` in scope), then the PR fails. When `hardcoded_strings_lint` reports `avoid_hardcoded_strings_in_widgets` on `app/lib/**`, `flutter analyze` in the same workflow must also fail on analyzer errors.
 
