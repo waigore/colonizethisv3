@@ -197,6 +197,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
           widget.humanPlayerId,
           widget.topology,
           widget.draftOrders,
+          appL10n(context),
         ),
       );
       final valid = flat.map(_selectionFleetId).toSet();
@@ -269,6 +270,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       widget.humanPlayerId,
       widget.topology,
       widget.draftOrders,
+      l10n,
     );
     final flat = flattenNavalTree(tree);
     final hasAny = tree.any(
@@ -397,6 +399,9 @@ class _FleetExpansionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final subtitleText =
+        '${row.locationLabel}\n${l10n.naval_units_mission(row.missionLabel)} · ${_summary()}'
+        '${row.draftNavalMoveLine != null ? '\n${row.draftNavalMoveLine}' : ''}';
     return Padding(
       padding: const EdgeInsets.only(left: 8),
       child: ExpansionTile(
@@ -422,10 +427,7 @@ class _FleetExpansionTile extends StatelessWidget {
             ],
           ],
         ),
-        subtitle: Text(
-          '${row.locationLabel}\n${l10n.naval_units_mission(row.missionLabel)} · ${_summary()}'
-          '${row.draftNavalMoveLine != null ? '\n${row.draftNavalMoveLine}' : ''}',
-        ),
+        subtitle: Text(subtitleText),
         dense: true,
         children: [
           if (row.shipCountsByType.isEmpty)

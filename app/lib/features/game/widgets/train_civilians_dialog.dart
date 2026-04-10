@@ -316,7 +316,6 @@ class _UnitTypeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = appL10n(context);
     final paperQty = econ.buildInputs[CommodityCatalog.paper.id] ?? 0;
     final theme = Theme.of(context);
 
@@ -345,9 +344,9 @@ class _UnitTypeRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  l10n.trainCivilians_economyCost(
+                  appL10n(context).trainCivilians_costLine(
                     _formatTreasury(econ.buildTreasuryCost),
-                    paperQty,
+                    paperQty.toString(),
                   ),
                   style: theme.textTheme.bodyMedium,
                 ),
@@ -374,7 +373,7 @@ class _UnitTypeRow extends StatelessWidget {
                 SizedBox(
                   width: 32,
                   child: Text(
-                    '$count',
+                    count.toString(),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge,
                   ),

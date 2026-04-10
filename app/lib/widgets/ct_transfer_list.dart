@@ -1,6 +1,6 @@
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_app/l10n/l10n.dart';
 import 'ct_nine_patch_button.dart';
 import 'ct_panel.dart';
 
@@ -323,7 +323,7 @@ class _TransferSidePanel extends StatelessWidget {
                       final typeId = sortedTypes[index];
                       final count = counts[typeId] ?? 0;
                       final label = Text(
-                        appL10n(context).transfer_list_itemCount(
+                        appL10n(context).transferList_rowCount(
                           itemLabelBuilder(typeId),
                           count,
                         ),

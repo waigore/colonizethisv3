@@ -322,7 +322,7 @@ class _MilitaryResourceBar extends StatelessWidget {
                       ResourceIcon(commodityId: commodityId, size: 14),
                       const SizedBox(width: 4),
                       Text(
-                        l10n.trainMilitary_commodityStock(
+                        l10n.trainMilitary_commodityAmount(
                           _label(commodityId),
                           stockpile.quantityOf(commodityId),
                         ),
@@ -415,7 +415,7 @@ class _RegimentRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${econ.buildTreasuryCost}',
+                  econ.buildTreasuryCost.toString(),
                   style: theme.textTheme.bodyMedium,
                 ),
               ],
@@ -427,16 +427,16 @@ class _RegimentRow extends StatelessWidget {
               children: [
                 _InlineCost(
                   icon: const Icon(Icons.payments_outlined, size: 14),
-                  label: '${econ.buildTreasuryCost}',
+                  label: econ.buildTreasuryCost.toString(),
                 ),
                 _InlineCost(
                   icon: const WorkerIcon(workerType: 'peasant', size: 14),
-                  label: '1',
+                  label: 1.toString(),
                 ),
                 for (final input in econ.buildInputs.entries)
                   _InlineCost(
                     icon: ResourceIcon(commodityId: input.key, size: 14),
-                    label: '${input.value}',
+                    label: input.value.toString(),
                   ),
               ],
             ),
@@ -461,7 +461,7 @@ class _RegimentRow extends StatelessWidget {
                 SizedBox(
                   width: 32,
                   child: Text(
-                    '$count',
+                    count.toString(),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge,
                   ),

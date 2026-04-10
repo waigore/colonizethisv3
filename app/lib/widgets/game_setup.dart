@@ -1,8 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_app/l10n/l10n.dart';
 import '../config/constants.dart';
+import '../l10n/l10n.dart';
 import 'ct_dropdown.dart';
 import 'ct_nine_patch_button.dart';
 
@@ -139,21 +139,21 @@ class _CtGameSetupState extends State<CtGameSetup> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              l10n.gameSetup_loading,
+                              l10n.gameSetup_starting,
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],
                         ),
                       ),
                     _GameSetupMenuButton(
-                      label: 'Start Game',
+                      label: l10n.gameSetup_startGame,
                       variant: widget.variant,
                       enabled: _startEnabled,
                       onPressed: _startEnabled ? _onStartGame : null,
                     ),
                     const SizedBox(height: 12),
                     _GameSetupMenuButton(
-                      label: 'Back',
+                      label: l10n.gameSetup_back,
                       variant: widget.variant,
                       enabled: true,
                       onPressed: widget.onBack,
@@ -170,9 +170,12 @@ class _CtGameSetupState extends State<CtGameSetup> {
   }
 
   Widget _buildSlots(BuildContext context, {required bool narrow}) {
+    final l10n = appL10n(context);
     final rows = <Widget>[];
     for (var i = 0; i < _kNumSlots; i++) {
-      final label = i == 0 ? 'Player 1 (You)' : 'Player ${i + 1} (AI)';
+      final label = i == 0
+          ? l10n.gameSetup_player1You
+          : l10n.gameSetup_playerAiSlot(i + 1);
       rows.add(_buildSlotRow(context, i, label, narrow: narrow));
     }
     return Column(
@@ -204,14 +207,15 @@ class _CtGameSetupState extends State<CtGameSetup> {
           ),
     );
 
+    final l10n = appL10n(context);
     final Widget nationDropdown = CtDropdown<String>(
       value: availableGpIds.contains(gpId)
           ? gpId
           : (availableGpIds.isNotEmpty ? availableGpIds.first : null),
       items: availableGpIds,
-      hint: 'Select nation',
+      hint: l10n.gameSetup_selectNation,
       itemLabel: (id) => id.isEmpty
-          ? 'Select nation'
+          ? l10n.gameSetup_selectNation
           : (widget.naming.gpById(id)?.countryName ?? id),
       onChanged: _isLoading
           ? (_) {}
@@ -239,8 +243,8 @@ class _CtGameSetupState extends State<CtGameSetup> {
         ? CtDropdown<String>(
             value: '',
             items: const [''],
-            hint: 'Select leader',
-            itemLabel: (_) => 'Select leader',
+            hint: l10n.gameSetup_selectLeader,
+            itemLabel: (_) => l10n.gameSetup_selectLeader,
             onChanged: (_) {},
           )
         : CtDropdown<String>(
@@ -248,7 +252,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
                 ? currentVariantId
                 : (variants.isNotEmpty ? variants.first.id : null),
             items: variants.map((v) => v.id).toList(),
-            hint: 'Select leader',
+            hint: l10n.gameSetup_selectLeader,
             itemLabel: (id) =>
                 variants.firstWhere((v) => v.id == id).name,
             onChanged: _isLoading

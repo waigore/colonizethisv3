@@ -309,8 +309,14 @@ _OverlayContent _provinceContent({
             c.visibility != TileVisibility.unrevealed,
       );
   if (isFullyUnrevealed) {
-    final politicalObs = _buildSection('Political', Text(l10n.provinceOverlay_unknown));
-    final tileObs = _buildSection('Tile', Text(l10n.provinceOverlay_unknown));
+    final politicalObs = _buildSection(
+      l10n.provinceOverlay_sectionPolitical,
+      Text(l10n.provinceOverlay_unknown),
+    );
+    final tileObs = _buildSection(
+      l10n.provinceOverlay_sectionTile,
+      Text(l10n.provinceOverlay_unknown),
+    );
     final sections = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -358,13 +364,13 @@ _OverlayContent _provinceContent({
         Text(l10n.provinceOverlay_unknown),
       ],
     );
-    const tabLabels = [
-      'Political',
-      'Tile',
-      'Economic',
-      'Military',
-      'Civilian',
-      'Naval',
+    final tabLabels = [
+      l10n.provinceOverlay_sectionPolitical,
+      l10n.provinceOverlay_sectionTile,
+      l10n.provinceOverlay_sectionEconomic,
+      l10n.provinceOverlay_sectionMilitary,
+      l10n.provinceOverlay_sectionCivilian,
+      l10n.provinceOverlay_sectionNaval,
     ];
     final tabViews = [
       politicalObs,
@@ -497,7 +503,10 @@ _OverlayContent _provinceContent({
           prospectRows: prospectRows,
           onHighlightTile: onHighlightTile,
         )
-      : _buildSection('Economic', Text(l10n.provinceOverlay_unknown));
+      : _buildSection(
+          l10n.provinceOverlay_sectionEconomic,
+          Text(l10n.provinceOverlay_unknown),
+        );
   final militarySection = showsFullIntel
       ? _buildMilitarySectionByOwner(
           l10n: l10n,
@@ -507,7 +516,10 @@ _OverlayContent _provinceContent({
           provinceId: provinceId,
           draftOrders: draftOrders,
         )
-      : _buildSection('Military', Text(l10n.provinceOverlay_unknown));
+      : _buildSection(
+          l10n.provinceOverlay_sectionMilitary,
+          Text(l10n.provinceOverlay_unknown),
+        );
   final civilianSection = showsFullIntel
       ? _buildCivilianSectionFiltered(
           l10n: l10n,
@@ -517,7 +529,10 @@ _OverlayContent _provinceContent({
           playerView: playerView,
           draftOrders: draftOrders,
         )
-      : _buildSection('Civilian', Text(l10n.provinceOverlay_unknown));
+      : _buildSection(
+          l10n.provinceOverlay_sectionCivilian,
+          Text(l10n.provinceOverlay_unknown),
+        );
   final naval = showsFullIntel
       ? _buildNavalSection(
           l10n: l10n,
@@ -527,15 +542,18 @@ _OverlayContent _provinceContent({
           draftOrders: draftOrders,
           pendingNavalPortProvinceId: provinceId,
         )
-      : _buildSection('Naval', Text(l10n.provinceOverlay_unknown));
+      : _buildSection(
+          l10n.provinceOverlay_sectionNaval,
+          Text(l10n.provinceOverlay_unknown),
+        );
 
-  const tabLabels = [
-    'Political',
-    'Tile',
-    'Economic',
-    'Military',
-    'Civilian',
-    'Naval',
+  final tabLabels = [
+    l10n.provinceOverlay_sectionPolitical,
+    l10n.provinceOverlay_sectionTile,
+    l10n.provinceOverlay_sectionEconomic,
+    l10n.provinceOverlay_sectionMilitary,
+    l10n.provinceOverlay_sectionCivilian,
+    l10n.provinceOverlay_sectionNaval,
   ];
   final tabViews = [
     political,
@@ -614,21 +632,24 @@ Widget _buildTileSection({
   String? selectedTileKey,
 }) {
   if (selectedTileKey == null) {
-    return _buildSection('Tile', Text(l10n.provinceOverlay_clickTileForDetails));
+    return _buildSection(
+      l10n.provinceOverlay_sectionTile,
+      Text(l10n.provinceOverlay_clickTileForDetails),
+    );
   }
   final parts = selectedTileKey.split('|');
   if (parts.length < 4 || parts[0] != region.regionId) {
-    return _buildSection('Tile', const Text('—'));
+    return _buildSection(l10n.provinceOverlay_sectionTile, const Text('—'));
   }
   final x = int.tryParse(parts[2]) ?? 0;
   final y = int.tryParse(parts[3]) ?? 0;
   if (x < 0 || x >= region.width || y < 0 || y >= region.height) {
-    return _buildSection('Tile', const Text('—'));
+    return _buildSection(l10n.provinceOverlay_sectionTile, const Text('—'));
   }
   final cell = region.cellAt(x, y);
   if (cell.visibility == TileVisibility.unrevealed) {
     return _buildSection(
-      'Tile',
+      l10n.provinceOverlay_sectionTile,
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -677,7 +698,7 @@ Widget _buildTileSection({
   );
 
   return _buildSection(
-    'Tile',
+    l10n.provinceOverlay_sectionTile,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -734,9 +755,18 @@ _OverlayContent _seaZoneContent({
             c.visibility != TileVisibility.unrevealed,
       );
   if (isSeaZoneFullyUnrevealed) {
-    const tabLabels = ['Political', 'Naval'];
-    final politicalObs = _buildSection('Political', Text(l10n.provinceOverlay_unknown));
-    final navalObs = _buildSection('Naval', Text(l10n.provinceOverlay_unknown));
+    final tabLabels = [
+      l10n.provinceOverlay_sectionPolitical,
+      l10n.provinceOverlay_sectionNaval,
+    ];
+    final politicalObs = _buildSection(
+      l10n.provinceOverlay_sectionPolitical,
+      Text(l10n.provinceOverlay_unknown),
+    );
+    final navalObs = _buildSection(
+      l10n.provinceOverlay_sectionNaval,
+      Text(l10n.provinceOverlay_unknown),
+    );
     final sections = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -769,7 +799,7 @@ _OverlayContent _seaZoneContent({
     seaZoneId: localSeaZoneId,
   );
   final political = _buildSection(
-    'Political',
+    l10n.provinceOverlay_sectionPolitical,
     Text(l10n.provinceOverlay_seaZone(seaName)),
   );
   final naval = _buildNavalSection(
@@ -781,7 +811,10 @@ _OverlayContent _seaZoneContent({
     pendingNavalPortProvinceId: null,
   );
 
-  const tabLabels = ['Political', 'Naval'];
+  final tabLabels = [
+    l10n.provinceOverlay_sectionPolitical,
+    l10n.provinceOverlay_sectionNaval,
+  ];
   final tabViews = [political, naval];
   final sections = Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -858,7 +891,7 @@ Widget _buildPoliticalSection({
   required String ownerName,
 }) {
   return _buildSection(
-    'Political',
+    l10n.provinceOverlay_sectionPolitical,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -896,7 +929,7 @@ Widget _buildEconomicSection({
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  l10n.province_economic_tileLine(
+                  l10n.province_economic_resourceRow(
                     row.terrain,
                     resId,
                     l10n.province_economic_withImprovement(row.impBase),
@@ -921,7 +954,7 @@ Widget _buildEconomicSection({
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  l10n.province_economic_tileLine(
+                  l10n.province_economic_resourceRow(
                     row.terrain,
                     resId,
                     l10n.province_economic_improvableSuffix,
@@ -946,10 +979,13 @@ Widget _buildEconomicSection({
   }
 
   if (children.isEmpty) {
-    return _buildSection('Economic', const Text('—'));
+    return _buildSection(
+      l10n.provinceOverlay_sectionEconomic,
+      const Text('—'),
+    );
   }
   return _buildSection(
-    'Economic',
+    l10n.provinceOverlay_sectionEconomic,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -974,11 +1010,14 @@ Widget _buildMilitarySectionByOwner({
     l10n: l10n,
   );
   if (military.isEmpty && pending.isEmpty) {
-    return _buildSection('Military', const Text('—'));
+    return _buildSection(
+      l10n.provinceOverlay_sectionMilitary,
+      const Text('—'),
+    );
   }
   if (military.isEmpty) {
     return _buildSection(
-      'Military',
+      l10n.provinceOverlay_sectionMilitary,
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -1004,7 +1043,7 @@ Widget _buildMilitarySectionByOwner({
       return _ownerName(game, a).compareTo(_ownerName(game, b));
     });
   return _buildSection(
-    'Military',
+    l10n.provinceOverlay_sectionMilitary,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1062,11 +1101,14 @@ Widget _buildCivilianSectionFiltered({
       )
       .toList();
   if (visible.isEmpty) {
-    return _buildSection('Civilian', const Text('—'));
+    return _buildSection(
+      l10n.provinceOverlay_sectionCivilian,
+      const Text('—'),
+    );
   }
   final workList = draftOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
   return _buildSection(
-    'Civilian',
+    l10n.provinceOverlay_sectionCivilian,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1128,7 +1170,7 @@ Widget _buildNavalSection({
           l10n: l10n,
         );
   return _buildSection(
-    'Naval',
+    l10n.provinceOverlay_sectionNaval,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1142,8 +1184,8 @@ Widget _buildNavalSection({
               byType[s.typeId] = (byType[s.typeId] ?? 0) + 1;
             }
             final fleetLabel = f.id == homeFleetIdFor(f.ownerId)
-                ? 'Home fleet'
-                : 'Fleet ${f.id}';
+                ? l10n.naval_homeFleetLabel
+                : l10n.naval_fleetLabel(f.id);
             final shipParts = byType.entries
                 .map((e) {
                   final label = shipTypeDisplayLabel(l10n, e.key);

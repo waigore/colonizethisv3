@@ -1,10 +1,10 @@
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../config/app_assets.dart';
 import '../../../providers/region_minimap_provider.dart';
 import 'region_map_viewport_snapshot.dart'
@@ -240,7 +240,7 @@ class _MinimapZoomControlsState extends State<_MinimapZoomControls> {
         SizedBox(
           width: widget.trackWidth,
           child: Text(
-            l10n.map_zoom_percent(pct),
+            l10n.common_percent(pct),
             textAlign: TextAlign.center,
             style: widget.theme.textTheme.labelSmall,
           ),
@@ -254,11 +254,11 @@ class _MinimapZoomControlsState extends State<_MinimapZoomControls> {
             children: [
               Expanded(
                 child: Semantics(
-                  label: l10n.map_zoom_tooltip,
-                  value: '$pct percent',
+                  label: l10n.regionMinimap_mapZoom,
+                  value: l10n.regionMinimap_zoomSemanticsValue(pct),
                   slider: true,
                   child: Tooltip(
-                    message: l10n.map_zoom_tooltip,
+                    message: l10n.regionMinimap_mapZoom,
                     child: Center(
                       child: CtSlider(
                         key: kRegionMinimapZoomSliderKey,

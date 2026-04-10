@@ -144,7 +144,8 @@ class _AvailableSubpanel extends StatelessWidget {
   final VoidCallback? onOpenCommodityBreakdown;
 
   Widget _buildCommodityRow(Commodity c, int qty, int change, ThemeData theme) {
-    final changePart = change == 0
+    final name = c.displayName ?? c.id;
+    final changeSeg = change == 0
         ? ''
         : ' (${change > 0 ? '+' : ''}$change)';
     return Row(
@@ -154,7 +155,7 @@ class _AvailableSubpanel extends StatelessWidget {
         const SizedBox(width: 4),
         Flexible(
           child: Text(
-            l10n.production_commodityLine(c.displayName ?? c.id, qty, changePart),
+            l10n.production_commodityStock(name, qty, changeSeg),
             style: theme.textTheme.bodySmall,
             overflow: TextOverflow.ellipsis,
           ),
@@ -192,7 +193,10 @@ class _AvailableSubpanel extends StatelessWidget {
         const SizedBox(width: 4),
         Flexible(
           child: Text(
-            l10n.production_workerLine(_workerDisplayName(workerType), count),
+            l10n.production_workerCount(
+              _workerDisplayName(workerType),
+              count,
+            ),
             style: theme.textTheme.bodySmall,
             overflow: TextOverflow.ellipsis,
           ),
@@ -440,7 +444,7 @@ class _AllocationSubpanel extends StatelessWidget {
                         Expanded(
                           flex: 1,
                           child: Text(
-                            l10n.production_affordanceLine(
+                            l10n.production_recipeAffordance(
                               affordance.maxDesiredOutput,
                               affordance.limitingLabel,
                             ),
@@ -482,7 +486,7 @@ class _AllocationSubpanel extends StatelessWidget {
                         SizedBox(
                           width: 36,
                           child: Text(
-                            '$desired',
+                            desired.toString(),
                             textAlign: TextAlign.right,
                             style: theme.textTheme.bodySmall,
                           ),

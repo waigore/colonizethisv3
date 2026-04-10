@@ -348,13 +348,13 @@ List<String> provincePanelWideLayoutExpectedTexts(
           byType[s.typeId] = (byType[s.typeId] ?? 0) + 1;
         }
         final fleetLabel = f.id == homeFleetIdFor(f.ownerId)
-            ? 'Home fleet'
-            : 'Fleet ${f.id}';
+            ? l10n.naval_homeFleetLabel
+            : l10n.naval_fleetLabel(f.id);
         final shipParts = byType.entries.map((e) {
           final label = shipTypeDisplayLabel(l10n, e.key);
           return '$label×${e.value}';
         }).join(', ');
-        out.add('$ownerName — $fleetLabel: $shipParts');
+        out.add(l10n.provinceOverlay_fleetSummary(ownerName, fleetLabel, shipParts));
       }
     }
     for (final line in pending) {

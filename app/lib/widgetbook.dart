@@ -1234,11 +1234,11 @@ class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
           ),
           Expanded(
             child: ColoredBox(
-              color: Color(0xFFE0E0E0),
+              color: const Color(0xFFE0E0E0),
               child: Center(
                 child: Text(
-                  appL10n(context).widgetbook_bottomSheetHint,
-                  style: TextStyle(color: Color(0xFF616161)),
+                  appL10n(context).widgetbook_openPanelHint,
+                  style: const TextStyle(color: Color(0xFF616161)),
                 ),
               ),
             ),

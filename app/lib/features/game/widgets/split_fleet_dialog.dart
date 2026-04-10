@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_app/l10n/l10n.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_transfer_list.dart';
 import '../utils/region_labels.dart';
@@ -95,7 +95,7 @@ class SplitFleetDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                l10n.fleet_split_dialogTitle,
+                l10n.splitFleet_dialogTitle,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
@@ -103,16 +103,16 @@ class SplitFleetDialog extends StatelessWidget {
                 listHeight: 220,
                 itemLabelBuilder: shipTypeDisplayName,
                 leftTitle: originalFleet.id == 'home_fleet'
-                    ? 'Home Fleet'
-                    : 'Fleet ${originalFleet.id}',
-                rightTitle: 'New Fleet',
+                    ? l10n.naval_homeFleetLabel
+                    : l10n.naval_fleetLabel(originalFleet.id),
+                rightTitle: l10n.splitFleet_newFleetTitle,
                 leftSubtitle: _fleetLocationLabel(),
                 rightSubtitle: _fleetLocationLabel(),
                 initialLeftCounts: _initialOriginalCounts(),
-                leftEmptyLabel: 'No ships',
-                rightEmptyLabel: 'No ships',
-                confirmLabel: 'Confirm Split',
-                totalLabelBuilder: (total) => 'Total: $total ships',
+                leftEmptyLabel: l10n.splitFleet_noShips,
+                rightEmptyLabel: l10n.splitFleet_noShips,
+                confirmLabel: l10n.splitFleet_confirm,
+                totalLabelBuilder: (total) => l10n.splitFleet_totalShips(total),
                 canConfirm: (left, right) {
                   final leftTotal = left.values.fold(
                     0,
