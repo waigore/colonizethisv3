@@ -469,9 +469,35 @@ class _UnitRow extends StatelessWidget {
       UnitStatus.working => l10n.province_unitStatus_working,
     };
     final showActions = !isTileScope || isSelectedInTileScope;
+    final tileKeyForLocate = projectedTileKey;
+    final regionIdForLocate = Unit.regionIdFromTileKey(tileKeyForLocate);
     return ListTile(
       selected: isTileScope && isSelectedInTileScope,
-      title: Text(unit.type),
+      title: Row(
+        children: [
+          Expanded(child: Text(unit.type, overflow: TextOverflow.ellipsis)),
+          const SizedBox(width: 4),
+          IconButton(
+            tooltip: l10n.common_locate,
+            onPressed:
+                tileKeyForLocate != null &&
+                    tileKeyForLocate.isNotEmpty &&
+                    regionIdForLocate != null
+                ? () {
+                    bus.emit(
+                      LocateMapTileEvent(
+                        tileKey: tileKeyForLocate,
+                        regionId: regionIdForLocate,
+                      ),
+                    );
+                  }
+                : null,
+            icon: const Icon(Icons.my_location),
+            iconSize: 18,
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
