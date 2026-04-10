@@ -553,9 +553,8 @@ class _TileMapGenLandSeeds {
           final score = scoreCoastalCell(sx, sy, c);
           if (score > bestScore) {
             bestScore = score;
-            bestCandidates
-              ..clear()
-              ..add((sx, sy));
+            bestCandidates.clear();
+            bestCandidates.add((sx, sy));
           } else if (score == bestScore) {
             bestCandidates.add((sx, sy));
           }
