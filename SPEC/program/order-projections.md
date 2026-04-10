@@ -48,7 +48,7 @@ Optionally, when feasible (currently deferred; fields exist on `ProjectedEffects
 
 - `extractionByCommodity` — projected extraction per commodity
 
-**Production panel stockpile preview (implemented):** `colonizethis_logic` exposes `previewStockpileNetDeltaByCommodityForPlayer` and `applyEconomyPhasesForPreview`, which first apply pending build-order costs from unresolved `Orders.buildUnitOrdersByPlayerId` (affordability-checked) and then run Extraction → Riches-to-treasury → Consumption → Production on a copy of the passed `Game` (no turn advance). Used by the Flutter production panel per [production-panel.md](../ui/production-panel.md).
+**Production panel stockpile preview (implemented):** `colonizethis_logic` exposes `previewStockpileNetDeltaByCommodityForPlayer` and `applyEconomyPhasesForPreview`, which first apply pending stockpile costs: unresolved `Orders.buildUnitOrdersByPlayerId` (affordability-checked, sequential per player), then pending `build_improvement` entries in `Orders.workOrdersByPlayerId` (same material cost and guards as the work phase’s `applyStandardWorkOrder` for that target, sequential per player, after unit-build deductions on the preview clone). Then Extraction → Riches-to-treasury → Consumption → Production run on a copy of the passed `Game` (no turn advance). Used by the Flutter production panel per [production-panel.md](../ui/production-panel.md).
 
 **Phased breakdown (implemented):** `EconomyPreviewStockpilePhase` enum (`pendingBuildCosts`, `extraction`, `richesToTreasury`, `consumption`, `production`) and `previewStockpilePhaseDeltasByCommodityForPlayer` with the **same parameters** as `previewStockpileNetDeltaByCommodityForPlayer`. Returns a map from each phase to per-commodity deltas (zeros omitted). Implementation runs the same private preview steps as `applyEconomyPhasesForPreview` in `turn_resolver.dart` (`economyPreviewStockpilePhaseDeltasForPlayer`). **Invariant:** for every commodity id, the sum of the phase deltas equals the net delta from `previewStockpileNetDeltaByCommodityForPlayer` for the same inputs.
 
@@ -66,7 +66,7 @@ When projecting for a single player: merge that player's orders with empty or pl
 
 For the production-panel Available-grid parenthetical deltas, the projection is not allocation-only arithmetic. The projection runs the same build-cost and economy semantics as live resolver for these phases and order:
 
-0. `Pending build costs` (only unresolved `buildUnitOrdersByPlayerId`; affordability checked with sequential deduction)
+0. `Pending build costs` — unresolved `buildUnitOrdersByPlayerId` (affordability checked, sequential deduction per player), then unresolved `workOrdersByPlayerId` entries with target `build_improvement` (material cost from `workOrderMaterialCost` / current `tileState.improvementLevel(targetTileKey)`, same unit idle/type/target validation as work phase; sequential per player after unit-build deductions on the preview clone). Other work targets are not included in this phase (preview parity for `build_improvement` only unless extended).
 
 1. `Extraction` (land + overseas delivered by cargo/interception ordering)
 2. `Riches-to-treasury`

@@ -253,6 +253,291 @@ void main() {
       );
     });
 
+    test(
+      'pending build_improvement work orders deduct in pending build phase',
+      () {
+        const tileKey = 'oldWorld|ow|p1|0|0';
+        final tileState = const TileMapState().setImprovement(tileKey, 0);
+        final player = Player(
+          id: 'p1',
+          displayName: 'A',
+          isHuman: true,
+          stockpile: const Stockpile()
+              .applyDelta(CommodityCatalog.lumber.id, 10)
+              .applyDelta(CommodityCatalog.castIron.id, 10),
+        );
+        final game = Game(
+          id: 't',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              units: [
+                Unit(
+                  id: 'b1',
+                  type: 'Builder',
+                  ownerId: 'p1',
+                  locationProvinceId: 'ow|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            tileState: tileState,
+          ),
+          players: [player],
+        );
+        final currentOrders = Orders(
+          workOrdersByPlayerId: {
+            'p1': [
+              WorkOrder(
+                unitId: 'b1',
+                target: kWorkTargetBuildImprovement,
+                targetTileKey: tileKey,
+              ),
+            ],
+          },
+        );
+        final delta = previewStockpileNetDeltaByCommodityForPlayer(
+          game: game,
+          topology: const MapTopology(),
+          playerId: 'p1',
+          currentOrders: currentOrders,
+        );
+        final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
+          game: game,
+          topology: const MapTopology(),
+          playerId: 'p1',
+          currentOrders: currentOrders,
+        );
+        expect(delta[CommodityCatalog.lumber.id], -1);
+        expect(delta[CommodityCatalog.castIron.id], -1);
+        expect(
+          phases[EconomyPreviewStockpilePhase
+              .pendingBuildCosts]![CommodityCatalog.lumber.id],
+          -1,
+        );
+        expect(
+          phases[EconomyPreviewStockpilePhase
+              .pendingBuildCosts]![CommodityCatalog.castIron.id],
+          -1,
+        );
+        expectPhaseDeltasSumToNet(
+          game: game,
+          playerId: 'p1',
+          currentOrders: currentOrders,
+        );
+      },
+    );
+
+    test(
+      'build_improvement preview uses improvement level for material cost',
+      () {
+        const tileKey = 'oldWorld|ow|p1|0|0';
+        final tileState = const TileMapState().setImprovement(tileKey, 1);
+        final player = Player(
+          id: 'p1',
+          displayName: 'A',
+          isHuman: true,
+          stockpile: const Stockpile()
+              .applyDelta(CommodityCatalog.lumber.id, 10)
+              .applyDelta(CommodityCatalog.castIron.id, 10),
+        );
+        final game = Game(
+          id: 't',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              units: [
+                Unit(
+                  id: 'b1',
+                  type: 'Builder',
+                  ownerId: 'p1',
+                  locationProvinceId: 'ow|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            tileState: tileState,
+          ),
+          players: [player],
+        );
+        final currentOrders = Orders(
+          workOrdersByPlayerId: {
+            'p1': [
+              WorkOrder(
+                unitId: 'b1',
+                target: kWorkTargetBuildImprovement,
+                targetTileKey: tileKey,
+              ),
+            ],
+          },
+        );
+        final delta = previewStockpileNetDeltaByCommodityForPlayer(
+          game: game,
+          topology: const MapTopology(),
+          playerId: 'p1',
+          currentOrders: currentOrders,
+        );
+        expect(delta[CommodityCatalog.lumber.id], -4);
+        expect(delta[CommodityCatalog.castIron.id], -4);
+      },
+    );
+
+    test('build_improvement preview skips busy unit or unaffordable cost', () {
+      const tileKey = 'oldWorld|ow|p1|0|0';
+      final tileState = const TileMapState();
+      final busyUnit = Unit(
+        id: 'b1',
+        type: 'Builder',
+        ownerId: 'p1',
+        locationProvinceId: 'ow|p1',
+        tileKey: tileKey,
+        status: UnitStatus.working,
+        currentWork: CurrentWork(
+          workTarget: kWorkTargetBuildImprovement,
+          tileKey: tileKey,
+          totalTurns: 2,
+          remainingTurns: 2,
+        ),
+      );
+      final poorPlayer = Player(
+        id: 'p1',
+        displayName: 'A',
+        isHuman: true,
+        stockpile: const Stockpile(),
+      );
+      final gameBusy = Game(
+        id: 't',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(units: [busyUnit]),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: [poorPlayer],
+      );
+      final ordersBusy = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      expect(
+        previewStockpileNetDeltaByCommodityForPlayer(
+          game: gameBusy,
+          topology: const MapTopology(),
+          playerId: 'p1',
+          currentOrders: ordersBusy,
+        ),
+        isEmpty,
+      );
+
+      final playerLowStock = Player(
+        id: 'p1',
+        displayName: 'A',
+        isHuman: true,
+        stockpile: const Stockpile()
+            .applyDelta(CommodityCatalog.lumber.id, 1)
+            .applyDelta(CommodityCatalog.castIron.id, 1),
+      );
+      final gamePoorCost = Game(
+        id: 't2',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            units: [
+              Unit(
+                id: 'b2',
+                type: 'Builder',
+                ownerId: 'p1',
+                locationProvinceId: 'ow|p1',
+                tileKey: tileKey,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          tileState: const TileMapState().setImprovement(tileKey, 1),
+        ),
+        players: [playerLowStock],
+      );
+      final ordersPoorCost = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'b2',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      expect(
+        previewStockpileNetDeltaByCommodityForPlayer(
+          game: gamePoorCost,
+          topology: const MapTopology(),
+          playerId: 'p1',
+          currentOrders: ordersPoorCost,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('build_improvement preview skips disallowed unit type', () {
+      const tileKey = 'oldWorld|ow|p1|0|0';
+      final player = Player(
+        id: 'p1',
+        displayName: 'A',
+        isHuman: true,
+        stockpile: const Stockpile()
+            .applyDelta(CommodityCatalog.lumber.id, 10)
+            .applyDelta(CommodityCatalog.castIron.id, 10),
+      );
+      final game = Game(
+        id: 't',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'peasant_levies',
+                ownerId: 'p1',
+                locationProvinceId: 'ow|p1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [player],
+      );
+      final currentOrders = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            WorkOrder(
+              unitId: 'u1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      expect(
+        previewStockpileNetDeltaByCommodityForPlayer(
+          game: game,
+          topology: const MapTopology(),
+          playerId: 'p1',
+          currentOrders: currentOrders,
+        ),
+        isEmpty,
+      );
+    });
+
     test('combined: extraction + riches + consumption + production', () {
       final stockpile = const Stockpile()
           .applyDelta(CommodityCatalog.grain.id, 100)
