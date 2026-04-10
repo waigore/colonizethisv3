@@ -129,6 +129,25 @@ The OrderEngine validates and stores **move (civilian), army move, build, work, 
 
 ---
 
+## Code generation (OrderEngine slots)
+
+**Mechanical vs validation:** `validatePlayerOrdersWithContext` stays hand-written in `order_engine.dart` (per-type validators, treasury/stockpile propagation). The **slot table** (getter/updater/`_OrderSlot` consts), **constructor and deep-copy wiring** (`copyInitialOrdersForEngine`, `copyOrdersSnapshotForEngine`), and **public** `addXxxOrder`, `addXxxOrderWithContext`, `removeXxxOrder` methods are **generated** into `order_engine.g.dart` from `order_engine_manifest.yaml` via `dart run tool/generate_order_engine_slots.dart`.
+
+**Manifest:** `packages/colonizethis_logic/lib/src/orders/order_engine_manifest.yaml` lists each **engine-managed** order kind (Dart type, `Orders` field, `copyWith` parameter name, log label, public method names) and **storage-only** fields copied with orders but not exposed as engine slots (e.g. `researchOrdersByPlayerId` — no `addResearchOrder` on `OrderEngine`).
+
+**CI / workflow:** `melos run codegen_order_engine` regenerates output; `melos run codegen_verify` (runs `tool/verify_order_engine_codegen.sh`) must pass on PRs — committed `order_engine.g.dart` must match the generator.
+
+**Structural guard:** The generator compares manifest field names to every `final Map<String, List<…>>` field on `Orders` in `colonizethis_models`; a mismatch fails generation so new order maps are not silently omitted.
+
+**Implementation note:** Generated public `add*` / `remove*` methods live in a `mixin` mixed into `OrderEngine` (a `mixin on OrderEngine` would be circular). They delegate to `addOrderForSlot` / `addOrderForSlotWithContext` / `removeOrderForSlot` on the class via `(this as OrderEngine)` so slot helpers stay on the class body next to private state.
+
+### Acceptance criteria (codegen)
+
+- **Given** the repository has `order_engine_manifest.yaml` and `order_engine.g.dart` committed in sync, **when** a maintainer runs `dart run tool/generate_order_engine_slots.dart`, **then** `git diff` shows no changes to `order_engine.g.dart`.
+- **Given** `Orders` in `colonizethis_models` defines a set of `Map<String, List<…>>` order-collection fields, **when** `order_engine_manifest.yaml` does not list exactly those fields split across `engine_slots` and `storage_only`, **then** the generator exits with non-zero status and reports the field-set mismatch.
+
+---
+
 ## Diagnostics
 
 ctdev uses OrderEngine to surface order validity in the Orders (AI history) tab. This is purely diagnostic and does not alter orders passed to TurnResolver.
