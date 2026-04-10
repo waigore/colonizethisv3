@@ -10,7 +10,9 @@ import 'economy_preview_stockpile_phase.dart';
 ///
 /// Phases:
 /// Pending build costs → Extraction → Riches-to-treasury → Consumption → Production,
-/// using the same rules as [applyEconomyPhasesForPreview]. Other players are
+/// using the same rules as [applyEconomyPhasesForPreview]. Pending build costs
+/// include unresolved unit builds and pending `build_improvement` work-order
+/// material costs (work-phase rules). Other players are
 /// simulated in lockstep so extraction ordering (e.g. fleet updates from
 /// trade interception) matches a full turn.
 ///
