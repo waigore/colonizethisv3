@@ -38,6 +38,8 @@ jobs:
               - 'tool/init_game/**'
               - 'tool/sim_economy/**'
               - 'tool/show_tech/**'
+              - 'tool/generate_order_engine_slots.dart'
+              - 'tool/verify_order_engine_codegen.sh'
 
   # Resolved pub cache + .dart_tool + gen-l10n; flutter analyze gate; then pack for shards (--no-pub).
   # Jobs always run after `changes` so required branch checks get success (not skip) when the path filter
@@ -283,6 +285,9 @@ jobs:
       - name: Resolve dependencies
         run: dart pub get
 
+      - name: Verify OrderEngine codegen (SPEC/program/order-engine.md)
+        run: bash tool/verify_order_engine_codegen.sh
+
       - name: Check test import convention (SPEC/program/test-logging.md)
         run: tool/check_test_imports.sh
 
@@ -385,6 +390,9 @@ jobs:
 
       - name: Test disallowed AST patterns checker (SPEC/program/disallowed-ast-patterns.md)
         run: dart test test/check_disallowed_ast_patterns_test.dart --reporter=compact
+
+      - name: Test OrderEngine slot generator (SPEC/program/order-engine.md)
+        run: dart test test/generate_order_engine_slots_test.dart --reporter=compact
 
       - name: Test app hardcoded UI string checker (SPEC/program/localization.md)
         run: dart test test/check_app_hardcoded_ui_strings_test.dart --reporter=compact
