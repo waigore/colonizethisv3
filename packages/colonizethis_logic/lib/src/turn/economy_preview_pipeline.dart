@@ -66,6 +66,93 @@ Game _applyPendingBuildOrderCostsForPreview({
   return game.copyWith(players: updatedPlayers);
 }
 
+Unit? _unitByIdInGame(Game game, String unitId) {
+  for (final u in game.worldState.oldWorld.units) {
+    if (u.id == unitId) return u;
+  }
+  for (final u in game.worldState.newWorld.units) {
+    if (u.id == unitId) return u;
+  }
+  return null;
+}
+
+/// Pending [kWorkTargetBuildImprovement] material costs from
+/// [Orders.workOrdersByPlayerId], after unit-build pending costs, mirroring
+/// [applyStandardWorkOrder] for that target in the work phase (unit present
+/// and idle, valid target tile key, unit type allowed, sequential affordability).
+/// Other work targets are not deducted here (issue #1722 scope).
+Game _applyPendingBuildImprovementWorkOrderCostsForPreview({
+  required Game game,
+  required Orders currentOrders,
+}) {
+  if (currentOrders.workOrdersByPlayerId.isEmpty) {
+    return game;
+  }
+  final tileState = game.worldState.tileState;
+  final updatedPlayers = game.players.map((player) {
+    final orders = currentOrders.workOrdersByPlayerId[player.id];
+    if (orders == null || orders.isEmpty) {
+      return player;
+    }
+    var stockpile = player.stockpile;
+    for (final order in orders) {
+      if (order.target != kWorkTargetBuildImprovement) {
+        continue;
+      }
+      final u = _unitByIdInGame(game, order.unitId);
+      if (u == null || u.currentWork != null) {
+        continue;
+      }
+      final targetTileKey = order.targetTileKey;
+      if (targetTileKey.isEmpty) {
+        continue;
+      }
+      if (!isWorkOrderTargetAllowedForUnitType(
+        u.type,
+        kWorkTargetBuildImprovement,
+      )) {
+        continue;
+      }
+      final cost = workOrderMaterialCost(
+        kWorkTargetBuildImprovement,
+        improvementLevel: tileState.improvementLevel(targetTileKey),
+      );
+      if (cost == null) {
+        continue;
+      }
+      var canAfford = true;
+      for (final e in cost.entries) {
+        if (stockpile.quantityOf(e.key) < e.value) {
+          canAfford = false;
+          break;
+        }
+      }
+      if (!canAfford) {
+        continue;
+      }
+      for (final e in cost.entries) {
+        stockpile = stockpile.applyDelta(e.key, -e.value);
+      }
+    }
+    return player.copyWith(stockpile: stockpile);
+  }).toList();
+  return game.copyWith(players: updatedPlayers);
+}
+
+Game _applyPendingStockpileCostsForPreview({
+  required Game game,
+  required Orders currentOrders,
+}) {
+  final afterBuilds = _applyPendingBuildOrderCostsForPreview(
+    game: game,
+    currentOrders: currentOrders,
+  );
+  return _applyPendingBuildImprovementWorkOrderCostsForPreview(
+    game: afterBuilds,
+    currentOrders: currentOrders,
+  );
+}
+
 /// Per-phase stockpile commodity deltas for [playerId] when running the same
 /// preview pipeline as [applyEconomyPhasesForPreview]. Maps omit zero deltas.
 Map<EconomyPreviewStockpilePhase, Map<String, int>>
@@ -95,7 +182,7 @@ economyPreviewStockpilePhaseDeltasForPlayer({
 
   final beforePendingBuildCosts = stockpileForViewed(acc.game);
   acc = acc.copyWith(
-    game: _applyPendingBuildOrderCostsForPreview(
+    game: _applyPendingStockpileCostsForPreview(
       game: acc.game,
       currentOrders: currentOrders,
     ),
@@ -166,7 +253,7 @@ Game applyEconomyPhasesForPreview({
 }) {
   var acc = TurnPipelineState(game: game);
   acc = acc.copyWith(
-    game: _applyPendingBuildOrderCostsForPreview(
+    game: _applyPendingStockpileCostsForPreview(
       game: acc.game,
       currentOrders: currentOrders,
     ),
