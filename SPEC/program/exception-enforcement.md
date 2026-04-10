@@ -42,9 +42,9 @@ The repository uses an AST-based checker that:
 
 1. Parses Dart files with analyzer.
 2. Visits `ThrowExpression` nodes.
-3. Detects `InstanceCreationExpression` for disallowed generic exception constructors.
-4. Reports file + line + constructor name for each violation.
-5. Fails CI when a violation is outside the migration allowlist.
+3. Detects disallowed generic throws: `ArgumentError` / `Exception` as `InstanceCreationExpression` (e.g. `throw const ArgumentError(...)`) or as implicit-constructor `MethodInvocation` with a null target (e.g. `throw ArgumentError(...)` / `throw Exception(...)`), and `ArgumentError.value(...)` (static `MethodInvocation` on `ArgumentError`).
+4. Reports file + line + disallowed form for each violation.
+5. Fails CI on violations (Phase 2+ may introduce an explicit path allowlist for documented interop boundaries).
 
 ## Rollout Model
 
@@ -56,7 +56,7 @@ The repository uses an AST-based checker that:
 
 ### Phase 2+
 
-- Expand from constructor-only detection to broader thrown-type validation policy per domain.
+- Expand to broader thrown-type validation policy per domain (e.g. path glob → allowed base types).
 - Keep checker mandatory in CI and apply the same migration pattern to any newly introduced runtime packages.
 
 ## Acceptance Criteria

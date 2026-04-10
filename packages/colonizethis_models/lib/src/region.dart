@@ -1,8 +1,7 @@
+import 'model_validation_exception.dart';
+
 /// Region identifier. SPEC/game/world-model: Old World + New World.
-enum Region {
-  oldWorld,
-  newWorld,
-}
+enum Region { oldWorld, newWorld }
 
 extension RegionJson on Region {
   static Region fromJson(String value) {
@@ -12,7 +11,7 @@ extension RegionJson on Region {
       case 'newWorld':
         return Region.newWorld;
       default:
-        throw ArgumentError.value(value, 'value', 'Unknown Region');
+        throw ModelValidationException.value(value, 'value', 'Unknown Region');
     }
   }
 

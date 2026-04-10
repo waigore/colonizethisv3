@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../logic_validation_exception.dart';
 import 'province_lookup.dart';
 import 'unit_lookup.dart';
 
@@ -70,7 +71,11 @@ class PlayerView {
 PlayerView buildPlayerView(Game game, MapTopology _, String playerId) {
   final player = game.playerById(playerId);
   if (player == null) {
-    throw ArgumentError.value(playerId, 'playerId', 'Player not found in game');
+    throw LogicValidationException.value(
+      playerId,
+      'playerId',
+      'Player not found in game',
+    );
   }
 
   // Provinces: key by full id (p.id is regionId|localId).

@@ -6,6 +6,7 @@ export 'package:colonizethis_models/colonizethis_models.dart'
     show AssignedRecipe;
 export 'order_suggestion_api.dart';
 export 'src/constants.dart';
+export 'src/logic_validation_exception.dart';
 export 'src/event_bus/game_event_bus.dart';
 export 'src/game_events.dart';
 export 'src/turn_to_year.dart';

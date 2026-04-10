@@ -209,7 +209,7 @@ void main() {
       const topology = MapTopology(nodes: [], edges: []);
       expect(
         () => buildPlayerView(game, topology, 'nonexistent'),
-        throwsA(isA<ArgumentError>()),
+        throwsA(isA<LogicValidationException>()),
       );
     });
 
