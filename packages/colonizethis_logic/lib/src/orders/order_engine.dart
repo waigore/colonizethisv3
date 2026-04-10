@@ -12,13 +12,9 @@ export 'order_validation_result.dart';
 import 'order_validators.dart';
 import 'unit_type_helpers.dart';
 
+part 'order_engine.g.dart';
+
 final _log = packageLogger();
-
-/// Order engine: current-turn orders per player, validation, projected effects.
-/// SPEC/program/order-engine.md. Does not mutate world state.
-
-/// Order engine: holds per-player orders, validates in submission order,
-/// exposes projected effects. No world state mutation.
 
 /// Appends one [OrderValidationResult] per order; short-circuits when [rejected].
 /// Returns the new rejected flag (true if any result was rejected).
@@ -61,7 +57,7 @@ bool _appendValidationResults<T>(
   return (rejected: r, state: s);
 }
 
-/// Deep-copy of order maps: new map and new list per player. Used by constructor and _copyOrders.
+/// Deep-copy of order maps: new map and new list per player. Used by generated copy helpers.
 Map<String, List<T>> _copyMapOfOrderLists<T>(Map<String, List<T>> map) =>
     Map.from(map)..updateAll((_, v) => List<T>.from(v));
 
@@ -77,57 +73,17 @@ class _OrderSlot<T> {
   final String label;
 }
 
-class OrderEngine {
+/// Order engine: holds per-player orders, validates in submission order,
+/// exposes projected effects. SPEC/program/order-engine.md.
+/// Slot table and public add/remove/withContext methods are generated from
+/// [order_engine_manifest.yaml] → [order_engine.g.dart].
+class OrderEngine with _OrderEngineGeneratedOrderMethods {
   OrderEngine({Orders initialOrders = const Orders()})
-    : _orders = Orders(
-        moveOrdersByPlayerId: _copyMapOfOrderLists(
-          initialOrders.moveOrdersByPlayerId,
-        ),
-        armyMoveOrdersByPlayerId: _copyMapOfOrderLists(
-          initialOrders.armyMoveOrdersByPlayerId,
-        ),
-        buildUnitOrdersByPlayerId: _copyMapOfOrderLists(
-          initialOrders.buildUnitOrdersByPlayerId,
-        ),
-        workOrdersByPlayerId: _copyMapOfOrderLists(
-          initialOrders.workOrdersByPlayerId,
-        ),
-        diplomaticOrdersByPlayerId: _copyMapOfOrderLists(
-          initialOrders.diplomaticOrdersByPlayerId,
-        ),
-        researchOrdersByPlayerId: _copyMapOfOrderLists(
-          initialOrders.researchOrdersByPlayerId,
-        ),
-        navalMoveOrdersByPlayerId: _copyMapOfOrderLists(
-          initialOrders.navalMoveOrdersByPlayerId,
-        ),
-        navalMissionOrdersByPlayerId: _copyMapOfOrderLists(
-          initialOrders.navalMissionOrdersByPlayerId,
-        ),
-      );
+    : _orders = copyInitialOrdersForEngine(initialOrders);
 
   Orders _orders;
 
-  Orders get orders => _copyOrders(_orders);
-
-  Orders _copyOrders(Orders o) => Orders(
-    moveOrdersByPlayerId: _copyMapOfOrderLists(o.moveOrdersByPlayerId),
-    armyMoveOrdersByPlayerId: _copyMapOfOrderLists(o.armyMoveOrdersByPlayerId),
-    buildUnitOrdersByPlayerId: _copyMapOfOrderLists(
-      o.buildUnitOrdersByPlayerId,
-    ),
-    workOrdersByPlayerId: _copyMapOfOrderLists(o.workOrdersByPlayerId),
-    diplomaticOrdersByPlayerId: _copyMapOfOrderLists(
-      o.diplomaticOrdersByPlayerId,
-    ),
-    researchOrdersByPlayerId: _copyMapOfOrderLists(o.researchOrdersByPlayerId),
-    navalMoveOrdersByPlayerId: _copyMapOfOrderLists(
-      o.navalMoveOrdersByPlayerId,
-    ),
-    navalMissionOrdersByPlayerId: _copyMapOfOrderLists(
-      o.navalMissionOrdersByPlayerId,
-    ),
-  );
+  Orders get orders => copyOrdersSnapshotForEngine(_orders);
 
   // -- Generic helpers for add/remove --
 
@@ -185,103 +141,8 @@ class OrderEngine {
     }
   }
 
-  // -- Field accessors for Orders --
-
-  static Map<String, List<MoveOrder>> _moveOrders(Orders o) =>
-      o.moveOrdersByPlayerId;
-  static Orders _withMoveOrders(Orders o, Map<String, List<MoveOrder>> m) =>
-      o.copyWith(moveOrdersByPlayerId: m);
-
-  static Map<String, List<ArmyMoveOrder>> _armyMoveOrders(Orders o) =>
-      o.armyMoveOrdersByPlayerId;
-  static Orders _withArmyMoveOrders(
-    Orders o,
-    Map<String, List<ArmyMoveOrder>> m,
-  ) => o.copyWith(armyMoveOrdersByPlayerId: m);
-
-  static Map<String, List<BuildUnitOrder>> _buildOrders(Orders o) =>
-      o.buildUnitOrdersByPlayerId;
-  static Orders _withBuildOrders(
-    Orders o,
-    Map<String, List<BuildUnitOrder>> m,
-  ) => o.copyWith(buildUnitOrdersByPlayerId: m);
-
-  static Map<String, List<WorkOrder>> _workOrders(Orders o) =>
-      o.workOrdersByPlayerId;
-  static Orders _withWorkOrders(Orders o, Map<String, List<WorkOrder>> m) =>
-      o.copyWith(workOrdersByPlayerId: m);
-
-  static Map<String, List<DiplomaticOrder>> _diplomaticOrders(Orders o) =>
-      o.diplomaticOrdersByPlayerId;
-  static Orders _withDiplomaticOrders(
-    Orders o,
-    Map<String, List<DiplomaticOrder>> m,
-  ) => o.copyWith(diplomaticOrdersByPlayerId: m);
-
-  static Map<String, List<NavalMoveOrder>> _navalMoveOrders(Orders o) =>
-      o.navalMoveOrdersByPlayerId;
-  static Orders _withNavalMoveOrders(
-    Orders o,
-    Map<String, List<NavalMoveOrder>> m,
-  ) => o.copyWith(navalMoveOrdersByPlayerId: m);
-
-  static Map<String, List<NavalMissionOrder>> _navalMissionOrders(Orders o) =>
-      o.navalMissionOrdersByPlayerId;
-  static Orders _withNavalMissionOrders(
-    Orders o,
-    Map<String, List<NavalMissionOrder>> m,
-  ) => o.copyWith(navalMissionOrdersByPlayerId: m);
-
-  // -- Public add/remove methods --
-
-  static const _OrderSlot<MoveOrder> _moveSlot = _OrderSlot<MoveOrder>(
-    getter: _moveOrders,
-    updater: _withMoveOrders,
-    label: 'move',
-  );
-
-  static const _OrderSlot<ArmyMoveOrder> _armyMoveSlot =
-      _OrderSlot<ArmyMoveOrder>(
-        getter: _armyMoveOrders,
-        updater: _withArmyMoveOrders,
-        label: 'army move',
-      );
-
-  static const _OrderSlot<BuildUnitOrder> _buildSlot =
-      _OrderSlot<BuildUnitOrder>(
-        getter: _buildOrders,
-        updater: _withBuildOrders,
-        label: 'build',
-      );
-
-  static const _OrderSlot<WorkOrder> _workSlot = _OrderSlot<WorkOrder>(
-    getter: _workOrders,
-    updater: _withWorkOrders,
-    label: 'work',
-  );
-
-  static const _OrderSlot<DiplomaticOrder> _diplomaticSlot =
-      _OrderSlot<DiplomaticOrder>(
-        getter: _diplomaticOrders,
-        updater: _withDiplomaticOrders,
-        label: 'diplomatic',
-      );
-
-  static const _OrderSlot<NavalMoveOrder> _navalMoveSlot =
-      _OrderSlot<NavalMoveOrder>(
-        getter: _navalMoveOrders,
-        updater: _withNavalMoveOrders,
-        label: 'naval move',
-      );
-
-  static const _OrderSlot<NavalMissionOrder> _navalMissionSlot =
-      _OrderSlot<NavalMissionOrder>(
-        getter: _navalMissionOrders,
-        updater: _withNavalMissionOrders,
-        label: 'naval mission',
-      );
-
-  OrderValidationResult _addOrder<T>(
+  /// Used by generated [order_engine.g.dart] mixins; not part of the supported public API.
+  OrderValidationResult addOrderForSlot<T>(
     String playerId,
     T order,
     _OrderSlot<T> slot,
@@ -290,7 +151,8 @@ class OrderEngine {
     return OrderValidationResult.accepted();
   }
 
-  OrderValidationResult _addOrderWithContextSlot<T>(
+  /// Used by generated [order_engine.g.dart] mixins; not part of the supported public API.
+  OrderValidationResult addOrderForSlotWithContext<T>(
     Game game,
     MapTopology topology,
     String playerId,
@@ -310,155 +172,10 @@ class OrderEngine {
     );
   }
 
-  void _removeOrderAtSlot<T>(String playerId, int index, _OrderSlot<T> slot) {
+  /// Used by generated [order_engine.g.dart] mixins; not part of the supported public API.
+  void removeOrderForSlot<T>(String playerId, int index, _OrderSlot<T> slot) {
     _removeOrderAt(playerId, index, slot.getter, slot.updater);
   }
-
-  OrderValidationResult addMoveOrder(String playerId, MoveOrder order) =>
-      _addOrder(playerId, order, _moveSlot);
-
-  OrderValidationResult addArmyMoveOrder(
-    String playerId,
-    ArmyMoveOrder order,
-  ) => _addOrder(playerId, order, _armyMoveSlot);
-
-  OrderValidationResult addMoveOrderWithContext(
-    Game game,
-    MapTopology topology,
-    String playerId,
-    MoveOrder order, {
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => _addOrderWithContextSlot(
-    game,
-    topology,
-    playerId,
-    order,
-    _moveSlot,
-    tileMapByRegion: tileMapByRegion,
-  );
-
-  OrderValidationResult addArmyMoveOrderWithContext(
-    Game game,
-    MapTopology topology,
-    String playerId,
-    ArmyMoveOrder order, {
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => _addOrderWithContextSlot(
-    game,
-    topology,
-    playerId,
-    order,
-    _armyMoveSlot,
-    tileMapByRegion: tileMapByRegion,
-  );
-
-  OrderValidationResult addBuildOrder(String playerId, BuildUnitOrder order) =>
-      _addOrder(playerId, order, _buildSlot);
-
-  OrderValidationResult addBuildOrderWithContext(
-    Game game,
-    MapTopology topology,
-    String playerId,
-    BuildUnitOrder order, {
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => _addOrderWithContextSlot(
-    game,
-    topology,
-    playerId,
-    order,
-    _buildSlot,
-    tileMapByRegion: tileMapByRegion,
-  );
-
-  OrderValidationResult addWorkOrder(String playerId, WorkOrder order) =>
-      _addOrder(playerId, order, _workSlot);
-
-  OrderValidationResult addWorkOrderWithContext(
-    Game game,
-    MapTopology topology,
-    String playerId,
-    WorkOrder order, {
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => _addOrderWithContextSlot(
-    game,
-    topology,
-    playerId,
-    order,
-    _workSlot,
-    tileMapByRegion: tileMapByRegion,
-  );
-
-  OrderValidationResult addDiplomaticOrder(
-    String playerId,
-    DiplomaticOrder order,
-  ) => _addOrder(playerId, order, _diplomaticSlot);
-
-  OrderValidationResult addDiplomaticOrderWithContext(
-    Game game,
-    MapTopology topology,
-    String playerId,
-    DiplomaticOrder order, {
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => _addOrderWithContextSlot(
-    game,
-    topology,
-    playerId,
-    order,
-    _diplomaticSlot,
-    tileMapByRegion: tileMapByRegion,
-  );
-
-  OrderValidationResult addNavalMoveOrder(
-    String playerId,
-    NavalMoveOrder order,
-  ) => _addOrder(playerId, order, _navalMoveSlot);
-
-  OrderValidationResult addNavalMoveOrderWithContext(
-    Game game,
-    MapTopology topology,
-    String playerId,
-    NavalMoveOrder order, {
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => _addOrderWithContextSlot(
-    game,
-    topology,
-    playerId,
-    order,
-    _navalMoveSlot,
-    tileMapByRegion: tileMapByRegion,
-  );
-
-  OrderValidationResult addNavalMissionOrder(
-    String playerId,
-    NavalMissionOrder order,
-  ) => _addOrder(playerId, order, _navalMissionSlot);
-
-  OrderValidationResult addNavalMissionOrderWithContext(
-    Game game,
-    MapTopology topology,
-    String playerId,
-    NavalMissionOrder order, {
-    Map<String, TileMapResult>? tileMapByRegion,
-  }) => _addOrderWithContextSlot(
-    game,
-    topology,
-    playerId,
-    order,
-    _navalMissionSlot,
-    tileMapByRegion: tileMapByRegion,
-  );
-
-  void removeMoveOrder(String playerId, int index) =>
-      _removeOrderAtSlot(playerId, index, _moveSlot);
-
-  void removeArmyMoveOrder(String playerId, int index) =>
-      _removeOrderAtSlot(playerId, index, _armyMoveSlot);
-
-  void removeBuildOrder(String playerId, int index) =>
-      _removeOrderAtSlot(playerId, index, _buildSlot);
-
-  void removeWorkOrder(String playerId, int index) =>
-      _removeOrderAtSlot(playerId, index, _workSlot);
 
   /// Validates with full context. Call this when Game and topology available.
   List<OrderValidationResult> validatePlayerOrdersWithContext(
@@ -506,6 +223,7 @@ class OrderEngine {
         previousRejected: previousRejected,
       );
     }
+
     OrderValidationResult validateArmyMove(ArmyMoveOrder o) {
       return armyMoveValidator.validate(
         o,
@@ -618,7 +336,6 @@ class OrderEngine {
     List<AssignedRecipe> defaultAssignments = const [],
     Map<String, TileMapResult>? tileMapByRegion,
   }) {
-    final orders = _copyOrders(_orders);
     final tileMaps = tileMapByRegion ?? <String, TileMapResult>{};
     if (tileMaps.isEmpty) {
       _log.d(
@@ -627,7 +344,7 @@ class OrderEngine {
     }
     return projectOrderEffects(
       game: game,
-      orders: orders,
+      orders: copyOrdersSnapshotForEngine(_orders),
       topology: topology,
       tileMapByRegion: tileMaps,
       playerId: playerId,
