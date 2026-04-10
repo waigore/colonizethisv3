@@ -14,7 +14,7 @@ The civilian units panel gives the player a single place to see every civilian u
 
 - **Included:** All units owned by the human player that are **civilian** per the game model: Explorer, Builder, Engineer, Spy, Merchant, Rail Builder. Identification uses the same rule as development and TUI (e.g. `unitRoleForType(unit.type)` is not military and not naval; units have `tileKey`).
 - **Excluded:** Military regiments and naval units. Units owned by other players or by Minor Nations/Tribes are not shown.
-- **Data source:** Units from `WorldState` for all regions (e.g. `oldWorld.units` and `newWorld.units`), filtered by `ownerId == humanPlayerId` and civilian type. Province and region for each unit are derived from `Unit.tileKey` (prefixed format `regionId|provinceId|x|y`).
+- **Data source:** Units from `WorldState` for all regions (e.g. `oldWorld.units` and `newWorld.units`), filtered by `ownerId == humanPlayerId` and civilian type. Province and region for each unit are derived from the **projected civilian tile** (pending draft `WorkOrder.targetTileKey` for that unit when present, else non-empty `assignedTileKey`, else `tileKey`).
 
 ---
 
@@ -41,9 +41,9 @@ For each civilian unit, the panel shows:
 
 | Field        | Source | Notes |
 |-------------|--------|--------|
-| **Status**  | `Unit.status` | One of: `idle`, `working`, `done`. Display as short label (e.g. "Idle", "Working", "Done"). |
-| **Location**| `Unit.tileKey` | **Province name only** (no raw id). Province name from game data (e.g. `Province.displayName` for the province derived from `tileKey`). **Always show the region** with the location (e.g. "Old World — London" or "New World — Mexica") so the player knows which map tab the unit is in. |
-| **Assigned to** | `Unit.currentWork` when `status == working` | If idle or done: show "—" or "Idle". If working: show work target (e.g. `build_improvement`, `explore`, `prospect`) and target location (province name + region). When `currentWork.remainingTurns` / `totalTurns` are present, the UI **must** show progress (e.g. `2/5 turns`); when absent, omit the progress segment. |
+| **Status**  | `Unit.status` | One of: `idle`, `working`. Display as short label (e.g. "Idle", "Working"). |
+| **Location**| projected civilian tile key | **Province name only** (no raw id). Province name from game data (e.g. `Province.displayName` for the province derived from projected tile). **Always show the region** with the location (e.g. "Old World — London" or "New World — Mexica") so the player knows which map tab the unit is in. |
+| **Assigned to** | pending `WorkOrder` first, else `Unit.currentWork` when `status == working` | If idle and no pending work: show "—". If pending or working: show work target (e.g. `build_improvement`, `explore`, `prospect`) and target location (province name + region). When `currentWork.remainingTurns` / `totalTurns` are present, the UI **must** show progress (e.g. `2/5 turns`); when absent, omit the progress segment. |
 
 - **Unit identity:** Each row is associated with one `Unit` (e.g. `unit.id`). Show unit type (Explorer, Builder, etc.) and a short id or label so the player can tell units apart.
 - **Clickable row:** The entire row (or a dedicated "Locate" control) is the click target for "highlight this unit's tile on the map and pan/center to it".
@@ -54,7 +54,7 @@ For each civilian unit, the panel shows:
 
 ## Map highlight and pan/center on unit selection
 
-- **When** the user clicks a unit row in the civilian units panel, **then** the UI layer: (1) sets the map's **highlighted tile** to that unit's `tileKey`; (2) **pans and centers** the map viewport so that the unit's tile is visible and centered; (3) **switches the active region tab** to the unit's region if it differs from the current tab.
+- **When** the user clicks a unit row in the civilian units panel, **then** the UI layer: (1) sets the map's **highlighted tile** to that unit's projected civilian tile key; (2) **pans and centers** the map viewport so that the unit's tile is visible and centered; (3) **switches the active region tab** to the unit's region if it differs from the current tab.
 - **Contract:** The map widget supports `highlightedTileKey` per [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md) and an optional "center on tile" (e.g. `centerOnTileKey` or callback) so the shell can request pan/center when a unit is selected from the panel.
 - **Clearing:** Highlight remains until the user selects another unit, selects a province/tile elsewhere, or closes the panel (implementation may keep or clear highlight on panel close).
 
@@ -89,7 +89,7 @@ For each civilian unit, the panel shows:
 
 - **Given** the Civilian Units panel is open and the human player has zero civilian units, **when** the panel is displayed, **then** the UI layer shows an empty state message (e.g. "No civilian units") and does not show any unit rows.
 
-- **Given** the Civilian Units panel is open and the user clicks a unit row (or a "Locate" control for that unit), **when** that unit has a non-null `tileKey`, **then** the UI layer sets the map's highlighted tile to that unit's `tileKey`, pans and centers the map so that tile is visible and centered, and switches the active region tab to the unit's region if it differs from the current tab.
+- **Given** the Civilian Units panel is open and the user clicks a unit row (or a "Locate" control for that unit), **when** that unit has a non-null projected civilian tile key, **then** the UI layer sets the map's highlighted tile to that projected tile, pans and centers the map so that tile is visible and centered, and switches the active region tab to the unit's region if it differs from the current tab.
 
 - **Given** the user has just selected a unit in the Civilian Units panel whose `tileKey` is in region R and the visible map tab is for a different region, **when** the panel triggers locate, **then** the UI layer switches the active region tab to R so the correct map is shown, then applies the highlight and pan/center on that map.
 

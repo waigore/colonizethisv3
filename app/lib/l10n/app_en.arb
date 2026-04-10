@@ -462,8 +462,6 @@
   "@province_unitStatus_idle": {"description": "Province panel: unit has no pending orders this turn."},
   "province_unitStatus_working": "working",
   "@province_unitStatus_working": {"description": "Province panel: unit work in progress in world state."},
-  "province_unitStatus_done": "done",
-  "@province_unitStatus_done": {"description": "Province panel: unit status done."},
 
   "province_workOrder_explore": "explore",
   "@province_workOrder_explore": {"description": "Work order target label in province panel."},

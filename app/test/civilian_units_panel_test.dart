@@ -339,6 +339,83 @@ void main() {
     );
 
     testWidgets(
+      'uses pending target tile for Location and locate event in full-list mode',
+      (WidgetTester tester) async {
+        const human = 'gp1';
+        const standingTile = 'oldWorld|p1|0|0';
+        const pendingTile = 'oldWorld|p2|0|0';
+        final gameWithPending = Game(
+          id: 'g_pending_projection',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+                Province(
+                  id: 'oldWorld|p2',
+                  regionId: 'oldWorld',
+                  displayName: 'Beta',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: 'Builder',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: standingTile,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        final orders = const Orders(
+          workOrdersByPlayerId: {
+            human: [
+              WorkOrder(
+                unitId: 'u1',
+                target: 'build_improvement',
+                targetTileKey: pendingTile,
+              ),
+            ],
+          },
+        );
+        LocateMapTileEvent? locateEvent;
+        final bus = AppEventBus.create();
+        bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
+
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithPending,
+            humanPlayerId: human,
+            currentOrders: orders,
+            bus: bus,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.textContaining('Location: Old World — Beta'),
+          findsOneWidget,
+        );
+        await tester.tap(find.byType(ListTile).first);
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(locateEvent, isNotNull);
+        expect(locateEvent!.tileKey, pendingTile);
+      },
+    );
+
+    testWidgets(
       'AC: assign target emits ClosePanelEvent before StartCivilianWorkTargetSelectionEvent',
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
