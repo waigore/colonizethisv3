@@ -23,7 +23,7 @@
 - WorkOrder applies to **civilian units only** and carries **targetTileKey**. Military and naval units do not have tileKey or work orders of this kind.
 - When a `WorkOrder` is accepted for a civilian:
   - Validate **unit type**, **target tile** (targetTileKey: exists, tile ownership, terrain eligibility), and **tech prerequisites** (e.g. Road Construction for transport level 2, Early Steam Engine for rail, Mine Engineering / Modern Forts for higher forts, gathering techs for higher improvements).
-  - For **build_improvement** specifically: reject if the tile has no resource (per [extraction-and-improvements.md](../game/extraction-and-improvements.md)); reject if the tile's improvement level is already at max (4) or if the next level would exceed the player's tech-allowed extraction cap (see [tech-and-extraction-cap.md](../game/tech-and-extraction-cap.md)).
+  - For **build_improvement** specifically: reject if the tile has no resource (per [extraction-and-improvements.md](../game/extraction-and-improvements.md)); for **prospect-required minerals** (iron, copper, tin, coal, silver, gold, gems, diamonds — same set as [extraction-and-improvements.md](../game/extraction-and-improvements.md) Mineral Prospecting Gate), reject if that tile is not in the player's `playerProspectedTiles` entry (same message pattern as `purchase_land`: mineral must be prospected first); reject if the tile's improvement level is already at max (4) or if the next level would exceed the player's tech-allowed extraction cap (see [tech-and-extraction-cap.md](../game/tech-and-extraction-cap.md)).
   - Look up:
     - `totalTurns` for this action using `totalTurnsForWork` in `packages/colonizethis_data` `work_order_costs.dart`, applied from `applyBuildAndWorkOrders` for standard material-backed targets (`build_improvement`, `build_road`, `build_port`, `build_fort`, `build_rail`, `upgrade_town`). **`explore`** uses the province-scaled turn count computed in that application path (see [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md)). **`steal_tech`** uses 5 turns. **`counter_spy`** is ongoing (see loop below). **`purchase_land`** and **`prospect`** do not use this `currentWork` duration path in the build-phase application (see application code and fog spec).
     - Material **costs** per action from `work_order_materialCost` / related helpers in the same module (and treasury rules for `purchase_land`).
@@ -92,7 +92,15 @@ Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-
 
 - **build_improvement validation:** Given a `build_improvement` work order  
   When the order engine validates it  
-  Then the engine rejects the order if the target tile has no resource, if the tile's improvement level is already 4, or if the player's tech-allowed extraction cap is strictly less than (current improvement level + 1).
+  Then the engine rejects the order if the target tile has no resource, if the tile's improvement level is already 4, if the player's tech-allowed extraction cap is strictly less than (current improvement level + 1), or if the tile's resource is a prospect-required mineral and the tile key is not in that player's `playerProspectedTiles` set (rejection reason includes that the mineral tile must be prospected first).
+
+- **build_improvement validation (mineral prospected):** Given an owned or player-controlled tile whose `resourceByTileKey` entry is a prospect-required mineral and that tile key is present in `playerProspectedTiles` for the submitting player, and given improvement level and tech cap allow the next level  
+  When the order engine validates a `build_improvement` work order on that tile  
+  Then the engine does not reject for missing prospection (subject to existing resource, level, tech, materials, and territory rules).
+
+- **build_improvement validation (non-mineral):** Given a tile whose resource is not a prospect-required mineral and that tile is not in `playerProspectedTiles`  
+  When the order engine validates `build_improvement`  
+  Then the engine does not reject for missing prospection when all other validation rules pass.
 
 - **build_improvement completion (stored level):** Given a unit completes `build_improvement` on a tile whose stored improvement level is `N` with `0 <= N <= 3`  
   When `remainingTurns` reaches 0 and the effect is applied  
