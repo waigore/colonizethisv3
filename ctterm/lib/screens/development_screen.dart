@@ -697,9 +697,6 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     final reservedTiles = <String>{};
 
     // Existing multi-turn work (currentWork) for Builder/Engineer/Merchant units.
-    bool isDevExclusiveUnitType(String type) =>
-        type == 'Builder' || type == 'Engineer' || type == 'Merchant';
-
     for (final u in world.oldWorld.units) {
       final w = u.currentWork;
       if (u.ownerId == playerId &&

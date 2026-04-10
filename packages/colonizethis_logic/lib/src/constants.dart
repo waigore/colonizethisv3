@@ -4,6 +4,15 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+export 'package:colonizethis_models/colonizethis_models.dart'
+    show
+        kUnitTypeBuilder,
+        kUnitTypeEngineer,
+        kUnitTypeExplorer,
+        kUnitTypeMerchant,
+        kUnitTypeRailBuilder,
+        kUnitTypeSpy;
+
 const String kRegionOldWorld = 'oldWorld';
 const String kRegionNewWorld = 'newWorld';
 
