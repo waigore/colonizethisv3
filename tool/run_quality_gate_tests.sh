@@ -49,6 +49,10 @@ echo "=== App hardcoded UI string gate (AST, app/lib/** -> l10n) ==="
 dart run "$ROOT/tool/check_app_hardcoded_ui_strings.dart"
 
 echo ""
+echo "=== Work target constants convention gate ==="
+bash "$ROOT/tool/check_work_target_constants.sh"
+
+echo ""
 echo "=== Test app (Flutter) ==="
 # CI runs sharded app tests with a shared deps artifact (.github/workflows/quality.yml).
 # Locally: single process is enough; use the same flags as shards for parity.

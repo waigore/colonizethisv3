@@ -48,7 +48,8 @@ Orders runDomainPlanners({
     orders,
   );
   final hasSpyWork = workCandidates.any(
-    (o) => o.target == 'steal_tech' || o.target == 'counter_spy',
+    (o) =>
+        o.target == kWorkTargetStealTech || o.target == kWorkTargetCounterSpy,
   );
   final workThreshold =
       40 - (hasSpyWork ? agendaSpyOrderModifier(config.hiddenAgendaId) : 0);
@@ -64,7 +65,9 @@ Orders runDomainPlanners({
     final pickFrom = (agendaId == 'tech_thief' && hasSpyWork)
         ? workCandidates
               .where(
-                (o) => o.target == 'steal_tech' || o.target == 'counter_spy',
+                (o) =>
+                    o.target == kWorkTargetStealTech ||
+                    o.target == kWorkTargetCounterSpy,
               )
               .toList()
         : workCandidates;

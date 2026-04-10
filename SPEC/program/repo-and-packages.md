@@ -67,6 +67,8 @@ colonizethis_data    (no package deps)
 - **Given** an app runtime asset reference in `app/lib`, **when** the code compiles, **then** the reference uses constants or helper builders defined in `app/lib/config/app_assets.dart`.
 - **Given** Dart source under `app/`, `ctterm/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical tech IDs are rejected outside allowlisted declaration/config and fixture paths.
 - **Given** the tech-ID convention gate reports a violation, **when** a developer inspects the output, **then** each violation includes file path, line, column, and the offending tech ID literal for direct remediation.
+- **Given** Dart source under `app/`, `ctterm/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical work target IDs are rejected outside the allowlisted work-target declaration file and fixture paths.
+- **Given** the work-target convention gate reports a violation, **when** a developer inspects the output, **then** each violation includes file path, line, column, and the offending work target literal with a suggested `kWorkTarget*` constant when available.
 
 ### Automated guard gate (CI)
 
@@ -75,9 +77,11 @@ The repository enforces this boundary in CI via:
 - `tool/check_logic_ai_decoupling.sh`
 - `tool/check_asset_path_constants.sh`
 - `tool/check_tech_id_constants.sh`
+- `tool/check_work_target_constants.sh`
 - `.github/workflows/quality.yml` step: `Check logic/ai decoupling convention (SPEC/program/repo-and-packages.md)`
 - `.github/workflows/quality.yml` step: `Check asset path constants convention (SPEC/program/repo-and-packages.md)`
 - `.github/workflows/quality.yml` step: `Check tech ID constants convention (SPEC/program/repo-and-packages.md)`
+- `.github/workflows/quality.yml` step: `Check work target constants convention (SPEC/program/repo-and-packages.md)`
 
 Guard behavior:
 
@@ -87,7 +91,9 @@ Guard behavior:
 - Fails if `packages/colonizethis_logic/test/**` imports `package:colonizethis_ai/...`.
 - Fails if `app/lib/**` contains direct `assets/...` or `packages/<pkg>/assets/...` string literals outside `app/lib/config/app_assets.dart`.
 - Fails if executable `StringLiteral` AST nodes equal to canonical tech IDs appear outside allowlisted tech declaration/config files and approved fixture/test-data paths.
+- Fails if executable `StringLiteral` AST nodes equal to canonical work target IDs appear outside `packages/colonizethis_logic/lib/src/constants.dart`, approved fixture/test-data paths, and an explicit temporary allowlist for generated/legacy surfaces pending migration.
 - In PR CI, the tech-ID guard may scan only changed Dart files for faster feedback; if PR diff context is unavailable, it falls back to a full repository scan with the same violation rules.
+- In PR CI, the work-target guard may scan only changed Dart files for faster feedback; if PR diff context is unavailable, it falls back to a full repository scan with the same violation rules.
 
 Asset-path guard remediation:
 
