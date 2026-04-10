@@ -7,6 +7,8 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/source/line_info.dart';
 import 'package:path/path.dart' as p;
 
+import 'ct_repo_lint_scan_contract.dart';
+
 /// PR-blocking hardcoded UI string check for `app/lib/**`.
 ///
 /// Uses the Dart AST (not line regexes) so multiline `Text(\n  '…',\n)` and
@@ -21,7 +23,7 @@ void main() {
   }
 
   final violations = <HardcodedUiViolation>[];
-  for (final file in _collectAppLibDartFiles(appLib)) {
+  for (final file in collectRepoLintAppLibDartFilesSorted(repoRoot)) {
     final relativePath = p.relative(file.path, from: repoRoot);
     final content = file.readAsStringSync();
     violations.addAll(findHardcodedUiViolations(relativePath, content));
@@ -55,15 +57,7 @@ List<HardcodedUiViolation> findHardcodedUiViolations(
   if (_fileHasIgnoreForRule(content)) {
     return const [];
   }
-  if (!relativePath.endsWith('.dart')) {
-    return const [];
-  }
-  if (relativePath.contains('/test/') || relativePath.endsWith('_test.dart')) {
-    return const [];
-  }
-  if (relativePath.endsWith('.g.dart') ||
-      relativePath.endsWith('.freezed.dart') ||
-      relativePath.endsWith('.mocks.dart')) {
+  if (repoLintAppLibHardcodedUiVisitorShouldSkip(relativePath)) {
     return const [];
   }
 
@@ -75,21 +69,6 @@ List<HardcodedUiViolation> findHardcodedUiViolations(
   final visitor = _HardcodedUiVisitor(relativePath, content, parsed.lineInfo);
   parsed.unit.accept(visitor);
   return visitor.violations;
-}
-
-List<File> _collectAppLibDartFiles(Directory appLib) {
-  final files = <File>[];
-  for (final entity in appLib.listSync(recursive: true, followLinks: false)) {
-    if (entity is! File) {
-      continue;
-    }
-    if (!entity.path.endsWith('.dart')) {
-      continue;
-    }
-    files.add(entity);
-  }
-  files.sort((a, b) => a.path.compareTo(b.path));
-  return files;
 }
 
 bool _fileHasIgnoreForRule(String source) {

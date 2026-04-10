@@ -150,3 +150,96 @@ bool repoLintIdentifierLiteralShouldSkipFile(
   }
   return false;
 }
+
+// --- Canonical province tile-key checker ---
+
+/// Repo-root `test/**` or any `.../test/...` segment (normalized path).
+bool repoLintPathIsUnderPackageOrRootTestTree(String relativePathFromRepo) {
+  final norm = p.normalize(relativePathFromRepo);
+  if (norm.startsWith('test${p.separator}')) {
+    return true;
+  }
+  if (norm.contains('${p.separator}test${p.separator}')) {
+    return true;
+  }
+  return false;
+}
+
+bool repoLintPathEndsWithKnownGeneratedDartSuffix(String relativePathFromRepo) {
+  return relativePathFromRepo.endsWith('.g.dart') ||
+      relativePathFromRepo.endsWith('.freezed.dart') ||
+      relativePathFromRepo.endsWith('.mocks.dart') ||
+      relativePathFromRepo.endsWith('.gen.dart');
+}
+
+bool repoLintCanonicalProvinceTileKeyShouldSkipFile(
+  String relativePathFromRepo,
+  Set<String> excludedPaths,
+) {
+  if (excludedPaths.contains(relativePathFromRepo)) {
+    return true;
+  }
+  if (repoLintPathIsUnderPackageOrRootTestTree(relativePathFromRepo)) {
+    return true;
+  }
+  if (repoLintPathEndsWithKnownGeneratedDartSuffix(relativePathFromRepo)) {
+    return true;
+  }
+  return false;
+}
+
+/// Candidate `.dart` files for the canonical province `targetTileKey` gate (same
+/// roots as identifier-literal checkers; skips tests/generated and checker-local
+/// [excludedPaths] only — no fixture-dir heuristics).
+List<File> collectRepoLintCanonicalProvinceTileKeyDartFiles(
+  String repoRoot,
+  Set<String> excludedPaths,
+) {
+  final candidates = collectRepoLintDartFilesUnderRelativeRoots(
+    repoRoot,
+    repoLintIdentifierLiteralScanRoots,
+  );
+  final out = <File>[];
+  for (final f in candidates) {
+    final rel = p.normalize(p.relative(f.path, from: repoRoot));
+    if (!repoLintCanonicalProvinceTileKeyShouldSkipFile(rel, excludedPaths)) {
+      out.add(f);
+    }
+  }
+  return out;
+}
+
+// --- App `lib/` hardcoded UI string checker ---
+
+/// All `app/lib/**/*.dart` files, sorted by path (historical checker order).
+List<File> collectRepoLintAppLibDartFilesSorted(String repoRoot) {
+  final base = Directory(p.join(repoRoot, 'app', 'lib'));
+  if (!base.existsSync()) {
+    return <File>[];
+  }
+  final files = <File>[];
+  for (final entity in base.listSync(recursive: true, followLinks: false)) {
+    if (entity is File && entity.path.endsWith('.dart')) {
+      files.add(entity);
+    }
+  }
+  files.sort((a, b) => a.path.compareTo(b.path));
+  return files;
+}
+
+/// Skip predicate for [findHardcodedUiViolations] after `app/lib` prefix checks.
+bool repoLintAppLibHardcodedUiVisitorShouldSkip(String relativePathFromRepo) {
+  if (!relativePathFromRepo.endsWith('.dart')) {
+    return true;
+  }
+  if (relativePathFromRepo.contains('/test/') ||
+      relativePathFromRepo.endsWith('_test.dart')) {
+    return true;
+  }
+  if (relativePathFromRepo.endsWith('.g.dart') ||
+      relativePathFromRepo.endsWith('.freezed.dart') ||
+      relativePathFromRepo.endsWith('.mocks.dart')) {
+    return true;
+  }
+  return false;
+}
