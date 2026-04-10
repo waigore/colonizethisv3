@@ -2,8 +2,10 @@
 # SPEC: SPEC/program/repo-lint.md
 version: 1
 
-# Shared defaults (documentation for Phase 2+; individual runners apply their own excludes today).
+# Domain lib scan roots / excludes for AST rules aligned with exception-enforcement:
+# see tool/ct_repo_lint_scan_contract.dart (single source of truth).
 shared_scan_notes:
+  dart_contract: tool/ct_repo_lint_scan_contract.dart
   exclude_path_globs:
     - "**/test/**"
     - "**/*.g.dart"
