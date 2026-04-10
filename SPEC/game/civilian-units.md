@@ -33,7 +33,7 @@ Canonical list of WorkOrder targets per civilian type. Order engine and suggesti
 |--------|------|--------------|----------|-------|
 | explore | Explorer | Free | Multi-turn (province size) | Province-level; reveals tiles |
 | prospect | Explorer | Free | Instant (Build/Work phase) | Tile-level; mineral-eligible; resolved immediately when order is accepted |
-| build_improvement | Builder | Lumber + cast iron per level | Config (default 1) | Tile-level; level 1–4 |
+| build_improvement | Builder | Lumber + cast iron per level | Config (default 1) | Tile-level; level 1–4; prospect-required minerals → tile must be prospected (same gate as extraction / `purchase_land`) |
 | upgrade_town | Builder | Per ruleset | Config | Town tile; town development level |
 | build_road | Engineer | 1 lumber + 1 cast iron (level 1); Road Construction for level 2 | Config | 0→1→2; tech for 2 |
 | build_port | Engineer | Lumber + metal | Config | Coastal/river; transport 4 |

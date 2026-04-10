@@ -171,5 +171,57 @@ void main() {
         );
       },
     );
+
+    test('precheckBuildImprovement rejects unprospected mineral tile', () {
+      const ow = 'oldWorld';
+      const provinceId = '$ow|P1';
+      const tileKey = '$provinceId|0|0';
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: {tileKey: 'iron'},
+          tileKeysByRegionAndProvince: {
+            ow: {provinceId: [tileKey]},
+          },
+        ),
+        players: [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: provinceId,
+            techUnlocked: const {},
+          ),
+        ],
+      );
+      final player = game.players.single;
+      final ctx = WorkOrderTargetPrecheckContext(
+        game: game,
+        player: player,
+        playerId: 'p1',
+        treasury: 0,
+        civilianEmbassyWorkAllowed: (_, _) => false,
+      );
+      final order = WorkOrder(
+        unitId: 'b1',
+        target: 'build_improvement',
+        targetTileKey: tileKey,
+      );
+      final r = runWorkOrderTargetPrecheck(
+        ctx,
+        order,
+        provinceId,
+        'p1',
+        'Builder',
+      );
+      expect(r, isNotNull);
+      expect(r!.status, OrderValidationStatus.rejected);
+      expect(r.reason, contains('prospected'));
+    });
   });
 }
