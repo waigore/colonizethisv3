@@ -554,4 +554,228 @@ void main() {
       expect(entries, isEmpty);
     });
   });
+
+  group('evidenceForAiStealTechResolved', () {
+    Game baseSpyEvidenceGame() {
+      return Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 4),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'human', displayName: 'Human', isHuman: true),
+          Player(id: 'ai', displayName: 'AI', isHuman: false),
+        ],
+      );
+    }
+
+    test('failed steal adds tech_thief +1 for human observer', () {
+      final game = baseSpyEvidenceGame();
+      final entries = evidenceForAiStealTechResolved(
+        game,
+        'ai',
+        4,
+        success: false,
+      );
+      expect(entries.length, 1);
+      expect(entries.single.observerId, 'human');
+      expect(entries.single.subjectId, 'ai');
+      expect(entries.single.agendaType, 'tech_thief');
+      expect(entries.single.scoreDelta, 1);
+      expect(entries.single.turnNumber, 4);
+      expect(entries.single.description, contains('attempt'));
+    });
+
+    test('successful steal adds tech_thief +3 for human observer', () {
+      final game = baseSpyEvidenceGame();
+      final entries = evidenceForAiStealTechResolved(
+        game,
+        'ai',
+        4,
+        success: true,
+      );
+      expect(entries.length, 1);
+      expect(entries.single.agendaType, 'tech_thief');
+      expect(entries.single.scoreDelta, 3);
+      expect(entries.single.description, contains('succeeded'));
+    });
+
+    test('human spy owner returns no evidence', () {
+      final game = baseSpyEvidenceGame();
+      final entries = evidenceForAiStealTechResolved(
+        game,
+        'human',
+        4,
+        success: true,
+      );
+      expect(entries, isEmpty);
+    });
+
+    test('no human observer returns no evidence', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 4),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'ai1', displayName: 'AI1', isHuman: false),
+          Player(id: 'ai2', displayName: 'AI2', isHuman: false),
+        ],
+      );
+      final entries = evidenceForAiStealTechResolved(
+        game,
+        'ai1',
+        4,
+        success: false,
+      );
+      expect(entries, isEmpty);
+    });
+  });
+
+  group('evidenceForIsolationistCallToArmsRefuse', () {
+    Game ctaRefuseGame({
+      required bool allyIsAi,
+      required bool atPeaceWithDefender,
+    }) {
+      return Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          const Player(id: 'observer', displayName: 'Human', isHuman: true),
+          Player(
+            id: 'ally',
+            displayName: 'Ally',
+            isHuman: !allyIsAi,
+          ),
+          const Player(id: 'defender', displayName: 'Defender', isHuman: false),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'ally',
+            factionId2: 'defender',
+            score: 50,
+            level: RelationLevel.friendly,
+            state: atPeaceWithDefender
+                ? RelationState.atPeace
+                : RelationState.atWar,
+          ),
+        ],
+      );
+    }
+
+    test(
+      'AI refusing call to arms while at peace with defender adds isolationist +2',
+      () {
+        final game = ctaRefuseGame(
+          allyIsAi: true,
+          atPeaceWithDefender: true,
+        );
+        final entries = evidenceForIsolationistCallToArmsRefuse(
+          game,
+          'ally',
+          'defender',
+          3,
+        );
+        expect(entries.length, 1);
+        expect(entries.single.observerId, 'observer');
+        expect(entries.single.subjectId, 'ally');
+        expect(entries.single.agendaType, 'isolationist');
+        expect(entries.single.scoreDelta, 2);
+        expect(entries.single.turnNumber, 3);
+        expect(entries.single.description, contains('declined call to arms'));
+      },
+    );
+
+    test('empty when ally and defender are at war', () {
+      final game = ctaRefuseGame(
+        allyIsAi: true,
+        atPeaceWithDefender: false,
+      );
+      final entries = evidenceForIsolationistCallToArmsRefuse(
+        game,
+        'ally',
+        'defender',
+        3,
+      );
+      expect(entries, isEmpty);
+    });
+
+    test('human ally returns no evidence', () {
+      final game = ctaRefuseGame(
+        allyIsAi: false,
+        atPeaceWithDefender: true,
+      );
+      final entries = evidenceForIsolationistCallToArmsRefuse(
+        game,
+        'ally',
+        'defender',
+        3,
+      );
+      expect(entries, isEmpty);
+    });
+
+    test('no human observer returns no evidence', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'ai1', displayName: 'AI1', isHuman: false),
+          Player(id: 'ai2', displayName: 'AI2', isHuman: false),
+          Player(id: 'defender', displayName: 'Defender', isHuman: false),
+        ],
+        diplomacyRelations: [
+          DiplomacyRelation(
+            factionId1: 'ai1',
+            factionId2: 'defender',
+            score: 50,
+            level: RelationLevel.friendly,
+            state: RelationState.atPeace,
+          ),
+        ],
+      );
+      final entries = evidenceForIsolationistCallToArmsRefuse(
+        game,
+        'ai1',
+        'defender',
+        3,
+      );
+      expect(entries, isEmpty);
+    });
+
+    test('empty when no relation exists between ally and defender', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'observer', displayName: 'Human', isHuman: true),
+          Player(id: 'ally', displayName: 'Ally', isHuman: false),
+          Player(id: 'defender', displayName: 'Defender', isHuman: false),
+        ],
+        diplomacyRelations: const [],
+      );
+      final entries = evidenceForIsolationistCallToArmsRefuse(
+        game,
+        'ally',
+        'defender',
+        3,
+      );
+      expect(entries, isEmpty);
+    });
+  });
 }
