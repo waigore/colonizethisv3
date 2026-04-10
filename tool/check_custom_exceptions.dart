@@ -16,22 +16,18 @@ final _domainRoots = <String>[
 
 final _forbiddenExceptionTypes = <String>{'ArgumentError', 'Exception'};
 
+/// PR-blocking check for generic exception throws in runtime domain code.
+///
+/// SPEC: SPEC/program/exception-enforcement.md
 void main() {
   final repoRoot = Directory.current.path;
   final dartFiles = _collectDomainDartFiles(repoRoot);
-  final violations = <_Violation>[];
+  final violations = <CustomExceptionViolation>[];
 
   for (final file in dartFiles) {
     final relativePath = p.relative(file.path, from: repoRoot);
     final content = file.readAsStringSync();
-    final parsed = parseString(
-      content: content,
-      path: file.path,
-      throwIfDiagnostics: false,
-    );
-    final visitor = _ThrowVisitor(relativePath, parsed.lineInfo);
-    parsed.unit.accept(visitor);
-    violations.addAll(visitor.violations);
+    violations.addAll(findCustomExceptionViolations(relativePath, content));
   }
 
   if (violations.isEmpty) {
@@ -49,6 +45,33 @@ void main() {
     );
   }
   exitCode = 1;
+}
+
+/// Exposed for unit tests (same behavior as production scan for a single file).
+List<CustomExceptionViolation> findCustomExceptionViolations(
+  String relativePath,
+  String content,
+) {
+  if (!relativePath.endsWith('.dart')) {
+    return const [];
+  }
+  if (relativePath.contains('/test/') || relativePath.endsWith('_test.dart')) {
+    return const [];
+  }
+  if (relativePath.endsWith('.g.dart') ||
+      relativePath.endsWith('.freezed.dart') ||
+      relativePath.endsWith('.mocks.dart')) {
+    return const [];
+  }
+
+  final parsed = parseString(
+    content: content,
+    path: relativePath,
+    throwIfDiagnostics: false,
+  );
+  final visitor = _ThrowVisitor(relativePath, parsed.lineInfo);
+  parsed.unit.accept(visitor);
+  return visitor.violations;
 }
 
 List<File> _collectDomainDartFiles(String repoRoot) {
@@ -83,32 +106,8 @@ List<File> _collectDomainDartFiles(String repoRoot) {
   return files;
 }
 
-class _ThrowVisitor extends RecursiveAstVisitor<void> {
-  _ThrowVisitor(this.path, this.lineInfo);
-
-  final String path;
-  final LineInfo lineInfo;
-  final List<_Violation> violations = [];
-
-  @override
-  void visitThrowExpression(ThrowExpression node) {
-    final expression = node.expression;
-    if (expression is! InstanceCreationExpression) {
-      return;
-    }
-    final rawTypeName = expression.constructorName.type.toSource();
-    final typeName = rawTypeName.split('<').first;
-    if (_forbiddenExceptionTypes.contains(typeName)) {
-      final line = lineInfo.getLocation(node.offset).lineNumber;
-      violations.add(
-        _Violation(path: path, line: line, exceptionType: typeName),
-      );
-    }
-  }
-}
-
-class _Violation {
-  const _Violation({
+class CustomExceptionViolation {
+  const CustomExceptionViolation({
     required this.path,
     required this.line,
     required this.exceptionType,
@@ -117,4 +116,56 @@ class _Violation {
   final String path;
   final int line;
   final String exceptionType;
+}
+
+class _ThrowVisitor extends RecursiveAstVisitor<void> {
+  _ThrowVisitor(this.path, this.lineInfo);
+
+  final String path;
+  final LineInfo lineInfo;
+  final List<CustomExceptionViolation> violations = [];
+
+  @override
+  void visitThrowExpression(ThrowExpression node) {
+    final expression = node.expression;
+    if (expression is InstanceCreationExpression) {
+      final rawTypeName = expression.constructorName.type.toSource();
+      final typeName = rawTypeName.split('<').first;
+      if (_forbiddenExceptionTypes.contains(typeName)) {
+        _addViolation(node, typeName);
+      }
+    } else if (expression is MethodInvocation) {
+      if (_isArgumentErrorValueInvocation(expression)) {
+        _addViolation(node, 'ArgumentError.value');
+      } else if (expression.target == null &&
+          _forbiddenExceptionTypes.contains(expression.methodName.name)) {
+        _addViolation(node, expression.methodName.name);
+      }
+    }
+    super.visitThrowExpression(node);
+  }
+
+  void _addViolation(ThrowExpression node, String exceptionType) {
+    final line = lineInfo.getLocation(node.offset).lineNumber;
+    violations.add(
+      CustomExceptionViolation(
+        path: path,
+        line: line,
+        exceptionType: exceptionType,
+      ),
+    );
+  }
+}
+
+/// `ArgumentError.value(...)` parses as a static method invocation, not a
+/// constructor [InstanceCreationExpression].
+bool _isArgumentErrorValueInvocation(MethodInvocation node) {
+  if (node.methodName.name != 'value') {
+    return false;
+  }
+  final target = node.target;
+  if (target is SimpleIdentifier && target.name == 'ArgumentError') {
+    return true;
+  }
+  return false;
 }
