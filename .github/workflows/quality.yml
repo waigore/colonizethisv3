@@ -392,6 +392,12 @@ jobs:
       - name: Test work target constants checker (SPEC/program/repo-and-packages.md)
         run: dart test test/check_work_target_constants_test.dart --reporter=compact
 
+      - name: Check canonical province tile-key literals (SPEC/game/world-model-identity.md)
+        run: dart run tool/check_canonical_province_tile_keys.dart
+
+      - name: Test canonical province tile-key checker (SPEC/game/world-model-identity.md)
+        run: dart test test/check_canonical_province_tile_keys_test.dart --reporter=compact
+
       - name: Wang incremental assets gate (Python)
         run: |
           set -euo pipefail

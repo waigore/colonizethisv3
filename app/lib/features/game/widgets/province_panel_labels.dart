@@ -80,7 +80,6 @@ String unitStatusDisplayLabel(AppLocalizations l10n, UnitStatus status) {
   return switch (status) {
     UnitStatus.idle => l10n.province_unitStatus_idle,
     UnitStatus.working => l10n.province_unitStatus_working,
-    UnitStatus.done => l10n.province_unitStatus_done,
   };
 }
 
