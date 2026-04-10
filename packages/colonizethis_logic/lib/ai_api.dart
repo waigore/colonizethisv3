@@ -6,7 +6,8 @@ library;
 
 export 'src/ai/ai_control.dart' show isAiControlled;
 export 'src/ai/simple_ai_heuristics.dart' show turnSeedForPlayer;
-export 'src/constants.dart' show GamePlayerLookup;
+export 'src/constants.dart'
+    show GamePlayerLookup, kWorkTargetCounterSpy, kWorkTargetStealTech;
 export 'src/diplomacy/diplomacy_relation_lookup.dart'
     show
         getRelation,

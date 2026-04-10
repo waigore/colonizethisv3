@@ -172,7 +172,7 @@ class WorkOrderValidator extends OrderValidator {
               );
             }
           }
-          if (o.target == 'build_rail') {
+          if (o.target == kWorkTargetBuildRail) {
             final terrain = terrainTypeForTileKey(
               _context.tileMapByRegion,
               o.targetTileKey,

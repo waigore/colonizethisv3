@@ -330,6 +330,44 @@ jobs:
           echo "Running tech-id convention check on changed Dart files only."
           tool/check_tech_id_constants.sh --files "$changed_files"
 
+      - name: Check work target constants convention (SPEC/program/repo-and-packages.md)
+        run: |
+          set -euo pipefail
+          base_ref="${GITHUB_BASE_REF:-}"
+          if [ -z "$base_ref" ]; then
+            echo "No GITHUB_BASE_REF in context; running full work-target scan."
+            tool/check_work_target_constants.sh
+            exit 0
+          fi
+
+          if ! git fetch --no-tags --depth=1 origin "$base_ref"; then
+            echo "Could not fetch origin/$base_ref; running full work-target scan."
+            tool/check_work_target_constants.sh
+            exit 0
+          fi
+
+          merge_base="$(git merge-base "origin/$base_ref" HEAD 2>/dev/null || true)"
+          if [ -z "$merge_base" ]; then
+            echo "No merge base between origin/$base_ref and HEAD in this checkout; running full work-target scan."
+            tool/check_work_target_constants.sh
+            exit 0
+          fi
+
+          changed_files="$(
+            git diff --name-only "origin/$base_ref"...HEAD -- '*.dart' \
+              | tr '\n' ',' \
+              | sed 's/,$//'
+          )"
+
+          if [ -z "$changed_files" ]; then
+            echo "No changed Dart files detected in PR diff; running full work-target scan."
+            tool/check_work_target_constants.sh
+            exit 0
+          fi
+
+          echo "Running work-target convention check on changed Dart files only."
+          tool/check_work_target_constants.sh --files "$changed_files"
+
       - name: Check package logger API convention (SPEC/program/logging/logging.md)
         run: tool/check_naked_logger_usage.sh
 
@@ -350,6 +388,9 @@ jobs:
 
       - name: Test app hardcoded UI string checker (SPEC/program/localization.md)
         run: dart test test/check_app_hardcoded_ui_strings_test.dart --reporter=compact
+
+      - name: Test work target constants checker (SPEC/program/repo-and-packages.md)
+        run: dart test test/check_work_target_constants_test.dart --reporter=compact
 
       - name: Wang incremental assets gate (Python)
         run: |

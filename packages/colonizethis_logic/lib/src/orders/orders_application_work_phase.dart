@@ -118,7 +118,7 @@ void _runWorkPhase(
                 return totalTurnsForWork(target, fortLevel: fortLevel);
               },
             );
-          case 'build_rail':
+          case kWorkTargetBuildRail:
             return (
               target: target,
               allowedForUnitType: (t) =>
@@ -367,7 +367,7 @@ void _runWorkPhase(
         }
         if (applyStandardWorkOrder(kWorkTargetBuildFort)) continue;
       }
-      if (workTarget == 'build_rail') {
+      if (workTarget == kWorkTargetBuildRail) {
         final terrain = terrainTypeForTileKey(
           state.tileMapByRegion,
           targetTileKey,
@@ -381,7 +381,7 @@ void _runWorkPhase(
           _log.d('build_rail skipped - $railReason');
           continue;
         }
-        if (applyStandardWorkOrder('build_rail')) continue;
+        if (applyStandardWorkOrder(kWorkTargetBuildRail)) continue;
       }
       if (workTarget == kWorkTargetUpgradeTown) {
         if (applyStandardWorkOrder(kWorkTargetUpgradeTown)) continue;

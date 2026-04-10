@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart';
 
@@ -12,9 +13,9 @@ class GameMapAreaStateLogic {
   }
 
   static bool isWorkTargetTileProvinceBased(String workTarget) {
-    return workTarget == 'explore' ||
-        workTarget == 'steal_tech' ||
-        workTarget == 'counter_spy';
+    return workTarget == kWorkTargetExplore ||
+        workTarget == kWorkTargetStealTech ||
+        workTarget == kWorkTargetCounterSpy;
   }
 
   /// For province-based work targets, translate the tile key to a canonical tile
