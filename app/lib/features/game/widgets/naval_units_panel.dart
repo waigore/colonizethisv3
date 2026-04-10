@@ -126,9 +126,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       if (allSelected) {
         _selectedFleetIds.clear();
       } else {
-        _selectedFleetIds
-          ..clear()
-          ..addAll(ids);
+        _selectedFleetIds.clear();
+        _selectedFleetIds.addAll(ids);
       }
     });
   }
@@ -206,9 +205,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           setState(() {
-            _selectedFleetIds
-              ..clear()
-              ..addAll(pruned);
+            _selectedFleetIds.clear();
+            _selectedFleetIds.addAll(pruned);
           });
         });
       }

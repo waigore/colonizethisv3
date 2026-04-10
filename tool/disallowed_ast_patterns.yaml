@@ -1,0 +1,14 @@
+# Disallowed AST patterns — rules for tool/check_disallowed_ast_patterns.dart
+# SPEC: SPEC/program/disallowed-ast-patterns.md
+#
+# Suppress: // ignore: disallowed_ast_<id>  or  // ignore_for_file: disallowed_ast_<id>
+
+rules:
+  - id: cascade_void_clear
+    message: >-
+      Do not use cascade ..clear(); use a separate .clear() statement or a new
+      collection instance. Cascading void methods is misleading.
+    match:
+      kind: cascaded_method_invocation
+      method_names:
+        - clear

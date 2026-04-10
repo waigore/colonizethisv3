@@ -336,6 +336,12 @@ jobs:
       - name: Check custom exception enforcement (SPEC/program/exception-enforcement.md)
         run: dart run tool/check_custom_exceptions.dart
 
+      - name: Check disallowed AST patterns (SPEC/program/disallowed-ast-patterns.md)
+        run: dart run tool/check_disallowed_ast_patterns.dart
+
+      - name: Test disallowed AST patterns checker (SPEC/program/disallowed-ast-patterns.md)
+        run: dart test test/check_disallowed_ast_patterns_test.dart --reporter=compact
+
       - name: Test app hardcoded UI string checker (SPEC/program/localization.md)
         run: dart test test/check_app_hardcoded_ui_strings_test.dart --reporter=compact
 
