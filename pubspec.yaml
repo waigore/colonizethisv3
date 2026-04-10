@@ -9,6 +9,7 @@ workspace:
   - widgetbook_host
   - ctdev
   - ctterm
+  - packages/colonizethis_exception_lint
   - packages/session_log_buffer
   - packages/colonizethis_logger
   - packages/colonizethis_models
@@ -29,6 +30,8 @@ workspace:
 
 dev_dependencies:
   analyzer: ^8.4.0
+  colonizethis_exception_lint:
+    path: packages/colonizethis_exception_lint
   image: ^4.5.4
   melos: ^7.0.0
   path: ^1.9.1
@@ -67,6 +70,9 @@ melos:
     check_custom_exceptions:
       description: AST check that forbids generic exceptions in runtime domain code. SPEC/program/exception-enforcement.md.
       run: dart run tool/check_custom_exceptions.dart
+    custom_lint_domain_exceptions:
+      description: Run custom_lint in packages wired for colonizethis_exception_lint. SPEC/program/exception-enforcement.md.
+      run: bash tool/run_custom_lint_domain_exceptions.sh
     check_app_hardcoded_ui_strings:
       description: AST check that forbids hardcoded user-visible UI strings in app/lib. SPEC/program/localization.md.
       run: dart run tool/check_app_hardcoded_ui_strings.dart

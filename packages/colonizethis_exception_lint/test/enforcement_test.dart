@@ -1,6 +1,5 @@
-import 'package:test/test.dart';
-
-import '../tool/check_custom_exceptions.dart';
+import 'package:colonizethis_exception_lint/exception_enforcement.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('findCustomExceptionViolations', () {
@@ -83,6 +82,17 @@ void f() {
         findCustomExceptionViolations('packages/foo/lib/x.g.dart', src),
         isEmpty,
       );
+    });
+
+    test('shouldEnforceDomainExceptions skips widgetbook_host', () {
+      expect(
+        shouldEnforceDomainExceptions('/repo/widgetbook_host/lib/main.dart'),
+        isFalse,
+      );
+    });
+
+    test('shouldEnforceDomainExceptions accepts app/lib', () {
+      expect(shouldEnforceDomainExceptions('/repo/app/lib/main.dart'), isTrue);
     });
   });
 }
