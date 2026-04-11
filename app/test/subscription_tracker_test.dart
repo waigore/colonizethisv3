@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/core/services/subscription_tracker.dart';
 import 'package:flutter_test/flutter_test.dart';
 
