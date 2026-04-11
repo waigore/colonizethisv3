@@ -31,7 +31,6 @@ Enforcement applies to runtime code across:
 - `packages/**/lib/**`
 - `app/lib/**`
 - `ctdev/lib/**`
-- `ctterm/lib/**`
 - `tool/**/lib/**`
 
 Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) are excluded.
@@ -58,7 +57,7 @@ The checker:
 - Introduce checker and CI hook.
 - Add `colonizethis_exception_lint` (`custom_lint` plugin) for in-editor diagnostics aligned with the checker.
 - Migrate setup domain (`packages/colonizethis_logic/lib/src/setup/**`) to `SetupValidationException`.
-- Add package-local validation exception types in ai/map/data/models/ui/ctterm/tool runtime code and migrate existing generic throws in those domains.
+- Add package-local validation exception types in ai/map/data/models/ui/tool runtime code and migrate existing generic throws in those domains.
 
 ### Phase 2+
 

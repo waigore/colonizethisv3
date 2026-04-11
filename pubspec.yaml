@@ -8,7 +8,6 @@ workspace:
   - app
   - widgetbook_host
   - ctdev
-  - ctterm
   - packages/colonizethis_exception_lint
   - packages/session_log_buffer
   - packages/colonizethis_logger
@@ -79,9 +78,6 @@ melos:
     check_disallowed_ast_patterns:
       description: Config-driven AST check for disallowed structural patterns. SPEC/program/disallowed-ast-patterns.md.
       run: dart run tool/check_disallowed_ast_patterns.dart
-    ctterm:
-      description: Terminal UI for full single-player ColonizeThis. SPEC/tui/ctterm.md.
-      run: dart run ctterm
     codegen_order_engine:
       description: Regenerate OrderEngine slot wiring from order_engine_manifest.yaml. SPEC/program/order-engine.md.
       run: dart run tool/generate_order_engine_slots.dart

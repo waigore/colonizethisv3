@@ -151,7 +151,7 @@ Rationale: `DialogueEvent` is defined in `colonizethis_models` (shared), not `co
 | `colonizethis_logic` | Defines `GameEventBus`, emits game events via bus |
 | `colonizethis_models` | Defines `DialogueEventBus`, AI events |
 | `colonizethis_ai` | Emits dialogue events via `DialogueEventBus` |
-| App/ctterm | Creates bus, passes to resolver, subscribes to events |
+| App | Creates bus, passes to resolver, subscribes to events |
 
 ---
 
@@ -193,7 +193,7 @@ Rationale: `DialogueEvent` is defined in `colonizethis_models` (shared), not `co
 2. **Phase 2**: Update `resolveTurnForGame` to accept `GameEventBus?` alongside existing callbacks (backward compat)
 3. **Phase 3**: Migrate all internal emission sites to use bus
 4. **Phase 4**: Remove callback parameters from `resolveTurnForGame` signature
-5. **Phase 5**: Update all callers (app, ctterm, tests) to use bus
+5. **Phase 5**: Update all callers (app, tests) to use bus
 
 ---
 

@@ -10,7 +10,7 @@ cd "$ROOT"
 
 FAIL=0
 
-for f in $(find app packages ctdev ctterm tool -name '*_test.dart' -type f 2>/dev/null | sort); do
+for f in $(find app packages ctdev tool -name '*_test.dart' -type f 2>/dev/null | sort); do
   # Forbid direct package:test/test.dart
   if grep -q "package:test/test\.dart" "$f"; then
     echo "ERROR: $f must not import package:test/test.dart; use package:colonizethis_test/test.dart first (see SPEC/program/test-logging.md)"

@@ -150,8 +150,8 @@ class Game {
   /// from setup starting-resources config at game creation. GDD extraction.
   final int capitalTileGrainBonusPerTurn;
 
-  /// 1-character political map glyph per faction id. Used by ctterm and other
-  /// UIs for the political ownership layer. SPEC/tui/map-tui-mapping.md.
+  /// 1-character political map glyph per faction id. Used by map UIs for the
+  /// political ownership layer.
   final Map<String, String> politicalGlyphByPlayerId;
 
   /// Last tech-catalog **category** a human Great Power set for Envy mirror tracking

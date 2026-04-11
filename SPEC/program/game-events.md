@@ -1,18 +1,18 @@
 # Game Events — Shared Event Stream
 
-**SPEC/program** — Contract for game events emitted during or after turn resolution and on order validation. Consumed by Flutter app and ctterm so users are clearly notified what is happening. Province identity: [world-model-identity.md](../game/world-model-identity.md).
+**SPEC/program** — Contract for game events emitted during or after turn resolution and on order validation. Consumed by the Flutter app so users are clearly notified what is happening. Province identity: [world-model-identity.md](../game/world-model-identity.md).
 
 ---
 
 ## Responsibility
 
-Define the **contract** of the game event stream: event types, payload shapes, emission points, and determinism. No UI-specific fields in events; consumers (app, ctterm) map events to notifications and UI. Implementation lives in colonizethis_logic (or a shared layer); TurnResolver and OrderEngine (or their caller) emit events.
+Define the **contract** of the game event stream: event types, payload shapes, emission points, and determinism. No UI-specific fields in events; consumers (the app) map events to notifications and UI. Implementation lives in colonizethis_logic (or a shared layer); TurnResolver and OrderEngine (or their caller) emit events.
 
 ---
 
 ## Purpose
 
-A single event stream for "what happened in the game" consumable by any client (Flutter app, ctterm). Enables status lines, logs, overlays, and notification feeds without each consumer parsing raw resolution output.
+A single event stream for "what happened in the game" consumable by the Flutter app. Enables status lines, logs, overlays, and notification feeds without the UI parsing raw resolution output.
 
 ---
 
@@ -37,7 +37,7 @@ Additional event types (e.g. extraction_summary) may be added in the same format
 ## Emission points
 
 - **Turn resolution:** During or immediately after each phase in [turn-resolution-phase-details.md](turn-resolution-phase-details.md) (Combat → combat_result, province_captured; Diplomacy → diplomacy_change; Research → research_complete; End-of-turn → victory_set when applicable). Caller or TurnResolver pushes events in phase order.
-- **Order validation:** When [order-engine.md](order-engine.md) validates and rejects an order, an `order_rejected` event is emitted (or the validation layer emits it so that UI and ctterm can show the reason).
+- **Order validation:** When [order-engine.md](order-engine.md) validates and rejects an order, an `order_rejected` event is emitted (or the validation layer emits it so that the UI can show the reason).
 
 The **caller** that owns the order list or invokes TurnResolver is responsible for wiring the event stream to the resolver/engine so that events are emitted in a deterministic order. Same game state and seeds produce the same event sequence (replay and save/load compatibility).
 
@@ -67,8 +67,8 @@ The **caller** that owns the order list or invokes TurnResolver is responsible f
 ## Integration
 
 - **Upstream:** [turn-resolution-phase-details.md](turn-resolution-phase-details.md), [order-engine.md](order-engine.md), [victory.md](../game/victory.md). Emission is implemented in or alongside colonizethis_logic.
-- **Downstream:** Flutter app, ctterm. Both subscribe to the same stream and present events (e.g. status line, scrollable log, overlay). [SPEC/tui/ctterm.md](../tui/ctterm.md) § UI – game logic – event communication architecture.
-- **Dialogue/mood:** [ai-events-and-dossier.md](ai-events-and-dossier.md) defines DialogueEvent and PortraitMoodEvent. Whether they are part of this stream or a separate channel is an implementation choice; if separate, ctterm and app may subscribe to both for a unified feed.
+- **Downstream:** Flutter app subscribes to the stream and presents events (e.g. status line, scrollable log, overlay).
+- **Dialogue/mood:** [ai-events-and-dossier.md](ai-events-and-dossier.md) defines DialogueEvent and PortraitMoodEvent. Whether they are part of this stream or a separate channel is an implementation choice; if separate, the app may subscribe to both for a unified feed.
 
 ---
 

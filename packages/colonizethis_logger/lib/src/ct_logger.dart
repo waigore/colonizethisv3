@@ -52,9 +52,6 @@ CtLogger mapLogger([String? subPrefix]) =>
 CtLogger saveLogger([String? subPrefix]) =>
     subPrefix != null ? CtLogger('save.$subPrefix') : CtLogger('save');
 
-CtLogger tuiLogger([String? subPrefix]) =>
-    subPrefix != null ? CtLogger('tui.$subPrefix') : CtLogger('tui');
-
 CtLogger gameLogger([String? subPrefix]) =>
     subPrefix != null ? CtLogger('game.$subPrefix') : CtLogger('game');
 

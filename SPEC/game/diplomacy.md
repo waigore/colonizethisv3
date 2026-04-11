@@ -23,7 +23,7 @@ While relationState is `AT_WAR` between a Great Power and any other faction, **n
 
 - **Declare War:** Requires AT_PEACE. Sets AT_WAR; takes effect before Movement in same turn.
 - **Peace (white peace):** Both sides must agree. Sets AT_PEACE; no border or ownership changes.
-- **Alliances:** Offer/accept between GPs. **Mutual defence (call to arms):** When a Great Power **declares war** on another Great Power (same Diplomacy phase resolution as declare war—including any path that applies GP–GP war before Movement, e.g. naval context is still a declared GP–GP war), each other Great Power that is **allied** (`RelationLevel.allied`, `AT_PEACE`) with the **declared-upon** GP receives exactly **one** call to arms per aggressor–defender pair for that turn. **AI** allies **join** the war (enter `AT_WAR` with the aggressor) if their relation score with the defended ally is **≥ 50**; otherwise they **refuse**. **Human** allies: turn resolution **suspends** until the player chooses join or refuse (app popup / TUI screen; same blocking pattern as human overture target). **Join:** ally enters `AT_WAR` with the aggressor; subsidies between those two are cancelled like a normal war. **Refuse:** relation score between ally and defended GP drops by **20** (clamped 0–100), alliance ends (level no longer Allied; if score would remain Allied, clamp to top of Friendly); **subsidies are not** cancelled by this refusal. History records `callToArmsAccepted` / `callToArmsRefused`. Joining an ally's **offensive** war separately remains optional with no penalty; this rule is only for **defence** of an allied GP that was declared upon.
+- **Alliances:** Offer/accept between GPs. **Mutual defence (call to arms):** When a Great Power **declares war** on another Great Power (same Diplomacy phase resolution as declare war—including any path that applies GP–GP war before Movement, e.g. naval context is still a declared GP–GP war), each other Great Power that is **allied** (`RelationLevel.allied`, `AT_PEACE`) with the **declared-upon** GP receives exactly **one** call to arms per aggressor–defender pair for that turn. **AI** allies **join** the war (enter `AT_WAR` with the aggressor) if their relation score with the defended ally is **≥ 50**; otherwise they **refuse**. **Human** allies: turn resolution **suspends** until the player chooses join or refuse (app UI; same blocking pattern as human overture target). **Join:** ally enters `AT_WAR` with the aggressor; subsidies between those two are cancelled like a normal war. **Refuse:** relation score between ally and defended GP drops by **20** (clamped 0–100), alliance ends (level no longer Allied; if score would remain Allied, clamp to top of Friendly); **subsidies are not** cancelled by this refusal. History records `callToArmsAccepted` / `callToArmsRefused`. Joining an ally's **offensive** war separately remains optional with no penalty; this rule is only for **defence** of an allied GP that was declared upon.
 - **Join Empire:** Requires target nearly defeated; tech-gated by Empire Building (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)). Acceptance removes target GP and transfers provinces.
 
 #### Nearly defeated (GP target)
@@ -240,7 +240,7 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - **Relation thresholds and config:** Relation level (Hostile, Neutral, Friendly, Allied) is derived from relation score using the thresholds in Configurable Values; the table in this document is the source of truth for default values; ruleset overrides apply when specified.
 - **Implementation:** Order validation and resolution flow: [diplomacy-resolution.md](../program/diplomacy-resolution.md). Phase order: [turn-resolution-phases.md](../program/turn-resolution-phases.md).
 
-- Given the user views the diplomacy panel (app or TUI) for a discovered faction with a diplomatic relation  
+- Given the user views the diplomacy panel for a discovered faction with a diplomatic relation  
   When the panel displays the current relation  
   Then the system shows the **one-word relation state** (Hostile, Unfriendly, Cordial, or Friendly) derived from the relation score per the Player-facing relation display table (0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly), and does **not** display the numeric relation score.
 
@@ -268,9 +268,9 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 
 ### Player-facing relation display
 
-The **relation score** (0–100) is a **hidden variable**: it is not shown to the player in the diplomacy UI (app or TUI). Validation and game logic continue to use the internal score and relation level (Hostile/Neutral/Friendly/Allied) per the thresholds above.
+The **relation score** (0–100) is a **hidden variable**: it is not shown to the player in the diplomacy UI. Validation and game logic continue to use the internal score and relation level (Hostile/Neutral/Friendly/Allied) per the thresholds above.
 
-The diplomacy panel (app and ctterm) shows instead a **one-word relation state** derived from the score:
+The diplomacy panel shows instead a **one-word relation state** derived from the score:
 
 | Score range | Display label |
 |-------------|---------------|
@@ -279,7 +279,7 @@ The diplomacy panel (app and ctterm) shows instead a **one-word relation state**
 | 50–69 | Cordial |
 | 70–100 | Friendly |
 
-Same mapping for both Flutter app and TUI. Game logic (e.g. Join Empire ≥ 51, Alliance ≥ 76) uses the internal score and level; only the displayed label uses these bands.
+The Flutter app uses this mapping for the player-facing label. Game logic (e.g. Join Empire ≥ 51, Alliance ≥ 76) uses the internal score and level; only the displayed label uses these bands.
 
 ### Great Power power score
 
@@ -288,7 +288,7 @@ An **absolute power score** is computed for each Great Power for display on the 
 - **Formula:** `powerScore = provinceCount × W_province + round(regimentStrength) × W_regiment + shipCount × W_ship`
 - **Definitions:** `provinceCount` = number of provinces owned by that GP (Old + New World). `regimentStrength` = same aggregation as [military-strength](../program/military-strength.md) (FPN+FPM, era downgrade, medal multiplier). `shipCount` = total number of ships (sum of `shipTypeIds.length` over all fleets owned by that GP).
 - **Default weights:** W_province = 10, W_regiment = 1, W_ship = 5. So one province = 10, one point of army strength = 1, one ship = 5.
-- **Display:** The diplomacy panel shows this score for each GP. If the GP’s score is **higher** than the human player’s score, the value is shown in **red**; otherwise in **green**. Same formula and display rule for app and TUI where applicable.
+- **Display:** The diplomacy panel shows this score for each GP. If the GP’s score is **higher** than the human player’s score, the value is shown in **red**; otherwise in **green**.
 
 ### Where defined (current product)
 

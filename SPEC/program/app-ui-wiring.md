@@ -116,7 +116,7 @@ In **`colonizethis_app`**, widgets and services that hold **one or more** `Strea
 
 **Documented exceptions:**
 
-- **`ctterm`** does not depend on **`colonizethis_app`**; TUI code must not import app-only types. Screens that only use **`Timer`** or other non-stream async handles keep their existing teardown (for example **`generating_world_screen.dart`**).
+- Packages that do not depend on **`colonizethis_app`** must not import app-only types such as **`SubscriptionTracker`**; they keep local teardown for their own subscriptions and non-stream async handles (for example **`Timer`**).
 
 ---
 

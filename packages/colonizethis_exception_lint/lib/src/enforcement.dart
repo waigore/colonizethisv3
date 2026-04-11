@@ -28,9 +28,6 @@ bool shouldEnforceDomainExceptions(String filePath) {
   if (p.contains('/ctdev/lib/') || p.startsWith('ctdev/lib/')) {
     return true;
   }
-  if (p.contains('/ctterm/lib/') || p.startsWith('ctterm/lib/')) {
-    return true;
-  }
   if (RegExp(r'(^|/)tool/').hasMatch(p)) {
     return true;
   }

@@ -91,7 +91,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
 });
 ```
 
-When `tileMapByRegion` is non-null (app shell, ctterm, turn resolution), prospect pre-filtering and `prospect` work-order validation use the same terrain-aware eligibility as work application. When null, eligibility falls back to mineral resource ids on `resourceByTileKey` only.
+When `tileMapByRegion` is non-null (app shell, turn resolution), prospect pre-filtering and `prospect` work-order validation use the same terrain-aware eligibility as work application. When null, eligibility falls back to mineral resource ids on `resourceByTileKey` only.
 
 **Pre-filtering by work target type:**
 
@@ -123,12 +123,11 @@ Before iterating candidate tiles, apply work-target-specific filters to dramatic
 
 **Why separate from `getValidWorkOrderTileKeys`:**
 - `getValidWorkOrderTileKeys` is agnostic to player view (used by AI that operates on full game state).
-- UI tooling (app, ctterm) needs visibility-aware filtering to avoid expensive order-engine calls for invisible tiles.
+- The app needs visibility-aware filtering to avoid expensive order-engine calls for invisible tiles.
 - Pre-filtering by work-target-specific criteria dramatically reduces the candidate set before order-engine validation.
 
 **Consumers:**
 - App UI (civilian units panel for work assignment).
-- ctterm (TUI work order assignment).
 
 **Acceptance criteria (prospect tile picker and validation)**
 
