@@ -7,7 +7,10 @@ import 'package:path/path.dart' as p;
 
 const _scannedRoots = <String>['app/lib'];
 
-const _excludedPaths = <String>{'app/lib/config/app_assets.dart'};
+const _excludedPaths = <String>{
+  'app/lib/config/app_assets.dart',
+  'app/lib/config/app_constants.dart',
+};
 
 /// One direct `assets/...` or `packages/.../assets/...` string literal violation.
 final class AssetPathConstantViolation {
@@ -87,7 +90,7 @@ int runCheckAssetPathConstants(
 
   logE(
     'ERROR: Found direct asset path literals. Use constants from '
-    'app/lib/config/app_assets.dart instead.',
+    'app/lib/config/app_assets.dart or app/lib/config/app_constants.dart instead.',
   );
   for (final v in violations) {
     logE('${v.path}:${v.line}:${v.column} ${v.message}');

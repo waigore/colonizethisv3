@@ -61,5 +61,16 @@ const String kX = 'assets/icons/x.png';
       );
       expect(v, isEmpty);
     });
+
+    test('does not flag app_constants.dart', () {
+      const src = r'''
+const String kPrefix = 'assets/icons/32/';
+''';
+      final v = findAssetPathConstantViolationsInSource(
+        relativePath: 'app/lib/config/app_constants.dart',
+        source: src,
+      );
+      expect(v, isEmpty);
+    });
   });
 }
