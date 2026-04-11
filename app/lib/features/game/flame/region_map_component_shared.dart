@@ -289,6 +289,18 @@ bool shouldShowExtractionUnitDiscs({
   return baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
 }
 
+/// On-map resource icon width/height in world/cell coordinates.
+///
+/// SPEC/ui/map-widget.md § Resource Icons: **one quarter** of [cellSize], capped
+/// at [ResourceIconCache.iconSize] so 64×64 source assets are **never upscaled**
+/// on the map (scale down only).
+double resourceIconDisplaySizePx(double cellSize) {
+  final quarter = cellSize * 0.25;
+  return quarter < ResourceIconCache.iconSize
+      ? quarter
+      : ResourceIconCache.iconSize;
+}
+
 /// Returns circle centers for a right-fan extraction-disc layout.
 List<Offset> extractionDiscCentersForIconRect({
   required Rect iconRect,

@@ -995,15 +995,16 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       if (showResources && resourceForIcon != null) {
         final icon = resourceIconCache.getIcon(resourceForIcon);
         if (icon != null) {
-          final iconSize = ResourceIconCache.iconSize;
+          final assetSize = ResourceIconCache.iconSize;
+          final displaySize = resourceIconDisplaySizePx(cellSize);
           final tileLeft = cell.x * cellSize;
           final tileTop = cell.y * cellSize;
 
           final iconX = tileLeft;
-          final iconY = tileTop + cellSize - iconSize;
+          final iconY = tileTop + cellSize - displaySize;
 
-          final dstRect = Rect.fromLTWH(iconX, iconY, iconSize, iconSize);
-          final srcRect = Rect.fromLTWH(0, 0, iconSize, iconSize);
+          final dstRect = Rect.fromLTWH(iconX, iconY, displaySize, displaySize);
+          final srcRect = Rect.fromLTWH(0, 0, assetSize, assetSize);
           final paint = _resourceOverlayPaintForCell(cell);
           canvas.drawImageRect(icon, srcRect, dstRect, paint);
           final extractionUnits = cell.resourceExtractionUnits ?? 0;
