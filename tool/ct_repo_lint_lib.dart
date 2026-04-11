@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -48,6 +49,7 @@ final class RepoLintOptions {
     required this.onlyRuleId,
     required this.onlyGroup,
     required this.forceFullScan,
+    required this.sarifOutputPath,
   });
 
   final String manifestPath;
@@ -56,6 +58,10 @@ final class RepoLintOptions {
   final String? onlyRuleId;
   final String? onlyGroup;
   final bool forceFullScan;
+
+  /// When set, run every selected rule (do not stop at the first failure) and
+  /// write SARIF 2.1.0 to this path, or `-` for stdout.
+  final String? sarifOutputPath;
 }
 
 RepoLintOptions parseRepoLintArgs(List<String> args) {
@@ -65,6 +71,7 @@ RepoLintOptions parseRepoLintArgs(List<String> args) {
   var onlyRuleId = '';
   var onlyGroup = '';
   var forceFullScan = false;
+  String? sarifOutputPath;
 
   for (var i = 0; i < args.length; i++) {
     final a = args[i];
@@ -123,8 +130,26 @@ RepoLintOptions parseRepoLintArgs(List<String> args) {
       onlyGroup = args[i];
       continue;
     }
+    if (a.startsWith('--sarif=')) {
+      sarifOutputPath = a.substring('--sarif='.length);
+      continue;
+    }
+    if (a == '--sarif') {
+      i++;
+      if (i >= args.length) {
+        stderr.writeln('ct_repo_lint: --sarif requires a path or -');
+        exit(2);
+      }
+      sarifOutputPath = args[i];
+      continue;
+    }
     stderr.writeln('ct_repo_lint: unknown argument: $a');
     stderr.writeln(_usage);
+    exit(2);
+  }
+
+  if (listOnly && sarifOutputPath != null) {
+    stderr.writeln('ct_repo_lint: --sarif cannot be used with --list');
     exit(2);
   }
 
@@ -135,6 +160,7 @@ RepoLintOptions parseRepoLintArgs(List<String> args) {
     onlyRuleId: onlyRuleId.isEmpty ? null : onlyRuleId,
     onlyGroup: onlyGroup.isEmpty ? null : onlyGroup,
     forceFullScan: forceFullScan,
+    sarifOutputPath: sarifOutputPath,
   );
 }
 
@@ -151,6 +177,7 @@ Options:
   --group <name>        Run only rules in this group
   --force-full-scan     Do not pass PR incremental --files to supported rules
   --verbose, -v         Log each rule as it starts
+  --sarif <path>        After running, write SARIF 2.1.0 (run all rules; use - for stdout)
   --help, -h            Show this message
 
 Environment:
@@ -349,6 +376,15 @@ int runRepoLint({
     return 2;
   }
 
+  if (options.sarifOutputPath != null) {
+    return _runRepoLintWithSarif(
+      repoRoot: repoRoot,
+      rules: rules,
+      options: options,
+      incrementalCsv: incrementalCsv,
+    );
+  }
+
   for (final rule in rules) {
     if (options.verbose) {
       stderr.writeln('ct_repo_lint: [${rule.ruleId}] ${rule.title}');
@@ -358,6 +394,7 @@ int runRepoLint({
       repoRoot: repoRoot,
       rule: rule,
       incrementalCsv: incrementalCsv,
+      relayChildStdoutToStderr: false,
     );
     if (code != 0) {
       return code;
@@ -368,10 +405,132 @@ int runRepoLint({
   return 0;
 }
 
+int _runRepoLintWithSarif({
+  required String repoRoot,
+  required List<RepoLintRule> rules,
+  required RepoLintOptions options,
+  required String? incrementalCsv,
+}) {
+  final failures = <({RepoLintRule rule, int exitCode})>[];
+  for (final rule in rules) {
+    if (options.verbose) {
+      stderr.writeln('ct_repo_lint: [${rule.ruleId}] ${rule.title}');
+    }
+
+    final code = _runOneRule(
+      repoRoot: repoRoot,
+      rule: rule,
+      incrementalCsv: incrementalCsv,
+      relayChildStdoutToStderr: true,
+    );
+    if (code != 0) {
+      failures.add((rule: rule, exitCode: code));
+    }
+  }
+
+  final sarifText = encodeCtRepoLintSarif(
+    executedRules: rules,
+    failures: failures,
+  );
+  _writeSarifOutput(options.sarifOutputPath!, sarifText);
+
+  if (failures.isEmpty) {
+    stderr.writeln('ct_repo_lint: all ${rules.length} rule(s) passed.');
+    return 0;
+  }
+  stderr.writeln(
+    'ct_repo_lint: ${failures.length} rule(s) failed (SARIF written).',
+  );
+  return 1;
+}
+
+void _writeSarifOutput(String path, String json) {
+  final text = json.endsWith('\n') ? json : '$json\n';
+  if (path == '-') {
+    stdout.write(text);
+    return;
+  }
+  File(path).writeAsStringSync(text);
+}
+
+/// Builds SARIF 2.1.0 JSON for [executedRules] and failed runs in [failures].
+/// Exposed for tests.
+String encodeCtRepoLintSarif({
+  required List<RepoLintRule> executedRules,
+  required List<({RepoLintRule rule, int exitCode})> failures,
+}) {
+  return JsonEncoder.withIndent('  ').convert(
+    buildCtRepoLintSarifObject(
+      executedRules: executedRules,
+      failures: failures,
+    ),
+  );
+}
+
+/// SARIF object before JSON encoding. Exposed for tests.
+Map<String, Object?> buildCtRepoLintSarifObject({
+  required List<RepoLintRule> executedRules,
+  required List<({RepoLintRule rule, int exitCode})> failures,
+}) {
+  final driverRules = <Map<String, Object?>>[];
+  final ruleIndexById = <String, int>{};
+  for (var i = 0; i < executedRules.length; i++) {
+    final r = executedRules[i];
+    ruleIndexById[r.ruleId] = i;
+    driverRules.add({
+      'id': r.ruleId,
+      'name': r.title,
+      if (r.spec.isNotEmpty) 'shortDescription': {'text': 'SPEC: ${r.spec}'},
+    });
+  }
+
+  final results = <Map<String, Object?>>[];
+  for (final f in failures) {
+    final uri = f.rule.runner == 'dart'
+        ? (f.rule.script ?? 'unknown.dart')
+        : (f.rule.argv.isNotEmpty ? f.rule.argv.first : 'unknown');
+    results.add({
+      'ruleId': f.rule.ruleId,
+      'ruleIndex': ruleIndexById[f.rule.ruleId]!,
+      'level': 'error',
+      'message': {
+        'text':
+            'Convention check failed (exit ${f.exitCode}). See log output for file and line details.',
+      },
+      'locations': [
+        {
+          'physicalLocation': {
+            'artifactLocation': {'uri': uri},
+          },
+        },
+      ],
+    });
+  }
+
+  return {
+    r'$schema':
+        'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
+    'version': '2.1.0',
+    'runs': [
+      {
+        'tool': {
+          'driver': {
+            'name': 'ct_repo_lint',
+            'informationUri': 'https://github.com/waigore/colonizethisv3',
+            'rules': driverRules,
+          },
+        },
+        'results': results,
+      },
+    ],
+  };
+}
+
 int _runOneRule({
   required String repoRoot,
   required RepoLintRule rule,
   required String? incrementalCsv,
+  required bool relayChildStdoutToStderr,
 }) {
   stderr.writeln('ct_repo_lint: --- [${rule.ruleId}] ${rule.title} ---');
 
@@ -385,7 +544,10 @@ int _runOneRule({
       environment: Platform.environment,
       runInShell: false,
     );
-    _forwardProcessOutput(result);
+    _forwardProcessOutput(
+      result,
+      relayStdoutToStderr: relayChildStdoutToStderr,
+    );
     if (result.exitCode != 0) {
       stderr.writeln(
         'ct_repo_lint: FAILED [${rule.ruleId}] exit ${result.exitCode} (see output above)',
@@ -423,7 +585,7 @@ int _runOneRule({
     environment: Platform.environment,
     runInShell: false,
   );
-  _forwardProcessOutput(result);
+  _forwardProcessOutput(result, relayStdoutToStderr: relayChildStdoutToStderr);
   if (result.exitCode != 0) {
     stderr.writeln(
       'ct_repo_lint: FAILED [${rule.ruleId}] exit ${result.exitCode} (see output above)',
@@ -475,11 +637,18 @@ int? _tryRunDartRuleInProcess({
   }
 }
 
-void _forwardProcessOutput(ProcessResult result) {
+void _forwardProcessOutput(
+  ProcessResult result, {
+  required bool relayStdoutToStderr,
+}) {
   final out = result.stdout.toString();
   final err = result.stderr.toString();
   if (out.isNotEmpty) {
-    stdout.write(out);
+    if (relayStdoutToStderr) {
+      stderr.write(out);
+    } else {
+      stdout.write(out);
+    }
   }
   if (err.isNotEmpty) {
     stderr.write(err);

@@ -54,4 +54,15 @@ void main() {
     expect(out, contains('repo.custom_exceptions'));
     expect(out, contains('repo.test_imports'));
   });
+
+  test('CLI rejects --list with --sarif', () {
+    final r = Process.runSync(Platform.resolvedExecutable, [
+      'run',
+      'tool/ct_repo_lint.dart',
+      '--list',
+      '--sarif=-',
+    ], workingDirectory: repoRoot);
+    expect(r.exitCode, 2);
+    expect(r.stderr.toString(), contains('--sarif'));
+  });
 }

@@ -37,11 +37,17 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 
 ## CLI options
 
-`dart run tool/ct_repo_lint.dart --help` — `--list`, `--rule`, `--group`, `--manifest`, `--verbose`, `--force-full-scan`.
+`dart run tool/ct_repo_lint.dart --help` — `--list`, `--rule`, `--group`, `--manifest`, `--verbose`, `--force-full-scan`, `--sarif <path>`.
+
+### SARIF (GitHub annotations / code scanning)
+
+- **`--sarif <path>`** or **`--sarif=-`** (stdout): after the run, write **SARIF 2.1.0** with one **result** per failed rule (`level: error`, `message` points to full log for file:line detail). The tool **runs all selected rules** when SARIF is requested (it does not stop at the first failure) so the report lists every failing gate. Checker **stdout** is relayed to **stderr** in this mode so the SARIF stream (file or `-`) stays valid JSON.
+- **`--list` and `--sarif` are mutually exclusive.**
+- Upload in CI (optional): e.g. `github/codeql-action/upload-sarif` with the generated file; wire paths and permissions per GitHub’s current docs.
 
 ## Follow-ups (out of scope for initial landing)
 
-- SARIF output for GitHub annotations.
+- Align **canonical province tile-key** and **app hardcoded UI string** checkers with the same contract patterns where it reduces duplication without changing coverage.
 - Optionally lift shared roots into the manifest once all consumers read it.
 
 ## Acceptance criteria
