@@ -16,6 +16,7 @@ import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
         extractionDiscCentersForIconRect,
         resolveProvinceLabelIconIds,
         resolveProvinceLabelPresenceIconIds,
+        resourceIconDisplaySizePx,
         shouldEllipsizeProvinceLabelText,
         shouldShowExtractionUnitDiscs,
         shouldApplyFogToFeatureOverlay,
@@ -1723,12 +1724,14 @@ void main() {
     );
 
     testWidgets(
-      'resource icons render at 64x64 native size for 64px tiles (SPEC/ui/map-widget.md § Resource Icons)',
+      'resource icons render for 64px tiles with quarter-size display (SPEC/ui/map-widget.md § Resource Icons)',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
           await resourceIconCache.load();
         });
+
+        expect(resourceIconDisplaySizePx(64), equals(16));
 
         final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(

@@ -48,7 +48,8 @@ class ResourceIconCache {
 
   bool get isLoaded => _isLoaded;
 
-  /// Size of resource icons in pixels.
+  /// Edge length of resource icon **source** PNG assets in pixels (on-map display
+  /// size is defined in SPEC/ui/map-widget.md § Resource Icons).
   static const double iconSize = 64.0;
 
   /// Loads all resource icons asynchronously.
