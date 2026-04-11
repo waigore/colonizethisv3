@@ -1,7 +1,7 @@
+import 'package:colonizethis_test/test.dart';
 import 'dart:async';
 
 import 'package:colonizethis_models/stream_where_type.dart';
-import 'package:test/test.dart';
 
 void main() {
   test('whereType emits only elements that are T', () async {
