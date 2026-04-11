@@ -1,10 +1,9 @@
-import 'dart:async';
-
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/services/subscription_tracker.dart';
 import '../features/game/widgets/turn_news_dialog.dart';
 import '../providers/app_event_bus_provider.dart';
 import '../providers/game_service_provider.dart';
@@ -29,21 +28,23 @@ class GameToUIBusListener extends ConsumerStatefulWidget {
 }
 
 class _GameToUIBusListenerState extends ConsumerState<GameToUIBusListener> {
-  StreamSubscription<TurnResolutionCompleteEvent>? _turnSub;
-  StreamSubscription<NegotiationMoodUpdateEvent>? _negotiationMoodSub;
+  final SubscriptionTracker _subscriptions = SubscriptionTracker();
+  bool _busSubscriptionsAttached = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _turnSub ??=
-        ref.read(appEventBusProvider).on<TurnResolutionCompleteEvent>().listen(
-              _onTurnResolutionComplete,
-            );
-    _negotiationMoodSub ??=
-        ref
-            .read(appEventBusProvider)
-            .on<NegotiationMoodUpdateEvent>()
-            .listen(_onNegotiationMoodUpdate);
+    if (_busSubscriptionsAttached) {
+      return;
+    }
+    _busSubscriptionsAttached = true;
+    final bus = ref.read(appEventBusProvider);
+    _subscriptions.track(
+      bus.on<TurnResolutionCompleteEvent>().listen(_onTurnResolutionComplete),
+    );
+    _subscriptions.track(
+      bus.on<NegotiationMoodUpdateEvent>().listen(_onNegotiationMoodUpdate),
+    );
   }
 
   void _onTurnResolutionComplete(TurnResolutionCompleteEvent event) {
@@ -66,7 +67,9 @@ class _GameToUIBusListenerState extends ConsumerState<GameToUIBusListener> {
       final newTurn = event.turnNumber;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        ref.read(appEventBusProvider).emit(
+        ref
+            .read(appEventBusProvider)
+            .emit(
               OpenDialogEvent(turnNewsDialogId, {
                 'digest': digest,
                 'newTurnNumber': newTurn,
@@ -92,8 +95,7 @@ class _GameToUIBusListenerState extends ConsumerState<GameToUIBusListener> {
 
   @override
   void dispose() {
-    _turnSub?.cancel();
-    _negotiationMoodSub?.cancel();
+    _subscriptions.cancelAll();
     super.dispose();
   }
 

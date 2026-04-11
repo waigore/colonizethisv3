@@ -110,6 +110,16 @@ Feature-specific behavior (tabs, panel listeners, orders callbacks, local dialog
 
 ---
 
+## Stream subscriptions (`SubscriptionTracker`)
+
+In **`colonizethis_app`**, widgets and services that hold **one or more** `StreamSubscription` values for the same lifecycle should register them with **`app/lib/core/services/subscription_tracker.dart`** and call **`cancelAll()`** in **`dispose()`** / teardown (same pattern as **`AppEventHandler.unbind`** and **`CtRegionMap`** bus listeners). This keeps multi-subscription cleanup in one place and avoids scattered **`?.cancel()`** calls.
+
+**Documented exceptions:**
+
+- Packages that do not depend on **`colonizethis_app`** must not import app-only types such as **`SubscriptionTracker`**; they keep local teardown for their own subscriptions and non-stream async handles (for example **`Timer`**).
+
+---
+
 ## Migration checklist
 
 ### Done

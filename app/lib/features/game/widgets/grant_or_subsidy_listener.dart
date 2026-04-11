@@ -1,11 +1,11 @@
 // Listens for GrantOrSubsidySubmittedEvent and shows a confirmation dialog.
 
-import 'dart:async';
-
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/services/subscription_tracker.dart';
 
 class GrantOrSubsidyListener extends StatefulWidget {
   const GrantOrSubsidyListener({
@@ -26,8 +26,7 @@ class GrantOrSubsidyListener extends StatefulWidget {
 }
 
 class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
-  StreamSubscription? _sub;
-  StreamSubscription<PortraitMoodEvent>? _moodSub;
+  final SubscriptionTracker _subscriptions = SubscriptionTracker();
   final Map<String, String> _moodByLeaderId = <String, String>{};
 
   String _targetName(String factionId) {
@@ -45,55 +44,58 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
   @override
   void initState() {
     super.initState();
-    _moodSub = widget.bus.on<PortraitMoodEvent>().listen((event) {
-      _moodByLeaderId[event.leaderId] = event.toMood;
-    });
-    _sub = widget.bus.on<GrantOrSubsidySubmittedEvent>().listen((event) {
-      final targetName = _targetName(event.targetFactionId);
-      final actionName = event.isSubsidy ? 'Set subsidy' : 'Grant aid';
-      widget.bus.emit(
-        ConfirmDialogEvent(
-          title: actionName,
-          message: '$actionName of £${event.amount} to $targetName?',
-          onResult: (confirmed) {
-            if (confirmed) {
-              final orderType = event.isSubsidy
-                  ? DiplomaticOrderType.setSubsidy
-                  : DiplomaticOrderType.grantAid;
-              widget.bus.emit(
-                AppendDiplomaticOrderRequestedEvent(
-                  playerId: widget.humanPlayerId,
-                  order: DiplomaticOrder(
-                    type: orderType,
-                    targetFactionId: event.targetFactionId,
-                    amount: event.amount,
+    _subscriptions.track(
+      widget.bus.on<PortraitMoodEvent>().listen((event) {
+        _moodByLeaderId[event.leaderId] = event.toMood;
+      }),
+    );
+    _subscriptions.track(
+      widget.bus.on<GrantOrSubsidySubmittedEvent>().listen((event) {
+        final targetName = _targetName(event.targetFactionId);
+        final actionName = event.isSubsidy ? 'Set subsidy' : 'Grant aid';
+        widget.bus.emit(
+          ConfirmDialogEvent(
+            title: actionName,
+            message: '$actionName of £${event.amount} to $targetName?',
+            onResult: (confirmed) {
+              if (confirmed) {
+                final orderType = event.isSubsidy
+                    ? DiplomaticOrderType.setSubsidy
+                    : DiplomaticOrderType.grantAid;
+                widget.bus.emit(
+                  AppendDiplomaticOrderRequestedEvent(
+                    playerId: widget.humanPlayerId,
+                    order: DiplomaticOrder(
+                      type: orderType,
+                      targetFactionId: event.targetFactionId,
+                      amount: event.amount,
+                    ),
                   ),
-                ),
-              );
-              final turn = widget.game.worldState.turnState.turnNumber;
-              final base = widget.game.globalGameSeed ?? 0;
-              final currentMood =
-                  _moodByLeaderId[event.targetFactionId] ?? kDefaultMood;
-              widget.bus.emit(
-                NegotiationMoodUpdateEvent(
-                  leaderId: event.targetFactionId,
-                  currentMood: currentMood,
-                  offerQualityDelta: event.isSubsidy ? 0.5 : 0.7,
-                  stallCounter: 0,
-                  seed: base ^ (turn * 0x9E3779B1) ^ event.amount,
-                ),
-              );
-            }
-          },
-        ),
-      );
-    });
+                );
+                final turn = widget.game.worldState.turnState.turnNumber;
+                final base = widget.game.globalGameSeed ?? 0;
+                final currentMood =
+                    _moodByLeaderId[event.targetFactionId] ?? kDefaultMood;
+                widget.bus.emit(
+                  NegotiationMoodUpdateEvent(
+                    leaderId: event.targetFactionId,
+                    currentMood: currentMood,
+                    offerQualityDelta: event.isSubsidy ? 0.5 : 0.7,
+                    stallCounter: 0,
+                    seed: base ^ (turn * 0x9E3779B1) ^ event.amount,
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      }),
+    );
   }
 
   @override
   void dispose() {
-    _sub?.cancel();
-    _moodSub?.cancel();
+    _subscriptions.cancelAll();
     super.dispose();
   }
 

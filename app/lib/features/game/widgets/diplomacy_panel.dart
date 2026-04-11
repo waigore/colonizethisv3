@@ -5,10 +5,10 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
 
 import '../../../config/routes.dart';
 import '../../../core/services/app_event_handler_scope.dart';
+import '../../../core/services/subscription_tracker.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
@@ -241,19 +241,21 @@ class DiplomacyPanel extends StatefulWidget {
 
 class _DiplomacyPanelState extends State<DiplomacyPanel> {
   final Map<String, String> _moodByLeaderId = <String, String>{};
-  StreamSubscription<PortraitMoodEvent>? _moodSub;
+  final SubscriptionTracker _subscriptions = SubscriptionTracker();
 
   @override
   void initState() {
     super.initState();
-    _moodSub = widget.bus.on<PortraitMoodEvent>().listen((event) {
-      _moodByLeaderId[event.leaderId] = event.toMood;
-    });
+    _subscriptions.track(
+      widget.bus.on<PortraitMoodEvent>().listen((event) {
+        _moodByLeaderId[event.leaderId] = event.toMood;
+      }),
+    );
   }
 
   @override
   void dispose() {
-    _moodSub?.cancel();
+    _subscriptions.cancelAll();
     super.dispose();
   }
 
@@ -580,9 +582,7 @@ class _DiplomacyRow extends StatelessWidget {
               if (data.pendingGrantAmount != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  l10n.diplomacy_panel_pendingGrant(
-                    data.pendingGrantAmount!,
-                  ),
+                  l10n.diplomacy_panel_pendingGrant(data.pendingGrantAmount!),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: Theme.of(context).colorScheme.tertiary,
