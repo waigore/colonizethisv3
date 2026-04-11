@@ -23,19 +23,27 @@ const _excludedPaths = <String>{
   'packages/colonizethis_data/lib/src/ai_personality_config.dart',
 };
 
-void main(List<String> args) {
-  final parsedArgs = _parseArgs(args);
-  final root = p.normalize(Directory.current.path);
+/// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
+int runCheckCivilianUnitTypeConstants(
+  String repoRoot, {
+  List<String>? incrementalRelativeDartPaths,
+  void Function(String line)? info,
+  void Function(String line)? err,
+}) {
+  final logI = info ?? stdout.writeln;
+  final logE = err ?? stderr.writeln;
+  final root = p.normalize(repoRoot);
   final canonicalIds = _loadCanonicalCivilianUnitTypeIds(root);
   if (canonicalIds.isEmpty) {
-    stderr.writeln(
+    logE(
       'ERROR: Could not derive canonical civilian unit type ids from '
       '$_civilianUnitTypeIdsRelPath.',
     );
-    exit(1);
+    return 1;
   }
   final constantNameById = _loadCivilianUnitTypeConstantNames(root);
-  final candidateFiles = _collectCandidateFiles(root, parsedArgs.files);
+  final requested = incrementalRelativeDartPaths ?? const <String>[];
+  final candidateFiles = _collectCandidateFiles(root, requested);
 
   final violations = <CivilianUnitTypeConstantViolation>[];
   for (final file in candidateFiles) {
@@ -55,21 +63,33 @@ void main(List<String> args) {
   }
 
   if (violations.isEmpty) {
-    stdout.writeln('Civilian unit type constant usage check passed.');
-    exit(0);
+    logI('Civilian unit type constant usage check passed.');
+    return 0;
   }
 
-  stderr.writeln(
+  logE(
     'ERROR: Found raw civilian unit type string literals in executable code. '
     'Use kUnitType* constants from colonizethis_models.',
   );
   for (final violation in violations) {
-    stderr.writeln(
+    logE(
       '${violation.path}:${violation.line}:${violation.column} '
       '${violation.message}',
     );
   }
-  exit(1);
+  return 1;
+}
+
+void main(List<String> args) {
+  final parsedArgs = _parseArgs(args);
+  exit(
+    runCheckCivilianUnitTypeConstants(
+      Directory.current.path,
+      incrementalRelativeDartPaths: parsedArgs.files.isEmpty
+          ? null
+          : parsedArgs.files,
+    ),
+  );
 }
 
 List<CivilianUnitTypeConstantViolation> findCivilianUnitTypeConstantViolations({
@@ -123,20 +143,10 @@ _ParsedArgs _parseArgs(List<String> args) {
     exit(2);
   }
   return _ParsedArgs(
-    files: filesArgValue == null ? const [] : _splitFileArg(filesArgValue),
+    files: filesArgValue == null
+        ? const []
+        : repoLintSplitRelativeDartPathsArg(filesArgValue),
   );
-}
-
-List<String> _splitFileArg(String value) {
-  if (value.trim().isEmpty) {
-    return const [];
-  }
-  final normalized = value.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-  return normalized
-      .split(RegExp('[,\n]'))
-      .map((entry) => entry.trim())
-      .where((entry) => entry.isNotEmpty)
-      .toList(growable: false);
 }
 
 List<File> _collectCandidateFiles(String root, List<String> requestedPaths) {

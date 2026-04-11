@@ -13,13 +13,18 @@ import 'ct_repo_lint_scan_contract.dart';
 ///
 /// Uses the Dart AST (not line regexes) so multiline `Text(\n  '…',\n)` and
 /// adjacent string literals are detected. Supplements `hardcoded_strings_lint`.
-void main() {
-  final repoRoot = Directory.current.path;
+/// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
+int runCheckAppHardcodedUiStrings(
+  String repoRoot, {
+  void Function(String line)? info,
+  void Function(String line)? err,
+}) {
+  final logI = info ?? stdout.writeln;
+  final logE = err ?? stderr.writeln;
   final appLib = Directory(p.join(repoRoot, 'app', 'lib'));
   if (!appLib.existsSync()) {
-    stderr.writeln('check_app_hardcoded_ui_strings: app/lib not found.');
-    exitCode = 1;
-    return;
+    logE('check_app_hardcoded_ui_strings: app/lib not found.');
+    return 1;
   }
 
   final violations = <HardcodedUiViolation>[];
@@ -30,19 +35,23 @@ void main() {
   }
 
   if (violations.isEmpty) {
-    stdout.writeln('check_app_hardcoded_ui_strings: no violations found.');
-    return;
+    logI('check_app_hardcoded_ui_strings: no violations found.');
+    return 0;
   }
 
-  stderr.writeln('Hardcoded UI string violations found in app/lib:');
+  logE('Hardcoded UI string violations found in app/lib:');
   for (final v in violations) {
-    stderr.writeln(' - ${v.path}:${v.line}: ${v.snippet}');
+    logE(' - ${v.path}:${v.line}: ${v.snippet}');
   }
-  stderr.writeln(
+  logE(
     '\nTotal violations: ${violations.length}. '
     'Move user-visible strings to AppLocalizations/ARB.',
   );
-  exitCode = 1;
+  return 1;
+}
+
+void main() {
+  exit(runCheckAppHardcodedUiStrings(Directory.current.path));
 }
 
 /// Exposed for unit tests (same behavior as production scan).
