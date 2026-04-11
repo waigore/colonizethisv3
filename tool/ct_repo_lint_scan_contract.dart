@@ -9,7 +9,6 @@ const List<String> repoLintDomainScanRoots = <String>[
   'packages',
   'app/lib',
   'ctdev/lib',
-  'ctterm/lib',
   'tool',
 ];
 
@@ -81,11 +80,10 @@ List<String> repoLintSplitRelativeDartPathsArg(String value) {
 
 // --- Identifier-literal checkers (tech / work-target / civilian unit type) ---
 
-/// Scan roots for tech / work-target / civilian literal checkers (historical
-/// layout: top-level `app`, `ctterm`, `packages`, `tool` — not `ctdev/lib`).
+/// Scan roots for tech / work-target / civilian literal checkers (top-level
+/// `app`, `packages`, `tool` — not `ctdev/lib`, which is covered elsewhere).
 const List<String> repoLintIdentifierLiteralScanRoots = <String>[
   'app',
-  'ctterm',
   'packages',
   'tool',
 ];

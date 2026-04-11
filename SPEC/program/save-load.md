@@ -13,7 +13,7 @@
 
 ## Contract
 
-- **Storage backend:** Hive box. One box per store; keys are strings. Hive uses a **lock file** (e.g. `games.lock`) in the store directory so only one process has the box open at a time. Clients that open the box (e.g. ctterm) must handle lock failure appropriately; ctterm does so by showing a lock-prompt screen and deleting the lock only if the user agrees (see [SPEC/tui/ctterm.md](../tui/ctterm.md) §5.1).
+- **Storage backend:** Hive box. One box per store; keys are strings. Hive uses a **lock file** (e.g. `games.lock`) in the store directory so only one process has the box open at a time. Human-facing clients that open the box (**Flutter app** and **ctdev**) must handle lock failure in a user-visible way (e.g. explain that another instance may hold the store, offer retry or safe exit) and must not delete the lock file without explicit user consent.
 - **Key convention:**
   - **Game:** key = `gameId`; value = envelope JSON `{ saveFormatVersion, game }`.
     - `saveFormatVersion`: integer persisted by `colonizethis_save` as a hardcoded program constant.

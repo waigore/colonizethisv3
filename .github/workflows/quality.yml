@@ -30,7 +30,6 @@ jobs:
             tests:
               - 'packages/**'
               - 'app/**'
-              - 'ctterm/**'
               - 'tool/sim_scenarios/**'
               - 'tool/sim_combat_montecarlo/**'
               - 'tool/sim_combat/**'
@@ -382,16 +381,6 @@ jobs:
           if [ -d packages/colonizethis_map/test ]; then
             (cd packages/colonizethis_map && dart test --coverage=coverage -j 2 --reporter=compact)
             (cd packages/colonizethis_map && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test ctterm (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          set -e
-          if [ -d ctterm/test ]; then
-            (cd ctterm && dart test -j 2 --reporter=compact)
           fi
 
       - name: Test tool packages (Dart)

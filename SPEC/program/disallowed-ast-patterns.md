@@ -24,7 +24,6 @@ Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dar
 - `packages/**/lib/**`
 - `app/lib/**`
 - `ctdev/lib/**`
-- `ctterm/lib/**`
 - `tool/**/lib/**`
 
 Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/test/**`, `*_test.dart`) are excluded.

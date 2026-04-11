@@ -20,7 +20,7 @@ Resolves diplomatic orders, manages overture state machine, updates relation sco
 - **primaryType**: enum describing the main event (e.g. `declareWar`, `peace`, `allianceFormed`, `allianceBroken`, `overtureAccepted`, `overtureRejected`, `joinEmpireResolved`, `grantAidApplied`, `subsidySet`, `subsidyUpdated`, `subsidyCancelled`, `interventionIntervene`, `interventionProtest`, `interventionDoNothing`, `agreementsClearedOnWar`, `callToArmsAccepted`, `callToArmsRefused`).
 - **details**: structured payload fields specific to the primaryType (e.g. `fromFactionId`, `toFactionId`, `overtureStage`, `amount`, `reason`, `wasAiInitiator`).
 
-Rendering of human-readable strings (including year labels derived from turn) is delegated to UI/TUI layers based on this structured event model.
+Rendering of human-readable strings (including year labels derived from turn) is delegated to UI layers based on this structured event model.
 
 ---
 

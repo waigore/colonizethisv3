@@ -27,7 +27,6 @@ Cursor rules are the source of truth for implementation and review behavior.
 | `colonizethis-code-review.mdc` | `**/*.dart` | Review checklist and quality gates |
 | `colonizethis-lifecycle.mdc` | `**/*.dart` | Flame/Flutter lifecycle conventions |
 | `colonizethis-assets.mdc` | `**/*.dart`, `**/pubspec.yaml`, `**/assets/**` | Asset structure, naming, loading |
-| `colonizethis-tui.mdc` | `SPEC/tui/**`, `ctterm/**` | ctterm-specific behavior and constraints |
 | `colonizethis-acceptance-criteria.mdc` | `SPEC/ai/**`, `SPEC/game/**`, `SPEC/program/**`, `SPEC/ui/**` | Given–When–Then, testable AC quality |
 
 ## Rule interaction
@@ -42,7 +41,7 @@ Multiple context-specific rules may apply to a single file (e.g., a UI widget ma
 4. **Coverage policy**: **90% for logic/ai/map packages; 80% everywhere else**. See `colonizethis-testing.mdc`.
 5. **Widget tests**: Run app/ctdev widget tests with `flutter test` (or `melos run test_app`), not `dart test app/...`. See `colonizethis-testing.mdc`.
 6. **Logging**: Policy and annexes: `SPEC/program/logging/logging.md`; ctdev file/Sim Log: `SPEC/program/ctdev-logging.md`; use `basic_logger_file` per `colonizethis-logging-file.mdc` where file sinks apply.
-7. **Cross-panel UI orchestration**: "Panels" refers to app panels/dialogs/components. Panels should **not** directly invoke or depend on each other unless absolutely necessary. Use `AppEventBus` for cross-panel communication. See `SPEC/program/app-ui-wiring.md`, `SPEC/program/app-event-bus.md`, and `colonizethis-tui.mdc`.
+7. **Cross-panel UI orchestration**: "Panels" refers to app panels/dialogs/components. Panels should **not** directly invoke or depend on each other unless absolutely necessary. Use `AppEventBus` for cross-panel communication. See `SPEC/program/app-ui-wiring.md` and `SPEC/program/app-event-bus.md`.
 
 For complete details, read the relevant rule file(s) in `.cursor/rules/`.
 

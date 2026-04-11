@@ -12,7 +12,7 @@ The civilian units panel gives the player a single place to see every civilian u
 
 ## Scope: which units are shown
 
-- **Included:** All units owned by the human player that are **civilian** per the game model: Explorer, Builder, Engineer, Spy, Merchant, Rail Builder. Identification uses the same rule as development and TUI (e.g. `unitRoleForType(unit.type)` is not military and not naval; units have `tileKey`).
+- **Included:** All units owned by the human player that are **civilian** per the game model: Explorer, Builder, Engineer, Spy, Merchant, Rail Builder. Identification uses the same rule as the development flow (e.g. `unitRoleForType(unit.type)` is not military and not naval; units have `tileKey`).
 - **Excluded:** Military regiments and naval units. Units owned by other players or by Minor Nations/Tribes are not shown.
 - **Data source:** Units from `WorldState` for all regions (e.g. `oldWorld.units` and `newWorld.units`), filtered by `ownerId == humanPlayerId` and civilian type. Province and region for each unit are derived from the **projected civilian tile** (pending draft `WorkOrder.targetTileKey` for that unit when present, else non-empty `assignedTileKey`, else `tileKey`).
 

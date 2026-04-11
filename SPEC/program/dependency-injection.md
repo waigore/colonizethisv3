@@ -8,7 +8,7 @@
 
 - Keep **game rules and map generation** free of Flutter; use the Dart **`riverpod`** package (not `flutter_riverpod`) inside `colonizethis_logic`, `colonizethis_map`, and `colonizethis_ai`.
 - Expose **canonical `Provider`s** for cross-cutting seams (order suggestions, game events, tile-map generation).
-- Preserve **backward compatibility**: leaf APIs accept **optional** parameters; when `null`, behavior matches the previous hard-coded default (`ctterm`, CLI tools, and tests that do not import DI).
+- Preserve **backward compatibility**: leaf APIs accept **optional** parameters; when `null`, behavior matches the previous hard-coded default (CLI tools and tests that do not import DI).
 
 ---
 
@@ -34,7 +34,7 @@ The main package barrels (`colonizethis_logic.dart`, `colonizethis_map.dart`) do
 
 - **Flutter app** (`app/`): Under `ProviderScope`, use `ref.read(orderSuggestionApiProvider)` (and optionally `gameEventBusProvider`) when calling APIs that accept an injected `OrderSuggestionAPI` or when passing an event bus into `resolveTurnForGame`.
 - **Tests**: Use `ProviderContainer(overrides: [...])` then `container.read(...)`; dispose the container in `tearDown`.
-- **ctdev / ctterm / tools**: May ignore DI libraries entirely; pass `null` for optional generation or suggestion parameters so built-in defaults apply.
+- **ctdev / tools**: May ignore DI libraries entirely; pass `null` for optional generation or suggestion parameters so built-in defaults apply.
 
 ---
 

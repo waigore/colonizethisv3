@@ -16,7 +16,6 @@ run_if_wired() {
 for dir in \
   app \
   ctdev \
-  ctterm \
   packages/colonizethis_ai \
   packages/colonizethis_data \
   packages/colonizethis_exception_lint \

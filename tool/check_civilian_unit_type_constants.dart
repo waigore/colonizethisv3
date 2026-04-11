@@ -16,9 +16,6 @@ const _civilianUnitTypeIdsRelPath =
 const _excludedPaths = <String>{
   _civilianUnitTypeIdsRelPath,
 
-  /// Naval ship category label; same spelling as civilian [kUnitTypeMerchant].
-  'ctterm/lib/screens/shipyard_screen.dart',
-
   /// Archetype display names; values may match civilian spellings by coincidence.
   'packages/colonizethis_data/lib/src/ai_personality_config.dart',
 };

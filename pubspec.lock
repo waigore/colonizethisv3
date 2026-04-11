@@ -33,14 +33,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.10"
-  ansi_escape_codes:
-    dependency: transitive
-    description:
-      name: ansi_escape_codes
-      sha256: "68dfa36c8858bfdd5d6d9a64e09a88c9cf93d2c8e35c9df0cc0e75bccda9ee23"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.2.1"
   ansi_styles:
     dependency: transitive
     description:
@@ -257,14 +249,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.0"
-  equatable:
-    dependency: transitive
-    description:
-      name: equatable
-      sha256: "3e0141505477fd8ad55d6eb4e7776d3fe8430be8e497ccb1521370c3f21a3e2b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.8"
   fake_async:
     dependency: transitive
     description:
@@ -556,14 +540,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.0"
-  markdown:
-    dependency: transitive
-    description:
-      name: markdown
-      sha256: ee85086ad7698b42522c6ad42fe195f1b9898e4d974a1af4576c1a3a176cada9
-      url: "https://pub.dev"
-    source: hosted
-    version: "7.3.1"
   matcher:
     dependency: transitive
     description:
@@ -592,10 +568,10 @@ packages:
     dependency: transitive
     description:
       name: meta
-      sha256: "23f08335362185a5ea2ad3a4e597f1375e78bce8a040df5c600c8d3552ef2394"
+      sha256: "1741988757a65eb6b36abe716829688cf01910bbf91c34354ff7ec1c3de2b349"
       url: "https://pub.dev"
     source: hosted
-    version: "1.17.0"
+    version: "1.18.0"
   mime:
     dependency: transitive
     description:
@@ -628,14 +604,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
-  nocterm:
-    dependency: transitive
-    description:
-      name: nocterm
-      sha256: "07e6fc6986a13f774360328acf377f6eea1287217e9246bdd5bbab88a7be2e36"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.4"
   node_preamble:
     dependency: transitive
     description:
@@ -804,14 +772,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.0"
-  quiver:
-    dependency: transitive
-    description:
-      name: quiver
-      sha256: ea0b925899e64ecdfbf9c7becb60d5b50e706ade44a85b2363be2a22d88117d2
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.2"
   resizable_widget:
     dependency: transitive
     description:
@@ -1169,14 +1129,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.4"
-  zmodem:
-    dependency: transitive
-    description:
-      name: zmodem
-      sha256: "3b7e5b29f3a7d8aee472029b05165a68438eff2f3f7766edf13daba1e297adbf"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.6"
 sdks:
   dart: ">=3.11.0 <4.0.0"
   flutter: ">=3.41.0"
