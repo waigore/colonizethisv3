@@ -117,7 +117,20 @@ class OpenMilitaryUnitsPanelEvent extends UIActionEvent {
 
 /// Naval units bottom sheet. Fleet mutations emit [NavalFleetsUpdatedEvent] from the panel.
 class OpenNavalUnitsPanelEvent extends UIActionEvent {
-  const OpenNavalUnitsPanelEvent();
+  const OpenNavalUnitsPanelEvent({
+    this.locationScopeKey,
+    this.initialSelectedFleetId,
+    this.tileScopeTileKey,
+  });
+
+  /// Optional `port:regionId|provinceId` / `sea:regionId|seaZoneId` filter (naval tree).
+  final String? locationScopeKey;
+
+  /// Optional initial fleet selection when opening in location scope.
+  final String? initialSelectedFleetId;
+
+  /// Optional map tile key (`regionId|cellId|x|y`) for tile-scoped panel chrome (Locate / title).
+  final String? tileScopeTileKey;
 }
 
 /// Request to center/highlight a map tile. To close a units sheet first, emit [ClosePanelEvent]

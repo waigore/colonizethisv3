@@ -41,7 +41,7 @@ Keep **`showDialog` / `showModalBottomSheet` / `Navigator.pop`** **inside one fe
 | `OpenPauseMenuPanelEvent` | `GameScreen` (pause) | `PauseMenuPanel` |
 | `OpenCivilianUnitsPanelEvent` | `GameSideMenu` | `CivilianUnitsPanel` (+ Riverpod game/orders) |
 | `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
-| `OpenNavalUnitsPanelEvent` | `GameSideMenu` | `NavalUnitsPanel` |
+| `OpenNavalUnitsPanelEvent` | `GameSideMenu`, map fleet marker | `NavalUnitsPanel` (optional tile/location scope fields on event) |
 
 Sheet close cleanup should be emitted as a typed bus event (`UnitsPanelClosedEvent`) from the handler.
 

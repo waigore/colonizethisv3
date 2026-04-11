@@ -9,6 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'combine_region_topologies.dart';
 import 'init_game_map_view_data.dart';
 import 'port_icon_placement.dart';
+import 'sea_zone_centroid_tile.dart';
 import 'tile_map_visualization_shared.dart';
 
 String? _capitalTileKeyForProvince({
@@ -76,6 +77,213 @@ bool _isCivilianUnitType(String unitType) {
     return false;
   }
   return role != UnitRole.military && role != UnitRole.naval;
+}
+
+String _homeFleetIdForMapMarker(String playerId) => 'fleet_$playerId';
+
+bool _fleetAtHumanCapital(Game game, String playerId, Fleet fleet) {
+  if (!fleet.isInPort || fleet.inPortAtProvinceId == null) {
+    return false;
+  }
+  final player = game.players.firstWhere(
+    (p) => p.id == playerId,
+    orElse: () => game.players.first,
+  );
+  if (!player.isHuman) {
+    return false;
+  }
+  final cap = player.capitalTile;
+  if (cap == null) {
+    return false;
+  }
+  final capParts = cap.toTileKey().split('|');
+  if (capParts.length < 2) {
+    return false;
+  }
+  final capReg = capParts[0];
+  final capProvLocal = capParts[1];
+  if (fleet.regionId != capReg) {
+    return false;
+  }
+  final port = fleet.inPortAtProvinceId!;
+  return port == capProvLocal || port == '$capReg|$capProvLocal';
+}
+
+bool _includeFleetForTileMarker(
+  Game game,
+  Fleet f,
+  String regionId,
+  Set<String> humanIds,
+) {
+  if (!humanIds.contains(f.ownerId) || f.regionId != regionId) {
+    return false;
+  }
+  if (f.shipTypeIds.isNotEmpty) {
+    return true;
+  }
+  return f.id == _homeFleetIdForMapMarker(f.ownerId) &&
+      _fleetAtHumanCapital(game, f.ownerId, f);
+}
+
+String? _tileKeyForProvinceFleetMarker(Game game, Province province) {
+  if (province.townTileKey != null && province.townTileKey!.isNotEmpty) {
+    return province.townTileKey;
+  }
+  final byProvince =
+      game.worldState.tileKeysByRegionAndProvince[province.regionId];
+  final prefixedId = '${province.regionId}|${province.id}';
+  final tiles = byProvince?[prefixedId] ?? byProvince?[province.id];
+  if (tiles != null && tiles.isNotEmpty) {
+    return tiles.first;
+  }
+  return null;
+}
+
+(int?, int?) _xyFromMapTileKey(String tileKey) {
+  final parts = tileKey.split('|');
+  if (parts.length < 4) {
+    return (null, null);
+  }
+  final x = int.tryParse(parts[parts.length - 2]);
+  final y = int.tryParse(parts[parts.length - 1]);
+  return (x, y);
+}
+
+List<FleetTileMarkerView> _buildFleetTileMarkersForRegion({
+  required Game game,
+  required String regionId,
+  required List<Province> provinces,
+  required TileMapResult tileMap,
+  required Set<String> seaZoneIds,
+}) {
+  final humanIds = game.players
+      .where((p) => p.isHuman)
+      .map((p) => p.id)
+      .toSet();
+  if (humanIds.isEmpty) {
+    return const [];
+  }
+
+  final provinceMap = <String, Province>{
+    for (final p in provinces) ...{
+      '${p.regionId}|${p.id}': p,
+      p.id: p,
+    },
+  };
+
+  final byLocation = <String, List<Fleet>>{};
+
+  for (final f in game.worldState.fleets) {
+    if (!_includeFleetForTileMarker(game, f, regionId, humanIds)) {
+      continue;
+    }
+    if (f.isAtSea && f.seaZoneId != null) {
+      final z = f.seaZoneId!;
+      final zoneKey = z.contains('|') ? z : '$regionId|$z';
+      byLocation.putIfAbsent('sea:$zoneKey', () => []).add(f);
+    } else if (f.inPortAtProvinceId != null) {
+      final province =
+          provinceMap['$regionId|${f.inPortAtProvinceId}'] ??
+          provinceMap[f.inPortAtProvinceId!];
+      if (province == null) {
+        continue;
+      }
+      byLocation
+          .putIfAbsent('port:${province.regionId}|${province.id}', () => [])
+          .add(f);
+    }
+  }
+
+  for (final player in game.players.where((p) => p.isHuman)) {
+    final hid = player.id;
+    final homeId = _homeFleetIdForMapMarker(hid);
+    if (game.worldState.fleets.any((fl) => fl.id == homeId)) {
+      continue;
+    }
+    final cap = player.capitalTile;
+    if (cap == null || cap.regionId != regionId) {
+      continue;
+    }
+    final capParts = cap.toTileKey().split('|');
+    if (capParts.length < 2) {
+      continue;
+    }
+    final capLocal = capParts[1];
+    final province =
+        provinceMap['$regionId|$capLocal'] ?? provinceMap[capLocal];
+    if (province == null) {
+      continue;
+    }
+    byLocation
+        .putIfAbsent('port:${province.regionId}|${province.id}', () => [])
+        .add(
+          Fleet(
+            id: homeId,
+            ownerId: hid,
+            regionId: regionId,
+            inPortAtProvinceId: '$regionId|$capLocal',
+            ships: const [],
+            mission: FleetMission.none,
+          ),
+        );
+  }
+
+  final markers = <FleetTileMarkerView>[];
+  for (final entry in byLocation.entries) {
+    final scopeKey = entry.key;
+    final fleets = entry.value.toList()
+      ..sort((a, b) => a.id.compareTo(b.id));
+    final fleetIds = fleets.map((fl) => fl.id).toList();
+
+    String? tileKey;
+    if (scopeKey.startsWith('sea:')) {
+      final zoneKey = scopeKey.substring(4);
+      final local = zoneKey.contains('|') ? zoneKey.split('|').last : zoneKey;
+      tileKey = seaZoneCentroidTileKey(
+        tileMap: tileMap,
+        regionId: regionId,
+        localSeaZoneId: local,
+        seaZoneNodeIds: seaZoneIds,
+      );
+    } else if (scopeKey.startsWith('port:')) {
+      final fullProv = scopeKey.substring(5);
+      final province = provinceMap[fullProv];
+      if (province != null) {
+        tileKey = _tileKeyForProvinceFleetMarker(game, province);
+      }
+    }
+    if (tileKey == null) {
+      continue;
+    }
+    final xy = _xyFromMapTileKey(tileKey);
+    final x = xy.$1;
+    final y = xy.$2;
+    if (x == null || y == null) {
+      continue;
+    }
+    markers.add(
+      FleetTileMarkerView(
+        tileKey: tileKey,
+        x: x,
+        y: y,
+        locationScopeKey: scopeKey,
+        fleetIds: fleetIds,
+        stackCount: fleetIds.length,
+      ),
+    );
+  }
+  markers.sort((a, b) {
+    final yc = a.y.compareTo(b.y);
+    if (yc != 0) {
+      return yc;
+    }
+    final xc = a.x.compareTo(b.x);
+    if (xc != 0) {
+      return xc;
+    }
+    return a.tileKey.compareTo(b.tileKey);
+  });
+  return markers;
 }
 
 InitGameMapViewData buildInitGameMapViewData({
@@ -616,6 +824,14 @@ RegionMapViewData _buildRegionViewData({
     );
   }
 
+  final fleetTileMarkers = _buildFleetTileMarkersForRegion(
+    game: game,
+    regionId: regionId,
+    provinces: provinces,
+    tileMap: tileMap,
+    seaZoneIds: seaZoneIds,
+  );
+
   return RegionMapViewData(
     regionId: regionId,
     width: tileMap.width,
@@ -629,6 +845,7 @@ RegionMapViewData _buildRegionViewData({
     terrainColors: terrainColors,
     unitMarkers: unitMarkers,
     civilianTileMarkers: playerOwnedCivilianTileMarkers,
+    fleetTileMarkers: fleetTileMarkers,
     warpMarkers: warpMarkers,
     townMarkers: towns,
     provinceUnitPresenceByProvinceId: provincePresenceById,

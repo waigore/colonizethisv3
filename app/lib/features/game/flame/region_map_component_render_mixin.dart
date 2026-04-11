@@ -1,6 +1,28 @@
 part of 'region_map_component.dart';
 
 extension _CtRegionMapRenderExtension on CtRegionMapComponent {
+  TileVisibility _visibilityForTerrain(CellViewData cell) {
+    if (visibilityMode != CtMapVisibilityMode.playerConstrained) {
+      return cell.visibility;
+    }
+    if (_isUnderFleetRevealHalo(cell.x, cell.y)) {
+      return TileVisibility.visible;
+    }
+    return cell.visibility;
+  }
+
+  bool _isUnderFleetRevealHalo(int x, int y) {
+    for (final m in region.fleetTileMarkers) {
+      if (!m.applyFleetRevealHalo) {
+        continue;
+      }
+      if (math.max((x - m.x).abs(), (y - m.y).abs()) <= 2) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void _renderRegionMap(Canvas canvas) {
     _paintTiles(canvas);
     if (showProvinceOwnershipTint) {
@@ -23,6 +45,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     _paintTowns(canvas);
     _paintWarpZones(canvas);
     _paintCivilianTileMarkers(canvas);
+    _paintFleetTileMarkers(canvas);
     if (_hoveredTileX != null && _hoveredTileY != null) {
       _paintSelector(canvas);
     }
@@ -50,7 +73,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       if (regionMapSkipPointMarkerOnCell(
         playerConstrainedVisibility:
             visibilityMode == CtMapVisibilityMode.playerConstrained,
-        cellVisibility: cell.visibility,
+        cellVisibility: _visibilityForTerrain(cell),
       )) {
         continue;
       }
@@ -121,6 +144,89 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       final badgeFill = Paint()
         ..style = PaintingStyle.fill
         ..color = Colors.black.withValues(alpha: blinkAlpha.clamp(0.35, 1.0));
+      canvas.drawCircle(Offset(badgeCx, badgeCy), badgeRadius, badgeFill);
+      final badgeText = TextPainter(
+        text: TextSpan(
+          text: '${marker.stackCount}',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: math.max(8.0, cellSize * 0.24),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      badgeText.paint(
+        canvas,
+        Offset(badgeCx - badgeText.width / 2, badgeCy - badgeText.height / 2),
+      );
+    }
+  }
+
+  void _paintFleetTileMarkers(Canvas canvas) {
+    if (region.fleetTileMarkers.isEmpty) {
+      return;
+    }
+    for (final marker in region.fleetTileMarkers) {
+      if (marker.x < 0 ||
+          marker.x >= region.width ||
+          marker.y < 0 ||
+          marker.y >= region.height) {
+        continue;
+      }
+      final left = marker.x * cellSize;
+      final top = marker.y * cellSize;
+      final icon = fleetIconCache.getIcon();
+      if (icon != null) {
+        final srcRect = Rect.fromLTWH(
+          0,
+          0,
+          FleetIconCache.iconSize,
+          FleetIconCache.iconSize,
+        );
+        final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
+        final paint = Paint();
+        if (marker.renderGrayscale) {
+          paint.colorFilter = const ColorFilter.matrix(<double>[
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+          ]);
+        }
+        canvas.drawImageRect(icon, srcRect, dstRect, paint);
+      } else {
+        final fallback = Paint()
+          ..style = PaintingStyle.fill
+          ..color = const Color(0xFF1c3d5a);
+        canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), fallback);
+      }
+
+      if (marker.stackCount <= 1) {
+        continue;
+      }
+      final badgeRadius = math.max(7.0, cellSize * 0.2);
+      final badgeCx = left + cellSize - badgeRadius;
+      final badgeCy = top + cellSize - badgeRadius;
+      final badgeFill = Paint()
+        ..style = PaintingStyle.fill
+        ..color = Colors.black;
       canvas.drawCircle(Offset(badgeCx, badgeCy), badgeRadius, badgeFill);
       final badgeText = TextPainter(
         text: TextSpan(
@@ -251,7 +357,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     for (final cell in region.cells) {
       if (cell.isSea) continue;
       if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-          cell.visibility == TileVisibility.unrevealed) {
+          _visibilityForTerrain(cell) == TileVisibility.unrevealed) {
         continue;
       }
       byLocalId.putIfAbsent(cell.regionCellId, () => []).add(cell);
@@ -530,7 +636,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     final top = cell.y * cellSize;
 
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        cell.visibility == TileVisibility.unrevealed) {
+        _visibilityForTerrain(cell) == TileVisibility.unrevealed) {
       final paint = Paint()..color = Colors.black;
       canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), paint);
       return;
@@ -563,7 +669,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
         final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
         canvas.drawImageRect(tileset.image, srcRect, dstRect, Paint());
         if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-            cell.visibility == TileVisibility.fogged) {
+            _visibilityForTerrain(cell) == TileVisibility.fogged) {
           canvas.drawRect(
             dstRect,
             Paint()..color = Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
@@ -591,7 +697,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     final top = cell.y * cellSize;
 
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        cell.visibility == TileVisibility.unrevealed) {
+        _visibilityForTerrain(cell) == TileVisibility.unrevealed) {
       final paint = Paint()..color = Colors.black;
       canvas.drawRect(Rect.fromLTWH(left, top, cellSize, cellSize), paint);
       return;
@@ -747,7 +853,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
         final overlayPaint = Paint();
         if (shouldApplyFogToInteriorPlainsVariantOverlay(
           visibilityMode: visibilityMode,
-          tileVisibility: cell.visibility,
+          tileVisibility: _visibilityForTerrain(cell),
         )) {
           overlayPaint.colorFilter = ColorFilter.mode(
             Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
@@ -773,7 +879,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     final dstRect = Rect.fromLTWH(left, top, cellSize, cellSize);
     final paint = _landBaseImagePaint(
       terrain: terrain,
-      tileVisibility: cell.visibility,
+      tileVisibility: _visibilityForTerrain(cell),
     );
     _drawLandInteriorUpperBaseForTerrain(
       canvas,
@@ -788,7 +894,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     final top = cell.y * cellSize;
 
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        cell.visibility == TileVisibility.unrevealed) {
+        _visibilityForTerrain(cell) == TileVisibility.unrevealed) {
       return;
     }
 
@@ -814,7 +920,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     final paint = Paint();
     if (shouldApplyFogToFeatureOverlay(
       visibilityMode: visibilityMode,
-      tileVisibility: cell.visibility,
+      tileVisibility: _visibilityForTerrain(cell),
       terrain: terrain,
     )) {
       paint.colorFilter = ColorFilter.mode(
@@ -924,7 +1030,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     canvas.drawImageRect(tileset.image, srcRect, dstRect, Paint());
 
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        cell.visibility == TileVisibility.fogged) {
+        _visibilityForTerrain(cell) == TileVisibility.fogged) {
       canvas.drawRect(
         dstRect,
         Paint()..color = Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
@@ -958,7 +1064,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
   Paint _resourceOverlayPaintForCell(CellViewData cell) {
     final paint = Paint();
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        cell.visibility == TileVisibility.fogged) {
+        _visibilityForTerrain(cell) == TileVisibility.fogged) {
       paint.colorFilter = ColorFilter.mode(
         _kMapHoverSelectorIdle.withValues(
           alpha: _kFoggedResourceIconModulateAlpha,
@@ -987,7 +1093,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
     for (final cell in region.cells) {
       if (cell.isSea) continue;
       if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-          cell.visibility == TileVisibility.unrevealed) {
+          _visibilityForTerrain(cell) == TileVisibility.unrevealed) {
         continue;
       }
 
@@ -1029,7 +1135,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       for (final cell in region.cells) {
         if (cell.isSea) continue;
         if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-            cell.visibility == TileVisibility.unrevealed) {
+            _visibilityForTerrain(cell) == TileVisibility.unrevealed) {
           continue;
         }
         final imp = cell.improvementLevel ?? 0;
@@ -1042,7 +1148,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       for (final cell in region.cells) {
         if (cell.isSea) continue;
         if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-            cell.visibility == TileVisibility.unrevealed) {
+            _visibilityForTerrain(cell) == TileVisibility.unrevealed) {
           continue;
         }
         final road = cell.roadLevel ?? 0;
@@ -1103,8 +1209,8 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
           if (right.regionCellId != provinceId) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
               gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
-              visibilityA: cell.visibility,
-              visibilityB: right.visibility,
+              visibilityA: _visibilityForTerrain(cell),
+              visibilityB: _visibilityForTerrain(right),
             )) {
               final xEdge = verticalProvinceTopologyEdgeX(
                 left: cell,
@@ -1126,8 +1232,8 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
           if (bottom.regionCellId != provinceId) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
               gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
-              visibilityA: cell.visibility,
-              visibilityB: bottom.visibility,
+              visibilityA: _visibilityForTerrain(cell),
+              visibilityB: _visibilityForTerrain(bottom),
             )) {
               final yEdge = horizontalProvinceTopologyEdgeY(
                 top: cell,
@@ -1199,8 +1305,8 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
           if (cell.regionCellId != right.regionCellId) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
               gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
-              visibilityA: cell.visibility,
-              visibilityB: right.visibility,
+              visibilityA: _visibilityForTerrain(cell),
+              visibilityB: _visibilityForTerrain(right),
             )) {
               paint.color = _provinceBorderColor(cell, right);
               final xEdge = verticalProvinceTopologyEdgeX(
@@ -1223,8 +1329,8 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
           if (cell.regionCellId != bottom.regionCellId) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
               gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
-              visibilityA: cell.visibility,
-              visibilityB: bottom.visibility,
+              visibilityA: _visibilityForTerrain(cell),
+              visibilityB: _visibilityForTerrain(bottom),
             )) {
               paint.color = _provinceBorderColor(cell, bottom);
               final yEdge = horizontalProvinceTopologyEdgeY(
@@ -1269,8 +1375,8 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
           if (!right.isSea && (right.ownerFactionId ?? '') != owner) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
               gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
-              visibilityA: cell.visibility,
-              visibilityB: right.visibility,
+              visibilityA: _visibilityForTerrain(cell),
+              visibilityB: _visibilityForTerrain(right),
             )) {
               final xEdge = (x + 1) * cellSize;
               canvas.drawLine(
@@ -1286,8 +1392,8 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
           if (!bottom.isSea && (bottom.ownerFactionId ?? '') != owner) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
               gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
-              visibilityA: cell.visibility,
-              visibilityB: bottom.visibility,
+              visibilityA: _visibilityForTerrain(cell),
+              visibilityB: _visibilityForTerrain(bottom),
             )) {
               final yEdge = (y + 1) * cellSize;
               canvas.drawLine(
@@ -1313,7 +1419,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       if (regionMapSkipPointMarkerOnCell(
         playerConstrainedVisibility:
             visibilityMode == CtMapVisibilityMode.playerConstrained,
-        cellVisibility: cell.visibility,
+        cellVisibility: _visibilityForTerrain(cell),
       )) {
         continue;
       }
@@ -1333,7 +1439,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       if (regionMapSkipPointMarkerOnCell(
         playerConstrainedVisibility:
             visibilityMode == CtMapVisibilityMode.playerConstrained,
-        cellVisibility: cell.visibility,
+        cellVisibility: _visibilityForTerrain(cell),
       )) {
         continue;
       }
@@ -1355,7 +1461,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
       if (regionMapSkipPointMarkerOnCell(
         playerConstrainedVisibility:
             visibilityMode == CtMapVisibilityMode.playerConstrained,
-        cellVisibility: portCell.visibility,
+        cellVisibility: _visibilityForTerrain(portCell),
       )) {
         continue;
       }
@@ -1401,7 +1507,7 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
 
     var paint = Paint();
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-        cell.visibility == TileVisibility.fogged) {
+        _visibilityForTerrain(cell) == TileVisibility.fogged) {
       paint.color = Color.fromRGBO(0, 0, 0, _fogOverlayOpacity);
     }
     canvas.drawImageRect(uiImage, srcRect, dstRect, paint);
@@ -1439,8 +1545,8 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
         if (!warpSeaZoneIds.contains(right.regionCellId)) {
           if (regionMapDrawBoundaryBetweenAdjacentCells(
             gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
-            visibilityA: cell.visibility,
-            visibilityB: right.visibility,
+            visibilityA: _visibilityForTerrain(cell),
+            visibilityB: _visibilityForTerrain(right),
           )) {
             final xEdge = (x + 1) * cellSize;
             canvas.drawLine(
@@ -1461,8 +1567,8 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
         if (!warpSeaZoneIds.contains(bottom.regionCellId)) {
           if (regionMapDrawBoundaryBetweenAdjacentCells(
             gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
-            visibilityA: cell.visibility,
-            visibilityB: bottom.visibility,
+            visibilityA: _visibilityForTerrain(cell),
+            visibilityB: _visibilityForTerrain(bottom),
           )) {
             final yEdge = (y + 1) * cellSize;
             canvas.drawLine(
@@ -1483,8 +1589,8 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
         if (!warpSeaZoneIds.contains(left.regionCellId)) {
           if (regionMapDrawBoundaryBetweenAdjacentCells(
             gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
-            visibilityA: cell.visibility,
-            visibilityB: left.visibility,
+            visibilityA: _visibilityForTerrain(cell),
+            visibilityB: _visibilityForTerrain(left),
           )) {
             final xEdge = x * cellSize;
             canvas.drawLine(
@@ -1505,8 +1611,8 @@ extension _CtRegionMapRenderExtension on CtRegionMapComponent {
         if (!warpSeaZoneIds.contains(top.regionCellId)) {
           if (regionMapDrawBoundaryBetweenAdjacentCells(
             gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
-            visibilityA: cell.visibility,
-            visibilityB: top.visibility,
+            visibilityA: _visibilityForTerrain(cell),
+            visibilityB: _visibilityForTerrain(top),
           )) {
             final yEdge = y * cellSize;
             canvas.drawLine(

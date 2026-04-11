@@ -843,6 +843,8 @@
   },
   "naval_units_title": "Naval Units",
   "@naval_units_title": {"description": "Naval units panel title."},
+  "naval_units_title_tile": "Naval Units (Tile)",
+  "@naval_units_title_tile": {"description": "Tile-scoped naval units panel title."},
   "naval_units_deselectAllFleets": "Deselect all fleets",
   "@naval_units_deselectAllFleets": {"description": "Tooltip for deselecting all fleets in naval panel."},
   "naval_units_selectAllFleets": "Select all fleets",

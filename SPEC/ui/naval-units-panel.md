@@ -29,13 +29,17 @@ For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the 
    - **At sea:** **Sea zones** lists only **S–S** neighbors of the fleet’s current sea zone (including **warp** / cross‑region links where the graph has an S–S edge). **Provinces (dock)** lists only **owned** provinces with a direct **S–P** edge from that sea zone. Destinations in a **different** region than the fleet’s current sea zone must be labeled so the player sees **cross‑region** (e.g. include the destination region label in the row text).
    - **In port:** **Sea zones** lists only seas with a direct **P–S** edge from the fleet’s port; the **Provinces** section is **empty** (no port‑to‑port moves).
 2. **Selects** one row (radio or single selection), then taps **Confirm** to submit (or **Cancel** to close without changing orders).
-3. May tap a **locate** control beside each destination row to emit **`LocateMapTileEvent`** (same family as fleet locate): province → town/first tile; sea zone → port tile adjacent to that zone per [map-widget.md](map-widget.md) / [map_location_resolver](military/naval panel contract).
+3. May tap a **locate** control beside each destination row to emit **`LocateMapTileEvent`** (same family as fleet locate): province → town/first tile; sea zone → centroid tile when map data is available, else port tile adjacent to that zone per [map-widget.md](map-widget.md) / `map_location_resolver`.
 
 **Orders:** On confirm, the panel emits **`NavalMoveFleetRequestedEvent`** (see [app-ui-wiring.md](../program/app-ui-wiring.md)). The shell applies **`applyNavalMoveOrderForPlayer`** (colonizethis_logic): the new **naval move** replaces any prior **naval move** for that fleet and **removes** any **naval mission** order for that fleet from the current‑turn draft.
 
 **Labels:** The capital province (dock), when listed, should indicate that the fleet **joins the Home Fleet** when the order resolves (per GDD).
 
 **Acceptance — Move fleet with combined topology (in port):** Given a sea-going fleet **in port** at a **coastal** province (prefixed `inPortAtProvinceId`, seabound per map topology) and the panel uses the same **combined** world topology as turn resolution (prefixed node/edge ids per [map-data.md](../program/map-data.md)), when the player opens **Move fleet**, then the dialog shows **at least one** row under **Sea zones** (legal adjacent sea zones for undock) and does **not** show the sole empty-state message *No adjacent sea zones (check map topology).* when adjacency exists.
+
+### Tile-scoped open (map fleet marker)
+
+When the shell opens the panel via **`OpenNavalUnitsPanelEvent`** with `locationScopeKey`, optional `initialSelectedFleetId`, and optional `tileScopeTileKey`, the list shows only fleets at that location scope, the title uses the tile-scoped string, and the **Tile** header action emits **`OpenMapTileDetailEvent`** for `tileScopeTileKey` (after **`ClosePanelEvent`**, same pattern as civilians).
 
 ---
 
@@ -117,7 +121,7 @@ When a row is **expanded**, additional details are shown **within the same panel
 - **Locate on tap:** When the user taps a fleet row (collapsed or expanded), the UI layer:
   1. Resolves a **tile key** that represents the fleet’s location:
      - For fleets **in port**: use the same logic as the Military Units panel for provinces, i.e. town tile key if available, otherwise the first tile for that province, using prefixed province id per [world-model-identity.md](../game/world-model-identity.md).
-     - For fleets **at sea**: resolve a **port tile adjacent to the fleet’s sea zone** using `portsByProvinceSeaboard` (same algorithm as `tileKeyForSeaZoneLocation` in the Military Units panel).
+     - For fleets **at sea**: prefer the **sea-zone centroid tile** from the region tile map when `tileMapByRegion` / `topologyByRegion` are available (`tileKeyForNavalFleetAtSea`); otherwise fall back to a **port tile adjacent** to the sea zone via `tileKeyForSeaZoneLocation` (same port-adjacency algorithm as the Military Units panel).
   2. Sets the map’s **highlighted tile** to that tile key.
   3. **Pans and centers** the map viewport on that tile.
   4. **Switches the active region tab** to the fleet’s region if it differs from the current tab.

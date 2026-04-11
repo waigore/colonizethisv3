@@ -143,6 +143,42 @@ class CivilianTileMarkerView {
   final bool representativeIsAssigned;
 }
 
+/// Human-player fleet stack at one port or sea zone for interactive map markers.
+/// SPEC/ui/map-widget.md § Fleet tile markers.
+class FleetTileMarkerView {
+  const FleetTileMarkerView({
+    required this.tileKey,
+    required this.x,
+    required this.y,
+    required this.locationScopeKey,
+    required this.fleetIds,
+    required this.stackCount,
+    this.renderGrayscale = false,
+    this.applyFleetRevealHalo = false,
+  });
+
+  /// Tile key `regionId|provinceOrSeaId|x|y` for marker anchor (may be projected).
+  final String tileKey;
+  final int x;
+  final int y;
+
+  /// Naval panel location scope (`port:…` / `sea:…`).
+  final String locationScopeKey;
+
+  /// Fleet ids at this marker, deterministic order (lexical by id).
+  final List<String> fleetIds;
+
+  /// Same as [fleetIds.length] when > 1 enables stack badge.
+  final int stackCount;
+
+  /// Grayscale ship icon when every fleet here has a pending naval move/mission draft.
+  final bool renderGrayscale;
+
+  /// When true, renderer treats Chebyshev distance ≤ 2 around [tileKey] as fully visible
+  /// while any fleet here has a pending naval **move** draft (display-only).
+  final bool applyFleetRevealHalo;
+}
+
 /// Province-level unit-presence counts for map labels.
 class ProvinceUnitPresenceView {
   const ProvinceUnitPresenceView({
@@ -246,6 +282,7 @@ class RegionMapViewData {
     required this.terrainColors,
     this.unitMarkers = const [],
     this.civilianTileMarkers = const [],
+    this.fleetTileMarkers = const [],
     this.warpMarkers = const [],
     this.townMarkers = const [],
     this.provinceUnitPresenceByProvinceId = const {},
@@ -288,6 +325,9 @@ class RegionMapViewData {
 
   /// Tile-scoped player civilian markers for interactive map civilian icons.
   final List<CivilianTileMarkerView> civilianTileMarkers;
+
+  /// Human-player fleet markers (port or sea-zone stacks).
+  final List<FleetTileMarkerView> fleetTileMarkers;
 
   /// Province full id -> class presence counts/intel gate for map labels.
   final Map<String, ProvinceUnitPresenceView> provinceUnitPresenceByProvinceId;

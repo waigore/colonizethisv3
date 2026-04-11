@@ -31,6 +31,7 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.onWorkTargetSelectionCancelled,
     required this.selectedCivilianTileKey,
     required this.onCivilianTileTapped,
+    this.onFleetMarkerTapped,
     required this.onCivilianTileSelectionCleared,
     required this.onRegionViewportSnapshot,
     this.bus,
@@ -53,6 +54,12 @@ class GameMapCanvasStack extends ConsumerWidget {
   final VoidCallback? onWorkTargetSelectionCancelled;
   final String? selectedCivilianTileKey;
   final void Function(String tileKey)? onCivilianTileTapped;
+  final void Function(
+    String locationScopeKey,
+    String? initialFleetId,
+    String markerTileKey,
+  )?
+  onFleetMarkerTapped;
   final VoidCallback? onCivilianTileSelectionCleared;
   final void Function(RegionMapViewportSnapshot snapshot)
   onRegionViewportSnapshot;
@@ -86,6 +93,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   onProvinceHovered: (_) {},
                   onTileHovered: (_) {},
                   onCivilianTileTapped: onCivilianTileTapped,
+                  onFleetMarkerTapped: onFleetMarkerTapped,
                   onCivilianTileSelectionCleared:
                       onCivilianTileSelectionCleared,
                   selectedTileKey: panel.selectedTileKey,
