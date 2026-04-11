@@ -9,6 +9,7 @@ import 'package:ctterm/map_tui_mapping.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:ctterm/utils/unit_utils.dart';
 
 final _log = packageLogger();
 
@@ -125,12 +126,6 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
   /// Color for feedback message.
   Color _feedbackColor = Colors.white;
 
-  /// Check if a unit is a civilian unit (Builder, Engineer).
-  bool _isCivilianUnit(Unit unit) {
-    final type = unit.type.toLowerCase();
-    return type.contains('builder') || type.contains('engineer');
-  }
-
   /// Get all civilian units for the human player.
   List<Unit> get _playerCivilianUnits {
     final humanPlayerId = _getHumanPlayerId();
@@ -140,12 +135,12 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
     final allUnits = <Unit>[];
     allUnits.addAll(
       component.game.worldState.oldWorld.units.where(
-        (u) => u.ownerId == humanPlayerId && _isCivilianUnit(u),
+        (u) => u.ownerId == humanPlayerId && isCivilianUnit(u),
       ),
     );
     allUnits.addAll(
       component.game.worldState.newWorld.units.where(
-        (u) => u.ownerId == humanPlayerId && _isCivilianUnit(u),
+        (u) => u.ownerId == humanPlayerId && isCivilianUnit(u),
       ),
     );
     return allUnits;
@@ -1123,7 +1118,7 @@ class _DevelopmentScreenState extends State<DevelopmentScreen> {
           _buildDetailRow('Location', _getProvinceName(unit)),
           _buildDetailRow(
             'Type',
-            _isCivilianUnit(unit) ? 'Civilian' : 'Military',
+            isCivilianUnit(unit) ? 'Civilian' : 'Military',
           ),
           _buildDetailRow(
             'Status',

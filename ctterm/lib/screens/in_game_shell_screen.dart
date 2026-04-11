@@ -10,6 +10,7 @@ import 'package:ctterm/widgets/map_grid_widget.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:ctterm/map_tui_mapping.dart';
+import 'package:ctterm/utils/unit_utils.dart';
 
 final _log = packageLogger();
 
@@ -179,11 +180,6 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
     return null;
   }
 
-  bool _isCivilianUnit(Unit unit) {
-    final type = unit.type.toLowerCase();
-    return type.contains('builder') || type.contains('engineer');
-  }
-
   List<Unit> get _playerCivilianUnits {
     final game = component.game;
     final playerId = _humanPlayerId();
@@ -191,9 +187,9 @@ class _InGameShellScreenState extends State<InGameShellScreen> {
 
     final units = <Unit>[];
     units.addAll(game.worldState.oldWorld.units
-        .where((u) => u.ownerId == playerId && _isCivilianUnit(u)));
+        .where((u) => u.ownerId == playerId && isCivilianUnit(u)));
     units.addAll(game.worldState.newWorld.units
-        .where((u) => u.ownerId == playerId && _isCivilianUnit(u)));
+        .where((u) => u.ownerId == playerId && isCivilianUnit(u)));
     return units;
   }
 
