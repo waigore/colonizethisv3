@@ -12,3 +12,9 @@ rules:
       kind: cascaded_method_invocation
       method_names:
         - clear
+  - id: stream_where_is_map_as
+    message: >-
+      Do not chain .where((x) => x is T).map((x) => x as T); use
+      .whereType<T>() on Stream or Iterable instead.
+    match:
+      kind: stream_where_is_map_as

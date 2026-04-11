@@ -38,5 +38,6 @@ export 'src/economy_plan.dart';
 export 'src/strategic_order_result.dart';
 export 'src/app_event_bus.dart';
 export 'src/app_events.dart';
+export 'src/stream_where_type.dart';
 export 'src/dossier_evidence.dart';
 export 'src/events/dialogue_event_bus.dart';

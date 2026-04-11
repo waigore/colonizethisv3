@@ -10,6 +10,10 @@ rules:
       kind: cascaded_method_invocation
       method_names:
         - clear
+  - id: stream_where_is_map_as
+    message: 'use whereType'
+    match:
+      kind: stream_where_is_map_as
 ''';
 
 void main() {
@@ -100,6 +104,89 @@ void f(List<int> a) {
           src,
           rules,
         ),
+        isEmpty,
+      );
+    });
+
+    test('flags .where is .map as chain', () {
+      const src = r'''
+import 'dart:async';
+
+Stream<int> f(Stream<num> s) =>
+    s.where((e) => e is int).map((e) => e as int);
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(v, isNotEmpty);
+      expect(v.first.ruleId, 'stream_where_is_map_as');
+      expect(v.first.line, greaterThan(0));
+    });
+
+    test('allows whereType', () {
+      const src = r'''
+import 'dart:async';
+
+Stream<int> f(Stream<num> s) => s.whereType<int>();
+''';
+      expect(
+        findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
+        isEmpty,
+      );
+    });
+
+    test('allows where+map without is/as pattern', () {
+      const src = r'''
+Iterable<String> f(Iterable<Object?> xs) =>
+    xs.where((x) => x != null).map((x) => x as String);
+''';
+      expect(
+        findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
+        isEmpty,
+      );
+    });
+
+    test('stream_where_is_map_as respects same-line ignore', () {
+      const src = r'''
+import 'dart:async';
+
+Stream<int> f(Stream<num> s) =>
+    s.where((e) => e is int).map((e) => e as int); // ignore: disallowed_ast_stream_where_is_map_as
+''';
+      expect(
+        findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
+        isEmpty,
+      );
+    });
+
+    test('stream_where_is_map_as respects ignore on previous line', () {
+      const src = r'''
+import 'dart:async';
+
+Stream<int> f(Stream<num> s) {
+  // ignore: disallowed_ast_stream_where_is_map_as
+  return s.where((e) => e is int).map((e) => e as int);
+}
+''';
+      expect(
+        findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
+        isEmpty,
+      );
+    });
+
+    test('stream_where_is_map_as respects ignore_for_file', () {
+      const src = r'''
+// ignore_for_file: disallowed_ast_stream_where_is_map_as
+
+import 'dart:async';
+
+Stream<int> f(Stream<num> s) =>
+    s.where((e) => e is int).map((e) => e as int);
+''';
+      expect(
+        findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
         isEmpty,
       );
     });
