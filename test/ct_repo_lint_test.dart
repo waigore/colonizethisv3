@@ -30,6 +30,10 @@ void main() {
             .includeOnlyWhenEnvName,
         'CT_REPO_LINT_INCLUDE_APP',
       );
+      final assetRule =
+          rules.firstWhere((r) => r.ruleId == 'repo.asset_path_constants');
+      expect(assetRule.runner, 'dart');
+      expect(assetRule.script, 'tool/check_asset_path_constants.dart');
     });
   });
 

@@ -38,7 +38,7 @@ Each tech node displays a **category icon** to the left of its label. Icons are 
 
 ### Implementation
 
-The widget reads `tech.category` and looks up the icon path via a static map (`kAppIconAssetPrefix` is `assets/icons/` from `lib/config/app_assets.dart`). Render with `StrictAssetIcon` so a missing or invalid file throws `FlutterError` (no silent placeholder).
+The widget reads `tech.category` and looks up the icon path via a static map (`kAppIconAssetPrefix` is `assets/icons/32/` from `lib/config/app_constants.dart`, re-exported via `lib/config/app_assets.dart`). Render with `StrictAssetIcon` so a missing or invalid file throws `FlutterError` (no silent placeholder).
 
 ```dart
 static const Map<String, String> _categoryIcons = {

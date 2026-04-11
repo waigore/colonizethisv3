@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
 import 'check_app_hardcoded_ui_strings.dart';
+import 'check_asset_path_constants.dart';
 import 'check_canonical_province_tile_keys.dart';
 import 'check_civilian_unit_type_constants.dart';
 import 'check_custom_exceptions.dart';
@@ -611,6 +612,8 @@ int? _tryRunDartRuleInProcess({
   switch (rule.ruleId) {
     case 'repo.custom_exceptions':
       return runCheckCustomExceptions(repoRoot);
+    case 'repo.asset_path_constants':
+      return runCheckAssetPathConstants(repoRoot);
     case 'repo.disallowed_ast_patterns':
       return runCheckDisallowedAstPatterns(repoRoot);
     case 'repo.tech_id_constants':
