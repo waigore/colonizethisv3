@@ -11,8 +11,15 @@ const _provinceLevelTargets = <String>{'explore', 'steal_tech', 'counter_spy'};
 
 const _excludedPaths = <String>{'tool/check_canonical_province_tile_keys.dart'};
 
-void main() {
-  final root = p.normalize(Directory.current.path);
+/// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
+int runCheckCanonicalProvinceTileKeys(
+  String repoRoot, {
+  void Function(String line)? info,
+  void Function(String line)? err,
+}) {
+  final logI = info ?? stdout.writeln;
+  final logE = err ?? stderr.writeln;
+  final root = p.normalize(repoRoot);
   final files = collectRepoLintCanonicalProvinceTileKeyDartFiles(
     root,
     _excludedPaths,
@@ -30,18 +37,22 @@ void main() {
   }
 
   if (violations.isEmpty) {
-    stdout.writeln('Canonical province tile-key check passed.');
-    exit(0);
+    logI('Canonical province tile-key check passed.');
+    return 0;
   }
 
-  stderr.writeln(
+  logE(
     'ERROR: Found non-canonical province-level WorkOrder targetTileKey values. '
     'Use region|province|0|0 for explore/steal_tech/counter_spy.',
   );
   for (final v in violations) {
-    stderr.writeln('${v.path}:${v.line}:${v.column} ${v.message}');
+    logE('${v.path}:${v.line}:${v.column} ${v.message}');
   }
-  exit(1);
+  return 1;
+}
+
+void main() {
+  exit(runCheckCanonicalProvinceTileKeys(Directory.current.path));
 }
 
 List<CanonicalProvinceTileKeyViolation> findCanonicalProvinceTileKeyViolations({

@@ -21,19 +21,27 @@ const _excludedPaths = <String>{
   'packages/colonizethis_data/lib/src/work_order_costs.dart',
 };
 
-void main(List<String> args) {
-  final parsedArgs = _parseArgs(args);
-  final root = p.normalize(Directory.current.path);
+/// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
+int runCheckWorkTargetConstants(
+  String repoRoot, {
+  List<String>? incrementalRelativeDartPaths,
+  void Function(String line)? info,
+  void Function(String line)? err,
+}) {
+  final logI = info ?? stdout.writeln;
+  final logE = err ?? stderr.writeln;
+  final root = p.normalize(repoRoot);
   final canonicalWorkTargets = _loadCanonicalWorkTargets(root);
   if (canonicalWorkTargets.isEmpty) {
-    stderr.writeln(
+    logE(
       'ERROR: Could not derive canonical work target IDs from '
       '$_workTargetConstantsRelPath.',
     );
-    exit(1);
+    return 1;
   }
   final constantNameByWorkTarget = _loadWorkTargetConstantNames(root);
-  final candidateFiles = _collectCandidateFiles(root, parsedArgs.files);
+  final requested = incrementalRelativeDartPaths ?? const <String>[];
+  final candidateFiles = _collectCandidateFiles(root, requested);
 
   final violations = <WorkTargetConstantViolation>[];
   for (final file in candidateFiles) {
@@ -53,21 +61,33 @@ void main(List<String> args) {
   }
 
   if (violations.isEmpty) {
-    stdout.writeln('Work target constant usage check passed.');
-    exit(0);
+    logI('Work target constant usage check passed.');
+    return 0;
   }
 
-  stderr.writeln(
+  logE(
     'ERROR: Found raw work target string literals in executable code. '
     'Use constants from colonizethis_logic.',
   );
   for (final violation in violations) {
-    stderr.writeln(
+    logE(
       '${violation.path}:${violation.line}:${violation.column} '
       '${violation.message}',
     );
   }
-  exit(1);
+  return 1;
+}
+
+void main(List<String> args) {
+  final parsedArgs = _parseArgs(args);
+  exit(
+    runCheckWorkTargetConstants(
+      Directory.current.path,
+      incrementalRelativeDartPaths: parsedArgs.files.isEmpty
+          ? null
+          : parsedArgs.files,
+    ),
+  );
 }
 
 List<WorkTargetConstantViolation> findWorkTargetConstantViolations({
@@ -121,20 +141,10 @@ _ParsedArgs _parseArgs(List<String> args) {
     exit(2);
   }
   return _ParsedArgs(
-    files: filesArgValue == null ? const [] : _splitFileArg(filesArgValue),
+    files: filesArgValue == null
+        ? const []
+        : repoLintSplitRelativeDartPathsArg(filesArgValue),
   );
-}
-
-List<String> _splitFileArg(String value) {
-  if (value.trim().isEmpty) {
-    return const [];
-  }
-  final normalized = value.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-  return normalized
-      .split(RegExp('[,\n]'))
-      .map((entry) => entry.trim())
-      .where((entry) => entry.isNotEmpty)
-      .toList(growable: false);
 }
 
 List<File> _collectCandidateFiles(String root, List<String> requestedPaths) {

@@ -66,6 +66,19 @@ List<File> collectRepoLintDomainDartFiles(String repoRoot) {
   return files;
 }
 
+/// Splits comma/newline-separated repo-relative paths (same as `check_* --files`).
+List<String> repoLintSplitRelativeDartPathsArg(String value) {
+  if (value.trim().isEmpty) {
+    return const [];
+  }
+  final normalized = value.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+  return normalized
+      .split(RegExp('[,\n]'))
+      .map((entry) => entry.trim())
+      .where((entry) => entry.isNotEmpty)
+      .toList(growable: false);
+}
+
 // --- Identifier-literal checkers (tech / work-target / civilian unit type) ---
 
 /// Scan roots for tech / work-target / civilian literal checkers (historical

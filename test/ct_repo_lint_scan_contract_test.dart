@@ -286,4 +286,23 @@ void main() {
       expect(p.basename(got[1].path), 'b.dart');
     });
   });
+
+  group('repoLintSplitRelativeDartPathsArg', () {
+    test('splits commas and newlines and trims', () {
+      expect(repoLintSplitRelativeDartPathsArg(''), isEmpty);
+      expect(repoLintSplitRelativeDartPathsArg('  '), isEmpty);
+      expect(repoLintSplitRelativeDartPathsArg('a.dart,b.dart'), [
+        'a.dart',
+        'b.dart',
+      ]);
+      expect(repoLintSplitRelativeDartPathsArg('a.dart\nb.dart'), [
+        'a.dart',
+        'b.dart',
+      ]);
+      expect(repoLintSplitRelativeDartPathsArg(' a.dart , b.dart '), [
+        'a.dart',
+        'b.dart',
+      ]);
+    });
+  });
 }

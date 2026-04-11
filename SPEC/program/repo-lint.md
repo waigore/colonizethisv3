@@ -9,11 +9,13 @@
 | `tool/ct_repo_lint_manifest.yaml` | Lists **rules** with stable **`rule_id`**, **group**, human title, SPEC path, and how to invoke the checker |
 | `tool/ct_repo_lint.dart` | Orchestrator: loads manifest, runs rules in order, stops on first failure |
 | `tool/ct_repo_lint_lib.dart` | Parse/execute helpers (also covered by `test/ct_repo_lint_test.dart`) |
-| `tool/ct_repo_lint_scan_contract.dart` | **Shared scan contract:** (1) `collectRepoLintDomainDartFiles` + predicates for exception / disallowed-AST **`lib/`** trees; (2) identifier-literal roots/skip helpers; (3) canonical province tile-key collection (`collectRepoLintCanonicalProvinceTileKeyDartFiles`); (4) app UI gate (`collectRepoLintAppLibDartFilesSorted`, `repoLintAppLibHardcodedUiVisitorShouldSkip`) — see `test/ct_repo_lint_scan_contract_test.dart` |
+| `tool/ct_repo_lint_scan_contract.dart` | **Shared scan contract:** (1) `collectRepoLintDomainDartFiles` + predicates for exception / disallowed-AST **`lib/`** trees; (2) identifier-literal roots/skip helpers; (3) canonical province tile-key collection (`collectRepoLintCanonicalProvinceTileKeyDartFiles`); (4) app UI gate (`collectRepoLintAppLibDartFilesSorted`, `repoLintAppLibHardcodedUiVisitorShouldSkip`); (5) `repoLintSplitRelativeDartPathsArg` for PR incremental path lists — see `test/ct_repo_lint_scan_contract_test.dart` |
 
 ## Rule IDs and groups
 
-Each rule has a stable `rule_id` (prefix `repo.`). **Groups** (non-exhaustive): `structure`, `architecture`, `identifiers`, `exceptions`, `game_invariants`, `ui_i18n`. Violation text from underlying tools should include **file path and line** (and column when the checker provides it). The orchestrator prints a banner `--- [rule_id] title ---` before each subprocess so logs stay attributable.
+Each rule has a stable `rule_id` (prefix `repo.`). **Groups** (non-exhaustive): `structure`, `architecture`, `identifiers`, `exceptions`, `game_invariants`, `ui_i18n`. Violation text from underlying tools should include **file path and line** (and column when the checker provides it). The orchestrator prints a banner `--- [rule_id] title ---` before each rule so logs stay attributable.
+
+**Dart `runner` rules** listed in the manifest are executed **in-process** by `ct_repo_lint_lib.dart` (calling `runCheck…` entrypoints on the existing `tool/check_*.dart` modules). Unknown `rule_id` values or future scripts without an in-process binding still use `dart run <script>` as a fallback. Standalone `dart run tool/check_*.dart` remains supported via thin `main()` wrappers.
 
 ## CI contract
 
@@ -29,7 +31,7 @@ Rules marked `pr_incremental: true` in the manifest receive `--files <csv>` when
 Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without updating this SPEC and the manifest. Prefer:
 
 1. Add a row under `rules:` in `tool/ct_repo_lint_manifest.yaml` with a new stable `rule_id`.
-2. Implement or extend logic in a **library** or existing checker module; keep a single `main()` wrapper only if required for `dart run`, and wire it from the manifest.
+2. Implement or extend logic in a **library** or existing checker module; expose `int runCheck…(String repoRoot, …)` for `ct_repo_lint_lib.dart` to call in-process, keep a thin `main()` that `exit(runCheck…(…))` for `dart run`, and register the manifest row. Add a `switch` arm in `_tryRunDartRuleInProcess` when introducing a new stable `rule_id`.
 3. When a new checker scans the **same domain `lib/` tree** as exception / disallowed-AST enforcement, reuse **`collectRepoLintDomainDartFiles`** (and related predicates) from **`tool/ct_repo_lint_scan_contract.dart`**. When it matches **tech / work-target / civilian** literal scans (`app`, `ctterm`, `packages`, `tool` trees, `lib/`-gated, fixture-dir markers), reuse **`repoLintIdentifierLiteralScanRoots`** and **`repoLintIdentifierLiteralShouldSkipFile`** with a checker-local `excludedPaths` set. For **canonical province `targetTileKey`** coverage, reuse **`collectRepoLintCanonicalProvinceTileKeyDartFiles`** (tests/generated + checker excludes only — not fixture-dir markers). For **`app/lib` UI copy**, reuse **`collectRepoLintAppLibDartFilesSorted`** and **`repoLintAppLibHardcodedUiVisitorShouldSkip`**.
 4. Align wording with `colonizethis_exception_lint` (and similar) when the same policy exists in the analyzer.
 

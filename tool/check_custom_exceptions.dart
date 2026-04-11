@@ -8,8 +8,15 @@ import 'ct_repo_lint_scan_contract.dart';
 /// PR-blocking check for generic exception throws in runtime domain code.
 ///
 /// SPEC: SPEC/program/exception-enforcement.md
-void main() {
-  final repoRoot = Directory.current.path;
+///
+/// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
+int runCheckCustomExceptions(
+  String repoRoot, {
+  void Function(String line)? info,
+  void Function(String line)? err,
+}) {
+  final logI = info ?? stdout.writeln;
+  final logE = err ?? stderr.writeln;
   final dartFiles = collectRepoLintDomainDartFiles(repoRoot);
   final violations = <CustomExceptionViolation>[];
 
@@ -20,18 +27,20 @@ void main() {
   }
 
   if (violations.isEmpty) {
-    stdout.writeln('check_custom_exceptions: no violations found.');
-    return;
+    logI('check_custom_exceptions: no violations found.');
+    return 0;
   }
 
-  stderr.writeln(
-    'check_custom_exceptions: found ${violations.length} violation(s):',
-  );
+  logE('check_custom_exceptions: found ${violations.length} violation(s):');
   for (final violation in violations) {
-    stderr.writeln(
+    logE(
       ' - ${violation.path}:${violation.line}: '
       'throwing ${violation.exceptionType} is forbidden; use a domain-specific exception type',
     );
   }
-  exitCode = 1;
+  return 1;
+}
+
+void main() {
+  exit(runCheckCustomExceptions(Directory.current.path));
 }

@@ -13,24 +13,29 @@ import 'ct_repo_lint_scan_contract.dart';
 /// PR-blocking structural AST checks driven by [tool/disallowed_ast_patterns.yaml].
 ///
 /// SPEC: SPEC/program/disallowed-ast-patterns.md
-void main() {
-  final repoRoot = Directory.current.path;
+///
+/// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
+int runCheckDisallowedAstPatterns(
+  String repoRoot, {
+  void Function(String line)? info,
+  void Function(String line)? err,
+}) {
+  final logI = info ?? stdout.writeln;
+  final logE = err ?? stderr.writeln;
   final configFile = File(
     p.join(repoRoot, 'tool', 'disallowed_ast_patterns.yaml'),
   );
   if (!configFile.existsSync()) {
-    stderr.writeln('check_disallowed_ast_patterns: missing ${configFile.path}');
-    exitCode = 1;
-    return;
+    logE('check_disallowed_ast_patterns: missing ${configFile.path}');
+    return 1;
   }
 
   final rules = _loadRules(configFile.readAsStringSync());
   if (rules.isEmpty) {
-    stderr.writeln(
+    logE(
       'check_disallowed_ast_patterns: no rules in disallowed_ast_patterns.yaml',
     );
-    exitCode = 1;
-    return;
+    return 1;
   }
 
   final dartFiles = collectRepoLintDomainDartFiles(repoRoot);
@@ -45,17 +50,21 @@ void main() {
   }
 
   if (violations.isEmpty) {
-    stdout.writeln('check_disallowed_ast_patterns: no violations found.');
-    return;
+    logI('check_disallowed_ast_patterns: no violations found.');
+    return 0;
   }
 
-  stderr.writeln(
+  logE(
     'check_disallowed_ast_patterns: found ${violations.length} violation(s):',
   );
   for (final v in violations) {
-    stderr.writeln(' - ${v.path}:${v.line}: [${v.ruleId}] ${v.message}');
+    logE(' - ${v.path}:${v.line}: [${v.ruleId}] ${v.message}');
   }
-  exitCode = 1;
+  return 1;
+}
+
+void main() {
+  exit(runCheckDisallowedAstPatterns(Directory.current.path));
 }
 
 /// Exposed for unit tests (same behavior as production scan).
