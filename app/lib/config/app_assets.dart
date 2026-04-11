@@ -1,20 +1,7 @@
+import 'app_constants.dart';
+
 export 'app_constants.dart';
 
-/// Root-relative prefix for terrain tile PNGs.
-const String kTerrainTileAssetPrefix = 'assets/images/terrain/tile_';
-
-/// Main menu pixel-art assets.
-const String kMainMenuLogoAsset = 'assets/images/ui_main_menu_logo.png';
-const String kMainMenuBackgroundAsset =
-    'assets/images/ui_main_menu_background.png';
-
-/// Dialogue script assets.
-const String kDialogueGameIntroAsset = 'assets/dialogue/game_intro.yarn';
-const String kDialogueInterventionAsset = 'assets/dialogue/intervention.yarn';
-const String kDialogueOvertureAsset = 'assets/dialogue/overture.yarn';
-
-/// Map terrain config asset loaded at app startup.
-const String kMapTerrainTilesetsAsset = 'assets/data/map_terrain_tilesets.json';
-
+/// Full path for a terrain tile PNG given its stem (no extension).
 String terrainTileAssetPath(String assetStem) =>
     '$kTerrainTileAssetPrefix$assetStem.png';
