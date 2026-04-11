@@ -4,6 +4,15 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
+import 'check_app_hardcoded_ui_strings.dart';
+import 'check_canonical_province_tile_keys.dart';
+import 'check_civilian_unit_type_constants.dart';
+import 'check_custom_exceptions.dart';
+import 'check_disallowed_ast_patterns.dart';
+import 'check_tech_id_constants.dart';
+import 'check_work_target_constants.dart';
+import 'ct_repo_lint_scan_contract.dart';
+
 /// One entry from [tool/ct_repo_lint_manifest.yaml].
 final class RepoLintRule {
   const RepoLintRule({
@@ -482,7 +491,7 @@ Map<String, Object?> buildCtRepoLintSarifObject({
         : (f.rule.argv.isNotEmpty ? f.rule.argv.first : 'unknown');
     results.add({
       'ruleId': f.rule.ruleId,
-      'ruleIndex': ?ruleIndexById[f.rule.ruleId],
+      'ruleIndex': ruleIndexById[f.rule.ruleId]!,
       'level': 'error',
       'message': {
         'text':
@@ -547,6 +556,20 @@ int _runOneRule({
     return result.exitCode;
   }
 
+  final inProcess = _tryRunDartRuleInProcess(
+    rule: rule,
+    repoRoot: repoRoot,
+    incrementalCsv: incrementalCsv,
+  );
+  if (inProcess != null) {
+    if (inProcess != 0) {
+      stderr.writeln(
+        'ct_repo_lint: FAILED [${rule.ruleId}] exit $inProcess (see output above)',
+      );
+    }
+    return inProcess;
+  }
+
   final script = rule.script!;
   final args = <String>['run', script];
   if (rule.prIncremental &&
@@ -569,6 +592,49 @@ int _runOneRule({
     );
   }
   return result.exitCode;
+}
+
+/// Runs manifest Dart rules in-process when wired; returns `null` to fall back
+/// to `dart run` (unknown [RepoLintRule.ruleId] or future scripts).
+int? _tryRunDartRuleInProcess({
+  required RepoLintRule rule,
+  required String repoRoot,
+  required String? incrementalCsv,
+}) {
+  List<String>? incrementalPaths;
+  if (rule.prIncremental &&
+      incrementalCsv != null &&
+      incrementalCsv.isNotEmpty) {
+    incrementalPaths = repoLintSplitRelativeDartPathsArg(incrementalCsv);
+  }
+
+  switch (rule.ruleId) {
+    case 'repo.custom_exceptions':
+      return runCheckCustomExceptions(repoRoot);
+    case 'repo.disallowed_ast_patterns':
+      return runCheckDisallowedAstPatterns(repoRoot);
+    case 'repo.tech_id_constants':
+      return runCheckTechIdConstants(
+        repoRoot,
+        incrementalRelativeDartPaths: incrementalPaths,
+      );
+    case 'repo.work_target_constants':
+      return runCheckWorkTargetConstants(
+        repoRoot,
+        incrementalRelativeDartPaths: incrementalPaths,
+      );
+    case 'repo.civilian_unit_type_constants':
+      return runCheckCivilianUnitTypeConstants(
+        repoRoot,
+        incrementalRelativeDartPaths: incrementalPaths,
+      );
+    case 'repo.canonical_province_tile_keys':
+      return runCheckCanonicalProvinceTileKeys(repoRoot);
+    case 'repo.app_hardcoded_ui_strings':
+      return runCheckAppHardcodedUiStrings(repoRoot);
+    default:
+      return null;
+  }
 }
 
 void _forwardProcessOutput(

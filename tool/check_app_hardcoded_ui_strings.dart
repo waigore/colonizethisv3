@@ -7,40 +7,51 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/source/line_info.dart';
 import 'package:path/path.dart' as p;
 
+import 'ct_repo_lint_scan_contract.dart';
+
 /// PR-blocking hardcoded UI string check for `app/lib/**`.
 ///
 /// Uses the Dart AST (not line regexes) so multiline `Text(\n  '…',\n)` and
 /// adjacent string literals are detected. Supplements `hardcoded_strings_lint`.
-void main() {
-  final repoRoot = Directory.current.path;
+/// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
+int runCheckAppHardcodedUiStrings(
+  String repoRoot, {
+  void Function(String line)? info,
+  void Function(String line)? err,
+}) {
+  final logI = info ?? stdout.writeln;
+  final logE = err ?? stderr.writeln;
   final appLib = Directory(p.join(repoRoot, 'app', 'lib'));
   if (!appLib.existsSync()) {
-    stderr.writeln('check_app_hardcoded_ui_strings: app/lib not found.');
-    exitCode = 1;
-    return;
+    logE('check_app_hardcoded_ui_strings: app/lib not found.');
+    return 1;
   }
 
   final violations = <HardcodedUiViolation>[];
-  for (final file in _collectAppLibDartFiles(appLib)) {
+  for (final file in collectRepoLintAppLibDartFilesSorted(repoRoot)) {
     final relativePath = p.relative(file.path, from: repoRoot);
     final content = file.readAsStringSync();
     violations.addAll(findHardcodedUiViolations(relativePath, content));
   }
 
   if (violations.isEmpty) {
-    stdout.writeln('check_app_hardcoded_ui_strings: no violations found.');
-    return;
+    logI('check_app_hardcoded_ui_strings: no violations found.');
+    return 0;
   }
 
-  stderr.writeln('Hardcoded UI string violations found in app/lib:');
+  logE('Hardcoded UI string violations found in app/lib:');
   for (final v in violations) {
-    stderr.writeln(' - ${v.path}:${v.line}: ${v.snippet}');
+    logE(' - ${v.path}:${v.line}: ${v.snippet}');
   }
-  stderr.writeln(
+  logE(
     '\nTotal violations: ${violations.length}. '
     'Move user-visible strings to AppLocalizations/ARB.',
   );
-  exitCode = 1;
+  return 1;
+}
+
+void main() {
+  exit(runCheckAppHardcodedUiStrings(Directory.current.path));
 }
 
 /// Exposed for unit tests (same behavior as production scan).
@@ -55,15 +66,7 @@ List<HardcodedUiViolation> findHardcodedUiViolations(
   if (_fileHasIgnoreForRule(content)) {
     return const [];
   }
-  if (!relativePath.endsWith('.dart')) {
-    return const [];
-  }
-  if (relativePath.contains('/test/') || relativePath.endsWith('_test.dart')) {
-    return const [];
-  }
-  if (relativePath.endsWith('.g.dart') ||
-      relativePath.endsWith('.freezed.dart') ||
-      relativePath.endsWith('.mocks.dart')) {
+  if (repoLintAppLibHardcodedUiVisitorShouldSkip(relativePath)) {
     return const [];
   }
 
@@ -75,21 +78,6 @@ List<HardcodedUiViolation> findHardcodedUiViolations(
   final visitor = _HardcodedUiVisitor(relativePath, content, parsed.lineInfo);
   parsed.unit.accept(visitor);
   return visitor.violations;
-}
-
-List<File> _collectAppLibDartFiles(Directory appLib) {
-  final files = <File>[];
-  for (final entity in appLib.listSync(recursive: true, followLinks: false)) {
-    if (entity is! File) {
-      continue;
-    }
-    if (!entity.path.endsWith('.dart')) {
-      continue;
-    }
-    files.add(entity);
-  }
-  files.sort((a, b) => a.path.compareTo(b.path));
-  return files;
 }
 
 bool _fileHasIgnoreForRule(String source) {

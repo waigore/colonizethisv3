@@ -165,4 +165,144 @@ void main() {
       );
     });
   });
+
+  group('repoLintPathIsUnderPackageOrRootTestTree', () {
+    test('detects repo test/ and package test dirs', () {
+      expect(repoLintPathIsUnderPackageOrRootTestTree('test/foo.dart'), isTrue);
+      expect(
+        repoLintPathIsUnderPackageOrRootTestTree(
+          p.join('packages', 'p', 'test', 'a.dart'),
+        ),
+        isTrue,
+      );
+      expect(
+        repoLintPathIsUnderPackageOrRootTestTree('packages/p/lib/a.dart'),
+        isFalse,
+      );
+    });
+  });
+
+  group('repoLintCanonicalProvinceTileKeyShouldSkipFile', () {
+    test('skips excluded, test tree, and generated suffixes', () {
+      const excluded = <String>{'tool/x.dart'};
+      expect(
+        repoLintCanonicalProvinceTileKeyShouldSkipFile('tool/x.dart', excluded),
+        isTrue,
+      );
+      expect(
+        repoLintCanonicalProvinceTileKeyShouldSkipFile(
+          p.join('packages', 'p', 'test', 'a.dart'),
+          excluded,
+        ),
+        isTrue,
+      );
+      expect(
+        repoLintCanonicalProvinceTileKeyShouldSkipFile(
+          'packages/p/lib/a.g.dart',
+          excluded,
+        ),
+        isTrue,
+      );
+      expect(
+        repoLintCanonicalProvinceTileKeyShouldSkipFile(
+          'packages/p/lib/a.gen.dart',
+          excluded,
+        ),
+        isTrue,
+      );
+      expect(
+        repoLintCanonicalProvinceTileKeyShouldSkipFile(
+          'packages/p/lib/a.dart',
+          excluded,
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('collectRepoLintCanonicalProvinceTileKeyDartFiles', () {
+    test('keeps lib sources and drops tests/generated', () {
+      final tmp = Directory.systemTemp.createTempSync('ct_canon_tile_');
+      addTearDown(() {
+        if (tmp.existsSync()) {
+          tmp.deleteSync(recursive: true);
+        }
+      });
+      final repo = tmp.path;
+      File(
+        p.join(repo, 'packages', 'p', 'lib', 'keep.dart'),
+      ).createSync(recursive: true);
+      File(
+        p.join(repo, 'packages', 'p', 'lib', 'x.g.dart'),
+      ).createSync(recursive: true);
+      File(
+        p.join(repo, 'packages', 'p', 'test', 't.dart'),
+      ).createSync(recursive: true);
+
+      final got = collectRepoLintCanonicalProvinceTileKeyDartFiles(repo, {});
+      final rels = got.map((f) => p.relative(f.path, from: repo)).toSet();
+      expect(rels, contains(p.join('packages', 'p', 'lib', 'keep.dart')));
+      expect(rels, isNot(contains(p.join('packages', 'p', 'lib', 'x.g.dart'))));
+      expect(rels, isNot(contains(p.join('packages', 'p', 'test', 't.dart'))));
+    });
+  });
+
+  group('repoLintAppLibHardcodedUiVisitorShouldSkip', () {
+    test('matches historical app/lib visitor filters', () {
+      expect(
+        repoLintAppLibHardcodedUiVisitorShouldSkip('app/lib/a.dart'),
+        isFalse,
+      );
+      expect(
+        repoLintAppLibHardcodedUiVisitorShouldSkip('app/lib/a.g.dart'),
+        isTrue,
+      );
+      expect(
+        repoLintAppLibHardcodedUiVisitorShouldSkip('app/lib/foo_test.dart'),
+        isTrue,
+      );
+      expect(
+        repoLintAppLibHardcodedUiVisitorShouldSkip('app/lib/x.gen.dart'),
+        isFalse,
+      );
+    });
+  });
+
+  group('collectRepoLintAppLibDartFilesSorted', () {
+    test('returns sorted dart files under app/lib', () {
+      final tmp = Directory.systemTemp.createTempSync('ct_app_lib_');
+      addTearDown(() {
+        if (tmp.existsSync()) {
+          tmp.deleteSync(recursive: true);
+        }
+      });
+      final repo = tmp.path;
+      File(p.join(repo, 'app', 'lib', 'b.dart')).createSync(recursive: true);
+      File(p.join(repo, 'app', 'lib', 'a.dart')).createSync(recursive: true);
+
+      final got = collectRepoLintAppLibDartFilesSorted(repo);
+      expect(got.length, 2);
+      expect(p.basename(got[0].path), 'a.dart');
+      expect(p.basename(got[1].path), 'b.dart');
+    });
+  });
+
+  group('repoLintSplitRelativeDartPathsArg', () {
+    test('splits commas and newlines and trims', () {
+      expect(repoLintSplitRelativeDartPathsArg(''), isEmpty);
+      expect(repoLintSplitRelativeDartPathsArg('  '), isEmpty);
+      expect(repoLintSplitRelativeDartPathsArg('a.dart,b.dart'), [
+        'a.dart',
+        'b.dart',
+      ]);
+      expect(repoLintSplitRelativeDartPathsArg('a.dart\nb.dart'), [
+        'a.dart',
+        'b.dart',
+      ]);
+      expect(repoLintSplitRelativeDartPathsArg(' a.dart , b.dart '), [
+        'a.dart',
+        'b.dart',
+      ]);
+    });
+  });
 }

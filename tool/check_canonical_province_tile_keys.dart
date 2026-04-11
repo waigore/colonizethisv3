@@ -5,19 +5,28 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:path/path.dart' as p;
 
-const _scanRoots = <String>['app', 'ctterm', 'packages', 'tool', 'test'];
+import 'ct_repo_lint_scan_contract.dart';
 
 const _provinceLevelTargets = <String>{'explore', 'steal_tech', 'counter_spy'};
 
 const _excludedPaths = <String>{'tool/check_canonical_province_tile_keys.dart'};
 
-void main() {
-  final root = p.normalize(Directory.current.path);
-  final files = _collectDartFiles(root);
+/// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
+int runCheckCanonicalProvinceTileKeys(
+  String repoRoot, {
+  void Function(String line)? info,
+  void Function(String line)? err,
+}) {
+  final logI = info ?? stdout.writeln;
+  final logE = err ?? stderr.writeln;
+  final root = p.normalize(repoRoot);
+  final files = collectRepoLintCanonicalProvinceTileKeyDartFiles(
+    root,
+    _excludedPaths,
+  );
   final violations = <CanonicalProvinceTileKeyViolation>[];
   for (final file in files) {
     final relPath = p.normalize(p.relative(file.path, from: root));
-    if (_shouldSkipFile(relPath)) continue;
     final source = file.readAsStringSync();
     violations.addAll(
       findCanonicalProvinceTileKeyViolations(
@@ -28,18 +37,22 @@ void main() {
   }
 
   if (violations.isEmpty) {
-    stdout.writeln('Canonical province tile-key check passed.');
-    exit(0);
+    logI('Canonical province tile-key check passed.');
+    return 0;
   }
 
-  stderr.writeln(
+  logE(
     'ERROR: Found non-canonical province-level WorkOrder targetTileKey values. '
     'Use region|province|0|0 for explore/steal_tech/counter_spy.',
   );
   for (final v in violations) {
-    stderr.writeln('${v.path}:${v.line}:${v.column} ${v.message}');
+    logE('${v.path}:${v.line}:${v.column} ${v.message}');
   }
-  exit(1);
+  return 1;
+}
+
+void main() {
+  exit(runCheckCanonicalProvinceTileKeys(Directory.current.path));
 }
 
 List<CanonicalProvinceTileKeyViolation> findCanonicalProvinceTileKeyViolations({
@@ -59,41 +72,6 @@ List<CanonicalProvinceTileKeyViolation> findCanonicalProvinceTileKeyViolations({
   // is insufficient for some call sites).
   parsed.unit.accept(visitor);
   return visitor.violations;
-}
-
-List<File> _collectDartFiles(String root) {
-  final out = <File>[];
-  for (final scanRoot in _scanRoots) {
-    final dir = Directory(p.join(root, scanRoot));
-    if (!dir.existsSync()) continue;
-    for (final entity in dir.listSync(recursive: true, followLinks: false)) {
-      if (entity is File && entity.path.endsWith('.dart')) {
-        out.add(entity);
-      }
-    }
-  }
-  return out;
-}
-
-bool _shouldSkipFile(String relPath) {
-  if (_excludedPaths.contains(relPath)) return true;
-  if (_isUnderTestTree(relPath)) return true;
-  if (relPath.endsWith('.g.dart') ||
-      relPath.endsWith('.freezed.dart') ||
-      relPath.endsWith('.mocks.dart') ||
-      relPath.endsWith('.gen.dart')) {
-    return true;
-  }
-  return false;
-}
-
-/// Skip `test/` packages and repo-root tests so fixtures can use non-canonical
-/// literals while still exercising normalization behavior.
-bool _isUnderTestTree(String relPath) {
-  final norm = p.normalize(relPath);
-  if (norm.startsWith('test${p.separator}')) return true;
-  if (norm.contains('${p.separator}test${p.separator}')) return true;
-  return false;
 }
 
 class _CanonicalProvinceTileKeyVisitor extends RecursiveAstVisitor<void> {
