@@ -45,6 +45,8 @@ class _GeneratingWorldScreenState extends State<GeneratingWorldScreen> {
 
   @override
   void dispose() {
+    // No [StreamSubscription]; only [Timer]. ctterm does not depend on
+    // colonizethis_app [SubscriptionTracker]; see SPEC/program/app-ui-wiring.md.
     _timer?.cancel();
     super.dispose();
   }
