@@ -8,9 +8,9 @@
 
 Monorepo layout:
 
-- **Root:** `SPEC/`, `packages/`, `app/`, **`ctterm/`**, optional `assets/`, **`tool/`** (standalone CLI tools), tooling (e.g. `analysis_options.yaml`).
+- **Root:** `SPEC/`, `packages/`, `app/`, **`ctdev/`** (developer Flutter shell; sim and tooling UI), optional `assets/`, **`tool/`** (standalone CLI tools), tooling (e.g. `analysis_options.yaml`).
 - **Flutter app** lives under **`app/`** (not at root). Run and build from `app/` (e.g. `flutter run`, `flutter build macos`). Package work is done in `packages/<name>/`.
-- **ctterm** lives at top-level **`ctterm/`** — standalone Dart TUI (Nocterm). Run via `dart run ctterm` or `melos run ctterm`. Uses its own Hive data directory; see [SPEC/tui/ctterm.md](../tui/ctterm.md).
+- **Ctdev** lives under **`ctdev/`** — Flutter package for development workflows (see [ctdev-app.md](ctdev-app.md)).
 - **Standalone CLI tools** (e.g. topology description, map generation) live under **`tool/`**. Run from the **project root** via **Melos**: `melos run <tool_name> -- [args]` (paths in args are relative to repo root). The repo uses a root Dart workspace and Melos for scripts; see [.cursor/rules/colonizethis-tools.mdc](../../.cursor/rules/colonizethis-tools.mdc). Tools may depend on colonizethis_data or a shared reader to load topology.
 - **No `server/`** in current scope.
 
@@ -65,11 +65,11 @@ colonizethis_data    (no package deps)
 - **Given** `colonizethis_ai` imports logic interfaces, **when** static analysis inspects imports under `packages/colonizethis_ai/lib`, **then** imports use narrow logic contract libraries (`order_suggestion_api.dart`, `ai_api.dart`) and do not import `package:colonizethis_logic/colonizethis_logic.dart`.
 - **Given** Dart source under `app/lib` except `app/lib/config/app_assets.dart`, **when** static analysis inspects string literals, **then** direct asset path literals matching `assets/...` or `packages/<pkg>/assets/...` are rejected and diagnostics include file, line, and reason.
 - **Given** an app runtime asset reference in `app/lib`, **when** the code compiles, **then** the reference uses constants or helper builders defined in `app/lib/config/app_assets.dart`.
-- **Given** Dart source under `app/`, `ctterm/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical tech IDs are rejected outside allowlisted declaration/config and fixture paths.
+- **Given** Dart source under `app/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical tech IDs are rejected outside allowlisted declaration/config and fixture paths.
 - **Given** the tech-ID convention gate reports a violation, **when** a developer inspects the output, **then** each violation includes file path, line, column, and the offending tech ID literal for direct remediation.
-- **Given** Dart source under `app/`, `ctterm/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical work target IDs are rejected outside the allowlisted work-target declaration file and fixture paths.
+- **Given** Dart source under `app/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical work target IDs are rejected outside the allowlisted work-target declaration file and fixture paths.
 - **Given** the work-target convention gate reports a violation, **when** a developer inspects the output, **then** each violation includes file path, line, column, and the offending work target literal with a suggested `kWorkTarget*` constant when available.
-- **Given** Dart source under `app/`, `ctterm/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical civilian unit type ids (`Explorer`, `Builder`, `Engineer`, `Spy`, `Merchant`, `Rail Builder` per `SPEC/game/civilian-units.md`) are rejected outside `packages/colonizethis_models/lib/src/civilian_unit_type_ids.dart`, approved fixture/test-data paths, and an explicit allowlist for ambiguous spellings (e.g. naval ship category vs civilian `Merchant`, personality archetype display strings).
+- **Given** Dart source under `app/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical civilian unit type ids (`Explorer`, `Builder`, `Engineer`, `Spy`, `Merchant`, `Rail Builder` per `SPEC/game/civilian-units.md`) are rejected outside `packages/colonizethis_models/lib/src/civilian_unit_type_ids.dart`, approved fixture/test-data paths, and an explicit allowlist for ambiguous spellings (e.g. naval ship category vs civilian `Merchant`, personality archetype display strings).
 - **Given** the civilian unit type convention gate reports a violation, **when** a developer inspects the output, **then** each violation includes file path, line, column, and the offending literal with a suggested `kUnitType*` constant when available.
 
 ### Automated guard gate (CI)

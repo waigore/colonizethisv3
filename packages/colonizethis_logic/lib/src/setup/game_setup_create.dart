@@ -270,7 +270,7 @@ GameSetupResult createGameFromGeneratedMaps({
   ];
 
   /// Explicit designation of which Great Power is human-controlled (respects game setup: slot 0 = human).
-  /// Used by ctterm and other clients for visibility and input; AI uses true, human uses false.
+  /// Used by human-facing clients for visibility and input; AI uses true, human uses false.
   final aiControlByGpId = {for (final p in players) p.id: !p.isHuman};
 
   var game = Game(

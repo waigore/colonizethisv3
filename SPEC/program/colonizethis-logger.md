@@ -26,7 +26,6 @@ const String kLogPrefixAi = 'ai';
 const String kLogPrefixData = 'data';
 const String kLogPrefixMap = 'map';
 const String kLogPrefixSave = 'save';
-const String kLogPrefixTui = 'tui';
 const String kLogPrefixGame = 'game';
 ```
 
@@ -102,9 +101,9 @@ Replace raw `Logger()` usage with `CtLogger(prefix)`:
 4. **colonizethis_data** — prefix `data`
 5. **colonizethis_save** — prefix `save`
 6. **app/lib/features/game/flame/** — prefix `game` (Flame components)
-7. **app/lib/features/debug_log/** — prefix `app` (not `tui`, which is ctterm-only)
+7. **app/lib/features/debug_log/** — prefix `app`
 
-ctterm and ctdev have their own logging setups (`ctterm_log.dart`, `ctdev_log.dart`) using `basic_logger_file`; they may optionally adopt `CtLogger` internally but are not required for the debug viewer (they don't use `SessionLogBuffer`).
+Ctdev has its own logging setup (`ctdev_log.dart`) using `basic_logger_file`; it may optionally adopt `CtLogger` internally but is not required for the debug viewer (it does not use `SessionLogBuffer`).
 
 ### 4.3 SessionLogBuffer knownPrefixes update
 
@@ -119,7 +118,6 @@ const List<String> knownPrefixes = [
   'map',
   'save',
   'game',  // <-- Flame/UI components
-  'tui',
 ];
 ```
 
@@ -138,4 +136,4 @@ const List<String> knownPrefixes = [
 
 - Debug log viewer: [SPEC/program/debug-log-viewer.md](debug-log-viewer.md)
 - Session log buffer: `packages/session_log_buffer/lib/session_log_buffer.dart`
-- Existing prefixes: `ctdev`, `logic`, `ai`, `data`, `map`, `save`, `tui` (per `session_log_buffer.dart`)
+- Existing prefixes: `ctdev`, `logic`, `ai`, `data`, `map`, `save`, `game`, `app` (per `session_log_buffer.dart`)

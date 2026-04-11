@@ -99,7 +99,6 @@ void main() {
       expect(allLogPrefixes, contains('data'));
       expect(allLogPrefixes, contains('map'));
       expect(allLogPrefixes, contains('save'));
-      expect(allLogPrefixes, contains('tui'));
       expect(allLogPrefixes, contains('game'));
       expect(allLogPrefixes, contains('app'));
     });
@@ -110,7 +109,6 @@ void main() {
       expect(kLogPrefixData, 'data');
       expect(kLogPrefixMap, 'map');
       expect(kLogPrefixSave, 'save');
-      expect(kLogPrefixTui, 'tui');
       expect(kLogPrefixGame, 'game');
       expect(kLogPrefixApp, 'app');
       expect(kLogPrefixCtdev, 'ctdev');

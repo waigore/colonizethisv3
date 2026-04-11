@@ -17,7 +17,6 @@ const _excludedPaths = <String>{
   'app/lib/l10n/app_localizations_en.dart',
   'app/lib/widgetbook.dart',
   'app/lib/widgetbook/catalog.dart',
-  'ctterm/lib/screens/development_screen.dart',
   'packages/colonizethis_data/lib/src/work_order_costs.dart',
 };
 

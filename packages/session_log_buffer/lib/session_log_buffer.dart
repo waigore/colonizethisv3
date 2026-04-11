@@ -5,7 +5,7 @@ import 'package:logger/logger.dart';
 /// Default maximum number of log entries to retain (oldest dropped when exceeded).
 const int defaultMaxEntries = 5000;
 
-/// Known log prefixes used in the project (ctdev, logic, ai, data, map, save, tui, game, app).
+/// Known log prefixes used in the project (ctdev, logic, ai, data, map, save, game, app).
 /// Used for filter options in the viewer.
 const List<String> knownPrefixes = [
   'ctdev',
@@ -15,7 +15,6 @@ const List<String> knownPrefixes = [
   'map',
   'save',
   'game',
-  'tui',
   'app',
 ];
 
@@ -156,7 +155,7 @@ class SessionLogBuffer {
   static SessionLogBuffer get instance => _instance;
 
   /// Initializes the global session log buffer and registers a [Logger.addLogListener].
-  /// Call once from app/ctterm main(). Logs at [Level.debug] and above are captured.
+  /// Call once from app or ctdev main(). Logs at [Level.debug] and above are captured.
   static void init() {
     if (_instance._initialized) return;
     _instance._initialized = true;
