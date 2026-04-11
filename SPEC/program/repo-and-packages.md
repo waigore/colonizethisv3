@@ -76,16 +76,9 @@ colonizethis_data    (no package deps)
 
 The repository enforces this boundary in CI via:
 
-- `tool/check_logic_ai_decoupling.sh`
-- `tool/check_asset_path_constants.sh`
-- `tool/check_tech_id_constants.sh`
-- `tool/check_work_target_constants.sh`
-- `tool/check_civilian_unit_type_constants.sh`
-- `.github/workflows/quality.yml` step: `Check logic/ai decoupling convention (SPEC/program/repo-and-packages.md)`
-- `.github/workflows/quality.yml` step: `Check asset path constants convention (SPEC/program/repo-and-packages.md)`
-- `.github/workflows/quality.yml` step: `Check tech ID constants convention (SPEC/program/repo-and-packages.md)`
-- `.github/workflows/quality.yml` step: `Check work target constants convention (SPEC/program/repo-and-packages.md)`
-- `.github/workflows/quality.yml` step: `Check civilian unit type constants convention (SPEC/program/repo-and-packages.md)`
+- `dart run tool/ct_repo_lint.dart` (Quality workflow), including rules `repo.logic_ai_decoupling`, `repo.asset_path_constants`, `repo.tech_id_constants`, `repo.work_target_constants`, and `repo.civilian_unit_type_constants` (see `tool/ct_repo_lint_manifest.yaml` and `SPEC/program/repo-lint.md`).
+- `tool/check_logic_ai_decoupling.sh`, `tool/check_asset_path_constants.dart` (also runnable via `tool/check_asset_path_constants.sh`), and the other `tool/check_*` entrypoints invoked by repo lint.
+- `.github/workflows/quality.yml` steps that run unit tests for individual convention checkers (e.g. `test/check_asset_path_constants_test.dart`, `test/check_work_target_constants_test.dart`, …) so checker logic stays covered in CI.
 
 Guard behavior:
 

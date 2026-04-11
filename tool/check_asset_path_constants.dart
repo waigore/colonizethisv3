@@ -9,10 +9,52 @@ const _scannedRoots = <String>['app/lib'];
 
 const _excludedPaths = <String>{'app/lib/config/app_assets.dart'};
 
-void main() {
-  final cwd = Directory.current.path;
-  final root = p.normalize(cwd);
-  final violations = <_Violation>[];
+/// One direct `assets/...` or `packages/.../assets/...` string literal violation.
+final class AssetPathConstantViolation {
+  const AssetPathConstantViolation({
+    required this.path,
+    required this.line,
+    required this.column,
+    required this.message,
+  });
+
+  final String path;
+  final int line;
+  final int column;
+  final String message;
+}
+
+/// Parses [source] as a compilation unit and returns violations for [relativePath].
+///
+/// Used by unit tests; [relativePath] is repo-relative (POSIX-style). The constants
+/// file `app/lib/config/app_assets.dart` is never flagged.
+List<AssetPathConstantViolation> findAssetPathConstantViolationsInSource({
+  required String relativePath,
+  required String source,
+}) {
+  if (_excludedPaths.contains(relativePath)) {
+    return const [];
+  }
+  final parsed = parseString(
+    content: source,
+    path: relativePath,
+    throwIfDiagnostics: false,
+  );
+  final visitor = _AssetLiteralVisitor(path: relativePath, unit: parsed.unit);
+  parsed.unit.visitChildren(visitor);
+  return visitor.violations;
+}
+
+/// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
+int runCheckAssetPathConstants(
+  String repoRoot, {
+  void Function(String line)? info,
+  void Function(String line)? err,
+}) {
+  final logI = info ?? stdout.writeln;
+  final logE = err ?? stderr.writeln;
+  final root = p.normalize(repoRoot);
+  final violations = <AssetPathConstantViolation>[];
 
   for (final relRoot in _scannedRoots) {
     final absRoot = p.join(root, relRoot);
@@ -29,30 +71,32 @@ void main() {
         continue;
       }
       final src = entity.readAsStringSync();
-      final parsed = parseString(
-        content: src,
-        path: entity.path,
-        throwIfDiagnostics: false,
+      violations.addAll(
+        findAssetPathConstantViolationsInSource(
+          relativePath: relPath,
+          source: src,
+        ),
       );
-      final visitor = _AssetLiteralVisitor(path: relPath, unit: parsed.unit);
-      parsed.unit.visitChildren(visitor);
-      violations.addAll(visitor.violations);
     }
   }
 
   if (violations.isEmpty) {
-    stdout.writeln('Asset path constant check passed.');
-    exit(0);
+    logI('Asset path constant check passed.');
+    return 0;
   }
 
-  stderr.writeln(
+  logE(
     'ERROR: Found direct asset path literals. Use constants from '
     'app/lib/config/app_assets.dart instead.',
   );
   for (final v in violations) {
-    stderr.writeln('${v.path}:${v.line}:${v.column} ${v.message}');
+    logE('${v.path}:${v.line}:${v.column} ${v.message}');
   }
-  exit(1);
+  return 1;
+}
+
+void main() {
+  exit(runCheckAssetPathConstants(Directory.current.path));
 }
 
 class _AssetLiteralVisitor extends RecursiveAstVisitor<void> {
@@ -60,7 +104,7 @@ class _AssetLiteralVisitor extends RecursiveAstVisitor<void> {
 
   final String path;
   final CompilationUnit unit;
-  final List<_Violation> violations = [];
+  final List<AssetPathConstantViolation> violations = [];
 
   @override
   void visitSimpleStringLiteral(SimpleStringLiteral node) {
@@ -105,7 +149,7 @@ class _AssetLiteralVisitor extends RecursiveAstVisitor<void> {
     }
     final location = unit.lineInfo.getLocation(node.offset);
     violations.add(
-      _Violation(
+      AssetPathConstantViolation(
         path: path,
         line: location.lineNumber,
         column: location.columnNumber,
@@ -113,18 +157,4 @@ class _AssetLiteralVisitor extends RecursiveAstVisitor<void> {
       ),
     );
   }
-}
-
-class _Violation {
-  const _Violation({
-    required this.path,
-    required this.line,
-    required this.column,
-    required this.message,
-  });
-
-  final String path;
-  final int line;
-  final int column;
-  final String message;
 }

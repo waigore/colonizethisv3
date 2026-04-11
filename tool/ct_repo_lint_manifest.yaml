@@ -31,8 +31,8 @@ rules:
     group: identifiers
     title: Asset path constants in app runtime code
     spec: SPEC/program/repo-and-packages.md
-    runner: shell
-    argv: [tool/check_asset_path_constants.sh]
+    runner: dart
+    script: tool/check_asset_path_constants.dart
 
   - rule_id: repo.tech_id_constants
     group: identifiers

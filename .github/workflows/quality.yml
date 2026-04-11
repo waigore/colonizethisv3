@@ -310,6 +310,9 @@ jobs:
       - name: Test work target constants checker (SPEC/program/repo-and-packages.md)
         run: dart test test/check_work_target_constants_test.dart --reporter=compact
 
+      - name: Test asset path constants checker (SPEC/program/repo-and-packages.md)
+        run: dart test test/check_asset_path_constants_test.dart --reporter=compact
+
       - name: Test civilian unit type constants checker (SPEC/program/repo-and-packages.md)
         run: dart test test/check_civilian_unit_type_constants_test.dart --reporter=compact
 
