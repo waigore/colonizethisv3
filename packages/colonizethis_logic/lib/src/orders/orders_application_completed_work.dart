@@ -267,7 +267,8 @@ void _completedWorkBuildFort(
   if (s.topology != null && s.onDialogue != null) {
     final seed =
         ((s.game.globalGameSeed ?? 0) ^
-                (s.game.worldState.turnState.turnNumber * 0x9E3779B1))
+                (s.game.worldState.turnState.turnNumber *
+                    kDeterministicHashMixPrime32))
             .toInt();
     final events = dialogueEventsForReactiveFortsOnBorder(
       s.game,

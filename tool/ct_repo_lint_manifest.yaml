@@ -79,6 +79,13 @@ rules:
     runner: dart
     script: tool/check_disallowed_ast_patterns.dart
 
+  - rule_id: repo.repeated_magic_numbers
+    group: structure
+    title: Repeated magic integer literals (hash/LCG-style)
+    spec: SPEC/program/repeated-magic-numbers.md
+    runner: dart
+    script: tool/check_repeated_magic_numbers.dart
+
   - rule_id: repo.canonical_province_tile_keys
     group: game_invariants
     title: Canonical province WorkOrder targetTileKey literals

@@ -69,7 +69,7 @@ Game applyEconomyPhasesForPreview({
     final extractedPlayers = <Player>[];
     var extractionSeed =
         (state.globalGameSeed ?? 0) ^
-        (state.worldState.turnState.turnNumber * 0x9E3779B1);
+        (state.worldState.turnState.turnNumber * kDeterministicHashMixPrime32);
     for (final player in state.players) {
       var stockpile = player.stockpile;
       final totals = extraction[player.id];
@@ -80,7 +80,10 @@ Game applyEconomyPhasesForPreview({
           cargoHolds: cargoHoldsForHomeFleet(state, player.id),
         );
         if (overseasDelivered.isNotEmpty) {
-          extractionSeed = (extractionSeed * 1103515245 + 12345) & 0x7fffffff;
+          extractionSeed =
+              (extractionSeed * kDeterministicLcgMultiplierGlibc +
+                  kDeterministicLcgIncrementGlibc) &
+              kDeterministicLcg31Mask;
           final interception = applyTradeInterception(
             stateWithFleets,
             player.id,

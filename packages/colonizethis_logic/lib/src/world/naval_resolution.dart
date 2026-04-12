@@ -9,6 +9,7 @@ import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
+import '../turn/turn_seed_constants.dart';
 import 'naval.dart';
 import 'player_view.dart';
 import 'province_lookup.dart';
@@ -388,10 +389,12 @@ Game runNavalInterceptionCombatPhase(
   ];
   var seed =
       (game.globalGameSeed ?? 0) ^
-      (game.worldState.turnState.turnNumber * 0x9E3779B1);
+      (game.worldState.turnState.turnNumber * kTurnResolutionSeedMix);
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
   _log.d('naval phase after interception battles=${battles.length}');
-  seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+  seed =
+      (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
+      kTurnResolutionLcgMask;
   var state = game;
   final turn = game.worldState.turnState.turnNumber;
   var battleIndex = 0;
@@ -415,7 +418,9 @@ Game runNavalInterceptionCombatPhase(
       side2CanRetreat: retreatZoneSide2 != null,
       navalFeedingCoverageByPlayerId: navalFeedingCoverageByPlayerId,
     );
-    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    seed =
+        (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
+        kTurnResolutionLcgMask;
     final zoneRegionId = regionIdForSeaZone(topology, battle.seaZoneId);
     final fleetsInZone = state.worldState.fleets.where(
       (f) => f.seaZoneId == battle.seaZoneId,
@@ -463,7 +468,9 @@ Game runNavalInterceptionCombatPhase(
           ],
         );
       }
-      final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
+      final dialogueSeed =
+          (seed ^ (battleIndex * kTurnResolutionSeedMix)) &
+          kTurnResolutionLcgMask;
       final events = dialogueEventsForNavalBattleResult(
         state,
         victorId,

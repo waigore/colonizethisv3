@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../dossier/event_dialogue.dart';
 import '../world/fog_resolution.dart';
+import 'turn_seed_constants.dart';
 
 final _log = packageLogger();
 
@@ -80,7 +81,7 @@ void _emitEraChangeDialogue(
   final previousEra = eraFromYear(mapping.yearAtTurn(currentTurn));
   final newEra = eraFromYear(mapping.yearAtTurn(nextTurn));
   if (previousEra == newEra) return;
-  final seed = (game.globalGameSeed ?? 0) ^ (nextTurn * 0x9E3779B1);
+  final seed = (game.globalGameSeed ?? 0) ^ (nextTurn * kTurnResolutionSeedMix);
   final events = dialogueEventsForEraChange(game, previousEra, newEra, seed);
   for (final e in events) {
     onDialogue(e);

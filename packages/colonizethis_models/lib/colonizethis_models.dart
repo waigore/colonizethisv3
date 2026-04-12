@@ -2,6 +2,8 @@
 library colonizethis_models;
 
 export 'src/army.dart';
+export 'src/deterministic_hash_mix_constants.dart';
+export 'src/deterministic_lcg_constants.dart';
 export 'src/capital_tile.dart';
 export 'src/diplomacy.dart';
 export 'src/fleet.dart';

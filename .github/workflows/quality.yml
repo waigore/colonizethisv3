@@ -301,6 +301,9 @@ jobs:
       - name: Test disallowed AST patterns checker (SPEC/program/disallowed-ast-patterns.md)
         run: dart test test/check_disallowed_ast_patterns_test.dart --reporter=compact
 
+      - name: Test repeated magic numbers checker (SPEC/program/repeated-magic-numbers.md)
+        run: dart test test/check_repeated_magic_numbers_test.dart --reporter=compact
+
       - name: Test OrderEngine slot generator (SPEC/program/order-engine.md)
         run: dart test test/generate_order_engine_slots_test.dart --reporter=compact
 

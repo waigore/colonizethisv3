@@ -17,13 +17,14 @@ const List<String> kHiddenAgendaIds = [
 Game assignHiddenAgendasForGame(Game game) {
   if (game.players.isEmpty) return game;
   final global = game.globalGameSeed ?? 0;
-  const int prime = 0x9E3779B1;
   final newAgendas = <String, String>{};
   for (final p in game.players) {
     final isAi = game.aiControlByGpId[p.id] ?? !p.isHuman;
     if (!isAi) continue;
     final aiSeed = game.aiSeedByGpId[p.id] ?? p.id.hashCode;
-    final agendaSeed = (global ^ (aiSeed * prime)) & 0x7fffffff;
+    final agendaSeed =
+        (global ^ (aiSeed * kDeterministicHashMixPrime32)) &
+        kDeterministicLcg31Mask;
     final idx = agendaSeed % kHiddenAgendaIds.length;
     newAgendas[p.id] = kHiddenAgendaIds[idx];
   }
