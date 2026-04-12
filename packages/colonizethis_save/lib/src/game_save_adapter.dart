@@ -14,6 +14,13 @@ const String _suffixWarpLinks = '_warpLinks';
 const String _saveFormatVersionKey = 'saveFormatVersion';
 const String _saveGamePayloadKey = 'game';
 
+const List<String> _mapDataKeySuffixes = <String>[
+  _suffixTileMapByRegion,
+  _suffixTopologyByRegion,
+  _suffixCombinedTopology,
+  _suffixWarpLinks,
+];
+
 /// Current save format version for game envelopes written by [GameSaveAdapter].
 const int kSaveFormatVersion = 1;
 const Set<int> _supportedSaveFormatVersions = {kSaveFormatVersion};
@@ -187,35 +194,15 @@ class GameSaveAdapter {
     final result = <String>[...definiteGameIds];
 
     for (final key in allKeys) {
-      if (key.endsWith(_suffixTileMapByRegion)) {
-        final prefix = key.substring(
-          0,
-          key.length - _suffixTileMapByRegion.length,
-        );
+      for (final suffix in _mapDataKeySuffixes) {
+        if (!key.endsWith(suffix)) {
+          continue;
+        }
+        final prefix = key.substring(0, key.length - suffix.length);
         if (prefix != kAutoSaveSlotId && !definiteGameIds.contains(prefix)) {
           result.add(key);
         }
-      } else if (key.endsWith(_suffixTopologyByRegion)) {
-        final prefix = key.substring(
-          0,
-          key.length - _suffixTopologyByRegion.length,
-        );
-        if (prefix != kAutoSaveSlotId && !definiteGameIds.contains(prefix)) {
-          result.add(key);
-        }
-      } else if (key.endsWith(_suffixCombinedTopology)) {
-        final prefix = key.substring(
-          0,
-          key.length - _suffixCombinedTopology.length,
-        );
-        if (prefix != kAutoSaveSlotId && !definiteGameIds.contains(prefix)) {
-          result.add(key);
-        }
-      } else if (key.endsWith(_suffixWarpLinks)) {
-        final prefix = key.substring(0, key.length - _suffixWarpLinks.length);
-        if (prefix != kAutoSaveSlotId && !definiteGameIds.contains(prefix)) {
-          result.add(key);
-        }
+        break;
       }
     }
 

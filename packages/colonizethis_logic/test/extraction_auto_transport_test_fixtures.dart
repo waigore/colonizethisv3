@@ -8,8 +8,12 @@ int extractionAutoTransportInterceptionSeed({
   required int turnNumber,
   required String playerId,
 }) {
-  var extractionSeed = globalGameSeed ^ (turnNumber * 0x9E3779B1);
-  extractionSeed = (extractionSeed * 1103515245 + 12345) & 0x7fffffff;
+  var extractionSeed =
+      globalGameSeed ^ (turnNumber * kDeterministicHashMixPrime32);
+  extractionSeed =
+      (extractionSeed * kDeterministicLcgMultiplierGlibc +
+          kDeterministicLcgIncrementGlibc) &
+      kDeterministicLcg31Mask;
   return extractionSeed ^ playerId.hashCode;
 }
 

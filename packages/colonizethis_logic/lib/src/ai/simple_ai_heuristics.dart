@@ -28,10 +28,9 @@ int turnSeedForPlayer(
   final global = game.globalGameSeed ?? 0;
   final aiSeed =
       game.aiSeedByGpId[playerId] ?? fallbackAiSeed ?? playerId.hashCode;
-  const int prime = 0x9E3779B1;
-  var h = global ^ (turnNumber * prime);
-  h ^= aiSeed * prime;
-  return h & 0x7fffffff;
+  var h = global ^ (turnNumber * kDeterministicHashMixPrime32);
+  h ^= aiSeed * kDeterministicHashMixPrime32;
+  return h & kDeterministicLcg31Mask;
 }
 
 enum _SuggestionCategory { moves, work, build, research }
@@ -80,8 +79,12 @@ Orders generateOrdersWithSimpleHeuristics(
   const maxIterationsPerPlayer = 32;
   for (var i = 0; i < maxIterationsPerPlayer; i++) {
     final moveSuggestions = suggestMoveOrders(view, g, topology, current);
-    final armyMoveSuggestions =
-        suggestArmyMoveOrders(view, g, topology, current);
+    final armyMoveSuggestions = suggestArmyMoveOrders(
+      view,
+      g,
+      topology,
+      current,
+    );
     final workSuggestions = suggestWorkOrders(
       view,
       g,
@@ -214,8 +217,11 @@ Orders generateOrdersWithSimpleHeuristics(
   }
   final rawArmyMoves = current.armyMoveOrdersByPlayerId[player.id];
   if (rawArmyMoves != null && rawArmyMoves.isNotEmpty) {
-    final filtered =
-        filterArmyMoveOrdersByDiplomacy(g, player.id, rawArmyMoves);
+    final filtered = filterArmyMoveOrdersByDiplomacy(
+      g,
+      player.id,
+      rawArmyMoves,
+    );
     if (filtered.isNotEmpty) {
       armyMoveByPlayer[player.id] = filtered;
     }

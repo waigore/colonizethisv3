@@ -15,6 +15,7 @@ import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
+import 'turn_seed_constants.dart';
 
 final _combatPhaseLog = packageLogger();
 
@@ -215,7 +216,8 @@ void _emitLandBattleDialogue(
   void Function(DialogueEvent)? onDialogue,
 ) {
   if (onDialogue == null) return;
-  final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
+  final dialogueSeed =
+      (seed ^ (battleIndex * kTurnResolutionSeedMix)) & kTurnResolutionLcgMask;
   final events = dialogueEventsForLandBattleResult(
     state,
     victorId,

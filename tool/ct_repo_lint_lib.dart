@@ -10,6 +10,7 @@ import 'check_canonical_province_tile_keys.dart';
 import 'check_civilian_unit_type_constants.dart';
 import 'check_custom_exceptions.dart';
 import 'check_disallowed_ast_patterns.dart';
+import 'check_repeated_magic_numbers.dart';
 import 'check_tech_id_constants.dart';
 import 'check_work_target_constants.dart';
 import 'ct_repo_lint_scan_contract.dart';
@@ -616,6 +617,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckAssetPathConstants(repoRoot);
     case 'repo.disallowed_ast_patterns':
       return runCheckDisallowedAstPatterns(repoRoot);
+    case 'repo.repeated_magic_numbers':
+      return runCheckRepeatedMagicNumbers(repoRoot);
     case 'repo.tech_id_constants':
       return runCheckTechIdConstants(
         repoRoot,

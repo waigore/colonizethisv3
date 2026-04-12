@@ -187,7 +187,8 @@ Set<String> _enemiesAtWar(Game game, String playerId) {
       continue; // Only fleets at sea can intercept. SPEC/game/ships-and-naval.md.
     }
     if (!enemyIds.contains(f.ownerId)) continue;
-    if (f.mission != FleetMission.patrol && f.mission != FleetMission.blockade) {
+    if (f.mission != FleetMission.patrol &&
+        f.mission != FleetMission.blockade) {
       continue;
     }
     if (f.mission == FleetMission.blockade) hasBlockade = true;
@@ -324,7 +325,10 @@ TradeInterceptionResult applyTradeInterception(
   var rng = seed;
   int nextInt(int max) {
     if (max <= 0) return 0;
-    rng = (rng * 1103515245 + 12345) & 0x7fffffff;
+    rng =
+        (rng * kDeterministicLcgMultiplierGlibc +
+            kDeterministicLcgIncrementGlibc) &
+        kDeterministicLcg31Mask;
     return rng % max;
   }
 

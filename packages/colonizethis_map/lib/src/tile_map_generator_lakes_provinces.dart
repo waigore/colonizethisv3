@@ -69,8 +69,20 @@ class _TileMapGenLakesProvinces {
     }
     final sorted = coastalLandCandidates.toList()
       ..sort((a, b) {
-        final na = _graph.oceanNeighbourCount(next, a.$1, a.$2, seaZoneId, ocean);
-        final nb = _graph.oceanNeighbourCount(next, b.$1, b.$2, seaZoneId, ocean);
+        final na = _graph.oceanNeighbourCount(
+          next,
+          a.$1,
+          a.$2,
+          seaZoneId,
+          ocean,
+        );
+        final nb = _graph.oceanNeighbourCount(
+          next,
+          b.$1,
+          b.$2,
+          seaZoneId,
+          ocean,
+        );
         return nb.compareTo(na);
       });
     for (final (fx, fy) in sorted.take(lakesFilled)) {
@@ -152,7 +164,14 @@ class _TileMapGenLakesProvinces {
 
     // Preserve overall sea fraction by converting an equal number of coastal
     // land tiles back to sea, using the existing helper.
-    _join.preserveSeaFraction(next, null, null, seaZoneId, ocean, moatCells.length);
+    _join.preserveSeaFraction(
+      next,
+      null,
+      null,
+      seaZoneId,
+      ocean,
+      moatCells.length,
+    );
 
     return next;
   }
@@ -173,7 +192,7 @@ class _TileMapGenLakesProvinces {
       for (var x = 0; x < params.width; x++) {
         if (grid[y][x] != _landSentinel) continue;
         var bestSeedIndex = 0;
-        var bestD2 = 0x7fffffff;
+        var bestD2 = kUnsetSquaredDistanceInt31;
         for (var i = 0; i < landSeeds.length; i++) {
           final (sx, sy) = landSeeds[i];
           final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);

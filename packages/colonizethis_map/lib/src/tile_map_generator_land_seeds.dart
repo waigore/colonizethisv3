@@ -372,7 +372,7 @@ class _TileMapGenLandSeeds {
         for (var c = 0; c < numContinents; c++) {
           final start = seedStartByContinent[c];
           final end = seedEndByContinent[c];
-          var d2 = 0x7fffffff;
+          var d2 = kUnsetSquaredDistanceInt31;
           for (var i = start; i < end; i++) {
             final (sx, sy) = landSeeds[i];
             final dd = (x - sx) * (x - sx) + (y - sy) * (y - sy);
@@ -528,7 +528,7 @@ class _TileMapGenLandSeeds {
         final coastal = coastalByContinent[c]!;
         if (coastal.isEmpty) continue;
 
-        var bestScore = -0x7fffffff;
+        var bestScore = kMinLandSeedScoreSentinel;
         final bestCandidates = <(int x, int y)>[];
 
         for (final (sx, sy) in coastal) {
@@ -668,7 +668,7 @@ class _TileMapGenLandSeeds {
         for (var c = 0; c < numContinents; c++) {
           final start = seedStartByContinent[c];
           final end = seedEndByContinent[c];
-          var d2 = 0x7fffffff;
+          var d2 = kUnsetSquaredDistanceInt31;
           for (var i = start; i < end; i++) {
             final (sx, sy) = landSeeds[i];
             final dd = (x - sx) * (x - sx) + (y - sy) * (y - sy);
@@ -706,6 +706,6 @@ class _TileMapGenLandSeeds {
     h = (h ^ (h >> 16)) * 0x85ebca6b;
     h = (h ^ (h >> 13)) * 0xc2b2ae35;
     h = h ^ (h >> 16);
-    return (h & 0x7FFFFFFF) / 0x7FFFFFFF * 2 - 1;
+    return (h & kDeterministicLcg31Mask) / kDeterministicLcg31Mask * 2 - 1;
   }
 }
