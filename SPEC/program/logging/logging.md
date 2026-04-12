@@ -15,6 +15,7 @@
 | Ctdev file / Sim Log / pre-sim buffer | [ctdev-logging.md](../ctdev-logging.md) |
 | Test runs (suppress logger) | [test-logging.md](../test-logging.md) |
 | Prefix helper (`CtLogger`, factories) | [colonizethis-logger.md](../colonizethis-logger.md) |
+| Flutter timeline + startup log tokens (new-game → game screen) | [flutter-performance-tracing.md](../flutter-performance-tracing.md) |
 
 ---
 

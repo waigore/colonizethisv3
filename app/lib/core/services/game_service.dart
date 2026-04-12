@@ -1,5 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/package_logger.dart';
+import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -358,20 +359,30 @@ class GameService {
     final cfg = config ?? GameSetupConfig.defaultConfig;
     final effectiveSeed = resolveEffectiveSetupSeed(cfg.seed);
     const total = newGameSetupProgressStepCount;
+    final log = packageLogger();
     Future<void> yieldUi() => Future<void>.delayed(Duration.zero);
 
     // Let any pending frame (e.g. progress modal paint) run before step 0 work.
     await yieldUi();
 
-    onProgress?.call(0, total);
+    void reportPhase(int stepIndex) {
+      ctAppPerfInstant('newGameAsync.phase_$stepIndex');
+      log.i('newGameAsync phase step=$stepIndex total=$total gameId=$gameId');
+      onProgress?.call(stepIndex, total);
+    }
+
+    ctAppPerfInstant('newGameAsync.begin');
+    log.i('newGameAsync begin gameId=$gameId');
+
+    reportPhase(0);
     await yieldUi();
     final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg, effectiveSeed);
 
-    onProgress?.call(1, total);
+    reportPhase(1);
     await yieldUi();
     final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg, effectiveSeed);
 
-    onProgress?.call(2, total);
+    reportPhase(2);
     await yieldUi();
     final warpLinks = _generateWarpLinks(
       effectiveSeed: effectiveSeed,
@@ -381,7 +392,7 @@ class GameService {
       topoNW: topoNW,
     );
 
-    onProgress?.call(3, total);
+    reportPhase(3);
     await yieldUi();
     final setupResult = createGameFromGeneratedMaps(
       config: cfg,
@@ -396,9 +407,11 @@ class GameService {
     );
     final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);
 
-    onProgress?.call(4, total);
+    reportPhase(4);
     await yieldUi();
     _persistNewGame(gameId: gameId, result: result);
+    ctAppPerfInstant('newGameAsync.complete');
+    log.i('newGameAsync complete gameId=$gameId');
     return result.game;
   }
 
