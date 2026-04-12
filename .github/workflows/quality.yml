@@ -37,6 +37,10 @@ jobs:
               - 'tool/init_game/**'
               - 'tool/sim_economy/**'
               - 'tool/show_tech/**'
+              - 'tool/check_long_string_switches.dart'
+              - 'tool/generate_tech_effect_yaml.dart'
+              - 'tool/generate_tech_effect_l10n.dart'
+              - 'tool/embed_tech_effect_summary.dart'
               - 'tool/generate_order_engine_slots.dart'
               - 'tool/verify_order_engine_codegen.sh'
 
@@ -77,6 +81,10 @@ jobs:
           set -e
           cd app
           flutter gen-l10n
+
+      - name: Check long string switches (AST)
+        if: needs.changes.outputs.tests == 'true'
+        run: dart tool/check_long_string_switches.dart
 
       - name: Compile app entrypoints (Flutter analyze)
         if: needs.changes.outputs.tests == 'true'
