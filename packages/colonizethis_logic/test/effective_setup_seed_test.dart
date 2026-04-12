@@ -1,5 +1,6 @@
+import 'package:colonizethis_test/test.dart';
+
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:test/test.dart';
 
 void main() {
   group('resolveEffectiveSetupSeed', () {
@@ -9,7 +10,10 @@ void main() {
     });
 
     test('throws when config seed is negative', () {
-      expect(() => resolveEffectiveSetupSeed(-1), throwsArgumentError);
+      expect(
+        () => resolveEffectiveSetupSeed(-1),
+        throwsA(isA<SetupConfigConstraintException>()),
+      );
     });
 
     test('zero yields a large positive epoch-based value', () {
