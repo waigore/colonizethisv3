@@ -226,6 +226,17 @@
   "@shell_leaderDialog_enforceFairGpAssignment": {
     "description": "Checkbox label: run Old World GP land connectivity repair and assignment retries per game-setup spec."
   },
+
+  "shell_leaderDialog_seedLabel": "Game / world seed",
+  "@shell_leaderDialog_seedLabel": {
+    "description": "Label for the numeric seed field in the new-game leader dialog."
+  },
+
+  "shell_leaderDialog_seedHelper": "Use 0 for a random world (a new time-based seed each time setup runs). Any other number reproduces the same world for the same settings.",
+  "@shell_leaderDialog_seedHelper": {
+    "description": "Helper text explaining 0 vs fixed seed for the new-game leader dialog."
+  },
+
   "shell_newGameProgress_title": "Creating game",
   "@shell_newGameProgress_title": {
     "description": "Title of the modal shown while a new game is being generated."

@@ -1,4 +1,6 @@
-// SPEC/ui/game-initializing.md — progress dialog, async setup, error + retry (new seed).
+// SPEC/ui/game-initializing.md — progress dialog, async setup, error + retry.
+// Retry: fixed user seed K uses K+N per attempt; user seed 0 keeps 0 each attempt (fresh
+// time-based effective seed when init runs).
 
 import 'dart:async';
 
@@ -33,7 +35,7 @@ class _NewGameOutcomeFailure extends _NewGameOutcome {
 }
 
 /// Runs phased new-game creation after leader selection: progress dialog, navigate on success,
-/// error dialog with retry (`seed = baseSeed + attemptIndex`). SPEC/ui/game-initializing.md.
+/// error dialog with retry. SPEC/ui/game-initializing.md.
 Future<void> runNewGameSetupAfterLeaderPick({
   required ProviderContainer container,
   required GameSetupConfig templateConfig,
@@ -48,6 +50,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
   final bus = container.read(appEventBusProvider);
 
   while (true) {
+    final perAttemptSeed = baseSeed == 0 ? 0 : baseSeed + attemptIndex;
     final config = GameSetupConfig(
       selectedGreatPowerIds: templateConfig.selectedGreatPowerIds,
       leaderVariantByGpId: templateConfig.leaderVariantByGpId,
@@ -57,7 +60,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
       numProvincesOldWorld: templateConfig.numProvincesOldWorld,
       numProvincesNewWorld: templateConfig.numProvincesNewWorld,
       minProvincesPerMinor: templateConfig.minProvincesPerMinor,
-      seed: baseSeed + attemptIndex,
+      seed: perAttemptSeed,
       startingResources: templateConfig.startingResources,
       enforceFairGpOldWorldAssignment:
           templateConfig.enforceFairGpOldWorldAssignment,

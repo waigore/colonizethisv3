@@ -320,24 +320,28 @@ class GameService {
   Game createNewGame({String? id, GameSetupConfig? config}) {
     final gameId = id ?? 'game_${DateTime.now().millisecondsSinceEpoch}';
     final cfg = config ?? GameSetupConfig.defaultConfig;
-    final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg);
-    final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg);
+    final effectiveSeed = resolveEffectiveSetupSeed(cfg.seed);
+    final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg, effectiveSeed);
+    final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg, effectiveSeed);
     final warpLinks = _generateWarpLinks(
-      cfg: cfg,
+      effectiveSeed: effectiveSeed,
       tileMapOW: tileMapOW,
       topoOW: topoOW,
       tileMapNW: tileMapNW,
       topoNW: topoNW,
     );
-    final result = createGameFromGeneratedMaps(
+    final setupResult = createGameFromGeneratedMaps(
       config: cfg,
       tileMapOldWorld: tileMapOW,
       topologyOldWorld: topoOW,
       tileMapNewWorld: tileMapNW,
       topologyNewWorld: topoNW,
       gameId: gameId,
+      namingSeed: effectiveSeed,
+      assignmentPerturbationBase: effectiveSeed,
       warpLinks: warpLinks,
     );
+    final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);
     _persistNewGame(gameId: gameId, result: result);
     return result.game;
   }
@@ -352,6 +356,7 @@ class GameService {
   }) async {
     final gameId = id ?? 'game_${DateTime.now().millisecondsSinceEpoch}';
     final cfg = config ?? GameSetupConfig.defaultConfig;
+    final effectiveSeed = resolveEffectiveSetupSeed(cfg.seed);
     const total = newGameSetupProgressStepCount;
     Future<void> yieldUi() => Future<void>.delayed(Duration.zero);
 
@@ -360,16 +365,16 @@ class GameService {
 
     onProgress?.call(0, total);
     await yieldUi();
-    final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg);
+    final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg, effectiveSeed);
 
     onProgress?.call(1, total);
     await yieldUi();
-    final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg);
+    final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg, effectiveSeed);
 
     onProgress?.call(2, total);
     await yieldUi();
     final warpLinks = _generateWarpLinks(
-      cfg: cfg,
+      effectiveSeed: effectiveSeed,
       tileMapOW: tileMapOW,
       topoOW: topoOW,
       tileMapNW: tileMapNW,
@@ -378,15 +383,18 @@ class GameService {
 
     onProgress?.call(3, total);
     await yieldUi();
-    final result = createGameFromGeneratedMaps(
+    final setupResult = createGameFromGeneratedMaps(
       config: cfg,
       tileMapOldWorld: tileMapOW,
       topologyOldWorld: topoOW,
       tileMapNewWorld: tileMapNW,
       topologyNewWorld: topoNW,
       gameId: gameId,
+      namingSeed: effectiveSeed,
+      assignmentPerturbationBase: effectiveSeed,
       warpLinks: warpLinks,
     );
+    final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);
 
     onProgress?.call(4, total);
     await yieldUi();
@@ -394,10 +402,33 @@ class GameService {
     return result.game;
   }
 
-  (TileMapResult, MapTopology) _generateTileMapOldWorld(GameSetupConfig cfg) {
+  GameSetupResult _setupResultWithFinalizedGame(
+    GameSetupResult setup,
+    int effectiveSeed,
+  ) {
+    var game = setup.game.copyWith(
+      globalGameSeed: effectiveSeed,
+      aiSeedByGpId: {
+        for (final p in setup.game.players) p.id: effectiveSeed + p.id.hashCode,
+      },
+    );
+    game = assignHiddenAgendasForGame(game);
+    return GameSetupResult(
+      game: game,
+      tileMapByRegion: setup.tileMapByRegion,
+      topologyByRegion: setup.topologyByRegion,
+      combinedTopology: setup.combinedTopology,
+      warpLinks: setup.warpLinks,
+    );
+  }
+
+  (TileMapResult, MapTopology) _generateTileMapOldWorld(
+    GameSetupConfig cfg,
+    int effectiveSeed,
+  ) {
     final mapGenParams = MapGenerationParams(
       numContinents: cfg.continentCount,
-      seed: cfg.seed,
+      seed: effectiveSeed,
       seaFraction: kDefaultSeaFraction,
     );
     final sizeOW = computeGridSizeFromParams(
@@ -407,7 +438,7 @@ class GameService {
     final paramsOW = TileMapParams(
       width: sizeOW.width,
       height: sizeOW.height,
-      seed: cfg.seed,
+      seed: effectiveSeed,
       seaFraction: kDefaultSeaFraction,
     );
     return TileMapGenerator(params: paramsOW).generate(
@@ -419,10 +450,13 @@ class GameService {
     );
   }
 
-  (TileMapResult, MapTopology) _generateTileMapNewWorld(GameSetupConfig cfg) {
+  (TileMapResult, MapTopology) _generateTileMapNewWorld(
+    GameSetupConfig cfg,
+    int effectiveSeed,
+  ) {
     final mapGenParams = MapGenerationParams(
       numContinents: cfg.continentCount,
-      seed: cfg.seed,
+      seed: effectiveSeed,
       seaFraction: kDefaultSeaFraction,
     );
     final sizeNW = computeGridSizeFromParams(
@@ -432,7 +466,7 @@ class GameService {
     final paramsNW = TileMapParams(
       width: sizeNW.width,
       height: sizeNW.height,
-      seed: cfg.seed + 1,
+      seed: effectiveSeed + 1,
       seaFraction: kDefaultSeaFraction,
     );
     return TileMapGenerator(params: paramsNW).generate(
@@ -445,7 +479,7 @@ class GameService {
   }
 
   List<WarpLink> _generateWarpLinks({
-    required GameSetupConfig cfg,
+    required int effectiveSeed,
     required TileMapResult tileMapOW,
     required MapTopology topoOW,
     required TileMapResult tileMapNW,
@@ -458,7 +492,7 @@ class GameService {
       topologyNewWorld: topoNW,
       regionIdOld: 'oldWorld',
       regionIdNew: 'newWorld',
-      seed: cfg.seed,
+      seed: effectiveSeed,
     );
   }
 

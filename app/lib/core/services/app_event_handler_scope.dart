@@ -185,6 +185,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
                   orderedGreatPowerIds,
                   leaderVariantByGpId,
                   enforceFairGpOldWorldAssignment,
+                  seed,
                 ) {
                   final navCtx = appNavigatorKey.currentContext;
                   if (navCtx == null) {
@@ -203,7 +204,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
                     numProvincesOldWorld: baseConfig.numProvincesOldWorld,
                     numProvincesNewWorld: baseConfig.numProvincesNewWorld,
                     minProvincesPerMinor: baseConfig.minProvincesPerMinor,
-                    seed: baseConfig.seed,
+                    seed: seed,
                     startingResources: baseConfig.startingResources,
                     enforceFairGpOldWorldAssignment:
                         enforceFairGpOldWorldAssignment,
@@ -339,11 +340,11 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
       }),
       bus.on<NavalMoveFleetRequestedEvent>().listen((e) {
         final o = ref.read(currentOrdersProvider);
-        ref.read(currentOrdersProvider.notifier).replaceAll(applyNavalMoveOrderForPlayer(
-          o,
-          e.humanPlayerId,
-          e.moveOrder,
-        ));
+        ref
+            .read(currentOrdersProvider.notifier)
+            .replaceAll(
+              applyNavalMoveOrderForPlayer(o, e.humanPlayerId, e.moveOrder),
+            );
       }),
       bus.on<LandArmiesUpdatedEvent>().listen((e) {
         ref.read(currentGameProvider.notifier).setGame(e.game);
@@ -372,7 +373,8 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
       bus.on<ArmyMoveRequestedEvent>().listen((e) {
         final g = ref.read(currentGameProvider);
         if (g == null) return;
-        final topo = ref.read(gameServiceProvider).getMapData(g.id)?.combinedTopology ??
+        final topo =
+            ref.read(gameServiceProvider).getMapData(g.id)?.combinedTopology ??
             const MapTopology();
         final o = ref.read(currentOrdersProvider);
         var next = o;
@@ -396,14 +398,13 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             );
           }
         }
-        next = applyArmyMoveOrderForPlayer(
-          next,
-          e.humanPlayerId,
-          e.moveOrder,
-        );
+        next = applyArmyMoveOrderForPlayer(next, e.humanPlayerId, e.moveOrder);
         final engine = OrderEngine(initialOrders: next);
-        final results =
-            engine.validatePlayerOrdersWithContext(g, topo, e.humanPlayerId);
+        final results = engine.validatePlayerOrdersWithContext(
+          g,
+          topo,
+          e.humanPlayerId,
+        );
         if (!results.every((r) => r.isAccepted)) {
           _logEvent.e(
             'ui: army move rejected: merged draft failed order validation',
@@ -428,12 +429,14 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
         final o = ref.read(currentOrdersProvider);
         ref
             .read(currentOrdersProvider.notifier)
-            .replaceAll(_mergeTrainCivilianOrdersForPlayer(
-          current: o,
-          game: g,
-          humanPlayerId: pid,
-          newFromDialog: e.orders,
-        ));
+            .replaceAll(
+              _mergeTrainCivilianOrdersForPlayer(
+                current: o,
+                game: g,
+                humanPlayerId: pid,
+                newFromDialog: e.orders,
+              ),
+            );
       }),
       bus.on<TrainMilitaryBuildOrdersCommittedEvent>().listen((e) {
         final g = ref.read(currentGameProvider);
@@ -442,28 +445,34 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
         final o = ref.read(currentOrdersProvider);
         ref
             .read(currentOrdersProvider.notifier)
-            .replaceAll(_mergeTrainMilitaryOrdersForPlayer(
-          current: o,
-          game: g,
-          humanPlayerId: pid,
-          newFromDialog: e.orders,
-        ));
+            .replaceAll(
+              _mergeTrainMilitaryOrdersForPlayer(
+                current: o,
+                game: g,
+                humanPlayerId: pid,
+                newFromDialog: e.orders,
+              ),
+            );
       }),
       bus.on<AppendDiplomaticOrderRequestedEvent>().listen((e) {
         final current = ref.read(currentOrdersProvider);
-        ref.read(currentOrdersProvider.notifier).replaceAll(
-          current.appendDiplomaticOrderForPlayer(e.playerId, e.order),
-        );
+        ref
+            .read(currentOrdersProvider.notifier)
+            .replaceAll(
+              current.appendDiplomaticOrderForPlayer(e.playerId, e.order),
+            );
       }),
       bus.on<RemoveDiplomaticOrderRequestedEvent>().listen((e) {
         final current = ref.read(currentOrdersProvider);
-        ref.read(currentOrdersProvider.notifier).replaceAll(
-          current.removeDiplomaticOrderForPlayer(
-              e.playerId,
-              type: e.type,
-              targetFactionId: e.targetFactionId,
-            ),
-        );
+        ref
+            .read(currentOrdersProvider.notifier)
+            .replaceAll(
+              current.removeDiplomaticOrderForPlayer(
+                e.playerId,
+                type: e.type,
+                targetFactionId: e.targetFactionId,
+              ),
+            );
       }),
       bus.on<CombatModeChosenEvent>().listen((e) {
         final g = ref.read(currentGameProvider);

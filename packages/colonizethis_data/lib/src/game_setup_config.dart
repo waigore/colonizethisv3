@@ -33,7 +33,8 @@ class GameSetupConfig {
        assert(minorNationCount >= 0),
        assert(tribeCount >= 0),
        assert(minProvincesPerMinor >= 0),
-       assert(numProvincesNewWorld >= 1) {
+       assert(numProvincesNewWorld >= 1),
+       assert(seed >= 0) {
     _log.d(
       'GameSetupConfig created OW=$numProvincesOldWorld NW=$numProvincesNewWorld',
     );
