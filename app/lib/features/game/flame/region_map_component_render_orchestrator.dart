@@ -40,6 +40,7 @@ extension _CtRegionMapRenderOrchestrator on CtRegionMapComponent {
     }
     if (showProvinceNamesLayer) {
       _paintProvinceNames(canvas);
+      _paintSeaZoneNames(canvas);
     }
     _paintCapitals(canvas);
     _paintTowns(canvas);

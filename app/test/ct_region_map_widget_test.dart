@@ -16,6 +16,7 @@ import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
         extractionDiscCentersForIconRect,
         resolveProvinceLabelIconIds,
         resolveProvinceLabelPresenceIconIds,
+        resolveSeaZoneNamePlateCenterWorld,
         resourceIconDisplaySizePx,
         shouldEllipsizeProvinceLabelText,
         shouldShowExtractionUnitDiscs,
@@ -1898,6 +1899,132 @@ void main() {
         expect(panelProvinceId, equals('oldWorld|p1'));
       },
       timeout: const Timeout(Duration(seconds: 10)),
+    );
+  });
+
+  group('Sea zone name plate layout (#1756)', () {
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld uses below placement when above clips map top',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        const cellSize = 24.0;
+        const plateW = 80.0;
+        const plateH = 20.0;
+        const zoom = 1.0;
+        final invZ = 1.0 / zoom.clamp(0.25, 4.0);
+        final hh = plateH * invZ / 2;
+        final center = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 1,
+          centroidTileY: 0,
+          cellSize: cellSize,
+          gridWidth: 20,
+          gridHeight: 20,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        final cellBottom = cellSize;
+        expect(
+          center.dy,
+          greaterThanOrEqualTo(cellBottom + 1 + hh - 1e-6),
+          reason: 'Below placement anchors under the centroid cell',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld keeps plate inside region bounds',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        const cellSize = 16.0;
+        const gw = 20;
+        const gh = 20;
+        const plateW = 200.0;
+        const plateH = 30.0;
+        const zoom = 2.0;
+        final invZ = 1.0 / zoom.clamp(0.25, 4.0);
+        final ww = plateW * invZ / 2;
+        final hh = plateH * invZ / 2;
+        final center = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 10,
+          centroidTileY: 10,
+          cellSize: cellSize,
+          gridWidth: gw,
+          gridHeight: gh,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        final mapW = gw * cellSize;
+        final mapH = gh * cellSize;
+        expect(center.dx - ww, greaterThanOrEqualTo(-1e-6));
+        expect(center.dx + ww, lessThanOrEqualTo(mapW + 1e-6));
+        expect(center.dy - hh, greaterThanOrEqualTo(-1e-6));
+        expect(center.dy + hh, lessThanOrEqualTo(mapH + 1e-6));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld avoids overlapping centroid cell when room allows',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        bool overlaps(
+          Offset c,
+          double ww,
+          double hh,
+          int tcx,
+          int tcy,
+          double cs,
+        ) {
+          final cl = tcx * cs;
+          final cr = cl + cs;
+          final ct = tcy * cs;
+          final cb = ct + cs;
+          final l = c.dx - ww;
+          final r = c.dx + ww;
+          final t = c.dy - hh;
+          final b = c.dy + hh;
+          return !(r <= cl || l >= cr || b <= ct || t >= cb);
+        }
+
+        const cellSize = 32.0;
+        const plateW = 60.0;
+        const plateH = 14.0;
+        const zoom = 1.0;
+        final invZ = 1.0 / zoom;
+        final ww = plateW * invZ / 2;
+        final hh = plateH * invZ / 2;
+        final c = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 5,
+          centroidTileY: 5,
+          cellSize: cellSize,
+          gridWidth: 20,
+          gridHeight: 20,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        expect(overlaps(c, ww, hh, 5, 5, cellSize), isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'sea zone label TextPainter lays out full long string without ellipsis',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        const long =
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789HelloSeaZoneNameThatIsQuiteVerbose';
+        const textStyle = TextStyle(color: Colors.black, fontSize: 11);
+        final tp = TextPainter(
+          text: const TextSpan(text: long, style: textStyle),
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: double.infinity);
+        expect(tp.width, greaterThan(200));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
     );
   });
 }

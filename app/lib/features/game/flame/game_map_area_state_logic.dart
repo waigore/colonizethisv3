@@ -189,6 +189,7 @@ class GameMapAreaStateLogic {
       provinceUnitPresenceByProvinceId: region.provinceUnitPresenceByProvinceId,
       provincePoliticalOwnerByPrefixedProvinceId:
           region.provincePoliticalOwnerByPrefixedProvinceId,
+      seaZoneDisplayNameByPrefixedId: region.seaZoneDisplayNameByPrefixedId,
     );
   }
 
@@ -395,6 +396,7 @@ class GameMapAreaStateLogic {
       provinceUnitPresenceByProvinceId: region.provinceUnitPresenceByProvinceId,
       provincePoliticalOwnerByPrefixedProvinceId:
           region.provincePoliticalOwnerByPrefixedProvinceId,
+      seaZoneDisplayNameByPrefixedId: region.seaZoneDisplayNameByPrefixedId,
     );
   }
 

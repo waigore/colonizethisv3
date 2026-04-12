@@ -259,6 +259,106 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
     }
   }
 
+  void _ensureSeaZoneLabelCache() {
+    if (identical(_seaZoneLabelsRegionRef, region) &&
+        _seaZoneLabelsCellSize == cellSize &&
+        _seaZoneLabelsCached != null) {
+      return;
+    }
+    _seaZoneLabelsRegionRef = region;
+    _seaZoneLabelsCellSize = cellSize;
+    _seaZoneLabelsCached = _computeSeaZoneLabels();
+  }
+
+  List<({int cx, int cy, String text})> _computeSeaZoneLabels() {
+    final byLocalId = <String, List<CellViewData>>{};
+    for (final cell in region.cells) {
+      if (!cell.isSea) {
+        continue;
+      }
+      byLocalId.putIfAbsent(cell.regionCellId, () => []).add(cell);
+    }
+    final out = <({int cx, int cy, String text})>[];
+    for (final e in byLocalId.entries) {
+      final cells = e.value;
+      if (cells.isEmpty) {
+        continue;
+      }
+      var sx = 0;
+      var sy = 0;
+      for (final c in cells) {
+        sx += c.x;
+        sy += c.y;
+      }
+      final n = cells.length;
+      final cx = (sx / n).round();
+      final cy = (sy / n).round();
+      if (cx < 0 ||
+          cy < 0 ||
+          cx >= region.width ||
+          cy >= region.height) {
+        continue;
+      }
+      final prefixed = '${region.regionId}|${e.key}';
+      final text =
+          region.seaZoneDisplayNameByPrefixedId[prefixed] ?? e.key;
+      out.add((cx: cx, cy: cy, text: text));
+    }
+    return out;
+  }
+
+  void _paintSeaZoneNames(Canvas canvas) {
+    _ensureSeaZoneLabelCache();
+    final items = _seaZoneLabelsCached;
+    if (items == null || items.isEmpty) {
+      return;
+    }
+
+    final invZ = 1.0 / cameraZoom.clamp(0.25, 4.0);
+    const textStyle = TextStyle(
+      color: _seaZoneLabelTextColor,
+      fontSize: _provinceLabelFontSizePx,
+      fontWeight: FontWeight.w600,
+    );
+    const pad = _provinceLabelPlatePaddingPx;
+    final platePaint = Paint()..color = _seaZoneLabelPlateColor;
+
+    for (final item in items) {
+      final centroidCell = region.cellAt(item.cx, item.cy);
+      if (_visibilityForTerrain(centroidCell) == TileVisibility.unrevealed) {
+        continue;
+      }
+      final tp =
+          TextPainter(
+            text: TextSpan(text: item.text, style: textStyle),
+            textDirection: TextDirection.ltr,
+          )..layout(maxWidth: double.infinity);
+      final bw = tp.width + pad * 2;
+      final bh = tp.height + pad * 2;
+      final center = resolveSeaZoneNamePlateCenterWorld(
+        centroidTileX: item.cx,
+        centroidTileY: item.cy,
+        cellSize: cellSize,
+        gridWidth: region.width,
+        gridHeight: region.height,
+        plateWidthLogicalPx: bw,
+        plateHeightLogicalPx: bh,
+        cameraZoom: cameraZoom,
+      );
+
+      canvas.save();
+      canvas.translate(center.dx, center.dy);
+      canvas.scale(invZ);
+      final rect = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset.zero, width: bw, height: bh),
+        const Radius.circular(4),
+      );
+      canvas.drawRRect(rect, platePaint);
+      tp.paint(canvas, Offset(-tp.width / 2, -tp.height / 2));
+      canvas.restore();
+    }
+  }
+
   void _paintProvinceLabelIconsRow({
     required Canvas canvas,
     required List<String> iconIds,

@@ -287,6 +287,7 @@ class RegionMapViewData {
     this.townMarkers = const [],
     this.provinceUnitPresenceByProvinceId = const {},
     this.provincePoliticalOwnerByPrefixedProvinceId = const {},
+    this.seaZoneDisplayNameByPrefixedId = const {},
   });
 
   /// Region identifier, e.g. 'oldWorld' or 'newWorld'.
@@ -337,6 +338,10 @@ class RegionMapViewData {
   /// vs neutral (Minor/Tribe provinces with GP-purchased tiles). See
   /// SPEC/program/map-visualization.md § Map view model.
   final Map<String, String?> provincePoliticalOwnerByPrefixedProvinceId;
+
+  /// Copy of [WorldState.seaZoneDisplayNameById] for sea zone map labels.
+  /// Keys: `regionId|localSeaZoneId`. SPEC/program/map-visualization.md.
+  final Map<String, String> seaZoneDisplayNameByPrefixedId;
 
   /// Convenience accessor for cell at (x, y).
   CellViewData cellAt(int x, int y) => cells[y * width + x];

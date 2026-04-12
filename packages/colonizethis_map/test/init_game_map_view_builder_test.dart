@@ -117,6 +117,105 @@ void main() {
       expect(viewData.newWorld.cells.length, 4);
     });
 
+    test('copies seaZoneDisplayNameById into RegionMapViewData.seaZoneDisplayNameByPrefixedId', () {
+      final owMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: [
+          ['p1', 's1'],
+          ['s1', 's1'],
+        ],
+      );
+      final nwMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: [
+          ['p1', 's1'],
+          ['s1', 's1'],
+        ],
+      );
+      final owTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 's1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+      );
+      final nwTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 's1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+      );
+      final game = Game(
+        id: 'test',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          seaZoneDisplayNameById: const {
+            'oldWorld|s1': 'Adriatic Sea',
+            'newWorld|s1': 'Caribbean Sea',
+          },
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                displayName: 'OW P1',
+                ownerId: 'gp1',
+              ),
+            ],
+            units: const [],
+          ),
+          newWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'newWorld|p1',
+                regionId: 'newWorld',
+                displayName: 'NW P1',
+              ),
+            ],
+            units: const [],
+          ),
+        ),
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
+        minorNations: const [],
+        tribes: const [],
+      );
+
+      final viewData = buildInitGameMapViewData(
+        game: game,
+        tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
+        topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+        cellSize: 16,
+      );
+
+      expect(
+        viewData.oldWorld.seaZoneDisplayNameByPrefixedId['oldWorld|s1'],
+        'Adriatic Sea',
+      );
+      expect(
+        viewData.newWorld.seaZoneDisplayNameByPrefixedId['newWorld|s1'],
+        'Caribbean Sea',
+      );
+    });
+
     test('invokes with seed configSummary and greatPowerColorOverride', () {
       final owMap = TileMapResult(
         width: 1,
