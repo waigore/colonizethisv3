@@ -230,6 +230,10 @@ void main() {
       expect(find.textContaining('Gathering'), findsWidgets);
       expect(find.textContaining('RP'), findsOneWidget);
       expect(find.text('Effects'), findsOneWidget);
+      expect(
+        find.textContaining('Timber extraction cap'),
+        findsWidgets,
+      );
     },
   );
 

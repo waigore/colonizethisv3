@@ -14,6 +14,7 @@ export 'src/map_topology.dart';
 export 'src/tech_definition.dart';
 export 'src/tech_ids.dart';
 export 'src/tech_extraction.dart';
+export 'src/tech_effect_summary.dart';
 export 'src/riches_prices.dart';
 export 'src/production_recipes.dart';
 export 'src/resource.dart';
