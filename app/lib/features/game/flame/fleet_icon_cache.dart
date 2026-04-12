@@ -8,6 +8,10 @@ import '../../../config/app_assets.dart';
 
 final _log = packageLogger();
 
+/// 64px fleet map marker; keep in sync with [FleetIconCache.load].
+const String kFleetMapIcon64PngAssetPath =
+    '${kAppIcon64AssetPrefix}ui_icon_map_fleet.png';
+
 class FleetIconCache {
   ui.Image? _icon;
   bool _isLoading = false;
@@ -23,7 +27,7 @@ class FleetIconCache {
     }
     _isLoading = true;
     try {
-      _icon = await _decodePng('${kAppIcon64AssetPrefix}ui_icon_map_fleet.png');
+      _icon = await _decodePng(kFleetMapIcon64PngAssetPath);
       _isLoaded = true;
       _log.i('Loaded fleet map icon');
     } catch (e, stackTrace) {
