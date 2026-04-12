@@ -19,9 +19,13 @@ import 'resource_icon_disc_palette.dart';
 import 'province_label_icon_cache.dart';
 import 'terrain_tileset.dart';
 import 'town_icon_cache.dart';
+import 'warp_zone_edge_geometry.dart';
 
 part 'region_map_component_shared.dart';
-part 'region_map_component_render_mixin.dart';
+part 'region_map_component_render_orchestrator.dart';
+part 'region_map_component_render_core.dart';
+part 'region_map_component_render_political.dart';
+part 'region_map_component_render_markers.dart';
 
 final _log = packageLogger();
 

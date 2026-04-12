@@ -17,6 +17,7 @@ void main() {
       final ids = rules.map((r) => r.ruleId).toList();
       expect(ids, contains('repo.custom_exceptions'));
       expect(ids, contains('repo.disallowed_ast_patterns'));
+      expect(ids, contains('repo.control_flow_nesting_depth'));
       expect(ids, contains('repo.repeated_magic_numbers'));
       expect(ids, contains('repo.app_hardcoded_ui_strings'));
       expect(
