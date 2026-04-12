@@ -17,6 +17,7 @@ import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/features/shell/new_game_setup_seed_for_attempt.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
@@ -50,7 +51,10 @@ Future<void> runNewGameSetupAfterLeaderPick({
   final bus = container.read(appEventBusProvider);
 
   while (true) {
-    final perAttemptSeed = baseSeed == 0 ? 0 : baseSeed + attemptIndex;
+    final perAttemptSeed = newGameSetupConfigSeedForAttempt(
+      dialogChosenSeed: baseSeed,
+      attemptIndex: attemptIndex,
+    );
     final config = GameSetupConfig(
       selectedGreatPowerIds: templateConfig.selectedGreatPowerIds,
       leaderVariantByGpId: templateConfig.leaderVariantByGpId,
