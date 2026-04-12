@@ -188,6 +188,45 @@ Offset resolveSeaZoneNamePlateCenterWorld({
   return Offset(cx, cy);
 }
 
+/// True when `(x, y)` is within Chebyshev distance ≤ 2 of a fleet marker that
+/// applies the naval move-draft reveal halo. SPEC/ui/map-widget.md.
+bool isCellUnderFleetRevealHalo({
+  required int x,
+  required int y,
+  required List<FleetTileMarkerView> fleetTileMarkers,
+}) {
+  for (final m in fleetTileMarkers) {
+    if (!m.applyFleetRevealHalo) {
+      continue;
+    }
+    if (math.max((x - m.x).abs(), (y - m.y).abs()) <= 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Effective terrain visibility for map painting (fog + fleet reveal halo).
+///
+/// Used by the region map renderer and tests for sea zone label gating (#1756).
+TileVisibility visibilityForTerrainForMapCell({
+  required CtMapVisibilityMode visibilityMode,
+  required CellViewData cell,
+  required List<FleetTileMarkerView> fleetTileMarkers,
+}) {
+  if (visibilityMode != CtMapVisibilityMode.playerConstrained) {
+    return cell.visibility;
+  }
+  if (isCellUnderFleetRevealHalo(
+    x: cell.x,
+    y: cell.y,
+    fleetTileMarkers: fleetTileMarkers,
+  )) {
+    return TileVisibility.visible;
+  }
+  return cell.visibility;
+}
+
 /// Resolves map province-label icon ids.
 ///
 /// Capital icon is prepended, then optional presence icons follow.
