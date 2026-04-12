@@ -8,8 +8,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/services/app_event_handler_scope.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
+import '../../../widgets/resource_icon.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
@@ -88,6 +90,79 @@ List<Unit> _civilianUnitsInRegion(
     if (typeCmp != 0) return typeCmp;
     return a.id.compareTo(b.id);
   });
+  return list;
+}
+
+/// Pending assigned-to line plus optional cost strip. SPEC/ui/civilian-units-panel.md.
+class _PendingAssignedResolution {
+  const _PendingAssignedResolution({
+    required this.mainLine,
+    this.materialCosts,
+    this.treasuryAmount,
+  });
+
+  final String mainLine;
+  final Map<String, int>? materialCosts;
+  final int? treasuryAmount;
+}
+
+_PendingAssignedResolution _resolvePendingAssignedResolution(
+  Game game,
+  WorkOrder order,
+  Map<String, String> provinceNames,
+) {
+  final workLabel = _workTargetLabels[order.target] ?? order.target;
+  final regionId = Unit.regionIdFromTileKey(order.targetTileKey);
+  final provinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
+  var location = '';
+  if (regionId != null && provinceId != null) {
+    final name =
+        provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
+    location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
+  }
+  final base = '$workLabel$location';
+
+  if (order.target == kWorkTargetPurchaseLand) {
+    final resourceId = game.worldState.resourceByTileKey[order.targetTileKey];
+    if (resourceId != null && resourceId.isNotEmpty) {
+      return _PendingAssignedResolution(
+        mainLine: base,
+        treasuryAmount: purchaseLandCost(resourceId),
+      );
+    }
+    return _PendingAssignedResolution(mainLine: '$base (pending)');
+  }
+  if (order.target == kWorkTargetStealTech ||
+      order.target == kWorkTargetCounterSpy) {
+    return _PendingAssignedResolution(mainLine: '$base (pending)');
+  }
+
+  final targetProvinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
+  final province = targetProvinceId != null
+      ? game.worldState.tryGetProvince(targetProvinceId)
+      : null;
+
+  final improvementLevel = order.target == kWorkTargetBuildImprovement
+      ? game.worldState.tileState.improvementLevel(order.targetTileKey)
+      : 0;
+  final fortLevel = province?.fortLevel ?? 0;
+  final roadLevel = game.worldState.tileState.roadLevel(order.targetTileKey);
+
+  final costMap = WorkOrderCostCalculator(game).calculateCost(
+    order.target,
+    order.targetTileKey,
+    improvementLevel: improvementLevel,
+    fortLevel: fortLevel,
+    roadLevel: roadLevel,
+  );
+  if (costMap != null && costMap.isNotEmpty) {
+    return _PendingAssignedResolution(mainLine: base, materialCosts: costMap);
+  }
+  return _PendingAssignedResolution(mainLine: '$base (pending)');
+}
+
+List<MapEntry<String, int>> _sortedMaterialCostEntries(Map<String, int> m) {
+  final list = m.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
   return list;
 }
 
@@ -246,6 +321,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
           RegionSectionHeader(label: unitsPanelRegionLabel('oldWorld')),
           ...scopedOw.map(
             (u) => _UnitRow(
+              game: widget.game,
               unit: u,
               provinceNames: provinceNames,
               currentOrders: widget.currentOrders,
@@ -267,6 +343,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
           RegionSectionHeader(label: unitsPanelRegionLabel('newWorld')),
           ...scopedNw.map(
             (u) => _UnitRow(
+              game: widget.game,
               unit: u,
               provinceNames: provinceNames,
               currentOrders: widget.currentOrders,
@@ -292,6 +369,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
 
 class _UnitRow extends StatelessWidget {
   const _UnitRow({
+    required this.game,
     required this.unit,
     required this.provinceNames,
     required this.currentOrders,
@@ -304,6 +382,7 @@ class _UnitRow extends StatelessWidget {
     required this.projectedTileKey,
   });
 
+  final Game game;
   final Unit unit;
   final Map<String, String> provinceNames;
   final Orders currentOrders;
@@ -318,7 +397,14 @@ class _UnitRow extends StatelessWidget {
   List<WorkOrder> get _pendingForPlayer =>
       currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
 
-  bool get _hasPending => _pendingForPlayer.any((o) => o.unitId == unit.id);
+  WorkOrder? get _pendingWorkOrder {
+    for (final o in _pendingForPlayer) {
+      if (o.unitId == unit.id) return o;
+    }
+    return null;
+  }
+
+  bool get _hasPending => _pendingWorkOrder != null;
 
   int? get _pendingIndex {
     final list = _pendingForPlayer;
@@ -345,24 +431,7 @@ class _UnitRow extends StatelessWidget {
     return '$regionLabel — $name';
   }
 
-  String _assignedToLabel() {
-    // Check for pending work orders first
-    final pendingOrders = _pendingForPlayer;
-    for (final order in pendingOrders) {
-      if (order.unitId == unit.id) {
-        final workLabel = _workTargetLabels[order.target] ?? order.target;
-        final regionId = Unit.regionIdFromTileKey(order.targetTileKey);
-        final provinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
-        String location = '';
-        if (regionId != null && provinceId != null) {
-          final name =
-              provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
-          location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
-        }
-        return '$workLabel$location (pending)';
-      }
-    }
-    // Then check for in-progress work
+  String _assignedToLabelNonPending() {
     if (unit.status != UnitStatus.working || unit.currentWork == null) {
       return '—';
     }
@@ -370,7 +439,7 @@ class _UnitRow extends StatelessWidget {
     final workLabel = _workTargetLabels[cw.workTarget] ?? cw.workTarget;
     final regionId = Unit.regionIdFromTileKey(cw.tileKey);
     final provinceId = Unit.provinceIdFromTileKey(cw.tileKey);
-    String location = '';
+    var location = '';
     if (regionId != null && provinceId != null) {
       final name =
           provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
@@ -380,6 +449,51 @@ class _UnitRow extends StatelessWidget {
         ? ' ${cw.remainingTurns}/${cw.totalTurns} turns'
         : '';
     return '$workLabel$location$progress';
+  }
+
+  Widget _buildAssignedToSubtitle(AppLocalizations l10n) {
+    final pending = _pendingWorkOrder;
+    if (pending != null) {
+      final r = _resolvePendingAssignedResolution(game, pending, provinceNames);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(l10n.civilian_units_assignedTo(r.mainLine)),
+          if (r.materialCosts != null && r.materialCosts!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final e in _sortedMaterialCostEntries(r.materialCosts!))
+                    _AssignedCostChip(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ResourceIcon(commodityId: e.key, size: 14),
+                          const SizedBox(width: 4),
+                          Text(e.value.toString()),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          if (r.treasuryAmount != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: _AssignedCostChip(
+                child: Text(
+                  l10n.trainUnits_treasury(r.treasuryAmount!.toString()),
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+    return Text(l10n.civilian_units_assignedTo(_assignedToLabelNonPending()));
   }
 
   void _showOrderMenu(BuildContext context) {
@@ -504,7 +618,7 @@ class _UnitRow extends StatelessWidget {
         children: [
           Text(l10n.civilian_units_status(statusLabel)),
           Text(l10n.civilian_units_location(_locationLabel())),
-          Text(l10n.civilian_units_assignedTo(_assignedToLabel())),
+          _buildAssignedToSubtitle(l10n),
         ],
       ),
       dense: true,
@@ -539,6 +653,29 @@ class _UnitRow extends StatelessWidget {
               ],
             )
           : null,
+    );
+  }
+}
+
+/// Dense chip matching training cost rows (`train_military_dialog`). SPEC/ui/civilian-units-panel.md.
+class _AssignedCostChip extends StatelessWidget {
+  const _AssignedCostChip({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: child,
+      ),
     );
   }
 }
