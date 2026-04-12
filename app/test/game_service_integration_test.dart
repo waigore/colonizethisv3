@@ -26,35 +26,47 @@ void main() {
 
     tearDown(() async {});
 
-    test('createNewGame and nextTurn persist Phase 2 fields; save/load round-trip', () {
-      final config = GameSetupConfig(
-        selectedGreatPowerIds: ['england'],
-        continentCount: 1,
-        minorNationCount: 0,
-        tribeCount: 1,
-        numProvincesOldWorld: 3,
-        numProvincesNewWorld: 2,
-      );
-      final game = service.createNewGame(id: 'g1', config: config);
+    test(
+      'createNewGame and nextTurn persist Phase 2 fields; save/load round-trip',
+      () {
+        final config = GameSetupConfig(
+          selectedGreatPowerIds: ['england'],
+          continentCount: 1,
+          minorNationCount: 0,
+          tribeCount: 1,
+          numProvincesOldWorld: 3,
+          numProvincesNewWorld: 2,
+        );
+        final game = service.createNewGame(id: 'g1', config: config);
 
-      expect(game.players.length, 1);
-      expect(game.players.first.id, 'gp1');
-      expect(game.players.first.capitalProvinceId, isNotNull);
-      expect(game.minorNations, isEmpty);
-      expect(game.tribes.length, 1);
+        expect(game.players.length, 1);
+        expect(game.players.first.id, 'gp1');
+        expect(game.players.first.capitalProvinceId, isNotNull);
+        expect(game.minorNations, isEmpty);
+        expect(game.tribes.length, 1);
 
-      final orders = Orders(moveOrdersByPlayerId: const {});
-      final updated = service.nextTurn(game, orders: orders);
+        final orders = Orders(moveOrdersByPlayerId: const {});
+        final updated = service.nextTurn(game, orders: orders);
 
-      final loaded = service.loadGame(updated.id);
-      expect(loaded, isNotNull);
-      expect(loaded!.worldState.turnState.turnNumber, updated.worldState.turnState.turnNumber);
-      expect(loaded.players.first.stockpile.quantities, updated.players.first.stockpile.quantities);
-      expect(loaded.players.first.workerPool, updated.players.first.workerPool);
-      expect(loaded.turnTimeMapping, TurnTimeMapping.gdd01);
-      expect(loaded.minorNations, isEmpty);
-      expect(loaded.tribes.length, 1);
-    });
+        final loaded = service.loadGame(updated.id);
+        expect(loaded, isNotNull);
+        expect(
+          loaded!.worldState.turnState.turnNumber,
+          updated.worldState.turnState.turnNumber,
+        );
+        expect(
+          loaded.players.first.stockpile.quantities,
+          updated.players.first.stockpile.quantities,
+        );
+        expect(
+          loaded.players.first.workerPool,
+          updated.players.first.workerPool,
+        );
+        expect(loaded.turnTimeMapping, TurnTimeMapping.gdd01);
+        expect(loaded.minorNations, isEmpty);
+        expect(loaded.tribes.length, 1);
+      },
+    );
 
     test('nextTurn with orders advances turn and survives save/load', () {
       final config = GameSetupConfig(
@@ -73,11 +85,17 @@ void main() {
       final orders = const Orders();
       final updated = service.nextTurn(game, orders: orders);
 
-      expect(updated.worldState.turnState.turnNumber, game.worldState.turnState.turnNumber + 1);
+      expect(
+        updated.worldState.turnState.turnNumber,
+        game.worldState.turnState.turnNumber + 1,
+      );
 
       final reloaded = service.loadGame(updated.id);
       expect(reloaded, isNotNull);
-      expect(reloaded!.worldState.turnState.turnNumber, updated.worldState.turnState.turnNumber);
+      expect(
+        reloaded!.worldState.turnState.turnNumber,
+        updated.worldState.turnState.turnNumber,
+      );
       expect(reloaded.players.length, updated.players.length);
     });
 
@@ -106,9 +124,37 @@ void main() {
       expect(service.loadGame('g_async_progress'), isNotNull);
     });
 
-    test('createNewGameAsync builds same worldState as createNewGame for same config', () async {
+    test(
+      'createNewGameAsync builds same worldState as createNewGame for same config',
+      () async {
+        final config = GameSetupConfig(
+          seed: 9001,
+          selectedGreatPowerIds: const ['england'],
+          continentCount: 1,
+          minorNationCount: 0,
+          tribeCount: 1,
+          numProvincesOldWorld: 3,
+          numProvincesNewWorld: 2,
+        );
+        final syncGame = service.createNewGame(
+          id: 'g_sync_world',
+          config: config,
+        );
+        final asyncGame = await service.createNewGameAsync(
+          id: 'g_async_world',
+          config: config,
+        );
+        expect(asyncGame.worldState.oldWorld, syncGame.worldState.oldWorld);
+        expect(asyncGame.worldState.newWorld, syncGame.worldState.newWorld);
+        expect(asyncGame.players.length, syncGame.players.length);
+        expect(syncGame.globalGameSeed, 9001);
+        expect(asyncGame.globalGameSeed, 9001);
+      },
+    );
+
+    test('createNewGame with seed 0 uses non-zero globalGameSeed', () {
       final config = GameSetupConfig(
-        seed: 9001,
+        seed: 0,
         selectedGreatPowerIds: const ['england'],
         continentCount: 1,
         minorNationCount: 0,
@@ -116,11 +162,9 @@ void main() {
         numProvincesOldWorld: 3,
         numProvincesNewWorld: 2,
       );
-      final syncGame = service.createNewGame(id: 'g_sync_world', config: config);
-      final asyncGame = await service.createNewGameAsync(id: 'g_async_world', config: config);
-      expect(asyncGame.worldState.oldWorld, syncGame.worldState.oldWorld);
-      expect(asyncGame.worldState.newWorld, syncGame.worldState.newWorld);
-      expect(asyncGame.players.length, syncGame.players.length);
+      final game = service.createNewGame(id: 'g_seed0', config: config);
+      expect(game.globalGameSeed, isNot(0));
+      expect(game.globalGameSeed, greaterThan(1_000_000_000));
     });
 
     test('createNewGame mirrors auto-save; loadAutoSaveGame round-trip', () {
@@ -167,4 +211,3 @@ void main() {
     });
   });
 }
-

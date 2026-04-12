@@ -55,14 +55,17 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 | Leader picker | Per slot (same row as nation), leaders for that slot’s nation only; changing nation resets leader to that nation’s default variant. |
 | Initial load | **Implicit default:** slot order starts as **`GameSetupConfig.defaultConfig.selectedGreatPowerIds`** (six distinct GPs). Leaders default to each nation’s default variant. **Start** is enabled when all slots have valid nations and leaders (true on open with default data). |
 | Fair assignment | Checkbox (default off) sets **`GameSetupConfig.enforceFairGpOldWorldAssignment`** on confirm, same semantics as before. |
-| Actions | **Start** closes the dialog and passes **`(orderedGreatPowerIds, leaderVariantByGpId, enforceFairGpOldWorldAssignment)`** to the shell; shell builds `GameSetupConfig` and runs [Game initializing](game-initializing.md). **Cancel** dismisses without starting setup. |
+| Game / world seed | Numeric field **below** the fair-assignment row. Initial display **42** (from template `GameSetupConfig.seed`). **0** = random (time-based effective seed when setup runs; see [game-setup-pipeline.md](../program/game-setup-pipeline.md)). Any other non-negative integer is reproducible. **Empty or unparsable** on Start → **42**. **Negative** input on Start → **42**. Short **localized helper** beside/near the field explains 0 vs fixed seed. The dialog does **not** show the resolved effective seed. |
+| Actions | **Start** closes the dialog and passes **`(orderedGreatPowerIds, leaderVariantByGpId, enforceFairGpOldWorldAssignment, seed)`** to the shell; shell builds `GameSetupConfig` (including **`seed`**) and runs [Game initializing](game-initializing.md). **Cancel** dismisses without starting setup. |
 
 **Acceptance criteria (shell dialog).**
 
 - **Given** the user opened New Game from the main menu, **when** the dialog is shown, **then** six slot rows appear; each row shows the slot label and **nation + leader dropdowns on one line**; fair-assignment checkbox, Cancel, and Start; initial nations match the program default six GPs and leaders match defaults; nation pickers show the GP colour swatch beside each nation label.
 - **Given** the dialog is open, **when** the user changes a slot’s nation, **then** that slot’s leader list updates to that nation’s variants and the selected leader becomes that nation’s default unless the user picks another.
 - **Given** the dialog is open, **when** the user opens a nation dropdown, **then** only GPs not assigned to **other** slots are listed (plus the current slot’s nation).
-- **Given** the user taps Start, **when** the handler runs, **then** it receives the six gpIds in slot order and the leader map for those ids, and game initialization proceeds as in [game-initializing.md](game-initializing.md).
+- **Given** the user taps Start, **when** the handler runs, **then** it receives the six gpIds in slot order, the leader map for those ids, the fair-assignment flag, and an integer **`seed` ≥ 0** (default **42** when the field is unchanged), and game initialization proceeds as in [game-initializing.md](game-initializing.md).
+- **Given** the dialog is open with the default seed field, **when** the user taps Start without editing the seed, **then** the UI layer passed **`seed == 42`**, helper text for the seed field is visible, and **`GameSetupConfig.seed`** in the template matches that value.
+- **Given** the user cleared the seed field or entered a negative value, **when** the user taps Start, **then** the shell uses **`GameSetupConfig.seed == 42`**.
 
 **Automated tests.** Widget tests cover the dialog (defaults, swatch presence, Start payload) and shell integration (`app/test/shell_screen_test.dart`).
 
