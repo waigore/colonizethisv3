@@ -13,6 +13,7 @@ import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
+import 'tech_effect_summary_lookup.dart';
 
 /// Node position for layout. Exposed for tests (column rule: A→B→C and A→C ⇒ gap between A and C).
 class TechNodePosition {
@@ -251,7 +252,7 @@ class TechTreeWidget extends StatelessWidget {
 
   void _showTechDialog(BuildContext context, TechDefinition tech) {
     final l10n = appL10n(context);
-    final effects = _effectSummary(tech);
+    final effects = _effectSummaryLines(l10n, tech);
     final theme = Theme.of(context);
     showDialog<void>(
       context: context,
@@ -273,7 +274,7 @@ class TechTreeWidget extends StatelessWidget {
                     Text(
                       l10n.techTree_eraCategory(
                         _eraRoman(tech.era),
-                        _categoryLabel(tech.category),
+                        _categoryLabelL10n(l10n, tech.category),
                       ),
                       style: theme.textTheme.bodySmall,
                     ),
@@ -302,7 +303,10 @@ class TechTreeWidget extends StatelessWidget {
                     ],
                     if (effects.isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      Text(l10n.techTree_effects, style: theme.textTheme.labelLarge),
+                      Text(
+                        l10n.techTree_effects,
+                        style: theme.textTheme.labelLarge,
+                      ),
                       ...effects.map(
                         (e) => Padding(
                           padding: const EdgeInsets.only(top: 2),
@@ -336,596 +340,40 @@ class TechTreeWidget extends StatelessWidget {
     return era >= 1 && era <= romans.length ? romans[era - 1] : '$era';
   }
 
-  static String _categoryLabel(String category) {
-    const labels = {
-      'gathering': 'Gathering',
-      'transport': 'Transport',
-      'labour': 'Labour',
-      'civilian': 'Civilian',
-      'diplomacy': 'Diplomacy',
-      'naval': 'Naval',
-      'military': 'Military',
-      'new-world': 'New World',
+  static String _categoryLabelL10n(AppLocalizations l10n, String category) {
+    return switch (category) {
+      'gathering' => l10n.techTree_categoryGathering,
+      'transport' => l10n.techTree_categoryTransport,
+      'labour' => l10n.techTree_categoryLabour,
+      'civilian' => l10n.techTree_categoryCivilian,
+      'diplomacy' => l10n.techTree_categoryDiplomacy,
+      'naval' => l10n.techTree_categoryNaval,
+      'military' => l10n.techTree_categoryMilitary,
+      'new-world' => l10n.techTree_categoryNewWorld,
+      _ => category,
     };
-    return labels[category] ?? category;
   }
 
-  static List<String> _effectSummary(TechDefinition tech) {
+  static List<String> _effectSummaryLines(
+    AppLocalizations l10n,
+    TechDefinition tech,
+  ) {
     final list = <String>[];
     for (final rid in tech.regimentUnlockIds) {
-      list.add('Unlocks regiment: ${_humanizeId(rid)}');
+      list.add(l10n.techEffect_unlocksRegiment(_humanizeId(rid)));
     }
     for (final sid in tech.shipUnlockIds) {
-      list.add('Unlocks ship: ${_humanizeId(sid)}');
+      list.add(l10n.techEffect_unlocksShip(_humanizeId(sid)));
     }
-    switch (tech.id) {
-      case 'university':
-        list.add('Enables: Fourth active research slot (3 -> 4)');
-        list.add(
-          'Unlocks: Master Artisans, Propaganda, Scientific Cattle Breeding',
-        );
-        break;
-      case 'road_construction':
-        list.add('Enables: Engineer road upgrades to transport level 2');
-        list.add('Unlocks: Early Steam Engine');
-        break;
-      case 'early_steam_engine':
-        list.add('Enables: Rail Builder and railroads on flat terrain');
-        list.add('Unlocks: Later Steam Engine, Riverboats, Tobacco Industry');
-        break;
-      case 'later_steam_engine':
-        list.add('Enables: Railroads on hills and swamps');
-        list.add('Unlocks: Dynamite and Excessive Fur Harvesting');
-        break;
-      case 'dynamite':
-        list.add('Enables: Railroads on mountains');
-        list.add(
-          'Unlocks: Safety Lamp, Geological Prospecting, Amalgamation Process',
-        );
-        break;
-      case 'mine_engineering':
-        list.add('Enables: Builder upgrades to Fort Level 2');
-        list.add(
-          'Unlocks: Iron Mining, Copper and Tin Mining, and Coal Mining',
-        );
-        break;
-      case 'national_bureaucracy':
-        list.add('Enables: Builder upgrade_town work order');
-        list.add('Improves: General cap floor to at least 3');
-        list.add('Unlocks: Propaganda');
-        break;
-      case 'merchant_companies':
-        list.add('Enables: Merchant civilian unit construction');
-        list.add(
-          'Enables: purchase_land in Minor Nations/Tribes (requires embassy, not at war)',
-        );
-        list.add('Unlocks: Trade Fairs');
-        break;
-      case 'printing_press':
-        list.add(
-          'Unlocks: Trained Journeymen, University, and military doctrine paths',
-        );
-        list.add(
-          'Prerequisite-only: unlock paths only; no direct economy modifier',
-        );
-        break;
-      case 'money_lending':
-        list.add('Enables: Research-phase treasury floor to -500');
-        list.add('Prerequisite for: University, National Bureaucracy');
-        list.add('Deferred: General borrowing/interest not simulated yet');
-        break;
-      case 'apprentice_workers':
-        list.add(
-          'Enables: Apprentice tier (4x labour; consumes refined sugar)',
-        );
-        list.add('Unlocks: University and Master Artisans');
-        break;
-      case 'trained_journeymen':
-        list.add('Enables: Journeyman tier (6x labour; consumes cigars)');
-        list.add('Unlocks: Cotton Gin and Recruit Steppe Horsemen');
-        break;
-      case 'master_artisans':
-        list.add('Enables: Master tier (8x labour; consumes fur hats)');
-        list.add('Unlocks: Banking, Nationalism, Scientific Cattle Breeding');
-        break;
-      case 'trade_fairs':
-        list.add(
-          'Enables: 6 commodity slots per embassy trade agreement (3 baseline without this tech)',
-        );
-        list.add('Unlocks: Banking');
-        break;
-      case 'banking':
-        list.add('Unlocks: Dynamite, Empire Building, Modern Military Funding');
-        list.add(
-          'With Money Lending: extends research-phase treasury floor to −£1000',
-        );
-        break;
-      case 'diplomatic_expertise':
-        list.add('Enables: Embassy overtures with Minor Nations');
-        list.add('Enables: civilian work in embassy-linked Minor Nations');
-        list.add('Unlocks: National Bureaucracy');
-        break;
-      case 'propaganda':
-        list.add(
-          'Improves: Diplomatic protest war penalty against aggressor (-10 -> -5)',
-        );
-        list.add('Unlocks: Nationalism');
-        break;
-      case 'nationalism':
-        list.add(
-          'Improves: Battle deployment base limit to 12 regiments (vs 10)',
-        );
-        list.add('Improves: General cap floor to at least 4');
-        list.add('Unlocks: Empire Building (with Banking)');
-        break;
-      case 'empire_building':
-        list.add(
-          'Enables: Join Empire overture toward nearly-defeated Great Powers',
-        );
-        list.add(
-          'Requires: Target owns ≤3 provinces and lost original capital',
-        );
-        break;
-      case 'superior_hull_design':
-        list.add('Unlocks: Improved Sail Design and Navigation hull paths');
-        break;
-      case 'improved_sail_design':
-        list.add(
-          'Unlocks: Advanced Hull Design path (University + Privateering)',
-        );
-        break;
-      case 'convoying':
-        list.add('Unlocks: Large Hulls (with Wind Saw Mill + Navigation)');
-        break;
-      case 'navigation':
-        list.add('Unlocks: Large Hulls and Privateering Companies');
-        break;
-      case 'large_hulls':
-        list.add('Unlocks: Ship of the Line (with Large Copper and Tin Mines)');
-        break;
-      case 'clipper_ships':
-        list.add('Improves: Late-era fast merchant Clipper cargo line');
-        break;
-      case 'paddlewheels':
-        list.add('Unlocks: Merchant Steamships (with Riverboats)');
-        break;
-      case 'merchant_steamships':
-        list.add('Enables: Steam-powered merchant hull for seagoing trade');
-        break;
-      case 'advanced_hull_design':
-        list.add(
-          'Improves: Frigate — high intercept, moderate flee (patrol/blockade)',
-        );
-        list.add('Unlocks: Clipper Ships and Paddlewheels hull paths');
-        break;
-      case 'ship_of_the_line':
-        list.add(
-          'Improves: Battle-line capital ship for decisive fleet engagements',
-        );
-        list.add(
-          'Unlocks: Advanced Iron Working (with Industrial Funding + Paddlewheels)',
-        );
-        break;
-      case 'privateering_companies':
-        list.add(
-          'Improves: Patrol/Blockade interception and trade-raid effectiveness',
-        );
-        list.add(
-          'Unlocks: Advanced Hull Design (frigate doctrine prerequisite)',
-        );
-        break;
-      case 'advanced_iron_working':
-        list.add('Improves: Ironclad armored steam combat hull');
-        break;
-      case 'organised_regiments':
-        list.add('Improves: General cap floor to at least 2');
-        list.add(
-          'Unlocks: Improved Iron/Infantry/Weapon Craftsmanship doctrine paths',
-        );
-        break;
-      case 'improved_iron_weapons':
-        list.add('Unlocks: Bayonet (with Crucible Process)');
-        break;
-      case 'improved_infantry_tactics':
-        list.add(
-          'Improves: General cap floor to at least 3 (or National Bureaucracy)',
-        );
-        list.add('Unlocks: Early Rifles (with Crucible Process)');
-        break;
-      case 'crucible_process':
-        list.add(
-          'Prerequisite-only: Steel chain for Bayonet, rifles, steam, and cannons',
-        );
-        list.add('Unlocks: No regiment from this tech alone');
-        break;
-      case 'bayonet':
-        list.add(
-          'Unlocks: Needle Guns (with Industrial Funding + Early Rifles)',
-        );
-        break;
-      case 'weapon_craftsmanship':
-        list.add(
-          'Unlocks: Explosives and Grenadiers (with Industrial Machinery)',
-        );
-        break;
-      case 'land_enclosure':
-        list.add('Improves: Grain extraction cap to 2');
-        list.add('Unlocks: Seed Drill, Money Lending, and Organised Regiments');
-        break;
-      case 'crop_rotation':
-        list.add(
-          'Unlocks: Sheep Ranching, Animal Husbandry, and Steppe Horsemen research paths',
-        );
-        break;
-      case 'saw_mill':
-        list.add('Improves: Timber extraction cap to 2 (forested provinces)');
-        list.add('Unlocks: Wind Saw Mill');
-        break;
-      case 'iron_mining':
-        list.add('Improves: Iron extraction cap to 2');
-        list.add('Unlocks: Steam in Mining');
-        break;
-      case 'copper_and_tin_mining':
-        list.add('Improves: Copper/Tin extraction cap to 2');
-        list.add('Unlocks: Large Copper and Tin Mines');
-        list.add('Enables: Military branches that require this tech');
-        break;
-      case 'coal_mining':
-        list.add('Enables: Coal extraction (cap 1)');
-        list.add('Unlocks: Square-set Timbering');
-        break;
-      case 'wind_saw_mill':
-        list.add('Improves: Timber extraction cap to 3');
-        list.add('Unlocks: Circular Saw');
-        break;
-      case 'seed_drill':
-        list.add('Improves: Grain extraction cap to 3');
-        list.add('Unlocks: Moldboard Plow');
-        break;
-      case 'sheep_ranching':
-        list.add('Improves: Wool extraction cap to 2');
-        list.add('Unlocks: Scientific Sheep Breeding');
-        break;
-      case 'animal_husbandry':
-        list.add('Improves: Meat extraction cap to 3');
-        list.add('Unlocks: Scientific Cattle Breeding (with University)');
-        list.add('Enables: Military branches that require this tech');
-        break;
-      case 'square_set_timbering':
-        list.add('Improves: Coal extraction cap to 2');
-        list.add('Unlocks: Large Coal Mines (requires Steam in Mining)');
-        list.add('Prerequisite for: Early Steam Engine and Crucible Process');
-        break;
-      case 'steam_in_mining':
-        list.add('Improves: Iron extraction cap to 3');
-        list.add('Unlocks: Large Coal Mines (with Square-set Timbering)');
-        list.add(
-          'Prerequisite for: Industrial Iron Mining, Early Steam Engine, Crucible Process, Industrial Machinery',
-        );
-        break;
-      case 'large_coal_mines':
-        list.add('Improves: Coal extraction cap to 3');
-        list.add('Unlocks: Safety Lamp (with Dynamite)');
-        list.add('Unlocks: Efficient Extraction of Copper & Tin');
-        break;
-      case 'large_copper_and_tin_mines':
-        list.add('Improves: Copper/Tin extraction cap to 3');
-        list.add(
-          'Unlocks: Efficient Extraction of Copper & Tin (with Large Coal Mines)',
-        );
-        list.add('Prerequisite for: Ship of the Line');
-        break;
-      case 'circular_saw':
-        list.add('Improves: Timber extraction cap to 4');
-        list.add('Unlocks: Clipper Ships (with Advanced Hull Design)');
-        break;
-      case 'scientific_sheep_breeding':
-        list.add('Improves: Wool extraction cap to 3');
-        list.add('Terminal tech: nothing else in the catalog requires this');
-        break;
-      case 'scientific_cattle_breeding':
-        list.add('Improves: Meat extraction cap to 4');
-        list.add('Terminal tech: nothing else in the catalog requires this');
-        break;
-      case 'moldboard_plow':
-        list.add('Improves: Grain extraction cap to 4');
-        list.add('Terminal tech: nothing else in the catalog requires this');
-        break;
-      case 'safety_lamp':
-        list.add('Improves: Coal extraction cap to 4');
-        list.add('Terminal tech: nothing else in the catalog requires this');
-        break;
-      case 'large_precious_stone_mines':
-        list.add('Improves: Gems/diamonds extraction cap to 3');
-        list.add(
-          'Unlocks: Geological Prospecting (with Dynamite); Modern Military Funding (with Banking and Modern Forts)',
-        );
-        break;
-      case 'extraction_of_precious_metals':
-        list.add('Improves: Gold/silver extraction cap to 3');
-        list.add('Unlocks: Amalgamation Process (with Dynamite)');
-        break;
-      case 'geological_prospecting':
-        list.add('Improves: Gems/diamonds extraction cap to 4');
-        list.add(
-          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
-        );
-        break;
-      case 'amalgamation_process':
-        list.add('Improves: Gold/silver extraction cap to 4');
-        list.add(
-          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
-        );
-        break;
-      case 'industrial_iron_mining':
-        list.add('Improves: Iron extraction cap to 4');
-        list.add(
-          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
-        );
-        break;
-      case 'efficient_extraction_of_copper_and_tin':
-        list.add('Improves: Copper/Tin extraction cap to 4');
-        list.add(
-          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
-        );
-        break;
-      case 'discovery_of_sugar':
-        list.add(
-          'Enables: Research when player has revealed sugar cane (discovery rule)',
-        );
-        list.add('Unlocks: Sugar Planting and Sugar Refining');
-        break;
-      case 'sugar_planting':
-        list.add('Improves: Sugar cane extraction cap to 2');
-        list.add('Unlocks: Large Sugar Plantations');
-        break;
-      case 'sugar_refining':
-        list.add(
-          'Enables: Refined sugar luxury for Apprentice-tier worker consumption',
-        );
-        list.add(
-          'Unlocks: Apprentice Workers (with Land Enclosure); Trade Fairs (with Merchant Companies)',
-        );
-        break;
-      case 'large_sugar_plantations':
-        list.add('Improves: Sugar cane extraction cap to 3');
-        list.add('Unlocks: Sugar Industry');
-        break;
-      case 'sugar_industry':
-        list.add('Improves: Sugar cane extraction cap to 4');
-        list.add(
-          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
-        );
-        break;
-      case 'discovery_of_tobacco':
-        list.add(
-          'Enables: Research when player has revealed tobacco (discovery rule)',
-        );
-        list.add('Unlocks: Tobacco Planting and Cigar Production');
-        break;
-      case 'tobacco_planting':
-        list.add('Improves: Tobacco extraction cap to 2');
-        list.add('Unlocks: Large Tobacco Plantations');
-        break;
-      case 'cigar_production':
-        list.add(
-          'Enables: Cigar luxury production for Journeyman-tier worker consumption',
-        );
-        list.add('Unlocks: Trained Journeymen');
-        break;
-      case 'large_tobacco_plantations':
-        list.add('Improves: Tobacco extraction cap to 3');
-        list.add('Unlocks: Tobacco Industry');
-        break;
-      case 'tobacco_industry':
-        list.add('Improves: Tobacco extraction cap to 4');
-        list.add(
-          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
-        );
-        break;
-      case 'discovery_of_cotton':
-        list.add(
-          'Enables: Research when player has revealed cotton (discovery rule)',
-        );
-        list.add('Unlocks: Cotton Planting and Cotton Weaving');
-        break;
-      case 'cotton_planting':
-        list.add('Improves: Cotton extraction cap to 2');
-        list.add('Unlocks: Large Cotton Plantations');
-        break;
-      case 'cotton_weaving':
-        list.add('Enables: Cloth production from cotton');
-        list.add(
-          'Prerequisite-only: catalog leaf; recipe unlock is the active benefit',
-        );
-        break;
-      case 'large_cotton_plantations':
-        list.add('Improves: Cotton extraction cap to 3');
-        list.add('Unlocks: Cotton Gin');
-        break;
-      case 'cotton_gin':
-        list.add('Improves: Cotton extraction cap to 4');
-        list.add(
-          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
-        );
-        break;
-      case 'discovery_of_furs':
-        list.add(
-          'Enables: Research when player has revealed furs (discovery rule)',
-        );
-        list.add('Unlocks: Improved Trapping Techniques and Hat Production');
-        break;
-      case 'improved_trapping_techniques':
-        list.add('Improves: Furs extraction cap to 2');
-        list.add('Unlocks: Riverboats');
-        break;
-      case 'hat_production':
-        list.add(
-          'Enables: Fur hats luxury production for Master-tier worker consumption',
-        );
-        list.add('Unlocks: Master Artisans');
-        break;
-      case 'riverboats':
-        list.add('Improves: Furs extraction cap to 3');
-        list.add(
-          'Unlocks: Excessive Fur Harvesting and Merchant Steamships research paths',
-        );
-        break;
-      case 'excessive_fur_harvesting':
-        list.add('Improves: Furs extraction cap to 4');
-        list.add(
-          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
-        );
-        break;
-      case 'discovery_of_spices':
-        list.add(
-          'Enables: Research when player has revealed spices (discovery rule)',
-        );
-        list.add('Unlocks: Improved Sea Routes');
-        break;
-      case 'discovery_of_gold_or_silver':
-        list.add(
-          'Enables: Research when player has revealed and prospected gold/silver',
-        );
-        list.add('Unlocks: Precious Metals Mining');
-        break;
-      case 'precious_metals_mining':
-        list.add('Improves: Gold/silver extraction cap to 2');
-        list.add('Unlocks: Extraction of Precious Metals');
-        break;
-      case 'discovery_of_gems_or_diamonds':
-        list.add(
-          'Enables: Research when player has revealed and prospected gems/diamonds',
-        );
-        list.add('Unlocks: Precious Stone Mining');
-        break;
-      case 'precious_stone_mining':
-        list.add('Improves: Gems/diamonds extraction cap to 2');
-        list.add('Unlocks: Large Precious Stone Mines (with Modern Forts)');
-        break;
-      case 'improved_sea_routes':
-        list.add('Improves: Spices extraction cap to 2');
-        list.add('Unlocks: Large Spice Plantations');
-        break;
-      case 'large_spice_plantations':
-        list.add('Improves: Spices extraction cap to 3');
-        list.add('Unlocks: Improved Food Preservation');
-        break;
-      case 'improved_food_preservation':
-        list.add('Improves: Spices extraction cap to 4');
-        list.add(
-          'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit',
-        );
-        break;
-      case 'industrial_machinery':
-        list.add(
-          'Unlocks: Explosives, Improved Cavalry Weapons, Industrial Funding of Research (as prerequisite)',
-        );
-        list.add(
-          'Improves: ×0.75 multiplicative on per-land-battle attack treasury cost at combat resolution',
-        );
-        break;
-      case 'explosives':
-        list.add('Improves: Musketeers regiment upgrade path');
-        list.add('Prerequisite for: Elite Military Training');
-        break;
-      case 'early_rifles':
-        list.add('Improves: Calivermen regiment upgrade path');
-        list.add(
-          'Prerequisite for: Long Range Rifles, Scouting, and Needle Guns',
-        );
-        break;
-      case 'long_range_rifles':
-        list.add('Improves: Skirmishers regiment upgrade path');
-        break;
-      case 'needle_guns':
-        list.add('Improves: Regulars regiment upgrade path');
-        list.add('Prerequisite for: Elite Military Training');
-        break;
-      case 'elite_military_training':
-        list.add('Improves: Grenadiers regiment upgrade path');
-        break;
-      case 'recruit_steppe_horsemen':
-        list.add('Improves: Squires regiment upgrade path');
-        list.add('Prerequisite for: Hussars');
-        break;
-      case 'improved_cavalry_tactics':
-        list.add('Prerequisite for: Hussars and Improved Cavalry Weapons');
-        break;
-      case 'hussars':
-        list.add('Improves: Cossacks regiment upgrade path');
-        list.add('Prerequisite for: Scouting');
-        break;
-      case 'improved_cavalry_weapons':
-        list.add('Improves: Harquebusiers regiment upgrade path');
-        list.add('Prerequisite for: Repeating Cavalry Carbine');
-        break;
-      case 'scouting':
-        list.add('Improves: Hussars regiment upgrade path');
-        break;
-      case 'repeating_cavalry_carbine':
-        list.add('Improves: Cuirassiers regiment upgrade path');
-        break;
-      case 'horse_artillery':
-        list.add('Prerequisite for: Light Artillery Tactics');
-        break;
-      case 'siege_engineering':
-        list.add('Improves: Culverin regiment upgrade path');
-        list.add('Prerequisite for: Modern Forts and Heavy Emplaced Artillery');
-        break;
-      case 'light_artillery_tactics':
-        list.add('Improves: Horse Artillery regiment upgrade path');
-        list.add('Prerequisite for: Field Artillery Tactics');
-        break;
-      case 'modern_forts':
-        list.add(
-          'Enables: Builder fort upgrades to level 3 (Modern: 3 emplaced guns, strongest walls)',
-        );
-        list.add(
-          'Unlocks: Heavy Artillery and Modern Military Funding (as prerequisite)',
-        );
-        break;
-      case 'heavy_artillery':
-        list.add('Improves: Royal Artillery regiment upgrade path');
-        list.add('Prerequisite for: High Grade Steel and Emplaced Siege Guns');
-        break;
-      case 'heavy_emplaced_artillery':
-        list.add(
-          'Improves: defender emplaced fort batteries to Heavy quality (Royal → Heavy line)',
-        );
-        list.add('Prerequisite for: Emplaced Siege Guns');
-        break;
-      case 'field_artillery_tactics':
-        list.add('Improves: Light Artillery regiment upgrade path');
-        break;
-      case 'high_grade_steel':
-        list.add('Improves: Heavy Artillery regiment upgrade path');
-        break;
-      case 'emplaced_siege_guns':
-        list.add(
-          'Improves: defender emplaced fort batteries to Siege Gun quality (final emplaced tier)',
-        );
-        break;
-      case 'modern_military_funding':
-        list.add(
-          'Unlocks: Field Artillery Tactics, High Grade Steel, Elite Military Training stack',
-        );
-        list.add(
-          'Improves: ×0.85 multiplicative on per-land-battle attack treasury cost (stacks with Industrial Machinery)',
-        );
-        break;
-      case 'industrial_funding_of_research':
-        list.add(
-          'Unlocks: Needle Guns, Repeating Cavalry Carbine, High Grade Steel, Advanced Iron Working (as prerequisite)',
-        );
-        list.add(
-          'Improves: +20% effective RP (floor) for military and naval category research allocations',
-        );
-        break;
-      default:
-        if (list.isEmpty) {
-          list.add('Improves ${_categoryLabel(tech.category)} capabilities');
-        }
+    for (final lineId in techEffectSummaryLineIdsFor(tech.id)) {
+      list.add(lookupTechEffectSummaryLine(l10n, lineId));
+    }
+    if (list.isEmpty) {
+      list.add(
+        l10n.techEffect_fallbackCategoryImprovement(
+          _categoryLabelL10n(l10n, tech.category),
+        ),
+      );
     }
     return list;
   }
@@ -1108,7 +556,7 @@ class _TechTreeLegend extends StatelessWidget {
               .map(
                 (e) => _LegendChip(
                   color: e.value,
-                  label: TechTreeWidget._categoryLabel(e.key),
+                  label: TechTreeWidget._categoryLabelL10n(l10n, e.key),
                 ),
               )
               .toList(),

@@ -21,7 +21,7 @@
 
 ### Interactive / query mode
 
-- **Behaviour:** Accept a tech id and output for that tech: **description** (short text from catalog), **dependencies** (prerequisite ids and display names), **effects** (unlocks: regiments, civilian units, extraction/transport/diplomatic/labour effects as applicable).
+- **Behaviour:** Accept a tech id and output for that tech: **description** (short text from catalog), **dependencies** (prerequisite ids and display names), **effects** (unlocks: regiments, ships, and the same **effect summary lines** as the tech tree dialog — sourced from `colonizethis_data` `tech_effect_summary.yaml` / `techEffectSummaryMessageEn`, not duplicated prose in the tool).
 - **Invocation:** Either `--interactive` (REPL: prompt for tech id, print result, repeat until exit) or a single-query form such as `show_tech query <techId>` (or `--query <techId>`). Invalid or unknown tech id returns a clear error and non-zero exit code.
 
 ---
@@ -41,3 +41,12 @@
 
 - No dependency on colonizethis_models or colonizethis_logic beyond any shared types for tech ids; no Game or WorldState. Read-only access to colonizethis_data tech catalog.
 - Diagram format: markdown (e.g. headings by era/category, lists or tables of techs with prerequisite arrows, or Mermaid-style block if desired). Exact format is implementation-defined as long as it is human-readable and reflects the full tree.
+
+## Maintenance: tech effect copy and ARB
+
+- After editing `packages/colonizethis_data/lib/src/data/tech_effect_summary.yaml`, run `dart tool/generate_tech_effect_l10n.dart` from the repo root, then `cd app && flutter gen-l10n`, so `app_en.arb` and `tech_effect_summary_lookup.dart` stay aligned with the YAML.
+- If the YAML file alone changes, refresh the embed with `dart tool/embed_tech_effect_summary.dart` (or re-run the flow that regenerates `tech_effect_summary_embed.dart`).
+
+## CI: long string switches
+
+- **Given** a Dart `switch` (statement or expression) whose case patterns are **string literals**, **when** the analyzer-based check `dart tool/check_long_string_switches.dart` runs in CI, **then** the job **warns** if such cases count ≥ 20 and **fails** if they count ≥ 50 (other switches are ignored). Scope: all `.dart` files under the repo except generated paths (e.g. `*.g.dart`, `tech_effect_summary_embed.dart`).

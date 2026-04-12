@@ -10,6 +10,7 @@ environment:
 dependencies:
   colonizethis_logger: any
   colonizethis_data:
+  path: ^1.9.1
 
 dev_dependencies:
   colonizethis_exception_lint:
