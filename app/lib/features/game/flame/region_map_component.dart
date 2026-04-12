@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -10,6 +11,7 @@ import 'package:flutter/material.dart';
 
 import 'gp_ownership_tint_layer.dart';
 import 'civilian_icon_cache.dart';
+import 'fleet_icon_cache.dart';
 import 'region_map_boundary_visibility.dart';
 import 'region_map_province_overlay_geometry.dart';
 import 'resource_icon_cache.dart';
@@ -42,6 +44,7 @@ class CtRegionMapComponent extends PositionComponent {
     this.onTileHovered,
     this.onTileTapped,
     this.onCivilianTileTapped,
+    this.onFleetMarkerTapped,
     this.onCivilianTileSelectionCleared,
     this.selectedTileKey,
     this.selectedCivilianTileKey,
@@ -73,6 +76,8 @@ class CtRegionMapComponent extends PositionComponent {
   void Function(String? tileKey)? onTileHovered;
   void Function(String? tileKey)? onTileTapped;
   void Function(String tileKey)? onCivilianTileTapped;
+  void Function(String locationScopeKey, String? initialFleetId, String markerTileKey)?
+  onFleetMarkerTapped;
   VoidCallback? onCivilianTileSelectionCleared;
   String? selectedTileKey;
   String? selectedCivilianTileKey;
@@ -119,6 +124,13 @@ class CtRegionMapComponent extends PositionComponent {
       townIconCache.load(),
       provinceLabelIconCache.load(),
     ]);
+    // Fleet icon uses ui.decodeImageFromList; awaiting it here can deadlock with
+    // Flutter's test/game bootstrap (decode needs frames while onLoad blocks).
+    unawaited(
+      fleetIconCache.load().catchError((Object _, StackTrace __) {
+        // Errors are already logged inside FleetIconCache.load.
+      }),
+    );
     _log.i(
       'TerrainTilesetCache loaded. '
       'sea_plains: ${terrainTilesetCache.getSeaPlainsTileset() != null}, '
@@ -198,6 +210,15 @@ class CtRegionMapComponent extends PositionComponent {
       }
       return;
     }
+    final tappedFleet = _getFleetMarkerAtTile(x, y);
+    if (tappedFleet != null) {
+      onFleetMarkerTapped?.call(
+        tappedFleet.locationScopeKey,
+        tappedFleet.fleetIds.isNotEmpty ? tappedFleet.fleetIds.first : null,
+        tappedFleet.tileKey,
+      );
+      return;
+    }
     final tappedCivilian = _getCivilianMarkerAtTile(x, y);
     if (tappedCivilian != null) {
       onCivilianTileTapped?.call(tappedCivilian.tileKey);
@@ -216,6 +237,16 @@ class CtRegionMapComponent extends PositionComponent {
     final provinceId = '${region.regionId}|${cell.regionCellId}';
     onMapTileTappedForDetail?.call(tileKey);
     onProvinceSelected?.call(provinceId);
+  }
+
+  FleetTileMarkerView? _getFleetMarkerAtTile(int x, int y) {
+    for (final marker in region.fleetTileMarkers) {
+      if (marker.x != x || marker.y != y) {
+        continue;
+      }
+      return marker;
+    }
+    return null;
   }
 
   CivilianTileMarkerView? _getCivilianMarkerAtTile(int x, int y) {

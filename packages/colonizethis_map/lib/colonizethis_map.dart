@@ -19,6 +19,7 @@ export 'src/tile_map_visualization_shared.dart'
         resourceIdToLegendLetter,
         tileMapResourceGlyphs;
 export 'src/init_game_map_view_data.dart';
+export 'src/sea_zone_centroid_tile.dart';
 export 'src/port_icon_placement.dart';
 export 'src/gp_ownership_tint.dart';
 export 'src/province_label_plate_tint.dart';

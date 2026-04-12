@@ -41,6 +41,8 @@ A **sea zone** S (per region) reverts to **fogged** for that player for all **wa
 
 While a fleet **enters** S during Movement, that player’s water tiles in S are set **fully visible** until this rule applies (see [ships-and-naval.md](ships-and-naval.md), [naval-movement-resolution.md](../program/naval-movement-resolution.md), [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md)).
 
+**Map UI (display-only):** While the human player has a **draft naval move** pending for a fleet shown on the region map, the map renderer may paint terrain within **Chebyshev distance ≤ 2** of that fleet’s marker tile as if **fully visible**. This affects **drawing only** and does not change stored visibility or turn rules.
+
 ### Initial Visibility
 
 - **Old World:** Starts fogged (own provinces fully visible); coastal sea zones adjacent to owned provinces are set to fully visible during Game Setup.
