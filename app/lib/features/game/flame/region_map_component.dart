@@ -242,9 +242,11 @@ class CtRegionMapComponent extends PositionComponent {
       final provinceId = '${region.regionId}|${tappedTown.provinceId}';
       onTownIconTapped?.call(provinceId);
     }
-    final provinceId = '${region.regionId}|${cell.regionCellId}';
     onMapTileTappedForDetail?.call(tileKey);
-    onProvinceSelected?.call(provinceId);
+    final provinceIdForSelection = tappedTown != null
+        ? '${region.regionId}|${tappedTown.provinceId}'
+        : '${region.regionId}|${cell.regionCellId}';
+    onProvinceSelected?.call(provinceIdForSelection);
   }
 
   FleetTileMarkerView? _getFleetMarkerAtTile(int x, int y) {

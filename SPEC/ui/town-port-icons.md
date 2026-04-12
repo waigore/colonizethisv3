@@ -45,13 +45,16 @@ On the tile from `province.townTileKey` (same centering as before):
 
 ### Position — port icon (drawable cell)
 
-Authoritative port location comes from `WorldState.portsByProvinceSeaboard` values (tile key `regionId|localProvinceId|x|y`).
+Authoritative **port land tile** comes from `WorldState.portsByProvinceSeaboard` **values** (tile key `regionId|localProvinceId|x|y`). **Drawable** harbor/fleet coordinates are always a **sea** map cell (topology `seaZoneIds`); **no** silent land fallback (GitHub [#1761](https://github.com/waigore/colonizethisv3/issues/1761)).
 
-1. If the port tile key is **not** equal to `townTileKey` and **not** equal to the faction **capital** tile key for that province (when a capital exists), the port icon is drawn **on the port tile**.
-2. If the port tile **equals** `townTileKey` **or** the capital tile key, the port icon is **not** stacked on that land cell. Scan **orthogonal** neighbors of the **town** tile in fixed order **North, East, South, West** and draw on the first cell whose map cell id belongs to a **sea zone** in topology (`seaZoneIds`).
-3. If no such sea cell exists, **fall back** to the port tile (co-located with town/capital markers).
+1. Parse `(px, py)` from the port tile key.
+2. If `tileMap.cell(px, py)` is in `seaZoneIds`, the drawable cell is `(px, py)`.
+3. Otherwise scan **orthogonal** neighbors of **`(px, py)`** in fixed order **North, East, South, West** and use the **first** cell whose map cell id is in `seaZoneIds`.
+4. If no such cell exists, implementation **throws** (data/spec violation for content authors). Do **not** draw on land and do **not** scan from the town tile or capital tile as origin.
 
-Implementation populates `TownMarkerView.portIconX` / `portIconY` when `isPort` is true (`colonizethis_map` `computePortIconCellForMap`).
+**Port province matching:** `isPort` / port town wiring resolves the owning province from the **seaboard map key** (`fullProvinceId|seaZoneId` or legacy `localProvinceId|seaZoneId`) when present, so non-capital ports stay consistent even if a stale value tile key repeats the wrong `localProvinceId` segment.
+
+Implementation populates `TownMarkerView.portIconX` / `portIconY` when `isPort` is true (`colonizethis_map` `computePortDrawableSeaCellForMap`).
 
 ### View data (`TownMarkerView`)
 
@@ -161,8 +164,8 @@ ProvinceSeaZoneDetailOverlay shown
 ### Icon Rendering
 
 - **Given** a province with `townTileKey` and a port whose tile differs from town and capital, **when** the map renders, **then** the `port` icon is at `portIconX/portIconY` matching that port tile and the town glyph is on the town tile.
-- **Given** a port whose tile equals **town** or **capital** and an orthogonal sea cell exists in N→E→S→W order from the town tile, **when** the map renders, **then** `portIconX/portIconY` is that sea cell.
-- **Given** that co-location case with **no** qualifying sea neighbor, **when** the map renders, **then** `portIconX/portIconY` fall back to the port tile.
+- **Given** a port land tile (whether or not it equals town/capital) and an orthogonal sea cell exists in N→E→S→W order **from that port tile**, **when** the map renders, **then** `portIconX/portIconY` is that sea cell.
+- **Given** a port land tile with **no** orthogonal sea cell in `seaZoneIds`, **when** the map builds, **then** the implementation **throws** with a diagnosable error (no land drawable).
 - **Given** a province with `townTileKey` that **touches sea** (topology), **when** the map renders, **then** the `town_inland_64` glyph is on the town tile (including port provinces).
 - **Given** a province with `townTileKey` that does **not** touch sea, **when** the map renders, **then** the `town_inland_64` glyph is on the town tile.
 - **Given** a province with `townTileKey` (player-owned or non-player-owned), **when** the map renders in full visibility mode, **then** a town icon is displayed for that province.
