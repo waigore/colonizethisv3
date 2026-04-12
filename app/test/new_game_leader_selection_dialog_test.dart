@@ -12,6 +12,20 @@ import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 void main() {
   suppressLogsForTests();
 
+  group('parseSeedInput', () {
+    test('empty and invalid map to 42', () {
+      expect(NewGameLeaderSelectionDialog.parseSeedInput(''), 42);
+      expect(NewGameLeaderSelectionDialog.parseSeedInput('   '), 42);
+      expect(NewGameLeaderSelectionDialog.parseSeedInput('abc'), 42);
+      expect(NewGameLeaderSelectionDialog.parseSeedInput('-3'), 42);
+    });
+
+    test('accepts non-negative integers', () {
+      expect(NewGameLeaderSelectionDialog.parseSeedInput('0'), 0);
+      expect(NewGameLeaderSelectionDialog.parseSeedInput(' 99 '), 99);
+    });
+  });
+
   group('NewGameLeaderSelectionDialog', () {
     Future<void> pumpDialog(
       WidgetTester tester, {
@@ -19,7 +33,9 @@ void main() {
         List<String> orderedGreatPowerIds,
         Map<String, String> leaderVariantByGpId,
         bool enforceFairGpOldWorldAssignment,
-      ) onConfirmed,
+        int seed,
+      )
+      onConfirmed,
     }) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -64,9 +80,10 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('shows six GP colour swatches and default nation labels',
-        (WidgetTester tester) async {
-      await pumpDialog(tester, onConfirmed: (_, _, _) {});
+    testWidgets('shows six GP colour swatches and default nation labels', (
+      WidgetTester tester,
+    ) async {
+      await pumpDialog(tester, onConfirmed: (_, _, _, _) {});
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
@@ -74,24 +91,26 @@ void main() {
       expect(find.text('Player 1 (You)'), findsOneWidget);
       expect(find.text('Player 2 (AI)'), findsOneWidget);
       expect(find.text('Player 6 (AI)'), findsOneWidget);
-      expect(
-        find.textContaining('Default map colours'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Default map colours'), findsOneWidget);
+      expect(find.text('Game / world seed'), findsOneWidget);
+      expect(find.textContaining('Use 0 for a random world'), findsOneWidget);
     });
 
-    testWidgets('Start passes default ordered Great Power ids and leader map',
-        (WidgetTester tester) async {
+    testWidgets('Start passes default ordered Great Power ids and leader map', (
+      WidgetTester tester,
+    ) async {
       List<String>? gotIds;
       Map<String, String>? gotLeaders;
       bool? gotFair;
+      int? gotSeed;
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, fair) {
+        onConfirmed: (ids, leaders, fair, seed) {
           gotIds = ids;
           gotLeaders = leaders;
           gotFair = fair;
+          gotSeed = seed;
         },
       );
 
@@ -102,22 +121,21 @@ void main() {
       await tester.tap(startButton);
       await tester.pumpAndSettle();
 
-      expect(
-        gotIds,
-        GameSetupConfig.defaultConfig.selectedGreatPowerIds,
-      );
+      expect(gotIds, GameSetupConfig.defaultConfig.selectedGreatPowerIds);
       expect(gotLeaders, isNotNull);
       expect(gotLeaders!.length, 6);
       expect(gotLeaders!['england'], 'queen_victoria');
       expect(gotFair, isFalse);
+      expect(gotSeed, 42);
     });
 
-    testWidgets('Cancel closes dialog without calling onConfirmed',
-        (WidgetTester tester) async {
+    testWidgets('Cancel closes dialog without calling onConfirmed', (
+      WidgetTester tester,
+    ) async {
       var confirmed = false;
       await pumpDialog(
         tester,
-        onConfirmed: (_, _, _) {
+        onConfirmed: (_, _, _, _) {
           confirmed = true;
         },
       );
@@ -133,37 +151,40 @@ void main() {
       expect(find.text('New game — Setup'), findsNothing);
     });
 
-    testWidgets('Start passes enforceFairGpOldWorldAssignment when checkbox toggled',
-        (WidgetTester tester) async {
-      bool? gotFair;
-      await pumpDialog(
-        tester,
-        onConfirmed: (_, _, fair) {
-          gotFair = fair;
-        },
-      );
+    testWidgets(
+      'Start passes enforceFairGpOldWorldAssignment when checkbox toggled',
+      (WidgetTester tester) async {
+        bool? gotFair;
+        await pumpDialog(
+          tester,
+          onConfirmed: (_, _, fair, _) {
+            gotFair = fair;
+          },
+        );
 
-      await tester.tap(find.byType(Checkbox));
-      await tester.pumpAndSettle();
+        await tester.tap(find.byType(Checkbox));
+        await tester.pumpAndSettle();
 
-      final startButton = find.ancestor(
-        of: find.text('Start'),
-        matching: find.byType(CtNinePatchButton),
-      );
-      await tester.tap(startButton);
-      await tester.pumpAndSettle();
+        final startButton = find.ancestor(
+          of: find.text('Start'),
+          matching: find.byType(CtNinePatchButton),
+        );
+        await tester.tap(startButton);
+        await tester.pumpAndSettle();
 
-      expect(gotFair, isTrue);
-    });
+        expect(gotFair, isTrue);
+      },
+    );
 
-    testWidgets('changing slot 1 nation to Sweden updates order and leader',
-        (WidgetTester tester) async {
+    testWidgets('changing slot 1 nation to Sweden updates order and leader', (
+      WidgetTester tester,
+    ) async {
       List<String>? gotIds;
       Map<String, String>? gotLeaders;
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, _) {
+        onConfirmed: (ids, leaders, _, _) {
           gotIds = ids;
           gotLeaders = leaders;
         },
@@ -185,6 +206,38 @@ void main() {
       expect(gotIds!.first, 'sweden');
       expect(gotLeaders, isNotNull);
       expect(gotLeaders!['sweden'], 'gustavus');
+    });
+
+    testWidgets('Start passes seed 0 when field is 0', (
+      WidgetTester tester,
+    ) async {
+      int? gotSeed;
+      await pumpDialog(tester, onConfirmed: (_, _, _, s) => gotSeed = s);
+      await tester.enterText(find.byType(TextField), '0');
+      await tester.pump();
+      final startButton = find.ancestor(
+        of: find.text('Start'),
+        matching: find.byType(CtNinePatchButton),
+      );
+      await tester.tap(startButton);
+      await tester.pumpAndSettle();
+      expect(gotSeed, 0);
+    });
+
+    testWidgets('Start uses 42 when field is cleared', (
+      WidgetTester tester,
+    ) async {
+      int? gotSeed;
+      await pumpDialog(tester, onConfirmed: (_, _, _, s) => gotSeed = s);
+      await tester.enterText(find.byType(TextField), '');
+      await tester.pump();
+      final startButton = find.ancestor(
+        of: find.text('Start'),
+        matching: find.byType(CtNinePatchButton),
+      );
+      await tester.tap(startButton);
+      await tester.pumpAndSettle();
+      expect(gotSeed, 42);
     });
   });
 }

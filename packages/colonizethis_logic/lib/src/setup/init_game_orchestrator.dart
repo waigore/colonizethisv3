@@ -11,6 +11,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../ai/hidden_agenda_assignment.dart';
 import '../constants.dart';
 import '../world/unit_lookup.dart';
+import 'effective_setup_seed.dart';
 import 'game_setup.dart';
 import 'setup_exceptions.dart';
 import 'warp_zone_generator.dart';
@@ -95,11 +96,7 @@ InitGameResult runInitGame({
   _log.i(
     'init game start OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
   );
-  // Derive an effective seed: non-zero config seeds are used as-is for
-  // reproducible runs; a zero seed means "choose a time-based seed".
-  final effectiveSeed = config.seed == 0
-      ? DateTime.now().millisecondsSinceEpoch
-      : config.seed;
+  final effectiveSeed = resolveEffectiveSetupSeed(config.seed);
 
   final mapGenParams = MapGenerationParams(
     numContinents: config.continentCount,
