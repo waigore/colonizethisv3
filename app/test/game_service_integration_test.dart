@@ -167,6 +167,38 @@ void main() {
       expect(game.globalGameSeed, greaterThan(1_000_000_000));
     });
 
+    test(
+      'createNewGame with seed 0: spaced sequential games yield distinct globalGameSeed',
+      () async {
+        final config = GameSetupConfig(
+          seed: 0,
+          selectedGreatPowerIds: const ['england'],
+          continentCount: 1,
+          minorNationCount: 0,
+          tribeCount: 1,
+          numProvincesOldWorld: 3,
+          numProvincesNewWorld: 2,
+        );
+        final seeds = <int>{};
+        for (var i = 0; i < 6; i++) {
+          if (i > 0) {
+            await Future<void>.delayed(const Duration(milliseconds: 3));
+          }
+          final game = service.createNewGame(
+            id: 'g_seed0_seq_$i',
+            config: config,
+          );
+          seeds.add(game.globalGameSeed!);
+        }
+        expect(
+          seeds.length,
+          greaterThan(1),
+          reason:
+              'effective seed uses wall-clock ms; spaced calls should not all collide',
+        );
+      },
+    );
+
     test('createNewGame mirrors auto-save; loadAutoSaveGame round-trip', () {
       final config = GameSetupConfig(
         selectedGreatPowerIds: ['england'],
