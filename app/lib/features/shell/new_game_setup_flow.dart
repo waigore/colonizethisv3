@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/routes.dart';
+import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
@@ -83,6 +84,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
     switch (outcome) {
       case _NewGameOutcomeSuccess(:final game):
         container.read(currentGameProvider.notifier).setGame(game);
+        ctAppPerfInstant('navigate.game');
         bus.emit(const NavigateToRouteEvent(Routes.game));
         return;
       case _NewGameOutcomeFailure(:final error):
