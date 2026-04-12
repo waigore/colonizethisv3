@@ -44,6 +44,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required this.onProvinceHovered,
     required this.onTileHovered,
     required this.onCivilianTileTapped,
+    this.onFleetMarkerTapped,
     required this.onCivilianTileSelectionCleared,
     required this.selectedTileKey,
     required this.selectedCivilianTileKey,
@@ -70,6 +71,12 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   void Function(String? provinceId)? onProvinceHovered;
   void Function(String? tileKey)? onTileHovered;
   void Function(String tileKey)? onCivilianTileTapped;
+  void Function(
+    String locationScopeKey,
+    String? initialFleetId,
+    String markerTileKey,
+  )?
+  onFleetMarkerTapped;
   VoidCallback? onCivilianTileSelectionCleared;
   String? selectedTileKey;
   String? selectedCivilianTileKey;
@@ -107,6 +114,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
       onProvinceHovered: onProvinceHovered,
       onTileHovered: onTileHovered,
       onCivilianTileTapped: onCivilianTileTapped,
+      onFleetMarkerTapped: onFleetMarkerTapped,
       onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
       selectedTileKey: selectedTileKey,
       selectedCivilianTileKey: selectedCivilianTileKey,
@@ -232,6 +240,12 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     void Function(String tileKey)? onTileSelected,
     VoidCallback? onWorkTargetSelectionCancelled,
     void Function(String tileKey)? onCivilianTileTapped,
+    void Function(
+      String locationScopeKey,
+      String? initialFleetId,
+      String markerTileKey,
+    )?
+    onFleetMarkerTapped,
     VoidCallback? onCivilianTileSelectionCleared,
     required PlayerView? playerViewForResources,
     void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
@@ -284,6 +298,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     this.onTileSelected = onTileSelected;
     this.onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
     this.onCivilianTileTapped = onCivilianTileTapped;
+    this.onFleetMarkerTapped = onFleetMarkerTapped;
     this.onCivilianTileSelectionCleared = onCivilianTileSelectionCleared;
     this.playerViewForResources = playerViewForResources;
     if (onViewportSnapshotChanged != null) {
@@ -309,7 +324,8 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         ..selectedCivilianTileKey = this.selectedCivilianTileKey
         ..secondaryHighlightTileKey = this.secondaryHighlightTileKey
         ..validTileKeys = this.validTileKeys
-        ..playerViewForResources = this.playerViewForResources;
+        ..playerViewForResources = this.playerViewForResources
+        ..onFleetMarkerTapped = onFleetMarkerTapped;
       _emitViewportSnapshot();
     }
   }
@@ -529,6 +545,7 @@ class CtRegionMap extends StatefulWidget {
     this.onProvinceHovered,
     this.onTileHovered,
     this.onCivilianTileTapped,
+    this.onFleetMarkerTapped,
     this.onCivilianTileSelectionCleared,
     this.selectedTileKey,
     this.selectedCivilianTileKey,
@@ -558,6 +575,12 @@ class CtRegionMap extends StatefulWidget {
   final void Function(String? provinceId)? onProvinceHovered;
   final void Function(String? tileKey)? onTileHovered;
   final void Function(String tileKey)? onCivilianTileTapped;
+  final void Function(
+    String locationScopeKey,
+    String? initialFleetId,
+    String markerTileKey,
+  )?
+  onFleetMarkerTapped;
   final VoidCallback? onCivilianTileSelectionCleared;
   final String? selectedTileKey;
   final String? selectedCivilianTileKey;
@@ -637,6 +660,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
         widget.baseLayerDisplayMode != oldWidget.baseLayerDisplayMode ||
         widget.validTileKeys != oldWidget.validTileKeys ||
         widget.onCivilianTileTapped != oldWidget.onCivilianTileTapped ||
+        widget.onFleetMarkerTapped != oldWidget.onFleetMarkerTapped ||
         widget.onCivilianTileSelectionCleared !=
             oldWidget.onCivilianTileSelectionCleared ||
         widget.selectedTileKey != oldWidget.selectedTileKey ||
@@ -672,6 +696,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
         onTileSelected: widget.onTileSelected,
         onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
         onCivilianTileTapped: widget.onCivilianTileTapped,
+        onFleetMarkerTapped: widget.onFleetMarkerTapped,
         onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
         playerViewForResources: widget.playerViewForResources,
         onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
@@ -706,6 +731,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
       onProvinceHovered: widget.onProvinceHovered,
       onTileHovered: widget.onTileHovered,
       onCivilianTileTapped: widget.onCivilianTileTapped,
+      onFleetMarkerTapped: widget.onFleetMarkerTapped,
       onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
       selectedTileKey: widget.selectedTileKey,
       selectedCivilianTileKey: widget.selectedCivilianTileKey,

@@ -6,6 +6,7 @@ import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/fleet_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
@@ -94,6 +95,7 @@ Future<void> _ensureAllRelocated64pxPngsLoad() async {
     ...kProvinceLabelIconIds.map(
       (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
     ),
+    kFleetMapIcon64PngAssetPath,
   };
   final expectedSorted = expectedAssets.toList()..sort();
 

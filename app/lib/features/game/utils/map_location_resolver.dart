@@ -1,7 +1,16 @@
 // Tile keys for centering the map on provinces and sea zones from game UI.
 // SPEC/ui/military-units-panel.md, SPEC/ui/naval-units-panel.md.
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart' show seaZoneCentroidTileKey;
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+Set<String> _seaZoneLocalIdsForRegion(MapTopology topology, String regionId) {
+  return {
+    for (final n in topology.nodes)
+      if (n.type == TopologyNodeType.seaZone && n.regionId == regionId) n.id,
+  };
+}
 
 /// Resolves the tile key to use when centering on [province] (town tile or first tile).
 /// Uses `(regionId, province.id)` via [Province.regionId] and prefixed map keys.
@@ -38,4 +47,29 @@ String? tileKeyForSeaZoneLocation(
     }
   }
   return null;
+}
+
+/// Sea fleets: centroid tile on the region tile map when [tileMap] / [regionTopology]
+/// are available; otherwise falls back to [tileKeyForSeaZoneLocation] (port adjacency).
+String? tileKeyForNavalFleetAtSea({
+  required Game game,
+  required String regionId,
+  required String seaZoneId,
+  TileMapResult? tileMap,
+  MapTopology? regionTopology,
+}) {
+  final local = seaZoneId.contains('|') ? seaZoneId.split('|').last : seaZoneId;
+  if (tileMap != null && regionTopology != null) {
+    final nodeIds = _seaZoneLocalIdsForRegion(regionTopology, regionId);
+    final centroid = seaZoneCentroidTileKey(
+      tileMap: tileMap,
+      regionId: regionId,
+      localSeaZoneId: local,
+      seaZoneNodeIds: nodeIds,
+    );
+    if (centroid != null) {
+      return centroid;
+    }
+  }
+  return tileKeyForSeaZoneLocation(game, regionId, seaZoneId);
 }
