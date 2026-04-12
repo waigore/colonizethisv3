@@ -114,6 +114,10 @@ class CtRegionMapComponent extends PositionComponent {
   >?
   _provinceLabelsCached;
 
+  RegionMapViewData? _seaZoneLabelsRegionRef;
+  double? _seaZoneLabelsCellSize;
+  List<({int cx, int cy, String text})>? _seaZoneLabelsCached;
+
   @override
   Future<void> onLoad() async {
     assertCtMapPlayerViewRequired(

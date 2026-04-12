@@ -851,5 +851,6 @@ RegionMapViewData _buildRegionViewData({
     provinceUnitPresenceByProvinceId: provincePresenceById,
     provincePoliticalOwnerByPrefixedProvinceId:
         provincePoliticalOwnerByPrefixedProvinceId,
+    seaZoneDisplayNameByPrefixedId: game.worldState.seaZoneDisplayNameById,
   );
 }
