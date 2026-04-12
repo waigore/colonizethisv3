@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -120,10 +121,16 @@ class CtRegionMapComponent extends PositionComponent {
       terrainTilesetCache.load(),
       resourceIconCache.load(),
       civilianIconCache.load(),
-      fleetIconCache.load(),
       townIconCache.load(),
       provinceLabelIconCache.load(),
     ]);
+    // Fleet icon uses ui.decodeImageFromList; awaiting it here can deadlock with
+    // Flutter's test/game bootstrap (decode needs frames while onLoad blocks).
+    unawaited(
+      fleetIconCache.load().catchError((Object _, StackTrace __) {
+        // Errors are already logged inside FleetIconCache.load.
+      }),
+    );
     _log.i(
       'TerrainTilesetCache loaded. '
       'sea_plains: ${terrainTilesetCache.getSeaPlainsTileset() != null}, '
