@@ -74,6 +74,8 @@ For interactive civilian map icons, `RegionMapViewData` may also carry tile-scop
 - `stackCount` equals the number of included civilians on that tile and supports tile stack badges.
 - This payload is view-only and does not mutate unit placement or save semantics.
 
+For interactive **human fleet** map icons (ports and sea-zone centroids), `RegionMapViewData` carries `fleetTileMarkers[]` with `tileKey`, `x`, `y`, `locationScopeKey` (`port:…` / `sea:…`), `fleetIds`, `stackCount`, `renderGrayscale`, and `applyFleetRevealHalo` (display-only halo for draft naval moves). Built in `colonizethis_map` from game state, tile maps, topology, and draft orders; consumed by the Flame map and naval panel tile scope.
+
 **Province-level political owner for label plates:** `provincePoliticalOwnerByPrefixedProvinceId[provinceId] = Province.ownerId` (nullable) for each land province in the region, populated from world state in `buildInitGameMapViewData`. The in-game map uses this map with per-cell `CellViewData.ownerFactionId` to choose a **GP-tinted** vs **neutral** semi-transparent name plate per [map-widget.md](../ui/map-widget.md) § Layer model (province names). This distinguishes Great Power–owned provinces from Minor/Tribe provinces where purchased tiles may assign a GP to individual cells.
 
 `InitGameMapViewData`: oldWorld, newWorld, metadata. `cellSize` = base logical px per map cell for Flame terrain/layout; for the shipped app init-game map it is taken from `assets/data/map_terrain_tilesets.json` (`map_cell_size_px`) via `MapTerrainConfig` so it matches Wang destination rects ([wang-tileset-and-assets.md](../ui/wang-tileset-and-assets.md) § App map runtime configuration). Zoom still scales the canvas in the parent; this is the unzoomed cell size.

@@ -339,13 +339,28 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       _humanPlayerId,
     );
     final l10n = appL10n(context);
-    final projectedRegion =
+    final mapData = ref.watch(gameServiceProvider).getMapData(widget.game.id);
+    var projectedRegion =
         GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
           region: _currentRegion,
           game: widget.game,
           orders: currentOrders,
           humanPlayerId: _humanPlayerId,
         );
+    final tm = mapData?.tileMapByRegion;
+    final tr = mapData?.topologyByRegion;
+    final ct = mapData?.combinedTopology;
+    if (tm != null && tr != null && ct != null) {
+      projectedRegion = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
+        region: projectedRegion,
+        game: widget.game,
+        orders: currentOrders,
+        humanPlayerId: _humanPlayerId,
+        tileMapByRegion: tm,
+        topologyByRegion: tr,
+        combinedTopology: ct,
+      );
+    }
     final nextTurnText = l10n.game_nextTurnButton(
       widget.game.worldState.turnState.turnNumber,
       turnToYear(
@@ -437,6 +452,18 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           setState(() {
                             _selectedCivilianTileKey = null;
                           });
+                        },
+                        onFleetMarkerTapped:
+                            (locationScopeKey, initialFleetId, markerTileKey) {
+                          ref
+                              .read(appEventBusProvider)
+                              .emit(
+                                ct_models.OpenNavalUnitsPanelEvent(
+                                  locationScopeKey: locationScopeKey,
+                                  initialSelectedFleetId: initialFleetId,
+                                  tileScopeTileKey: markerTileKey,
+                                ),
+                              );
                         },
                         bus: ref.read(appEventBusProvider),
                         onRegionViewportSnapshot: _onRegionViewportSnapshot,

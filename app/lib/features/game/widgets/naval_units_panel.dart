@@ -24,6 +24,11 @@ class NavalUnitsPanel extends StatefulWidget {
     required this.bus,
     required this.topology,
     this.draftOrders = const Orders(),
+    this.tileMapByRegion,
+    this.topologyByRegion,
+    this.locationScopeKey,
+    this.initialSelectedFleetId,
+    this.tileScopeTileKey,
   });
 
   final Game game;
@@ -31,6 +36,11 @@ class NavalUnitsPanel extends StatefulWidget {
   final AppEventBus bus;
   final MapTopology topology;
   final Orders draftOrders;
+  final Map<String, TileMapResult>? tileMapByRegion;
+  final Map<String, MapTopology>? topologyByRegion;
+  final String? locationScopeKey;
+  final String? initialSelectedFleetId;
+  final String? tileScopeTileKey;
 
   @override
   State<NavalUnitsPanel> createState() => _NavalUnitsPanelState();
@@ -38,6 +48,15 @@ class NavalUnitsPanel extends StatefulWidget {
 
 class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   final Set<String> _selectedFleetIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    final id = widget.initialSelectedFleetId;
+    if (id != null && id.isNotEmpty) {
+      _selectedFleetIds.add(id);
+    }
+  }
 
   /// Canonical fleet id for combine/split selection (Home Fleet uses [homeFleetIdFor]).
   String _selectionFleetId(FleetRow row) {
@@ -197,6 +216,9 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
           widget.topology,
           widget.draftOrders,
           appL10n(context),
+          tileMapByRegion: widget.tileMapByRegion,
+          topologyByRegion: widget.topologyByRegion,
+          locationScopeKeyFilter: widget.locationScopeKey,
         ),
       );
       final valid = flat.map(_selectionFleetId).toSet();
@@ -263,12 +285,17 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
+    final tileScopeActive = widget.tileScopeTileKey != null &&
+        widget.tileScopeTileKey!.isNotEmpty;
     final tree = buildNavalTree(
       widget.game,
       widget.humanPlayerId,
       widget.topology,
       widget.draftOrders,
       l10n,
+      tileMapByRegion: widget.tileMapByRegion,
+      topologyByRegion: widget.topologyByRegion,
+      locationScopeKeyFilter: widget.locationScopeKey,
     );
     final flat = flattenNavalTree(tree);
     final hasAny = tree.any(
@@ -278,8 +305,26 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     final headerCheckbox = _headerSelectAllValue(flat);
 
     return UnitsPanelShell(
-      title: l10n.naval_units_title,
+      title: tileScopeActive
+          ? l10n.naval_units_title_tile
+          : l10n.naval_units_title,
       actions: [
+        if (tileScopeActive)
+          CtNinePatchButton(
+            enabled: widget.tileScopeTileKey!.isNotEmpty,
+            onPressed: () {
+              final key = widget.tileScopeTileKey!;
+              widget.bus.emit(const ClosePanelEvent());
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                widget.bus.emit(OpenMapTileDetailEvent(tileKey: key));
+              });
+            },
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            minHeight: 32,
+            child: Text(l10n.civilian_units_tile),
+          ),
+        if (tileScopeActive && hasAny && flat.isNotEmpty)
+          const SizedBox(width: 4),
         if (hasAny && flat.isNotEmpty) ...[
           Tooltip(
             message: headerCheckbox == true

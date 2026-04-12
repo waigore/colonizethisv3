@@ -143,7 +143,7 @@ When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnFo
 | `OpenPauseMenuPanelEvent` | `GameScreen` (pause) | `PauseMenuPanel` |
 | `OpenCivilianUnitsPanelEvent` | `GameSideMenu` | `CivilianUnitsPanel` (+ Riverpod game/orders, `AppEventBus`) |
 | `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
-| `OpenNavalUnitsPanelEvent` | `GameSideMenu` | `NavalUnitsPanel` (+ `AppEventBus`) |
+| `OpenNavalUnitsPanelEvent` | `GameSideMenu`, map fleet marker tap | `NavalUnitsPanel` (+ `AppEventBus`); optional `locationScopeKey`, `initialSelectedFleetId`, `tileScopeTileKey` for tile-scoped list and header |
 
 **Civilian / naval work and fleets:** `CivilianUnitsPanel` emits `StartCivilianWorkTargetSelectionEvent`, `LocateMapTileEvent`, `RemovePendingWorkOrderRequestedEvent`, and `CancelInProgressCivilianWorkRequestedEvent`; `MilitaryUnitsPanel` / `NavalUnitsPanel` emit `LocateMapTileEvent`; `MilitaryUnitsPanel` emits **`ArmyMoveRequestedEvent`**, **`ArmySplitRequestedEvent`**, **`ArmyCombineRequestedEvent`**, and **`LandArmiesUpdatedEvent`** when army state changes; `NavalUnitsPanel` emits `NavalFleetsUpdatedEvent` after combine; split uses `SplitFleetDialog` → **`NavalSplitFleetRequestedEvent`** → scope applies and emits **`NavalFleetsUpdatedEvent`**. Train dialogs emit **`TrainCivilianBuildOrdersCommittedEvent`** / **`TrainMilitaryBuildOrdersCommittedEvent`** on close; scope merges orders. `AppEventHandlerScope` subscribes and updates `currentOrdersProvider` / `currentGameProvider` using `colonizethis_logic` where applicable (`removePendingWorkOrderAt`, `clearUnitCurrentWork`). Panels do not receive Riverpod `ref` for those mutations.
 

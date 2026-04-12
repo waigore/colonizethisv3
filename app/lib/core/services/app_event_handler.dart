@@ -319,6 +319,11 @@ class AppEventHandler {
             bus: bus,
             topology: mapData?.combinedTopology ?? const MapTopology(),
             draftOrders: draftOrders,
+            tileMapByRegion: mapData?.tileMapByRegion,
+            topologyByRegion: mapData?.topologyByRegion,
+            locationScopeKey: event.locationScopeKey,
+            initialSelectedFleetId: event.initialSelectedFleetId,
+            tileScopeTileKey: event.tileScopeTileKey,
           );
         },
       ),
