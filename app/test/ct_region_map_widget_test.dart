@@ -1913,6 +1913,94 @@ void main() {
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
+
+    testWidgets(
+      'tap on port drawable sea cell selects owning province not sea zone id',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+          await townIconCache.load();
+        });
+
+        final base = ctRegionMapTestOldWorldRegion();
+        final land = base.cells.firstWhere((c) => !c.isSea);
+        final region = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 2,
+          height: 2,
+          cellSize: 24,
+          cells: [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+            const CellViewData(x: 1, y: 0, regionCellId: 's1', isSea: true),
+            CellViewData(
+              x: 0,
+              y: 1,
+              regionCellId: 'p1x',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+            CellViewData(
+              x: 1,
+              y: 1,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          townMarkers: const [
+            TownMarkerView(
+              x: 1,
+              y: 1,
+              provinceId: 'p1',
+              isCoastal: false,
+              isPort: true,
+              touchesSea: true,
+              portIconX: 1,
+              portIconY: 0,
+            ),
+          ],
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+        );
+
+        const cell = 32.0;
+        String? selectedProvinceId;
+
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            cellSizePx: cell,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+            onProvinceSelected: (id) => selectedProvinceId = id,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        final topLeft = tester.getTopLeft(mapFinder);
+        await tester.tapAt(topLeft + const Offset(48, 16));
+        await tester.pump();
+
+        expect(selectedProvinceId, equals('oldWorld|p1'));
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
   });
 
   group('Sea zone name plate layout (#1756)', () {

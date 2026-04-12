@@ -31,6 +31,8 @@ When the player chooses the capital tile:
 - Otherwise, for that seaboard, a port tile is chosen from tiles in the capital province that are adjacent to that seaboard's sea zone and is the tile with the shortest path to the capital tile (deterministic tie-break).
 - For each off-capital seaboard port tile, a road is auto-built along the shortest path (on province tiles only) from that seaboard's port tile to the capital tile.
 
+**Map harbor drawable (UI):** Registered port tiles must support **strict sea-only** harbor/fleet placement per [town-port-icons.md](../ui/town-port-icons.md): the port tile cell is sea in topology, or at least one **orthogonal** neighbor is a sea-zone cell. Otherwise map view construction throws; treat as **data/setup** defect (GitHub [#1761](https://github.com/waigore/colonizethisv3/issues/1761)).
+
 **Init order:** Capital placement (province + tile) and port placement happen first; **then** for each such port that is land-connected to the capital, roads are placed along the shortest path to the capital (so the path is computed and applied after all capitals/ports are fixed). **Then** (step 7d) province town assignment: each province gets one **town** tile — see § Town per province.
 
 **Great Power capital province town development (init):** Immediately after the capital tile is fixed for each Great Power, The System sets that Great Power’s **capital province** `townDevelopmentLevel` to **4**.
