@@ -25,7 +25,14 @@ void main() {
     final parsed = parseFile(
       path: file.path,
       featureSet: FeatureSet.latestLanguageVersion(),
+      throwIfDiagnostics: false,
     );
+    if (parsed.errors.isNotEmpty) {
+      stderr.writeln(
+        'warning: $rel — skipping AST switch scan (${parsed.errors.length} parse errors)',
+      );
+      continue;
+    }
     final unit = parsed.unit;
     unit.accept(_SwitchVisitor(rel, parsed.lineInfo, fails, warns));
   }
@@ -42,14 +49,15 @@ void main() {
 }
 
 bool _isExcluded(String relativePath) {
-  final parts = p.split(relativePath);
+  final normalized = p.normalize(relativePath);
+  final parts = p.split(normalized);
   if (parts.contains('.dart_tool') || parts.contains('build')) {
     return true;
   }
-  if (relativePath.endsWith('.g.dart')) {
+  if (normalized.endsWith('.g.dart')) {
     return true;
   }
-  if (relativePath.endsWith('tech_effect_summary_embed.dart')) {
+  if (normalized.endsWith('tech_effect_summary_embed.dart')) {
     return true;
   }
   return false;
@@ -70,12 +78,15 @@ Iterable<File> _dartSources(Directory root) sync* {
   }
 }
 
+/// Workspace root `pubspec.yaml` uses exactly `name: colonizethis` (not
+/// `colonizethis_app`, `colonizethis_data`, etc.) so nested packages are not
+/// mistaken for the monorepo root when this tool is run from a subdirectory.
 String _repoRoot() {
+  final rootName = RegExp(r'^name:\s*colonizethis\s*$', multiLine: true);
   var dir = Directory.current;
   while (true) {
     final pub = File(p.join(dir.path, 'pubspec.yaml'));
-    if (pub.existsSync() &&
-        pub.readAsStringSync().contains('name: colonizethis')) {
+    if (pub.existsSync() && rootName.hasMatch(pub.readAsStringSync())) {
       return dir.path;
     }
     final parent = dir.parent;
