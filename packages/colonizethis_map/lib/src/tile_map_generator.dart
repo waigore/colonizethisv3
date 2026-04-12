@@ -4,9 +4,11 @@ import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/package_logger.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'grid_voronoi.dart';
 import 'map_validation_exception.dart';
+import 'tile_map_distance_sentinels.dart';
 import 'topology_inference.dart';
 
 part 'tile_map_generator_types.dart';
@@ -38,8 +40,7 @@ class _LandSeedService {
     Map<String, int> provinceToContinent,
     String seaZoneId,
     Random rnd,
-  ) =>
-      _impl.placeLandSeedsOrganic(grid, provinceToContinent, seaZoneId, rnd);
+  ) => _impl.placeLandSeedsOrganic(grid, provinceToContinent, seaZoneId, rnd);
 
   List<List<String>> assignLandByLandSeeds(
     List<List<String>> grid,
@@ -73,8 +74,7 @@ class _LakeAndProvinceService {
     List<(int x, int y)> landSeeds,
     List<int> continentBySeedIndex,
     Random rnd,
-  ) =>
-      _impl.fillMoats(grid, seaZoneId, landSeeds, continentBySeedIndex, rnd);
+  ) => _impl.fillMoats(grid, seaZoneId, landSeeds, continentBySeedIndex, rnd);
 
   List<List<String>> borderNoise(
     List<List<String>> grid,

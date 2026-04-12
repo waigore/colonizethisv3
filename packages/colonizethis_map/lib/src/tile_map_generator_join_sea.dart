@@ -333,7 +333,7 @@ class _TileMapGenJoinSea {
       var bestMinD2 = 0;
       for (final (x, y) in list) {
         if (chosen.contains((x, y))) continue;
-        var minD2 = 0x7fffffff;
+        var minD2 = kUnsetSquaredDistanceInt31;
         for (final (sx, sy) in chosen) {
           final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
           if (d2 < minD2) minD2 = d2;

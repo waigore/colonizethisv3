@@ -10,6 +10,7 @@
 | `tool/ct_repo_lint.dart` | Orchestrator: loads manifest, runs rules in order, stops on first failure |
 | `tool/ct_repo_lint_lib.dart` | Parse/execute helpers (also covered by `test/ct_repo_lint_test.dart`) |
 | `tool/ct_repo_lint_scan_contract.dart` | **Shared scan contract:** (1) `collectRepoLintDomainDartFiles` + predicates for exception / disallowed-AST **`lib/`** trees; (2) identifier-literal roots/skip helpers; (3) canonical province tile-key collection (`collectRepoLintCanonicalProvinceTileKeyDartFiles`); (4) app UI gate (`collectRepoLintAppLibDartFilesSorted`, `repoLintAppLibHardcodedUiVisitorShouldSkip`); (5) `repoLintSplitRelativeDartPathsArg` for PR incremental path lists — see `test/ct_repo_lint_scan_contract_test.dart` |
+| `tool/check_repeated_magic_numbers.dart` | Repeated **hash/LCG-style** integer literals (`SPEC/program/repeated-magic-numbers.md`); rule `repo.repeated_magic_numbers` |
 
 ## Rule IDs and groups
 
