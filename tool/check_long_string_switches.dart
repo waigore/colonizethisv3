@@ -51,7 +51,9 @@ void main() {
 bool _isExcluded(String relativePath) {
   final normalized = p.normalize(relativePath);
   final parts = p.split(normalized);
-  if (parts.contains('.dart_tool') || parts.contains('build')) {
+  if (parts.contains('.dart_tool') ||
+      parts.contains('.pub-cache') ||
+      parts.contains('build')) {
     return true;
   }
   if (normalized.endsWith('.g.dart')) {
