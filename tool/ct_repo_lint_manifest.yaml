@@ -79,6 +79,13 @@ rules:
     runner: dart
     script: tool/check_disallowed_ast_patterns.dart
 
+  - rule_id: repo.control_flow_nesting_depth
+    group: structure
+    title: Control-flow nesting depth (if/for/while/switch)
+    spec: SPEC/program/control-flow-nesting-depth.md
+    runner: dart
+    script: tool/check_control_flow_nesting_depth.dart
+
   - rule_id: repo.repeated_magic_numbers
     group: structure
     title: Repeated magic integer literals (hash/LCG-style)

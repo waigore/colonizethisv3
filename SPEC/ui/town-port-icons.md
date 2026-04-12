@@ -203,7 +203,7 @@ Icons are loaded via the existing `ResourceIconCache` pattern:
 
 ### Existing Code Changes
 
-1. **`region_map_component.dart`**:
+1. **`region_map_component.dart`** (render parts: `SPEC/program/map-region-map-render.md`):
    - Add `onTownIconTapped` callback parameter
    - Replace `_paintPorts()` with `_paintTowns()` method
    - Add `_getTownAtTile()` helper for tap detection

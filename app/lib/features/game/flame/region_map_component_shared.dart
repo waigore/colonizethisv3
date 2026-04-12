@@ -210,6 +210,29 @@ bool _isFeatureTerrain(TerrainType terrain) {
       terrain == TerrainType.swamp;
 }
 
+final class _PlainsDesertTally {
+  int plains = 0;
+  int desert = 0;
+}
+
+void _tallyDominantLandNeighbor(CellViewData? cell, _PlainsDesertTally tally) {
+  if (cell == null || cell.isSea) {
+    return;
+  }
+  final terrain = cell.terrainType;
+  if (terrain == TerrainType.plains) {
+    tally.plains++;
+    return;
+  }
+  if (terrain == TerrainType.desert) {
+    tally.desert++;
+    return;
+  }
+  if (terrain != null && _isFeatureTerrain(terrain)) {
+    tally.plains++; // Features have plains underneath
+  }
+}
+
 /// Get the dominant adjacent land base type for coastline tileset selection.
 /// Returns 'plains' or 'desert' based on which is more common among neighbors.
 TerrainType? _getDominantAdjacentLandBase(
@@ -217,27 +240,20 @@ TerrainType? _getDominantAdjacentLandBase(
   int y,
   CellViewData? Function(int, int) getCellAt,
 ) {
-  int plainsCount = 0;
-  int desertCount = 0;
+  final tally = _PlainsDesertTally();
 
   for (final dy in [-1, 0, 1]) {
     for (final dx in [-1, 0, 1]) {
-      if (dx == 0 && dy == 0) continue;
-      final cell = getCellAt(x + dx, y + dy);
-      if (cell != null && !cell.isSea) {
-        final terrain = cell.terrainType;
-        if (terrain == TerrainType.plains) {
-          plainsCount++;
-        } else if (terrain == TerrainType.desert) {
-          desertCount++;
-        } else if (terrain != null && _isFeatureTerrain(terrain)) {
-          plainsCount++; // Features have plains underneath
-        }
+      if (dx == 0 && dy == 0) {
+        continue;
       }
+      _tallyDominantLandNeighbor(getCellAt(x + dx, y + dy), tally);
     }
   }
 
-  if (plainsCount >= desertCount) return TerrainType.plains;
+  if (tally.plains >= tally.desert) {
+    return TerrainType.plains;
+  }
   return TerrainType.desert;
 }
 
