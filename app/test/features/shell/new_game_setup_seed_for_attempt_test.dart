@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/features/shell/new_game_setup_seed_for_attempt.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
