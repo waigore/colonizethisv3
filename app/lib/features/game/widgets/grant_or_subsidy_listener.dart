@@ -82,7 +82,10 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
                     currentMood: currentMood,
                     offerQualityDelta: event.isSubsidy ? 0.5 : 0.7,
                     stallCounter: 0,
-                    seed: base ^ (turn * 0x9E3779B1) ^ event.amount,
+                    seed:
+                        base ^
+                        (turn * kDeterministicHashMixPrime32) ^
+                        event.amount,
                   ),
                 );
               }

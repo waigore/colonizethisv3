@@ -121,7 +121,7 @@ class TileMapGridGraph {
   ) {
     if (landSeeds.isEmpty) return 0;
     var bestSeedIndex = 0;
-    var bestD2 = 0x7fffffff;
+    var bestD2 = kUnsetSquaredDistanceInt31;
     for (var i = 0; i < landSeeds.length; i++) {
       final (sx, sy) = landSeeds[i];
       final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);

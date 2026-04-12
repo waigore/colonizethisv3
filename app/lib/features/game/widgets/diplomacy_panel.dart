@@ -13,6 +13,7 @@ import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 import 'diplomacy_order_helpers.dart';
+import 'fnv1a_hash_constants.dart';
 
 int? _outgoingSubsidyPerTurn(Game game, String payerId, String targetId) {
   for (final s in game.subsidyStates) {
@@ -471,10 +472,10 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
     final turn = widget.game.worldState.turnState.turnNumber;
     final base = widget.game.globalGameSeed ?? 0;
     final text = '$leaderId|$discriminator|$stallCounter|$turn';
-    var hash = 0x811C9DC5;
+    var hash = kFnv1aOffsetBasis32;
     for (final code in text.codeUnits) {
       hash ^= code;
-      hash = (hash * 0x01000193) & 0x7fffffff;
+      hash = (hash * kFnv1aPrime32) & kDeterministicLcg31Mask;
     }
     return base ^ hash;
   }

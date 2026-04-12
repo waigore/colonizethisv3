@@ -880,10 +880,9 @@ int _invasionCapacityAdjustment(
     score -= 25;
   }
 
-  final activeWars = game.diplomacyRelations.where((r) {
-    final involvesNation = r.factionId1 == nationId || r.factionId2 == nationId;
-    return involvesNation && r.state == RelationState.atWar;
-  }).length;
+  final activeWars = game.diplomacyRelations
+      .where((r) => r.involvesNation(nationId) && r.atWar)
+      .length;
   if (activeWars >= 2) score -= 15;
   return score;
 }
