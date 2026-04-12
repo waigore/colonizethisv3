@@ -90,6 +90,10 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
 
   late final CtRegionMapComponent _mapComponent;
 
+  /// Widget tests only: Flame [onLoad] must have completed before reading.
+  @visibleForTesting
+  CtRegionMapComponent get debugMapComponentForTest => _mapComponent;
+
   /// `m` in [kRegionMapZoomMultiplierMin]–[kRegionMapZoomMultiplierMax]; camera zoom = `m × z_fit`.
   double _zoomMultiplier = 1.0;
   bool _mapLoaded = false;

@@ -13,7 +13,9 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show
+        CtRegionMapComponent,
         extractionDiscCentersForIconRect,
+        isCellUnderFleetRevealHalo,
         resolveProvinceLabelIconIds,
         resolveProvinceLabelPresenceIconIds,
         resolveSeaZoneNamePlateCenterWorld,
@@ -24,7 +26,8 @@ import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
         shouldApplyFogToInteriorPlainsVariantBase,
         shouldApplyFogToInteriorPlainsVariantOverlay,
         shouldApplyFogToLandBase,
-        shouldWrapProvinceLabelPresenceIcons;
+        shouldWrapProvinceLabelPresenceIcons,
+        visibilityForTerrainForMapCell;
 import 'package:colonizethis_app/features/game/flame/resource_icon_disc_palette.dart';
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
@@ -34,6 +37,16 @@ import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
 
 import 'ct_region_map_test_support.dart';
+
+CtRegionMapComponent ctRegionMapComponentFromTester(WidgetTester tester) {
+  final finder = find.byWidgetPredicate(
+    (w) => w.runtimeType.toString().startsWith('GameWidget<'),
+  );
+  expect(finder, findsOneWidget);
+  final gameWidget = tester.widget(finder);
+  final game = (gameWidget as dynamic).game;
+  return (game as dynamic).debugMapComponentForTest as CtRegionMapComponent;
+}
 
 void main() {
   suppressLogsForTests();
@@ -2025,6 +2038,136 @@ void main() {
         expect(tp.width, greaterThan(200));
       },
       timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    test(
+      'visibilityForTerrainForMapCell leaves cell visibility in full map mode',
+      () {
+        const cell = CellViewData(
+          x: 1,
+          y: 2,
+          regionCellId: 's1',
+          isSea: true,
+          visibility: TileVisibility.unrevealed,
+        );
+        expect(
+          visibilityForTerrainForMapCell(
+            visibilityMode: CtMapVisibilityMode.full,
+            cell: cell,
+            fleetTileMarkers: const [],
+          ),
+          TileVisibility.unrevealed,
+        );
+      },
+    );
+
+    test(
+      'visibilityForTerrainForMapCell keeps unrevealed sea centroid hidden when constrained and no halo',
+      () {
+        const cell = CellViewData(
+          x: 1,
+          y: 0,
+          regionCellId: 'sz',
+          isSea: true,
+          visibility: TileVisibility.unrevealed,
+        );
+        expect(
+          visibilityForTerrainForMapCell(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            cell: cell,
+            fleetTileMarkers: const [],
+          ),
+          TileVisibility.unrevealed,
+        );
+      },
+    );
+
+    test(
+      'visibilityForTerrainForMapCell reveals unrevealed centroid under fleet move-draft halo',
+      () {
+        const cell = CellViewData(
+          x: 1,
+          y: 0,
+          regionCellId: 'sz',
+          isSea: true,
+          visibility: TileVisibility.unrevealed,
+        );
+        final markers = [
+          FleetTileMarkerView(
+            tileKey: 'oldWorld|sz|1|0',
+            x: 1,
+            y: 0,
+            locationScopeKey: 'sea:oldWorld|sz',
+            fleetIds: const ['f1'],
+            stackCount: 1,
+            applyFleetRevealHalo: true,
+          ),
+        ];
+        expect(
+          visibilityForTerrainForMapCell(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            cell: cell,
+            fleetTileMarkers: markers,
+          ),
+          TileVisibility.visible,
+        );
+      },
+    );
+
+    test(
+      'isCellUnderFleetRevealHalo ignores markers without applyFleetRevealHalo',
+      () {
+        expect(
+          isCellUnderFleetRevealHalo(
+            x: 1,
+            y: 0,
+            fleetTileMarkers: [
+              FleetTileMarkerView(
+                tileKey: 'k',
+                x: 1,
+                y: 0,
+                locationScopeKey: 'sea:x',
+                fleetIds: const ['f1'],
+                stackCount: 1,
+                applyFleetRevealHalo: false,
+              ),
+            ],
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    testWidgets(
+      'CtRegionMapComponent showProvinceNamesLayer false when harness disables names (#1756)',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(region: region, showProvinceNamesLayer: false),
+        );
+        await tester.pump();
+        expect(
+          ctRegionMapComponentFromTester(tester).showProvinceNamesLayer,
+          isFalse,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'CtRegionMapComponent showProvinceNamesLayer true when harness enables names (#1756)',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(region: region, showProvinceNamesLayer: true),
+        );
+        await tester.pump();
+        expect(
+          ctRegionMapComponentFromTester(tester).showProvinceNamesLayer,
+          isTrue,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
     );
   });
 }

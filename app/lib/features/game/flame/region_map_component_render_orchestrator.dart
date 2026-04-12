@@ -2,25 +2,11 @@ part of 'region_map_component.dart';
 
 extension _CtRegionMapRenderOrchestrator on CtRegionMapComponent {
   TileVisibility _visibilityForTerrain(CellViewData cell) {
-    if (visibilityMode != CtMapVisibilityMode.playerConstrained) {
-      return cell.visibility;
-    }
-    if (_isUnderFleetRevealHalo(cell.x, cell.y)) {
-      return TileVisibility.visible;
-    }
-    return cell.visibility;
-  }
-
-  bool _isUnderFleetRevealHalo(int x, int y) {
-    for (final m in region.fleetTileMarkers) {
-      if (!m.applyFleetRevealHalo) {
-        continue;
-      }
-      if (math.max((x - m.x).abs(), (y - m.y).abs()) <= 2) {
-        return true;
-      }
-    }
-    return false;
+    return visibilityForTerrainForMapCell(
+      visibilityMode: visibilityMode,
+      cell: cell,
+      fleetTileMarkers: region.fleetTileMarkers,
+    );
   }
 
   void _renderRegionMap(Canvas canvas) {
