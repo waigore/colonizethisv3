@@ -7,6 +7,12 @@ import 'package:flutter/material.dart';
 /// Wraps arbitrary [child] content inside a constrained, centered dialog with
 /// a transparent backdrop and nine-patch chrome. Use this instead of
 /// [AlertDialog] or [Dialog] for all app dialogs.
+///
+/// **Layout:** The frame height follows content up to [maxHeight]. When content
+/// exceeds [maxHeight], a single outer vertical scroll reaches the full body
+/// (see SPEC/ui/pixel-art-ui-catalog.md). Avoid [Expanded] / vertical [Flexible]
+/// in [child]; use [mainAxisSize]: [MainAxisSize.min] columns and let this shell
+/// scroll.
 class CtDialogShell extends StatelessWidget {
   const CtDialogShell({
     super.key,
@@ -55,34 +61,41 @@ class CtDialogShell extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final double width = constraints.maxWidth;
-              final double height = constraints.maxHeight;
-              return NineTileBoxWidget.asset(
-                path: _kAssetPath,
-                tileSize: _tileSize,
-                destTileSize: destTileSize,
-                width: width,
-                height: height,
-                padding: padding,
-                child: DefaultTextStyle(
-                  style: theme.textTheme.bodyMedium ??
-                      const TextStyle(color: Colors.white),
-                  child: child,
-                ),
-                loadingBuilder: (_) => _FallbackDialogFrame(
-                  color: fallbackColor,
-                  padding: padding,
-                  child: child,
-                ),
-                errorBuilder: (_) {
-                  packageLogger('ui').w(
-                    'dialog nine-patch asset not found, using fallback frame',
-                  );
-                  return _FallbackDialogFrame(
-                    color: fallbackColor,
-                    padding: padding,
-                    child: child,
-                  );
-                },
+              return CustomScrollView(
+                shrinkWrap: true,
+                physics: const ClampingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: NineTileBoxWidget.asset(
+                      path: _kAssetPath,
+                      tileSize: _tileSize,
+                      destTileSize: destTileSize,
+                      width: width,
+                      height: null,
+                      padding: padding,
+                      child: DefaultTextStyle(
+                        style: theme.textTheme.bodyMedium ??
+                            const TextStyle(color: Colors.white),
+                        child: child,
+                      ),
+                      loadingBuilder: (_) => _FallbackDialogFrame(
+                        color: fallbackColor,
+                        padding: padding,
+                        child: child,
+                      ),
+                      errorBuilder: (_) {
+                        packageLogger('ui').w(
+                          'dialog nine-patch asset not found, using fallback frame',
+                        );
+                        return _FallbackDialogFrame(
+                          color: fallbackColor,
+                          padding: padding,
+                          child: child,
+                        );
+                      },
+                    ),
+                  ),
+                ],
               );
             },
           ),

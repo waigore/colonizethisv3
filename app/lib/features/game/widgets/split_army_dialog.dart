@@ -76,43 +76,41 @@ class SplitArmyDialog extends StatelessWidget {
     return CtDialogShell(
       maxWidth: 520,
       maxHeight: 500,
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                l10n.splitArmy_title,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              CtTransferList(
-                listHeight: 220,
-                leftTitle: army.isHomeArmy ? 'Home Army' : 'Army ${army.id}',
-                rightTitle: 'New Army',
-                leftSubtitle: _locationLabel(),
-                rightSubtitle: _locationLabel(),
-                initialLeftCounts: _initialLeftCounts(),
-                itemLabelBuilder: (bucketKey) => bucketKey,
-                leftEmptyLabel: 'No regiments',
-                rightEmptyLabel: 'No regiments',
-                confirmLabel: 'Confirm Split',
-                totalLabelBuilder: (total) => 'Total: $total regiments',
-                canConfirm: (left, right) {
-                  final leftTotal = left.values.fold(0, (sum, c) => sum + c);
-                  final rightTotal = right.values.fold(0, (sum, c) => sum + c);
-                  if (isHomeArmy) {
-                    return rightTotal > 0;
-                  }
-                  return leftTotal >= 1 && rightTotal > 0;
-                },
-                onCancel: () => Navigator.of(context).pop(),
-                onConfirm: (_, right) => _handleConfirm(right, context),
-              ),
-            ],
-          ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.splitArmy_title,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            CtTransferList(
+              listHeight: 220,
+              leftTitle: army.isHomeArmy ? 'Home Army' : 'Army ${army.id}',
+              rightTitle: 'New Army',
+              leftSubtitle: _locationLabel(),
+              rightSubtitle: _locationLabel(),
+              initialLeftCounts: _initialLeftCounts(),
+              itemLabelBuilder: (bucketKey) => bucketKey,
+              leftEmptyLabel: 'No regiments',
+              rightEmptyLabel: 'No regiments',
+              confirmLabel: 'Confirm Split',
+              totalLabelBuilder: (total) => 'Total: $total regiments',
+              canConfirm: (left, right) {
+                final leftTotal = left.values.fold(0, (sum, c) => sum + c);
+                final rightTotal = right.values.fold(0, (sum, c) => sum + c);
+                if (isHomeArmy) {
+                  return rightTotal > 0;
+                }
+                return leftTotal >= 1 && rightTotal > 0;
+              },
+              onCancel: () => Navigator.of(context).pop(),
+              onConfirm: (_, right) => _handleConfirm(right, context),
+            ),
+          ],
         ),
       ),
     );

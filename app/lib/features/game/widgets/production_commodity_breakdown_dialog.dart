@@ -163,49 +163,45 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
             style: theme.textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          Flexible(
-            child: Scrollbar(
-              thumbVisibility: true,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SingleChildScrollView(
-                  child: DataTable(
-                    headingRowHeight: 40,
-                    dataRowMinHeight: 32,
-                    dataRowMaxHeight: 48,
-                    columns: [
-                      DataColumn(
-                        label: Text(l10n.production_breakdown_commodity),
-                      ),
-                      ...EconomyPreviewStockpilePhase.values.map(
-                        (p) => DataColumn(
-                          label: Text(
-                            _phaseColumnLabel(l10n, p),
-                            softWrap: true,
-                          ),
-                        ),
-                      ),
-                      DataColumn(label: Text(l10n.production_breakdown_total)),
-                    ],
-                    rows: [
-                      for (final (label, commodities) in sections)
-                        if (commodities.isNotEmpty) ...[
-                          DataRow(
-                            cells: [
-                              DataCell(
-                                Text(label, style: theme.textTheme.titleSmall),
-                              ),
-                              ...List<DataCell>.generate(
-                                phaseColCount + 1,
-                                (_) => const DataCell(SizedBox.shrink()),
-                              ),
-                            ],
-                          ),
-                          ...rowsFor(commodities),
-                        ],
-                    ],
+          Scrollbar(
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowHeight: 40,
+                dataRowMinHeight: 32,
+                dataRowMaxHeight: 48,
+                columns: [
+                  DataColumn(
+                    label: Text(l10n.production_breakdown_commodity),
                   ),
-                ),
+                  ...EconomyPreviewStockpilePhase.values.map(
+                    (p) => DataColumn(
+                      label: Text(
+                        _phaseColumnLabel(l10n, p),
+                        softWrap: true,
+                      ),
+                    ),
+                  ),
+                  DataColumn(label: Text(l10n.production_breakdown_total)),
+                ],
+                rows: [
+                  for (final (label, commodities) in sections)
+                    if (commodities.isNotEmpty) ...[
+                      DataRow(
+                        cells: [
+                          DataCell(
+                            Text(label, style: theme.textTheme.titleSmall),
+                          ),
+                          ...List<DataCell>.generate(
+                            phaseColCount + 1,
+                            (_) => const DataCell(SizedBox.shrink()),
+                          ),
+                        ],
+                      ),
+                      ...rowsFor(commodities),
+                    ],
+                ],
               ),
             ),
           ),

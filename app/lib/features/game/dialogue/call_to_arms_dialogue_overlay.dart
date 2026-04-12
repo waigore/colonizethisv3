@@ -85,44 +85,42 @@ class _CallToArmsDialogueOverlayState extends State<CallToArmsDialogueOverlay> {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 16),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 280),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: items.length,
-                        itemBuilder: (context, i) {
-                          final c = items[i];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    l10n.game_callToArms_prompt(
-                                      _gpName(c.defenderGpId),
-                                      _gpName(c.aggressorGpId),
-                                    ),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: items.length,
+                      itemBuilder: (context, i) {
+                        final c = items[i];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  l10n.game_callToArms_prompt(
+                                    _gpName(c.defenderGpId),
+                                    _gpName(c.aggressorGpId),
                                   ),
                                 ),
-                                CtNinePatchButton(
-                                  onPressed: () {
-                                    setState(() => _join[i] = true);
-                                  },
-                                  child: Text(l10n.game_callToArms_join),
-                                ),
-                                const SizedBox(width: 8),
-                                CtNinePatchButton(
-                                  onPressed: () {
-                                    setState(() => _join[i] = false);
-                                  },
-                                  child: Text(l10n.game_callToArms_refuse),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                              ),
+                              CtNinePatchButton(
+                                onPressed: () {
+                                  setState(() => _join[i] = true);
+                                },
+                                child: Text(l10n.game_callToArms_join),
+                              ),
+                              const SizedBox(width: 8),
+                              CtNinePatchButton(
+                                onPressed: () {
+                                  setState(() => _join[i] = false);
+                                },
+                                child: Text(l10n.game_callToArms_refuse),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     Align(

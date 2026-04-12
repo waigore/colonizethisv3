@@ -243,43 +243,41 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 16),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 280),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: offers.length,
-                        itemBuilder: (context, i) {
-                          final offer = offers[i];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    l10n.game_overture_offerLine(
-                                      _offererDisplayName(offer.offererGpId),
-                                      _stageLabel(l10n, offer.stage),
-                                    ),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: offers.length,
+                      itemBuilder: (context, i) {
+                        final offer = offers[i];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  l10n.game_overture_offerLine(
+                                    _offererDisplayName(offer.offererGpId),
+                                    _stageLabel(l10n, offer.stage),
                                   ),
                                 ),
-                                CtNinePatchButton(
-                                  onPressed: () {
-                                    setState(() => _accepted[i] = true);
-                                  },
-                                  child: Text(l10n.game_overture_accept),
-                                ),
-                                const SizedBox(width: 8),
-                                CtNinePatchButton(
-                                  onPressed: () {
-                                    setState(() => _accepted[i] = false);
-                                  },
-                                  child: Text(l10n.game_overture_reject),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                              ),
+                              CtNinePatchButton(
+                                onPressed: () {
+                                  setState(() => _accepted[i] = true);
+                                },
+                                child: Text(l10n.game_overture_accept),
+                              ),
+                              const SizedBox(width: 8),
+                              CtNinePatchButton(
+                                onPressed: () {
+                                  setState(() => _accepted[i] = false);
+                                },
+                                child: Text(l10n.game_overture_reject),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     Align(
