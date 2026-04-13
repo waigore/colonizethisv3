@@ -33,22 +33,25 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
   }
 
   void _paintTransportOverlayTiles(Canvas canvas) {
-    if (baseLayerDisplayMode !=
-        BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads) {
+    if (!shouldRenderTransportOverlay(
+      baseLayerDisplayMode: baseLayerDisplayMode,
+    )) {
       return;
     }
     if (!transportOverlayTilesetCache.isLoaded) {
       return;
     }
     for (final cell in region.cells) {
-      if (cell.isSea) continue;
-      if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-          _visibilityForTerrain(cell) == TileVisibility.unrevealed) {
+      final tileVisibility = _visibilityForTerrain(cell);
+      if (!shouldPaintTransportOverlayForCell(
+        cell: cell,
+        visibilityMode: visibilityMode,
+        tileVisibility: tileVisibility,
+      )) {
         continue;
       }
       final roadLevel = cell.roadLevel ?? 0;
-      if (roadLevel <= 0) continue;
-      final family = roadLevel == 4
+      final family = isRailTransportLevel(roadLevel)
           ? TransportTileFamily.rail
           : TransportTileFamily.road;
       final tileset = transportOverlayTilesetCache.getTileset(family);
