@@ -14,6 +14,7 @@ import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/test_support/province_panel_e2e_expected_lines.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -173,6 +174,17 @@ void main() {
       matching: find.byType(CtNinePatchButton),
     );
     expect(startButton, findsOneWidget);
+
+    final shellScrollable = find.descendant(
+      of: find.byType(CtDialogShell),
+      matching: find.byType(Scrollable),
+    );
+    await tester.dragUntilVisible(
+      startButton,
+      shellScrollable,
+      const Offset(0, -120),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
     await tester.ensureVisible(startButton);
     await tester.tap(startButton);
     await tester.pump();
