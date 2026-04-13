@@ -50,6 +50,33 @@ Future<void> _waitUntilFound(
   );
 }
 
+Future<void> _openCivilianPanel(
+  WidgetTester tester, {
+  Duration timeout = const Duration(seconds: 20),
+}) async {
+  final sw = Stopwatch()..start();
+  final empireRailButton = find.byKey(kEmpireCivilianUnitsButtonKey);
+  final markerButton = find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey);
+  while (sw.elapsed < timeout) {
+    await tester.pump(const Duration(milliseconds: 100));
+    if (empireRailButton.evaluate().isNotEmpty) {
+      await tester.tap(empireRailButton);
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      return;
+    }
+    if (markerButton.evaluate().isNotEmpty) {
+      await tester.tap(markerButton);
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      return;
+    }
+  }
+  fail(
+    'Timed out after ${timeout.inSeconds}s waiting for a civilian panel opener. '
+    'empire=$empireRailButton marker=$markerButton '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
 void _collectTextPreorder(Element element, List<String> out) {
   final w = element.widget;
   if (w is Text) {
@@ -325,14 +352,12 @@ void main() {
       }
 
       // --- Civilian (empire rail): baseline ---
-      await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
-      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await _openCivilianPanel(tester);
       await expectCivilianPanelTexts();
       await _closeBottomSheet(tester);
 
       // --- Builder: build improvement + first legal tile (e2e tap target) ---
-      await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
-      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await _openCivilianPanel(tester);
       await _tapFirstAssignInCivilianPanel(tester);
       await tester.tap(find.text('Build improvement'));
       await _pumpFor(tester, const Duration(milliseconds: 400));
@@ -341,13 +366,7 @@ void main() {
       await _closeBottomSheet(tester);
 
       // --- Explorer: prospect + first legal tile ---
-      await _waitUntilFound(
-        tester,
-        find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey),
-        timeout: const Duration(seconds: 20),
-      );
-      await tester.tap(find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey));
-      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await _openCivilianPanel(tester);
       await _tapAssignOnCivilianRowWithTitle(tester, 'Explorer');
       await tester.tap(find.text('Prospect'));
       await _pumpFor(tester, const Duration(milliseconds: 400));
