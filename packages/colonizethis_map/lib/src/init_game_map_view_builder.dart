@@ -12,41 +12,6 @@ import 'port_icon_placement.dart';
 import 'sea_zone_centroid_tile.dart';
 import 'tile_map_visualization_shared.dart';
 
-/// Local province id from `portsByProvinceSeaboard` map key for [regionId].
-String? _localProvinceIdFromSeaboardKey(String seaboardKey, String regionId) {
-  final parts = seaboardKey.split('|');
-  if (parts.length >= 3) {
-    if (parts[0] != regionId) {
-      return null;
-    }
-    return parts[1];
-  }
-  if (parts.length == 2) {
-    return parts[0];
-  }
-  return null;
-}
-
-String? _portTileKeyForProvinceInRegion(
-  Game game,
-  String regionId,
-  String localProvinceId,
-) {
-  for (final e in game.worldState.portsByProvinceSeaboard.entries) {
-    final fromKey = _localProvinceIdFromSeaboardKey(e.key, regionId);
-    if (fromKey == localProvinceId) {
-      return e.value;
-    }
-  }
-  for (final e in game.worldState.portsByProvinceSeaboard.entries) {
-    final v = e.value.split('|');
-    if (v.length >= 4 && v[0] == regionId && v[1] == localProvinceId) {
-      return e.value;
-    }
-  }
-  return null;
-}
-
 final _log = packageLogger();
 
 const String _regionOldWorld = 'oldWorld';
@@ -139,25 +104,21 @@ String? _inPortFleetMarkerTileKey({
   required Set<String> seaZoneIds,
 }) {
   final localProvinceId = ProvinceId.localIdFrom(province.id);
-  final portTileKey =
-      _portTileKeyForProvinceInRegion(game, regionId, localProvinceId);
-  if (portTileKey == null) {
+  final tileKey = harborDrawableSeaTileKeyForPortProvince(
+    game: game,
+    regionId: regionId,
+    localProvinceId: localProvinceId,
+    tileMap: tileMap,
+    seaZoneIds: seaZoneIds,
+    contextLabel: 'fleet marker region=$regionId province=$localProvinceId',
+  );
+  if (tileKey == null) {
     _log.w(
       'map: in-port fleet marker skipped: no portsByProvinceSeaboard entry '
       'for region=$regionId province=$localProvinceId',
     );
-    return null;
   }
-  final placed = computePortDrawableSeaCellForMap(
-    tileMap: tileMap,
-    seaZoneIds: seaZoneIds,
-    portTileKey: portTileKey,
-    contextLabel: 'fleet marker region=$regionId province=$localProvinceId',
-  );
-  final cx = placed.x;
-  final cy = placed.y;
-  final regionCellId = tileMap.cell(cx, cy);
-  return '$regionId|$regionCellId|$cx|$cy';
+  return tileKey;
 }
 
 (int?, int?) _xyFromMapTileKey(String tileKey) {
@@ -683,7 +644,7 @@ RegionMapViewData _buildRegionViewData({
     if (regId != regionId) {
       return;
     }
-    final fromKey = _localProvinceIdFromSeaboardKey(key, regionId);
+    final fromKey = localProvinceIdFromPortsSeaboardKey(key, regionId);
     final provinceIdForMarker = fromKey ?? parts[1];
     final x = int.tryParse(parts[2]);
     final y = int.tryParse(parts[3]);
@@ -736,7 +697,7 @@ RegionMapViewData _buildRegionViewData({
     final localProvinceId = ProvinceId.localIdFrom(p.id);
     final hasPort = portProvinceIds.contains(localProvinceId);
     final portTileKey = hasPort
-        ? _portTileKeyForProvinceInRegion(game, regionId, localProvinceId)
+        ? portLandTileKeyForProvinceInRegion(game, regionId, localProvinceId)
         : null;
     int? portIconX;
     int? portIconY;

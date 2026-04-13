@@ -3,8 +3,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart';
 
-import '../utils/map_location_resolver.dart';
-
 /// Pure-ish helpers for `GameMapArea` state translation.
 class GameMapAreaStateLogic {
   static const String _regionOldWorld = 'oldWorld';
@@ -241,7 +239,24 @@ class GameMapAreaStateLogic {
         if (p == null) {
           return null;
         }
-        return tileKeyForProvinceLocation(game, p);
+        final destReg = p.regionId;
+        final tmDock = tileMapByRegion[destReg];
+        final tpDock = topologyByRegion[destReg];
+        if (tmDock == null || tpDock == null) {
+          return null;
+        }
+        final seaIdsDock = {
+          for (final n in tpDock.nodes)
+            if (n.type == TopologyNodeType.seaZone) n.id,
+        };
+        return harborDrawableSeaTileKeyForPortProvince(
+          game: game,
+          regionId: destReg,
+          localProvinceId: ct_models.ProvinceId.localIdFrom(p.id),
+          tileMap: tmDock,
+          seaZoneIds: seaIdsDock,
+          contextLabel: 'dock draft destination',
+        );
       }
       final seaId = move.destinationSeaZoneId!;
       final destReg =
@@ -291,7 +306,24 @@ class GameMapAreaStateLogic {
         if (p == null) {
           return null;
         }
-        return tileKeyForProvinceLocation(game, p);
+        final reg = p.regionId;
+        final tmPort = tileMapByRegion[reg];
+        final tpPort = topologyByRegion[reg];
+        if (tmPort == null || tpPort == null) {
+          return null;
+        }
+        final seaIdsPort = {
+          for (final n in tpPort.nodes)
+            if (n.type == TopologyNodeType.seaZone) n.id,
+        };
+        return harborDrawableSeaTileKeyForPortProvince(
+          game: game,
+          regionId: reg,
+          localProvinceId: ct_models.ProvinceId.localIdFrom(p.id),
+          tileMap: tmPort,
+          seaZoneIds: seaIdsPort,
+          contextLabel: 'in-port fleet current',
+        );
       }
       return null;
     }

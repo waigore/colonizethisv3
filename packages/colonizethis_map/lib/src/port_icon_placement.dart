@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Orthogonal scan order: North, East, South, West.
 /// SPEC/ui/town-port-icons.md, GitHub #1761.
@@ -89,4 +90,80 @@ String _portPlacementContextSuffix(String? contextLabel) {
     return '';
   }
   return ' ($contextLabel)';
+}
+
+/// Local province id from a `portsByProvinceSeaboard` **key** for [regionId].
+/// SPEC/ui/town-port-icons.md, GitHub #1770.
+String? localProvinceIdFromPortsSeaboardKey(
+  String seaboardKey,
+  String regionId,
+) {
+  final parts = seaboardKey.split('|');
+  if (parts.length >= 3) {
+    if (parts[0] != regionId) {
+      return null;
+    }
+    return parts[1];
+  }
+  if (parts.length == 2) {
+    return parts[0];
+  }
+  return null;
+}
+
+/// Authoritative **land** port tile key from [Game.worldState.portsByProvinceSeaboard]
+/// for [localProvinceId] in [regionId]. Null when no entry matches.
+String? portLandTileKeyForProvinceInRegion(
+  Game game,
+  String regionId,
+  String localProvinceId,
+) {
+  for (final e in game.worldState.portsByProvinceSeaboard.entries) {
+    final fromKey = localProvinceIdFromPortsSeaboardKey(e.key, regionId);
+    if (fromKey == localProvinceId) {
+      return e.value;
+    }
+  }
+  for (final e in game.worldState.portsByProvinceSeaboard.entries) {
+    final v = e.value.split('|');
+    if (v.length >= 4 && v[0] == regionId && v[1] == localProvinceId) {
+      return e.value;
+    }
+  }
+  return null;
+}
+
+/// Full map tile key for the drawable harbor **sea** cell (port sprite,
+/// `FleetTileMarkerView` in port, dock-move preview). Format
+/// `regionId|seaCellId|x|y` where `seaCellId` is [TileMapResult.cell] at the
+/// resolved coordinates.
+///
+/// Returns null when there is no matching `portsByProvinceSeaboard` entry.
+/// Throws [PortDrawableSeaCellException] when an entry exists but no valid sea
+/// drawable can be resolved (same as [computePortDrawableSeaCellForMap]).
+/// GitHub #1770, SPEC/ui/town-port-icons.md.
+String? harborDrawableSeaTileKeyForPortProvince({
+  required Game game,
+  required String regionId,
+  required String localProvinceId,
+  required TileMapResult tileMap,
+  required Set<String> seaZoneIds,
+  String? contextLabel,
+}) {
+  final portTileKey =
+      portLandTileKeyForProvinceInRegion(game, regionId, localProvinceId);
+  if (portTileKey == null) {
+    return null;
+  }
+  final placed = computePortDrawableSeaCellForMap(
+    tileMap: tileMap,
+    seaZoneIds: seaZoneIds,
+    portTileKey: portTileKey,
+    contextLabel: contextLabel ??
+        'harbor drawable region=$regionId province=$localProvinceId',
+  );
+  final cx = placed.x;
+  final cy = placed.y;
+  final regionCellId = tileMap.cell(cx, cy);
+  return '$regionId|$regionCellId|$cx|$cy';
 }
