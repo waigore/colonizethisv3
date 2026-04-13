@@ -1,0 +1,252 @@
+<section class="module" id="module-1" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">01</span>
+      <h1 class="module-title">Your Empire as a Factory</h1>
+      <p class="module-subtitle">Every turn is a 13-step factory cycle — here's what really happens when you click End Turn.</p>
+    </header>
+
+    <div class="module-body">
+
+      <!-- SCREEN 1: Opening Hook -->
+      <section class="screen animate-in">
+        <div class="screen-number">1</div>
+        <h2 class="screen-heading">You've played ColonizeThis.<br>But what's actually happening inside?</h2>
+
+        <div class="callout callout-accent animate-in" style="margin: var(--space-8) 0">
+          <div class="callout-icon">🏭</div>
+          <div class="callout-content">
+            <strong class="callout-title">The Factory Metaphor</strong>
+            <p>Your empire isn't a game — it's a <span class="term" data-definition="A factory is a place where raw materials go in one end and finished products come out the other, via a sequence of specialized stations.">factory</span>. Every turn, a tiny clockwork mechanism winds through 13 exact steps. Raw materials get extracted. Gold gets minted. Armies march. Wars get fought. The same 13 steps, every single turn, like clockwork.</p>
+          </div>
+        </div>
+
+        <div class="pattern-cards stagger-children" style="margin-top: var(--space-8)">
+          <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🌍</div>
+            <h4 class="pattern-title">Old World</h4>
+            <p class="pattern-desc">Home territories. Refines raw materials into finished goods and gold bars.</p>
+          </div>
+          <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🌄</div>
+            <h4 class="pattern-title">New World</h4>
+            <p class="pattern-desc">Colonies and frontier. Extracts raw materials — gold ore, lumber, food.</p>
+          </div>
+        </div>
+
+        <p style="margin-top: var(--space-8); color: var(--color-text-secondary); font-size: var(--text-lg)">
+          The <span class="term" data-definition="The Old World refers to your starting European territories — the home base that produces advanced goods and gold bars from raw materials.">Old World</span> and <span class="term" data-definition="The New World refers to the uncolonized frontier where your colonies extract raw materials like gold ore, lumber, and food from the land.">New World</span> are two sides of the same factory floor. Raw materials flow one way; finished goods flow the other.
+        </p>
+      </section>
+
+      <!-- SCREEN 2: Two Factories -->
+      <section class="screen animate-in">
+        <div class="screen-number">2</div>
+        <h2 class="screen-heading">Your Empire Has Two Factories</h2>
+
+        <div class="icon-rows animate-in" style="margin: var(--space-8) 0">
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-1)">🏠</div>
+            <div>
+              <strong>Old World — The Refinery</strong>
+              <p>Your home territories receive raw materials and refine them into gold bars, manufactured goods, and research progress. No extraction happens here — only transformation.</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-2)">⛏️</div>
+            <div>
+              <strong>New World — The Extraction Zone</strong>
+              <p>Colonies on the frontier extract raw resources from the map — gold ore from mines, lumber from forests, food from farmland. These raw materials feed into the Old World.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-steps animate-in" style="margin-top: var(--space-8)">
+          <div class="flow-step">
+            <div class="flow-step-num">1</div>
+            <p>New World extracts raw materials</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">2</div>
+            <p>Raw materials shipped to Old World</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">3</div>
+            <p>Old World refines into gold/research</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: Meet the 13 Steps -->
+      <section class="screen animate-in">
+        <div class="screen-number">3</div>
+        <h2 class="screen-heading">Meet the 13 Steps</h2>
+        <p>Every turn runs through these 13 phases, in exact order. Click <strong>Next Step</strong> to see what each phase does.</p>
+
+        <div class="flow-animation" data-steps='[
+          {"highlight":"flow-actor-1","label":"Players write their orders — move armies, build colonies, research tech"},
+          {"highlight":"flow-actor-1","label":"Extraction: mines and colonies in the New World produce raw materials"},
+          {"highlight":"flow-actor-1","label":"Riches to Treasury: raw gold ore becomes spendable gold bars"},
+          {"highlight":"flow-actor-1","label":"Production: Old World factories turn raw materials into goods"},
+          {"highlight":"flow-actor-1","label":"Consumption: colonies and armies eat food, using up supplies"},
+          {"highlight":"flow-actor-1","label":"Research: universities generate research points toward new techs"},
+          {"highlight":"flow-actor-1","label":"Diplomacy: diplomatic orders get processed — alliances, trade deals"},
+          {"highlight":"flow-actor-1","label":"Movement: all armies and fleets execute their move orders"},
+          {"highlight":"flow-actor-1","label":"Minor Regiment Upgrade: cheap army upgrades happen"},
+          {"highlight":"flow-actor-1","label":"Naval Interception Combat: fleets intercept enemy fleets at sea"},
+          {"highlight":"flow-actor-1","label":"Combat: land battles resolved — forts fire, armies clash"},
+          {"highlight":"flow-actor-1","label":"Build Work: colonies spend production on buildings and units"},
+          {"highlight":"flow-actor-1","label":"End of Turn: turn counter increments, next turn begins"}
+        ]'>
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-actor-1">
+              <div class="flow-actor-icon" style="background: var(--color-actor-1)">⚙️</div>
+              <span>Turn Phase</span>
+            </div>
+          </div>
+          <div class="flow-packet" id="flow-packet"></div>
+          <div class="flow-step-label" id="flow-label">Click "Next Step" to begin</div>
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">Next Step</button>
+            <button class="btn flow-reset-btn">Restart</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: Code ↔ English Translation -->
+      <section class="screen animate-in">
+        <div class="screen-number">4</div>
+        <h2 class="screen-heading">The Phase List in Code — And Plain English</h2>
+        <p>This <span class="term" data-definition="An enum is a list of named values — a way to say a variable can only be one of a fixed set of options, like days of the week or here, phases of a turn.">enum</span> defines every phase that runs each turn. Real code, exactly as in the game.</p>
+
+        <div class="translation-block animate-in" style="margin-top: var(--space-6)">
+          <div class="translation-code">
+            <span class="translation-label">CODE</span>
+            <pre><code><span class="code-keyword">enum</span> <span class="code-function">TurnPhase</span> {
+  <span class="code-property">orders</span>,
+  <span class="code-property">extraction</span>,
+  <span class="code-property">richesToTreasury</span>,
+  <span class="code-property">production</span>,
+  <span class="code-property">consumption</span>,
+  <span class="code-property">research</span>,
+  <span class="code-property">diplomacy</span>,
+  <span class="code-property">movement</span>,
+  <span class="code-property">minorRegimentUpgrade</span>,
+  <span class="code-property">navalInterceptionCombat</span>,
+  <span class="code-property">combat</span>,
+  <span class="code-property">buildWork</span>,
+  <span class="code-property">endOfTurn</span>,
+}</code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl"><strong>orders</strong> — Players (human or AI) write what they want to do this turn</p>
+              <p class="tl"><strong>extraction</strong> — Mines and colonies pull raw gold ore from the map</p>
+              <p class="tl"><strong>richesToTreasury</strong> — Raw gold ore gets minted into spendable gold bars</p>
+              <p class="tl"><strong>production</strong> — Old World factories convert raw materials into goods</p>
+              <p class="tl"><strong>consumption</strong> — Colonies and armies eat food, depleting supplies</p>
+              <p class="tl"><strong>research</strong> — Universities generate research points for new technologies</p>
+              <p class="tl"><strong>diplomacy</strong> — Alliance and trade deal orders get processed</p>
+              <p class="tl"><strong>movement</strong> — All armies and fleets actually move on the map</p>
+              <p class="tl"><strong>minorRegimentUpgrade</strong> — Cheap army upgrades (muskets → rifles, etc.)</p>
+              <p class="tl"><strong>navalInterceptionCombat</strong> — Fleets try to intercept enemy fleets crossing the sea</p>
+              <p class="tl"><strong>combat</strong> — Land battles happen: forts fire, armies clash</p>
+              <p class="tl"><strong>buildWork</strong> — Colonies spend their production on buildings and units</p>
+              <p class="tl"><strong>endOfTurn</strong> — Turn number increases, the cycle restarts</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent animate-in" style="margin-top: var(--space-6)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Key Insight</strong>
+            <p>Notice the order is strict and always the same: extraction before production, because you need raw materials before you can refine them. You can't mint gold bars before the mines produce ore.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Quiz -->
+      <section class="screen animate-in">
+        <div class="screen-number">5</div>
+        <h2 class="screen-heading">Test Your Understanding</h2>
+
+        <div class="quiz-container" id="quiz-module1" style="margin-top: var(--space-6)">
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="Exactly! The movement phase is step 8. Your army receives its move order during the orders phase (step 1), but doesn't actually move until the movement phase (step 8)."
+               data-explanation-wrong="Not quite. Orders are written in phase 1, but the actual movement happens in the movement phase — step 8. Your army is given its marching orders early, but doesn't march until later.">
+            <h3 class="quiz-question">You want to move your army from Province A to Province B. Which phase actually moves it?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Orders phase — that's when you give the order</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Movement phase — that's when armies actually move</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Combat phase — armies move toward enemies</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="Right! You wrote the order in the orders phase, but the End Turn button just starts the turn cycle. Your army won't move until the movement phase runs — which happens after you click End Turn."
+               data-explanation-wrong="Not quite. Clicking End Turn starts the turn resolver running through all 13 phases. Your army's move order was saved in the orders phase, but it doesn't execute until the movement phase — which is step 8.">
+            <h3 class="quiz-question">You clicked End Turn, but your army didn't move. Why?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The game is broken — End Turn should move everything instantly</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>You didn't have enough gold to pay for movement</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The movement phase hasn't run yet — End Turn just starts the cycle</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="Correct! Gold ore is extracted in phase 2 (extraction), then converted to gold bars in phase 3 (richesToTreasury). The ore travels: mine → extraction phase → treasury phase → spendable gold."
+               data-explanation-wrong="Not quite. Trace the path: extraction phase pulls ore from mines in the New World. Then richesToTreasury converts that ore into minted gold bars that go into your treasury. Two separate phases, in order.">
+            <h3 class="quiz-question">Trace what happens to gold ore from a mine in the New World. What is the correct path?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Extraction phase → Riches to Treasury phase → spendable gold</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Production phase → Consumption phase → treasury</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Research phase → Diplomacy phase → gold bars</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">Check Answers</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">Try Again</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>

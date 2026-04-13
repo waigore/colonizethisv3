@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inside ColonizeThis: How a Turn-Based Strategy Game Works</title>
+
+  <!-- Google Fonts: Bricolage Grotesque · DM Sans · JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <!--
+    CUSTOMIZE PER COURSE — vermillion palette for ColonizeThis course
+  -->
+  <style>
+    :root {
+      --color-accent:       #D94F30;
+      --color-accent-hover: #C4432A;
+      --color-accent-light: #FDEEE9;
+      --color-accent-muted: #E8836C;
+    }
+  </style>
+
+  <script src="main.js" defer></script>
+</head>
+<body>
+
+  <nav class="nav" id="nav">
+    <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="nav-inner">
+      <span class="nav-title">Inside ColonizeThis</span>
+      <div class="nav-dots" id="nav-dots" role="tablist">
+        <button class="nav-dot" data-target="module-1" data-tooltip="Your Empire as a Factory" role="tab" aria-label="Module 1: Your Empire as a Factory"></button>
+        <button class="nav-dot" data-target="module-2" data-tooltip="Meet the Team" role="tab" aria-label="Module 2: Meet the Team"></button>
+        <button class="nav-dot" data-target="module-3" data-tooltip="The Turn Ticker" role="tab" aria-label="Module 3: The Turn Ticker"></button>
+        <button class="nav-dot" data-target="module-4" data-tooltip="The AI Brain" role="tab" aria-label="Module 4: The AI Brain"></button>
+        <button class="nav-dot" data-target="module-5" data-tooltip="Orders in Action" role="tab" aria-label="Module 5: Orders in Action"></button>
+        <button class="nav-dot" data-target="module-6" data-tooltip="The Fog of War" role="tab" aria-label="Module 6: The Fog of War"></button>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
+    <!-- modules/*.html content is assembled here by build.sh -->
+
+  </main>
+
+</body>
+</html>
+<section class="module" id="module-1" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">01</span>
+      <h1 class="module-title">Your Empire as a Factory</h1>
+      <p class="module-subtitle">Every turn is a 13-step factory cycle — here's what really happens when you click End Turn.</p>
+    </header>
+
+    <div class="module-body">
+
+      <!-- SCREEN 1: Opening Hook -->
+      <section class="screen animate-in">
+        <div class="screen-number">1</div>
+        <h2 class="screen-heading">You've played ColonizeThis.<br>But what's actually happening inside?</h2>
+
+        <div class="callout callout-accent animate-in" style="margin: var(--space-8) 0">
+          <div class="callout-icon">🏭</div>
+          <div class="callout-content">
+            <strong class="callout-title">The Factory Metaphor</strong>
+            <p>Your empire isn't a game — it's a <span class="term" data-definition="A factory is a place where raw materials go in one end and finished products come out the other, via a sequence of specialized stations.">factory</span>. Every turn, a tiny clockwork mechanism winds through 13 exact steps. Raw materials get extracted. Gold gets minted. Armies march. Wars get fought. The same 13 steps, every single turn, like clockwork.</p>
+          </div>
+        </div>
+
+        <div class="pattern-cards stagger-children" style="margin-top: var(--space-8)">
+          <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🌍</div>
+            <h4 class="pattern-title">Old World</h4>
+            <p class="pattern-desc">Home territories. Refines raw materials into finished goods and gold bars.</p>
+          </div>
+          <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🌄</div>
+            <h4 class="pattern-title">New World</h4>
+            <p class="pattern-desc">Colonies and frontier. Extracts raw materials — gold ore, lumber, food.</p>
+          </div>
+        </div>
+
+        <p style="margin-top: var(--space-8); color: var(--color-text-secondary); font-size: var(--text-lg)">
+          The <span class="term" data-definition="The Old World refers to your starting European territories — the home base that produces advanced goods and gold bars from raw materials.">Old World</span> and <span class="term" data-definition="The New World refers to the uncolonized frontier where your colonies extract raw materials like gold ore, lumber, and food from the land.">New World</span> are two sides of the same factory floor. Raw materials flow one way; finished goods flow the other.
+        </p>
+      </section>
+
+      <!-- SCREEN 2: Two Factories -->
+      <section class="screen animate-in">
+        <div class="screen-number">2</div>
+        <h2 class="screen-heading">Your Empire Has Two Factories</h2>
+
+        <div class="icon-rows animate-in" style="margin: var(--space-8) 0">
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-1)">🏠</div>
+            <div>
+              <strong>Old World — The Refinery</strong>
+              <p>Your home territories receive raw materials and refine them into gold bars, manufactured goods, and research progress. No extraction happens here — only transformation.</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-2)">⛏️</div>
+            <div>
+              <strong>New World — The Extraction Zone</strong>
+              <p>Colonies on the frontier extract raw resources from the map — gold ore from mines, lumber from forests, food from farmland. These raw materials feed into the Old World.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-steps animate-in" style="margin-top: var(--space-8)">
+          <div class="flow-step">
+            <div class="flow-step-num">1</div>
+            <p>New World extracts raw materials</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">2</div>
+            <p>Raw materials shipped to Old World</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">3</div>
+            <p>Old World refines into gold/research</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: Meet the 13 Steps -->
+      <section class="screen animate-in">
+        <div class="screen-number">3</div>
+        <h2 class="screen-heading">Meet the 13 Steps</h2>
+        <p>Every turn runs through these 13 phases, in exact order. Click <strong>Next Step</strong> to see what each phase does.</p>
+
+        <div class="flow-animation" data-steps='[
+          {"highlight":"flow-actor-1","label":"Players write their orders — move armies, build colonies, research tech"},
+          {"highlight":"flow-actor-1","label":"Extraction: mines and colonies in the New World produce raw materials"},
+          {"highlight":"flow-actor-1","label":"Riches to Treasury: raw gold ore becomes spendable gold bars"},
+          {"highlight":"flow-actor-1","label":"Production: Old World factories turn raw materials into goods"},
+          {"highlight":"flow-actor-1","label":"Consumption: colonies and armies eat food, using up supplies"},
+          {"highlight":"flow-actor-1","label":"Research: universities generate research points toward new techs"},
+          {"highlight":"flow-actor-1","label":"Diplomacy: diplomatic orders get processed — alliances, trade deals"},
+          {"highlight":"flow-actor-1","label":"Movement: all armies and fleets execute their move orders"},
+          {"highlight":"flow-actor-1","label":"Minor Regiment Upgrade: cheap army upgrades happen"},
+          {"highlight":"flow-actor-1","label":"Naval Interception Combat: fleets intercept enemy fleets at sea"},
+          {"highlight":"flow-actor-1","label":"Combat: land battles resolved — forts fire, armies clash"},
+          {"highlight":"flow-actor-1","label":"Build Work: colonies spend production on buildings and units"},
+          {"highlight":"flow-actor-1","label":"End of Turn: turn counter increments, next turn begins"}
+        ]'>
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-actor-1">
+              <div class="flow-actor-icon" style="background: var(--color-actor-1)">⚙️</div>
+              <span>Turn Phase</span>
+            </div>
+          </div>
+          <div class="flow-packet" id="flow-packet"></div>
+          <div class="flow-step-label" id="flow-label">Click "Next Step" to begin</div>
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">Next Step</button>
+            <button class="btn flow-reset-btn">Restart</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: Code ↔ English Translation -->
+      <section class="screen animate-in">
+        <div class="screen-number">4</div>
+        <h2 class="screen-heading">The Phase List in Code — And Plain English</h2>
+        <p>This <span class="term" data-definition="An enum is a list of named values — a way to say a variable can only be one of a fixed set of options, like days of the week or here, phases of a turn.">enum</span> defines every phase that runs each turn. Real code, exactly as in the game.</p>
+
+        <div class="translation-block animate-in" style="margin-top: var(--space-6)">
+          <div class="translation-code">
+            <span class="translation-label">CODE</span>
+            <pre><code><span class="code-keyword">enum</span> <span class="code-function">TurnPhase</span> {
+  <span class="code-property">orders</span>,
+  <span class="code-property">extraction</span>,
+  <span class="code-property">richesToTreasury</span>,
+  <span class="code-property">production</span>,
+  <span class="code-property">consumption</span>,
+  <span class="code-property">research</span>,
+  <span class="code-property">diplomacy</span>,
+  <span class="code-property">movement</span>,
+  <span class="code-property">minorRegimentUpgrade</span>,
+  <span class="code-property">navalInterceptionCombat</span>,
+  <span class="code-property">combat</span>,
+  <span class="code-property">buildWork</span>,
+  <span class="code-property">endOfTurn</span>,
+}</code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl"><strong>orders</strong> — Players (human or AI) write what they want to do this turn</p>
+              <p class="tl"><strong>extraction</strong> — Mines and colonies pull raw gold ore from the map</p>
+              <p class="tl"><strong>richesToTreasury</strong> — Raw gold ore gets minted into spendable gold bars</p>
+              <p class="tl"><strong>production</strong> — Old World factories convert raw materials into goods</p>
+              <p class="tl"><strong>consumption</strong> — Colonies and armies eat food, depleting supplies</p>
+              <p class="tl"><strong>research</strong> — Universities generate research points for new technologies</p>
+              <p class="tl"><strong>diplomacy</strong> — Alliance and trade deal orders get processed</p>
+              <p class="tl"><strong>movement</strong> — All armies and fleets actually move on the map</p>
+              <p class="tl"><strong>minorRegimentUpgrade</strong> — Cheap army upgrades (muskets → rifles, etc.)</p>
+              <p class="tl"><strong>navalInterceptionCombat</strong> — Fleets try to intercept enemy fleets crossing the sea</p>
+              <p class="tl"><strong>combat</strong> — Land battles happen: forts fire, armies clash</p>
+              <p class="tl"><strong>buildWork</strong> — Colonies spend their production on buildings and units</p>
+              <p class="tl"><strong>endOfTurn</strong> — Turn number increases, the cycle restarts</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent animate-in" style="margin-top: var(--space-6)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Key Insight</strong>
+            <p>Notice the order is strict and always the same: extraction before production, because you need raw materials before you can refine them. You can't mint gold bars before the mines produce ore.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Quiz -->
+      <section class="screen animate-in">
+        <div class="screen-number">5</div>
+        <h2 class="screen-heading">Test Your Understanding</h2>
+
+        <div class="quiz-container" id="quiz-module1" style="margin-top: var(--space-6)">
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="Exactly! The movement phase is step 8. Your army receives its move order during the orders phase (step 1), but doesn't actually move until the movement phase (step 8)."
+               data-explanation-wrong="Not quite. Orders are written in phase 1, but the actual movement happens in the movement phase — step 8. Your army is given its marching orders early, but doesn't march until later.">
+            <h3 class="quiz-question">You want to move your army from Province A to Province B. Which phase actually moves it?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Orders phase — that's when you give the order</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Movement phase — that's when armies actually move</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Combat phase — armies move toward enemies</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="Right! You wrote the order in the orders phase, but the End Turn button just starts the turn cycle. Your army won't move until the movement phase runs — which happens after you click End Turn."
+               data-explanation-wrong="Not quite. Clicking End Turn starts the turn resolver running through all 13 phases. Your army's move order was saved in the orders phase, but it doesn't execute until the movement phase — which is step 8.">
+            <h3 class="quiz-question">You clicked End Turn, but your army didn't move. Why?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The game is broken — End Turn should move everything instantly</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>You didn't have enough gold to pay for movement</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The movement phase hasn't run yet — End Turn just starts the cycle</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="Correct! Gold ore is extracted in phase 2 (extraction), then converted to gold bars in phase 3 (richesToTreasury). The ore travels: mine → extraction phase → treasury phase → spendable gold."
+               data-explanation-wrong="Not quite. Trace the path: extraction phase pulls ore from mines in the New World. Then richesToTreasury converts that ore into minted gold bars that go into your treasury. Two separate phases, in order.">
+            <h3 class="quiz-question">Trace what happens to gold ore from a mine in the New World. What is the correct path?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Extraction phase → Riches to Treasury phase → spendable gold</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Production phase → Consumption phase → treasury</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Research phase → Diplomacy phase → gold bars</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">Check Answers</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">Try Again</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+<section class="module" id="module-2" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">02</span>
+      <h1 class="module-title">Meet the Team</h1>
+      <p class="module-subtitle">Four specialized packages power the game — each with exactly one job.</p>
+    </header>
+
+    <div class="module-body">
+
+      <!-- SCREEN 1: Opening Hook -->
+      <section class="screen animate-in">
+        <div class="screen-number">1</div>
+        <h2 class="screen-heading">When you play, you see the UI.<br>But behind it sits a team of specialists.</h2>
+
+        <div class="callout callout-accent animate-in" style="margin: var(--space-8) 0">
+          <div class="callout-icon">🎭</div>
+          <div class="callout-content">
+            <strong class="callout-title">The Theater Troupe Metaphor</strong>
+            <p>The game is like a theater troupe with four actors, each with a strict role. <span class="term" data-definition="Models is the script — it only contains data structures, with no logic or behavior. Pure information, nothing else.">Models</span> is the script. <span class="term" data-definition="Logic is the stage manager — it enforces the rules and orchestrates what happens each turn.">Logic</span> is the stage manager. <span class="term" data-definition="AI is the understudy — it makes automated decisions on behalf of AI-controlled players.">AI</span> is the understudy. <span class="term" data-definition="Map is the set designer — it procedurally generates the game world from mathematical rules.">Map</span> is the set designer.</p>
+          </div>
+        </div>
+
+        <p style="color: var(--color-text-secondary); margin-top: var(--space-6)">Each package has exactly one job. They never talk to each other directly — only through well-defined contracts.</p>
+      </section>
+
+      <!-- SCREEN 2: Architecture Diagram -->
+      <section class="screen animate-in">
+        <div class="screen-number">2</div>
+        <h2 class="screen-heading">Four Packages, One Rule</h2>
+        <p>The dependency arrow only goes one way. Hover each package to see what it does.</p>
+
+        <div class="arch-diagram animate-in" style="margin-top: var(--space-8)">
+          <div class="arch-zones" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); max-width: 700px; margin: 0 auto;">
+
+            <div class="arch-zone" style="text-align: center;">
+              <div class="arch-component" data-desc="The script — pure data only. Contains classes like Player, Province, Unit, Army, Fleet. No logic, no behavior, just information about the game state."
+                   onclick="showArchDesc(this)" style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); cursor: pointer; border-top: 4px solid var(--color-actor-1)">
+                <div class="arch-icon" style="font-size: 2rem; margin-bottom: var(--space-2)">📋</div>
+                <strong style="font-size: var(--text-lg)">colonizethis_models</strong>
+                <p style="color: var(--color-text-secondary); font-size: var(--text-sm); margin-top: var(--space-2)">Data structures only</p>
+              </div>
+            </div>
+
+            <div class="arch-zone" style="text-align: center;">
+              <div class="arch-component" data-desc="The stage manager — rules and orchestration. Contains TurnResolver, CombatResolver, PlayerView. Enforces the 13-phase turn cycle and combat rules."
+                   onclick="showArchDesc(this)" style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); cursor: pointer; border-top: 4px solid var(--color-actor-2)">
+                <div class="arch-icon" style="font-size: 2rem; margin-bottom: var(--space-2)">🎬</div>
+                <strong style="font-size: var(--text-lg)">colonizethis_logic</strong>
+                <p style="color: var(--color-text-secondary); font-size: var(--text-sm); margin-top: var(--space-2)">Rules and orchestration</p>
+              </div>
+            </div>
+
+            <div class="arch-zone" style="text-align: center;">
+              <div class="arch-component" data-desc="The understudy — automated decision-making. Contains StrategicAI, GoalManager, TacticalAI. Decides what AI players do each turn."
+                   onclick="showArchDesc(this)" style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); cursor: pointer; border-top: 4px solid var(--color-actor-3)">
+                <div class="arch-icon" style="font-size: 2rem; margin-bottom: var(--space-2)">🤖</div>
+                <strong style="font-size: var(--text-lg)">colonizethis_ai</strong>
+                <p style="color: var(--color-text-secondary); font-size: var(--text-sm); margin-top: var(--space-2)">AI decision-making</p>
+              </div>
+            </div>
+
+            <div class="arch-zone" style="text-align: center;">
+              <div class="arch-component" data-desc="The set designer — procedural world generation. Generates the map topology, terrain, and province boundaries from mathematical rules."
+                   onclick="showArchDesc(this)" style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); cursor: pointer; border-top: 4px solid var(--color-actor-4)">
+                <div class="arch-icon" style="font-size: 2rem; margin-bottom: var(--space-2)">🗺️</div>
+                <strong style="font-size: var(--text-lg)">colonizethis_map</strong>
+                <p style="color: var(--color-text-secondary); font-size: var(--text-sm); margin-top: var(--space-2)">Procedural generation</p>
+              </div>
+            </div>
+
+          </div>
+
+          <div style="text-align: center; margin-top: var(--space-6); padding: var(--space-4); background: var(--color-surface); border-radius: var(--radius-md);">
+            <p style="font-size: var(--text-sm); color: var(--color-text-secondary)">
+              <strong style="color: var(--color-accent)">AI → Logic → Models</strong> — dependencies flow in this direction only.<br>
+              Map stands alone — it generates the world once at setup, then doesn't participate in turn logic.
+            </p>
+          </div>
+
+          <div class="arch-description" id="arch-desc" style="margin-top: var(--space-4); min-height: 48px; padding: var(--space-4); background: var(--color-bg-code); color: #CDD6F4; border-radius: var(--radius-sm); font-size: var(--text-sm);">
+            Click any package above to learn what it does.
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: What Each Package Does -->
+      <section class="screen animate-in">
+        <div class="screen-number">3</div>
+        <h2 class="screen-heading">What Each Package Is Responsible For</h2>
+
+        <div class="pattern-cards animate-in" style="margin-top: var(--space-8)">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">📋</div>
+            <h4 class="pattern-title">colonizethis_models</h4>
+            <p class="pattern-desc">Pure data. Defines what a Player, Province, Unit, Army, Fleet, and TurnPhase look like. No logic lives here — just the shape of information.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🎬</div>
+            <h4 class="pattern-title">colonizethis_logic</h4>
+            <p class="pattern-desc">The rules engine. Runs the 13-phase turn cycle, resolves combat, builds PlayerView for each player, merges human and AI orders.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🤖</div>
+            <h4 class="pattern-title">colonizethis_ai</h4>
+            <p class="pattern-desc">The brain. Decides what AI players want to do — build armies, negotiate alliances, research tech. Feeds orders into the Logic layer.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">🗺️</div>
+            <h4 class="pattern-title">colonizethis_map</h4>
+            <p class="pattern-desc">The set designer. Procedurally generates terrain, province boundaries, and topology. Runs once at game start, then stays quiet.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: Group Chat Animation -->
+      <section class="screen animate-in">
+        <div class="screen-number">4</div>
+        <h2 class="screen-heading">How They Talk to Each Other</h2>
+        <p>AI can ask Logic for help. Logic can respond. But Logic <em>never</em> initiates. Watch:</p>
+
+        <div class="chat-window" id="chat-module2" style="margin-top: var(--space-6)">
+          <div class="chat-messages">
+            <div class="chat-message" data-msg="0" data-sender="actor-ai" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-3)">AI</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-3)">AI Planner</span>
+                <p>Hey Logic, I need to decide what to build this turn. Can you give me suggestions?</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="1" data-sender="actor-logic" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">LG</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">Logic</span>
+                <p>Sure! Based on the current game state, your best options are: build a colony here, train an army there, or research this tech.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="2" data-sender="actor-ai" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-3)">AI</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-3)">AI Planner</span>
+                <p>Got it — I'll prioritize the colony. Thanks!</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="3" data-sender="actor-logic" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">LG</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">Logic</span>
+                <p>No problem! Remember — I can only respond when you ask. I never initiate.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-typing" id="chat-typing" style="display:none">
+            <div class="chat-avatar" id="typing-avatar">?</div>
+            <div class="chat-typing-dots">
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+            </div>
+          </div>
+
+          <div class="chat-controls">
+            <button class="btn chat-next-btn">Next Message</button>
+            <button class="btn chat-all-btn">Play All</button>
+            <button class="btn chat-reset-btn">Replay</button>
+            <span class="chat-progress"></span>
+          </div>
+        </div>
+
+        <div class="callout callout-accent animate-in" style="margin-top: var(--space-6)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Why This Matters</strong>
+            <p>Because Logic never initiates with AI, the AI <em>must</em> make its own decisions. Logic can't "push" suggestions to AI or give it unfair advantages. This is how the game stays fair and deterministic.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Drag and Drop -->
+      <section class="screen animate-in">
+        <div class="screen-number">5</div>
+        <h2 class="screen-heading">Match Each Component to Its Package</h2>
+        <p>Drag each class or file to the correct package. This tests whether you understand where each responsibility lives.</p>
+
+        <div class="dnd-container animate-in" style="margin-top: var(--space-6)">
+          <div class="dnd-chips">
+            <div class="dnd-chip" draggable="true" data-answer="models">TurnPhase enum</div>
+            <div class="dnd-chip" draggable="true" data-answer="models">Player class</div>
+            <div class="dnd-chip" draggable="true" data-answer="logic">TurnResolver</div>
+            <div class="dnd-chip" draggable="true" data-answer="logic">CombatResolver</div>
+            <div class="dnd-chip" draggable="true" data-answer="logic">PlayerView</div>
+            <div class="dnd-chip" draggable="true" data-answer="ai">StrategicAI</div>
+            <div class="dnd-chip" draggable="true" data-answer="ai">GoalManager</div>
+            <div class="dnd-chip" draggable="true" data-answer="map">MapTopology</div>
+          </div>
+          <div class="dnd-zones">
+            <div class="dnd-zone" data-correct="models" style="border-top: 4px solid var(--color-actor-1)">
+              <p class="dnd-zone-label"><strong>colonizethis_models</strong> — pure data</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="logic" style="border-top: 4px solid var(--color-actor-2)">
+              <p class="dnd-zone-label"><strong>colonizethis_logic</strong> — rules engine</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="ai" style="border-top: 4px solid var(--color-actor-3)">
+              <p class="dnd-zone-label"><strong>colonizethis_ai</strong> — AI decisions</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="map" style="border-top: 4px solid var(--color-actor-4)">
+              <p class="dnd-zone-label"><strong>colonizethis_map</strong> — world generation</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+          </div>
+          <button class="btn" onclick="checkDnD()">Check Matches</button>
+          <button class="btn" onclick="resetDnD()">Reset</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 6: The Golden Rule -->
+      <section class="screen animate-in">
+        <div class="screen-number">6</div>
+        <h2 class="screen-heading">The Golden Rule</h2>
+
+        <div class="callout callout-accent animate-in" style="margin: var(--space-8) 0; border-left: 4px solid var(--color-accent); background: var(--color-accent-light)">
+          <div class="callout-icon">⚠️</div>
+          <div class="callout-content">
+            <strong class="callout-title">Architecturally Enforced, Not Just a Convention</strong>
+            <p><strong>Logic MUST NOT import AI.</strong> This isn't a style guide — it's enforced by the package structure. If you try to import AI from Logic, the code won't compile.</p>
+          </div>
+        </div>
+
+        <p style="margin-bottom: var(--space-6)">Why does this matter? Because if Logic could call AI, the AI could get information Logic doesn't normally have access to — making it impossible to keep the game fair.</p>
+
+        <div class="flow-steps animate-in">
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-3)">AI</div>
+            <p>Asks Logic for help</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-2)">Logic</div>
+            <p>Responds with options</p>
+          </div>
+          <div class="flow-arrow" style="opacity: 0.3">✗</div>
+          <div class="flow-step" style="opacity: 0.4">
+            <div class="flow-step-num" style="background: var(--color-text-muted)">Logic</div>
+            <p>Asks AI for help</p>
+          </div>
+        </div>
+
+        <p style="margin-top: var(--space-8); color: var(--color-text-secondary)">This one-way door is the architectural foundation that makes ColonizeThis a fair, deterministic strategy game.</p>
+      </section>
+
+    </div>
+  </div>
+</section>
+<section class="module" id="module-3" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">03</span>
+      <h1 class="module-title">The Turn Ticker</h1>
+      <p class="module-subtitle">How the factory floor supervisor runs 13 phases in perfect order — every turn, without fail.</p>
+    </header>
+
+    <div class="module-body">
+
+      <!-- SCREEN 1: Opening / Hero Visual -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 1 of 5</div>
+        <h2 class="screen-heading">The Factory Floor Supervisor</h2>
+        <p class="screen-lead">The <span class="term" data-definition="The logic package's TurnResolver — the component that orchestrates all 13 phases in order every turn.">TurnResolver</span> is the factory floor supervisor. It runs each phase in strict order, every turn, without ever skipping one.</p>
+
+        <div class="callout callout-accent" style="margin: var(--space-6) 0">
+          <div class="callout-icon">🏭</div>
+          <div class="callout-content">
+            <strong class="callout-title">Factory Shift Metaphor</strong>
+            <p>Think of a turn like a factory shift. First everyone writes down what they want to do (orders phase). Then the supervisor processes requests in strict sequence — you can't skip steps. Extraction happens before consumption, because you need resources before you can use them.</p>
+          </div>
+        </div>
+
+        <div class="icon-rows" style="margin-top: var(--space-6)">
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-1)">📋</div>
+            <div>
+              <strong>Orders Phase</strong>
+              <p>Every player (human and AI) writes down what they want to do this turn</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-2)">⚙️</div>
+            <div>
+              <strong>TurnResolver</strong>
+              <p>Runs 13 phases in order — extraction, production, consumption, movement, combat, and more</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-3)">🎯</div>
+            <div>
+              <strong>State Transform</strong>
+              <p>Each phase reads WorldState, produces new WorldState — no phase ever modifies the original</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: Data Flow Animation -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 2 of 5</div>
+        <h2 class="screen-heading">State in Motion</h2>
+        <p class="screen-lead">Watch how game state transforms as it passes through key phases. Each phase is a pure function — it takes state in, produces new state out.</p>
+
+        <div class="flow-animation" data-steps='[
+          {"highlight":"flow-actor-1","label":"Orders Phase: Collect all player and AI orders"},
+          {"highlight":"flow-actor-1","label":"Orders collected","packet":true,"from":"actor-1","to":"actor-2"},
+          {"highlight":"flow-actor-2","label":"Extraction Phase: Pull raw resources from provinces"},
+          {"highlight":"flow-actor-2","label":"Gold ore, lumber, and goods extracted","packet":true,"from":"actor-2","to":"actor-3"},
+          {"highlight":"flow-actor-3","label":"Production Phase: Convert raw materials into usable goods"},
+          {"highlight":"flow-actor-3","label":"Raw ore becomes gold bars, lumber becomes materials","packet":true,"from":"actor-3","to":"actor-4"},
+          {"highlight":"flow-actor-4","label":"Consumption Phase: Deduct upkeep costs from stockpiles"},
+          {"highlight":"flow-actor-4","label":"Armies and colonies consume goods each turn","packet":true,"from":"actor-4","to":"actor-5"},
+          {"highlight":"flow-actor-5","label":"Movement Phase: Units change position on the map"},
+          {"highlight":"flow-actor-5","label":"Armies march, fleets sail — positions updated","packet":true,"from":"actor-5","to":"actor-6"},
+          {"highlight":"flow-actor-6","label":"Combat Phase: Opposing forces in the same tile resolve battles"}
+        ]'>
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-actor-1">
+              <div class="flow-actor-icon">📋</div>
+              <span>Orders</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-2">
+              <div class="flow-actor-icon">⛏️</div>
+              <span>Extraction</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-3">
+              <div class="flow-actor-icon">🏭</div>
+              <span>Production</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-4">
+              <div class="flow-actor-icon">🍽️</div>
+              <span>Consumption</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-5">
+              <div class="flow-actor-icon">🚶</div>
+              <span>Movement</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-6">
+              <div class="flow-actor-icon">⚔️</div>
+              <span>Combat</span>
+            </div>
+          </div>
+
+          <div class="flow-packet" id="flow-packet"></div>
+
+          <div class="flow-step-label" id="flow-label">Click "Next Step" to follow state through the phases</div>
+
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">Next Step</button>
+            <button class="btn flow-reset-btn">Restart</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+
+        <p class="text-sm" style="margin-top: var(--space-4); color: var(--color-text-secondary)">Notice: the state that comes out of Extraction is a <em>new</em> state object — the old one is never changed. This is immutability in action.</p>
+      </section>
+
+      <!-- SCREEN 3: Pattern Cards -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 3 of 5</div>
+        <h2 class="screen-heading">Three Design Pillars</h2>
+        <p class="screen-lead">The turn cycle works because of three non-negotiable rules built into every phase.</p>
+
+        <div class="pattern-cards">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🔒</div>
+            <h4 class="pattern-title">Immutability</h4>
+            <p class="pattern-desc">No phase ever modifies the WorldState it receives. It reads, computes, and returns a new state. Like copying a document before editing — the original stays intact.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🧩</div>
+            <h4 class="pattern-title">Phase Isolation</h4>
+            <p class="pattern-desc">Each phase is completely standalone. If the extraction phase produces a bug, it cannot corrupt the combat phase. Problems stay contained to the phase that caused them.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🔁</div>
+            <h4 class="pattern-title">Determinism</h4>
+            <p class="pattern-desc">Same inputs in, same result out — every time. There are no dice rolls or random events inside phases. This is what makes replaying a turn and getting the same result possible.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: var(--space-6)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Why Does This Matter?</strong>
+            <p>Imagine if phases could modify each other's state. A bug in consumption could silently corrupt your army positions. Immutability means you can always trace exactly what happened — and replay any turn step by step.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: Stateless Phase Visualization -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 4 of 5</div>
+        <h2 class="screen-heading">Each Phase is Stateless</h2>
+        <p class="screen-lead">A phase never "remembers" anything between turns. It reads the current WorldState, does one focused job, and hands off a new WorldState to the next phase.</p>
+
+        <div class="flow-steps" style="margin: var(--space-8) 0">
+          <div class="flow-step">
+            <div class="flow-step-num">1</div>
+            <div>
+              <strong>WorldState arrives</strong>
+              <p style="color: var(--color-text-secondary)">The phase receives a read-only snapshot of the entire game world</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-1)">⚙️</div>
+            <div>
+              <strong>Phase computes</strong>
+              <p style="color: var(--color-text-secondary)">Reads the state, applies its logic, produces a new state object</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-2)">📦</div>
+            <div>
+              <strong>New state exits</strong>
+              <p style="color: var(--color-text-secondary)">The original state is unchanged; a new one is passed forward</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-3)">⏭️</div>
+            <div>
+              <strong>Next phase begins</strong>
+              <p style="color: var(--color-text-secondary)">Chain continues until all 13 phases complete</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="screen-lead" style="margin-top: var(--space-4)">The <span class="term" data-definition="A read-only window into the game state that filters out information the player shouldn't see — like enemy positions in fogged tiles.">PlayerView</span> is how individual players see the world. Each player (human or AI) gets their own filtered view — they can't see enemy positions in fogged tiles, and they only see their own colony's interior.</p>
+
+        <div class="translation-block animate-in" style="margin-top: var(--space-6)">
+          <div class="translation-code">
+            <span class="translation-label">CODE</span>
+            <pre><code><span class="code-keyword">enum</span> <span class="code-type">VisibilityLevel</span> { unknown, revealed, fogged, fullyVisible }
+
+<span class="code-keyword">class</span> <span class="code-type">PlayerView</span> {
+  <span class="code-keyword">const</span> <span class="code-function">PlayerView</span>({
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.playerId,
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.player,
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.ownUnitsById,
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.provincesById,
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.visibilityByTile,
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.prospectedTiles,
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.diplomacyByOtherId,
+  });
+
+  <span class="code-type">VisibilityLevel</span> <span class="code-function">visibilityForTile</span>(<span class="code-type">String</span> tileKey) =>
+      visibilityByTile[tileKey] ?? <span class="code-type">VisibilityLevel</span>.unknown;</code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl"><strong>Four levels of visibility</strong> — unknown (never seen), revealed (was seen, now dark), fogged (you know it exists but not what's inside), and fullyVisible (you can see everything).</p>
+              <p class="tl"><strong>PlayerView is the gatekeeper</strong> — every player (human or AI) gets their own version filtered to what they're allowed to see.</p>
+              <p class="tl"><strong>ownUnitsById</strong> — only the units this player controls, no enemy units.</p>
+              <p class="tl"><strong>visibilityByTile</strong> — a map of what this player can see in each tile on the map.</p>
+              <p class="tl"><strong>prospectedTiles</strong> — tiles where hidden resources (like gold veins) have been revealed.</p>
+              <p class="tl"><strong>The helper function</strong> — asks "what can this player see in this tile?" and returns unknown if the player has never looked there.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Debugging Quiz -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 5 of 5</div>
+        <h2 class="screen-heading">Debugging: Find the Broken Phase</h2>
+        <p class="screen-lead">When something goes wrong, you can trace the failure to exactly one phase. Here's your diagnostic toolkit.</p>
+
+        <div class="scenario-block" style="margin: var(--space-6) 0">
+          <div class="scenario-context">
+            <span class="scenario-label">Scenario</span>
+            <p>You issued an order to move an army from Province A to Province B. You clicked "End Turn." The army is still in Province A when the turn ends. What happened?</p>
+          </div>
+        </div>
+
+        <div class="quiz-container" id="quiz-module3">
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="The Movement phase is where units actually change position on the map. If extraction produced no food, the army might have been under-supplied — but that doesn't stop movement. The movement phase either ran and failed to find a valid path, or was skipped."
+               data-explanation-wrong="Extraction and Production affect resources, not unit positions. Combat resolves battles — it doesn't move armies. The issue is always in the Movement phase for positional bugs.">
+            <h3 class="quiz-question">Which phase is most likely responsible for the army not moving?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Extraction Phase — the army had no resources to move</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Combat Phase — the army was killed before it could move</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Movement Phase — the unit's move order was never executed</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="Phase Isolation means a bug in one phase cannot corrupt another. If production has a bug, combat still gets the correct state — because each phase receives a fresh copy of the WorldState, not a mutated version."
+               data-explanation-wrong="The correct answer is no — this is exactly what Phase Isolation prevents. Each phase receives a fresh WorldState copy, so a bug in one phase cannot bleed into the next.">
+            <h3 class="quiz-question">Could a bug in the Production phase cause your army to die in Combat?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Yes — if Production produced wrong resource counts, Combat would use them</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>No — Production and Combat are isolated; they can't corrupt each other</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="If the same inputs always produce the same result, you can replay a turn exactly. This is how players can 'take back' a move in some game systems — the game can recompute what happened step by step from the starting state."
+               data-explanation-wrong="Determinism is what makes replay possible. If a phase had random dice rolls inside it, replaying would give different results each time — and bugs would be nearly impossible to reproduce.">
+            <h3 class="quiz-question">Why is it important that phases are deterministic (no random dice rolls)?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>So you can replay any turn and get the same result — essential for debugging</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>So the AI makes smarter decisions each time it plays</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>So players can't save and reload to try different choices</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="If Consumption shows 0 food available and the army's upkeep is 1, the army is under-supplied. Under-supplied armies take attrition damage in Combat — they don't move to a new tile, but they also don't die during the Movement phase. The attrition happens in Combat."
+               data-explanation-wrong="The army doesn't die in Movement — it dies in Combat from attrition if it's under-supplied. Extraction and Production phases are the ones to check for 'why was no food produced?'">
+            <h3 class="quiz-question">Your army is under-supplied (not enough food). When does it take damage?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Extraction Phase — the mine that should have fed it produced nothing</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Movement Phase — under-supplied armies cannot move</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Combat Phase — attrition damage is applied during combat resolution</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module3')">Check Answers</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module3')">Try Again</button>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-8)">
+          <div class="callout-icon">🔍</div>
+          <div class="callout-content">
+            <strong class="callout-title">The Debugging Rule</strong>
+            <p>When something goes wrong, ask: "Which phase is responsible?" If your army didn't move — Movement phase. If your army died — Combat phase. If you had no gold — Extraction phase. Each phase owns one job, and bugs stay isolated to that job.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+<section class="module" id="module-4" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h1 class="module-title">The AI Brain</h1>
+      <p class="module-subtitle">A deterministic decision engine that weighs goals against game state — no dice, no chaos, just math.</p>
+    </header>
+
+    <div class="module-body">
+
+      <!-- SCREEN 1: Opening -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 1 of 6</div>
+        <h2 class="screen-heading">Not Magic — Math</h2>
+        <p class="screen-lead">The AI in ColonizeThis isn't magic. It's a <span class="term" data-definition="A deterministic system where the same inputs always produce the same outputs — no random dice rolls or chance events.">deterministic decision engine</span> that weighs goals against the game state. Give it the same inputs twice, and it makes the same decision every time.</p>
+
+        <div class="callout callout-accent" style="margin: var(--space-6) 0">
+          <div class="callout-icon">🧠</div>
+          <div class="callout-content">
+            <strong class="callout-title">The Methodical Employee</strong>
+            <p>The AI is like a highly methodical employee with a secret notebook of hidden priorities. It generates decisions using a weighted goal system — calculating a score for every possible action and picking the highest. No randomness. No luck. Just math.</p>
+          </div>
+        </div>
+
+        <div class="icon-rows" style="margin-top: var(--space-6)">
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-2)">🎯</div>
+            <div>
+              <strong>Goal Manager</strong>
+              <p>Decides overall strategy — expand, defend, trade, conquer, research, or diplomacy first?</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-3)">💰</div>
+            <div>
+              <strong>Domain Planners</strong>
+              <p>Three specialists: Economy Planner, Military Planner, Diplomatic Planner — each weights goals within their domain</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-4)">⚔️</div>
+            <div>
+              <strong>Tactical AI</strong>
+              <p>Translates high-level goals into specific orders — where to move, what to attack, what to build</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: Group Chat - AI Brain Meeting -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 2 of 6</div>
+        <h2 class="screen-heading">The AI Brain in Action</h2>
+        <p class="screen-lead">Watch how the AI's components "discuss" a decision — weighing competing goals and scoring every option.</p>
+
+        <div class="chat-window" id="chat-module4">
+          <div class="chat-messages">
+            <div class="chat-message" data-msg="0" data-sender="goal-manager" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-1)">GM</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-1)">Goal Manager</span>
+                <p>Priority update: Expansion is our top goal this epoch. We need more provinces to outpace the rival empire.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="1" data-sender="economy-planner" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">EP</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">Economy Planner</span>
+                <p>Understood. But expansion costs gold. I'm scoring every province by gold income minus garrison cost. Province NW-7 scores 0.73 — good return on investment.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="2" data-sender="military-planner" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-3)">MP</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-3)">Military Planner</span>
+                <p>Watch out — Province NW-7 borders the rival's territory. I'm scoring by threat level minus conquest difficulty. That province scores 0.41. Too risky right now.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="3" data-sender="tactical-ai" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-4)">TA</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-4)">Tactical AI</span>
+                <p>Combining your scores: 0.73 (economy) × 0.41 (military threat) = 0.30 final score. But Province S-3 scores 0.68 combined. I'm issuing orders for S-3.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="4" data-sender="goal-manager" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-1)">GM</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-1)">Goal Manager</span>
+                <p>Approved. Orders sent to TurnResolver. Next epoch — we reassess priorities based on the new game state.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-typing" id="chat-module4-typing-avatar" style="display:none">
+            <div class="chat-avatar">?</div>
+            <div class="chat-typing-dots">
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+            </div>
+          </div>
+
+          <div class="chat-controls">
+            <button class="btn chat-next-btn">Next Message</button>
+            <button class="btn chat-all-btn">Play All</button>
+            <button class="btn chat-reset-btn">Replay</button>
+            <span class="chat-progress"></span>
+          </div>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: var(--space-6)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Weighted Scoring</strong>
+            <p>Every possible action gets a score from 0.0 to 1.0. The AI multiplies domain scores together — a province with great gold but extreme military threat gets a low final score. This is why the AI sometimes ignores obvious opportunities: something else scored higher when all factors were combined.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: Code - generateOrdersForPlayerFullAI -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 3 of 6</div>
+        <h2 class="screen-heading">Inside the AI Brain</h2>
+        <p class="screen-lead">The <span class="term" data-definition="The entry point function that generates all orders for a single AI player each turn — it's the AI's equivalent of a player clicking 'End Turn'.">generateOrdersForPlayerFullAI</span> function is the AI's "think" button. Here's what it actually does, line by line.</p>
+
+        <div class="translation-block animate-in" style="margin: var(--space-6) 0">
+          <div class="translation-code">
+            <span class="translation-label">CODE</span>
+            <pre><code><span class="code-type">StrategicOrderResult</span> <span class="code-function">generateOrdersForPlayerFullAI</span>(
+  <span class="code-type">Game</span> game,
+  <span class="code-type">MapTopology</span> topology,
+  <span class="code-type">String</span> playerId, {
+  <span class="code-type">Map</span>&lt;<span class="code-type">String</span>, <span class="code-type">TileMapResult</span>&gt;? tileMapByRegion,
+  <span class="code-type">OrderSuggestionAPI</span>? orderSuggestionApi,
+  <span class="code-keyword">void</span> <span class="code-function">Function</span>(<span class="code-type">DialogueEvent</span>)? onDialogue,
+  <span class="code-keyword">void</span> <span class="code-function">Function</span>(<span class="code-type">PortraitMoodEvent</span>)? onMood,
+}) {
+  <span class="code-keyword">final</span> player = game.<span class="code-function">playerById</span>(playerId);
+  <span class="code-keyword">if</span> (player == <span class="code-keyword">null</span> || !<span class="code-function">isAiControlled</span>(game, player.id)) {
+    <span class="code-keyword">return const</span> <span class="code-type">StrategicOrderResult</span>(
+      orders: <span class="code-type">Orders</span>(),
+      economyPlan: <span class="code-type">EconomyPlan</span>(productionAssignments: [], cargoPreference: <span class="code-type">CargoPreference</span>.none),
+    );
+  }
+  <span class="code-keyword">final</span> view = <span class="code-function">buildPlayerView</span>(game, topology, playerId);
+  <span class="code-keyword">return</span> <span class="code-function">generateStrategicOrders</span>(...);
+}</code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl"><strong>The function signature</strong> — takes the current game state, the map layout, and which player to generate orders for. Optional callbacks let the AI trigger dialogue and portrait mood changes as it "thinks."</p>
+              <p class="tl"><strong>Look up the player</strong> — first it finds the player object by ID. If the ID is wrong or the player doesn't exist, it returns empty orders — this player gets no AI actions.</p>
+              <p class="tl"><strong>Is this an AI player?</strong> — double-checks that this player is actually AI-controlled (not a human). Humans give their own orders, so the AI skips them entirely.</p>
+              <p class="tl"><strong>Return empty if not AI</strong> — if either check fails, return a blank StrategicOrderResult with no orders and no economy plan. This player will rely entirely on human input.</p>
+              <p class="tl"><strong>Build the PlayerView</strong> — this is critical. The AI does NOT get the full game state. It gets a PlayerView — the same filtered view a human player would see. This enforces the fog of war on the AI too.</p>
+              <p class="tl"><strong>Delegate to strategic AI</strong> — the real thinking happens in generateStrategicOrders(), which applies goals, domain planners, and tactical scoring to produce actual order objects.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: Seeding System -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 4 of 6</div>
+        <h2 class="screen-heading">No Dice — Just Seeds</h2>
+        <p class="screen-lead">The AI uses <span class="term" data-definition="A seed is a fixed number that deterministic algorithms use to produce the same sequence of pseudo-random values every time — like a random number generator with a memorized phone book.">seeding</span> instead of randomness. Give the same inputs, get the same outputs. Every time.</p>
+
+        <div class="flow-steps" style="margin: var(--space-8) 0">
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-1)">🌱</div>
+            <div>
+              <strong>Seed is set</strong>
+              <p style="color: var(--color-text-secondary)">Before the game starts, a seed number is chosen — either randomly or deliberately</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-2)">🔢</div>
+            <div>
+              <strong>Same seed = same sequence</strong>
+              <p style="color: var(--color-text-secondary)">The AI's "random" decisions are actually a deterministic sequence — but it looks unpredictable</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-3)">🔁</div>
+            <div>
+              <strong>Replayability</strong>
+              <p style="color: var(--color-text-secondary)">Give the same seed + game state = same AI decisions. Useful for replays and debugging</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-4)">🎭</div>
+            <div>
+              <strong>Personality without chaos</strong>
+              <p style="color: var(--color-text-secondary)">Different seeds give different AI personalities — aggressive, defensive, economic — all without dice rolls</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-6)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Seeding vs Randomness</strong>
+            <p>Randomness means "this could be anything." Seeding means "this looks random but it's actually fixed — we just chose a complicated starting point." The AI doesn't flip a coin. It follows a recipe that produces different results depending on which seed was used. Both players with identical seeds and game states will make identical decisions.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Why PlayerView? -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 5 of 6</div>
+        <h2 class="screen-heading">Why Does the AI Use PlayerView?</h2>
+        <p class="screen-lead">The AI doesn't see the whole map. It sees exactly what a human player would see — and that's by design.</p>
+
+        <div class="icon-rows" style="margin: var(--space-6) 0">
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-1)">👁️</div>
+            <div>
+              <strong>Fog of War for Everyone</strong>
+              <p>The AI only knows what it has explored. Tiles in fog are unknown — the AI can't see enemy armies hiding there any more than a human could.</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-2)">⚖️</div>
+            <div>
+              <strong>Fairness by Architecture</strong>
+              <p>If the AI used the full game state, it would effectively be cheating — knowing about armies the player can't see. PlayerView enforces equality.</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-3)">🎯</div>
+            <div>
+              <strong>Predicable AI</strong>
+              <p>Because the AI works with the same limited information as the player, its decisions are predictable. Players can outmaneuver it by using fog strategically.</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="screen-lead" style="margin-top: var(--space-4)">This is the same <span class="term" data-definition="A read-only projection of game state that filters out information — the AI and human player both use it to see only what they're allowed to see.">PlayerView</span> you learned about in the Turn Ticker module. It's the gatekeeper for all game information — one version for the human UI, one for the AI.</p>
+      </section>
+
+      <!-- SCREEN 6: Quiz -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 6 of 6</div>
+        <h2 class="screen-heading">Predicting AI Behavior</h2>
+        <p class="screen-lead">Now you know how the AI thinks. Can you predict what it will do?</p>
+
+        <div class="scenario-block" style="margin: var(--space-6) 0">
+          <div class="scenario-context">
+            <span class="scenario-label">Scenario</span>
+            <p>You've been watching the AI player. It consistently rushes military technology while ignoring economy. You notice it always attacks in the mid-game, never early. You're in the early game and the AI is adjacent to your territory. What do you expect?</p>
+          </div>
+        </div>
+
+        <div class="quiz-container" id="quiz-module4">
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="The AI is scoring every province and action by weighted goals. Military rush means it assigns high weight to military strength. It may be building up strength silently — but won't attack until its score for 'military advantage' exceeds the threshold. The weighted scoring system is predictable once you know the weights."
+               data-explanation-wrong="The AI isn't being cautious for emotional reasons — it's math. If it's not attacking yet, it's because its scoring function hasn't crossed the threshold for an attack. Once you know the weights, its behavior becomes predictable.">
+            <h3 class="quiz-question">The AI has high military goals and is next to your territory — why hasn't it attacked yet?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The AI is being cautious — it doesn't want to risk losing</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Its scoring function hasn't crossed the threshold for an attack yet</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>It's waiting for you to make the first move so it can retaliate</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="The seed is the explanation. Seeding produces deterministic behavior that varies by seed — two identical AI players with different seeds will have different personalities. One might be aggressive (seed that weights military high), one might be economic (seed that weights trade high). The game is consistent but each AI is distinctive."
+               data-explanation-wrong="It's not luck or hidden randomization between games — it's the seed. Each AI player gets a different seed at game creation, which produces different goal weights. The randomness is an illusion created by deterministic math.">
+            <h3 class="quiz-question">Two AI players in identical game situations make different decisions. What's the most likely explanation?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>They have different seeds — which produce different weighted goal priorities</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>One AI is 'smarter' than the other due to random variation</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The game has hidden randomization between AI decision cycles</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="The AI sees exactly what the player sees via PlayerView. If the player can see the gold in fog (through a scout that revealed it earlier), the AI can too. But if the tile is truly unknown — never explored — neither player nor AI can see it. The AI is constrained by the same fog as the human."
+               data-explanation-wrong="The AI does not have omniscient access to the game state. It uses PlayerView, the same filtered view the player gets. If a tile is fogged, the AI cannot see it. This is fundamental to how the game maintains fairness between human and AI players.">
+            <h3 class="quiz-question">Can the AI see gold mines in fog of war?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Yes — the AI can see everything in the game state, fog or not</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>No — neither the AI nor any player can see anything in fog</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>It depends — if the tile was explored and revealed, the AI can see it</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">Check Answers</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">Try Again</button>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-8)">
+          <div class="callout-icon">🏆</div>
+          <div class="callout-content">
+            <strong class="callout-title">Outmaneuvering the AI</strong>
+            <p>Now that you understand the AI's weighted scoring system, you can exploit it. If you know the AI prioritizes military strength, avoid being the obvious military target. Use fog to hide your troop movements. Make the AI's scoring function favor other targets. The AI is predictable — once you know its priorities.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+<section class="module" id="module-5" style="background: var(--color-bg)">
+  <div class="module-content">
+
+    <header class="module-header animate-in">
+      <span class="module-number">05</span>
+      <h1 class="module-title">Orders in Action</h1>
+      <p class="module-subtitle">How your orders and the AI's orders become one list — with you always winning.</p>
+    </header>
+
+    <div class="module-body">
+
+      <!-- SCREEN 1: Opening -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 1 of 6</div>
+        <h2 class="screen-heading">Two Tickets, One Kitchen</h2>
+
+        <p class="screen-lead">Every turn, the game collects two sets of orders: yours and the AI's. These get merged into one list. The rule? <strong>You win every time.</strong></p>
+
+        <div class="icon-rows stagger-children" style="margin-top: var(--space-8)">
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-1)">🧑</div>
+            <div>
+              <strong>Your Orders</strong>
+              <p>What you tell your empire to do this turn</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-3)">🤖</div>
+            <div>
+              <strong>AI Orders</strong>
+              <p>What the AI tells its empire to do this turn</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-accent)">⚙️</div>
+            <div>
+              <strong>Merged Orders</strong>
+              <p>The single list that drives what actually happens</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-8)">
+          <div class="callout-icon">🍽️</div>
+          <div class="callout-content">
+            <strong class="callout-title">The Restaurant Ticket Metaphor</strong>
+            <p>Think of it like two tickets in a restaurant kitchen — yours and the AI's. If both tickets order the same dish for the same table, yours wins. You're the customer.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: Data Flow Animation -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 2 of 6</div>
+        <h2 class="screen-heading">The Merge Flow</h2>
+
+        <p>Watch how human and AI orders flow through the merge function together.</p>
+
+        <div class="flow-animation" data-steps='[
+          {"highlight":"flow-actor-1","label":"Your orders arrive from the UI"},
+          {"highlight":"flow-actor-2","label":"AI orders arrive from the AI Brain"},
+          {"highlight":"flow-actor-3","label":"Merge function processes both lists"},
+          {"highlight":"flow-actor-3","label":"Conflict check: same unit, same slot?"},
+          {"highlight":"flow-actor-4","label":"Merged orders go to execution"}
+        ]'>
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-actor-1">
+              <div class="flow-actor-icon">🧑</div>
+              <span>Human Orders</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-2">
+              <div class="flow-actor-icon">🤖</div>
+              <span>AI Orders</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-3">
+              <div class="flow-actor-icon">⚙️</div>
+              <span>Merge Function</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-4">
+              <div class="flow-actor-icon">▶️</div>
+              <span>Execution</span>
+            </div>
+          </div>
+
+          <div class="flow-packet" id="flow-packet"></div>
+
+          <div class="flow-step-label" id="flow-label">Click "Next Step" to begin</div>
+
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">Next Step</button>
+            <button class="btn flow-reset-btn">Restart</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: The Merge Rule -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 3 of 6</div>
+        <h2 class="screen-heading">The Merge Rule</h2>
+
+        <p>When orders conflict — same <span class="term" data-definition="An ID is a unique label that identifies a specific thing, like a unit's name tag.">unit</span>, same <span class="term" data-definition="A slot is like a time slot in a schedule — each unit has one slot per phase for each type of action.">slot</span> — human always wins.</p>
+
+        <div class="pattern-cards stagger-children" style="margin-top: var(--space-8)">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🧑</div>
+            <h4 class="pattern-title">You Move First</h4>
+            <p class="pattern-desc">Your move order for Unit A always takes the slot.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🤖</div>
+            <h4 class="pattern-title">AI Moves Second</h4>
+            <p class="pattern-desc">AI's move order for the same unit gets bumped.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-success)">
+            <div class="pattern-icon" style="background: var(--color-success)">✓</div>
+            <h4 class="pattern-title">No Conflict = Both Execute</h4>
+            <p class="pattern-desc">If orders target different units, both run.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: var(--space-6)">
+          <div class="callout-icon">ℹ️</div>
+          <div class="callout-content">
+            <strong class="callout-title">Why This Matters</strong>
+            <p>You can always override the AI. Issue the same order for the same unit, and yours wins. The AI can never "steal" a slot from you.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: Drag-and-Drop -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 4 of 6</div>
+        <h2 class="screen-heading">Order Types and Their Merge Buckets</h2>
+
+        <p>Orders are split into 8 types. Each type merges separately — a Build order only conflicts with another Build order.</p>
+
+        <div class="dnd-container" style="margin-top: var(--space-6)">
+          <p style="margin-bottom: var(--space-4); color: var(--color-text-secondary);">Drag each order type to the correct bucket:</p>
+          <div class="dnd-chips">
+            <div class="dnd-chip" draggable="true" data-answer="move">Move</div>
+            <div class="dnd-chip" draggable="true" data-answer="army-move">Army Move</div>
+            <div class="dnd-chip" draggable="true" data-answer="build">Build</div>
+            <div class="dnd-chip" draggable="true" data-answer="work">Work</div>
+            <div class="dnd-chip" draggable="true" data-answer="diplomatic">Diplomatic</div>
+            <div class="dnd-chip" draggable="true" data-answer="research">Research</div>
+            <div class="dnd-chip" draggable="true" data-answer="naval">Naval</div>
+          </div>
+          <div class="dnd-zones">
+            <div class="dnd-zone" data-correct="move">
+              <p class="dnd-zone-label">Move Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="army-move">
+              <p class="dnd-zone-label">Army Move Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="build">
+              <p class="dnd-zone-label">Build Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="work">
+              <p class="dnd-zone-label">Work Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="diplomatic">
+              <p class="dnd-zone-label">Diplomatic Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="research">
+              <p class="dnd-zone-label">Research Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="naval">
+              <p class="dnd-zone-label">Naval Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+          </div>
+          <button class="btn" onclick="checkDnD()">Check Matches</button>
+          <button class="btn" onclick="resetDnD()">Reset</button>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: var(--space-6)">
+          <div class="callout-icon">ℹ️</div>
+          <div class="callout-content">
+            <strong class="callout-title">Conflict Keys</strong>
+            <p>Each order type has its own <span class="term" data-definition="A conflict key is the 'address' used to match orders — for moves, it's the unit ID. Two moves conflict only if they're for the same unit.">conflict key</span>. A Move order conflicts with another Move order for the same unit. But a Move order and a Build order never conflict — they go to different buckets.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Code ↔ English Translation -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 5 of 6</div>
+        <h2 class="screen-heading">The Merge Function, Line by Line</h2>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">CODE</span>
+            <pre><code><span class="code-keyword">///</span> Merges human and AI orders with
+<span class="code-comment">/// precedence (human over AI).
+/// For conflicting orders (e.g. same unit,
+/// same slot): human wins.</span>
+<span class="code-keyword">Orders</span> mergeOrderLists({
+  <span class="code-keyword">required</span> <span class="code-type">Orders</span> humanOrders,
+  <span class="code-type">Orders</span>? aiOrders,
+}) {
+  <span class="code-keyword">if</span> (aiOrders == <span class="code-keyword">null</span> ||
+      _isEmpty(aiOrders)) {
+    <span class="code-keyword">return</span> humanOrders;
+  }
+  <span class="code-keyword">final</span> merged = <span class="code-type">Orders</span>(
+    moveOrdersByPlayerId:
+      _mergeMoveOrders(humanOrders...),
+    armyMoveOrdersByPlayerId:
+      _mergeArmyMoveOrders(...),
+    <span class="code-comment">// ... all 8 order types</span>
+  );
+  <span class="code-keyword">return</span> merged;
+}
+
+<span class="code-type">Map</span>&lt;<span class="code-type">String</span>, <span class="code-type">List</span>&lt;<span class="code-type">MoveOrder</span>&gt;&gt;
+_mergeMoveOrders(...) =&gt;
+  _mergeByConflictKey(
+    human, ai, (o) =&gt; o.unitId);
+</code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl">The function takes two order lists — yours and the AI's — and returns one merged list.</p>
+              <p class="tl">If there's no AI orders at all, just give back the human orders unchanged.</p>
+              <p class="tl">Otherwise, create a new merged Orders object by calling a helper for each order type.</p>
+              <p class="tl">For move orders, merge by unit ID — if two moves target the same unit, the human one wins.</p>
+              <p class="tl">The merge happens per-type, using a conflict key (like unitId) to spot collisions.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 6: Quiz -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 6 of 6</div>
+        <h2 class="screen-heading">Quiz: Order Conflicts</h2>
+
+        <div class="quiz-container" id="quiz-module5">
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="Exactly — when orders target the same unit in the same slot, human wins. The AI's order is discarded."
+               data-explanation-wrong="Not quite. When both you and the AI order the same army to move to the same province, your order wins. The AI's order is bumped out of that slot.">
+            <h3 class="quiz-question">You order Army A to move to Province X. The AI also orders Army A to move to Province Y. Who wins?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The AI wins — it's smarter</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>You win — human always wins conflicts</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Neither — both orders get cancelled</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="Correct — the conflict key for diplomatic orders is the target faction. Both orders target Faction X, so they conflict. Your order wins."
+               data-explanation-wrong="Actually, diplomatic orders conflict when they target the same faction. Since both you and the AI are targeting Faction X, your order wins and the AI's is dropped.">
+            <h3 class="quiz-question">You issue a Diplomatic order to ally with Faction X. The AI also wants to ally with Faction X. What happens to the AI's order?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The AI's order executes first, then yours</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Both orders execute — they don't conflict</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Your order wins, AI's order is dropped</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="Right — if only you issued a research order, there's no conflict. The AI simply has no research order for that slot."
+               data-explanation-wrong="No conflict here. Research orders only conflict with other research orders targeting the same faction or technology. Since only you issued one, the AI gets nothing in that slot — not even an empty order.">
+            <h3 class="quiz-question">You issue a Research order for Technology A. The AI doesn't issue a Research order. What does the AI get?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Nothing — there's no conflict to resolve</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The AI gets the same research order as you</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The AI gets a random research order</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module5')">Check Answers</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module5')">Try Again</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section><section class="module" id="module-6" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+
+    <header class="module-header animate-in">
+      <span class="module-number">06</span>
+      <h1 class="module-title">The Fog of War</h1>
+      <p class="module-subtitle">The AI reads from the same "newspaper" you do — no cheating allowed.</p>
+    </header>
+
+    <div class="module-body">
+
+      <!-- SCREEN 1: Opening -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 1 of 6</div>
+        <h2 class="screen-heading">The Newspaper Metaphor</h2>
+
+        <p class="screen-lead">The fog of war is like a newspaper. You only know what's been reported to you. And the AI reads from the same newspaper.</p>
+
+        <div class="icon-rows stagger-children" style="margin-top: var(--space-8)">
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-4)">📰</div>
+            <div>
+              <strong>The Newspaper = PlayerView</strong>
+              <p>A filtered projection of what each player knows</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-2)">🧑</div>
+            <div>
+              <strong>You = The Reader</strong>
+              <p>Your UI sees only what PlayerView reveals</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-3)">🤖</div>
+            <div>
+              <strong>The AI = Also a Reader</strong>
+              <p>The AI has no privileged access — it sees what you see</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-8)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Key Insight</strong>
+            <p><span class="term" data-definition="PlayerView is a read-only snapshot of what a player knows — it's not the real game state, just what each side is allowed to know.">PlayerView</span> is a projection, not the real state. Both UI and AI read from it. The AI cannot see through the fog any more than you can.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: Architecture Diagram -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 2 of 6</div>
+        <h2 class="screen-heading">How Visibility Flows</h2>
+
+        <p>The real game state sits at the center. PlayerView wraps it with a visibility filter.</p>
+
+        <div class="arch-diagram" style="margin-top: var(--space-6)">
+          <div class="arch-zone arch-zone-center" style="border: 2px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-6); margin-bottom: var(--space-4);">
+            <h4 class="arch-zone-label" style="text-align: center; color: var(--color-text-secondary);">WorldState (The Real State)</h4>
+            <p style="text-align: center; font-size: var(--text-sm); color: var(--color-text-muted);">Everything about the game — all players, all units, all provinces</p>
+          </div>
+          <div style="text-align: center; font-size: var(--text-2xl); color: var(--color-accent); margin: var(--space-4) 0;">↓</div>
+          <div class="arch-zone arch-zone-center" style="border: 3px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-6); background: var(--color-accent-light);">
+            <h4 class="arch-zone-label" style="text-align: center; color: var(--color-accent);">PlayerView (The Filter)</h4>
+            <p style="text-align: center; font-size: var(--text-sm);">Wraps WorldState with visibility rules — hides what you can't see</p>
+          </div>
+          <div style="display: flex; justify-content: space-around; margin-top: var(--space-4);">
+            <div class="arch-component" style="text-align: center;">
+              <div style="font-size: 2rem;">🧑</div>
+              <span>Player UI</span>
+            </div>
+            <div class="arch-component" style="text-align: center;">
+              <div style="font-size: 2rem;">🤖</div>
+              <span>AI Brain</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: var(--space-6)">
+          <div class="callout-icon">ℹ️</div>
+          <div class="callout-content">
+            <strong class="callout-title">No Cheating Architecture</strong>
+            <p>Both UI and AI call the same <span class="term" data-definition="A getter is a function that retrieves a value — like asking 'what can I see at this tile?'">getter</span> to ask about visibility. There's no special "AI mode" that reveals more.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: Four Visibility Levels -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 3 of 6</div>
+        <h2 class="screen-heading">Four Levels of Knowing</h2>
+
+        <p>PlayerView tracks four <span class="term" data-definition="A visibility level describes how much you can see in a given tile — from nothing to everything.">visibility levels</span>. Each tile on the map has one.</p>
+
+        <div class="pattern-cards stagger-children" style="margin-top: var(--space-6)">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-text-muted)">
+            <div class="pattern-icon" style="background: var(--color-text-muted)">?</div>
+            <h4 class="pattern-title">Unknown</h4>
+            <p class="pattern-desc">You've never been here. No information at all — the tile might as well not exist on your map.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">👁️</div>
+            <h4 class="pattern-title">Revealed</h4>
+            <p class="pattern-desc">You saw it once, but it's faded. You remember something was there, but not what's there now.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🌫️</div>
+            <h4 class="pattern-title">Fogged</h4>
+            <p class="pattern-desc">You know the province exists and whose territory it is. But you can't see inside — no units, no buildings.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-success)">
+            <div class="pattern-icon" style="background: var(--color-success)">✓</div>
+            <h4 class="pattern-title">Fully Visible</h4>
+            <p class="pattern-desc">You can see everything — typically your own territory or allies. Units, buildings, everything.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-warning" style="margin-top: var(--space-6)">
+          <div class="callout-icon">⚠️</div>
+          <div class="callout-content">
+            <strong class="callout-title">Fogged ≠ Empty</strong>
+            <p>A fogged province might hide a massive army. You know it's enemy territory, but you can't see what's inside. That's why the AI can still attack fogged provinces — it might know something you don't.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: AI Doesn't Cheat -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 4 of 6</div>
+        <h2 class="screen-heading">Can the AI Cheat?</h2>
+
+        <p>No. The AI uses the exact same <span class="term" data-definition="PlayerView is the same filtered view that your UI uses — it's how the game decides what's fair to show.">PlayerView</span> that your UI reads from. No back door.</p>
+
+        <div class="step-cards stagger-children" style="margin-top: var(--space-6)">
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <strong>AI asks: "What's at tile X?"</strong>
+              <p>The AI calls visibilityForTile(tileX) — the same function your UI calls.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <strong>PlayerView returns: fogged</strong>
+              <p>The filter says "you know the province exists but can't see units."</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <strong>AI makes decisions with incomplete info</strong>
+              <p>The AI might guess there's an army in there, but it can't know for sure — just like you.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-6)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Fairness by Architecture</strong>
+            <p>This is why ColonizeThis is fair. The AI isn't cheating behind a curtain — it's reading the same newspaper you are. When it "surprises" you with an attack, it's because it saw something in its own territory that you couldn't see from yours.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Visual File Tree -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 5 of 6</div>
+        <h2 class="screen-heading">What Prospecting Reveals</h2>
+
+        <p><span class="term" data-definition="Prospecting is like sending a scout to check a tile for valuable resources — you pay a cost, and the game reveals what's hidden.">Prospecting</span> reveals hidden resources in unknown or fogged tiles. Without it, you can't see what's beneath the surface.</p>
+
+        <div class="file-tree" style="margin-top: var(--space-6); background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6);">
+          <div class="ft-folder open">
+            <span class="ft-name">WorldState</span>
+            <span class="ft-desc">The full picture — everything is visible here</span>
+            <div class="ft-children">
+              <div class="ft-folder">
+                <span class="ft-name">provincesById</span>
+                <span class="ft-desc">All provinces, with or without hidden resources</span>
+              </div>
+              <div class="ft-folder">
+                <span class="ft-name">tiles</span>
+                <span class="ft-desc">Every tile, including unexplored ones</span>
+              </div>
+            </div>
+          </div>
+          <div class="ft-folder open" style="margin-top: var(--space-4);">
+            <span class="ft-name">PlayerView</span>
+            <span class="ft-desc">What you know — filtered by visibility and prospecting</span>
+            <div class="ft-children">
+              <div class="ft-folder">
+                <span class="ft-name">prospectedTiles</span>
+                <span class="ft-desc">Set of tiles you've scouted — reveals gold, silver, etc.</span>
+              </div>
+              <div class="ft-folder">
+                <span class="ft-name">visibilityByTile</span>
+                <span class="ft-desc">Map of tile → visibility level (unknown/revealed/fogged/fullyVisible)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pattern-cards stagger-children" style="margin-top: var(--space-6)">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">🥇</div>
+            <h4 class="pattern-title">Gold</h4>
+            <p class="pattern-desc">Found by prospecting. Adds to your treasury.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">🥈</div>
+            <h4 class="pattern-title">Silver</h4>
+            <p class="pattern-desc">Found by prospecting. Less valuable than gold but still useful.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">❓</div>
+            <h4 class="pattern-title">Hidden Resources</h4>
+            <p class="pattern-desc">Unknown resources only revealed through prospecting.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 6: Quiz -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 6 of 6</div>
+        <h2 class="screen-heading">Quiz: Fog of War Scenarios</h2>
+
+        <div class="quiz-container" id="quiz-module6">
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="Correct — the AI sees through its own PlayerView, not yours. If a tile is fogged for the AI (because it's the AI's territory you can't see), the AI also can't see enemy units there. Fog applies to everyone."
+               data-explanation-wrong="Actually, the AI can only see what its own PlayerView reveals. If a tile is fogged from the AI's perspective, the AI can't see enemy units there either — even if you can't see them from your perspective.">
+            <h3 class="quiz-question">You can't see an enemy army in a fogged province. Could the AI see it?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>No — the AI uses the same fog rules</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Yes — AI can see everything</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Only if it's in the AI's own territory</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="Right — if the tile was prospected, it's in prospectedTiles. Both AI and player share the same prospectedTiles data, so the AI would know about the gold."
+               data-explanation-wrong="Actually, if you prospected a tile and found gold, the AI can see that too. Prospecting results are visible to both sides through PlayerView — the AI knows what you've discovered.">
+            <h3 class="quiz-question">You prospected a tile and found gold. Can the AI see the gold?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>No — prospecting is private to you</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Yes — prospecting results are in PlayerView</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Only if the AI also prospects that tile</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="Exactly — revealed means you saw it once and it faded. Unknown means you've never seen it at all. If a province went from fogged to unknown, something unusual happened (like the province being destroyed or leaving your knowledge entirely)."
+               data-explanation-wrong="Not quite. The fog of war levels have specific meanings: fogged means you know the province exists, unknown means you've never seen it. If something went from fogged to unknown, that's unusual — it means the province left your knowledge entirely (destroyed, abandoned, etc.).">
+            <h3 class="quiz-question">A province went from fogged to unknown. What happened?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The AI conquered it</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>You moved your army there</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The province left your knowledge entirely</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module6')">Check Answers</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module6')">Try Again</button>
+        </div>
+      </section>
+
+      <!-- FINAL: Closing Recap -->
+      <section class="screen animate-in" style="background: var(--color-bg-warm); margin: 0 calc(-1 * var(--space-6)); padding: var(--space-12) var(--space-6);">
+        <h2 class="screen-heading" style="text-align: center;">The Full Picture</h2>
+
+        <p style="text-align: center; max-width: 600px; margin: 0 auto;">Let's tie it all together. Remember the factory from Module 1? Now you know how the whole machine fits together.</p>
+
+        <div class="step-cards stagger-children" style="max-width: 600px; margin: var(--space-8) auto;">
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <strong>The Factory Runs in Phases</strong>
+              <p>Every turn, 13 phases run in order — extraction before consumption, movement before combat.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <strong>Four Packages, One-Way Doors</strong>
+              <p>Models is data, Logic is rules, AI is decisions, Map is generation. AI can ask Logic, but Logic never asks AI.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <strong>Orders Merge with You Winning</strong>
+              <p>Your orders and AI orders flow into a merge function. When they conflict, your orders always win.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <strong>Everyone Reads the Same Newspaper</strong>
+              <p>PlayerView is the filtered view both UI and AI use. The AI can't see through the fog any more than you can.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="max-width: 600px; margin: var(--space-8) auto;">
+          <div class="callout-icon">🏭</div>
+          <div class="callout-content">
+            <strong class="callout-title">The Factory, End to End</strong>
+            <p>You issue orders → they merge with AI orders (you win) → the TurnResolver processes 13 phases in order → visibility filters what each side knows → the AI makes decisions from the same filtered view you do. Fair, deterministic — no chaos dice, no secret back doors.</p>
+          </div>
+        </div>
+
+        <p style="text-align: center; color: var(--color-text-muted); margin-top: var(--space-8);">You've completed the Inside ColonizeThis course.</p>
+      </section>
+
+    </div>
+  </div>
+</section>
+</footer>
+  </main>
+</body>
+</html>

@@ -130,6 +130,39 @@ const List<String> newWorldSeaNamePreset = [
 
 String _suffixOrdinal(int n) => ' ($n)';
 
+int _fnv1a32Update(int hash, int value) {
+  var out = hash & 0xFFFFFFFF;
+  final v = value & 0xFFFFFFFF;
+  for (var shift = 0; shift < 32; shift += 8) {
+    out ^= (v >> shift) & 0xFF;
+    out = (out * 0x01000193) & 0xFFFFFFFF;
+  }
+  return out;
+}
+
+int _stableStringHash(String value) {
+  var hash = 0x811C9DC5;
+  for (final codeUnit in value.codeUnits) {
+    hash = _fnv1a32Update(hash, codeUnit);
+  }
+  return hash;
+}
+
+/// Deterministically derives the per-region shuffle seed for sea-zone naming.
+///
+/// This must remain independent from process-randomized hash implementations so
+/// fixed `(namingSeed, regionId)` inputs are reproducible across app restarts.
+int deriveSeaZoneNamingShuffleSeed({
+  required int namingSeed,
+  required String regionId,
+}) {
+  var hash = 0x811C9DC5;
+  hash = _fnv1a32Update(hash, 0x5EA20E);
+  hash = _fnv1a32Update(hash, namingSeed);
+  hash = _fnv1a32Update(hash, _stableStringHash(regionId));
+  return hash & 0x7FFFFFFF;
+}
+
 Map<String, String> buildSeaZoneDisplayNamesForRegion({
   required MapTopology topology,
   required String regionId,
@@ -147,7 +180,10 @@ Map<String, String> buildSeaZoneDisplayNamesForRegion({
       ? newWorldSeaNamePreset
       : oldWorldSeaNamePreset;
   final n = preset.length;
-  final rngSeed = Object.hash(0x5EA20E, namingSeed, regionId);
+  final rngSeed = deriveSeaZoneNamingShuffleSeed(
+    namingSeed: namingSeed,
+    regionId: regionId,
+  );
   final poolIndices = shuffledPoolIndices(poolLength: n, seed: rngSeed);
 
   final out = <String, String>{};

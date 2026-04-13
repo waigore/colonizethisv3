@@ -1,0 +1,257 @@
+<section class="module" id="module-2" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">02</span>
+      <h1 class="module-title">Meet the Team</h1>
+      <p class="module-subtitle">Four specialized packages power the game — each with exactly one job.</p>
+    </header>
+
+    <div class="module-body">
+
+      <!-- SCREEN 1: Opening Hook -->
+      <section class="screen animate-in">
+        <div class="screen-number">1</div>
+        <h2 class="screen-heading">When you play, you see the UI.<br>But behind it sits a team of specialists.</h2>
+
+        <div class="callout callout-accent animate-in" style="margin: var(--space-8) 0">
+          <div class="callout-icon">🎭</div>
+          <div class="callout-content">
+            <strong class="callout-title">The Theater Troupe Metaphor</strong>
+            <p>The game is like a theater troupe with four actors, each with a strict role. <span class="term" data-definition="Models is the script — it only contains data structures, with no logic or behavior. Pure information, nothing else.">Models</span> is the script. <span class="term" data-definition="Logic is the stage manager — it enforces the rules and orchestrates what happens each turn.">Logic</span> is the stage manager. <span class="term" data-definition="AI is the understudy — it makes automated decisions on behalf of AI-controlled players.">AI</span> is the understudy. <span class="term" data-definition="Map is the set designer — it procedurally generates the game world from mathematical rules.">Map</span> is the set designer.</p>
+          </div>
+        </div>
+
+        <p style="color: var(--color-text-secondary); margin-top: var(--space-6)">Each package has exactly one job. They never talk to each other directly — only through well-defined contracts.</p>
+      </section>
+
+      <!-- SCREEN 2: Architecture Diagram -->
+      <section class="screen animate-in">
+        <div class="screen-number">2</div>
+        <h2 class="screen-heading">Four Packages, One Rule</h2>
+        <p>The dependency arrow only goes one way. Hover each package to see what it does.</p>
+
+        <div class="arch-diagram animate-in" style="margin-top: var(--space-8)">
+          <div class="arch-zones" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); max-width: 700px; margin: 0 auto;">
+
+            <div class="arch-zone" style="text-align: center;">
+              <div class="arch-component" data-desc="The script — pure data only. Contains classes like Player, Province, Unit, Army, Fleet. No logic, no behavior, just information about the game state."
+                   onclick="showArchDesc(this)" style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); cursor: pointer; border-top: 4px solid var(--color-actor-1)">
+                <div class="arch-icon" style="font-size: 2rem; margin-bottom: var(--space-2)">📋</div>
+                <strong style="font-size: var(--text-lg)">colonizethis_models</strong>
+                <p style="color: var(--color-text-secondary); font-size: var(--text-sm); margin-top: var(--space-2)">Data structures only</p>
+              </div>
+            </div>
+
+            <div class="arch-zone" style="text-align: center;">
+              <div class="arch-component" data-desc="The stage manager — rules and orchestration. Contains TurnResolver, CombatResolver, PlayerView. Enforces the 13-phase turn cycle and combat rules."
+                   onclick="showArchDesc(this)" style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); cursor: pointer; border-top: 4px solid var(--color-actor-2)">
+                <div class="arch-icon" style="font-size: 2rem; margin-bottom: var(--space-2)">🎬</div>
+                <strong style="font-size: var(--text-lg)">colonizethis_logic</strong>
+                <p style="color: var(--color-text-secondary); font-size: var(--text-sm); margin-top: var(--space-2)">Rules and orchestration</p>
+              </div>
+            </div>
+
+            <div class="arch-zone" style="text-align: center;">
+              <div class="arch-component" data-desc="The understudy — automated decision-making. Contains StrategicAI, GoalManager, TacticalAI. Decides what AI players do each turn."
+                   onclick="showArchDesc(this)" style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); cursor: pointer; border-top: 4px solid var(--color-actor-3)">
+                <div class="arch-icon" style="font-size: 2rem; margin-bottom: var(--space-2)">🤖</div>
+                <strong style="font-size: var(--text-lg)">colonizethis_ai</strong>
+                <p style="color: var(--color-text-secondary); font-size: var(--text-sm); margin-top: var(--space-2)">AI decision-making</p>
+              </div>
+            </div>
+
+            <div class="arch-zone" style="text-align: center;">
+              <div class="arch-component" data-desc="The set designer — procedural world generation. Generates the map topology, terrain, and province boundaries from mathematical rules."
+                   onclick="showArchDesc(this)" style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); cursor: pointer; border-top: 4px solid var(--color-actor-4)">
+                <div class="arch-icon" style="font-size: 2rem; margin-bottom: var(--space-2)">🗺️</div>
+                <strong style="font-size: var(--text-lg)">colonizethis_map</strong>
+                <p style="color: var(--color-text-secondary); font-size: var(--text-sm); margin-top: var(--space-2)">Procedural generation</p>
+              </div>
+            </div>
+
+          </div>
+
+          <div style="text-align: center; margin-top: var(--space-6); padding: var(--space-4); background: var(--color-surface); border-radius: var(--radius-md);">
+            <p style="font-size: var(--text-sm); color: var(--color-text-secondary)">
+              <strong style="color: var(--color-accent)">AI → Logic → Models</strong> — dependencies flow in this direction only.<br>
+              Map stands alone — it generates the world once at setup, then doesn't participate in turn logic.
+            </p>
+          </div>
+
+          <div class="arch-description" id="arch-desc" style="margin-top: var(--space-4); min-height: 48px; padding: var(--space-4); background: var(--color-bg-code); color: #CDD6F4; border-radius: var(--radius-sm); font-size: var(--text-sm);">
+            Click any package above to learn what it does.
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: What Each Package Does -->
+      <section class="screen animate-in">
+        <div class="screen-number">3</div>
+        <h2 class="screen-heading">What Each Package Is Responsible For</h2>
+
+        <div class="pattern-cards animate-in" style="margin-top: var(--space-8)">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">📋</div>
+            <h4 class="pattern-title">colonizethis_models</h4>
+            <p class="pattern-desc">Pure data. Defines what a Player, Province, Unit, Army, Fleet, and TurnPhase look like. No logic lives here — just the shape of information.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🎬</div>
+            <h4 class="pattern-title">colonizethis_logic</h4>
+            <p class="pattern-desc">The rules engine. Runs the 13-phase turn cycle, resolves combat, builds PlayerView for each player, merges human and AI orders.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🤖</div>
+            <h4 class="pattern-title">colonizethis_ai</h4>
+            <p class="pattern-desc">The brain. Decides what AI players want to do — build armies, negotiate alliances, research tech. Feeds orders into the Logic layer.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">🗺️</div>
+            <h4 class="pattern-title">colonizethis_map</h4>
+            <p class="pattern-desc">The set designer. Procedurally generates terrain, province boundaries, and topology. Runs once at game start, then stays quiet.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: Group Chat Animation -->
+      <section class="screen animate-in">
+        <div class="screen-number">4</div>
+        <h2 class="screen-heading">How They Talk to Each Other</h2>
+        <p>AI can ask Logic for help. Logic can respond. But Logic <em>never</em> initiates. Watch:</p>
+
+        <div class="chat-window" id="chat-module2" style="margin-top: var(--space-6)">
+          <div class="chat-messages">
+            <div class="chat-message" data-msg="0" data-sender="actor-ai" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-3)">AI</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-3)">AI Planner</span>
+                <p>Hey Logic, I need to decide what to build this turn. Can you give me suggestions?</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="1" data-sender="actor-logic" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">LG</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">Logic</span>
+                <p>Sure! Based on the current game state, your best options are: build a colony here, train an army there, or research this tech.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="2" data-sender="actor-ai" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-3)">AI</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-3)">AI Planner</span>
+                <p>Got it — I'll prioritize the colony. Thanks!</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="3" data-sender="actor-logic" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">LG</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">Logic</span>
+                <p>No problem! Remember — I can only respond when you ask. I never initiate.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-typing" id="chat-typing" style="display:none">
+            <div class="chat-avatar" id="typing-avatar">?</div>
+            <div class="chat-typing-dots">
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+            </div>
+          </div>
+
+          <div class="chat-controls">
+            <button class="btn chat-next-btn">Next Message</button>
+            <button class="btn chat-all-btn">Play All</button>
+            <button class="btn chat-reset-btn">Replay</button>
+            <span class="chat-progress"></span>
+          </div>
+        </div>
+
+        <div class="callout callout-accent animate-in" style="margin-top: var(--space-6)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Why This Matters</strong>
+            <p>Because Logic never initiates with AI, the AI <em>must</em> make its own decisions. Logic can't "push" suggestions to AI or give it unfair advantages. This is how the game stays fair and deterministic.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Drag and Drop -->
+      <section class="screen animate-in">
+        <div class="screen-number">5</div>
+        <h2 class="screen-heading">Match Each Component to Its Package</h2>
+        <p>Drag each class or file to the correct package. This tests whether you understand where each responsibility lives.</p>
+
+        <div class="dnd-container animate-in" style="margin-top: var(--space-6)">
+          <div class="dnd-chips">
+            <div class="dnd-chip" draggable="true" data-answer="models">TurnPhase enum</div>
+            <div class="dnd-chip" draggable="true" data-answer="models">Player class</div>
+            <div class="dnd-chip" draggable="true" data-answer="logic">TurnResolver</div>
+            <div class="dnd-chip" draggable="true" data-answer="logic">CombatResolver</div>
+            <div class="dnd-chip" draggable="true" data-answer="logic">PlayerView</div>
+            <div class="dnd-chip" draggable="true" data-answer="ai">StrategicAI</div>
+            <div class="dnd-chip" draggable="true" data-answer="ai">GoalManager</div>
+            <div class="dnd-chip" draggable="true" data-answer="map">MapTopology</div>
+          </div>
+          <div class="dnd-zones">
+            <div class="dnd-zone" data-correct="models" style="border-top: 4px solid var(--color-actor-1)">
+              <p class="dnd-zone-label"><strong>colonizethis_models</strong> — pure data</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="logic" style="border-top: 4px solid var(--color-actor-2)">
+              <p class="dnd-zone-label"><strong>colonizethis_logic</strong> — rules engine</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="ai" style="border-top: 4px solid var(--color-actor-3)">
+              <p class="dnd-zone-label"><strong>colonizethis_ai</strong> — AI decisions</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="map" style="border-top: 4px solid var(--color-actor-4)">
+              <p class="dnd-zone-label"><strong>colonizethis_map</strong> — world generation</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+          </div>
+          <button class="btn" onclick="checkDnD()">Check Matches</button>
+          <button class="btn" onclick="resetDnD()">Reset</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 6: The Golden Rule -->
+      <section class="screen animate-in">
+        <div class="screen-number">6</div>
+        <h2 class="screen-heading">The Golden Rule</h2>
+
+        <div class="callout callout-accent animate-in" style="margin: var(--space-8) 0; border-left: 4px solid var(--color-accent); background: var(--color-accent-light)">
+          <div class="callout-icon">⚠️</div>
+          <div class="callout-content">
+            <strong class="callout-title">Architecturally Enforced, Not Just a Convention</strong>
+            <p><strong>Logic MUST NOT import AI.</strong> This isn't a style guide — it's enforced by the package structure. If you try to import AI from Logic, the code won't compile.</p>
+          </div>
+        </div>
+
+        <p style="margin-bottom: var(--space-6)">Why does this matter? Because if Logic could call AI, the AI could get information Logic doesn't normally have access to — making it impossible to keep the game fair.</p>
+
+        <div class="flow-steps animate-in">
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-3)">AI</div>
+            <p>Asks Logic for help</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-2)">Logic</div>
+            <p>Responds with options</p>
+          </div>
+          <div class="flow-arrow" style="opacity: 0.3">✗</div>
+          <div class="flow-step" style="opacity: 0.4">
+            <div class="flow-step-num" style="background: var(--color-text-muted)">Logic</div>
+            <p>Asks AI for help</p>
+          </div>
+        </div>
+
+        <p style="margin-top: var(--space-8); color: var(--color-text-secondary)">This one-way door is the architectural foundation that makes ColonizeThis a fair, deterministic strategy game.</p>
+      </section>
+
+    </div>
+  </div>
+</section>
