@@ -78,6 +78,7 @@ const double _provinceLabelIconRenderedPx = 12;
 const double _provinceLabelIconGapPx = 3;
 const double _provinceLabelTextIconGapPx = 4;
 const String _provinceLabelCapitalIconId = 'map_capital_star';
+const String _seaZoneLabelWarpIconId = 'map_warp_zone';
 
 /// Sea zone name plates (light blue, black text). SPEC/ui/map-widget.md.
 const Color _seaZoneLabelPlateColor = Color.fromRGBO(173, 216, 230, 0.55);
@@ -237,6 +238,14 @@ List<String> resolveProvinceLabelIconIds({
   final ids = <String>[if (isCapital) _provinceLabelCapitalIconId];
   ids.addAll(resolveProvinceLabelPresenceIconIds(presence));
   return ids;
+}
+
+/// Resolves optional prefix icon ids for sea-zone labels.
+List<String> resolveSeaZoneLabelPrefixIconIds({required bool isWarpZone}) {
+  if (!isWarpZone) {
+    return const <String>[];
+  }
+  return const <String>[_seaZoneLabelWarpIconId];
 }
 
 /// Resolves map province-label presence icon ids from province presence data.

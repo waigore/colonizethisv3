@@ -270,7 +270,8 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
     _seaZoneLabelsCached = _computeSeaZoneLabels();
   }
 
-  List<({int cx, int cy, String text})> _computeSeaZoneLabels() {
+  List<({int cx, int cy, String text, bool isWarpZone})>
+  _computeSeaZoneLabels() {
     final byLocalId = <String, List<CellViewData>>{};
     for (final cell in region.cells) {
       if (!cell.isSea) {
@@ -278,7 +279,8 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
       }
       byLocalId.putIfAbsent(cell.regionCellId, () => []).add(cell);
     }
-    final out = <({int cx, int cy, String text})>[];
+    final out = <({int cx, int cy, String text, bool isWarpZone})>[];
+    final warpSeaZoneIds = region.warpMarkers.map((m) => m.seaZoneId).toSet();
     for (final e in byLocalId.entries) {
       final cells = e.value;
       if (cells.isEmpty) {
@@ -293,16 +295,17 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
       final n = cells.length;
       final cx = (sx / n).round();
       final cy = (sy / n).round();
-      if (cx < 0 ||
-          cy < 0 ||
-          cx >= region.width ||
-          cy >= region.height) {
+      if (cx < 0 || cy < 0 || cx >= region.width || cy >= region.height) {
         continue;
       }
       final prefixed = '${region.regionId}|${e.key}';
-      final text =
-          region.seaZoneDisplayNameByPrefixedId[prefixed] ?? e.key;
-      out.add((cx: cx, cy: cy, text: text));
+      final text = region.seaZoneDisplayNameByPrefixedId[prefixed] ?? e.key;
+      out.add((
+        cx: cx,
+        cy: cy,
+        text: text,
+        isWarpZone: warpSeaZoneIds.contains(e.key),
+      ));
     }
     return out;
   }
@@ -328,13 +331,24 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
       if (_visibilityForTerrain(centroidCell) == TileVisibility.unrevealed) {
         continue;
       }
-      final tp =
-          TextPainter(
-            text: TextSpan(text: item.text, style: textStyle),
-            textDirection: TextDirection.ltr,
-          )..layout(maxWidth: double.infinity);
-      final bw = tp.width + pad * 2;
-      final bh = tp.height + pad * 2;
+      final tp = TextPainter(
+        text: TextSpan(text: item.text, style: textStyle),
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: double.infinity);
+      final prefixIconIds = resolveSeaZoneLabelPrefixIconIds(
+        isWarpZone: item.isWarpZone,
+      );
+      final hasPrefixIcon = prefixIconIds.isNotEmpty;
+      final prefixIconWidth = hasPrefixIcon
+          ? _provinceLabelIconRenderedPx + _provinceLabelTextIconGapPx
+          : 0.0;
+      final contentWidth = prefixIconWidth + tp.width;
+      final contentHeight = math.max(
+        tp.height,
+        hasPrefixIcon ? _provinceLabelIconRenderedPx : 0.0,
+      );
+      final bw = contentWidth + pad * 2;
+      final bh = contentHeight + pad * 2;
       final center = resolveSeaZoneNamePlateCenterWorld(
         centroidTileX: item.cx,
         centroidTileY: item.cy,
@@ -354,7 +368,24 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
         const Radius.circular(4),
       );
       canvas.drawRRect(rect, platePaint);
-      tp.paint(canvas, Offset(-tp.width / 2, -tp.height / 2));
+      final rowLeft = -contentWidth / 2;
+      final rowTop = -contentHeight / 2;
+      if (hasPrefixIcon) {
+        _paintProvinceLabelIconsRow(
+          canvas: canvas,
+          iconIds: prefixIconIds,
+          left: rowLeft,
+          top: rowTop + (contentHeight - _provinceLabelIconRenderedPx) / 2,
+          rowWidth: _provinceLabelIconRenderedPx,
+        );
+      }
+      tp.paint(
+        canvas,
+        Offset(
+          rowLeft + prefixIconWidth,
+          rowTop + (contentHeight - tp.height) / 2,
+        ),
+      );
       canvas.restore();
     }
   }
@@ -390,6 +421,7 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
       x += _provinceLabelIconRenderedPx + _provinceLabelIconGapPx;
     }
   }
+
   void _paintHoveredProvinceGlow(Canvas canvas) {
     final t = _hoverAnimationT;
     final opacity =
@@ -458,6 +490,7 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
       }
     }
   }
+
   void _paintGreatPowerLandOwnershipTint(Canvas canvas) {
     paintGreatPowerOwnershipTintLayer(
       canvas: canvas,
