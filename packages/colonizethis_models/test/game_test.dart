@@ -104,6 +104,34 @@ void main() {
       expect(restored.lastHumanResearchCategoryCompletionTurn, 2);
     });
 
+    test('mapViewState round-trip and legacy default', () {
+      final game = Game(
+        id: 'g-map',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+        mapViewState: const MapViewState(
+          zoomMultiplier: 2.25,
+          showProvinceOverlay: false,
+          showProvinceOwnershipTint: true,
+          showProvinceNamesLayer: false,
+        ),
+      );
+      final roundTrip = Game.fromJson(game.toJson());
+      expect(roundTrip.mapViewState.zoomMultiplier, 2.25);
+      expect(roundTrip.mapViewState.showProvinceOverlay, isFalse);
+      expect(roundTrip.mapViewState.showProvinceOwnershipTint, isTrue);
+      expect(roundTrip.mapViewState.showProvinceNamesLayer, isFalse);
+
+      final legacyJson = Map<String, dynamic>.from(game.toJson())
+        ..remove('mapViewState');
+      final legacy = Game.fromJson(legacyJson);
+      expect(legacy.mapViewState, MapViewState.defaults);
+    });
+
     test('copyWith id and players', () {
       final game = Game(
         id: 'g1',

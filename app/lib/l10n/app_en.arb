@@ -1037,6 +1037,15 @@
   "@moveFleet_locateOnMap": {
     "description": "Tooltip for locate action in move fleet dialog."
   },
+  "moveFleet_warpLinkToRegion": "links to {region}",
+  "@moveFleet_warpLinkToRegion": {
+    "description": "Suffix appended to cross-region sea-zone destinations in move fleet dialog.",
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
   "military_units_title": "Military Units",
   "@military_units_title": {
     "description": "Military units panel title."

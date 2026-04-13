@@ -451,6 +451,41 @@ void main() {
       expect(loaded.turnTimeMapping!.yearsPerTurnAfterCutoff, 2);
     });
 
+    test('save/load round-trip includes mapViewState and legacy default', () {
+      final game = Game(
+        id: 'mapViewStateSave',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+        mapViewState: const MapViewState(
+          zoomMultiplier: 3.5,
+          showProvinceOverlay: false,
+          showProvinceOwnershipTint: true,
+          showProvinceNamesLayer: false,
+        ),
+      );
+      adapter.save(box, game);
+      final loaded = adapter.load(box, 'mapViewStateSave');
+      expect(loaded, isNotNull);
+      expect(loaded!.mapViewState.zoomMultiplier, 3.5);
+      expect(loaded.mapViewState.showProvinceOverlay, isFalse);
+      expect(loaded.mapViewState.showProvinceOwnershipTint, isTrue);
+      expect(loaded.mapViewState.showProvinceNamesLayer, isFalse);
+
+      final legacyGameJson = Map<String, dynamic>.from(game.toJson())
+        ..remove('mapViewState');
+      box.put('legacyMapViewStateSave', {
+        'saveFormatVersion': kSaveFormatVersion,
+        'game': legacyGameJson,
+      });
+      final legacyLoaded = adapter.load(box, 'legacyMapViewStateSave');
+      expect(legacyLoaded, isNotNull);
+      expect(legacyLoaded!.mapViewState, MapViewState.defaults);
+    });
+
     test(
       'load succeeds when turnTimeMapping is Map<dynamic,dynamic> (Hive typing)',
       () {
@@ -734,26 +769,27 @@ void main() {
       expect(loaded!.turnTimeMapping, isNull);
     });
 
-    test('loadStrict throws IncompatibleSaveFormatException for unsupported version',
-        () {
-      final game = Game(
-        id: 'unsupportedVersion',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
-      );
-      box.put('badVer', {
-        'saveFormatVersion': 999,
-        'game': game.toJson(),
-      });
-      expect(
-        () => adapter.loadStrict(box, 'badVer'),
-        throwsA(isA<IncompatibleSaveFormatException>()),
-      );
-    });
+    test(
+      'loadStrict throws IncompatibleSaveFormatException for unsupported version',
+      () {
+        final game = Game(
+          id: 'unsupportedVersion',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'pl1', displayName: 'Spain', isHuman: true),
+          ],
+        );
+        box.put('badVer', {'saveFormatVersion': 999, 'game': game.toJson()});
+        expect(
+          () => adapter.loadStrict(box, 'badVer'),
+          throwsA(isA<IncompatibleSaveFormatException>()),
+        );
+      },
+    );
 
     test('load returns null for unsupported saveFormatVersion', () {
       final game = Game(

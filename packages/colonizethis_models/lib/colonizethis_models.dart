@@ -12,6 +12,7 @@ export 'src/combat_mode.dart';
 export 'src/civilian_unit_type_ids.dart';
 export 'src/current_work.dart';
 export 'src/game.dart';
+export 'src/map_view_state.dart';
 export 'src/general.dart';
 export 'src/minor_nation.dart';
 export 'src/tribe.dart';

@@ -34,6 +34,7 @@ class GameMapCanvasStack extends ConsumerWidget {
     this.onFleetMarkerTapped,
     required this.onCivilianTileSelectionCleared,
     required this.onRegionViewportSnapshot,
+    required this.zoomMultiplier,
     this.bus,
     super.key,
   });
@@ -63,6 +64,7 @@ class GameMapCanvasStack extends ConsumerWidget {
   final VoidCallback? onCivilianTileSelectionCleared;
   final void Function(RegionMapViewportSnapshot snapshot)
   onRegionViewportSnapshot;
+  final double zoomMultiplier;
   final ct_models.AppEventBus? bus;
 
   @override
@@ -106,6 +108,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                       onWorkTargetSelectionCancelled,
                   bus: bus,
                   onViewportSnapshotChanged: onRegionViewportSnapshot,
+                  zoomMultiplier: zoomMultiplier,
                 ),
               ),
               if (!isNarrow)
