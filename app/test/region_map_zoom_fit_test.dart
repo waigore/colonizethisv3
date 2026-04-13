@@ -241,9 +241,13 @@ void main() {
       expect(
         snap!.zoomMultiplier,
         greaterThan(1.03),
-        reason: 'pinch-out should increase fit-relative zoom like zoom-in slider drag',
+        reason:
+            'pinch-out should increase fit-relative zoom like zoom-in slider drag',
       );
-      expect(snap!.zoomMultiplier, lessThanOrEqualTo(kRegionMapZoomMultiplierMax));
+      expect(
+        snap!.zoomMultiplier,
+        lessThanOrEqualTo(kRegionMapZoomMultiplierMax),
+      );
       final mAfterPinch = snap!.zoomMultiplier;
       final zAfterPinch = snap!.zoom;
 
@@ -268,6 +272,97 @@ void main() {
 
       expect(snap!.zoomMultiplier, closeTo(mAfterPinch, 0.08));
       expect(snap!.zoom, closeTo(zAfterPinch, zFit * 0.04));
+
+      bus.dispose();
+    },
+    timeout: const Timeout(Duration(seconds: 20)),
+  );
+
+  testWidgets(
+    'CtRegionMap preserves global zoom multiplier across region switches',
+    (WidgetTester tester) async {
+      final oldWorld = ctRegionMapTestOldWorldRegion();
+      final newWorld = ctRegionMapTestNewWorldRegion();
+      final bus = AppEventBus.create();
+      RegionMapViewportSnapshot? snap;
+      var activeRegion = oldWorld;
+      var controlledZoomMultiplier = 1.0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                return Center(
+                  child: SizedBox(
+                    width: 400,
+                    height: 320,
+                    child: CtRegionMap(
+                      region: activeRegion,
+                      cellSizePx: activeRegion.cellSize.toDouble(),
+                      visibilityMode: CtMapVisibilityMode.full,
+                      bus: bus,
+                      zoomMultiplier: controlledZoomMultiplier,
+                      onViewportSnapshotChanged: (s) {
+                        snap = s;
+                        controlledZoomMultiplier = s.zoomMultiplier;
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await pumpUntilCtRegionMapFitBaseline(tester, () => snap);
+
+      bus.emit(
+        RequestRegionMapSetZoomMultiplierEvent(
+          regionId: oldWorld.regionId,
+          zoomMultiplier: 2.0,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      final zoomBeforeSwitch = snap!.zoomMultiplier;
+      expect(zoomBeforeSwitch, closeTo(2.0, 0.08));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                activeRegion = newWorld;
+                return Center(
+                  child: SizedBox(
+                    width: 400,
+                    height: 320,
+                    child: CtRegionMap(
+                      region: activeRegion,
+                      cellSizePx: activeRegion.cellSize.toDouble(),
+                      visibilityMode: CtMapVisibilityMode.full,
+                      bus: bus,
+                      zoomMultiplier: controlledZoomMultiplier,
+                      onViewportSnapshotChanged: (s) {
+                        snap = s;
+                        controlledZoomMultiplier = s.zoomMultiplier;
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 120));
+      expect(snap, isNotNull);
+      expect(snap!.regionId, newWorld.regionId);
+      expect(snap!.zoomMultiplier, closeTo(zoomBeforeSwitch, 0.1));
 
       bus.dispose();
     },
