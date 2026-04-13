@@ -200,6 +200,32 @@ python3 pytool/wang_incremental_64.py --run-dir /path/to/other_run --init
 
 This contract is normative for issue #1775 transport overlays and future atlas refreshes.
 
+**Resumable generation workflow (`pytool/generate_transport_overlay_tiles_64.py`):**
+
+1. Initialize family contracts from Pixflux (once per family, or when reseeding style):
+
+```bash
+uv run --directory pytool python generate_transport_overlay_tiles_64.py --family road --init-seed
+uv run --directory pytool python generate_transport_overlay_tiles_64.py --family rail --init-seed
+```
+
+2. Generate masks one-by-one (`inpaint-v3` heavy step), with resume safety:
+
+```bash
+uv run --directory pytool python generate_transport_overlay_tiles_64.py --family road --mask 1 --resume
+uv run --directory pytool python generate_transport_overlay_tiles_64.py --family road --mask 2 --resume
+# ...continue through mask 15, repeat for --family rail
+```
+
+3. Rebuild atlas PNG after all `tile_mask_00..15.png` exist for that family:
+
+```bash
+uv run --directory pytool python generate_transport_overlay_tiles_64.py --family road --rebuild-atlas
+uv run --directory pytool python generate_transport_overlay_tiles_64.py --family rail --rebuild-atlas
+```
+
+4. Resume point for handoff: `pytool/out/transport_edge_contracts_64/state.json` stores completed masks by family and is authoritative for `--resume`.
+
 ---
 
 ### wang_reference_legal_layout_64.py
