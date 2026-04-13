@@ -44,7 +44,7 @@ Order: during game setup/map creation, after province assignment and after capit
   - Same seed ⇒ same names (deterministic, reproducible).
   - Different seed ⇒ different names across games.
 - **Faction display names:** Great Powers get `countryName` (e.g. England, France); Minor Nations and Tribes get `displayName` from the naming config. These are applied to the game’s players, minorNations, and tribes so UI can show human-readable faction names.
-- **Sea-zone display names:** Every sea zone node in topology receives a non-empty display name keyed by prefixed id (`regionId|seaZoneLocalId`). Assignment is deterministic from setup seed and region-specific list (`oldWorld` list for `oldWorld`, `newWorld` list for `newWorld`).
+- **Sea-zone display names:** Every sea zone node in topology receives a non-empty display name keyed by prefixed id (`regionId|seaZoneLocalId`). Assignment is deterministic from the game setup seed and region-specific list (`oldWorld` list for `oldWorld`, `newWorld` list for `newWorld`), analogous to province pool naming: **the same setup seed and the same generated topology must always yield the same display string for each prefixed sea-zone id** when setup runs again. **Pairwise distinct** display names across all sea zones in a region are **not** required unless the GDD explicitly adds that requirement later.
 
 Pool sizes: default ruleset uses **10** names per Great Power and **5** per Minor Nation and Tribe. Tribes use historically inspired **Amerindian / indigenous** place or region names.
 

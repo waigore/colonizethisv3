@@ -95,6 +95,10 @@ These criteria are implemented and covered by automated tests where noted.
   When step **7c** naming is applied  
   Then the System assigns a non-empty display name for every sea-zone node and stores those names keyed by prefixed sea-zone id (`regionId|seaZoneLocalId`) in `WorldState`.
 
+- Given `runInitGame` is invoked twice with the same `GameSetupConfig` whose `seed` is a positive integer and with `InitGameOptions(renderPng: false)`  
+  When both runs complete successfully  
+  Then `WorldState.seaZoneDisplayNameById` on the first result’s game deep-equals that on the second (same keys and same display strings per prefixed sea-zone id) (`colonizethis_logic` `init_game_orchestrator_test.dart`).
+
 - Given `createGameFromGeneratedMaps` completes with generated terrain and resource grids for Old World and New World  
   When The System has applied steps **7b** (capitals), **7d** (towns), and **7d.strip**  
   Then **no** tile key equal to any faction `capitalTile` or any province `townTileKey` has a non-null terrain **resource** or a non-zero **extraction improvement** on that tile; **roadLevel** on those tiles may still be greater than zero where init ports/paths placed roads (`game_setup.dart` / integration tests).

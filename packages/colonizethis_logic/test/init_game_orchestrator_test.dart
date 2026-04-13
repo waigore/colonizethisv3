@@ -175,6 +175,38 @@ void main() {
       expect(result.game.globalGameSeed, k);
     });
 
+    test(
+      'same positive seed: seaZoneDisplayNameById matches across two '
+      'runInitGame calls (province-like repeatability, not label distinctness)',
+      () {
+        // End-to-end guard: full procedural OW+NW generation + topology + naming.
+        // Pairwise distinct sea-zone strings on one map are not required; stability
+        // of (regionId|localSeaZoneId) → displayName for a fixed seed is.
+        const k = 900_002;
+        final base = GameSetupConfig.defaultConfig;
+        final config = GameSetupConfig(
+          selectedGreatPowerIds: base.selectedGreatPowerIds,
+          leaderVariantByGpId: base.leaderVariantByGpId,
+          continentCount: base.continentCount,
+          minorNationCount: base.minorNationCount,
+          tribeCount: base.tribeCount,
+          numProvincesOldWorld: base.numProvincesOldWorld,
+          numProvincesNewWorld: base.numProvincesNewWorld,
+          minProvincesPerMinor: base.minProvincesPerMinor,
+          seed: k,
+          startingResources: base.startingResources,
+          enforceFairGpOldWorldAssignment: base.enforceFairGpOldWorldAssignment,
+        );
+        const options = InitGameOptions(cellSize: 8, renderPng: false);
+        final first = runInitGame(config: config, options: options);
+        final second = runInitGame(config: config, options: options);
+        expect(
+          first.game.worldState.seaZoneDisplayNameById,
+          second.game.worldState.seaZoneDisplayNameById,
+        );
+      },
+    );
+
     test('NW tile map uses effectiveSeed + 1 (OW uses effective seed)', () {
       final seedsByRegion = <String, int>{};
       (TileMapResult, MapTopology) captureSeeds({
