@@ -7,6 +7,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/ct_e2e.dart';
+import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n.dart';
@@ -285,7 +287,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
             orders: widget.currentOrders,
           );
 
-    return UnitsPanelShell(
+    final panel = UnitsPanelShell(
       title: tileScopeActive
           ? l10n.civilian_units_title_tile
           : l10n.civilian_units_title,
@@ -364,6 +366,21 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
       ],
       emptyMessage: l10n.civilian_units_empty,
     );
+    if (kCtE2EEnabled) {
+      updateCtE2eCivilianPanelSnapshotIfEnabled(
+        CtE2eCivilianPanelSnapshot(
+          game: widget.game,
+          humanPlayerId: widget.humanPlayerId,
+          currentOrders: widget.currentOrders,
+          availableWorkTargets: widget.availableWorkTargets,
+          tileScopeTileKey: widget.tileScopeTileKey,
+          initialSelectedUnitId: widget.initialSelectedUnitId,
+          resolvedSelectedUnitId: resolvedSelectedUnitId,
+        ),
+      );
+      return KeyedSubtree(key: kCtE2ECivilianPanelRootKey, child: panel);
+    }
+    return panel;
   }
 }
 

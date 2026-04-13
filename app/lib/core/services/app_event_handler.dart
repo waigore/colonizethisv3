@@ -30,6 +30,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/routes.dart';
 import '../../config/constants.dart';
+import '../../config/ct_e2e.dart';
+import '../../config/ct_e2e_last_panel_snapshot.dart';
 import 'subscription_tracker.dart';
 import '../../features/game/widgets/civilian_units_panel.dart';
 import '../../features/game/widgets/military_units_panel.dart';
@@ -264,7 +266,12 @@ class AppEventHandler {
           );
         },
       ),
-    ).whenComplete(() => _bus.emit(const UnitsPanelClosedEvent('civilian')));
+    ).whenComplete(() {
+      if (kCtE2EEnabled) {
+        updateCtE2eCivilianPanelSnapshotIfEnabled(null);
+      }
+      _bus.emit(const UnitsPanelClosedEvent('civilian'));
+    });
   }
 
   Future<void> _openMilitaryUnitsPanel(
@@ -327,7 +334,12 @@ class AppEventHandler {
           );
         },
       ),
-    ).whenComplete(() => _bus.emit(const UnitsPanelClosedEvent('naval')));
+    ).whenComplete(() {
+      if (kCtE2EEnabled) {
+        updateCtE2eNavalPanelSnapshotIfEnabled(null);
+      }
+      _bus.emit(const UnitsPanelClosedEvent('naval'));
+    });
   }
 
   String _humanPlayerId(Game game) {

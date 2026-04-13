@@ -309,6 +309,93 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     ref.read(currentOrdersProvider.notifier).clear();
   }
 
+  void _e2eSelectFirstValidWorkTargetTile() {
+    final keys = _cachedValidTileKeys;
+    if (keys == null || keys.isEmpty) return;
+    final sorted = keys.toList()..sort();
+    _onTileSelectedForWork(sorted.first);
+  }
+
+  void _e2eOpenFirstCivilianMarkerPanel() {
+    if (!mounted) return;
+    final currentOrders = ref.read(currentOrdersProvider);
+    var projected = GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+      region: _currentRegion,
+      game: widget.game,
+      orders: currentOrders,
+      humanPlayerId: _humanPlayerId,
+    );
+    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
+    final tm = mapData?.tileMapByRegion;
+    final tr = mapData?.topologyByRegion;
+    final ct = mapData?.combinedTopology;
+    if (tm != null && tr != null && ct != null) {
+      projected = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
+        region: projected,
+        game: widget.game,
+        orders: currentOrders,
+        humanPlayerId: _humanPlayerId,
+        tileMapByRegion: tm,
+        topologyByRegion: tr,
+        combinedTopology: ct,
+      );
+    }
+    final markers = [...projected.civilianTileMarkers]
+      ..sort((a, b) => a.tileKey.compareTo(b.tileKey));
+    if (markers.isEmpty) return;
+    final m = markers.first;
+    final initialUnitId = m.unitIds.isNotEmpty ? m.unitIds.first : null;
+    setState(() => _selectedCivilianTileKey = m.tileKey);
+    ref
+        .read(appEventBusProvider)
+        .emit(
+          ct_models.OpenCivilianUnitsPanelEvent(
+            tileScopeTileKey: m.tileKey,
+            initialSelectedUnitId: initialUnitId,
+          ),
+        );
+  }
+
+  void _e2eOpenFirstFleetMarkerPanel() {
+    if (!mounted) return;
+    final currentOrders = ref.read(currentOrdersProvider);
+    var projected = GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+      region: _currentRegion,
+      game: widget.game,
+      orders: currentOrders,
+      humanPlayerId: _humanPlayerId,
+    );
+    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
+    final tm = mapData?.tileMapByRegion;
+    final tr = mapData?.topologyByRegion;
+    final ct = mapData?.combinedTopology;
+    if (tm != null && tr != null && ct != null) {
+      projected = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
+        region: projected,
+        game: widget.game,
+        orders: currentOrders,
+        humanPlayerId: _humanPlayerId,
+        tileMapByRegion: tm,
+        topologyByRegion: tr,
+        combinedTopology: ct,
+      );
+    }
+    final markers = [...projected.fleetTileMarkers]
+      ..sort((a, b) => a.tileKey.compareTo(b.tileKey));
+    if (markers.isEmpty) return;
+    final m = markers.first;
+    final initialFleetId = m.fleetIds.isNotEmpty ? m.fleetIds.first : null;
+    ref
+        .read(appEventBusProvider)
+        .emit(
+          ct_models.OpenNavalUnitsPanelEvent(
+            locationScopeKey: m.locationScopeKey,
+            initialSelectedFleetId: initialFleetId,
+            tileScopeTileKey: m.tileKey,
+          ),
+        );
+  }
+
   @override
   void didUpdateWidget(covariant GameMapArea oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -592,7 +679,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           },
                         ),
                       ),
-                      if (kCtE2EEnabled)
+                      if (kCtE2EEnabled) ...[
                         Positioned(
                           right: kMapOverlayEdgeInset,
                           top: kMapOverlayEdgeInset,
@@ -608,6 +695,57 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                             ),
                           ),
                         ),
+                        if (_workTargetSelection != null &&
+                            _cachedValidTileKeys != null &&
+                            _cachedValidTileKeys!.isNotEmpty)
+                          Positioned(
+                            right: kMapOverlayEdgeInset,
+                            top: kMapOverlayEdgeInset + 48,
+                            child: SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  key: kCtE2ESelectFirstValidWorkTileKey,
+                                  onTap: _e2eSelectFirstValidWorkTargetTile,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (projectedRegion.civilianTileMarkers.isNotEmpty)
+                          Positioned(
+                            right: kMapOverlayEdgeInset,
+                            top: kMapOverlayEdgeInset + 96,
+                            child: SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  key: kCtE2EOpenFirstCivilianMarkerPanelKey,
+                                  onTap: _e2eOpenFirstCivilianMarkerPanel,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (projectedRegion.fleetTileMarkers.isNotEmpty)
+                          Positioned(
+                            right: kMapOverlayEdgeInset,
+                            top: kMapOverlayEdgeInset + 144,
+                            child: SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  key: kCtE2EOpenFirstFleetMarkerPanelKey,
+                                  onTap: _e2eOpenFirstFleetMarkerPanel,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                       if (_sideMenuOpen) ...[
                         Positioned.fill(
                           child: GestureDetector(
