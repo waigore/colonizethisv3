@@ -9,6 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'game_factory.dart';
 import 'order_script.dart';
 import 'scenario.dart';
+import 'seaboard_port_audit.dart';
 import 'state_verifier.dart';
 
 /// Holds game state for scenario execution.
@@ -16,11 +17,13 @@ class ScenarioContext {
   const ScenarioContext({
     required this.game,
     this.topology,
+    this.topologyByRegion,
     this.tileMapByRegion,
   });
 
   final Game game;
   final MapTopology? topology;
+  final Map<String, MapTopology>? topologyByRegion;
   final Map<String, TileMapResult>? tileMapByRegion;
 }
 
@@ -32,6 +35,7 @@ class ScenarioResult {
     required this.failures,
     this.finalState,
     this.turnResults = const {},
+    this.seaboardPortAudit,
   });
 
   final String scenarioName;
@@ -39,6 +43,8 @@ class ScenarioResult {
   final List<String> failures;
   final Game? finalState;
   final Map<int, TurnResult> turnResults;
+  /// GitHub #1766 — null if audit did not run (e.g. init failed before context).
+  final SeaboardPortAuditOutcome? seaboardPortAudit;
 }
 
 /// Result of a single turn within a scenario.
@@ -102,7 +108,28 @@ class ScenarioRunner {
         currentContext = ScenarioContext(
           game: _applySetup(currentContext.game, scenario.setup!),
           topology: currentContext.topology,
+          topologyByRegion: currentContext.topologyByRegion,
           tileMapByRegion: currentContext.tileMapByRegion,
+        );
+      }
+
+      final maps = currentContext.tileMapByRegion;
+      final topoByRegion = currentContext.topologyByRegion;
+      final SeaboardPortAuditOutcome portAudit;
+      if (maps != null &&
+          topoByRegion != null &&
+          maps.isNotEmpty &&
+          topoByRegion.isNotEmpty) {
+        portAudit = runSeaboardPortAudit(
+          game: currentContext.game,
+          tileMapByRegion: maps,
+          topologyByRegion: topoByRegion,
+        );
+      } else {
+        portAudit = SeaboardPortAuditOutcome(
+          skipped: true,
+          skipReason:
+              'missing tileMapByRegion or topologyByRegion (e.g. saved-game init without maps)',
         );
       }
 
@@ -114,6 +141,7 @@ class ScenarioRunner {
         final contextForTurn = ScenarioContext(
           game: gameForTurn,
           topology: currentContext.topology,
+          topologyByRegion: currentContext.topologyByRegion,
           tileMapByRegion: currentContext.tileMapByRegion,
         );
         // Parse orders
@@ -132,6 +160,7 @@ class ScenarioRunner {
         currentContext = ScenarioContext(
           game: nextGame,
           topology: currentContext.topology,
+          topologyByRegion: currentContext.topologyByRegion,
           tileMapByRegion: currentContext.tileMapByRegion,
         );
 
@@ -164,12 +193,17 @@ class ScenarioRunner {
       }
       allFailures.addAll(finalResult.failures);
 
+      if (!portAudit.skipped && !portAudit.passed) {
+        allFailures.addAll(portAudit.failures.map((f) => f.message));
+      }
+
       return ScenarioResult(
         scenarioName: scenario.name,
         passed: allFailures.isEmpty,
         failures: allFailures,
         finalState: currentContext.game,
         turnResults: turnResults,
+        seaboardPortAudit: portAudit,
       );
     } catch (e, stack) {
       return ScenarioResult(
@@ -221,6 +255,7 @@ class ScenarioRunner {
       return ScenarioContext(
         game: result.game,
         topology: result.topology,
+        topologyByRegion: result.topologyByRegion,
         tileMapByRegion: result.tileMapByRegion,
       );
     } else if (scenario.init.type == 'fromTopology') {
@@ -228,6 +263,7 @@ class ScenarioRunner {
       return ScenarioContext(
         game: result.game,
         topology: result.topology,
+        topologyByRegion: result.topologyByRegion,
         tileMapByRegion: result.tileMapByRegion,
       );
     } else if (scenario.init.type == 'saved') {
