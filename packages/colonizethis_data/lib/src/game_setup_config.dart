@@ -22,6 +22,7 @@ class GameSetupConfig {
     this.seed = 42,
     this.startingResources = const StartingResourcesConfig(),
     this.enforceFairGpOldWorldAssignment = false,
+    this.preferredInitialMapZoomMultiplier,
     Set<String>? initTownRoadWiringRegionIds,
   }) : initTownRoadWiringRegionIds =
            initTownRoadWiringRegionIds ?? const {'oldWorld'},
@@ -73,6 +74,10 @@ class GameSetupConfig {
   /// per SPEC/game/game-setup.md. When false, use a single assignment pass with no
   /// repair (faster; a GP may own disconnected P–P components).
   final bool enforceFairGpOldWorldAssignment;
+
+  /// Optional explicit fit-relative map zoom multiplier (`m`) for fresh campaign
+  /// initialization. When null, setup uses pipeline default behavior.
+  final double? preferredInitialMapZoomMultiplier;
 
   /// Region ids (`oldWorld`, `newWorld`, …) where init runs **town → capital**
   /// road wiring on **owned tiles only** after §7d town assignment.

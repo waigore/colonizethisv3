@@ -6,7 +6,7 @@ Orchestrates game creation from config through map generation, province/capital 
 
 ## Data Model
 
-- **GameSetupConfig:** seed, selectedGreatPowerIds, continent count, minor/tribe counts, target province counts, min provinces per minor, **`enforceFairGpOldWorldAssignment`** (bool, default **false**), **`initTownRoadWiringRegionIds`** (`Set<String>`, default **`{oldWorld}`**): regions where §7d.bis runs town→capital init roads on owned tiles; empty disables; include **`newWorld`** only if NW init wiring is desired. When **`enforceFairGpOldWorldAssignment`** is **true**, `createGameFromGeneratedMaps` runs GP land connectivity repair and assignment retries per [game-setup.md](../game/game-setup.md). When **false**, it uses one OW assignment pass without repair. **current product:** Values come from program defaults and optional CLI/API JSON per [init-game-tool.md](init-game-tool.md); there is **no** Base → Difficulty → Scenario JSON merge yet (deferred per [ruleset-config.md](../game/ruleset-config.md) / #57 / #58). **Future:** Same fields resolved from ruleset merge as in ruleset-config.
+- **GameSetupConfig:** seed, selectedGreatPowerIds, continent count, minor/tribe counts, target province counts, min provinces per minor, **`enforceFairGpOldWorldAssignment`** (bool, default **false**), **`initTownRoadWiringRegionIds`** (`Set<String>`, default **`{oldWorld}`**), and optional **`preferredInitialMapZoomMultiplier`** (`double?`, fit-relative `m`): regions where §7d.bis runs town→capital init roads on owned tiles; empty disables; include **`newWorld`** only if NW init wiring is desired. When **`enforceFairGpOldWorldAssignment`** is **true**, `createGameFromGeneratedMaps` runs GP land connectivity repair and assignment retries per [game-setup.md](../game/game-setup.md). When **false**, it uses one OW assignment pass without repair. For fresh campaign setup, if `preferredInitialMapZoomMultiplier` is null the setup seeds `Game.mapViewState.zoomMultiplier = 4.0`; if set, setup uses that preferred value. In both cases setup clamps to the shared fit-relative band `[0.5, 8.0]`. **current product:** Values come from program defaults and optional CLI/API JSON per [init-game-tool.md](init-game-tool.md); there is **no** Base → Difficulty → Scenario JSON merge yet (deferred per [ruleset-config.md](../game/ruleset-config.md) / #57 / #58). **Future:** Same fields resolved from ruleset merge as in ruleset-config.
 - **Effective seed:** if `config.seed ≠ 0`, use directly; if 0 or absent, derive from `DateTime.now().millisecondsSinceEpoch`. **Shared API:** `resolveEffectiveSetupSeed(config.seed)` in `packages/colonizethis_logic/lib/src/setup/effective_setup_seed.dart` (used by `runInitGame` and app `GameService` so CLI and shell agree).
 - **Game / WorldState:** RegionData per region (OW, NW), Province list (id, regionId, ownerId), faction records (Players, Minor Nations, Tribes).
 - **InitGameResult:** Game, mapPngBytes, markdown, InitGameMapViewData, tileMapByRegion, topologyByRegion, **warpLinks**, combinedTopology (or equivalent for cross-region sea paths). Warp links are produced in step 4 and consumed when building combined topology / connectivity.
@@ -90,6 +90,14 @@ These criteria are implemented and covered by automated tests where noted.
 - Given `createGameFromGeneratedMaps` (or `runInitGame`) completes successfully  
   When the caller reads `result.game.worldState.turnState`  
   Then `turnState.phase` is `TurnPhase.orders` and `turnState.turnNumber` is `0` (`game_setup.dart` / orchestrator tests).
+
+- Given `createGameFromGeneratedMaps` creates a brand-new campaign and `GameSetupConfig.preferredInitialMapZoomMultiplier` is null  
+  When the caller reads `result.game.mapViewState.zoomMultiplier`  
+  Then the value is `4.0` (fit-relative multiplier for first Empire Overview render).
+
+- Given `createGameFromGeneratedMaps` creates a brand-new campaign and `GameSetupConfig.preferredInitialMapZoomMultiplier` is set to a numeric value `P`  
+  When the caller reads `result.game.mapViewState.zoomMultiplier`  
+  Then the value equals `clamp(P, 0.5, 8.0)` and no other map view toggles are changed by zoom seeding.
 
 - Given `createGameFromGeneratedMaps` completes and Old World/New World topologies each contain one or more sea-zone nodes  
   When step **7c** naming is applied  

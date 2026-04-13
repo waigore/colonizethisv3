@@ -87,6 +87,7 @@ List<_MovePick> _buildNavalMovePicks({
   required MapTopology topology,
   required String humanPlayerId,
   required Fleet fleet,
+  required String warpLinkLabel,
   required String Function(String regionLabel) warpLinkLabelForRegion,
 }) {
   final outSea = <_PickSeaZone>[];
@@ -103,14 +104,17 @@ List<_MovePick> _buildNavalMovePicks({
     final zReg = regionIdForSeaZone(topology, z) ?? fleetSeaRegion;
     final regLabel = unitsPanelRegionLabel(zReg);
     final cross = zReg != fleetSeaRegion;
+    final isWarp = isWarpZoneSeaZone(topology, z);
     final zoneLabel = seaZoneDisplayName(
       game: game,
       regionId: zReg,
       seaZoneId: z,
     );
-    final label = cross
+    final label = !isWarp
+        ? zoneLabel
+        : cross
         ? '$zoneLabel ${warpLinkLabelForRegion(regLabel)}'
-        : zoneLabel;
+        : '$zoneLabel $warpLinkLabel';
     outSea.add(_PickSeaZone(seaZoneId: z, zoneRegionId: zReg, rowLabel: label));
   }
   outSea.sort((a, b) => a.rowLabel.compareTo(b.rowLabel));
@@ -177,6 +181,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
       topology: widget.topology,
       humanPlayerId: widget.humanPlayerId,
       fleet: widget.fleet,
+      warpLinkLabel: l10n.moveFleet_warpLink,
       warpLinkLabelForRegion: l10n.moveFleet_warpLinkToRegion,
     );
     _picksInitialized = true;
