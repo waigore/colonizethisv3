@@ -59,6 +59,35 @@ Base tiles are chained across tilesets to ensure consistent appearance.
 
 ---
 
+### Transport Overlay Atlases (Road/Rail)
+
+The region map transport overlay uses two dedicated **64x64** atlases with **16 cardinal masks** (`0..15`) each:
+
+- `tileset_transport_road_64` for `roadLevel` **1/2**
+- `tileset_transport_rail_64` for `roadLevel` **4**
+
+Both families share geometry and mask indexing:
+
+- Bit 0 = **North**
+- Bit 1 = **East**
+- Bit 2 = **South**
+- Bit 3 = **West**
+- Mask = sum of active bits (`0..15`)
+
+Runtime selection policy is documented in [map-widget.md](map-widget.md) and implemented in app transport overlay render policy helpers.
+
+**Atlas contract (both families):**
+
+- `tile_size`: `64x64`
+- Exactly 16 tile entries, one per mask id `0..15`
+- Each entry has a `bounding_box` aligned to 64px grid
+- All `bounding_box` rectangles are unique and within atlas bounds
+- Paths are declared in `app/assets/data/map_terrain_tilesets.json` under `transport_tilesets.road` and `transport_tilesets.rail`
+
+Transport overlays are land-only visual overlays and do not add sea extensions or explicit road/rail transition art in this slice.
+
+---
+
 ## Base Tile Chain Strategy
 
 To ensure visual consistency, tilesets must share base tiles:
@@ -216,6 +245,8 @@ Native **64×64** plains/sea/desert fill tiles (not Wang tileset API). **MCP too
 - `map_cell_size_px` (int ≥ 1): logical pixels per map cell for Flame (`InitGameMapViewData` / `RegionMapViewData.cellSize`).
 - `wang_tilesets` (object): must contain exactly these keys: `sea_plains`, `sea_desert`, `plains_desert`.
 - Each Wang entry: `spec_json` (String, asset path to PixelLab-style JSON), `atlas_png` (String), `tile_px` (int ≥ 1). Loader requires `tile_px` to equal both `tile_size.width` and `tile_size.height` in that JSON.
+- `transport_tilesets` (object): must contain exactly `road` and `rail`.
+- Each transport entry: `spec_json` (String), `atlas_png` (String), `tile_px` (int ≥ 1) with `tile_px == 64` and exactly 16 tiles mapping mask ids `0..15`.
 - **PNG vs metadata:** Every tile’s `bounding_box` must lie within the decoded PNG. If `tileset_image.dimensions` disagrees with the PNG size, the app may log a warning but still load when bboxes are valid.
 
 **Rendering note:** Source rects use JSON `bounding_box`; destination is always one map cell of size `map_cell_size_px`, so mixed `tile_px` across tilesets (e.g. 64 sea/plains atlas, 32 desert atlases) is supported.
@@ -232,3 +263,5 @@ Native **64×64** plains/sea/desert fill tiles (not Wang tileset API). **MCP too
 - Given a map cell with plains adjacent to desert, when rendering, then the `plains_desert` Wang tileset is used.
 - Given a feature cell (forest/hills/mountain/swamp), when rendering, then the appropriate land base is drawn first, then the feature overlay tile on top.
 - Given valid bundled `map_terrain_tilesets.json` and referenced atlases, when the Flutter map loads Wang tilesets, then `sea_plains`, `sea_desert`, and `plains_desert` all resolve from the configured paths and the map grid uses `map_cell_size_px`.
+- Given valid transport atlases and JSON contracts, when the Flutter map loads transport tilesets, then both `road` and `rail` resolve from `transport_tilesets` and each provides all masks `0..15`.
+- Given a transport tile family atlas contract, when validated by tests, then each mask rectangle is unique, 64px-grid aligned, and inside atlas bounds.
