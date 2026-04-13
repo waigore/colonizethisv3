@@ -11,6 +11,7 @@ import 'package:colonizethis_app/features/shell/shell_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -55,12 +56,7 @@ class _DummyGameService extends GameService {
         newWorld: RegionData(),
       ),
       players: const [
-        Player(
-          id: 'gp1',
-          displayName: 'Human',
-          isHuman: true,
-          treasury: 0,
-        ),
+        Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
       ],
     );
     _loadedGame = game;
@@ -105,35 +101,48 @@ void main() {
     );
   }
 
-  testWidgets('ShellScreen New Game flow starts a game and navigates to game route',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(buildApp());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'ShellScreen New Game flow starts a game and navigates to game route',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(buildApp());
+      await tester.pumpAndSettle();
 
-    expect(find.text('New Game'), findsOneWidget);
+      expect(find.text('New Game'), findsOneWidget);
 
-    await tester.tap(find.text('New Game'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('New Game'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Player 1 (You)'), findsOneWidget);
-    expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
+      expect(find.text('Player 1 (You)'), findsOneWidget);
+      expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
 
-    // Dialog should appear with Start and Cancel buttons.
-    final startButton = find.ancestor(
-      of: find.text('Start'),
-      matching: find.byType(CtNinePatchButton),
-    );
-    expect(startButton, findsOneWidget);
+      // Dialog should appear with Start and Cancel buttons.
+      final startButton = find.ancestor(
+        of: find.text('Start'),
+        matching: find.byType(CtNinePatchButton),
+      );
+      expect(startButton, findsOneWidget);
 
-    await tester.ensureVisible(startButton);
-    await tester.tap(startButton);
-    await tester.pumpAndSettle();
+      final shellScrollable = find.descendant(
+        of: find.byType(CtDialogShell),
+        matching: find.byType(Scrollable),
+      );
+      await tester.dragUntilVisible(
+        startButton,
+        shellScrollable,
+        const Offset(0, -120),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(startButton);
+      await tester.tap(startButton);
+      await tester.pumpAndSettle();
 
-    expect(find.text('In game'), findsOneWidget);
-  });
+      expect(find.text('In game'), findsOneWidget);
+    },
+  );
 
-  testWidgets('ShellScreen Load Game loads first game id when available',
-      (WidgetTester tester) async {
+  testWidgets('ShellScreen Load Game loads first game id when available', (
+    WidgetTester tester,
+  ) async {
     // Seed the dummy service with a pre-existing game.
     dummyService.createNewGame(id: 'saved_game');
 
@@ -148,4 +157,3 @@ void main() {
     expect(find.text('In game'), findsOneWidget);
   });
 }
-

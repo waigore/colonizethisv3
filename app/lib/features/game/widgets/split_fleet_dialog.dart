@@ -87,51 +87,49 @@ class SplitFleetDialog extends StatelessWidget {
     return CtDialogShell(
       maxWidth: 520,
       maxHeight: 500,
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                l10n.splitFleet_dialogTitle,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              CtTransferList(
-                listHeight: 220,
-                itemLabelBuilder: shipTypeDisplayName,
-                leftTitle: originalFleet.id == 'home_fleet'
-                    ? l10n.naval_homeFleetLabel
-                    : l10n.naval_fleetLabel(originalFleet.id),
-                rightTitle: l10n.splitFleet_newFleetTitle,
-                leftSubtitle: _fleetLocationLabel(),
-                rightSubtitle: _fleetLocationLabel(),
-                initialLeftCounts: _initialOriginalCounts(),
-                leftEmptyLabel: l10n.splitFleet_noShips,
-                rightEmptyLabel: l10n.splitFleet_noShips,
-                confirmLabel: l10n.splitFleet_confirm,
-                totalLabelBuilder: (total) => l10n.splitFleet_totalShips(total),
-                canConfirm: (left, right) {
-                  final leftTotal = left.values.fold(
-                    0,
-                    (sum, count) => sum + count,
-                  );
-                  final rightTotal = right.values.fold(
-                    0,
-                    (sum, count) => sum + count,
-                  );
-                  if (isHomeFleet) {
-                    return rightTotal > 0;
-                  }
-                  return leftTotal >= 1 && rightTotal > 0;
-                },
-                onCancel: () => Navigator.of(context).pop(),
-                onConfirm: (_, right) => _handleConfirm(right, context),
-              ),
-            ],
-          ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.splitFleet_dialogTitle,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            CtTransferList(
+              listHeight: 220,
+              itemLabelBuilder: shipTypeDisplayName,
+              leftTitle: originalFleet.id == 'home_fleet'
+                  ? l10n.naval_homeFleetLabel
+                  : l10n.naval_fleetLabel(originalFleet.id),
+              rightTitle: l10n.splitFleet_newFleetTitle,
+              leftSubtitle: _fleetLocationLabel(),
+              rightSubtitle: _fleetLocationLabel(),
+              initialLeftCounts: _initialOriginalCounts(),
+              leftEmptyLabel: l10n.splitFleet_noShips,
+              rightEmptyLabel: l10n.splitFleet_noShips,
+              confirmLabel: l10n.splitFleet_confirm,
+              totalLabelBuilder: (total) => l10n.splitFleet_totalShips(total),
+              canConfirm: (left, right) {
+                final leftTotal = left.values.fold(
+                  0,
+                  (sum, count) => sum + count,
+                );
+                final rightTotal = right.values.fold(
+                  0,
+                  (sum, count) => sum + count,
+                );
+                if (isHomeFleet) {
+                  return rightTotal > 0;
+                }
+                return leftTotal >= 1 && rightTotal > 0;
+              },
+              onCancel: () => Navigator.of(context).pop(),
+              onConfirm: (_, right) => _handleConfirm(right, context),
+            ),
+          ],
         ),
       ),
     );

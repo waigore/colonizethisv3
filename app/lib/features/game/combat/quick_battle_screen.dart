@@ -80,15 +80,11 @@ class _QuickBattleScreenState extends State<QuickBattleScreen> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 12),
-          Expanded(
-            child: SingleChildScrollView(
-              child: QuickBattleDeploymentView(
-                attackerDeployment: widget.input.attackerDeployment,
-                defenderDeployment: widget.input.defenderDeployment,
-                attackerName: widget.input.attackerFactionId,
-                defenderName: widget.input.defenderFactionId,
-              ),
-            ),
+          QuickBattleDeploymentView(
+            attackerDeployment: widget.input.attackerDeployment,
+            defenderDeployment: widget.input.defenderDeployment,
+            attackerName: widget.input.attackerFactionId,
+            defenderName: widget.input.defenderFactionId,
           ),
           if (widget.interactive) ...[
             const SizedBox(height: 12),

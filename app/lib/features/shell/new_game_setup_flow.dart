@@ -134,12 +134,7 @@ Future<bool> _showNewGameErrorDialog(Object error) async {
             style: Theme.of(ctx).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 280),
-            child: SingleChildScrollView(
-              child: SelectableText(error.toString()),
-            ),
-          ),
+          SelectableText(error.toString()),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
