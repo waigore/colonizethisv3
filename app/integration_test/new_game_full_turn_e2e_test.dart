@@ -251,6 +251,51 @@ Future<void> _closeBottomSheet(WidgetTester tester) async {
   fail('Timed out closing bottom sheet; panels remained visible');
 }
 
+Future<void> _openProductionPanel(WidgetTester tester) async {
+  final productionPanel = find.byKey(kCtE2EProductionPanelRootKey);
+  final productionButton = find.byKey(kEmpireProductionButtonKey);
+  final sw = Stopwatch()..start();
+  while (sw.elapsed < const Duration(seconds: 20)) {
+    await tester.pump(const Duration(milliseconds: 100));
+    if (productionPanel.evaluate().isNotEmpty) {
+      return;
+    }
+
+    if (find.byType(BottomSheet).evaluate().isNotEmpty) {
+      await _closeBottomSheet(tester);
+      continue;
+    }
+
+    if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
+      await tester.binding.handlePopRoute();
+      await _pumpFor(tester, const Duration(milliseconds: 250));
+      continue;
+    }
+
+    if (productionButton.evaluate().isNotEmpty) {
+      final productionButtonHit = productionButton.hitTestable();
+      final target =
+          productionButtonHit.evaluate().isNotEmpty
+              ? productionButtonHit
+              : productionButton;
+      await tester.tap(target.first, warnIfMissed: false);
+      await _pumpFor(tester, const Duration(milliseconds: 350));
+      if (productionPanel.evaluate().isNotEmpty) {
+        return;
+      }
+    } else {
+      // Dismiss transient overlays/scrims and retry opening from the rail.
+      await tester.tapAt(const Offset(1200, 360));
+      await _pumpFor(tester, const Duration(milliseconds: 150));
+    }
+  }
+
+  fail(
+    'Timed out opening production panel; '
+    'button=$productionButton panel=$productionPanel',
+  );
+}
+
 Future<void> _tapFirstAssignInCivilianPanel(WidgetTester tester) async {
   final assign = find.descendant(
     of: find.byKey(kCtE2ECivilianPanelRootKey),
@@ -531,14 +576,7 @@ void main() {
       expect(turnAfter.data, isNot(turnLabelBefore));
 
       // --- Production (post-resolution stockpiles) ---
-      final productionButton = find.byKey(kEmpireProductionButtonKey).hitTestable();
-      await _waitUntilFound(
-        tester,
-        productionButton,
-        timeout: const Duration(seconds: 20),
-      );
-      await tester.tap(productionButton.first, warnIfMissed: false);
-      await _pumpFor(tester, const Duration(seconds: 1));
+      await _openProductionPanel(tester);
       await expectProductionPanelTexts();
 
       await tester.tap(find.byIcon(Icons.arrow_back));
