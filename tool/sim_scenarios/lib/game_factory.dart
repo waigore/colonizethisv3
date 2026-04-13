@@ -17,11 +17,15 @@ class GameInitResult {
   const GameInitResult({
     required this.game,
     this.topology,
+    this.topologyByRegion,
     this.tileMapByRegion,
   });
 
   final Game game;
+  /// Combined topology (prefixed ids) for turn resolution.
   final MapTopology? topology;
+  /// Per-region topology with local node ids (capital setup, map drawable checks).
+  final Map<String, MapTopology>? topologyByRegion;
   final Map<String, TileMapResult>? tileMapByRegion;
 }
 
@@ -44,6 +48,7 @@ class GameFactory {
     return GameInitResult(
       game: result.game,
       topology: result.combinedTopology,
+      topologyByRegion: result.topologyByRegion,
       tileMapByRegion: result.tileMapByRegion,
     );
   }
@@ -165,6 +170,7 @@ class GameFactory {
     return GameInitResult(
       game: game,
       topology: setupResult.combinedTopology,
+      topologyByRegion: setupResult.topologyByRegion,
       tileMapByRegion: setupResult.tileMapByRegion,
     );
   }
