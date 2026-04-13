@@ -156,6 +156,7 @@ class _NewGameLeaderSelectionDialogState
       maxWidth: 480,
       maxHeight: 720,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -168,14 +169,10 @@ class _NewGameLeaderSelectionDialogState
             style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 16),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: slotWidgets,
-              ),
-            ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: slotWidgets,
           ),
           const SizedBox(height: 12),
           Row(

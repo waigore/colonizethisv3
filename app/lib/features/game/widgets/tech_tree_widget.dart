@@ -265,62 +265,52 @@ class TechTreeWidget extends StatelessWidget {
           children: [
             Text(techDisplayName(tech.id), style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      l10n.techTree_eraCategory(
-                        _eraRoman(tech.era),
-                        _categoryLabelL10n(l10n, tech.category),
-                      ),
-                      style: theme.textTheme.bodySmall,
+            Text(
+              l10n.techTree_eraCategory(
+                _eraRoman(tech.era),
+                _categoryLabelL10n(l10n, tech.category),
+              ),
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.techTree_researchPoints(tech.cost),
+              style: theme.textTheme.bodyMedium,
+            ),
+            if (tech.prerequisiteIds.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.techTree_prerequisites,
+                style: theme.textTheme.labelLarge,
+              ),
+              ...tech.prerequisiteIds.map(
+                (id) => Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    l10n.techTree_prerequisiteBullet(
+                      techDisplayName(id),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.techTree_researchPoints(tech.cost),
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    if (tech.prerequisiteIds.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.techTree_prerequisites,
-                        style: theme.textTheme.labelLarge,
-                      ),
-                      ...tech.prerequisiteIds.map(
-                        (id) => Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            l10n.techTree_prerequisiteBullet(
-                              techDisplayName(id),
-                            ),
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ),
-                      ),
-                    ],
-                    if (effects.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.techTree_effects,
-                        style: theme.textTheme.labelLarge,
-                      ),
-                      ...effects.map(
-                        (e) => Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            l10n.techTree_bulletItem(e),
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+                    style: theme.textTheme.bodySmall,
+                  ),
                 ),
               ),
-            ),
+            ],
+            if (effects.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.techTree_effects,
+                style: theme.textTheme.labelLarge,
+              ),
+              ...effects.map(
+                (e) => Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    l10n.techTree_bulletItem(e),
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,

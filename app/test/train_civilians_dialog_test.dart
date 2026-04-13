@@ -6,6 +6,7 @@ import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -359,7 +360,9 @@ void main() {
       (WidgetTester tester) async {
         List<BuildUnitOrder>? capturedOrders;
         final bus = AppEventBus.create();
-        final sub = bus.on<TrainCivilianBuildOrdersCommittedEvent>().listen((e) {
+        final sub = bus.on<TrainCivilianBuildOrdersCommittedEvent>().listen((
+          e,
+        ) {
           capturedOrders = e.orders;
         });
         addTearDown(sub.cancel);
@@ -406,8 +409,18 @@ void main() {
         // Verify count is 2
         expect(find.text('2'), findsWidgets);
 
-        // Close dialog via X button
+        // Close dialog via X button (footer may be below fold in shell scroll)
+        final shellScrollable = find.descendant(
+          of: find.byType(CtDialogShell),
+          matching: find.byType(Scrollable),
+        );
         final closeButton = find.byIcon(Icons.close);
+        await tester.dragUntilVisible(
+          closeButton,
+          shellScrollable,
+          const Offset(0, -120),
+        );
+        await tester.pumpAndSettle();
         await tester.ensureVisible(closeButton);
         await tester.tap(closeButton);
         await tester.pumpAndSettle();
@@ -466,9 +479,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
-              currentGameProvider.overrideWith(
-                () => CurrentGameNotifier(game),
-              ),
+              currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
               currentOrdersProvider.overrideWith(
                 () => CurrentOrdersNotifier(const Orders()),
               ),

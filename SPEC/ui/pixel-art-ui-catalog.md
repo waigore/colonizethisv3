@@ -15,7 +15,7 @@
 ## Pixel-art component catalog (Flutter shell)
 
 - **CtNinePatchButton:** Primary/secondary/action button. Uses Flame `NineTileBoxWidget` with `ui_button_nine_patch.png`. All tappable controls must be built from this (or a component that wraps it).
-- **CtDialogShell:** Pixel-art dialog frame (nine-patch border, solid interior). Replaces `AlertDialog`/`Dialog` for all popups.
+- **CtDialogShell:** Pixel-art dialog frame (nine-patch border, solid interior). Replaces `AlertDialog`/`Dialog` for all popups. **Layout:** The framed area grows with body content up to `maxHeight` (no empty vertical filler at `maxHeight` when content is shorter). When content exceeds `maxHeight`, **one** outer vertical scroll on the shell exposes the full body (including footer actions). Dialog bodies should use `Column(mainAxisSize: MainAxisSize.min)` and must not use vertical `Expanded` / `Flexible` against the shell’s inner height; nested inner vertical scroll regions for the primary flow are discouraged—prefer a single shell scroll. Secondary scrolls (e.g. horizontal table pan, fixed-height transfer lists) remain valid where specified.
 - **CtPanel:** Pixel-art framed panel for in-screen sections (production, technology, diplomacy, victory overlays, unit panels). Replaces `Card`.
 - **CtChoiceChip:** Small, pixel-friendly toggle chip used for region/visibility toggles and similar controls. Replaces `ChoiceChip`.
 - **CtSlider:** Pixel-art slider (rectangular track, square handle) for integer values. Used in Production Allocation; replaces `Slider`.

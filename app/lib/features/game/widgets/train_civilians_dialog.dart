@@ -197,24 +197,23 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
                 l10n: l10n,
               ),
               const Divider(height: 1),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Column(
-                    children: [
-                      for (final econ in CivilianEconomyCatalog.all)
-                        _UnitTypeRow(
-                          econ: econ,
-                          count: _counts[econ.id] ?? 0,
-                          isLocked: _isLocked(econ.id),
-                          techRequiredLabel: _techRequiredLabel(econ.id),
-                          canIncrement: _canAffordIncrement(econ.id),
-                          canDecrement: (_counts[econ.id] ?? 0) > 0,
-                          onIncrement: () => _increment(econ.id),
-                          onDecrement: () => _decrement(econ.id),
-                        ),
-                    ],
-                  ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final econ in CivilianEconomyCatalog.all)
+                      _UnitTypeRow(
+                        econ: econ,
+                        count: _counts[econ.id] ?? 0,
+                        isLocked: _isLocked(econ.id),
+                        techRequiredLabel: _techRequiredLabel(econ.id),
+                        canIncrement: _canAffordIncrement(econ.id),
+                        canDecrement: (_counts[econ.id] ?? 0) > 0,
+                        onIncrement: () => _increment(econ.id),
+                        onDecrement: () => _decrement(econ.id),
+                      ),
+                  ],
                 ),
               ),
               const Divider(height: 1),

@@ -58,6 +58,8 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 | Game / world seed | Numeric field **below** the fair-assignment row. Initial display **42** (from template `GameSetupConfig.seed`). **0** = random (time-based effective seed when setup runs; see [game-setup-pipeline.md](../program/game-setup-pipeline.md)). Any other non-negative integer is reproducible. **Empty or unparsable** on Start → **42**. **Negative** input on Start → **42**. Short **localized helper** beside/near the field explains 0 vs fixed seed. The dialog does **not** show the resolved effective seed. |
 | Actions | **Start** closes the dialog and passes **`(orderedGreatPowerIds, leaderVariantByGpId, enforceFairGpOldWorldAssignment, seed)`** to the shell; shell builds `GameSetupConfig` (including **`seed`**) and runs [Game initializing](game-initializing.md). **Cancel** dismisses without starting setup. |
 
+**Layout (shell dialog + `CtDialogShell`).** The dialog is framed by **`CtDialogShell`**: frame height follows content up to `maxHeight`; when taller, the **entire** body (slots, fair row, seed, actions) scrolls as **one** vertical scroll—there is **no** separate fixed-height scroll region that only wraps the six slot rows on large viewports. On tall viewports, all six slot rows are visible without scrolling inside a slot-only panel.
+
 **Acceptance criteria (shell dialog).**
 
 - **Given** the user opened New Game from the main menu, **when** the dialog is shown, **then** six slot rows appear; each row shows the slot label and **nation + leader dropdowns on one line**; fair-assignment checkbox, Cancel, and Start; initial nations match the program default six GPs and leaders match defaults; nation pickers show the GP colour swatch beside each nation label.
@@ -67,7 +69,7 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 - **Given** the dialog is open with the default seed field, **when** the user taps Start without editing the seed, **then** the UI layer passed **`seed == 42`**, helper text for the seed field is visible, and **`GameSetupConfig.seed`** in the template matches that value.
 - **Given** the user cleared the seed field or entered a negative value, **when** the user taps Start, **then** the shell uses **`GameSetupConfig.seed == 42`**.
 
-**Automated tests.** Widget tests cover the dialog (defaults, swatch presence, Start payload) and shell integration (`app/test/shell_screen_test.dart`).
+**Automated tests.** Widget tests cover the dialog (defaults, swatch presence, Start payload, shell scroll/layout) and shell integration (`app/test/shell_screen_test.dart`); `app/test/ct_dialog_shell_test.dart` covers shared `CtDialogShell` sizing and scroll.
 
 ---
 
