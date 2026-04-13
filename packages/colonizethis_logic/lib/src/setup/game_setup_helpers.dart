@@ -370,8 +370,10 @@ Game _applyNaming({
   }) {
     if (provinces.isEmpty) return;
     provinces = List.of(provinces)..sort((a, b) => a.id.compareTo(b.id));
-    final rng = Random(rngSeed);
-    final poolIndices = List.generate(pool.length, (i) => i)..shuffle(rng);
+    final poolIndices = shuffledPoolIndices(
+      poolLength: pool.length,
+      seed: rngSeed,
+    );
     var poolIndex = 0;
     for (var i = 0; i < provinces.length; i++) {
       final p = provinces[i];

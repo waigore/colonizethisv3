@@ -44,7 +44,7 @@ Order: during game setup/map creation, after province assignment and after capit
   - Same seed ⇒ same names (deterministic, reproducible).
   - Different seed ⇒ different names across games.
 - **Faction display names:** Great Powers get `countryName` (e.g. England, France); Minor Nations and Tribes get `displayName` from the naming config. These are applied to the game’s players, minorNations, and tribes so UI can show human-readable faction names.
-- **Sea-zone display names:** Every sea zone node in topology receives a non-empty display name keyed by prefixed id (`regionId|seaZoneLocalId`). Assignment is deterministic from the game setup seed and region-specific list (`oldWorld` list for `oldWorld`, `newWorld` list for `newWorld`), analogous to province pool naming: **the same setup seed and the same generated topology must always yield the same display string for each prefixed sea-zone id** when setup runs again. **Pairwise distinct** display names across all sea zones in a region are **not** required unless the GDD explicitly adds that requirement later.
+- **Sea-zone display names:** Every sea zone node in topology receives a non-empty display name keyed by prefixed id (`regionId|seaZoneLocalId`). **Implementation (province-analogous):** Sea-zone local ids are sorted; a single RNG is derived from the setup naming seed and `regionId` (`shuffledPoolIndices` in `colonizethis_data`, same Fisher–Yates shuffle contract as non-capital province pool draws in setup). The System shuffles a permutation of indices into the region’s sea-name preset list, then walks sea zones in sorted id order, assigning `preset[permutation[i % preset.length]]` and, when there are more zones than preset entries, appending deterministic numeric ordinals `(2)`, `(3)`, … on later cycles. **The same setup seed and the same generated topology must always yield the same display string for each prefixed sea-zone id** when setup runs again. **Pairwise distinct** display names across all sea zones in a region are **not** required unless the GDD explicitly adds that requirement later.
 
 Pool sizes: default ruleset uses **10** names per Great Power and **5** per Minor Nation and Tribe. Tribes use historically inspired **Amerindian / indigenous** place or region names.
 
@@ -93,3 +93,7 @@ When a faction has no matching entry in the naming config (e.g. tribe count > 10
 - Given a generated region has more sea-zone nodes than entries in that region’s sea-name preset list  
   When the System assigns sea-zone display names during setup  
   Then the System assigns deterministic suffixed fallback names for overflow sea zones, keeps names non-empty, and still assigns a display name to every sea-zone node.
+
+- Given a region topology includes at least one sea-zone node  
+  When the System assigns sea-zone display names during setup  
+  Then the System sorts local sea-zone ids, builds a deterministic permutation of preset indices with `shuffledPoolIndices` (same Fisher–Yates contract as non-capital province pool assignment) seeded from the setup naming seed and `regionId`, assigns display strings by cycling that permutation, and applies numeric ordinal suffixes on later cycles when zone count exceeds preset length (`colonizethis_data` `sea_zone_naming_test.dart`; `colonizethis_logic` `init_game_orchestrator_test.dart`).
