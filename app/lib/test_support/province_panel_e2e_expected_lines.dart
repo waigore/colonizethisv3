@@ -80,7 +80,8 @@ List<String> provincePanelWideLayoutExpectedTexts(
       .length;
   final fleetsInPort = fleetsInPortAtProvince(game.worldState, provinceId);
   final tileKeys =
-      game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId] ??
+      game.worldState.tileKeysByRegionAndProvince[region
+          .regionId]?[provinceId] ??
       [];
   final resourceByTile = game.worldState.resourceByTileKey;
   final tileState = game.worldState.tileState;
@@ -89,24 +90,15 @@ List<String> provincePanelWideLayoutExpectedTexts(
   final byResImproved =
       <String, List<({String tileKey, String terrain, String impBase})>>{};
   final byResImprovable = <String, List<({String tileKey, String terrain})>>{};
-  final prospectRows = <({String tileKey, String terrain})>[];
 
   for (final tk in tileKeys) {
     final res = resourceByTile[tk];
-    final visibleRes = resourceIdVisibleInPlayerView(playerView, tk, res);
     final tkParts = tk.split('|');
     if (tkParts.length < 4) continue;
+    if (!prospected.contains(tk)) continue;
     final imp = tileState.improvementLevel(tk);
     final visLevel = playerView.visibilityForTile(tk);
-
-    final needsProspect = res != null &&
-        kProspectRequiredResourceIds.contains(res) &&
-        !prospected.contains(tk);
-    if (needsProspect) {
-      final terrain = _economicTerrainTitleForTile(region, tk) ?? '—';
-      prospectRows.add((tileKey: tk, terrain: terrain));
-      continue;
-    }
+    final visibleRes = resourceIdVisibleInPlayerView(playerView, tk, res);
 
     if (visibleRes == null) continue;
 
@@ -118,15 +110,15 @@ List<String> provincePanelWideLayoutExpectedTexts(
         visibleResourceId: visibleRes,
       );
       byResImproved.putIfAbsent(visibleRes, () => []).add((
-            tileKey: tk,
-            terrain: terrain,
-            impBase: impBase,
-          ));
+        tileKey: tk,
+        terrain: terrain,
+        impBase: impBase,
+      ));
     } else if (res != null && imp < 4) {
       byResImprovable.putIfAbsent(visibleRes, () => []).add((
-            tileKey: tk,
-            terrain: terrain,
-          ));
+        tileKey: tk,
+        terrain: terrain,
+      ));
     }
   }
 
@@ -136,10 +128,11 @@ List<String> provincePanelWideLayoutExpectedTexts(
   for (final list in byResImprovable.values) {
     list.sort((a, b) => a.tileKey.compareTo(b.tileKey));
   }
-  prospectRows.sort((a, b) => a.tileKey.compareTo(b.tileKey));
 
-  final resourceKeysSorted = {...byResImproved.keys, ...byResImprovable.keys}.toList()
-    ..sort();
+  final resourceKeysSorted = {
+    ...byResImproved.keys,
+    ...byResImprovable.keys,
+  }.toList()..sort();
 
   final out = <String>['Province', '×'];
 
@@ -167,7 +160,9 @@ List<String> provincePanelWideLayoutExpectedTexts(
     }
     final cell = region.cellAt(x, y);
     if (cell.visibility == TileVisibility.unrevealed) {
-      throw StateError('E2E tile $selectedTileKey should be revealed for capital');
+      throw StateError(
+        'E2E tile $selectedTileKey should be revealed for capital',
+      );
     }
     final resourceRaw = resourceByTile[selectedTileKey] ?? cell.resourceId;
     final visLevel = playerView.visibilityForTile(selectedTileKey);
@@ -230,10 +225,6 @@ List<String> provincePanelWideLayoutExpectedTexts(
         );
         wroteAny = true;
       }
-    }
-    for (final row in prospectRows) {
-      out.add(row.terrain);
-      wroteAny = true;
     }
     if (!wroteAny) {
       out.add('—');
@@ -350,11 +341,15 @@ List<String> provincePanelWideLayoutExpectedTexts(
         final fleetLabel = f.id == homeFleetIdFor(f.ownerId)
             ? l10n.naval_homeFleetLabel
             : l10n.naval_fleetLabel(f.id);
-        final shipParts = byType.entries.map((e) {
-          final label = shipTypeDisplayLabel(l10n, e.key);
-          return '$label×${e.value}';
-        }).join(', ');
-        out.add(l10n.provinceOverlay_fleetSummary(ownerName, fleetLabel, shipParts));
+        final shipParts = byType.entries
+            .map((e) {
+              final label = shipTypeDisplayLabel(l10n, e.key);
+              return '$label×${e.value}';
+            })
+            .join(', ');
+        out.add(
+          l10n.provinceOverlay_fleetSummary(ownerName, fleetLabel, shipParts),
+        );
       }
     }
     for (final line in pending) {
@@ -393,9 +388,7 @@ String _economicTerrainTitle(String raw) {
   if (raw.isEmpty || raw == '—') return raw;
   return raw
       .split('_')
-      .map(
-        (w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}',
-      )
+      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
       .join(' ');
 }
 

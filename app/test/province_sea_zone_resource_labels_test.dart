@@ -38,6 +38,7 @@ Game _minimalGame({
   required Map<String, List<String>> tileKeysByProvince,
   Map<String, String> resourceByTileKey = const {},
   Map<String, Map<String, String>> playerVisibilityByTile = const {},
+  Map<String, Set<String>> playerProspectedTiles = const {},
 }) {
   return Game(
     id: 'res_label_test',
@@ -56,6 +57,7 @@ Game _minimalGame({
       tileKeysByRegionAndProvince: {_regionId: tileKeysByProvince},
       resourceByTileKey: resourceByTileKey,
       playerVisibilityByTile: playerVisibilityByTile,
+      playerProspectedTiles: playerProspectedTiles,
     ),
     players: const [
       Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
@@ -85,7 +87,7 @@ void main() {
 
   group('ProvinceSeaZoneDetailOverlay resource labels', () {
     testWidgets(
-      'Tile and Economic show ResourceLabelInline when grain is visible',
+      'Tile and Economic show ResourceLabelInline when grain is visible and prospected',
       (WidgetTester tester) async {
         final tk = _tileKey(0, 0);
         final game = _minimalGame(
@@ -95,6 +97,9 @@ void main() {
           resourceByTileKey: {tk: 'grain'},
           playerVisibilityByTile: {
             'gp1': {tk: 'fullyVisible'},
+          },
+          playerProspectedTiles: {
+            'gp1': {tk},
           },
         );
         final region = _regionWithCells(
@@ -135,6 +140,115 @@ void main() {
         expect(find.text('grain'), findsNWidgets(2));
         expect(find.byType(ResourceLabelInline), findsNWidgets(2));
         expect(find.byType(StrictAssetIcon), findsNWidgets(2));
+      },
+    );
+
+    testWidgets(
+      'Economic excludes unprospected tile even when resource is visible in Tile section',
+      (WidgetTester tester) async {
+        final tk = _tileKey(0, 0);
+        final game = _minimalGame(
+          tileKeysByProvince: {
+            _fullProvinceId: [tk],
+          },
+          resourceByTileKey: {tk: 'grain'},
+          playerVisibilityByTile: {
+            'gp1': {tk: 'fullyVisible'},
+          },
+          playerProspectedTiles: const {'gp1': <String>{}},
+        );
+        final region = _regionWithCells(
+          [
+            const CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: _localProvinceId,
+              isSea: false,
+              terrainTypeId: 'plains',
+              resourceId: 'grain',
+              visibility: TileVisibility.visible,
+            ),
+          ],
+          1,
+          1,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 800,
+                child: ProvinceSeaZoneDetailOverlay(
+                  game: game,
+                  region: region,
+                  displayId: _fullProvinceId,
+                  selectedTileKey: tk,
+                  humanPlayerId: 'gp1',
+                  playerView: _omniscientViewForTiles([tk]),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('grain'), findsOneWidget);
+        expect(find.byType(ResourceLabelInline), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Economic excludes prospected tiles with no discovered resource',
+      (WidgetTester tester) async {
+        final tk = _tileKey(0, 0);
+        final game = _minimalGame(
+          tileKeysByProvince: {
+            _fullProvinceId: [tk],
+          },
+          resourceByTileKey: const {},
+          playerVisibilityByTile: {
+            'gp1': {tk: 'fullyVisible'},
+          },
+          playerProspectedTiles: {
+            'gp1': {tk},
+          },
+        );
+        final region = _regionWithCells(
+          [
+            const CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: _localProvinceId,
+              isSea: false,
+              terrainTypeId: 'plains',
+              visibility: TileVisibility.visible,
+            ),
+          ],
+          1,
+          1,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 800,
+                child: ProvinceSeaZoneDetailOverlay(
+                  game: game,
+                  region: region,
+                  displayId: _fullProvinceId,
+                  selectedTileKey: tk,
+                  humanPlayerId: 'gp1',
+                  playerView: _omniscientViewForTiles([tk]),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ResourceLabelInline), findsNothing);
+        expect(find.textContaining('Resource:'), findsWidgets);
       },
     );
 
@@ -254,6 +368,9 @@ void main() {
         resourceByTileKey: {tk0: 'timber', tk1: 'grain'},
         playerVisibilityByTile: {
           'gp1': {tk0: 'fullyVisible', tk1: 'fullyVisible'},
+        },
+        playerProspectedTiles: {
+          'gp1': {tk0, tk1},
         },
       );
       final region = _regionWithCells(
