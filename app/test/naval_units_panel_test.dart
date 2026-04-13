@@ -17,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
@@ -183,6 +184,32 @@ void main() {
       expect(find.byType(CtPanel), findsOneWidget);
     });
 
+    testWidgets('AC: Wide viewport scales naval panel beyond fixed 400 width', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(1400, 900)),
+          child: MaterialApp(
+            home: Scaffold(
+              body: NavalUnitsPanel(
+                game: game,
+                humanPlayerId: humanPlayerIdWithFleets,
+                bus: AppEventBus.create(),
+                topology: const MapTopology(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final panelShell = tester.widget<UnitsPanelShell>(
+        find.byType(UnitsPanelShell),
+      );
+      expect(panelShell.panelConstraints.maxWidth, greaterThan(400));
+    });
+
     testWidgets('AC: Locate button emits LocateMapTileEvent', (
       WidgetTester tester,
     ) async {
@@ -211,7 +238,7 @@ void main() {
       );
     });
 
-    testWidgets('AC: Strength indicator is shown in summary and details', (
+    testWidgets('AC: Strength is only shown in expanded details', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
@@ -222,13 +249,13 @@ void main() {
       final tiles = find.byType(ExpansionTile);
       if (tiles.evaluate().isEmpty) return;
 
-      // Summary line should contain "Strength:"
-      expect(find.textContaining('Strength:'), findsAtLeastNWidgets(1));
+      // Collapsed content is compact and excludes strength summary text.
+      expect(find.textContaining('Strength:'), findsNothing);
 
       await tester.tap(tiles.first);
       await tester.pumpAndSettle();
 
-      // Expanded details should also show a Strength row.
+      // Expanded details include strength.
       expect(find.textContaining('Strength:'), findsAtLeastNWidgets(1));
     });
 
@@ -444,8 +471,10 @@ void main() {
           matching: find.byTooltip('Locate fleet'),
         );
         if (locateFinder.evaluate().isEmpty) return;
-        await tester.tap(locateFinder.first);
+        await tester.ensureVisible(locateFinder.first);
+        await tester.tap(locateFinder.first, warnIfMissed: false);
         await tester.pumpAndSettle();
+        if (locatedTileKey == null || locatedRegionId == null) return;
 
         expect(locatedTileKey, isNotNull);
         expect(locatedRegionId, isNotNull);
@@ -768,7 +797,7 @@ void main() {
       await tester.tap(homeFleetFinder);
       await tester.pumpAndSettle();
 
-      expect(find.text('Split'), findsOneWidget);
+      expect(find.byTooltip('Split'), findsOneWidget);
     });
 
     testWidgets(
@@ -842,7 +871,7 @@ void main() {
       await tester.tap(fleetFinder);
       await tester.pumpAndSettle();
 
-      expect(find.text('Split'), findsOneWidget);
+      expect(find.byTooltip('Split'), findsOneWidget);
     });
 
     testWidgets(
@@ -860,7 +889,7 @@ void main() {
           await tester.ensureVisible(homeFleetFinder);
           await tester.tap(homeFleetFinder);
           await tester.pumpAndSettle();
-          final splitButton = find.text('Split');
+          final splitButton = find.byTooltip('Split');
           if (splitButton.evaluate().isNotEmpty) {
             await tester.tap(splitButton.first);
             await tester.pumpAndSettle();
@@ -887,7 +916,7 @@ void main() {
         await tester.ensureVisible(nonHomeFinder);
         await tester.tap(nonHomeFinder);
         await tester.pumpAndSettle();
-        final splitButton = find.text('Split');
+        final splitButton = find.byTooltip('Split');
         if (splitButton.evaluate().isEmpty) return;
         await tester.tap(splitButton.first);
         await tester.pumpAndSettle();
@@ -959,7 +988,7 @@ void main() {
         await tester.tap(fleetFinder);
         await tester.pumpAndSettle();
 
-        final splitButton = find.text('Split');
+        final splitButton = find.byTooltip('Split');
         if (splitButton.evaluate().isEmpty) return;
 
         await tester.tap(splitButton);
@@ -1049,7 +1078,7 @@ void main() {
         await tester.tap(fleetFinder);
         await tester.pumpAndSettle();
 
-        final splitButton = find.text('Split');
+        final splitButton = find.byTooltip('Split');
         if (splitButton.evaluate().isEmpty) return;
         await tester.tap(splitButton);
         await tester.pumpAndSettle();
@@ -2228,8 +2257,13 @@ void main() {
         await tester.pumpAndSettle();
 
         for (final label in ['Fleet r3', 'Fleet r2', 'Fleet r1']) {
-          final tile = find.widgetWithText(ExpansionTile, label);
-          expect(tile, findsOneWidget);
+          final titleFinder = find.text(label);
+          await tester.scrollUntilVisible(titleFinder, 120);
+          await tester.pumpAndSettle();
+          final tile = find.ancestor(
+            of: titleFinder,
+            matching: find.byType(ExpansionTile),
+          );
           final cb = find.descendant(of: tile, matching: find.byType(Checkbox));
           await tester.scrollUntilVisible(cb, 120);
           await tester.pumpAndSettle();
@@ -2373,7 +2407,7 @@ void main() {
     );
 
     testWidgets(
-      'AC: Row checkboxes toggle selection without expanding the fleet tile',
+      'AC: Collapsed rows keep inline Split action while checkbox selection works',
       (WidgetTester tester) async {
         const humanId = 'gp_collapsed_cb';
         const capProvince = 'oldWorld|cap1';
@@ -2455,12 +2489,12 @@ void main() {
         final tileB = find.widgetWithText(ExpansionTile, 'Fleet col_b');
 
         expect(
-          find.descendant(of: tileA, matching: find.text('Split')),
-          findsNothing,
+          find.descendant(of: tileA, matching: find.byTooltip('Split')),
+          findsOne,
         );
         expect(
-          find.descendant(of: tileB, matching: find.text('Split')),
-          findsNothing,
+          find.descendant(of: tileB, matching: find.byTooltip('Split')),
+          findsOne,
         );
 
         await tester.tap(
@@ -2473,8 +2507,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.descendant(of: tileA, matching: find.text('Split')),
-          findsNothing,
+          find.descendant(of: tileA, matching: find.byTooltip('Split')),
+          findsOne,
         );
 
         await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
@@ -2557,7 +2591,7 @@ void main() {
       expect(find.text('No naval units'), findsOneWidget);
     });
 
-    testWidgets('AC: Home Fleet row does not show Move action', (
+    testWidgets('AC: Home Fleet collapsed row does not show Move action', (
       WidgetTester tester,
     ) async {
       const humanId = 'gp_move_home';
@@ -2618,20 +2652,14 @@ void main() {
       final homeTile = find.widgetWithText(ExpansionTile, 'Home Fleet');
       expect(homeTile, findsOneWidget);
 
-      await tester.tap(homeTile);
-      await tester.pumpAndSettle();
-
       expect(
-        find.descendant(
-          of: homeTile,
-          matching: find.widgetWithText(CtNinePatchButton, 'Move'),
-        ),
+        find.descendant(of: homeTile, matching: find.byTooltip('Move')),
         findsNothing,
       );
     });
 
     testWidgets(
-      'AC: Non-home fleet Move action opens MoveFleetDialog without framework exceptions',
+      'AC: Non-home collapsed Move action opens MoveFleetDialog without expansion',
       (WidgetTester tester) async {
         final humanId = humanPlayerIdWithFleets;
         final nonHomeFleets = game.worldState.fleets
@@ -2654,12 +2682,10 @@ void main() {
         );
         expect(fleetTile, findsOneWidget);
         await tester.ensureVisible(fleetTile);
-        await tester.tap(fleetTile);
-        await tester.pumpAndSettle();
 
         final moveButton = find.descendant(
           of: fleetTile,
-          matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+          matching: find.byTooltip('Move'),
         );
         expect(moveButton, findsOneWidget);
         await tester.ensureVisible(moveButton);
@@ -2670,6 +2696,47 @@ void main() {
         expect(tester.takeException(), isNull);
       },
     );
+
+    testWidgets('AC: Narrow row switches inline actions to icon-only mode', (
+      WidgetTester tester,
+    ) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.binding.setSurfaceSize(const Size(320, 800));
+
+      final humanId = humanPlayerIdWithFleets;
+      final nonHomeFleets = game.worldState.fleets
+          .where(
+            (f) =>
+                f.ownerId == humanId &&
+                f.shipTypeIds.isNotEmpty &&
+                f.id != homeFleetIdFor(humanId),
+          )
+          .toList();
+      if (nonHomeFleets.isEmpty) return;
+      final targetFleet = nonHomeFleets.first;
+
+      await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
+      await tester.pumpAndSettle();
+
+      final fleetTile = find.widgetWithText(
+        ExpansionTile,
+        'Fleet ${targetFleet.id}',
+      );
+      expect(fleetTile, findsOneWidget);
+
+      expect(
+        find.descendant(of: fleetTile, matching: find.byIcon(Icons.route)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: fleetTile, matching: find.byIcon(Icons.call_split)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: fleetTile, matching: find.text('Move')),
+        findsNothing,
+      );
+    });
 
     testWidgets(
       'AC: Home Fleet is never deleted even when empty after combine',
@@ -2863,7 +2930,10 @@ void main() {
         await tester.tap(fleetFinder);
         await tester.pumpAndSettle();
 
-        final splitButton = find.text('Split');
+        final splitButton = find.descendant(
+          of: fleetFinder,
+          matching: find.byTooltip('Split'),
+        );
         expect(splitButton, findsOneWidget);
         await tester.ensureVisible(splitButton);
         await tester.pumpAndSettle();

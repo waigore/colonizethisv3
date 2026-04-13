@@ -4,7 +4,8 @@ import '../../../config/app_assets.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
-import 'game_screen_shared.dart';
+import 'game_screen_shared.dart'
+    show kCargoHoldIndicatorKey, kGameMapNextTurnButtonKey;
 
 /// Top bar and region chips for the in-game map shell.
 class GameMapControls extends StatelessWidget {
@@ -47,6 +48,7 @@ class GameMapControls extends StatelessWidget {
               ),
               Expanded(
                 child: CtNinePatchButton(
+                  key: kGameMapNextTurnButtonKey,
                   onPressed: () => onNextTurn(),
                   child: Text(nextTurnText),
                 ),

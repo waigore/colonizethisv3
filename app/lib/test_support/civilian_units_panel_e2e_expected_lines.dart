@@ -1,0 +1,399 @@
+// Expected plain-text lines for CivilianUnitsPanel (bottom sheet). Mirrors
+// app/lib/features/game/widgets/civilian_units_panel.dart for e2e.
+// If drift fails tests, align this file with the panel widget.
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
+import 'package:colonizethis_app/l10n/app_localizations.dart';
+
+const Map<String, String> _workTargetLabels = {
+  'explore': 'Explore',
+  'prospect': 'Prospect',
+  'build_improvement': 'Build improvement',
+  'upgrade_town': 'Upgrade town',
+  'build_road': 'Build road',
+  'build_port': 'Build port',
+  'build_fort': 'Build fort',
+  'build_rail': 'Build rail',
+  'steal_tech': 'Steal tech',
+  'counter_spy': 'Counter spy',
+  'purchase_land': 'Purchase land',
+};
+
+Map<String, String> _provinceNamesByPrefixedId(Game game) {
+  final out = <String, String>{};
+  for (final p in game.worldState.oldWorld.provinces) {
+    out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
+  }
+  for (final p in game.worldState.newWorld.provinces) {
+    out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
+  }
+  return out;
+}
+
+bool _isCivilianUnit(Unit unit) {
+  final role = unitRoleForType(unit.type);
+  if (role == null) return false;
+  return role != UnitRole.military && role != UnitRole.naval;
+}
+
+List<Unit> _civilianUnitsInRegion(
+  List<Unit> units,
+  String humanPlayerId,
+  Map<String, String> provinceNames,
+  Orders currentOrders,
+) {
+  final list = units
+      .where(
+        (u) =>
+            u.ownerId == humanPlayerId &&
+            u.tileKey != null &&
+            _isCivilianUnit(u),
+      )
+      .toList();
+  list.sort((a, b) {
+    final tileA = projectedCivilianTileKey(
+      unit: a,
+      playerId: humanPlayerId,
+      orders: currentOrders,
+    );
+    final tileB = projectedCivilianTileKey(
+      unit: b,
+      playerId: humanPlayerId,
+      orders: currentOrders,
+    );
+    final provA = Unit.provinceIdFromTileKey(tileA);
+    final provB = Unit.provinceIdFromTileKey(tileB);
+    final regionA = Unit.regionIdFromTileKey(tileA) ?? '';
+    final regionB = Unit.regionIdFromTileKey(tileB) ?? '';
+    final prefixedA = '$regionA|$provA';
+    final prefixedB = '$regionB|$provB';
+    final nameA = provinceNames[prefixedA] ?? prefixedA;
+    final nameB = provinceNames[prefixedB] ?? prefixedB;
+    final nameCmp = nameA.compareTo(nameB);
+    if (nameCmp != 0) return nameCmp;
+    final typeCmp = a.type.compareTo(b.type);
+    if (typeCmp != 0) return typeCmp;
+    return a.id.compareTo(b.id);
+  });
+  return list;
+}
+
+class _PendingAssignedResolution {
+  const _PendingAssignedResolution({
+    required this.mainLine,
+    this.materialCosts,
+    this.treasuryAmount,
+  });
+
+  final String mainLine;
+  final Map<String, int>? materialCosts;
+  final int? treasuryAmount;
+}
+
+_PendingAssignedResolution _resolvePendingAssignedResolution(
+  Game game,
+  WorkOrder order,
+  Map<String, String> provinceNames,
+) {
+  final workLabel = _workTargetLabels[order.target] ?? order.target;
+  final regionId = Unit.regionIdFromTileKey(order.targetTileKey);
+  final provinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
+  var location = '';
+  if (regionId != null && provinceId != null) {
+    final name =
+        provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
+    location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
+  }
+  final base = '$workLabel$location';
+
+  if (order.target == kWorkTargetPurchaseLand) {
+    final resourceId = game.worldState.resourceByTileKey[order.targetTileKey];
+    if (resourceId != null && resourceId.isNotEmpty) {
+      return _PendingAssignedResolution(
+        mainLine: base,
+        treasuryAmount: purchaseLandCost(resourceId),
+      );
+    }
+    return _PendingAssignedResolution(mainLine: '$base (pending)');
+  }
+  if (order.target == kWorkTargetStealTech ||
+      order.target == kWorkTargetCounterSpy) {
+    return _PendingAssignedResolution(mainLine: '$base (pending)');
+  }
+
+  final targetProvinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
+  final province = targetProvinceId != null
+      ? game.worldState.tryGetProvince(targetProvinceId)
+      : null;
+
+  final improvementLevel = order.target == kWorkTargetBuildImprovement
+      ? game.worldState.tileState.improvementLevel(order.targetTileKey)
+      : 0;
+  final fortLevel = province?.fortLevel ?? 0;
+  final roadLevel = game.worldState.tileState.roadLevel(order.targetTileKey);
+
+  final costMap = WorkOrderCostCalculator(game).calculateCost(
+    order.target,
+    order.targetTileKey,
+    improvementLevel: improvementLevel,
+    fortLevel: fortLevel,
+    roadLevel: roadLevel,
+  );
+  if (costMap != null && costMap.isNotEmpty) {
+    return _PendingAssignedResolution(mainLine: base, materialCosts: costMap);
+  }
+  return _PendingAssignedResolution(mainLine: '$base (pending)');
+}
+
+List<MapEntry<String, int>> _sortedMaterialCostEntries(Map<String, int> m) {
+  return m.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
+}
+
+WorkOrder? _pendingWorkOrder(Unit unit, Orders currentOrders, String humanId) {
+  final list = currentOrders.workOrdersByPlayerId[humanId] ?? const [];
+  for (final o in list) {
+    if (o.unitId == unit.id) return o;
+  }
+  return null;
+}
+
+bool _hasPending(Unit unit, Orders currentOrders, String humanId) =>
+    _pendingWorkOrder(unit, currentOrders, humanId) != null;
+
+bool _isIdleNoPending(Unit unit, Orders currentOrders, String humanId) =>
+    unit.status == UnitStatus.idle &&
+    unit.currentWork == null &&
+    !_hasPending(unit, currentOrders, humanId);
+
+bool _hasWork(Unit unit, Orders currentOrders, String humanId) =>
+    unit.currentWork != null || _hasPending(unit, currentOrders, humanId);
+
+String _locationLabel(
+  String? projectedTileKey,
+  Map<String, String> provinceNames,
+) {
+  final regionId = Unit.regionIdFromTileKey(projectedTileKey);
+  final provinceId = Unit.provinceIdFromTileKey(projectedTileKey);
+  if (regionId == null || provinceId == null) return '—';
+  final prefixed = '$regionId|$provinceId';
+  final name = provinceNames[prefixed] ?? prefixed;
+  final regionLabel = unitsPanelRegionLabel(regionId);
+  return '$regionLabel — $name';
+}
+
+String _assignedToLabelNonPending(
+  Unit unit,
+  Map<String, String> provinceNames,
+) {
+  if (unit.status != UnitStatus.working || unit.currentWork == null) {
+    return '—';
+  }
+  final cw = unit.currentWork!;
+  final workLabel = _workTargetLabels[cw.workTarget] ?? cw.workTarget;
+  final regionId = Unit.regionIdFromTileKey(cw.tileKey);
+  final provinceId = Unit.provinceIdFromTileKey(cw.tileKey);
+  var location = '';
+  if (regionId != null && provinceId != null) {
+    final name =
+        provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
+    location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
+  }
+  final progress = cw.totalTurns > 0
+      ? ' ${cw.remainingTurns}/${cw.totalTurns} turns'
+      : '';
+  return '$workLabel$location$progress';
+}
+
+void _addAssignedLines(
+  List<String> out,
+  Game game,
+  Unit unit,
+  Orders currentOrders,
+  String humanId,
+  Map<String, String> provinceNames,
+  AppLocalizations l10n,
+) {
+  final pending = _pendingWorkOrder(unit, currentOrders, humanId);
+  if (pending != null) {
+    final r = _resolvePendingAssignedResolution(game, pending, provinceNames);
+    out.add(l10n.civilian_units_assignedTo(r.mainLine));
+    if (r.materialCosts != null && r.materialCosts!.isNotEmpty) {
+      for (final e in _sortedMaterialCostEntries(r.materialCosts!)) {
+        out.add(e.value.toString());
+      }
+    }
+    if (r.treasuryAmount != null) {
+      out.add(l10n.trainUnits_treasury(r.treasuryAmount!.toString()));
+    }
+    return;
+  }
+  out.add(
+    l10n.civilian_units_assignedTo(
+      _assignedToLabelNonPending(unit, provinceNames),
+    ),
+  );
+}
+
+void _addUnitRowTexts({
+  required List<String> out,
+  required Game game,
+  required Unit unit,
+  required String humanPlayerId,
+  required Orders currentOrders,
+  required Map<String, String> provinceNames,
+  required AppLocalizations l10n,
+  required bool isTileScope,
+  required String? resolvedSelectedUnitId,
+  required String? projectedTileKey,
+}) {
+  final statusLabel = switch (unit.status) {
+    UnitStatus.idle => l10n.province_unitStatus_idle,
+    UnitStatus.working => l10n.province_unitStatus_working,
+  };
+  final showActions = !isTileScope || resolvedSelectedUnitId == unit.id;
+
+  out.add(unit.type);
+  out.add(l10n.civilian_units_status(statusLabel));
+  out.add(
+    l10n.civilian_units_location(
+      _locationLabel(projectedTileKey, provinceNames),
+    ),
+  );
+  _addAssignedLines(
+    out,
+    game,
+    unit,
+    currentOrders,
+    humanPlayerId,
+    provinceNames,
+    l10n,
+  );
+  if (showActions) {
+    if (_isIdleNoPending(unit, currentOrders, humanPlayerId)) {
+      out.add(l10n.civilian_units_assign);
+    }
+    if (_hasWork(unit, currentOrders, humanPlayerId)) {
+      out.add(l10n.common_cancel);
+    }
+  }
+}
+
+/// In-order [Text.data] strings for [CivilianUnitsPanel] preorder traversal.
+List<String> civilianUnitsPanelExpectedTexts(
+  CtE2eCivilianPanelSnapshot snap,
+  AppLocalizations l10n,
+) {
+  final game = snap.game;
+  final humanPlayerId = snap.humanPlayerId;
+  final provinceNames = _provinceNamesByPrefixedId(game);
+  final ow = _civilianUnitsInRegion(
+    game.worldState.oldWorld.units,
+    humanPlayerId,
+    provinceNames,
+    snap.currentOrders,
+  );
+  final nw = _civilianUnitsInRegion(
+    game.worldState.newWorld.units,
+    humanPlayerId,
+    provinceNames,
+    snap.currentOrders,
+  );
+  final scopeTileKey = snap.tileScopeTileKey;
+  final tileScopeActive = scopeTileKey != null && scopeTileKey.isNotEmpty;
+  var scopedOw = ow;
+  var scopedNw = nw;
+  if (tileScopeActive) {
+    scopedOw = ow
+        .where(
+          (u) =>
+              projectedCivilianTileKey(
+                unit: u,
+                playerId: humanPlayerId,
+                orders: snap.currentOrders,
+              ) ==
+              scopeTileKey,
+        )
+        .toList();
+    scopedNw = nw
+        .where(
+          (u) =>
+              projectedCivilianTileKey(
+                unit: u,
+                playerId: humanPlayerId,
+                orders: snap.currentOrders,
+              ) ==
+              scopeTileKey,
+        )
+        .toList();
+  }
+  final allScoped = <Unit>[...scopedOw, ...scopedNw];
+  final resolvedSelected =
+      snap.resolvedSelectedUnitId ??
+      (allScoped.isNotEmpty ? allScoped.first.id : null);
+
+  final out = <String>[];
+  out.add(
+    tileScopeActive
+        ? l10n.civilian_units_title_tile
+        : l10n.civilian_units_title,
+  );
+  if (tileScopeActive) {
+    out.add(l10n.civilian_units_tile);
+  }
+  out.add(l10n.common_train);
+
+  final hasAny = scopedOw.isNotEmpty || scopedNw.isNotEmpty;
+  if (!hasAny) {
+    out.add(l10n.civilian_units_empty);
+    return out;
+  }
+
+  if (scopedOw.isNotEmpty) {
+    out.add(unitsPanelRegionLabel('oldWorld'));
+    for (final u in scopedOw) {
+      _addUnitRowTexts(
+        out: out,
+        game: game,
+        unit: u,
+        humanPlayerId: humanPlayerId,
+        currentOrders: snap.currentOrders,
+        provinceNames: provinceNames,
+        l10n: l10n,
+        isTileScope: tileScopeActive,
+        resolvedSelectedUnitId: resolvedSelected,
+        projectedTileKey: projectedCivilianTileKey(
+          unit: u,
+          playerId: humanPlayerId,
+          orders: snap.currentOrders,
+        ),
+      );
+    }
+  }
+  if (scopedNw.isNotEmpty) {
+    out.add(unitsPanelRegionLabel('newWorld'));
+    for (final u in scopedNw) {
+      _addUnitRowTexts(
+        out: out,
+        game: game,
+        unit: u,
+        humanPlayerId: humanPlayerId,
+        currentOrders: snap.currentOrders,
+        provinceNames: provinceNames,
+        l10n: l10n,
+        isTileScope: tileScopeActive,
+        resolvedSelectedUnitId: resolvedSelected,
+        projectedTileKey: projectedCivilianTileKey(
+          unit: u,
+          playerId: humanPlayerId,
+          orders: snap.currentOrders,
+        ),
+      );
+    }
+  }
+  return out;
+}
