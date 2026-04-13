@@ -68,7 +68,7 @@ Players need to reorganize their fleets:
 
 ### Trigger
 
-Each fleet row in the expanded state shows a **"Split Fleet"** button, including the Home Fleet.
+Each fleet row shows a **Split** action in the collapsed header content so the action is available without expanding first, including for the Home Fleet. The expanded section remains for detailed composition and transfer context, not for primary action discovery.
 
 ### Dialog
 
