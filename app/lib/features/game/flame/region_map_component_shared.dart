@@ -429,20 +429,22 @@ void assertCtMapPlayerViewRequired({
   }
 }
 
-/// Base layer display mode: terrain, resource icons, improvement/road labels.
+/// Base layer display mode: terrain, resource icons, improvement labels, and
+/// road/rail transport sprite overlays.
 /// SPEC/ui/map-widget.md § Base layer display mode.
 enum BaseLayerDisplayMode {
-  /// Terrain only; no resource icons or improvement/road labels.
+  /// Terrain only; no resource icons, improvement labels, or transport overlay.
   terrainOnly,
 
-  /// Terrain + resource icons; no improvement or road labels.
+  /// Terrain + resource icons; no improvement labels or transport overlay.
   terrainAndResources,
 
-  /// Terrain + resource icons + improvement labels (`I{n}` when n > 0); no road labels.
+  /// Terrain + resource icons + improvement labels (`I{n}` when n > 0); no
+  /// transport overlay.
   terrainAndResourcesImprovementLabels,
 
-  /// Terrain + resource icons + improvement labels + road/rail labels (`R{n}` when n > 0).
-  /// Roads are painted after improvements (on top). Road labels require improvement mode on.
+  /// Terrain + resource icons + improvement labels + road/rail transport
+  /// overlay (`roadLevel > 0`).
   terrainAndResourcesImprovementsRoads,
 }
 
