@@ -130,7 +130,7 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('shows cross-region destination label in sea-zone picks', (
+  testWidgets('shows links-to suffix only for cross-region sea-zone picks', (
     WidgetTester tester,
   ) async {
     await openDialog(tester, bus: AppEventBus.create());
@@ -140,11 +140,10 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Sea zones'), findsOneWidget);
-    expect(find.text('Adjacent OW Sea · Old World'), findsOneWidget);
-    expect(
-      find.text('Cross NW Sea · New World (cross-region)'),
-      findsOneWidget,
-    );
+    expect(find.text('Adjacent OW Sea'), findsOneWidget);
+    expect(find.text('Cross NW Sea links to New World'), findsOneWidget);
+    expect(find.textContaining('· Old World'), findsNothing);
+    expect(find.textContaining('(cross-region)'), findsNothing);
   });
 
   testWidgets('confirm emits NavalMoveFleetRequestedEvent and closes dialog', (
@@ -159,7 +158,7 @@ void main() {
 
     await openDialog(tester, bus: bus);
 
-    await tester.tap(find.text('Cross NW Sea · New World (cross-region)'));
+    await tester.tap(find.text('Cross NW Sea links to New World'));
     await tester.pump();
     await tester.tap(find.text('Confirm'));
     await tester.pump();
@@ -325,7 +324,7 @@ void main() {
         findsNothing,
       );
       expect(find.text('Sea zones'), findsOneWidget);
-      expect(find.text('Second Sea · Old World'), findsOneWidget);
+      expect(find.text('Second Sea'), findsOneWidget);
     },
   );
 
