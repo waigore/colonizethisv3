@@ -48,6 +48,10 @@ class NavalUnitsPanel extends StatefulWidget {
 
 class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   final Set<String> _selectedFleetIds = {};
+  static const double _desktopViewportThreshold = 1280;
+  static const double _scaledWidthMin = 420;
+  static const double _scaledWidthMax = 640;
+  static const double _scaledViewportFactor = 0.36;
 
   @override
   void initState() {
@@ -282,11 +286,26 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     );
   }
 
+  BoxConstraints _panelConstraints(BuildContext context) {
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    if (viewportWidth < _desktopViewportThreshold) {
+      return UnitsPanelShell.defaultPanelConstraints;
+    }
+    final scaledWidth = (viewportWidth * _scaledViewportFactor).clamp(
+      _scaledWidthMin,
+      _scaledWidthMax,
+    );
+    return BoxConstraints(
+      maxWidth: scaledWidth,
+      maxHeight: UnitsPanelShell.defaultPanelConstraints.maxHeight,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final tileScopeActive = widget.tileScopeTileKey != null &&
-        widget.tileScopeTileKey!.isNotEmpty;
+    final tileScopeActive =
+        widget.tileScopeTileKey != null && widget.tileScopeTileKey!.isNotEmpty;
     final tree = buildNavalTree(
       widget.game,
       widget.humanPlayerId,
@@ -402,6 +421,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
         ],
       ],
       emptyMessage: l10n.naval_units_empty,
+      panelConstraints: _panelConstraints(context),
     );
   }
 }
@@ -427,24 +447,40 @@ class _FleetExpansionTile extends StatelessWidget {
   final VoidCallback? onMoveFleet;
   final bool isSplitAllowed;
 
-  String _summary() {
-    final parts = <String>[];
-    parts.add(l10n.naval_units_totalShips(row.totalShips));
-    parts.add(l10n.naval_units_strength(row.strength.toStringAsFixed(1)));
-    if (row.warshipCount > 0) {
-      parts.add(l10n.naval_units_warships(row.warshipCount));
-    }
-    if (row.merchantCount > 0) {
-      parts.add(l10n.naval_units_merchants(row.merchantCount));
-    }
-    return parts.join(' · ');
+  Widget _actionButton({
+    required String tooltip,
+    required IconData icon,
+    required String text,
+    required bool iconOnly,
+    required VoidCallback? onPressed,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: CtNinePatchButton(
+        onPressed: onPressed,
+        enabled: onPressed != null,
+        padding: EdgeInsets.symmetric(
+          horizontal: iconOnly ? 8 : 10,
+          vertical: 6,
+        ),
+        minHeight: 32,
+        child: iconOnly
+            ? Icon(icon, size: 16)
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 16),
+                  const SizedBox(width: 4),
+                  Text(text),
+                ],
+              ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final subtitleText =
-        '${row.locationLabel}\n${l10n.naval_units_mission(row.missionLabel)} · ${_summary()}'
-        '${row.draftNavalMoveLine != null ? '\n${row.draftNavalMoveLine}' : ''}';
+    final missionText = l10n.naval_units_mission(row.missionLabel);
     return Padding(
       padding: const EdgeInsets.only(left: 8),
       child: ExpansionTile(
@@ -470,7 +506,45 @@ class _FleetExpansionTile extends StatelessWidget {
             ],
           ],
         ),
-        subtitle: Text(subtitleText),
+        subtitle: LayoutBuilder(
+          builder: (context, constraints) {
+            final iconOnly = constraints.maxWidth < 240;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(row.locationLabel),
+                Text(missionText),
+                if (row.draftNavalMoveLine != null)
+                  Text(row.draftNavalMoveLine!),
+                if (isSplitAllowed)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        if (onMoveFleet != null)
+                          _actionButton(
+                            tooltip: l10n.common_move,
+                            icon: Icons.route,
+                            text: l10n.common_move,
+                            iconOnly: iconOnly,
+                            onPressed: onMoveFleet,
+                          ),
+                        _actionButton(
+                          tooltip: l10n.common_split,
+                          icon: Icons.call_split,
+                          text: l10n.common_split,
+                          iconOnly: iconOnly,
+                          onPressed: onSplitFleet,
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
         dense: true,
         children: [
           if (row.shipCountsByType.isEmpty)
@@ -493,6 +567,13 @@ class _FleetExpansionTile extends StatelessWidget {
             ),
             dense: true,
           ),
+          ListTile(title: Text(l10n.naval_units_totalShips(row.totalShips))),
+          if (row.warshipCount > 0)
+            ListTile(title: Text(l10n.naval_units_warships(row.warshipCount))),
+          if (row.merchantCount > 0)
+            ListTile(
+              title: Text(l10n.naval_units_merchants(row.merchantCount)),
+            ),
           ListTile(
             title: Text(
               row.isHomeFleet
@@ -501,36 +582,6 @@ class _FleetExpansionTile extends StatelessWidget {
             ),
             dense: true,
           ),
-          if (isSplitAllowed)
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (onMoveFleet != null) ...[
-                    CtNinePatchButton(
-                      onPressed: onMoveFleet,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      minHeight: 36,
-                      child: Text(l10n.common_move),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  CtNinePatchButton(
-                    onPressed: onSplitFleet,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    minHeight: 36,
-                    child: Text(l10n.common_split),
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
