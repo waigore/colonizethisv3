@@ -14,7 +14,7 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/resource_icon.dart';
 
 /// Dialog showing per-commodity preview deltas for each economy preview phase.
-class ProductionCommodityBreakdownDialog extends ConsumerWidget {
+class ProductionCommodityBreakdownDialog extends ConsumerStatefulWidget {
   const ProductionCommodityBreakdownDialog({
     super.key,
     required this.game,
@@ -29,6 +29,10 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
   final MapTopology topology;
   final Map<String, TileMapResult>? tileMapByRegion;
   final Orders currentOrders;
+
+  @override
+  ConsumerState<ProductionCommodityBreakdownDialog> createState() =>
+      _ProductionCommodityBreakdownDialogState();
 
   static String _phaseColumnLabel(
     AppLocalizations l10n,
@@ -52,21 +56,38 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
     if (v > 0) return '+$v';
     return '$v';
   }
+}
+
+class _ProductionCommodityBreakdownDialogState
+    extends ConsumerState<ProductionCommodityBreakdownDialog> {
+  late final ScrollController _horizontalScrollController;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    _horizontalScrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _horizontalScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
     final desiredOutputByRecipe = ref.watch(productionDesiredOutputProvider);
     final defaultAssignmentsByPlayerId = {
-      player.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
+      widget.player.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
     };
     final phaseDeltas = previewStockpilePhaseDeltasByCommodityForPlayer(
-      game: game,
-      topology: topology,
-      playerId: player.id,
-      tileMapByRegion: tileMapByRegion,
-      currentOrders: currentOrders,
+      game: widget.game,
+      topology: widget.topology,
+      playerId: widget.player.id,
+      tileMapByRegion: widget.tileMapByRegion,
+      currentOrders: widget.currentOrders,
       defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
     );
 
@@ -139,10 +160,20 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
             ),
             ...EconomyPreviewStockpilePhase.values.map(
               (p) => DataCell(
-                Text(_formatDelta(phaseValue(c.id, p)), maxLines: 1),
+                Text(
+                  ProductionCommodityBreakdownDialog._formatDelta(
+                    phaseValue(c.id, p),
+                  ),
+                  maxLines: 1,
+                ),
               ),
             ),
-            DataCell(Text(_formatDelta(total), maxLines: 1)),
+            DataCell(
+              Text(
+                ProductionCommodityBreakdownDialog._formatDelta(total),
+                maxLines: 1,
+              ),
+            ),
           ],
         );
       }).toList();
@@ -164,21 +195,24 @@ class ProductionCommodityBreakdownDialog extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Scrollbar(
+            controller: _horizontalScrollController,
             thumbVisibility: true,
             child: SingleChildScrollView(
+              controller: _horizontalScrollController,
               scrollDirection: Axis.horizontal,
               child: DataTable(
                 headingRowHeight: 40,
                 dataRowMinHeight: 32,
                 dataRowMaxHeight: 48,
                 columns: [
-                  DataColumn(
-                    label: Text(l10n.production_breakdown_commodity),
-                  ),
+                  DataColumn(label: Text(l10n.production_breakdown_commodity)),
                   ...EconomyPreviewStockpilePhase.values.map(
                     (p) => DataColumn(
                       label: Text(
-                        _phaseColumnLabel(l10n, p),
+                        ProductionCommodityBreakdownDialog._phaseColumnLabel(
+                          l10n,
+                          p,
+                        ),
                         softWrap: true,
                       ),
                     ),
