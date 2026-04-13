@@ -1,0 +1,331 @@
+<section class="module" id="module-3" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">03</span>
+      <h1 class="module-title">The Turn Ticker</h1>
+      <p class="module-subtitle">How the factory floor supervisor runs 13 phases in perfect order — every turn, without fail.</p>
+    </header>
+
+    <div class="module-body">
+
+      <!-- SCREEN 1: Opening / Hero Visual -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 1 of 5</div>
+        <h2 class="screen-heading">The Factory Floor Supervisor</h2>
+        <p class="screen-lead">The <span class="term" data-definition="The logic package's TurnResolver — the component that orchestrates all 13 phases in order every turn.">TurnResolver</span> is the factory floor supervisor. It runs each phase in strict order, every turn, without ever skipping one.</p>
+
+        <div class="callout callout-accent" style="margin: var(--space-6) 0">
+          <div class="callout-icon">🏭</div>
+          <div class="callout-content">
+            <strong class="callout-title">Factory Shift Metaphor</strong>
+            <p>Think of a turn like a factory shift. First everyone writes down what they want to do (orders phase). Then the supervisor processes requests in strict sequence — you can't skip steps. Extraction happens before consumption, because you need resources before you can use them.</p>
+          </div>
+        </div>
+
+        <div class="icon-rows" style="margin-top: var(--space-6)">
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-1)">📋</div>
+            <div>
+              <strong>Orders Phase</strong>
+              <p>Every player (human and AI) writes down what they want to do this turn</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-2)">⚙️</div>
+            <div>
+              <strong>TurnResolver</strong>
+              <p>Runs 13 phases in order — extraction, production, consumption, movement, combat, and more</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-3)">🎯</div>
+            <div>
+              <strong>State Transform</strong>
+              <p>Each phase reads WorldState, produces new WorldState — no phase ever modifies the original</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: Data Flow Animation -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 2 of 5</div>
+        <h2 class="screen-heading">State in Motion</h2>
+        <p class="screen-lead">Watch how game state transforms as it passes through key phases. Each phase is a pure function — it takes state in, produces new state out.</p>
+
+        <div class="flow-animation" data-steps='[
+          {"highlight":"flow-actor-1","label":"Orders Phase: Collect all player and AI orders"},
+          {"highlight":"flow-actor-1","label":"Orders collected","packet":true,"from":"actor-1","to":"actor-2"},
+          {"highlight":"flow-actor-2","label":"Extraction Phase: Pull raw resources from provinces"},
+          {"highlight":"flow-actor-2","label":"Gold ore, lumber, and goods extracted","packet":true,"from":"actor-2","to":"actor-3"},
+          {"highlight":"flow-actor-3","label":"Production Phase: Convert raw materials into usable goods"},
+          {"highlight":"flow-actor-3","label":"Raw ore becomes gold bars, lumber becomes materials","packet":true,"from":"actor-3","to":"actor-4"},
+          {"highlight":"flow-actor-4","label":"Consumption Phase: Deduct upkeep costs from stockpiles"},
+          {"highlight":"flow-actor-4","label":"Armies and colonies consume goods each turn","packet":true,"from":"actor-4","to":"actor-5"},
+          {"highlight":"flow-actor-5","label":"Movement Phase: Units change position on the map"},
+          {"highlight":"flow-actor-5","label":"Armies march, fleets sail — positions updated","packet":true,"from":"actor-5","to":"actor-6"},
+          {"highlight":"flow-actor-6","label":"Combat Phase: Opposing forces in the same tile resolve battles"}
+        ]'>
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-actor-1">
+              <div class="flow-actor-icon">📋</div>
+              <span>Orders</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-2">
+              <div class="flow-actor-icon">⛏️</div>
+              <span>Extraction</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-3">
+              <div class="flow-actor-icon">🏭</div>
+              <span>Production</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-4">
+              <div class="flow-actor-icon">🍽️</div>
+              <span>Consumption</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-5">
+              <div class="flow-actor-icon">🚶</div>
+              <span>Movement</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-6">
+              <div class="flow-actor-icon">⚔️</div>
+              <span>Combat</span>
+            </div>
+          </div>
+
+          <div class="flow-packet" id="flow-packet"></div>
+
+          <div class="flow-step-label" id="flow-label">Click "Next Step" to follow state through the phases</div>
+
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">Next Step</button>
+            <button class="btn flow-reset-btn">Restart</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+
+        <p class="text-sm" style="margin-top: var(--space-4); color: var(--color-text-secondary)">Notice: the state that comes out of Extraction is a <em>new</em> state object — the old one is never changed. This is immutability in action.</p>
+      </section>
+
+      <!-- SCREEN 3: Pattern Cards -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 3 of 5</div>
+        <h2 class="screen-heading">Three Design Pillars</h2>
+        <p class="screen-lead">The turn cycle works because of three non-negotiable rules built into every phase.</p>
+
+        <div class="pattern-cards">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🔒</div>
+            <h4 class="pattern-title">Immutability</h4>
+            <p class="pattern-desc">No phase ever modifies the WorldState it receives. It reads, computes, and returns a new state. Like copying a document before editing — the original stays intact.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🧩</div>
+            <h4 class="pattern-title">Phase Isolation</h4>
+            <p class="pattern-desc">Each phase is completely standalone. If the extraction phase produces a bug, it cannot corrupt the combat phase. Problems stay contained to the phase that caused them.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🔁</div>
+            <h4 class="pattern-title">Determinism</h4>
+            <p class="pattern-desc">Same inputs in, same result out — every time. There are no dice rolls or random events inside phases. This is what makes replaying a turn and getting the same result possible.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: var(--space-6)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Why Does This Matter?</strong>
+            <p>Imagine if phases could modify each other's state. A bug in consumption could silently corrupt your army positions. Immutability means you can always trace exactly what happened — and replay any turn step by step.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: Stateless Phase Visualization -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 4 of 5</div>
+        <h2 class="screen-heading">Each Phase is Stateless</h2>
+        <p class="screen-lead">A phase never "remembers" anything between turns. It reads the current WorldState, does one focused job, and hands off a new WorldState to the next phase.</p>
+
+        <div class="flow-steps" style="margin: var(--space-8) 0">
+          <div class="flow-step">
+            <div class="flow-step-num">1</div>
+            <div>
+              <strong>WorldState arrives</strong>
+              <p style="color: var(--color-text-secondary)">The phase receives a read-only snapshot of the entire game world</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-1)">⚙️</div>
+            <div>
+              <strong>Phase computes</strong>
+              <p style="color: var(--color-text-secondary)">Reads the state, applies its logic, produces a new state object</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-2)">📦</div>
+            <div>
+              <strong>New state exits</strong>
+              <p style="color: var(--color-text-secondary)">The original state is unchanged; a new one is passed forward</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-3)">⏭️</div>
+            <div>
+              <strong>Next phase begins</strong>
+              <p style="color: var(--color-text-secondary)">Chain continues until all 13 phases complete</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="screen-lead" style="margin-top: var(--space-4)">The <span class="term" data-definition="A read-only window into the game state that filters out information the player shouldn't see — like enemy positions in fogged tiles.">PlayerView</span> is how individual players see the world. Each player (human or AI) gets their own filtered view — they can't see enemy positions in fogged tiles, and they only see their own colony's interior.</p>
+
+        <div class="translation-block animate-in" style="margin-top: var(--space-6)">
+          <div class="translation-code">
+            <span class="translation-label">CODE</span>
+            <pre><code><span class="code-keyword">enum</span> <span class="code-type">VisibilityLevel</span> { unknown, revealed, fogged, fullyVisible }
+
+<span class="code-keyword">class</span> <span class="code-type">PlayerView</span> {
+  <span class="code-keyword">const</span> <span class="code-function">PlayerView</span>({
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.playerId,
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.player,
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.ownUnitsById,
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.provincesById,
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.visibilityByTile,
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.prospectedTiles,
+    <span class="code-keyword">required</span> <span class="code-keyword">this</span>.diplomacyByOtherId,
+  });
+
+  <span class="code-type">VisibilityLevel</span> <span class="code-function">visibilityForTile</span>(<span class="code-type">String</span> tileKey) =>
+      visibilityByTile[tileKey] ?? <span class="code-type">VisibilityLevel</span>.unknown;</code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl"><strong>Four levels of visibility</strong> — unknown (never seen), revealed (was seen, now dark), fogged (you know it exists but not what's inside), and fullyVisible (you can see everything).</p>
+              <p class="tl"><strong>PlayerView is the gatekeeper</strong> — every player (human or AI) gets their own version filtered to what they're allowed to see.</p>
+              <p class="tl"><strong>ownUnitsById</strong> — only the units this player controls, no enemy units.</p>
+              <p class="tl"><strong>visibilityByTile</strong> — a map of what this player can see in each tile on the map.</p>
+              <p class="tl"><strong>prospectedTiles</strong> — tiles where hidden resources (like gold veins) have been revealed.</p>
+              <p class="tl"><strong>The helper function</strong> — asks "what can this player see in this tile?" and returns unknown if the player has never looked there.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Debugging Quiz -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 5 of 5</div>
+        <h2 class="screen-heading">Debugging: Find the Broken Phase</h2>
+        <p class="screen-lead">When something goes wrong, you can trace the failure to exactly one phase. Here's your diagnostic toolkit.</p>
+
+        <div class="scenario-block" style="margin: var(--space-6) 0">
+          <div class="scenario-context">
+            <span class="scenario-label">Scenario</span>
+            <p>You issued an order to move an army from Province A to Province B. You clicked "End Turn." The army is still in Province A when the turn ends. What happened?</p>
+          </div>
+        </div>
+
+        <div class="quiz-container" id="quiz-module3">
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="The Movement phase is where units actually change position on the map. If extraction produced no food, the army might have been under-supplied — but that doesn't stop movement. The movement phase either ran and failed to find a valid path, or was skipped."
+               data-explanation-wrong="Extraction and Production affect resources, not unit positions. Combat resolves battles — it doesn't move armies. The issue is always in the Movement phase for positional bugs.">
+            <h3 class="quiz-question">Which phase is most likely responsible for the army not moving?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Extraction Phase — the army had no resources to move</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Combat Phase — the army was killed before it could move</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Movement Phase — the unit's move order was never executed</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="Phase Isolation means a bug in one phase cannot corrupt another. If production has a bug, combat still gets the correct state — because each phase receives a fresh copy of the WorldState, not a mutated version."
+               data-explanation-wrong="The correct answer is no — this is exactly what Phase Isolation prevents. Each phase receives a fresh WorldState copy, so a bug in one phase cannot bleed into the next.">
+            <h3 class="quiz-question">Could a bug in the Production phase cause your army to die in Combat?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Yes — if Production produced wrong resource counts, Combat would use them</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>No — Production and Combat are isolated; they can't corrupt each other</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="If the same inputs always produce the same result, you can replay a turn exactly. This is how players can 'take back' a move in some game systems — the game can recompute what happened step by step from the starting state."
+               data-explanation-wrong="Determinism is what makes replay possible. If a phase had random dice rolls inside it, replaying would give different results each time — and bugs would be nearly impossible to reproduce.">
+            <h3 class="quiz-question">Why is it important that phases are deterministic (no random dice rolls)?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>So you can replay any turn and get the same result — essential for debugging</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>So the AI makes smarter decisions each time it plays</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>So players can't save and reload to try different choices</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="If Consumption shows 0 food available and the army's upkeep is 1, the army is under-supplied. Under-supplied armies take attrition damage in Combat — they don't move to a new tile, but they also don't die during the Movement phase. The attrition happens in Combat."
+               data-explanation-wrong="The army doesn't die in Movement — it dies in Combat from attrition if it's under-supplied. Extraction and Production phases are the ones to check for 'why was no food produced?'">
+            <h3 class="quiz-question">Your army is under-supplied (not enough food). When does it take damage?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Extraction Phase — the mine that should have fed it produced nothing</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Movement Phase — under-supplied armies cannot move</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Combat Phase — attrition damage is applied during combat resolution</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module3')">Check Answers</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module3')">Try Again</button>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-8)">
+          <div class="callout-icon">🔍</div>
+          <div class="callout-content">
+            <strong class="callout-title">The Debugging Rule</strong>
+            <p>When something goes wrong, ask: "Which phase is responsible?" If your army didn't move — Movement phase. If your army died — Combat phase. If you had no gold — Extraction phase. Each phase owns one job, and bugs stay isolated to that job.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>

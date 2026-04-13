@@ -1,0 +1,320 @@
+<section class="module" id="module-5" style="background: var(--color-bg)">
+  <div class="module-content">
+
+    <header class="module-header animate-in">
+      <span class="module-number">05</span>
+      <h1 class="module-title">Orders in Action</h1>
+      <p class="module-subtitle">How your orders and the AI's orders become one list — with you always winning.</p>
+    </header>
+
+    <div class="module-body">
+
+      <!-- SCREEN 1: Opening -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 1 of 6</div>
+        <h2 class="screen-heading">Two Tickets, One Kitchen</h2>
+
+        <p class="screen-lead">Every turn, the game collects two sets of orders: yours and the AI's. These get merged into one list. The rule? <strong>You win every time.</strong></p>
+
+        <div class="icon-rows stagger-children" style="margin-top: var(--space-8)">
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-1)">🧑</div>
+            <div>
+              <strong>Your Orders</strong>
+              <p>What you tell your empire to do this turn</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-3)">🤖</div>
+            <div>
+              <strong>AI Orders</strong>
+              <p>What the AI tells its empire to do this turn</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-accent)">⚙️</div>
+            <div>
+              <strong>Merged Orders</strong>
+              <p>The single list that drives what actually happens</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-8)">
+          <div class="callout-icon">🍽️</div>
+          <div class="callout-content">
+            <strong class="callout-title">The Restaurant Ticket Metaphor</strong>
+            <p>Think of it like two tickets in a restaurant kitchen — yours and the AI's. If both tickets order the same dish for the same table, yours wins. You're the customer.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: Data Flow Animation -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 2 of 6</div>
+        <h2 class="screen-heading">The Merge Flow</h2>
+
+        <p>Watch how human and AI orders flow through the merge function together.</p>
+
+        <div class="flow-animation" data-steps='[
+          {"highlight":"flow-actor-1","label":"Your orders arrive from the UI"},
+          {"highlight":"flow-actor-2","label":"AI orders arrive from the AI Brain"},
+          {"highlight":"flow-actor-3","label":"Merge function processes both lists"},
+          {"highlight":"flow-actor-3","label":"Conflict check: same unit, same slot?"},
+          {"highlight":"flow-actor-4","label":"Merged orders go to execution"}
+        ]'>
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-actor-1">
+              <div class="flow-actor-icon">🧑</div>
+              <span>Human Orders</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-2">
+              <div class="flow-actor-icon">🤖</div>
+              <span>AI Orders</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-3">
+              <div class="flow-actor-icon">⚙️</div>
+              <span>Merge Function</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-4">
+              <div class="flow-actor-icon">▶️</div>
+              <span>Execution</span>
+            </div>
+          </div>
+
+          <div class="flow-packet" id="flow-packet"></div>
+
+          <div class="flow-step-label" id="flow-label">Click "Next Step" to begin</div>
+
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">Next Step</button>
+            <button class="btn flow-reset-btn">Restart</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: The Merge Rule -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 3 of 6</div>
+        <h2 class="screen-heading">The Merge Rule</h2>
+
+        <p>When orders conflict — same <span class="term" data-definition="An ID is a unique label that identifies a specific thing, like a unit's name tag.">unit</span>, same <span class="term" data-definition="A slot is like a time slot in a schedule — each unit has one slot per phase for each type of action.">slot</span> — human always wins.</p>
+
+        <div class="pattern-cards stagger-children" style="margin-top: var(--space-8)">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🧑</div>
+            <h4 class="pattern-title">You Move First</h4>
+            <p class="pattern-desc">Your move order for Unit A always takes the slot.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🤖</div>
+            <h4 class="pattern-title">AI Moves Second</h4>
+            <p class="pattern-desc">AI's move order for the same unit gets bumped.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-success)">
+            <div class="pattern-icon" style="background: var(--color-success)">✓</div>
+            <h4 class="pattern-title">No Conflict = Both Execute</h4>
+            <p class="pattern-desc">If orders target different units, both run.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: var(--space-6)">
+          <div class="callout-icon">ℹ️</div>
+          <div class="callout-content">
+            <strong class="callout-title">Why This Matters</strong>
+            <p>You can always override the AI. Issue the same order for the same unit, and yours wins. The AI can never "steal" a slot from you.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: Drag-and-Drop -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 4 of 6</div>
+        <h2 class="screen-heading">Order Types and Their Merge Buckets</h2>
+
+        <p>Orders are split into 8 types. Each type merges separately — a Build order only conflicts with another Build order.</p>
+
+        <div class="dnd-container" style="margin-top: var(--space-6)">
+          <p style="margin-bottom: var(--space-4); color: var(--color-text-secondary);">Drag each order type to the correct bucket:</p>
+          <div class="dnd-chips">
+            <div class="dnd-chip" draggable="true" data-answer="move">Move</div>
+            <div class="dnd-chip" draggable="true" data-answer="army-move">Army Move</div>
+            <div class="dnd-chip" draggable="true" data-answer="build">Build</div>
+            <div class="dnd-chip" draggable="true" data-answer="work">Work</div>
+            <div class="dnd-chip" draggable="true" data-answer="diplomatic">Diplomatic</div>
+            <div class="dnd-chip" draggable="true" data-answer="research">Research</div>
+            <div class="dnd-chip" draggable="true" data-answer="naval">Naval</div>
+          </div>
+          <div class="dnd-zones">
+            <div class="dnd-zone" data-correct="move">
+              <p class="dnd-zone-label">Move Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="army-move">
+              <p class="dnd-zone-label">Army Move Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="build">
+              <p class="dnd-zone-label">Build Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="work">
+              <p class="dnd-zone-label">Work Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="diplomatic">
+              <p class="dnd-zone-label">Diplomatic Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="research">
+              <p class="dnd-zone-label">Research Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="naval">
+              <p class="dnd-zone-label">Naval Orders</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+          </div>
+          <button class="btn" onclick="checkDnD()">Check Matches</button>
+          <button class="btn" onclick="resetDnD()">Reset</button>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: var(--space-6)">
+          <div class="callout-icon">ℹ️</div>
+          <div class="callout-content">
+            <strong class="callout-title">Conflict Keys</strong>
+            <p>Each order type has its own <span class="term" data-definition="A conflict key is the 'address' used to match orders — for moves, it's the unit ID. Two moves conflict only if they're for the same unit.">conflict key</span>. A Move order conflicts with another Move order for the same unit. But a Move order and a Build order never conflict — they go to different buckets.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Code ↔ English Translation -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 5 of 6</div>
+        <h2 class="screen-heading">The Merge Function, Line by Line</h2>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">CODE</span>
+            <pre><code><span class="code-keyword">///</span> Merges human and AI orders with
+<span class="code-comment">/// precedence (human over AI).
+/// For conflicting orders (e.g. same unit,
+/// same slot): human wins.</span>
+<span class="code-keyword">Orders</span> mergeOrderLists({
+  <span class="code-keyword">required</span> <span class="code-type">Orders</span> humanOrders,
+  <span class="code-type">Orders</span>? aiOrders,
+}) {
+  <span class="code-keyword">if</span> (aiOrders == <span class="code-keyword">null</span> ||
+      _isEmpty(aiOrders)) {
+    <span class="code-keyword">return</span> humanOrders;
+  }
+  <span class="code-keyword">final</span> merged = <span class="code-type">Orders</span>(
+    moveOrdersByPlayerId:
+      _mergeMoveOrders(humanOrders...),
+    armyMoveOrdersByPlayerId:
+      _mergeArmyMoveOrders(...),
+    <span class="code-comment">// ... all 8 order types</span>
+  );
+  <span class="code-keyword">return</span> merged;
+}
+
+<span class="code-type">Map</span>&lt;<span class="code-type">String</span>, <span class="code-type">List</span>&lt;<span class="code-type">MoveOrder</span>&gt;&gt;
+_mergeMoveOrders(...) =&gt;
+  _mergeByConflictKey(
+    human, ai, (o) =&gt; o.unitId);
+</code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl">The function takes two order lists — yours and the AI's — and returns one merged list.</p>
+              <p class="tl">If there's no AI orders at all, just give back the human orders unchanged.</p>
+              <p class="tl">Otherwise, create a new merged Orders object by calling a helper for each order type.</p>
+              <p class="tl">For move orders, merge by unit ID — if two moves target the same unit, the human one wins.</p>
+              <p class="tl">The merge happens per-type, using a conflict key (like unitId) to spot collisions.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 6: Quiz -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 6 of 6</div>
+        <h2 class="screen-heading">Quiz: Order Conflicts</h2>
+
+        <div class="quiz-container" id="quiz-module5">
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="Exactly — when orders target the same unit in the same slot, human wins. The AI's order is discarded."
+               data-explanation-wrong="Not quite. When both you and the AI order the same army to move to the same province, your order wins. The AI's order is bumped out of that slot.">
+            <h3 class="quiz-question">You order Army A to move to Province X. The AI also orders Army A to move to Province Y. Who wins?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The AI wins — it's smarter</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>You win — human always wins conflicts</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Neither — both orders get cancelled</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="Correct — the conflict key for diplomatic orders is the target faction. Both orders target Faction X, so they conflict. Your order wins."
+               data-explanation-wrong="Actually, diplomatic orders conflict when they target the same faction. Since both you and the AI are targeting Faction X, your order wins and the AI's is dropped.">
+            <h3 class="quiz-question">You issue a Diplomatic order to ally with Faction X. The AI also wants to ally with Faction X. What happens to the AI's order?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The AI's order executes first, then yours</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Both orders execute — they don't conflict</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Your order wins, AI's order is dropped</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="Right — if only you issued a research order, there's no conflict. The AI simply has no research order for that slot."
+               data-explanation-wrong="No conflict here. Research orders only conflict with other research orders targeting the same faction or technology. Since only you issued one, the AI gets nothing in that slot — not even an empty order.">
+            <h3 class="quiz-question">You issue a Research order for Technology A. The AI doesn't issue a Research order. What does the AI get?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Nothing — there's no conflict to resolve</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The AI gets the same research order as you</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The AI gets a random research order</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module5')">Check Answers</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module5')">Try Again</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
