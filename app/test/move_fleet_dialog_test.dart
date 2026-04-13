@@ -15,8 +15,9 @@ void main() {
 
   const humanId = 'gp_move_dialog';
   const originSea = 'sea_ow';
-  const sameRegionAdjacentSea = 'sea_local';
-  const crossRegionAdjacentSea = 'sea_nw';
+  const sameRegionWarpSea = 'sea_local';
+  const sameRegionNonWarpSea = 'sea_plain';
+  const crossRegionWarpSea = 'sea_nw';
 
   Game buildGame() {
     return Game(
@@ -40,7 +41,8 @@ void main() {
         },
         seaZoneDisplayNameById: const {
           'oldWorld|sea_ow': 'Origin Sea',
-          'oldWorld|sea_local': 'Adjacent OW Sea',
+          'oldWorld|sea_local': 'Warp OW Sea',
+          'oldWorld|sea_plain': 'Plain OW Sea',
           'newWorld|sea_nw': 'Cross NW Sea',
         },
       ),
@@ -70,19 +72,26 @@ void main() {
           type: TopologyNodeType.seaZone,
         ),
         TopologyNode(
-          id: sameRegionAdjacentSea,
+          id: sameRegionWarpSea,
           regionId: 'oldWorld',
           type: TopologyNodeType.seaZone,
         ),
         TopologyNode(
-          id: crossRegionAdjacentSea,
+          id: sameRegionNonWarpSea,
+          regionId: 'oldWorld',
+          type: TopologyNodeType.seaZone,
+        ),
+        TopologyNode(
+          id: crossRegionWarpSea,
           regionId: 'newWorld',
           type: TopologyNodeType.seaZone,
         ),
       ],
       edges: [
-        TopologyEdge(id1: originSea, id2: sameRegionAdjacentSea),
-        TopologyEdge(id1: originSea, id2: crossRegionAdjacentSea),
+        TopologyEdge(id1: originSea, id2: sameRegionWarpSea),
+        TopologyEdge(id1: originSea, id2: sameRegionNonWarpSea),
+        TopologyEdge(id1: originSea, id2: crossRegionWarpSea),
+        TopologyEdge(id1: sameRegionWarpSea, id2: crossRegionWarpSea),
       ],
     );
   }
@@ -130,18 +139,20 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('shows links-to suffix only for cross-region sea-zone picks', (
+  testWidgets('labels warp-zone destinations with warp copy only', (
     WidgetTester tester,
   ) async {
     await openDialog(tester, bus: AppEventBus.create());
 
     expect(
-      find.textContaining('Move fleet — Fleet f_move (2 destinations)'),
+      find.textContaining('Move fleet — Fleet f_move (3 destinations)'),
       findsOneWidget,
     );
     expect(find.text('Sea zones'), findsOneWidget);
-    expect(find.text('Adjacent OW Sea'), findsOneWidget);
+    expect(find.text('Warp OW Sea links'), findsOneWidget);
+    expect(find.text('Plain OW Sea'), findsOneWidget);
     expect(find.text('Cross NW Sea links to New World'), findsOneWidget);
+    expect(find.textContaining('Plain OW Sea links'), findsNothing);
     expect(find.textContaining('· Old World'), findsNothing);
     expect(find.textContaining('(cross-region)'), findsNothing);
   });
@@ -166,7 +177,7 @@ void main() {
     expect(captured, isNotNull);
     expect(captured!.humanPlayerId, humanId);
     expect(captured!.moveOrder.fleetId, 'f_move');
-    expect(captured!.moveOrder.destinationSeaZoneId, crossRegionAdjacentSea);
+    expect(captured!.moveOrder.destinationSeaZoneId, crossRegionWarpSea);
     expect(captured!.moveOrder.destinationPortProvinceId, isNull);
     expect(find.text('Move fleet — f_move'), findsNothing);
   });
@@ -206,9 +217,9 @@ void main() {
       of: find.byType(AlertDialog),
       matching: find.byTooltip('Locate on map'),
     );
-    expect(locateButtons, findsNWidgets(2));
+    expect(locateButtons, findsNWidgets(3));
 
-    await tester.tap(locateButtons.at(1));
+    await tester.tap(locateButtons.first);
     await tester.pump();
 
     expect(locate, isNotNull);
