@@ -21,6 +21,9 @@ const ctRegionMapTestPlayerView = PlayerView(
 RegionMapViewData ctRegionMapTestOldWorldRegion() =>
     getDebugInitGameResult().mapViewData.oldWorld;
 
+RegionMapViewData ctRegionMapTestNewWorldRegion() =>
+    getDebugInitGameResult().mapViewData.newWorld;
+
 Widget ctRegionMapTestHarness({
   required RegionMapViewData region,
   double width = 400,

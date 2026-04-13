@@ -55,6 +55,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     required this.onTownIconTapped,
     this.playerViewForResources,
     this.onViewportSnapshotChanged,
+    this.initialZoomMultiplier = 1.0,
   });
 
   RegionMapViewData region;
@@ -87,6 +88,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   void Function(String provinceId)? onTownIconTapped;
   PlayerView? playerViewForResources;
   void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged;
+  final double initialZoomMultiplier;
 
   late final CtRegionMapComponent _mapComponent;
 
@@ -95,7 +97,7 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
   CtRegionMapComponent get debugMapComponentForTest => _mapComponent;
 
   /// `m` in [kRegionMapZoomMultiplierMin]–[kRegionMapZoomMultiplierMax]; camera zoom = `m × z_fit`.
-  double _zoomMultiplier = 1.0;
+  late double _zoomMultiplier = initialZoomMultiplier;
   bool _mapLoaded = false;
   Vector2? _lastCanvasSize;
 
@@ -253,11 +255,11 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     VoidCallback? onCivilianTileSelectionCleared,
     required PlayerView? playerViewForResources,
     void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
+    double? zoomMultiplier,
   }) {
+    var regionChanged = false;
     if (region != null) {
-      if (region.regionId != this.region.regionId) {
-        _zoomMultiplier = 1.0;
-      }
+      regionChanged = region.regionId != this.region.regionId;
       this.region = region;
     }
     if (showPoliticalOverlay != null) {
@@ -308,6 +310,9 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
     if (onViewportSnapshotChanged != null) {
       this.onViewportSnapshotChanged = onViewportSnapshotChanged;
     }
+    if (zoomMultiplier != null) {
+      _zoomMultiplier = zoomMultiplier;
+    }
 
     assertCtMapPlayerViewRequired(
       visibilityMode: this.visibilityMode,
@@ -330,7 +335,11 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
         ..validTileKeys = this.validTileKeys
         ..playerViewForResources = this.playerViewForResources
         ..onFleetMarkerTapped = onFleetMarkerTapped;
-      _emitViewportSnapshot();
+      if (regionChanged || zoomMultiplier != null) {
+        _syncCameraZoomFromMultiplier();
+      } else {
+        _emitViewportSnapshot();
+      }
     }
   }
 
@@ -561,6 +570,7 @@ class CtRegionMap extends StatefulWidget {
     this.bus,
     this.playerViewForResources,
     this.onViewportSnapshotChanged,
+    this.zoomMultiplier,
   });
 
   final RegionMapViewData region;
@@ -604,6 +614,7 @@ class CtRegionMap extends StatefulWidget {
   /// Optional: notified when the camera viewport changes (for region minimap sync).
   final void Function(RegionMapViewportSnapshot viewport)?
   onViewportSnapshotChanged;
+  final double? zoomMultiplier;
 
   @override
   State<CtRegionMap> createState() => _CtRegionMapState();
@@ -676,7 +687,8 @@ class _CtRegionMapState extends State<CtRegionMap> {
             oldWidget.onWorkTargetSelectionCancelled ||
         widget.playerViewForResources != oldWidget.playerViewForResources ||
         widget.onViewportSnapshotChanged !=
-            oldWidget.onViewportSnapshotChanged) {
+            oldWidget.onViewportSnapshotChanged ||
+        widget.zoomMultiplier != oldWidget.zoomMultiplier) {
       _game.updateProps(
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
@@ -704,6 +716,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
         onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
         playerViewForResources: widget.playerViewForResources,
         onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
+        zoomMultiplier: widget.zoomMultiplier,
       );
     }
     if (widget.bus != oldWidget.bus) {
@@ -750,6 +763,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
           : null,
       playerViewForResources: widget.playerViewForResources,
       onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
+      initialZoomMultiplier: widget.zoomMultiplier ?? 1.0,
     );
   }
 
