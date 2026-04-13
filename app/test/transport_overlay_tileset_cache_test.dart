@@ -64,5 +64,43 @@ void main() {
         }
       },
     );
+
+    test('mask rects are grid aligned and unique per family', () async {
+      final cache = TransportOverlayTilesetCache();
+      await cache.load();
+      final config = MapTerrainConfig.instance;
+
+      for (final family in TransportTileFamily.values) {
+        final key = family.name;
+        final familyConfig = config.transportTilesets[key];
+        expect(familyConfig, isNotNull, reason: 'Missing config for $key');
+        final tileset = cache.getTileset(family);
+        expect(tileset, isNotNull, reason: 'Missing loaded tileset for $key');
+        final tilePx = familyConfig!.tilePx.toDouble();
+        final seenRects = <String>{};
+
+        for (final entry in tileset!.maskRects.entries) {
+          final mask = entry.key;
+          final rect = entry.value;
+          expect(
+            rect.left % tilePx,
+            0,
+            reason: '$key mask $mask left is not aligned to tile grid',
+          );
+          expect(
+            rect.top % tilePx,
+            0,
+            reason: '$key mask $mask top is not aligned to tile grid',
+          );
+          final rectKey =
+              '${rect.left},${rect.top},${rect.width},${rect.height}';
+          expect(
+            seenRects.add(rectKey),
+            isTrue,
+            reason: '$key mask $mask reuses an existing source rect',
+          );
+        }
+      }
+    });
   });
 }

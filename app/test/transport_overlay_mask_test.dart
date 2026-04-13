@@ -72,5 +72,36 @@ void main() {
             kTransportMaskWest,
       );
     });
+
+    test('returns exact mask value for each cardinal bit pattern 0..15', () {
+      for (var expectedMask = 0; expectedMask < 16; expectedMask++) {
+        final cells = <String, CellViewData>{
+          '1,1': _cell(x: 1, y: 1, isSea: false, roadLevel: 2),
+        };
+        if ((expectedMask & kTransportMaskNorth) != 0) {
+          cells['1,0'] = _cell(x: 1, y: 0, isSea: false, roadLevel: 1);
+        }
+        if ((expectedMask & kTransportMaskEast) != 0) {
+          cells['2,1'] = _cell(x: 2, y: 1, isSea: false, roadLevel: 1);
+        }
+        if ((expectedMask & kTransportMaskSouth) != 0) {
+          cells['1,2'] = _cell(x: 1, y: 2, isSea: false, roadLevel: 1);
+        }
+        if ((expectedMask & kTransportMaskWest) != 0) {
+          cells['0,1'] = _cell(x: 0, y: 1, isSea: false, roadLevel: 1);
+        }
+
+        final mask = computeTransportConnectivityMask(
+          x: 1,
+          y: 1,
+          getCellAt: (x, y) => cells['$x,$y'],
+        );
+        expect(
+          mask,
+          expectedMask,
+          reason: 'Unexpected connectivity for $cells',
+        );
+      }
+    });
   });
 }
