@@ -57,17 +57,44 @@ Future<void> _openCivilianPanel(
   final sw = Stopwatch()..start();
   final empireRailButton = find.byKey(kEmpireCivilianUnitsButtonKey);
   final markerButton = find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey);
+  final civilianPanel = find.byKey(kCtE2ECivilianPanelRootKey);
+  final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
+  Future<bool> tryOpen(Finder trigger) async {
+    final tappable = trigger.hitTestable();
+    if (tappable.evaluate().isEmpty) {
+      // Dismiss blocking overlays (for example, side menu scrim) before retrying.
+      await tester.tapAt(const Offset(1200, 360));
+      await _pumpFor(tester, const Duration(milliseconds: 120));
+      return false;
+    }
+    await tester.tap(tappable.first, warnIfMissed: false);
+    await _pumpFor(tester, const Duration(milliseconds: 250));
+    final openDeadline = DateTime.now().add(const Duration(seconds: 3));
+    while (DateTime.now().isBefore(openDeadline)) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (civilianPanel.evaluate().isNotEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   while (sw.elapsed < timeout) {
     await tester.pump(const Duration(milliseconds: 100));
+    if (civilianPanel.evaluate().isNotEmpty ||
+        navalPanel.evaluate().isNotEmpty) {
+      await _closeBottomSheet(tester);
+      continue;
+    }
     if (empireRailButton.evaluate().isNotEmpty) {
-      await tester.tap(empireRailButton);
-      await _pumpFor(tester, const Duration(milliseconds: 400));
-      return;
+      if (await tryOpen(empireRailButton)) {
+        return;
+      }
     }
     if (markerButton.evaluate().isNotEmpty) {
-      await tester.tap(markerButton);
-      await _pumpFor(tester, const Duration(milliseconds: 400));
-      return;
+      if (await tryOpen(markerButton)) {
+        return;
+      }
     }
   }
   fail(
@@ -206,14 +233,22 @@ Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
 }
 
 Future<void> _closeBottomSheet(WidgetTester tester) async {
-  final navFinder = find.byType(Navigator);
-  expect(navFinder, findsWidgets);
-  final ctx = tester.element(navFinder.first);
-  final nav = Navigator.of(ctx, rootNavigator: true);
-  if (nav.canPop()) {
-    nav.pop();
-    await _pumpFor(tester, const Duration(milliseconds: 400));
+  bool anyPanelOpen() => find.byType(BottomSheet).evaluate().isNotEmpty;
+
+  if (!anyPanelOpen()) {
+    return;
   }
+
+  final sw = Stopwatch()..start();
+  while (sw.elapsed < const Duration(seconds: 5)) {
+    if (!anyPanelOpen()) {
+      return;
+    }
+    await tester.binding.handlePopRoute();
+    await _pumpFor(tester, const Duration(milliseconds: 250));
+  }
+
+  fail('Timed out closing bottom sheet; panels remained visible');
 }
 
 Future<void> _tapFirstAssignInCivilianPanel(WidgetTester tester) async {
