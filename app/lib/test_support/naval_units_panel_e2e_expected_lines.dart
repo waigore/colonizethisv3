@@ -8,28 +8,6 @@ import 'package:colonizethis_app/features/game/widgets/utils/naval_tree_builder.
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
 
-String _fleetSummaryLine(FleetRow row, AppLocalizations l10n) {
-  final parts = <String>[];
-  parts.add(l10n.naval_units_totalShips(row.totalShips));
-  parts.add(l10n.naval_units_strength(row.strength.toStringAsFixed(1)));
-  if (row.warshipCount > 0) {
-    parts.add(l10n.naval_units_warships(row.warshipCount));
-  }
-  if (row.merchantCount > 0) {
-    parts.add(l10n.naval_units_merchants(row.merchantCount));
-  }
-  return parts.join(' · ');
-}
-
-String _collapsedSubtitle(FleetRow row, AppLocalizations l10n) {
-  final base =
-      '${row.locationLabel}\n${l10n.naval_units_mission(row.missionLabel)} · ${_fleetSummaryLine(row, l10n)}';
-  if (row.draftNavalMoveLine != null) {
-    return '$base\n${row.draftNavalMoveLine}';
-  }
-  return base;
-}
-
 void _addFleetRowTexts({
   required List<String> out,
   required FleetRow row,
@@ -37,7 +15,15 @@ void _addFleetRowTexts({
   required bool expansionTilesOpen,
 }) {
   out.add(row.label);
-  out.add(_collapsedSubtitle(row, l10n));
+  out.add(row.locationLabel);
+  out.add(l10n.naval_units_mission(row.missionLabel));
+  if (row.draftNavalMoveLine != null) {
+    out.add(row.draftNavalMoveLine!);
+  }
+  if (!row.isHomeFleet) {
+    out.add(l10n.common_move);
+  }
+  out.add(l10n.common_split);
   if (!expansionTilesOpen) {
     return;
   }
@@ -59,10 +45,6 @@ void _addFleetRowTexts({
         ? l10n.naval_units_cargoCapacity(row.cargoCapacity)
         : l10n.naval_units_cargoCapacityIfAssigned(row.cargoCapacity),
   );
-  if (!row.isHomeFleet) {
-    out.add(l10n.common_move);
-  }
-  out.add(l10n.common_split);
 }
 
 /// In-order [Text.data] for [NavalUnitsPanel] preorder traversal.

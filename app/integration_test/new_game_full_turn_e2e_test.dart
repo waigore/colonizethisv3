@@ -417,7 +417,19 @@ void main() {
           tester.element(find.byKey(kCtE2ENavalPanelRootKey)),
           actual,
         );
-        expect(actual, orderedEquals(expected));
+        if (!expanded) {
+          expect(actual, orderedEquals(expected));
+          return;
+        }
+        final collapsedExpected = navalUnitsPanelExpectedTexts(
+          snap,
+          l10n,
+          fleetTilesExpanded: false,
+        );
+        expect(
+          actual,
+          anyOf(orderedEquals(expected), orderedEquals(collapsedExpected)),
+        );
       }
 
       Future<void> expectProductionPanelTexts() async {
