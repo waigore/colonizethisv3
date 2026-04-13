@@ -18,7 +18,6 @@ import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
-import '../../../../providers/map_view_provider.dart';
 import '../../../../providers/region_minimap_provider.dart';
 import 'region_map_viewport_snapshot.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
@@ -57,6 +56,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   Set<String>? _cachedValidTileKeys;
   bool _sideMenuOpen = false;
   final List<StreamSubscription<dynamic>> _busSubscriptions = [];
+  ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode _baseLayerDisplayMode =
@@ -65,6 +65,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   @override
   void initState() {
     super.initState();
+    _mapViewState = widget.game.mapViewState;
     final bus = ref.read(appEventBusProvider);
     _busSubscriptions.addAll([
       bus.on<ct_models.OpenProvinceDetailPanelEvent>().listen((_) {
@@ -153,6 +154,21 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
           BaseLayerDisplayMode.terrainOnly,
       };
     });
+  }
+
+  void _setMapViewState(ct_models.MapViewState next) {
+    if (_mapViewState == next) {
+      return;
+    }
+    setState(() {
+      _mapViewState = next;
+    });
+    final current = ref.read(currentGameProvider);
+    if (current != null && current.id == widget.game.id) {
+      ref
+          .read(currentGameProvider.notifier)
+          .setGame(current.copyWith(mapViewState: next));
+    }
   }
 
   void _centerOnHumanCapital() {
@@ -300,14 +316,23 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       ref.read(mapProvincePanelProvider.notifier).reset();
       ref.read(regionMinimapVisibleProvider.notifier).resetToDefault();
       setState(() {
+        _mapViewState = widget.game.mapViewState;
         _regionViewportSnapshot = null;
         _pendingRegionViewport = null;
         _regionViewportFrameScheduled = false;
       });
+    } else if (oldWidget.game.mapViewState != widget.game.mapViewState) {
+      _mapViewState = widget.game.mapViewState;
     }
   }
 
   void _onRegionViewportSnapshot(RegionMapViewportSnapshot snapshot) {
+    final clampedMultiplier = snapshot.zoomMultiplier.clamp(0.5, 8.0);
+    if ((clampedMultiplier - _mapViewState.zoomMultiplier).abs() > 0.001) {
+      _setMapViewState(
+        _mapViewState.copyWith(zoomMultiplier: clampedMultiplier),
+      );
+    }
     _pendingRegionViewport = snapshot;
     if (_regionViewportFrameScheduled) return;
     _regionViewportFrameScheduled = true;
@@ -326,11 +351,6 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   @override
   Widget build(BuildContext context) {
     final currentOrders = ref.watch(currentOrdersProvider);
-    final showProvinceOverlay = ref.watch(mapProvinceOverlayVisibleProvider);
-    final showProvinceOwnershipTint = ref.watch(
-      mapProvinceOwnershipTintVisibleProvider,
-    );
-    final showProvinceNames = ref.watch(mapProvinceNamesVisibleProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     final mapTopology = widget.mapViewData.combinedTopology;
     final humanPlayerView = buildPlayerView(
@@ -407,9 +427,11 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                         game: widget.game,
                         region: projectedRegion,
                         baseLayerDisplayMode: _baseLayerDisplayMode,
-                        showProvinceOverlay: showProvinceOverlay,
-                        showProvinceOwnershipTint: showProvinceOwnershipTint,
-                        showProvinceNamesLayer: showProvinceNames,
+                        showProvinceOverlay: _mapViewState.showProvinceOverlay,
+                        showProvinceOwnershipTint:
+                            _mapViewState.showProvinceOwnershipTint,
+                        showProvinceNamesLayer:
+                            _mapViewState.showProvinceNamesLayer,
                         humanPlayerId: _humanPlayerId,
                         playerView: humanPlayerView,
                         centerOnTileKey: _centerOnTileKey,
@@ -455,18 +477,19 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                         },
                         onFleetMarkerTapped:
                             (locationScopeKey, initialFleetId, markerTileKey) {
-                          ref
-                              .read(appEventBusProvider)
-                              .emit(
-                                ct_models.OpenNavalUnitsPanelEvent(
-                                  locationScopeKey: locationScopeKey,
-                                  initialSelectedFleetId: initialFleetId,
-                                  tileScopeTileKey: markerTileKey,
-                                ),
-                              );
-                        },
+                              ref
+                                  .read(appEventBusProvider)
+                                  .emit(
+                                    ct_models.OpenNavalUnitsPanelEvent(
+                                      locationScopeKey: locationScopeKey,
+                                      initialSelectedFleetId: initialFleetId,
+                                      tileScopeTileKey: markerTileKey,
+                                    ),
+                                  );
+                            },
                         bus: ref.read(appEventBusProvider),
                         onRegionViewportSnapshot: _onRegionViewportSnapshot,
+                        zoomMultiplier: _mapViewState.zoomMultiplier,
                       ),
                       if (!_sideMenuOpen)
                         Positioned(
@@ -505,16 +528,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                 return AlertDialog(
                                   title: Text(l10n.map_displayOptions_title),
                                   content: Consumer(
-                                    builder: (context, ref, _) {
-                                      final provinceOverlayVisible = ref.watch(
-                                        mapProvinceOverlayVisibleProvider,
-                                      );
-                                      final ownershipTintVisible = ref.watch(
-                                        mapProvinceOwnershipTintVisibleProvider,
-                                      );
-                                      final namesVisible = ref.watch(
-                                        mapProvinceNamesVisibleProvider,
-                                      );
+                                    builder: (context, _, __) {
                                       return Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
@@ -522,42 +536,43 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                             title: Text(
                                               l10n.map_displayOptions_showProvinceOverlay,
                                             ),
-                                            value: provinceOverlayVisible,
+                                            value: _mapViewState
+                                                .showProvinceOverlay,
                                             onChanged: (value) {
-                                              ref
-                                                  .read(
-                                                    mapProvinceOverlayVisibleProvider
-                                                        .notifier,
-                                                  )
-                                                  .set(value);
+                                              _setMapViewState(
+                                                _mapViewState.copyWith(
+                                                  showProvinceOverlay: value,
+                                                ),
+                                              );
                                             },
                                           ),
                                           SwitchListTile(
                                             title: Text(
                                               l10n.map_displayOptions_showProvinceOwnership,
                                             ),
-                                            value: ownershipTintVisible,
+                                            value: _mapViewState
+                                                .showProvinceOwnershipTint,
                                             onChanged: (value) {
-                                              ref
-                                                  .read(
-                                                    mapProvinceOwnershipTintVisibleProvider
-                                                        .notifier,
-                                                  )
-                                                  .set(value);
+                                              _setMapViewState(
+                                                _mapViewState.copyWith(
+                                                  showProvinceOwnershipTint:
+                                                      value,
+                                                ),
+                                              );
                                             },
                                           ),
                                           SwitchListTile(
                                             title: Text(
                                               l10n.map_displayOptions_showProvinceNames,
                                             ),
-                                            value: namesVisible,
+                                            value: _mapViewState
+                                                .showProvinceNamesLayer,
                                             onChanged: (value) {
-                                              ref
-                                                  .read(
-                                                    mapProvinceNamesVisibleProvider
-                                                        .notifier,
-                                                  )
-                                                  .set(value);
+                                              _setMapViewState(
+                                                _mapViewState.copyWith(
+                                                  showProvinceNamesLayer: value,
+                                                ),
+                                              );
                                             },
                                           ),
                                         ],
