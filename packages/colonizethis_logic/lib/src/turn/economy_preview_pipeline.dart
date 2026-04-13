@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../economy/build_cost.dart';
 import '../economy/economy_preview_stockpile_phase.dart';
+import '../world/province_lookup.dart';
 import 'phases/consumption_phase.dart';
 import 'phases/extraction_phase.dart';
 import 'phases/production_phase.dart';
@@ -76,12 +77,20 @@ Unit? _unitByIdInGame(Game game, String unitId) {
   return null;
 }
 
-/// Pending [kWorkTargetBuildImprovement] material costs from
-/// [Orders.workOrdersByPlayerId], after unit-build pending costs, mirroring
-/// [applyStandardWorkOrder] for that target in the work phase (unit present
-/// and idle, valid target tile key, unit type allowed, sequential affordability).
-/// Other work targets are not deducted here (issue #1722 scope).
-Game _applyPendingBuildImprovementWorkOrderCostsForPreview({
+const Set<String> _pendingStockpileWorkTargetsForPreview = {
+  kWorkTargetBuildImprovement,
+  kWorkTargetUpgradeTown,
+  kWorkTargetBuildRoad,
+  kWorkTargetBuildPort,
+  kWorkTargetBuildFort,
+  kWorkTargetBuildRail,
+};
+
+/// Pending material-backed work-order costs from [Orders.workOrdersByPlayerId],
+/// after unit-build pending costs, mirroring [applyStandardWorkOrder] guards in
+/// the work phase (unit present and idle, valid target tile key, unit type
+/// allowed, sequential affordability). Non-stockpile work targets are excluded.
+Game _applyPendingMaterialWorkOrderCostsForPreview({
   required Game game,
   required Orders currentOrders,
 }) {
@@ -96,7 +105,8 @@ Game _applyPendingBuildImprovementWorkOrderCostsForPreview({
     }
     var stockpile = player.stockpile;
     for (final order in orders) {
-      if (order.target != kWorkTargetBuildImprovement) {
+      final target = order.target;
+      if (!_pendingStockpileWorkTargetsForPreview.contains(target)) {
         continue;
       }
       final u = _unitByIdInGame(game, order.unitId);
@@ -107,15 +117,14 @@ Game _applyPendingBuildImprovementWorkOrderCostsForPreview({
       if (targetTileKey.isEmpty) {
         continue;
       }
-      if (!isWorkOrderTargetAllowedForUnitType(
-        u.type,
-        kWorkTargetBuildImprovement,
-      )) {
+      if (!isWorkOrderTargetAllowedForUnitType(u.type, target)) {
         continue;
       }
+      final province = game.worldState.tryGetProvince(u.locationProvinceId);
       final cost = workOrderMaterialCost(
-        kWorkTargetBuildImprovement,
+        target,
         improvementLevel: tileState.improvementLevel(targetTileKey),
+        fortLevel: province?.fortLevel ?? 0,
       );
       if (cost == null) {
         continue;
@@ -147,7 +156,7 @@ Game _applyPendingStockpileCostsForPreview({
     game: game,
     currentOrders: currentOrders,
   );
-  return _applyPendingBuildImprovementWorkOrderCostsForPreview(
+  return _applyPendingMaterialWorkOrderCostsForPreview(
     game: afterBuilds,
     currentOrders: currentOrders,
   );
