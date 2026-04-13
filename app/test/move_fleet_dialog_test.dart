@@ -146,6 +146,108 @@ void main() {
     expect(find.textContaining('(cross-region)'), findsNothing);
   });
 
+  testWidgets(
+    'shows links-to Old World for new-world fleet cross-region picks',
+    (WidgetTester tester) async {
+      const humanId = 'gp_move_dialog_nw';
+      const originSea = 'sea_nw_origin';
+      const sameRegionAdjacentSea = 'sea_nw_local';
+      const crossRegionAdjacentSea = 'sea_ow_cross';
+      final game = Game(
+        id: 'g_move_dialog_nw',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          portsByProvinceSeaboard: const {},
+          seaZoneDisplayNameById: const {
+            'newWorld|sea_nw_origin': 'Origin NW Sea',
+            'newWorld|sea_nw_local': 'Adjacent NW Sea',
+            'oldWorld|sea_ow_cross': 'Cross OW Sea',
+          },
+        ),
+        players: const [
+          Player(
+            id: humanId,
+            displayName: 'Move Dialog Tester NW',
+            isHuman: true,
+            capitalProvinceId: 'newWorld|port_home_nw',
+            capitalTile: CapitalTile(
+              regionId: 'newWorld',
+              provinceId: 'newWorld|port_home_nw',
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: originSea,
+            regionId: 'newWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: sameRegionAdjacentSea,
+            regionId: 'newWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: crossRegionAdjacentSea,
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [
+          TopologyEdge(id1: originSea, id2: sameRegionAdjacentSea),
+          TopologyEdge(id1: originSea, id2: crossRegionAdjacentSea),
+        ],
+      );
+      final fleet = Fleet(
+        id: 'f_move_nw',
+        ownerId: humanId,
+        regionId: 'newWorld',
+        seaZoneId: originSea,
+        ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
+      );
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                return TextButton(
+                  onPressed: () {
+                    showDialog<void>(
+                      context: context,
+                      builder: (_) => MoveFleetDialog(
+                        game: game,
+                        topology: topology,
+                        humanPlayerId: humanId,
+                        fleet: fleet,
+                        bus: bus,
+                      ),
+                    );
+                  },
+                  child: const Text('open'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('open'));
+      await tester.pump();
+
+      expect(find.text('Adjacent NW Sea'), findsOneWidget);
+      expect(find.text('Cross OW Sea links to Old World'), findsOneWidget);
+      expect(find.textContaining('· New World'), findsNothing);
+      expect(find.textContaining('(cross-region)'), findsNothing);
+    },
+  );
+
   testWidgets('confirm emits NavalMoveFleetRequestedEvent and closes dialog', (
     WidgetTester tester,
   ) async {
