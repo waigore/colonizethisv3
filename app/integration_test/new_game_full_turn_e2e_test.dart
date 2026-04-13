@@ -341,6 +341,11 @@ void main() {
       await _closeBottomSheet(tester);
 
       // --- Explorer: prospect + first legal tile ---
+      await _waitUntilFound(
+        tester,
+        find.byKey(kEmpireCivilianUnitsButtonKey),
+        timeout: const Duration(seconds: 20),
+      );
       await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
       await _pumpFor(tester, const Duration(milliseconds: 400));
       await _tapAssignOnCivilianRowWithTitle(tester, 'Explorer');
