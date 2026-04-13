@@ -17,6 +17,40 @@ import 'topology_helpers.dart';
 
 final _log = packageLogger();
 
+({int x, int y})? _xyFromTileKey(String tileKey) {
+  final parts = tileKey.split('|');
+  if (parts.length < 4) return null;
+  final x = int.tryParse(parts[parts.length - 2]);
+  final y = int.tryParse(parts[parts.length - 1]);
+  if (x == null || y == null) return null;
+  return (x: x, y: y);
+}
+
+Set<String> _coastalTileKeysAdjacentToSeaZone({
+  required List<String> provinceTileKeys,
+  required List<String> seaWaterTileKeys,
+}) {
+  if (provinceTileKeys.isEmpty || seaWaterTileKeys.isEmpty) return const {};
+  final seaCoords = <String>{};
+  for (final seaTileKey in seaWaterTileKeys) {
+    final xy = _xyFromTileKey(seaTileKey);
+    if (xy == null) continue;
+    seaCoords.add('${xy.x}|${xy.y}');
+  }
+  if (seaCoords.isEmpty) return const {};
+  final coastal = <String>{};
+  const deltas = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+  for (final provinceTileKey in provinceTileKeys) {
+    final xy = _xyFromTileKey(provinceTileKey);
+    if (xy == null) continue;
+    final isCoastal = deltas.any(
+      (delta) => seaCoords.contains('${xy.x + delta.$1}|${xy.y + delta.$2}'),
+    );
+    if (isCoastal) coastal.add(provinceTileKey);
+  }
+  return coastal;
+}
+
 Map<String, Map<String, String>> _revealProvinceTilesForPlayer(
   Game game,
   Map<String, Map<String, String>> visibilityByTile,
@@ -334,20 +368,24 @@ Game applyNavalMovesAndShipReveal(
           regionId: destRegionId,
         );
         final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
+        final seaWaterKeys = game
+            .worldState
+            .tileKeysByRegionAndProvince[destRegionId]?[destZoneId];
         for (final localProvinceId in provinceIds) {
           final fullProvinceId = ProvinceId.full(destRegionId, localProvinceId);
-          final tileKeys =
+          final provinceTileKeys =
               game
                   .worldState
                   .tileKeysByRegionAndProvince[destRegionId]?[fullProvinceId] ??
               [];
-          for (final tk in tileKeys) {
+          final coastalTileKeys = _coastalTileKeysAdjacentToSeaZone(
+            provinceTileKeys: provinceTileKeys,
+            seaWaterTileKeys: seaWaterKeys ?? const [],
+          );
+          for (final tk in coastalTileKeys) {
             vis[tk] = VisibilityLevel.revealed.name;
           }
         }
-        final seaWaterKeys = game
-            .worldState
-            .tileKeysByRegionAndProvince[destRegionId]?[destZoneId];
         if (seaWaterKeys != null) {
           for (final tk in seaWaterKeys) {
             vis[tk] = VisibilityLevel.fullyVisible.name;
