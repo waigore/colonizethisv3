@@ -80,7 +80,11 @@ class CtRegionMapComponent extends PositionComponent {
   void Function(String? tileKey)? onTileHovered;
   void Function(String? tileKey)? onTileTapped;
   void Function(String tileKey)? onCivilianTileTapped;
-  void Function(String locationScopeKey, String? initialFleetId, String markerTileKey)?
+  void Function(
+    String locationScopeKey,
+    String? initialFleetId,
+    String markerTileKey,
+  )?
   onFleetMarkerTapped;
   VoidCallback? onCivilianTileSelectionCleared;
   String? selectedTileKey;
@@ -116,7 +120,7 @@ class CtRegionMapComponent extends PositionComponent {
 
   RegionMapViewData? _seaZoneLabelsRegionRef;
   double? _seaZoneLabelsCellSize;
-  List<({int cx, int cy, String text})>? _seaZoneLabelsCached;
+  List<({int cx, int cy, String text, bool isWarpZone})>? _seaZoneLabelsCached;
 
   @override
   Future<void> onLoad() async {

@@ -10,6 +10,7 @@ final _log = packageLogger();
 
 const Set<String> kProvinceLabelIconIds = {
   'map_capital_star',
+  'map_warp_zone',
   'map_presence_civilian',
   'map_presence_regiment',
   'map_presence_ship',

@@ -18,6 +18,7 @@ import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
         isCellUnderFleetRevealHalo,
         resolveProvinceLabelIconIds,
         resolveProvinceLabelPresenceIconIds,
+        resolveSeaZoneLabelPrefixIconIds,
         resolveSeaZoneNamePlateCenterWorld,
         resourceIconDisplaySizePx,
         shouldEllipsizeProvinceLabelText,
@@ -240,7 +241,7 @@ void main() {
     );
 
     testWidgets(
-      'required province label presence icon assets exist and are non-empty',
+      'required province/sea label icon assets exist and are non-empty',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
         for (final iconId in kProvinceLabelIconIds) {
@@ -422,6 +423,19 @@ void main() {
             'map_presence_ship',
           ],
         );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'sea-zone label prefix icon resolver emits warp icon only for warp zones',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(resolveSeaZoneLabelPrefixIconIds(isWarpZone: false), isEmpty);
+        expect(resolveSeaZoneLabelPrefixIconIds(isWarpZone: true), const [
+          'map_warp_zone',
+        ]);
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );
