@@ -674,7 +674,7 @@ void main() {
         expect(tm.x, 0);
         expect(tm.y, 0);
         expect(tm.portIconX, 2);
-        expect(tm.portIconY, 0);
+        expect(tm.portIconY, 1);
       },
     );
 
@@ -1034,7 +1034,7 @@ void main() {
     );
 
     test(
-      'town markers: co-located with no orthogonal sea keeps port on port tile',
+      'town markers: co-located port with no orthogonal sea throws',
       () {
         final owMap = TileMapResult(
           width: 2,
@@ -1098,6 +1098,85 @@ void main() {
           tribes: const [],
         );
 
+        expect(
+          () => buildInitGameMapViewData(
+            game: game,
+            tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
+            topologyByRegion: {'oldWorld': owTopology, 'newWorld': nwTopology},
+            cellSize: 8,
+          ),
+          throwsA(isA<PortDrawableSeaCellException>()),
+        );
+      },
+    );
+
+    test(
+      'town markers: isPort from seaboard key when value province segment mismatches',
+      () {
+        final owMap = TileMapResult(
+          width: 3,
+          height: 2,
+          grid: [
+            ['p2', 'p2', 'p2'],
+            ['p2', 'p2', 's1'],
+          ],
+        );
+        final nwMap = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: [
+            ['p1'],
+          ],
+        );
+        final owTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 's1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'p2', id2: 's1')],
+        );
+        final nwTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final game = Game(
+          id: 'nonCapitalPortKey',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                const Province(
+                  id: 'oldWorld|p2',
+                  regionId: 'oldWorld',
+                  townTileKey: 'oldWorld|p2|0|0',
+                ),
+              ],
+              units: const [],
+            ),
+            newWorld: const RegionData(provinces: [], units: []),
+            portsByProvinceSeaboard: {
+              'oldWorld|p2|sb': 'oldWorld|p1|2|0',
+            },
+          ),
+          players: const [],
+          minorNations: const [],
+          tribes: const [],
+        );
+
         final viewData = buildInitGameMapViewData(
           game: game,
           tileMapByRegion: {'oldWorld': owMap, 'newWorld': nwMap},
@@ -1106,9 +1185,11 @@ void main() {
         );
 
         final tm = viewData.oldWorld.townMarkers.single;
+        expect(tm.provinceId, 'p2');
         expect(tm.isPort, isTrue);
-        expect(tm.portIconX, 1);
+        expect(tm.portIconX, 2);
         expect(tm.portIconY, 1);
+        expect(viewData.oldWorld.portMarkers.single.provinceId, 'p2');
       },
     );
 

@@ -27,6 +27,7 @@ When the user **taps/clicks a map tile** (not hover), the shell shows detail for
 - **Hover:** Pointer hover updates **only** map hover visuals (and optional `onProvinceHovered` / tooltips). It does **not** update `selectedTileKey` or the Tile section.
 - **Touch / mobile:** There is **no** "tap-as-hover" for **panel** content. Only **tap** commits selection for the overlay.
 - **Data context:** `RegionMapViewData` and human player for cell visibility and prospecting. **[PlayerView](../program/player-view.md)** (`buildPlayerView` from `GameMapArea` with combined topology) gates foreign civilian lines and the Tile section's civilian count (`foreignCivilianVisibleToPlayer` in colonizethis_logic).
+- **Port harbor sea cell:** When `selectedTileKey` is the drawable **sea** cell for a port (`TownMarkerView` `portIconX`/`portIconY`), the overlay **display id** resolves to the **owning land province** (`regionId|localProvinceId`), not sea-zone-only context. Map tile section still uses the selected sea tile key. GitHub [#1761](https://github.com/waigore/colonizethisv3/issues/1761); [town-port-icons.md](town-port-icons.md), [map-widget.md](map-widget.md).
 
 ---
 

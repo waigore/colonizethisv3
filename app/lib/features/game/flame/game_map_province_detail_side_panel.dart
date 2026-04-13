@@ -35,8 +35,15 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
       }
       return const SizedBox.shrink();
     }
-    final displayId =
-        displayProvinceOrSeaIdFromTileKey(panel.selectedTileKey) ?? '';
+    final tileKey = panel.selectedTileKey;
+    final displayId = tileKey == null || tileKey.isEmpty
+        ? ''
+        : (provinceDetailDisplayIdForPortHarborMapTile(
+                region: region,
+                tileKey: tileKey,
+              ) ??
+              displayProvinceOrSeaIdFromTileKey(tileKey)) ??
+            '';
     if (displayId.isEmpty) {
       if (kCtE2EEnabled) {
         updateCtE2eLastPanelSnapshotIfEnabled(null);

@@ -45,6 +45,8 @@ Canonical list of WorkOrder targets per civilian type. Order engine and suggesti
 
 Spy does not have explore/prospect; Spy's garrison reveal is handled by visibility (see [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md)), not a work order.
 
+**UI:** The Civilian Units panel shows pending-turn cost previews (commodity icons + quantities or treasury for `purchase_land`) per [civilian-units-panel.md](../ui/civilian-units-panel.md); it does not restate affordability.
+
 ---
 
 ## Work Types and Multi-Turn Builds

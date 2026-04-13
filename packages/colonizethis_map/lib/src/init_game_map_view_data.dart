@@ -347,6 +347,40 @@ class RegionMapViewData {
   CellViewData cellAt(int x, int y) => cells[y * width + x];
 }
 
+/// `regionId|localProvinceId` for province / sea-zone detail when the user
+/// selects a map tile.
+///
+/// When [tileKey] matches a port town's drawable harbor cell (`portIconX` /
+/// `portIconY`), returns that **land province** id so the overlay stays in
+/// province context instead of sea-zone-only. Otherwise returns `null`.
+/// SPEC/ui/map-widget.md, SPEC/ui/province-sea-zone-detail-overlay.md,
+/// GitHub #1761.
+String? provinceDetailDisplayIdForPortHarborMapTile({
+  required RegionMapViewData region,
+  required String tileKey,
+}) {
+  final parts = tileKey.split('|');
+  if (parts.length < 4 || parts[0] != region.regionId) {
+    return null;
+  }
+  final x = int.tryParse(parts[2]);
+  final y = int.tryParse(parts[3]);
+  if (x == null || y == null) {
+    return null;
+  }
+  for (final t in region.townMarkers) {
+    if (!t.isPort) {
+      continue;
+    }
+    final px = t.portIconX;
+    final py = t.portIconY;
+    if (px != null && py != null && px == x && py == y) {
+      return '${region.regionId}|${t.provinceId}';
+    }
+  }
+  return null;
+}
+
 /// Combined map view data for init_game (Old World + New World).
 class InitGameMapViewData {
   const InitGameMapViewData({
