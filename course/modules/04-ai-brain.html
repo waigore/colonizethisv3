@@ -1,0 +1,341 @@
+<section class="module" id="module-4" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h1 class="module-title">The AI Brain</h1>
+      <p class="module-subtitle">A deterministic decision engine that weighs goals against game state — no dice, no chaos, just math.</p>
+    </header>
+
+    <div class="module-body">
+
+      <!-- SCREEN 1: Opening -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 1 of 6</div>
+        <h2 class="screen-heading">Not Magic — Math</h2>
+        <p class="screen-lead">The AI in ColonizeThis isn't magic. It's a <span class="term" data-definition="A deterministic system where the same inputs always produce the same outputs — no random dice rolls or chance events.">deterministic decision engine</span> that weighs goals against the game state. Give it the same inputs twice, and it makes the same decision every time.</p>
+
+        <div class="callout callout-accent" style="margin: var(--space-6) 0">
+          <div class="callout-icon">🧠</div>
+          <div class="callout-content">
+            <strong class="callout-title">The Methodical Employee</strong>
+            <p>The AI is like a highly methodical employee with a secret notebook of hidden priorities. It generates decisions using a weighted goal system — calculating a score for every possible action and picking the highest. No randomness. No luck. Just math.</p>
+          </div>
+        </div>
+
+        <div class="icon-rows" style="margin-top: var(--space-6)">
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-2)">🎯</div>
+            <div>
+              <strong>Goal Manager</strong>
+              <p>Decides overall strategy — expand, defend, trade, conquer, research, or diplomacy first?</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-3)">💰</div>
+            <div>
+              <strong>Domain Planners</strong>
+              <p>Three specialists: Economy Planner, Military Planner, Diplomatic Planner — each weights goals within their domain</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-4)">⚔️</div>
+            <div>
+              <strong>Tactical AI</strong>
+              <p>Translates high-level goals into specific orders — where to move, what to attack, what to build</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: Group Chat - AI Brain Meeting -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 2 of 6</div>
+        <h2 class="screen-heading">The AI Brain in Action</h2>
+        <p class="screen-lead">Watch how the AI's components "discuss" a decision — weighing competing goals and scoring every option.</p>
+
+        <div class="chat-window" id="chat-module4">
+          <div class="chat-messages">
+            <div class="chat-message" data-msg="0" data-sender="goal-manager" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-1)">GM</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-1)">Goal Manager</span>
+                <p>Priority update: Expansion is our top goal this epoch. We need more provinces to outpace the rival empire.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="1" data-sender="economy-planner" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">EP</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">Economy Planner</span>
+                <p>Understood. But expansion costs gold. I'm scoring every province by gold income minus garrison cost. Province NW-7 scores 0.73 — good return on investment.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="2" data-sender="military-planner" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-3)">MP</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-3)">Military Planner</span>
+                <p>Watch out — Province NW-7 borders the rival's territory. I'm scoring by threat level minus conquest difficulty. That province scores 0.41. Too risky right now.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="3" data-sender="tactical-ai" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-4)">TA</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-4)">Tactical AI</span>
+                <p>Combining your scores: 0.73 (economy) × 0.41 (military threat) = 0.30 final score. But Province S-3 scores 0.68 combined. I'm issuing orders for S-3.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="4" data-sender="goal-manager" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-1)">GM</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-1)">Goal Manager</span>
+                <p>Approved. Orders sent to TurnResolver. Next epoch — we reassess priorities based on the new game state.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-typing" id="chat-module4-typing-avatar" style="display:none">
+            <div class="chat-avatar">?</div>
+            <div class="chat-typing-dots">
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+            </div>
+          </div>
+
+          <div class="chat-controls">
+            <button class="btn chat-next-btn">Next Message</button>
+            <button class="btn chat-all-btn">Play All</button>
+            <button class="btn chat-reset-btn">Replay</button>
+            <span class="chat-progress"></span>
+          </div>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: var(--space-6)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Weighted Scoring</strong>
+            <p>Every possible action gets a score from 0.0 to 1.0. The AI multiplies domain scores together — a province with great gold but extreme military threat gets a low final score. This is why the AI sometimes ignores obvious opportunities: something else scored higher when all factors were combined.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: Code - generateOrdersForPlayerFullAI -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 3 of 6</div>
+        <h2 class="screen-heading">Inside the AI Brain</h2>
+        <p class="screen-lead">The <span class="term" data-definition="The entry point function that generates all orders for a single AI player each turn — it's the AI's equivalent of a player clicking 'End Turn'.">generateOrdersForPlayerFullAI</span> function is the AI's "think" button. Here's what it actually does, line by line.</p>
+
+        <div class="translation-block animate-in" style="margin: var(--space-6) 0">
+          <div class="translation-code">
+            <span class="translation-label">CODE</span>
+            <pre><code><span class="code-type">StrategicOrderResult</span> <span class="code-function">generateOrdersForPlayerFullAI</span>(
+  <span class="code-type">Game</span> game,
+  <span class="code-type">MapTopology</span> topology,
+  <span class="code-type">String</span> playerId, {
+  <span class="code-type">Map</span>&lt;<span class="code-type">String</span>, <span class="code-type">TileMapResult</span>&gt;? tileMapByRegion,
+  <span class="code-type">OrderSuggestionAPI</span>? orderSuggestionApi,
+  <span class="code-keyword">void</span> <span class="code-function">Function</span>(<span class="code-type">DialogueEvent</span>)? onDialogue,
+  <span class="code-keyword">void</span> <span class="code-function">Function</span>(<span class="code-type">PortraitMoodEvent</span>)? onMood,
+}) {
+  <span class="code-keyword">final</span> player = game.<span class="code-function">playerById</span>(playerId);
+  <span class="code-keyword">if</span> (player == <span class="code-keyword">null</span> || !<span class="code-function">isAiControlled</span>(game, player.id)) {
+    <span class="code-keyword">return const</span> <span class="code-type">StrategicOrderResult</span>(
+      orders: <span class="code-type">Orders</span>(),
+      economyPlan: <span class="code-type">EconomyPlan</span>(productionAssignments: [], cargoPreference: <span class="code-type">CargoPreference</span>.none),
+    );
+  }
+  <span class="code-keyword">final</span> view = <span class="code-function">buildPlayerView</span>(game, topology, playerId);
+  <span class="code-keyword">return</span> <span class="code-function">generateStrategicOrders</span>(...);
+}</code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl"><strong>The function signature</strong> — takes the current game state, the map layout, and which player to generate orders for. Optional callbacks let the AI trigger dialogue and portrait mood changes as it "thinks."</p>
+              <p class="tl"><strong>Look up the player</strong> — first it finds the player object by ID. If the ID is wrong or the player doesn't exist, it returns empty orders — this player gets no AI actions.</p>
+              <p class="tl"><strong>Is this an AI player?</strong> — double-checks that this player is actually AI-controlled (not a human). Humans give their own orders, so the AI skips them entirely.</p>
+              <p class="tl"><strong>Return empty if not AI</strong> — if either check fails, return a blank StrategicOrderResult with no orders and no economy plan. This player will rely entirely on human input.</p>
+              <p class="tl"><strong>Build the PlayerView</strong> — this is critical. The AI does NOT get the full game state. It gets a PlayerView — the same filtered view a human player would see. This enforces the fog of war on the AI too.</p>
+              <p class="tl"><strong>Delegate to strategic AI</strong> — the real thinking happens in generateStrategicOrders(), which applies goals, domain planners, and tactical scoring to produce actual order objects.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: Seeding System -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 4 of 6</div>
+        <h2 class="screen-heading">No Dice — Just Seeds</h2>
+        <p class="screen-lead">The AI uses <span class="term" data-definition="A seed is a fixed number that deterministic algorithms use to produce the same sequence of pseudo-random values every time — like a random number generator with a memorized phone book.">seeding</span> instead of randomness. Give the same inputs, get the same outputs. Every time.</p>
+
+        <div class="flow-steps" style="margin: var(--space-8) 0">
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-1)">🌱</div>
+            <div>
+              <strong>Seed is set</strong>
+              <p style="color: var(--color-text-secondary)">Before the game starts, a seed number is chosen — either randomly or deliberately</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-2)">🔢</div>
+            <div>
+              <strong>Same seed = same sequence</strong>
+              <p style="color: var(--color-text-secondary)">The AI's "random" decisions are actually a deterministic sequence — but it looks unpredictable</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-3)">🔁</div>
+            <div>
+              <strong>Replayability</strong>
+              <p style="color: var(--color-text-secondary)">Give the same seed + game state = same AI decisions. Useful for replays and debugging</p>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num" style="background: var(--color-actor-4)">🎭</div>
+            <div>
+              <strong>Personality without chaos</strong>
+              <p style="color: var(--color-text-secondary)">Different seeds give different AI personalities — aggressive, defensive, economic — all without dice rolls</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-6)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Seeding vs Randomness</strong>
+            <p>Randomness means "this could be anything." Seeding means "this looks random but it's actually fixed — we just chose a complicated starting point." The AI doesn't flip a coin. It follows a recipe that produces different results depending on which seed was used. Both players with identical seeds and game states will make identical decisions.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Why PlayerView? -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 5 of 6</div>
+        <h2 class="screen-heading">Why Does the AI Use PlayerView?</h2>
+        <p class="screen-lead">The AI doesn't see the whole map. It sees exactly what a human player would see — and that's by design.</p>
+
+        <div class="icon-rows" style="margin: var(--space-6) 0">
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-1)">👁️</div>
+            <div>
+              <strong>Fog of War for Everyone</strong>
+              <p>The AI only knows what it has explored. Tiles in fog are unknown — the AI can't see enemy armies hiding there any more than a human could.</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-2)">⚖️</div>
+            <div>
+              <strong>Fairness by Architecture</strong>
+              <p>If the AI used the full game state, it would effectively be cheating — knowing about armies the player can't see. PlayerView enforces equality.</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-3)">🎯</div>
+            <div>
+              <strong>Predicable AI</strong>
+              <p>Because the AI works with the same limited information as the player, its decisions are predictable. Players can outmaneuver it by using fog strategically.</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="screen-lead" style="margin-top: var(--space-4)">This is the same <span class="term" data-definition="A read-only projection of game state that filters out information — the AI and human player both use it to see only what they're allowed to see.">PlayerView</span> you learned about in the Turn Ticker module. It's the gatekeeper for all game information — one version for the human UI, one for the AI.</p>
+      </section>
+
+      <!-- SCREEN 6: Quiz -->
+      <section class="screen animate-in">
+        <div class="screen-badge">Screen 6 of 6</div>
+        <h2 class="screen-heading">Predicting AI Behavior</h2>
+        <p class="screen-lead">Now you know how the AI thinks. Can you predict what it will do?</p>
+
+        <div class="scenario-block" style="margin: var(--space-6) 0">
+          <div class="scenario-context">
+            <span class="scenario-label">Scenario</span>
+            <p>You've been watching the AI player. It consistently rushes military technology while ignoring economy. You notice it always attacks in the mid-game, never early. You're in the early game and the AI is adjacent to your territory. What do you expect?</p>
+          </div>
+        </div>
+
+        <div class="quiz-container" id="quiz-module4">
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="The AI is scoring every province and action by weighted goals. Military rush means it assigns high weight to military strength. It may be building up strength silently — but won't attack until its score for 'military advantage' exceeds the threshold. The weighted scoring system is predictable once you know the weights."
+               data-explanation-wrong="The AI isn't being cautious for emotional reasons — it's math. If it's not attacking yet, it's because its scoring function hasn't crossed the threshold for an attack. Once you know the weights, its behavior becomes predictable.">
+            <h3 class="quiz-question">The AI has high military goals and is next to your territory — why hasn't it attacked yet?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The AI is being cautious — it doesn't want to risk losing</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Its scoring function hasn't crossed the threshold for an attack yet</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>It's waiting for you to make the first move so it can retaliate</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="The seed is the explanation. Seeding produces deterministic behavior that varies by seed — two identical AI players with different seeds will have different personalities. One might be aggressive (seed that weights military high), one might be economic (seed that weights trade high). The game is consistent but each AI is distinctive."
+               data-explanation-wrong="It's not luck or hidden randomization between games — it's the seed. Each AI player gets a different seed at game creation, which produces different goal weights. The randomness is an illusion created by deterministic math.">
+            <h3 class="quiz-question">Two AI players in identical game situations make different decisions. What's the most likely explanation?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>They have different seeds — which produce different weighted goal priorities</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>One AI is 'smarter' than the other due to random variation</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The game has hidden randomization between AI decision cycles</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="The AI sees exactly what the player sees via PlayerView. If the player can see the gold in fog (through a scout that revealed it earlier), the AI can too. But if the tile is truly unknown — never explored — neither player nor AI can see it. The AI is constrained by the same fog as the human."
+               data-explanation-wrong="The AI does not have omniscient access to the game state. It uses PlayerView, the same filtered view the player gets. If a tile is fogged, the AI cannot see it. This is fundamental to how the game maintains fairness between human and AI players.">
+            <h3 class="quiz-question">Can the AI see gold mines in fog of war?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Yes — the AI can see everything in the game state, fog or not</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>No — neither the AI nor any player can see anything in fog</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>It depends — if the tile was explored and revealed, the AI can see it</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">Check Answers</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">Try Again</button>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-8)">
+          <div class="callout-icon">🏆</div>
+          <div class="callout-content">
+            <strong class="callout-title">Outmaneuvering the AI</strong>
+            <p>Now that you understand the AI's weighted scoring system, you can exploit it. If you know the AI prioritizes military strength, avoid being the obvious military target. Use fog to hide your troop movements. Make the AI's scoring function favor other targets. The AI is predictable — once you know its priorities.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>

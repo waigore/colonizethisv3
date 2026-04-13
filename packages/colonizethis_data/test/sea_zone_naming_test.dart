@@ -2,6 +2,21 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
+  test('deriveSeaZoneNamingShuffleSeed is stable for known inputs', () {
+    expect(
+      deriveSeaZoneNamingShuffleSeed(namingSeed: 42, regionId: 'oldWorld'),
+      1788045454,
+    );
+    expect(
+      deriveSeaZoneNamingShuffleSeed(namingSeed: 42, regionId: 'newWorld'),
+      982935113,
+    );
+    expect(
+      deriveSeaZoneNamingShuffleSeed(namingSeed: 1, regionId: 'oldWorld'),
+      1980948369,
+    );
+  });
+
   test('buildSeaZoneDisplayNamesForRegion assigns all sea zones', () {
     final topology = MapTopology(
       nodes: const [

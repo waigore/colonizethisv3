@@ -2,6 +2,7 @@ import 'combat_mode.dart';
 import 'dossier_evidence.dart';
 import 'diplomacy.dart';
 import 'general.dart';
+import 'map_view_state.dart';
 import 'minor_nation.dart';
 import 'player.dart';
 import 'tribe.dart';
@@ -89,6 +90,7 @@ class Game {
     this.politicalGlyphByPlayerId = const {},
     this.lastHumanCompletedResearchCategory,
     this.lastHumanResearchCategoryCompletionTurn,
+    this.mapViewState = MapViewState.defaults,
   });
 
   final String id;
@@ -163,6 +165,9 @@ class Game {
   /// Turn number when [lastHumanCompletedResearchCategory] was last updated.
   final int? lastHumanResearchCategoryCompletionTurn;
 
+  /// Persisted Empire overview map state (zoom + display toggles).
+  final MapViewState mapViewState;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'worldState': worldState.toJson(),
@@ -211,6 +216,8 @@ class Game {
     if (lastHumanResearchCategoryCompletionTurn != null)
       'lastHumanResearchCategoryCompletionTurn':
           lastHumanResearchCategoryCompletionTurn,
+    if (mapViewState != MapViewState.defaults)
+      'mapViewState': mapViewState.toJson(),
   };
 
   static Game fromJson(Map<String, dynamic> json) {
@@ -307,6 +314,10 @@ class Game {
     final politicalGlyphByPlayerId = politicalGlyphRaw.map(
       (k, v) => MapEntry(k.toString(), v.toString()),
     );
+    final mapViewStateRaw = json['mapViewState'];
+    final mapViewState = mapViewStateRaw is Map
+        ? MapViewState.fromJson(Map<String, dynamic>.from(mapViewStateRaw))
+        : MapViewState.defaults;
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(
@@ -351,6 +362,7 @@ class Game {
           json['lastHumanCompletedResearchCategory'] as String?,
       lastHumanResearchCategoryCompletionTurn:
           (json['lastHumanResearchCategoryCompletionTurn'] as num?)?.toInt(),
+      mapViewState: mapViewState,
     );
   }
 
@@ -380,6 +392,7 @@ class Game {
     Map<String, String>? politicalGlyphByPlayerId,
     String? lastHumanCompletedResearchCategory,
     int? lastHumanResearchCategoryCompletionTurn,
+    MapViewState? mapViewState,
   }) {
     return Game(
       id: id ?? this.id,
@@ -417,6 +430,7 @@ class Game {
       lastHumanResearchCategoryCompletionTurn:
           lastHumanResearchCategoryCompletionTurn ??
           this.lastHumanResearchCategoryCompletionTurn,
+      mapViewState: mapViewState ?? this.mapViewState,
     );
   }
 
@@ -457,7 +471,8 @@ class Game {
           lastHumanCompletedResearchCategory ==
               other.lastHumanCompletedResearchCategory &&
           lastHumanResearchCategoryCompletionTurn ==
-              other.lastHumanResearchCategoryCompletionTurn;
+              other.lastHumanResearchCategoryCompletionTurn &&
+          mapViewState == other.mapViewState;
 
   @override
   int get hashCode => Object.hash(
@@ -491,6 +506,7 @@ class Game {
       Object.hashAll(politicalGlyphByPlayerId.entries),
       lastHumanCompletedResearchCategory,
       lastHumanResearchCategoryCompletionTurn,
+      mapViewState,
     ),
   );
 
