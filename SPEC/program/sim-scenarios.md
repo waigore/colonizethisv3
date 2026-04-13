@@ -267,6 +267,10 @@ Markdown report with:
 - **Drawable sea cell:** for every `portsByProvinceSeaboard` entry, `computePortDrawableSeaCellForMap` (colonizethis_map) must not throw for that entry’s port tile key and the region’s tile map + sea zone id set.
 - **Capital port completeness:** for each Great Power, Minor Nation, and Tribe with a **capital tile** in a region whose topology marks that capital province as **sea-bound** (`isProvinceSeaBound`), every adjacent sea zone in that topology must have a matching `portsByProvinceSeaboard` key `fullProvinceId|seaZoneId` (same shape as `applyCapitalPortAndRoad` in capital setup). Inland capitals are not checked for port registry completeness.
 
+- **Unowned provinces:** [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Town per province applies only to **owned** provinces; unowned provinces get a default town tile from setup (first tile in the province). The audit **does not** require or check `portsByProvinceSeaboard` entries for provinces with **no** `ownerId`.
+
+- **Overseas owned provinces (town vs port):** Per [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Town per province, a province **overseas** for its owner (province `regionId` ≠ capital province’s region) with **at least one** port registry entry for that full province id must have **`townTileKey` equal to one of those port tile values** (same rule as init town assignment’s overseas branch). Failure kind: `overseas_town_not_port_tile`.
+
 **Skipped audit:** Init paths without both `tileMapByRegion` and `topologyByRegion` (e.g. `saved` scenarios that load a game without map data in the runner) skip the audit and record `skipped: true` in the JSON summary; they do **not** fail the scenario on that basis alone.
 
 **Output:** Batch and single-scenario runs append a fenced **JSON** block after the markdown report with `seaboardPortAuditVersion` and per-scenario `portAudit` objects (`skipped`, `skipReason`, `failures` with structured fields). Any non-skipped audit failure fails the scenario run and exits non-zero (same CI gate as `melos run sim_scenarios`).
