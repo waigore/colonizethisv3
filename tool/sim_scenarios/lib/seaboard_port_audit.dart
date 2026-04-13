@@ -16,30 +16,36 @@ class SeaboardPortAuditFailure {
     this.provinceId,
     this.seaboardKey,
     this.portTileKey,
+    this.townTileKey,
     this.factionId,
     this.seaZoneId,
   });
 
-  /// `drawable_error` | `missing_capital_port` | `malformed_port_entry`
+  /// `drawable_error` | `missing_capital_port` | `malformed_port_entry` |
+  /// `overseas_town_not_port_tile`
   final String kind;
   final String message;
   final String? region;
   final String? provinceId;
   final String? seaboardKey;
   final String? portTileKey;
+
+  /// Province town tile when [kind] is `overseas_town_not_port_tile`.
+  final String? townTileKey;
   final String? factionId;
   final String? seaZoneId;
 
   Map<String, Object?> toJsonObject() => {
-        'kind': kind,
-        'message': message,
-        if (region != null) 'region': region,
-        if (provinceId != null) 'provinceId': provinceId,
-        if (seaboardKey != null) 'seaboardKey': seaboardKey,
-        if (portTileKey != null) 'portTileKey': portTileKey,
-        if (factionId != null) 'factionId': factionId,
-        if (seaZoneId != null) 'seaZoneId': seaZoneId,
-      };
+    'kind': kind,
+    'message': message,
+    if (region != null) 'region': region,
+    if (provinceId != null) 'provinceId': provinceId,
+    if (seaboardKey != null) 'seaboardKey': seaboardKey,
+    if (portTileKey != null) 'portTileKey': portTileKey,
+    if (townTileKey != null) 'townTileKey': townTileKey,
+    if (factionId != null) 'factionId': factionId,
+    if (seaZoneId != null) 'seaZoneId': seaZoneId,
+  };
 
   @override
   String toString() => message;
@@ -60,17 +66,17 @@ class SeaboardPortAuditOutcome {
   bool get passed => failures.isEmpty;
 
   Map<String, Object?> toJsonObject() => {
-        'skipped': skipped,
-        if (skipReason != null) 'skipReason': skipReason,
-        'failureCount': failures.length,
-        'failures': [for (final f in failures) f.toJsonObject()],
-      };
+    'skipped': skipped,
+    if (skipReason != null) 'skipReason': skipReason,
+    'failureCount': failures.length,
+    'failures': [for (final f in failures) f.toJsonObject()],
+  };
 }
 
 Set<String> _seaZoneNodeIds(MapTopology topology) => {
-      for (final n in topology.nodes)
-        if (n.type == TopologyNodeType.seaZone) n.id,
-    };
+  for (final n in topology.nodes)
+    if (n.type == TopologyNodeType.seaZone) n.id,
+};
 
 TopologyNode? _nodeById(MapTopology topology, String id) {
   for (final n in topology.nodes) {
@@ -99,7 +105,9 @@ Set<String> _seaZonesAdjacentToProvince(
 }
 
 /// Parses `portsByProvinceSeaboard` keys: `regionId|localProvinceId|seaZoneId` or legacy `province|sea`.
-(String? fullProvinceId, String? seaZoneId, String? error) _parseSeaboardKey(String key) {
+(String? fullProvinceId, String? seaZoneId, String? error) _parseSeaboardKey(
+  String key,
+) {
   final parts = key.split('|');
   if (parts.length >= 3) {
     return ('${parts[0]}|${parts[1]}', parts[2], null);
@@ -276,5 +284,117 @@ SeaboardPortAuditOutcome runSeaboardPortAudit({
     checkFaction(factionId: t.id, capitalTile: t.capitalTile);
   }
 
+  _auditOverseasTownMatchesPortTile(
+    game: game,
+    ports: ports,
+    failures: failures,
+  );
+
   return SeaboardPortAuditOutcome(skipped: false, failures: failures);
+}
+
+/// Capital home region per faction id (Great Power, minor nation, tribe).
+Map<String, String> _capitalRegionIdByFactionId(Game game) {
+  final out = <String, String>{};
+  void put(String id, String? capProvinceId) {
+    if (capProvinceId == null) return;
+    out[id] = ProvinceId.regionIdFrom(capProvinceId);
+  }
+
+  for (final p in game.players) {
+    put(p.id, p.capitalProvinceId);
+  }
+  for (final m in game.minorNations) {
+    put(m.id, m.capitalProvinceId);
+  }
+  for (final t in game.tribes) {
+    put(t.id, t.capitalProvinceId);
+  }
+  return out;
+}
+
+Set<String> _portTileValuesForProvince(
+  Map<String, String> ports,
+  String fullProvinceId,
+) {
+  final prefix = '$fullProvinceId|';
+  return {
+    for (final e in ports.entries)
+      if (e.key.startsWith(prefix)) e.value,
+  };
+}
+
+/// SPEC/game/capital-and-connectivity.md § Town per province: **overseas** provinces
+/// use the **port tile** as town when any port exists in `portsByProvinceSeaboard`.
+/// Unowned provinces have no port-registry requirement (same as setup: town = first tile).
+void _auditOverseasTownMatchesPortTile({
+  required Game game,
+  required Map<String, String> ports,
+  required List<SeaboardPortAuditFailure> failures,
+}) {
+  final capRegionByOwner = _capitalRegionIdByFactionId(game);
+  final capitalProvinceByOwner = <String, String>{};
+  for (final p in game.players) {
+    if (p.capitalProvinceId != null) {
+      capitalProvinceByOwner[p.id] = p.capitalProvinceId!;
+    }
+  }
+  for (final m in game.minorNations) {
+    if (m.capitalProvinceId != null) {
+      capitalProvinceByOwner[m.id] = m.capitalProvinceId!;
+    }
+  }
+  for (final t in game.tribes) {
+    if (t.capitalProvinceId != null) {
+      capitalProvinceByOwner[t.id] = t.capitalProvinceId!;
+    }
+  }
+
+  void checkProvince(Province p) {
+    final ownerId = p.ownerId;
+    if (ownerId == null) {
+      return;
+    }
+    final capRegion = capRegionByOwner[ownerId];
+    if (capRegion == null) {
+      return;
+    }
+    final capProvince = capitalProvinceByOwner[ownerId];
+    if (capProvince != null && p.id == capProvince) {
+      return;
+    }
+    final overseas = p.regionId != capRegion;
+    if (!overseas) {
+      return;
+    }
+    final portTiles = _portTileValuesForProvince(ports, p.id);
+    if (portTiles.isEmpty) {
+      return;
+    }
+    final town = p.townTileKey;
+    if (town == null || !portTiles.contains(town)) {
+      failures.add(
+        SeaboardPortAuditFailure(
+          kind: 'overseas_town_not_port_tile',
+          message:
+              '[seaboard-port-audit] overseas_town_not_port_tile '
+              'faction=$ownerId region=${p.regionId} province=${p.id} '
+              'townTileKey=${town ?? "(null)"} expected one of '
+              '${portTiles.join(", ")} per SPEC/game/capital-and-connectivity.md '
+              '§ Town per province (overseas)',
+          region: p.regionId,
+          provinceId: p.id,
+          factionId: ownerId,
+          townTileKey: town,
+        ),
+      );
+    }
+  }
+
+  for (final p in game.worldState.oldWorld.provinces) {
+    checkProvince(p);
+  }
+  for (final p in game.worldState.newWorld.provinces) {
+    checkProvince(p);
+  }
 }
