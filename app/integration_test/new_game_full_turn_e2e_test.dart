@@ -1,0 +1,452 @@
+import 'dart:async';
+import 'dart:ui' as ui;
+
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
+import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/fleet_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
+import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
+import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
+import 'package:colonizethis_app/test_support/civilian_units_panel_e2e_expected_lines.dart';
+import 'package:colonizethis_app/test_support/naval_units_panel_e2e_expected_lines.dart';
+import 'package:colonizethis_app/test_support/production_panel_e2e_expected_lines.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+
+Future<void> _pumpFor(WidgetTester tester, Duration total) async {
+  const step = Duration(milliseconds: 50);
+  var elapsed = Duration.zero;
+  while (elapsed < total) {
+    await tester.pump(step);
+    elapsed += step;
+  }
+}
+
+Future<void> _waitUntilFound(
+  WidgetTester tester,
+  Finder finder, {
+  required Duration timeout,
+}) async {
+  final sw = Stopwatch()..start();
+  while (sw.elapsed < timeout) {
+    await tester.pump(const Duration(milliseconds: 100));
+    if (finder.evaluate().isNotEmpty) {
+      return;
+    }
+  }
+  fail(
+    'Timed out after ${timeout.inSeconds}s waiting for $finder. '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
+void _collectTextPreorder(Element element, List<String> out) {
+  final w = element.widget;
+  if (w is Text) {
+    final d = w.data;
+    if (d != null && d.isNotEmpty) {
+      out.add(d);
+    }
+  }
+  element.visitChildren((child) {
+    _collectTextPreorder(child, out);
+  });
+}
+
+Future<List<String>> _discoverRelocated64pxPngAssets() async {
+  final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+  final assets =
+      manifest
+          .listAssets()
+          .where(
+            (assetPath) =>
+                assetPath.startsWith('assets/icons/64/') &&
+                assetPath.endsWith('.png'),
+          )
+          .toList()
+        ..sort();
+  return assets;
+}
+
+Future<void> _ensureAllRelocated64pxPngsLoad() async {
+  final assets = await _discoverRelocated64pxPngAssets();
+  final expectedAssets = <String>{
+    ...kCivilianIconSlugs.map(
+      (slug) => 'assets/icons/64/ui_icon_civ_$slug.png',
+    ),
+    ...kResourceIconIds.map(
+      (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
+    ),
+    ...kTownIconIds.map((iconId) => 'assets/icons/64/ui_icon_com_$iconId.png'),
+    ...kProvinceLabelIconIds.map(
+      (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
+    ),
+    kFleetMapIcon64PngAssetPath,
+  };
+  final expectedSorted = expectedAssets.toList()..sort();
+
+  expect(assets, isNotEmpty);
+  expect(assets.length, expectedAssets.length);
+  expect(assets, orderedEquals(expectedSorted));
+
+  final failures = <String>[];
+  for (final assetPath in assets) {
+    try {
+      final data = await rootBundle.load(assetPath);
+      final bytes = data.buffer.asUint8List();
+      final completer = Completer<ui.Image>();
+      ui.decodeImageFromList(bytes, completer.complete);
+      final image = await completer.future;
+      image.dispose();
+    } catch (e) {
+      failures.add('$assetPath ($e)');
+    }
+  }
+  expect(failures, isEmpty);
+}
+
+Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
+  await tester.tap(find.text('New Game'));
+  await _waitUntilFound(
+    tester,
+    find.text('Start'),
+    timeout: const Duration(seconds: 30),
+  );
+
+  final startButton = find.ancestor(
+    of: find.text('Start'),
+    matching: find.byType(CtNinePatchButton),
+  );
+  expect(startButton, findsOneWidget);
+
+  final shellScrollable = find.descendant(
+    of: find.byType(CtDialogShell),
+    matching: find.byType(Scrollable),
+  );
+  await tester.dragUntilVisible(
+    startButton,
+    shellScrollable,
+    const Offset(0, -120),
+  );
+  await tester.pump(const Duration(milliseconds: 200));
+  await tester.ensureVisible(startButton);
+  await tester.tap(startButton);
+  await tester.pump();
+
+  final setupDeadline = DateTime.now().add(const Duration(minutes: 6));
+  var reachedMap = false;
+  while (DateTime.now().isBefore(setupDeadline)) {
+    await tester.pump(const Duration(milliseconds: 100));
+    if (find.text('Could not create game').evaluate().isNotEmpty) {
+      fail(
+        'New game setup failed (error dialog). '
+        'Exception: ${tester.takeException()}',
+      );
+    }
+    final introOpen = find.byType(GameStartIntroOverlay).evaluate().isNotEmpty;
+    if (introOpen) {
+      if (find.text('Continue').evaluate().isNotEmpty) {
+        await tester.tap(find.text('Continue').first);
+        await tester.pump(const Duration(milliseconds: 200));
+      } else if (find.text('I shall.').evaluate().isNotEmpty) {
+        await tester.tap(find.text('I shall.').first);
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+      continue;
+    }
+    final creating = find.text('Creating game').evaluate().isNotEmpty;
+    if (creating) {
+      continue;
+    }
+    if (find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty) {
+      reachedMap = true;
+      break;
+    }
+  }
+  expect(reachedMap, isTrue);
+  expect(find.byKey(kHomeToCapitalButtonKey), findsOneWidget);
+  await tester.pump(const Duration(milliseconds: 500));
+}
+
+Future<void> _closeBottomSheet(WidgetTester tester) async {
+  final navFinder = find.byType(Navigator);
+  expect(navFinder, findsWidgets);
+  final ctx = tester.element(navFinder.first);
+  final nav = Navigator.of(ctx, rootNavigator: true);
+  if (nav.canPop()) {
+    nav.pop();
+    await _pumpFor(tester, const Duration(milliseconds: 400));
+  }
+}
+
+Future<void> _tapFirstAssignInCivilianPanel(WidgetTester tester) async {
+  final assign = find.descendant(
+    of: find.byKey(kCtE2ECivilianPanelRootKey),
+    matching: find.text('Assign'),
+  );
+  expect(assign, findsWidgets);
+  await tester.tap(assign.first);
+  await _pumpFor(tester, const Duration(milliseconds: 300));
+}
+
+/// Taps Assign on a visible [ListTile] whose title is exactly [unitTypeTitle]
+/// (e.g. [Unit.type] like `Explorer`). Scrolls the panel [ListView] between
+/// attempts so rows below the fold can be reached.
+Future<void> _tapAssignOnCivilianRowWithTitle(
+  WidgetTester tester,
+  String unitTypeTitle,
+) async {
+  final root = find.byKey(kCtE2ECivilianPanelRootKey);
+  final listView = find.descendant(of: root, matching: find.byType(ListView));
+  expect(listView, findsOneWidget);
+  for (var attempt = 0; attempt < 25; attempt++) {
+    final titleMatches = find.descendant(
+      of: root,
+      matching: find.text(unitTypeTitle),
+    );
+    final count = titleMatches.evaluate().length;
+    for (var i = 0; i < count; i++) {
+      final listTile = find.ancestor(
+        of: titleMatches.at(i),
+        matching: find.byType(ListTile),
+      );
+      final assign = find.descendant(
+        of: listTile,
+        matching: find.text('Assign'),
+      );
+      if (assign.evaluate().isNotEmpty) {
+        await tester.tap(assign);
+        await _pumpFor(tester, const Duration(milliseconds: 300));
+        return;
+      }
+    }
+    await tester.drag(listView, const Offset(0, -120));
+    await _pumpFor(tester, const Duration(milliseconds: 120));
+  }
+  fail('No idle Assign row for unit type "$unitTypeTitle" in civilian panel');
+}
+
+Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
+  final tiles = find.byType(ExpansionTile);
+  final n = tiles.evaluate().length;
+  for (var j = 0; j < n; j++) {
+    await tester.tap(tiles.at(j));
+    await _pumpFor(tester, const Duration(milliseconds: 250));
+  }
+}
+
+void main() {
+  suppressLogsForTests();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets(
+    'new game → full human turn: civilians, naval split/move, production',
+    (WidgetTester tester) async {
+      expect(
+        kCtE2EEnabled,
+        isTrue,
+        reason:
+            'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 720));
+      await bootstrapForIntegrationTest();
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 2));
+      await _ensureAllRelocated64pxPngsLoad();
+
+      await _bootstrapNewGameToMap(tester);
+
+      final l10n = lookupAppLocalizations(const Locale('en'));
+
+      Future<void> expectCivilianPanelTexts() async {
+        await _waitUntilFound(
+          tester,
+          find.byKey(kCtE2ECivilianPanelRootKey),
+          timeout: const Duration(seconds: 20),
+        );
+        final snap = ctE2eCivilianPanelSnapshot;
+        expect(snap, isNotNull);
+        final expected = civilianUnitsPanelExpectedTexts(snap!, l10n);
+        final actual = <String>[];
+        _collectTextPreorder(
+          tester.element(find.byKey(kCtE2ECivilianPanelRootKey)),
+          actual,
+        );
+        expect(actual, orderedEquals(expected));
+      }
+
+      Future<void> expectNavalPanelTexts({required bool expanded}) async {
+        await _waitUntilFound(
+          tester,
+          find.byKey(kCtE2ENavalPanelRootKey),
+          timeout: const Duration(seconds: 20),
+        );
+        final snap = ctE2eNavalPanelSnapshot;
+        expect(snap, isNotNull);
+        final expected = navalUnitsPanelExpectedTexts(
+          snap!,
+          l10n,
+          fleetTilesExpanded: expanded,
+        );
+        final actual = <String>[];
+        _collectTextPreorder(
+          tester.element(find.byKey(kCtE2ENavalPanelRootKey)),
+          actual,
+        );
+        expect(actual, orderedEquals(expected));
+      }
+
+      Future<void> expectProductionPanelTexts() async {
+        await _waitUntilFound(
+          tester,
+          find.byKey(kCtE2EProductionPanelRootKey),
+          timeout: const Duration(seconds: 20),
+        );
+        final snap = ctE2eProductionPanelSnapshot;
+        expect(snap, isNotNull);
+        final expected = productionPanelWideExpectedTexts(snap!, l10n);
+        final actual = <String>[];
+        _collectTextPreorder(
+          tester.element(find.byKey(kCtE2EProductionPanelRootKey)),
+          actual,
+        );
+        expect(actual, orderedEquals(expected));
+      }
+
+      // --- Civilian (empire rail): baseline ---
+      await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await expectCivilianPanelTexts();
+      await _closeBottomSheet(tester);
+
+      // --- Builder: build improvement + first legal tile (e2e tap target) ---
+      await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await _tapFirstAssignInCivilianPanel(tester);
+      await tester.tap(find.text('Build improvement'));
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await tester.tap(find.byKey(kCtE2ESelectFirstValidWorkTileKey));
+      await _pumpFor(tester, const Duration(milliseconds: 500));
+      await _closeBottomSheet(tester);
+
+      // --- Explorer: prospect + first legal tile ---
+      await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await _tapAssignOnCivilianRowWithTitle(tester, 'Explorer');
+      await tester.tap(find.text('Prospect'));
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await tester.tap(find.byKey(kCtE2ESelectFirstValidWorkTileKey));
+      await _pumpFor(tester, const Duration(milliseconds: 500));
+      await _closeBottomSheet(tester);
+
+      // --- Civilian rail: after draft orders ---
+      await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await expectCivilianPanelTexts();
+      await _closeBottomSheet(tester);
+
+      // --- Naval rail: collapsed ---
+      await tester.tap(find.byKey(kEmpireNavalUnitsButtonKey));
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await expectNavalPanelTexts(expanded: false);
+      await _expandEachExpansionTileOnce(tester);
+      final split = find.descendant(
+        of: find.byKey(kCtE2ENavalPanelRootKey),
+        matching: find.text('Split'),
+      );
+      expect(split, findsWidgets);
+      await tester.tap(split.first);
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+
+      final moveOneRight = find.descendant(
+        of: find.byType(CtDialogShell),
+        matching: find.widgetWithText(CtNinePatchButton, '>'),
+      );
+      expect(moveOneRight, findsWidgets);
+      await tester.tap(moveOneRight.first);
+      await _pumpFor(tester, const Duration(milliseconds: 200));
+      await tester.tap(find.text('Confirm Split'));
+      await _pumpFor(tester, const Duration(seconds: 1));
+
+      final moveButtons = find.descendant(
+        of: find.byKey(kCtE2ENavalPanelRootKey),
+        matching: find.text('Move'),
+      );
+      expect(moveButtons, findsWidgets);
+      await tester.tap(moveButtons.first);
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+
+      final seaRadio = find.byType(RadioListTile<dynamic>);
+      expect(seaRadio, findsWidgets);
+      await tester.tap(seaRadio.first);
+      await _pumpFor(tester, const Duration(milliseconds: 200));
+      await tester.tap(find.text('Confirm'));
+      await _pumpFor(tester, const Duration(seconds: 1));
+
+      await _expandEachExpansionTileOnce(tester);
+      await expectNavalPanelTexts(expanded: true);
+      await _closeBottomSheet(tester);
+
+      // --- Civilian + naval from first map markers (tile scope) ---
+      await tester.tap(find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey));
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await expectCivilianPanelTexts();
+      await _closeBottomSheet(tester);
+
+      await tester.tap(find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey));
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await expectNavalPanelTexts(expanded: false);
+      await _closeBottomSheet(tester);
+
+      // --- Next turn ---
+      final turnBefore =
+          find
+                  .descendant(
+                    of: find.byKey(kGameMapNextTurnButtonKey),
+                    matching: find.byType(Text),
+                  )
+                  .evaluate()
+                  .single
+                  .widget
+              as Text;
+      final turnLabelBefore = turnBefore.data!;
+
+      await tester.tap(find.byKey(kGameMapNextTurnButtonKey));
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await tester.tap(find.text(l10n.common_yes));
+      await _pumpFor(tester, const Duration(seconds: 3));
+
+      final turnAfter =
+          find
+                  .descendant(
+                    of: find.byKey(kGameMapNextTurnButtonKey),
+                    matching: find.byType(Text),
+                  )
+                  .evaluate()
+                  .single
+                  .widget
+              as Text;
+      expect(turnAfter.data, isNot(turnLabelBefore));
+
+      // --- Production (post-resolution stockpiles) ---
+      await tester.tap(find.byKey(kEmpireProductionButtonKey));
+      await _pumpFor(tester, const Duration(seconds: 1));
+      await expectProductionPanelTexts();
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await _pumpFor(tester, const Duration(milliseconds: 500));
+      expect(find.byKey(kHomeToCapitalButtonKey), findsOneWidget);
+    },
+  );
+}

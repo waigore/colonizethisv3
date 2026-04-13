@@ -6,6 +6,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/ct_e2e.dart';
+import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../providers/production_allocation_provider.dart';
@@ -85,7 +87,7 @@ class ProductionScreen extends ConsumerWidget {
                 ),
               },
             );
-        return ProductionPanel(
+        final productionPanel = ProductionPanel(
           game: displayGame,
           player: displayPlayer,
           desiredOutputByRecipe: desiredOutputByRecipe,
@@ -108,6 +110,23 @@ class ProductionScreen extends ConsumerWidget {
                 .replaceAll(next);
           },
         );
+        if (kCtE2EEnabled) {
+          updateCtE2eProductionPanelSnapshotIfEnabled(
+            CtE2eProductionPanelSnapshot(
+              game: displayGame,
+              player: displayPlayer,
+              desiredOutputByRecipe: desiredOutputByRecipe,
+              netDeltasByCommodity: netDeltasByCommodity,
+              topology: panelTopology,
+              tileMapByRegion: panelTileMaps,
+            ),
+          );
+          return KeyedSubtree(
+            key: kCtE2EProductionPanelRootKey,
+            child: productionPanel,
+          );
+        }
+        return productionPanel;
       },
     );
   }

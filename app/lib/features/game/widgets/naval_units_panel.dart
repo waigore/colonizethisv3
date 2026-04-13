@@ -5,6 +5,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/ct_e2e.dart';
+import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
@@ -285,8 +287,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final tileScopeActive = widget.tileScopeTileKey != null &&
-        widget.tileScopeTileKey!.isNotEmpty;
+    final tileScopeActive =
+        widget.tileScopeTileKey != null && widget.tileScopeTileKey!.isNotEmpty;
     final tree = buildNavalTree(
       widget.game,
       widget.humanPlayerId,
@@ -304,7 +306,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     final canCombine = _canCombineSelection(flat);
     final headerCheckbox = _headerSelectAllValue(flat);
 
-    return UnitsPanelShell(
+    final panel = UnitsPanelShell(
       title: tileScopeActive
           ? l10n.naval_units_title_tile
           : l10n.naval_units_title,
@@ -403,6 +405,23 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       ],
       emptyMessage: l10n.naval_units_empty,
     );
+    if (kCtE2EEnabled) {
+      updateCtE2eNavalPanelSnapshotIfEnabled(
+        CtE2eNavalPanelSnapshot(
+          game: widget.game,
+          humanPlayerId: widget.humanPlayerId,
+          topology: widget.topology,
+          draftOrders: widget.draftOrders,
+          tileMapByRegion: widget.tileMapByRegion,
+          topologyByRegion: widget.topologyByRegion,
+          locationScopeKey: widget.locationScopeKey,
+          initialSelectedFleetId: widget.initialSelectedFleetId,
+          tileScopeTileKey: widget.tileScopeTileKey,
+        ),
+      );
+      return KeyedSubtree(key: kCtE2ENavalPanelRootKey, child: panel);
+    }
+    return panel;
   }
 }
 
