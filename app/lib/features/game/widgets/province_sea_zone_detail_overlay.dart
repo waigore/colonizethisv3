@@ -505,25 +505,14 @@ _OverlayContent _provinceContent({
   final byResImproved =
       <String, List<({String tileKey, String terrain, String impBase})>>{};
   final byResImprovable = <String, List<({String tileKey, String terrain})>>{};
-  final prospectRows = <({String tileKey, String terrain})>[];
-
   for (final tk in tileKeys) {
     final res = resourceByTile[tk];
-    final visibleRes = resourceIdVisibleInPlayerView(playerView, tk, res);
     final parts = tk.split('|');
     if (parts.length < 4) continue;
+    if (!prospected.contains(tk)) continue;
     final imp = tileState.improvementLevel(tk);
     final visLevel = playerView.visibilityForTile(tk);
-
-    final needsProspect =
-        res != null &&
-        kProspectRequiredResourceIds.contains(res) &&
-        !prospected.contains(tk);
-    if (needsProspect) {
-      final terrain = _economicTerrainTitleForTile(region, tk) ?? '—';
-      prospectRows.add((tileKey: tk, terrain: terrain));
-      continue;
-    }
+    final visibleRes = resourceIdVisibleInPlayerView(playerView, tk, res);
 
     if (visibleRes == null) continue;
 
@@ -553,7 +542,6 @@ _OverlayContent _provinceContent({
   for (final list in byResImprovable.values) {
     list.sort((a, b) => a.tileKey.compareTo(b.tileKey));
   }
-  prospectRows.sort((a, b) => a.tileKey.compareTo(b.tileKey));
 
   final resourceKeysSorted = {
     ...byResImproved.keys,
@@ -582,7 +570,6 @@ _OverlayContent _provinceContent({
           resourceKeysSorted: resourceKeysSorted,
           byResImproved: byResImproved,
           byResImprovable: byResImprovable,
-          prospectRows: prospectRows,
           onHighlightTile: onHighlightTile,
         )
       : _buildSection(
@@ -983,7 +970,6 @@ Widget _buildEconomicSection({
   byResImproved,
   required Map<String, List<({String tileKey, String terrain})>>
   byResImprovable,
-  required List<({String tileKey, String terrain})> prospectRows,
   void Function(String?)? onHighlightTile,
 }) {
   final children = <Widget>[];
@@ -1039,16 +1025,6 @@ Widget _buildEconomicSection({
         ),
       );
     }
-  }
-
-  for (final row in prospectRows) {
-    children.add(
-      _economicHoverRow(
-        tileKey: row.tileKey,
-        onHighlightTile: onHighlightTile,
-        child: Text(row.terrain),
-      ),
-    );
   }
 
   if (children.isEmpty) {
