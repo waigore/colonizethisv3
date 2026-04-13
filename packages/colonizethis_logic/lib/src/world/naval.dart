@@ -129,6 +129,25 @@ List<String> adjacentSeaZoneIdsSeaOnly(
   return out.toList()..sort();
 }
 
+/// True when [seaZoneId] has at least one S–S edge to a sea zone in another
+/// region (warp-zone membership in combined topology).
+bool isWarpZoneSeaZone(MapTopology topology, String seaZoneId) {
+  final sourceRegion = regionIdForSeaZone(topology, seaZoneId);
+  if (sourceRegion == null) return false;
+  final seaZoneIds = seaZoneNodeIds(topology);
+  if (!seaZoneIds.contains(seaZoneId)) return false;
+  for (final e in topology.edges) {
+    final other = e.id1 == seaZoneId
+        ? e.id2
+        : (e.id2 == seaZoneId ? e.id1 : null);
+    if (other == null) continue;
+    if (!seaZoneIds.contains(other)) continue;
+    final otherRegion = regionIdForSeaZone(topology, other);
+    if (otherRegion != null && otherRegion != sourceRegion) return true;
+  }
+  return false;
+}
+
 /// One-hop naval **topology** destinations: S–S and S–P when at sea; P–S undock when in port.
 /// Province ids match topology endpoints (local or prefixed); resolve world [Province] in the UI.
 class NavalMoveTopologyPicks {

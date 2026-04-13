@@ -1037,6 +1037,10 @@
   "@moveFleet_locateOnMap": {
     "description": "Tooltip for locate action in move fleet dialog."
   },
+  "moveFleet_warpLink": "links",
+  "@moveFleet_warpLink": {
+    "description": "Suffix appended to same-region warp-zone sea destinations in move fleet dialog."
+  },
   "moveFleet_warpLinkToRegion": "links to {region}",
   "@moveFleet_warpLinkToRegion": {
     "description": "Suffix appended to cross-region sea-zone destinations in move fleet dialog.",

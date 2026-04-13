@@ -481,6 +481,44 @@ void main() {
       });
     });
 
+    group('isWarpZoneSeaZone', () {
+      test('returns true when sea zone has cross-region S-S edge', () {
+        const ow = 'oldWorld';
+        const nw = 'newWorld';
+        final combined = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: '$ow|sea_a',
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: '$ow|sea_b',
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: '$nw|sea_c',
+              regionId: nw,
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [
+            TopologyEdge(id1: '$ow|sea_a', id2: '$ow|sea_b'),
+            TopologyEdge(id1: '$ow|sea_b', id2: '$nw|sea_c'),
+          ],
+        );
+
+        expect(isWarpZoneSeaZone(combined, '$ow|sea_b'), isTrue);
+        expect(isWarpZoneSeaZone(combined, '$nw|sea_c'), isTrue);
+      });
+
+      test('returns false for same-region edges only', () {
+        expect(isWarpZoneSeaZone(topology, 'sea1'), isFalse);
+        expect(isWarpZoneSeaZone(topology, 'sea2'), isFalse);
+      });
+    });
+
     group('provinceIdsAdjacentToSeaZone region-scoped', () {
       test('when regionId passed, returns only provinces in that region', () {
         final multiRegion = MapTopology(
