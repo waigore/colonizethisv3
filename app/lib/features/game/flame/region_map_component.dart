@@ -122,7 +122,7 @@ class CtRegionMapComponent extends PositionComponent {
 
   RegionMapViewData? _seaZoneLabelsRegionRef;
   double? _seaZoneLabelsCellSize;
-  List<({int cx, int cy, String text})>? _seaZoneLabelsCached;
+  List<({int cx, int cy, String text, bool isWarpZone})>? _seaZoneLabelsCached;
 
   @override
   Future<void> onLoad() async {
