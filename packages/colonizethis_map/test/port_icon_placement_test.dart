@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('computePortDrawableSeaCellForMap', () {
@@ -136,6 +137,70 @@ void main() {
           portTileKey: 'bad',
         ),
         throwsA(isA<PortDrawableSeaCellException>()),
+      );
+    });
+  });
+
+  group('harborDrawableSeaTileKeyForPortProvince', () {
+    TileMapResult tm(List<List<String>> rows) {
+      return TileMapResult(
+        width: rows.first.length,
+        height: rows.length,
+        grid: rows,
+      );
+    }
+
+    final sea = {'s1'};
+
+    test('returns region|seaCellId|x|y consistent with port placement', () {
+      final map = tm([
+        ['p1', 's1'],
+        ['p1', 'p1'],
+      ]);
+      final game = Game(
+        id: 't',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(provinces: [], units: []),
+          newWorld: const RegionData(provinces: [], units: []),
+          portsByProvinceSeaboard: {'oldWorld|p1|sb': 'oldWorld|p1|0|0'},
+        ),
+        players: const [],
+        minorNations: const [],
+        tribes: const [],
+      );
+      final key = harborDrawableSeaTileKeyForPortProvince(
+        game: game,
+        regionId: 'oldWorld',
+        localProvinceId: 'p1',
+        tileMap: map,
+        seaZoneIds: sea,
+      );
+      expect(key, 'oldWorld|s1|1|0');
+    });
+
+    test('returns null when no seaboard entry for province', () {
+      final map = tm([['p1']]);
+      final game = Game(
+        id: 't',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(provinces: [], units: []),
+          newWorld: const RegionData(provinces: [], units: []),
+        ),
+        players: const [],
+        minorNations: const [],
+        tribes: const [],
+      );
+      expect(
+        harborDrawableSeaTileKeyForPortProvince(
+          game: game,
+          regionId: 'oldWorld',
+          localProvinceId: 'p1',
+          tileMap: map,
+          seaZoneIds: sea,
+        ),
+        isNull,
       );
     });
   });
