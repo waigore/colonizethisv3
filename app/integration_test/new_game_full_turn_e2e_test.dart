@@ -343,10 +343,10 @@ void main() {
       // --- Explorer: prospect + first legal tile ---
       await _waitUntilFound(
         tester,
-        find.byKey(kEmpireCivilianUnitsButtonKey),
+        find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey),
         timeout: const Duration(seconds: 20),
       );
-      await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
+      await tester.tap(find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey));
       await _pumpFor(tester, const Duration(milliseconds: 400));
       await _tapAssignOnCivilianRowWithTitle(tester, 'Explorer');
       await tester.tap(find.text('Prospect'));
