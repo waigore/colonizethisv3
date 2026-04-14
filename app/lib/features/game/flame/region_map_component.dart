@@ -114,6 +114,8 @@ class CtRegionMapComponent extends PositionComponent {
       String provinceId,
       Color plateColor,
       bool isCapital,
+      int? avoidTileX,
+      int? avoidTileY,
     })
   >?
   _provinceLabelsCached;
