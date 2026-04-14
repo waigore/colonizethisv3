@@ -477,7 +477,7 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
   void _paintOverlay(Canvas canvas) {
     final showResources =
         baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
-    final showExtractionDiscs = shouldShowExtractionUnitDiscs(
+    final showExtractionIndicators = shouldShowExtractionUnitIndicators(
       baseLayerDisplayMode: baseLayerDisplayMode,
     );
     final showImprovementLabels =
@@ -512,18 +512,31 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
           final srcRect = Rect.fromLTWH(0, 0, assetSize, assetSize);
           final paint = _resourceOverlayPaintForCell(cell);
           canvas.drawImageRect(icon, srcRect, dstRect, paint);
-          final extractionUnits = cell.resourceExtractionUnits ?? 0;
-          if (showExtractionDiscs && extractionUnits > 0) {
-            final discColor = discColorForResourceId(resourceForIcon);
-            final discPaint = _resourceOverlayPaintForCell(cell)
-              ..style = PaintingStyle.fill
-              ..color = discColor;
-            final centers = extractionDiscCentersForIconRect(
+          final effectiveUnits =
+              cell.resourceExtractionEffectiveUnits ??
+              cell.resourceExtractionUnits ??
+              0;
+          final blockedUnits = cell.resourceExtractionBlockedUnits ?? 0;
+          final totalUnits = effectiveUnits + blockedUnits;
+          if (showExtractionIndicators && totalUnits > 0) {
+            final indicatorRects = extractionIndicatorRectsForIconRect(
               iconRect: dstRect,
-              units: extractionUnits,
+              units: totalUnits,
             );
-            for (final center in centers) {
-              canvas.drawCircle(center, _kExtractionDiscRadiusPx, discPaint);
+            for (var i = 0; i < indicatorRects.length; i++) {
+              final indicatorPaint = _resourceOverlayPaintForCell(cell)
+                ..colorFilter = ColorFilter.mode(
+                  i < effectiveUnits
+                      ? _kExtractionIndicatorGoldTint
+                      : _kExtractionIndicatorGrayTint,
+                  BlendMode.modulate,
+                );
+              canvas.drawImageRect(
+                icon,
+                srcRect,
+                indicatorRects[i],
+                indicatorPaint,
+              );
             }
           }
         }
