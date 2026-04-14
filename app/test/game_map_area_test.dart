@@ -40,7 +40,10 @@ class _MapAreaHostState extends State<_MapAreaHost> {
           ),
           Expanded(
             child: _showMapArea
-                ? GameMapArea(game: widget.game, mapViewData: widget.mapViewData)
+                ? GameMapArea(
+                    game: widget.game,
+                    mapViewData: widget.mapViewData,
+                  )
                 : const SizedBox.shrink(),
           ),
         ],
@@ -91,10 +94,12 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
 
     await tester.tap(find.text('dispose-map-area'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
 
     bus.emit(
       const LocateMapTileEvent(
@@ -113,5 +118,56 @@ void main() {
 
     expect(tester.takeException(), isNull);
     bus.dispose();
+  });
+
+  testWidgets('Player turn event feed commits batch on turn complete', (
+    WidgetTester tester,
+  ) async {
+    final init = getDebugInitGameResult();
+    final game = init.game;
+    final mapViewData = init.mapViewData;
+    final humanId = game.players.firstWhere((p) => p.isHuman).id;
+    final bus = AppEventBus.create();
+    addTearDown(bus.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appEventBusProvider.overrideWith((ref) => bus),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          mapViewDataProvider.overrideWith((ref) => mapViewData),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: GameMapArea(game: game, mapViewData: mapViewData),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+
+    bus.emit(
+      AppResearchCompleteEvent(
+        playerId: humanId,
+        techId: 'agri_1',
+        turnNumber: 1,
+      ),
+    );
+    bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(
+      find.textContaining('Research complete! agri_1 unlocked!'),
+      findsOneWidget,
+    );
   });
 }

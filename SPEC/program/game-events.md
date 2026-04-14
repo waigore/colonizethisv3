@@ -77,3 +77,24 @@ The **caller** that owns the order list or invokes TurnResolver is responsible f
 - No asset paths or UI-only strings in event payloads.
 - Province ids in payloads are always prefixed; never bare local id.
 - Event order is part of the contract; consumers may rely on chronological order for display.
+
+---
+
+## Player turn event feed batch (v1)
+
+The app builds a **human-player-scoped turn feed batch** from the deterministic `GameEvent` stream (forwarded as `App*` events) and commits the batch when `TurnResolutionCompleteEvent` is emitted for the same game.
+
+- Source events for v1: `combat_result`, `naval_combat_result`, `province_captured`, `diplomacy_change`, `research_complete`, `order_rejected`.
+- Scope filter:
+  - combat/naval: include when the human player id is one of the participating side ids.
+  - province capture: include when human player id is `previousOwnerId` or `newOwnerId`.
+  - diplomacy: include when human player id is `actorId` or `targetId`.
+  - research/order rejected: include when `playerId` equals the human player id.
+- Payloads remain id-oriented; formatting to exclamatory English copy is app-layer only.
+- Batch lifecycle: accumulate during one resolution run, then **replace** previous UI lines atomically on `TurnResolutionCompleteEvent` (no cross-turn accumulation).
+
+### Acceptance criteria (Given-When-Then)
+
+- Given one turn resolution run emits zero or more mapped game events in deterministic order for game `G` and human player `P`, when the app receives `TurnResolutionCompleteEvent(gameId: G)`, then the app commits exactly one ordered batch containing only lines relevant to `P`.
+- Given the app has a committed batch for turn `T`, when the next `TurnResolutionCompleteEvent` for the same game commits turn `T+1`, then the app replaces all prior lines with turn `T+1` lines.
+- Given a mapped game event payload includes a province id, when it is included in the player turn event feed batch, then the province id remains prefixed (`regionId|localId`).

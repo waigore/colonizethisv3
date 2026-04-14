@@ -33,6 +33,8 @@ import 'game_region_minimap.dart';
 import 'game_map_narrow_detail_overlay.dart';
 import 'game_map_area_state_logic.dart';
 import 'next_turn_confirmation_dialog.dart';
+import '../utils/map_location_resolver.dart';
+import '../widgets/player_turn_event_feed.dart';
 
 /// Map area with region tabs and province/sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
 class GameMapArea extends ConsumerStatefulWidget {
@@ -57,6 +59,9 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   bool _sideMenuOpen = false;
   final List<StreamSubscription<dynamic>> _busSubscriptions = [];
   ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
+  final List<ct_models.GameToUIEvent> _pendingPlayerTurnEvents = [];
+  List<ct_models.GameToUIEvent> _resolvedPlayerTurnEvents = const [];
+  int? _resolvedFeedTurnNumber;
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode _baseLayerDisplayMode =
@@ -86,7 +91,86 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       bus.on<ct_models.OpenMapTileDetailEvent>().listen(
         (e) => _openMapTileDetail(e.tileKey),
       ),
+      bus.on<ct_models.AppCombatResultEvent>().listen(_onAppCombatResultEvent),
+      bus.on<ct_models.AppNavalCombatResultEvent>().listen(
+        _onAppNavalCombatResultEvent,
+      ),
+      bus.on<ct_models.AppProvinceCapturedEvent>().listen(
+        _onAppProvinceCapturedEvent,
+      ),
+      bus.on<ct_models.AppDiplomacyChangeEvent>().listen(
+        _onAppDiplomacyChangeEvent,
+      ),
+      bus.on<ct_models.AppResearchCompleteEvent>().listen(
+        _onAppResearchCompleteEvent,
+      ),
+      bus.on<ct_models.AppOrderRejectedEvent>().listen(
+        _onAppOrderRejectedEvent,
+      ),
+      bus.on<ct_models.TurnResolutionCompleteEvent>().listen(
+        _onTurnResolutionCompleteEvent,
+      ),
     ]);
+  }
+
+  void _onTurnResolutionCompleteEvent(
+    ct_models.TurnResolutionCompleteEvent event,
+  ) {
+    if (event.gameId != widget.game.id || !mounted) {
+      return;
+    }
+    setState(() {
+      _resolvedPlayerTurnEvents = List<ct_models.GameToUIEvent>.from(
+        _pendingPlayerTurnEvents,
+      );
+      _pendingPlayerTurnEvents.clear();
+      _resolvedFeedTurnNumber = event.turnNumber > 0 ? event.turnNumber - 1 : 0;
+    });
+  }
+
+  void _onAppCombatResultEvent(ct_models.AppCombatResultEvent event) {
+    if (event.attackerId != _humanPlayerId &&
+        event.defenderId != _humanPlayerId) {
+      return;
+    }
+    _pendingPlayerTurnEvents.add(event);
+  }
+
+  void _onAppNavalCombatResultEvent(ct_models.AppNavalCombatResultEvent event) {
+    if (event.side1OwnerId != _humanPlayerId &&
+        event.side2OwnerId != _humanPlayerId) {
+      return;
+    }
+    _pendingPlayerTurnEvents.add(event);
+  }
+
+  void _onAppProvinceCapturedEvent(ct_models.AppProvinceCapturedEvent event) {
+    if (event.previousOwnerId != _humanPlayerId &&
+        event.newOwnerId != _humanPlayerId) {
+      return;
+    }
+    _pendingPlayerTurnEvents.add(event);
+  }
+
+  void _onAppDiplomacyChangeEvent(ct_models.AppDiplomacyChangeEvent event) {
+    if (event.actorId != _humanPlayerId && event.targetId != _humanPlayerId) {
+      return;
+    }
+    _pendingPlayerTurnEvents.add(event);
+  }
+
+  void _onAppResearchCompleteEvent(ct_models.AppResearchCompleteEvent event) {
+    if (event.playerId != _humanPlayerId) {
+      return;
+    }
+    _pendingPlayerTurnEvents.add(event);
+  }
+
+  void _onAppOrderRejectedEvent(ct_models.AppOrderRejectedEvent event) {
+    if (event.playerId != _humanPlayerId) {
+      return;
+    }
+    _pendingPlayerTurnEvents.add(event);
   }
 
   @override
@@ -396,6 +480,145 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         );
   }
 
+  String _factionLabel(String id) {
+    for (final p in widget.game.players) {
+      if (p.id == id) return p.displayName;
+    }
+    for (final m in widget.game.minorNations) {
+      if (m.id == id) return m.displayName ?? m.id;
+    }
+    for (final t in widget.game.tribes) {
+      if (t.id == id) return t.displayName ?? t.id;
+    }
+    return id;
+  }
+
+  String _provinceLabel(String fullProvinceId) {
+    for (final region in [
+      widget.game.worldState.oldWorld,
+      widget.game.worldState.newWorld,
+    ]) {
+      for (final province in region.provinces) {
+        final prefixed = province.id.contains('|')
+            ? province.id
+            : '${province.regionId}|${province.id}';
+        if (prefixed == fullProvinceId) {
+          return province.displayName ?? prefixed;
+        }
+      }
+    }
+    return fullProvinceId;
+  }
+
+  String _seaZoneLabel(String seaZoneId) {
+    return widget.game.worldState.seaZoneDisplayNameById[seaZoneId] ??
+        seaZoneId;
+  }
+
+  ct_models.Province? _provinceByPrefixedId(String prefixedProvinceId) {
+    for (final region in [
+      widget.game.worldState.oldWorld,
+      widget.game.worldState.newWorld,
+    ]) {
+      for (final province in region.provinces) {
+        final prefixed = province.id.contains('|')
+            ? province.id
+            : '${province.regionId}|${province.id}';
+        if (prefixed == prefixedProvinceId) {
+          return province;
+        }
+      }
+    }
+    return null;
+  }
+
+  List<PlayerTurnEventFeedEntry> _feedEntries() {
+    return _resolvedPlayerTurnEvents
+        .map((event) {
+          return switch (event) {
+            ct_models.AppCombatResultEvent(
+              :final provinceId,
+              :final winnerId,
+              :final attackerId,
+              :final defenderId,
+            ) =>
+              PlayerTurnEventFeedEntry(
+                text:
+                    '${_provinceLabel(provinceId)} battle resolved! ${_factionLabel(winnerId)} defeated ${_factionLabel(winnerId == attackerId ? defenderId : attackerId)}!',
+                onTap: () {
+                  final province = _provinceByPrefixedId(provinceId);
+                  if (province == null) return;
+                  final tileKey = tileKeyForProvinceLocation(
+                    widget.game,
+                    province,
+                  );
+                  if (tileKey == null) return;
+                  ref
+                      .read(appEventBusProvider)
+                      .emit(
+                        ct_models.LocateMapTileEvent(
+                          tileKey: tileKey,
+                          regionId: province.regionId,
+                        ),
+                      );
+                },
+              ),
+            ct_models.AppProvinceCapturedEvent(
+              :final provinceId,
+              :final newOwnerId,
+            ) =>
+              PlayerTurnEventFeedEntry(
+                text:
+                    '${_provinceLabel(provinceId)} captured! ${_factionLabel(newOwnerId)} now controls it!',
+                onTap: () {
+                  final province = _provinceByPrefixedId(provinceId);
+                  if (province == null) return;
+                  final tileKey = tileKeyForProvinceLocation(
+                    widget.game,
+                    province,
+                  );
+                  if (tileKey == null) return;
+                  ref
+                      .read(appEventBusProvider)
+                      .emit(
+                        ct_models.LocateMapTileEvent(
+                          tileKey: tileKey,
+                          regionId: province.regionId,
+                        ),
+                      );
+                },
+              ),
+            ct_models.AppNavalCombatResultEvent(
+              :final seaZoneId,
+              :final outcomeName,
+            ) =>
+              PlayerTurnEventFeedEntry(
+                text:
+                    '${_seaZoneLabel(seaZoneId)} naval battle resolved! Outcome: $outcomeName!',
+              ),
+            ct_models.AppDiplomacyChangeEvent(
+              :final actorId,
+              :final targetId,
+              :final changeType,
+            ) =>
+              PlayerTurnEventFeedEntry(
+                text:
+                    '${_factionLabel(actorId)} and ${_factionLabel(targetId)} diplomacy changed! ${changeType.toUpperCase()}!',
+              ),
+            ct_models.AppResearchCompleteEvent(:final techId) =>
+              PlayerTurnEventFeedEntry(
+                text: 'Research complete! $techId unlocked!',
+              ),
+            ct_models.AppOrderRejectedEvent(:final reasonCode) =>
+              PlayerTurnEventFeedEntry(
+                text: 'Order rejected! Reason: $reasonCode!',
+              ),
+            _ => const PlayerTurnEventFeedEntry(text: 'Event resolved!'),
+          };
+        })
+        .toList(growable: false);
+  }
+
   @override
   void didUpdateWidget(covariant GameMapArea oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -476,6 +699,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       ),
     );
     final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
+    final feedEntries = _feedEntries();
     return Column(
       children: [
         GameMapControls(
@@ -615,7 +839,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                 return AlertDialog(
                                   title: Text(l10n.map_displayOptions_title),
                                   content: Consumer(
-                                    builder: (context, _, __) {
+                                    builder: (context, ref, child) {
                                       return Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
@@ -779,6 +1003,24 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           );
                         },
                       ),
+                      if (!isNarrow)
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final panelOpen = ref
+                                .watch(mapProvincePanelProvider)
+                                .overlayOpen;
+                            final rightInset = panelOpen ? 8.0 + 320.0 : 8.0;
+                            return Positioned(
+                              right: rightInset,
+                              top: 56,
+                              child: PlayerTurnEventFeedCard(
+                                resolvedTurnNumber: _resolvedFeedTurnNumber,
+                                entries: feedEntries,
+                                emptyLabel: 'No player events last turn.',
+                              ),
+                            );
+                          },
+                        ),
                     ],
                   ),
                 ),
@@ -786,11 +1028,35 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
               if (isNarrow)
                 Align(
                   alignment: Alignment.bottomCenter,
-                  child: GameMapNarrowDetailOverlaySlot(
-                    game: widget.game,
-                    region: projectedRegion,
-                    humanPlayerId: _humanPlayerId,
-                    playerView: humanPlayerView,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: ActionChip(
+                          label: Text('Events (${feedEntries.length})'),
+                          onPressed: () {
+                            showDialog<void>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text('Events'),
+                                content: PlayerTurnEventFeedCard(
+                                  resolvedTurnNumber: _resolvedFeedTurnNumber,
+                                  entries: feedEntries,
+                                  emptyLabel: 'No player events last turn.',
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      GameMapNarrowDetailOverlaySlot(
+                        game: widget.game,
+                        region: projectedRegion,
+                        humanPlayerId: _humanPlayerId,
+                        playerView: humanPlayerView,
+                      ),
+                    ],
                   ),
                 ),
             ],

@@ -45,6 +45,19 @@ Forward by copying fields; no payload transforms. Province ids remain **prefixed
 
 When `resolveTurnForGame` returns `TurnResolutionPendingOvertures`, `GameService` emits `OvertureRequiredEvent` on `eventBus` **before** returning, so listeners see it synchronously with the pending result.
 
+## Player turn event feed integration (v1)
+
+The bridge remains a per-event forwarder. The app-side map shell may aggregate these forwarded `App*` events into one human-player-scoped batch per resolved turn and commit that batch only when `TurnResolutionCompleteEvent` for the same game is received.
+
+- No extra singleton bus is introduced; this uses the existing `GameEventBus -> GameEventBridge -> AppEventBus` path.
+- Aggregation preserves incoming event order.
+- Batch commit uses `TurnResolutionCompleteEvent` as the replace boundary.
+
+### Acceptance criteria (Given-When-Then)
+
+- Given a started bridge and an app subscriber that accumulates forwarded `App*` events, when the logic bus publishes A then B and the service emits `TurnResolutionCompleteEvent`, then the subscriber can commit one batch ordered A then B.
+- Given two consecutive resolved turns for the same game, when each turn publishes events and then `TurnResolutionCompleteEvent`, then the subscriber replaces the previous committed batch on the second completion event.
+
 ---
 
 ## Files
