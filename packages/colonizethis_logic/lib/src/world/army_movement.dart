@@ -1,12 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'army_migration.dart';
 import 'movement.dart';
 import 'province_lookup.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Applies army moves in [regionId] (same-region leg). See [applyMoveOrdersToRegion].
 WorldState applyArmyMoveOrdersToRegion(

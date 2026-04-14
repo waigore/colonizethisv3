@@ -1,8 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Thrown when [resolveConsumption] sees a ship type id not in [ShipEconomyCatalog].
 /// SPEC/game/workers-and-population.md (invalid fleet data).

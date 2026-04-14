@@ -2,6 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/routes.dart';
+import '../../../l10n/l10n.dart';
 
 /// Pause menu content for [OpenPauseMenuPanelEvent]. Emits bus follow-up events only.
 class PauseMenuPanel extends StatelessWidget {
@@ -11,13 +12,14 @@ class PauseMenuPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
             leading: const Icon(Icons.list),
-            title: const Text('Debug log'),
+            title: Text(l10n.debugLog_title),
             onTap: () {
               bus.emit(const ClosePanelEvent());
               bus.emit(const NavigateToRouteEvent(Routes.debugLog));
@@ -25,7 +27,7 @@ class PauseMenuPanel extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.play_arrow),
-            title: const Text('Resume'),
+            title: Text(l10n.game_pauseMenu_resume),
             onTap: () => bus.emit(const ClosePanelEvent()),
           ),
         ],

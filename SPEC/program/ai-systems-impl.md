@@ -47,14 +47,13 @@ Orders generateStrategicOrders({
 
 Personality-related fields in **AIConfig** follow [ai-personalities.md](../ai/ai-personalities.md):
 
-- `leaderId` is the canonical leader id and is the only id used for personality lookups and dossier/archetype display.
-- `personalityId` is an optional archetype handle; in MVP it is not read by `colonizethis_ai`, and callers typically pass the same value as `leaderId`.
+- `leaderId` is the canonical leader id used for dossier, dialogue, and display.
+- `personalityId` is the **primary lookup key** for domain/goal/threshold weights (`getDomainWeightsForLeader`, etc.). It is resolved from optional `Player.personalityId` when that id matches a known archetype; otherwise from `canonicalLeaderIdForPersonality(Player.leaderKey ?? player.id)` (`personalityLookupKeyForAi` in `ai_personality_config.dart`).
 
-When `ai_planner.generateOrdersForPlayerFullAI` constructs **AIConfig** for an AI-controlled Great Power, it:
+When `generateOrdersForPlayerFullAI` constructs **AIConfig**:
 
-- Reads `Player.leaderKey` from the `Game` model (variant key from the naming ruleset, e.g. `england_leader`, `france_leader`, `prussia_reserve_leader`).
-- Calls into `colonizethis_data` to resolve this value to a **canonical leader id** for personality lookups (see `ai_personality_config.dart` and [ai-personalities.md](../ai/ai-personalities.md) § Leader identity and `Player.leaderKey`).
-- Passes the resolved canonical id as both `leaderId` and (in MVP) `personalityId` when creating **AIConfig**, so that domain planners, goal selection, and dossier projection all use the same canonical identity regardless of which variant leader key is stored on the Player.
+- Resolves `leaderId` from `Player.leaderKey` / id via `canonicalLeaderIdForPersonality`.
+- Sets `personalityId` to `personalityLookupKeyForAi(leaderKeyOrId: …, personalityId: Player.personalityId)` so planners use the override archetype when valid.
 
 ### Tactical (Quick Battle)
 

@@ -2,6 +2,7 @@ import 'combat_mode.dart';
 import 'dossier_evidence.dart';
 import 'diplomacy.dart';
 import 'general.dart';
+import 'map_view_state.dart';
 import 'minor_nation.dart';
 import 'player.dart';
 import 'tribe.dart';
@@ -87,6 +88,9 @@ class Game {
     this.richesCashMultiplier = 1.0,
     this.capitalTileGrainBonusPerTurn = 5,
     this.politicalGlyphByPlayerId = const {},
+    this.lastHumanCompletedResearchCategory,
+    this.lastHumanResearchCategoryCompletionTurn,
+    this.mapViewState = MapViewState.defaults,
   });
 
   final String id;
@@ -148,9 +152,21 @@ class Game {
   /// from setup starting-resources config at game creation. GDD extraction.
   final int capitalTileGrainBonusPerTurn;
 
-  /// 1-character political map glyph per faction id. Used by ctterm and other
-  /// UIs for the political ownership layer. SPEC/tui/map-tui-mapping.md.
+  /// 1-character political map glyph per faction id. Used by map UIs for the
+  /// political ownership layer.
   final Map<String, String> politicalGlyphByPlayerId;
+
+  /// Last tech-catalog **category** a human Great Power set for Envy mirror tracking
+  /// (most recent): either a completed **research** tech’s `category`, or **gathering**
+  /// from a completed extraction **build_improvement** on a tracked resource tile.
+  /// JSON keys retain the historical `…Research…` names. SPEC/ai/hidden-agendas.md.
+  final String? lastHumanCompletedResearchCategory;
+
+  /// Turn number when [lastHumanCompletedResearchCategory] was last updated.
+  final int? lastHumanResearchCategoryCompletionTurn;
+
+  /// Persisted Empire overview map state (zoom + display toggles).
+  final MapViewState mapViewState;
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -195,6 +211,13 @@ class Game {
       'generals': generals.map((e) => e.toJson()).toList(),
     if (politicalGlyphByPlayerId.isNotEmpty)
       'politicalGlyphByPlayerId': politicalGlyphByPlayerId,
+    if (lastHumanCompletedResearchCategory != null)
+      'lastHumanCompletedResearchCategory': lastHumanCompletedResearchCategory,
+    if (lastHumanResearchCategoryCompletionTurn != null)
+      'lastHumanResearchCategoryCompletionTurn':
+          lastHumanResearchCategoryCompletionTurn,
+    if (mapViewState != MapViewState.defaults)
+      'mapViewState': mapViewState.toJson(),
   };
 
   static Game fromJson(Map<String, dynamic> json) {
@@ -202,10 +225,9 @@ class Game {
     final minorNationsList = json['minorNations'] as List<dynamic>? ?? [];
     final tribesList = json['tribes'] as List<dynamic>? ?? [];
     final turnTimeMappingRaw = json['turnTimeMapping'];
-    final Map<String, dynamic>? turnTimeMappingJson =
-        turnTimeMappingRaw is Map
-            ? Map<String, dynamic>.from(turnTimeMappingRaw)
-            : null;
+    final Map<String, dynamic>? turnTimeMappingJson = turnTimeMappingRaw is Map
+        ? Map<String, dynamic>.from(turnTimeMappingRaw)
+        : null;
     final defaultCombatModeRaw = json['defaultCombatMode'] as String?;
     final defaultCombatMode = defaultCombatModeRaw != null
         ? CombatMode.values.firstWhere(
@@ -292,6 +314,10 @@ class Game {
     final politicalGlyphByPlayerId = politicalGlyphRaw.map(
       (k, v) => MapEntry(k.toString(), v.toString()),
     );
+    final mapViewStateRaw = json['mapViewState'];
+    final mapViewState = mapViewStateRaw is Map
+        ? MapViewState.fromJson(Map<String, dynamic>.from(mapViewStateRaw))
+        : MapViewState.defaults;
     return Game(
       id: json['id'] as String,
       worldState: WorldState.fromJson(
@@ -332,6 +358,11 @@ class Game {
       richesCashMultiplier: richesCashMultiplier,
       capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
       politicalGlyphByPlayerId: politicalGlyphByPlayerId,
+      lastHumanCompletedResearchCategory:
+          json['lastHumanCompletedResearchCategory'] as String?,
+      lastHumanResearchCategoryCompletionTurn:
+          (json['lastHumanResearchCategoryCompletionTurn'] as num?)?.toInt(),
+      mapViewState: mapViewState,
     );
   }
 
@@ -359,6 +390,9 @@ class Game {
     double? richesCashMultiplier,
     int? capitalTileGrainBonusPerTurn,
     Map<String, String>? politicalGlyphByPlayerId,
+    String? lastHumanCompletedResearchCategory,
+    int? lastHumanResearchCategoryCompletionTurn,
+    MapViewState? mapViewState,
   }) {
     return Game(
       id: id ?? this.id,
@@ -390,6 +424,13 @@ class Game {
           capitalTileGrainBonusPerTurn ?? this.capitalTileGrainBonusPerTurn,
       politicalGlyphByPlayerId:
           politicalGlyphByPlayerId ?? this.politicalGlyphByPlayerId,
+      lastHumanCompletedResearchCategory:
+          lastHumanCompletedResearchCategory ??
+          this.lastHumanCompletedResearchCategory,
+      lastHumanResearchCategoryCompletionTurn:
+          lastHumanResearchCategoryCompletionTurn ??
+          this.lastHumanResearchCategoryCompletionTurn,
+      mapViewState: mapViewState ?? this.mapViewState,
     );
   }
 
@@ -423,7 +464,15 @@ class Game {
           victory == other.victory &&
           richesCashMultiplier == other.richesCashMultiplier &&
           capitalTileGrainBonusPerTurn == other.capitalTileGrainBonusPerTurn &&
-          _mapEquals(politicalGlyphByPlayerId, other.politicalGlyphByPlayerId);
+          _mapEquals(
+            politicalGlyphByPlayerId,
+            other.politicalGlyphByPlayerId,
+          ) &&
+          lastHumanCompletedResearchCategory ==
+              other.lastHumanCompletedResearchCategory &&
+          lastHumanResearchCategoryCompletionTurn ==
+              other.lastHumanResearchCategoryCompletionTurn &&
+          mapViewState == other.mapViewState;
 
   @override
   int get hashCode => Object.hash(
@@ -455,6 +504,9 @@ class Game {
       richesCashMultiplier,
       capitalTileGrainBonusPerTurn,
       Object.hashAll(politicalGlyphByPlayerId.entries),
+      lastHumanCompletedResearchCategory,
+      lastHumanResearchCategoryCompletionTurn,
+      mapViewState,
     ),
   );
 

@@ -17,11 +17,12 @@ void main() {
         edges: const [],
       );
 
-      Game _baseGame({
+      Game baseGame({
         Map<String, String>? resourceByTileKey,
         TileMapState tileState = const TileMapState(),
         Map<String, bool>? techUnlocked,
         Stockpile? stockpile,
+        Map<String, Set<String>>? playerProspectedTiles,
       }) {
         return Game(
           id: 'g1',
@@ -52,6 +53,7 @@ void main() {
             playerVisibilityByTile: const {
               'p1': {tileKey: 'fullyVisible'},
             },
+            playerProspectedTiles: playerProspectedTiles ?? const {},
           ),
           players: [
             Player(
@@ -70,8 +72,82 @@ void main() {
         );
       }
 
+      test(
+        'rejects build_improvement on mineral tile when not prospected',
+        () {
+          final game = baseGame(
+            resourceByTileKey: {tileKey: 'iron'},
+          );
+          final engine = OrderEngine();
+          engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.rejected);
+          expect(results.single.reason, contains('prospected'));
+        },
+      );
+
+      test(
+        'accepts build_improvement on mineral tile after prospected',
+        () {
+          final game = baseGame(
+            resourceByTileKey: {tileKey: 'iron'},
+            playerProspectedTiles: {
+              'p1': {tileKey},
+            },
+          );
+          final engine = OrderEngine();
+          engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.accepted);
+        },
+      );
+
+      test(
+        'accepts build_improvement on grain when tile not prospected',
+        () {
+          final game = baseGame(resourceByTileKey: {tileKey: 'grain'});
+          final engine = OrderEngine();
+          engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.accepted);
+        },
+      );
+
       test('rejects build_improvement when tile has no resource', () {
-        final game = _baseGame(resourceByTileKey: {});
+        final game = baseGame(resourceByTileKey: {});
         final engine = OrderEngine();
         engine.addWorkOrder(
           'p1',
@@ -91,7 +167,7 @@ void main() {
       });
 
       test('rejects build_improvement when improvement level already 4', () {
-        final game = _baseGame(
+        final game = baseGame(
           tileState: const TileMapState(
             improvementByTile: {'oldWorld|P1|0|0': 4},
           ),
@@ -117,12 +193,45 @@ void main() {
         expect(results.single.reason, contains('maximum'));
       });
 
+      test(
+        'rejects build_improvement when tech cap would be exceeded (empty tech)',
+        () {
+          final game = baseGame(
+            techUnlocked: const {},
+            tileState: const TileMapState(
+              improvementByTile: {'oldWorld|P1|0|0': 1},
+            ),
+            stockpile: Stockpile()
+                .applyDelta(CommodityCatalog.lumber.id, 10)
+                .applyDelta(CommodityCatalog.castIron.id, 10),
+          );
+          final engine = OrderEngine();
+          engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.rejected);
+          expect(results.single.reason, contains('Insufficient tech'));
+          expect(results.single.reason, contains('grain'));
+          expect(results.single.reason, contains('cap 1'));
+        },
+      );
+
       test('rejects build_improvement when tech cap would be exceeded', () {
-        // saw_mill gives cap 2; tile at level 2 → next would be 3 > 2
-        final game = _baseGame(
+        // With no grain-cap tech, grain stays at cap 1; tile at level 1 cannot upgrade.
+        final game = baseGame(
           techUnlocked: const {'saw_mill': true},
           tileState: const TileMapState(
-            improvementByTile: {'oldWorld|P1|0|0': 2},
+            improvementByTile: {'oldWorld|P1|0|0': 1},
           ),
           stockpile: Stockpile()
               .applyDelta(CommodityCatalog.lumber.id, 10)
@@ -144,13 +253,43 @@ void main() {
         );
         expect(results.single.status, OrderValidationStatus.rejected);
         expect(results.single.reason, contains('Insufficient tech'));
-        expect(results.single.reason, contains('cap 2'));
+        expect(results.single.reason, contains('cap 1'));
       });
+
+      test(
+        'accepts grain upgrade when exact next-level grain tech is unlocked',
+        () {
+          final game = baseGame(
+            techUnlocked: const {'land_enclosure': true},
+            tileState: const TileMapState(
+              improvementByTile: {'oldWorld|P1|0|0': 1},
+            ),
+            stockpile: Stockpile()
+                .applyDelta(CommodityCatalog.lumber.id, 10)
+                .applyDelta(CommodityCatalog.castIron.id, 10),
+          );
+          final engine = OrderEngine();
+          engine.addWorkOrder(
+            'p1',
+            const WorkOrder(
+              unitId: 'builder1',
+              target: 'build_improvement',
+              targetTileKey: tileKey,
+            ),
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topology,
+            'p1',
+          );
+          expect(results.single.status, OrderValidationStatus.accepted);
+        },
+      );
 
       test(
         'accepts build_improvement when tile has resource, level < 4, tech cap allows',
         () {
-          final game = _baseGame(
+          final game = baseGame(
             resourceByTileKey: {tileKey: 'grain'},
             tileState: const TileMapState(),
             techUnlocked: const {'circular_saw': true},

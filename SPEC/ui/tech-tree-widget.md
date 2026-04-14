@@ -12,7 +12,7 @@
 - **Graph:** All techs from the global catalog in a single graph. **Left to right:** starting techs (no prerequisites) at the left; end-game techs at the right. Nodes are arranged in **topological layers** (by distance from roots); within a layer, nodes may be grouped or spaced to reduce edge crossings.
 - **Column rule:** If tech A has a prerequisite tech B, then A must be in a column strictly to the right of B. Thus when there is both a chain (A→B→C) and a direct edge (A→C), there is necessarily a gap between A and C, because B occupies the column in between.
 - **Edges:** **Right-angled connectors** from each prerequisite tech to the tech that requires it. Each edge is drawn as three segments: horizontal from the source node’s right edge into the inter-column gap; vertical at that X to the target row; horizontal to the target node’s left edge. The bend X is placed just to the right of the source column (e.g. source right + half the layer gap minus node width) so the vertical segment never passes through other columns’ nodes. Edges are drawn **behind nodes** so they do not obscure node labels or node bodies. For edges that span multiple columns, the layout reserves a row slot in each intermediate column for the connector (as if a tech occupied that slot); other techs in those columns are shifted down so connectors never pass through nodes.
-- **Scroll:** The graph can be long; the content is inside a **scrollable** viewport (e.g. `SingleChildScrollView` with both axes, or scrollable region). No zoom or pan required for MVP.
+- **Scroll:** The graph can be long; the content is inside a **scrollable** viewport (e.g. `SingleChildScrollView` with both axes, or scrollable region). No zoom or pan required for current product.
 - **Categories:** One graph shows **all** techs. Each node is **color-coded by category** (gathering, transport, labour, civilian, diplomacy, naval, military; new-world if present). Category colours are distinct and consistent (e.g. gathering = green, transport = blue, labour = amber, etc.; exact palette in theme or widget).
 
 ## Icons (one per category)
@@ -38,7 +38,7 @@ Each tech node displays a **category icon** to the left of its label. Icons are 
 
 ### Implementation
 
-The widget reads `tech.category` and looks up the icon path via a static map (`kAppIconAssetPrefix` is `assets/icons/` from `lib/config/app_assets.dart`). Render with `StrictAssetIcon` so a missing or invalid file throws `FlutterError` (no silent placeholder).
+The widget reads `tech.category` and looks up the icon path via a static map (`kAppIconAssetPrefix` is `assets/icons/32/` from `lib/config/app_constants.dart`, re-exported via `lib/config/app_assets.dart`). Render with `StrictAssetIcon` so a missing or invalid file throws `FlutterError` (no silent placeholder).
 
 ```dart
 static const Map<String, String> _categoryIcons = {
@@ -53,7 +53,7 @@ static const Map<String, String> _categoryIcons = {
 };
 ```
 
-If no icon exists for a category, omit the icon (backwards compatible).
+Each tech category in the catalog must have a mapped icon asset. Missing or invalid icon assets are contract violations and must fail during development/test rendering.
 
 ### Legend
 
@@ -82,7 +82,8 @@ States are mutually exclusive; “in progress” takes precedence over “availa
 ## Data
 
 - **Catalog:** `techCatalog` from colonizethis_data (id, era, category, cost, prerequisiteIds, regimentUnlockIds, shipUnlockIds, etc.). Display name: humanized from id (e.g. `road_construction` → “Road Construction”) unless a display-name map is added.
-- **Player:** `Player.techUnlocked`, `Player.researchProgressByTechId`, `Player.researchSlots`. **Researchable** set: derived as techs whose prerequisites are all in `techUnlocked`, tech not in `techUnlocked`, and not already in `researchProgressByTechId` (optional; “available” can mean “all prereqs met” only).
+- **Effect summary (dialog):** Authored per-tech lines live in `packages/colonizethis_data/lib/src/data/tech_effect_summary.yaml` (embedded at runtime via `tech_effect_summary_embed.dart`). Each line has a stable id (`techEffectSummary_<techId>_<index>`) and English template text. The Flutter app resolves those ids through **`AppLocalizations`** (keys merged into `app/lib/l10n/app_en.arb` by `tool/generate_tech_effect_l10n.dart`). Regiment/ship unlock bullets and category fallback strings are separate ARB messages. Do not add large per-tech `switch`es in the widget for this copy.
+- **Player:** `Player.techUnlocked`, `Player.researchProgressByTechId`, `Player.researchSlots`. **Researchable** set is required: techs whose prerequisites are all in `techUnlocked`, tech not in `techUnlocked`, and not already in `researchProgressByTechId`.
 
 ## Acceptance criteria
 
@@ -105,7 +106,7 @@ States are mutually exclusive; “in progress” takes precedence over “availa
 ## Integration
 
 - **Source of truth:** [tech-tree.md](../game/tech-tree.md), [research-state.md](../game/research-state.md). Research resolution: [research-resolution.md](../program/research-resolution.md).
-- **Widgetbook:** At least one story that simulates a **mid-game scenario**: roughly half of techs researched, half still to go, and optionally one or two techs in progress. This story uses a mock or real `Game` / `Player` with `techUnlocked` and `researchProgressByTechId` set accordingly.
+- **Widgetbook:** At least one story that simulates a **mid-game scenario**: roughly half of techs researched, half still to go, and one or two techs in progress. This story uses a mock or real `Game` / `Player` with `techUnlocked` and `researchProgressByTechId` set accordingly.
 - **App:** Technology entry opens full-screen with tabs (e.g. “Slots”, “Tree”). Tree tab hosts this widget. Register in widget catalog.
 
 ## Out of scope
@@ -113,4 +114,3 @@ States are mutually exclusive; “in progress” takes precedence over “availa
 - Assigning research from the tree (slots only).
 - Zoom or pan of the graph (scroll only).
 - Filtering by category (one graph, colour only).
-- Prerequisite list in the description dialog.

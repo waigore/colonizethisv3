@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 
@@ -21,22 +22,21 @@ class CombatModeChoiceDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return CtDialogShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Combat at $provinceName',
+            l10n.quickBattle_combatAt(provinceName),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           if (isCapitalSiege)
-            const Text(
-              'Capital siege — Quick Battle only (no auto-resolve).',
-            )
+            Text(l10n.quickBattle_capitalSiegeQuickBattleOnly)
           else
-            const Text('Choose combat mode:'),
+            Text(l10n.quickBattle_chooseCombatMode),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -44,10 +44,12 @@ class CombatModeChoiceDialog extends StatelessWidget {
               if (!isCapitalSiege)
                 CtNinePatchButton(
                   onPressed: () {
-                    bus.emit(const CombatModeChosenEvent(CombatMode.autoResolve));
+                    bus.emit(
+                      const CombatModeChosenEvent(CombatMode.autoResolve),
+                    );
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Auto-Resolve'),
+                  child: Text(l10n.quickBattle_autoResolve),
                 ),
               if (!isCapitalSiege) const SizedBox(width: 8),
               CtNinePatchButton(
@@ -55,7 +57,7 @@ class CombatModeChoiceDialog extends StatelessWidget {
                   bus.emit(const CombatModeChosenEvent(CombatMode.quickBattle));
                   Navigator.of(context).pop();
                 },
-                child: const Text('Quick Battle'),
+                child: Text(l10n.quickBattle_quickBattle),
               ),
             ],
           ),

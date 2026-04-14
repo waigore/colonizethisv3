@@ -10,8 +10,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_app/widgets/resource_icon.dart';
 
 class _EventHandlingWrapper extends StatefulWidget {
   const _EventHandlingWrapper({
@@ -124,6 +126,18 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Civilian Units'), findsOneWidget);
+    });
+
+    testWidgets('AC: full-list mode has Train only in header (no Tile)', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Train'), findsOneWidget);
+      expect(find.text('Tile'), findsNothing);
     });
 
     testWidgets('AC: Empty state when human player has zero civilian units', (
@@ -304,7 +318,11 @@ void main() {
         bus.stream.listen((e) => sequence.add(e.runtimeType));
 
         await tester.pumpWidget(
-          buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits, bus: bus),
+          buildPanel(
+            game: game,
+            humanPlayerId: humanPlayerIdWithUnits,
+            bus: bus,
+          ),
         );
         await tester.pumpAndSettle();
 
@@ -318,6 +336,221 @@ void main() {
           sequence.indexOf(ClosePanelEvent),
           lessThan(sequence.indexOf(LocateMapTileEvent)),
         );
+      },
+    );
+
+    testWidgets(
+      'AC: per-row locate icon emits LocateMapTileEvent without ClosePanelEvent',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_locate_icon',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'civ1',
+                  type: 'Builder',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        var closeCount = 0;
+        LocateMapTileEvent? locateEvent;
+        final bus = AppEventBus.create();
+        bus.on<ClosePanelEvent>().listen((_) => closeCount++);
+        bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
+
+        await tester.pumpWidget(
+          buildPanel(game: miniGame, humanPlayerId: human, bus: bus),
+        );
+        await tester.pumpAndSettle();
+
+        final locateBtn = find.byTooltip('Locate');
+        expect(locateBtn, findsOneWidget);
+        final iconButtons = find.byType(IconButton);
+        expect(iconButtons, findsOneWidget);
+        final iconBtn = tester.widget<IconButton>(iconButtons.first);
+        expect(iconBtn.iconSize, 18);
+        expect(iconBtn.visualDensity, VisualDensity.compact);
+
+        await tester.tap(locateBtn);
+        await tester.pump();
+
+        expect(closeCount, 0);
+        expect(locateEvent, isNotNull);
+        expect(locateEvent!.tileKey, tileKey);
+        expect(locateEvent!.regionId, 'oldWorld');
+      },
+    );
+
+    testWidgets(
+      'AC: tile-scoped locate icon on non-selected row emits LocateMapTileEvent',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_locate_tile_scope',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'civ_a',
+                  type: 'Builder',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+                Unit(
+                  id: 'civ_b',
+                  type: 'Engineer',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        var closeCount = 0;
+        LocateMapTileEvent? locateEvent;
+        final bus = AppEventBus.create();
+        bus.on<ClosePanelEvent>().listen((_) => closeCount++);
+        bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: CivilianUnitsPanel(
+                game: miniGame,
+                humanPlayerId: human,
+                currentOrders: const Orders(),
+                availableWorkTargets: const {},
+                bus: bus,
+                tileScopeTileKey: tileKey,
+                initialSelectedUnitId: 'civ_a',
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final locateIcons = find.byTooltip('Locate');
+        expect(locateIcons, findsNWidgets(2));
+
+        await tester.tap(locateIcons.at(1));
+        await tester.pump();
+
+        expect(closeCount, 0);
+        expect(locateEvent, isNotNull);
+        expect(locateEvent!.tileKey, tileKey);
+        expect(locateEvent!.regionId, 'oldWorld');
+      },
+    );
+
+    testWidgets(
+      'uses pending target tile for Location and locate event in full-list mode',
+      (WidgetTester tester) async {
+        const human = 'gp1';
+        const standingTile = 'oldWorld|p1|0|0';
+        const pendingTile = 'oldWorld|p2|0|0';
+        final gameWithPending = Game(
+          id: 'g_pending_projection',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+                Province(
+                  id: 'oldWorld|p2',
+                  regionId: 'oldWorld',
+                  displayName: 'Beta',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: 'Builder',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: standingTile,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        final orders = const Orders(
+          workOrdersByPlayerId: {
+            human: [
+              WorkOrder(
+                unitId: 'u1',
+                target: 'build_improvement',
+                targetTileKey: pendingTile,
+              ),
+            ],
+          },
+        );
+        LocateMapTileEvent? locateEvent;
+        final bus = AppEventBus.create();
+        bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
+
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameWithPending,
+            humanPlayerId: human,
+            currentOrders: orders,
+            bus: bus,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.textContaining('Location: Old World — Beta'),
+          findsOneWidget,
+        );
+        await tester.tap(find.byType(ListTile).first);
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(locateEvent, isNotNull);
+        expect(locateEvent!.tileKey, pendingTile);
       },
     );
 
@@ -343,7 +576,8 @@ void main() {
 
         final availableWorkTargets = <String, List<String>>{};
         for (final u in idleCivilians) {
-          final allowed = workOrderTargetsByUnitType[u.type] ?? const <String>[];
+          final allowed =
+              workOrderTargetsByUnitType[u.type] ?? const <String>[];
           if (allowed.isNotEmpty) {
             availableWorkTargets[u.id] = [allowed.first];
           }
@@ -687,48 +921,360 @@ void main() {
     );
 
     testWidgets(
-      'AC: pending work order shows in Assigned to field with (pending)',
+      'AC: pending build_improvement shows ResourceIcons and omits (pending)',
       (WidgetTester tester) async {
-        final units = [
-          ...game.worldState.oldWorld.units,
-          ...game.worldState.newWorld.units,
-        ];
-        final idleCivilians = units.where(
-          (u) =>
-              u.ownerId == humanPlayerIdWithUnits &&
-              u.tileKey != null &&
-              _isCivilian(u) &&
-              u.currentWork == null,
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_pending_build',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'b1',
+                  type: 'Builder',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
         );
-        if (idleCivilians.isEmpty) return;
-        final idleCivilian = idleCivilians.first;
-
-        final pendingOrder = WorkOrder(
-          unitId: idleCivilian.id,
-          target: 'build_improvement',
-          targetTileKey: idleCivilian.tileKey!,
-        );
-        final ordersWithOne = Orders(
+        final orders = Orders(
           workOrdersByPlayerId: {
-            humanPlayerIdWithUnits: [pendingOrder],
+            human: [
+              WorkOrder(
+                unitId: 'b1',
+                target: 'build_improvement',
+                targetTileKey: tileKey,
+              ),
+            ],
           },
         );
         await tester.pumpWidget(
           buildPanel(
-            game: game,
-            humanPlayerId: humanPlayerIdWithUnits,
-            currentOrders: ordersWithOne,
+            game: miniGame,
+            humanPlayerId: human,
+            currentOrders: orders,
           ),
         );
         await tester.pumpAndSettle();
 
-        expect(find.textContaining('Assigned to:'), findsAtLeastNWidgets(1));
-        expect(find.textContaining('(pending)'), findsAtLeastNWidgets(1));
+        expect(find.textContaining('Assigned to:'), findsOneWidget);
+        expect(find.textContaining('(pending)'), findsNothing);
+        expect(
+          find.byWidgetPredicate(
+            (w) => w is ResourceIcon && w.commodityId == 'lumber',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.byWidgetPredicate(
+            (w) => w is ResourceIcon && w.commodityId == 'castIron',
+          ),
+          findsOneWidget,
+        );
       },
     );
 
     testWidgets(
-      'tile-scoped mode shows Tile action for selected civilian',
+      'AC: pending explore keeps (pending) and no ResourceIcon strip',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_pending_explore',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'e1',
+                  type: 'Explorer',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        final orders = Orders(
+          workOrdersByPlayerId: {
+            human: [
+              WorkOrder(
+                unitId: 'e1',
+                target: 'explore',
+                targetTileKey: 'oldWorld|p1|0|0',
+              ),
+            ],
+          },
+        );
+        await tester.pumpWidget(
+          buildPanel(
+            game: miniGame,
+            humanPlayerId: human,
+            currentOrders: orders,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('(pending)'), findsOneWidget);
+        expect(find.byType(ResourceIcon), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'AC: pending purchase_land shows treasury chip not ResourceIcon',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_pending_land',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'm1',
+                  type: 'Merchant',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: {tileKey: 'grain'},
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        final orders = Orders(
+          workOrdersByPlayerId: {
+            human: [
+              WorkOrder(
+                unitId: 'm1',
+                target: 'purchase_land',
+                targetTileKey: tileKey,
+              ),
+            ],
+          },
+        );
+        await tester.pumpWidget(
+          buildPanel(
+            game: miniGame,
+            humanPlayerId: human,
+            currentOrders: orders,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Treasury:'), findsOneWidget);
+        expect(find.textContaining('(pending)'), findsNothing);
+        expect(find.byType(ResourceIcon), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'AC: pending purchase_land without tile resource falls back to (pending)',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_pending_land_nores',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'm1',
+                  type: 'Merchant',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        final orders = Orders(
+          workOrdersByPlayerId: {
+            human: [
+              WorkOrder(
+                unitId: 'm1',
+                target: 'purchase_land',
+                targetTileKey: tileKey,
+              ),
+            ],
+          },
+        );
+        await tester.pumpWidget(
+          buildPanel(
+            game: miniGame,
+            humanPlayerId: human,
+            currentOrders: orders,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('(pending)'), findsOneWidget);
+        expect(find.textContaining('Treasury:'), findsNothing);
+      },
+    );
+
+    testWidgets('AC: pending build_rail shows steel and lumber icons', (
+      WidgetTester tester,
+    ) async {
+      const human = 'h1';
+      const tileKey = 'oldWorld|p1|0|0';
+      final miniGame = Game(
+        id: 'g_civ_pending_rail',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                displayName: 'Alpha',
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'r1',
+                type: 'Rail Builder',
+                ownerId: human,
+                locationProvinceId: 'oldWorld|p1',
+                tileKey: tileKey,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: human, displayName: 'Human', isHuman: true)],
+      );
+      final orders = Orders(
+        workOrdersByPlayerId: {
+          human: [
+            WorkOrder(
+              unitId: 'r1',
+              target: 'build_rail',
+              targetTileKey: tileKey,
+            ),
+          ],
+        },
+      );
+      await tester.pumpWidget(
+        buildPanel(game: miniGame, humanPlayerId: human, currentOrders: orders),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('(pending)'), findsNothing);
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is ResourceIcon && w.commodityId == 'lumber',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is ResourceIcon && w.commodityId == 'steel',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('AC: in-progress work row has no pending cost ResourceIcons', (
+      WidgetTester tester,
+    ) async {
+      const human = 'h1';
+      const tileKey = 'oldWorld|p1|0|0';
+      final miniGame = Game(
+        id: 'g_civ_working',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                displayName: 'Alpha',
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'b1',
+                type: 'Builder',
+                ownerId: human,
+                locationProvinceId: 'oldWorld|p1',
+                tileKey: tileKey,
+                status: UnitStatus.working,
+                currentWork: const CurrentWork(
+                  workTarget: 'build_improvement',
+                  tileKey: tileKey,
+                  totalTurns: 5,
+                  remainingTurns: 2,
+                ),
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: human, displayName: 'Human', isHuman: true)],
+      );
+      await tester.pumpWidget(buildPanel(game: miniGame, humanPlayerId: human));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('2/5'), findsOneWidget);
+      expect(find.byType(ResourceIcon), findsNothing);
+    });
+
+    testWidgets(
+      'tile-scoped mode: Tile then Train in header; no Tile on ListTiles',
       (WidgetTester tester) async {
         final units = [
           ...game.worldState.oldWorld.units,
@@ -744,17 +1290,6 @@ void main() {
         final scopedTileKey = civilianWithTile.first.tileKey!;
         final scopedUnitId = civilianWithTile.first.id;
         final bus = AppEventBus.create();
-
-        await tester.pumpWidget(
-          buildPanel(
-            game: game,
-            humanPlayerId: humanPlayerIdWithUnits,
-            bus: bus,
-            currentOrders: const Orders(),
-            availableWorkTargets: const {},
-          ),
-        );
-        await tester.pumpAndSettle();
 
         await tester.pumpWidget(
           MaterialApp(
@@ -774,7 +1309,108 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Civilian Units (Tile)'), findsOneWidget);
-        expect(find.text('Tile'), findsAtLeastNWidgets(1));
+        expect(find.text('Tile'), findsOneWidget);
+
+        final shellButtons = find.descendant(
+          of: find.byType(UnitsPanelShell),
+          matching: find.byType(CtNinePatchButton),
+        );
+        expect(
+          find.descendant(of: shellButtons.at(0), matching: find.text('Tile')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: shellButtons.at(1), matching: find.text('Train')),
+          findsOneWidget,
+        );
+
+        expect(
+          find.descendant(
+            of: find.byType(ListTile),
+            matching: find.text('Tile'),
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets('tile-scoped empty list: header Tile is disabled', (
+      WidgetTester tester,
+    ) async {
+      final bus = AppEventBus.create();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CivilianUnitsPanel(
+              game: game,
+              humanPlayerId: humanPlayerIdWithUnits,
+              bus: bus,
+              tileScopeTileKey:
+                  'oldWorld|no_civilian_units_on_this_province|0|0',
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Civilian Units (Tile)'), findsOneWidget);
+      expect(find.text('No civilian units'), findsOneWidget);
+      final tileButton = find.ancestor(
+        of: find.text('Tile'),
+        matching: find.byType(CtNinePatchButton),
+      );
+      expect(tester.widget<CtNinePatchButton>(tileButton).enabled, isFalse);
+    });
+
+    testWidgets(
+      'tile-scoped header Tile emits OpenMapTileDetailEvent for rendered tile',
+      (WidgetTester tester) async {
+        final units = [
+          ...game.worldState.oldWorld.units,
+          ...game.worldState.newWorld.units,
+        ];
+        final civilian = units.where(
+          (u) =>
+              u.ownerId == humanPlayerIdWithUnits &&
+              u.tileKey != null &&
+              _isCivilian(u),
+        );
+        if (civilian.isEmpty) return;
+        final u = civilian.first;
+        final rendered = u.assignedTileKey?.isNotEmpty == true
+            ? u.assignedTileKey!
+            : u.tileKey!;
+
+        final bus = AppEventBus.create();
+        OpenMapTileDetailEvent? captured;
+        final sub = bus.on<OpenMapTileDetailEvent>().listen((e) {
+          captured = e;
+        });
+        addTearDown(sub.cancel);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: CivilianUnitsPanel(
+                game: game,
+                humanPlayerId: humanPlayerIdWithUnits,
+                bus: bus,
+                tileScopeTileKey: rendered,
+                initialSelectedUnitId: u.id,
+              ),
+            ),
+          ),
+        );
+        // Avoid pumpAndSettle: nine-patch buttons may not settle in widget tests.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        captured = null;
+        await tester.tap(find.text('Tile'));
+        await tester.pump();
+        await tester.pump();
+        expect(captured, isNotNull);
+        expect(captured?.tileKey, rendered);
       },
     );
   });

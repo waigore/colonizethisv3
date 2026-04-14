@@ -1,13 +1,13 @@
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_data/package_logger.dart';
 
 import 'starting_resources_config.dart';
 
-final _log = dataLogger();
+final _log = packageLogger();
 
 /// Game setup parameters. SPEC/game/game-setup.md, SPEC/game/ruleset-config.md,
 /// SPEC/program/game-setup-pipeline.md.
 ///
-/// **MVP:** Program-level defaults and constructor/CLI fields only; no Base →
+/// **Current product:** Program-level defaults and constructor/CLI fields only; no Base →
 /// Difficulty → Scenario JSON merge (see ruleset-config.md, GitHub #57 / #58).
 class GameSetupConfig {
   GameSetupConfig({
@@ -22,6 +22,7 @@ class GameSetupConfig {
     this.seed = 42,
     this.startingResources = const StartingResourcesConfig(),
     this.enforceFairGpOldWorldAssignment = false,
+    this.preferredInitialMapZoomMultiplier,
     Set<String>? initTownRoadWiringRegionIds,
   }) : initTownRoadWiringRegionIds =
            initTownRoadWiringRegionIds ?? const {'oldWorld'},
@@ -33,7 +34,8 @@ class GameSetupConfig {
        assert(minorNationCount >= 0),
        assert(tribeCount >= 0),
        assert(minProvincesPerMinor >= 0),
-       assert(numProvincesNewWorld >= 1) {
+       assert(numProvincesNewWorld >= 1),
+       assert(seed >= 0) {
     _log.d(
       'GameSetupConfig created OW=$numProvincesOldWorld NW=$numProvincesNewWorld',
     );
@@ -72,6 +74,10 @@ class GameSetupConfig {
   /// per SPEC/game/game-setup.md. When false, use a single assignment pass with no
   /// repair (faster; a GP may own disconnected P–P components).
   final bool enforceFairGpOldWorldAssignment;
+
+  /// Optional explicit fit-relative map zoom multiplier (`m`) for fresh campaign
+  /// initialization. When null, setup uses pipeline default behavior.
+  final double? preferredInitialMapZoomMultiplier;
 
   /// Region ids (`oldWorld`, `newWorld`, …) where init runs **town → capital**
   /// road wiring on **owned tiles only** after §7d town assignment.

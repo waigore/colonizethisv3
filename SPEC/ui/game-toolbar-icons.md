@@ -27,7 +27,7 @@ The in-game screen (game_screen.dart) has a toolbar with buttons for Civilian Un
 
 **File naming:** `ui_icon_<icon_id>.png` in `app/assets/icons/`. Example: `ui_icon_diplomacy.png`. List `assets/icons/` in `pubspec.yaml` under `flutter: assets:` (directory entry is enough).
 
-**Loading (app):** Paths use `kAppIconAssetPrefix` (`assets/icons/`, `lib/config/app_assets.dart`). In-game and overlays use `StrictAssetIcon` (`lib/widgets/strict_asset_icon.dart`): missing or invalid PNGs throw `FlutterError` when the asset resolves. Flame `ResourceIconCache` loads `ui_icon_com_<resource_id>.png` from the same prefix and rethrows on any load/decode failure.
+**Loading (app):** Paths use `kAppIconAssetPrefix` (`assets/icons/32/`, `lib/config/app_constants.dart`, re-exported from `lib/config/app_assets.dart`). In-game and overlays use `StrictAssetIcon` (`lib/widgets/strict_asset_icon.dart`): missing or invalid PNGs throw `FlutterError` when the asset resolves. Flame `ResourceIconCache` loads `ui_icon_com_<resource_id>.png` from the 64px prefix (`kAppIcon64AssetPrefix`); toolbar uses the 32px prefix.
 
 **Style lock:** Must match the color palette and pixel style from `ui_main_menu_button.png` (per [main-menu.md](main-menu.md) § Color palette):
 - Frame: deep reddish-brown `#3E1F1A`–`#5A332C`

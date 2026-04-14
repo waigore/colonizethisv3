@@ -7,13 +7,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/cache.dart';
 import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
@@ -27,11 +25,6 @@ Future<void> _pumpPanelBuilt(WidgetTester tester) async {
 }
 
 /// Dialogs: `showDialog` from async bus listeners + route transition.
-Future<void> _pumpAfterDialogStep(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 120));
-}
-
 /// Tall surface so diplomacy rows and action buttons are on-screen without
 /// calling `ensureVisible` (avoids long scroll pump loops on [ListView]).
 Future<void> _bindTallTestSurface(WidgetTester tester) async {
@@ -107,23 +100,6 @@ class _EventHandlingWrapperState extends State<_EventHandlingWrapper> {
           ),
         );
       });
-    });
-    _openDialogSub = widget.bus.on<OpenDialogEvent>().listen((event) async {
-      final nav = widget.navigatorKey.currentState;
-      if (nav == null) return;
-      await showDialog<void>(
-        context: nav.context,
-        builder: (ctx) => AlertDialog(
-          title: Text('dialog:${event.dialogId}'),
-          content: const Text('opened-via-bus'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
     });
   }
 

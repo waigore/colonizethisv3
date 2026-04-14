@@ -1,0 +1,353 @@
+<section class="module" id="module-6" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+
+    <header class="module-header animate-in">
+      <span class="module-number">06</span>
+      <h1 class="module-title">The Fog of War</h1>
+      <p class="module-subtitle">The AI reads from the same "newspaper" you do — no cheating allowed.</p>
+    </header>
+
+    <div class="module-body">
+
+      <!-- SCREEN 1: Opening -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 1 of 6</div>
+        <h2 class="screen-heading">The Newspaper Metaphor</h2>
+
+        <p class="screen-lead">The fog of war is like a newspaper. You only know what's been reported to you. And the AI reads from the same newspaper.</p>
+
+        <div class="icon-rows stagger-children" style="margin-top: var(--space-8)">
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-4)">📰</div>
+            <div>
+              <strong>The Newspaper = PlayerView</strong>
+              <p>A filtered projection of what each player knows</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-2)">🧑</div>
+            <div>
+              <strong>You = The Reader</strong>
+              <p>Your UI sees only what PlayerView reveals</p>
+            </div>
+          </div>
+          <div class="icon-row">
+            <div class="icon-circle" style="background: var(--color-actor-3)">🤖</div>
+            <div>
+              <strong>The AI = Also a Reader</strong>
+              <p>The AI has no privileged access — it sees what you see</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-8)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Key Insight</strong>
+            <p><span class="term" data-definition="PlayerView is a read-only snapshot of what a player knows — it's not the real game state, just what each side is allowed to know.">PlayerView</span> is a projection, not the real state. Both UI and AI read from it. The AI cannot see through the fog any more than you can.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: Architecture Diagram -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 2 of 6</div>
+        <h2 class="screen-heading">How Visibility Flows</h2>
+
+        <p>The real game state sits at the center. PlayerView wraps it with a visibility filter.</p>
+
+        <div class="arch-diagram" style="margin-top: var(--space-6)">
+          <div class="arch-zone arch-zone-center" style="border: 2px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-6); margin-bottom: var(--space-4);">
+            <h4 class="arch-zone-label" style="text-align: center; color: var(--color-text-secondary);">WorldState (The Real State)</h4>
+            <p style="text-align: center; font-size: var(--text-sm); color: var(--color-text-muted);">Everything about the game — all players, all units, all provinces</p>
+          </div>
+          <div style="text-align: center; font-size: var(--text-2xl); color: var(--color-accent); margin: var(--space-4) 0;">↓</div>
+          <div class="arch-zone arch-zone-center" style="border: 3px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-6); background: var(--color-accent-light);">
+            <h4 class="arch-zone-label" style="text-align: center; color: var(--color-accent);">PlayerView (The Filter)</h4>
+            <p style="text-align: center; font-size: var(--text-sm);">Wraps WorldState with visibility rules — hides what you can't see</p>
+          </div>
+          <div style="display: flex; justify-content: space-around; margin-top: var(--space-4);">
+            <div class="arch-component" style="text-align: center;">
+              <div style="font-size: 2rem;">🧑</div>
+              <span>Player UI</span>
+            </div>
+            <div class="arch-component" style="text-align: center;">
+              <div style="font-size: 2rem;">🤖</div>
+              <span>AI Brain</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: var(--space-6)">
+          <div class="callout-icon">ℹ️</div>
+          <div class="callout-content">
+            <strong class="callout-title">No Cheating Architecture</strong>
+            <p>Both UI and AI call the same <span class="term" data-definition="A getter is a function that retrieves a value — like asking 'what can I see at this tile?'">getter</span> to ask about visibility. There's no special "AI mode" that reveals more.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: Four Visibility Levels -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 3 of 6</div>
+        <h2 class="screen-heading">Four Levels of Knowing</h2>
+
+        <p>PlayerView tracks four <span class="term" data-definition="A visibility level describes how much you can see in a given tile — from nothing to everything.">visibility levels</span>. Each tile on the map has one.</p>
+
+        <div class="pattern-cards stagger-children" style="margin-top: var(--space-6)">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-text-muted)">
+            <div class="pattern-icon" style="background: var(--color-text-muted)">?</div>
+            <h4 class="pattern-title">Unknown</h4>
+            <p class="pattern-desc">You've never been here. No information at all — the tile might as well not exist on your map.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">👁️</div>
+            <h4 class="pattern-title">Revealed</h4>
+            <p class="pattern-desc">You saw it once, but it's faded. You remember something was there, but not what's there now.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🌫️</div>
+            <h4 class="pattern-title">Fogged</h4>
+            <p class="pattern-desc">You know the province exists and whose territory it is. But you can't see inside — no units, no buildings.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-success)">
+            <div class="pattern-icon" style="background: var(--color-success)">✓</div>
+            <h4 class="pattern-title">Fully Visible</h4>
+            <p class="pattern-desc">You can see everything — typically your own territory or allies. Units, buildings, everything.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-warning" style="margin-top: var(--space-6)">
+          <div class="callout-icon">⚠️</div>
+          <div class="callout-content">
+            <strong class="callout-title">Fogged ≠ Empty</strong>
+            <p>A fogged province might hide a massive army. You know it's enemy territory, but you can't see what's inside. That's why the AI can still attack fogged provinces — it might know something you don't.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: AI Doesn't Cheat -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 4 of 6</div>
+        <h2 class="screen-heading">Can the AI Cheat?</h2>
+
+        <p>No. The AI uses the exact same <span class="term" data-definition="PlayerView is the same filtered view that your UI uses — it's how the game decides what's fair to show.">PlayerView</span> that your UI reads from. No back door.</p>
+
+        <div class="step-cards stagger-children" style="margin-top: var(--space-6)">
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <strong>AI asks: "What's at tile X?"</strong>
+              <p>The AI calls visibilityForTile(tileX) — the same function your UI calls.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <strong>PlayerView returns: fogged</strong>
+              <p>The filter says "you know the province exists but can't see units."</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <strong>AI makes decisions with incomplete info</strong>
+              <p>The AI might guess there's an army in there, but it can't know for sure — just like you.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-6)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Fairness by Architecture</strong>
+            <p>This is why ColonizeThis is fair. The AI isn't cheating behind a curtain — it's reading the same newspaper you are. When it "surprises" you with an attack, it's because it saw something in its own territory that you couldn't see from yours.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Visual File Tree -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 5 of 6</div>
+        <h2 class="screen-heading">What Prospecting Reveals</h2>
+
+        <p><span class="term" data-definition="Prospecting is like sending a scout to check a tile for valuable resources — you pay a cost, and the game reveals what's hidden.">Prospecting</span> reveals hidden resources in unknown or fogged tiles. Without it, you can't see what's beneath the surface.</p>
+
+        <div class="file-tree" style="margin-top: var(--space-6); background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6);">
+          <div class="ft-folder open">
+            <span class="ft-name">WorldState</span>
+            <span class="ft-desc">The full picture — everything is visible here</span>
+            <div class="ft-children">
+              <div class="ft-folder">
+                <span class="ft-name">provincesById</span>
+                <span class="ft-desc">All provinces, with or without hidden resources</span>
+              </div>
+              <div class="ft-folder">
+                <span class="ft-name">tiles</span>
+                <span class="ft-desc">Every tile, including unexplored ones</span>
+              </div>
+            </div>
+          </div>
+          <div class="ft-folder open" style="margin-top: var(--space-4);">
+            <span class="ft-name">PlayerView</span>
+            <span class="ft-desc">What you know — filtered by visibility and prospecting</span>
+            <div class="ft-children">
+              <div class="ft-folder">
+                <span class="ft-name">prospectedTiles</span>
+                <span class="ft-desc">Set of tiles you've scouted — reveals gold, silver, etc.</span>
+              </div>
+              <div class="ft-folder">
+                <span class="ft-name">visibilityByTile</span>
+                <span class="ft-desc">Map of tile → visibility level (unknown/revealed/fogged/fullyVisible)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pattern-cards stagger-children" style="margin-top: var(--space-6)">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">🥇</div>
+            <h4 class="pattern-title">Gold</h4>
+            <p class="pattern-desc">Found by prospecting. Adds to your treasury.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">🥈</div>
+            <h4 class="pattern-title">Silver</h4>
+            <p class="pattern-desc">Found by prospecting. Less valuable than gold but still useful.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">❓</div>
+            <h4 class="pattern-title">Hidden Resources</h4>
+            <p class="pattern-desc">Unknown resources only revealed through prospecting.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 6: Quiz -->
+      <section class="screen animate-in">
+        <div class="screen-label">Screen 6 of 6</div>
+        <h2 class="screen-heading">Quiz: Fog of War Scenarios</h2>
+
+        <div class="quiz-container" id="quiz-module6">
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="Correct — the AI sees through its own PlayerView, not yours. If a tile is fogged for the AI (because it's the AI's territory you can't see), the AI also can't see enemy units there. Fog applies to everyone."
+               data-explanation-wrong="Actually, the AI can only see what its own PlayerView reveals. If a tile is fogged from the AI's perspective, the AI can't see enemy units there either — even if you can't see them from your perspective.">
+            <h3 class="quiz-question">You can't see an enemy army in a fogged province. Could the AI see it?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>No — the AI uses the same fog rules</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Yes — AI can see everything</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Only if it's in the AI's own territory</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="Right — if the tile was prospected, it's in prospectedTiles. Both AI and player share the same prospectedTiles data, so the AI would know about the gold."
+               data-explanation-wrong="Actually, if you prospected a tile and found gold, the AI can see that too. Prospecting results are visible to both sides through PlayerView — the AI knows what you've discovered.">
+            <h3 class="quiz-question">You prospected a tile and found gold. Can the AI see the gold?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>No — prospecting is private to you</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Yes — prospecting results are in PlayerView</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Only if the AI also prospects that tile</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="Exactly — revealed means you saw it once and it faded. Unknown means you've never seen it at all. If a province went from fogged to unknown, something unusual happened (like the province being destroyed or leaving your knowledge entirely)."
+               data-explanation-wrong="Not quite. The fog of war levels have specific meanings: fogged means you know the province exists, unknown means you've never seen it. If something went from fogged to unknown, that's unusual — it means the province left your knowledge entirely (destroyed, abandoned, etc.).">
+            <h3 class="quiz-question">A province went from fogged to unknown. What happened?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The AI conquered it</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>You moved your army there</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>The province left your knowledge entirely</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module6')">Check Answers</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module6')">Try Again</button>
+        </div>
+      </section>
+
+      <!-- FINAL: Closing Recap -->
+      <section class="screen animate-in" style="background: var(--color-bg-warm); margin: 0 calc(-1 * var(--space-6)); padding: var(--space-12) var(--space-6);">
+        <h2 class="screen-heading" style="text-align: center;">The Full Picture</h2>
+
+        <p style="text-align: center; max-width: 600px; margin: 0 auto;">Let's tie it all together. Remember the factory from Module 1? Now you know how the whole machine fits together.</p>
+
+        <div class="step-cards stagger-children" style="max-width: 600px; margin: var(--space-8) auto;">
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <strong>The Factory Runs in Phases</strong>
+              <p>Every turn, 13 phases run in order — extraction before consumption, movement before combat.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <strong>Four Packages, One-Way Doors</strong>
+              <p>Models is data, Logic is rules, AI is decisions, Map is generation. AI can ask Logic, but Logic never asks AI.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <strong>Orders Merge with You Winning</strong>
+              <p>Your orders and AI orders flow into a merge function. When they conflict, your orders always win.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <strong>Everyone Reads the Same Newspaper</strong>
+              <p>PlayerView is the filtered view both UI and AI use. The AI can't see through the fog any more than you can.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="max-width: 600px; margin: var(--space-8) auto;">
+          <div class="callout-icon">🏭</div>
+          <div class="callout-content">
+            <strong class="callout-title">The Factory, End to End</strong>
+            <p>You issue orders → they merge with AI orders (you win) → the TurnResolver processes 13 phases in order → visibility filters what each side knows → the AI makes decisions from the same filtered view you do. Fair, deterministic — no chaos dice, no secret back doors.</p>
+          </div>
+        </div>
+
+        <p style="text-align: center; color: var(--color-text-muted); margin-top: var(--space-8);">You've completed the Inside ColonizeThis course.</p>
+      </section>
+
+    </div>
+  </div>
+</section>

@@ -7,7 +7,6 @@ import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
@@ -18,7 +17,8 @@ import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_map/colonizethis_map.dart' show InitGameMapViewData;
+import 'package:colonizethis_map/colonizethis_map.dart'
+    show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -39,36 +39,35 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  _gameShellOverrides({
+  gameShellOverrides({
     required Game game,
     required InitGameMapViewData? mapViewData,
-  }) =>
-      [
-        gamesBoxProvider.overrideWith((ref) => gamesBox),
-        gameServiceProvider.overrideWith(
-          (ref) => GameService(gamesBox, GameSaveAdapter()),
-        ),
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
-        ),
-        mapViewDataProvider.overrideWith((ref) => mapViewData),
-        gameIdsWithIntroShownProvider.overrideWith(
-          () => GameIdsWithIntroShownNotifier({game.id}),
-        ),
-        appEventBusProvider.overrideWith((ref) {
-          final bus = AppEventBus.create();
-          ref.onDispose(bus.dispose);
-          return bus;
-        }),
-        homeFleetCargoSummaryProvider.overrideWith(
-          (ref) => const HomeFleetCargoSummary(used: 0, capacity: 0),
-        ),
-      ];
+  }) => [
+    gamesBoxProvider.overrideWith((ref) => gamesBox),
+    gameServiceProvider.overrideWith(
+      (ref) => GameService(gamesBox, GameSaveAdapter()),
+    ),
+    currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+    currentOrdersProvider.overrideWith(
+      () => CurrentOrdersNotifier(const Orders()),
+    ),
+    mapViewDataProvider.overrideWith((ref) => mapViewData),
+    gameIdsWithIntroShownProvider.overrideWith(
+      () => GameIdsWithIntroShownNotifier({game.id}),
+    ),
+    appEventBusProvider.overrideWith((ref) {
+      final bus = AppEventBus.create();
+      ref.onDispose(bus.dispose);
+      return bus;
+    }),
+    homeFleetCargoSummaryProvider.overrideWith(
+      (ref) => const HomeFleetCargoSummary(used: 0, capacity: 0),
+    ),
+  ];
 
   Widget buildGameScreen({required double width, required double height}) {
     return ProviderScope(
-      overrides: _gameShellOverrides(
+      overrides: gameShellOverrides(
         game: debugResult.game,
         mapViewData: debugResult.mapViewData,
       ),
@@ -91,7 +90,7 @@ void main() {
     TargetPlatform platform = TargetPlatform.android,
   }) {
     return ProviderScope(
-      overrides: _gameShellOverrides(
+      overrides: gameShellOverrides(
         game: debugResult.game,
         mapViewData: debugResult.mapViewData,
       ),
@@ -138,7 +137,7 @@ void main() {
         );
         expect(iconFinder, findsOneWidget);
         final iconWidget = tester.widget<StrictAssetIcon>(iconFinder);
-        expect(iconWidget.assetPath, 'assets/icons/ui_icon_cargo_hold.png');
+        expect(iconWidget.assetPath, 'assets/icons/32/ui_icon_cargo_hold.png');
       },
       timeout: const Timeout(Duration(seconds: 15)),
     );
@@ -481,7 +480,7 @@ void main() {
   });
 
   group('GameScreen — pause menu and victory overlay', () {
-    Widget _buildGameScreenWithPauseMenu({required Game game}) {
+    Widget buildGameScreenWithPauseMenu({required Game game}) {
       return ProviderScope(
         overrides: [
           currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
@@ -515,7 +514,7 @@ void main() {
       'pause menu opens bottom sheet and shows debug log entry',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _buildGameScreenWithPauseMenu(game: debugResult.game),
+          buildGameScreenWithPauseMenu(game: debugResult.game),
         );
         await tester.pump();
 
@@ -541,7 +540,7 @@ void main() {
 
         await tester.pumpWidget(
           ProviderScope(
-            overrides: _gameShellOverrides(
+            overrides: gameShellOverrides(
               game: victoryGame,
               mapViewData: debugResult.mapViewData,
             ),

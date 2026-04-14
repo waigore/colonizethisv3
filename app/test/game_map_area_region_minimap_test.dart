@@ -17,7 +17,6 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -71,7 +70,7 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  _mapAreaProviderOverrides({
+  mapAreaProviderOverrides({
     required AppEventBus bus,
     required Game game,
     required InitGameMapViewData mapViewData,
@@ -97,7 +96,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _mapAreaProviderOverrides(
+        overrides: mapAreaProviderOverrides(
           bus: bus,
           game: game,
           mapViewData: init.mapViewData,
@@ -170,7 +169,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _mapAreaProviderOverrides(
+        overrides: mapAreaProviderOverrides(
           bus: bus,
           game: init.game,
           mapViewData: init.mapViewData,
@@ -222,7 +221,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _mapAreaProviderOverrides(
+        overrides: mapAreaProviderOverrides(
           bus: bus,
           game: init.game,
           mapViewData: init.mapViewData,
@@ -282,7 +281,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _mapAreaProviderOverrides(
+        overrides: mapAreaProviderOverrides(
           bus: bus,
           game: init.game,
           mapViewData: init.mapViewData,
@@ -344,7 +343,7 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: _mapAreaProviderOverrides(
+          overrides: mapAreaProviderOverrides(
             bus: bus,
             game: game,
             mapViewData: init.mapViewData,

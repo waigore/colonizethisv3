@@ -46,8 +46,9 @@ void main() {
     );
   });
 
-  Widget _buildScreen({
+  Widget buildScreen({
     Map<String, int>? initialDesiredOutput,
+    Orders initialOrders = const Orders(),
     double width = 800,
     double height = 500,
   }) {
@@ -55,6 +56,9 @@ void main() {
       overrides: [
         currentGameProvider.overrideWith(
           () => CurrentGameNotifier(isolatedGame),
+        ),
+        currentOrdersProvider.overrideWith(
+          () => CurrentOrdersNotifier(initialOrders),
         ),
         appEventBusProvider.overrideWith((ref) {
           final bus = AppEventBus.create();
@@ -86,7 +90,7 @@ void main() {
       'preseeded provider state is reflected in Available net changes',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _buildScreen(initialDesiredOutput: {'lumber_from_timber': 5}),
+          buildScreen(initialDesiredOutput: {'lumber_from_timber': 5}),
         );
         await pumpSettleCapped(tester);
 
@@ -97,82 +101,113 @@ void main() {
       },
     );
 
-    testWidgets(
-      'moving a slider updates derived values via provider rebuild',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(_buildScreen());
-        await pumpSettleCapped(tester);
-
-        expect(find.textContaining('Timber:'), findsOneWidget);
-
-        final sliders = find.byType(CtSlider);
-        expect(sliders, findsNWidgets(ProductionRecipesCatalog.all.length));
-
-        await tester.drag(sliders.first, const Offset(80, 0));
-        await pumpSyncFrames(tester);
-
-        expect(find.textContaining('Timber:'), findsOneWidget);
-        expect(find.textContaining(RegExp(r'\(|\+|-')), findsWidgets);
-      },
-    );
-
-    testWidgets('Breakdown dialog shows phase columns and live-updates from provider', (
+    testWidgets('moving a slider updates derived values via provider rebuild', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(_buildScreen());
+      await tester.pumpWidget(buildScreen());
       await pumpSettleCapped(tester);
 
-      await tester.tap(find.text('Breakdown'));
-      await pumpSettleCapped(
-        tester,
-        timeout: const Duration(milliseconds: 800),
-      );
+      expect(find.textContaining('Timber:'), findsOneWidget);
 
-      expect(find.text('Commodity breakdown'), findsOneWidget);
-      final tableFinder = find.byType(DataTable);
-      expect(tableFinder, findsOneWidget);
-      expect(
-        find.descendant(of: tableFinder, matching: find.text('Extraction')),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: tableFinder,
-          matching: find.text('Riches to treasury'),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: tableFinder, matching: find.text('Consumption')),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: tableFinder, matching: find.text('Production')),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: tableFinder, matching: find.text('Total')),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: tableFinder,
-          matching: find.byWidgetPredicate(
-            (w) => w is ResourceIcon && w.commodityId == 'grain',
-          ),
-        ),
-        findsOneWidget,
-      );
+      final sliders = find.byType(CtSlider);
+      expect(sliders, findsNWidgets(ProductionRecipesCatalog.all.length));
 
-      final screenContext = tester.element(find.byType(ProductionScreen));
-      final container = ProviderScope.containerOf(screenContext);
-      container
-          .read(productionDesiredOutputProvider.notifier)
-          .replaceAll({'lumber_from_timber': 2});
+      await tester.drag(sliders.first, const Offset(80, 0));
       await pumpSyncFrames(tester);
 
-      expect(find.text('Commodity breakdown'), findsOneWidget);
-      expect(find.text('+2'), findsWidgets);
+      expect(find.textContaining('Timber:'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'\(|\+|-')), findsWidgets);
     });
+
+    testWidgets('pending build orders affect Available net deltas', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildScreen(
+          initialOrders: const Orders(
+            buildUnitOrdersByPlayerId: {
+              'test_gp_full': [
+                BuildUnitOrder(
+                  unitType: 'Builder',
+                  isMilitary: false,
+                  spawnProvinceId: 'ow|prov-1',
+                ),
+              ],
+            },
+          ),
+        ),
+      );
+      await pumpSettleCapped(tester);
+
+      expect(find.textContaining('Paper:'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'\(-2\)')), findsOneWidget);
+    });
+
+    testWidgets(
+      'Breakdown dialog shows phase columns and live-updates from provider',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildScreen());
+        await pumpSettleCapped(tester);
+
+        await tester.tap(find.text('Breakdown'));
+        await pumpSettleCapped(
+          tester,
+          timeout: const Duration(milliseconds: 800),
+        );
+
+        expect(find.text('Commodity breakdown'), findsOneWidget);
+        final tableFinder = find.byType(DataTable);
+        expect(tableFinder, findsOneWidget);
+        expect(
+          find.descendant(of: tableFinder, matching: find.text('Extraction')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: tableFinder,
+            matching: find.text('Pending build costs'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: tableFinder,
+            matching: find.text('Riches to treasury'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: tableFinder, matching: find.text('Consumption')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: tableFinder, matching: find.text('Production')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: tableFinder, matching: find.text('Total')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: tableFinder,
+            matching: find.byWidgetPredicate(
+              (w) => w is ResourceIcon && w.commodityId == 'grain',
+            ),
+          ),
+          findsOneWidget,
+        );
+
+        final screenContext = tester.element(find.byType(ProductionScreen));
+        final container = ProviderScope.containerOf(screenContext);
+        container.read(productionDesiredOutputProvider.notifier).replaceAll({
+          'lumber_from_timber': 2,
+        });
+        await pumpSyncFrames(tester);
+
+        expect(find.text('Commodity breakdown'), findsOneWidget);
+        expect(find.text('+2'), findsWidgets);
+      },
+    );
   });
 }

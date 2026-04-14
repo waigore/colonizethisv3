@@ -4,6 +4,7 @@ import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -173,7 +174,19 @@ void main() {
     await tester.tap(firstPlus);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.close));
+    final shellScrollable = find.descendant(
+      of: find.byType(CtDialogShell),
+      matching: find.byType(Scrollable),
+    );
+    final closeButton = find.byIcon(Icons.close);
+    await tester.dragUntilVisible(
+      closeButton,
+      shellScrollable,
+      const Offset(0, -120),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(closeButton);
+    await tester.tap(closeButton);
     await tester.pumpAndSettle();
 
     expect(capturedOrders, isNotNull);

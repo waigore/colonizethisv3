@@ -30,5 +30,14 @@ void main() {
         0,
       );
     });
+
+    test('returns 1000 when money_lending and banking are unlocked', () {
+      expect(
+        maxDebtForPlayer(
+          player(const {'money_lending': true, 'banking': true}),
+        ),
+        1000,
+      );
+    });
   });
 }

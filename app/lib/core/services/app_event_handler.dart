@@ -23,13 +23,15 @@
 import 'dart:async';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/routes.dart';
 import '../../config/constants.dart';
+import '../../config/ct_e2e.dart';
+import '../../config/ct_e2e_last_panel_snapshot.dart';
 import 'subscription_tracker.dart';
 import '../../features/game/widgets/civilian_units_panel.dart';
 import '../../features/game/widgets/military_units_panel.dart';
@@ -42,7 +44,7 @@ import '../../providers/games_provider.dart';
 typedef DialogBuilder =
     Widget Function(BuildContext context, Map<String, Object?>? params);
 
-final _log = appLogger('event');
+final _log = packageLogger('event');
 
 class AppEventHandler {
   AppEventHandler({
@@ -264,7 +266,12 @@ class AppEventHandler {
           );
         },
       ),
-    ).whenComplete(() => _bus.emit(const UnitsPanelClosedEvent('civilian')));
+    ).whenComplete(() {
+      if (kCtE2EEnabled) {
+        updateCtE2eCivilianPanelSnapshotIfEnabled(null);
+      }
+      _bus.emit(const UnitsPanelClosedEvent('civilian'));
+    });
   }
 
   Future<void> _openMilitaryUnitsPanel(
@@ -319,10 +326,20 @@ class AppEventHandler {
             bus: bus,
             topology: mapData?.combinedTopology ?? const MapTopology(),
             draftOrders: draftOrders,
+            tileMapByRegion: mapData?.tileMapByRegion,
+            topologyByRegion: mapData?.topologyByRegion,
+            locationScopeKey: event.locationScopeKey,
+            initialSelectedFleetId: event.initialSelectedFleetId,
+            tileScopeTileKey: event.tileScopeTileKey,
           );
         },
       ),
-    ).whenComplete(() => _bus.emit(const UnitsPanelClosedEvent('naval')));
+    ).whenComplete(() {
+      if (kCtE2EEnabled) {
+        updateCtE2eNavalPanelSnapshotIfEnabled(null);
+      }
+      _bus.emit(const UnitsPanelClosedEvent('naval'));
+    });
   }
 
   String _humanPlayerId(Game game) {

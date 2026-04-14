@@ -126,8 +126,8 @@ void main() {
         provinceId: 'oldWorld|P9',
         regionId: 'oldWorld',
         defenderFactionId: 'd',
-        defenderUnitIds: const [],
-        attackers: const [
+        defenderUnitIds: [],
+        attackers: [
           AttackingSide(factionId: 'a', unitIds: ['u1']),
         ],
         fortLevel: 0,

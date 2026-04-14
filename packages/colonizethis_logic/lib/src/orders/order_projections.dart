@@ -1,14 +1,13 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../economy/economy_production.dart';
 import '../constants.dart';
 import '../world/unit_lookup.dart';
 import 'projected_effects.dart';
 import '../turn/turn_resolver.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Projects effects of unresolved orders. SPEC/program/order-projections.md.
 /// Dry-run of resolveTurnForGame; no world state mutation.

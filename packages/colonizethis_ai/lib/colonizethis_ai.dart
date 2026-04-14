@@ -15,6 +15,7 @@ export 'src/economy_planner.dart';
 export 'src/full_ai_planner.dart';
 export 'src/goal_manager.dart';
 export 'src/hidden_agenda.dart';
+export 'src/ai_validation_exception.dart';
 export 'src/mood_state_machine.dart';
 export 'src/perception.dart';
 export 'src/strategic_ai.dart';

@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
-final _homeFleetCargoLog = appLogger('home_fleet_cargo');
+final _homeFleetCargoLog = packageLogger('home_fleet_cargo');
 
 class HomeFleetCargoSummary {
   const HomeFleetCargoSummary({

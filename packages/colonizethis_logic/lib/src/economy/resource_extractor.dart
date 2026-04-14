@@ -1,12 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/connectivity_resolver.dart';
 import '../world/province_lookup.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Per-player extraction totals: land (same region as capital) vs overseas.
 class ExtractionTotals {
@@ -14,6 +14,23 @@ class ExtractionTotals {
 
   final Map<CommodityId, int> land;
   final Map<CommodityId, int> overseas;
+}
+
+/// Tile-scoped extraction contribution used by map overlays and previews.
+class TileExtractionContribution {
+  const TileExtractionContribution({
+    required this.tileKey,
+    required this.commodityId,
+    required this.units,
+    required this.isLandRelativeToCapital,
+  });
+
+  final String tileKey;
+  final CommodityId commodityId;
+  final int units;
+
+  /// True when tile region matches player's capital region (land bucket).
+  final bool isLandRelativeToCapital;
 }
 
 /// Computes per-player extraction from connected tiles. SPEC/game/extraction-and-improvements.
@@ -31,6 +48,7 @@ Map<String, ExtractionTotals> computeExtraction({
   required Map<String, TileMapResult> tileMapByRegion,
   required Map<String, ConnectivityResult> connectivityResult,
   int Function(String playerId) techCapForPlayer = _defaultTechCap,
+  int Function(String playerId, String resourceId)? techCapForPlayerAndResource,
 
   /// When set, only these tile keys contribute (must still be in [ConnectivityResult.connected]).
   /// Used by tests (e.g. Great Power bootstrap farms) without duplicating extraction rules.
@@ -46,7 +64,6 @@ Map<String, ExtractionTotals> computeExtraction({
     final portTileKeys = game.worldState.portsByProvinceSeaboard.values.toSet();
     final cap = player.capitalTile;
     final capitalRegionId = cap?.regionId;
-    final techCap = techCapForPlayer(player.id);
 
     final landTotals = <CommodityId, int>{};
     final overseasTotals = <CommodityId, int>{};
@@ -58,81 +75,31 @@ Map<String, ExtractionTotals> computeExtraction({
       if (restrictToTileKeys != null && !restrictToTileKeys.contains(tileKey)) {
         continue;
       }
-      final parts = tileKey.split('|');
-      if (parts.length != 4) continue;
-      final regionId = parts[0];
-      final x = int.tryParse(parts[2]) ?? -1;
-      final y = int.tryParse(parts[3]) ?? -1;
-      if (x < 0 || y < 0) continue;
-
-      final map = tileMapByRegion[regionId];
-      if (map == null) continue;
-
-      final resource = map.resourceAt(x, y);
-      if (resource == null) continue;
-
-      final commodityId = _resourceToCommodityId(resource);
-      final isMineral = kMineralResourceIds.contains(commodityId);
-
-      // Minerals only from prospected tiles. SPEC/program/fog-and-exploration-resolution.md.
-      if (isMineral && !prospected.contains(tileKey)) {
+      final contribution = computeTileExtractionContributionForPlayer(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        player: player,
+        tileKey: tileKey,
+        connectedTileKeys: connected,
+        pathTransportCap: pathTransportCap,
+        connectedByRoadRule: roadRuleTiles,
+        portTileKeys: portTileKeys,
+        prospectedTileKeys: prospected,
+        capitalRegionId: capitalRegionId,
+        techCapForPlayer: techCapForPlayer,
+        techCapForPlayerAndResource: techCapForPlayerAndResource,
+      );
+      if (contribution == null) {
         continue;
       }
-      // Province lookup must be region-scoped. SPEC/game/world-model-identity.md.
-      final provinceId = '$regionId|${parts[1]}';
-      final regionData = regionDataForId(game.worldState, regionId);
-      final province = regionData?.provinces
-          .where((p) => p.id == provinceId)
-          .firstOrNull;
-      if (regionData == null || province == null) {
-        final msg =
-            'extraction province missing tileKey=$tileKey provinceId=$provinceId '
-            '(region-scoped lookup failed; SPEC/game/world-model-identity.md)';
-        _log.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
-        continue;
-      }
-      final townDevelopmentCap = province.townDevelopmentLevel;
-      final townTileKey = province?.townTileKey;
-      final townTileIsPort =
-          townTileKey != null && portTileKeys.contains(townTileKey);
 
-      final improvementLevel = game.worldState.tileState
-          .improvementLevel(tileKey)
-          .clamp(0, 4);
-      final roadLevel = game.worldState.tileState.roadLevel(tileKey);
-      final isPort = portTileKeys.contains(tileKey);
-      final tileTransportLevel = isPort ? 4 : (roadLevel > 0 ? roadLevel : 0);
-      final pathCap = pathTransportCap[tileKey] ?? tileTransportLevel;
-
-      final production =
-          (improvementLevel < techCap ? improvementLevel : techCap).clamp(0, 4);
-      var effective = (production < pathCap ? production : pathCap).clamp(0, 4);
-
-      final isCapitalProvince = provinceId == player.capitalProvinceId;
-      final usesRoadRule = roadRuleTiles.contains(tileKey);
-      if (isCapitalProvince) {
-        effective =
-            (effective < townDevelopmentCap ? effective : townDevelopmentCap)
-                .clamp(0, 4);
-      } else if (usesRoadRule) {
-        // Non-capital + Road rule: town development does not cap yield.
+      if (contribution.isLandRelativeToCapital) {
+        landTotals[contribution.commodityId] =
+            (landTotals[contribution.commodityId] ?? 0) + contribution.units;
       } else {
-        // Town rule only (non-capital).
-        if (townTileIsPort) {
-          effective =
-              (effective < townDevelopmentCap ? effective : townDevelopmentCap)
-                  .clamp(0, 4);
-        }
-      }
-      final effectiveCapped = effective;
-      if (effectiveCapped <= 0) continue;
-
-      if (regionId == capitalRegionId) {
-        landTotals[commodityId] =
-            (landTotals[commodityId] ?? 0) + effectiveCapped;
-      } else {
-        overseasTotals[commodityId] =
-            (overseasTotals[commodityId] ?? 0) + effectiveCapped;
+        overseasTotals[contribution.commodityId] =
+            (overseasTotals[contribution.commodityId] ?? 0) +
+            contribution.units;
       }
     }
 
@@ -159,6 +126,117 @@ Map<String, ExtractionTotals> computeExtraction({
     'extraction compute end players=${out.length} landTotal=$landSum overseasTotal=$overseasSum',
   );
   return out;
+}
+
+/// Computes per-tile extraction contribution for one player's connected tile.
+///
+/// Returns null when the tile contributes no extraction units (not connected,
+/// invalid tile key, missing map/province/resource, mineral not prospected, or
+/// computed effective units <= 0).
+TileExtractionContribution? computeTileExtractionContributionForPlayer({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Player player,
+  required String tileKey,
+  required Set<String> connectedTileKeys,
+  required Map<String, int> pathTransportCap,
+  required Set<String> connectedByRoadRule,
+  required Set<String> portTileKeys,
+  required Set<String> prospectedTileKeys,
+  required String? capitalRegionId,
+  int Function(String playerId) techCapForPlayer = _defaultTechCap,
+  int Function(String playerId, String resourceId)? techCapForPlayerAndResource,
+}) {
+  if (!connectedTileKeys.contains(tileKey)) {
+    return null;
+  }
+  final parts = tileKey.split('|');
+  if (parts.length != 4) {
+    return null;
+  }
+  final regionId = parts[0];
+  final x = int.tryParse(parts[2]) ?? -1;
+  final y = int.tryParse(parts[3]) ?? -1;
+  if (x < 0 || y < 0) {
+    return null;
+  }
+
+  final map = tileMapByRegion[regionId];
+  if (map == null) {
+    return null;
+  }
+
+  final resource = map.resourceAt(x, y);
+  if (resource == null) {
+    return null;
+  }
+
+  final commodityId = _resourceToCommodityId(resource);
+  final techCap =
+      techCapForPlayerAndResource?.call(player.id, commodityId) ??
+      techCapForPlayer(player.id);
+  final isMineral = kMineralResourceIds.contains(commodityId);
+  if (isMineral && !prospectedTileKeys.contains(tileKey)) {
+    return null;
+  }
+
+  // Province lookup must be region-scoped. SPEC/game/world-model-identity.md.
+  final provinceId = '$regionId|${parts[1]}';
+  final regionData = regionDataForId(game.worldState, regionId);
+  final province = regionData?.provinces
+      .where((p) => p.id == provinceId)
+      .firstOrNull;
+  if (regionData == null || province == null) {
+    final msg =
+        'extraction province missing tileKey=$tileKey provinceId=$provinceId '
+        '(region-scoped lookup failed; SPEC/game/world-model-identity.md)';
+    _log.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
+    return null;
+  }
+  final townDevelopmentCap = province.townDevelopmentLevel;
+  final townTileKey = province.townTileKey;
+  final townTileIsPort =
+      townTileKey != null && portTileKeys.contains(townTileKey);
+
+  final improvementLevel = game.worldState.tileState
+      .improvementLevel(tileKey)
+      .clamp(0, 4);
+  final roadLevel = game.worldState.tileState.roadLevel(tileKey);
+  final isPort = portTileKeys.contains(tileKey);
+  final tileTransportLevel = isPort ? 4 : (roadLevel > 0 ? roadLevel : 0);
+  final pathCap = pathTransportCap[tileKey] ?? tileTransportLevel;
+
+  final production = (improvementLevel < techCap ? improvementLevel : techCap)
+      .clamp(0, 4);
+  var effective = (production < pathCap ? production : pathCap).clamp(0, 4);
+
+  final isCapitalProvince = provinceId == player.capitalProvinceId;
+  final usesRoadRule = connectedByRoadRule.contains(tileKey);
+  if (isCapitalProvince) {
+    effective =
+        (effective < townDevelopmentCap ? effective : townDevelopmentCap).clamp(
+          0,
+          4,
+        );
+  } else if (!usesRoadRule && townTileIsPort) {
+    // Town rule only (non-capital) with connected port town applies town cap.
+    effective =
+        (effective < townDevelopmentCap ? effective : townDevelopmentCap).clamp(
+          0,
+          4,
+        );
+  }
+  final effectiveCapped = effective;
+  if (effectiveCapped <= 0) {
+    return null;
+  }
+
+  return TileExtractionContribution(
+    tileKey: tileKey,
+    commodityId: commodityId,
+    units: effectiveCapped,
+    isLandRelativeToCapital: regionId == capitalRegionId,
+  );
 }
 
 int _defaultTechCap(String playerId) => defaultExtractionCap;

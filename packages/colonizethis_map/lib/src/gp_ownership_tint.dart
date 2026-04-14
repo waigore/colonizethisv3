@@ -1,5 +1,6 @@
 /// Rules for Great Power land ownership tint on the app map.
 /// SPEC/ui/map-widget.md § Province overlay.
+library;
 
 import 'init_game_map_view_data.dart';
 

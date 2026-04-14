@@ -1,10 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/naval.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Sea transport: allocate overseas extraction to stockpile by priority. SPEC/program/auto-transport.
 /// Trade/transport interception: SPEC/program/naval-movement-resolution.md (P_cargo_intercept, P_ship_sunk).
@@ -108,7 +108,7 @@ void _logExtractionAutoTransportInterception(
 
 /// Total cargo holds for [playerId] based on ships in the home fleet at the capital port.
 ///
-/// Home fleet convention: fleet id = 'fleet_<playerId>'. Each ship's cargoHold is read from
+/// Home fleet convention: fleet id = `fleet_<playerId>`. Each ship's cargoHold is read from
 /// NavalStatsCatalog; if no such fleet exists or the sum of cargoHold values is zero, this
 /// falls back to [defaultCargoHoldsStub] per SPEC/program/extraction-pipeline.md § Cargo holds.
 int cargoHoldsForHomeFleet(Game game, String playerId) {
@@ -183,11 +183,14 @@ Set<String> _enemiesAtWar(Game game, String playerId) {
   var sum = 0;
   var hasBlockade = false;
   for (final f in fleets) {
-    if (!f.isAtSea)
+    if (!f.isAtSea) {
       continue; // Only fleets at sea can intercept. SPEC/game/ships-and-naval.md.
+    }
     if (!enemyIds.contains(f.ownerId)) continue;
-    if (f.mission != FleetMission.patrol && f.mission != FleetMission.blockade)
+    if (f.mission != FleetMission.patrol &&
+        f.mission != FleetMission.blockade) {
       continue;
+    }
     if (f.mission == FleetMission.blockade) hasBlockade = true;
     for (final typeId in f.shipTypeIds) {
       sum += NavalStatsCatalog.get(typeId).interceptRating;
@@ -322,7 +325,10 @@ TradeInterceptionResult applyTradeInterception(
   var rng = seed;
   int nextInt(int max) {
     if (max <= 0) return 0;
-    rng = (rng * 1103515245 + 12345) & 0x7fffffff;
+    rng =
+        (rng * kDeterministicLcgMultiplierGlibc +
+            kDeterministicLcgIncrementGlibc) &
+        kDeterministicLcg31Mask;
     return rng % max;
   }
 

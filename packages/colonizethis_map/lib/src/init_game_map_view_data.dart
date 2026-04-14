@@ -1,5 +1,6 @@
 /// View models for init_game map visualization (PNG and ctdev debug app).
 /// SPEC/program/map-visualization.md § Tile map visualizers, Map view model for tools.
+library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 
@@ -32,6 +33,7 @@ class CellViewData {
     this.provinceDisplayName,
     this.improvementLevel,
     this.roadLevel,
+    this.resourceExtractionUnits,
     this.visibility = TileVisibility.visible,
   });
 
@@ -64,6 +66,10 @@ class CellViewData {
 
   /// Road level 0/1/2/4 for land tiles. From WorldState.tileState.roadLevelByTile. Null for sea or when not populated.
   final int? roadLevel;
+
+  /// Human-player per-tile extraction units (integer >= 0) used by map
+  /// extraction-disc overlays. Null for sea or when not populated.
+  final int? resourceExtractionUnits;
 
   /// Per-tile visibility for the current player view. Defaults to [TileVisibility.visible].
   final TileVisibility visibility;
@@ -135,6 +141,42 @@ class CivilianTileMarkerView {
   /// True when the representative unit is rendered on an assigned work tile.
   /// Used for grayscale map marker rendering in glyph-marker slices.
   final bool representativeIsAssigned;
+}
+
+/// Human-player fleet stack at one port or sea zone for interactive map markers.
+/// SPEC/ui/map-widget.md § Fleet tile markers.
+class FleetTileMarkerView {
+  const FleetTileMarkerView({
+    required this.tileKey,
+    required this.x,
+    required this.y,
+    required this.locationScopeKey,
+    required this.fleetIds,
+    required this.stackCount,
+    this.renderGrayscale = false,
+    this.applyFleetRevealHalo = false,
+  });
+
+  /// Tile key `regionId|provinceOrSeaId|x|y` for marker anchor (may be projected).
+  final String tileKey;
+  final int x;
+  final int y;
+
+  /// Naval panel location scope (`port:…` / `sea:…`).
+  final String locationScopeKey;
+
+  /// Fleet ids at this marker, deterministic order (lexical by id).
+  final List<String> fleetIds;
+
+  /// Same as [fleetIds.length] when > 1 enables stack badge.
+  final int stackCount;
+
+  /// Grayscale ship icon when every fleet here has a pending naval move/mission draft.
+  final bool renderGrayscale;
+
+  /// When true, renderer treats Chebyshev distance ≤ 2 around [tileKey] as fully visible
+  /// while any fleet here has a pending naval **move** draft (display-only).
+  final bool applyFleetRevealHalo;
 }
 
 /// Province-level unit-presence counts for map labels.
@@ -240,10 +282,12 @@ class RegionMapViewData {
     required this.terrainColors,
     this.unitMarkers = const [],
     this.civilianTileMarkers = const [],
+    this.fleetTileMarkers = const [],
     this.warpMarkers = const [],
     this.townMarkers = const [],
     this.provinceUnitPresenceByProvinceId = const {},
     this.provincePoliticalOwnerByPrefixedProvinceId = const {},
+    this.seaZoneDisplayNameByPrefixedId = const {},
   });
 
   /// Region identifier, e.g. 'oldWorld' or 'newWorld'.
@@ -283,6 +327,9 @@ class RegionMapViewData {
   /// Tile-scoped player civilian markers for interactive map civilian icons.
   final List<CivilianTileMarkerView> civilianTileMarkers;
 
+  /// Human-player fleet markers (port or sea-zone stacks).
+  final List<FleetTileMarkerView> fleetTileMarkers;
+
   /// Province full id -> class presence counts/intel gate for map labels.
   final Map<String, ProvinceUnitPresenceView> provinceUnitPresenceByProvinceId;
 
@@ -292,8 +339,46 @@ class RegionMapViewData {
   /// SPEC/program/map-visualization.md § Map view model.
   final Map<String, String?> provincePoliticalOwnerByPrefixedProvinceId;
 
+  /// Copy of [WorldState.seaZoneDisplayNameById] for sea zone map labels.
+  /// Keys: `regionId|localSeaZoneId`. SPEC/program/map-visualization.md.
+  final Map<String, String> seaZoneDisplayNameByPrefixedId;
+
   /// Convenience accessor for cell at (x, y).
   CellViewData cellAt(int x, int y) => cells[y * width + x];
+}
+
+/// `regionId|localProvinceId` for province / sea-zone detail when the user
+/// selects a map tile.
+///
+/// When [tileKey] matches a port town's drawable harbor cell (`portIconX` /
+/// `portIconY`), returns that **land province** id so the overlay stays in
+/// province context instead of sea-zone-only. Otherwise returns `null`.
+/// SPEC/ui/map-widget.md, SPEC/ui/province-sea-zone-detail-overlay.md,
+/// GitHub #1761.
+String? provinceDetailDisplayIdForPortHarborMapTile({
+  required RegionMapViewData region,
+  required String tileKey,
+}) {
+  final parts = tileKey.split('|');
+  if (parts.length < 4 || parts[0] != region.regionId) {
+    return null;
+  }
+  final x = int.tryParse(parts[2]);
+  final y = int.tryParse(parts[3]);
+  if (x == null || y == null) {
+    return null;
+  }
+  for (final t in region.townMarkers) {
+    if (!t.isPort) {
+      continue;
+    }
+    final px = t.portIconX;
+    final py = t.portIconY;
+    if (px != null && py != null && px == x && py == y) {
+      return '${region.regionId}|${t.provinceId}';
+    }
+  }
+  return null;
 }
 
 /// Combined map view data for init_game (Old World + New World).

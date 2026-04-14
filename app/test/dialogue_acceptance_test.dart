@@ -3,10 +3,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
+import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart'
+    show GameStartIntroLoadingIndicator, GameStartIntroOverlay;
 import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -21,55 +21,83 @@ class _ThrowingAssetBundle extends Fake implements AssetBundle {
 void main() {
   suppressLogsForTests();
 
-  group('GameStartIntroOverlay — SPEC/ai/dialogue-management.md § First dialogue emission point', () {
-    testWidgets(
-      'AC: asset load failure shows error shell; Continue invokes onDismissed',
-      (WidgetTester tester) async {
-        var dismissed = false;
+  group(
+    'GameStartIntroOverlay — SPEC/ai/dialogue-management.md § First dialogue emission point',
+    () {
+      testWidgets('GameStartIntroLoadingIndicator uses ColorScheme.primary', (
+        WidgetTester tester,
+      ) async {
+        const seedColor = Color(0xFF112233);
+        final theme = ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: seedColor,
+            brightness: Brightness.dark,
+          ),
+          useMaterial3: true,
+        );
         await tester.pumpWidget(
           MaterialApp(
-            home: GameStartIntroOverlay(
-              assetBundle: _ThrowingAssetBundle(),
-              onDismissed: () => dismissed = true,
-              child: const SizedBox(),
-            ),
+            theme: theme,
+            home: const Scaffold(body: GameStartIntroLoadingIndicator()),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
-        expect(
-          find.textContaining('Could not load intro dialogue'),
-          findsOneWidget,
+        final indicator = tester.widget<CircularProgressIndicator>(
+          find.byType(CircularProgressIndicator),
         );
-        await tester.tap(find.text('Continue'));
-        await tester.pump();
-        expect(dismissed, isTrue);
-      },
-    );
+        expect(indicator.color, theme.colorScheme.primary);
+        expect(indicator.strokeWidth, 2);
+      });
 
-    testWidgets('AC: modal uses CtDialogShell and blocks; intro text and Continue present',
+      testWidgets(
+        'AC: asset load failure shows error shell; Continue invokes onDismissed',
         (WidgetTester tester) async {
-      var dismissed = false;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: GameStartIntroOverlay(
-            onDismissed: () => dismissed = true,
-            child: const SizedBox(),
-          ),
-        ),
+          var dismissed = false;
+          await tester.pumpWidget(
+            MaterialApp(
+              home: GameStartIntroOverlay(
+                assetBundle: _ThrowingAssetBundle(),
+                onDismissed: () => dismissed = true,
+                child: const SizedBox(),
+              ),
+            ),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 200));
+          expect(
+            find.textContaining('Could not load intro dialogue'),
+            findsOneWidget,
+          );
+          await tester.tap(find.text('Continue'));
+          await tester.pump();
+          expect(dismissed, isTrue);
+        },
       );
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pumpAndSettle(const Duration(seconds: 5));
-      expect(find.byType(CtDialogShell), findsOneWidget);
-      expect(dismissed, isFalse);
-      expect(find.textContaining('imperialism'), findsOneWidget);
-      expect(find.byType(CtNinePatchButton), findsWidgets);
-    });
 
-  });
+      testWidgets(
+        'AC: modal uses CtDialogShell and blocks; intro text and Continue present',
+        (WidgetTester tester) async {
+          var dismissed = false;
+          await tester.pumpWidget(
+            MaterialApp(
+              home: GameStartIntroOverlay(
+                onDismissed: () => dismissed = true,
+                child: const SizedBox(),
+              ),
+            ),
+          );
+          await tester.pump(const Duration(milliseconds: 100));
+          await tester.pumpAndSettle(const Duration(seconds: 5));
+          expect(find.byType(CtDialogShell), findsOneWidget);
+          expect(dismissed, isFalse);
+          expect(find.textContaining('imperialism'), findsOneWidget);
+          expect(find.byType(CtNinePatchButton), findsWidgets);
+        },
+      );
+    },
+  );
 
   group('OvertureDialogueOverlay — SPEC/ui/dialogue-presentation.md AC', () {
-    Game _minimalGame() {
+    Game minimalGame() {
       return Game(
         id: 'test',
         worldState: const WorldState(
@@ -78,59 +106,57 @@ void main() {
           newWorld: RegionData(),
         ),
         players: [
-          Player(
-            id: 'gp1',
-            displayName: 'France',
-            isHuman: false,
-            treasury: 0,
-          ),
+          Player(id: 'gp1', displayName: 'France', isHuman: false, treasury: 0),
         ],
       );
     }
 
-    testWidgets('AC: modal with CtDialogShell; Accept/Reject per offer; Submit calls onDecisions with OvertureDecision list',
-        (WidgetTester tester) async {
-      List<OvertureDecision>? captured;
-      final game = _minimalGame();
-      final offers = [
-        const OvertureOffer(
-          offererGpId: 'gp1',
-          targetFactionId: 'gp2',
-          stage: OvertureStage.embassy,
-        ),
-      ];
-      await tester.pumpWidget(
-        MaterialApp(
-          home: OvertureDialogueOverlay(
-            game: game,
-            pendingOvertures: offers,
-            skipIntroForTest: true,
-            onDecisions: (decisions) => captured = decisions,
-            child: const SizedBox(),
+    testWidgets(
+      'AC: modal with CtDialogShell; Accept/Reject per offer; Submit calls onDecisions with OvertureDecision list',
+      (WidgetTester tester) async {
+        List<OvertureDecision>? captured;
+        final game = minimalGame();
+        final offers = [
+          const OvertureOffer(
+            offererGpId: 'gp1',
+            targetFactionId: 'gp2',
+            stage: OvertureStage.embassy,
           ),
-        ),
-      );
-      await tester.pumpAndSettle(const Duration(seconds: 1));
-      expect(find.byType(CtDialogShell), findsOneWidget);
-      expect(find.text('Diplomatic overtures'), findsOneWidget);
-      expect(find.text('Accept'), findsWidgets);
-      expect(find.text('Reject'), findsWidgets);
-      expect(find.text('Submit'), findsOneWidget);
-      await tester.tap(find.text('Reject'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Submit'));
-      await tester.pumpAndSettle();
-      expect(captured, isNotNull);
-      expect(captured!.length, 1);
-      expect(captured!.single.offererGpId, 'gp1');
-      expect(captured!.single.targetFactionId, 'gp2');
-      expect(captured!.single.stage, OvertureStage.embassy);
-      expect(captured!.single.accepted, isFalse);
-    });
+        ];
+        await tester.pumpWidget(
+          MaterialApp(
+            home: OvertureDialogueOverlay(
+              game: game,
+              pendingOvertures: offers,
+              skipIntroForTest: true,
+              onDecisions: (decisions) => captured = decisions,
+              child: const SizedBox(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle(const Duration(seconds: 1));
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.text('Diplomatic overtures'), findsOneWidget);
+        expect(find.text('Accept'), findsWidgets);
+        expect(find.text('Reject'), findsWidgets);
+        expect(find.text('Submit'), findsOneWidget);
+        await tester.tap(find.text('Reject'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Submit'));
+        await tester.pumpAndSettle();
+        expect(captured, isNotNull);
+        expect(captured!.length, 1);
+        expect(captured!.single.offererGpId, 'gp1');
+        expect(captured!.single.targetFactionId, 'gp2');
+        expect(captured!.single.stage, OvertureStage.embassy);
+        expect(captured!.single.accepted, isFalse);
+      },
+    );
 
-    testWidgets('AC: pixel-art — CtDialogShell and CtNinePatchButton used',
-        (WidgetTester tester) async {
-      final game = _minimalGame();
+    testWidgets('AC: pixel-art — CtDialogShell and CtNinePatchButton used', (
+      WidgetTester tester,
+    ) async {
+      final game = minimalGame();
       final offers = [
         const OvertureOffer(
           offererGpId: 'gp1',

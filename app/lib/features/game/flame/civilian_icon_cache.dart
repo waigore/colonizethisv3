@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/services.dart';
 
 import '../../../config/app_assets.dart';
 
-final _log = gameLogger();
+final _log = packageLogger();
 
 const Map<String, String> kCivilianTypeToIconSlug = {
   'builder': 'builder',
@@ -35,7 +35,7 @@ class CivilianIconCache {
 
   bool get isLoaded => _isLoaded;
 
-  static const double iconSize = 32.0;
+  static const double iconSize = 64.0;
 
   Future<void> load() async {
     if (_isLoaded || _isLoading) return;
@@ -60,7 +60,7 @@ class CivilianIconCache {
   }
 
   Future<void> _loadColorIcon(String slug) async {
-    final pngPath = '${kAppIconAssetPrefix}ui_icon_civ_$slug.png';
+    final pngPath = '${kAppIcon64AssetPrefix}ui_icon_civ_$slug.png';
     _icons[slug] = await _decodePng(pngPath);
   }
 

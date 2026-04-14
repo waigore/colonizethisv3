@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 
 /// [OpenDialogEvent] id. SPEC/program/app-ui-wiring.md.
 const String turnNewsDialogId = 'turn_news';
@@ -23,7 +24,7 @@ class TurnNewsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = appL10n(context);
     final lines = digest.lines.isEmpty
         ? <String>[l10n.turnNews_empty]
         : digest.lines.map((e) => formatTurnNewsLine(l10n, game, e)).toList();

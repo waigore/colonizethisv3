@@ -1,11 +1,9 @@
 import 'topology_node.dart';
+import 'data_validation_exception.dart';
 
 /// Static map topology: nodes (provinces, sea zones) and undirected edges. SPEC/program/map-data.md.
 class MapTopology {
-  const MapTopology({
-    this.nodes = const [],
-    this.edges = const [],
-  });
+  const MapTopology({this.nodes = const [], this.edges = const []});
 
   final List<TopologyNode> nodes;
   final List<TopologyEdge> edges;
@@ -14,9 +12,9 @@ class MapTopology {
   static const String _keyEdges = 'edges';
 
   Map<String, dynamic> toJson() => {
-        _keyNodes: nodes.map((e) => e.toJson()).toList(),
-        _keyEdges: edges.map((e) => e.toJson()).toList(),
-      };
+    _keyNodes: nodes.map((e) => e.toJson()).toList(),
+    _keyEdges: edges.map((e) => e.toJson()).toList(),
+  };
 
   static MapTopology fromJson(Map<String, dynamic> json) {
     final nodesList = json[_keyNodes] as List<dynamic>? ?? [];
@@ -27,7 +25,9 @@ class MapTopology {
     }).toList();
     return MapTopology(
       nodes: nodesList
-          .map((e) => TopologyNode.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => TopologyNode.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
           .toList(),
       edges: edges,
     );
@@ -55,10 +55,7 @@ class TopologyEdge {
 
   /// From a two-element list [id1, id2] (e.g. JSON array edge).
   static TopologyEdge fromJsonList(List<dynamic> list) {
-    if (list.length < 2) throw ArgumentError('Edge needs two ids');
-    return TopologyEdge(
-      id1: list[0] as String,
-      id2: list[1] as String,
-    );
+    if (list.length < 2) throw DataValidationException('Edge needs two ids');
+    return TopologyEdge(id1: list[0] as String, id2: list[1] as String);
   }
 }

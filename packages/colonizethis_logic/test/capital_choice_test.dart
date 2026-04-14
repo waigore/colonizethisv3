@@ -154,7 +154,13 @@ void main() {
             topology,
             tileMap,
           ),
-          throwsArgumentError,
+          throwsA(
+            isA<NoSeaBoundCapitalProvinceException>().having(
+              (e) => e.code,
+              'code',
+              'no_sea_bound_capital_province',
+            ),
+          ),
         );
       },
     );
@@ -273,11 +279,13 @@ void main() {
       expect(
         () => pickCapitalForFaction(['p1'], 'oldWorld', topology, tileMap),
         throwsA(
-          isA<ArgumentError>().having(
-            (e) => e.message.toString(),
-            'message',
-            contains('no_coastal_capital_tile_for_gp'),
-          ),
+          isA<NoCoastalCapitalTileForGpException>()
+              .having((e) => e.code, 'code', 'no_coastal_capital_tile_for_gp')
+              .having(
+                (e) => e.message,
+                'message',
+                contains('No coastal tile found'),
+              ),
         ),
       );
     });
@@ -592,7 +600,9 @@ void main() {
               ],
             ),
             newWorld: const RegionData(),
-            portsByProvinceSeaboard: const {'oldWorld|p1|sea1': 'oldWorld|p1|0|0'},
+            portsByProvinceSeaboard: const {
+              'oldWorld|p1|sea1': 'oldWorld|p1|0|0',
+            },
           ),
           players: [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
         );
@@ -618,35 +628,36 @@ void main() {
       },
     );
 
-    test('pickCapitalProvinceIdForReassignment prefers seaboard by sorted id', () {
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'pA',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: 'pB',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: 'sea1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.seaZone,
-          ),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'pA', id2: 'sea1'),
-        ],
-      );
-      final id = pickCapitalProvinceIdForReassignment(
-        ['oldWorld|pB', 'oldWorld|pA'],
-        topology,
-      );
-      expect(id, 'oldWorld|pA');
-    });
+    test(
+      'pickCapitalProvinceIdForReassignment prefers seaboard by sorted id',
+      () {
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'pA',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'pB',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'sea1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'pA', id2: 'sea1')],
+        );
+        final id = pickCapitalProvinceIdForReassignment([
+          'oldWorld|pB',
+          'oldWorld|pA',
+        ], topology);
+        expect(id, 'oldWorld|pA');
+      },
+    );
 
     test('pickCapitalProvinceIdForReassignment inland when no seaboard', () {
       final topology = MapTopology(
@@ -664,10 +675,10 @@ void main() {
         ],
         edges: const [],
       );
-      final id = pickCapitalProvinceIdForReassignment(
-        ['oldWorld|pB', 'oldWorld|pA'],
-        topology,
-      );
+      final id = pickCapitalProvinceIdForReassignment([
+        'oldWorld|pB',
+        'oldWorld|pA',
+      ], topology);
       expect(id, 'oldWorld|pA');
     });
 

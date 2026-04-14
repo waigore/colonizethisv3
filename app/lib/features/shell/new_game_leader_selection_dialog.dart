@@ -33,8 +33,22 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
     List<String> orderedGreatPowerIds,
     Map<String, String> leaderVariantByGpId,
     bool enforceFairGpOldWorldAssignment,
+    int seed,
   )
   onConfirmed;
+
+  /// Parses seed field text for [GameSetupConfig.seed]: empty or invalid → 42; negative → 42.
+  static int parseSeedInput(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      return 42;
+    }
+    final parsed = int.tryParse(trimmed);
+    if (parsed == null || parsed < 0) {
+      return 42;
+    }
+    return parsed;
+  }
 
   @override
   State<NewGameLeaderSelectionDialog> createState() =>
@@ -46,6 +60,7 @@ class _NewGameLeaderSelectionDialogState
   late List<String> _orderedGpIdsBySlot;
   late Map<String, String> _leaderByGpId;
   var _enforceFairGpOldWorldAssignment = false;
+  late final TextEditingController _seedController;
 
   List<String> get _allGpIds =>
       widget.naming.greatPowers.map((g) => g.id).toList();
@@ -53,6 +68,9 @@ class _NewGameLeaderSelectionDialogState
   @override
   void initState() {
     super.initState();
+    _seedController = TextEditingController(
+      text: widget.baseConfig.seed.toString(),
+    );
     final initial = widget.baseConfig.selectedGreatPowerIds;
     _orderedGpIdsBySlot = initial.length == _kNumSlots
         ? List<String>.from(initial)
@@ -68,6 +86,12 @@ class _NewGameLeaderSelectionDialogState
         _leaderByGpId[id] = gp.defaultLeaderVariantId;
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _seedController.dispose();
+    super.dispose();
   }
 
   List<String> _availableGpIdsForSlot(int slotIndex) {
@@ -132,6 +156,7 @@ class _NewGameLeaderSelectionDialogState
       maxWidth: 480,
       maxHeight: 720,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -144,14 +169,10 @@ class _NewGameLeaderSelectionDialogState
             style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 16),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: slotWidgets,
-              ),
-            ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: slotWidgets,
           ),
           const SizedBox(height: 12),
           Row(
@@ -182,6 +203,30 @@ class _NewGameLeaderSelectionDialogState
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.shell_leaderDialog_seedLabel,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          TextField(
+            controller: _seedController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.shell_leaderDialog_seedHelper,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -194,11 +239,16 @@ class _NewGameLeaderSelectionDialogState
               CtNinePatchButton(
                 onPressed: _startEnabled
                     ? () {
+                        final seed =
+                            NewGameLeaderSelectionDialog.parseSeedInput(
+                              _seedController.text,
+                            );
                         Navigator.of(context).pop();
                         widget.onConfirmed(
                           List<String>.from(_orderedGpIdsBySlot),
                           Map<String, String>.from(_leaderByGpId),
                           _enforceFairGpOldWorldAssignment,
+                          seed,
                         );
                       }
                     : null,
@@ -272,8 +322,8 @@ class _NewGameLeaderSelectionDialogState
           Text(
             _slotLabel(l10n, slotIndex),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: slotIndex == 0 ? FontWeight.w600 : FontWeight.normal,
-                ),
+              fontWeight: slotIndex == 0 ? FontWeight.w600 : FontWeight.normal,
+            ),
           ),
           const SizedBox(height: 4),
           Row(

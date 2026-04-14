@@ -2,13 +2,17 @@
 library colonizethis_models;
 
 export 'src/army.dart';
+export 'src/deterministic_hash_mix_constants.dart';
+export 'src/deterministic_lcg_constants.dart';
 export 'src/capital_tile.dart';
 export 'src/diplomacy.dart';
 export 'src/fleet.dart';
 export 'src/ship_instance.dart';
 export 'src/combat_mode.dart';
+export 'src/civilian_unit_type_ids.dart';
 export 'src/current_work.dart';
 export 'src/game.dart';
+export 'src/map_view_state.dart';
 export 'src/general.dart';
 export 'src/minor_nation.dart';
 export 'src/tribe.dart';
@@ -37,5 +41,6 @@ export 'src/economy_plan.dart';
 export 'src/strategic_order_result.dart';
 export 'src/app_event_bus.dart';
 export 'src/app_events.dart';
+export 'src/stream_where_type.dart';
 export 'src/dossier_evidence.dart';
 export 'src/events/dialogue_event_bus.dart';

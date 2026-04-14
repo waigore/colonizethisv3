@@ -1,10 +1,11 @@
 /// Shared simple heuristics for AI order generation. SPEC/program/ai-planner.md,
 /// sim-game-default-ai.md. Used by AIPlanner and defaultSimGameAi.
+library;
 
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -13,7 +14,7 @@ import '../orders/order_suggestion.dart';
 import '../world/army_migration.dart';
 import '../world/player_view.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Derives turn seed per ai-planner: turnSeed = hash(globalGameSeed, aiSeed[P], T).
 /// When [fallbackAiSeed] is provided and [game.aiSeedByGpId] has no entry for
@@ -27,10 +28,9 @@ int turnSeedForPlayer(
   final global = game.globalGameSeed ?? 0;
   final aiSeed =
       game.aiSeedByGpId[playerId] ?? fallbackAiSeed ?? playerId.hashCode;
-  const int prime = 0x9E3779B1;
-  var h = global ^ (turnNumber * prime);
-  h ^= aiSeed * prime;
-  return h & 0x7fffffff;
+  var h = global ^ (turnNumber * kDeterministicHashMixPrime32);
+  h ^= aiSeed * kDeterministicHashMixPrime32;
+  return h & kDeterministicLcg31Mask;
 }
 
 enum _SuggestionCategory { moves, work, build, research }
@@ -79,8 +79,12 @@ Orders generateOrdersWithSimpleHeuristics(
   const maxIterationsPerPlayer = 32;
   for (var i = 0; i < maxIterationsPerPlayer; i++) {
     final moveSuggestions = suggestMoveOrders(view, g, topology, current);
-    final armyMoveSuggestions =
-        suggestArmyMoveOrders(view, g, topology, current);
+    final armyMoveSuggestions = suggestArmyMoveOrders(
+      view,
+      g,
+      topology,
+      current,
+    );
     final workSuggestions = suggestWorkOrders(
       view,
       g,
@@ -213,8 +217,11 @@ Orders generateOrdersWithSimpleHeuristics(
   }
   final rawArmyMoves = current.armyMoveOrdersByPlayerId[player.id];
   if (rawArmyMoves != null && rawArmyMoves.isNotEmpty) {
-    final filtered =
-        filterArmyMoveOrdersByDiplomacy(g, player.id, rawArmyMoves);
+    final filtered = filterArmyMoveOrdersByDiplomacy(
+      g,
+      player.id,
+      rawArmyMoves,
+    );
     if (filtered.isNotEmpty) {
       armyMoveByPlayer[player.id] = filtered;
     }

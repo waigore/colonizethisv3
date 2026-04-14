@@ -9,6 +9,7 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
 
 import 'scenario.dart';
+import 'sim_scenarios_validation_exception.dart';
 
 /// Result of creating a game for a scenario.
 /// Includes the game and supporting data for turn resolution.
@@ -16,11 +17,15 @@ class GameInitResult {
   const GameInitResult({
     required this.game,
     this.topology,
+    this.topologyByRegion,
     this.tileMapByRegion,
   });
 
   final Game game;
+  /// Combined topology (prefixed ids) for turn resolution.
   final MapTopology? topology;
+  /// Per-region topology with local node ids (capital setup, map drawable checks).
+  final Map<String, MapTopology>? topologyByRegion;
   final Map<String, TileMapResult>? tileMapByRegion;
 }
 
@@ -43,6 +48,7 @@ class GameFactory {
     return GameInitResult(
       game: result.game,
       topology: result.combinedTopology,
+      topologyByRegion: result.topologyByRegion,
       tileMapByRegion: result.tileMapByRegion,
     );
   }
@@ -60,7 +66,7 @@ class GameFactory {
   /// oldWorld: { grid: List<List<String>>, nodes: [...], edges: [...] }, and optional newWorld.
   Future<GameInitResult> createFromTopology(ScenarioInit init) async {
     if (init.type != 'fromTopology' || init.oldWorld == null) {
-      throw ArgumentError(
+      throw SimScenariosValidationException(
         'createFromTopology requires init.type==fromTopology and init.oldWorld',
       );
     }
@@ -164,6 +170,7 @@ class GameFactory {
     return GameInitResult(
       game: game,
       topology: setupResult.combinedTopology,
+      topologyByRegion: setupResult.topologyByRegion,
       tileMapByRegion: setupResult.tileMapByRegion,
     );
   }
@@ -289,7 +296,7 @@ class GameFactory {
       return GameSetupConfig.defaultConfig.initTownRoadWiringRegionIds;
     }
     if (raw is! List<dynamic>) {
-      throw ArgumentError(
+      throw SimScenariosValidationException(
         'initTownRoadWiringRegionIds must be a JSON array of region id strings',
       );
     }

@@ -20,7 +20,7 @@ Resolves diplomatic orders, manages overture state machine, updates relation sco
 - **primaryType**: enum describing the main event (e.g. `declareWar`, `peace`, `allianceFormed`, `allianceBroken`, `overtureAccepted`, `overtureRejected`, `joinEmpireResolved`, `grantAidApplied`, `subsidySet`, `subsidyUpdated`, `subsidyCancelled`, `interventionIntervene`, `interventionProtest`, `interventionDoNothing`, `agreementsClearedOnWar`, `callToArmsAccepted`, `callToArmsRefused`).
 - **details**: structured payload fields specific to the primaryType (e.g. `fromFactionId`, `toFactionId`, `overtureStage`, `amount`, `reason`, `wasAiInitiator`).
 
-Rendering of human-readable strings (including year labels derived from turn) is delegated to UI/TUI layers based on this structured event model.
+Rendering of human-readable strings (including year labels derived from turn) is delegated to UI layers based on this structured event model.
 
 ---
 
@@ -64,7 +64,7 @@ At the same hook points where relation state, overtures, or economic diplomacy a
 | Upstream | Player orders, world state (relations, overtures, treasury) |
 | Downstream | Relation state → combat/movement validation; AI evidence/dossier pipeline |
 
-**Economy:** GrantAid and SetSubsidy deduct payer treasury; SetSubsidy transfers to target GP or improves relation with Minor/Tribe. Trade agreement slots gated by embassy level. War terminates trade agreements with target. **`trade_fairs` (GDD “6 vs 3 commodities”)** is **not** implemented here yet; `tradeSlotsForGp` is a **stub** (0 / 1 by embassy). When trade commodities are modeled, align caps with [tech-tree-labour-economy.md](../game/tech-tree-labour-economy.md) § trade_fairs.
+**Economy:** GrantAid and SetSubsidy deduct payer treasury; SetSubsidy transfers to target GP or improves relation with Minor/Tribe. **`tradeSlotsForGp`** returns commodity capacity for trade agreements: **0** without embassy toward the target, **3** with embassy (baseline), **6** with embassy when the ordering GP has **`trade_fairs`** unlocked. War terminates trade agreements with target. See [tech-tree-labour-economy.md](../game/tech-tree-labour-economy.md) § trade_fairs.
 
 **Combat/movement:** Before military move into a foreign province or naval **Blockade** against a province owner, require `AT_WAR` or same-turn `Declare War` on that owner (Great Power, Minor, or Tribe). Enforced by order validation and turn resolver. **Intervention** is evaluated only in the Diplomacy phase (step 5b), not during Combat; it may set `AT_WAR` between an intervening GP and the declaring GP before Movement.
 
@@ -107,9 +107,9 @@ Rejections and validation failures are logged by the order engine; diplomacy res
 
 ---
 
-## Config source (MVP)
+## Config source (current product)
 
-Relation thresholds (score-to-level bands), overture costs (Consulate £500, Embassy £1000), and Join Empire cost (base £5000, per-province £2000) are currently **code constants** in the diplomacy resolver (`colonizethis_logic`: `overtureConsulateCost`, `overtureEmbassyCost`, `joinEmpireBaseCost`, `joinEmpirePerProvinceCost`, `scoreToLevel`). The **default values** are defined in [diplomacy.md](../game/diplomacy.md) § Configurable Values; that table is the source of truth for design. Ruleset loading for these parameters is **not implemented** in MVP. When ruleset-driven config is added, the resolver will read from the resolved ruleset per [ruleset-config.md](ruleset-config.md) and the key path will be specified in the GDD and here.
+Relation thresholds (score-to-level bands), overture costs (Consulate £500, Embassy £1000), and Join Empire cost (base £5000, per-province £2000) are currently **code constants** in the diplomacy resolver (`colonizethis_logic`: `overtureConsulateCost`, `overtureEmbassyCost`, `joinEmpireBaseCost`, `joinEmpirePerProvinceCost`, `scoreToLevel`). The **default values** are defined in [diplomacy.md](../game/diplomacy.md) § Configurable Values; that table is the source of truth for design. Ruleset loading for these parameters is **not implemented** in current product. When ruleset-driven config is added, the resolver will read from the resolved ruleset per [ruleset-config.md](ruleset-config.md) and the key path will be specified in the GDD and here.
 
 **Propaganda tech:** When the **aggressor** Great Power in an **intervention** flow has **`propaganda`** unlocked, **Diplomatic Protest** applies a **reduced** relation penalty (**5** points instead of **10**) between the protesting GP and the aggressor. See [tech-tree-diplomacy-civilian.md](../game/tech-tree-diplomacy-civilian.md) and `warDeclarationThirdPartyPenaltyDelta` in diplomacy relation lookup.
 

@@ -1,16 +1,23 @@
 part of 'tile_map_generator.dart';
 
-mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
+/// Pass 2–3: land seed placement and assignment (organic and seed-before-assignment).
+class _TileMapGenLandSeeds {
+  _TileMapGenLandSeeds(this.params);
+
+  final TileMapParams params;
+
   /// One continent seed per continent; then a cluster of land-shape seeds per continent (K from province count). No province seeds yet.
-  (List<(int x, int y)>, List<(int x, int y)>, List<int>) _placeLandSeeds(
+  (List<(int x, int y)>, List<(int x, int y)>, List<int>) placeLandSeeds(
     Map<String, int> provinceToContinent,
     Random rnd,
   ) {
-    if (provinceToContinent.isEmpty)
+    if (provinceToContinent.isEmpty) {
       return (<(int x, int y)>[], <(int x, int y)>[], <int>[]);
+    }
     final numContinents = provinceToContinent.values.toSet().length;
-    if (numContinents < 1)
+    if (numContinents < 1) {
       return (<(int x, int y)>[], <(int x, int y)>[], <int>[]);
+    }
     final provincesByContinent = <int, List<String>>{};
     for (final e in provinceToContinent.entries) {
       provincesByContinent.putIfAbsent(e.value, () => []).add(e.key);
@@ -84,17 +91,19 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
   /// Organic land growing: interleaved seed placement + small Voronoi + coastline growth.
   /// Returns (continentSeeds, landSeeds, continentBySeedIndex, grid).
   (List<(int x, int y)>, List<(int x, int y)>, List<int>, List<List<String>>)
-  _placeLandSeedsOrganic(
+  placeLandSeedsOrganic(
     List<List<String>> grid,
     Map<String, int> provinceToContinent,
     String seaZoneId,
     Random rnd,
   ) {
-    if (provinceToContinent.isEmpty)
+    if (provinceToContinent.isEmpty) {
       return (<(int x, int y)>[], <(int x, int y)>[], <int>[], grid);
+    }
     final numContinents = provinceToContinent.values.toSet().length;
-    if (numContinents < 1)
+    if (numContinents < 1) {
       return (<(int x, int y)>[], <(int x, int y)>[], <int>[], grid);
+    }
 
     final provincesByContinent = <int, List<String>>{};
     for (final e in provinceToContinent.entries) {
@@ -117,8 +126,9 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
 
     final landBudgetTotal =
         ((1 - params.seaFraction) * params.width * params.height).round();
-    if (landBudgetTotal <= 0)
+    if (landBudgetTotal <= 0) {
       return (<(int x, int y)>[], <(int x, int y)>[], <int>[], grid);
+    }
 
     // Step 0: Place continent seeds
     final continentSeeds = <(int x, int y)>[];
@@ -362,7 +372,7 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
         for (var c = 0; c < numContinents; c++) {
           final start = seedStartByContinent[c];
           final end = seedEndByContinent[c];
-          var d2 = 0x7fffffff;
+          var d2 = kUnsetSquaredDistanceInt31;
           for (var i = start; i < end; i++) {
             final (sx, sy) = landSeeds[i];
             final dd = (x - sx) * (x - sx) + (y - sy) * (y - sy);
@@ -437,7 +447,9 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
     var g = grid.map((row) => row.toList()).toList();
     var cg = continentGrid.map((row) => row.toList()).toList();
     final coastalByContinent = <int, List<(int x, int y)>>{};
-    for (var c = 0; c < numContinents; c++) coastalByContinent[c] = [];
+    for (var c = 0; c < numContinents; c++) {
+      coastalByContinent[c] = [];
+    }
 
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
@@ -467,8 +479,9 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
               .round();
       allocated += budgetPerContinent[c];
     }
-    if (allocated < remaining && numContinents > 0)
+    if (allocated < remaining && numContinents > 0) {
       budgetPerContinent[0] += remaining - allocated;
+    }
 
     // Radius for local land-neighbour scoring when picking coastal cells.
     const scoreRadius = 3;
@@ -515,7 +528,7 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
         final coastal = coastalByContinent[c]!;
         if (coastal.isEmpty) continue;
 
-        var bestScore = -0x7fffffff;
+        var bestScore = kMinLandSeedScoreSentinel;
         final bestCandidates = <(int x, int y)>[];
 
         for (final (sx, sy) in coastal) {
@@ -540,9 +553,8 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
           final score = scoreCoastalCell(sx, sy, c);
           if (score > bestScore) {
             bestScore = score;
-            bestCandidates
-              ..clear()
-              ..add((sx, sy));
+            bestCandidates.clear();
+            bestCandidates.add((sx, sy));
           } else if (score == bestScore) {
             bestCandidates.add((sx, sy));
           }
@@ -590,12 +602,14 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
   double _nextGaussian(Random rnd) {
     var u1 = rnd.nextDouble();
     var u2 = rnd.nextDouble();
-    while (u1 <= 0) u1 = rnd.nextDouble();
+    while (u1 <= 0) {
+      u1 = rnd.nextDouble();
+    }
     return sqrt(-2 * log(u1)) * cos(2 * pi * u2);
   }
 
   /// Per-continent land budget; assign to _landSentinel by smallest effective distance (with optional Voronoi noise). Each cell at most one continent.
-  List<List<String>> _assignLandByLandSeeds(
+  List<List<String>> assignLandByLandSeeds(
     List<List<String>> grid,
     List<(int x, int y)> landSeeds,
     List<int> continentBySeedIndex,
@@ -654,7 +668,7 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
         for (var c = 0; c < numContinents; c++) {
           final start = seedStartByContinent[c];
           final end = seedEndByContinent[c];
-          var d2 = 0x7fffffff;
+          var d2 = kUnsetSquaredDistanceInt31;
           for (var i = start; i < end; i++) {
             final (sx, sy) = landSeeds[i];
             final dd = (x - sx) * (x - sx) + (y - sy) * (y - sy);
@@ -692,6 +706,6 @@ mixin _TileMapGeneratorLandSeeds on _TileMapGeneratorGraph {
     h = (h ^ (h >> 16)) * 0x85ebca6b;
     h = (h ^ (h >> 13)) * 0xc2b2ae35;
     h = h ^ (h >> 16);
-    return (h & 0x7FFFFFFF) / 0x7FFFFFFF * 2 - 1;
+    return (h & kDeterministicLcg31Mask) / kDeterministicLcg31Mask * 2 - 1;
   }
 }

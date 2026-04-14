@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/services.dart';
 
 import '../../../config/app_assets.dart';
 
-final _log = gameLogger();
+final _log = packageLogger();
 
 /// Resource IDs for which icons exist (excludes commodities without tile resources).
 const Set<String> kResourceIconIds = {
@@ -48,8 +48,9 @@ class ResourceIconCache {
 
   bool get isLoaded => _isLoaded;
 
-  /// Size of resource icons in pixels.
-  static const double iconSize = 32.0;
+  /// Edge length of resource icon **source** PNG assets in pixels (on-map display
+  /// size is defined in SPEC/ui/map-widget.md § Resource Icons).
+  static const double iconSize = 64.0;
 
   /// Loads all resource icons asynchronously.
   Future<void> load() async {
@@ -71,13 +72,10 @@ class ResourceIconCache {
   }
 
   Future<void> _loadIcon(String resourceId) async {
-    final pngPath = '${kAppIconAssetPrefix}ui_icon_com_$resourceId.png';
+    final pngPath = '${kAppIcon64AssetPrefix}ui_icon_com_$resourceId.png';
     final imageData = await rootBundle.load(pngPath);
     final completer = Completer<ui.Image>();
-    ui.decodeImageFromList(
-      imageData.buffer.asUint8List(),
-      completer.complete,
-    );
+    ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);
     final image = await completer.future;
     _icons[resourceId] = image;
   }

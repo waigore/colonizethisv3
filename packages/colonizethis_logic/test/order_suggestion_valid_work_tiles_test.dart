@@ -283,6 +283,114 @@ void main() {
       expect(valid.contains(foreignTileWithResource), isFalse);
     });
 
+    test(
+      'build_improvement excludes owned mineral tile until prospected; '
+      'includes after prospected',
+      () {
+        const playerId = 'gp1';
+        const ow = 'oldWorld';
+        const grainTile = 'oldWorld|p1|0|0';
+        const ironTile = 'oldWorld|p1|1|0';
+
+        final unit = Unit(
+          id: 'u1',
+          type: 'Builder',
+          ownerId: playerId,
+          locationProvinceId: '$ow|p1',
+          tileKey: grainTile,
+        );
+        WorldState worldForProspected(Map<String, Set<String>> prospected) {
+          return WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: '$ow|p1', regionId: ow, ownerId: playerId),
+              ],
+              units: [unit],
+            ),
+            newWorld: const RegionData(),
+            tileKeysByRegionAndProvince: {
+              ow: {
+                '$ow|p1': [grainTile, ironTile],
+              },
+            },
+            resourceByTileKey: {
+              grainTile: 'grain',
+              ironTile: 'iron',
+            },
+            playerVisibilityByTile: {
+              playerId: {grainTile: 'fullyVisible', ironTile: 'fullyVisible'},
+            },
+            tileState: TileMapState(
+              improvementByTile: {grainTile: 0, ironTile: 0},
+            ),
+            playerProspectedTiles: prospected,
+          );
+        }
+
+        final topology = const MapTopology(nodes: [], edges: []);
+        final stockpile = Stockpile(quantities: {'lumber': 10, 'castIron': 10});
+
+        final gameUnprospected = Game(
+          id: 'g1',
+          worldState: worldForProspected(const {}),
+          players: [
+            Player(
+              id: playerId,
+              displayName: 'GP',
+              isHuman: false,
+              stockpile: stockpile,
+            ),
+          ],
+        );
+        final viewUnprospected = buildPlayerView(
+          gameUnprospected,
+          topology,
+          playerId,
+        );
+        final validUnprospected = getValidWorkOrderTileKeysWithVisibility(
+          game: gameUnprospected,
+          topology: topology,
+          view: viewUnprospected,
+          unitId: 'u1',
+          workTarget: 'build_improvement',
+          currentOrders: const Orders(),
+        );
+        expect(validUnprospected.contains(grainTile), isTrue);
+        expect(validUnprospected.contains(ironTile), isFalse);
+
+        final gameProspected = Game(
+          id: 'g2',
+          worldState: worldForProspected({
+            playerId: {ironTile},
+          }),
+          players: [
+            Player(
+              id: playerId,
+              displayName: 'GP',
+              isHuman: false,
+              stockpile: stockpile,
+            ),
+          ],
+        );
+        final viewProspected = buildPlayerView(
+          gameProspected,
+          topology,
+          playerId,
+        );
+        final validProspected = getValidWorkOrderTileKeysWithVisibility(
+          game: gameProspected,
+          topology: topology,
+          view: viewProspected,
+          unitId: 'u1',
+          workTarget: 'build_improvement',
+          currentOrders: const Orders(),
+        );
+        expect(validProspected.contains(grainTile), isTrue);
+        expect(validProspected.contains(ironTile), isTrue);
+      },
+    );
+
     test('build_improvement includes purchased tiles with resources', () {
       const playerId = 'gp1';
       const ow = 'oldWorld';

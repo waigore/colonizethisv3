@@ -8,7 +8,7 @@
 
 Commodities are grouped by **category**: food, rawMaterial, manufactured, luxury, riches, advanced. Categories determine which priority **bucket** each commodity belongs to for overseas sea transport (fill order is **fixed** in [auto-transport.md](../program/auto-transport.md); not player-, AI-, or ruleset-configurable). Categories also drive UI grouping and (later) trade. Per GDD 04.
 
-For the **MVP ruleset**, all trained-worker luxury consumption is modelled via **manufactured** commodities (refinedSugar, cigars, furHats) rather than a separate `luxury` category. The `luxury` category is reserved as a future extension hook: no commodity currently uses `luxury` as its primary category, and any code that needs to reason about worker luxuries MUST do so via the manufactured entries and [workers-and-population.md](workers-and-population.md) rather than by checking for a `luxury` category.
+For the **current product ruleset**, all trained-worker luxury consumption is modelled via **manufactured** commodities (refinedSugar, cigars, furHats) rather than a separate `luxury` category. The `luxury` category is reserved as a future extension hook: no commodity currently uses `luxury` as its primary category, and any code that needs to reason about worker luxuries MUST do so via the manufactured entries and [workers-and-population.md](workers-and-population.md) rather than by checking for a `luxury` category.
 
 ---
 
@@ -19,7 +19,7 @@ For the **MVP ruleset**, all trained-worker luxury consumption is modelled via *
 | **Food** | grain, meat |
 | **Raw materials** | timber, iron, wool, cotton, coal, copper, tin, sugarCane, tobacco, furs, horses |
 | **Manufactured** | lumber, castIron, fabric, refinedSugar, cigars, furHats, steel, paper, bronze |
-| **Luxury** | _None in MVP (reserved tag); luxuries are represented by manufactured refinedSugar, cigars, furHats consumed per [workers-and-population.md](workers-and-population.md)._ |
+| **Luxury** | _None in current product (reserved tag); luxuries are represented by manufactured refinedSugar, cigars, furHats consumed per [workers-and-population.md](workers-and-population.md)._ |
 | **Riches** | gold, silver, gems, diamonds |
 | **Advanced** | spices |
 

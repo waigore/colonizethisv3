@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show homeFleetIdFor, regionIdForSeaZone, tryGetProvince;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../units/shared/units_panel_region_label.dart';
 import '../../utils/map_location_resolver.dart';
 import '../../utils/sea_zone_name_resolver.dart';
@@ -157,7 +158,11 @@ buildNavalTree(
   String humanPlayerId,
   MapTopology topology,
   Orders draftOrders,
-) {
+  AppLocalizations l10n, {
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, MapTopology>? topologyByRegion,
+  String? locationScopeKeyFilter,
+}) {
   final player = game.players.firstWhere(
     (p) => p.id == humanPlayerId,
     orElse: () => game.players.first,
@@ -206,6 +211,8 @@ buildNavalTree(
     'newWorld': game.worldState.newWorld,
   }.entries) {
     final regionId = regionEntry.key;
+    final regionTileMap = tileMapByRegion?[regionId];
+    final regionTopo = topologyByRegion?[regionId];
 
     final fleetsInRegion = game.worldState.fleets
         .where(
@@ -265,17 +272,27 @@ buildNavalTree(
         final zoneKey = seaZoneId.contains('|')
             ? seaZoneId
             : '$regionId|$seaZoneId';
+        locationKey = 'sea:$zoneKey';
+        if (locationScopeKeyFilter != null &&
+            locationKey != locationScopeKeyFilter) {
+          continue;
+        }
         final zoneLabel = seaZoneDisplayName(
           game: game,
           regionId: regionId,
           seaZoneId: zoneKey,
         );
         locationLabel = '${unitsPanelRegionLabel(regionId)} — $zoneLabel';
-        tileKey = tileKeyForSeaZoneLocation(game, regionId, zoneKey);
-        locationKey = 'sea:$zoneKey';
+        tileKey = tileKeyForNavalFleetAtSea(
+          game: game,
+          regionId: regionId,
+          seaZoneId: zoneKey,
+          tileMap: regionTileMap,
+          regionTopology: regionTopo,
+        );
         final row = FleetRow(
           fleetId: fleet.id,
-          label: 'Fleet ${fleet.id}',
+          label: l10n.naval_fleetLabel(fleet.id),
           locationLabel: locationLabel,
           regionId: regionId,
           missionLabel: fleetMissionDisplayLabel(fleet.mission),
@@ -305,13 +322,19 @@ buildNavalTree(
         final province =
             provinceMap['$regionId|$inPortId'] ?? provinceMap[inPortId];
         if (province == null) continue;
+        locationKey = 'port:${province.regionId}|${province.id}';
+        if (locationScopeKeyFilter != null &&
+            locationKey != locationScopeKeyFilter) {
+          continue;
+        }
         tileKey = tileKeyForProvinceLocation(game, province);
         locationLabel =
             '${unitsPanelRegionLabel(regionId)} — ${province.displayName ?? province.id}';
-        locationKey = 'port:${province.regionId}|${province.id}';
         final row = FleetRow(
           fleetId: fleet.id,
-          label: isHomeFleet ? 'Home Fleet' : 'Fleet ${fleet.id}',
+          label: isHomeFleet
+              ? l10n.naval_homeFleetLabel
+              : l10n.naval_fleetLabel(fleet.id),
           locationLabel: locationLabel,
           regionId: regionId,
           missionLabel: fleetMissionDisplayLabel(fleet.mission),
@@ -354,28 +377,33 @@ buildNavalTree(
           provinceMap['$capitalRegionId|$capitalProvinceLocalId'] ??
           provinceMap[capitalProvinceLocalId];
       if (province != null) {
-        final tileKey = tileKeyForProvinceLocation(game, province);
-        final locationLabel =
-            '${unitsPanelRegionLabel(regionId)} — ${province.displayName ?? province.id}';
-        homeFleetRow = FleetRow(
-          fleetId: homeFleetIdFor(humanPlayerId),
-          label: 'Home Fleet',
-          locationLabel: locationLabel,
-          regionId: regionId,
-          missionLabel: fleetMissionDisplayLabel(FleetMission.none),
-          totalShips: 0,
-          warshipCount: 0,
-          merchantCount: 0,
-          strength: 0,
-          tileKey: tileKey,
-          isHomeFleet: true,
-          shipCountsByType: const {},
-          cargoCapacity: 0,
-          isAtSea: false,
-          locationKey: 'port:${province.regionId}|${province.id}',
-          inPortAtProvinceId: '$capitalRegionId|$capitalProvinceLocalId',
-          draftNavalMoveLine: null,
-        );
+        final synLocationKey = 'port:${province.regionId}|${province.id}';
+        final omitSynthetic = locationScopeKeyFilter != null &&
+            locationScopeKeyFilter != synLocationKey;
+        if (!omitSynthetic) {
+          final tileKey = tileKeyForProvinceLocation(game, province);
+          final locationLabel =
+              '${unitsPanelRegionLabel(regionId)} — ${province.displayName ?? province.id}';
+          homeFleetRow = FleetRow(
+            fleetId: homeFleetIdFor(humanPlayerId),
+            label: l10n.naval_homeFleetLabel,
+            locationLabel: locationLabel,
+            regionId: regionId,
+            missionLabel: fleetMissionDisplayLabel(FleetMission.none),
+            totalShips: 0,
+            warshipCount: 0,
+            merchantCount: 0,
+            strength: 0,
+            tileKey: tileKey,
+            isHomeFleet: true,
+            shipCountsByType: const {},
+            cargoCapacity: 0,
+            isAtSea: false,
+            locationKey: synLocationKey,
+            inPortAtProvinceId: '$capitalRegionId|$capitalProvinceLocalId',
+            draftNavalMoveLine: null,
+          );
+        }
       }
     }
 

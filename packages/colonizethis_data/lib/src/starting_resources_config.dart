@@ -1,3 +1,5 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
+
 /// Starting resources and units per Great Power at game start.
 /// TDD 09 (Great Powers), GDD 05 (Units). Scenario overlay may override per TDD 19.
 class StartingResourcesConfig {
@@ -46,7 +48,7 @@ class StartingResourcesConfig {
   final int initialPaper;
 
   /// Number of starting land regiments to spawn in each Great Power's capital.
-  /// Default type is `peasant_levies` (MVP). See game setup in `colonizethis_logic`.
+  /// Default type is `peasant_levies` (bootstrap per SPEC/program/game-setup-pipeline.md §7f).
   final int initialMilitaryRegiments;
 
   /// Number of starting merchant ships to place in each Great Power's home fleet.
@@ -61,9 +63,9 @@ class StartingResourcesConfig {
   final Map<String, int> startingCivilianUnits;
 
   static const Map<String, int> _defaultStartingCivilianUnits = {
-    'Explorer': 2,
-    'Builder': 2,
-    'Engineer': 1,
+    kUnitTypeExplorer: 2,
+    kUnitTypeBuilder: 2,
+    kUnitTypeEngineer: 1,
   };
 
   /// Default config for Phase 2+.

@@ -1,11 +1,12 @@
 /// Game rules, turn resolution, victory, validation. SPEC/program/turn-resolution.
-library colonizethis_logic;
+library;
 
 // Root
 export 'package:colonizethis_models/colonizethis_models.dart'
     show AssignedRecipe;
 export 'order_suggestion_api.dart';
 export 'src/constants.dart';
+export 'src/logic_validation_exception.dart';
 export 'src/event_bus/game_event_bus.dart';
 export 'src/game_events.dart';
 export 'src/turn_to_year.dart';
@@ -13,13 +14,16 @@ export 'src/turn_to_year.dart';
 // Setup
 export 'src/setup/capital_choice.dart';
 export 'src/setup/game_setup.dart';
+export 'src/setup/setup_validation_exception.dart';
 export 'src/setup/gp_starting_grain.dart';
 export 'src/setup/town_capital_occupancy.dart';
+export 'src/setup/effective_setup_seed.dart';
 export 'src/setup/init_game_orchestrator.dart';
 export 'src/setup/warp_zone_generator.dart';
 export 'src/setup/province_assignment.dart';
 export 'src/setup/gp_land_connectivity_repair.dart';
 export 'src/setup/province_name_fallback.dart';
+export 'src/setup/setup_exceptions.dart';
 
 // Turn
 export 'src/turn/economy_debt_rules.dart';
@@ -55,6 +59,8 @@ export 'src/economy/worker_economy.dart';
 
 // Orders
 export 'src/orders/orders.dart';
+export 'src/orders/civilian_projected_tile.dart';
+export 'src/orders/validators/work_order_cost_calculator.dart';
 export 'src/orders/order_suggestion.dart'
     show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;
 export 'src/orders/unit_type_helpers.dart'

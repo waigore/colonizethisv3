@@ -1,6 +1,6 @@
 # Map Widget (reusable)
 
-**SPEC/ui** — Reusable 2D tile-map component for the Flutter app. Renders one region's map with a base tile layer and optional overlays; viewport sized to the widget; pan and zoom on a **fit-map baseline** with a unified **0.5×–8×** multiplier band (see § Viewport, scale, pan, zoom). Tap/click exposes province selection via callbacks. Implemented as a **Flame** component to support animation of individual tiles and other assets. Data and events align with shared packages and event systems (same as ctterm); this spec is for the app only.
+**SPEC/ui** — Reusable 2D tile-map component for the Flutter app. Renders one region's map with a base tile layer and optional overlays; viewport sized to the widget; pan and zoom on a **fit-map baseline** with a unified **0.5×–8×** multiplier band (see § Viewport, scale, pan, zoom). Tap/click exposes province selection via callbacks. Implemented as a **Flame** component to support animation of individual tiles and other assets. Data and events align with shared packages and event systems; this spec is for the app only.
 
 ---
 
@@ -29,9 +29,16 @@
 | **Province overlay** | Province and sea-zone **boundary strokes** only (topology edges P–P, P–S, S–S). **Land–sea edges:** strokes are drawn **inset into the land cell** (toward land from the nominal grid line between tiles) so the coastline reads as an outline around seaboard land; land–land and sea–sea edges stay on the grid line. Stroke width is **2 logical px** in world space at baseline cell scale (2× legacy 1 px). **Player-constrained visibility:** draw a unit edge between two adjacent cells only if **at least one** cell is not `unrevealed` (same rule for land and sea cells). **Full visibility mode:** draw all topology edges regardless of `CellViewData.visibility`. | Yes. In-game toggle **Show province overlay** ([empire-overview.md](empire-overview.md)). When off, boundary strokes are not drawn; other layers follow their own toggles. |
 | **Province ownership (GP tint)** | **Great Power land ownership tint:** for each **land** cell whose `ownerFactionId` is a Great Power (runtime id in `RegionMapViewData.greatPowerFactionIds`), draw a **semi-transparent** fill in that faction’s colour from `factionColors` at **fixed alpha 0.5** (`BlendMode.srcOver`). **Not** drawn for sea cells, unowned land, Minor Nations, or Tribes. **Player-constrained visibility:** tint is **not** drawn on `unrevealed` tiles; **`visible` and `fogged`** tiles use the same tint rules (no extra suppression for fogged). **Full visibility mode:** all GP-owned land cells qualify when the layer is on. Tint is painted **after** terrain (including feature layers) and **before** resource icons, improvement labels, and road/rail labels. | Yes. In-game toggle **Show province ownership** ([empire-overview.md](empire-overview.md)), independent of boundary strokes. When off, no GP tint is drawn. |
 | **Political** | Political borders (ownership differences between adjacent land provinces). Stroke width **4 logical px** in world space (2× legacy 2 px). **Player-constrained visibility:** same edge rule as the province overlay — draw the segment only if at least one of the two adjacent land cells is not `unrevealed`. **Full visibility mode:** no gating. Drawn on top of base and province overlay strokes when both are enabled. | Yes. User can turn political overlay on/off. |
-| **Province names** | Land province labels: `CellViewData.provinceDisplayName` (same string as the Political section in the province detail overlay), with fallback to local province id when missing. One label per land province per region. Position: centroid of that province’s **land** tiles in the region (tile centers averaged). **Not** drawn for sea zones. **Player-constrained visibility:** only tiles that are not `unrevealed` participate in the centroid and get a label; if no qualifying tiles, no label. **Screen space:** text and backing plate use roughly **constant logical pixel size** regardless of map zoom (inverse scale in world space). Style: short label on a **semi-transparent** rectangular plate; when the province’s **province-level** owner (see `RegionMapViewData.provincePoliticalOwnerByPrefixedProvinceId` in [map-visualization.md](../program/map-visualization.md)) is a Great Power **and** every qualifying land cell’s `CellViewData.ownerFactionId` matches that owner, the plate is **tinted** with that GP’s RGB from `factionColors` at **alpha 0.55** (same strength as the legacy neutral dark plate). Otherwise the plate uses the **neutral** semi-transparent dark style (unowned land; Minor/Tribe province-level owner—including provinces where GPs own **purchased** tiles and per-cell owner may differ; missing colour data; mismatched tile vs province owner). **Independent** of the **Show province ownership** (GP land tint) toggle. Neighbor overlap is acceptable. Province labels may include a second-line unit-presence icon row (see below). Rendered after province/political border strokes and before capitals/ports. | Yes. Independent of province overlay, province ownership tint, and political overlay toggles. |
+| **Human fleet markers** | One icon per distinct human naval **location scope** (port or sea zone) on the region map. **In port:** anchored at the **same sea drawable cell** as the harbor icon (`TownMarkerView.portIconX` / `portIconY`), computed from `portsByProvinceSeaboard` per [town-port-icons.md](town-port-icons.md) (strict sea-only placement). **At sea:** anchored at the **sea-zone centroid** from the tile map. Icon: `ui_icon_map_fleet.png`. **Stack badge** when multiple fleets share the scope. **Grayscale** when every fleet at the marker has a pending naval move/mission draft; **Chebyshev ≤2 terrain “reveal” halo** (painting only; no stored fog change) when any fleet there has a pending naval **move** draft. **Tap** (before civilian markers when overlapping) emits **`OpenNavalUnitsPanelEvent`** with `locationScopeKey`, optional `initialSelectedFleetId`, and `tileScopeTileKey` for panel chrome. **Draft projection** (human naval move drafts in the app shell) must use the same harbor sea cell as map construction: `colonizethis_map` `harborDrawableSeaTileKeyForPortProvince` for in-port positions and **dock** destinations — not province town tile keys (`tileKeyForProvinceLocation`). | No separate toggle; follows map visibility and draft projection from `RegionMapViewData.fleetTileMarkers`. |
+| **Province and sea zone names** | **Land (province) labels:** `CellViewData.provinceDisplayName` (same string as the Political section in the province detail overlay), with fallback to local province id when missing. One label per land province per region. Centroid: average of **land** tile centers. **Sea zone labels:** one per local sea zone in the region topology; text from `RegionMapViewData.seaZoneDisplayNameByPrefixedId['regionId|localSeaZoneId']` with fallback to the local sea zone id (same resolution as app `sea_zone_name_resolver`). Centroid tile: `round(mean x)`, `round(mean y)` over all grid cells for that zone (same anchor as fleet markers). **Warp sea-zone prefix icon:** when the local sea-zone id appears in `RegionMapViewData.warpMarkers`, render `ui_icon_map_warp_zone.png` inside the same sea label plate immediately to the **left** of text (`[icon][gap][text]`), using the same rendered icon size and text-icon gap constants as province label rows; non-warp sea zones render text-only labels. **Shared toggle:** in-game **Show province names** (`showProvinceNamesLayer`); **no** separate toggle for sea zone names. **Player-constrained visibility (sea):** draw a sea zone label only if the **centroid cell** is not `TileVisibility.unrevealed` under the same rules as terrain for the map, including fleet move-draft reveal halo (`_visibilityForTerrain` / Chebyshev ≤2). Other sea cells in the zone need not be revealed. Warp icon visibility is identical to sea-label visibility (same centroid predicate and toggle gating). **Sea plate style:** fill **RGB (173, 216, 230)** at **alpha 0.55**; text **black** (`#000000`). **Sea placement:** default **above** the centroid so the plate does **not** overlap the centroid cell (fleet icon cell); if that would clip the **top** of the map, place **below** the centroid instead; then apply **minimal** horizontal/vertical nudge so the **entire** plate stays inside the region world rect — no clipping. **Long names:** no ellipsis; render the full string (overlap with neighbors acceptable), including warp labels. Land province label rules (GP-tinted vs neutral plate, capital icon, presence row, ellipsize exceptions) are unchanged — see § Sea zone name plates and § Province label unit presence icons. Rendered after province/political border strokes; **sea zone name plates** are painted immediately **after** land province name plates and **before** capitals/towns/warp/civilian/fleet markers. | Yes. **Show province names** only; independent of province overlay, province ownership tint, and political overlay toggles. |
 
 Data source for tiles and ownership: shared view model (e.g. `RegionMapViewData` / game + tile maps per [map-visualization.md](../program/map-visualization.md)). Province and tile identity: [world-model-identity.md](../game/world-model-identity.md).
+
+### Sea zone name plates
+
+Detailed behavior for sea zone labels (toggle gating, visibility, style, placement) is summarized in the **Province and sea zone names** layer row above. **Inverse zoom** for constant on-screen size matches land province names: scale factor `1.0 / cameraZoom.clamp(0.25, 4.0)` in world space.
+
+**Bounds algorithm (normative summary):** Let `cellSize` be `RegionMapViewData.cellSize`, map world size `W = width × cellSize`, `H = height × cellSize`. Let the centroid cell be `(cx, cy)` in grid indices. In world space, plate half-extents are `(bw·invZ/2, bh·invZ/2)` where `bw`, `bh` are the label plate’s width and height in logical pixels (text + padding) and `invZ` is the inverse zoom factor above. Prefer vertical placement **above** the centroid cell (plate does not intersect the centroid cell’s world rectangle). If the plate would extend above `y = 0`, use **below** the centroid cell instead. Clamp/nudge the plate center so the axis-aligned plate rectangle lies entirely in `[0, W] × [0, H]`. If clamping introduces overlap with the centroid cell, nudge toward the alternate vertical side and re-clamp as needed.
 
 ### Province label unit presence icons
 
@@ -43,7 +50,7 @@ Province-name overlays on the main app map may render decorative unit-presence i
 
 Asset and style contract:
 
-- 32x32 full-color pixel-art PNG icons in `app/assets/icons/`.
+- 64x64 full-color pixel-art PNG icons in `app/assets/icons/64/`.
 - Distinct visual identity:
   - civilian: person with 16th-century hat
   - regiment: tent
@@ -65,6 +72,17 @@ Render and data rules:
 - **Semantics:** map widget may expose semantic labels/tooltips describing class presence for accessibility, but icon-level semantics are optional because these indicators are decorative and non-interactive.
 - **Refresh cadence:** label icon data is recomputed at turn start after turn resolution.
 
+### Province label capital icon
+
+Province-name overlays on the main app map render a decorative capital icon for capital provinces:
+
+- **Scope:** applies to all faction types with capitals represented in `RegionMapViewData.capitalMarkers` (Great Powers, Minor Nations, Tribes).
+- **Asset:** 64x64 full-color PNG in `app/assets/icons/64/ui_icon_map_capital_star.png` generated via PixelLab.
+- **Visual contract:** icon is recognizable as a gold five-point star in the project’s pixel-art style; transparent background.
+- **Placement:** icon appears immediately to the **left** of the province name text inside the same label plate.
+- **Layout guarantee:** for capital labels, both the star icon and full province name remain visible (no ellipsis or truncation that hides either). Increased overlap with nearby labels is acceptable.
+- **Interaction:** decorative only; no click/tap behavior.
+
 ### Base overlay paint order (Z-order, bottom → top)
 
 Within the Flame map render pipeline, after terrain (sea, land base, features), the **base overlays** and subsequent layers are painted in this order (earlier = underneath):
@@ -73,7 +91,7 @@ Within the Flame map render pipeline, after terrain (sea, land base, features), 
 2. **Resource icons** (when the base-layer mode includes resources).
 3. **Improvement labels** `I{n}` (when the mode includes improvements and `n > 0`).
 4. **Road/rail labels** `R{n}` (when the mode includes roads and `n > 0`). **Road labels are only used in a mode that also enables improvement labels** (roads are painted after improvements so they sit on top where pixels overlap).
-5. Province boundary strokes (when enabled), then hover glow, political borders, province names, capitals, towns/ports, warp indicators, then selection/hover chrome — unchanged except as noted elsewhere in this spec.
+5. Province boundary strokes (when enabled), then hover glow, political borders, province names, **sea zone names**, capitals, towns/ports, warp indicators, civilian markers, fleet markers, then selection/hover chrome — unchanged except as noted elsewhere in this spec.
 
 **Label placement:** Improvement label at the **top-left** of the tile cell (small inset from top and left edges). Road/rail label at the **top-right** (inset from top and right). **Do not** draw `I0` or `R0`; only draw when the corresponding level is **greater than zero**.
 
@@ -102,11 +120,24 @@ The widget accepts an optional **base layer display mode** enumerating terrain, 
 
 ## Resource Icons
 
-Resources are displayed as 32×32 pixel-art icons rendered on tiles, centered within the cell. Icons are drawn instead of the legacy single-letter glyphs (g, t, i, …).
+Resources use **64×64** pixel-art **source** assets (`app/assets/icons/64/`). On the map they are drawn **scaled to a marker**—**one quarter of the tile’s linear size** in world/cell space—**anchored to the bottom-left** of the cell, so terrain stays visible at native zoom (e.g. **16×16** drawn when `cellSize == 64`). The painted width/height is **never larger** than the asset (64); when `cellSize / 4` would exceed 64, the display size **caps at 64** (scale down only, never upscale beyond native asset resolution). Icons replace the legacy single-letter glyphs (g, t, i, …).
+
+### Map tile icon inventory (64 policy)
+
+The following map-rendered icon families are governed by the 64×64 tile icon policy and are loaded from `app/assets/icons/64/`:
+
+| Family | Files |
+|---|---|
+| Town / port | `ui_icon_com_town_inland_64.png`, `ui_icon_com_port.png` |
+| Resource tile icons | `ui_icon_com_<resource_id>.png` (all `kResourceIconIds`) |
+| Civilian tile markers | `ui_icon_civ_builder.png`, `ui_icon_civ_engineer.png`, `ui_icon_civ_rail_builder.png`, `ui_icon_civ_explorer.png`, `ui_icon_civ_merchant.png`, `ui_icon_civ_spy.png` |
+| Province label row icons | `ui_icon_map_capital_star.png`, `ui_icon_map_presence_civilian.png`, `ui_icon_map_presence_regiment.png`, `ui_icon_map_presence_ship.png`, `ui_icon_map_warp_zone.png` |
+
+Non-map UI glyphs remain outside this map tile inventory and use their own UI contracts.
 
 ### Asset Files
 
-Resource icons are stored in `app/assets/icons/` with naming convention `ui_icon_com_<resource_id>.png`:
+Resource icons are stored in `app/assets/icons/64/` with naming convention `ui_icon_com_<resource_id>.png`:
 
 | Resource ID | Icon File | Resource ID | Icon File |
 |-------------|-----------|-------------|-----------|
@@ -125,22 +156,32 @@ Resource icons are stored in `app/assets/icons/` with naming convention `ui_icon
 | gems | ui_icon_com_gems.png | diamonds | ui_icon_com_diamonds.png |
 | spices | ui_icon_com_spices.png | | |
 
-All icons are 32×32 PNG with RGBA transparency, colonial-era pixel art style matching `ui_main_menu_button.png`.
+All icons are 64×64 PNG with RGBA transparency, colonial-era pixel art style matching `ui_main_menu_button.png`.
 
 ### Rendering
 
-- **Icon size:** Resource icons are always 32×32 pixels, regardless of the tile cell size. Icons are never scaled up; they render at native 32×32 resolution.
-- **Position:** Position depends on the tile cell size:
-  - **For tiles &lt;32px:** Icon is centered horizontally; vertically **bottom-aligned** to the tile (top may extend above the cell) so the visible footprint sits toward the lower part of the cell.
-  - **For tiles exactly 32px:** Icon is **centered** in the cell (same width and height as the icon).
-  - **For tiles >32px:** Icon is placed in the **bottom-left corner** of the tile cell (at x=0, y=tileSize-32). This ensures the icon remains visible and readable at native resolution without being obscured or requiring upscaling.
+- **Asset vs display:** Source samples are always the full **64×64** PNG. The **destination** `Rect` uses edge length `displaySize = min(cellSize / 4, 64)` (same width and height). `drawImageRect` maps the full source rect to that destination (downscale when `displaySize &lt; 64`; at `displaySize == 64` the marker matches native asset pixel density for that cell scale).
+- **Position:** **Bottom-left** anchor in tile/world coordinates: `iconX = tileLeft`, `iconY = tileTop + cellSize - displaySize` (with `tileLeft` / `tileTop` and `cellSize` in the same space). The marker fits within the cell horizontally and vertically (width and height ≤ `cellSize` given the cap above).
 - **Visibility:** Icons are subject to the same visibility rules as terrain (visible/fogged/unrevealed). Fogged tiles render icons with reduced opacity; unrevealed tiles show nothing.
+
+### Per-tile extraction unit discs
+
+When resource icons are visible, the map may render extraction-unit discs for the same tile:
+
+- **Scope:** Discs encode per-tile effective extraction units for the **human player only**, from `CellViewData.resourceExtractionUnits`.
+- **Count rule:** Draw exactly `N` discs when `N` is an integer `>= 1`; draw none when `N` is `0` or `null`.
+- **Economic alignment:** `N` follows the tile-level extraction branch used by `computeExtraction` tile `effectiveCapped` and excludes aggregate-only adjustments (for example `Game.capitalTileGrainBonusPerTurn`).
+- **Placement:** Discs are anchored to the **painted** resource icon `Rect` (the quarter-size/capped destination box) and rendered immediately to the right in a horizontal right fan (`+x` step with overlap, default no vertical stagger).
+- **Base-layer gating:** Discs are rendered only when resource icons are rendered (`baseLayerDisplayMode != terrainOnly`).
+- **Icon visibility gating:** If resource icon visibility/prospecting rules suppress the icon on a tile, discs are also suppressed on that tile.
+- **Fog parity:** On `TileVisibility.fogged`, discs use the same fog modulation treatment as resource icons.
+- **Color source:** Disc fill color comes from a fixed checked-in resource palette generated by a build-time sampler from `ui_icon_com_<resource_id>.png`; runtime map rendering must not decode/summarize icon pixels for palette lookup.
 
 ---
 
 ## Civilian Marker Icons
 
-Interactive civilian tile markers use per-type color icon assets in `assets/icons/`:
+Interactive civilian tile markers use per-type color icon assets in `assets/icons/64/`:
 
 - `ui_icon_civ_builder.png`
 - `ui_icon_civ_engineer.png`
@@ -149,19 +190,19 @@ Interactive civilian tile markers use per-type color icon assets in `assets/icon
 - `ui_icon_civ_merchant.png`
 - `ui_icon_civ_spy.png`
 
-All assets are 32×32 PNG with transparency. The map draws these icons tile-sized in world space so marker occupancy scales with zoom. Assigned-state rendering is achieved by applying a grayscale color filter at paint time, not by loading separate grayscale runtime assets.
+All assets are 64×64 PNG with transparency. The map draws these icons tile-sized in world space so marker occupancy scales with zoom. Assigned-state rendering is achieved by applying a grayscale color filter at paint time, not by loading separate grayscale runtime assets.
 
 ### PixelLab generation prompts (this slice)
 
 - Generator: `pixellab-generate_image_pixflux`
-- Shared settings: `width=32`, `height=32`, `no_background=true`, `outline='single color outline'`, `shading='medium shading'`, `detail='medium detail'`
+- Shared settings: `width=64`, `height=64`, `no_background=true`, `outline='single color outline'`, `shading='medium shading'`, `detail='medium detail'`
 - Color prompts:
-  - `pixel art builder civilian with hammer and tool belt, full body, colonial era style, readable 32x32 unit marker icon`
-  - `pixel art engineer civilian with wrench and measuring tools, full body, colonial era style, readable 32x32 unit marker icon`
-  - `pixel art rail builder civilian with pickaxe and rail spike hammer, full body, colonial era style, readable 32x32 unit marker icon`
-  - `pixel art explorer civilian with compass and satchel, full body, colonial era style, readable 32x32 unit marker icon`
-  - `pixel art trader merchant civilian holding visible coin pouch and ledger, full body, colonial era clothing, readable 32x32 unit marker icon`
-  - `pixel art spy civilian cloaked with dagger and covert posture, full body, colonial era style, readable 32x32 unit marker icon`
+  - `pixel art builder civilian with hammer and tool belt, full body, colonial era style, readable 64x64 unit marker icon`
+  - `pixel art engineer civilian with wrench and measuring tools, full body, colonial era style, readable 64x64 unit marker icon`
+  - `pixel art rail builder civilian with pickaxe and rail spike hammer, full body, colonial era style, readable 64x64 unit marker icon`
+  - `pixel art explorer civilian with compass and satchel, full body, colonial era style, readable 64x64 unit marker icon`
+  - `pixel art trader merchant civilian holding visible coin pouch and ledger, full body, colonial era clothing, readable 64x64 unit marker icon`
+  - `pixel art spy civilian cloaked with dagger and covert posture, full body, colonial era style, readable 64x64 unit marker icon`
 - Grayscale assets:
   - Runtime assigned-state rendering is paint-time grayscale filtering of color icons.
   - Compatibility `_gray` files are generated from approved color icons via deterministic grayscale conversion.
@@ -201,7 +242,7 @@ The **in-game shell** (Empire overview) may overlay a cycle button that toggles 
 - **Fit-relative multiplier:** `m = zoom / z_fit` where `zoom` is the Flame viewfinder zoom. User-facing **percent = 100 × m** (display range **50%–800%** corresponds to **`m ∈ [0.5, 8]`**). **100% = fit the full map** in the current viewport.
 - **Unified clamp:** **Pinch**, **scroll wheel**, **keyboard zoom shortcuts**, and the **in-game minimap zoom slider** all use the **same** limits on **`m`**: **`[0.5, 8]`** (no separate clamps per input). Effective camera zoom is **`m × z_fit`** after clamping **`m`**.
 - **Pan:** User can pan to move the visible region over the full map (drag or gesture). Map is larger than viewport when zoomed in; **dragging** on the map surface pans the camera.
-- **Zoom:** **Continuous** zoom within the band above; scroll, pinch, keys, and shell slider update **`m`** smoothly. **`z_fit`** is recomputed when the widget resizes or the displayed region changes; **the implementation preserves `m` across viewport resize** so the on-screen zoom feel stays consistent; **when the `regionId` of the map instance changes**, **`m` resets to `1.0`** (100% fit) for that instance.
+- **Zoom:** **Continuous** zoom within the band above; scroll, pinch, keys, and shell slider update **`m`** smoothly. **`z_fit`** is recomputed when the widget resizes or the displayed region changes; the implementation preserves `m` across viewport resize and **across `regionId` switches** for the same map host. On region switch, the host reapplies the current global `m` to the new region and clamps effective zoom to the region's allowable range.
 - **Full map:** The component always has the full region map in memory/logic; viewport is a window over it.
 
 ---
@@ -423,6 +464,9 @@ Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_m
 - **Given** the province names layer is enabled and province `P` has province-level owner a Great Power (in `greatPowerFactionIds`) and every qualifying land cell for `P`’s label has `ownerFactionId` equal to that owner with a defined `factionColors` entry, **when** the map renders the label for `P`, **then** the name plate fill uses that GP’s RGB at **alpha 0.55** (tinted semi-transparent plate).
 - **Given** the province names layer is enabled and province `P` has province-level owner a Minor Nation or Tribe (not in `greatPowerFactionIds`), **when** the map renders the label for `P`, **then** the name plate uses the **neutral** semi-transparent dark plate (even if some land tiles in `P` are owned by a GP due to purchase).
 - **Given** the province names layer is enabled and the province ownership (GP land tint) layer is disabled, **when** the map renders a province that qualifies for a GP-tinted name plate, **then** the name plate is still GP-tinted (no dependency on the ownership tint toggle).
+- **Given** the province names layer is enabled and a land province is the active capital province of any faction represented in `RegionMapViewData.capitalMarkers`, **when** the map renders the province label, **then** the UI layer draws `ui_icon_map_capital_star.png` immediately to the left of the province name.
+- **Given** the province names layer is enabled and a land province is not the active capital province of any faction, **when** the map renders the province label, **then** the UI layer does not draw the capital star icon for that label.
+- **Given** the province names layer is enabled and a capital province label is rendered, **when** label layout is computed, **then** the full province name text and capital star icon are both visible and neither is ellipsized or clipped.
 - **Given** the province names layer is enabled and province `P` has civilian presence count greater than zero and player intel permits class-presence knowledge for `P`, **when** the map renders the province name label for `P`, **then** the province label includes the civilian presence icon.
 - **Given** the province names layer is enabled and province `P` has regiment presence count greater than zero and player intel permits class-presence knowledge for `P`, **when** the map renders the province name label for `P`, **then** the province label includes the regiment presence icon.
 - **Given** the province names layer is enabled and province `P` has ship presence count greater than zero and player intel permits class-presence knowledge for `P`, **when** the map renders the province name label for `P`, **then** the province label includes the ship presence icon.
@@ -431,7 +475,18 @@ Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_m
 - **Given** the map cannot fit province name text and class icons on one line at the label position, **when** label layout is computed, **then** the map renders icons on a second line under the province name while preserving class order.
 - **Given** player-constrained visibility/intel for province `P` does not expose class-presence knowledge to the current player, **when** the map renders `P`'s province name label, **then** no class presence icons are shown for `P`.
 - **Given** turn resolution has completed and a new turn starts, **when** map label view data is refreshed, **then** class-presence icons are recomputed from the post-resolution province unit-presence state.
-- **Given** the province names layer is disabled, **when** the map renders, **then** no province name labels are drawn.
+- **Given** `assets/icons/64/ui_icon_map_capital_star.png` is generated for the map label capital indicator, **when** asset checks run, **then** the icon passes: (a) human visual review confirming a recognizable gold star silhouette at map-label render scale and (b) deterministic checks confirming dominant yellow/gold hue and a non-rectangular opaque pixel cluster.
+- **Given** the province names layer is disabled, **when** the map renders, **then** no province name labels and no sea zone name plates are drawn.
+- **Given** the province names layer is enabled and a sea zone’s **centroid cell** is not `TileVisibility.unrevealed` under the map’s terrain visibility rules (including fleet move-draft reveal halo where applicable), **when** the map renders that region, **then** that sea zone’s **full** display name appears on a semi-transparent plate with fill **RGB (173, 216, 230)** at **alpha 0.55** and **black** text, using `RegionMapViewData.seaZoneDisplayNameByPrefixedId['regionId|localSeaZoneId']` with fallback to the local sea zone id when the map entry is missing.
+- **Given** the province names layer is enabled and a sea zone’s **centroid cell** is `TileVisibility.unrevealed`, **when** the map renders, **then** no name plate is drawn for that sea zone.
+- **Given** the province names layer is enabled and a sea zone has a fleet marker on its centroid tile, **when** the map renders, **then** the sea zone name plate does not overlap the centroid cell’s world rectangle (default placement **above**; **below** when **above** would clip the top of the map), and the full plate remains inside the region bounds after minimal nudge.
+- **Given** the province names layer is enabled and a sea zone’s centroid lies on the **top** grid row (or any case where **above** placement would clip the map top), **when** the map renders, **then** the plate is placed **below** the centroid, still not overlapping the centroid cell, and the entire plate lies within the region world bounds.
+- **Given** the province names layer is enabled and any sea zone label is rendered at a supported zoom level, **when** the map paints that label, **then** the entire sea zone name plate rectangle lies within the region’s world bounds (`0`–`width×cellSize`, `0`–`height×cellSize`) with no partial clipping.
+- **Given** the province names layer is enabled and `RegionMapViewData.seaZoneDisplayNameByPrefixedId` supplies an unexpectedly long display string for a sea zone, **when** the map renders that label, **then** the UI shows the **complete** text with **no** ellipsis.
+- **Given** the province names layer is enabled and a sea zone local id is present in `RegionMapViewData.warpMarkers`, **when** the sea label renders, **then** the label plate shows `ui_icon_map_warp_zone.png` to the left of the text in the same row with the standard label text-icon gap.
+- **Given** the province names layer is enabled and a sea zone local id is not present in `RegionMapViewData.warpMarkers`, **when** the sea label renders, **then** no warp prefix icon is shown.
+- **Given** the province names layer is disabled or the sea-zone centroid is `TileVisibility.unrevealed`, **when** the map renders, **then** neither sea-zone text nor the warp prefix icon is shown.
+- **Given** a warp sea zone where the sea label is shown, **when** the map renders, **then** the existing yellow warp border glow remains unchanged and visible in its normal layer.
 - **Given** the province names layer is enabled and the province overlay (boundaries) is disabled, **when** the map renders, **then** province name labels are still drawn (no dependency on the province overlay).
 - **Given** the province names layer is enabled and the province ownership layer is disabled, **when** the map renders, **then** province name labels are still drawn (no dependency on the ownership tint).
 - **Given** the political overlay is enabled while the province overlay is enabled and visibility mode is **player-constrained**, **when** two adjacent land tiles belong to different owning factions and **both** tiles are `unrevealed`, **then** no political border stroke is drawn between them.
@@ -440,6 +495,8 @@ Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_m
 - **Given** the political overlay is disabled, **when** the map renders adjacent land tiles with different owning factions, **then** no political border stroke is drawn between them regardless of the province overlay setting.
 - **When** the user pans, **then** the visible portion of the map updates; the full map remains pannable within the fixed scale.
 - **When** the user zooms via scroll, pinch, keyboard, or shell slider, **then** the fit-relative multiplier `m` stays within **[0.5, 8]** and camera zoom equals **`m × z_fit`** after each update.
+- **Given** the player changes fit-relative zoom multiplier `m` on one region map instance and then switches to another region in the same map host, **when** the new region is rendered, **then** the host reapplies the same `m` and computes effective camera zoom as `clamp(m, 0.5, 8) × z_fit(activeRegion)` without resetting `m` to 1.0.
+- **Given** the reapplied global `m` would produce a camera state outside active-region camera bounds, **when** the map host updates the region, **then** the map clamps the resulting camera position and effective zoom using the same clamping rules as normal zoom/pan updates and remains interactive without errors.
 - **When** the user taps/clicks a province, **then** the widget invokes the provided province-selection callback with an identifier (e.g. prefixed province id); the widget does not render province details itself.
 - **When** the user hovers over a tile, **then** a selector (e.g. simple square) is shown on that tile with a subtle bouncing animation.
 - **When** the user hovers over a tile that is not `unrevealed`, **then** the borders of that tile's province (or sea zone) glow and have a subtle animation, and each glowing segment follows the same visibility predicate as province topology strokes in player-constrained mode; when hover leaves, the highlight is removed.
@@ -457,20 +514,29 @@ Required plains resource variant assets (`tile_plains_grain.png`, `tile_plains_m
 - **Given** the map widget is in work target selection mode, **when** the user taps a tile in **validTileKeys** or taps outside valid tiles, **then** the widget invokes **onTileSelected** (for valid tiles) or **onWorkTargetSelectionCancelled** (for invalid/empty), respectively; hover gestures remain purely visual during selection mode and do not commit or cancel.
 - **Given** the map widget is in work target selection mode, **when** the map renders, **then** a cancel button with a cross icon (×) is overlaid on the map (Flutter overlay) in a visible position (e.g., top-right corner). Clicking the cancel button invokes **onWorkTargetSelectionCancelled** and exits selection mode.
 - **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` and the map is not in work target selection mode, **when** the map renders tile `T`, **then** it draws one tile-sized civilian marker with a stack badge when `stackCount > 1`.
-- **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` with representative unit type `U` and `representativeIsAssigned = false`, **when** the map renders tile `T`, **then** the UI layer draws `assets/icons/ui_icon_civ_<slug(U)>.png` mapped by unit type.
-- **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` with representative unit type `U` and `representativeIsAssigned = true`, **when** the map renders tile `T`, **then** the UI layer draws `assets/icons/ui_icon_civ_<slug(U)>.png` mapped by unit type and applies grayscale via paint-time color filtering.
+- **Given** the user assigns a civilian work order in the current turn and that unit has a pending draft `WorkOrder` with target tile key `T`, **when** the map renders before turn resolution, **then** the civilian marker projection includes that unit at tile `T` in the same turn (using the current draft order), instead of waiting for post-resolution unit movement.
+- **Given** map markers and Civilian Units panel rows are shown in the same turn, **when** a civilian has pending or assigned work, **then** each surface derives location from one shared projected-location rule (pending target tile, else assigned tile, else standing tile) so display and locate targets stay aligned.
+- **Given** a civilian marker tile `T` is the same tile as a capital marker tile, **when** the map renders both markers, **then** the civilian marker is painted above the capital marker and any civilian stack badge remains legible.
+- **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` with representative unit type `U` and `representativeIsAssigned = false`, **when** the map renders tile `T`, **then** the UI layer draws `assets/icons/64/ui_icon_civ_<slug(U)>.png` mapped by unit type.
+- **Given** `RegionMapViewData.civilianTileMarkers` contains a marker for tile `T` with representative unit type `U` and `representativeIsAssigned = true`, **when** the map renders tile `T`, **then** the UI layer draws `assets/icons/64/ui_icon_civ_<slug(U)>.png` mapped by unit type and applies grayscale via paint-time color filtering.
 - **Given** a selected civilian marker tile key and a map frame render, **when** the selected marker is painted, **then** only that marker (including its badge) uses blink modulation; unselected civilian markers remain steady.
+- **Given** a civilian assignment flow completes and the previously selected civilian marker tile key differs from the newly assigned marker tile, **when** the shell exits work-target selection mode, **then** the shell clears the stale selected marker key so only an actively selected marker can blink.
 - **Given** the map is not in work target selection mode and tile `T` contains a civilian marker, **when** the user taps tile `T`, **then** `onCivilianTileTapped` is invoked and default province/tile-detail tap handling for that tap is suppressed.
 - **Given** a civilian marker is selected and the map is not in work target selection mode, **when** the user taps a non-civilian tile, **then** `onCivilianTileSelectionCleared` is invoked and regular map detail/province tap handling still runs.
 - **Given** the map widget is given **base layer display mode** `terrainOnly`, **when** the widget renders the base layer, **then** terrain is drawn and no resource icons or improvement or road labels are drawn on tiles; capitals, town/port icons, and warp indicators are drawn subject to [base layer display mode](#base-layer-display-mode) (always, for mode switching) and, in player-constrained mode, capital/town/port markers additionally respect per-cell visibility as above.
-- **Given** the map widget is given **base layer display mode** `terrainAndResources`, **when** the widget renders the base layer, **then** terrain and resource icons (32×32 pixel art) are drawn per cell where present, and no improvement or road labels are drawn.
+- **Given** the map widget is given **base layer display mode** `terrainAndResources`, **when** the widget renders the base layer, **then** terrain and resource icons (64×64 source assets, on-map quarter-cell/capped display per § Resource Icons) are drawn per cell where present, and no improvement or road labels are drawn.
 - **Given** the map widget is given **base layer display mode** `terrainAndResourcesImprovementLabels`, **when** the widget renders the base layer, **then** terrain and resource icons are drawn, and improvement labels `I{n}` are drawn only when `improvementLevel > 0` (top-left of cell); no road labels are drawn.
 - **Given** the map widget is given **base layer display mode** `terrainAndResourcesImprovementsRoads`, **when** the widget renders the base layer, **then** terrain and resource icons are drawn, improvement labels when `improvementLevel > 0`, and road labels `R{n}` when `roadLevel > 0` (top-right), with **roads painted after improvements** in Z-order.
 - **Given** the map widget omits **base layer display mode** (null), **when** the widget renders the base layer, **then** behavior matches `terrainAndResourcesImprovementsRoads` (full detail).
 - **Given** the map widget uses a mode that draws improvement or road labels, **when** a tile has `improvementLevel == 0` or `roadLevel == 0`, **then** no `I0` or `R0` label is drawn for that level.
-- **Given** a map widget rendering a tile with a resource, **when** the base layer display mode includes resources, **then** the resource icon matching the resource ID is loaded from `assets/icons/ui_icon_com_<resource_id>.png` and rendered at native 32×32 resolution (never upscaled). **Loading failures** (missing file, decode error) must propagate: `ResourceIconCache` does not swallow per-icon errors; a failed load aborts cache initialization so the problem surfaces immediately.
-- **Given** a map widget rendering a tile with a resource on a **32px or smaller cell**, **when** the base layer display mode includes resources, **then** the resource icon is centered horizontally and positioned in the lower half of the cell.
-- **Given** a map widget rendering a tile with a resource on a **larger than 32px cell** (e.g. 64px), **when** the base layer display mode includes resources, **then** the resource icon is positioned in the **bottom-left corner** of the tile (x=0, y=tileSize-32) at native 32×32 resolution.
+- **Given** a map widget rendering a tile with a resource, **when** the base layer display mode includes resources, **then** the resource icon matching the resource ID is loaded from `assets/icons/64/ui_icon_com_<resource_id>.png` from the full **64×64** source and painted into the on-map **display** rect (quarter `cellSize`, capped at 64; never upscaled beyond native asset size). **Loading failures** (missing file, decode error) must propagate: `ResourceIconCache` does not swallow per-icon errors; a failed load aborts cache initialization so the problem surfaces immediately.
+- **Given** a map widget rendering a tile with a resource, **when** the base layer display mode includes resources, **then** the resource icon uses **bottom-left placement** with `displaySize = min(cellSize / 4, 64)`: `iconX = tileLeft`, `iconY = tileTop + cellSize - displaySize` in tile coordinates; extraction-unit discs remain anchored to that painted `Rect` and fan to the right.
+- **Given** `baseLayerDisplayMode` is `terrainOnly`, **when** the map renders tiles, **then** the UI layer draws no extraction-unit discs on any tile.
+- **Given** a land tile renders a resource icon and `CellViewData.resourceExtractionUnits` equals integer `N` where `N >= 1`, **when** the map renders that tile, **then** the UI layer draws exactly `N` extraction discs immediately to the right of the icon in a horizontal right fan.
+- **Given** `CellViewData.resourceExtractionUnits` is `0` or `null`, **when** the map renders that tile, **then** the UI layer draws no extraction discs on that tile.
+- **Given** resource icon visibility/prospecting rules suppress a tile’s resource icon, **when** the map renders that tile, **then** the UI layer draws no extraction discs on that tile.
+- **Given** a fogged tile (`TileVisibility.fogged`) with a visible resource icon and `CellViewData.resourceExtractionUnits >= 1`, **when** the map renders the icon and discs, **then** the discs use the same fog modulation as the icon on that tile.
+- **Given** two resource ids `A` and `B` with fixed palette entries in the checked-in build-time generated palette map, **when** extraction discs render for tiles with `resourceId = A` and `resourceId = B`, **then** the UI layer uses exactly those palette RGB values and performs no runtime PNG dominant-color sampling.
 - **Given** a map widget with `RegionMapViewData.warpMarkers` populated (non-empty), **when** the widget renders the map, **then** a glowing yellow border is drawn around each warp sea zone; warp zone indicators are rendered regardless of `baseLayerDisplayMode`.
 - **Given** a map widget in **player-constrained** visibility mode with `RegionMapViewData.warpMarkers` populated, **when** a warp perimeter unit edge has adjacent cells where both visibilities are `unrevealed`, **then** no warp glow segment is drawn on that edge.
 - **Given** a map widget in **player-constrained** visibility mode with `RegionMapViewData.warpMarkers` populated, **when** a warp perimeter unit edge has adjacent cells where at least one visibility is `visible` or `fogged`, **then** the warp glow segment is drawn on that edge.

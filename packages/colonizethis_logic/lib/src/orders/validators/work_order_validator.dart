@@ -42,14 +42,17 @@ class WorkOrderValidator extends OrderValidator {
 
   Stockpile _stockpile;
   int _treasury;
+  final Set<String> _seenUnitIds;
 
   WorkOrderValidator({
     required WorkOrderValidationContext context,
     required Stockpile stockpile,
     required int treasury,
+    Set<String> initialSeenUnitIds = const <String>{},
   }) : _context = context,
        _stockpile = stockpile,
-       _treasury = treasury;
+       _treasury = treasury,
+       _seenUnitIds = {...initialSeenUnitIds};
 
   Stockpile get stockpile => _stockpile;
   int get treasury => _treasury;
@@ -68,6 +71,12 @@ class WorkOrderValidator extends OrderValidator {
         if (unit == null || unit.ownerId != _context.playerId) {
           return OrderValidationResult.rejected('Unit not found');
         }
+        if (_seenUnitIds.contains(o.unitId)) {
+          return OrderValidationResult.rejected(
+            'Only one work order per unit is allowed each turn',
+          );
+        }
+        _seenUnitIds.add(o.unitId);
         if (unit.currentWork != null) {
           return OrderValidationResult.rejected(
             'Unit already has a work order; cancel first',
@@ -151,7 +160,7 @@ class WorkOrderValidator extends OrderValidator {
           );
           if (o.target == kWorkTargetBuildRoad && roadLevel >= 1) {
             final hasRoadConstruction =
-                _context.player.techUnlocked?['road_construction'] == true;
+                _context.player.techUnlocked?[kTechIdRoadConstruction] == true;
             if (!hasRoadConstruction) {
               return OrderValidationResult.rejected(
                 'Road Construction tech required for transport level 2',
@@ -160,19 +169,19 @@ class WorkOrderValidator extends OrderValidator {
           }
           if (o.target == kWorkTargetBuildFort) {
             if (fortLevel == 1 &&
-                _context.player.techUnlocked?['mine_engineering'] != true) {
+                _context.player.techUnlocked?[kTechIdMineEngineering] != true) {
               return OrderValidationResult.rejected(
                 'Mine Engineering tech required for fort level 2',
               );
             }
             if (fortLevel == 2 &&
-                _context.player.techUnlocked?['modern_forts'] != true) {
+                _context.player.techUnlocked?[kTechIdModernForts] != true) {
               return OrderValidationResult.rejected(
                 'Modern Forts tech required for fort level 3',
               );
             }
           }
-          if (o.target == 'build_rail') {
+          if (o.target == kWorkTargetBuildRail) {
             final terrain = terrainTypeForTileKey(
               _context.tileMapByRegion,
               o.targetTileKey,
@@ -281,9 +290,9 @@ class WorkOrderValidator extends OrderValidator {
     if (provinceOwnerId == null || provinceOwnerId == _context.playerId) {
       return false;
     }
-    if (unitType != 'Builder' &&
-        unitType != 'Engineer' &&
-        unitType != 'Merchant') {
+    if (unitType != kUnitTypeBuilder &&
+        unitType != kUnitTypeEngineer &&
+        unitType != kUnitTypeMerchant) {
       return false;
     }
     if (!isMinorOrTribe(_context.game, provinceOwnerId)) return false;

@@ -138,27 +138,118 @@ void main() {
       });
     });
 
-    test('ship reveal sets coastal tiles to revealed when fleet enters sea zone', () {
-      // Single coastal province adjacent to a sea zone; moving fleet into that
-      // sea zone should reveal the province's coastal tiles for the fleet owner.
+    test(
+      'ship reveal reveals only coastal tiles and keeps inland tiles unchanged',
+      () {
+        const nw = 'newWorld';
+        const provinceP1 = '$nw|p1';
+        const provinceP2 = '$nw|p2';
+        const p1CoastalTile = '$provinceP1|0|0';
+        const p1InlandTile = '$provinceP1|0|1';
+        const p2CoastalTile = '$provinceP2|2|0';
+        const sea2WaterA = '$nw|sea2|1|0';
+        const sea2WaterB = '$nw|sea2|3|0';
+
+        final revealTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'p2',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'sea1',
+              regionId: nw,
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 'sea2',
+              regionId: nw,
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [
+            TopologyEdge(id1: 'p1', id2: 'sea2'),
+            TopologyEdge(id1: 'p2', id2: 'sea2'),
+            TopologyEdge(id1: 'sea1', id2: 'sea2'),
+          ],
+        );
+
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.movement,
+              turnNumber: 0,
+            ),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: 'f1',
+                ownerId: 'gp1',
+                seaZoneId: 'sea1',
+                regionId: nw,
+                shipTypeIds: ['carrack'],
+              ),
+            ],
+            tileKeysByRegionAndProvince: const {
+              nw: {
+                provinceP1: [p1CoastalTile, p1InlandTile],
+                provinceP2: [p2CoastalTile],
+                'sea2': [sea2WaterA, sea2WaterB],
+              },
+            },
+            playerVisibilityByTile: const {'gp1': {}},
+          ),
+          players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+        );
+
+        final orders = {
+          'gp1': [
+            const NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'sea2'),
+          ],
+        };
+
+        final next = applyNavalMovesAndShipReveal(game, revealTopology, orders);
+        final visibility = next.worldState.playerVisibilityByTile['gp1'];
+
+        expect(visibility?[p1CoastalTile], VisibilityLevel.revealed.name);
+        expect(visibility?[p2CoastalTile], VisibilityLevel.revealed.name);
+        expect(visibility?[p1InlandTile], isNull);
+        expect(visibility?[sea2WaterA], VisibilityLevel.fullyVisible.name);
+        expect(visibility?[sea2WaterB], VisibilityLevel.fullyVisible.name);
+      },
+    );
+
+    test('ship reveal stays region-scoped when ids overlap across regions', () {
       const ow = 'oldWorld';
-      const provinceLocalId = 'p1';
-      const fullProvinceId = '$ow|$provinceLocalId';
-      const tileKey = '$fullProvinceId|0|0';
-      const tileSea2 = '$ow|sea2|0|0';
+      const nw = 'newWorld';
+      const nwProvince = '$nw|p1';
+      const owProvince = '$ow|p1';
+      const nwCoastalTile = '$nwProvince|0|0';
+      const owTile = '$owProvince|0|0';
+      const nwSea2Tile = '$nw|sea2|1|0';
 
       final revealTopology = MapTopology(
         nodes: const [
-          TopologyNode(
-            id: provinceLocalId,
-            regionId: ow,
-            type: TopologyNodeType.province,
-          ),
+          TopologyNode(id: 'p1', regionId: nw, type: TopologyNodeType.province),
           TopologyNode(
             id: 'sea1',
-            regionId: ow,
+            regionId: nw,
             type: TopologyNodeType.seaZone,
           ),
+          TopologyNode(
+            id: 'sea2',
+            regionId: nw,
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
           TopologyNode(
             id: 'sea2',
             regionId: ow,
@@ -166,32 +257,33 @@ void main() {
           ),
         ],
         edges: const [
-          // Province is coastal to the destination sea zone (sea2); sea1 adjacent
-          // to sea2 so fleet can move from sea1 into sea2 and then reveal coast.
-          TopologyEdge(id1: provinceLocalId, id2: 'sea2'),
+          TopologyEdge(id1: 'p1', id2: 'sea2'),
           TopologyEdge(id1: 'sea1', id2: 'sea2'),
         ],
       );
 
       final game = Game(
-        id: 'g1',
+        id: 'g2',
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.movement, turnNumber: 0),
           oldWorld: const RegionData(),
           newWorld: const RegionData(),
           fleets: [
             Fleet(
-              id: 'f1',
+              id: 'f2',
               ownerId: 'gp1',
               seaZoneId: 'sea1',
-              regionId: ow,
+              regionId: nw,
               shipTypeIds: ['carrack'],
             ),
           ],
           tileKeysByRegionAndProvince: const {
             ow: {
-              fullProvinceId: [tileKey],
-              'sea2': [tileSea2],
+              owProvince: [owTile],
+            },
+            nw: {
+              nwProvince: [nwCoastalTile],
+              'sea2': [nwSea2Tile],
             },
           },
           playerVisibilityByTile: const {'gp1': {}},
@@ -201,20 +293,15 @@ void main() {
 
       final orders = {
         'gp1': [
-          const NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'sea2'),
+          const NavalMoveOrder(fleetId: 'f2', destinationSeaZoneId: 'sea2'),
         ],
       };
 
       final next = applyNavalMovesAndShipReveal(game, revealTopology, orders);
-
-      expect(
-        next.worldState.playerVisibilityByTile['gp1']?[tileKey],
-        VisibilityLevel.revealed.name,
-      );
-      expect(
-        next.worldState.playerVisibilityByTile['gp1']?[tileSea2],
-        VisibilityLevel.fullyVisible.name,
-      );
+      final visibility = next.worldState.playerVisibilityByTile['gp1'];
+      expect(visibility?[nwCoastalTile], VisibilityLevel.revealed.name);
+      expect(visibility?[nwSea2Tile], VisibilityLevel.fullyVisible.name);
+      expect(visibility?[owTile], isNull);
     });
 
     group('firstAdjacentSeaZone', () {
@@ -391,6 +478,44 @@ void main() {
 
       test('returns null when sea zone not found (no default region)', () {
         expect(regionIdForSeaZone(topology, 'nonexistent'), isNull);
+      });
+    });
+
+    group('isWarpZoneSeaZone', () {
+      test('returns true when sea zone has cross-region S-S edge', () {
+        const ow = 'oldWorld';
+        const nw = 'newWorld';
+        final combined = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: '$ow|sea_a',
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: '$ow|sea_b',
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: '$nw|sea_c',
+              regionId: nw,
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [
+            TopologyEdge(id1: '$ow|sea_a', id2: '$ow|sea_b'),
+            TopologyEdge(id1: '$ow|sea_b', id2: '$nw|sea_c'),
+          ],
+        );
+
+        expect(isWarpZoneSeaZone(combined, '$ow|sea_b'), isTrue);
+        expect(isWarpZoneSeaZone(combined, '$nw|sea_c'), isTrue);
+      });
+
+      test('returns false for same-region edges only', () {
+        expect(isWarpZoneSeaZone(topology, 'sea1'), isFalse);
+        expect(isWarpZoneSeaZone(topology, 'sea2'), isFalse);
       });
     });
 

@@ -30,7 +30,6 @@ jobs:
             tests:
               - 'packages/**'
               - 'app/**'
-              - 'ctterm/**'
               - 'tool/sim_scenarios/**'
               - 'tool/sim_combat_montecarlo/**'
               - 'tool/sim_combat/**'
@@ -38,6 +37,12 @@ jobs:
               - 'tool/init_game/**'
               - 'tool/sim_economy/**'
               - 'tool/show_tech/**'
+              - 'tool/check_long_string_switches.dart'
+              - 'tool/generate_tech_effect_yaml.dart'
+              - 'tool/generate_tech_effect_l10n.dart'
+              - 'tool/embed_tech_effect_summary.dart'
+              - 'tool/generate_order_engine_slots.dart'
+              - 'tool/verify_order_engine_codegen.sh'
 
   # Resolved pub cache + .dart_tool + gen-l10n; flutter analyze gate; then pack for shards (--no-pub).
   # Jobs always run after `changes` so required branch checks get success (not skip) when the path filter
@@ -76,6 +81,10 @@ jobs:
           set -e
           cd app
           flutter gen-l10n
+
+      - name: Check long string switches (AST)
+        if: needs.changes.outputs.tests == 'true'
+        run: dart tool/check_long_string_switches.dart
 
       - name: Compile app entrypoints (Flutter analyze)
         if: needs.changes.outputs.tests == 'true'
@@ -249,9 +258,7 @@ jobs:
         uses: GabrielBB/xvfb-action@v1.7
         with:
           working-directory: app
-          run: >-
-            flutter test integration_test/new_game_capital_panel_e2e_test.dart
-            -d linux --dart-define=CT_E2E=true --reporter=compact
+          run: bash -lc "set -euo pipefail; flutter test integration_test/new_game_capital_panel_e2e_test.dart -d linux --dart-define=CT_E2E=true --reporter=compact; flutter test integration_test/new_game_full_turn_e2e_test.dart -d linux --dart-define=CT_E2E=true --reporter=compact"
 
   quality:
     needs: changes
@@ -263,7 +270,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Flutter
-        if: needs.changes.outputs.tests == 'true'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -282,11 +288,45 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y lcov
 
       - name: Resolve dependencies
-        if: needs.changes.outputs.tests == 'true'
         run: dart pub get
 
-      - name: Check test import convention (SPEC/program/test-logging.md)
-        run: tool/check_test_imports.sh
+      - name: Verify OrderEngine codegen (SPEC/program/order-engine.md)
+        run: bash tool/verify_order_engine_codegen.sh
+
+      - name: Repo convention lint (unified manifest, SPEC/program/repo-lint.md)
+        env:
+          CT_REPO_LINT_INCLUDE_APP: ${{ needs.changes.outputs.tests }}
+        run: dart run tool/ct_repo_lint.dart
+
+      - name: Run domain exception custom_lint (SPEC/program/exception-enforcement.md)
+        run: bash tool/run_custom_lint_domain_exceptions.sh
+
+      - name: Test colonizethis_exception_lint (SPEC/program/exception-enforcement.md)
+        run: dart test packages/colonizethis_exception_lint/test --reporter=compact
+
+      - name: Test disallowed AST patterns checker (SPEC/program/disallowed-ast-patterns.md)
+        run: dart test test/check_disallowed_ast_patterns_test.dart --reporter=compact
+
+      - name: Test repeated magic numbers checker (SPEC/program/repeated-magic-numbers.md)
+        run: dart test test/check_repeated_magic_numbers_test.dart --reporter=compact
+
+      - name: Test OrderEngine slot generator (SPEC/program/order-engine.md)
+        run: dart test test/generate_order_engine_slots_test.dart --reporter=compact
+
+      - name: Test app hardcoded UI string checker (SPEC/program/localization.md)
+        run: dart test test/check_app_hardcoded_ui_strings_test.dart --reporter=compact
+
+      - name: Test work target constants checker (SPEC/program/repo-and-packages.md)
+        run: dart test test/check_work_target_constants_test.dart --reporter=compact
+
+      - name: Test asset path constants checker (SPEC/program/repo-and-packages.md)
+        run: dart test test/check_asset_path_constants_test.dart --reporter=compact
+
+      - name: Test civilian unit type constants checker (SPEC/program/repo-and-packages.md)
+        run: dart test test/check_civilian_unit_type_constants_test.dart --reporter=compact
+
+      - name: Test canonical province tile-key checker (SPEC/game/world-model-identity.md)
+        run: dart test test/check_canonical_province_tile_keys_test.dart --reporter=compact
 
       - name: Wang incremental assets gate (Python)
         run: |
@@ -353,16 +393,6 @@ jobs:
           if [ -d packages/colonizethis_map/test ]; then
             (cd packages/colonizethis_map && dart test --coverage=coverage -j 2 --reporter=compact)
             (cd packages/colonizethis_map && dart run coverage:format_coverage --lcov -i coverage -o coverage/lcov.info --report-on=lib --package=.)
-          fi
-
-      - name: Test ctterm (Dart)
-        if: needs.changes.outputs.tests == 'true'
-        env:
-          SUPPRESS_IMAGE_VIEWER: "1"
-        run: |
-          set -e
-          if [ -d ctterm/test ]; then
-            (cd ctterm && dart test -j 2 --reporter=compact)
           fi
 
       - name: Test tool packages (Dart)

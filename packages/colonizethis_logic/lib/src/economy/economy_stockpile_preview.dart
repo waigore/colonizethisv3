@@ -4,13 +4,15 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../turn/turn_resolver.dart';
 import 'economy_preview_stockpile_phase.dart';
-import 'economy_production.dart';
 
 /// Preview net stockpile change for one player after economy phases that feed
 /// the production panel. SPEC/ui/production-panel.md.
 ///
-/// Phases: Extraction → Riches-to-treasury → Consumption → Production, using
-/// the same rules as [applyEconomyPhasesForPreview]. Other players are
+/// Phases:
+/// Pending build costs → Extraction → Riches-to-treasury → Consumption → Production,
+/// using the same rules as [applyEconomyPhasesForPreview]. Pending build costs
+/// include unresolved unit builds and pending `build_improvement` work-order
+/// material costs (work-phase rules). Other players are
 /// simulated in lockstep so extraction ordering (e.g. fleet updates from
 /// trade interception) matches a full turn.
 ///
@@ -21,6 +23,7 @@ Map<String, int> previewStockpileNetDeltaByCommodityForPlayer({
   required String playerId,
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  Orders currentOrders = const Orders(),
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
 }) {
@@ -34,6 +37,7 @@ Map<String, int> previewStockpileNetDeltaByCommodityForPlayer({
     topology: topology,
     tileMapByRegion: tileMapByRegion,
     extractedByPlayerId: extractedByPlayerId,
+    currentOrders: currentOrders,
     defaultAssignments: defaultAssignments,
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
   );
@@ -62,6 +66,7 @@ previewStockpilePhaseDeltasByCommodityForPlayer({
   required String playerId,
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  Orders currentOrders = const Orders(),
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
 }) {
@@ -71,6 +76,7 @@ previewStockpilePhaseDeltasByCommodityForPlayer({
     playerId: playerId,
     tileMapByRegion: tileMapByRegion,
     extractedByPlayerId: extractedByPlayerId,
+    currentOrders: currentOrders,
     defaultAssignments: defaultAssignments,
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
   );

@@ -64,7 +64,7 @@ bool _minorOrTribeAcceptsByRule(OvertureStage stage) {
       stage == OvertureStage.nap;
 }
 
-/// AI GP target: accept if relation score >= neutral (Neutral or better). MVP rule.
+/// AI GP target: accept if relation score >= neutral (Neutral or better). Current product rule.
 bool _aiGpAccepts(Game game, String offererGpId, String targetGpId) {
   final rel = getRelation(game, offererGpId, targetGpId);
   final score = rel?.score ?? relationScoreNeutral;

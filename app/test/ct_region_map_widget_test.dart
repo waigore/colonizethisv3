@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -11,10 +13,23 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show
+        CtRegionMapComponent,
+        extractionDiscCentersForIconRect,
+        isCellUnderFleetRevealHalo,
+        resolveProvinceLabelIconIds,
         resolveProvinceLabelPresenceIconIds,
+        resolveSeaZoneLabelPrefixIconIds,
+        resolveSeaZoneNamePlateCenterWorld,
+        resourceIconDisplaySizePx,
+        shouldEllipsizeProvinceLabelText,
+        shouldShowExtractionUnitDiscs,
         shouldApplyFogToFeatureOverlay,
+        shouldApplyFogToInteriorPlainsVariantBase,
+        shouldApplyFogToInteriorPlainsVariantOverlay,
         shouldApplyFogToLandBase,
-        shouldWrapProvinceLabelPresenceIcons;
+        shouldWrapProvinceLabelPresenceIcons,
+        visibilityForTerrainForMapCell;
+import 'package:colonizethis_app/features/game/flame/resource_icon_disc_palette.dart';
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
@@ -23,6 +38,16 @@ import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
 
 import 'ct_region_map_test_support.dart';
+
+CtRegionMapComponent ctRegionMapComponentFromTester(WidgetTester tester) {
+  final finder = find.byWidgetPredicate(
+    (w) => w.runtimeType.toString().startsWith('GameWidget<'),
+  );
+  expect(finder, findsOneWidget);
+  final gameWidget = tester.widget(finder);
+  final game = (gameWidget as dynamic).game;
+  return (game as dynamic).debugMapComponentForTest as CtRegionMapComponent;
+}
 
 void main() {
   suppressLogsForTests();
@@ -127,23 +152,63 @@ void main() {
     );
 
     testWidgets(
+      'fogged interior plains variants apply fog exactly once on overlay pass',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(
+          shouldApplyFogToInteriorPlainsVariantBase(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+          ),
+          isFalse,
+          reason:
+              'Variant base must remain un-fogged to avoid double darkening',
+        );
+        expect(
+          shouldApplyFogToInteriorPlainsVariantOverlay(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.fogged,
+          ),
+          isTrue,
+          reason: 'Variant overlay is the single fog attenuation pass',
+        );
+        expect(
+          shouldApplyFogToInteriorPlainsVariantBase(
+            visibilityMode: CtMapVisibilityMode.full,
+            tileVisibility: TileVisibility.fogged,
+          ),
+          isFalse,
+        );
+        expect(
+          shouldApplyFogToInteriorPlainsVariantOverlay(
+            visibilityMode: CtMapVisibilityMode.full,
+            tileVisibility: TileVisibility.fogged,
+          ),
+          isFalse,
+        );
+        expect(
+          shouldApplyFogToInteriorPlainsVariantOverlay(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            tileVisibility: TileVisibility.visible,
+          ),
+          isFalse,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
       'required civilian map icon assets exist and are non-empty',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
         for (final slug in kCivilianIconSlugs) {
-          final colorPath = 'assets/icons/ui_icon_civ_$slug.png';
-          final grayPath = 'assets/icons/ui_icon_civ_${slug}_gray.png';
+          final colorPath = 'assets/icons/64/ui_icon_civ_$slug.png';
           final colorData = await rootBundle.load(colorPath);
-          final grayData = await rootBundle.load(grayPath);
           expect(
             colorData.lengthInBytes,
             greaterThan(0),
             reason: 'Civilian icon $colorPath is empty',
-          );
-          expect(
-            grayData.lengthInBytes,
-            greaterThan(0),
-            reason: 'Civilian grayscale icon $grayPath is empty',
           );
         }
       },
@@ -176,11 +241,11 @@ void main() {
     );
 
     testWidgets(
-      'required province label presence icon assets exist and are non-empty',
+      'required province/sea label icon assets exist and are non-empty',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
         for (final iconId in kProvinceLabelIconIds) {
-          final path = 'assets/icons/ui_icon_$iconId.png';
+          final path = 'assets/icons/64/ui_icon_$iconId.png';
           final data = await rootBundle.load(path);
           expect(
             data.lengthInBytes,
@@ -188,6 +253,93 @@ void main() {
             reason: 'Province label icon $path is empty',
           );
         }
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'capital star icon asset resembles a gold star silhouette',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.runAsync(() async {
+          final data = await rootBundle.load(
+            'assets/icons/64/ui_icon_map_capital_star.png',
+          );
+          expect(data.lengthInBytes, greaterThan(0));
+          final codec = await ui.instantiateImageCodec(
+            data.buffer.asUint8List(),
+          );
+          final frame = await codec.getNextFrame();
+          final image = frame.image;
+          final bytes = await image.toByteData(
+            format: ui.ImageByteFormat.rawRgba,
+          );
+          expect(bytes, isNotNull);
+          final rgba = bytes!.buffer.asUint8List();
+          expect(rgba.length, image.width * image.height * 4);
+
+          var opaqueCount = 0;
+          var goldCount = 0;
+          var minX = image.width;
+          var minY = image.height;
+          var maxX = -1;
+          var maxY = -1;
+          for (var y = 0; y < image.height; y++) {
+            for (var x = 0; x < image.width; x++) {
+              final i = (y * image.width + x) * 4;
+              final r = rgba[i];
+              final g = rgba[i + 1];
+              final b = rgba[i + 2];
+              final a = rgba[i + 3];
+              if (a < 200) continue;
+              opaqueCount++;
+              if (r >= 150 && g >= 110 && b <= 120 && r >= g) {
+                goldCount++;
+              }
+              if (x < minX) minX = x;
+              if (y < minY) minY = y;
+              if (x > maxX) maxX = x;
+              if (y > maxY) maxY = y;
+            }
+          }
+
+          expect(opaqueCount, greaterThan(20));
+          expect(
+            goldCount / opaqueCount,
+            greaterThan(0.20),
+            reason: 'Capital icon should be dominantly gold/yellow',
+          );
+
+          final boxWidth = (maxX - minX + 1).toDouble();
+          final boxHeight = (maxY - minY + 1).toDouble();
+          expect(boxWidth, greaterThan(6));
+          expect(boxHeight, greaterThan(6));
+          final bboxArea = boxWidth * boxHeight;
+          final fillRatio = opaqueCount / bboxArea;
+          expect(
+            fillRatio,
+            lessThan(0.75),
+            reason:
+                'Star silhouette should not fill a rectangular bounding box',
+          );
+
+          final rowCounts = List<int>.filled(image.height, 0);
+          final colCounts = List<int>.filled(image.width, 0);
+          for (var y = minY; y <= maxY; y++) {
+            for (var x = minX; x <= maxX; x++) {
+              final i = (y * image.width + x) * 4;
+              if (rgba[i + 3] < 200) continue;
+              rowCounts[y]++;
+              colCounts[x]++;
+            }
+          }
+          final midRow = (minY + maxY) ~/ 2;
+          final midCol = (minX + maxX) ~/ 2;
+          expect(rowCounts[midRow], greaterThan(rowCounts[minY] * 2));
+          expect(rowCounts[midRow], greaterThan(rowCounts[maxY] * 2));
+          expect(colCounts[midCol], greaterThan(colCounts[minX] * 2));
+          expect(colCounts[midCol], greaterThan(colCounts[maxX] * 2));
+        });
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
@@ -241,6 +393,60 @@ void main() {
           const ['map_presence_regiment'],
           reason: 'Only >0 classes should render',
         );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'province label icon resolver prepends capital icon before presence icons',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(
+          resolveProvinceLabelIconIds(isCapital: true, presence: null),
+          const ['map_capital_star'],
+        );
+        expect(
+          resolveProvinceLabelIconIds(
+            isCapital: true,
+            presence: const ProvinceUnitPresenceView(
+              civilianCount: 1,
+              regimentCount: 2,
+              shipCount: 3,
+              intelVisible: true,
+            ),
+          ),
+          const [
+            'map_capital_star',
+            'map_presence_civilian',
+            'map_presence_regiment',
+            'map_presence_ship',
+          ],
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'sea-zone label prefix icon resolver emits warp icon only for warp zones',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(resolveSeaZoneLabelPrefixIconIds(isWarpZone: false), isEmpty);
+        expect(resolveSeaZoneLabelPrefixIconIds(isWarpZone: true), const [
+          'map_warp_zone',
+        ]);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'capital province labels disable ellipsis while non-capitals retain ellipsis',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(shouldEllipsizeProvinceLabelText(isCapital: true), isFalse);
+        expect(shouldEllipsizeProvinceLabelText(isCapital: false), isTrue);
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );
@@ -620,6 +826,70 @@ void main() {
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'extraction disc visibility follows base-layer resource visibility mode',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(
+          shouldShowExtractionUnitDiscs(
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
+          ),
+          isFalse,
+        );
+        expect(
+          shouldShowExtractionUnitDiscs(
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+          ),
+          isTrue,
+        );
+        expect(
+          shouldShowExtractionUnitDiscs(
+            baseLayerDisplayMode:
+                BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
+          ),
+          isTrue,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'extraction disc fan layout advances right with overlap',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        final centers = extractionDiscCentersForIconRect(
+          iconRect: const Rect.fromLTWH(10, 20, 64, 64),
+          units: 3,
+        );
+        expect(centers, hasLength(3));
+        expect(centers[1].dx, greaterThan(centers[0].dx));
+        expect(centers[2].dx, greaterThan(centers[1].dx));
+        expect(centers[0].dy, equals(centers[1].dy));
+        expect(centers[1].dy, equals(centers[2].dy));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resource extraction disc palette is fixed and complete for icon ids',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        for (final resourceId in kResourceIconIds) {
+          expect(
+            kResourceIconDiscPalette.containsKey(resourceId),
+            isTrue,
+            reason: 'Missing extraction disc palette entry for $resourceId',
+          );
+          final color = discColorForResourceId(resourceId);
+          expect(color.a, equals(1.0));
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
     );
 
     testWidgets(
@@ -1287,7 +1557,7 @@ void main() {
 
         // Verify all resource icon assets exist and are non-empty
         for (final resourceId in kResourceIconIds) {
-          final path = 'assets/icons/ui_icon_com_$resourceId.png';
+          final path = 'assets/icons/64/ui_icon_com_$resourceId.png';
           final data = await rootBundle.load(path);
           expect(
             data.lengthInBytes,
@@ -1308,7 +1578,7 @@ void main() {
         var loadedCount = 0;
         await tester.runAsync(() async {
           for (final resourceId in kResourceIconIds) {
-            final path = 'assets/icons/ui_icon_com_$resourceId.png';
+            final path = 'assets/icons/64/ui_icon_com_$resourceId.png';
             try {
               final data = await rootBundle.load(path);
               if (data.lengthInBytes > 0) {
@@ -1482,12 +1752,14 @@ void main() {
     );
 
     testWidgets(
-      'resource icons render at 32x32 native size for 64px tiles (SPEC/ui/map-widget.md § Resource Icons)',
+      'resource icons render for 64px tiles with quarter-size display (SPEC/ui/map-widget.md § Resource Icons)',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
           await resourceIconCache.load();
         });
+
+        expect(resourceIconDisplaySizePx(64), equals(16));
 
         final region = ctRegionMapTestOldWorldRegion();
         await tester.pumpWidget(
@@ -1505,7 +1777,7 @@ void main() {
     );
 
     testWidgets(
-      'map renders correctly with 32px tile size (SPEC/ui/map-widget.md § Resource Icons)',
+      'map renders correctly with 64px tile size (SPEC/ui/map-widget.md § Resource Icons)',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
@@ -1516,7 +1788,7 @@ void main() {
         await tester.pumpWidget(
           ctRegionMapTestHarness(
             region: region,
-            cellSizePx: 32,
+            cellSizePx: 64,
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
           ),
         );
@@ -1652,6 +1924,350 @@ void main() {
         await tester.pump();
 
         expect(panelProvinceId, equals('oldWorld|p1'));
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'tap on port drawable sea cell selects owning province not sea zone id',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+          await townIconCache.load();
+        });
+
+        final base = ctRegionMapTestOldWorldRegion();
+        final land = base.cells.firstWhere((c) => !c.isSea);
+        final region = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 2,
+          height: 2,
+          cellSize: 24,
+          cells: [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+            const CellViewData(x: 1, y: 0, regionCellId: 's1', isSea: true),
+            CellViewData(
+              x: 0,
+              y: 1,
+              regionCellId: 'p1x',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+            CellViewData(
+              x: 1,
+              y: 1,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          townMarkers: const [
+            TownMarkerView(
+              x: 1,
+              y: 1,
+              provinceId: 'p1',
+              isCoastal: false,
+              isPort: true,
+              touchesSea: true,
+              portIconX: 1,
+              portIconY: 0,
+            ),
+          ],
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+        );
+
+        const cell = 32.0;
+        String? selectedProvinceId;
+
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            cellSizePx: cell,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+            onProvinceSelected: (id) => selectedProvinceId = id,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        final topLeft = tester.getTopLeft(mapFinder);
+        await tester.tapAt(topLeft + const Offset(48, 16));
+        await tester.pump();
+
+        expect(selectedProvinceId, equals('oldWorld|p1'));
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+  });
+
+  group('Sea zone name plate layout (#1756)', () {
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld uses below placement when above clips map top',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        const cellSize = 24.0;
+        const plateW = 80.0;
+        const plateH = 20.0;
+        const zoom = 1.0;
+        final invZ = 1.0 / zoom.clamp(0.25, 4.0);
+        final hh = plateH * invZ / 2;
+        final center = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 1,
+          centroidTileY: 0,
+          cellSize: cellSize,
+          gridWidth: 20,
+          gridHeight: 20,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        final cellBottom = cellSize;
+        expect(
+          center.dy,
+          greaterThanOrEqualTo(cellBottom + 1 + hh - 1e-6),
+          reason: 'Below placement anchors under the centroid cell',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld keeps plate inside region bounds',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        const cellSize = 16.0;
+        const gw = 20;
+        const gh = 20;
+        const plateW = 200.0;
+        const plateH = 30.0;
+        const zoom = 2.0;
+        final invZ = 1.0 / zoom.clamp(0.25, 4.0);
+        final ww = plateW * invZ / 2;
+        final hh = plateH * invZ / 2;
+        final center = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 10,
+          centroidTileY: 10,
+          cellSize: cellSize,
+          gridWidth: gw,
+          gridHeight: gh,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        final mapW = gw * cellSize;
+        final mapH = gh * cellSize;
+        expect(center.dx - ww, greaterThanOrEqualTo(-1e-6));
+        expect(center.dx + ww, lessThanOrEqualTo(mapW + 1e-6));
+        expect(center.dy - hh, greaterThanOrEqualTo(-1e-6));
+        expect(center.dy + hh, lessThanOrEqualTo(mapH + 1e-6));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld avoids overlapping centroid cell when room allows',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        bool overlaps(
+          Offset c,
+          double ww,
+          double hh,
+          int tcx,
+          int tcy,
+          double cs,
+        ) {
+          final cl = tcx * cs;
+          final cr = cl + cs;
+          final ct = tcy * cs;
+          final cb = ct + cs;
+          final l = c.dx - ww;
+          final r = c.dx + ww;
+          final t = c.dy - hh;
+          final b = c.dy + hh;
+          return !(r <= cl || l >= cr || b <= ct || t >= cb);
+        }
+
+        const cellSize = 32.0;
+        const plateW = 60.0;
+        const plateH = 14.0;
+        const zoom = 1.0;
+        final invZ = 1.0 / zoom;
+        final ww = plateW * invZ / 2;
+        final hh = plateH * invZ / 2;
+        final c = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 5,
+          centroidTileY: 5,
+          cellSize: cellSize,
+          gridWidth: 20,
+          gridHeight: 20,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        expect(overlaps(c, ww, hh, 5, 5, cellSize), isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'sea zone label TextPainter lays out full long string without ellipsis',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        const long =
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789HelloSeaZoneNameThatIsQuiteVerbose';
+        const textStyle = TextStyle(color: Colors.black, fontSize: 11);
+        final tp = TextPainter(
+          text: const TextSpan(text: long, style: textStyle),
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: double.infinity);
+        expect(tp.width, greaterThan(200));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    test(
+      'visibilityForTerrainForMapCell leaves cell visibility in full map mode',
+      () {
+        const cell = CellViewData(
+          x: 1,
+          y: 2,
+          regionCellId: 's1',
+          isSea: true,
+          visibility: TileVisibility.unrevealed,
+        );
+        expect(
+          visibilityForTerrainForMapCell(
+            visibilityMode: CtMapVisibilityMode.full,
+            cell: cell,
+            fleetTileMarkers: const [],
+          ),
+          TileVisibility.unrevealed,
+        );
+      },
+    );
+
+    test(
+      'visibilityForTerrainForMapCell keeps unrevealed sea centroid hidden when constrained and no halo',
+      () {
+        const cell = CellViewData(
+          x: 1,
+          y: 0,
+          regionCellId: 'sz',
+          isSea: true,
+          visibility: TileVisibility.unrevealed,
+        );
+        expect(
+          visibilityForTerrainForMapCell(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            cell: cell,
+            fleetTileMarkers: const [],
+          ),
+          TileVisibility.unrevealed,
+        );
+      },
+    );
+
+    test(
+      'visibilityForTerrainForMapCell reveals unrevealed centroid under fleet move-draft halo',
+      () {
+        const cell = CellViewData(
+          x: 1,
+          y: 0,
+          regionCellId: 'sz',
+          isSea: true,
+          visibility: TileVisibility.unrevealed,
+        );
+        final markers = [
+          FleetTileMarkerView(
+            tileKey: 'oldWorld|sz|1|0',
+            x: 1,
+            y: 0,
+            locationScopeKey: 'sea:oldWorld|sz',
+            fleetIds: const ['f1'],
+            stackCount: 1,
+            applyFleetRevealHalo: true,
+          ),
+        ];
+        expect(
+          visibilityForTerrainForMapCell(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            cell: cell,
+            fleetTileMarkers: markers,
+          ),
+          TileVisibility.visible,
+        );
+      },
+    );
+
+    test(
+      'isCellUnderFleetRevealHalo ignores markers without applyFleetRevealHalo',
+      () {
+        expect(
+          isCellUnderFleetRevealHalo(
+            x: 1,
+            y: 0,
+            fleetTileMarkers: [
+              FleetTileMarkerView(
+                tileKey: 'k',
+                x: 1,
+                y: 0,
+                locationScopeKey: 'sea:x',
+                fleetIds: const ['f1'],
+                stackCount: 1,
+                applyFleetRevealHalo: false,
+              ),
+            ],
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    testWidgets(
+      'CtRegionMapComponent showProvinceNamesLayer false when harness disables names (#1756)',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(region: region, showProvinceNamesLayer: false),
+        );
+        await tester.pump();
+        expect(
+          ctRegionMapComponentFromTester(tester).showProvinceNamesLayer,
+          isFalse,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'CtRegionMapComponent showProvinceNamesLayer true when harness enables names (#1756)',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(region: region, showProvinceNamesLayer: true),
+        );
+        await tester.pump();
+        expect(
+          ctRegionMapComponentFromTester(tester).showProvinceNamesLayer,
+          isTrue,
+        );
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );

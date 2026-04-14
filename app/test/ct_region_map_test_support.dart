@@ -21,6 +21,9 @@ const ctRegionMapTestPlayerView = PlayerView(
 RegionMapViewData ctRegionMapTestOldWorldRegion() =>
     getDebugInitGameResult().mapViewData.oldWorld;
 
+RegionMapViewData ctRegionMapTestNewWorldRegion() =>
+    getDebugInitGameResult().mapViewData.newWorld;
+
 Widget ctRegionMapTestHarness({
   required RegionMapViewData region,
   double width = 400,
@@ -29,6 +32,7 @@ Widget ctRegionMapTestHarness({
   bool showPoliticalOverlay = true,
   bool showProvinceOverlay = true,
   bool showProvinceOwnershipTint = false,
+  bool showProvinceNamesLayer = true,
   CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
   BaseLayerDisplayMode? baseLayerDisplayMode,
   String? centerOnTileKey,
@@ -56,6 +60,7 @@ Widget ctRegionMapTestHarness({
             showPoliticalOverlay: showPoliticalOverlay,
             showProvinceOverlay: showProvinceOverlay,
             showProvinceOwnershipTint: showProvinceOwnershipTint,
+            showProvinceNamesLayer: showProvinceNamesLayer,
             visibilityMode: visibilityMode,
             playerViewForResources: playerViewForResources,
             baseLayerDisplayMode: baseLayerDisplayMode,

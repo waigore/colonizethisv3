@@ -43,7 +43,7 @@ void main() {
       ? game.players.where((p) => p.isHuman).first.id
       : game.players.first.id;
 
-  _overrides() => [
+  overrides() => [
     gamesBoxProvider.overrideWith((ref) => gamesBox),
     gameServiceProvider.overrideWith(
       (ref) => GameService(gamesBox, GameSaveAdapter()),
@@ -60,7 +60,7 @@ void main() {
 
   Widget railScaffold() {
     return ProviderScope(
-      overrides: _overrides(),
+      overrides: overrides(),
       child: AppEventHandlerScope(
         child: MaterialApp(
           navigatorKey: appNavigatorKey,
@@ -88,7 +88,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _overrides(),
+        overrides: overrides(),
         child: AppEventHandlerScope(
           child: MaterialApp(
             navigatorKey: appNavigatorKey,
@@ -124,7 +124,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _overrides(),
+        overrides: overrides(),
         child: AppEventHandlerScope(
           child: MaterialApp(
             navigatorKey: appNavigatorKey,
@@ -162,7 +162,7 @@ void main() {
       MediaQuery(
         data: const MediaQueryData(size: Size(480, 1600)),
         child: ProviderScope(
-          overrides: _overrides(),
+          overrides: overrides(),
           child: AppEventHandlerScope(
             child: MaterialApp(
               navigatorKey: appNavigatorKey,
@@ -199,7 +199,7 @@ void main() {
       MediaQuery(
         data: const MediaQueryData(size: Size(480, 1600)),
         child: ProviderScope(
-          overrides: _overrides(),
+          overrides: overrides(),
           child: AppEventHandlerScope(
             child: MaterialApp(
               navigatorKey: appNavigatorKey,
@@ -246,7 +246,7 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: _overrides(),
+          overrides: overrides(),
           child: AppEventHandlerScope(
             child: MaterialApp(
               navigatorKey: appNavigatorKey,
@@ -273,7 +273,7 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: _overrides(),
+          overrides: overrides(),
           child: AppEventHandlerScope(
             child: MaterialApp(
               navigatorKey: appNavigatorKey,
@@ -303,7 +303,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _overrides(),
+        overrides: overrides(),
         child: AppEventHandlerScope(
           child: MaterialApp(
             navigatorKey: appNavigatorKey,
@@ -342,7 +342,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: _overrides(),
+        overrides: overrides(),
         child: AppEventHandlerScope(
           child: MaterialApp(
             navigatorKey: appNavigatorKey,

@@ -10,7 +10,7 @@ import 'package:colonizethis_app/features/game/dialogue/overture_dialogue_overla
 void main() {
   suppressLogsForTests();
 
-  Game _game() {
+  Game game() {
     return const Game(
       id: 'g1',
       worldState: WorldState(
@@ -45,7 +45,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: OvertureDialogueOverlay(
-            game: _game(),
+            game: game(),
             pendingOvertures: offers,
             skipIntroForTest: true,
             onDecisions: (d) => submitted = List.of(d),

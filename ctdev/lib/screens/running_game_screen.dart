@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:ctdev/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -11,7 +11,7 @@ import '../debug_map_painter.dart';
 import '../player_view_map_painter.dart';
 import '../sim_game_controller.dart';
 
-final _runningGameLog = ctdevLogger('running_game');
+final _runningGameLog = packageLogger('running_game');
 
 /// Running Game Screen: sim game with control bar and tabs.
 class RunningGameScreen extends StatefulWidget {

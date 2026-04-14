@@ -50,10 +50,10 @@ const Set<String> kWorkTargetsSkippingDefaultForeignProvinceCheck = {
 
 OrderValidationResult? precheckUpgradeTown(
   WorkOrderTargetPrecheckContext ctx,
-  WorkOrder _order,
-  String? _targetProvinceId,
-  String? _provinceOwnerId,
-  String _unitType,
+  WorkOrder order,
+  String? targetProvinceId,
+  String? provinceOwnerId,
+  String unitType,
 ) {
   if (ctx.player.techUnlocked?[kTechIdNationalBureaucracy] != true) {
     return OrderValidationResult.rejected(
@@ -65,10 +65,10 @@ OrderValidationResult? precheckUpgradeTown(
 
 OrderValidationResult? precheckStealTech(
   WorkOrderTargetPrecheckContext ctx,
-  WorkOrder _order,
+  WorkOrder order,
   String? targetProvinceId,
-  String? _provinceOwnerId,
-  String _unitType,
+  String? provinceOwnerId,
+  String unitType,
 ) {
   if (targetProvinceId == null) {
     return OrderValidationResult.rejected('Invalid target for steal_tech');
@@ -96,10 +96,10 @@ OrderValidationResult? precheckStealTech(
 
 OrderValidationResult? precheckCounterSpy(
   WorkOrderTargetPrecheckContext ctx,
-  WorkOrder _order,
-  String? _targetProvinceId,
+  WorkOrder order,
+  String? targetProvinceId,
   String? provinceOwnerId,
-  String _unitType,
+  String unitType,
 ) {
   if (provinceOwnerId != ctx.playerId) {
     return OrderValidationResult.rejected(
@@ -112,9 +112,9 @@ OrderValidationResult? precheckCounterSpy(
 OrderValidationResult? precheckPurchaseLand(
   WorkOrderTargetPrecheckContext ctx,
   WorkOrder o,
-  String? _targetProvinceId,
+  String? targetProvinceId,
   String? ownerId,
-  String _unitType,
+  String unitType,
 ) {
   if (ownerId == null || ownerId == ctx.playerId) {
     return OrderValidationResult.rejected(
@@ -173,7 +173,7 @@ OrderValidationResult? precheckPurchaseLand(
 OrderValidationResult? precheckBuildImprovement(
   WorkOrderTargetPrecheckContext ctx,
   WorkOrder o,
-  String? _targetProvinceId,
+  String? targetProvinceId,
   String? ownerId,
   String unitType,
 ) {
@@ -194,6 +194,16 @@ OrderValidationResult? precheckBuildImprovement(
       'Tile has no resource; build_improvement requires a resource on the tile',
     );
   }
+  if (kMineralResourceIds.contains(resourceId)) {
+    final prospected =
+        ctx.game.worldState.playerProspectedTiles[ctx.playerId] ??
+        const <String>{};
+    if (!prospected.contains(o.targetTileKey)) {
+      return OrderValidationResult.rejected(
+        'Mineral tile must be prospected first',
+      );
+    }
+  }
   final currentLevel = ctx.game.worldState.tileState.improvementLevel(
     o.targetTileKey,
   );
@@ -202,10 +212,14 @@ OrderValidationResult? precheckBuildImprovement(
       'Improvement level already at maximum (4)',
     );
   }
-  final techCap = extractionCapForUnlocked(ctx.player.techUnlocked);
+  final techCap = extractionCapForResourceForUnlocked(
+    ctx.player.techUnlocked,
+    resourceId,
+  );
   if (currentLevel + 1 > techCap) {
     return OrderValidationResult.rejected(
-      'Insufficient tech to build next improvement level (cap $techCap)',
+      'Insufficient tech for next improvement level on $resourceId '
+      '(extraction cap $techCap; unlock gathering tech to raise the cap)',
     );
   }
   return null;

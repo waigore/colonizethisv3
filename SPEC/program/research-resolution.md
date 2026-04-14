@@ -36,7 +36,7 @@ Techs that require the player to have found a resource on the map carry **discov
 ## Constraints
 - Clearing a slot loses all progress for that tech (no partial save).
 - A tech cannot be started in the same turn its prerequisite completes.
-- **Treasury floor for research spending:** After each research spend, treasury must remain ≥ **−maxDebt** where `maxDebt` comes from labour techs (`maxDebtForPlayer` in `economy_debt_rules.dart`). **MVP:** `money_lending` → max debt **500** ducats (treasury may go to **−500** inclusive for research only); otherwise max debt **0** (treasury cannot go negative). **`banking` does not** change this floor until a future spec extends it. Game rules: [tech-tree-labour-economy.md](../game/tech-tree-labour-economy.md) § Effect implementation status; program detail: [economy-models.md](economy-models.md) § Research treasury debt.
+- **Treasury floor for research spending:** After each research spend, treasury must remain ≥ **−maxDebt** where `maxDebt` comes from labour techs (`maxDebtForPlayer` in `economy_debt_rules.dart`). **current product debt floors:** no qualifying tech → max debt **0** (treasury cannot go negative for research); `money_lending` unlocked (without `banking`) → max debt **500**; `banking` unlocked (with its prerequisite chain) → max debt **1000**. Treasury may go to the floor value inclusive during research spending only. Game rules: [tech-tree-labour-economy.md](../game/tech-tree-labour-economy.md) § Effect implementation status; program detail: [economy-models.md](economy-models.md) § Research treasury debt.
 
 ## Acceptance criteria
 

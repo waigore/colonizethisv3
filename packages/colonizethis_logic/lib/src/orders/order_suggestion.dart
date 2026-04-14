@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -25,4 +25,4 @@ part 'order_suggestion_work.dart';
 part 'order_suggestion_build_research.dart';
 part 'order_suggestion_naval_diplomatic.dart';
 
-final _log = logicLogger('order_suggestion');
+final _log = packageLogger('order_suggestion');

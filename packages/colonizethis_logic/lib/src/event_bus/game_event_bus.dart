@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_models/stream_where_type.dart';
 
 import '../game_events.dart';
 
@@ -8,13 +9,7 @@ import '../game_events.dart';
 /// SPEC/program/logging/events.md — truncate with `…` and `truncated=true` when exceeded.
 const int kGameEventLogSummaryMaxChars = 500;
 
-final _gameEventLog = logicLogger();
-
-extension _GameEventStreamWhereType on Stream<GameEvent> {
-  Stream<T> whereType<T extends GameEvent>() {
-    return where((event) => event is T).map((event) => event as T);
-  }
-}
+final _gameEventLog = packageLogger();
 
 String _gameEventPayloadSummary(GameEvent event) {
   return switch (event) {

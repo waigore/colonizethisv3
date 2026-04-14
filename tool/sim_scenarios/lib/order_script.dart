@@ -86,7 +86,7 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
         // should provide targetTileKey; otherwise empty string is used.
         final workOrder = WorkOrder(
           unitId: cmd.unit ?? '',
-          target: cmd.workType ?? 'explore',
+          target: cmd.workType ?? kWorkTargetExplore,
           targetTileKey: cmd.targetTileKey ?? '',
         );
         workOrdersByPlayerId.putIfAbsent(cmd.player, () => []).add(workOrder);

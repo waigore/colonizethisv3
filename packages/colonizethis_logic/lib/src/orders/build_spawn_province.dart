@@ -3,6 +3,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/province_lookup.dart';
 
+const kCivilianCapitalTileMissingReason =
+    'No capital tile to spawn civilian unit';
+
 /// Resolves the effective spawn province for a build order.
 ///
 /// Rules:
@@ -37,4 +40,21 @@ String? resolveBuildSpawnProvinceId({
   }
 
   return hasCapital ? capitalProvinceId : null;
+}
+
+/// Resolves civilian spawn tile as the player's capital tile key.
+///
+/// Returns null when capital tile cannot be resolved.
+String? resolveCivilianSpawnTileKey({
+  required Player player,
+  required WorldState worldState,
+}) {
+  final capitalTile = player.capitalTile;
+  if (capitalTile == null) return null;
+  final tileKey = capitalTile.toTileKey();
+  final provinceId = Unit.provinceIdFromTileKey(tileKey);
+  if (provinceId == null) return null;
+  final province = worldState.tryGetProvince(provinceId);
+  if (province == null || province.ownerId != player.id) return null;
+  return tileKey;
 }

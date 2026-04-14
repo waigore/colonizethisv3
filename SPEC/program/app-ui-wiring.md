@@ -41,7 +41,7 @@ Keep **`showDialog` / `showModalBottomSheet` / `Navigator.pop`** **inside one fe
 | `OpenPauseMenuPanelEvent` | `GameScreen` (pause) | `PauseMenuPanel` |
 | `OpenCivilianUnitsPanelEvent` | `GameSideMenu` | `CivilianUnitsPanel` (+ Riverpod game/orders) |
 | `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
-| `OpenNavalUnitsPanelEvent` | `GameSideMenu` | `NavalUnitsPanel` |
+| `OpenNavalUnitsPanelEvent` | `GameSideMenu`, map fleet marker | `NavalUnitsPanel` (optional tile/location scope fields on event) |
 
 Sheet close cleanup should be emitted as a typed bus event (`UnitsPanelClosedEvent`) from the handler.
 
@@ -56,7 +56,7 @@ Register builders in **`app/lib/core/services/app_event_handler_scope.dart`**.
 | `train_civilians` | `TrainCiviliansDialog` | `trainCiviliansDialogId` |
 | `train_military` | `TrainMilitaryDialog` | `trainMilitaryDialogId` |
 | `grant_or_subsidy` | `GrantOrSubsidyDialog` | `grantOrSubsidyDialogId` |
-| `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`) | `newGameLeaderSelectionDialogId` |
+| `new_game_leader_selection` | `NewGameLeaderSelectionDialog` (six slots: **nation** + **leader** per slot; nation picker shows default GP map colour swatch beside each nation name; fair GP Old World assignment checkbox; **game / world seed** field + helper below checkbox; initial nations = `GameSetupConfig.defaultConfig.selectedGreatPowerIds`) | `newGameLeaderSelectionDialogId` |
 
 For `train_civilians` and `train_military`, shared order/count orchestration must be implemented in `app/lib/features/game/widgets/train_unit_dialog_helper.dart`; keep dialog-specific economics and lock rules inside each dialog widget.
 
@@ -107,6 +107,16 @@ Game-bound feature screens under `app/lib/features/game/widgets/` should use a s
 - `GameScreen` is excluded from this wrapper requirement because it owns Flame/map overlays and custom lifecycle concerns.
 
 Feature-specific behavior (tabs, panel listeners, orders callbacks, local dialogs) remains in each feature screen.
+
+---
+
+## Stream subscriptions (`SubscriptionTracker`)
+
+In **`colonizethis_app`**, widgets and services that hold **one or more** `StreamSubscription` values for the same lifecycle should register them with **`app/lib/core/services/subscription_tracker.dart`** and call **`cancelAll()`** in **`dispose()`** / teardown (same pattern as **`AppEventHandler.unbind`** and **`CtRegionMap`** bus listeners). This keeps multi-subscription cleanup in one place and avoids scattered **`?.cancel()`** calls.
+
+**Documented exceptions:**
+
+- Packages that do not depend on **`colonizethis_app`** must not import app-only types such as **`SubscriptionTracker`**; they keep local teardown for their own subscriptions and non-stream async handles (for example **`Timer`**).
 
 ---
 

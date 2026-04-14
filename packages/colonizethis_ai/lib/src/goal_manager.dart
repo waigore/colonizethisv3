@@ -1,13 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'hidden_agenda.dart';
 import 'perception.dart';
 
-final _log = aiLogger();
+final _log = packageLogger();
 
 // Goal selection (behavior tree). SPEC/ai/ai-architecture.md, ai-personalities.md.
 
@@ -22,8 +22,8 @@ StrategicGoal selectPrimaryGoal(
   int goalSeed,
   {required String nationId, required int turn}
 ) {
-  final weights = getGoalWeightsForLeader(config.leaderId);
-  final thresholds = getThresholdsForLeader(config.leaderId);
+  final weights = getGoalWeightsForLeader(config.personalityId);
+  final thresholds = getThresholdsForLeader(config.personalityId);
 
   // Situational modifiers from snapshot.
   int defend = weights.defend;

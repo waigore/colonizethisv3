@@ -1,9 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 
-final _log = aiLogger();
+final _log = packageLogger();
 
 // Perception: PlayerView → AIWorldSnapshot. SPEC/ai/ai-architecture.md.
 // All data derived from PlayerView only; no hidden state.

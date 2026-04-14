@@ -26,6 +26,9 @@ const Key kEmpireTechnologyButtonKey = Key('empire_rail_technology');
 /// Key for the cargo hold indicator row item. SPEC/ui/empire-overview.md.
 const Key kCargoHoldIndicatorKey = Key('cargo_hold_indicator');
 
+/// Key for the in-map Next turn control (integration / widget tests).
+const Key kGameMapNextTurnButtonKey = Key('game_map_next_turn_button');
+
 /// Key for the region minimap globe toggle. SPEC/ui/empire-overview.md § Region minimap.
 const Key kRegionMinimapToggleKey = Key('region_minimap_toggle');
 

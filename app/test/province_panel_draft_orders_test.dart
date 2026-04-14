@@ -473,5 +473,271 @@ void main() {
         );
       },
     );
+
+    testWidgets(
+      'Foreign province with partial intel obfuscates sections and hides pending lines',
+      (WidgetTester tester) async {
+        final tk = _tileKey(0, 0);
+        final game = Game(
+          id: 'intel_gate_hidden_test',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: _fullProvinceId,
+                  regionId: _regionId,
+                  displayName: 'ForeignProv',
+                  ownerId: 'gp2',
+                ),
+                Province(
+                  id: _fullDestProvinceId,
+                  regionId: _regionId,
+                  displayName: 'DestProv',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'r_move',
+                  type: 'peasant_levies',
+                  ownerId: 'gp1',
+                  locationProvinceId: _fullProvinceId,
+                  tileKey: tk,
+                  status: UnitStatus.idle,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            tileKeysByRegionAndProvince: {
+              _regionId: {
+                _fullProvinceId: [tk],
+              },
+            },
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+            Player(
+              id: 'gp2',
+              displayName: 'Foreign',
+              isHuman: false,
+              treasury: 0,
+            ),
+          ],
+        );
+        final region = RegionMapViewData(
+          regionId: _regionId,
+          width: 1,
+          height: 1,
+          cellSize: 32,
+          cells: const [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: _localProvinceId,
+              isSea: false,
+              terrainTypeId: 'plains',
+              visibility: TileVisibility.fogged,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          factionColors: const {},
+          greatPowerFactionIds: const {'gp1', 'gp2'},
+          terrainColors: const {},
+        );
+        final view = PlayerView(
+          playerId: 'gp1',
+          player: const Player(
+            id: 'gp1',
+            displayName: 'Human',
+            isHuman: true,
+            treasury: 0,
+          ),
+          ownUnitsById: const {},
+          provincesById: {
+            _fullProvinceId: Province(
+              id: _fullProvinceId,
+              regionId: _regionId,
+              displayName: 'ForeignProv',
+              ownerId: 'gp2',
+            ),
+          },
+          visibilityByTile: {tk: VisibilityLevel.fogged},
+          prospectedTiles: const {},
+          diplomacyByOtherId: const {},
+        );
+        final orders = Orders(
+          moveOrdersByPlayerId: {
+            'gp1': [
+              MoveOrder(
+                unitId: 'r_move',
+                destinationProvinceId: _fullDestProvinceId,
+              ),
+            ],
+          },
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: game,
+                region: region,
+                displayId: _fullProvinceId,
+                selectedTileKey: tk,
+                humanPlayerId: 'gp1',
+                playerView: view,
+                draftOrders: orders,
+              ),
+            ),
+          ),
+        );
+        await _pumpOverlayLayout(tester);
+
+        expect(find.text('Economic'), findsOneWidget);
+        expect(find.text('Military'), findsOneWidget);
+        expect(find.text('Civilian'), findsOneWidget);
+        expect(find.text('Naval'), findsOneWidget);
+        expect(find.text('???'), findsNWidgets(4));
+        expect(find.textContaining('Ordered: move regiment to'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'Spy timer bypass shows pending military lines for foreign province',
+      (WidgetTester tester) async {
+        final tk = _tileKey(0, 0);
+        final game = Game(
+          id: 'intel_gate_timer_test',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: _fullProvinceId,
+                  regionId: _regionId,
+                  displayName: 'ForeignProv',
+                  ownerId: 'gp2',
+                ),
+                Province(
+                  id: _fullDestProvinceId,
+                  regionId: _regionId,
+                  displayName: 'DestProv',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'r_move',
+                  type: 'peasant_levies',
+                  ownerId: 'gp1',
+                  locationProvinceId: _fullProvinceId,
+                  tileKey: tk,
+                  status: UnitStatus.idle,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            tileKeysByRegionAndProvince: {
+              _regionId: {
+                _fullProvinceId: [tk],
+              },
+            },
+            spyRevealTurnsByPlayer: {
+              'gp1': {_fullProvinceId: 3},
+            },
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+            Player(
+              id: 'gp2',
+              displayName: 'Foreign',
+              isHuman: false,
+              treasury: 0,
+            ),
+          ],
+        );
+        final region = RegionMapViewData(
+          regionId: _regionId,
+          width: 1,
+          height: 1,
+          cellSize: 32,
+          cells: const [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: _localProvinceId,
+              isSea: false,
+              terrainTypeId: 'plains',
+              visibility: TileVisibility.fogged,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          factionColors: const {},
+          greatPowerFactionIds: const {'gp1', 'gp2'},
+          terrainColors: const {},
+        );
+        final view = PlayerView(
+          playerId: 'gp1',
+          player: const Player(
+            id: 'gp1',
+            displayName: 'Human',
+            isHuman: true,
+            treasury: 0,
+          ),
+          ownUnitsById: const {},
+          provincesById: {
+            _fullProvinceId: Province(
+              id: _fullProvinceId,
+              regionId: _regionId,
+              displayName: 'ForeignProv',
+              ownerId: 'gp2',
+            ),
+          },
+          visibilityByTile: {tk: VisibilityLevel.fogged},
+          prospectedTiles: const {},
+          diplomacyByOtherId: const {},
+        );
+        final orders = Orders(
+          moveOrdersByPlayerId: {
+            'gp1': [
+              MoveOrder(
+                unitId: 'r_move',
+                destinationProvinceId: _fullDestProvinceId,
+              ),
+            ],
+          },
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: game,
+                region: region,
+                displayId: _fullProvinceId,
+                selectedTileKey: tk,
+                humanPlayerId: 'gp1',
+                playerView: view,
+                draftOrders: orders,
+              ),
+            ),
+          ),
+        );
+        await _pumpOverlayLayout(tester);
+
+        expect(
+          find.textContaining('Ordered: move regiment to'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('DestProv'), findsOneWidget);
+      },
+    );
   });
 }

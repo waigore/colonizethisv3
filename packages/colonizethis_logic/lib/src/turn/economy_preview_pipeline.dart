@@ -2,8 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../economy/build_cost.dart';
 import '../economy/economy_preview_stockpile_phase.dart';
-import '../economy/economy_production.dart';
+import '../world/province_lookup.dart';
 import 'phases/consumption_phase.dart';
 import 'phases/extraction_phase.dart';
 import 'phases/production_phase.dart';
@@ -25,6 +26,142 @@ Map<String, int> _stockpileCommodityDeltaMap(
   return out;
 }
 
+Game _applyPendingBuildOrderCostsForPreview({
+  required Game game,
+  required Orders currentOrders,
+}) {
+  if (currentOrders.buildUnitOrdersByPlayerId.isEmpty) {
+    return game;
+  }
+  final updatedPlayers = game.players.map((player) {
+    var workers = player.workerPool;
+    var stockpile = player.stockpile;
+    var treasury = player.treasury;
+    final orders =
+        currentOrders.buildUnitOrdersByPlayerId[player.id] ?? const [];
+    if (orders.isEmpty) {
+      return player;
+    }
+    for (final order in orders) {
+      final check = canAffordBuild(player, order, workers, stockpile, treasury);
+      if (!check.canAfford) {
+        continue;
+      }
+      final after = applyBuildCostDeduction(
+        player,
+        order,
+        workers,
+        stockpile,
+        treasury,
+      );
+      workers = after.workers;
+      stockpile = after.stockpile;
+      treasury = after.treasury;
+    }
+    return player.copyWith(
+      workerPool: workers,
+      stockpile: stockpile,
+      treasury: treasury,
+    );
+  }).toList();
+  return game.copyWith(players: updatedPlayers);
+}
+
+Unit? _unitByIdInGame(Game game, String unitId) {
+  for (final u in game.worldState.oldWorld.units) {
+    if (u.id == unitId) return u;
+  }
+  for (final u in game.worldState.newWorld.units) {
+    if (u.id == unitId) return u;
+  }
+  return null;
+}
+
+const Set<String> _pendingStockpileWorkTargetsForPreview = {
+  kWorkTargetBuildImprovement,
+  kWorkTargetUpgradeTown,
+  kWorkTargetBuildRoad,
+  kWorkTargetBuildPort,
+  kWorkTargetBuildFort,
+  kWorkTargetBuildRail,
+};
+
+/// Pending material-backed work-order costs from [Orders.workOrdersByPlayerId],
+/// after unit-build pending costs, mirroring [applyStandardWorkOrder] guards in
+/// the work phase (unit present and idle, valid target tile key, unit type
+/// allowed, sequential affordability). Non-stockpile work targets are excluded.
+Game _applyPendingMaterialWorkOrderCostsForPreview({
+  required Game game,
+  required Orders currentOrders,
+}) {
+  if (currentOrders.workOrdersByPlayerId.isEmpty) {
+    return game;
+  }
+  final tileState = game.worldState.tileState;
+  final updatedPlayers = game.players.map((player) {
+    final orders = currentOrders.workOrdersByPlayerId[player.id];
+    if (orders == null || orders.isEmpty) {
+      return player;
+    }
+    var stockpile = player.stockpile;
+    for (final order in orders) {
+      final target = order.target;
+      if (!_pendingStockpileWorkTargetsForPreview.contains(target)) {
+        continue;
+      }
+      final u = _unitByIdInGame(game, order.unitId);
+      if (u == null || u.currentWork != null) {
+        continue;
+      }
+      final targetTileKey = order.targetTileKey;
+      if (targetTileKey.isEmpty) {
+        continue;
+      }
+      if (!isWorkOrderTargetAllowedForUnitType(u.type, target)) {
+        continue;
+      }
+      final province = game.worldState.tryGetProvince(u.locationProvinceId);
+      final cost = workOrderMaterialCost(
+        target,
+        improvementLevel: tileState.improvementLevel(targetTileKey),
+        fortLevel: province?.fortLevel ?? 0,
+      );
+      if (cost == null) {
+        continue;
+      }
+      var canAfford = true;
+      for (final e in cost.entries) {
+        if (stockpile.quantityOf(e.key) < e.value) {
+          canAfford = false;
+          break;
+        }
+      }
+      if (!canAfford) {
+        continue;
+      }
+      for (final e in cost.entries) {
+        stockpile = stockpile.applyDelta(e.key, -e.value);
+      }
+    }
+    return player.copyWith(stockpile: stockpile);
+  }).toList();
+  return game.copyWith(players: updatedPlayers);
+}
+
+Game _applyPendingStockpileCostsForPreview({
+  required Game game,
+  required Orders currentOrders,
+}) {
+  final afterBuilds = _applyPendingBuildOrderCostsForPreview(
+    game: game,
+    currentOrders: currentOrders,
+  );
+  return _applyPendingMaterialWorkOrderCostsForPreview(
+    game: afterBuilds,
+    currentOrders: currentOrders,
+  );
+}
+
 /// Per-phase stockpile commodity deltas for [playerId] when running the same
 /// preview pipeline as [applyEconomyPhasesForPreview]. Maps omit zero deltas.
 Map<EconomyPreviewStockpilePhase, Map<String, int>>
@@ -34,6 +171,7 @@ economyPreviewStockpilePhaseDeltasForPlayer({
   required String playerId,
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  Orders currentOrders = const Orders(),
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
 }) {
@@ -50,6 +188,18 @@ economyPreviewStockpilePhaseDeltasForPlayer({
   }
 
   var acc = TurnPipelineState(game: game);
+
+  final beforePendingBuildCosts = stockpileForViewed(acc.game);
+  acc = acc.copyWith(
+    game: _applyPendingStockpileCostsForPreview(
+      game: acc.game,
+      currentOrders: currentOrders,
+    ),
+  );
+  final pendingBuildCosts = _stockpileCommodityDeltaMap(
+    beforePendingBuildCosts,
+    stockpileForViewed(acc.game),
+  );
 
   final beforeExtraction = stockpileForViewed(acc.game);
   acc = acc.copyWith(
@@ -92,6 +242,7 @@ economyPreviewStockpilePhaseDeltasForPlayer({
   );
 
   return {
+    EconomyPreviewStockpilePhase.pendingBuildCosts: pendingBuildCosts,
     EconomyPreviewStockpilePhase.extraction: extraction,
     EconomyPreviewStockpilePhase.richesToTreasury: richesToTreasury,
     EconomyPreviewStockpilePhase.consumption: consumption,
@@ -105,10 +256,17 @@ Game applyEconomyPhasesForPreview({
   required MapTopology topology,
   Map<String, TileMapResult>? tileMapByRegion,
   Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  Orders currentOrders = const Orders(),
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
 }) {
   var acc = TurnPipelineState(game: game);
+  acc = acc.copyWith(
+    game: _applyPendingStockpileCostsForPreview(
+      game: acc.game,
+      currentOrders: currentOrders,
+    ),
+  );
   acc = acc.copyWith(
     game: runExtractionPhase(
       acc.game,

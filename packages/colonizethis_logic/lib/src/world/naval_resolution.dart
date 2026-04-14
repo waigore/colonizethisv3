@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../combat/naval_combat_resolver.dart';
@@ -9,12 +9,47 @@ import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
+import '../turn/turn_seed_constants.dart';
 import 'naval.dart';
 import 'player_view.dart';
 import 'province_lookup.dart';
 import 'topology_helpers.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
+
+({int x, int y})? _xyFromTileKey(String tileKey) {
+  final parts = tileKey.split('|');
+  if (parts.length < 4) return null;
+  final x = int.tryParse(parts[parts.length - 2]);
+  final y = int.tryParse(parts[parts.length - 1]);
+  if (x == null || y == null) return null;
+  return (x: x, y: y);
+}
+
+Set<String> _coastalTileKeysAdjacentToSeaZone({
+  required List<String> provinceTileKeys,
+  required List<String> seaWaterTileKeys,
+}) {
+  if (provinceTileKeys.isEmpty || seaWaterTileKeys.isEmpty) return const {};
+  final seaCoords = <String>{};
+  for (final seaTileKey in seaWaterTileKeys) {
+    final xy = _xyFromTileKey(seaTileKey);
+    if (xy == null) continue;
+    seaCoords.add('${xy.x}|${xy.y}');
+  }
+  if (seaCoords.isEmpty) return const {};
+  final coastal = <String>{};
+  const deltas = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+  for (final provinceTileKey in provinceTileKeys) {
+    final xy = _xyFromTileKey(provinceTileKey);
+    if (xy == null) continue;
+    final isCoastal = deltas.any(
+      (delta) => seaCoords.contains('${xy.x + delta.$1}|${xy.y + delta.$2}'),
+    );
+    if (isCoastal) coastal.add(provinceTileKey);
+  }
+  return coastal;
+}
 
 Map<String, Map<String, String>> _revealProvinceTilesForPlayer(
   Game game,
@@ -95,13 +130,11 @@ Game applyNavalMissionOrders(
         final homeFleet = fleetById[homeFleetId];
         if (homeFleet == null) continue;
         // Only fleets in port at the player's capital province can join home fleet. SPEC/game/ships-and-naval.md.
-        final capitalProvinceId = game.players
-            .where((p) => p.id == playerId)
-            .map((p) => p.capitalProvinceId)
-            .firstOrNull;
+        final capitalProvinceId = game.playerById(playerId)?.capitalProvinceId;
         if (capitalProvinceId == null ||
-            fleet.inPortAtProvinceId != capitalProvinceId)
+            fleet.inPortAtProvinceId != capitalProvinceId) {
           continue;
+        }
         if (fleet.shipTypeIds.isEmpty) continue;
         final updatedHome = homeFleet.copyWith(
           ships: [...homeFleet.ships, ...fleet.ships],
@@ -335,20 +368,24 @@ Game applyNavalMovesAndShipReveal(
           regionId: destRegionId,
         );
         final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
+        final seaWaterKeys = game
+            .worldState
+            .tileKeysByRegionAndProvince[destRegionId]?[destZoneId];
         for (final localProvinceId in provinceIds) {
           final fullProvinceId = ProvinceId.full(destRegionId, localProvinceId);
-          final tileKeys =
+          final provinceTileKeys =
               game
                   .worldState
                   .tileKeysByRegionAndProvince[destRegionId]?[fullProvinceId] ??
               [];
-          for (final tk in tileKeys) {
+          final coastalTileKeys = _coastalTileKeysAdjacentToSeaZone(
+            provinceTileKeys: provinceTileKeys,
+            seaWaterTileKeys: seaWaterKeys ?? const [],
+          );
+          for (final tk in coastalTileKeys) {
             vis[tk] = VisibilityLevel.revealed.name;
           }
         }
-        final seaWaterKeys = game
-            .worldState
-            .tileKeysByRegionAndProvince[destRegionId]?[destZoneId];
         if (seaWaterKeys != null) {
           for (final tk in seaWaterKeys) {
             vis[tk] = VisibilityLevel.fullyVisible.name;
@@ -390,10 +427,12 @@ Game runNavalInterceptionCombatPhase(
   ];
   var seed =
       (game.globalGameSeed ?? 0) ^
-      (game.worldState.turnState.turnNumber * 0x9E3779B1);
+      (game.worldState.turnState.turnNumber * kTurnResolutionSeedMix);
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
   _log.d('naval phase after interception battles=${battles.length}');
-  seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+  seed =
+      (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
+      kTurnResolutionLcgMask;
   var state = game;
   final turn = game.worldState.turnState.turnNumber;
   var battleIndex = 0;
@@ -417,7 +456,9 @@ Game runNavalInterceptionCombatPhase(
       side2CanRetreat: retreatZoneSide2 != null,
       navalFeedingCoverageByPlayerId: navalFeedingCoverageByPlayerId,
     );
-    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    seed =
+        (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
+        kTurnResolutionLcgMask;
     final zoneRegionId = regionIdForSeaZone(topology, battle.seaZoneId);
     final fleetsInZone = state.worldState.fleets.where(
       (f) => f.seaZoneId == battle.seaZoneId,
@@ -465,7 +506,9 @@ Game runNavalInterceptionCombatPhase(
           ],
         );
       }
-      final dialogueSeed = (seed ^ (battleIndex * 0x9E3779B1)) & 0x7fffffff;
+      final dialogueSeed =
+          (seed ^ (battleIndex * kTurnResolutionSeedMix)) &
+          kTurnResolutionLcgMask;
       final events = dialogueEventsForNavalBattleResult(
         state,
         victorId,

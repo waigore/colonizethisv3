@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
+import 'package:colonizethis_map/colonizethis_map.dart';
 
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
@@ -31,8 +31,15 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
     if (!panel.overlayOpen) {
       return const SizedBox.shrink();
     }
-    final displayId =
-        displayProvinceOrSeaIdFromTileKey(panel.selectedTileKey) ?? '';
+    final tileKey = panel.selectedTileKey;
+    final displayId = tileKey == null || tileKey.isEmpty
+        ? ''
+        : (provinceDetailDisplayIdForPortHarborMapTile(
+                region: region,
+                tileKey: tileKey,
+              ) ??
+              displayProvinceOrSeaIdFromTileKey(tileKey)) ??
+            '';
     if (displayId.isEmpty) {
       return const SizedBox.shrink();
     }

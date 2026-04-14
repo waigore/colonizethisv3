@@ -45,7 +45,7 @@ void main() {
     (WidgetTester tester) async {
       await pumpTransferList(
         tester,
-        onConfirm: (_, __) {},
+        onConfirm: (_, _) {},
         initialLeftCounts: const {'carrack': 3},
       );
 
@@ -70,7 +70,7 @@ void main() {
   testWidgets('per-row controls move one and all without selection', (
     WidgetTester tester,
   ) async {
-    await pumpTransferList(tester, onConfirm: (_, __) {});
+    await pumpTransferList(tester, onConfirm: (_, _) {});
 
     await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne('carrack')));
     await tester.pump();
@@ -91,7 +91,7 @@ void main() {
   ) async {
     await pumpTransferList(
       tester,
-      onConfirm: (_, __) {},
+      onConfirm: (_, _) {},
       initialLeftCounts: const {'carrack': 2, 'galleon': 1},
     );
 
@@ -114,7 +114,7 @@ void main() {
   ) async {
     await pumpTransferList(
       tester,
-      onConfirm: (_, __) {},
+      onConfirm: (_, _) {},
       canConfirm: (left, right) {
         final leftTotal = left.values.fold(0, (sum, value) => sum + value);
         final rightTotal = right.values.fold(0, (sum, value) => sum + value);

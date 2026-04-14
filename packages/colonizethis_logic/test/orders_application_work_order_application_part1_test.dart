@@ -9,7 +9,7 @@ void main() {
     const provinceId = 'oldWorld|P1';
     const tileKey = 'oldWorld|P1|0|0';
 
-    TileMapResult _tileMapWithTerrain(TerrainType terrain) {
+    TileMapResult tileMapWithTerrain(TerrainType terrain) {
       return TileMapResult(
         width: 1,
         height: 1,
@@ -60,7 +60,7 @@ void main() {
         final next = applyBuildAndWorkOrders(
           game,
           orders,
-          tileMapByRegion: {ow: _tileMapWithTerrain(TerrainType.hills)},
+          tileMapByRegion: {ow: tileMapWithTerrain(TerrainType.hills)},
         );
         expect(next.worldState.playerProspectedTiles['p1'], contains(tileKey));
       },
@@ -96,7 +96,7 @@ void main() {
       final next = applyBuildAndWorkOrders(
         game,
         orders,
-        tileMapByRegion: {ow: _tileMapWithTerrain(TerrainType.plains)},
+        tileMapByRegion: {ow: tileMapWithTerrain(TerrainType.plains)},
       );
       final prospected =
           next.worldState.playerProspectedTiles['p1'] ?? const <String>{};

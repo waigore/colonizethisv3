@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'map_topology.dart';
 import 'topology_node.dart';
 
@@ -136,6 +134,8 @@ Map<String, String> buildSeaZoneDisplayNamesForRegion({
   required String regionId,
   required int namingSeed,
 }) {
+  // Sea-zone naming is fixed-order by design: same topology ids => same names.
+  final _ = namingSeed;
   final seaZoneIds =
       topology.nodes
           .where((n) => n.type == TopologyNodeType.seaZone)
@@ -147,13 +147,12 @@ Map<String, String> buildSeaZoneDisplayNamesForRegion({
   final preset = regionId == 'newWorld'
       ? newWorldSeaNamePreset
       : oldWorldSeaNamePreset;
-  final pool = List<String>.from(preset)
-    ..shuffle(Random(Object.hash(0x5EA20E, namingSeed, regionId)));
+  final n = preset.length;
 
   final out = <String, String>{};
   for (var i = 0; i < seaZoneIds.length; i++) {
-    final base = pool[i % pool.length];
-    final cycle = (i ~/ pool.length) + 1;
+    final base = preset[i % n];
+    final cycle = (i ~/ n) + 1;
     final display = cycle == 1 ? base : '$base${_suffixOrdinal(cycle)}';
     out['$regionId|${seaZoneIds[i]}'] = display;
   }

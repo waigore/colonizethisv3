@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -13,7 +13,69 @@ import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';
 import 'military_strength.dart';
 
-final _combatLog = logicLogger();
+final _combatLog = packageLogger();
+
+const String kRecoveryUnitPrefix = 'recover_';
+const double kGarrisonRecoveryFraction = 0.2;
+const double kNoDefenderRatioFallback = 10.0;
+const double kStrongAttackerRatioThreshold = 1.5;
+const double kBluntAttackerVictoryUpperRatio = 4.0;
+const double kStrongDefenderRatioThreshold = 0.67;
+const double kAttackerEdgeRatioThreshold = 1.0;
+const double kBluntAttackerLossFraction = 0.6;
+const double kBluntDefenderLossFraction = 0.4;
+const double kStrongAttackerLossFraction = 0.15;
+const double kStrongDefenderLossFraction = 1.0;
+const double kStrongDefenderAttackerLossFraction = 1.0;
+const double kStrongDefenderDefenderLossFraction = 0.15;
+const double kAttackerEdgeAttackerLossFraction = 0.3;
+const double kAttackerEdgeDefenderLossFraction = 0.6;
+const double kDefaultAttackerLossFraction = 0.5;
+const double kDefaultDefenderLossFraction = 0.4;
+
+/// When feeding coverage is omitted for a faction, treat as full supply.
+const double kDefaultFeedingCoverageMultiplier = 1.0;
+
+/// General medals: bounds and per-victory gain. SPEC/game/military-generals.md.
+const int kGeneralMedalsMin = 0;
+const int kGeneralMedalsMax = 4;
+const int kGeneralMedalsGainedOnBattleWin = 1;
+
+/// Morale aura from general medals: base multiplier plus per-medal increment.
+const double kMoraleMultiplierBaseFromGenerals = 1.0;
+const double kMoraleMultiplierPerGeneralMedal = 0.05;
+
+/// Great Power / fallback effective era for regiment strength aggregation.
+/// Matches [effectiveEraForFaction] default when faction is not minor/tribe.
+const int kDefaultEffectiveMilitaryEra = 4;
+
+/// Default multipliers when morale/leader bonuses are neutral in an engagement.
+const double kNeutralMoraleMultiplier = 1.0;
+const double kNeutralLeaderMultiplier = 1.0;
+
+/// Terrain table fallback: no modifier when terrain key is unknown.
+const double kNeutralTerrainAttackerModifier = 1.0;
+const double kNeutralTerrainDefenderModifier = 1.0;
+
+/// Fort levels that receive siege combat modifiers (walls, guns, reduction).
+const int kMinFortLevelForCombatModifiers = 1;
+const int kMaxFortLevelForCombatModifiers = 3;
+
+/// Attacker effective strength is scaled by `(this - fortDamageReduction[level])`.
+const double kUnityAttackerStrengthMultiplier = 1.0;
+
+/// Lower bound when subtracting wall HP from attacker effective strength for ratio.
+const double kEffectiveAttackForRatioClampMin = 0.0;
+const double kEffectiveAttackForRatioClampMax = double.infinity;
+
+/// RNG range for initiative tie-break (exclusive upper bound for [Random.nextInt]).
+const int kInitiativeTieBreakRngUpperExclusive = 1 << 31;
+
+/// Cavalry share when an army lists no regiments (sort key only).
+const double kZeroCavalryShareWhenNoUnits = 0.0;
+
+/// Minimum casualty slots when applying fractional losses (obvious index floor).
+const int kMinCasualtySlots = 0;
 
 /// Result of one engagement. SPEC/game/combat.md.
 enum EngagementResult {
@@ -69,7 +131,7 @@ Game resolveBattleContext(
   var currentDefenderGeneralId = ctx.defenderGeneralId;
   var currentDefenderMedals = ctx.defenderGeneralMedals;
 
-  final allCasualties = <String>[];
+  final allCasualties = <String>{};
   String? survivingAttackerFactionId;
 
   final initialDefenderCount = ctx.defenderUnitIds.length;
@@ -122,9 +184,11 @@ Game resolveBattleContext(
       defenderFactionId,
     );
     final attackerCoverage =
-        feedingCoverageByPlayerId[attacker.side.factionId] ?? 1.0;
+        feedingCoverageByPlayerId[attacker.side.factionId] ??
+        kDefaultFeedingCoverageMultiplier;
     final defenderCoverage =
-        feedingCoverageByPlayerId[defenderFactionId] ?? 1.0;
+        feedingCoverageByPlayerId[defenderFactionId] ??
+        kDefaultFeedingCoverageMultiplier;
     final attackerLeaderMult = leaderBonusForFaction(
       game,
       attacker.side.factionId,
@@ -184,8 +248,12 @@ Game resolveBattleContext(
         currentDefenderGeneralId = attacker.assignedGeneralId;
         currentDefenderMedals =
             attacker.side.generalMedals +
-            (attacker.assignedGeneralId != null ? 1 : 0);
-        if (currentDefenderMedals > 4) currentDefenderMedals = 4;
+            (attacker.assignedGeneralId != null
+                ? kGeneralMedalsGainedOnBattleWin
+                : 0);
+        if (currentDefenderMedals > kGeneralMedalsMax) {
+          currentDefenderMedals = kGeneralMedalsMax;
+        }
         break;
       case EngagementResult.defenderVictory:
         _incrementGeneralMedals(
@@ -193,7 +261,7 @@ Game resolveBattleContext(
           generalId: currentDefenderGeneralId,
         );
         if (currentDefenderGeneralId != null) {
-          final updated = generalsById[currentDefenderGeneralId!];
+          final updated = generalsById[currentDefenderGeneralId];
           if (updated != null) currentDefenderMedals = updated.medals;
         }
         survivingAttackerFactionId = null;
@@ -207,10 +275,11 @@ Game resolveBattleContext(
             .skip(attackerIndex + 1)
             .toList();
         if (remainingAttackers.isNotEmpty) {
-          final recoverCount = (initialDefenderCount * 0.2).ceil().clamp(
-            1,
-            initialDefenderCount,
-          );
+          final recoverCount =
+              (initialDefenderCount * kGarrisonRecoveryFraction).ceil().clamp(
+                1,
+                initialDefenderCount,
+              );
           final recoveryType = garrisonRecoveryRegimentTypeForEra(
             defenderEffectiveLevel,
           );
@@ -220,7 +289,7 @@ Game resolveBattleContext(
             i++
           ) {
             final type = recoveryType;
-            final id = 'recover_${ctx.provinceId}_$i';
+            final id = '${kRecoveryUnitPrefix}${ctx.provinceId}_$i';
             defenderUnitIds.add(id);
             final stubUnit = Unit(
               id: id,
@@ -298,7 +367,7 @@ Game resolveBattleContext(
 ({RegionData region, bool provinceChangedOwner}) _buildPostBattleRegion({
   required RegionData region,
   required BattleContext ctx,
-  required List<String> allCasualties,
+  required Set<String> allCasualties,
   required Map<String, Unit> unitsById,
   required String provinceOwnerId,
   required String defenderFactionId,
@@ -325,7 +394,9 @@ Game resolveBattleContext(
 
   final recoveredUnits = unitsById.values
       .where(
-        (u) => u.id.startsWith('recover_') && !allCasualties.contains(u.id),
+        (u) =>
+            u.id.startsWith(kRecoveryUnitPrefix) &&
+            !allCasualties.contains(u.id),
       )
       .toList();
   var finalUnits = [...survivingUnits, ...recoveredUnits];
@@ -385,7 +456,7 @@ void _sortAttackersByInitiative(
     return count;
   }
 
-  final tieBreakRoll = rng.nextInt(1 << 31);
+  final tieBreakRoll = rng.nextInt(kInitiativeTieBreakRngUpperExclusive);
   int tieRank(String factionId) => Object.hash(factionId, tieBreakRoll);
 
   attackers.sort((a, b) {
@@ -393,8 +464,8 @@ void _sortAttackersByInitiative(
     final cavB = cavalryCount(b.side);
     final totalA = a.side.unitIds.length;
     final totalB = b.side.unitIds.length;
-    final shareA = totalA > 0 ? cavA / totalA : 0.0;
-    final shareB = totalB > 0 ? cavB / totalB : 0.0;
+    final shareA = totalA > 0 ? cavA / totalA : kZeroCavalryShareWhenNoUnits;
+    final shareB = totalB > 0 ? cavB / totalB : kZeroCavalryShareWhenNoUnits;
     final initA =
         shareA * initiativeCavalryShareWeight +
         a.side.generalMedals * initiativeGeneralMedalWeight;
@@ -425,7 +496,10 @@ void _incrementGeneralMedals({
   final current = generalsById[generalId];
   if (current == null) return;
   generalsById[generalId] = current.copyWith(
-    medals: (current.medals + 1).clamp(0, 4),
+    medals: (current.medals + kGeneralMedalsGainedOnBattleWin).clamp(
+      kGeneralMedalsMin,
+      kGeneralMedalsMax,
+    ),
   );
 }
 
@@ -436,7 +510,7 @@ int _defenderEffectiveLevel(Game game, String defenderFactionId) {
   for (final t in game.tribes) {
     if (t.id == defenderFactionId) return t.effectiveMilitaryLevel;
   }
-  return 4;
+  return kDefaultEffectiveMilitaryEra;
 }
 
 /// Max regiments that can participate per side in one engagement.
@@ -457,16 +531,18 @@ EngagementOutcome resolveEngagement({
   int generalMedals = 0,
   required int fortLevel,
   required String terrain,
-  int defenderEffectiveMilitaryLevel = 4,
-  double attackerMoraleMultiplier = 1.0,
-  double defenderMoraleMultiplier = 1.0,
-  double attackerLeaderMultiplier = 1.0,
-  double defenderLeaderMultiplier = 1.0,
+  int defenderEffectiveMilitaryLevel = kDefaultEffectiveMilitaryEra,
+  double attackerMoraleMultiplier = kNeutralMoraleMultiplier,
+  double defenderMoraleMultiplier = kNeutralMoraleMultiplier,
+  double attackerLeaderMultiplier = kNeutralLeaderMultiplier,
+  double defenderLeaderMultiplier = kNeutralLeaderMultiplier,
 }) {
-  final attStr = aggregateStrength(attackerUnits, 4);
+  final attStr = aggregateStrength(attackerUnits, kDefaultEffectiveMilitaryEra);
   var defStr = aggregateStrength(defenderUnits, defenderEffectiveMilitaryLevel);
 
-  final terrainMod = terrainModifiers[terrain] ?? (1.0, 1.0);
+  final terrainMod =
+      terrainModifiers[terrain] ??
+      (kNeutralTerrainAttackerModifier, kNeutralTerrainDefenderModifier);
   var effAtt =
       attStr *
       terrainMod.$1 *
@@ -478,18 +554,23 @@ EngagementOutcome resolveEngagement({
       defenderMoraleMultiplier *
       defenderLeaderMultiplier;
 
-  if (fortLevel >= 1 && fortLevel <= 3) {
+  if (fortLevel >= kMinFortLevelForCombatModifiers &&
+      fortLevel <= kMaxFortLevelForCombatModifiers) {
     final reduction = fortDamageReduction[fortLevel];
-    effAtt *= (1.0 - reduction);
+    effAtt *= (kUnityAttackerStrengthMultiplier - reduction);
     final emplaced = fortGunCount[fortLevel] * fortEmplacedStrength[fortLevel];
     effDef += emplaced;
   }
 
   // Wall HP soaks damage before it applies to defender casualty ratio. SPEC/game/siege-mechanics.md.
   var effAttForRatio = effAtt;
-  if (fortLevel >= 1 && fortLevel <= 3) {
+  if (fortLevel >= kMinFortLevelForCombatModifiers &&
+      fortLevel <= kMaxFortLevelForCombatModifiers) {
     final wallHp = wallHpByFortLevel[fortLevel];
-    effAttForRatio = (effAtt - wallHp).clamp(0.0, double.infinity);
+    effAttForRatio = (effAtt - wallHp).clamp(
+      kEffectiveAttackForRatioClampMin,
+      kEffectiveAttackForRatioClampMax,
+    );
   }
 
   final attackerCasualties = <String>[];
@@ -505,7 +586,7 @@ EngagementOutcome resolveEngagement({
     );
   }
 
-  final ratio = effDef > 0 ? effAttForRatio / effDef : 10.0;
+  final ratio = effDef > 0 ? effAttForRatio / effDef : kNoDefenderRatioFallback;
   final attackerLowMorale = attackerMoraleMultiplier < defenderMoraleMultiplier;
 
   return _resolveByRatio(
@@ -532,25 +613,27 @@ EngagementOutcome _resolveByRatio({
 
   EngagementResult bothDeadResult = EngagementResult.mutualAnnihilation;
 
-  if (ratio >= 1.5 && attackerLowMorale && ratio < 4.0) {
-    attLossFrac = 0.6;
-    defLossFrac = 0.4;
+  if (ratio >= kStrongAttackerRatioThreshold &&
+      attackerLowMorale &&
+      ratio < kBluntAttackerVictoryUpperRatio) {
+    attLossFrac = kBluntAttackerLossFraction;
+    defLossFrac = kBluntDefenderLossFraction;
     bluntAttackerVictory = true;
-  } else if (ratio >= 1.5) {
-    attLossFrac = 0.15;
-    defLossFrac = 1.0;
+  } else if (ratio >= kStrongAttackerRatioThreshold) {
+    attLossFrac = kStrongAttackerLossFraction;
+    defLossFrac = kStrongDefenderLossFraction;
     bothDeadResult = EngagementResult.attackerVictory;
-  } else if (ratio <= 0.67) {
-    attLossFrac = 1.0;
-    defLossFrac = 0.15;
+  } else if (ratio <= kStrongDefenderRatioThreshold) {
+    attLossFrac = kStrongDefenderAttackerLossFraction;
+    defLossFrac = kStrongDefenderDefenderLossFraction;
     bothDeadResult = EngagementResult.defenderVictory;
-  } else if (ratio >= 1.0) {
-    attLossFrac = 0.3;
-    defLossFrac = 0.6;
+  } else if (ratio >= kAttackerEdgeRatioThreshold) {
+    attLossFrac = kAttackerEdgeAttackerLossFraction;
+    defLossFrac = kAttackerEdgeDefenderLossFraction;
     bothDeadResult = EngagementResult.attackerVictory;
   } else {
-    attLossFrac = 0.5;
-    defLossFrac = 0.4;
+    attLossFrac = kDefaultAttackerLossFraction;
+    defLossFrac = kDefaultDefenderLossFraction;
   }
 
   return _buildOutcome(
@@ -576,11 +659,11 @@ EngagementOutcome _buildOutcome({
   EngagementResult bothDeadResult = EngagementResult.mutualAnnihilation,
 }) {
   final attLoss = (attackerUnits.length * attLossFrac).ceil().clamp(
-    0,
+    kMinCasualtySlots,
     attackerUnits.length,
   );
   final defLoss = (defenderUnits.length * defLossFrac).ceil().clamp(
-    0,
+    kMinCasualtySlots,
     defenderUnits.length,
   );
 
@@ -619,6 +702,7 @@ EngagementOutcome _buildOutcome({
 /// Morale aura from general medals. SPEC/game/military-generals.md:
 /// 5% per general medal, up to 20% (at 4 medals).
 double moraleMultiplierForGeneralMedals(int generalMedals) {
-  final capped = generalMedals.clamp(0, 4);
-  return 1.0 + (capped * 0.05);
+  final capped = generalMedals.clamp(kGeneralMedalsMin, kGeneralMedalsMax);
+  return kMoraleMultiplierBaseFromGenerals +
+      (capped * kMoraleMultiplierPerGeneralMedal);
 }

@@ -19,23 +19,27 @@ The naval units panel gives the player a single place to see every **fleet** the
 
 ## Move fleet
 
-For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the **expanded** row includes a **Move** button next to **Split**. The **Home Fleet** row does **not** show **Move** (cannot move).
+For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the **collapsed row header area** includes a **Move** action next to **Split** so orders can be issued without expansion. The **Home Fleet** row does **not** show **Move** (cannot move).
 
 **Dialog (local `showDialog`, commit via bus):** Opening **Move** shows a modal where the player:
 
 **Title:** **Fleet \<id\>** (or equivalent) and, when there is at least one destination, **(N destinations)** so numeric ids are not mistaken for option counts.
 
 1. Sees two sections (**Sea zones** first, then **Provinces**), each a **sorted** list of **legal** destinations from the fleet’s **current** location per [ships-and-naval.md](../game/ships-and-naval.md) and [naval-movement-resolution.md](../program/naval-movement-resolution.md). One-hop naval moves use topology only: **S→S** (sea to adjacent sea), **S→P** (dock at adjacent owned port), **P→S** (undock to adjacent sea). **No P→P** and no multi-hop in a single order; every offered destination shares an edge with the fleet’s current sea node or port node.
-   - **At sea:** **Sea zones** lists only **S–S** neighbors of the fleet’s current sea zone (including **warp** / cross‑region links where the graph has an S–S edge). **Provinces (dock)** lists only **owned** provinces with a direct **S–P** edge from that sea zone. Destinations in a **different** region than the fleet’s current sea zone must be labeled so the player sees **cross‑region** (e.g. include the destination region label in the row text).
+   - **At sea:** **Sea zones** lists only **S–S** neighbors of the fleet’s current sea zone (including **warp** / cross‑region links where the graph has an S–S edge). **Provinces (dock)** lists only **owned** provinces with a direct **S–P** edge from that sea zone. Sea-zone row suffix behavior is **warp-zone membership** based: non-warp destinations show only the sea-zone name; warp-zone destinations append localized warp-link copy; and only warp-zone destinations in a different region append localized **`links to <region>`** (destination region label, e.g. Old World / New World). Warp-zone destinations in the same region must not show `<region>` text. Sea-zone rows must not render legacy `· <region>` or `(cross-region)` suffixes.
    - **In port:** **Sea zones** lists only seas with a direct **P–S** edge from the fleet’s port; the **Provinces** section is **empty** (no port‑to‑port moves).
 2. **Selects** one row (radio or single selection), then taps **Confirm** to submit (or **Cancel** to close without changing orders).
-3. May tap a **locate** control beside each destination row to emit **`LocateMapTileEvent`** (same family as fleet locate): province → town/first tile; sea zone → port tile adjacent to that zone per [map-widget.md](map-widget.md) / [map_location_resolver](military/naval panel contract).
+3. May tap a **locate** control beside each destination row to emit **`LocateMapTileEvent`** (same family as fleet locate): province → town/first tile; sea zone → centroid tile when map data is available, else port tile adjacent to that zone per [map-widget.md](map-widget.md) / `map_location_resolver`.
 
 **Orders:** On confirm, the panel emits **`NavalMoveFleetRequestedEvent`** (see [app-ui-wiring.md](../program/app-ui-wiring.md)). The shell applies **`applyNavalMoveOrderForPlayer`** (colonizethis_logic): the new **naval move** replaces any prior **naval move** for that fleet and **removes** any **naval mission** order for that fleet from the current‑turn draft.
 
 **Labels:** The capital province (dock), when listed, should indicate that the fleet **joins the Home Fleet** when the order resolves (per GDD).
 
 **Acceptance — Move fleet with combined topology (in port):** Given a sea-going fleet **in port** at a **coastal** province (prefixed `inPortAtProvinceId`, seabound per map topology) and the panel uses the same **combined** world topology as turn resolution (prefixed node/edge ids per [map-data.md](../program/map-data.md)), when the player opens **Move fleet**, then the dialog shows **at least one** row under **Sea zones** (legal adjacent sea zones for undock) and does **not** show the sole empty-state message *No adjacent sea zones (check map topology).* when adjacency exists.
+
+### Tile-scoped open (map fleet marker)
+
+When the shell opens the panel via **`OpenNavalUnitsPanelEvent`** with `locationScopeKey`, optional `initialSelectedFleetId`, and optional `tileScopeTileKey`, the list shows only fleets at that location scope, the title uses the tile-scoped string, and the **Tile** header action emits **`OpenMapTileDetailEvent`** for `tileScopeTileKey` (after **`ClosePanelEvent`**, same pattern as civilians).
 
 ---
 
@@ -57,7 +61,7 @@ For every **sea‑going** fleet (any fleet that is **not** the Home Fleet), the 
 ## Panel placement and opening
 
 - **Access:** The panel is opened from the in-game shell **toolbar** via a dedicated **Naval Units** button, alongside Production, Civilian Units, Military Units, Diplomacy, and Technology per [empire-buttons.md](empire-buttons.md) and [in-game-shell-narrow.md](in-game-shell-narrow.md).
-- **Desktop / wide viewport:** Panel appears as a **side panel** (CtPanel) next to the map, matching the Military Units panel’s placement and max size (map remains visible).
+- **Desktop / wide viewport:** Panel appears as a **side panel** (CtPanel) next to the map (map remains visible). At viewport widths **>=1280px**, panel width is derived from viewport width using a bounded scale rule (not a fixed `maxWidth: 400`), while preserving sensible min/max limits.
 - **Mobile / narrow viewport:** Behaviour matches the wide layout but may adapt to a narrower side panel or overlay per [mobile-adaptation.md](mobile-adaptation.md); interaction (list + locate) remains the same.
 
 ---
@@ -91,9 +95,9 @@ For every fleet (including the Home Fleet), the collapsed row shows:
 | **Fleet name**    | Fleet id or display name                | For Home Fleet, label is “Home Fleet”. For other fleets, use a human-readable label (e.g. “Fleet #3”, “Atlantic Squadron” if available; otherwise a stable fallback). |
 | **Location**      | `inPortAtProvinceId` or `seaZoneId`     | Display as `Region — Province` for in-port fleets (province display name) or `Region — Sea zone` for at-sea fleets. Region label uses same mapping as Military Units panel. |
 | **Mission**       | `Fleet.mission`                         | Enum mapped to user labels: None, Patrol, Blockade, Beachhead, Defend. For Home Fleet, always shown as “None”. When the shell’s draft **`Orders`** contains a **naval move** for this fleet, show **Moving to:** \<display name of destination sea zone or dock province\> (dock targets may suffix **(dock)** in UI copy). |
-| **Ships summary** | Fleet ship list and naval catalog       | Summary text such as `Total ships: N` and a short breakdown, e.g. `2 warships · 3 merchants` based on ship types' merchant/warship role per [ships-and-naval.md](../game/ships-and-naval.md) (§ Ship Types). |
+| **Inline actions** | Fleet action availability rules | `Split` is always visible. `Move` is visible for sea-going fleets and hidden for Home Fleet. Actions remain clickable while collapsed; narrow layouts may render icon-only buttons and wrap onto a second line. |
 
-The entire collapsed row is clickable to select/locate the fleet and to toggle expansion.
+Collapsed row content stays compact and focused on: location, mission (and draft move line when present), and inline actions.
 
 ### Expanded details (on demand)
 
@@ -108,6 +112,7 @@ When a row is **expanded**, additional details are shown **within the same panel
     - **Cargo capacity**: total cargo holds, computed as the sum of `cargoHold` for all merchant ships in the Home Fleet per [ships-and-naval.md](../game/ships-and-naval.md) (§ Home Fleet, Cargo holds and capacity). Display as `Cargo capacity: X holds`.
   - For **sea-going fleets**:
     - A simple **strength summary** derived from naval combat aggregation (e.g. a single “Strength” value or short label that reflects FRP/RNG/HULL per [ships-and-naval.md](../game/ships-and-naval.md) § Naval Strength Aggregation Formula). Exact numeric display may be minimal for v1; underlying formula remains per game spec.
+- **Secondary summary fields:** `Total ships`, `Warships`, and `Merchants` are displayed in expanded content (not in collapsed summary text).
 - **Additional status:** Optional badges such as “In port”, “At sea”, or mission badges (Patrol, Blockade, Beachhead, Defend).
 
 ---
@@ -117,7 +122,7 @@ When a row is **expanded**, additional details are shown **within the same panel
 - **Locate on tap:** When the user taps a fleet row (collapsed or expanded), the UI layer:
   1. Resolves a **tile key** that represents the fleet’s location:
      - For fleets **in port**: use the same logic as the Military Units panel for provinces, i.e. town tile key if available, otherwise the first tile for that province, using prefixed province id per [world-model-identity.md](../game/world-model-identity.md).
-     - For fleets **at sea**: resolve a **port tile adjacent to the fleet’s sea zone** using `portsByProvinceSeaboard` (same algorithm as `tileKeyForSeaZoneLocation` in the Military Units panel).
+     - For fleets **at sea**: prefer the **sea-zone centroid tile** from the region tile map when `tileMapByRegion` / `topologyByRegion` are available (`tileKeyForNavalFleetAtSea`); otherwise fall back to a **port tile adjacent** to the sea zone via `tileKeyForSeaZoneLocation` (same port-adjacency algorithm as the Military Units panel).
   2. Sets the map’s **highlighted tile** to that tile key.
   3. **Pans and centers** the map viewport on that tile.
   4. **Switches the active region tab** to the fleet’s region if it differs from the current tab.
@@ -190,9 +195,13 @@ The naval units panel participates in the Widgetbook catalog for review and test
 
 - **Given** the Widgetbook “Naval Units Panel” folder is open, **when** the user selects the “With map” use case, **then** the UI layer displays the Naval Units panel alongside a map built from a real generated map and initialized game (`getDebugInitGameResult()`), and clicking a fleet row highlights and pans/centers the map on the appropriate tile (capital port for Home Fleet, port or adjacent port for other fleets) while switching the region tab when necessary.
 
-- **Given** the Naval Units panel is open and a **sea‑going** fleet row is expanded, **when** the user views the row actions, **then** the UI layer shows a **Move** button (in addition to **Split**) and does **not** omit it for that fleet.
+- **Given** a sea‑going fleet row is collapsed, **when** the user views row actions, **then** the UI layer shows **Move** and **Split** inline and both actions are clickable without expanding the row.
 
-- **Given** the Naval Units panel is open and the **Home Fleet** row is expanded, **when** the user views the row actions, **then** the UI layer does **not** show a **Move** button for the Home Fleet.
+- **Given** the Home Fleet row is collapsed, **when** the user views row actions, **then** the UI layer does **not** show **Move** and still shows **Split**.
+
+- **Given** the panel is rendered at viewport width **>=1280px**, **when** layout constraints are applied, **then** panel width is computed from a bounded viewport scaling rule instead of fixed max width.
+
+- **Given** the panel is rendered on narrower widths, **when** inline actions have limited horizontal space, **then** action controls can wrap to a second line and may switch to icon-only mode while staying accessible and clickable.
 
 - **Given** the Move dialog is open with at least one destination, **when** the user selects a destination and taps **Confirm**, **then** the UI layer emits **`NavalMoveFleetRequestedEvent`** with a **naval move** order matching the selection (sea zone id or dock province id per `NavalMoveOrder`) and closes the dialog.
 

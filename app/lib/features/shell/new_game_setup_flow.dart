@@ -1,24 +1,28 @@
-// SPEC/ui/game-initializing.md — progress dialog, async setup, error + retry (new seed).
+// SPEC/ui/game-initializing.md — progress dialog, async setup, error + retry.
+// Retry: fixed user seed K uses K+N per attempt; user seed 0 keeps 0 each attempt (fresh
+// time-based effective seed when init runs).
 
 import 'dart:async';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/routes.dart';
+import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/features/shell/new_game_setup_seed_for_attempt.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-final _log = appLogger('shell');
+final _log = packageLogger('shell');
 
 sealed class _NewGameOutcome {}
 
@@ -33,7 +37,7 @@ class _NewGameOutcomeFailure extends _NewGameOutcome {
 }
 
 /// Runs phased new-game creation after leader selection: progress dialog, navigate on success,
-/// error dialog with retry (`seed = baseSeed + attemptIndex`). SPEC/ui/game-initializing.md.
+/// error dialog with retry. SPEC/ui/game-initializing.md.
 Future<void> runNewGameSetupAfterLeaderPick({
   required ProviderContainer container,
   required GameSetupConfig templateConfig,
@@ -48,6 +52,10 @@ Future<void> runNewGameSetupAfterLeaderPick({
   final bus = container.read(appEventBusProvider);
 
   while (true) {
+    final perAttemptSeed = newGameSetupConfigSeedForAttempt(
+      dialogChosenSeed: baseSeed,
+      attemptIndex: attemptIndex,
+    );
     final config = GameSetupConfig(
       selectedGreatPowerIds: templateConfig.selectedGreatPowerIds,
       leaderVariantByGpId: templateConfig.leaderVariantByGpId,
@@ -57,7 +65,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
       numProvincesOldWorld: templateConfig.numProvincesOldWorld,
       numProvincesNewWorld: templateConfig.numProvincesNewWorld,
       minProvincesPerMinor: templateConfig.minProvincesPerMinor,
-      seed: baseSeed + attemptIndex,
+      seed: perAttemptSeed,
       startingResources: templateConfig.startingResources,
       enforceFairGpOldWorldAssignment:
           templateConfig.enforceFairGpOldWorldAssignment,
@@ -76,6 +84,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
     switch (outcome) {
       case _NewGameOutcomeSuccess(:final game):
         container.read(currentGameProvider.notifier).setGame(game);
+        ctAppPerfInstant('navigate.game');
         bus.emit(const NavigateToRouteEvent(Routes.game));
         return;
       case _NewGameOutcomeFailure(:final error):
@@ -125,12 +134,7 @@ Future<bool> _showNewGameErrorDialog(Object error) async {
             style: Theme.of(ctx).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 280),
-            child: SingleChildScrollView(
-              child: SelectableText(error.toString()),
-            ),
-          ),
+          SelectableText(error.toString()),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -23,7 +22,7 @@ void main() {
 
     test('town and port render sizes follow spec', () {
       expect(TownIconCache.townIconSize, equals(64.0));
-      expect(TownIconCache.portIconSize, equals(32.0));
+      expect(TownIconCache.portIconSize, equals(64.0));
     });
 
     testWidgets(
@@ -33,7 +32,7 @@ void main() {
         expect(TownIconCache.townIconId, 'town_inland_64');
         expect(TownIconCache.portIconId, 'port');
         expect(TownIconCache.townIconSize, 64);
-        expect(TownIconCache.portIconSize, 32);
+        expect(TownIconCache.portIconSize, 64);
         expect(kTownIconIds, containsAll(['town_inland_64', 'port']));
         expect(kTownIconIds, isNot(contains('town_coastal')));
       },
@@ -46,7 +45,7 @@ void main() {
         await tester.pumpWidget(const SizedBox.shrink());
 
         for (final iconId in kTownIconIds) {
-          final path = 'assets/icons/ui_icon_com_$iconId.png';
+          final path = 'assets/icons/64/ui_icon_com_$iconId.png';
           final data = await rootBundle.load(path);
           expect(
             data.lengthInBytes,
@@ -64,7 +63,7 @@ void main() {
         var loadedCount = 0;
         await tester.runAsync(() async {
           for (final iconId in kTownIconIds) {
-            final path = 'assets/icons/ui_icon_com_$iconId.png';
+            final path = 'assets/icons/64/ui_icon_com_$iconId.png';
             try {
               final data = await rootBundle.load(path);
               if (data.lengthInBytes > 0) {
@@ -93,7 +92,7 @@ void main() {
       var hasTransparentPixel = false;
       await tester.runAsync(() async {
         final data = await rootBundle.load(
-          'assets/icons/ui_icon_com_town_inland_64.png',
+          'assets/icons/64/ui_icon_com_town_inland_64.png',
         );
         final image = await _decodePng(data.buffer.asUint8List());
         final pixels = await image.toByteData(

@@ -8,8 +8,13 @@ environment:
   sdk: ">=3.11.0 <4.0.0"
 
 dependencies:
+  colonizethis_logger: any
   colonizethis_data:
+  path: ^1.9.1
 
 dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../../packages/colonizethis_exception_lint
   colonizethis_test:
+  custom_lint: ^0.8.1
   test: ^1.24.0

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
@@ -21,7 +20,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Same path as [StrictAssetIcon] in [GameRegionMinimap] toggle.
-const _kRegionMinimapIconAssetPath = 'assets/icons/ui_icon_region_minimap.png';
+const _kRegionMinimapIconAssetPath =
+    'assets/icons/32/ui_icon_region_minimap.png';
 
 ByteData _oneByOnePngByteData() {
   final bytes = base64Decode(

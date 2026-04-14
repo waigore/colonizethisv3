@@ -10,7 +10,7 @@ void main() {
     const ownedTile = '$ownedProvinceId|0|0';
     const foreignTile = '$foreignProvinceId|0|0';
 
-    Game _game({
+    Game game0({
       String? ownerP1 = 'p1',
       String? ownerP2 = 'p2',
       Map<String, String>? purchased,
@@ -40,24 +40,24 @@ void main() {
     }
 
     test('returns true for tile in province owned by player', () {
-      final game = _game();
+      final game = game0();
       expect(isTileControlledByPlayer(game, 'p1', ownedTile), isTrue);
     });
 
     test('returns false for foreign, unpurchased tile', () {
-      final game = _game();
+      final game = game0();
       expect(isTileControlledByPlayer(game, 'p1', foreignTile), isFalse);
     });
 
     test('returns true for tile purchased in foreign province', () {
-      final game = _game(
+      final game = game0(
         purchased: {foreignTile: 'p1'},
       );
       expect(isTileControlledByPlayer(game, 'p1', foreignTile), isTrue);
     });
 
     test('returns false when tileKey does not map to a province', () {
-      final game = _game();
+      final game = game0();
       expect(
         isTileControlledByPlayer(game, 'p1', 'oldWorld|UNKNOWN|0|0'),
         isFalse,

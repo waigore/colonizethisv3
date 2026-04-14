@@ -31,6 +31,13 @@ void main() {
           game: game,
           tileMapByRegion: tileMapByRegion,
           connectivityResult: connectivity,
+          techCapForPlayerAndResource: (playerId, resourceId) {
+            final player = game.playerById(playerId);
+            return extractionCapForResourceForUnlocked(
+              player?.techUnlocked,
+              resourceId,
+            );
+          },
         );
         final overseas = extraction['pl1']!.overseas;
         expect(overseas['sugarCane'], 4);
@@ -76,6 +83,7 @@ void main() {
           nwResourceGrid: nwGrid,
           nwImprovementLevel: 2,
           globalGameSeed: globalSeed,
+          techUnlocked: const {'cotton_planting': true, 'sugar_planting': true},
         );
         final topology = crossRegionSeaTopologyForExtractionTests();
 
@@ -88,6 +96,13 @@ void main() {
           game: game,
           tileMapByRegion: tileMapByRegion,
           connectivityResult: connectivity,
+          techCapForPlayerAndResource: (playerId, resourceId) {
+            final player = game.playerById(playerId);
+            return extractionCapForResourceForUnlocked(
+              player?.techUnlocked,
+              resourceId,
+            );
+          },
         );
         final overseas = extraction['pl1']!.overseas;
         expect(overseas['cotton'], 2);
@@ -150,6 +165,13 @@ void main() {
           game: game,
           tileMapByRegion: tileMapByRegion,
           connectivityResult: connectivity,
+          techCapForPlayerAndResource: (playerId, resourceId) {
+            final player = game.playerById(playerId);
+            return extractionCapForResourceForUnlocked(
+              player?.techUnlocked,
+              resourceId,
+            );
+          },
         );
         final overseas = extraction['pl1']!.overseas;
         final holds = cargoHoldsForHomeFleet(game, 'pl1');

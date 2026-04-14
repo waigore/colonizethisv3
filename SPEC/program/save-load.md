@@ -13,9 +13,11 @@
 
 ## Contract
 
-- **Storage backend:** Hive box. One box per store; keys are strings. Hive uses a **lock file** (e.g. `games.lock`) in the store directory so only one process has the box open at a time. Clients that open the box (e.g. ctterm) must handle lock failure appropriately; ctterm does so by showing a lock-prompt screen and deleting the lock only if the user agrees (see [SPEC/tui/ctterm.md](../tui/ctterm.md) §5.1).
+- **Storage backend:** Hive box. One box per store; keys are strings. Hive uses a **lock file** (e.g. `games.lock`) in the store directory so only one process has the box open at a time. Human-facing clients that open the box (**Flutter app** and **ctdev**) must handle lock failure in a user-visible way (e.g. explain that another instance may hold the store, offer retry or safe exit) and must not delete the lock file without explicit user consent.
 - **Key convention:**
-  - **Game:** key = `gameId`; value = `Game.toJson()`. Schema is the Game model (no separate version field in MVP). `Game.toJson()` includes all core fields, including `politicalGlyphByPlayerId` (1-character political owner glyphs) so that ownership glyphs on political maps are stable across loads.
+  - **Game:** key = `gameId`; value = envelope JSON `{ saveFormatVersion, game }`.
+    - `saveFormatVersion`: integer persisted by `colonizethis_save` as a hardcoded program constant.
+    - `game`: `Game.toJson()` payload. `Game.toJson()` includes all core fields, including `politicalGlyphByPlayerId` (1-character political owner glyphs) so that ownership glyphs on political maps are stable across loads, and `mapViewState` (Empire overview map zoom + map display toggles) so map UI state restores across load.
   - **gameId constraints:** The `gameId` must be a non-empty string. It may contain any characters except those that would create ambiguity with map-data keys (see below). For clarity, avoid gameIds that end with `_tileMapByRegion`, `_topologyByRegion`, or `_combinedTopology` unless you intentionally want the game to be treated as a potential map-data key (see listGameIds behavior).
   - **Required map data:** keys = `gameId + suffix`; suffixes: `_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`. Values = JSON produced by the respective model `toJson()` (e.g. `TileMapResult`, `MapTopology`).
 - **Province/region identity:** Province and region ids stored in the saved payload are whatever the model stores; for consistency with [world-model-identity.md](../game/world-model-identity.md), any province or region id in saved state follows the same prefixed form and lookup rules as at runtime (no separate serialization format).
@@ -32,9 +34,11 @@
 
 ## Versioning and compatibility
 
-- **MVP:** The persisted payload has **no version field**. Schema is the Game model (and optional map-data models); readers do not branch on a save-format version.
-- **No legacy migration guarantee:** The project does not support migration from historical schemas. Loads are expected to target saves created by the current model set.
-- **Future option:** The project may introduce a **save-format version** (e.g. a `saveFormatVersion` field in the persisted payload or in a small envelope) and document a migration policy.
+- **Required save envelope:** Game payloads must include a `saveFormatVersion` integer and a `game` object.
+- **Compatibility check before deserialize:** Load must validate `saveFormatVersion` before calling `Game.fromJson`.
+- **Incompatible version behavior:** If `saveFormatVersion` is missing, malformed, or unsupported, load must fail with an explicit incompatibility error outcome and must not return a partially loaded `Game`.
+- **Supported versions policy:** `colonizethis_save` owns a hardcoded supported-version set. Versions outside that set are incompatible by definition.
+- **Strict API:** `GameSaveAdapter.loadStrict` throws `IncompatibleSaveFormatException` when `saveFormatVersion` is missing or unsupported (or the payload is not a map); it returns null only when the Hive key is absent. Callers that need a typed failure path use `loadStrict`; `load` continues to return null and log for backward compatibility.
 
 ---
 
@@ -63,11 +67,15 @@
 
 - **Save Game.** Given a Hive box and a Game with id `gameId`, when the system saves the game, then the system writes one entry with key `gameId` and value `Game.toJson()`, and the system logs with prefix `save:` including `gameId` and success (per [ctdev-logging.md](ctdev-logging.md)).
 - **Load Game.** Given a Hive box and a `gameId`, when the system loads the game, then the system returns a Game instance from the stored JSON, or null if the key is not found or deserialization fails; on failure the system logs with prefix `save:` including `gameId` and error (per [ctdev-logging.md](ctdev-logging.md)).
+- **Versioned save envelope.** Given a Hive box and a Game with id `gameId`, when the system saves the game, then the stored value at key `gameId` contains `saveFormatVersion` and `game`, where `game` equals `Game.toJson()` for that Game.
+- **Incompatible save version fails load.** Given a Hive box and a `gameId` where the stored payload has missing, malformed, or unsupported `saveFormatVersion`, when the system loads that `gameId`, then the system rejects the payload as incompatible, returns no `Game`, and logs an explicit incompatibility error with prefix `save:`.
 - **List game ids.** Given a Hive box, when the system lists game ids, then the system returns only keys that are game ids. Keys ending with `_tileMapByRegion`, `_topologyByRegion`, or `_combinedTopology` are excluded ONLY if their prefix (gameId) exists as a separate key in the box (proving they are map data). This ensures game IDs that happen to end with these suffixes are not incorrectly excluded.
 - **Required map data — save/load round-trip.** Given a Hive box, a `gameId`, and valid `tileMapByRegion`, `topologyByRegion`, and `combinedTopology`, when the system calls saveMapData and then loadMapData for that `gameId`, then loadMapData returns the same three maps (round-trip preserves data).
 - **Required map data missing.** Given a Hive box and a `gameId` for which any required map-data key is missing, when the system calls `loadMapData` for that `gameId`, then `loadMapData` fails with an explicit error that identifies missing required map data.
 - **Delete.** Given a Hive box and a `gameId`, when the system deletes the game, then the system removes the key `gameId` and the three map-data keys (`gameId + _tileMapByRegion`, etc.); no-op if the game key is not present.
 - **Round-trip Game fields.** Given a Game with worldState, players, greatPowerColorOverride, turnTimeMapping, and other serialized fields, when the system saves and then loads by the same game id, then the loaded Game equals the original for all fields covered by `Game.toJson()`/`fromJson()` (as covered by existing game_save_adapter_test.dart).
+- **Round-trip map view state fields.** Given a Game with `mapViewState.zoomMultiplier`, `mapViewState.showProvinceOverlay`, `mapViewState.showProvinceOwnershipTint`, and `mapViewState.showProvinceNamesLayer` set to non-default values, when the system saves and then loads by the same game id, then the loaded Game preserves those map view fields exactly.
+- **Legacy save default map view state.** Given a current-envelope save payload where `mapViewState` is absent (legacy save), when the system loads the game, then the loaded Game uses default map view state values (`zoomMultiplier = 1.0`, `showProvinceOverlay = true`, `showProvinceOwnershipTint = false`, `showProvinceNamesLayer = true`) and gameplay remains functional.
 - **Round-trip civilian assignment placement fields.** Given a Game where a civilian `Unit` has `tileKey`, `originTileKey`, and `assignedTileKey` set while work is in progress, when the system saves and then loads by the same game id, then the loaded unit preserves those three fields exactly.
 - **Logging.** Save/load operations use the `save:` prefix and log gameId and success or failure per [ctdev-logging.md](ctdev-logging.md).
 

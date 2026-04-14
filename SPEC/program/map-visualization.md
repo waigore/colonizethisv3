@@ -48,7 +48,14 @@ Render tile maps and topology to PNG; provide view models for tools. Two visuali
 
 ## Map view model
 
-`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the **province ownership** (GP land tint) layer to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model).
+`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel, **`resourceExtractionUnits`**); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the **province ownership** (GP land tint) layer to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model).
+
+`CellViewData.resourceExtractionUnits` semantics:
+
+- Nullable integer for **land** cells only; `null` for sea cells.
+- Value is the **human-player** per-tile extraction units used by map extraction-disc overlays.
+- Value is derived from the same extraction pipeline branch as `computeExtraction` tile `effectiveCapped` (improvement, tech cap, path/tile transport cap, town-development branch rules), and excludes economy-wide aggregate-only lines not attributable to a tile.
+- The extraction-disc count path does **not** include `Game.capitalTileGrainBonusPerTurn` (or equivalent aggregate-only adjustments).
 
 For province-name overlays, `RegionMapViewData` may also carry province-level unit-presence data keyed by full province id:
 
@@ -67,7 +74,11 @@ For interactive civilian map icons, `RegionMapViewData` may also carry tile-scop
 - `stackCount` equals the number of included civilians on that tile and supports tile stack badges.
 - This payload is view-only and does not mutate unit placement or save semantics.
 
+For interactive **human fleet** map icons (ports and sea-zone centroids), `RegionMapViewData` carries `fleetTileMarkers[]` with `tileKey`, `x`, `y`, `locationScopeKey` (`port:…` / `sea:…`), `fleetIds`, `stackCount`, `renderGrayscale`, and `applyFleetRevealHalo` (display-only halo for draft naval moves). Built in `colonizethis_map` from game state, tile maps, topology, and draft orders; consumed by the Flame map and naval panel tile scope.
+
 **Province-level political owner for label plates:** `provincePoliticalOwnerByPrefixedProvinceId[provinceId] = Province.ownerId` (nullable) for each land province in the region, populated from world state in `buildInitGameMapViewData`. The in-game map uses this map with per-cell `CellViewData.ownerFactionId` to choose a **GP-tinted** vs **neutral** semi-transparent name plate per [map-widget.md](../ui/map-widget.md) § Layer model (province names). This distinguishes Great Power–owned provinces from Minor/Tribe provinces where purchased tiles may assign a GP to individual cells.
+
+**Sea zone display names for map labels:** `seaZoneDisplayNameByPrefixedId` — copy of `WorldState.seaZoneDisplayNameById` populated in `buildInitGameMapViewData` for each `RegionMapViewData`. Keys are prefixed sea zone ids (`regionId|localSeaZoneId`). The Flame map resolves label text per [map-widget.md](../ui/map-widget.md) § Province and sea zone names (fallback to local id when missing).
 
 `InitGameMapViewData`: oldWorld, newWorld, metadata. `cellSize` = base logical px per map cell for Flame terrain/layout; for the shipped app init-game map it is taken from `assets/data/map_terrain_tilesets.json` (`map_cell_size_px`) via `MapTerrainConfig` so it matches Wang destination rects ([wang-tileset-and-assets.md](../ui/wang-tileset-and-assets.md) § App map runtime configuration). Zoom still scales the canvas in the parent; this is the unzoomed cell size.
 
@@ -144,3 +155,8 @@ Implemented in colonizethis_map. Consumed by generate_map, init_game, ctdev.
 - **Given** a region has two or more human-player civilian units on the same tile and their types are mixed, **when** `buildInitGameMapViewData` builds `RegionMapViewData.civilianTileMarkers`, **then** the tile has one marker with `stackCount` equal to the number of units and `representativeUnitType` set by priority `Builder > Engineer > Rail Builder > Explorer > Merchant > Spy`.
 - **Given** a region contains civilian units not owned by a human player, **when** `buildInitGameMapViewData` builds `RegionMapViewData.civilianTileMarkers`, **then** those non-player civilians are excluded from `civilianTileMarkers`.
 - **Given** a human-player civilian has a `tileKey` whose region segment differs from the region currently being built, **when** `buildInitGameMapViewData` builds `RegionMapViewData.civilianTileMarkers`, **then** the builder excludes that civilian from that region’s marker list.
+- **Given** a tile-map export where `TileMapResult.resourceGrid` has nullable entries, **when** `renderTileMapToPng` renders map glyphs, **then** the system draws resource letters only for non-null `Resource` entries and skips null entries without throwing.
+- **Given** game-world geographic map rendering where `CellViewData.resourceId` may be null, empty, unknown, or outside the geographic subset, **when** `renderInitGameMapToPngFromViewData(geographicMode: true)` renders map glyphs, **then** the system draws letters only for resource ids mapped to the geographic subset (`grain`, `timber`, `iron`) and skips all other values without throwing.
+- **Given** `buildInitGameMapViewData` builds a region for a game with human player id `H`, **when** a land tile `T` belongs to `H`’s connected extraction graph and has effective per-tile extraction `N` under the same rule branch as `computeExtraction` tile `effectiveCapped`, **then** `CellViewData.resourceExtractionUnits` for `T` is set to integer `N` where `N >= 0`.
+- **Given** `Game.capitalTileGrainBonusPerTurn` is greater than zero, **when** `buildInitGameMapViewData` computes `CellViewData.resourceExtractionUnits`, **then** no tile’s `resourceExtractionUnits` includes any portion of that aggregate-only bonus.
+- **Given** a `Game` whose `WorldState.seaZoneDisplayNameById` contains an entry for prefixed sea zone id `S`, **when** `buildInitGameMapViewData` builds a `RegionMapViewData` for the region in `S`, **then** `RegionMapViewData.seaZoneDisplayNameByPrefixedId[S]` equals `WorldState.seaZoneDisplayNameById[S]`.
