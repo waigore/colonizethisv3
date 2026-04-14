@@ -15,6 +15,7 @@ dependencies:
   colonizethis_data:
   colonizethis_map:
   colonizethis_models:
+  meta: ^1.18.0
 
 dev_dependencies:
   colonizethis_exception_lint:

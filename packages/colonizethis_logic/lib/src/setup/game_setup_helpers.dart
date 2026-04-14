@@ -854,4 +854,19 @@ String _startingShipTypeForPlayer(Player _) {
   return ShipEconomyCatalog.carrack.shipTypeId;
 }
 
-/// Builds a map of province id -> neighbouring province ids using only P–P edges.
+/// Re-runs §7d province town assignment after the caller mutates provinces or maps.
+///
+/// For integration tests that need fixtures (e.g. overseas ownership) that
+/// [createGameFromGeneratedMaps] does not produce by default.
+@visibleForTesting
+Game assignProvinceTownsForTesting({
+  required Game game,
+  required Map<String, MapTopology> topologyByRegion,
+  required Map<String, TileMapResult> tileMapByRegion,
+}) {
+  return _assignProvinceTowns(
+    game: game,
+    topologyByRegion: topologyByRegion,
+    tileMapByRegion: tileMapByRegion,
+  );
+}
