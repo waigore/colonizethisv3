@@ -48,6 +48,9 @@ class GameMapArea extends ConsumerStatefulWidget {
 }
 
 class _GameMapAreaState extends ConsumerState<GameMapArea> {
+  static const ValueKey<String> _playerTurnFeedToggleButtonKey = ValueKey(
+    'player-turn-feed-toggle-button',
+  );
   int _regionIndex = 0;
   RegionMapViewportSnapshot? _regionViewportSnapshot;
   RegionMapViewportSnapshot? _pendingRegionViewport;
@@ -61,7 +64,6 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
   final List<ct_models.GameToUIEvent> _pendingPlayerTurnEvents = [];
   List<ct_models.GameToUIEvent> _resolvedPlayerTurnEvents = const [];
-  int? _resolvedFeedTurnNumber;
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode _baseLayerDisplayMode =
@@ -136,7 +138,6 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         _pendingPlayerTurnEvents,
       );
       _pendingPlayerTurnEvents.clear();
-      _resolvedFeedTurnNumber = event.turnNumber > 0 ? event.turnNumber - 1 : 0;
     });
   }
 
@@ -300,6 +301,63 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
           .read(currentGameProvider.notifier)
           .setGame(current.copyWith(mapViewState: next));
     }
+  }
+
+  void _togglePlayerTurnEventsFeedVisibility() {
+    _setMapViewState(
+      _mapViewState.copyWith(
+        showPlayerTurnEventsFeed: !_mapViewState.showPlayerTurnEventsFeed,
+      ),
+    );
+  }
+
+  Widget _buildPlayerTurnEventsToggleButton({
+    required int eventCount,
+    required String tooltipLabel,
+  }) {
+    final badgeLabel = eventCount > 99 ? '99+' : '$eventCount';
+    return Tooltip(
+      message: tooltipLabel,
+      child: IconButton(
+        key: _playerTurnFeedToggleButtonKey,
+        onPressed: _togglePlayerTurnEventsFeedVisibility,
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.black.withValues(alpha: 0.62),
+          foregroundColor: Colors.white,
+        ),
+        icon: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Icon(
+              _mapViewState.showPlayerTurnEventsFeed
+                  ? Icons.newspaper
+                  : Icons.newspaper_outlined,
+            ),
+            Positioned(
+              right: -8,
+              top: -8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: const BoxDecoration(
+                  color: Colors.redAccent,
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                ),
+                constraints: const BoxConstraints(minHeight: 16, minWidth: 16),
+                child: Text(
+                  badgeLabel,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _centerOnHumanCapital() {
@@ -914,6 +972,10 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     );
     final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
     final feedEntries = _feedEntries();
+    final feedButtonTopInset = kMapOverlayEdgeInset;
+    final feedButtonRightInset = kCtE2EEnabled
+        ? kMapOverlayEdgeInset + 48
+        : kMapOverlayEdgeInset;
     return Column(
       children: [
         GameMapControls(
@@ -1117,6 +1179,19 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           },
                         ),
                       ),
+                      Positioned(
+                        right: feedButtonRightInset,
+                        top: feedButtonTopInset,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildPlayerTurnEventsToggleButton(
+                              eventCount: feedEntries.length,
+                              tooltipLabel: l10n.playerTurnFeed_eventsTitle,
+                            ),
+                          ],
+                        ),
+                      ),
                       if (kCtE2EEnabled) ...[
                         Positioned(
                           right: kMapOverlayEdgeInset,
@@ -1224,16 +1299,27 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                 .watch(mapProvincePanelProvider)
                                 .overlayOpen;
                             final rightInset = panelOpen ? 8.0 + 320.0 : 8.0;
+                            if (!_mapViewState.showPlayerTurnEventsFeed) {
+                              return const SizedBox.shrink();
+                            }
                             return Positioned(
                               right: rightInset,
                               top: 56,
                               child: PlayerTurnEventFeedCard(
-                                resolvedTurnNumber: _resolvedFeedTurnNumber,
                                 entries: feedEntries,
                                 emptyLabel: 'No player events last turn.',
                               ),
                             );
                           },
+                        ),
+                      if (isNarrow && _mapViewState.showPlayerTurnEventsFeed)
+                        Positioned(
+                          right: kMapOverlayEdgeInset,
+                          top: 56,
+                          child: PlayerTurnEventFeedCard(
+                            entries: feedEntries,
+                            emptyLabel: 'No player events last turn.',
+                          ),
                         ),
                     ],
                   ),
@@ -1245,27 +1331,6 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: ActionChip(
-                          label: Text(
-                            l10n.playerTurnFeed_eventsChip(feedEntries.length),
-                          ),
-                          onPressed: () {
-                            showDialog<void>(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                title: Text(l10n.playerTurnFeed_eventsTitle),
-                                content: PlayerTurnEventFeedCard(
-                                  resolvedTurnNumber: _resolvedFeedTurnNumber,
-                                  entries: feedEntries,
-                                  emptyLabel: 'No player events last turn.',
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
                       GameMapNarrowDetailOverlaySlot(
                         game: widget.game,
                         region: projectedRegion,

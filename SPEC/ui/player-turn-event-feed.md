@@ -1,4 +1,4 @@
-# Player Turn Event Feed (map overlay + narrow dialog)
+# Player Turn Event Feed (map overlay + news toggle)
 
 **SPEC/ui** - Human-player-scoped turn outcomes feed rendered over the in-game map. Uses existing bus wiring (`GameEventBus -> GameEventBridge -> AppEventBus`) and commits one batch per resolved turn.
 
@@ -7,9 +7,11 @@
 ## Responsibility
 
 - Show significant outcomes relevant to the local human player as short "something happened!" lines.
-- Wide layout: non-modal right-side overlay column over the map.
-- Narrow/mobile layout: `Events` chip that opens an `Events` dialog with the same lines.
+- Wide and narrow layouts: hidden-by-default feed panel over the map.
+- Wide and narrow layouts: top-right news icon button toggles feed panel visibility.
+- News icon button shows a badge with the current feed-entry count.
 - Replace (not append) feed lines each time a new turn resolution completes.
+- Feed-panel visibility persists via `Game.mapViewState.showPlayerTurnEventsFeed`.
 
 ---
 
@@ -43,8 +45,9 @@
 
 ## Layout
 
-- **Wide**: right-side card over map, scrollable list body.
-- **Narrow**: `Events` chip above map overlays; tapping opens dialog with identical list content/order.
+- **Wide**: top-right news icon button row is always visible; feed card appears below when toggled on.
+- **Narrow**: same top-right news icon button row and same floating feed card behavior as wide.
+- **Feed card content**: no `Events` title row; render only event rows or empty-state text.
 
 ---
 
@@ -52,9 +55,15 @@
 
 - Given a running game map shell with human player `P`, when the app receives relevant forwarded app game events and then `TurnResolutionCompleteEvent` for game `G`, then the feed shows one ordered list containing only `P`-relevant lines from that resolved turn.
 - Given the feed currently shows lines for resolved turn `T`, when the next `TurnResolutionCompleteEvent` for the same game commits turn `T+1`, then the UI replaces all prior lines with the new batch and does not retain `T` lines.
-- Given wide layout, when the feed has lines, then a right-side non-modal map overlay shows those lines and allows scrolling.
-- Given narrow layout, when the user taps the `Events` chip, then a dialog opens and renders the same line texts in the same order as the current-turn feed.
+- Given a running game map shell with `mapViewState.showPlayerTurnEventsFeed = false`, when the UI renders on wide layout, then the feed card is hidden and the top-right news icon button is visible.
+- Given a running game map shell with `mapViewState.showPlayerTurnEventsFeed = false`, when the UI renders on narrow layout, then the feed card is hidden and the top-right news icon button is visible.
+- Given a running game map shell with `N` feed entries, when the UI renders, then the news icon button shows a badge with value `N`.
+- Given feed visibility is false, when The Player taps the top-right news icon button, then the UI layer shows the floating feed card.
+- Given feed visibility is true, when The Player taps the top-right news icon button, then the UI layer hides the floating feed card.
+- Given the feed card is visible, when the feed renders, then the feed card does not display an `Events` title and renders only event rows or empty-state text.
 - Given a tappable province-scoped line whose province anchor resolves to a tile key, when the user taps that row, then the app emits `LocateMapTileEvent` for that tile.
 - Given a tappable naval-combat line whose sea-zone anchor resolves to a tile key, when the user taps that row, then the app emits `LocateMapTileEvent` for that tile.
 - Given a non-tappable line or unresolved anchor, when the user taps the row, then no map-focus event is emitted and the app remains stable.
 - Given a diplomacy feed line with `changeType` of `declare_war`, `peace`, `alliance`, or `break_alliance`, when rendered, then the line uses a concrete outcome template (not the generic "diplomacy changed" fallback).
+- Given The Player toggles `showPlayerTurnEventsFeed` and saves the game, when the game is loaded, then `mapViewState.showPlayerTurnEventsFeed` restores with the same value.
+- Given a legacy save where `mapViewState.showPlayerTurnEventsFeed` is absent, when the game loads, then the loaded value defaults to `false`.

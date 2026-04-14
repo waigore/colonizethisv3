@@ -118,6 +118,7 @@ void main() {
           showProvinceOverlay: false,
           showProvinceOwnershipTint: true,
           showProvinceNamesLayer: false,
+          showPlayerTurnEventsFeed: true,
         ),
       );
       final roundTrip = Game.fromJson(game.toJson());
@@ -125,11 +126,13 @@ void main() {
       expect(roundTrip.mapViewState.showProvinceOverlay, isFalse);
       expect(roundTrip.mapViewState.showProvinceOwnershipTint, isTrue);
       expect(roundTrip.mapViewState.showProvinceNamesLayer, isFalse);
+      expect(roundTrip.mapViewState.showPlayerTurnEventsFeed, isTrue);
 
       final legacyJson = Map<String, dynamic>.from(game.toJson())
         ..remove('mapViewState');
       final legacy = Game.fromJson(legacyJson);
       expect(legacy.mapViewState, MapViewState.defaults);
+      expect(legacy.mapViewState.showPlayerTurnEventsFeed, isFalse);
     });
 
     test('copyWith id and players', () {
