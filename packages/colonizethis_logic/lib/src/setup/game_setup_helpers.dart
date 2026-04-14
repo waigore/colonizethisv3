@@ -858,7 +858,6 @@ String _startingShipTypeForPlayer(Player _) {
 ///
 /// For integration tests that need fixtures (e.g. overseas ownership) that
 /// [createGameFromGeneratedMaps] does not produce by default.
-@visibleForTesting
 Game assignProvinceTownsForTesting({
   required Game game,
   required Map<String, MapTopology> topologyByRegion,
