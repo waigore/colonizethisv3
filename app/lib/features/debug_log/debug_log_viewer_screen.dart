@@ -14,8 +14,19 @@ class DebugLogViewerScreen extends StatefulWidget {
 }
 
 class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
-  Set<String> _selectedPrefixes = Set<String>.from(knownPrefixes);
-  Set<Level> _selectedLevels = Set<Level>.from(knownLevels);
+  /// Package chips in the app viewer; omits `ctdev` per SPEC/program/debug-log-viewer.md.
+  static final List<String> _viewerPackagePrefixes = List<String>.unmodifiable(
+    knownPrefixes.where((String p) => p != 'ctdev').toList(),
+  );
+
+  static final Set<Level> _defaultLevels = <Level>{
+    Level.info,
+    Level.warning,
+    Level.error,
+  };
+
+  Set<String> _selectedPrefixes = {'app'};
+  Set<Level> _selectedLevels = Set<Level>.from(_defaultLevels);
 
   List<SessionLogEntry> get _filtered =>
       SessionLogBuffer.instance.getFiltered(
@@ -62,7 +73,7 @@ class _DebugLogViewerScreenState extends State<DebugLogViewerScreen> {
           Wrap(
             spacing: 4,
             runSpacing: 4,
-            children: knownPrefixes.map((p) {
+            children: _viewerPackagePrefixes.map((p) {
               final selected = _selectedPrefixes.contains(p);
               return FilterChip(
                 label: Text(p),
