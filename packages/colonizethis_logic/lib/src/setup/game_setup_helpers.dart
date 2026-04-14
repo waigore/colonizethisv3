@@ -89,8 +89,64 @@ List<String> _provinceIdsFromTopology(MapTopology topology) {
       .toList();
 }
 
+({int x, int y}) _provinceTownCentroidFromTileKeys(List<String> tiles) {
+  final c = roundedCentroidFromTileKeys(tiles);
+  if (c != null) return c;
+  final xy = parseTileKeyCellXY(tiles.first);
+  return (x: xy?.$1 ?? 0, y: xy?.$2 ?? 0);
+}
+
+int _compareTownTileCandidates(
+  String a,
+  String b, {
+  required int centroidX,
+  required int centroidY,
+  required Map<String, int> bfsFromCapital,
+}) {
+  int distSq(String tk) {
+    final xy = parseTileKeyCellXY(tk);
+    if (xy == null) return 1 << 30;
+    final dx = xy.$1 - centroidX;
+    final dy = xy.$2 - centroidY;
+    return dx * dx + dy * dy;
+  }
+
+  final da = distSq(a);
+  final db = distSq(b);
+  if (da != db) return da.compareTo(db);
+  const unreachable = 999999;
+  final ba = bfsFromCapital[a] ?? unreachable;
+  final bb = bfsFromCapital[b] ?? unreachable;
+  if (ba != bb) return ba.compareTo(bb);
+  return a.compareTo(b);
+}
+
+String _pickTownTileByCentroidAndBfs({
+  required List<String> candidates,
+  required int centroidX,
+  required int centroidY,
+  required Map<String, int> bfsFromCapital,
+}) {
+  var best = candidates.first;
+  for (var i = 1; i < candidates.length; i++) {
+    final c = candidates[i];
+    if (_compareTownTileCandidates(
+          c,
+          best,
+          centroidX: centroidX,
+          centroidY: centroidY,
+          bfsFromCapital: bfsFromCapital,
+        ) <
+        0) {
+      best = c;
+    }
+  }
+  return best;
+}
+
 /// 7d. Province town assignment. For each province, set townTileKey: capital province = capital tile;
-/// same region = tile with shortest path to capital; overseas = port tile or first tile. SPEC/program/game-setup-pipeline.md.
+/// otherwise branch eligibility (seaboard, same-region BFS, overseas port) then centroid tie-break,
+/// then shortest path to capital where applicable, then lexicographic tile key. SPEC/program/game-setup-pipeline.md.
 Game _assignProvinceTowns({
   required Game game,
   required Map<String, MapTopology> topologyByRegion,
@@ -240,15 +296,22 @@ Game _assignProvinceTowns({
 
   String? townTileKeyForProvince(Province p) {
     final ownerId = p.ownerId;
+    final tiles = tileKeysByRegion[p.regionId]?[p.id] ?? [];
     if (ownerId == null) {
-      final tiles = tileKeysByRegion[p.regionId]?[p.id] ?? [];
-      return tiles.isNotEmpty ? tiles.first : null;
+      if (tiles.isEmpty) return null;
+      final c = _provinceTownCentroidFromTileKeys(tiles);
+      return _pickTownTileByCentroidAndBfs(
+        candidates: tiles,
+        centroidX: c.x,
+        centroidY: c.y,
+        bfsFromCapital: const {},
+      );
     }
     final capProvinceId = capitalProvinceIdByOwner[ownerId];
     final capTileKey = capitalTileKeyByOwner[ownerId];
     if (p.id == capProvinceId && capTileKey != null) return capTileKey;
-    final tiles = tileKeysByRegion[p.regionId]?[p.id] ?? [];
     if (tiles.isEmpty) return null;
+    final centroid = _provinceTownCentroidFromTileKeys(tiles);
     final sameRegion =
         capProvinceId != null &&
         ProvinceId.regionIdFrom(capProvinceId) == p.regionId;
@@ -268,24 +331,15 @@ Game _assignProvinceTowns({
           )
           .toList();
       if (coastalCandidates.isNotEmpty) {
-        if (sameRegion && capTileKey != null) {
-          final distances = bfsDistances(p.regionId, capTileKey);
-          String? best;
-          var bestD = 999999;
-          for (final tk in coastalCandidates) {
-            final d = distances[tk] ?? 999999;
-            if (d < bestD) {
-              bestD = d;
-              best = tk;
-            }
-          }
-          return best ?? coastalCandidates.first;
-        }
-        final portTile = portTileInProvince(p.id);
-        if (portTile != null && coastalCandidates.contains(portTile)) {
-          return portTile;
-        }
-        return coastalCandidates.first;
+        final distances = sameRegion && capTileKey != null
+            ? bfsDistances(p.regionId, capTileKey)
+            : const <String, int>{};
+        return _pickTownTileByCentroidAndBfs(
+          candidates: coastalCandidates,
+          centroidX: centroid.x,
+          centroidY: centroid.y,
+          bfsFromCapital: distances,
+        );
       }
       _log.w(
         'seaboard town fallback for province=${p.id}: '
@@ -294,19 +348,21 @@ Game _assignProvinceTowns({
     }
     if (sameRegion && capTileKey != null) {
       final distances = bfsDistances(p.regionId, capTileKey);
-      String? best;
-      int bestD = 999999;
-      for (final tk in tiles) {
-        final d = distances[tk] ?? 999999;
-        if (d < bestD) {
-          bestD = d;
-          best = tk;
-        }
-      }
-      return best ?? tiles.first;
+      return _pickTownTileByCentroidAndBfs(
+        candidates: tiles,
+        centroidX: centroid.x,
+        centroidY: centroid.y,
+        bfsFromCapital: distances,
+      );
     }
     final portTile = portTileInProvince(p.id);
-    return portTile ?? tiles.first;
+    if (portTile != null) return portTile;
+    return _pickTownTileByCentroidAndBfs(
+      candidates: tiles,
+      centroidX: centroid.x,
+      centroidY: centroid.y,
+      bfsFromCapital: const {},
+    );
   }
 
   final oldProvinces = game.worldState.oldWorld.provinces.map((p) {
