@@ -107,6 +107,18 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       bus.on<ct_models.AppOrderRejectedEvent>().listen(
         _onAppOrderRejectedEvent,
       ),
+      bus.on<ct_models.AppWorkOrderCompletedEvent>().listen(
+        _onAppWorkOrderCompletedEvent,
+      ),
+      bus.on<ct_models.AppPlayerProvinceDiscoveredEvent>().listen(
+        _onAppPlayerProvinceDiscoveredEvent,
+      ),
+      bus.on<ct_models.AppPlayerSeaZoneDiscoveredEvent>().listen(
+        _onAppPlayerSeaZoneDiscoveredEvent,
+      ),
+      bus.on<ct_models.AppOvertureAdvancedEvent>().listen(
+        _onAppOvertureAdvancedEvent,
+      ),
       bus.on<ct_models.TurnResolutionCompleteEvent>().listen(
         _onTurnResolutionCompleteEvent,
       ),
@@ -168,6 +180,41 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
 
   void _onAppOrderRejectedEvent(ct_models.AppOrderRejectedEvent event) {
     if (event.playerId != _humanPlayerId) {
+      return;
+    }
+    _pendingPlayerTurnEvents.add(event);
+  }
+
+  void _onAppWorkOrderCompletedEvent(
+    ct_models.AppWorkOrderCompletedEvent event,
+  ) {
+    if (event.playerId != _humanPlayerId) {
+      return;
+    }
+    _pendingPlayerTurnEvents.add(event);
+  }
+
+  void _onAppPlayerProvinceDiscoveredEvent(
+    ct_models.AppPlayerProvinceDiscoveredEvent event,
+  ) {
+    if (event.playerId != _humanPlayerId) {
+      return;
+    }
+    _pendingPlayerTurnEvents.add(event);
+  }
+
+  void _onAppPlayerSeaZoneDiscoveredEvent(
+    ct_models.AppPlayerSeaZoneDiscoveredEvent event,
+  ) {
+    if (event.playerId != _humanPlayerId) {
+      return;
+    }
+    _pendingPlayerTurnEvents.add(event);
+  }
+
+  void _onAppOvertureAdvancedEvent(ct_models.AppOvertureAdvancedEvent event) {
+    if (event.offererGpId != _humanPlayerId &&
+        event.targetFactionId != _humanPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
@@ -702,6 +749,83 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
             ct_models.AppOrderRejectedEvent(:final reasonCode) =>
               PlayerTurnEventFeedEntry(
                 text: 'Order rejected! Reason: $reasonCode!',
+              ),
+            ct_models.AppWorkOrderCompletedEvent(
+              :final workTarget,
+              :final targetTileKey,
+              :final provinceId,
+            ) =>
+              PlayerTurnEventFeedEntry(
+                text:
+                    '${_provinceLabel(provinceId)} work completed! ${workTarget.toUpperCase()} finished!',
+                onTap: () {
+                  final regionId = ct_models.Unit.regionIdFromTileKey(
+                    targetTileKey,
+                  );
+                  if (regionId == null) {
+                    return;
+                  }
+                  ref
+                      .read(appEventBusProvider)
+                      .emit(
+                        ct_models.LocateMapTileEvent(
+                          tileKey: targetTileKey,
+                          regionId: regionId,
+                        ),
+                      );
+                },
+              ),
+            ct_models.AppPlayerProvinceDiscoveredEvent(:final provinceId) =>
+              PlayerTurnEventFeedEntry(
+                text: '${_provinceLabel(provinceId)} discovered!',
+                onTap: () {
+                  final province = _provinceByPrefixedId(provinceId);
+                  if (province == null) return;
+                  final tileKey = tileKeyForProvinceLocation(
+                    widget.game,
+                    province,
+                  );
+                  if (tileKey == null) return;
+                  ref
+                      .read(appEventBusProvider)
+                      .emit(
+                        ct_models.LocateMapTileEvent(
+                          tileKey: tileKey,
+                          regionId: province.regionId,
+                        ),
+                      );
+                },
+              ),
+            ct_models.AppPlayerSeaZoneDiscoveredEvent(:final seaZoneId) =>
+              PlayerTurnEventFeedEntry(
+                text: '${_seaZoneLabel(seaZoneId)} discovered!',
+                onTap: () {
+                  final tileKey = _tileKeyForSeaZoneEvent(seaZoneId);
+                  if (tileKey == null) {
+                    return;
+                  }
+                  final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
+                  if (regionId == null) {
+                    return;
+                  }
+                  ref
+                      .read(appEventBusProvider)
+                      .emit(
+                        ct_models.LocateMapTileEvent(
+                          tileKey: tileKey,
+                          regionId: regionId,
+                        ),
+                      );
+                },
+              ),
+            ct_models.AppOvertureAdvancedEvent(
+              :final offererGpId,
+              :final targetFactionId,
+              :final newStage,
+            ) =>
+              PlayerTurnEventFeedEntry(
+                text:
+                    'Overture advanced! ${_factionLabel(offererGpId)} with ${_factionLabel(targetFactionId)}: ${newStage.toUpperCase()}!',
               ),
             _ => const PlayerTurnEventFeedEntry(text: 'Event resolved!'),
           };

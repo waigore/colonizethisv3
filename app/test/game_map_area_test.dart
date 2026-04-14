@@ -358,4 +358,126 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'Player turn event feed renders work completion and taps map tile',
+    (WidgetTester tester) async {
+      final init = getDebugInitGameResult();
+      final game = init.game;
+      final mapViewData = init.mapViewData;
+      final humanId = game.players.firstWhere((p) => p.isHuman).id;
+      final bus = AppEventBus.create();
+      final locateEvents = <LocateMapTileEvent>[];
+      final sub = bus.on<LocateMapTileEvent>().listen(locateEvents.add);
+      addTearDown(() async {
+        await sub.cancel();
+        bus.dispose();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appEventBusProvider.overrideWith((ref) => bus),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentOrdersProvider.overrideWith(
+              () => CurrentOrdersNotifier(const Orders()),
+            ),
+            mapViewDataProvider.overrideWith((ref) => mapViewData),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: GameMapArea(game: game, mapViewData: mapViewData),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      bus.emit(
+        AppWorkOrderCompletedEvent(
+          playerId: humanId,
+          unitId: 'u1',
+          workTarget: 'build_road',
+          targetTileKey: 'oldWorld|1|0|0',
+          provinceId: 'oldWorld|1',
+          turnNumber: 1,
+        ),
+      );
+      bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      final line = find.textContaining('work completed');
+      expect(line, findsOneWidget);
+      await tester.tap(line);
+      await tester.pump();
+
+      expect(locateEvents, hasLength(1));
+      expect(locateEvents.single.tileKey, 'oldWorld|1|0|0');
+      expect(locateEvents.single.regionId, 'oldWorld');
+    },
+  );
+
+  testWidgets('Player turn event feed includes discovery and overture lines', (
+    WidgetTester tester,
+  ) async {
+    final init = getDebugInitGameResult();
+    final game = init.game;
+    final mapViewData = init.mapViewData;
+    final humanId = game.players.firstWhere((p) => p.isHuman).id;
+    final otherId = game.players.firstWhere((p) => p.id != humanId).id;
+    final bus = AppEventBus.create();
+    addTearDown(bus.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appEventBusProvider.overrideWith((ref) => bus),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          mapViewDataProvider.overrideWith((ref) => mapViewData),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: GameMapArea(game: game, mapViewData: mapViewData),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+
+    bus.emit(
+      AppPlayerProvinceDiscoveredEvent(
+        playerId: humanId,
+        provinceId: 'oldWorld|1',
+        turnNumber: 1,
+      ),
+    );
+    bus.emit(
+      AppOvertureAdvancedEvent(
+        offererGpId: humanId,
+        targetFactionId: otherId,
+        newStage: 'embassy',
+        turnNumber: 1,
+      ),
+    );
+    bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(find.textContaining('discovered!'), findsOneWidget);
+    expect(find.textContaining('Overture advanced!'), findsOneWidget);
+  });
 }

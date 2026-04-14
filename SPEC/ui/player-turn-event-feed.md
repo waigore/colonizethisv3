@@ -15,12 +15,14 @@
 
 ## Data contract (v1 slice)
 
-- Source: forwarded app game events (`AppCombatResultEvent`, `AppNavalCombatResultEvent`, `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppOrderRejectedEvent`) plus `TurnResolutionCompleteEvent`.
+- Source: forwarded app game events (`AppCombatResultEvent`, `AppNavalCombatResultEvent`, `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppOrderRejectedEvent`, `AppWorkOrderCompletedEvent`, `AppPlayerProvinceDiscoveredEvent`, `AppPlayerSeaZoneDiscoveredEvent`, `AppOvertureAdvancedEvent`) plus `TurnResolutionCompleteEvent`.
 - Human-player filter:
   - Combat/naval when human id is a participating side id.
   - Province capture when human id equals previous or new owner.
   - Diplomacy when human id equals actor or target.
   - Research/order rejected when event `playerId` equals human id.
+  - Work-order/province/sea discovery when event `playerId` equals human id.
+  - Overture advanced when human id equals offerer GP id or target faction id.
 - Formatting lives in Flutter UI; logic payloads remain ids.
 - Diplomacy formatting (v1.1 slice): known `changeType` values render concrete outcome copy (`declare_war`, `peace`, `alliance`, `break_alliance`), with a safe generic fallback for unknown values.
 
@@ -31,6 +33,9 @@
 - Row tap:
   - Province-scoped lines (land combat, province capture) attempt map focus to that province.
 - Naval combat lines attempt map focus to a sea-zone anchor tile (centroid when available, otherwise an adjacent mapped port tile).
+- Work-order completion lines tap-focus the target tile.
+- Province-discovery lines tap-focus the discovered province.
+- Sea-discovery lines tap-focus a sea-zone anchor tile.
 - Other lines are non-tappable in v1.
 - Fallback: if no valid map anchor can be resolved for a tappable row, render it non-tappable and keep app stable.
 

@@ -31,6 +31,10 @@ Forward by copying fields; no payload transforms. Province ids remain **prefixed
 | `ResearchCompleteEvent` | `AppResearchCompleteEvent` | `NotifyEvent` |
 | `VictorySetEvent` | `AppVictorySetEvent` | victory screen |
 | `OrderRejectedEvent` | `AppOrderRejectedEvent` | `NotifyEvent` (warning) |
+| `WorkOrderCompletedEvent` | `AppWorkOrderCompletedEvent` | player turn feed |
+| `PlayerProvinceDiscoveredEvent` | `AppPlayerProvinceDiscoveredEvent` | player turn feed |
+| `PlayerSeaZoneDiscoveredEvent` | `AppPlayerSeaZoneDiscoveredEvent` | player turn feed |
+| `OvertureAdvancedEvent` | `AppOvertureAdvancedEvent` | player turn feed |
 | (pending overtures; not a `GameEvent`) | `OvertureRequiredEvent` from `GameService` | overture dialog |
 
 `App*` field shapes mirror the logic events; source of truth: `packages/colonizethis_models/lib/src/app_events.dart`.
