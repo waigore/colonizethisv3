@@ -261,7 +261,7 @@ void main() {
                   id: 'levy1',
                   type: 'peasant_levies',
                   ownerId: playerId,
-                  locationProvinceId: provinceLocal,
+                  locationProvinceId: fullProvince,
                   medals: 0,
                   status: UnitStatus.idle,
                 ),
@@ -283,7 +283,7 @@ void main() {
                 id: 'army_field',
                 ownerId: playerId,
                 regionId: 'oldWorld',
-                stationedProvinceId: provinceLocal,
+                stationedProvinceId: fullProvince,
                 regimentUnitIds: const ['levy1'],
                 isHomeArmy: false,
               ),
@@ -380,9 +380,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final listTiles = find.byType(ListTile);
-      if (listTiles.evaluate().isEmpty) return;
-      await tester.tap(listTiles.first);
+      final locateButtons = find.byIcon(Icons.my_location);
+      if (locateButtons.evaluate().isEmpty) return;
+      await tester.tap(locateButtons.first);
       await tester.pump();
       await tester.pumpAndSettle();
 
@@ -446,9 +446,9 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final listTiles = find.byType(ListTile);
-        if (listTiles.evaluate().isEmpty) return;
-        await tester.tap(listTiles.first);
+        final locateButtons = find.byIcon(Icons.my_location);
+        if (locateButtons.evaluate().isEmpty) return;
+        await tester.tap(locateButtons.first);
         await tester.pump();
         await tester.pumpAndSettle();
 
@@ -705,7 +705,7 @@ void main() {
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: playerId,
-                locationProvinceId: 'lisbon',
+                locationProvinceId: 'oldWorld|lisbon',
                 medals: 1,
                 status: UnitStatus.idle,
               ),
@@ -713,7 +713,7 @@ void main() {
                 id: 'u2',
                 type: 'musketeers',
                 ownerId: playerId,
-                locationProvinceId: 'lisbon',
+                locationProvinceId: 'oldWorld|lisbon',
                 medals: 2,
                 status: UnitStatus.idle,
               ),
@@ -721,14 +721,14 @@ void main() {
                 id: 'u3',
                 type: 'musketeers',
                 ownerId: playerId,
-                locationProvinceId: 'lisbon',
+                locationProvinceId: 'oldWorld|lisbon',
                 medals: 3,
                 status: UnitStatus.idle,
               ),
             ],
             provinces: [
               Province(
-                id: 'lisbon',
+                id: 'oldWorld|lisbon',
                 regionId: 'oldWorld',
                 ownerId: playerId,
                 townTileKey: 'oldWorld|lisbon|0|0',
@@ -742,7 +742,7 @@ void main() {
               id: 'army_mixed',
               ownerId: playerId,
               regionId: 'oldWorld',
-              stationedProvinceId: 'lisbon',
+              stationedProvinceId: 'oldWorld|lisbon',
               regimentUnitIds: const ['u1', 'u2', 'u3'],
               isHomeArmy: false,
             ),
@@ -760,7 +760,8 @@ void main() {
         buildPanel(game: gameWithMixedMedals, humanPlayerId: playerId),
       );
       await tester.pumpAndSettle();
-      await expandFirstArmyExpansion(tester);
+      await tester.tap(find.text('Army army_mixed'));
+      await tester.pumpAndSettle();
 
       expect(find.textContaining('Medals: 1–3'), findsOneWidget);
     });
@@ -781,7 +782,7 @@ void main() {
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: playerId,
-                locationProvinceId: 'lisbon',
+                locationProvinceId: 'oldWorld|lisbon',
                 medals: 1,
                 status: UnitStatus.idle,
               ),
@@ -789,14 +790,14 @@ void main() {
                 id: 'u2',
                 type: 'musketeers',
                 ownerId: playerId,
-                locationProvinceId: 'lisbon',
+                locationProvinceId: 'oldWorld|lisbon',
                 medals: 1,
                 status: UnitStatus.working,
               ),
             ],
             provinces: [
               Province(
-                id: 'lisbon',
+                id: 'oldWorld|lisbon',
                 regionId: 'oldWorld',
                 ownerId: playerId,
                 townTileKey: 'oldWorld|lisbon|0|0',
@@ -810,7 +811,7 @@ void main() {
               id: 'army_w',
               ownerId: playerId,
               regionId: 'oldWorld',
-              stationedProvinceId: 'lisbon',
+              stationedProvinceId: 'oldWorld|lisbon',
               regimentUnitIds: const ['u1', 'u2'],
               isHomeArmy: false,
             ),
@@ -828,7 +829,8 @@ void main() {
         buildPanel(game: gameWithWorkingUnit, humanPlayerId: playerId),
       );
       await tester.pumpAndSettle();
-      await expandFirstArmyExpansion(tester);
+      await tester.tap(find.text('Army army_w'));
+      await tester.pumpAndSettle();
 
       expect(find.textContaining('Status: Working'), findsOneWidget);
     });
@@ -847,14 +849,14 @@ void main() {
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: playerId,
-                locationProvinceId: 'lisbon',
+                locationProvinceId: 'oldWorld|lisbon',
                 medals: 1,
                 status: UnitStatus.idle,
               ),
             ],
             provinces: [
               Province(
-                id: 'lisbon',
+                id: 'oldWorld|lisbon',
                 regionId: 'oldWorld',
                 ownerId: playerId,
                 townTileKey: 'oldWorld|lisbon|0|0',
@@ -868,7 +870,7 @@ void main() {
               id: 'army_d',
               ownerId: playerId,
               regionId: 'oldWorld',
-              stationedProvinceId: 'lisbon',
+              stationedProvinceId: 'oldWorld|lisbon',
               regimentUnitIds: const ['u1'],
               isHomeArmy: false,
             ),
@@ -886,7 +888,8 @@ void main() {
         buildPanel(game: gameWithIdleUnit, humanPlayerId: playerId),
       );
       await tester.pumpAndSettle();
-      await expandFirstArmyExpansion(tester);
+      await tester.tap(find.text('Army army_d'));
+      await tester.pumpAndSettle();
 
       expect(find.textContaining('Status: Idle'), findsOneWidget);
     });
@@ -1153,7 +1156,13 @@ void main() {
 
       await tester.tap(find.text('Army amove'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Move'));
+      final armyTile = find.widgetWithText(ExpansionTile, 'Army amove');
+      expect(armyTile, findsOneWidget);
+      final moveButton = find.descendant(
+        of: armyTile,
+        matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+      );
+      await tester.tap(moveButton.first);
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Confirm'));
@@ -1280,7 +1289,13 @@ void main() {
 
         await tester.tap(find.text('Army amove'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Move'));
+        final armyTile = find.widgetWithText(ExpansionTile, 'Army amove');
+        expect(armyTile, findsOneWidget);
+        final moveButton = find.descendant(
+          of: armyTile,
+          matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+        );
+        await tester.tap(moveButton.first);
         await tester.pumpAndSettle();
 
         expect(find.byType(MoveArmyDialog), findsOneWidget);
@@ -1472,7 +1487,13 @@ void main() {
 
       await tester.tap(find.text('Army ainv'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Move'));
+      final armyTile = find.widgetWithText(ExpansionTile, 'Army ainv');
+      expect(armyTile, findsOneWidget);
+      final moveButton = find.descendant(
+        of: armyTile,
+        matching: find.widgetWithText(CtNinePatchButton, 'Move'),
+      );
+      await tester.tap(moveButton.first);
       await tester.pumpAndSettle();
 
       await tester.tap(find.byType(DropdownButtonFormField<String>));
@@ -1709,6 +1730,8 @@ void main() {
 
         expect(find.text('1 regiments · Capital'), findsNWidgets(2));
 
+        await tester.tap(find.text('Home Army'));
+        await tester.pumpAndSettle();
         expect(find.text('Musketeers: 1'), findsOneWidget);
 
         await tester.tap(find.text('Army army_7'));
