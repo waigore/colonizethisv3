@@ -95,7 +95,7 @@ For every fleet (including the Home Fleet), the collapsed row shows:
 | **Fleet name**    | Fleet id or display name                | For Home Fleet, label is “Home Fleet”. For other fleets, use a human-readable label (e.g. “Fleet #3”, “Atlantic Squadron” if available; otherwise a stable fallback). |
 | **Location**      | `inPortAtProvinceId` or `seaZoneId`     | Display as `Region — Province` for in-port fleets (province display name) or `Region — Sea zone` for at-sea fleets. Region label uses same mapping as Military Units panel. |
 | **Mission**       | `Fleet.mission`                         | Enum mapped to user labels: None, Patrol, Blockade, Beachhead, Defend. For Home Fleet, always shown as “None”. When the shell’s draft **`Orders`** contains a **naval move** for this fleet, show **Moving to:** \<display name of destination sea zone or dock province\> (dock targets may suffix **(dock)** in UI copy). |
-| **Inline actions** | Fleet action availability rules | `Split` is always visible. `Move` is visible for sea-going fleets and hidden for Home Fleet. Actions remain clickable while collapsed; narrow layouts may render icon-only buttons and wrap onto a second line. |
+| **Inline actions** | Fleet action availability rules | `Split` is always visible. `Move` is visible for sea-going fleets and hidden for Home Fleet. Fleet rows use the shared unit-panel row-action widget convention from `app/lib/features/game/widgets/units/shared/` (left details, right left-to-right actions); narrow layouts switch row actions to icon-only while keeping controls tappable. |
 
 Collapsed row content stays compact and focused on: location, mission (and draft move line when present), and inline actions.
 
@@ -202,6 +202,8 @@ The naval units panel participates in the Widgetbook catalog for review and test
 - **Given** the panel is rendered at viewport width **>=1280px**, **when** layout constraints are applied, **then** panel width is computed from a bounded viewport scaling rule instead of fixed max width.
 
 - **Given** the panel is rendered on narrower widths, **when** inline actions have limited horizontal space, **then** action controls can wrap to a second line and may switch to icon-only mode while staying accessible and clickable.
+
+- **Given** the Naval Units panel renders collapsed fleet rows with actions, **when** the row is displayed, **then** the UI layer uses the shared unit-panel row-action abstraction for left-details/right-actions layout while preserving Home Fleet `Move` hiding and split availability rules.
 
 - **Given** the Move dialog is open with at least one destination, **when** the user selects a destination and taps **Confirm**, **then** the UI layer emits **`NavalMoveFleetRequestedEvent`** with a **naval move** order matching the selection (sea zone id or dock province id per `NavalMoveOrder`) and closes the dialog.
 

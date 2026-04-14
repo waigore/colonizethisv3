@@ -17,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
 import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
@@ -132,6 +133,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Naval Units'), findsOneWidget);
+      if (find.byType(ExpansionTile).evaluate().isNotEmpty) {
+        expect(find.byType(UnitsEntityActionRow), findsAtLeastNWidgets(1));
+      }
     });
 
     testWidgets(

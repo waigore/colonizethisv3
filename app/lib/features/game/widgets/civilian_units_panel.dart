@@ -15,6 +15,7 @@ import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/resource_icon.dart';
 import 'units/shared/region_section_header.dart';
+import 'units/shared/units_entity_action_row.dart';
 import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
 
@@ -602,32 +603,53 @@ class _UnitRow extends StatelessWidget {
     final showActions = !isTileScope || isSelectedInTileScope;
     final tileKeyForLocate = projectedTileKey;
     final regionIdForLocate = Unit.regionIdFromTileKey(tileKeyForLocate);
+    final rowActions = showActions
+        ? [
+            if (_isIdleNoPending)
+              UnitsEntityAction(
+                tooltip: l10n.civilian_units_assign,
+                icon: Icons.playlist_add,
+                label: l10n.civilian_units_assign,
+                onPressed: () => _showOrderMenu(context),
+              ),
+            if (_hasWork)
+              UnitsEntityAction(
+                tooltip: l10n.common_cancel,
+                icon: Icons.cancel_outlined,
+                label: l10n.common_cancel,
+                onPressed: () => _confirmCancel(context),
+              ),
+          ]
+        : const <UnitsEntityAction>[];
     return ListTile(
       selected: isTileScope && isSelectedInTileScope,
-      title: Row(
-        children: [
-          Expanded(child: Text(unit.type, overflow: TextOverflow.ellipsis)),
-          const SizedBox(width: 4),
-          IconButton(
-            tooltip: l10n.common_locate,
-            onPressed:
-                tileKeyForLocate != null &&
-                    tileKeyForLocate.isNotEmpty &&
-                    regionIdForLocate != null
-                ? () {
-                    bus.emit(
-                      LocateMapTileEvent(
-                        tileKey: tileKeyForLocate,
-                        regionId: regionIdForLocate,
-                      ),
-                    );
-                  }
-                : null,
-            icon: const Icon(Icons.my_location),
-            iconSize: 18,
-            visualDensity: VisualDensity.compact,
-          ),
-        ],
+      title: UnitsEntityActionRow(
+        details: Row(
+          children: [
+            Expanded(child: Text(unit.type, overflow: TextOverflow.ellipsis)),
+            const SizedBox(width: 4),
+            IconButton(
+              tooltip: l10n.common_locate,
+              onPressed:
+                  tileKeyForLocate != null &&
+                      tileKeyForLocate.isNotEmpty &&
+                      regionIdForLocate != null
+                  ? () {
+                      bus.emit(
+                        LocateMapTileEvent(
+                          tileKey: tileKeyForLocate,
+                          regionId: regionIdForLocate,
+                        ),
+                      );
+                    }
+                  : null,
+              icon: const Icon(Icons.my_location),
+              iconSize: 18,
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+        actions: rowActions,
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -653,23 +675,6 @@ class _UnitRow extends StatelessWidget {
           bus.emit(LocateMapTileEvent(tileKey: tileKey, regionId: regionId));
         });
       },
-      trailing: showActions
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_isIdleNoPending)
-                  CtNinePatchButton(
-                    onPressed: () => _showOrderMenu(context),
-                    child: Text(l10n.civilian_units_assign),
-                  ),
-                if (_hasWork)
-                  CtNinePatchButton(
-                    onPressed: () => _confirmCancel(context),
-                    child: Text(l10n.common_cancel),
-                  ),
-              ],
-            )
-          : null,
     );
   }
 }

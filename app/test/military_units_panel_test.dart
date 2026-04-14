@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/utils/map_location_resolver.dart';
 import 'package:colonizethis_app/features/game/widgets/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
@@ -234,6 +235,7 @@ void main() {
             .length;
         if (militaryCount > 0 || fleetCount > 0) {
           expect(find.byType(ListTile), findsAtLeastNWidgets(1));
+          expect(find.byType(UnitsEntityActionRow), findsAtLeastNWidgets(1));
           expect(
             find.text('Old World').evaluate().isNotEmpty ||
                 find.text('New World').evaluate().isNotEmpty,
