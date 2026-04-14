@@ -1,0 +1,665 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
+import 'package:yaml/yaml.dart';
+
+import 'check_app_hardcoded_ui_strings.dart';
+import 'check_asset_path_constants.dart';
+import 'check_canonical_province_tile_keys.dart';
+import 'check_civilian_unit_type_constants.dart';
+import 'check_control_flow_nesting_depth.dart';
+import 'check_custom_exceptions.dart';
+import 'check_disallowed_ast_patterns.dart';
+import 'check_repeated_magic_numbers.dart';
+import 'check_tech_id_constants.dart';
+import 'check_work_target_constants.dart';
+import 'ct_repo_lint_scan_contract.dart';
+
+/// One entry from [tool/ct_repo_lint_manifest.yaml].
+final class RepoLintRule {
+  const RepoLintRule({
+    required this.ruleId,
+    required this.group,
+    required this.title,
+    required this.spec,
+    required this.runner,
+    required this.argv,
+    required this.script,
+    required this.prIncremental,
+    required this.includeOnlyWhenEnvName,
+    required this.includeOnlyWhenEnvValue,
+  });
+
+  final String ruleId;
+  final String group;
+  final String title;
+  final String spec;
+  final String runner;
+  final List<String> argv;
+  final String? script;
+  final bool prIncremental;
+  final String? includeOnlyWhenEnvName;
+  final String? includeOnlyWhenEnvValue;
+}
+
+/// Parsed CLI options for [runRepoLint].
+final class RepoLintOptions {
+  const RepoLintOptions({
+    required this.manifestPath,
+    required this.listOnly,
+    required this.verbose,
+    required this.onlyRuleId,
+    required this.onlyGroup,
+    required this.forceFullScan,
+    required this.sarifOutputPath,
+  });
+
+  final String manifestPath;
+  final bool listOnly;
+  final bool verbose;
+  final String? onlyRuleId;
+  final String? onlyGroup;
+  final bool forceFullScan;
+
+  /// When set, run every selected rule (do not stop at the first failure) and
+  /// write SARIF 2.1.0 to this path, or `-` for stdout.
+  final String? sarifOutputPath;
+}
+
+RepoLintOptions parseRepoLintArgs(List<String> args) {
+  var manifestPath = 'tool/ct_repo_lint_manifest.yaml';
+  var listOnly = false;
+  var verbose = false;
+  var onlyRuleId = '';
+  var onlyGroup = '';
+  var forceFullScan = false;
+  String? sarifOutputPath;
+
+  for (var i = 0; i < args.length; i++) {
+    final a = args[i];
+    if (a == '--help' || a == '-h') {
+      stdout.writeln(_usage);
+      exit(0);
+    }
+    if (a == '--list') {
+      listOnly = true;
+      continue;
+    }
+    if (a == '--verbose' || a == '-v') {
+      verbose = true;
+      continue;
+    }
+    if (a == '--force-full-scan') {
+      forceFullScan = true;
+      continue;
+    }
+    if (a.startsWith('--manifest=')) {
+      manifestPath = a.substring('--manifest='.length);
+      continue;
+    }
+    if (a == '--manifest') {
+      i++;
+      if (i >= args.length) {
+        stderr.writeln('ct_repo_lint: --manifest requires a path');
+        exit(2);
+      }
+      manifestPath = args[i];
+      continue;
+    }
+    if (a.startsWith('--rule=')) {
+      onlyRuleId = a.substring('--rule='.length);
+      continue;
+    }
+    if (a == '--rule') {
+      i++;
+      if (i >= args.length) {
+        stderr.writeln('ct_repo_lint: --rule requires an id');
+        exit(2);
+      }
+      onlyRuleId = args[i];
+      continue;
+    }
+    if (a.startsWith('--group=')) {
+      onlyGroup = a.substring('--group='.length);
+      continue;
+    }
+    if (a == '--group') {
+      i++;
+      if (i >= args.length) {
+        stderr.writeln('ct_repo_lint: --group requires a name');
+        exit(2);
+      }
+      onlyGroup = args[i];
+      continue;
+    }
+    if (a.startsWith('--sarif=')) {
+      sarifOutputPath = a.substring('--sarif='.length);
+      continue;
+    }
+    if (a == '--sarif') {
+      i++;
+      if (i >= args.length) {
+        stderr.writeln('ct_repo_lint: --sarif requires a path or -');
+        exit(2);
+      }
+      sarifOutputPath = args[i];
+      continue;
+    }
+    stderr.writeln('ct_repo_lint: unknown argument: $a');
+    stderr.writeln(_usage);
+    exit(2);
+  }
+
+  if (listOnly && sarifOutputPath != null) {
+    stderr.writeln('ct_repo_lint: --sarif cannot be used with --list');
+    exit(2);
+  }
+
+  return RepoLintOptions(
+    manifestPath: manifestPath,
+    listOnly: listOnly,
+    verbose: verbose,
+    onlyRuleId: onlyRuleId.isEmpty ? null : onlyRuleId,
+    onlyGroup: onlyGroup.isEmpty ? null : onlyGroup,
+    forceFullScan: forceFullScan,
+    sarifOutputPath: sarifOutputPath,
+  );
+}
+
+const _usage = '''
+ct_repo_lint — unified repo convention checks (manifest-driven).
+
+Usage:
+  dart run tool/ct_repo_lint.dart [options]
+
+Options:
+  --manifest <path>     Manifest YAML (default: tool/ct_repo_lint_manifest.yaml)
+  --list                Print rule_id, group, and title; exit 0
+  --rule <rule_id>      Run only this rule
+  --group <name>        Run only rules in this group
+  --force-full-scan     Do not pass PR incremental --files to supported rules
+  --verbose, -v         Log each rule as it starts
+  --sarif <path>        After running, write SARIF 2.1.0 (run all rules; use - for stdout)
+  --help, -h            Show this message
+
+Environment:
+  CT_REPO_LINT_INCLUDE_APP=true   Include repo.app_hardcoded_ui_strings (Quality workflow sets this when app/package paths changed)
+  GITHUB_BASE_REF                 When set (not force-full-scan), incremental rules receive --files for changed *.dart on the PR branch
+''';
+
+List<RepoLintRule> loadRepoLintManifest(
+  String repoRoot,
+  String manifestRelativePath,
+) {
+  final manifestFile = File(p.join(repoRoot, manifestRelativePath));
+  if (!manifestFile.existsSync()) {
+    stderr.writeln('ct_repo_lint: manifest not found: ${manifestFile.path}');
+    exit(2);
+  }
+  final yaml = loadYaml(manifestFile.readAsStringSync());
+  if (yaml is! YamlMap) {
+    stderr.writeln('ct_repo_lint: manifest root must be a map');
+    exit(2);
+  }
+  final rulesYaml = yaml['rules'];
+  if (rulesYaml is! YamlList) {
+    stderr.writeln('ct_repo_lint: manifest missing rules: list');
+    exit(2);
+  }
+
+  final out = <RepoLintRule>[];
+  for (final entry in rulesYaml) {
+    if (entry is! YamlMap) {
+      continue;
+    }
+    final ruleId = entry['rule_id']?.toString();
+    final group = entry['group']?.toString() ?? 'default';
+    final title = entry['title']?.toString() ?? ruleId ?? '(untitled)';
+    final spec = entry['spec']?.toString() ?? '';
+    final runner = entry['runner']?.toString() ?? '';
+    if (ruleId == null || ruleId.isEmpty) {
+      stderr.writeln('ct_repo_lint: rule missing rule_id');
+      exit(2);
+    }
+    if (runner != 'shell' && runner != 'dart') {
+      stderr.writeln(
+        'ct_repo_lint: rule $ruleId: runner must be shell or dart',
+      );
+      exit(2);
+    }
+
+    String? script;
+    var argv = <String>[];
+    if (runner == 'shell') {
+      final a = entry['argv'];
+      if (a is! YamlList || a.isEmpty) {
+        stderr.writeln(
+          'ct_repo_lint: rule $ruleId: shell runner requires argv',
+        );
+        exit(2);
+      }
+      argv = a.map((e) => e.toString()).toList();
+    } else {
+      script = entry['script']?.toString();
+      if (script == null || script.isEmpty) {
+        stderr.writeln(
+          'ct_repo_lint: rule $ruleId: dart runner requires script',
+        );
+        exit(2);
+      }
+    }
+
+    final prInc = entry['pr_incremental'] == true;
+    final envGate = entry['include_only_when_env'];
+    String? envName;
+    String? envValue;
+    if (envGate is YamlMap) {
+      envName = envGate['name']?.toString();
+      envValue = envGate['value']?.toString();
+      if (envName == null || envName.isEmpty || envValue == null) {
+        stderr.writeln(
+          'ct_repo_lint: rule $ruleId: include_only_when_env needs name and value',
+        );
+        exit(2);
+      }
+    }
+
+    out.add(
+      RepoLintRule(
+        ruleId: ruleId,
+        group: group,
+        title: title,
+        spec: spec,
+        runner: runner,
+        argv: argv,
+        script: script,
+        prIncremental: prInc,
+        includeOnlyWhenEnvName: envName,
+        includeOnlyWhenEnvValue: envValue,
+      ),
+    );
+  }
+  return out;
+}
+
+/// Resolves a comma-separated list of changed `*.dart` paths for PR workflows,
+/// matching `.github/workflows/quality.yml` (three-dot diff vs `origin/$GITHUB_BASE_REF`).
+String? resolvePrChangedDartFilesCsv() {
+  final baseRef = Platform.environment['GITHUB_BASE_REF'];
+  if (baseRef == null || baseRef.isEmpty) {
+    return null;
+  }
+
+  final fetch = Process.runSync(
+    'git',
+    ['fetch', '--no-tags', '--depth=1', 'origin', baseRef],
+    workingDirectory: Directory.current.path,
+    runInShell: false,
+  );
+  if (fetch.exitCode != 0) {
+    return null;
+  }
+
+  final left = 'origin/$baseRef';
+  final diff = Process.runSync(
+    'git',
+    ['diff', '--name-only', '$left...HEAD', '--', '*.dart'],
+    workingDirectory: Directory.current.path,
+    runInShell: false,
+  );
+  if (diff.exitCode != 0) {
+    return null;
+  }
+
+  final lines = diff.stdout
+      .toString()
+      .split('\n')
+      .map((l) => l.trim())
+      .where((l) => l.isNotEmpty)
+      .toList();
+
+  if (lines.isEmpty) {
+    return null;
+  }
+  return lines.join(',');
+}
+
+bool ruleIsIncluded(RepoLintRule rule) {
+  final gateName = rule.includeOnlyWhenEnvName;
+  final gateValue = rule.includeOnlyWhenEnvValue;
+  if (gateName == null || gateValue == null) {
+    return true;
+  }
+  final actual = Platform.environment[gateName];
+  return actual == gateValue;
+}
+
+/// Runs selected rules; returns exit code (0 = success).
+int runRepoLint({
+  required String repoRoot,
+  required List<RepoLintRule> allRules,
+  required RepoLintOptions options,
+}) {
+  final incrementalCsv = options.forceFullScan
+      ? null
+      : resolvePrChangedDartFilesCsv();
+
+  var rules = List<RepoLintRule>.from(allRules);
+
+  if (options.onlyRuleId != null) {
+    rules = rules.where((r) => r.ruleId == options.onlyRuleId).toList();
+    if (rules.isEmpty) {
+      stderr.writeln(
+        'ct_repo_lint: no rule with rule_id "${options.onlyRuleId}"',
+      );
+      return 2;
+    }
+  } else if (options.onlyGroup != null) {
+    rules = rules.where((r) => r.group == options.onlyGroup).toList();
+    if (rules.isEmpty) {
+      stderr.writeln('ct_repo_lint: no rules in group "${options.onlyGroup}"');
+      return 2;
+    }
+  }
+
+  if (options.listOnly) {
+    for (final r in rules) {
+      stdout.writeln('${r.ruleId}\t${r.group}\t${r.title}');
+    }
+    return 0;
+  }
+
+  rules = rules.where(ruleIsIncluded).toList();
+  if (rules.isEmpty) {
+    stderr.writeln(
+      'ct_repo_lint: no rules to run after env gates '
+      '(e.g. set CT_REPO_LINT_INCLUDE_APP=true for repo.app_hardcoded_ui_strings).',
+    );
+    return 2;
+  }
+
+  if (options.sarifOutputPath != null) {
+    return _runRepoLintWithSarif(
+      repoRoot: repoRoot,
+      rules: rules,
+      options: options,
+      incrementalCsv: incrementalCsv,
+    );
+  }
+
+  for (final rule in rules) {
+    if (options.verbose) {
+      stderr.writeln('ct_repo_lint: [${rule.ruleId}] ${rule.title}');
+    }
+
+    final code = _runOneRule(
+      repoRoot: repoRoot,
+      rule: rule,
+      incrementalCsv: incrementalCsv,
+      relayChildStdoutToStderr: false,
+    );
+    if (code != 0) {
+      return code;
+    }
+  }
+
+  stdout.writeln('ct_repo_lint: all ${rules.length} rule(s) passed.');
+  return 0;
+}
+
+int _runRepoLintWithSarif({
+  required String repoRoot,
+  required List<RepoLintRule> rules,
+  required RepoLintOptions options,
+  required String? incrementalCsv,
+}) {
+  final failures = <({RepoLintRule rule, int exitCode})>[];
+  for (final rule in rules) {
+    if (options.verbose) {
+      stderr.writeln('ct_repo_lint: [${rule.ruleId}] ${rule.title}');
+    }
+
+    final code = _runOneRule(
+      repoRoot: repoRoot,
+      rule: rule,
+      incrementalCsv: incrementalCsv,
+      relayChildStdoutToStderr: true,
+    );
+    if (code != 0) {
+      failures.add((rule: rule, exitCode: code));
+    }
+  }
+
+  final sarifText = encodeCtRepoLintSarif(
+    executedRules: rules,
+    failures: failures,
+  );
+  _writeSarifOutput(options.sarifOutputPath!, sarifText);
+
+  if (failures.isEmpty) {
+    stderr.writeln('ct_repo_lint: all ${rules.length} rule(s) passed.');
+    return 0;
+  }
+  stderr.writeln(
+    'ct_repo_lint: ${failures.length} rule(s) failed (SARIF written).',
+  );
+  return 1;
+}
+
+void _writeSarifOutput(String path, String json) {
+  final text = json.endsWith('\n') ? json : '$json\n';
+  if (path == '-') {
+    stdout.write(text);
+    return;
+  }
+  File(path).writeAsStringSync(text);
+}
+
+/// Builds SARIF 2.1.0 JSON for [executedRules] and failed runs in [failures].
+/// Exposed for tests.
+String encodeCtRepoLintSarif({
+  required List<RepoLintRule> executedRules,
+  required List<({RepoLintRule rule, int exitCode})> failures,
+}) {
+  return JsonEncoder.withIndent('  ').convert(
+    buildCtRepoLintSarifObject(
+      executedRules: executedRules,
+      failures: failures,
+    ),
+  );
+}
+
+/// SARIF object before JSON encoding. Exposed for tests.
+Map<String, Object?> buildCtRepoLintSarifObject({
+  required List<RepoLintRule> executedRules,
+  required List<({RepoLintRule rule, int exitCode})> failures,
+}) {
+  final driverRules = <Map<String, Object?>>[];
+  final ruleIndexById = <String, int>{};
+  for (var i = 0; i < executedRules.length; i++) {
+    final r = executedRules[i];
+    ruleIndexById[r.ruleId] = i;
+    driverRules.add({
+      'id': r.ruleId,
+      'name': r.title,
+      if (r.spec.isNotEmpty) 'shortDescription': {'text': 'SPEC: ${r.spec}'},
+    });
+  }
+
+  final results = <Map<String, Object?>>[];
+  for (final f in failures) {
+    final uri = f.rule.runner == 'dart'
+        ? (f.rule.script ?? 'unknown.dart')
+        : (f.rule.argv.isNotEmpty ? f.rule.argv.first : 'unknown');
+    results.add({
+      'ruleId': f.rule.ruleId,
+      'ruleIndex': ruleIndexById[f.rule.ruleId]!,
+      'level': 'error',
+      'message': {
+        'text':
+            'Convention check failed (exit ${f.exitCode}). See log output for file and line details.',
+      },
+      'locations': [
+        {
+          'physicalLocation': {
+            'artifactLocation': {'uri': uri},
+          },
+        },
+      ],
+    });
+  }
+
+  return {
+    r'$schema':
+        'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
+    'version': '2.1.0',
+    'runs': [
+      {
+        'tool': {
+          'driver': {
+            'name': 'ct_repo_lint',
+            'informationUri': 'https://github.com/waigore/colonizethisv3',
+            'rules': driverRules,
+          },
+        },
+        'results': results,
+      },
+    ],
+  };
+}
+
+int _runOneRule({
+  required String repoRoot,
+  required RepoLintRule rule,
+  required String? incrementalCsv,
+  required bool relayChildStdoutToStderr,
+}) {
+  stderr.writeln('ct_repo_lint: --- [${rule.ruleId}] ${rule.title} ---');
+
+  if (rule.runner == 'shell') {
+    final rel = rule.argv.first;
+    final scriptPath = p.join(repoRoot, rel);
+    final result = Process.runSync(
+      'bash',
+      [scriptPath, ...rule.argv.skip(1)],
+      workingDirectory: repoRoot,
+      environment: Platform.environment,
+      runInShell: false,
+    );
+    _forwardProcessOutput(
+      result,
+      relayStdoutToStderr: relayChildStdoutToStderr,
+    );
+    if (result.exitCode != 0) {
+      stderr.writeln(
+        'ct_repo_lint: FAILED [${rule.ruleId}] exit ${result.exitCode} (see output above)',
+      );
+    }
+    return result.exitCode;
+  }
+
+  final inProcess = _tryRunDartRuleInProcess(
+    rule: rule,
+    repoRoot: repoRoot,
+    incrementalCsv: incrementalCsv,
+  );
+  if (inProcess != null) {
+    if (inProcess != 0) {
+      stderr.writeln(
+        'ct_repo_lint: FAILED [${rule.ruleId}] exit $inProcess (see output above)',
+      );
+    }
+    return inProcess;
+  }
+
+  final script = rule.script!;
+  final args = <String>['run', script];
+  if (rule.prIncremental &&
+      incrementalCsv != null &&
+      incrementalCsv.isNotEmpty) {
+    args.addAll(['--files', incrementalCsv]);
+  }
+
+  final result = Process.runSync(
+    Platform.resolvedExecutable,
+    args,
+    workingDirectory: repoRoot,
+    environment: Platform.environment,
+    runInShell: false,
+  );
+  _forwardProcessOutput(result, relayStdoutToStderr: relayChildStdoutToStderr);
+  if (result.exitCode != 0) {
+    stderr.writeln(
+      'ct_repo_lint: FAILED [${rule.ruleId}] exit ${result.exitCode} (see output above)',
+    );
+  }
+  return result.exitCode;
+}
+
+/// Runs manifest Dart rules in-process when wired; returns `null` to fall back
+/// to `dart run` (unknown [RepoLintRule.ruleId] or future scripts).
+int? _tryRunDartRuleInProcess({
+  required RepoLintRule rule,
+  required String repoRoot,
+  required String? incrementalCsv,
+}) {
+  List<String>? incrementalPaths;
+  if (rule.prIncremental &&
+      incrementalCsv != null &&
+      incrementalCsv.isNotEmpty) {
+    incrementalPaths = repoLintSplitRelativeDartPathsArg(incrementalCsv);
+  }
+
+  switch (rule.ruleId) {
+    case 'repo.custom_exceptions':
+      return runCheckCustomExceptions(repoRoot);
+    case 'repo.asset_path_constants':
+      return runCheckAssetPathConstants(repoRoot);
+    case 'repo.disallowed_ast_patterns':
+      return runCheckDisallowedAstPatterns(repoRoot);
+    case 'repo.control_flow_nesting_depth':
+      return runCheckControlFlowNestingDepth(repoRoot);
+    case 'repo.repeated_magic_numbers':
+      return runCheckRepeatedMagicNumbers(repoRoot);
+    case 'repo.tech_id_constants':
+      return runCheckTechIdConstants(
+        repoRoot,
+        incrementalRelativeDartPaths: incrementalPaths,
+      );
+    case 'repo.work_target_constants':
+      return runCheckWorkTargetConstants(
+        repoRoot,
+        incrementalRelativeDartPaths: incrementalPaths,
+      );
+    case 'repo.civilian_unit_type_constants':
+      return runCheckCivilianUnitTypeConstants(
+        repoRoot,
+        incrementalRelativeDartPaths: incrementalPaths,
+      );
+    case 'repo.canonical_province_tile_keys':
+      return runCheckCanonicalProvinceTileKeys(repoRoot);
+    case 'repo.app_hardcoded_ui_strings':
+      return runCheckAppHardcodedUiStrings(repoRoot);
+    default:
+      return null;
+  }
+}
+
+void _forwardProcessOutput(
+  ProcessResult result, {
+  required bool relayStdoutToStderr,
+}) {
+  final out = result.stdout.toString();
+  final err = result.stderr.toString();
+  if (out.isNotEmpty) {
+    if (relayStdoutToStderr) {
+      stderr.write(out);
+    } else {
+      stdout.write(out);
+    }
+  }
+  if (err.isNotEmpty) {
+    stderr.write(err);
+  }
+}

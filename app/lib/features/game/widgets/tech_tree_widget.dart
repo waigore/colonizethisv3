@@ -8,9 +8,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/app_assets.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
+import 'tech_effect_summary_lookup.dart';
 
 /// Node position for layout. Exposed for tests (column rule: A→B→C and A→C ⇒ gap between A and C).
 class TechNodePosition {
@@ -69,9 +72,10 @@ class TechTreeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final positions = TechTreeWidget.computeLayout(techCatalog);
     if (positions.isEmpty) {
-      return const Center(child: Text('No techs in catalog'));
+      return Center(child: Text(l10n.techTree_noTechsInCatalog));
     }
     final width = positions.map((p) => p.x).reduce(math.max) + _nodeWidth + 48;
     final height =
@@ -89,7 +93,7 @@ class TechTreeWidget extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: _TechTreeLegend(),
+          child: _TechTreeLegend(l10n: l10n),
         ),
         const Divider(height: 1),
         Expanded(
@@ -247,7 +251,8 @@ class TechTreeWidget extends StatelessWidget {
   }
 
   void _showTechDialog(BuildContext context, TechDefinition tech) {
-    final effects = _effectSummary(tech);
+    final l10n = appL10n(context);
+    final effects = _effectSummaryLines(l10n, tech);
     final theme = Theme.of(context);
     showDialog<void>(
       context: context,
@@ -260,51 +265,58 @@ class TechTreeWidget extends StatelessWidget {
           children: [
             Text(techDisplayName(tech.id), style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Era ${_eraRoman(tech.era)} · ${_categoryLabel(tech.category)}',
-                      style: theme.textTheme.bodySmall,
+            Text(
+              l10n.techTree_eraCategory(
+                _eraRoman(tech.era),
+                _categoryLabelL10n(l10n, tech.category),
+              ),
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.techTree_researchPoints(tech.cost),
+              style: theme.textTheme.bodyMedium,
+            ),
+            if (tech.prerequisiteIds.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.techTree_prerequisites,
+                style: theme.textTheme.labelLarge,
+              ),
+              ...tech.prerequisiteIds.map(
+                (id) => Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    l10n.techTree_prerequisiteBullet(
+                      techDisplayName(id),
                     ),
-                    const SizedBox(height: 4),
-                    Text('${tech.cost} RP', style: theme.textTheme.bodyMedium),
-                    if (tech.prerequisiteIds.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text('Prerequisites', style: theme.textTheme.labelLarge),
-                      ...tech.prerequisiteIds.map(
-                        (id) => Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            '• ${techDisplayName(id)}',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ),
-                      ),
-                    ],
-                    if (effects.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text('Effects', style: theme.textTheme.labelLarge),
-                      ...effects.map(
-                        (e) => Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text('• $e', style: theme.textTheme.bodySmall),
-                        ),
-                      ),
-                    ],
-                  ],
+                    style: theme.textTheme.bodySmall,
+                  ),
                 ),
               ),
-            ),
+            ],
+            if (effects.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.techTree_effects,
+                style: theme.textTheme.labelLarge,
+              ),
+              ...effects.map(
+                (e) => Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    l10n.techTree_bulletItem(e),
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
               child: CtNinePatchButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Close'),
+                child: Text(l10n.common_close),
               ),
             ),
           ],
@@ -318,96 +330,40 @@ class TechTreeWidget extends StatelessWidget {
     return era >= 1 && era <= romans.length ? romans[era - 1] : '$era';
   }
 
-  static String _categoryLabel(String category) {
-    const labels = {
-      'gathering': 'Gathering',
-      'transport': 'Transport',
-      'labour': 'Labour',
-      'civilian': 'Civilian',
-      'diplomacy': 'Diplomacy',
-      'naval': 'Naval',
-      'military': 'Military',
-      'new-world': 'New World',
+  static String _categoryLabelL10n(AppLocalizations l10n, String category) {
+    return switch (category) {
+      'gathering' => l10n.techTree_categoryGathering,
+      'transport' => l10n.techTree_categoryTransport,
+      'labour' => l10n.techTree_categoryLabour,
+      'civilian' => l10n.techTree_categoryCivilian,
+      'diplomacy' => l10n.techTree_categoryDiplomacy,
+      'naval' => l10n.techTree_categoryNaval,
+      'military' => l10n.techTree_categoryMilitary,
+      'new-world' => l10n.techTree_categoryNewWorld,
+      _ => category,
     };
-    return labels[category] ?? category;
   }
 
-  static List<String> _effectSummary(TechDefinition tech) {
+  static List<String> _effectSummaryLines(
+    AppLocalizations l10n,
+    TechDefinition tech,
+  ) {
     final list = <String>[];
     for (final rid in tech.regimentUnlockIds) {
-      list.add('Unlocks regiment: ${_humanizeId(rid)}');
+      list.add(l10n.techEffect_unlocksRegiment(_humanizeId(rid)));
     }
     for (final sid in tech.shipUnlockIds) {
-      list.add('Unlocks ship: ${_humanizeId(sid)}');
+      list.add(l10n.techEffect_unlocksShip(_humanizeId(sid)));
     }
-    switch (tech.id) {
-      case 'university':
-        list.add('Fourth research slot');
-        break;
-      case 'road_construction':
-        list.add('Road level 2');
-        break;
-      case 'early_steam_engine':
-        list.add('Railroads');
-        break;
-      case 'mine_engineering':
-        list.add('Fort level 2');
-        break;
-      case 'national_bureaucracy':
-        list.add('Builders can upgrade provincial towns');
-        list.add('Helps increase general cap');
-        break;
-      case 'merchant_companies':
-        list.add('Unlocks Merchant civilian unit');
-        list.add('Allows purchasing land in Minor Nations (with embassy)');
-        break;
-      case 'printing_press':
-        list.add('Enables Trained Journeymen and advanced tactics');
-        break;
-      case 'money_lending':
-        list.add('Research funding may reduce treasury to −500');
-        list.add('General borrowing/interest not simulated yet');
-        break;
-      case 'apprentice_workers':
-        list.add(
-          'Unlocks Apprentice Workers (4× labour; consume refined sugar)',
-        );
-        break;
-      case 'trained_journeymen':
-        list.add('Unlocks Trained Journeymen (6× labour; consume cigars)');
-        break;
-      case 'master_artisans':
-        list.add('Unlocks Master Artisans (8× labour; consume fur hats)');
-        break;
-      case 'trade_fairs':
-        list.add('Planned: more trade commodity slots vs baseline (not active yet)');
-        break;
-      case 'banking':
-        list.add('Unlocks later military, diplomacy, and transport techs');
-        list.add('Extended banking rules not active yet');
-        break;
-      case 'diplomatic_expertise':
-        list.add('Unlocks embassies with Minor Nations');
-        list.add('Civilian units may work in Minors with an embassy');
-        break;
-      case 'propaganda':
-        list.add('Decreases diplomatic penalties for declaring war');
-        break;
-      case 'nationalism':
-        list.add('Increases battle deployment limit to 12 regiments');
-        list.add('Helps raise general cap');
-        break;
-      case 'empire_building':
-        list.add('Allows asking Great Powers to join your empire peacefully');
-        break;
-      case 'land_enclosure':
-      case 'hat_production':
-        list.add('Improves labour and economy output');
-        break;
-      default:
-        if (list.isEmpty) {
-          list.add('Improves ${_categoryLabel(tech.category)} capabilities');
-        }
+    for (final lineId in techEffectSummaryLineIdsFor(tech.id)) {
+      list.add(lookupTechEffectSummaryLine(l10n, lineId));
+    }
+    if (list.isEmpty) {
+      list.add(
+        l10n.techEffect_fallbackCategoryImprovement(
+          _categoryLabelL10n(l10n, tech.category),
+        ),
+      );
     }
     return list;
   }
@@ -567,14 +523,21 @@ class _TechNode extends StatelessWidget {
   }
 }
 
+/// Row label for tech tree legend samples (maps to [AppLocalizations] state strings).
+enum _TechLegendStateKind { researched, inProgress, available, locked }
+
 class _TechTreeLegend extends StatelessWidget {
+  const _TechTreeLegend({required this.l10n});
+
+  final AppLocalizations l10n;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Technology tree legend', style: theme.textTheme.labelLarge),
+        Text(l10n.techTree_legendTitle, style: theme.textTheme.labelLarge),
         const SizedBox(height: 4),
         Wrap(
           spacing: 8,
@@ -583,7 +546,7 @@ class _TechTreeLegend extends StatelessWidget {
               .map(
                 (e) => _LegendChip(
                   color: e.value,
-                  label: TechTreeWidget._categoryLabel(e.key),
+                  label: TechTreeWidget._categoryLabelL10n(l10n, e.key),
                 ),
               )
               .toList(),
@@ -592,9 +555,9 @@ class _TechTreeLegend extends StatelessWidget {
         Wrap(
           spacing: 8,
           runSpacing: 4,
-          children: const [
+          children: [
             _StateLegendSample(
-              label: 'Researched',
+              kind: _TechLegendStateKind.researched,
               state: _TechNodeState(
                 researched: true,
                 inProgress: false,
@@ -602,7 +565,7 @@ class _TechTreeLegend extends StatelessWidget {
               ),
             ),
             _StateLegendSample(
-              label: 'In progress',
+              kind: _TechLegendStateKind.inProgress,
               state: _TechNodeState(
                 researched: false,
                 inProgress: true,
@@ -610,7 +573,7 @@ class _TechTreeLegend extends StatelessWidget {
               ),
             ),
             _StateLegendSample(
-              label: 'Available',
+              kind: _TechLegendStateKind.available,
               state: _TechNodeState(
                 researched: false,
                 inProgress: false,
@@ -618,7 +581,7 @@ class _TechTreeLegend extends StatelessWidget {
               ),
             ),
             _StateLegendSample(
-              label: 'Locked',
+              kind: _TechLegendStateKind.locked,
               state: _TechNodeState(
                 researched: false,
                 inProgress: false,
@@ -652,13 +615,14 @@ class _LegendChip extends StatelessWidget {
 }
 
 class _StateLegendSample extends StatelessWidget {
-  const _StateLegendSample({required this.label, required this.state});
+  const _StateLegendSample({required this.kind, required this.state});
 
-  final String label;
+  final _TechLegendStateKind kind;
   final _TechNodeState state;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     // Use a dummy tech with neutral category just to render the style.
     const dummyTech = TechDefinition(
       id: 'legend_dummy',
@@ -679,8 +643,20 @@ class _StateLegendSample extends StatelessWidget {
           child: _TechNode(tech: dummyTech, state: state, onTap: () {}),
         ),
         const SizedBox(width: 4),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          _localizedLabel(l10n),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ],
     );
+  }
+
+  String _localizedLabel(AppLocalizations l10n) {
+    return switch (kind) {
+      _TechLegendStateKind.researched => l10n.techTree_stateResearched,
+      _TechLegendStateKind.inProgress => l10n.techTree_stateInProgress,
+      _TechLegendStateKind.available => l10n.techTree_stateAvailable,
+      _TechLegendStateKind.locked => l10n.techTree_stateLocked,
+    };
   }
 }

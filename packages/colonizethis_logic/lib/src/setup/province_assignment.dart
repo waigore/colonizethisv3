@@ -1,5 +1,6 @@
 /// Generic BFS territory assignment for province ownership.
 /// Used by game_setup to assign Great Powers, Minor Nations, and Tribes.
+library;
 
 import 'dart:math';
 

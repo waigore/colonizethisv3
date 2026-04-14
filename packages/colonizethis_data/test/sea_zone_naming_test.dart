@@ -24,8 +24,8 @@ void main() {
       namingSeed: 1,
     );
     expect(names.length, 2);
-    expect(names['oldWorld|s1'], isNotNull);
-    expect(names['oldWorld|s2'], isNotNull);
+    expect(names['oldWorld|s1'], oldWorldSeaNamePreset[0]);
+    expect(names['oldWorld|s2'], oldWorldSeaNamePreset[1]);
   });
 
   test(
@@ -55,6 +55,46 @@ void main() {
         namingSeed: 3,
       );
       expect(names, second);
+    },
+  );
+
+  test(
+    'buildSeaZoneDisplayNamesForRegion ignores namingSeed for same topology',
+    () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 's10',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 's2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 's1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: const [],
+      );
+      final first = buildSeaZoneDisplayNamesForRegion(
+        topology: topology,
+        regionId: 'oldWorld',
+        namingSeed: 1,
+      );
+      final second = buildSeaZoneDisplayNamesForRegion(
+        topology: topology,
+        regionId: 'oldWorld',
+        namingSeed: 999999,
+      );
+      expect(first, second);
+      expect(first['oldWorld|s1'], oldWorldSeaNamePreset[0]);
+      expect(first['oldWorld|s10'], oldWorldSeaNamePreset[1]);
+      expect(first['oldWorld|s2'], oldWorldSeaNamePreset[2]);
     },
   );
 }

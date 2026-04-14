@@ -5,13 +5,15 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
 
 import '../../../config/routes.dart';
 import '../../../core/services/app_event_handler_scope.dart';
+import '../../../core/services/subscription_tracker.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 import 'diplomacy_order_helpers.dart';
+import 'fnv1a_hash_constants.dart';
 
 int? _outgoingSubsidyPerTurn(Game game, String payerId, String targetId) {
   for (final s in game.subsidyStates) {
@@ -240,24 +242,27 @@ class DiplomacyPanel extends StatefulWidget {
 
 class _DiplomacyPanelState extends State<DiplomacyPanel> {
   final Map<String, String> _moodByLeaderId = <String, String>{};
-  StreamSubscription<PortraitMoodEvent>? _moodSub;
+  final SubscriptionTracker _subscriptions = SubscriptionTracker();
 
   @override
   void initState() {
     super.initState();
-    _moodSub = widget.bus.on<PortraitMoodEvent>().listen((event) {
-      _moodByLeaderId[event.leaderId] = event.toMood;
-    });
+    _subscriptions.track(
+      widget.bus.on<PortraitMoodEvent>().listen((event) {
+        _moodByLeaderId[event.leaderId] = event.toMood;
+      }),
+    );
   }
 
   @override
   void dispose() {
-    _moodSub?.cancel();
+    _subscriptions.cancelAll();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final rows = buildDiplomacyRows(
       widget.game,
       widget.topology,
@@ -272,7 +277,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
         if (gps.isNotEmpty) ...[
-          _sectionHeader(context, 'Great Powers'),
+          _sectionHeader(context, l10n.diplomacy_section_greatPowers),
           ...gps.map(
             (r) => _DiplomacyRow(
               data: r,
@@ -282,7 +287,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
           ),
         ],
         if (minors.isNotEmpty) ...[
-          _sectionHeader(context, 'Minor Nations'),
+          _sectionHeader(context, l10n.diplomacy_section_minorNations),
           ...minors.map(
             (r) => _DiplomacyRow(
               data: r,
@@ -292,7 +297,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
           ),
         ],
         if (tribes.isNotEmpty) ...[
-          _sectionHeader(context, 'Tribes'),
+          _sectionHeader(context, l10n.diplomacy_section_tribes),
           ...tribes.map(
             (r) => _DiplomacyRow(
               data: r,
@@ -305,7 +310,7 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
           Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'No other factions discovered yet.',
+              l10n.diplomacy_panel_noFactions,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
           ),
@@ -467,10 +472,10 @@ class _DiplomacyPanelState extends State<DiplomacyPanel> {
     final turn = widget.game.worldState.turnState.turnNumber;
     final base = widget.game.globalGameSeed ?? 0;
     final text = '$leaderId|$discriminator|$stallCounter|$turn';
-    var hash = 0x811C9DC5;
+    var hash = kFnv1aOffsetBasis32;
     for (final code in text.codeUnits) {
       hash ^= code;
-      hash = (hash * 0x01000193) & 0x7fffffff;
+      hash = (hash * kFnv1aPrime32) & kDeterministicLcg31Mask;
     }
     return base ^ hash;
   }
@@ -507,12 +512,13 @@ class _DiplomacyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final rel = data.relation;
     final stateLabel = rel == null
         ? '—'
         : rel.atWar
-        ? 'War'
-        : 'Peace';
+        ? l10n.diplomacy_relationState_war
+        : l10n.diplomacy_relationState_peace;
     // SPEC/game/diplomacy.md § Player-facing relation display: show one-word state, hide score.
     final relationStateLabel = rel == null
         ? ''
@@ -542,7 +548,7 @@ class _DiplomacyRow extends StatelessWidget {
                   if (data.powerScore != null) ...[
                     const SizedBox(width: 8),
                     Text(
-                      'Power: ${data.powerScore}',
+                      l10n.diplomacy_panel_powerScore(data.powerScore!),
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color:
                             data.playerPowerScore != null &&
@@ -565,7 +571,10 @@ class _DiplomacyRow extends StatelessWidget {
               if (data.activeSubsidyPerTurn != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Outgoing subsidy: £${data.activeSubsidyPerTurn}/turn to ${data.displayName}',
+                  l10n.diplomacy_panel_outgoingSubsidy(
+                    data.activeSubsidyPerTurn!,
+                    data.displayName,
+                  ),
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
@@ -574,7 +583,7 @@ class _DiplomacyRow extends StatelessWidget {
               if (data.pendingGrantAmount != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Pending grant aid: £${data.pendingGrantAmount} (resolves end of turn)',
+                  l10n.diplomacy_panel_pendingGrant(data.pendingGrantAmount!),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: Theme.of(context).colorScheme.tertiary,
@@ -584,7 +593,9 @@ class _DiplomacyRow extends StatelessWidget {
               if (data.pendingSubsidyAmount != null) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Pending subsidy: £${data.pendingSubsidyAmount}/turn (resolves end of turn)',
+                  l10n.diplomacy_panel_pendingSubsidy(
+                    data.pendingSubsidyAmount!,
+                  ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: Theme.of(context).colorScheme.tertiary,

@@ -211,7 +211,7 @@ class Unit {
 }
 
 /// Minimal status for Phase 2 work and movement.
-enum UnitStatus { idle, working, done }
+enum UnitStatus { idle, working }
 
 UnitStatus _statusFromJson(String? value) {
   if (value == null) return UnitStatus.idle;

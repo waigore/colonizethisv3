@@ -14,7 +14,7 @@ Widget _openDialogButton(VoidCallback onOpen) {
 void main() {
   suppressLogsForTests();
 
-  Game _gameWithArmy({required Army army, required List<Unit> units}) {
+  Game gameWithArmy({required Army army, required List<Unit> units}) {
     const province = Province(
       id: 'cap',
       regionId: 'oldWorld',
@@ -67,7 +67,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  List<Unit> _threeLevyOneMusk() => [
+  List<Unit> threeLevyOneMusk() => [
     Unit(
       id: 'levy_1',
       type: 'peasant_levy',
@@ -104,7 +104,7 @@ void main() {
       stationedProvinceId: 'oldWorld|cap',
       regimentUnitIds: const ['levy_1', 'levy_2', 'levy_3', 'mus_1'],
     );
-    final game = _gameWithArmy(army: army, units: _threeLevyOneMusk());
+    final game = gameWithArmy(army: army, units: threeLevyOneMusk());
 
     await openDialog(
       tester,
@@ -128,7 +128,7 @@ void main() {
       stationedProvinceId: 'oldWorld|cap',
       regimentUnitIds: const ['levy_1', 'levy_2', 'levy_3', 'mus_1'],
     );
-    final game = _gameWithArmy(army: army, units: _threeLevyOneMusk());
+    final game = gameWithArmy(army: army, units: threeLevyOneMusk());
 
     await openDialog(
       tester,
@@ -165,7 +165,7 @@ void main() {
       stationedProvinceId: 'oldWorld|cap',
       regimentUnitIds: const ['levy_1', 'levy_2', 'levy_3', 'mus_1'],
     );
-    final game = _gameWithArmy(army: army, units: _threeLevyOneMusk());
+    final game = gameWithArmy(army: army, units: threeLevyOneMusk());
 
     await openDialog(
       tester,
@@ -215,7 +215,7 @@ void main() {
       regimentUnitIds: const ['only'],
       isHomeArmy: true,
     );
-    final game = _gameWithArmy(army: army, units: units);
+    final game = gameWithArmy(army: army, units: units);
 
     await openDialog(
       tester,

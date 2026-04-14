@@ -1,7 +1,5 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'army_ids.dart';
-
 /// Merges [armyIds] into one army at the same province. Home army wins as target.
 /// SPEC/ui/military-units-army-management.md.
 Game applyArmyCombine({

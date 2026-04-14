@@ -12,9 +12,9 @@ The civilian units panel gives the player a single place to see every civilian u
 
 ## Scope: which units are shown
 
-- **Included:** All units owned by the human player that are **civilian** per the game model: Explorer, Builder, Engineer, Spy, Merchant, Rail Builder. Identification uses the same rule as development and TUI (e.g. `unitRoleForType(unit.type)` is not military and not naval; units have `tileKey`).
+- **Included:** All units owned by the human player that are **civilian** per the game model: Explorer, Builder, Engineer, Spy, Merchant, Rail Builder. Identification uses the same rule as the development flow (e.g. `unitRoleForType(unit.type)` is not military and not naval; units have `tileKey`).
 - **Excluded:** Military regiments and naval units. Units owned by other players or by Minor Nations/Tribes are not shown.
-- **Data source:** Units from `WorldState` for all regions (e.g. `oldWorld.units` and `newWorld.units`), filtered by `ownerId == humanPlayerId` and civilian type. Province and region for each unit are derived from `Unit.tileKey` (prefixed format `regionId|provinceId|x|y`).
+- **Data source:** Units from `WorldState` for all regions (e.g. `oldWorld.units` and `newWorld.units`), filtered by `ownerId == humanPlayerId` and civilian type. Province and region for each unit are derived from the **projected civilian tile** (pending draft `WorkOrder.targetTileKey` for that unit when present, else non-empty `assignedTileKey`, else `tileKey`).
 
 ---
 
@@ -41,12 +41,13 @@ For each civilian unit, the panel shows:
 
 | Field        | Source | Notes |
 |-------------|--------|--------|
-| **Status**  | `Unit.status` | One of: `idle`, `working`, `done`. Display as short label (e.g. "Idle", "Working", "Done"). |
-| **Location**| `Unit.tileKey` | **Province name only** (no raw id). Province name from game data (e.g. `Province.displayName` for the province derived from `tileKey`). **Always show the region** with the location (e.g. "Old World — London" or "New World — Mexica") so the player knows which map tab the unit is in. |
-| **Assigned to** | `Unit.currentWork` when `status == working` | If idle or done: show "—" or "Idle". If working: show work target (e.g. `build_improvement`, `explore`, `prospect`) and target location (province name + region); optionally progress (e.g. "2/5 turns") from `currentWork.remainingTurns` / `totalTurns`. |
+| **Status**  | `Unit.status` | One of: `idle`, `working`. Display as short label (e.g. "Idle", "Working"). |
+| **Location**| projected civilian tile key | **Province name only** (no raw id). Province name from game data (e.g. `Province.displayName` for the province derived from projected tile). **Always show the region** with the location (e.g. "Old World — London" or "New World — Mexica") so the player knows which map tab the unit is in. |
+| **Assigned to** | pending `WorkOrder` first, else `Unit.currentWork` when `status == working` | If idle and no pending work: show "—". If **pending** this turn: show work target and target location (same as before). **Pending cost preview (this turn only):** When the pending order has a **stockpile material** cost per `WorkOrderCostCalculator(game).calculateCost(...)` (same inputs as order validation: `target`, `targetTileKey`, `improvementLevel` from tile state for `build_improvement` only, `fortLevel` / `roadLevel` from game state), the row **must not** append the literal ` (pending)`; instead show a second line (below the "Assigned to" text) of **dense chips**: each commodity as **`ResourceIcon` + required quantity** (canonical pattern; align with training / production panels, `app/lib/widgets/resource_icon.dart`). **Pending `purchase_land` (Merchant):** `calculateCost` is null; show **treasury** cost via `purchaseLandCost(resourceId)` with `resourceId` from `game.worldState.resourceByTileKey[order.targetTileKey]`, using the same **treasury chip/string** pattern as military training (`trainUnits_treasury` / `train_military_dialog.dart`) — **not** a commodity `ResourceIcon` for cash. If `purchase_land` has **no** resolvable `resourceId` on the tile, fall back to **` (pending)`** (or equivalent short label). **Other pending orders** with no material map and not `purchase_land` (e.g. `explore`, `prospect`, `steal_tech`, `counter_spy`): keep **` (pending)`** after location. **No affordability UI** on this panel: show **required amounts only**; do not compare to stockpile/treasury or use deficit / error styling. **In-progress** (`Unit.status == working`, `currentWork != null`): **unchanged** — work label, location, turn progress only; **no** resource cost strip (materials already committed at assignment per GDD). |
 
 - **Unit identity:** Each row is associated with one `Unit` (e.g. `unit.id`). Show unit type (Explorer, Builder, etc.) and a short id or label so the player can tell units apart.
-- **Clickable row:** The entire row (or a dedicated "Locate" control) is the click target for "highlight this unit's tile on the map and pan/center to it".
+- **Dedicated locate control:** Each row includes a compact **Locate** icon button matching the naval units panel fleet locate chrome (`Icons.my_location`, `iconSize` 18, `VisualDensity.compact`; tooltip uses the shared **Locate** label). Tapping it emits **`LocateMapTileEvent` only** — the panel stays open (no **`ClosePanelEvent`**), same contract as naval’s per-fleet locate icon.
+- **Clickable row:** In **full-list** mode, tapping the row body (outside row actions) closes the panel then locates on the map (post-frame **`LocateMapTileEvent`**). In **tile-scoped** mode, tapping the row body only changes **selection**; use the locate icon to highlight/pan on the map without closing the panel.
 - **Assign (idle only):** For each unit with `Unit.status == idle` and no pending work order for this turn, the row shows an **Assign** button. Clicking it opens a menu of **allowed work orders** for that unit type only (per [civilian-units.md](../game/civilian-units.md) Work Order Summary and `workOrderTargetsByUnitType`). After the user selects an order from the menu, the shell enters **work-target selection mode**: the shell computes valid target tiles once using `getValidWorkOrderTileKeysWithVisibility` (or equivalent), passing **per-region tile maps** when loaded so `prospect` highlights only terrain-eligible, not-yet-prospected tiles per [order-suggestions.md](../program/order-suggestions.md), caches the result, and passes it to the map widget. The map shows **valid target tiles** with a **flashing yellow selector** and an **orange hover cursor** (see [map-widget.md](map-widget.md) § Work target selection mode). The user may **switch region tabs** to select a target in the other region. Clicking a **valid** tile commits the work order and exits selection mode. For **province-level** orders (`explore`, `steal_tech`, `counter_spy`), the clicked tile is translated to the province (e.g. `regionId|provinceId|0|0`) per [orders.md](../program/orders.md). **Back-out:** Clicking a non-valid tile, clicking empty area, or clicking the **cancel button** (cross icon overlay on the map) cancels the assignment flow without submitting an order.
 - **Cancel (units with work):** For each unit that has either (1) a **pending** work order this turn (in the current orders list) or (2) **in-progress** work (`Unit.status == working`, `Unit.currentWork != null`), the row shows a **Cancel** control. Before cancelling, the UI layer shows a **confirm dialog** (e.g. "Cancel this work order?"). On confirm: **pending** — remove the work order from the player's orders for this turn; **in-progress** — the system clears `Unit.currentWork` and sets `Unit.status` to idle for that unit (no material refund). Implementation of in-progress cancel: see [development-resolution.md](../program/development-resolution.md) and/or [orders.md](../program/orders.md).
 
@@ -54,7 +55,7 @@ For each civilian unit, the panel shows:
 
 ## Map highlight and pan/center on unit selection
 
-- **When** the user clicks a unit row in the civilian units panel, **then** the UI layer: (1) sets the map's **highlighted tile** to that unit's `tileKey`; (2) **pans and centers** the map viewport so that the unit's tile is visible and centered; (3) **switches the active region tab** to the unit's region if it differs from the current tab.
+- **When** the user uses **full-row tap** (full-list mode) or the **dedicated locate icon** on a row, **then** the UI layer: (1) sets the map's **highlighted tile** to that unit's projected civilian tile key; (2) **pans and centers** the map viewport so that the unit's tile is visible and centered; (3) **switches the active region tab** to the unit's region if it differs from the current tab. Full-row tap in full-list mode also dismisses the panel first; the locate icon does not.
 - **Contract:** The map widget supports `highlightedTileKey` per [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md) and an optional "center on tile" (e.g. `centerOnTileKey` or callback) so the shell can request pan/center when a unit is selected from the panel.
 - **Clearing:** Highlight remains until the user selects another unit, selects a province/tile elsewhere, or closes the panel (implementation may keep or clear highlight on panel close).
 
@@ -62,8 +63,8 @@ For each civilian unit, the panel shows:
 
 - **Selection model:** In tile scope, the panel keeps one selected unit id. Initial selection is the unit id provided by the map marker tap; if missing, the first row in deterministic list order is selected.
 - **Selection swap:** In tile scope, tapping a different row changes selected unit id immediately.
-- **Action target:** In tile scope, row actions (Assign, Cancel, Tile) apply to the selected row only.
-- **Tile button:** In tile scope, the selected row includes a **Tile** button that opens province/tile detail for that selected row’s rendered tile (`assignedTileKey` when present, otherwise `tileKey`).
+- **Action target:** In tile scope, row actions (**Assign**, **Cancel**) apply to the selected row only.
+- **Header actions (tile scope only):** The panel title row includes **Tile** then **Train** (left to right after the title). **Tile** opens province/tile detail for the **currently selected** unit’s **rendered tile** (`assignedTileKey` when present, otherwise `tileKey`). When there is no selected unit or no rendered tile key, **Tile** is disabled (or equivalent). **Full-list mode** (panel opened from the rail, no tile scope): the title row has **Train** only—no **Tile** in the header.
 
 ---
 
@@ -77,7 +78,7 @@ For each civilian unit, the panel shows:
 
 - **Province lookup:** Always use prefixed province id (`regionId|provinceId`) derived from `Unit.tileKey` per [world-model-identity.md](../game/world-model-identity.md). Never use bare province id alone. **Display:** Use province **name** only (e.g. `Province.displayName` from the game's region data); do not show raw province id or prefixed id to the user.
 - **Region display:** When showing location, always include the region (e.g. "Old World", "New World") so the player can correlate with the map tabs.
-- **Work target labels:** Work targets come from `CurrentWork.workTarget` (e.g. `build_improvement`, `explore`). UI may show human-readable labels (e.g. "Build improvement", "Explore") from a small mapping; raw id is acceptable for MVP.
+- **Work target labels:** Work targets come from `CurrentWork.workTarget` (e.g. `build_improvement`, `explore`). The UI **must** display a **localized human-readable label** for every known `workTarget` id via a fixed mapping table; unknown ids fall back to the id string only for diagnostics.
 
 ---
 
@@ -89,7 +90,13 @@ For each civilian unit, the panel shows:
 
 - **Given** the Civilian Units panel is open and the human player has zero civilian units, **when** the panel is displayed, **then** the UI layer shows an empty state message (e.g. "No civilian units") and does not show any unit rows.
 
-- **Given** the Civilian Units panel is open and the user clicks a unit row (or a "Locate" control for that unit), **when** that unit has a non-null `tileKey`, **then** the UI layer sets the map's highlighted tile to that unit's `tileKey`, pans and centers the map so that tile is visible and centered, and switches the active region tab to the unit's region if it differs from the current tab.
+- **Given** the Civilian Units panel is open and the user clicks a unit row (or a "Locate" control for that unit), **when** that unit has a non-null projected civilian tile key, **then** the UI layer sets the map's highlighted tile to that projected tile, pans and centers the map so that tile is visible and centered, and switches the active region tab to the unit's region if it differs from the current tab.
+
+- **Given** the Civilian Units panel is open in **full-list** mode, **when** the user taps the **row body** (not the locate icon) for a unit with a projected tile key, **then** the UI layer emits **`ClosePanelEvent`** before **`LocateMapTileEvent`** (locate on the next frame).
+
+- **Given** the Civilian Units panel is open (full-list or tile-scoped) with at least one listed unit, **when** the user taps the per-row **Locate** icon for that unit, **then** the UI layer emits **`LocateMapTileEvent`** with that unit’s projected civilian tile key and region id and does **not** emit **`ClosePanelEvent`** from that gesture.
+
+- **Given** the civilian units panel is open in **tile scope** with at least two listed rows and unit `A` selected, **when** the user taps the **Locate** icon on row `B` (not selected), **then** the UI layer still emits **`LocateMapTileEvent`** for `B`’s projected tile (the icon is not gated on selection).
 
 - **Given** the user has just selected a unit in the Civilian Units panel whose `tileKey` is in region R and the visible map tab is for a different region, **when** the panel triggers locate, **then** the UI layer switches the active region tab to R so the correct map is shown, then applies the highlight and pan/center on that map.
 
@@ -117,9 +124,23 @@ For each civilian unit, the panel shows:
 
 - **Given** the user taps a civilian map marker for tile key `T`, **when** the civilian units panel opens in tile scope, **then** the UI layer lists only player-owned civilian units whose rendered tile equals `T`.
 
-- **Given** the civilian units panel is open in tile scope with selected unit `A`, **when** the user taps row `B`, **then** the UI layer updates selection to `B` and uses `B` as the target for panel actions.
+- **Given** the civilian units panel is open in tile scope with selected unit `A`, **when** the user taps row `B`, **then** the UI layer updates selection to `B` and uses `B` as the target for row actions and for the header **Tile** action.
 
-- **Given** the civilian units panel is open in tile scope and a unit row is selected, **when** the user presses **Tile**, **then** the UI layer opens province/tile detail for the selected row’s rendered tile key.
+- **Given** the civilian units panel is open in tile scope and a unit row is selected, **when** the user presses **Tile** in the panel header, **then** the UI layer opens province/tile detail for the selected row’s rendered tile key.
+
+- **Given** the civilian units panel is open in **full-list** mode (no tile scope), **when** the panel is displayed, **then** the title row shows **Train** only and does not show a header **Tile** button.
+
+- **Given** the civilian units panel is open in tile scope with **no** listed units for that tile (empty scoped list), **when** the panel is displayed, **then** the header **Tile** control does not open detail incorrectly (disabled or non-actionable).
+
+- **Given** the human player has a **pending** `WorkOrder` for a civilian with a **material-backed** target (e.g. Builder `build_improvement` or `upgrade_town`, Engineer / Rail Builder targets with a non-null material map from `WorkOrderCostCalculator`), **when** the Civilian Units panel renders that row, **then** the UI layer shows **Assigned to** with work label and location and displays **each required commodity** with **`ResourceIcon` and quantity**, and does **not** show the literal suffix **` (pending)`** for that row.
+
+- **Given** a **pending** `purchase_land` order and a resolvable `resourceId` on `targetTileKey` in `game.worldState.resourceByTileKey`, **when** the panel renders that row, **then** the UI layer shows the **treasury** cost using the app’s standard treasury presentation (`trainUnits_treasury` style), and does **not** use a commodity `ResourceIcon` for the cash amount.
+
+- **Given** a **pending** order with **no** material cost and **not** `purchase_land` (e.g. Explorer `explore`), **when** the panel renders, **then** the UI layer still shows **` (pending)`** (or equivalent) after the work label and location.
+
+- **Given** a unit is **working** with `currentWork` set, **when** the panel renders that row, **then** the UI layer shows progress as today and **does not** add a commodity cost preview strip for that row.
+
+- **Given** any row showing a pending cost preview (materials or treasury), **when** the panel renders, **then** the UI layer does **not** add stockpile/treasury deficit or “can’t afford” styling (required amounts only).
 
 ---
 

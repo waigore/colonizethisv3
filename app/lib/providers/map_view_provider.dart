@@ -1,8 +1,10 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/map_terrain_config.dart';
+import '../perf/app_perf_trace.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
@@ -54,44 +56,87 @@ final mapProvinceNamesVisibleProvider =
 final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
   final game = ref.watch(currentGameProvider);
   if (game == null) return null;
-  final service = ref.watch(gameServiceProvider);
-  final mapData = service.getMapData(game.id);
-  if (mapData == null) {
-    throw StateError('Missing required map data for gameId=${game.id}');
-  }
-  final colorOverride = greatPowerColorOverrideFromGame(game);
-
-  final humanPlayerId =
-      game.players.where((p) => p.isHuman).map((p) => p.id).firstOrNull ??
-      game.players.first.id;
-  final topology = mapData.combinedTopology;
-  final view = buildPlayerView(game, topology, humanPlayerId);
-
-  final visibilityByTile = <String, TileVisibility>{};
-  view.visibilityByTile.forEach((tileKey, level) {
-    late TileVisibility visibility;
-    switch (level) {
-      case VisibilityLevel.fullyVisible:
-        visibility = TileVisibility.visible;
-        break;
-      case VisibilityLevel.fogged:
-      case VisibilityLevel.revealed:
-        visibility = TileVisibility.fogged;
-        break;
-      case VisibilityLevel.unknown:
-        visibility = TileVisibility.unrevealed;
-        break;
+  return ctAppPerfSync('mapViewDataProvider.build', () {
+    final service = ref.watch(gameServiceProvider);
+    final mapData = service.getMapData(game.id);
+    if (mapData == null) {
+      throw StateError('Missing required map data for gameId=${game.id}');
     }
-    visibilityByTile[tileKey] = visibility;
-  });
+    final colorOverride = greatPowerColorOverrideFromGame(game);
 
-  return buildInitGameMapViewData(
-    game: game,
-    tileMapByRegion: mapData.tileMapByRegion,
-    topologyByRegion: mapData.topologyByRegion,
-    cellSize: MapTerrainConfig.instance.mapCellSizePx,
-    greatPowerColorOverride: colorOverride,
-    visibilityByTile: visibilityByTile,
-    warpLinks: mapData.warpLinks,
-  );
+    final humanPlayerId =
+        game.players.where((p) => p.isHuman).map((p) => p.id).firstOrNull ??
+        game.players.first.id;
+    final topology = mapData.combinedTopology;
+    final view = buildPlayerView(game, topology, humanPlayerId);
+    final humanPlayer =
+        game.players.where((p) => p.id == humanPlayerId).firstOrNull ??
+        game.players.first;
+
+    final visibilityByTile = <String, TileVisibility>{};
+    view.visibilityByTile.forEach((tileKey, level) {
+      late TileVisibility visibility;
+      switch (level) {
+        case VisibilityLevel.fullyVisible:
+          visibility = TileVisibility.visible;
+          break;
+        case VisibilityLevel.fogged:
+        case VisibilityLevel.revealed:
+          visibility = TileVisibility.fogged;
+          break;
+        case VisibilityLevel.unknown:
+          visibility = TileVisibility.unrevealed;
+          break;
+      }
+      visibilityByTile[tileKey] = visibility;
+    });
+
+    final connectivity = resolveConnectivity(
+      game: game,
+      tileMapByRegion: mapData.tileMapByRegion,
+      topology: topology,
+    );
+    final connectivityForHuman = connectivity[humanPlayer.id];
+    final resourceExtractionUnitsByTile = <String, int>{};
+    if (connectivityForHuman != null) {
+      final portTileKeys = game.worldState.portsByProvinceSeaboard.values
+          .toSet();
+      final prospected =
+          game.worldState.playerProspectedTiles[humanPlayer.id] ??
+          const <String>{};
+      for (final tileKey in connectivityForHuman.connected) {
+        final contribution = computeTileExtractionContributionForPlayer(
+          game: game,
+          tileMapByRegion: mapData.tileMapByRegion,
+          player: humanPlayer,
+          tileKey: tileKey,
+          connectedTileKeys: connectivityForHuman.connected,
+          pathTransportCap: connectivityForHuman.pathTransportCap,
+          connectedByRoadRule: connectivityForHuman.connectedByRoadRule,
+          portTileKeys: portTileKeys,
+          prospectedTileKeys: prospected,
+          capitalRegionId: humanPlayer.capitalTile?.regionId,
+          techCapForPlayer: (id) {
+            final player = game.playerById(id);
+            return extractionCapForUnlocked(player?.techUnlocked);
+          },
+        );
+        if (contribution == null) {
+          continue;
+        }
+        resourceExtractionUnitsByTile[tileKey] = contribution.units;
+      }
+    }
+
+    return buildInitGameMapViewData(
+      game: game,
+      tileMapByRegion: mapData.tileMapByRegion,
+      topologyByRegion: mapData.topologyByRegion,
+      cellSize: MapTerrainConfig.instance.mapCellSizePx,
+      greatPowerColorOverride: colorOverride,
+      visibilityByTile: visibilityByTile,
+      warpLinks: mapData.warpLinks,
+      resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
+    );
+  });
 });

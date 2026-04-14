@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:flutter/material.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/services.dart';
 import 'package:jenny/jenny.dart';
 
@@ -39,8 +40,8 @@ class InterventionDialogueOverlay extends StatefulWidget {
       _InterventionDialogueOverlayState();
 }
 
-class _InterventionDialogueOverlayState extends State<InterventionDialogueOverlay> {
-  static const String _kAsset = 'assets/dialogue/intervention.yarn';
+class _InterventionDialogueOverlayState
+    extends State<InterventionDialogueOverlay> {
   static const String _kIntro = 'DialoguePoint/intervention_intro';
   static const String _kSituation = 'DialoguePoint/intervention_situation';
   static const String _kReactIntervene =
@@ -67,10 +68,10 @@ class _InterventionDialogueOverlayState extends State<InterventionDialogueOverla
   }
 
   Future<void> _runFlow() async {
-    final log = widget.logger ?? appLogger('dialogue');
+    final log = widget.logger ?? packageLogger('dialogue');
     try {
       final bundle = widget.assetBundle ?? rootBundle;
-      final text = await bundle.loadString(_kAsset);
+      final text = await bundle.loadString(kDialogueInterventionAsset);
       final project = YarnProject()..parse(text);
       for (final node in [
         _kIntro,
@@ -80,7 +81,9 @@ class _InterventionDialogueOverlayState extends State<InterventionDialogueOverla
         _kReactProtest,
       ]) {
         if (!project.nodes.containsKey(node)) {
-          throw StateError('Intervention node "$node" missing in $_kAsset');
+          throw StateError(
+            'Intervention node "$node" missing in $kDialogueInterventionAsset',
+          );
         }
       }
       final view = CtDialogueView(logger: log);
@@ -151,11 +154,7 @@ class _InterventionDialogueOverlayState extends State<InterventionDialogueOverla
       if (!mounted) return;
       widget.onDecisions(List<InterventionDecision>.from(_decisions));
     } catch (e, st) {
-      log.e(
-        'ui:dialogue: intervention flow failed',
-        error: e,
-        stackTrace: st,
-      );
+      log.e('ui:dialogue: intervention flow failed', error: e, stackTrace: st);
       if (mounted) setState(() => _loadError = e);
     }
   }
@@ -298,10 +297,7 @@ class _InterventionDialogueOverlayState extends State<InterventionDialogueOverla
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (line != null) ...[
-                Text(
-                  line.text,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
+                Text(line.text, style: Theme.of(context).textTheme.bodyLarge),
                 const SizedBox(height: 16),
                 Align(
                   alignment: Alignment.centerRight,

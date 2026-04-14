@@ -40,9 +40,9 @@ Turns before cutoff = `(cutoffYear - startYear) / yearsPerTurnBeforeCutoff` (e.g
 
 ## Configuration Layers
 
-- **Base:** Default values (GDD 01). Single source for MVP.
-- **MVP:** Default only; turn-time mapping is not read from the ruleset at game creation. Game setup uses `TurnTimeMapping.gdd01`. See [game-setup-pipeline.md](../program/game-setup-pipeline.md) step 7e and [ruleset-config.md](../program/ruleset-config.md).
-- **Scenario:** May override (post-MVP). Scenarios not in MVP scope.
+- **Base:** Default values (GDD 01). Single source for current product.
+- **current product:** Default only; turn-time mapping is not read from the ruleset at game creation. Game setup uses `TurnTimeMapping.gdd01`. See [game-setup-pipeline.md](../program/game-setup-pipeline.md) step 7e and [ruleset-config.md](../program/ruleset-config.md).
+- **Scenario:** May override (later). Scenarios not in current product scope.
 - **Immutability:** Formula fixed at game creation; cannot change during play.
 
 ## Edge cases

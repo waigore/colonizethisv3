@@ -1,14 +1,29 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_save/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:hive/hive.dart';
 
-final _log = saveLogger();
+import 'incompatible_save_format_exception.dart';
+
+final _log = packageLogger();
 
 const String _suffixTileMapByRegion = '_tileMapByRegion';
 const String _suffixTopologyByRegion = '_topologyByRegion';
 const String _suffixCombinedTopology = '_combinedTopology';
 const String _suffixWarpLinks = '_warpLinks';
+const String _saveFormatVersionKey = 'saveFormatVersion';
+const String _saveGamePayloadKey = 'game';
+
+const List<String> _mapDataKeySuffixes = <String>[
+  _suffixTileMapByRegion,
+  _suffixTopologyByRegion,
+  _suffixCombinedTopology,
+  _suffixWarpLinks,
+];
+
+/// Current save format version for game envelopes written by [GameSaveAdapter].
+const int kSaveFormatVersion = 1;
+const Set<int> _supportedSaveFormatVersions = {kSaveFormatVersion};
 
 /// Fixed Hive key stem for the single auto-save slot. Not listed in [listGameIds].
 /// See SPEC/program/save-load.md § Auto-save slot.
@@ -17,10 +32,13 @@ const String kAutoSaveSlotId = '__colonizethis_autosave';
 /// Saves and loads [Game] state to/from a Hive box. One entry per game, keyed by [Game.id].
 /// Map data (tile maps, topology) is required for playable saves. See SPEC/program/save-load.md.
 class GameSaveAdapter {
-  /// Saves [game] to [box]. Key = game.id, value = game.toJson().
+  /// Saves [game] to [box] as a versioned envelope.
   void save(Box<dynamic> box, Game game) {
     _log.i('saving gameId=${game.id}');
-    box.put(game.id, game.toJson());
+    box.put(game.id, {
+      _saveFormatVersionKey: kSaveFormatVersion,
+      _saveGamePayloadKey: game.toJson(),
+    });
     _log.i('saved gameId=${game.id}');
   }
 
@@ -35,7 +53,10 @@ class GameSaveAdapter {
     List<WarpLink>? warpLinks,
   }) {
     _log.i('saving auto-save slot logicalGameId=${game.id}');
-    box.put(kAutoSaveSlotId, game.toJson());
+    box.put(kAutoSaveSlotId, {
+      _saveFormatVersionKey: kSaveFormatVersion,
+      _saveGamePayloadKey: game.toJson(),
+    });
     saveMapData(
       box,
       kAutoSaveSlotId,
@@ -78,7 +99,8 @@ class GameSaveAdapter {
     if (box.containsKey(kAutoSaveSlotId)) {
       return;
     }
-    final hasOrphan = box.containsKey(kAutoSaveSlotId + _suffixTileMapByRegion) ||
+    final hasOrphan =
+        box.containsKey(kAutoSaveSlotId + _suffixTileMapByRegion) ||
         box.containsKey(kAutoSaveSlotId + _suffixTopologyByRegion) ||
         box.containsKey(kAutoSaveSlotId + _suffixCombinedTopology) ||
         box.containsKey(kAutoSaveSlotId + _suffixWarpLinks);
@@ -97,14 +119,56 @@ class GameSaveAdapter {
       return null;
     }
     try {
-      final map = Map<String, dynamic>.from(raw as Map);
-      final game = Game.fromJson(map);
+      final envelope = Map<String, dynamic>.from(raw as Map);
+      final versionRaw = envelope[_saveFormatVersionKey];
+      if (versionRaw is! int ||
+          !_supportedSaveFormatVersions.contains(versionRaw)) {
+        throw IncompatibleSaveFormatException(
+          'Incompatible save format for gameId=$gameId version=$versionRaw',
+        );
+      }
+      final gameRaw = envelope[_saveGamePayloadKey];
+      if (gameRaw is! Map) {
+        throw IncompatibleSaveFormatException(
+          'Invalid save payload for gameId=$gameId',
+        );
+      }
+      final game = Game.fromJson(Map<String, dynamic>.from(gameRaw));
       _log.i('loaded gameId=$gameId');
       return game;
     } catch (e, st) {
       _log.e('load failed gameId=$gameId', error: e, stackTrace: st);
       return null;
     }
+  }
+
+  /// Loads [gameId] or throws [IncompatibleSaveFormatException] when the stored
+  /// [saveFormatVersion] is missing or unsupported, or the payload is not a map.
+  /// Returns null only when [gameId] is absent from [box].
+  Game? loadStrict(Box<dynamic> box, String gameId) {
+    _log.i('loading strict gameId=$gameId');
+    final raw = box.get(gameId);
+    if (raw == null) {
+      _log.w('gameId=$gameId not found');
+      return null;
+    }
+    final envelope = Map<String, dynamic>.from(raw as Map);
+    final versionRaw = envelope[_saveFormatVersionKey];
+    if (versionRaw is! int ||
+        !_supportedSaveFormatVersions.contains(versionRaw)) {
+      throw IncompatibleSaveFormatException(
+        'Incompatible save format for gameId=$gameId version=$versionRaw',
+      );
+    }
+    final gameRaw = envelope[_saveGamePayloadKey];
+    if (gameRaw is! Map) {
+      throw IncompatibleSaveFormatException(
+        'Invalid save payload for gameId=$gameId',
+      );
+    }
+    final game = Game.fromJson(Map<String, dynamic>.from(gameRaw));
+    _log.i('loaded strict gameId=$gameId');
+    return game;
   }
 
   /// Lists all game ids stored in [box]. Excludes internal map-data keys.
@@ -130,35 +194,15 @@ class GameSaveAdapter {
     final result = <String>[...definiteGameIds];
 
     for (final key in allKeys) {
-      if (key.endsWith(_suffixTileMapByRegion)) {
-        final prefix = key.substring(
-          0,
-          key.length - _suffixTileMapByRegion.length,
-        );
+      for (final suffix in _mapDataKeySuffixes) {
+        if (!key.endsWith(suffix)) {
+          continue;
+        }
+        final prefix = key.substring(0, key.length - suffix.length);
         if (prefix != kAutoSaveSlotId && !definiteGameIds.contains(prefix)) {
           result.add(key);
         }
-      } else if (key.endsWith(_suffixTopologyByRegion)) {
-        final prefix = key.substring(
-          0,
-          key.length - _suffixTopologyByRegion.length,
-        );
-        if (prefix != kAutoSaveSlotId && !definiteGameIds.contains(prefix)) {
-          result.add(key);
-        }
-      } else if (key.endsWith(_suffixCombinedTopology)) {
-        final prefix = key.substring(
-          0,
-          key.length - _suffixCombinedTopology.length,
-        );
-        if (prefix != kAutoSaveSlotId && !definiteGameIds.contains(prefix)) {
-          result.add(key);
-        }
-      } else if (key.endsWith(_suffixWarpLinks)) {
-        final prefix = key.substring(0, key.length - _suffixWarpLinks.length);
-        if (prefix != kAutoSaveSlotId && !definiteGameIds.contains(prefix)) {
-          result.add(key);
-        }
+        break;
       }
     }
 

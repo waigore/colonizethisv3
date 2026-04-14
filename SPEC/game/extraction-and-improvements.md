@@ -186,7 +186,7 @@ Extractable commodities are exactly the same as in Imp2. See [commodity-catalog.
   When the system computes effective yield
   Then **town development level does not reduce** yield: the effective yield equals `min(P, MinTransport)`
 
-- Given a new game where each Great Power receives four bootstrap `grain` tiles at improvement level `1` in the capital province per [tile-map-and-generation.md](tile-map-and-generation.md) § Great Power starting grain (bootstrap) and default tech allows level-1 extraction
+- Given a new game where each Great Power receives four bootstrap `grain` tiles at improvement level `1` in the capital province per [tile-map-and-generation.md](tile-map-and-generation.md) § Great Power starting grain (bootstrap), and the per-resource grain extraction cap is **1** when no grain-cap gathering tech is unlocked per [tech-and-extraction-cap.md](tech-and-extraction-cap.md)
   When the system runs the **first** Extraction phase after setup
   Then each Great Power's extraction totals include **exactly 4** units of commodity `grain` from those four tiles (land/same-region bucket), absent unrelated rules that would remove connectivity
 

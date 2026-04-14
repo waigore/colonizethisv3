@@ -13,10 +13,10 @@ void _runWorkPhase(
   applyCompletedWorkTarget,
 ) {
   final workOrders = state.workOrders;
-  final tileState = state.tileState;
-  final oldUnitsById = state.oldUnitsById;
-  final newUnitsById = state.newUnitsById;
-  final purchasedTilesByTileKey = state.purchasedTilesByTileKey;
+  final tileState = state.work.tileState;
+  final oldUnitsById = state.work.oldUnitsById;
+  final newUnitsById = state.work.newUnitsById;
+  final purchasedTilesByTileKey = state.work.purchasedTilesByTileKey;
 
   for (final player in state.game.players) {
     var stockpile = player.stockpile;
@@ -118,7 +118,7 @@ void _runWorkPhase(
                 return totalTurnsForWork(target, fortLevel: fortLevel);
               },
             );
-          case 'build_rail':
+          case kWorkTargetBuildRail:
             return (
               target: target,
               allowedForUnitType: (t) =>
@@ -354,19 +354,20 @@ void _runWorkPhase(
         final prov = provinceById(u.locationProvinceId);
         final fortLevel = prov?.fortLevel ?? 0;
         if (fortLevel == 1 &&
-            player.techUnlocked?['mine_engineering'] != true) {
+            player.techUnlocked?[kTechIdMineEngineering] != true) {
           _log.d(
             'build_fort skipped - Mine Engineering required for fort level 2',
           );
           continue;
         }
-        if (fortLevel == 2 && player.techUnlocked?['modern_forts'] != true) {
+        if (fortLevel == 2 &&
+            player.techUnlocked?[kTechIdModernForts] != true) {
           _log.d('build_fort skipped - Modern Forts required for fort level 3');
           continue;
         }
         if (applyStandardWorkOrder(kWorkTargetBuildFort)) continue;
       }
-      if (workTarget == 'build_rail') {
+      if (workTarget == kWorkTargetBuildRail) {
         final terrain = terrainTypeForTileKey(
           state.tileMapByRegion,
           targetTileKey,
@@ -380,14 +381,14 @@ void _runWorkPhase(
           _log.d('build_rail skipped - $railReason');
           continue;
         }
-        if (applyStandardWorkOrder('build_rail')) continue;
+        if (applyStandardWorkOrder(kWorkTargetBuildRail)) continue;
       }
       if (workTarget == kWorkTargetUpgradeTown) {
         if (applyStandardWorkOrder(kWorkTargetUpgradeTown)) continue;
       }
     }
 
-    state.updatedPlayers.add(
+    state.work.updatedPlayers.add(
       player.copyWith(
         stockpile: stockpile,
         workerPool: workers,

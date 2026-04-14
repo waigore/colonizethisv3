@@ -62,6 +62,9 @@ const Color _kProvinceLabelShadowColor = Color(0x8A000000);
 
 /// Fogged land tiles: modulate alpha for resource icons (linear 0–1).
 const double _kFoggedResourceIconModulateAlpha = 0.6;
+const double _kExtractionDiscRadiusPx = 3.0;
+const double _kExtractionDiscStepXPx = 2.5;
+const double _kExtractionDiscStartInsetXPx = 2.0;
 
 /// Political (faction) border stroke — indigo, visible over terrain.
 const Color _kFactionPoliticalBorderColor = Color(0xFF1A237E);
@@ -74,6 +77,176 @@ const Color _provinceLabelPlateColor = Color.fromRGBO(0, 0, 0, 0.55);
 const double _provinceLabelIconRenderedPx = 12;
 const double _provinceLabelIconGapPx = 3;
 const double _provinceLabelTextIconGapPx = 4;
+const String _provinceLabelCapitalIconId = 'map_capital_star';
+const String _seaZoneLabelWarpIconId = 'map_warp_zone';
+
+/// Sea zone name plates (light blue, black text). SPEC/ui/map-widget.md.
+const Color _seaZoneLabelPlateColor = Color.fromRGBO(173, 216, 230, 0.55);
+const Color _seaZoneLabelTextColor = Color(0xFF000000);
+
+/// World-space center for a sea zone name plate (inverse zoom applied to size).
+///
+/// Prefers placement above the centroid cell without overlapping it; if that
+/// would clip the map top, uses below. Clamps into the region world rect and
+/// resolves residual overlap with the centroid cell. SPEC/ui/map-widget.md § Sea
+/// zone name plates; issue #1756.
+Offset resolveSeaZoneNamePlateCenterWorld({
+  required int centroidTileX,
+  required int centroidTileY,
+  required double cellSize,
+  required int gridWidth,
+  required int gridHeight,
+  required double plateWidthLogicalPx,
+  required double plateHeightLogicalPx,
+  required double cameraZoom,
+}) {
+  final invZ = 1.0 / cameraZoom.clamp(0.25, 4.0);
+  final ww = plateWidthLogicalPx * invZ / 2;
+  final hh = plateHeightLogicalPx * invZ / 2;
+  final mapW = gridWidth * cellSize;
+  final mapH = gridHeight * cellSize;
+  final cellL = centroidTileX * cellSize;
+  final cellT = centroidTileY * cellSize;
+  final cellR = cellL + cellSize;
+  final cellB = cellT + cellSize;
+  const gap = 1.0;
+
+  var cx = (centroidTileX + 0.5) * cellSize;
+
+  bool overlapsCell(double pcx, double pcy) {
+    final l = pcx - ww;
+    final r = pcx + ww;
+    final t = pcy - hh;
+    final b = pcy + hh;
+    return !(r <= cellL || l >= cellR || b <= cellT || t >= cellB);
+  }
+
+  ({double x, double y}) clampPlateCenter(double pcx, double pcy) {
+    var x = pcx;
+    var y = pcy;
+    var l = x - ww;
+    var r = x + ww;
+    if (l < 0) {
+      x -= l;
+    }
+    r = x + ww;
+    if (r > mapW) {
+      x -= r - mapW;
+    }
+    l = x - ww;
+    if (l < 0) {
+      x = ww;
+    }
+    var t = y - hh;
+    var b = y + hh;
+    if (t < 0) {
+      y -= t;
+    }
+    b = y + hh;
+    if (b > mapH) {
+      y -= b - mapH;
+    }
+    t = y - hh;
+    if (t < 0) {
+      y = hh;
+    }
+    return (x: x, y: y);
+  }
+
+  // Above: plate bottom <= cell top - gap.
+  final aboveY = cellT - gap - hh;
+  final aboveTop = aboveY - hh;
+  var useAbove = aboveTop >= 0;
+  var cy = useAbove ? aboveY : cellB + gap + hh;
+
+  var clamped = clampPlateCenter(cx, cy);
+  cx = clamped.x;
+  cy = clamped.y;
+
+  if (overlapsCell(cx, cy)) {
+    if (useAbove) {
+      cy = cellB + gap + hh;
+    } else if (aboveTop >= 0) {
+      cy = aboveY;
+    }
+    clamped = clampPlateCenter(cx, cy);
+    cx = clamped.x;
+    cy = clamped.y;
+  }
+
+  for (var i = 0; i < 48 && overlapsCell(cx, cy); i++) {
+    final midY = (cellT + cellB) / 2;
+    if (cy < midY) {
+      cy -= 1;
+    } else {
+      cy += 1;
+    }
+    clamped = clampPlateCenter(cx, cy);
+    cx = clamped.x;
+    cy = clamped.y;
+  }
+
+  return Offset(cx, cy);
+}
+
+/// True when `(x, y)` is within Chebyshev distance ≤ 2 of a fleet marker that
+/// applies the naval move-draft reveal halo. SPEC/ui/map-widget.md.
+bool isCellUnderFleetRevealHalo({
+  required int x,
+  required int y,
+  required List<FleetTileMarkerView> fleetTileMarkers,
+}) {
+  for (final m in fleetTileMarkers) {
+    if (!m.applyFleetRevealHalo) {
+      continue;
+    }
+    if (math.max((x - m.x).abs(), (y - m.y).abs()) <= 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Effective terrain visibility for map painting (fog + fleet reveal halo).
+///
+/// Used by the region map renderer and tests for sea zone label gating (#1756).
+TileVisibility visibilityForTerrainForMapCell({
+  required CtMapVisibilityMode visibilityMode,
+  required CellViewData cell,
+  required List<FleetTileMarkerView> fleetTileMarkers,
+}) {
+  if (visibilityMode != CtMapVisibilityMode.playerConstrained) {
+    return cell.visibility;
+  }
+  if (isCellUnderFleetRevealHalo(
+    x: cell.x,
+    y: cell.y,
+    fleetTileMarkers: fleetTileMarkers,
+  )) {
+    return TileVisibility.visible;
+  }
+  return cell.visibility;
+}
+
+/// Resolves map province-label icon ids.
+///
+/// Capital icon is prepended, then optional presence icons follow.
+List<String> resolveProvinceLabelIconIds({
+  required bool isCapital,
+  ProvinceUnitPresenceView? presence,
+}) {
+  final ids = <String>[if (isCapital) _provinceLabelCapitalIconId];
+  ids.addAll(resolveProvinceLabelPresenceIconIds(presence));
+  return ids;
+}
+
+/// Resolves optional prefix icon ids for sea-zone labels.
+List<String> resolveSeaZoneLabelPrefixIconIds({required bool isWarpZone}) {
+  if (!isWarpZone) {
+    return const <String>[];
+  }
+  return const <String>[_seaZoneLabelWarpIconId];
+}
 
 /// Resolves map province-label presence icon ids from province presence data.
 ///
@@ -109,6 +282,11 @@ bool shouldWrapProvinceLabelPresenceIcons({
       (iconCount * iconRenderedPx) + ((iconCount - 1) * iconGapPx);
   final singleLineContentWidth = textWidthPx + textIconGapPx + iconsWidth;
   return singleLineContentWidth > maxWidthPx;
+}
+
+/// Capital labels must keep full text + star visible; do not ellipsize.
+bool shouldEllipsizeProvinceLabelText({required bool isCapital}) {
+  return !isCapital;
 }
 
 /// Returns true when the land-base pass should apply fog darkening.
@@ -154,6 +332,32 @@ bool shouldApplyFogToFeatureOverlay({
   return _isFeatureTerrain(terrain);
 }
 
+/// Returns true when the interior-plains variant base draw should apply fog.
+///
+/// For `tile_plains_*` composition, fog must be applied once across the final
+/// composed result. The base pass intentionally stays un-fogged, and the
+/// variant overlay pass receives fog attenuation when needed.
+bool shouldApplyFogToInteriorPlainsVariantBase({
+  required CtMapVisibilityMode visibilityMode,
+  required TileVisibility tileVisibility,
+}) {
+  return false;
+}
+
+/// Returns true when the interior-plains variant overlay draw should apply fog.
+///
+/// This is the single fog attenuation point for fogged interior-plains
+/// `tile_plains_*` composition to avoid double darkening.
+bool shouldApplyFogToInteriorPlainsVariantOverlay({
+  required CtMapVisibilityMode visibilityMode,
+  required TileVisibility tileVisibility,
+}) {
+  if (visibilityMode != CtMapVisibilityMode.playerConstrained) {
+    return false;
+  }
+  return tileVisibility == TileVisibility.fogged;
+}
+
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
 /// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
 bool _isFeatureTerrain(TerrainType terrain) {
@@ -163,6 +367,29 @@ bool _isFeatureTerrain(TerrainType terrain) {
       terrain == TerrainType.swamp;
 }
 
+final class _PlainsDesertTally {
+  int plains = 0;
+  int desert = 0;
+}
+
+void _tallyDominantLandNeighbor(CellViewData? cell, _PlainsDesertTally tally) {
+  if (cell == null || cell.isSea) {
+    return;
+  }
+  final terrain = cell.terrainType;
+  if (terrain == TerrainType.plains) {
+    tally.plains++;
+    return;
+  }
+  if (terrain == TerrainType.desert) {
+    tally.desert++;
+    return;
+  }
+  if (terrain != null && _isFeatureTerrain(terrain)) {
+    tally.plains++; // Features have plains underneath
+  }
+}
+
 /// Get the dominant adjacent land base type for coastline tileset selection.
 /// Returns 'plains' or 'desert' based on which is more common among neighbors.
 TerrainType? _getDominantAdjacentLandBase(
@@ -170,27 +397,20 @@ TerrainType? _getDominantAdjacentLandBase(
   int y,
   CellViewData? Function(int, int) getCellAt,
 ) {
-  int plainsCount = 0;
-  int desertCount = 0;
+  final tally = _PlainsDesertTally();
 
   for (final dy in [-1, 0, 1]) {
     for (final dx in [-1, 0, 1]) {
-      if (dx == 0 && dy == 0) continue;
-      final cell = getCellAt(x + dx, y + dy);
-      if (cell != null && !cell.isSea) {
-        final terrain = cell.terrainType;
-        if (terrain == TerrainType.plains) {
-          plainsCount++;
-        } else if (terrain == TerrainType.desert) {
-          desertCount++;
-        } else if (terrain != null && _isFeatureTerrain(terrain)) {
-          plainsCount++; // Features have plains underneath
-        }
+      if (dx == 0 && dy == 0) {
+        continue;
       }
+      _tallyDominantLandNeighbor(getCellAt(x + dx, y + dy), tally);
     }
   }
 
-  if (plainsCount >= desertCount) return TerrainType.plains;
+  if (tally.plains >= tally.desert) {
+    return TerrainType.plains;
+  }
   return TerrainType.desert;
 }
 
@@ -233,4 +453,43 @@ enum BaseLayerDisplayMode {
   /// Terrain + resource icons + improvement labels + road/rail labels (`R{n}` when n > 0).
   /// Roads are painted after improvements (on top). Road labels require improvement mode on.
   terrainAndResourcesImprovementsRoads,
+}
+
+/// Returns true when extraction unit discs are allowed for the current base mode.
+bool shouldShowExtractionUnitDiscs({
+  required BaseLayerDisplayMode baseLayerDisplayMode,
+}) {
+  return baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
+}
+
+/// On-map resource icon width/height in world/cell coordinates.
+///
+/// SPEC/ui/map-widget.md § Resource Icons: **one quarter** of [cellSize], capped
+/// at [ResourceIconCache.iconSize] so 64×64 source assets are **never upscaled**
+/// on the map (scale down only).
+double resourceIconDisplaySizePx(double cellSize) {
+  final quarter = cellSize * 0.25;
+  return quarter < ResourceIconCache.iconSize
+      ? quarter
+      : ResourceIconCache.iconSize;
+}
+
+/// Returns circle centers for a right-fan extraction-disc layout.
+List<Offset> extractionDiscCentersForIconRect({
+  required Rect iconRect,
+  required int units,
+  double radius = _kExtractionDiscRadiusPx,
+  double stepX = _kExtractionDiscStepXPx,
+  double startInsetX = _kExtractionDiscStartInsetXPx,
+}) {
+  if (units <= 0) {
+    return const <Offset>[];
+  }
+  final centerY = iconRect.center.dy;
+  final startX = iconRect.right + startInsetX + radius;
+  return List<Offset>.generate(
+    units,
+    (i) => Offset(startX + (i * stepX), centerY),
+    growable: false,
+  );
 }

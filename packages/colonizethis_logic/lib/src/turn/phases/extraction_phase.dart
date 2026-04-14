@@ -30,6 +30,13 @@ Game runExtractionPhase(
     game: state,
     tileMapByRegion: tileMapByRegion,
     connectivityResult: connectivity,
+    techCapForPlayerAndResource: (playerId, resourceId) {
+      final player = state.playerById(playerId);
+      return extractionCapForResourceForUnlocked(
+        player?.techUnlocked,
+        resourceId,
+      );
+    },
     techCapForPlayer: (playerId) {
       final player = state.playerById(playerId);
       return extractionCapForUnlocked(player?.techUnlocked);

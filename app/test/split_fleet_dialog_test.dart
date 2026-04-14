@@ -14,7 +14,7 @@ Widget _openDialogButton(VoidCallback onOpen) {
 void main() {
   suppressLogsForTests();
 
-  Game _minimalGame({
+  Game minimalGame({
     required List<Province> provinces,
     Map<String, String> seaZoneDisplayNameById = const {},
   }) {
@@ -79,7 +79,7 @@ void main() {
     await openDialog(
       tester,
       fleet: fleet,
-      game: _minimalGame(
+      game: minimalGame(
         provinces: const [],
         seaZoneDisplayNameById: const {'oldWorld|s1': 'Adriatic Display'},
       ),
@@ -111,7 +111,7 @@ void main() {
     await openDialog(
       tester,
       fleet: fleet,
-      game: _minimalGame(provinces: const []),
+      game: minimalGame(provinces: const []),
       isHomeFleet: false,
       bus: AppEventBus.create(),
     );
@@ -139,7 +139,7 @@ void main() {
       await openDialog(
         tester,
         fleet: fleet,
-        game: _minimalGame(provinces: const []),
+        game: minimalGame(provinces: const []),
         isHomeFleet: false,
         bus: AppEventBus.create(),
       );
@@ -170,7 +170,7 @@ void main() {
       await openDialog(
         tester,
         fleet: fleet,
-        game: _minimalGame(provinces: const []),
+        game: minimalGame(provinces: const []),
         isHomeFleet: false,
         bus: AppEventBus.create(),
       );
@@ -210,7 +210,7 @@ void main() {
     await openDialog(
       tester,
       fleet: fleet,
-      game: _minimalGame(provinces: const []),
+      game: minimalGame(provinces: const []),
       isHomeFleet: false,
       bus: bus,
     );
@@ -240,7 +240,7 @@ void main() {
     await openDialog(
       tester,
       fleet: fleet,
-      game: _minimalGame(provinces: const []),
+      game: minimalGame(provinces: const []),
       isHomeFleet: false,
       bus: AppEventBus.create(),
     );
@@ -274,7 +274,7 @@ void main() {
     await openDialog(
       tester,
       fleet: fleet,
-      game: _minimalGame(provinces: const []),
+      game: minimalGame(provinces: const []),
       isHomeFleet: false,
       bus: AppEventBus.create(),
     );
@@ -310,7 +310,7 @@ void main() {
     await openDialog(
       tester,
       fleet: fleet,
-      game: _minimalGame(provinces: const []),
+      game: minimalGame(provinces: const []),
       isHomeFleet: true,
       bus: bus,
     );

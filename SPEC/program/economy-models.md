@@ -38,7 +38,7 @@ Turn economic phases (in order):
 | `money_lending` not unlocked | 0 | 0 |
 | `money_lending` unlocked | 500 | −500 |
 
-**Implementation:** `maxDebtForPlayer(Player)` in `packages/colonizethis_logic/lib/src/turn/economy_debt_rules.dart`. The research resolver rejects a slot’s spend if `treasury - spend < -maxDebt`. **`banking`:** prerequisite-only for other techs in MVP; does not change `maxDebtForPlayer` until specified in GDD/TDD.
+**Implementation:** `maxDebtForPlayer(Player)` in `packages/colonizethis_logic/lib/src/turn/economy_debt_rules.dart`. The research resolver rejects a slot’s spend if `treasury - spend < -maxDebt`. **`banking`:** prerequisite-only for other techs in current product; does not change `maxDebtForPlayer` until specified in GDD/TDD.
 
 **Game source of truth:** [tech-tree-labour-economy.md](../game/tech-tree-labour-economy.md) § Effect implementation status. **Resolution:** [research-resolution.md](research-resolution.md).
 
@@ -76,4 +76,4 @@ Unit tests: Stockpile/WorkerPool serialization; resolveRichesToTreasury; resolve
 
 - Stockpile and WorkerPool types must be serializable for save/load.
 - Worker tier definitions, labour values, recruiting/training rules are defined in game/workers-and-population.md; this module references them.
-- **Config:** Program-level in MVP (no JSON rulesets for economy in MVP). Economy-related config (worker tiers, riches list/prices) may move to ruleset per [ruleset-config.md](ruleset-config.md) in a later phase.
+- **Config:** Program-level in current product (no JSON rulesets for economy in current product). Economy-related config (worker tiers, riches list/prices) may move to ruleset per [ruleset-config.md](ruleset-config.md) in a later phase.

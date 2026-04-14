@@ -20,13 +20,6 @@ QuickBattleInput buildQuickBattleInput(
   int seed = 0,
   BattleGeneralAssignment? battleAssignment,
 }) {
-  final assignment = battleAssignment ??
-      assignGeneralsForBattleContext(
-        game: game,
-        ctx: ctx,
-        rng: battleAssignmentRng(game, ctx),
-        ledger: CombatPhaseGeneralLedger(),
-      );
   final region = ctx.regionId == kRegionOldWorld
       ? game.worldState.oldWorld
       : game.worldState.newWorld;

@@ -1,6 +1,6 @@
 # Logging — domain events
 
-**SPEC/program/logging** — Annex to [logging.md](logging.md). Applies whenever **logic** (or another package) emits **game/domain events** consumed by UI, ctdev, ctterm, or tests — e.g. `GameEvent`, `OrderRejectedEvent`, combat result events, diplomacy events.
+**SPEC/program/logging** — Annex to [logging.md](logging.md). Applies whenever **logic** (or another package) emits **game/domain events** consumed by UI, ctdev, or tests — e.g. `GameEvent`, `OrderRejectedEvent`, combat result events, diplomacy events.
 
 ---
 

@@ -1,8 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../economy/economy_production.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
 import '../orders/order_engine.dart';
@@ -20,7 +19,7 @@ export 'turn_resolution_sequence.dart';
 import 'turn_resolver_config.dart';
 export 'turn_resolver_config.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Turn resolver stub (Phase 1 compatibility). Runs phase sequence; only
 /// endOfTurn advances turn number.

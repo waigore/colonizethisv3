@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../setup/capital_choice.dart';
@@ -7,7 +7,7 @@ import '../setup/town_capital_occupancy.dart';
 import '../world/province_lookup.dart';
 import 'capital_reassignment_fatal.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 Game applyCapitalReassignmentAfterCombat(
   Game state,
@@ -56,7 +56,7 @@ Game applyCapitalReassignmentAfterCombat(
       final msg =
           'capital reassignment: province $newProvinceId not found in region $regionId for player ${player.id}';
       _log.e(
-        '$msg',
+        msg,
         error: StateError(msg),
         stackTrace: StackTrace.current,
       );
@@ -69,7 +69,7 @@ Game applyCapitalReassignmentAfterCombat(
           'capital reassignment: missing townTileKey for province $newProvinceId player ${player.id}';
       final err = StateError(msg);
       _log.e(
-        '$msg',
+        msg,
         error: err,
         stackTrace: StackTrace.current,
       );
@@ -83,7 +83,7 @@ Game applyCapitalReassignmentAfterCombat(
       final msg =
           'capital reassignment: invalid townTileKey for province $newProvinceId player ${player.id} raw="$rawTown"';
       _log.e(
-        '$msg',
+        msg,
         error: e,
         stackTrace: st,
       );
@@ -127,7 +127,7 @@ Game applyCapitalReassignmentAfterCombat(
       final msg =
           'capital reassignment: failed to apply new capital for ${player.id}';
       _log.e(
-        '$msg',
+        msg,
         error: e,
         stackTrace: st,
       );

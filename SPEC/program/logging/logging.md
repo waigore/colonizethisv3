@@ -1,6 +1,6 @@
 # Logging (policy)
 
-**SPEC/program/logging** — Host-agnostic rules for **what** to log and **at which level**. Applies to **packages** (`colonizethis_logic`, `colonizethis_ai`, `colonizethis_map`, `colonizethis_data`, `colonizethis_save`, `colonizethis_models` where relevant), **app**, **ctdev**, and **ctterm**. **Where** logs are written (file, UI buffer, session viewer) is defined per host; see [ctdev-logging.md](../ctdev-logging.md) for ctdev sinks and [debug-log-viewer.md](../debug-log-viewer.md) for in-app viewing.
+**SPEC/program/logging** — Host-agnostic rules for **what** to log and **at which level**. Applies to **packages** (`colonizethis_logic`, `colonizethis_ai`, `colonizethis_map`, `colonizethis_data`, `colonizethis_save`, `colonizethis_models` where relevant), **app**, and **ctdev**. **Where** logs are written (file, UI buffer, session viewer) is defined per host; see [ctdev-logging.md](../ctdev-logging.md) for ctdev sinks and [debug-log-viewer.md](../debug-log-viewer.md) for in-app viewing.
 
 ---
 
@@ -15,6 +15,7 @@
 | Ctdev file / Sim Log / pre-sim buffer | [ctdev-logging.md](../ctdev-logging.md) |
 | Test runs (suppress logger) | [test-logging.md](../test-logging.md) |
 | Prefix helper (`CtLogger`, factories) | [colonizethis-logger.md](../colonizethis-logger.md) |
+| Flutter timeline + startup log tokens (new-game → game screen) | [flutter-performance-tracing.md](../flutter-performance-tracing.md) |
 
 ---
 
@@ -27,9 +28,18 @@
 
 ---
 
-## Prefixes
+## Prefixes and package ownership
 
-Use **`colonizethis_logger`** (`logicLogger`, `aiLogger`, `mapLogger`, etc.). Message text must **not** repeat the top-level prefix (avoid `logic: logic: …`).
+Each package is the owner of its own logging prefix and must define exactly one
+package-local constant file at `lib/package_log_prefix.dart` containing
+`kPackageLogPrefix`.
+
+Each package must expose exactly one package-local logging API at
+`lib/package_logger.dart` with signature `CtLogger packageLogger([String? subPrefix])`.
+Package code must use this API for all logger acquisition. Direct/naked
+`Logger(...)` construction in package code is forbidden.
+
+Message text must **not** repeat the top-level prefix (avoid `logic: logic: …`).
 
 | Prefix | Typical ownership |
 |--------|-------------------|
@@ -41,9 +51,12 @@ Use **`colonizethis_logger`** (`logicLogger`, `aiLogger`, `mapLogger`, etc.). Me
 | `app` | Flutter shell, setup flows not in packages |
 | `game` | Flame / in-game components |
 | `ctdev` | Ctdev app lifecycle, sim controller |
-| `tui` | Ctterm (see [ctterm.md](../../tui/ctterm.md)) |
+| package-defined | Any other first-party package not listed above must define its own package prefix in `lib/package_log_prefix.dart` |
 
-Sub-areas may use **dot** sub-prefixes via factories (e.g. `logicLogger('combat')` → `logic.combat` in logger naming; message body still uses stable **tokens** such as `combat battle_start` for grep). Align **session log filter** lists with [session_log_buffer](../../../packages/session_log_buffer/lib/session_log_buffer.dart) `knownPrefixes`.
+Sub-areas may use dot sub-prefixes via package-local `packageLogger` factories
+(e.g. `packageLogger('combat')` -> `logic.combat` in logger naming; message body
+still uses stable tokens such as `combat battle_start` for grep). Align session
+log filter lists with [session_log_buffer](../../../packages/session_log_buffer/lib/session_log_buffer.dart) `knownPrefixes`.
 
 ---
 
@@ -60,14 +73,16 @@ Sub-areas may use **dot** sub-prefixes via factories (e.g. `logicLogger('combat'
 All hosts consume the **same** `Logger` stream from packages; hosts only differ in **outputs**:
 
 - **ctdev:** Day file + Sim Log (info+, capped); see [ctdev-logging.md](../ctdev-logging.md).
-- **app / ctterm:** Session buffer for debug viewer; configure listeners at startup per [debug-log-viewer.md](../debug-log-viewer.md).
+- **app:** Session buffer for debug viewer; configure listeners at startup per [debug-log-viewer.md](../debug-log-viewer.md).
 
 ---
 
 ## Acceptance criteria
 
-- **Given** code in packages, app, ctdev, or ctterm that implements a feature described in an annex, **when** that feature runs in a dev configuration with file/debug logging enabled, **then** emitted lines follow the **info vs debug** split and **prefix** rules in this document and the relevant annex.
+- **Given** code in packages, app, or ctdev that implements a feature described in an annex, **when** that feature runs in a dev configuration with file/debug logging enabled, **then** emitted lines follow the **info vs debug** split and **prefix** rules in this document and the relevant annex.
 - **Given** a new PR that touches logging behavior, **when** reviewers use [CONTRIBUTING.md](../../../CONTRIBUTING.md) checklist, **then** they confirm alignment with **SPEC/program/logging/** and linked sink specs.
+- **Given** any first-party package in this repository, **when** package logging setup is reviewed, **then** the package contains `lib/package_log_prefix.dart` defining `kPackageLogPrefix` and `lib/package_logger.dart` defining `packageLogger`.
+- **Given** CI quality checks run for a pull request, **when** any package code uses naked `Logger(...)` instead of the package API, **then** CI fails with a blocking convention error.
 
 ---
 

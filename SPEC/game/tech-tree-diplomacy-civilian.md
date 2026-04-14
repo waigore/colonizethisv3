@@ -14,16 +14,16 @@ The **diplomacy and civilian tech table in this doc is the GDD source of truth**
 
 | id | name | era | prerequisites | effects |
 |----|------|-----|---------------|--------|
-| diplomatic_expertise | Diplomatic Expertise | 1 | — | Offer embassies to Minor Nations; Merchants, Engineers, Builders may work there |
-| merchant_companies | Merchant Companies | 1 | — | Construct Merchant units; buy land in Minor Nations |
-| national_bureaucracy | National Bureaucracy | 2 | printing_press, money_lending, diplomatic_expertise | Builders may upgrade provincial towns; contributes to raising general cap to at least 3 per [military-generals.md](military-generals.md) |
-| propaganda | Propaganda | 3 | national_bureaucracy, university | Decreases diplomatic penalties for declaring war |
-| nationalism | Nationalism | 3 | propaganda, master_artisans, modern_forts | Deployment limit 12 regiments (vs 10); general adds more; raises general cap to at least 4 per [military-generals.md](military-generals.md) |
-| empire_building | Empire Building | 4 | nationalism, banking | Ask Great Powers to join your empire peacefully |
+| diplomatic_expertise | Diplomatic Expertise | 1 | — | Enables: embassy overture to Minor Nations and civilian work access in embassy-linked Minor Nations (Merchants, Engineers, Builders). Unlocks: prerequisite for `national_bureaucracy`. |
+| merchant_companies | Merchant Companies | 1 | — | Enables: Merchant civilian unit construction and `purchase_land` work orders in Minor Nations/Tribes when an embassy exists and the parties are not at war. Unlocks: prerequisite for `trade_fairs`. |
+| national_bureaucracy | National Bureaucracy | 2 | printing_press, money_lending, diplomatic_expertise | Enables: Builder `upgrade_town` work order for provincial towns. Improves: general cap floor to at least **3** per [military-generals.md](military-generals.md). Unlocks: prerequisite for `propaganda`. |
+| propaganda | Propaganda | 3 | national_bureaucracy, university | Improves: third-party diplomatic protest penalty against a war aggressor from **-10** to **-5** relation score when the aggressor has `propaganda` (per diplomacy lookup constants). Unlocks: prerequisite for `nationalism`. |
+| nationalism | Nationalism | 3 | propaganda, master_artisans, modern_forts | **Improves:** battle **deployment base limit** to **12** regiments (vs **10**; general medals still **+1** regiment each per [military-generals.md](military-generals.md)). **Improves:** **general cap** floor to at least **4**. **Unlocks:** prerequisite for `empire_building`. |
+| empire_building | Empire Building | 4 | nationalism, banking | **Enables:** **Join Empire** diplomatic overture toward a **nearly defeated** Great Power (≤**3** provinces owned, **original capital not owned by target**) per [diplomacy.md](diplomacy.md). |
 
 ---
 
-## Tech costs and prerequisites (MVP)
+## Tech costs and prerequisites (current product)
 
 Tech costs and prerequisite ids for diplomacy/civilian techs are defined by the **tech table in this doc** (source of truth). **Implementation:** The program-level tech catalog (e.g. `colonizethis_data`) uses the same structure as other techs: fixed `cost` and `prerequisiteIds` per this table. When diplomacy/civilian techs are added to the catalog, prerequisite ids such as `printing_press` and `money_lending` are defined there (or in a shared catalog that includes labour/civilian techs). **Ruleset override** for tech costs and prereqs is deferred; when added, document in [ruleset-config.md](ruleset-config.md) and in the program ruleset-config.
 
@@ -37,7 +37,8 @@ When a Great Power that **declared war** (the aggressor in an intervention conte
 
 - **Diplomatic Expertise:** Unlocks embassy overture and allows civilian units to work in Minor Nations with embassy.
 - **Merchant Companies:** Unlocks building Merchant civilian unit. **Purchasing land** (Merchant `purchase_land` work order) in a Minor Nation or Tribe requires Merchant Companies **and** an **embassy** with that Minor/Tribe (see [diplomacy.md](diplomacy.md), [civilian-units.md](civilian-units.md)).
-- **Empire Building:** Unlocks Join Empire (GP can ask another GP to join when that target is **nearly defeated** as defined in [diplomacy.md](diplomacy.md) — three or fewer provinces remaining and original capital lost). See [diplomacy.md](diplomacy.md).
+- **Nationalism:** Raises battle **deployment base limit** to **12** regiments (vs **10**) and **general cap** floor to at least **4** per [military-generals.md](military-generals.md); prerequisite for `empire_building`.
+- **Empire Building:** Enables **Join Empire** overture (GP can ask another GP to join when that target is **nearly defeated** as defined in [diplomacy.md](diplomacy.md) — three or fewer provinces remaining and original capital lost). See [diplomacy.md](diplomacy.md).
 
 ---
 

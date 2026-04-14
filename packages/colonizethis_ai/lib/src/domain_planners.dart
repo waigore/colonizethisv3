@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
@@ -10,7 +10,7 @@ import 'goal_manager.dart';
 import 'hidden_agenda.dart';
 import 'perception.dart';
 
-final _log = aiLogger();
+final _log = packageLogger();
 
 // Domain planners (utility AI). SPEC/ai/ai-architecture.md, ai-systems-impl.md, economy-planner.md.
 
@@ -31,7 +31,7 @@ Orders runDomainPlanners({
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   var orders = const Orders();
-  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final domainWeights = getDomainWeightsForLeader(config.personalityId);
 
   // Economy: build/work suggestions weighted by economy domain.
   final workCandidates = suggestionAPI.suggestWorkOrders(
@@ -48,7 +48,8 @@ Orders runDomainPlanners({
     orders,
   );
   final hasSpyWork = workCandidates.any(
-    (o) => o.target == 'steal_tech' || o.target == 'counter_spy',
+    (o) =>
+        o.target == kWorkTargetStealTech || o.target == kWorkTargetCounterSpy,
   );
   final workThreshold =
       40 - (hasSpyWork ? agendaSpyOrderModifier(config.hiddenAgendaId) : 0);
@@ -64,7 +65,9 @@ Orders runDomainPlanners({
     final pickFrom = (agendaId == 'tech_thief' && hasSpyWork)
         ? workCandidates
               .where(
-                (o) => o.target == 'steal_tech' || o.target == 'counter_spy',
+                (o) =>
+                    o.target == kWorkTargetStealTech ||
+                    o.target == kWorkTargetCounterSpy,
               )
               .toList()
         : workCandidates;
@@ -165,7 +168,7 @@ Orders runDomainPlanners({
   if (researchCandidates.isNotEmpty &&
       (primaryGoal == StrategicGoal.tech ||
           domainWeights.research >= researchThreshold)) {
-    final thresholds = getThresholdsForLeader(config.leaderId);
+    final thresholds = getThresholdsForLeader(config.personalityId);
     final scores = researchCandidates.map((o) {
       final tech = techById(o.techId);
       final category = tech?.category ?? '';
@@ -225,7 +228,7 @@ Orders _runMovePlanner({
   if (moveCandidates.isEmpty) return orders;
   final filtered = filterMoveOrdersByDiplomacy(game, nationId, moveCandidates);
   if (filtered.isEmpty) return orders;
-  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final weight =
       primaryGoal == StrategicGoal.conquer ||
           primaryGoal == StrategicGoal.defend
@@ -298,7 +301,7 @@ Orders _runArmyMovePlanner({
     _log.d('army move filtered empty nationId=$nationId');
     return orders;
   }
-  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final weight =
       primaryGoal == StrategicGoal.conquer ||
           primaryGoal == StrategicGoal.defend
@@ -375,7 +378,7 @@ BuildUnitOrder? _pickBuildOrder({
   required String nationId,
 }) {
   if (buildCandidates.isEmpty) return null;
-  final thresholds = getThresholdsForLeader(config.leaderId);
+  final thresholds = getThresholdsForLeader(config.personalityId);
   final scores = buildCandidates.map((o) {
     final unitType = o.unitType;
     final isShip = ShipEconomyCatalog.byId.containsKey(unitType);
@@ -468,7 +471,7 @@ Orders _runNavalPlanner({
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
 }) {
-  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final weight =
       primaryGoal == StrategicGoal.conquer ||
           primaryGoal == StrategicGoal.defend ||
@@ -570,7 +573,7 @@ Orders _runDiplomacyPlanner({
   required AISeedBundle seeds,
   required OrderSuggestionAPI suggestionAPI,
 }) {
-  final domainWeights = getDomainWeightsForLeader(config.leaderId);
+  final domainWeights = getDomainWeightsForLeader(config.personalityId);
   final weight =
       primaryGoal == StrategicGoal.diplomacy ||
           primaryGoal == StrategicGoal.conquer ||
@@ -636,7 +639,7 @@ List<int> computeDiplomaticCandidateScores({
   required AIConfig config,
 }) {
   final agendaId = config.hiddenAgendaId;
-  final thresholds = getThresholdsForLeader(config.leaderId);
+  final thresholds = getThresholdsForLeader(config.personalityId);
   final maxRelationForDeclareWar = getDeclareWarMaxRelationScore(agendaId);
   const warCooldownTurns = 4;
   const improveRelationsCooldownTurns = 2;
@@ -877,10 +880,9 @@ int _invasionCapacityAdjustment(
     score -= 25;
   }
 
-  final activeWars = game.diplomacyRelations.where((r) {
-    final involvesNation = r.factionId1 == nationId || r.factionId2 == nationId;
-    return involvesNation && r.state == RelationState.atWar;
-  }).length;
+  final activeWars = game.diplomacyRelations
+      .where((r) => r.involvesNation(nationId) && r.atWar)
+      .length;
   if (activeWars >= 2) score -= 15;
   return score;
 }

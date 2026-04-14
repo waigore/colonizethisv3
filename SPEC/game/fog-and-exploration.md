@@ -21,6 +21,10 @@ Four levels per player per tile. Visibility state is keyed by player and by prov
 
 Own provinces are always fully visible and never decay. Fogged applies only to other factions' provinces.
 
+### Province ownership intel
+
+Province ownership shown in UI (Political sections, labels, ownership metadata) is always authoritative from `Province.ownerId` for every player and is not obfuscated by fog states.
+
 ### Coastal sea zone visibility
 
 For each **Great Power** (including the human player), all tiles in sea zones that are **immediately adjacent** (P–S edge in topology) to a province that player **fully owns** are **fully visible** to that player. Unknown or fogged tiles in those sea zones are overridden to fully visible.
@@ -36,6 +40,8 @@ For each **Great Power**, after Explorer/Spy fog decay each turn and **before** 
 A **sea zone** S (per region) reverts to **fogged** for that player for all **water** tiles in S **only when** both hold: (1) no province **fully owned** by that player has a **P–S** edge to S; and (2) that player has **no** fleet **at sea** in S (fleets **in port** do not count). Tiles that are **unknown** stay **unknown**.
 
 While a fleet **enters** S during Movement, that player’s water tiles in S are set **fully visible** until this rule applies (see [ships-and-naval.md](ships-and-naval.md), [naval-movement-resolution.md](../program/naval-movement-resolution.md), [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md)).
+
+**Map UI (display-only):** While the human player has a **draft naval move** pending for a fleet shown on the region map, the map renderer may paint terrain within **Chebyshev distance ≤ 2** of that fleet’s marker tile as if **fully visible**. This affects **drawing only** and does not change stored visibility or turn rules.
 
 ### Initial Visibility
 
@@ -108,7 +114,7 @@ Per [world-model-identity.md](world-model-identity.md):
 |---|---|---|
 | Explore max turns | 3 | Scaled by province size |
 | Prospect turns per tile | 1 | |
-| Spy fog decay turns | 5 | **Fixed constant for MVP** (not ruleset-configurable). When Spy leaves other-faction province, turns until that province's tiles revert to fogged |
+| Spy fog decay turns | 5 | **Fixed constant for current product** (not ruleset-configurable). When Spy leaves other-faction province, turns until that province's tiles revert to fogged |
 | Old World initial visibility | fogged | Own = fully visible |
 | New World initial visibility | unknown | |
 

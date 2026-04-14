@@ -318,8 +318,8 @@ void main() {
       );
 
       for (final p in allProvinces(result.game.worldState)) {
-        expect(p.displayName, isNotNull, reason: '${p.id}');
-        expect(p.displayName!.isNotEmpty, isTrue, reason: '${p.id}');
+        expect(p.displayName, isNotNull, reason: p.id);
+        expect(p.displayName!.isNotEmpty, isTrue, reason: p.id);
       }
       final nwProvinces = result.game.worldState.newWorld.provinces;
       expect(result.game.tribes.length, 11);

@@ -42,7 +42,7 @@ CLI entry point for game creation. Thin facade over the setup pipeline in [game-
 
 ## Integration
 
-- **Upstream:** [game-setup-pipeline.md](game-setup-pipeline.md) (`runInitGame` in colonizethis_logic). **MVP:** CLI/JSON only overrides `GameSetupConfig` fields supported here; there is no ruleset JSON merge yet (see [game-setup.md](../game/game-setup.md) § Config, [ruleset-config.md](../game/ruleset-config.md)).
+- **Upstream:** [game-setup-pipeline.md](game-setup-pipeline.md) (`runInitGame` in colonizethis_logic). **current product:** CLI/JSON only overrides `GameSetupConfig` fields supported here; there is no ruleset JSON merge yet (see [game-setup.md](../game/game-setup.md) § Config, [ruleset-config.md](../game/ruleset-config.md)).
 - **Owner:** `tool/init_game` (Dart CLI).
 
 ## Constraints

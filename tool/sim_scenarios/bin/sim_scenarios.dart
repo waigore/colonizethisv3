@@ -5,16 +5,17 @@
 //   dart run sim_scenarios --scenario=path.json     # Run specific scenario
 //   dart run sim_scenarios --directory=path/to/scenarios  # Run all in directory
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:sim_scenarios/package_logger.dart';
 import 'package:path/path.dart' as path;
 
 import 'package:sim_scenarios/scenario.dart';
 import 'package:sim_scenarios/scenario_runner.dart';
 
-final _log = logicLogger('sim_scenarios');
+final _log = packageLogger('sim_scenarios');
 
 void main(List<String> args) async {
   final parser = ArgParser();
@@ -98,6 +99,13 @@ void main(List<String> args) async {
     final report = formatScenarioReport(result);
     _log.i('run report\n$report');
     print(report);
+    final auditJson = seaboardPortAuditJson(
+      BatchResult(results: [result], runTime: DateTime.now()),
+    );
+    print('');
+    print('```json');
+    print(const JsonEncoder.withIndent('  ').convert(auditJson));
+    print('```');
     exit(result.passed ? 0 : 1);
   } else {
     // Run all scenarios in directory
@@ -113,9 +121,29 @@ void main(List<String> args) async {
     final report = formatBatchReport(batchResult);
     _log.i('run report\n$report');
     print(report);
+    final auditJson = seaboardPortAuditJson(batchResult);
+    print('');
+    print('```json');
+    print(const JsonEncoder.withIndent('  ').convert(auditJson));
+    print('```');
     exit(batchResult.failed > 0 ? 1 : 0);
   }
 }
+
+/// Machine-readable seaboard/port audit summary (GitHub #1766).
+Map<String, Object?> seaboardPortAuditJson(BatchResult batch) => {
+      'seaboardPortAuditVersion': 1,
+      'refs': {'issue1766': 'https://github.com/waigore/colonizethisv3/issues/1766'},
+      'scenarios': [
+        for (final r in batch.results)
+          {
+            'scenario': r.scenarioName,
+            'scenarioPassed': r.passed,
+            if (r.seaboardPortAudit != null)
+              'portAudit': r.seaboardPortAudit!.toJsonObject(),
+          },
+      ],
+    };
 
 /// Formats a batch result as markdown.
 String formatBatchReport(BatchResult batch) {

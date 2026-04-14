@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:jenny/jenny.dart';
 
 /// Flutter/Jenny dialogue view that drives UI via callbacks and completers.
 /// SPEC/ui/dialogue-presentation.md, SPEC/ai/dialogue-content-and-yarn.md.
 class CtDialogueView extends DialogueView {
-  CtDialogueView({CtLogger? logger}) : _log = logger ?? appLogger('dialogue');
+  CtDialogueView({CtLogger? logger}) : _log = logger ?? packageLogger('dialogue');
 
   final CtLogger _log;
 

@@ -31,6 +31,8 @@ When the player chooses the capital tile:
 - Otherwise, for that seaboard, a port tile is chosen from tiles in the capital province that are adjacent to that seaboard's sea zone and is the tile with the shortest path to the capital tile (deterministic tie-break).
 - For each off-capital seaboard port tile, a road is auto-built along the shortest path (on province tiles only) from that seaboard's port tile to the capital tile.
 
+**Map harbor drawable (UI):** Registered port tiles must support **strict sea-only** harbor/fleet placement per [town-port-icons.md](../ui/town-port-icons.md): the port tile cell is sea in topology, or at least one **orthogonal** neighbor is a sea-zone cell. Otherwise map view construction throws; treat as **data/setup** defect (GitHub [#1761](https://github.com/waigore/colonizethisv3/issues/1761)).
+
 **Init order:** Capital placement (province + tile) and port placement happen first; **then** for each such port that is land-connected to the capital, roads are placed along the shortest path to the capital (so the path is computed and applied after all capitals/ports are fixed). **Then** (step 7d) province town assignment: each province gets one **town** tile — see § Town per province.
 
 **Great Power capital province town development (init):** Immediately after the capital tile is fixed for each Great Power, The System sets that Great Power’s **capital province** `townDevelopmentLevel` to **4**.
@@ -41,11 +43,7 @@ When the player chooses the capital tile:
 
 ## Town per province
 
-At **game init**, every province has exactly one **town** tile assigned (the province's "town" for extraction). The town is: (1) the **capital tile** if the province is that faction's capital province, or (2) otherwise:
-   - **Sea-bound province (non-capital):** choose from tiles in that province that are adjacent to at least one sea-zone tile for a sea zone adjacent to that province in topology; pick the candidate with the **shortest path** to the capital (per BFS on province tiles; deterministic tie-break).
-   - **Sea-bound mismatch fallback (tolerant):** if topology marks the province sea-bound but no such seaboard candidate tile exists in the generated map, use the non-seaboard shortest-path rule and emit a `logic:` warning.
-   - **Same region (not overseas), not sea-bound:** the tile in that province with the **shortest path** to the capital (per BFS on province tiles).
-   - **Overseas provinces:** the **port tile** in that province, if any; otherwise an arbitrary/default tile (the first tile in the province's tile list).
+At **game init**, every province has exactly one **town** tile assigned (the province's "town" for extraction). The town is: (1) the **capital tile** if the province is that faction's capital province, or (2) otherwise apply **branch eligibility first** (capital exception above; seaboard filter for sea-bound provinces; overseas port when a port exists), then rank remaining candidates in order: (a) **minimum squared Euclidean distance** from the tile cell `(x, y)` to the **province centroid** — centroid is `round(mean x)`, `round(mean y)` over **all** tiles of that province (same formula as sea-zone fleet centroid markers in program); (b) **shortest path** to the capital tile by BFS on province tiles **in that region**, when the branch supplies a capital tile in-region (otherwise this step is skipped and all candidates tie on distance); (c) **ascending lexicographic** `townTileKey` string as final deterministic tie-break. **Neutral** provinces (no `ownerId`) use all province tiles as candidates with steps (a)–(c) and no BFS. **Sea-bound province (non-capital):** candidate set = province tiles **4-adjacent** to a sea-zone cell for a sea zone **P–S-adjacent** to that province in topology; then (a)–(c). **Sea-bound mismatch fallback (tolerant):** if that candidate set is empty, use **all** province tiles with (a)–(c) and emit one `logic:` warning. **Same region (not overseas), not sea-bound:** candidate set = all province tiles; then (a)–(c). **Overseas provinces:** if the province has a registered **port** tile, the town is that port tile (single choice); if there is **no** port, candidate set = all province tiles; then (a)–(c) without BFS to an overseas capital.
 
 Town is stored as province's `townTileKey` or in a region-level map. A tile may be **connected** for extraction by the **Town rule** in § Connectivity (Game Rule) when it is **4-adjacent** to a **town** tile that is itself connected to the capital. **Yield** limits follow **town development** rules in [extraction-and-improvements.md](extraction-and-improvements.md) (town development does **not** decide connectivity).
 
@@ -179,19 +177,23 @@ This Great Power fall check runs **after** combat and capital reassignment, and 
 
 - Given a Great Power player has a capital province with a capital tile already placed  
   When the system initializes towns for all provinces  
-  Then the capital province’s `townTileKey` is set to the capital tile and every other owned province has exactly one `townTileKey` set as follows: for sea-bound non-capital provinces, a tile adjacent to one of that province’s adjacent sea zones (with shortest-path-to-capital candidate selection and deterministic tie-break); for non-sea-bound same-region provinces, the tile with the shortest path to the capital; for overseas provinces, the port tile (if any) or an arbitrary/default tile.
+  Then the capital province’s `townTileKey` is set to the capital tile and every other owned province has exactly one `townTileKey` set as follows: for sea-bound non-capital provinces, a tile adjacent to one of that province’s adjacent sea zones, chosen by province-centroid distance first, then shortest path to the capital when applicable, then lexicographic tile key; for non-sea-bound same-region provinces, the same centroid-then-BFS-then-key ordering over all province tiles; for overseas provinces, the port tile when a port exists, otherwise centroid-then-key over all province tiles (no BFS to capital).
 
-- Given a Great Power player has a capital province in region `R1` and an owned sea-bound province `P2` in region `R1` with at least one tile adjacent to one of `P2`’s adjacent sea zones  
+- Given a Great Power player has a capital province in region `R1` and an owned sea-bound province `P2` in region `R1` with at least two distinct tiles in `P2` that are each adjacent to at least one of `P2`’s adjacent sea zones in the generated tile map  
   When the system assigns a town for `P2`  
-  Then the system selects as `P2`’s `townTileKey` the tile in `P2` with minimum shortest-path distance to the capital among only those valid seaboard-adjacent candidates, breaking ties deterministically.
+  Then the system selects as `P2`’s `townTileKey` the seaboard-valid candidate with minimum squared distance from its cell coordinates to `P2`’s province centroid; when two candidates tie on that distance, the system selects the one with smaller BFS distance to the capital on province tiles in `R1`; when still tied, the lexicographically smaller `townTileKey`.
 
 - Given a Great Power player has a sea-bound owned province `P2` in region `R1` where no tile in `P2` is adjacent to any of `P2`’s adjacent sea zones in the generated tile map  
   When the system assigns a town for `P2`  
-  Then the system falls back to selecting the tile in `P2` with minimum shortest-path distance to the capital among all tiles in `P2` and emits one `logic:` warning describing the mismatch.
+  Then the system falls back to the full province tile set and selects by province-centroid distance first, then BFS distance to the capital, then lexicographic `townTileKey`, and emits one `logic:` warning describing the seaboard-candidate mismatch.
 
 - Given a Great Power player has an owned province `P3` in region `R2` that is overseas (region `R2` is different from the capital region `R1`) and at least one port tile in `P3` whose sea zone is reachable from the capital’s seaboard via sea-zone and warp-zone edges  
   When the system assigns a town for `P3`  
-  Then the system selects as `P3`’s `townTileKey` the port tile itself (the tile with the port), which is used for extraction connectivity for that province. If `P3` has no port, an arbitrary/default tile (the first tile in the province's tile list) is used as the town.
+  Then the system selects as `P3`’s `townTileKey` the port tile itself (the tile with the port), which is used for extraction connectivity for that province. If `P3` has no port and multiple land tiles, the system selects by province-centroid distance then lexicographic `townTileKey`.
+
+- Given a fixed `GameSetupConfig` with a positive integer `seed` and fixed generated tile maps and topologies for both regions  
+  When the system runs `createGameFromGeneratedMaps` (or `runInitGame`) twice with that same config and maps  
+  Then every province `townTileKey` on the first completed game equals the corresponding `townTileKey` on the second (deterministic town placement).
 
 - Given a Great Power player has a capital tile and a port tile `portA` in the same region  
   When the system evaluates whether `portA` is connected to the capital  

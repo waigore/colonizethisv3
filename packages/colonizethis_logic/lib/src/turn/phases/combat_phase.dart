@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../combat/battle_general_assignment.dart';
@@ -11,7 +11,7 @@ import '../combat_phase_helpers.dart';
 import '../turn_seed_constants.dart';
 import '../../world/capital_and_gp_fall.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 Game runCombatPhase(
   Game game,

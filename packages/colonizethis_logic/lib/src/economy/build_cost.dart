@@ -23,8 +23,9 @@ typedef _BuildDeductionPlan = ({
   switch (category) {
     case BuildUnitCategory.civilian:
       final econ = CivilianEconomyCatalog.byId[order.unitType];
-      if (econ == null)
+      if (econ == null) {
         return (failReason: 'Insufficient resources', plan: null);
+      }
       final unlockingTechId = unlockingTechByCivilianId[order.unitType];
       if (unlockingTechId != null &&
           (player.techUnlocked?[unlockingTechId] != true)) {
@@ -49,8 +50,9 @@ typedef _BuildDeductionPlan = ({
 
     case BuildUnitCategory.military:
       final econ = RegimentEconomyCatalog.byId[order.unitType];
-      if (econ == null)
+      if (econ == null) {
         return (failReason: 'Insufficient resources', plan: null);
+      }
       final regimentUnlockTech = unlockingTechByRegimentId[order.unitType];
       if (regimentUnlockTech != null &&
           (player.techUnlocked?[regimentUnlockTech] != true)) {
@@ -78,8 +80,9 @@ typedef _BuildDeductionPlan = ({
 
     case BuildUnitCategory.naval:
       final shipEcon = ShipEconomyCatalog.byId[order.unitType];
-      if (shipEcon == null)
+      if (shipEcon == null) {
         return (failReason: 'Insufficient resources', plan: null);
+      }
       final shipUnlockTech = unlockingTechByShipId[order.unitType];
       if (shipUnlockTech != null &&
           (player.techUnlocked?[shipUnlockTech] != true)) {

@@ -2,6 +2,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import 'ct_choice_chip.dart';
 import 'ct_region_map.dart';
 import 'debug_init_game.dart';
@@ -62,7 +63,7 @@ InitGameMapViewData debugMapViewDataWithVisibilityForFirstPlayer() {
 
 /// Stateful Widgetbook story for the debug map with a visibility mode toggle.
 class DebugMapVisibilityStory extends StatefulWidget {
-  const DebugMapVisibilityStory({
+  const DebugMapVisibilityStory({super.key, 
     required this.showPoliticalOverlay,
   });
 
@@ -79,6 +80,7 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final mapViewData = debugMapViewDataWithVisibilityForFirstPlayer();
     final region = mapViewData.oldWorld;
 
@@ -94,7 +96,7 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CtChoiceChip(
-                  label: const Text('Full visibility'),
+                  label: Text(l10n.mapDebug_fullVisibility),
                   selected: _visibilityMode == CtMapVisibilityMode.full,
                   onSelected: (_) {
                     setState(() {
@@ -104,7 +106,7 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
                 ),
                 const SizedBox(width: 8),
                 CtChoiceChip(
-                  label: const Text('Player-constrained'),
+                  label: Text(l10n.mapDebug_playerConstrained),
                   selected:
                       _visibilityMode == CtMapVisibilityMode.playerConstrained,
                   onSelected: (_) {
@@ -114,14 +116,14 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
                   },
                 ),
                 CtChoiceChip(
-                  label: const Text('Province names'),
+                  label: Text(l10n.map_displayOptions_showProvinceNames),
                   selected: _showProvinceNames,
                   onSelected: (_) {
                     setState(() => _showProvinceNames = true);
                   },
                 ),
                 CtChoiceChip(
-                  label: const Text('No province names'),
+                  label: Text(l10n.mapDebug_hideProvinceNames),
                   selected: !_showProvinceNames,
                   onSelected: (_) {
                     setState(() => _showProvinceNames = false);

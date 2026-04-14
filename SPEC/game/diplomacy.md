@@ -23,12 +23,12 @@ While relationState is `AT_WAR` between a Great Power and any other faction, **n
 
 - **Declare War:** Requires AT_PEACE. Sets AT_WAR; takes effect before Movement in same turn.
 - **Peace (white peace):** Both sides must agree. Sets AT_PEACE; no border or ownership changes.
-- **Alliances:** Offer/accept between GPs. **Mutual defence (call to arms):** When a Great Power **declares war** on another Great Power (same Diplomacy phase resolution as declare war—including any path that applies GP–GP war before Movement, e.g. naval context is still a declared GP–GP war), each other Great Power that is **allied** (`RelationLevel.allied`, `AT_PEACE`) with the **declared-upon** GP receives exactly **one** call to arms per aggressor–defender pair for that turn. **AI** allies **join** the war (enter `AT_WAR` with the aggressor) if their relation score with the defended ally is **≥ 50**; otherwise they **refuse**. **Human** allies: turn resolution **suspends** until the player chooses join or refuse (app popup / TUI screen; same blocking pattern as human overture target). **Join:** ally enters `AT_WAR` with the aggressor; subsidies between those two are cancelled like a normal war. **Refuse:** relation score between ally and defended GP drops by **20** (clamped 0–100), alliance ends (level no longer Allied; if score would remain Allied, clamp to top of Friendly); **subsidies are not** cancelled by this refusal. History records `callToArmsAccepted` / `callToArmsRefused`. Joining an ally's **offensive** war separately remains optional with no penalty; this rule is only for **defence** of an allied GP that was declared upon.
+- **Alliances:** Offer/accept between GPs. **Mutual defence (call to arms):** When a Great Power **declares war** on another Great Power (same Diplomacy phase resolution as declare war—including any path that applies GP–GP war before Movement, e.g. naval context is still a declared GP–GP war), each other Great Power that is **allied** (`RelationLevel.allied`, `AT_PEACE`) with the **declared-upon** GP receives exactly **one** call to arms per aggressor–defender pair for that turn. **AI** allies **join** the war (enter `AT_WAR` with the aggressor) if their relation score with the defended ally is **≥ 50**; otherwise they **refuse**. **Human** allies: turn resolution **suspends** until the player chooses join or refuse (app UI; same blocking pattern as human overture target). **Join:** ally enters `AT_WAR` with the aggressor; subsidies between those two are cancelled like a normal war. **Refuse:** relation score between ally and defended GP drops by **20** (clamped 0–100), alliance ends (level no longer Allied; if score would remain Allied, clamp to top of Friendly); **subsidies are not** cancelled by this refusal. History records `callToArmsAccepted` / `callToArmsRefused`. Joining an ally's **offensive** war separately remains optional with no penalty; this rule is only for **defence** of an allied GP that was declared upon.
 - **Join Empire:** Requires target nearly defeated; tech-gated by Empire Building (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)). Acceptance removes target GP and transfers provinces.
 
 #### Nearly defeated (GP target)
 
-For MVP, a Great Power is treated as **nearly defeated** when **both** of the following are true:
+For current product, a Great Power is treated as **nearly defeated** when **both** of the following are true:
 
 - The target currently owns **three or fewer provinces** in total (Old World + New World combined; count is based on current world state, not starting setup).
 - The target **no longer controls its original capital province** (its `capitalProvinceId` in world state is not owned by that faction at the time the Join Empire overture is resolved).
@@ -39,22 +39,22 @@ When these conditions hold, other Great Powers that meet the tech and overture r
 
 - **Overture chain:** Trade Consulate (cost) → Embassy (cost) → Non-Aggression Pact (free) → Join Empire (cost, relation check). Each step unlocks the next. Embassies and foreign civilian work are tech-gated by Diplomatic Expertise. **Overtures are two-way:** one player offers; the **target** faction must accept or reject. When the target is a Minor or Tribe, the accept/reject decision is applied at turn resolution by rule (e.g. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation and cost). When the target is a Great Power, that GP's controller decides: if the target is **AI**, the decision is made during the Diplomacy phase; if the target is **human**, turn resolution **blocks** until the human responds (see [turn-resolution-phases.md](../program/turn-resolution-phases.md) § Blocking human input). Only when the target accepts are cost deducted and overture stage advanced. Minors never refuse Consulate/Embassy; Join Empire requires Friendly/Allied relation and a **cost in pounds** that scales with the size of the Minor/Tribe (see Configurable Values). When enacted, the Minor or Tribe is **absorbed**: all provinces, units, and fleets owned by that faction transfer to the requesting GP; the Minor/Tribe is removed from the game; overture and relation records involving that faction are removed. The GP’s treasury is reduced by the Join Empire cost.
 - **Purchase land (Merchant):** The Merchant work order `purchase_land` (tile in Minor/Tribe province with resource) requires the player to have an **embassy** with that Minor/Tribe and to **not be at war** with them. See [civilian-units.md](civilian-units.md).
-- **Foreign aid:** **Grant Aid** — deducts the chosen amount from the granting GP’s treasury and improves relation score. **MVP** matches the **Grant Aid** order rules under **Diplomatic Order Types** below: **positive multiple of £1000** (minimum £1000), enforced at validation and resolution; there is **no** percentage mode and **no** fixed menu of allowed amounts—only step/min rules. UI **defaults** (e.g. £1000) and AI suggestions are conveniences, not an exclusive list of legal values (see **Amount parameters (MVP)**).
+- **Foreign aid:** **Grant Aid** — deducts the chosen amount from the granting GP’s treasury and improves relation score. **current product** matches the **Grant Aid** order rules under **Diplomatic Order Types** below: **positive multiple of £1000** (minimum £1000), enforced at validation and resolution; there is **no** percentage mode and **no** fixed menu of allowed amounts—only step/min rules. UI **defaults** (e.g. £1000) and AI suggestions are conveniences, not an exclusive list of legal values (see **Amount parameters (current product)**).
 - **Intervention (human and AI, at war declaration — Diplomacy phase only):**
   - Trigger (embassy or investment protection): When a Great Power **declares war** on a **Minor Nation or Tribe** that currently has **at least one other GP** with an **Embassy** with that Minor/Tribe **or** **purchased land** recorded in its provinces (`purchasedTilesByTileKey` entries where the tile’s province ownerId is that Minor/Tribe), each such other GP evaluates or is offered a **one-time Intervention choice** against the aggressor **during the Diplomacy phase** (after `Declare War` is applied for that pair, before Movement). Intervention is **not** a combat-phase action.
   - Human GP with Embassy or purchased land: For each valid GP–Minor/Tribe war declaration, each human GP that:
     - is **not** the declaring GP, and
     - has an **Embassy** with that Minor/Tribe **or** has **purchased land** in any province owned by that Minor/Tribe  
     is presented an Intervention choice **once, at war declaration time** in the Diplomacy phase:
-    - **Intervene (human):** The intervening GP immediately enters a war state (`AT_WAR`) with the declaring Great Power; this war state is in effect for all subsequent Movement and Combat in that turn and beyond. The Minor remains an independent faction for province ownership purposes in MVP.
+    - **Intervene (human):** The intervening GP immediately enters a war state (`AT_WAR`) with the declaring Great Power; this war state is in effect for all subsequent Movement and Combat in that turn and beyond. The Minor remains an independent faction for province ownership purposes in current product.
     - **Do Nothing (human):** The intervening GP does not change relation score or war state with the declaring Great Power at that moment, but **loses its Embassy** with the attacked Minor (all overtures with that Minor are cleared). Any existing **purchased land** in that Minor’s provinces remains recorded until normal province conquest rules apply (see province conquest rules).
     - **Diplomatic Protest (human):** The intervening GP remains at peace but applies a relation penalty with the declaring Great Power; the Minor’s diplomatic state is unchanged. Purchased land and Embassy state remain unchanged.
   - AI GP with Embassy or purchased land: For each GP–Minor/Tribe war declaration:
     - Every AI-controlled GP that has an Embassy with the attacked Minor/Tribe, or has any purchased land in that Minor’s or Tribe’s provinces, independently evaluates whether to intervene against the declaring Great Power.
-    - The **probability to intervene** is a monotonic function of the GP–Minor relation score; default values for MVP are: relation score 0–25 → 0% chance, 26–50 → 25% chance, 51–75 → 50% chance, 76–100 → 80% chance.
+    - The **probability to intervene** is a monotonic function of the GP–Minor relation score; default values for current product are: relation score 0–25 → 0% chance, 26–50 → 25% chance, 51–75 → 50% chance, 76–100 → 80% chance.
     - On **AI Intervene**, the AI GP immediately enters a war state with the declaring Great Power; this war state is used for all Movement and Combat validation in that turn and subsequent turns. Embassy and overture state with the Minor remain unchanged.
     - On **AI Do Nothing**, the AI GP does not change relation or war state with the declaring Great Power but **loses its Embassy** (all overtures) with the attacked Minor/Tribe, matching the human Do Nothing outcome. Purchased land remains recorded until province conquest rules apply.
-    - MVP does not implement an AI **Protest** choice; AI either intervenes or does nothing.
+    - current product does not implement an AI **Protest** choice; AI either intervenes or does nothing.
   - Turn timing and scope: Intervention is evaluated **once per war declaration** during the Diplomacy phase, before Movement and Combat. There are **no additional intervention prompts tied to later battles** in that war; once the war state has been updated (or not) based on Intervention choices, subsequent combats proceed with that fixed war/peace state.
 - **Peace:** Minors never refuse peace offers.
  - **War and overtures:** When a GP declares war on a Minor (relationState becomes `AT_WAR`), any existing overture state between that GP and that Minor (Trade Consulate, Embassy, NAP, or Join Empire) is **cleared to `none`**. While `AT_WAR`, the GP cannot establish any new overtures with that Minor; after peace, the overture chain must be rebuilt from `none` if the player wants renewed consulate/embassy status.
@@ -113,7 +113,7 @@ For **Minor/Tribe targets**, add:
 - While at war, each turn Full AI recomputes `warDesireScore` for that pair:
   - high war desire lowers `Offer Peace` preference (continue war),
   - low war desire raises `Offer Peace` preference (de-escalate / adjust down goals).
-- MVP stores war goals as planner output (deterministic logs and action scoring), not as a separate persistent war-goal state object.
+- current product stores war goals as planner output (deterministic logs and action scoring), not as a separate persistent war-goal state object.
 
 ### Diplomatic Order Types
 
@@ -122,9 +122,9 @@ For **Minor/Tribe targets**, add:
 - **Alliance** — target GP; propose, accept, or refuse.
 - **Establish Overture** — target Minor/Tribe **or** Great Power, overture type; valid if previous step achieved and costs met. **At most one Establish Overture per (player, target faction) per turn.** The overture is a **two-way agreement**: at turn resolution the **target** accepts or rejects. For Minor/Tribe targets the decision is applied by rule during the Diplomacy phase. For GP targets: if the target is human-controlled, turn resolution suspends and the app must prompt the human and resume with the decision; if AI-controlled, the decision is made during the phase. Validation rejects any second Establish Overture order for the same target.
 - **Grant Aid** — target faction, **amount**: a **positive integer** in pounds (£). Valid if Embassy exists, treasury ≥ amount, and other diplomacy preconditions hold. Resolves as a **one-time** transfer: treasury deduction and relation update per resolver rules.
-- **Set Subsidy** — target faction, **amount**: a **positive integer** in pounds (£) **per turn** (ongoing subsidy until updated or cancelled). Valid if Consulate **or** Embassy exists and treasury meets validation (see resolver). **MVP** is **amount in £/turn only**; there is **no** percentage-based subsidy mode in orders or resolution.
+- **Set Subsidy** — target faction, **amount**: a **positive integer** in pounds (£) **per turn** (ongoing subsidy until updated or cancelled). Valid if Consulate **or** Embassy exists and treasury meets validation (see resolver). **current product** is **amount in £/turn only**; there is **no** percentage-based subsidy mode in orders or resolution.
 
-**Amount parameters (MVP):** Both orders use the same **order field model**: a single integer `amount` in diplomatic orders. **Grant Aid:** `amount` must be a **positive multiple of £1000** (minimum £1000). **Set Subsidy:** `amount` must be a **positive multiple of £100** (minimum £100). Validation and diplomacy resolution enforce these steps. Defaults in UI steppers and AI suggestions use **£1000** for both unless the ruleset changes; defaults are **not** an exclusive list of legal values.
+**Amount parameters (current product):** Both orders use the same **order field model**: a single integer `amount` in diplomatic orders. **Grant Aid:** `amount` must be a **positive multiple of £1000** (minimum £1000). **Set Subsidy:** `amount` must be a **positive multiple of £100** (minimum £100). Validation and diplomacy resolution enforce these steps. Defaults in UI steppers and AI suggestions use **£1000** for both unless the ruleset changes; defaults are **not** an exclusive list of legal values.
 
 ### Turn Sequence
 
@@ -177,7 +177,7 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 
 - Given the system controls an AI Great Power that has an Embassy with a Minor Nation or Tribe and another Great Power declares war on that Minor/Tribe in the Diplomacy phase of turn `t`  
   When the system evaluates whether that AI Great Power will intervene against the aggressor  
-  Then the system computes a probability to intervene based solely on the current relation score between the AI Great Power and that Minor/Tribe, using the default mapping 0–25 → 0%, 26–50 → 25%, 51–75 → 50%, 76–100 → 80% unless overridden by a ruleset, and samples a single Bernoulli trial with that probability to decide whether to intervene (otherwise **Do Nothing**; AI does not choose **Protest** in MVP).
+  Then the system computes a probability to intervene based solely on the current relation score between the AI Great Power and that Minor/Tribe, using the default mapping 0–25 → 0%, 26–50 → 25%, 51–75 → 50%, 76–100 → 80% unless overridden by a ruleset, and samples a single Bernoulli trial with that probability to decide whether to intervene (otherwise **Do Nothing**; AI does not choose **Protest** in current product).
 
 - Given Full AI controls a Great Power and has legal diplomacy candidates against a target faction in turn `t`  
   When the AI diplomacy planner scores candidates for that `(gpId, targetFactionId)` pair  
@@ -240,7 +240,7 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 - **Relation thresholds and config:** Relation level (Hostile, Neutral, Friendly, Allied) is derived from relation score using the thresholds in Configurable Values; the table in this document is the source of truth for default values; ruleset overrides apply when specified.
 - **Implementation:** Order validation and resolution flow: [diplomacy-resolution.md](../program/diplomacy-resolution.md). Phase order: [turn-resolution-phases.md](../program/turn-resolution-phases.md).
 
-- Given the user views the diplomacy panel (app or TUI) for a discovered faction with a diplomatic relation  
+- Given the user views the diplomacy panel for a discovered faction with a diplomatic relation  
   When the panel displays the current relation  
   Then the system shows the **one-word relation state** (Hostile, Unfriendly, Cordial, or Friendly) derived from the relation score per the Player-facing relation display table (0–29 Hostile, 30–49 Unfriendly, 50–69 Cordial, 70–100 Friendly), and does **not** display the numeric relation score.
 
@@ -268,9 +268,9 @@ The following Given–When–Then criteria are testable conditions for diplomacy
 
 ### Player-facing relation display
 
-The **relation score** (0–100) is a **hidden variable**: it is not shown to the player in the diplomacy UI (app or TUI). Validation and game logic continue to use the internal score and relation level (Hostile/Neutral/Friendly/Allied) per the thresholds above.
+The **relation score** (0–100) is a **hidden variable**: it is not shown to the player in the diplomacy UI. Validation and game logic continue to use the internal score and relation level (Hostile/Neutral/Friendly/Allied) per the thresholds above.
 
-The diplomacy panel (app and ctterm) shows instead a **one-word relation state** derived from the score:
+The diplomacy panel shows instead a **one-word relation state** derived from the score:
 
 | Score range | Display label |
 |-------------|---------------|
@@ -279,7 +279,7 @@ The diplomacy panel (app and ctterm) shows instead a **one-word relation state**
 | 50–69 | Cordial |
 | 70–100 | Friendly |
 
-Same mapping for both Flutter app and TUI. Game logic (e.g. Join Empire ≥ 51, Alliance ≥ 76) uses the internal score and level; only the displayed label uses these bands.
+The Flutter app uses this mapping for the player-facing label. Game logic (e.g. Join Empire ≥ 51, Alliance ≥ 76) uses the internal score and level; only the displayed label uses these bands.
 
 ### Great Power power score
 
@@ -288,11 +288,11 @@ An **absolute power score** is computed for each Great Power for display on the 
 - **Formula:** `powerScore = provinceCount × W_province + round(regimentStrength) × W_regiment + shipCount × W_ship`
 - **Definitions:** `provinceCount` = number of provinces owned by that GP (Old + New World). `regimentStrength` = same aggregation as [military-strength](../program/military-strength.md) (FPN+FPM, era downgrade, medal multiplier). `shipCount` = total number of ships (sum of `shipTypeIds.length` over all fleets owned by that GP).
 - **Default weights:** W_province = 10, W_regiment = 1, W_ship = 5. So one province = 10, one point of army strength = 1, one ship = 5.
-- **Display:** The diplomacy panel shows this score for each GP. If the GP’s score is **higher** than the human player’s score, the value is shown in **red**; otherwise in **green**. Same formula and display rule for app and TUI where applicable.
+- **Display:** The diplomacy panel shows this score for each GP. If the GP’s score is **higher** than the human player’s score, the value is shown in **red**; otherwise in **green**.
 
-### Where defined (MVP)
+### Where defined (current product)
 
-Default values for the parameters above are given in this table; the table is the **source of truth** for design defaults. In the current (MVP) implementation, the program does **not** read these from the ruleset. Relation thresholds (Hostile/Neutral/Friendly/Allied bands) and overture costs (Consulate, Embassy) are implemented as **code constants** in `colonizethis_logic` (see `diplomacy_resolver.dart`: `overtureConsulateCost`, `overtureEmbassyCost`, and the thresholds used in `scoreToLevel`). Ruleset-driven override for diplomacy parameters is **deferred**; when added, the key path and loader contract will be specified in this document and in [ruleset-config.md](ruleset-config.md); program loading: [ruleset-config.md](../program/ruleset-config.md).
+Default values for the parameters above are given in this table; the table is the **source of truth** for design defaults. In the current (current product) implementation, the program does **not** read these from the ruleset. Relation thresholds (Hostile/Neutral/Friendly/Allied bands) and overture costs (Consulate, Embassy) are implemented as **code constants** in `colonizethis_logic` (see `diplomacy_resolver.dart`: `overtureConsulateCost`, `overtureEmbassyCost`, and the thresholds used in `scoreToLevel`). Ruleset-driven override for diplomacy parameters is **deferred**; when added, the key path and loader contract will be specified in this document and in [ruleset-config.md](ruleset-config.md); program loading: [ruleset-config.md](../program/ruleset-config.md).
 
 ---
 

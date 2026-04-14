@@ -1,12 +1,7 @@
 import 'dart:async';
 
 import '../ai_events.dart';
-
-extension _DialogueEventStreamWhereType on Stream<DialogueEvent> {
-  Stream<T> whereType<T extends DialogueEvent>() {
-    return where((event) => event is T).map((event) => event as T);
-  }
-}
+import '../stream_where_type.dart';
 
 abstract class DialogueEventBus {
   void publish(DialogueEvent event);

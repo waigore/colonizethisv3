@@ -1,9 +1,10 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
-  group('computePortIconCellForMap', () {
+  group('computePortDrawableSeaCellForMap', () {
     TileMapResult grid(List<List<String>> rows) {
       return TileMapResult(
         width: rows.first.length,
@@ -14,33 +15,40 @@ void main() {
 
     final sea = {'s1'};
 
-    test('uses port tile when port is not shared with town or capital', () {
-      final tileMap = grid([['p1', 'p1', 'p1']]);
-      final r = computePortIconCellForMap(
+    test('uses port tile when that cell is already sea', () {
+      final tileMap = grid([
+        ['s1', 'p1', 'p1'],
+      ]);
+      final r = computePortDrawableSeaCellForMap(
         tileMap: tileMap,
         seaZoneIds: sea,
-        townX: 0,
-        townY: 0,
-        townTileKey: 'oldWorld|p1|0|0',
-        capitalTileKey: 'oldWorld|p1|1|0',
-        portTileKey: 'oldWorld|p1|2|0',
+        portTileKey: 'oldWorld|p1|0|0',
+      );
+      expect(r.x, 0);
+      expect(r.y, 0);
+    });
+
+    test('uses first orthogonal sea from port land tile (east)', () {
+      final tileMap = grid([
+        ['p1', 'p1', 's1'],
+      ]);
+      final r = computePortDrawableSeaCellForMap(
+        tileMap: tileMap,
+        seaZoneIds: sea,
+        portTileKey: 'oldWorld|p1|1|0',
       );
       expect(r.x, 2);
       expect(r.y, 0);
     });
 
-    test('when port equals town, picks north sea before east', () {
+    test('when port land co-located with town, picks north sea first', () {
       final tileMap = grid([
         ['p1', 's1'],
         ['p1', 'p1'],
       ]);
-      final r = computePortIconCellForMap(
+      final r = computePortDrawableSeaCellForMap(
         tileMap: tileMap,
         seaZoneIds: sea,
-        townX: 1,
-        townY: 1,
-        townTileKey: 'oldWorld|p1|1|1',
-        capitalTileKey: null,
         portTileKey: 'oldWorld|p1|1|1',
       );
       expect(r.x, 1);
@@ -52,13 +60,9 @@ void main() {
         ['p1', 's1'],
         ['p1', 'p1'],
       ]);
-      final r = computePortIconCellForMap(
+      final r = computePortDrawableSeaCellForMap(
         tileMap: tileMap,
         seaZoneIds: sea,
-        townX: 0,
-        townY: 0,
-        townTileKey: 'r|p1|0|0',
-        capitalTileKey: null,
         portTileKey: 'r|p1|0|0',
       );
       expect(r.x, 1);
@@ -71,13 +75,9 @@ void main() {
         ['p1', 'p1', 'p1'],
         ['p1', 's1', 'p1'],
       ]);
-      final r = computePortIconCellForMap(
+      final r = computePortDrawableSeaCellForMap(
         tileMap: tileMap,
         seaZoneIds: sea,
-        townX: 1,
-        townY: 1,
-        townTileKey: 'r|p1|1|1',
-        capitalTileKey: null,
         portTileKey: 'r|p1|1|1',
       );
       expect(r.x, 1);
@@ -90,53 +90,118 @@ void main() {
         ['s1', 'p1', 'p1'],
         ['p1', 'p1', 'p1'],
       ]);
-      final r = computePortIconCellForMap(
+      final r = computePortDrawableSeaCellForMap(
         tileMap: tileMap,
         seaZoneIds: sea,
-        townX: 1,
-        townY: 1,
-        townTileKey: 'r|p1|1|1',
-        capitalTileKey: null,
         portTileKey: 'r|p1|1|1',
       );
       expect(r.x, 0);
       expect(r.y, 1);
     });
 
-    test('port equals capital: sea search anchored on town tile', () {
+    test('port on capital tile: scan is anchored on port tile coords', () {
       final tileMap = grid([
         ['s1', 'p1'],
         ['p1', 'p1'],
       ]);
-      final r = computePortIconCellForMap(
+      final r = computePortDrawableSeaCellForMap(
         tileMap: tileMap,
         seaZoneIds: sea,
-        townX: 0,
-        townY: 1,
-        townTileKey: 'oldWorld|p1|0|1',
-        capitalTileKey: 'oldWorld|p1|1|0',
         portTileKey: 'oldWorld|p1|1|0',
       );
       expect(r.x, 0);
       expect(r.y, 0);
     });
 
-    test('fallback to port tile when co-located and no orthogonal sea', () {
+    test('throws when no orthogonal sea from port land tile', () {
       final tileMap = grid([
         ['p1', 'p1'],
         ['p1', 'p1'],
       ]);
-      final r = computePortIconCellForMap(
-        tileMap: tileMap,
-        seaZoneIds: sea,
-        townX: 1,
-        townY: 1,
-        townTileKey: 'oldWorld|p1|1|1',
-        capitalTileKey: null,
-        portTileKey: 'oldWorld|p1|1|1',
+      expect(
+        () => computePortDrawableSeaCellForMap(
+          tileMap: tileMap,
+          seaZoneIds: sea,
+          portTileKey: 'oldWorld|p1|1|1',
+        ),
+        throwsA(isA<PortDrawableSeaCellException>()),
       );
-      expect(r.x, 1);
-      expect(r.y, 1);
+    });
+
+    test('throws on invalid port tile key', () {
+      final tileMap = grid([['p1']]);
+      expect(
+        () => computePortDrawableSeaCellForMap(
+          tileMap: tileMap,
+          seaZoneIds: sea,
+          portTileKey: 'bad',
+        ),
+        throwsA(isA<PortDrawableSeaCellException>()),
+      );
+    });
+  });
+
+  group('harborDrawableSeaTileKeyForPortProvince', () {
+    TileMapResult tm(List<List<String>> rows) {
+      return TileMapResult(
+        width: rows.first.length,
+        height: rows.length,
+        grid: rows,
+      );
+    }
+
+    final sea = {'s1'};
+
+    test('returns region|seaCellId|x|y consistent with port placement', () {
+      final map = tm([
+        ['p1', 's1'],
+        ['p1', 'p1'],
+      ]);
+      final game = Game(
+        id: 't',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(provinces: [], units: []),
+          newWorld: const RegionData(provinces: [], units: []),
+          portsByProvinceSeaboard: {'oldWorld|p1|sb': 'oldWorld|p1|0|0'},
+        ),
+        players: const [],
+        minorNations: const [],
+        tribes: const [],
+      );
+      final key = harborDrawableSeaTileKeyForPortProvince(
+        game: game,
+        regionId: 'oldWorld',
+        localProvinceId: 'p1',
+        tileMap: map,
+        seaZoneIds: sea,
+      );
+      expect(key, 'oldWorld|s1|1|0');
+    });
+
+    test('returns null when no seaboard entry for province', () {
+      final map = tm([['p1']]);
+      final game = Game(
+        id: 't',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(provinces: [], units: []),
+          newWorld: const RegionData(provinces: [], units: []),
+        ),
+        players: const [],
+        minorNations: const [],
+        tribes: const [],
+      );
+      expect(
+        harborDrawableSeaTileKeyForPortProvince(
+          game: game,
+          regionId: 'oldWorld',
+          localProvinceId: 'p1',
+          tileMap: map,
+          seaZoneIds: sea,
+        ),
+        isNull,
+      );
     });
   });
 }

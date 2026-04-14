@@ -64,8 +64,9 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
               ? localId
               : ProvinceId.full(zoneRegionId, localId);
           if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ??
-              false)
+              false) {
             continue;
+          }
           final province = game.worldState.tryGetProvince(fullProvinceId);
           if (province?.ownerId != playerId) continue;
           final candidate = NavalMoveOrder(
@@ -603,7 +604,7 @@ void _prefilterWtBuildRoad(_WorkTilePrefilterCtx c) {
 }
 
 void _prefilterWtBuildRail(_WorkTilePrefilterCtx c) {
-  final player = c.game.players.where((p) => p.id == c.playerId).firstOrNull;
+  final player = c.game.playerById(c.playerId);
   if (player == null) return;
   final tech = player.techUnlocked;
   final tileState = c.game.worldState.tileState;

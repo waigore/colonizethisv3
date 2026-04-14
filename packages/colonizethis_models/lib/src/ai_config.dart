@@ -16,11 +16,9 @@ class AIConfig {
   /// Used as the key for personality config lookups and dossier/archetype display.
   final String leaderId;
 
-  /// Optional personality archetype id for goal and utility weighting.
-  ///
-  /// In MVP, colonizethis_ai does not read this field; callers should typically
-  /// pass the same canonical id as [leaderId]. Future ruleset-configurable
-  /// personality bundles may use this as an override handle.
+  /// Archetype id for goal and utility weighting ([getDomainWeightsForLeader],
+  /// etc.). Resolved from scenario [Player.personalityId] when set, else from
+  /// [leaderId]. SPEC/ai/ai-personalities.md.
   final String personalityId;
 
   /// Assigned hidden agenda id (never exposed to player; used only for modifiers).

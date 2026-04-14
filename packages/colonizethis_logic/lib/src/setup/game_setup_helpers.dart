@@ -89,8 +89,64 @@ List<String> _provinceIdsFromTopology(MapTopology topology) {
       .toList();
 }
 
+({int x, int y}) _provinceTownCentroidFromTileKeys(List<String> tiles) {
+  final c = roundedCentroidFromTileKeys(tiles);
+  if (c != null) return c;
+  final xy = parseTileKeyCellXY(tiles.first);
+  return (x: xy?.$1 ?? 0, y: xy?.$2 ?? 0);
+}
+
+int _compareTownTileCandidates(
+  String a,
+  String b, {
+  required int centroidX,
+  required int centroidY,
+  required Map<String, int> bfsFromCapital,
+}) {
+  int distSq(String tk) {
+    final xy = parseTileKeyCellXY(tk);
+    if (xy == null) return 1 << 30;
+    final dx = xy.$1 - centroidX;
+    final dy = xy.$2 - centroidY;
+    return dx * dx + dy * dy;
+  }
+
+  final da = distSq(a);
+  final db = distSq(b);
+  if (da != db) return da.compareTo(db);
+  const unreachable = 999999;
+  final ba = bfsFromCapital[a] ?? unreachable;
+  final bb = bfsFromCapital[b] ?? unreachable;
+  if (ba != bb) return ba.compareTo(bb);
+  return a.compareTo(b);
+}
+
+String _pickTownTileByCentroidAndBfs({
+  required List<String> candidates,
+  required int centroidX,
+  required int centroidY,
+  required Map<String, int> bfsFromCapital,
+}) {
+  var best = candidates.first;
+  for (var i = 1; i < candidates.length; i++) {
+    final c = candidates[i];
+    if (_compareTownTileCandidates(
+          c,
+          best,
+          centroidX: centroidX,
+          centroidY: centroidY,
+          bfsFromCapital: bfsFromCapital,
+        ) <
+        0) {
+      best = c;
+    }
+  }
+  return best;
+}
+
 /// 7d. Province town assignment. For each province, set townTileKey: capital province = capital tile;
-/// same region = tile with shortest path to capital; overseas = port tile or first tile. SPEC/program/game-setup-pipeline.md.
+/// otherwise branch eligibility (seaboard, same-region BFS, overseas port) then centroid tie-break,
+/// then shortest path to capital where applicable, then lexicographic tile key. SPEC/program/game-setup-pipeline.md.
 Game _assignProvinceTowns({
   required Game game,
   required Map<String, MapTopology> topologyByRegion,
@@ -240,15 +296,22 @@ Game _assignProvinceTowns({
 
   String? townTileKeyForProvince(Province p) {
     final ownerId = p.ownerId;
+    final tiles = tileKeysByRegion[p.regionId]?[p.id] ?? [];
     if (ownerId == null) {
-      final tiles = tileKeysByRegion[p.regionId]?[p.id] ?? [];
-      return tiles.isNotEmpty ? tiles.first : null;
+      if (tiles.isEmpty) return null;
+      final c = _provinceTownCentroidFromTileKeys(tiles);
+      return _pickTownTileByCentroidAndBfs(
+        candidates: tiles,
+        centroidX: c.x,
+        centroidY: c.y,
+        bfsFromCapital: const {},
+      );
     }
     final capProvinceId = capitalProvinceIdByOwner[ownerId];
     final capTileKey = capitalTileKeyByOwner[ownerId];
     if (p.id == capProvinceId && capTileKey != null) return capTileKey;
-    final tiles = tileKeysByRegion[p.regionId]?[p.id] ?? [];
     if (tiles.isEmpty) return null;
+    final centroid = _provinceTownCentroidFromTileKeys(tiles);
     final sameRegion =
         capProvinceId != null &&
         ProvinceId.regionIdFrom(capProvinceId) == p.regionId;
@@ -268,24 +331,15 @@ Game _assignProvinceTowns({
           )
           .toList();
       if (coastalCandidates.isNotEmpty) {
-        if (sameRegion && capTileKey != null) {
-          final distances = bfsDistances(p.regionId, capTileKey);
-          String? best;
-          var bestD = 999999;
-          for (final tk in coastalCandidates) {
-            final d = distances[tk] ?? 999999;
-            if (d < bestD) {
-              bestD = d;
-              best = tk;
-            }
-          }
-          return best ?? coastalCandidates.first;
-        }
-        final portTile = portTileInProvince(p.id);
-        if (portTile != null && coastalCandidates.contains(portTile)) {
-          return portTile;
-        }
-        return coastalCandidates.first;
+        final distances = sameRegion && capTileKey != null
+            ? bfsDistances(p.regionId, capTileKey)
+            : const <String, int>{};
+        return _pickTownTileByCentroidAndBfs(
+          candidates: coastalCandidates,
+          centroidX: centroid.x,
+          centroidY: centroid.y,
+          bfsFromCapital: distances,
+        );
       }
       _log.w(
         'seaboard town fallback for province=${p.id}: '
@@ -294,19 +348,21 @@ Game _assignProvinceTowns({
     }
     if (sameRegion && capTileKey != null) {
       final distances = bfsDistances(p.regionId, capTileKey);
-      String? best;
-      int bestD = 999999;
-      for (final tk in tiles) {
-        final d = distances[tk] ?? 999999;
-        if (d < bestD) {
-          bestD = d;
-          best = tk;
-        }
-      }
-      return best ?? tiles.first;
+      return _pickTownTileByCentroidAndBfs(
+        candidates: tiles,
+        centroidX: centroid.x,
+        centroidY: centroid.y,
+        bfsFromCapital: distances,
+      );
     }
     final portTile = portTileInProvince(p.id);
-    return portTile ?? tiles.first;
+    if (portTile != null) return portTile;
+    return _pickTownTileByCentroidAndBfs(
+      candidates: tiles,
+      centroidX: centroid.x,
+      centroidY: centroid.y,
+      bfsFromCapital: const {},
+    );
   }
 
   final oldProvinces = game.worldState.oldWorld.provinces.map((p) {
@@ -370,8 +426,10 @@ Game _applyNaming({
   }) {
     if (provinces.isEmpty) return;
     provinces = List.of(provinces)..sort((a, b) => a.id.compareTo(b.id));
-    final rng = Random(rngSeed);
-    final poolIndices = List.generate(pool.length, (i) => i)..shuffle(rng);
+    final poolIndices = shuffledPoolIndices(
+      poolLength: pool.length,
+      seed: rngSeed,
+    );
     var poolIndex = 0;
     for (var i = 0; i < provinces.length; i++) {
       final p = provinces[i];
@@ -584,23 +642,68 @@ Game _applyNaming({
   );
 }
 
-/// Adds starting civilian units for each Great Power in their capital provinces.
+/// Adds starting civilian units for each civilian-owning faction at its capital tile.
 Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
-  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
   var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
   var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
 
-  for (final player in game.players) {
-    final capitalProvinceId = player.capitalProvinceId;
-    if (capitalProvinceId == null) continue;
+  Iterable<
+    ({
+      String id,
+      String? capitalProvinceId,
+      CapitalTile? capitalTile,
+      bool requireCapitalTile,
+    })
+  >
+  civilianOwners() sync* {
+    for (final player in game.players) {
+      yield (
+        id: player.id,
+        capitalProvinceId: player.capitalProvinceId,
+        capitalTile: player.capitalTile,
+        requireCapitalTile: true,
+      );
+    }
+    for (final minor in game.minorNations) {
+      yield (
+        id: minor.id,
+        capitalProvinceId: minor.capitalProvinceId,
+        capitalTile: minor.capitalTile,
+        requireCapitalTile: false,
+      );
+    }
+    for (final tribe in game.tribes) {
+      yield (
+        id: tribe.id,
+        capitalProvinceId: tribe.capitalProvinceId,
+        capitalTile: tribe.capitalTile,
+        requireCapitalTile: false,
+      );
+    }
+  }
 
+  for (final owner in civilianOwners()) {
+    final ownerId = owner.id;
+    final capitalProvinceId = owner.capitalProvinceId;
+    final capitalTile = owner.capitalTile;
+    if (capitalProvinceId == null || capitalTile == null) {
+      if (!owner.requireCapitalTile) {
+        continue;
+      }
+      throw StateError(
+        'Cannot spawn starting civilians without capital tile: owner=$ownerId',
+      );
+    }
+    final capitalTileKey = capitalTile.toTileKey();
+    final tileProvinceId = Unit.provinceIdFromTileKey(capitalTileKey);
+    if (tileProvinceId == null || tileProvinceId != capitalProvinceId) {
+      throw StateError(
+        'Capital tile/province mismatch for starting civilians: '
+        'owner=$ownerId capitalProvinceId=$capitalProvinceId '
+        'capitalTileKey=$capitalTileKey',
+      );
+    }
     final capitalRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
-    final tilesInCapital =
-        tileKeysByRegion[capitalRegionId]?[capitalProvinceId];
-    final firstTileInCapital =
-        (tilesInCapital != null && tilesInCapital.isNotEmpty)
-        ? tilesInCapital.first
-        : null;
 
     final unitConfig = config.startingResources.startingCivilianUnits;
     for (final entry in unitConfig.entries) {
@@ -608,14 +711,14 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
       final count = entry.value;
 
       for (var k = 1; k <= count; k++) {
-        final unitId = '${player.id}_${unitType.toLowerCase()}_$k';
+        final unitId = '${ownerId}_${unitType.toLowerCase()}_$k';
         final unit = Unit(
           id: unitId,
           type: unitType,
-          ownerId: player.id,
+          ownerId: ownerId,
           locationProvinceId: capitalProvinceId,
           status: UnitStatus.idle,
-          tileKey: firstTileInCapital,
+          tileKey: capitalTileKey,
         );
         if (capitalRegionId == kRegionOldWorld) {
           oldWorldUnits.add(unit);
@@ -739,7 +842,7 @@ Game _addStartingMilitaryAndNaval({
 
 /// Chooses the regiment type used for starting armies.
 String _startingRegimentTypeForPlayer(Player player) {
-  // MVP: low-upkeep starting regiment (ruleset-config / game-setup-pipeline 7f).
+  // Bootstrap default: low-upkeep regiment (SPEC/program/game-setup-pipeline.md §7f).
   const fallbackId = 'peasant_levies';
   final stats = regimentStatsById(fallbackId);
   if (stats != null) return stats.id;
@@ -751,4 +854,18 @@ String _startingShipTypeForPlayer(Player _) {
   return ShipEconomyCatalog.carrack.shipTypeId;
 }
 
-/// Builds a map of province id -> neighbouring province ids using only P–P edges.
+/// Re-runs §7d province town assignment after the caller mutates provinces or maps.
+///
+/// For integration tests that need fixtures (e.g. overseas ownership) that
+/// [createGameFromGeneratedMaps] does not produce by default.
+Game assignProvinceTownsForTesting({
+  required Game game,
+  required Map<String, MapTopology> topologyByRegion,
+  required Map<String, TileMapResult> tileMapByRegion,
+}) {
+  return _assignProvinceTowns(
+    game: game,
+    topologyByRegion: topologyByRegion,
+    tileMapByRegion: tileMapByRegion,
+  );
+}

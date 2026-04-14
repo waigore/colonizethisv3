@@ -1,14 +1,16 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/services.dart';
 
 import '../../../config/app_assets.dart';
 
-final _log = gameLogger();
+final _log = packageLogger();
 
 const Set<String> kProvinceLabelIconIds = {
+  'map_capital_star',
+  'map_warp_zone',
   'map_presence_civilian',
   'map_presence_regiment',
   'map_presence_ship',
@@ -21,7 +23,7 @@ class ProvinceLabelIconCache {
 
   bool get isLoaded => _isLoaded;
 
-  static const double iconSize = 32.0;
+  static const double iconSize = 64.0;
 
   Future<void> load() async {
     if (_isLoaded || _isLoading) return;
@@ -45,7 +47,7 @@ class ProvinceLabelIconCache {
   }
 
   Future<void> _loadIcon(String iconId) async {
-    final pngPath = '${kAppIconAssetPrefix}ui_icon_$iconId.png';
+    final pngPath = '${kAppIcon64AssetPrefix}ui_icon_$iconId.png';
     final imageData = await rootBundle.load(pngPath);
     final completer = Completer<ui.Image>();
     ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);

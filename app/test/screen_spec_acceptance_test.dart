@@ -291,7 +291,7 @@ void main() {
           naming: defaultNamingConfig,
           initialOrderedGpIds: gpIds,
           initialLeaderVariantByGpId: initialLeaderVariantByGpId,
-          onStartGame: onStartGame ?? (_, __) {},
+          onStartGame: onStartGame ?? (_, _) {},
           onBack: onBack ?? () {},
         ),
       );

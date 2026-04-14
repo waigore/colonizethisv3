@@ -52,7 +52,7 @@ Supports a **dry-run**: apply orders via the resolver (which returns **new** sta
 
 ### ProjectedEffects fields
 
-| Field | Required for MVP | Implemented |
+| Field | Required for current product | Implemented |
 |-------|------------------|-------------|
 | `workerCount` | Yes | Yes |
 | `treasuryDelta` | Yes | Yes |
@@ -122,10 +122,29 @@ The OrderEngine validates and stores **move (civilian), army move, build, work, 
 - **Research orders:** Research orders are **not** added to OrderEngine; they are supplied separately via `Orders.researchOrdersByPlayerId` and validated/applied in the Research phase (TurnResolver).
 - **Caller contract:** The caller (app or ctdev) supplies civilian move, army move, build, work, diplomatic, and naval orders via OrderEngine methods; research orders are collected separately and passed to the resolver via `Orders.researchOrdersByPlayerId`.
 - **Merge:** Human + AI orders merged with human over AI for conflicts; ordering is stable for deterministic replay (player id, then conflict key / order type as specified).
-- **Projected effects:** Dry-run returns `ProjectedEffects` with worker count, treasury delta, unit locations, and stockpile deltas (all required for MVP and implemented); no mutation of the passed-in game from the caller's perspective. See § ProjectedEffects fields for the full list and implementation status.
+- **Projected effects:** Dry-run returns `ProjectedEffects` with worker count, treasury delta, unit locations, and stockpile deltas (all required for current product and implemented); no mutation of the passed-in game from the caller's perspective. See § ProjectedEffects fields for the full list and implementation status.
 - **No application:** Order engine does not apply orders to world state; TurnResolver applies after merge.
 - **Move validation (extracted):** Given a move order that violates civilian-into-GP or civilian-into-Minor/Tribe rules (per [orders.md](orders.md)), when validated with context, the result is rejected with reason "Civilian cannot enter other Great Power territory" or "Civilian cannot enter Minor/Tribe territory" as applicable. Military moves into GP or Minor/Tribe provinces without war (or same-turn declareWar) are rejected with the appropriate "Must declare war before attacking..." reason.
 - **Work order cost (single source):** Given work orders with material costs, when validated and when projecting effects in the same pass, the same cost calculation is used via WorkOrderCostCalculator (single source of truth).
+
+---
+
+## Code generation (OrderEngine slots)
+
+**Mechanical vs validation:** `validatePlayerOrdersWithContext` stays hand-written in `order_engine.dart` (per-type validators, treasury/stockpile propagation). The **slot table** (getter/updater/`_OrderSlot` consts), **constructor and deep-copy wiring** (`copyInitialOrdersForEngine`, `copyOrdersSnapshotForEngine`), and **public** `addXxxOrder`, `addXxxOrderWithContext`, `removeXxxOrder` methods are **generated** into `order_engine.g.dart` from `order_engine_manifest.yaml` via `dart run tool/generate_order_engine_slots.dart`.
+
+**Manifest:** `packages/colonizethis_logic/lib/src/orders/order_engine_manifest.yaml` lists each **engine-managed** order kind (Dart type, `Orders` field, `copyWith` parameter name, log label, public method names) and **storage-only** fields copied with orders but not exposed as engine slots (e.g. `researchOrdersByPlayerId` — no `addResearchOrder` on `OrderEngine`).
+
+**CI / workflow:** `melos run codegen_order_engine` regenerates output; `melos run codegen_verify` (runs `tool/verify_order_engine_codegen.sh`) must pass on PRs — committed `order_engine.g.dart` must match the generator.
+
+**Structural guard:** The generator compares manifest field names to every `final Map<String, List<…>>` field on `Orders` in `colonizethis_models`; a mismatch fails generation so new order maps are not silently omitted.
+
+**Implementation note:** Generated public `add*` / `remove*` methods live in a `mixin` mixed into `OrderEngine` (a `mixin on OrderEngine` would be circular). They delegate to `addOrderForSlot` / `addOrderForSlotWithContext` / `removeOrderForSlot` on the class via `(this as OrderEngine)` so slot helpers stay on the class body next to private state.
+
+### Acceptance criteria (codegen)
+
+- **Given** the repository has `order_engine_manifest.yaml` and `order_engine.g.dart` committed in sync, **when** a maintainer runs `dart run tool/generate_order_engine_slots.dart`, **then** `git diff` shows no changes to `order_engine.g.dart`.
+- **Given** `Orders` in `colonizethis_models` defines a set of `Map<String, List<…>>` order-collection fields, **when** `order_engine_manifest.yaml` does not list exactly those fields split across `engine_slots` and `storage_only`, **then** the generator exits with non-zero status and reports the field-set mismatch.
 
 ---
 

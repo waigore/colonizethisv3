@@ -1,5 +1,8 @@
 // Sub-seeds derived from turnSeed[P, T] for deterministic AI. SPEC/ai/ai-architecture.md, ai-planner.md.
 
+import 'deterministic_hash_mix_constants.dart';
+import 'deterministic_lcg_constants.dart';
+
 /// Bundle of sub-seeds for one AI turn. All randomness in colonizethis_ai uses these.
 class AISeedBundle {
   const AISeedBundle({
@@ -27,10 +30,10 @@ class AISeedBundle {
   /// Derives sub-seeds from [turnSeed] using a simple hash chain.
   /// Same turnSeed → same bundle (deterministic).
   factory AISeedBundle.fromTurnSeed(int turnSeed) {
-    const int prime = 0x9E3779B1;
-    int h(int s) => (s * prime) & 0x7fffffff;
+    int h(int s) =>
+        (s * kDeterministicHashMixPrime32) & kDeterministicLcg31Mask;
     return AISeedBundle(
-      perceptionSeed: turnSeed & 0x7fffffff,
+      perceptionSeed: turnSeed & kDeterministicLcg31Mask,
       goalSeed: h(turnSeed),
       economySeed: h(h(turnSeed)),
       militarySeed: h(h(h(turnSeed))),

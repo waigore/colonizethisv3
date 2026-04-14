@@ -13,6 +13,7 @@
 import 'dart:async';
 
 import 'app_events.dart';
+import 'stream_where_type.dart';
 
 class AppEventBus {
   AppEventBus._() : _controller = StreamController<AppEvent>.broadcast();
@@ -34,8 +35,7 @@ class AppEventBus {
 
   Stream<AppEvent> get stream => _controller.stream;
 
-  Stream<T> on<T extends AppEvent>() =>
-      _controller.stream.where((e) => e is T).map((e) => e as T);
+  Stream<T> on<T extends AppEvent>() => _controller.stream.whereType<T>();
 
   Stream<UIActionEvent> get uiActionEvents => on<UIActionEvent>();
 

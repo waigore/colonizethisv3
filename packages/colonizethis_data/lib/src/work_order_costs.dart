@@ -1,3 +1,5 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
+
 import 'commodities.dart';
 
 /// Work order material costs and durations. SPEC/game/civilian-units.md, extraction-and-improvements.md, siege-mechanics.md. Single source of truth for stockpile costs in order validation and application.
@@ -125,12 +127,12 @@ WorkOrderCost? workOrderMaterialCost(
 
 /// Allowed work order targets per unit type. SPEC/game/civilian-units.md Work Order Summary.
 const Map<String, List<String>> workOrderTargetsByUnitType = {
-  'Explorer': ['explore', 'prospect'],
-  'Builder': ['build_improvement', 'upgrade_town'],
-  'Engineer': ['build_road', 'build_port', 'build_fort'],
-  'Rail Builder': ['build_rail'],
-  'Spy': ['steal_tech', 'counter_spy'],
-  'Merchant': ['purchase_land'],
+  kUnitTypeExplorer: ['explore', 'prospect'],
+  kUnitTypeBuilder: ['build_improvement', 'upgrade_town'],
+  kUnitTypeEngineer: ['build_road', 'build_port', 'build_fort'],
+  kUnitTypeRailBuilder: ['build_rail'],
+  kUnitTypeSpy: ['steal_tech', 'counter_spy'],
+  kUnitTypeMerchant: ['purchase_land'],
 };
 
 /// Returns true if [unitType] can perform work order [target].

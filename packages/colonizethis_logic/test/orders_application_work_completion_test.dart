@@ -10,10 +10,10 @@ void main() {
     const provinceId = 'oldWorld|P1';
 
     // Non-empty orders so applyBuildAndWorkOrders does not return early (empty build list still counts).
-    Orders _ordersToTriggerProcessWork() =>
+    Orders ordersToTriggerProcessWork() =>
         Orders(buildUnitOrdersByPlayerId: {'p1': <BuildUnitOrder>[]});
 
-    TileMapResult _simpleTileMap() {
+    TileMapResult simpleTileMap() {
       return TileMapResult(
         width: 3,
         height: 3,
@@ -62,13 +62,114 @@ void main() {
         );
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
         );
         expect(next.worldState.tileState.improvementLevel(tileKey), 1);
         final after = next.worldState.oldWorld.units.single;
         expect(after.tileKey, tileKey);
         expect(after.originTileKey, isNull);
         expect(after.assignedTileKey, isNull);
+      },
+    );
+
+    test(
+      'build_improvement completion sets envy mirror hint for human on extraction tile',
+      () {
+        final tileState = TileMapState().setImprovement(tileKey, 0);
+        final unit = Unit(
+          id: 'u1',
+          type: 'Builder',
+          ownerId: 'p1',
+          locationProvinceId: provinceId,
+          tileKey: tileKey,
+          originTileKey: 'oldWorld|P1|1|0',
+          assignedTileKey: tileKey,
+          status: UnitStatus.working,
+          currentWork: const CurrentWork(
+            workTarget: 'build_improvement',
+            tileKey: tileKey,
+            totalTurns: 1,
+            remainingTurns: 1,
+          ),
+        );
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+              ],
+              units: [unit],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: const {tileKey: 'grain'},
+            tileState: tileState,
+          ),
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        );
+        final next = applyBuildAndWorkOrders(
+          game,
+          ordersToTriggerProcessWork(),
+        );
+        expect(next.lastHumanCompletedResearchCategory, 'gathering');
+        expect(next.lastHumanResearchCategoryCompletionTurn, 2);
+      },
+    );
+
+    test(
+      'build_improvement completion adds envy evidence when AI mirrors human gathering hint',
+      () {
+        const aiId = 'ai1';
+        final tileState = TileMapState().setImprovement(tileKey, 0);
+        final unit = Unit(
+          id: 'u1',
+          type: 'Builder',
+          ownerId: aiId,
+          locationProvinceId: provinceId,
+          tileKey: tileKey,
+          originTileKey: 'oldWorld|P1|1|0',
+          assignedTileKey: tileKey,
+          status: UnitStatus.working,
+          currentWork: const CurrentWork(
+            workTarget: 'build_improvement',
+            tileKey: tileKey,
+            totalTurns: 1,
+            remainingTurns: 1,
+          ),
+        );
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: ow, ownerId: aiId),
+              ],
+              units: [unit],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: const {tileKey: 'coal'},
+            tileState: tileState,
+          ),
+          players: const [
+            Player(id: 'human', displayName: 'H', isHuman: true),
+            Player(id: aiId, displayName: 'AI', isHuman: false),
+          ],
+          aiControlByGpId: const {aiId: true},
+          lastHumanCompletedResearchCategory: 'gathering',
+          lastHumanResearchCategoryCompletionTurn: 0,
+        );
+        final next = applyBuildAndWorkOrders(
+          game,
+          ordersToTriggerProcessWork(),
+        );
+        final envy = next.dossierEvidenceEntries
+            .where((e) => e.agendaType == 'envy')
+            .toList();
+        expect(envy, isNotEmpty);
+        expect(envy.single.subjectId, aiId);
+        expect(envy.single.scoreDelta, 1);
       },
     );
 
@@ -110,7 +211,7 @@ void main() {
         );
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
         );
         expect(next.worldState.tileState.improvementLevel(tileKey), 4);
       },
@@ -120,7 +221,12 @@ void main() {
       'build_improvement completion does not re-apply extraction tech cap (#1291)',
       () {
         // Assign-time would reject 3→4 with extraction cap 2; completion still applies +1 to stored level.
-        expect(extractionCapForUnlocked(const {'saw_mill': true}), 2);
+        expect(
+          extractionCapForResourceForUnlocked(const {
+            'saw_mill': true,
+          }, 'grain'),
+          1,
+        );
         final tileState = TileMapState().setImprovement(tileKey, 3);
         final unit = Unit(
           id: 'u1',
@@ -163,7 +269,7 @@ void main() {
         );
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
         );
         expect(next.worldState.tileState.improvementLevel(tileKey), 4);
       },
@@ -211,7 +317,7 @@ void main() {
         );
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
         );
         final uAfter = next.worldState.oldWorld.units.single;
         expect(uAfter.status, UnitStatus.idle);
@@ -259,14 +365,14 @@ void main() {
         );
         final afterFirst = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
         );
         expect(afterFirst.worldState.tileState.improvementLevel(tileKey), 0);
         final uAfterFirst = afterFirst.worldState.oldWorld.units.single;
         expect(uAfterFirst.currentWork!.remainingTurns, 1);
         final afterSecond = applyBuildAndWorkOrders(
           afterFirst,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
         );
         expect(afterSecond.worldState.tileState.improvementLevel(tileKey), 1);
       },
@@ -304,7 +410,7 @@ void main() {
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
-      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      final next = applyBuildAndWorkOrders(game, ordersToTriggerProcessWork());
       expect(
         next.worldState.playerVisibilityByTile['p1']?[tileKey],
         VisibilityLevel.fullyVisible.name,
@@ -342,7 +448,7 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(
         game,
-        _ordersToTriggerProcessWork(),
+        ordersToTriggerProcessWork(),
         tileMapByRegion: const {},
       );
       expect(next.worldState.tileState.roadLevel(tileKey), 1);
@@ -398,8 +504,8 @@ void main() {
         );
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
-          tileMapByRegion: {ow: _simpleTileMap()},
+          ordersToTriggerProcessWork(),
+          tileMapByRegion: {ow: simpleTileMap()},
         );
 
         // Road built on target tile.
@@ -451,8 +557,8 @@ void main() {
 
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
-          tileMapByRegion: {ow: _simpleTileMap()},
+          ordersToTriggerProcessWork(),
+          tileMapByRegion: {ow: simpleTileMap()},
         );
 
         // Road on target tile upgraded from 1 -> 2.
@@ -510,7 +616,7 @@ void main() {
         );
         final next = applyBuildAndWorkOrders(
           game,
-          _ordersToTriggerProcessWork(),
+          ordersToTriggerProcessWork(),
           topology: topology,
         );
         expect(next.worldState.tileState.roadLevel(tileKey), 4);
@@ -557,7 +663,7 @@ void main() {
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
-      final next = applyBuildAndWorkOrders(game, _ordersToTriggerProcessWork());
+      final next = applyBuildAndWorkOrders(game, ordersToTriggerProcessWork());
       expect(next.worldState.oldWorld.provinces.single.fortLevel, 1);
     });
 
@@ -609,7 +715,7 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(
         game,
-        _ordersToTriggerProcessWork(),
+        ordersToTriggerProcessWork(),
         tileMapByRegion: {ow: railMap},
       );
       expect(next.worldState.tileState.roadLevel(tileKey), 0);
@@ -663,7 +769,7 @@ void main() {
       );
       final next = applyBuildAndWorkOrders(
         game,
-        _ordersToTriggerProcessWork(),
+        ordersToTriggerProcessWork(),
         tileMapByRegion: {ow: railMap},
       );
       expect(next.worldState.tileState.roadLevel(tileKey), 4);

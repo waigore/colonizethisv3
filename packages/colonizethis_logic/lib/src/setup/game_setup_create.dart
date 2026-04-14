@@ -21,6 +21,10 @@ class GameSetupResult {
   final List<WarpLink> warpLinks;
 }
 
+const double _kNewCampaignDefaultMapZoomMultiplier = 4.0;
+const double _kMapZoomMultiplierMin = 0.5;
+const double _kMapZoomMultiplierMax = 8.0;
+
 /// Builds a new Game from pre-generated Old World and New World maps and config.
 /// Caller is responsible for generating tileMap and topology per region (e.g. via colonizethis_map).
 /// Per SPEC/program/game-setup-pipeline.md: assignment (GPs, minors, tribes), build state, capital auto-choice.
@@ -48,13 +52,16 @@ GameSetupResult createGameFromGeneratedMaps({
     kRegionNewWorld: topologyNewWorld,
   };
   final links = warpLinks ?? [];
+  final initialMapZoomMultiplier = _resolveInitialMapZoomMultiplier(config);
 
   final owProvinceIds = _provinceIdsFromTopology(topologyOldWorld);
   final nwProvinceIds = _provinceIdsFromTopology(topologyNewWorld);
 
   if (owProvinceIds.length < config.greatPowerCount) {
-    throw ArgumentError(
-      'Old World has ${owProvinceIds.length} provinces but ${config.greatPowerCount} Great Powers need at least one each',
+    throw SetupConfigConstraintException(
+      code: 'insufficient_old_world_provinces_for_great_powers',
+      details:
+          'Old World has ${owProvinceIds.length} provinces but ${config.greatPowerCount} Great Powers need at least one each',
     );
   }
 
@@ -64,8 +71,9 @@ GameSetupResult createGameFromGeneratedMaps({
           .toList()
         ..sort();
   if (seaBoundOW.length < config.greatPowerCount) {
-    throw ArgumentError(
-      'Old World has ${seaBoundOW.length} sea-bound provinces but ${config.greatPowerCount} Great Powers need one each',
+    throw NoSeaBoundCapitalProvinceException(
+      details:
+          'Old World has ${seaBoundOW.length} sea-bound provinces but ${config.greatPowerCount} Great Powers need one each',
     );
   }
 
@@ -267,7 +275,7 @@ GameSetupResult createGameFromGeneratedMaps({
   ];
 
   /// Explicit designation of which Great Power is human-controlled (respects game setup: slot 0 = human).
-  /// Used by ctterm and other clients for visibility and input; AI uses true, human uses false.
+  /// Used by human-facing clients for visibility and input; AI uses true, human uses false.
   final aiControlByGpId = {for (final p in players) p.id: !p.isHuman};
 
   var game = Game(
@@ -281,6 +289,9 @@ GameSetupResult createGameFromGeneratedMaps({
     aiControlByGpId: aiControlByGpId,
     capitalTileGrainBonusPerTurn:
         config.startingResources.capitalTileGrainBonusPerTurn,
+    mapViewState: MapViewState.defaults.copyWith(
+      zoomMultiplier: initialMapZoomMultiplier,
+    ),
   );
 
   // Capital auto-choice: GPs (OW), then minors (OW), then tribes (NW). Must run before naming.
@@ -450,4 +461,11 @@ GameSetupResult createGameFromGeneratedMaps({
     combinedTopology: combinedTopology,
     warpLinks: links,
   );
+}
+
+double _resolveInitialMapZoomMultiplier(GameSetupConfig config) {
+  final preferred =
+      config.preferredInitialMapZoomMultiplier ??
+      _kNewCampaignDefaultMapZoomMultiplier;
+  return preferred.clamp(_kMapZoomMultiplierMin, _kMapZoomMultiplierMax);
 }

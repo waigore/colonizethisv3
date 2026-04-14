@@ -2,13 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 
+import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/config/map_terrain_config.dart';
+import 'package:colonizethis_app/core/errors/ui_validation_exception.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart' show CellViewData;
 import 'package:flutter/services.dart';
 
-final _log = gameLogger();
+final _log = packageLogger();
 
 /// Sea terrain identifier (not in TerrainType enum).
 const String seaTerrainId = 'sea';
@@ -186,7 +188,7 @@ String featureOverlayTileKey({
   int? improvementLevel,
 }) {
   if (terrain == TerrainType.plains || terrain == TerrainType.desert) {
-    throw ArgumentError(
+    throw UiValidationException(
       'featureOverlayTileKey only supports L2+ feature terrains',
     );
   }
@@ -196,7 +198,7 @@ String featureOverlayTileKey({
     improvementLevel: improvementLevel,
   );
   if (key == null) {
-    throw ArgumentError(
+    throw UiValidationException(
       'featureOverlayTileKey only supports L2+ feature terrains',
     );
   }
@@ -331,7 +333,7 @@ class TerrainTilesetCache {
       final th = (tileSizeJson['height'] as num).toInt();
       if (tw != assetCfg.tilePx || th != assetCfg.tilePx) {
         throw StateError(
-          'map: $name tile_px ${assetCfg.tilePx} does not match JSON tile_size ${tw}×$th',
+          'map: $name tile_px ${assetCfg.tilePx} does not match JSON tile_size $tw×$th',
         );
       }
 
@@ -402,7 +404,7 @@ class TerrainTilesetCache {
   }
 
   Future<void> _loadStandaloneTile(String tileId, String assetStem) async {
-    final pngPath = 'assets/images/terrain/tile_$assetStem.png';
+    final pngPath = terrainTileAssetPath(assetStem);
 
     try {
       final imageData = await rootBundle.load(pngPath);
@@ -427,7 +429,7 @@ class TerrainTilesetCache {
     String tileId,
     String assetStem,
   ) async {
-    final pngPath = 'assets/images/terrain/tile_$assetStem.png';
+    final pngPath = terrainTileAssetPath(assetStem);
     final imageData = await rootBundle.load(pngPath);
     final completer = Completer<ui.Image>();
     ui.decodeImageFromList(imageData.buffer.asUint8List(), completer.complete);

@@ -27,5 +27,11 @@ void main() {
         expect(TurnState.fromJson(s.toJson()).phase, phase);
       }
     });
+    test('fromJson rejects unknown phase string', () {
+      expect(
+        () => TurnState.fromJson({'phase': 'notARealPhase', 'turnNumber': 0}),
+        throwsArgumentError,
+      );
+    });
   });
 }

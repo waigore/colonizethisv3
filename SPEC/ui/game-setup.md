@@ -11,7 +11,7 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `variant` | `plain` \| `pixelArt` | Both variants use the **same pixel-art component catalog** (CtNinePatchButton, CtDropdown, CtScreenShell). **plain:** colonial colour theme only (no background illustration). **pixelArt:** reuses main menu pixel-art background and button assets per UXD 02/03a. |
-| `state` | `default` \| `loading` | **default:** Start Game and dropdowns enabled. **loading:** Start disabled, optional loading indicator; Back remains enabled. |
+| `state` | `default` \| `loading` | **default:** Start Game and dropdowns enabled. **loading:** Start Game disabled; nation and leader dropdowns **disabled**; a loading indicator **must** be visible; Back remains enabled. |
 | `naming` | `ResolvedNamingConfig` | All GP country names and leader variants (colonizethis_data). Used to populate nation and leader dropdowns. |
 | `initialOrderedGpIds` | `List<String>` | Length 6. Initial nation (gpId) per slot; **empty string denotes unselected**. When the screen loads with all entries empty (e.g. `["", "", "", "", "", ""]`), all nation/leader choices are unselected; the shell should pass this for a fresh setup. |
 | `initialLeaderVariantByGpId` | `Map<String, String>` | Initial leader variant per gpId (gpId → variantId). When the screen loads with all choices unselected, this is empty. When a slot’s nation changes, leader resets to default for that nation. |
@@ -34,7 +34,7 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 - **Leader uniqueness:** Leaders are per nation; once a nation is assigned to a slot, the leader dropdown for that slot shows only that nation’s variants. No separate “leader taken” rule across slots because each slot has a distinct nation.
 - **Start:** Given state is default and **all six slots have both a nation and a leader selected**, when the user taps Start Game, the widget invokes `onStartGame` once with (1) a list of six gpIds in slot order (index 0 = human, 1–5 = AI) and (2) a map gpId → leaderVariantId for each of those gpIds. The shell builds GameSetupConfig (e.g. selectedGreatPowerIds = that list, leaderVariantByGpId = that map), creates the game, and navigates.
 - **Back:** When the user taps Back, the widget invokes `onBack` once; the shell navigates to Main Menu.
-- **Loading:** Given state is loading, the Start Game control is disabled and (optionally) a loading indicator is visible; nation and leader dropdowns may be disabled; tapping Back remains enabled.
+- **Loading:** Given state is loading, the Start Game control is disabled; a loading indicator is visible; nation and leader dropdowns are disabled; tapping Back remains enabled.
 
 **Interaction.** The widget holds per-slot state (ordered list of six gpIds and leader variant per gpId) and exposes it via `onStartGame(orderedGpIdsForSlots, leaderVariantByGpId)`. No routing logic lives in the widget.
 
@@ -46,7 +46,7 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 
 ## Shell new game dialog (`NewGameLeaderSelectionDialog`)
 
-**Flutter app shell** implements the same **six-slot** nation/leader semantics as `CtGameSetup` inside a **modal dialog** opened from Main Menu (bus id `new_game_leader_selection`). Full-screen `CtGameSetup` remains the catalog/widget contract for UXD 03b and tests; the shell path is dialog-based for MVP.
+**Flutter app shell** implements the same **six-slot** nation/leader semantics as `CtGameSetup` inside a **modal dialog** opened from Main Menu (bus id `new_game_leader_selection`). Full-screen `CtGameSetup` remains the catalog/widget contract for UXD 03b and tests; the shell path is dialog-based for current product.
 
 | Element | Requirement |
 |--------|-------------|
@@ -55,16 +55,21 @@ The CtGameSetup widget is presentational and accepts the following parameters. T
 | Leader picker | Per slot (same row as nation), leaders for that slot’s nation only; changing nation resets leader to that nation’s default variant. |
 | Initial load | **Implicit default:** slot order starts as **`GameSetupConfig.defaultConfig.selectedGreatPowerIds`** (six distinct GPs). Leaders default to each nation’s default variant. **Start** is enabled when all slots have valid nations and leaders (true on open with default data). |
 | Fair assignment | Checkbox (default off) sets **`GameSetupConfig.enforceFairGpOldWorldAssignment`** on confirm, same semantics as before. |
-| Actions | **Start** closes the dialog and passes **`(orderedGreatPowerIds, leaderVariantByGpId, enforceFairGpOldWorldAssignment)`** to the shell; shell builds `GameSetupConfig` and runs [Game initializing](game-initializing.md). **Cancel** dismisses without starting setup. |
+| Game / world seed | Numeric field **below** the fair-assignment row. Initial display **42** (from template `GameSetupConfig.seed`). **0** = random (time-based effective seed when setup runs; see [game-setup-pipeline.md](../program/game-setup-pipeline.md)). Any other non-negative integer is reproducible. **Empty or unparsable** on Start → **42**. **Negative** input on Start → **42**. Short **localized helper** beside/near the field explains 0 vs fixed seed. The dialog does **not** show the resolved effective seed. |
+| Actions | **Start** closes the dialog and passes **`(orderedGreatPowerIds, leaderVariantByGpId, enforceFairGpOldWorldAssignment, seed)`** to the shell; shell builds `GameSetupConfig` (including **`seed`**) and runs [Game initializing](game-initializing.md). **Cancel** dismisses without starting setup. |
+
+**Layout (shell dialog + `CtDialogShell`).** The dialog is framed by **`CtDialogShell`**: frame height follows content up to `maxHeight`; when taller, the **entire** body (slots, fair row, seed, actions) scrolls as **one** vertical scroll—there is **no** separate fixed-height scroll region that only wraps the six slot rows on large viewports. On tall viewports, all six slot rows are visible without scrolling inside a slot-only panel.
 
 **Acceptance criteria (shell dialog).**
 
 - **Given** the user opened New Game from the main menu, **when** the dialog is shown, **then** six slot rows appear; each row shows the slot label and **nation + leader dropdowns on one line**; fair-assignment checkbox, Cancel, and Start; initial nations match the program default six GPs and leaders match defaults; nation pickers show the GP colour swatch beside each nation label.
 - **Given** the dialog is open, **when** the user changes a slot’s nation, **then** that slot’s leader list updates to that nation’s variants and the selected leader becomes that nation’s default unless the user picks another.
 - **Given** the dialog is open, **when** the user opens a nation dropdown, **then** only GPs not assigned to **other** slots are listed (plus the current slot’s nation).
-- **Given** the user taps Start, **when** the handler runs, **then** it receives the six gpIds in slot order and the leader map for those ids, and game initialization proceeds as in [game-initializing.md](game-initializing.md).
+- **Given** the user taps Start, **when** the handler runs, **then** it receives the six gpIds in slot order, the leader map for those ids, the fair-assignment flag, and an integer **`seed` ≥ 0** (default **42** when the field is unchanged), and game initialization proceeds as in [game-initializing.md](game-initializing.md).
+- **Given** the dialog is open with the default seed field, **when** the user taps Start without editing the seed, **then** the UI layer passed **`seed == 42`**, helper text for the seed field is visible, and **`GameSetupConfig.seed`** in the template matches that value.
+- **Given** the user cleared the seed field or entered a negative value, **when** the user taps Start, **then** the shell uses **`GameSetupConfig.seed == 42`**.
 
-**Automated tests.** Widget tests cover the dialog (defaults, swatch presence, Start payload) and shell integration (`app/test/shell_screen_test.dart`).
+**Automated tests.** Widget tests cover the dialog (defaults, swatch presence, Start payload, shell scroll/layout) and shell integration (`app/test/shell_screen_test.dart`); `app/test/ct_dialog_shell_test.dart` covers shared `CtDialogShell` sizing and scroll.
 
 ---
 
@@ -89,9 +94,9 @@ Positions, layout, and hierarchy (per UXD 03b; 44 dp min touch targets).
 
 When the user has selected a nation and leader for every slot, Start Game becomes enabled. Nation dropdown for a slot lists "Select nation" (empty) plus GPs not selected in other slots. Leader dropdown lists "Select leader" (empty) until a nation is chosen, then that nation’s variants. When nation changes, leader resets to that nation’s default.
 
-**Loading:** Same layout; Start Game disabled; optional "Starting…" or spinner; Back enabled.
+**Loading:** Same layout; Start Game disabled; a visible loading indicator ("Starting…" label and/or spinner) is required; Back enabled.
 
-**Regions (UXD 07–style):** canvas full-screen; title_region ("Game Setup"); slots_region (scrollable: six rows, each with slot label, nation dropdown, leader dropdown); buttons_region (Start Game, Back); optional loading_region when state is loading.
+**Regions (UXD 07–style):** canvas full-screen; title_region ("Game Setup"); slots_region (scrollable: six rows, each with slot label, nation dropdown, leader dropdown); buttons_region (Start Game, Back); loading_region is present in `loading` state.
 
 **Layout (pixel-art variant):** Content column constrained to **max width 400 dp**; Start/Back use main menu button asset. Content centered. Slots may scroll on small screens.
 
@@ -101,7 +106,7 @@ When the user has selected a nation and leader for every slot, Start Game become
 
 ## Pixel-art assets
 
-For MVP, reuse main menu assets: `ui_main_menu_button.png` for Start Game and Back. Dropdowns and list use theme styling. If a dedicated game-setup panel is added later, add a row here and PixelLab prompts. Style lock: UXD 02.
+For current product, reuse main menu assets: `ui_main_menu_button.png` for Start Game and Back. Dropdowns and list use theme styling. Style lock: UXD 02.
 
 ---
 

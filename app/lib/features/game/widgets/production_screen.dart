@@ -6,7 +6,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/ct_e2e.dart';
+import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../providers/game_service_provider.dart';
+import '../../../providers/games_provider.dart';
 import '../../../providers/production_allocation_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
 import 'production_commodity_breakdown_dialog.dart';
@@ -46,6 +49,7 @@ class ProductionScreen extends ConsumerWidget {
         final desiredOutputByRecipe = shellRef.watch(
           productionDesiredOutputProvider,
         );
+        final currentOrders = shellRef.watch(currentOrdersProvider);
         var topology = MapTopology();
         Map<String, TileMapResult> tileMapByRegion = const {};
         try {
@@ -70,16 +74,20 @@ class ProductionScreen extends ConsumerWidget {
           panelTopology = topology;
           panelTileMaps = tileMapByRegion;
         }
-        final netDeltasByCommodity = previewStockpileNetDeltaByCommodityForPlayer(
-          game: displayGame,
-          topology: panelTopology,
-          playerId: displayPlayer.id,
-          tileMapByRegion: panelTileMaps,
-          defaultAssignmentsByPlayerId: {
-            displayPlayer.id: assignedRecipesFromDesiredOutput(desiredOutputByRecipe),
-          },
-        );
-        return ProductionPanel(
+        final netDeltasByCommodity =
+            previewStockpileNetDeltaByCommodityForPlayer(
+              game: displayGame,
+              topology: panelTopology,
+              playerId: displayPlayer.id,
+              tileMapByRegion: panelTileMaps,
+              currentOrders: currentOrders,
+              defaultAssignmentsByPlayerId: {
+                displayPlayer.id: assignedRecipesFromDesiredOutput(
+                  desiredOutputByRecipe,
+                ),
+              },
+            );
+        final productionPanel = ProductionPanel(
           game: displayGame,
           player: displayPlayer,
           desiredOutputByRecipe: desiredOutputByRecipe,
@@ -92,6 +100,7 @@ class ProductionScreen extends ConsumerWidget {
                 player: displayPlayer,
                 topology: panelTopology,
                 tileMapByRegion: panelTileMaps,
+                currentOrders: currentOrders,
               ),
             );
           },
@@ -101,6 +110,23 @@ class ProductionScreen extends ConsumerWidget {
                 .replaceAll(next);
           },
         );
+        if (kCtE2EEnabled) {
+          updateCtE2eProductionPanelSnapshotIfEnabled(
+            CtE2eProductionPanelSnapshot(
+              game: displayGame,
+              player: displayPlayer,
+              desiredOutputByRecipe: desiredOutputByRecipe,
+              netDeltasByCommodity: netDeltasByCommodity,
+              topology: panelTopology,
+              tileMapByRegion: panelTileMaps,
+            ),
+          );
+          return KeyedSubtree(
+            key: kCtE2EProductionPanelRootKey,
+            child: productionPanel,
+          );
+        }
+        return productionPanel;
       },
     );
   }

@@ -54,7 +54,9 @@ void emitResearchCompleteEvents(
             turnNumber: turn,
             seed: turn,
           );
-          for (final e in eventDialogue) onDialogue(e);
+          for (final e in eventDialogue) {
+            onDialogue(e);
+          }
           final isFirst =
               !hadTechBefore.contains(tech) &&
               firstDiscoveriesThisTurn.add(tech);
@@ -66,7 +68,9 @@ void emitResearchCompleteEvents(
               turnNumber: turn,
               seed: turn,
             );
-            for (final e in reactive) onDialogue(e);
+            for (final e in reactive) {
+              onDialogue(e);
+            }
           }
         }
       }
@@ -140,7 +144,9 @@ void emitProvinceCapturedEvents(
           turnNumber: turn,
           seed: turn,
         );
-        for (final e in colonyDialogue) onDialogue(e);
+        for (final e in colonyDialogue) {
+          onDialogue(e);
+        }
       }
     }
   }

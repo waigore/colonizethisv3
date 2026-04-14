@@ -81,41 +81,41 @@ class CtDropdown<T> extends StatelessWidget {
                   Text(hint!, style: Theme.of(ctx).textTheme.titleMedium),
                   const SizedBox(height: 8),
                 ],
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: items.length,
-                    itemBuilder: (context, index) {
-                      final v = items[index];
-                      final label = _labelFor(v);
-                      final rowLeading = itemLeading?.call(context, v);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: CtNinePatchButton(
-                          onPressed: () {
-                            Navigator.of(ctx).pop(v);
-                          },
-                          enabled: true,
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Row(
-                              children: [
-                                if (rowLeading != null) ...[
-                                  rowLeading,
-                                  const SizedBox(width: 8),
-                                ],
-                                Expanded(
-                                  child: Text(
-                                    label,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final v = items[index];
+                    final label = _labelFor(v);
+                    final rowLeading = itemLeading?.call(context, v);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: CtNinePatchButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop(v);
+                        },
+                        enabled: true,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            children: [
+                              if (rowLeading != null) ...[
+                                rowLeading,
+                                const SizedBox(width: 8),
                               ],
-                            ),
+                              Expanded(
+                                child: Text(
+                                  label,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

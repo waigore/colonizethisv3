@@ -1,14 +1,21 @@
 part of 'tile_map_generator.dart';
 
-mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
+/// Pass 4–5, Pass 8–9: lakes, moats, border noise, province seeds and assignment.
+class _TileMapGenLakesProvinces {
+  _TileMapGenLakesProvinces(this.params, this._graph, this._join);
+
+  final TileMapParams params;
+  final TileMapGridGraph _graph;
+  final _TileMapGenJoinSea _join;
+
   /// Fill lakes: convert lake (sea not in ocean) to land; skip lakes that border 2+ continents (straits).
-  List<List<String>> _fillLakes(
+  List<List<String>> fillLakes(
     List<List<String>> grid,
     String seaZoneId,
     List<(int x, int y)> landSeeds,
     List<int> continentBySeedIndex,
   ) {
-    final ocean = _oceanCells(grid, seaZoneId);
+    final ocean = _graph.oceanCells(grid, seaZoneId);
     final next = grid.map((row) => row.toList()).toList();
     final lakeCells = <(int x, int y)>[];
     for (var y = 0; y < params.height; y++) {
@@ -18,7 +25,7 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
         lakeCells.add((x, y));
       }
     }
-    final lakeComponents = _connectedComponentsOfLand(lakeCells.toSet());
+    final lakeComponents = _graph.connectedComponentsOfLand(lakeCells.toSet());
     var lakesFilled = 0;
     final coastalLandCandidates = <(int x, int y)>{};
     for (final component in lakeComponents) {
@@ -39,7 +46,7 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
       final continentsBordering = <int>{};
       for (final (lx, ly) in borderingLand) {
         continentsBordering.add(
-          _continentForLandCell(lx, ly, landSeeds, continentBySeedIndex),
+          _graph.continentForLandCell(lx, ly, landSeeds, continentBySeedIndex),
         );
       }
       if (continentsBordering.length >= 2) continue;
@@ -54,7 +61,7 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
               ny >= 0 &&
               ny < params.height &&
               next[ny][nx] == seaZoneId &&
-              _oceanNeighbourCount(next, nx, ny, seaZoneId, ocean) >= 1) {
+              _graph.oceanNeighbourCount(next, nx, ny, seaZoneId, ocean) >= 1) {
             coastalLandCandidates.add((nx, ny));
           }
         }
@@ -62,8 +69,20 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
     }
     final sorted = coastalLandCandidates.toList()
       ..sort((a, b) {
-        final na = _oceanNeighbourCount(next, a.$1, a.$2, seaZoneId, ocean);
-        final nb = _oceanNeighbourCount(next, b.$1, b.$2, seaZoneId, ocean);
+        final na = _graph.oceanNeighbourCount(
+          next,
+          a.$1,
+          a.$2,
+          seaZoneId,
+          ocean,
+        );
+        final nb = _graph.oceanNeighbourCount(
+          next,
+          b.$1,
+          b.$2,
+          seaZoneId,
+          ocean,
+        );
         return nb.compareTo(na);
       });
     for (final (fx, fy) in sorted.take(lakesFilled)) {
@@ -79,14 +98,14 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
   /// A moat candidate is an ocean cell whose 4-neighbourhood contains land
   /// belonging to the **same** continent in at least two directions and no
   /// land from any other continent.
-  List<List<String>> _fillMoats(
+  List<List<String>> fillMoats(
     List<List<String>> grid,
     String seaZoneId,
     List<(int x, int y)> landSeeds,
     List<int> continentBySeedIndex,
     Random rnd,
   ) {
-    final ocean = _oceanCells(grid, seaZoneId);
+    final ocean = _graph.oceanCells(grid, seaZoneId);
     if (ocean.isEmpty) return grid;
 
     final next = grid.map((row) => row.toList()).toList();
@@ -113,7 +132,7 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
             continue;
           }
           if (next[ny][nx] == seaZoneId) continue;
-          final continent = _continentForLandCell(
+          final continent = _graph.continentForLandCell(
             nx,
             ny,
             landSeeds,
@@ -125,8 +144,9 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
         }
 
         if (neighbouringContinents.isEmpty) continue;
-        if (neighbouringContinents.length > 1)
+        if (neighbouringContinents.length > 1) {
           continue; // multi-continent strait, keep as sea
+        }
 
         final c = neighbouringContinents.single;
         final dirCount = sameContinentDirectionCounts[c] ?? 0;
@@ -144,7 +164,14 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
 
     // Preserve overall sea fraction by converting an equal number of coastal
     // land tiles back to sea, using the existing helper.
-    _preserveSeaFraction(next, null, null, seaZoneId, ocean, moatCells.length);
+    _join.preserveSeaFraction(
+      next,
+      null,
+      null,
+      seaZoneId,
+      ocean,
+      moatCells.length,
+    );
 
     return next;
   }
@@ -165,7 +192,7 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
       for (var x = 0; x < params.width; x++) {
         if (grid[y][x] != _landSentinel) continue;
         var bestSeedIndex = 0;
-        var bestD2 = 0x7fffffff;
+        var bestD2 = kUnsetSquaredDistanceInt31;
         for (var i = 0; i < landSeeds.length; i++) {
           final (sx, sy) = landSeeds[i];
           final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
@@ -182,7 +209,7 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
   }
 
   /// Place one province seed per province on that continent's land cells; min spacing.
-  Map<String, (int x, int y)> _placeProvinceSeedsOnLand(
+  Map<String, (int x, int y)> placeProvinceSeedsOnLand(
     List<List<String>> grid,
     Map<String, int> provinceToContinent,
     List<(int x, int y)> landSeeds,
@@ -214,8 +241,9 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
         for (final (x, y) in shuffled) {
           if (used.any(
             (p) => (p.$1 - x).abs() < minDist && (p.$2 - y).abs() < minDist,
-          ))
+          )) {
             continue;
+          }
           seeds[provinceId] = (x, y);
           used.add((x, y));
           break;
@@ -231,7 +259,7 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
   }
 
   /// Replace each _landSentinel cell with nearest province seed id. Uses generic Voronoi.
-  List<List<String>> _assignProvincesFromSeeds(
+  List<List<String>> assignProvincesFromSeeds(
     List<List<String>> grid,
     Map<String, (int x, int y)> provinceSeeds,
     String seaZoneId,
@@ -258,7 +286,7 @@ mixin _TileMapGeneratorLakesProvinces on _TileMapGeneratorJoinSeaAndJitter {
   }
 
   /// Border noise: swap only at land/sea boundary (sentinel vs seaZoneId).
-  List<List<String>> _borderNoise(
+  List<List<String>> borderNoise(
     List<List<String>> grid,
     String seaZoneId,
     Random rnd,

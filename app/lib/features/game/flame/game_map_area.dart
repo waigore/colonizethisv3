@@ -18,7 +18,6 @@ import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
-import '../../../../providers/map_view_provider.dart';
 import '../../../../providers/region_minimap_provider.dart';
 import 'region_map_viewport_snapshot.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
@@ -57,6 +56,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   Set<String>? _cachedValidTileKeys;
   bool _sideMenuOpen = false;
   final List<StreamSubscription<dynamic>> _busSubscriptions = [];
+  ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode _baseLayerDisplayMode =
@@ -65,6 +65,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   @override
   void initState() {
     super.initState();
+    _mapViewState = widget.game.mapViewState;
     final bus = ref.read(appEventBusProvider);
     _busSubscriptions.addAll([
       bus.on<ct_models.OpenProvinceDetailPanelEvent>().listen((_) {
@@ -153,6 +154,21 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
           BaseLayerDisplayMode.terrainOnly,
       };
     });
+  }
+
+  void _setMapViewState(ct_models.MapViewState next) {
+    if (_mapViewState == next) {
+      return;
+    }
+    setState(() {
+      _mapViewState = next;
+    });
+    final current = ref.read(currentGameProvider);
+    if (current != null && current.id == widget.game.id) {
+      ref
+          .read(currentGameProvider.notifier)
+          .setGame(current.copyWith(mapViewState: next));
+    }
   }
 
   void _centerOnHumanCapital() {
@@ -265,6 +281,11 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
           ),
         );
     setState(() {
+      _selectedCivilianTileKey =
+          GameMapAreaStateLogic.selectionAfterWorkAssignment(
+            currentSelectedCivilianTileKey: _selectedCivilianTileKey,
+            assignedTileKey: targetTileKey,
+          );
       _workTargetSelection = null;
       _cachedValidTileKeys = null;
     });
@@ -288,6 +309,93 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     ref.read(currentOrdersProvider.notifier).clear();
   }
 
+  void _e2eSelectFirstValidWorkTargetTile() {
+    final keys = _cachedValidTileKeys;
+    if (keys == null || keys.isEmpty) return;
+    final sorted = keys.toList()..sort();
+    _onTileSelectedForWork(sorted.first);
+  }
+
+  void _e2eOpenFirstCivilianMarkerPanel() {
+    if (!mounted) return;
+    final currentOrders = ref.read(currentOrdersProvider);
+    var projected = GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+      region: _currentRegion,
+      game: widget.game,
+      orders: currentOrders,
+      humanPlayerId: _humanPlayerId,
+    );
+    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
+    final tm = mapData?.tileMapByRegion;
+    final tr = mapData?.topologyByRegion;
+    final ct = mapData?.combinedTopology;
+    if (tm != null && tr != null && ct != null) {
+      projected = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
+        region: projected,
+        game: widget.game,
+        orders: currentOrders,
+        humanPlayerId: _humanPlayerId,
+        tileMapByRegion: tm,
+        topologyByRegion: tr,
+        combinedTopology: ct,
+      );
+    }
+    final markers = [...projected.civilianTileMarkers]
+      ..sort((a, b) => a.tileKey.compareTo(b.tileKey));
+    if (markers.isEmpty) return;
+    final m = markers.first;
+    final initialUnitId = m.unitIds.isNotEmpty ? m.unitIds.first : null;
+    setState(() => _selectedCivilianTileKey = m.tileKey);
+    ref
+        .read(appEventBusProvider)
+        .emit(
+          ct_models.OpenCivilianUnitsPanelEvent(
+            tileScopeTileKey: m.tileKey,
+            initialSelectedUnitId: initialUnitId,
+          ),
+        );
+  }
+
+  void _e2eOpenFirstFleetMarkerPanel() {
+    if (!mounted) return;
+    final currentOrders = ref.read(currentOrdersProvider);
+    var projected = GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+      region: _currentRegion,
+      game: widget.game,
+      orders: currentOrders,
+      humanPlayerId: _humanPlayerId,
+    );
+    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
+    final tm = mapData?.tileMapByRegion;
+    final tr = mapData?.topologyByRegion;
+    final ct = mapData?.combinedTopology;
+    if (tm != null && tr != null && ct != null) {
+      projected = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
+        region: projected,
+        game: widget.game,
+        orders: currentOrders,
+        humanPlayerId: _humanPlayerId,
+        tileMapByRegion: tm,
+        topologyByRegion: tr,
+        combinedTopology: ct,
+      );
+    }
+    final markers = [...projected.fleetTileMarkers]
+      ..sort((a, b) => a.tileKey.compareTo(b.tileKey));
+    if (markers.isEmpty) return;
+    final m = markers.first;
+    final initialFleetId = m.fleetIds.isNotEmpty ? m.fleetIds.first : null;
+    ref
+        .read(appEventBusProvider)
+        .emit(
+          ct_models.OpenNavalUnitsPanelEvent(
+            locationScopeKey: m.locationScopeKey,
+            initialSelectedFleetId: initialFleetId,
+            tileScopeTileKey: m.tileKey,
+          ),
+        );
+  }
+
   @override
   void didUpdateWidget(covariant GameMapArea oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -295,14 +403,23 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       ref.read(mapProvincePanelProvider.notifier).reset();
       ref.read(regionMinimapVisibleProvider.notifier).resetToDefault();
       setState(() {
+        _mapViewState = widget.game.mapViewState;
         _regionViewportSnapshot = null;
         _pendingRegionViewport = null;
         _regionViewportFrameScheduled = false;
       });
+    } else if (oldWidget.game.mapViewState != widget.game.mapViewState) {
+      _mapViewState = widget.game.mapViewState;
     }
   }
 
   void _onRegionViewportSnapshot(RegionMapViewportSnapshot snapshot) {
+    final clampedMultiplier = snapshot.zoomMultiplier.clamp(0.5, 8.0);
+    if ((clampedMultiplier - _mapViewState.zoomMultiplier).abs() > 0.001) {
+      _setMapViewState(
+        _mapViewState.copyWith(zoomMultiplier: clampedMultiplier),
+      );
+    }
     _pendingRegionViewport = snapshot;
     if (_regionViewportFrameScheduled) return;
     _regionViewportFrameScheduled = true;
@@ -320,11 +437,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
 
   @override
   Widget build(BuildContext context) {
-    final showProvinceOverlay = ref.watch(mapProvinceOverlayVisibleProvider);
-    final showProvinceOwnershipTint = ref.watch(
-      mapProvinceOwnershipTintVisibleProvider,
-    );
-    final showProvinceNames = ref.watch(mapProvinceNamesVisibleProvider);
+    final currentOrders = ref.watch(currentOrdersProvider);
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     final mapTopology = widget.mapViewData.combinedTopology;
     final humanPlayerView = buildPlayerView(
@@ -333,6 +446,28 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       _humanPlayerId,
     );
     final l10n = appL10n(context);
+    final mapData = ref.watch(gameServiceProvider).getMapData(widget.game.id);
+    var projectedRegion =
+        GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+          region: _currentRegion,
+          game: widget.game,
+          orders: currentOrders,
+          humanPlayerId: _humanPlayerId,
+        );
+    final tm = mapData?.tileMapByRegion;
+    final tr = mapData?.topologyByRegion;
+    final ct = mapData?.combinedTopology;
+    if (tm != null && tr != null && ct != null) {
+      projectedRegion = GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
+        region: projectedRegion,
+        game: widget.game,
+        orders: currentOrders,
+        humanPlayerId: _humanPlayerId,
+        tileMapByRegion: tm,
+        topologyByRegion: tr,
+        combinedTopology: ct,
+      );
+    }
     final nextTurnText = l10n.game_nextTurnButton(
       widget.game.worldState.turnState.turnNumber,
       turnToYear(
@@ -377,11 +512,13 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                       GameMapCanvasStack(
                         isNarrow: isNarrow,
                         game: widget.game,
-                        region: _currentRegion,
+                        region: projectedRegion,
                         baseLayerDisplayMode: _baseLayerDisplayMode,
-                        showProvinceOverlay: showProvinceOverlay,
-                        showProvinceOwnershipTint: showProvinceOwnershipTint,
-                        showProvinceNamesLayer: showProvinceNames,
+                        showProvinceOverlay: _mapViewState.showProvinceOverlay,
+                        showProvinceOwnershipTint:
+                            _mapViewState.showProvinceOwnershipTint,
+                        showProvinceNamesLayer:
+                            _mapViewState.showProvinceNamesLayer,
                         humanPlayerId: _humanPlayerId,
                         playerView: humanPlayerView,
                         centerOnTileKey: _centerOnTileKey,
@@ -399,8 +536,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                             : null,
                         onCivilianTileTapped: (tileKey) {
                           String? initialSelectedUnitId;
-                          for (final marker in _currentRegion
-                              .civilianTileMarkers) {
+                          for (final marker
+                              in projectedRegion.civilianTileMarkers) {
                             if (marker.tileKey == tileKey &&
                                 marker.unitIds.isNotEmpty) {
                               initialSelectedUnitId = marker.unitIds.first;
@@ -410,12 +547,14 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           setState(() {
                             _selectedCivilianTileKey = tileKey;
                           });
-                          ref.read(appEventBusProvider).emit(
-                            ct_models.OpenCivilianUnitsPanelEvent(
-                              tileScopeTileKey: tileKey,
-                              initialSelectedUnitId: initialSelectedUnitId,
-                            ),
-                          );
+                          ref
+                              .read(appEventBusProvider)
+                              .emit(
+                                ct_models.OpenCivilianUnitsPanelEvent(
+                                  tileScopeTileKey: tileKey,
+                                  initialSelectedUnitId: initialSelectedUnitId,
+                                ),
+                              );
                         },
                         onCivilianTileSelectionCleared: () {
                           if (_selectedCivilianTileKey == null) return;
@@ -423,8 +562,21 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                             _selectedCivilianTileKey = null;
                           });
                         },
+                        onFleetMarkerTapped:
+                            (locationScopeKey, initialFleetId, markerTileKey) {
+                              ref
+                                  .read(appEventBusProvider)
+                                  .emit(
+                                    ct_models.OpenNavalUnitsPanelEvent(
+                                      locationScopeKey: locationScopeKey,
+                                      initialSelectedFleetId: initialFleetId,
+                                      tileScopeTileKey: markerTileKey,
+                                    ),
+                                  );
+                            },
                         bus: ref.read(appEventBusProvider),
                         onRegionViewportSnapshot: _onRegionViewportSnapshot,
+                        zoomMultiplier: _mapViewState.zoomMultiplier,
                       ),
                       if (!_sideMenuOpen)
                         Positioned(
@@ -463,16 +615,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                 return AlertDialog(
                                   title: Text(l10n.map_displayOptions_title),
                                   content: Consumer(
-                                    builder: (context, ref, _) {
-                                      final provinceOverlayVisible = ref.watch(
-                                        mapProvinceOverlayVisibleProvider,
-                                      );
-                                      final ownershipTintVisible = ref.watch(
-                                        mapProvinceOwnershipTintVisibleProvider,
-                                      );
-                                      final namesVisible = ref.watch(
-                                        mapProvinceNamesVisibleProvider,
-                                      );
+                                    builder: (context, _, __) {
                                       return Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
@@ -480,42 +623,43 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                                             title: Text(
                                               l10n.map_displayOptions_showProvinceOverlay,
                                             ),
-                                            value: provinceOverlayVisible,
+                                            value: _mapViewState
+                                                .showProvinceOverlay,
                                             onChanged: (value) {
-                                              ref
-                                                  .read(
-                                                    mapProvinceOverlayVisibleProvider
-                                                        .notifier,
-                                                  )
-                                                  .set(value);
+                                              _setMapViewState(
+                                                _mapViewState.copyWith(
+                                                  showProvinceOverlay: value,
+                                                ),
+                                              );
                                             },
                                           ),
                                           SwitchListTile(
                                             title: Text(
                                               l10n.map_displayOptions_showProvinceOwnership,
                                             ),
-                                            value: ownershipTintVisible,
+                                            value: _mapViewState
+                                                .showProvinceOwnershipTint,
                                             onChanged: (value) {
-                                              ref
-                                                  .read(
-                                                    mapProvinceOwnershipTintVisibleProvider
-                                                        .notifier,
-                                                  )
-                                                  .set(value);
+                                              _setMapViewState(
+                                                _mapViewState.copyWith(
+                                                  showProvinceOwnershipTint:
+                                                      value,
+                                                ),
+                                              );
                                             },
                                           ),
                                           SwitchListTile(
                                             title: Text(
                                               l10n.map_displayOptions_showProvinceNames,
                                             ),
-                                            value: namesVisible,
+                                            value: _mapViewState
+                                                .showProvinceNamesLayer,
                                             onChanged: (value) {
-                                              ref
-                                                  .read(
-                                                    mapProvinceNamesVisibleProvider
-                                                        .notifier,
-                                                  )
-                                                  .set(value);
+                                              _setMapViewState(
+                                                _mapViewState.copyWith(
+                                                  showProvinceNamesLayer: value,
+                                                ),
+                                              );
                                             },
                                           ),
                                         ],
@@ -535,7 +679,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           },
                         ),
                       ),
-                      if (kCtE2EEnabled)
+                      if (kCtE2EEnabled) ...[
                         Positioned(
                           right: kMapOverlayEdgeInset,
                           top: kMapOverlayEdgeInset,
@@ -551,6 +695,57 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                             ),
                           ),
                         ),
+                        if (_workTargetSelection != null &&
+                            _cachedValidTileKeys != null &&
+                            _cachedValidTileKeys!.isNotEmpty)
+                          Positioned(
+                            right: kMapOverlayEdgeInset,
+                            top: kMapOverlayEdgeInset + 48,
+                            child: SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  key: kCtE2ESelectFirstValidWorkTileKey,
+                                  onTap: _e2eSelectFirstValidWorkTargetTile,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (projectedRegion.civilianTileMarkers.isNotEmpty)
+                          Positioned(
+                            right: kMapOverlayEdgeInset,
+                            top: kMapOverlayEdgeInset + 96,
+                            child: SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  key: kCtE2EOpenFirstCivilianMarkerPanelKey,
+                                  onTap: _e2eOpenFirstCivilianMarkerPanel,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (projectedRegion.fleetTileMarkers.isNotEmpty)
+                          Positioned(
+                            right: kMapOverlayEdgeInset,
+                            top: kMapOverlayEdgeInset + 144,
+                            child: SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  key: kCtE2EOpenFirstFleetMarkerPanelKey,
+                                  onTap: _e2eOpenFirstFleetMarkerPanel,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                       if (_sideMenuOpen) ...[
                         Positioned.fill(
                           child: GestureDetector(
@@ -576,7 +771,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                             right: rightInset,
                             bottom: 8,
                             child: GameRegionMinimap(
-                              region: _currentRegion,
+                              region: projectedRegion,
                               viewportSnapshot: _regionViewportSnapshot,
                               bus: ref.read(appEventBusProvider),
                               cellSizePx: _currentRegion.cellSize.toDouble(),
@@ -593,7 +788,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   alignment: Alignment.bottomCenter,
                   child: GameMapNarrowDetailOverlaySlot(
                     game: widget.game,
-                    region: _currentRegion,
+                    region: projectedRegion,
                     humanPlayerId: _humanPlayerId,
                     playerView: humanPlayerView,
                   ),

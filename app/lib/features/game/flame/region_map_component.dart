@@ -1,26 +1,33 @@
+import 'dart:async' show unawaited;
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show PlayerView, resourceIdVisibleInPlayerView;
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import 'gp_ownership_tint_layer.dart';
 import 'civilian_icon_cache.dart';
+import 'fleet_icon_cache.dart';
 import 'region_map_boundary_visibility.dart';
 import 'region_map_province_overlay_geometry.dart';
 import 'resource_icon_cache.dart';
+import 'resource_icon_disc_palette.dart';
 import 'province_label_icon_cache.dart';
 import 'terrain_tileset.dart';
 import 'town_icon_cache.dart';
+import 'warp_zone_edge_geometry.dart';
 
 part 'region_map_component_shared.dart';
-part 'region_map_component_render_mixin.dart';
+part 'region_map_component_render_orchestrator.dart';
+part 'region_map_component_render_core.dart';
+part 'region_map_component_render_political.dart';
+part 'region_map_component_render_markers.dart';
 
-final _log = gameLogger();
+final _log = packageLogger();
 
 /// Flame-based region map component. Renders one RegionMapViewData and exposes
 /// hover/selection state via callbacks. SPEC/ui/map-widget.md.
@@ -41,6 +48,7 @@ class CtRegionMapComponent extends PositionComponent {
     this.onTileHovered,
     this.onTileTapped,
     this.onCivilianTileTapped,
+    this.onFleetMarkerTapped,
     this.onCivilianTileSelectionCleared,
     this.selectedTileKey,
     this.selectedCivilianTileKey,
@@ -72,6 +80,12 @@ class CtRegionMapComponent extends PositionComponent {
   void Function(String? tileKey)? onTileHovered;
   void Function(String? tileKey)? onTileTapped;
   void Function(String tileKey)? onCivilianTileTapped;
+  void Function(
+    String locationScopeKey,
+    String? initialFleetId,
+    String markerTileKey,
+  )?
+  onFleetMarkerTapped;
   VoidCallback? onCivilianTileSelectionCleared;
   String? selectedTileKey;
   String? selectedCivilianTileKey;
@@ -93,9 +107,20 @@ class CtRegionMapComponent extends PositionComponent {
   double? _provinceLabelsCellSize;
   CtMapVisibilityMode? _provinceLabelsVisibilityMode;
   List<
-    ({double cx, double cy, String text, String provinceId, Color plateColor})
+    ({
+      double cx,
+      double cy,
+      String text,
+      String provinceId,
+      Color plateColor,
+      bool isCapital,
+    })
   >?
   _provinceLabelsCached;
+
+  RegionMapViewData? _seaZoneLabelsRegionRef;
+  double? _seaZoneLabelsCellSize;
+  List<({int cx, int cy, String text, bool isWarpZone})>? _seaZoneLabelsCached;
 
   @override
   Future<void> onLoad() async {
@@ -111,6 +136,13 @@ class CtRegionMapComponent extends PositionComponent {
       townIconCache.load(),
       provinceLabelIconCache.load(),
     ]);
+    // Fleet icon uses ui.decodeImageFromList; awaiting it here can deadlock with
+    // Flutter's test/game bootstrap (decode needs frames while onLoad blocks).
+    unawaited(
+      fleetIconCache.load().catchError((Object _, StackTrace __) {
+        // Errors are already logged inside FleetIconCache.load.
+      }),
+    );
     _log.i(
       'TerrainTilesetCache loaded. '
       'sea_plains: ${terrainTilesetCache.getSeaPlainsTileset() != null}, '
@@ -190,6 +222,15 @@ class CtRegionMapComponent extends PositionComponent {
       }
       return;
     }
+    final tappedFleet = _getFleetMarkerAtTile(x, y);
+    if (tappedFleet != null) {
+      onFleetMarkerTapped?.call(
+        tappedFleet.locationScopeKey,
+        tappedFleet.fleetIds.isNotEmpty ? tappedFleet.fleetIds.first : null,
+        tappedFleet.tileKey,
+      );
+      return;
+    }
     final tappedCivilian = _getCivilianMarkerAtTile(x, y);
     if (tappedCivilian != null) {
       onCivilianTileTapped?.call(tappedCivilian.tileKey);
@@ -205,9 +246,21 @@ class CtRegionMapComponent extends PositionComponent {
       final provinceId = '${region.regionId}|${tappedTown.provinceId}';
       onTownIconTapped?.call(provinceId);
     }
-    final provinceId = '${region.regionId}|${cell.regionCellId}';
     onMapTileTappedForDetail?.call(tileKey);
-    onProvinceSelected?.call(provinceId);
+    final provinceIdForSelection = tappedTown != null
+        ? '${region.regionId}|${tappedTown.provinceId}'
+        : '${region.regionId}|${cell.regionCellId}';
+    onProvinceSelected?.call(provinceIdForSelection);
+  }
+
+  FleetTileMarkerView? _getFleetMarkerAtTile(int x, int y) {
+    for (final marker in region.fleetTileMarkers) {
+      if (marker.x != x || marker.y != y) {
+        continue;
+      }
+      return marker;
+    }
+    return null;
   }
 
   CivilianTileMarkerView? _getCivilianMarkerAtTile(int x, int y) {

@@ -7,10 +7,10 @@ import 'dart:io';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:sim_combat_montecarlo/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-final _log = logicLogger('sim_combat_montecarlo');
+final _log = packageLogger('sim_combat_montecarlo');
 
 /// Fixed defender effective military level for sim (SPEC: same for all script types).
 const int _simDefenderEffectiveLevel = 4;

@@ -4,11 +4,13 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/constants.dart';
-import '../production_recipe_affordance.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_slider.dart';
 import '../../../widgets/resource_icon.dart';
+import '../production_recipe_affordance.dart';
 
 class ProductionPanel extends StatelessWidget {
   const ProductionPanel({
@@ -44,6 +46,7 @@ class ProductionPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final regimentCounts = regimentTypeCountsForPlayer(
       game.worldState,
       player.id,
@@ -71,6 +74,7 @@ class ProductionPanel extends StatelessWidget {
               inputCommodityIds: inputCommodityIds,
               outputCommodityIds: outputCommodityIds,
               netDeltasByCommodity: netDeltasByCommodity,
+              l10n: l10n,
               onOpenCommodityBreakdown: onOpenCommodityBreakdown,
             ),
             const SizedBox(height: 24),
@@ -79,6 +83,7 @@ class ProductionPanel extends StatelessWidget {
               effectiveLabour: effectiveLabour,
               desiredOutputByRecipe: desiredOutputByRecipe,
               onDesiredOutputChanged: onDesiredOutputChanged,
+              l10n: l10n,
             ),
           ],
         ),
@@ -98,6 +103,7 @@ class ProductionPanel extends StatelessWidget {
               inputCommodityIds: inputCommodityIds,
               outputCommodityIds: outputCommodityIds,
               netDeltasByCommodity: netDeltasByCommodity,
+              l10n: l10n,
               onOpenCommodityBreakdown: onOpenCommodityBreakdown,
             ),
           ),
@@ -109,6 +115,7 @@ class ProductionPanel extends StatelessWidget {
               effectiveLabour: effectiveLabour,
               desiredOutputByRecipe: desiredOutputByRecipe,
               onDesiredOutputChanged: onDesiredOutputChanged,
+              l10n: l10n,
             ),
           ),
         ],
@@ -124,6 +131,7 @@ class _AvailableSubpanel extends StatelessWidget {
     required this.inputCommodityIds,
     required this.outputCommodityIds,
     required this.netDeltasByCommodity,
+    required this.l10n,
     this.onOpenCommodityBreakdown,
   });
 
@@ -132,9 +140,14 @@ class _AvailableSubpanel extends StatelessWidget {
   final Set<String> inputCommodityIds;
   final Set<String> outputCommodityIds;
   final Map<String, int> netDeltasByCommodity;
+  final AppLocalizations l10n;
   final VoidCallback? onOpenCommodityBreakdown;
 
   Widget _buildCommodityRow(Commodity c, int qty, int change, ThemeData theme) {
+    final name = c.displayName ?? c.id;
+    final changeSeg = change == 0
+        ? ''
+        : ' (${change > 0 ? '+' : ''}$change)';
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -142,7 +155,7 @@ class _AvailableSubpanel extends StatelessWidget {
         const SizedBox(width: 4),
         Flexible(
           child: Text(
-            '${c.displayName ?? c.id}: $qty${change != 0 ? ' (${change > 0 ? '+' : ''}$change)' : ''}',
+            l10n.production_commodityStock(name, qty, changeSeg),
             style: theme.textTheme.bodySmall,
             overflow: TextOverflow.ellipsis,
           ),
@@ -180,7 +193,10 @@ class _AvailableSubpanel extends StatelessWidget {
         const SizedBox(width: 4),
         Flexible(
           child: Text(
-            '${_workerDisplayName(workerType)}: $count',
+            l10n.production_workerCount(
+              _workerDisplayName(workerType),
+              count,
+            ),
             style: theme.textTheme.bodySmall,
             overflow: TextOverflow.ellipsis,
           ),
@@ -192,13 +208,13 @@ class _AvailableSubpanel extends StatelessWidget {
   String _workerDisplayName(String workerType) {
     switch (workerType) {
       case 'peasant':
-        return 'Peasants';
+        return l10n.production_workers_peasants;
       case 'apprentice':
-        return 'Apprentices';
+        return l10n.production_workers_apprentices;
       case 'journeyman':
-        return 'Journeymen';
+        return l10n.production_workers_journeymen;
       case 'master':
-        return 'Masters';
+        return l10n.production_workers_masters;
       default:
         return workerType;
     }
@@ -234,33 +250,42 @@ class _AvailableSubpanel extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text('Available', style: theme.textTheme.titleSmall),
+                  child: Text(
+                    l10n.production_available,
+                    style: theme.textTheme.titleSmall,
+                  ),
                 ),
                 if (onOpenCommodityBreakdown != null)
                   CtNinePatchButton(
                     onPressed: onOpenCommodityBreakdown,
-                    child: const Text('Breakdown'),
+                    child: Text(l10n.production_breakdown),
                   ),
               ],
             ),
             const SizedBox(height: 8),
             if (availableFood.isNotEmpty) ...[
-              Text('Food', style: theme.textTheme.labelMedium),
+              Text(l10n.production_food, style: theme.textTheme.labelMedium),
               const SizedBox(height: 4),
               _buildCommodityGrid(availableFood, netChanges, theme),
               const SizedBox(height: 12),
             ],
-            Text('Raw Materials', style: theme.textTheme.labelMedium),
+            Text(
+              l10n.production_rawMaterials,
+              style: theme.textTheme.labelMedium,
+            ),
             const SizedBox(height: 4),
             _buildCommodityGrid(rawMaterials, netChanges, theme),
             if (manufactured.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text('Manufactured', style: theme.textTheme.labelMedium),
+              Text(
+                l10n.production_manufactured,
+                style: theme.textTheme.labelMedium,
+              ),
               const SizedBox(height: 4),
               _buildCommodityGrid(manufactured, netChanges, theme),
             ],
             const SizedBox(height: 12),
-            Text('Workers', style: theme.textTheme.labelMedium),
+            Text(l10n.production_workers, style: theme.textTheme.labelMedium),
             const SizedBox(height: 4),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,7 +309,7 @@ class _AvailableSubpanel extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Effective labour: $effectiveLabour',
+              l10n.production_effectiveLabour(effectiveLabour),
               style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -302,12 +327,14 @@ class _AllocationSubpanel extends StatelessWidget {
     required this.effectiveLabour,
     required this.desiredOutputByRecipe,
     required this.onDesiredOutputChanged,
+    required this.l10n,
   });
 
   final Player player;
   final int effectiveLabour;
   final Map<String, int> desiredOutputByRecipe;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
+  final AppLocalizations l10n;
 
   Widget _buildRecipeLabel(ProductionRecipe recipe, ThemeData theme) {
     final outputCommodity = CommodityCatalog.byId[recipe.outputCommodityId];
@@ -366,11 +393,14 @@ class _AllocationSubpanel extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text('Allocation', style: theme.textTheme.titleSmall),
+                  child: Text(
+                    l10n.production_allocation,
+                    style: theme.textTheme.titleSmall,
+                  ),
                 ),
                 CtNinePatchButton(
                   onPressed: () => onDesiredOutputChanged({}),
-                  child: const Text('Reset'),
+                  child: Text(l10n.common_reset),
                 ),
               ],
             ),
@@ -414,7 +444,10 @@ class _AllocationSubpanel extends StatelessWidget {
                         Expanded(
                           flex: 1,
                           child: Text(
-                            '${affordance.maxDesiredOutput} · ${affordance.limitingLabel}',
+                            l10n.production_recipeAffordance(
+                              affordance.maxDesiredOutput,
+                              affordance.limitingLabel,
+                            ),
                             textAlign: TextAlign.right,
                             style: theme.textTheme.labelSmall,
                             overflow: TextOverflow.ellipsis,
@@ -453,7 +486,7 @@ class _AllocationSubpanel extends StatelessWidget {
                         SizedBox(
                           width: 36,
                           child: Text(
-                            '$desired',
+                            desired.toString(),
                             textAlign: TextAlign.right,
                             style: theme.textTheme.bodySmall,
                           ),
@@ -466,7 +499,10 @@ class _AllocationSubpanel extends StatelessWidget {
             }),
             const SizedBox(height: 8),
             Text(
-              'Total labour: $totalRequiredLabour / $effectiveLabour',
+              l10n.production_totalLabour(
+                totalRequiredLabour,
+                effectiveLabour,
+              ),
               style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: labourInsufficient ? theme.colorScheme.error : null,
@@ -476,7 +512,7 @@ class _AllocationSubpanel extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  'Insufficient labour — production will be capped next turn',
+                  l10n.production_labourInsufficient,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.error,
                   ),

@@ -30,7 +30,9 @@ void main() {
             oldWorld: const RegionData(),
             newWorld: const RegionData(),
           ),
-          players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+          players: const [
+            Player(id: 'p1', displayName: 'Spain', isHuman: true),
+          ],
           turnTimeMapping: const TurnTimeMapping(
             startYear: 1600,
             cutoffYear: 1750,
@@ -84,6 +86,52 @@ void main() {
       expect(game, game2);
       expect(game.hashCode, game2.hashCode);
     });
+
+    test('human research mirror hint fields round-trip JSON', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+        lastHumanCompletedResearchCategory: 'gathering',
+        lastHumanResearchCategoryCompletionTurn: 2,
+      );
+      final restored = Game.fromJson(game.toJson());
+      expect(restored.lastHumanCompletedResearchCategory, 'gathering');
+      expect(restored.lastHumanResearchCategoryCompletionTurn, 2);
+    });
+
+    test('mapViewState round-trip and legacy default', () {
+      final game = Game(
+        id: 'g-map',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'Spain', isHuman: true)],
+        mapViewState: const MapViewState(
+          zoomMultiplier: 2.25,
+          showProvinceOverlay: false,
+          showProvinceOwnershipTint: true,
+          showProvinceNamesLayer: false,
+        ),
+      );
+      final roundTrip = Game.fromJson(game.toJson());
+      expect(roundTrip.mapViewState.zoomMultiplier, 2.25);
+      expect(roundTrip.mapViewState.showProvinceOverlay, isFalse);
+      expect(roundTrip.mapViewState.showProvinceOwnershipTint, isTrue);
+      expect(roundTrip.mapViewState.showProvinceNamesLayer, isFalse);
+
+      final legacyJson = Map<String, dynamic>.from(game.toJson())
+        ..remove('mapViewState');
+      final legacy = Game.fromJson(legacyJson);
+      expect(legacy.mapViewState, MapViewState.defaults);
+    });
+
     test('copyWith id and players', () {
       final game = Game(
         id: 'g1',
@@ -98,7 +146,9 @@ void main() {
       expect(game2.id, 'g2');
       expect(game2.players, game.players);
       final game3 = game.copyWith(
-        players: [const Player(id: 'p2', displayName: 'France', isHuman: false)],
+        players: [
+          const Player(id: 'p2', displayName: 'France', isHuman: false),
+        ],
       );
       expect(game3.players.length, 1);
       expect(game3.players.first.id, 'p2');
@@ -173,7 +223,9 @@ void main() {
       expect(round.tribes.first.id, 'tribe1');
       expect(round.tribes.first.capitalTile?.x, 1);
       // Backward compat: missing minorNations/tribes => empty lists
-      final legacy = Map<String, dynamic>.from(json)..remove('minorNations')..remove('tribes');
+      final legacy = Map<String, dynamic>.from(json)
+        ..remove('minorNations')
+        ..remove('tribes');
       final fromLegacy = Game.fromJson(legacy);
       expect(fromLegacy.minorNations, isEmpty);
       expect(fromLegacy.tribes, isEmpty);
@@ -208,7 +260,8 @@ void main() {
       final defaultJson = defaultGame.toJson();
       expect(defaultJson.containsKey('richesCashMultiplier'), false);
       // Backward compat: missing richesCashMultiplier => default 1.0
-      final legacy = Map<String, dynamic>.from(json)..remove('richesCashMultiplier');
+      final legacy = Map<String, dynamic>.from(json)
+        ..remove('richesCashMultiplier');
       final fromLegacy = Game.fromJson(legacy);
       expect(fromLegacy.richesCashMultiplier, 1.0);
     });
@@ -234,12 +287,16 @@ void main() {
       );
       final round = Game.fromJson(game.toJson());
       expect(round.diplomaticHistoryEvents.length, 1);
-      expect(round.diplomaticHistoryEvents.first.type, DiplomaticEventType.declareWar);
+      expect(
+        round.diplomaticHistoryEvents.first.type,
+        DiplomaticEventType.declareWar,
+      );
       expect(round.diplomaticHistoryEvents.first.participants, contains('gp1'));
       expect(round.diplomaticHistoryEvents.first.turn, 1);
       // Backward compat: missing key => empty list
       final json = game.toJson();
-      final legacy = Map<String, dynamic>.from(json)..remove('diplomaticHistoryEvents');
+      final legacy = Map<String, dynamic>.from(json)
+        ..remove('diplomaticHistoryEvents');
       final fromLegacy = Game.fromJson(legacy);
       expect(fromLegacy.diplomaticHistoryEvents, isEmpty);
     });

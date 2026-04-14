@@ -1,4 +1,5 @@
 import 'package:colonizethis_models/colonizethis_models.dart' show UnitStatus;
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 import '../../../l10n/app_localizations.dart';
 
@@ -60,17 +61,17 @@ String shipTypeDisplayLabel(AppLocalizations l10n, String shipTypeId) {
 /// Localized work-order target string for province Civilian lines.
 String workOrderTargetDisplayLabel(AppLocalizations l10n, String target) {
   return switch (target) {
-    'explore' => l10n.province_workOrder_explore,
-    'prospect' => l10n.province_workOrder_prospect,
-    'build_improvement' => l10n.province_workOrder_build_improvement,
-    'upgrade_town' => l10n.province_workOrder_upgrade_town,
-    'build_road' => l10n.province_workOrder_build_road,
-    'build_port' => l10n.province_workOrder_build_port,
-    'build_fort' => l10n.province_workOrder_build_fort,
-    'build_rail' => l10n.province_workOrder_build_rail,
-    'steal_tech' => l10n.province_workOrder_steal_tech,
-    'counter_spy' => l10n.province_workOrder_counter_spy,
-    'purchase_land' => l10n.province_workOrder_purchase_land,
+    kWorkTargetExplore => l10n.province_workOrder_explore,
+    kWorkTargetProspect => l10n.province_workOrder_prospect,
+    kWorkTargetBuildImprovement => l10n.province_workOrder_build_improvement,
+    kWorkTargetUpgradeTown => l10n.province_workOrder_upgrade_town,
+    kWorkTargetBuildRoad => l10n.province_workOrder_build_road,
+    kWorkTargetBuildPort => l10n.province_workOrder_build_port,
+    kWorkTargetBuildFort => l10n.province_workOrder_build_fort,
+    kWorkTargetBuildRail => l10n.province_workOrder_build_rail,
+    kWorkTargetStealTech => l10n.province_workOrder_steal_tech,
+    kWorkTargetCounterSpy => l10n.province_workOrder_counter_spy,
+    kWorkTargetPurchaseLand => l10n.province_workOrder_purchase_land,
     _ => target,
   };
 }
@@ -79,7 +80,6 @@ String unitStatusDisplayLabel(AppLocalizations l10n, UnitStatus status) {
   return switch (status) {
     UnitStatus.idle => l10n.province_unitStatus_idle,
     UnitStatus.working => l10n.province_unitStatus_working,
-    UnitStatus.done => l10n.province_unitStatus_done,
   };
 }
 

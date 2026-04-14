@@ -1,7 +1,14 @@
 part of 'tile_map_generator.dart';
 
-mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
-  void _jitterTerrainByProvince(
+/// Pass 10–11: join continents, terrain jitter, sea subdivision.
+class _TileMapGenJoinSea {
+  _TileMapGenJoinSea(this.params, this._log, this._graph);
+
+  final TileMapParams params;
+  final CtLogger _log;
+  final TileMapGridGraph _graph;
+
+  void jitterTerrainByProvince(
     List<List<String>> grid,
     List<List<TerrainType?>> terrainGrid,
     List<List<Resource?>> resourceGrid,
@@ -116,8 +123,9 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
           if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
           if (grid[ny][nx] != entry.key) continue; // same province only
           final nt = terrainGrid[ny][nx];
-          if (nt == null || nt == dominant || nt == TerrainType.mountain)
+          if (nt == null || nt == dominant || nt == TerrainType.mountain) {
             continue;
+          }
           neighborCounts[nt] = (neighborCounts[nt] ?? 0) + 1;
         }
 
@@ -139,7 +147,7 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
 
   /// Join step: for each continent with >1 land component, connect two by a shortest path of sea cells. Returns (grid, terrainGrid, resourceGrid, didJoin).
   (List<List<String>>, List<List<TerrainType?>>?, List<List<Resource?>>?, bool)
-  _joinContinents(
+  joinContinents(
     List<List<String>> grid,
     List<List<TerrainType?>>? terrainGrid,
     List<List<Resource?>>? resourceGrid,
@@ -149,18 +157,15 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
     ResourceRules? resourceRules,
     Random rnd,
   ) {
-    if (provinceToContinent.isEmpty)
+    if (provinceToContinent.isEmpty) {
       return (grid, terrainGrid, resourceGrid, false);
+    }
     final numContinents = provinceToContinent.values.toSet().length;
     var didJoin = false;
     var g = grid.map((row) => row.toList()).toList();
-    var tg = terrainGrid != null
-        ? terrainGrid.map((row) => row.toList()).toList()
-        : null;
-    var rg = resourceGrid != null
-        ? resourceGrid.map((row) => row.toList()).toList()
-        : null;
-    final ocean = _oceanCells(g, seaZoneId);
+    var tg = terrainGrid?.map((row) => row.toList()).toList();
+    var rg = resourceGrid?.map((row) => row.toList()).toList();
+    final ocean = _graph.oceanCells(g, seaZoneId);
     // Upper bound so we cannot spin forever if sea-fraction preservation undoes a bridge.
     final maxJoinIterationsPerContinent = params.width * params.height;
 
@@ -188,7 +193,7 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
           c,
           seaZoneId,
         );
-        final components = _connectedComponentsOfLand(landCells);
+        final components = _graph.connectedComponentsOfLand(landCells);
         if (components.length <= 1) break;
         didJoin = true;
         final compA = components[0];
@@ -218,7 +223,7 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
         // Do not convert bridge tiles back to sea: _preserveSeaFraction picks the
         // most "coastal" land first, which matches the new corridor and would undo
         // the join, leaving >1 component and an infinite loop.
-        _preserveSeaFraction(
+        preserveSeaFraction(
           g,
           tg,
           rg,
@@ -229,7 +234,7 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
         );
       }
       if (joinIterations >= maxJoinIterationsPerContinent) {
-        final stillSplit = _connectedComponentsOfLand(
+        final stillSplit = _graph.connectedComponentsOfLand(
           _landCellsForContinent(g, provinceToContinent, c, seaZoneId),
         );
         if (stillSplit.length > 1) {
@@ -262,17 +267,17 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
 
   /// Pass 11: Subdivide sea so each zone has at most maxSeaZoneFraction * totalSea tiles.
   /// Returns (newGrid, total sea zone count).
-  (List<List<String>>, int) _subdivideSeaZonesWithCap(
+  (List<List<String>>, int) subdivideSeaZonesWithCap(
     List<List<String>> grid,
     String seaZoneId,
     int totalSea,
   ) {
-    final components = _connectedComponentsOfSea(grid, seaZoneId);
+    final components = _graph.connectedComponentsOfSea(grid, seaZoneId);
     if (components.isEmpty) return (grid, 0);
     final sorted = List<Set<(int x, int y)>>.from(components)
       ..sort((a, b) {
-        final (minYa, minXa) = _minYx(a);
-        final (minYb, minXb) = _minYx(b);
+        final (minYa, minXa) = _graph.minYx(a);
+        final (minYb, minXb) = _graph.minYx(b);
         if (minYa != minYb) return minYa.compareTo(minYb);
         return minXa.compareTo(minXb);
       });
@@ -328,7 +333,7 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
       var bestMinD2 = 0;
       for (final (x, y) in list) {
         if (chosen.contains((x, y))) continue;
-        var minD2 = 0x7fffffff;
+        var minD2 = kUnsetSquaredDistanceInt31;
         for (final (sx, sy) in chosen) {
           final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
           if (d2 < minD2) minD2 = d2;
@@ -397,8 +402,9 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
       for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
         final nx = x + dx;
         final ny = y + dy;
-        if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height)
+        if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
           continue;
+        }
         if (grid[ny][nx] != seaZoneId) continue;
         final n = (nx, ny);
         if (prev.containsKey(n)) continue;
@@ -481,7 +487,10 @@ mixin _TileMapGeneratorJoinSeaAndJitter on _TileMapGeneratorGraph {
     }
   }
 
-  void _preserveSeaFraction(
+  int countSeaCells(List<List<String>> grid, String seaZoneId) =>
+      _graph.countSeaCells(grid, seaZoneId);
+
+  void preserveSeaFraction(
     List<List<String>> grid,
     List<List<TerrainType?>>? terrainGrid,
     List<List<Resource?>>? resourceGrid,

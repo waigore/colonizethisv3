@@ -3,13 +3,14 @@
 // Called from turn_resolver.resolveTurnForGame.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../dossier/event_dialogue.dart';
 import '../world/fog_resolution.dart';
+import 'turn_seed_constants.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Runs the end-of-turn phase: victory check, era-change dialogue, Spy timers, fog decay,
 /// coastal sea zone full visibility, advance turn.
@@ -80,9 +81,11 @@ void _emitEraChangeDialogue(
   final previousEra = eraFromYear(mapping.yearAtTurn(currentTurn));
   final newEra = eraFromYear(mapping.yearAtTurn(nextTurn));
   if (previousEra == newEra) return;
-  final seed = (game.globalGameSeed ?? 0) ^ (nextTurn * 0x9E3779B1);
+  final seed = (game.globalGameSeed ?? 0) ^ (nextTurn * kTurnResolutionSeedMix);
   final events = dialogueEventsForEraChange(game, previousEra, newEra, seed);
-  for (final e in events) onDialogue(e);
+  for (final e in events) {
+    onDialogue(e);
+  }
 }
 
 /// Returns the id of a Great Power that controls 31+ Old World provinces, or null.

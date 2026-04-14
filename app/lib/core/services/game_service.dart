@@ -1,5 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_app/package_logger.dart';
+import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -21,7 +22,7 @@ class _GameMapCache {
 }
 
 /// Pass milestones for in-app tile map generation (SPEC/program/logging/map-generation.md).
-final _mapGenPassLog = mapLogger('tile_map');
+final _mapGenPassLog = packageLogger('tile_map');
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
 /// Phase 2: createNewGame uses full game-setup pipeline; nextTurn requires cached/persisted map data.
@@ -68,7 +69,7 @@ class GameService {
       _requireMapData(gameId);
       return game;
     } catch (e, st) {
-      saveLogger().e(
+      packageLogger().e(
         'required map data missing/invalid for gameId=$gameId',
         error: e,
         stackTrace: st,
@@ -156,7 +157,7 @@ class GameService {
       );
       return game;
     } catch (e, st) {
-      saveLogger().e(
+      packageLogger().e(
         'save: loadAutoSaveGame failed',
         error: e,
         stackTrace: st,
@@ -178,7 +179,7 @@ class GameService {
         warpLinks: md.warpLinks,
       );
     } catch (e, st) {
-      saveLogger().e(
+      packageLogger().e(
         'save: auto-save mirror failed',
         error: e,
         stackTrace: st,
@@ -320,24 +321,28 @@ class GameService {
   Game createNewGame({String? id, GameSetupConfig? config}) {
     final gameId = id ?? 'game_${DateTime.now().millisecondsSinceEpoch}';
     final cfg = config ?? GameSetupConfig.defaultConfig;
-    final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg);
-    final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg);
+    final effectiveSeed = resolveEffectiveSetupSeed(cfg.seed);
+    final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg, effectiveSeed);
+    final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg, effectiveSeed);
     final warpLinks = _generateWarpLinks(
-      cfg: cfg,
+      effectiveSeed: effectiveSeed,
       tileMapOW: tileMapOW,
       topoOW: topoOW,
       tileMapNW: tileMapNW,
       topoNW: topoNW,
     );
-    final result = createGameFromGeneratedMaps(
+    final setupResult = createGameFromGeneratedMaps(
       config: cfg,
       tileMapOldWorld: tileMapOW,
       topologyOldWorld: topoOW,
       tileMapNewWorld: tileMapNW,
       topologyNewWorld: topoNW,
       gameId: gameId,
+      namingSeed: effectiveSeed,
+      assignmentPerturbationBase: effectiveSeed,
       warpLinks: warpLinks,
     );
+    final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);
     _persistNewGame(gameId: gameId, result: result);
     return result.game;
   }
@@ -352,52 +357,91 @@ class GameService {
   }) async {
     final gameId = id ?? 'game_${DateTime.now().millisecondsSinceEpoch}';
     final cfg = config ?? GameSetupConfig.defaultConfig;
+    final effectiveSeed = resolveEffectiveSetupSeed(cfg.seed);
     const total = newGameSetupProgressStepCount;
+    final log = packageLogger();
     Future<void> yieldUi() => Future<void>.delayed(Duration.zero);
 
     // Let any pending frame (e.g. progress modal paint) run before step 0 work.
     await yieldUi();
 
-    onProgress?.call(0, total);
-    await yieldUi();
-    final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg);
+    void reportPhase(int stepIndex) {
+      ctAppPerfInstant('newGameAsync.phase_$stepIndex');
+      log.i('newGameAsync phase step=$stepIndex total=$total gameId=$gameId');
+      onProgress?.call(stepIndex, total);
+    }
 
-    onProgress?.call(1, total);
-    await yieldUi();
-    final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg);
+    ctAppPerfInstant('newGameAsync.begin');
+    log.i('newGameAsync begin gameId=$gameId');
 
-    onProgress?.call(2, total);
+    reportPhase(0);
+    await yieldUi();
+    final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg, effectiveSeed);
+
+    reportPhase(1);
+    await yieldUi();
+    final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg, effectiveSeed);
+
+    reportPhase(2);
     await yieldUi();
     final warpLinks = _generateWarpLinks(
-      cfg: cfg,
+      effectiveSeed: effectiveSeed,
       tileMapOW: tileMapOW,
       topoOW: topoOW,
       tileMapNW: tileMapNW,
       topoNW: topoNW,
     );
 
-    onProgress?.call(3, total);
+    reportPhase(3);
     await yieldUi();
-    final result = createGameFromGeneratedMaps(
+    final setupResult = createGameFromGeneratedMaps(
       config: cfg,
       tileMapOldWorld: tileMapOW,
       topologyOldWorld: topoOW,
       tileMapNewWorld: tileMapNW,
       topologyNewWorld: topoNW,
       gameId: gameId,
+      namingSeed: effectiveSeed,
+      assignmentPerturbationBase: effectiveSeed,
       warpLinks: warpLinks,
     );
+    final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);
 
-    onProgress?.call(4, total);
+    reportPhase(4);
     await yieldUi();
     _persistNewGame(gameId: gameId, result: result);
+    ctAppPerfInstant('newGameAsync.complete');
+    log.i('newGameAsync complete gameId=$gameId');
     return result.game;
   }
 
-  (TileMapResult, MapTopology) _generateTileMapOldWorld(GameSetupConfig cfg) {
+  GameSetupResult _setupResultWithFinalizedGame(
+    GameSetupResult setup,
+    int effectiveSeed,
+  ) {
+    var game = setup.game.copyWith(
+      globalGameSeed: effectiveSeed,
+      aiSeedByGpId: {
+        for (final p in setup.game.players) p.id: effectiveSeed + p.id.hashCode,
+      },
+    );
+    game = assignHiddenAgendasForGame(game);
+    return GameSetupResult(
+      game: game,
+      tileMapByRegion: setup.tileMapByRegion,
+      topologyByRegion: setup.topologyByRegion,
+      combinedTopology: setup.combinedTopology,
+      warpLinks: setup.warpLinks,
+    );
+  }
+
+  (TileMapResult, MapTopology) _generateTileMapOldWorld(
+    GameSetupConfig cfg,
+    int effectiveSeed,
+  ) {
     final mapGenParams = MapGenerationParams(
       numContinents: cfg.continentCount,
-      seed: cfg.seed,
+      seed: effectiveSeed,
       seaFraction: kDefaultSeaFraction,
     );
     final sizeOW = computeGridSizeFromParams(
@@ -407,7 +451,7 @@ class GameService {
     final paramsOW = TileMapParams(
       width: sizeOW.width,
       height: sizeOW.height,
-      seed: cfg.seed,
+      seed: effectiveSeed,
       seaFraction: kDefaultSeaFraction,
     );
     return TileMapGenerator(params: paramsOW).generate(
@@ -419,10 +463,13 @@ class GameService {
     );
   }
 
-  (TileMapResult, MapTopology) _generateTileMapNewWorld(GameSetupConfig cfg) {
+  (TileMapResult, MapTopology) _generateTileMapNewWorld(
+    GameSetupConfig cfg,
+    int effectiveSeed,
+  ) {
     final mapGenParams = MapGenerationParams(
       numContinents: cfg.continentCount,
-      seed: cfg.seed,
+      seed: effectiveSeed,
       seaFraction: kDefaultSeaFraction,
     );
     final sizeNW = computeGridSizeFromParams(
@@ -432,7 +479,7 @@ class GameService {
     final paramsNW = TileMapParams(
       width: sizeNW.width,
       height: sizeNW.height,
-      seed: cfg.seed + 1,
+      seed: effectiveSeed + 1,
       seaFraction: kDefaultSeaFraction,
     );
     return TileMapGenerator(params: paramsNW).generate(
@@ -445,7 +492,7 @@ class GameService {
   }
 
   List<WarpLink> _generateWarpLinks({
-    required GameSetupConfig cfg,
+    required int effectiveSeed,
     required TileMapResult tileMapOW,
     required MapTopology topoOW,
     required TileMapResult tileMapNW,
@@ -458,7 +505,7 @@ class GameService {
       topologyNewWorld: topoNW,
       regionIdOld: 'oldWorld',
       regionIdNew: 'newWorld',
-      seed: cfg.seed,
+      seed: effectiveSeed,
     );
   }
 

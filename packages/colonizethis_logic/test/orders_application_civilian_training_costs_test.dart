@@ -5,7 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('applyBuildAndWorkOrders (civilian training costs)', () {
-    Game _civilianGame({
+    Game civilianGame({
       required int treasury,
       required int paper,
       Map<String, bool>? techUnlocked,
@@ -20,6 +20,12 @@ void main() {
         displayName: 'Player 1',
         isHuman: true,
         capitalProvinceId: 'oldWorld|P1',
+        capitalTile: const CapitalTile(
+          regionId: 'oldWorld',
+          provinceId: 'P1',
+          x: 0,
+          y: 0,
+        ),
         stockpile: stockpile,
         workerPool: const WorkerPool(peasants: 0),
         treasury: treasury,
@@ -29,7 +35,7 @@ void main() {
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
         oldWorld: const RegionData(
           provinces: [
-            Province(id: 'P1', regionId: 'oldWorld', ownerId: playerId),
+            Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: playerId),
           ],
           units: [],
         ),
@@ -39,7 +45,7 @@ void main() {
     }
 
     test('rejects civilian build when treasury insufficient', () {
-      final game = _civilianGame(treasury: 999, paper: 2);
+      final game = civilianGame(treasury: 999, paper: 2);
       final orders = Orders(
         buildUnitOrdersByPlayerId: {
           'p1': [
@@ -63,7 +69,7 @@ void main() {
     });
 
     test('rejects civilian build when paper insufficient', () {
-      final game = _civilianGame(treasury: 1000, paper: 0);
+      final game = civilianGame(treasury: 1000, paper: 0);
       final orders = Orders(
         buildUnitOrdersByPlayerId: {
           'p1': [
@@ -85,7 +91,7 @@ void main() {
     test('applies treasury and paper cost when civilian build valid', () {
       const cash = 1000;
       const paperQty = 2;
-      final game = _civilianGame(treasury: cash + 100, paper: paperQty + 1);
+      final game = civilianGame(treasury: cash + 100, paper: paperQty + 1);
       final orders = Orders(
         buildUnitOrdersByPlayerId: {
           'p1': [
@@ -113,7 +119,7 @@ void main() {
     test('Merchant requires merchant_companies tech', () {
       const cash = 2000;
       const paperQty = 4;
-      final gameNoTech = _civilianGame(
+      final gameNoTech = civilianGame(
         treasury: cash + 100,
         paper: paperQty + 1,
         techUnlocked: {},
@@ -138,7 +144,7 @@ void main() {
         gameNoTech.players.single.treasury,
       );
 
-      final gameWithTech = _civilianGame(
+      final gameWithTech = civilianGame(
         treasury: cash + 100,
         paper: paperQty + 1,
         techUnlocked: {'merchant_companies': true},

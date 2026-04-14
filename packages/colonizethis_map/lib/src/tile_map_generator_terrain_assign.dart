@@ -1,7 +1,13 @@
 part of 'tile_map_generator.dart';
 
-mixin _TileMapGeneratorTerrainAssign on _TileMapGeneratorGraph {
-  (List<List<TerrainType?>>, List<List<Resource?>>) _assignTerrainAndResources(
+/// Pass 6–7: terrain ridges, region-growing, resources.
+class _TileMapGenTerrainResource {
+  _TileMapGenTerrainResource(this.params, this._graph);
+
+  final TileMapParams params;
+  final TileMapGridGraph _graph;
+
+  (List<List<TerrainType?>>, List<List<Resource?>>) assignTerrainAndResources(
     List<List<String>> grid,
     String mapRegionId,
     ResourceRules rules,
@@ -296,7 +302,7 @@ mixin _TileMapGeneratorTerrainAssign on _TileMapGeneratorGraph {
 
     // Split remaining land into connected components (continents) and run the
     // region-growing per component so each continent gets its own mix.
-    final components = _connectedComponentsOfLand(remainingLand.toSet());
+    final components = _graph.connectedComponentsOfLand(remainingLand.toSet());
     if (components.isEmpty) return;
 
     const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
@@ -604,7 +610,7 @@ mixin _TileMapGeneratorTerrainAssign on _TileMapGeneratorGraph {
     List<Set<(int x, int y)>> blobsForTerrain(TerrainType t) {
       final cells = cellsOfTerrain(t);
       if (cells.isEmpty) return const [];
-      return _connectedComponentsOfLand(cells);
+      return _graph.connectedComponentsOfLand(cells);
     }
 
     // Neighbour directions for interior tests and BFS (4-connected).

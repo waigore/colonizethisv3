@@ -1,13 +1,13 @@
 // SPEC/game/tile-map-and-generation.md § Great Power starting grain (bootstrap).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'town_capital_occupancy.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Thrown when the capital province cannot host four bootstrap grain farms on land tiles.
 class GreatPowerGrainBootstrapError implements Exception {

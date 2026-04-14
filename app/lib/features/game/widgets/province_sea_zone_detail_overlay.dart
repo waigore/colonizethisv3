@@ -10,6 +10,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         isProspectableTerrainId,
         kProspectRequiredResourceIds,
         PlayerView,
+        provincePanelShowsFullTileDerivedIntel,
         resourceIdVisibleInPlayerView,
         VisibilityLevel;
 import 'package:colonizethis_map/colonizethis_map.dart';
@@ -66,6 +67,88 @@ List<String> roadRailTileDetailLinesForTests({required int? transportLevel}) {
   return lines;
 }
 
+/// Parses `regionId|…|x|y` tile keys for the province overlay; null when invalid.
+@visibleForTesting
+({int x, int y})? tryParseProvinceOverlayTileCoords({
+  required String regionId,
+  required int regionWidth,
+  required int regionHeight,
+  required String selectedTileKey,
+}) {
+  final parts = selectedTileKey.split('|');
+  if (parts.length < 4 || parts[0] != regionId) return null;
+  final x = int.tryParse(parts[2]) ?? 0;
+  final y = int.tryParse(parts[3]) ?? 0;
+  if (x < 0 || x >= regionWidth || y < 0 || y >= regionHeight) {
+    return null;
+  }
+  return (x: x, y: y);
+}
+
+@visibleForTesting
+String tileDetailProspectedDisplayLabel({
+  required bool terrainProspectable,
+  required bool playerHasProspected,
+}) {
+  if (!terrainProspectable) return '—';
+  return playerHasProspected ? 'yes' : 'no';
+}
+
+Widget _buildTileResourceLabelRow({
+  required BuildContext context,
+  required AppLocalizations l10n,
+  required String? resourceVisible,
+  required String resourceLabel,
+}) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      Text(l10n.provinceOverlay_tileResourcePrefix),
+      if (resourceVisible != null)
+        ResourceLabelInline(commodityId: resourceVisible)
+      else
+        Text(resourceLabel),
+    ],
+  );
+}
+
+Widget _buildTileImprovementLabel({
+  required AppLocalizations l10n,
+  required int impLevel,
+  required VisibilityLevel visLevel,
+  required String? rawResourceId,
+  required String? visibleResourceId,
+}) {
+  final improvementLine = _improvementLabelForTileDetail(
+    impLevel: impLevel,
+    visLevel: visLevel,
+    rawResourceId: rawResourceId,
+    visibleResourceId: visibleResourceId,
+  );
+  return Text(l10n.provinceOverlay_tileImprovement(improvementLine));
+}
+
+List<Widget> _buildTileRoadLabelWidgets({
+  required BuildContext context,
+  required AppLocalizations l10n,
+  required int? roadLevel,
+}) {
+  if (roadLevel == null) {
+    return [Text(l10n.provinceOverlay_tileRoadNone)];
+  }
+  final roadCaptionStyle = TextStyle(
+    fontSize: 11,
+    height: 1.25,
+    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
+  );
+  return [
+    Text(roadRailTransportLevelPrimaryLine(roadLevel)),
+    Text(roadRailSupplementaryLabel(roadLevel), style: roadCaptionStyle),
+    if (roadLevel == 1)
+      Text(kRoadRailPrimitiveVersusRailGloss, style: roadCaptionStyle),
+  ];
+}
+
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.
 /// [displayId] is the province or sea-zone id (`regionId|localId`) for tab content;
 /// [selectedTileKey] drives the Tile section and must stay in sync with the map selection.
@@ -91,6 +174,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final String displayId;
   final String? selectedTileKey;
   final String humanPlayerId;
+
   /// Current-turn draft orders (session). Used for Civilian/Military/Naval preview.
   final Orders draftOrders;
   final void Function(String? tileKey)? onHighlightTile;
@@ -240,9 +324,7 @@ String _economicTerrainTitle(String raw) {
   if (raw.isEmpty || raw == '—') return raw;
   return raw
       .split('_')
-      .map(
-        (w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}',
-      )
+      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
       .join(' ');
 }
 
@@ -309,52 +391,76 @@ _OverlayContent _provinceContent({
             c.visibility != TileVisibility.unrevealed,
       );
   if (isFullyUnrevealed) {
-    final politicalObs = _buildSection('Political', const Text('???'));
-    final tileObs = _buildSection('Tile', const Text('???'));
+    final politicalObs = _buildSection(
+      l10n.provinceOverlay_sectionPolitical,
+      Text(l10n.provinceOverlay_unknown),
+    );
+    final tileObs = _buildSection(
+      l10n.provinceOverlay_sectionTile,
+      Text(l10n.provinceOverlay_unknown),
+    );
     final sections = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
-      children: const [
-        Text('Political', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 4),
-        Text('???'),
-        SizedBox(height: 12),
-        Text('Tile', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 4),
-        Text('???'),
-        SizedBox(height: 12),
-        Text('Economic', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 4),
-        Text('???'),
-        SizedBox(height: 12),
-        Text('Military', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 4),
-        Text('???'),
-        SizedBox(height: 12),
-        Text('Civilian', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 4),
-        Text('???'),
-        SizedBox(height: 12),
-        Text('Naval', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 4),
-        Text('???'),
+      children: [
+        Text(
+          l10n.provinceOverlay_sectionPolitical,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(l10n.provinceOverlay_unknown),
+        const SizedBox(height: 12),
+        Text(
+          l10n.provinceOverlay_sectionTile,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(l10n.provinceOverlay_unknown),
+        const SizedBox(height: 12),
+        Text(
+          l10n.provinceOverlay_sectionEconomic,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(l10n.provinceOverlay_unknown),
+        const SizedBox(height: 12),
+        Text(
+          l10n.provinceOverlay_sectionMilitary,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(l10n.provinceOverlay_unknown),
+        const SizedBox(height: 12),
+        Text(
+          l10n.provinceOverlay_sectionCivilian,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(l10n.provinceOverlay_unknown),
+        const SizedBox(height: 12),
+        Text(
+          l10n.provinceOverlay_sectionNaval,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(l10n.provinceOverlay_unknown),
       ],
     );
-    const tabLabels = [
-      'Political',
-      'Tile',
-      'Economic',
-      'Military',
-      'Civilian',
-      'Naval',
+    final tabLabels = [
+      l10n.provinceOverlay_sectionPolitical,
+      l10n.provinceOverlay_sectionTile,
+      l10n.provinceOverlay_sectionEconomic,
+      l10n.provinceOverlay_sectionMilitary,
+      l10n.provinceOverlay_sectionCivilian,
+      l10n.provinceOverlay_sectionNaval,
     ];
     final tabViews = [
       politicalObs,
       tileObs,
-      const _ObfuscatedSection(),
-      const _ObfuscatedSection(),
-      const _ObfuscatedSection(),
-      const _ObfuscatedSection(),
+      _ObfuscatedSection(l10n: l10n),
+      _ObfuscatedSection(l10n: l10n),
+      _ObfuscatedSection(l10n: l10n),
+      _ObfuscatedSection(l10n: l10n),
     ];
     return _OverlayContent(
       tabLabels: tabLabels,
@@ -385,6 +491,13 @@ _OverlayContent _provinceContent({
       game.worldState.tileKeysByRegionAndProvince[region
           .regionId]?[provinceId] ??
       [];
+  final showsFullIntel = provincePanelShowsFullTileDerivedIntel(
+    game: game,
+    view: playerView,
+    humanPlayerId: humanPlayerId,
+    provinceId: provinceId,
+    provinceTileKeys: tileKeys,
+  );
   final resourceByTile = game.worldState.resourceByTileKey;
   final tileState = game.worldState.tileState;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
@@ -392,24 +505,14 @@ _OverlayContent _provinceContent({
   final byResImproved =
       <String, List<({String tileKey, String terrain, String impBase})>>{};
   final byResImprovable = <String, List<({String tileKey, String terrain})>>{};
-  final prospectRows = <({String tileKey, String terrain})>[];
-
   for (final tk in tileKeys) {
     final res = resourceByTile[tk];
-    final visibleRes = resourceIdVisibleInPlayerView(playerView, tk, res);
     final parts = tk.split('|');
     if (parts.length < 4) continue;
+    if (!prospected.contains(tk)) continue;
     final imp = tileState.improvementLevel(tk);
     final visLevel = playerView.visibilityForTile(tk);
-
-    final needsProspect = res != null &&
-        kProspectRequiredResourceIds.contains(res) &&
-        !prospected.contains(tk);
-    if (needsProspect) {
-      final terrain = _economicTerrainTitleForTile(region, tk) ?? '—';
-      prospectRows.add((tileKey: tk, terrain: terrain));
-      continue;
-    }
+    final visibleRes = resourceIdVisibleInPlayerView(playerView, tk, res);
 
     if (visibleRes == null) continue;
 
@@ -421,15 +524,15 @@ _OverlayContent _provinceContent({
         visibleResourceId: visibleRes,
       );
       byResImproved.putIfAbsent(visibleRes, () => []).add((
-            tileKey: tk,
-            terrain: terrain,
-            impBase: impBase,
-          ));
+        tileKey: tk,
+        terrain: terrain,
+        impBase: impBase,
+      ));
     } else if (res != null && imp < 4) {
       byResImprovable.putIfAbsent(visibleRes, () => []).add((
-            tileKey: tk,
-            terrain: terrain,
-          ));
+        tileKey: tk,
+        terrain: terrain,
+      ));
     }
   }
 
@@ -439,16 +542,15 @@ _OverlayContent _provinceContent({
   for (final list in byResImprovable.values) {
     list.sort((a, b) => a.tileKey.compareTo(b.tileKey));
   }
-  prospectRows.sort((a, b) => a.tileKey.compareTo(b.tileKey));
 
   final resourceKeysSorted = {
     ...byResImproved.keys,
     ...byResImprovable.keys,
-  }.toList()
-    ..sort();
+  }.toList()..sort();
 
   final tileSection = _buildTileSection(
     context: context,
+    l10n: l10n,
     game: game,
     region: region,
     provinceId: provinceId,
@@ -458,49 +560,69 @@ _OverlayContent _provinceContent({
     selectedTileKey: selectedTileKey,
   );
   final political = _buildPoliticalSection(
+    l10n: l10n,
     name: province?.displayName ?? provinceId,
     ownerName: _ownerName(game, province?.ownerId),
   );
-  final economic = _buildEconomicSection(
-    l10n: l10n,
-    resourceKeysSorted: resourceKeysSorted,
-    byResImproved: byResImproved,
-    byResImprovable: byResImprovable,
-    prospectRows: prospectRows,
-    onHighlightTile: onHighlightTile,
-  );
-  final militarySection = _buildMilitarySectionByOwner(
-    l10n: l10n,
-    game: game,
-    military: military,
-    humanPlayerId: humanPlayerId,
-    provinceId: provinceId,
-    draftOrders: draftOrders,
-  );
-  final civilianSection = _buildCivilianSectionFiltered(
-    l10n: l10n,
-    game: game,
-    civilian: civilian,
-    humanPlayerId: humanPlayerId,
-    playerView: playerView,
-    draftOrders: draftOrders,
-  );
-  final naval = _buildNavalSection(
-    l10n: l10n,
-    game: game,
-    fleets: fleetsInPort,
-    humanPlayerId: humanPlayerId,
-    draftOrders: draftOrders,
-    pendingNavalPortProvinceId: provinceId,
-  );
+  final economic = showsFullIntel
+      ? _buildEconomicSection(
+          l10n: l10n,
+          resourceKeysSorted: resourceKeysSorted,
+          byResImproved: byResImproved,
+          byResImprovable: byResImprovable,
+          onHighlightTile: onHighlightTile,
+        )
+      : _buildSection(
+          l10n.provinceOverlay_sectionEconomic,
+          Text(l10n.provinceOverlay_unknown),
+        );
+  final militarySection = showsFullIntel
+      ? _buildMilitarySectionByOwner(
+          l10n: l10n,
+          game: game,
+          military: military,
+          humanPlayerId: humanPlayerId,
+          provinceId: provinceId,
+          draftOrders: draftOrders,
+        )
+      : _buildSection(
+          l10n.provinceOverlay_sectionMilitary,
+          Text(l10n.provinceOverlay_unknown),
+        );
+  final civilianSection = showsFullIntel
+      ? _buildCivilianSectionFiltered(
+          l10n: l10n,
+          game: game,
+          civilian: civilian,
+          humanPlayerId: humanPlayerId,
+          playerView: playerView,
+          draftOrders: draftOrders,
+        )
+      : _buildSection(
+          l10n.provinceOverlay_sectionCivilian,
+          Text(l10n.provinceOverlay_unknown),
+        );
+  final naval = showsFullIntel
+      ? _buildNavalSection(
+          l10n: l10n,
+          game: game,
+          fleets: fleetsInPort,
+          humanPlayerId: humanPlayerId,
+          draftOrders: draftOrders,
+          pendingNavalPortProvinceId: provinceId,
+        )
+      : _buildSection(
+          l10n.provinceOverlay_sectionNaval,
+          Text(l10n.provinceOverlay_unknown),
+        );
 
-  const tabLabels = [
-    'Political',
-    'Tile',
-    'Economic',
-    'Military',
-    'Civilian',
-    'Naval',
+  final tabLabels = [
+    l10n.provinceOverlay_sectionPolitical,
+    l10n.provinceOverlay_sectionTile,
+    l10n.provinceOverlay_sectionEconomic,
+    l10n.provinceOverlay_sectionMilitary,
+    l10n.provinceOverlay_sectionCivilian,
+    l10n.provinceOverlay_sectionNaval,
   ];
   final tabViews = [
     political,
@@ -569,6 +691,7 @@ String _improvementLabelForTileDetail({
 
 Widget _buildTileSection({
   required BuildContext context,
+  required AppLocalizations l10n,
   required Game game,
   required RegionMapViewData region,
   required String provinceId,
@@ -578,32 +701,37 @@ Widget _buildTileSection({
   String? selectedTileKey,
 }) {
   if (selectedTileKey == null) {
-    return _buildSection('Tile', const Text('Click a tile to see details.'));
+    return _buildSection(
+      l10n.provinceOverlay_sectionTile,
+      Text(l10n.provinceOverlay_clickTileForDetails),
+    );
   }
-  final parts = selectedTileKey.split('|');
-  if (parts.length < 4 || parts[0] != region.regionId) {
-    return _buildSection('Tile', const Text('—'));
+  final coords = tryParseProvinceOverlayTileCoords(
+    regionId: region.regionId,
+    regionWidth: region.width,
+    regionHeight: region.height,
+    selectedTileKey: selectedTileKey,
+  );
+  if (coords == null) {
+    return _buildSection(l10n.provinceOverlay_sectionTile, const Text('—'));
   }
-  final x = int.tryParse(parts[2]) ?? 0;
-  final y = int.tryParse(parts[3]) ?? 0;
-  if (x < 0 || x >= region.width || y < 0 || y >= region.height) {
-    return _buildSection('Tile', const Text('—'));
-  }
+  final x = coords.x;
+  final y = coords.y;
   final cell = region.cellAt(x, y);
   if (cell.visibility == TileVisibility.unrevealed) {
     return _buildSection(
-      'Tile',
-      const Column(
+      l10n.provinceOverlay_sectionTile,
+      Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Coordinates: ???'),
-          Text('Terrain: ???'),
-          Text('Resource: ???'),
-          Text('Prospected: ???'),
-          Text('Improvement: ???'),
-          Text('Road / railroad: ???'),
-          Text('Civilian units (province): ???'),
+          Text(l10n.provinceOverlay_tileCoordinatesUnknown),
+          Text(l10n.provinceOverlay_tileTerrainUnknown),
+          Text(l10n.provinceOverlay_tileResourceUnknown),
+          Text(l10n.provinceOverlay_tileProspectedUnknown),
+          Text(l10n.provinceOverlay_tileImprovementUnknown),
+          Text(l10n.provinceOverlay_tileRoadUnknown),
+          Text(l10n.provinceOverlay_tileCivilianUnitsUnknown),
         ],
       ),
     );
@@ -623,52 +751,41 @@ Widget _buildTileSection({
   final prospectable = cell.terrainType != null
       ? isProspectableTerrain(cell.terrainType!)
       : isProspectableTerrainId(cell.terrainTypeId);
-  final prospectedLabel = !prospectable
-      ? '—'
-      : (prospected.contains(selectedTileKey) ? 'yes' : 'no');
+  final prospectedLabel = tileDetailProspectedDisplayLabel(
+    terrainProspectable: prospectable,
+    playerHasProspected: prospected.contains(selectedTileKey),
+  );
   final impLevel = tileState.improvementLevel(selectedTileKey);
   final roadLevel = cell.isSea ? null : tileState.roadLevel(selectedTileKey);
-  final roadCaptionStyle = TextStyle(
-    fontSize: 11,
-    height: 1.25,
-    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
-  );
-  final improvementLine = _improvementLabelForTileDetail(
-    impLevel: impLevel,
-    visLevel: visLevel,
-    rawResourceId: resourceRaw,
-    visibleResourceId: resourceVisible,
-  );
 
   return _buildSection(
-    'Tile',
+    l10n.provinceOverlay_sectionTile,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Coordinates: ($x, $y)'),
-        Text('Terrain: $terrainStr'),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Text('Resource: '),
-            if (resourceVisible != null)
-              ResourceLabelInline(commodityId: resourceVisible)
-            else
-              Text(resourceLabel),
-          ],
+        Text(l10n.provinceOverlay_tileCoordinates(x, y)),
+        Text(l10n.provinceOverlay_tileTerrain(terrainStr)),
+        _buildTileResourceLabelRow(
+          context: context,
+          l10n: l10n,
+          resourceVisible: resourceVisible,
+          resourceLabel: resourceLabel,
         ),
-        Text('Prospected: $prospectedLabel'),
-        Text('Improvement: $improvementLine'),
-        if (roadLevel == null)
-          const Text('Road / railroad: —')
-        else ...[
-          Text(roadRailTransportLevelPrimaryLine(roadLevel)),
-          Text(roadRailSupplementaryLabel(roadLevel), style: roadCaptionStyle),
-          if (roadLevel == 1)
-            Text(kRoadRailPrimitiveVersusRailGloss, style: roadCaptionStyle),
-        ],
-        Text('Civilian units (province): $civilianCount'),
+        Text(l10n.provinceOverlay_tileProspected(prospectedLabel)),
+        _buildTileImprovementLabel(
+          l10n: l10n,
+          impLevel: impLevel,
+          visLevel: visLevel,
+          rawResourceId: resourceRaw,
+          visibleResourceId: resourceVisible,
+        ),
+        ..._buildTileRoadLabelWidgets(
+          context: context,
+          l10n: l10n,
+          roadLevel: roadLevel,
+        ),
+        Text(l10n.provinceOverlay_tileCivilianUnits(civilianCount)),
       ],
     ),
   );
@@ -698,20 +815,35 @@ _OverlayContent _seaZoneContent({
             c.visibility != TileVisibility.unrevealed,
       );
   if (isSeaZoneFullyUnrevealed) {
-    const tabLabels = ['Political', 'Naval'];
-    final politicalObs = _buildSection('Political', const Text('???'));
-    final navalObs = _buildSection('Naval', const Text('???'));
-    const sections = Column(
+    final tabLabels = [
+      l10n.provinceOverlay_sectionPolitical,
+      l10n.provinceOverlay_sectionNaval,
+    ];
+    final politicalObs = _buildSection(
+      l10n.provinceOverlay_sectionPolitical,
+      Text(l10n.provinceOverlay_unknown),
+    );
+    final navalObs = _buildSection(
+      l10n.provinceOverlay_sectionNaval,
+      Text(l10n.provinceOverlay_unknown),
+    );
+    final sections = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Political', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 4),
-        Text('???'),
-        SizedBox(height: 12),
-        Text('Naval', style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 4),
-        Text('???'),
+        Text(
+          l10n.provinceOverlay_sectionPolitical,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(l10n.provinceOverlay_unknown),
+        const SizedBox(height: 12),
+        Text(
+          l10n.provinceOverlay_sectionNaval,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(l10n.provinceOverlay_unknown),
       ],
     );
     return _OverlayContent(
@@ -726,7 +858,10 @@ _OverlayContent _seaZoneContent({
     regionId: regionId,
     seaZoneId: localSeaZoneId,
   );
-  final political = _buildSection('Political', Text('Sea zone: $seaName'));
+  final political = _buildSection(
+    l10n.provinceOverlay_sectionPolitical,
+    Text(l10n.provinceOverlay_seaZone(seaName)),
+  );
   final naval = _buildNavalSection(
     l10n: l10n,
     game: game,
@@ -736,7 +871,10 @@ _OverlayContent _seaZoneContent({
     pendingNavalPortProvinceId: null,
   );
 
-  const tabLabels = ['Political', 'Naval'];
+  final tabLabels = [
+    l10n.provinceOverlay_sectionPolitical,
+    l10n.provinceOverlay_sectionNaval,
+  ];
   final tabViews = [political, naval];
   final sections = Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -808,15 +946,19 @@ String _improvementNameForResource(String? resourceId) {
 }
 
 Widget _buildPoliticalSection({
+  required AppLocalizations l10n,
   required String name,
   required String ownerName,
 }) {
   return _buildSection(
-    'Political',
+    l10n.provinceOverlay_sectionPolitical,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
-      children: [Text('Name: $name'), Text('Owner: $ownerName')],
+      children: [
+        Text(l10n.provinceOverlay_name(name)),
+        Text(l10n.provinceOverlay_owner(ownerName)),
+      ],
     ),
   );
 }
@@ -826,8 +968,8 @@ Widget _buildEconomicSection({
   required List<String> resourceKeysSorted,
   required Map<String, List<({String tileKey, String terrain, String impBase})>>
   byResImproved,
-  required Map<String, List<({String tileKey, String terrain})>> byResImprovable,
-  required List<({String tileKey, String terrain})> prospectRows,
+  required Map<String, List<({String tileKey, String terrain})>>
+  byResImprovable,
   void Function(String?)? onHighlightTile,
 }) {
   final children = <Widget>[];
@@ -846,7 +988,11 @@ Widget _buildEconomicSection({
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  '${row.terrain}/$resId ${l10n.province_economic_withImprovement(row.impBase)}',
+                  l10n.province_economic_resourceRow(
+                    row.terrain,
+                    resId,
+                    l10n.province_economic_withImprovement(row.impBase),
+                  ),
                 ),
               ),
             ],
@@ -867,7 +1013,11 @@ Widget _buildEconomicSection({
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  '${row.terrain}/$resId ${l10n.province_economic_improvableSuffix}',
+                  l10n.province_economic_resourceRow(
+                    row.terrain,
+                    resId,
+                    l10n.province_economic_improvableSuffix,
+                  ),
                 ),
               ),
             ],
@@ -877,21 +1027,11 @@ Widget _buildEconomicSection({
     }
   }
 
-  for (final row in prospectRows) {
-    children.add(
-      _economicHoverRow(
-        tileKey: row.tileKey,
-        onHighlightTile: onHighlightTile,
-        child: Text(row.terrain),
-      ),
-    );
-  }
-
   if (children.isEmpty) {
-    return _buildSection('Economic', const Text('—'));
+    return _buildSection(l10n.provinceOverlay_sectionEconomic, const Text('—'));
   }
   return _buildSection(
-    'Economic',
+    l10n.provinceOverlay_sectionEconomic,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -916,11 +1056,11 @@ Widget _buildMilitarySectionByOwner({
     l10n: l10n,
   );
   if (military.isEmpty && pending.isEmpty) {
-    return _buildSection('Military', const Text('—'));
+    return _buildSection(l10n.provinceOverlay_sectionMilitary, const Text('—'));
   }
   if (military.isEmpty) {
     return _buildSection(
-      'Military',
+      l10n.provinceOverlay_sectionMilitary,
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -946,7 +1086,7 @@ Widget _buildMilitarySectionByOwner({
       return _ownerName(game, a).compareTo(_ownerName(game, b));
     });
   return _buildSection(
-    'Military',
+    l10n.provinceOverlay_sectionMilitary,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -966,7 +1106,9 @@ Widget _buildMilitarySectionByOwner({
                 Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
                 ...byType.entries.map((e) {
                   final label = regimentTypeDisplayLabel(l10n, e.key);
-                  return Text('  $label: ${e.value}');
+                  return Text(
+                    l10n.provinceOverlay_indentedCount(label, e.value),
+                  );
                 }),
               ],
             ),
@@ -974,10 +1116,12 @@ Widget _buildMilitarySectionByOwner({
         }),
         if (pending.isNotEmpty) ...[
           const SizedBox(height: 4),
-          ...pending.map((line) => Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(line),
-              )),
+          ...pending.map(
+            (line) => Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(line),
+            ),
+          ),
         ],
       ],
     ),
@@ -1002,11 +1146,11 @@ Widget _buildCivilianSectionFiltered({
       )
       .toList();
   if (visible.isEmpty) {
-    return _buildSection('Civilian', const Text('—'));
+    return _buildSection(l10n.provinceOverlay_sectionCivilian, const Text('—'));
   }
   final workList = draftOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
   return _buildSection(
-    'Civilian',
+    l10n.provinceOverlay_sectionCivilian,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1020,17 +1164,30 @@ Widget _buildCivilianSectionFiltered({
             }
           }
           if (pending != null) {
-            final targetLabel =
-                workOrderTargetDisplayLabel(l10n, pending.target);
-            return Text('${u.type} (${u.id}): $targetLabel');
+            final targetLabel = workOrderTargetDisplayLabel(
+              l10n,
+              pending.target,
+            );
+            return Text(
+              l10n.provinceOverlay_unitTarget(u.type, u.id, targetLabel),
+            );
           }
           return Text(
-            '${u.type} (${u.id}): ${unitStatusDisplayLabel(l10n, u.status)}',
+            l10n.provinceOverlay_unitTarget(
+              u.type,
+              u.id,
+              unitStatusDisplayLabel(l10n, u.status),
+            ),
           );
         }
         final o = _ownerName(game, u.ownerId);
         return Text(
-          '$o — ${u.type} (${u.id}): ${unitStatusDisplayLabel(l10n, u.status)}',
+          l10n.provinceOverlay_foreignUnitStatus(
+            o,
+            u.type,
+            u.id,
+            unitStatusDisplayLabel(l10n, u.status),
+          ),
         );
       }).toList(),
     ),
@@ -1043,6 +1200,7 @@ Widget _buildNavalSection({
   required List<Fleet> fleets,
   required String humanPlayerId,
   required Orders draftOrders,
+
   /// When set, append draft naval move/mission lines for fleets in port there.
   String? pendingNavalPortProvinceId,
 }) {
@@ -1056,7 +1214,7 @@ Widget _buildNavalSection({
           l10n: l10n,
         );
   return _buildSection(
-    'Naval',
+    l10n.provinceOverlay_sectionNaval,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1070,20 +1228,30 @@ Widget _buildNavalSection({
               byType[s.typeId] = (byType[s.typeId] ?? 0) + 1;
             }
             final fleetLabel = f.id == homeFleetIdFor(f.ownerId)
-                ? 'Home fleet'
-                : 'Fleet ${f.id}';
-            final shipParts = byType.entries.map((e) {
-              final label = shipTypeDisplayLabel(l10n, e.key);
-              return '$label×${e.value}';
-            }).join(', ');
-            return Text('$ownerName — $fleetLabel: $shipParts');
+                ? l10n.naval_homeFleetLabel
+                : l10n.naval_fleetLabel(f.id);
+            final shipParts = byType.entries
+                .map((e) {
+                  final label = shipTypeDisplayLabel(l10n, e.key);
+                  return '$label×${e.value}';
+                })
+                .join(', ');
+            return Text(
+              l10n.provinceOverlay_fleetSummary(
+                ownerName,
+                fleetLabel,
+                shipParts,
+              ),
+            );
           }),
         if (pending.isNotEmpty) ...[
           const SizedBox(height: 4),
-          ...pending.map((line) => Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(line),
-              )),
+          ...pending.map(
+            (line) => Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(line),
+            ),
+          ),
         ],
       ],
     ),
@@ -1106,10 +1274,12 @@ Widget _buildSection(String title, Widget child) {
 }
 
 class _ObfuscatedSection extends StatelessWidget {
-  const _ObfuscatedSection();
+  const _ObfuscatedSection({required this.l10n});
+
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    return _buildSection('', const Text('???'));
+    return _buildSection('', Text(l10n.provinceOverlay_unknown));
   }
 }

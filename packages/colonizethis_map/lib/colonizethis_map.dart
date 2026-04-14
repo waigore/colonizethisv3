@@ -1,6 +1,6 @@
 /// Topology and tile map generation and visualization.
 /// SPEC/program/tile-map-gen-algorithm.md, SPEC/program/tile-map-gen-resources.md, SPEC/program/map-data.md.
-library colonizethis_map;
+library;
 
 export 'src/grid_voronoi.dart';
 export 'src/topology_generator.dart';
@@ -10,8 +10,16 @@ export 'src/tile_map_generator.dart';
 export 'src/tile_map_generation_fn.dart';
 export 'src/tile_map_visualization.dart';
 export 'src/tile_map_visualization_shared.dart'
-    show landSeedMarkerRgb, continentSeedMarkerRgb, resourceIdToLegendLetter;
+    show
+        continentSeedMarkerRgb,
+        geographicGameWorldLegendResources,
+        geographicGameWorldResourceGlyphLetter,
+        geographicGameWorldResourceGlyphs,
+        landSeedMarkerRgb,
+        resourceIdToLegendLetter,
+        tileMapResourceGlyphs;
 export 'src/init_game_map_view_data.dart';
+export 'src/sea_zone_centroid_tile.dart';
 export 'src/port_icon_placement.dart';
 export 'src/gp_ownership_tint.dart';
 export 'src/province_label_plate_tint.dart';
@@ -19,4 +27,3 @@ export 'src/init_game_map_view_builder.dart';
 export 'src/game_world_state_map_visualizer.dart';
 export 'src/multi_region_map_rendering.dart';
 export 'src/map_format_util.dart';
-

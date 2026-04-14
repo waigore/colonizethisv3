@@ -1,10 +1,13 @@
 // Move fleet dialog. SPEC/ui/naval-units-panel.md, SPEC/program/app-ui-wiring.md.
 
+// ignore_for_file: deprecated_member_use
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/l10n.dart';
 import '../utils/map_location_resolver.dart';
 import '../utils/sea_zone_name_resolver.dart';
 import 'units/shared/units_panel_region_label.dart';
@@ -84,6 +87,8 @@ List<_MovePick> _buildNavalMovePicks({
   required MapTopology topology,
   required String humanPlayerId,
   required Fleet fleet,
+  required String warpLinkLabel,
+  required String Function(String regionLabel) warpLinkLabelForRegion,
 }) {
   final outSea = <_PickSeaZone>[];
   final outPort = <_PickPort>[];
@@ -99,14 +104,17 @@ List<_MovePick> _buildNavalMovePicks({
     final zReg = regionIdForSeaZone(topology, z) ?? fleetSeaRegion;
     final regLabel = unitsPanelRegionLabel(zReg);
     final cross = zReg != fleetSeaRegion;
+    final isWarp = isWarpZoneSeaZone(topology, z);
     final zoneLabel = seaZoneDisplayName(
       game: game,
       regionId: zReg,
       seaZoneId: z,
     );
-    final label = cross
-        ? '$zoneLabel · $regLabel (cross-region)'
-        : '$zoneLabel · $regLabel';
+    final label = !isWarp
+        ? zoneLabel
+        : cross
+        ? '$zoneLabel ${warpLinkLabelForRegion(regLabel)}'
+        : '$zoneLabel $warpLinkLabel';
     outSea.add(_PickSeaZone(seaZoneId: z, zoneRegionId: zReg, rowLabel: label));
   }
   outSea.sort((a, b) => a.rowLabel.compareTo(b.rowLabel));
@@ -161,51 +169,58 @@ class MoveFleetDialog extends StatefulWidget {
 class _MoveFleetDialogState extends State<MoveFleetDialog> {
   late final List<_MovePick> _picks;
   _MovePick? _selected;
+  var _picksInitialized = false;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_picksInitialized) return;
+    final l10n = appL10n(context);
     _picks = _buildNavalMovePicks(
       game: widget.game,
       topology: widget.topology,
       humanPlayerId: widget.humanPlayerId,
       fleet: widget.fleet,
+      warpLinkLabel: l10n.moveFleet_warpLink,
+      warpLinkLabelForRegion: l10n.moveFleet_warpLinkToRegion,
     );
+    _picksInitialized = true;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final picks = _picks;
     final seaPicks = picks.whereType<_PickSeaZone>().toList();
     final portPicks = picks.whereType<_PickPort>().toList();
     final fleetLabel = _fleetMoveDialogTitleLabel(widget.fleet);
     final titleText = picks.isEmpty
-        ? 'Move fleet — $fleetLabel'
-        : 'Move fleet — $fleetLabel (${picks.length} destinations)';
+        ? l10n.moveFleet_title(fleetLabel)
+        : l10n.moveFleet_titleWithDestinations(fleetLabel, picks.length);
 
     return AlertDialog(
       title: Text(titleText),
       content: SizedBox(
         width: 420,
         child: picks.isEmpty
-            ? const Text('No adjacent sea zones (check map topology).')
+            ? Text(l10n.moveFleet_noAdjacentSeaZones)
             : SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (seaPicks.isNotEmpty) ...[
-                      const Text(
-                        'Sea zones',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      Text(
+                        l10n.moveFleet_seaZonesSection,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       ...seaPicks.map(_row),
                     ],
                     if (portPicks.isNotEmpty) ...[
                       if (seaPicks.isNotEmpty) const SizedBox(height: 12),
-                      const Text(
-                        'Provinces (dock)',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      Text(
+                        l10n.moveFleet_provincesDockSection,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       ...portPicks.map(_row),
                     ],
@@ -216,7 +231,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l10n.common_cancel),
         ),
         TextButton(
           onPressed: _selected == null
@@ -230,7 +245,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
                   );
                   Navigator.pop(context);
                 },
-          child: const Text('Confirm'),
+          child: Text(l10n.common_confirm),
         ),
       ],
     );
@@ -245,7 +260,7 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
         children: [
           Expanded(child: Text(pick.rowLabel)),
           IconButton(
-            tooltip: 'Locate on map',
+            tooltip: appL10n(context).moveFleet_locateOnMap,
             icon: const Icon(Icons.my_location, size: 18),
             onPressed: () => pick.emitLocate(widget.bus, widget.game),
             visualDensity: VisualDensity.compact,

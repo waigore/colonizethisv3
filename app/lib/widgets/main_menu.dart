@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import '../config/app_assets.dart';
 import '../config/themes.dart';
 import 'ct_nine_patch_button.dart';
 
@@ -11,10 +12,6 @@ enum MainMenuVariant {
   /// Same layout with pixel-art assets from SPEC/ui/main-menu.md.
   pixelArt,
 }
-
-/// Asset paths for pixel-art variant. SPEC/ui/main-menu.md.
-const String _kAssetLogo = 'assets/images/ui_main_menu_logo.png';
-const String _kAssetBackground = 'assets/images/ui_main_menu_background.png';
 
 /// Content state of the main menu. SPEC/ui/main-menu.md; UXD 03a.
 enum MainMenuState {
@@ -44,9 +41,9 @@ class CtMainMenu extends StatelessWidget {
     required this.onSettings,
     required this.onQuit,
   }) : assert(
-          !resumeGameVisible || onResumeGame != null,
-          'onResumeGame is required when resumeGameVisible is true',
-        );
+         !resumeGameVisible || onResumeGame != null,
+         'onResumeGame is required when resumeGameVisible is true',
+       );
 
   final MainMenuVariant variant;
   final MainMenuState state;
@@ -77,56 +74,53 @@ class CtMainMenu extends StatelessWidget {
                 children: [
                   const SizedBox(height: 48),
                   _buildLogo(context),
-                if (_showAfterVictorySubtitle) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    l10n.mainMenu_subtitleAfterVictory,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontStyle: FontStyle.italic,
-                        ),
-                    textAlign: TextAlign.center,
+                  if (_showAfterVictorySubtitle) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.mainMenu_subtitleAfterVictory,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontStyle: FontStyle.italic,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  const SizedBox(height: 32),
+                  _MenuButton(
+                    label: l10n.mainMenu_newGame,
+                    variant: variant,
+                    onPressed: onNewGame,
                   ),
-                ],
-                const SizedBox(height: 32),
-                _MenuButton(
-                  label: l10n.mainMenu_newGame,
-                  variant: variant,
-                  onPressed: onNewGame,
-                ),
-                if (resumeGameVisible) ...[
+                  if (resumeGameVisible) ...[
+                    const SizedBox(height: 12),
+                    _MenuButton(
+                      label: l10n.mainMenu_resumeGame,
+                      variant: variant,
+                      onPressed: onResumeGame!,
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  _LoadGameButton(
+                    enabled: _loadGameEnabled,
+                    variant: variant,
+                    onPressed: onLoadGame,
+                  ),
                   const SizedBox(height: 12),
                   _MenuButton(
-                    label: l10n.mainMenu_resumeGame,
+                    label: l10n.mainMenu_settings,
                     variant: variant,
-                    onPressed: onResumeGame!,
+                    onPressed: onSettings,
                   ),
+                  const SizedBox(height: 32),
+                  Text(version, style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 8),
+                  _MenuButton(
+                    label: l10n.mainMenu_quit,
+                    variant: variant,
+                    onPressed: onQuit,
+                  ),
+                  const SizedBox(height: 24),
                 ],
-                const SizedBox(height: 12),
-                _LoadGameButton(
-                  enabled: _loadGameEnabled,
-                  variant: variant,
-                  onPressed: onLoadGame,
-                ),
-                const SizedBox(height: 12),
-                _MenuButton(
-                  label: l10n.mainMenu_settings,
-                  variant: variant,
-                  onPressed: onSettings,
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  version,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 8),
-                _MenuButton(
-                  label: l10n.mainMenu_quit,
-                  variant: variant,
-                  onPressed: onQuit,
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
+              ),
             ),
           ),
         ),
@@ -140,18 +134,14 @@ class CtMainMenu extends StatelessWidget {
           children: [
             Positioned.fill(
               child: Image.asset(
-                _kAssetBackground,
+                kMainMenuBackgroundAsset,
                 fit: BoxFit.cover,
                 filterQuality: FilterQuality.none,
-                errorBuilder: (_, __, ___) => Container(
-                  color: const Color(0xFF5D3A1A),
-                ),
+                errorBuilder: (_, _, _) =>
+                    Container(color: const Color(0xFF5D3A1A)),
               ),
             ),
-            Theme(
-              data: AppThemes.colonialPixelArt,
-              child: content,
-            ),
+            Theme(data: AppThemes.colonialPixelArt, child: content),
           ],
         ),
       );
@@ -172,10 +162,10 @@ class CtMainMenu extends StatelessWidget {
     return SizedBox(
       height: 64,
       child: Image.asset(
-        _kAssetLogo,
+        kMainMenuLogoAsset,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.none,
-        errorBuilder: (_, __, ___) {
+        errorBuilder: (_, _, _) {
           return const SizedBox.shrink();
         },
       ),
@@ -201,10 +191,7 @@ class _MenuButton extends StatelessWidget {
     }
     return SizedBox(
       width: double.infinity,
-      child: CtNinePatchButton(
-        onPressed: onPressed,
-        child: Text(label),
-      ),
+      child: CtNinePatchButton(onPressed: onPressed, child: Text(label)),
     );
   }
 }
@@ -236,13 +223,11 @@ class _PixelArtButtonState extends State<_PixelArtButton>
   @override
   void initState() {
     super.initState();
-    _bobController = AnimationController(
-      vsync: this,
-      duration: _bobDuration,
-    );
-    _bobAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _bobController, curve: Curves.easeInOut),
-    );
+    _bobController = AnimationController(vsync: this, duration: _bobDuration);
+    _bobAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _bobController, curve: Curves.easeInOut));
   }
 
   @override
@@ -271,15 +256,16 @@ class _PixelArtButtonState extends State<_PixelArtButton>
       child: MouseRegion(
         onEnter: _onHoverEnter,
         onExit: _onHoverExit,
-        cursor: widget.enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        cursor: widget.enabled
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
         child: AnimatedBuilder(
           animation: _bobAnimation,
           builder: (context, child) {
-            final double dy = _hovered ? (_bobAnimation.value * 2 * _bobAmount - _bobAmount) : 0;
-            return Transform.translate(
-              offset: Offset(0, dy),
-              child: child,
-            );
+            final double dy = _hovered
+                ? (_bobAnimation.value * 2 * _bobAmount - _bobAmount)
+                : 0;
+            return Transform.translate(offset: Offset(0, dy), child: child);
           },
           child: ColorFiltered(
             colorFilter: _hovered && widget.enabled

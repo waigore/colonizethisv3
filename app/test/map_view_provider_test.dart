@@ -8,15 +8,13 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
 class _FakeGameService extends GameService {
-  _FakeGameService(Box<dynamic> box, GameSaveAdapter adapter)
-    : super(box, adapter);
+  _FakeGameService(super.box, super.adapter);
 
   @override
   getMapData(String gameId) {
@@ -26,8 +24,7 @@ class _FakeGameService extends GameService {
 
 /// Minimal OW/NW tile maps + topology for [mapViewDataProvider] integration tests.
 class _GameServiceWithMinimalMap extends GameService {
-  _GameServiceWithMinimalMap(Box<dynamic> box, GameSaveAdapter adapter)
-    : super(box, adapter);
+  _GameServiceWithMinimalMap(super.box, super.adapter);
 
   static final Map<String, MapTopology> _topologyByRegion = {
     'oldWorld': MapTopology(

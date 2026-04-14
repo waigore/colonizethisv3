@@ -1,12 +1,13 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/army_ids.dart';
 import '../dossier/event_dialogue.dart';
+import '../dossier/evidence_rules.dart';
 import '../economy/build_cost.dart';
 import 'build_rail_work_rules.dart';
 import 'build_spawn_province.dart';
@@ -20,8 +21,9 @@ import '../world/unit_lookup.dart';
 
 part 'orders_application_work_phase.dart';
 part 'orders_application_completed_work.dart';
+part 'orders_application_build_phase.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 void _appendMilitaryRegimentToArmy(
   _BuildWorkState state,
@@ -118,15 +120,9 @@ Game clearUnitCurrentWork(Game game, String unitId) {
   }
 }
 
-/// Mutable state shared by build phase, work phase, and processWorkUnits.
-class _BuildWorkState {
-  _BuildWorkState({
-    required this.game,
-    required this.buildOrders,
-    required this.workOrders,
-    this.topology,
-    this.tileMapByRegion,
-    this.onDialogue,
+/// Mutable work-phase and per-turn scratch maps/lists (WorkState per #1618).
+class _WorkOrderState {
+  _WorkOrderState({
     required this.oldUnitsById,
     required this.newUnitsById,
     required this.tileState,
@@ -137,12 +133,6 @@ class _BuildWorkState {
     required this.newProvinces,
   });
 
-  Game game;
-  final Map<String, List<BuildUnitOrder>> buildOrders;
-  final Map<String, List<WorkOrder>> workOrders;
-  final MapTopology? topology;
-  final Map<String, TileMapResult>? tileMapByRegion;
-  final void Function(DialogueEvent)? onDialogue;
   final Map<String, Unit> oldUnitsById;
   final Map<String, Unit> newUnitsById;
   TileMapState tileState;
@@ -154,136 +144,25 @@ class _BuildWorkState {
   final List<Player> updatedPlayers = [];
 }
 
-/// Applies build orders for all players. Mutates [state.game], [state.oldUnitsById], [state.newUnitsById].
-void _runBuildPhase(_BuildWorkState state) {
-  for (final player in state.game.players) {
-    var workers = player.workerPool;
-    var stockpile = player.stockpile;
-    var treasury = player.treasury;
+/// Session context for applyBuildAndWorkOrders: game mutation, order maps, map topology.
+class _BuildWorkState {
+  _BuildWorkState({
+    required this.game,
+    required this.buildOrders,
+    required this.workOrders,
+    this.topology,
+    this.tileMapByRegion,
+    this.onDialogue,
+    required this.work,
+  });
 
-    for (final order in state.buildOrders[player.id] ?? const []) {
-      final category = buildUnitCategoryForUnitType(order.unitType);
-      if (category == BuildUnitCategory.unknown) continue;
-
-      final check = canAffordBuild(player, order, workers, stockpile, treasury);
-      if (!check.canAfford) continue;
-
-      final after = applyBuildCostDeduction(
-        player,
-        order,
-        workers,
-        stockpile,
-        treasury,
-      );
-      workers = after.workers;
-      stockpile = after.stockpile;
-      treasury = after.treasury;
-
-      if (category == BuildUnitCategory.naval) {
-        final capProvinceId = player.capitalProvinceId;
-        if (capProvinceId == null) continue;
-        final regionId = ProvinceId.regionIdFrom(capProvinceId);
-        // Only add ship when capital is sea-bound (has a port). SPEC/game/ships-and-naval.md.
-        if (state.topology == null) continue;
-        final seaZoneAtCap = seaZoneIdForProvince(
-          state.topology!,
-          ProvinceId.localIdFrom(capProvinceId),
-          regionId: regionId,
-        );
-        if (seaZoneAtCap == null) continue;
-
-        var ws = state.game.worldState;
-        var fleets = List<Fleet>.from(ws.fleets);
-        final homeFleetId = homeFleetIdFor(player.id);
-        final existing = fleets.indexWhere(
-          (f) => f.id == homeFleetId && f.ownerId == player.id,
-        );
-        var nextSeq = ws.nextShipInstanceSeq;
-        final inferred = inferNextShipInstanceSeqFromFleets(fleets);
-        if (nextSeq < inferred) nextSeq = inferred;
-        final (seqAfter, minted) = mintShipInstances(
-          nextShipInstanceSeq: nextSeq,
-          typeIds: [order.unitType],
-        );
-        nextSeq = seqAfter;
-        if (existing >= 0) {
-          final f = fleets[existing];
-          fleets = List<Fleet>.from(fleets)
-            ..[existing] = f.copyWith(ships: [...f.ships, ...minted]);
-        } else {
-          fleets = [
-            ...fleets,
-            Fleet(
-              id: homeFleetId,
-              ownerId: player.id,
-              seaZoneId: null,
-              inPortAtProvinceId: capProvinceId,
-              regionId: regionId,
-              ships: minted,
-            ),
-          ];
-        }
-        state.game = state.game.copyWith(
-          worldState: ws.copyWith(fleets: fleets, nextShipInstanceSeq: nextSeq),
-        );
-        continue;
-      }
-
-      final spawnProvinceId = resolveBuildSpawnProvinceId(
-        player: player,
-        worldState: state.game.worldState,
-        order: order,
-      );
-      if (spawnProvinceId == null) continue;
-      final regionId = ProvinceId.regionIdFrom(spawnProvinceId);
-      final tileKeysByRegion =
-          state.game.worldState.tileKeysByRegionAndProvince;
-      final firstTileInSpawn =
-          tileKeysByRegion[regionId]?[spawnProvinceId]?.isNotEmpty == true
-          ? tileKeysByRegion[regionId]![spawnProvinceId]!.first
-          : null;
-
-      final newUnit = Unit(
-        id: _buildUnitId(player.id, order, spawnProvinceId),
-        type: order.unitType,
-        ownerId: player.id,
-        locationProvinceId: spawnProvinceId,
-        tileKey: category == BuildUnitCategory.civilian
-            ? firstTileInSpawn
-            : null,
-      );
-
-      if (regionId == kRegionNewWorld) {
-        state.newUnitsById[newUnit.id] = newUnit;
-      } else {
-        state.oldUnitsById[newUnit.id] = newUnit;
-      }
-
-      if (category == BuildUnitCategory.military) {
-        _appendMilitaryRegimentToArmy(
-          state,
-          player,
-          spawnProvinceId,
-          newUnit.id,
-        );
-      }
-    }
-
-    // Apply build-phase deductions to this player so _runWorkPhase sees updated state.
-    state.game = state.game.copyWith(
-      players: state.game.players
-          .map(
-            (p) => p.id == player.id
-                ? p.copyWith(
-                    stockpile: stockpile,
-                    workerPool: workers,
-                    treasury: treasury,
-                  )
-                : p,
-          )
-          .toList(),
-    );
-  }
+  Game game;
+  final Map<String, List<BuildUnitOrder>> buildOrders;
+  final Map<String, List<WorkOrder>> workOrders;
+  final MapTopology? topology;
+  final Map<String, TileMapResult>? tileMapByRegion;
+  final void Function(DialogueEvent)? onDialogue;
+  final _WorkOrderState work;
 }
 
 /// Applies BuildUnitOrder and WorkOrder for all players in [game].
@@ -308,13 +187,7 @@ Game applyBuildAndWorkOrders(
     return game;
   }
 
-  final state = _BuildWorkState(
-    game: game,
-    buildOrders: buildOrders,
-    workOrders: workOrders,
-    topology: topology,
-    tileMapByRegion: tileMapByRegion,
-    onDialogue: onDialogue,
+  final work = _WorkOrderState(
     oldUnitsById: Map<String, Unit>.from(
       unitsByIdFromRegion(game.worldState.oldWorld),
     ),
@@ -336,6 +209,15 @@ Game applyBuildAndWorkOrders(
     oldProvinces: List<Province>.from(game.worldState.oldWorld.provinces),
     newProvinces: List<Province>.from(game.worldState.newWorld.provinces),
   );
+  final state = _BuildWorkState(
+    game: game,
+    buildOrders: buildOrders,
+    workOrders: workOrders,
+    topology: topology,
+    tileMapByRegion: tileMapByRegion,
+    onDialogue: onDialogue,
+    work: work,
+  );
 
   _runBuildPhase(state);
 
@@ -356,12 +238,14 @@ Game applyBuildAndWorkOrders(
             .tileKeysByRegionAndProvince[regionIdFromWork]?[fullProvinceId] ??
         [];
     final playerId = u.ownerId;
-    final vis = Map<String, String>.from(s.visibilityByTile[playerId] ?? {});
+    final vis = Map<String, String>.from(
+      s.work.visibilityByTile[playerId] ?? {},
+    );
     for (final tk in tileKeys) {
       vis[tk] = VisibilityLevel.fullyVisible.name;
     }
-    s.visibilityByTile = Map<String, Map<String, String>>.from(
-      s.visibilityByTile,
+    s.work.visibilityByTile = Map<String, Map<String, String>>.from(
+      s.work.visibilityByTile,
     )..[playerId] = vis;
   }
 
@@ -493,6 +377,7 @@ Game applyBuildAndWorkOrders(
                     p.capitalProvinceId == targetProvinceId,
               )
               .firstOrNull;
+          var stealSuccess = false;
           if (otherPlayer != null) {
             final ourTech = s.game.playerById(u.ownerId)?.techUnlocked ?? {};
             final theirTech = otherPlayer.techUnlocked ?? {};
@@ -501,10 +386,9 @@ Game applyBuildAndWorkOrders(
                 .map((e) => e.key)
                 .toList();
             if (missing.isNotEmpty && rand.nextDouble() < spyTechStealChance) {
+              stealSuccess = true;
               final granted = missing[rand.nextInt(missing.length)];
-              final player = s.game.players
-                  .where((p) => p.id == u.ownerId)
-                  .firstOrNull;
+              final player = s.game.playerById(u.ownerId);
               if (player != null) {
                 final updated = Map<String, bool>.from(
                   player.techUnlocked ?? {},
@@ -519,6 +403,21 @@ Game applyBuildAndWorkOrders(
                       .toList(),
                 );
               }
+            }
+            final turn = s.game.worldState.turnState.turnNumber;
+            final spyEvidence = evidenceForAiStealTechResolved(
+              s.game,
+              u.ownerId,
+              turn,
+              success: stealSuccess,
+            );
+            if (spyEvidence.isNotEmpty) {
+              s.game = s.game.copyWith(
+                dossierEvidenceEntries: [
+                  ...s.game.dossierEvidenceEntries,
+                  ...spyEvidence,
+                ],
+              );
             }
           }
         } else {
@@ -542,45 +441,45 @@ Game applyBuildAndWorkOrders(
 
   processWorkUnits(
     state,
-    state.oldUnitsById,
-    () => state.oldProvinces,
-    (p) => state.oldProvinces = p,
+    state.work.oldUnitsById,
+    () => state.work.oldProvinces,
+    (p) => state.work.oldProvinces = p,
   );
   processWorkUnits(
     state,
-    state.newUnitsById,
-    () => state.newProvinces,
-    (p) => state.newProvinces = p,
+    state.work.newUnitsById,
+    () => state.work.newProvinces,
+    (p) => state.work.newProvinces = p,
   );
 
   state.game = state.game.copyWith(
     worldState: state.game.worldState.copyWith(
-      tileState: state.tileState,
-      playerVisibilityByTile: state.visibilityByTile,
-      portsByProvinceSeaboard: state.portsByProvinceSeaboard,
-      purchasedTilesByTileKey: state.purchasedTilesByTileKey,
+      tileState: state.work.tileState,
+      playerVisibilityByTile: state.work.visibilityByTile,
+      portsByProvinceSeaboard: state.work.portsByProvinceSeaboard,
+      purchasedTilesByTileKey: state.work.purchasedTilesByTileKey,
       oldWorld: RegionData(
-        provinces: state.oldProvinces,
-        units: state.oldUnitsById.values.toList(),
+        provinces: state.work.oldProvinces,
+        units: state.work.oldUnitsById.values.toList(),
       ),
       newWorld: RegionData(
-        provinces: state.newProvinces,
-        units: state.newUnitsById.values.toList(),
+        provinces: state.work.newProvinces,
+        units: state.work.newUnitsById.values.toList(),
       ),
     ),
   );
 
   return state.game.copyWith(
-    players: state.updatedPlayers,
+    players: state.work.updatedPlayers,
     worldState: state.game.worldState.copyWith(
-      purchasedTilesByTileKey: state.purchasedTilesByTileKey,
+      purchasedTilesByTileKey: state.work.purchasedTilesByTileKey,
       oldWorld: RegionData(
         provinces: state.game.worldState.oldWorld.provinces,
-        units: state.oldUnitsById.values.toList(),
+        units: state.work.oldUnitsById.values.toList(),
       ),
       newWorld: RegionData(
         provinces: state.game.worldState.newWorld.provinces,
-        units: state.newUnitsById.values.toList(),
+        units: state.work.newUnitsById.values.toList(),
       ),
     ),
   );

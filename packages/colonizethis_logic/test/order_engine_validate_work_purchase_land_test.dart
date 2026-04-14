@@ -17,7 +17,7 @@ void main() {
         edges: const [TopologyEdge(id1: 'P1', id2: 'M1')],
       );
 
-      Game _baseGame({
+      Game baseGame({
         required int treasury,
         List<OvertureState>? overtureStates,
         List<DiplomacyRelation>? diplomacyRelations,
@@ -78,7 +78,7 @@ void main() {
       }
 
       test('rejects purchase_land when no embassy with Minor', () {
-        final game = _baseGame(treasury: 500);
+        final game = baseGame(treasury: 500);
         final engine = OrderEngine();
         engine.addWorkOrder(
           'p1',
@@ -98,7 +98,7 @@ void main() {
       });
 
       test('rejects purchase_land when at war with faction', () {
-        final game = _baseGame(
+        final game = baseGame(
           treasury: 500,
           overtureStates: [
             const OvertureState(
@@ -136,7 +136,7 @@ void main() {
 
       test('rejects purchase_land when insufficient treasury', () {
         const cost = 15 * 10; // grain default base 10
-        final game = _baseGame(
+        final game = baseGame(
           treasury: cost - 1,
           overtureStates: [
             const OvertureState(
@@ -166,7 +166,7 @@ void main() {
       });
 
       test('rejects purchase_land when tile has no resource', () {
-        final game = _baseGame(
+        final game = baseGame(
           treasury: 500,
           overtureStates: [
             const OvertureState(
@@ -197,7 +197,7 @@ void main() {
       });
 
       test('rejects purchase_land when mineral tile not prospected', () {
-        final game = _baseGame(
+        final game = baseGame(
           treasury: 500,
           overtureStates: [
             const OvertureState(
@@ -231,7 +231,7 @@ void main() {
       test(
         'accepts purchase_land with embassy, at peace, sufficient treasury, tile with resource',
         () {
-          final game = _baseGame(
+          final game = baseGame(
             treasury: 500,
             overtureStates: [
               const OvertureState(
@@ -368,7 +368,7 @@ void main() {
       );
 
       test('accepts purchase_land for mineral when prospected', () {
-        final game = _baseGame(
+        final game = baseGame(
           treasury: 500,
           overtureStates: [
             const OvertureState(
@@ -403,7 +403,7 @@ void main() {
       test(
         'rejects purchase_land when tile already purchased by another GP',
         () {
-          final game = _baseGame(
+          final game = baseGame(
             treasury: 500,
             overtureStates: [
               const OvertureState(
@@ -438,7 +438,7 @@ void main() {
       );
 
       test('rejects purchase_land when tile already owned by same player', () {
-        final game = _baseGame(
+        final game = baseGame(
           treasury: 500,
           overtureStates: [
             const OvertureState(

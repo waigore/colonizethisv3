@@ -2,17 +2,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../logic_validation_exception.dart';
 import 'province_lookup.dart';
 import 'unit_lookup.dart';
 
 /// Visibility level for a tile from a single player's perspective.
 /// Mirrors SPEC/game/fog-and-exploration.md.
-enum VisibilityLevel {
-  unknown,
-  revealed,
-  fogged,
-  fullyVisible,
-}
+enum VisibilityLevel { unknown, revealed, fogged, fullyVisible }
 
 /// Read-only projection of [Game] for a single player under fog-of-war.
 ///
@@ -72,14 +68,14 @@ class PlayerView {
 /// Builds a [PlayerView] for [playerId] from [game] and [topology].
 ///
 /// This is a pure function; it must be deterministic for the same inputs.
-PlayerView buildPlayerView(
-  Game game,
-  MapTopology _,
-  String playerId,
-) {
+PlayerView buildPlayerView(Game game, MapTopology _, String playerId) {
   final player = game.playerById(playerId);
   if (player == null) {
-    throw ArgumentError.value(playerId, 'playerId', 'Player not found in game');
+    throw LogicValidationException.value(
+      playerId,
+      'playerId',
+      'Player not found in game',
+    );
   }
 
   // Provinces: key by full id (p.id is regionId|localId).
@@ -108,7 +104,8 @@ PlayerView buildPlayerView(
 
   // Visibility and prospection per SPEC/program/fog-and-exploration-resolution.md:
   // derive from WorldState's per-player maps.
-  final rawVisibility = game.worldState.playerVisibilityByTile[playerId] ?? const {};
+  final rawVisibility =
+      game.worldState.playerVisibilityByTile[playerId] ?? const {};
   final visibilityByTile = <String, VisibilityLevel>{};
   rawVisibility.forEach((tileKey, levelName) {
     final level = VisibilityLevel.values.firstWhere(
@@ -123,10 +120,13 @@ PlayerView buildPlayerView(
     if (!isSpyUnit(u.type)) continue;
     final provId = u.locationProvinceId;
     final regionId = ProvinceId.regionIdFrom(provId);
-    final tileKeys = game.worldState.tileKeysByRegionAndProvince[regionId]?[provId] ?? [];
+    final tileKeys =
+        game.worldState.tileKeysByRegionAndProvince[regionId]?[provId] ?? [];
     if (tileKeys.isEmpty) continue;
     final province = provincesById[provId];
-    if (province == null || province.ownerId == null || province.ownerId == playerId) {
+    if (province == null ||
+        province.ownerId == null ||
+        province.ownerId == playerId) {
       continue;
     }
     for (final tk in tileKeys) {
@@ -151,7 +151,14 @@ PlayerView buildPlayerView(
 /// Resources that require prospecting before the player "knows" them.
 /// SPEC/game/fog-and-exploration.md: iron, copper, tin, coal, silver, gold, gems, diamonds.
 const Set<String> kProspectRequiredResourceIds = {
-  'iron', 'copper', 'tin', 'coal', 'silver', 'gold', 'gems', 'diamonds',
+  'iron',
+  'copper',
+  'tin',
+  'coal',
+  'silver',
+  'gold',
+  'gems',
+  'diamonds',
 };
 
 /// Resource commodity id to show in UI for the given visibility and
@@ -202,7 +209,11 @@ String? resourceIdVisibleInPlayerView(
 /// Revealed = visibility fully visible, fogged, or revealed. For prospect-required
 /// resources (gold, silver, gems, diamonds, etc.), the tile must also be
 /// prospected by that player. SPEC/game/tech-tree.md Discovery prerequisites.
-bool hasRevealedResourceForPlayer(Game game, String playerId, String resourceId) {
+bool hasRevealedResourceForPlayer(
+  Game game,
+  String playerId,
+  String resourceId,
+) {
   final ws = game.worldState;
   final visibility = ws.playerVisibilityByTile[playerId] ?? const {};
   final prospected = ws.playerProspectedTiles[playerId] ?? const <String>{};
@@ -235,3 +246,79 @@ bool foreignCivilianVisibleToPlayer({
   return view.visibilityForTile(tk) != VisibilityLevel.unknown;
 }
 
+/// True when province panel may show tile-derived full-intel sections.
+///
+/// Sections gated by this predicate are Economic, Military, Civilian, and Naval.
+/// Political ownership remains authoritative UI data.
+///
+/// Rules:
+/// - Own province: always true.
+/// - Foreign province + own Spy present: true.
+/// - Foreign province + active Spy fog-decay timer (> 0): true.
+/// - Otherwise: every tile in the province must be fully visible in [view].
+bool provincePanelShowsFullTileDerivedIntel({
+  required Game game,
+  required PlayerView view,
+  required String humanPlayerId,
+  required String provinceId,
+  Iterable<String>? provinceTileKeys,
+}) {
+  final province =
+      view.provincesById[provinceId] ?? _findProvince(game, provinceId);
+  final ownerId = province?.ownerId;
+  if (ownerId == humanPlayerId) {
+    return true;
+  }
+
+  final isForeignProvince =
+      ownerId != null && ownerId.isNotEmpty && ownerId != humanPlayerId;
+  if (isForeignProvince &&
+      _hasOwnSpyInProvince(view, humanPlayerId, provinceId)) {
+    return true;
+  }
+  if (isForeignProvince) {
+    final turnsLeft =
+        game.worldState.spyRevealTurnsByPlayer[humanPlayerId]?[provinceId] ?? 0;
+    if (turnsLeft > 0) {
+      return true;
+    }
+  }
+
+  final regionId = ProvinceId.regionIdFrom(provinceId);
+  final tileKeys =
+      (provinceTileKeys ??
+              game
+                  .worldState
+                  .tileKeysByRegionAndProvince[regionId]?[provinceId] ??
+              const <String>[])
+          .toList();
+  if (tileKeys.isEmpty) {
+    return false;
+  }
+  for (final tk in tileKeys) {
+    if (view.visibilityForTile(tk) != VisibilityLevel.fullyVisible) {
+      return false;
+    }
+  }
+  return true;
+}
+
+Province? _findProvince(Game game, String provinceId) {
+  for (final p in allProvinces(game.worldState)) {
+    if (p.id == provinceId) return p;
+  }
+  return null;
+}
+
+bool _hasOwnSpyInProvince(
+  PlayerView view,
+  String humanPlayerId,
+  String provinceId,
+) {
+  for (final unit in view.ownUnits) {
+    if (unit.ownerId != humanPlayerId) continue;
+    if (!isSpyUnit(unit.type)) continue;
+    if (unit.locationProvinceId == provinceId) return true;
+  }
+  return false;
+}

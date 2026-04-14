@@ -8,8 +8,12 @@ int extractionAutoTransportInterceptionSeed({
   required int turnNumber,
   required String playerId,
 }) {
-  var extractionSeed = globalGameSeed ^ (turnNumber * 0x9E3779B1);
-  extractionSeed = (extractionSeed * 1103515245 + 12345) & 0x7fffffff;
+  var extractionSeed =
+      globalGameSeed ^ (turnNumber * kDeterministicHashMixPrime32);
+  extractionSeed =
+      (extractionSeed * kDeterministicLcgMultiplierGlibc +
+          kDeterministicLcgIncrementGlibc) &
+      kDeterministicLcg31Mask;
   return extractionSeed ^ playerId.hashCode;
 }
 
@@ -78,6 +82,7 @@ extractionAutoTransportFixture({
   List<Fleet> extraFleets = const [],
   int globalGameSeed = 0,
   RelationState relationWithP2 = RelationState.atPeace,
+  Map<String, bool> techUnlocked = const {},
 }) {
   const ow = 'oldWorld', nw = 'newWorld';
   final tileMapNw = TileMapResult(
@@ -148,6 +153,7 @@ extractionAutoTransportFixture({
           CommodityCatalog.grain.id,
           1000,
         ),
+        techUnlocked: techUnlocked,
       ),
       const Player(id: 'p2', displayName: 'Rival', isHuman: false),
     ],

@@ -1,4 +1,5 @@
 import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logger/package_logger.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
@@ -81,26 +82,13 @@ void main() {
       expect(capturedEvents[0].stackTrace, stackTrace);
     });
 
-    test('factory functions create loggers with correct prefixes', () {
-      expect(ctdevLogger().prefix, 'ctdev');
-      expect(logicLogger().prefix, 'logic');
-      expect(aiLogger().prefix, 'ai');
-      expect(dataLogger().prefix, 'data');
-      expect(mapLogger().prefix, 'map');
-      expect(saveLogger().prefix, 'save');
-      expect(tuiLogger().prefix, 'tui');
-      expect(gameLogger().prefix, 'game');
-      expect(appLogger().prefix, 'app');
+    test('package logger creates logger with package prefix', () {
+      expect(packageLogger().prefix, 'logger');
     });
 
-    test(
-      'factory functions with subPrefix create loggers with compound prefixes',
-      () {
-        expect(logicLogger('turn').prefix, 'logic.turn');
-        expect(aiLogger('planner').prefix, 'ai.planner');
-        expect(mapLogger('tileset').prefix, 'map.tileset');
-      },
-    );
+    test('package logger subPrefix creates compound prefix', () {
+      expect(packageLogger('ct').prefix, 'logger.ct');
+    });
   });
 
   group('prefixes', () {
@@ -111,7 +99,6 @@ void main() {
       expect(allLogPrefixes, contains('data'));
       expect(allLogPrefixes, contains('map'));
       expect(allLogPrefixes, contains('save'));
-      expect(allLogPrefixes, contains('tui'));
       expect(allLogPrefixes, contains('game'));
       expect(allLogPrefixes, contains('app'));
     });
@@ -122,7 +109,6 @@ void main() {
       expect(kLogPrefixData, 'data');
       expect(kLogPrefixMap, 'map');
       expect(kLogPrefixSave, 'save');
-      expect(kLogPrefixTui, 'tui');
       expect(kLogPrefixGame, 'game');
       expect(kLogPrefixApp, 'app');
       expect(kLogPrefixCtdev, 'ctdev');

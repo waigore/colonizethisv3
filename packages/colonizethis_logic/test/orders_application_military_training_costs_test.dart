@@ -5,7 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('applyBuildAndWorkOrders (military training costs)', () {
-    Game _baseGame({required int peasants, required int treasury}) {
+    Game baseGame({required int peasants, required int treasury}) {
       const playerId = 'p1';
       final player = Player(
         id: playerId,
@@ -28,7 +28,7 @@ void main() {
       return Game(id: 'g', worldState: world, players: [player]);
     }
 
-    Orders _ordersFor(String unitType, {String? spawnProvinceId}) {
+    Orders ordersFor(String unitType, {String? spawnProvinceId}) {
       final spawn = spawnProvinceId ?? 'oldWorld|P1';
       return Orders(
         buildUnitOrdersByPlayerId: {
@@ -47,8 +47,8 @@ void main() {
 
     test('rejects build when treasury is insufficient', () {
       final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
-      final game = _baseGame(peasants: 5, treasury: econ.buildTreasuryCost - 1);
-      final orders = _ordersFor('peasant_levies');
+      final game = baseGame(peasants: 5, treasury: econ.buildTreasuryCost - 1);
+      final orders = ordersFor('peasant_levies');
 
       final next = applyBuildAndWorkOrders(game, orders);
 
@@ -64,11 +64,11 @@ void main() {
     test('rejects build when materials are insufficient', () {
       final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
       // Enough treasury, but empty stockpile (no fabric).
-      final game = _baseGame(
+      final game = baseGame(
         peasants: 5,
         treasury: econ.buildTreasuryCost + 10,
       );
-      final orders = _ordersFor('peasant_levies');
+      final orders = ordersFor('peasant_levies');
 
       final next = applyBuildAndWorkOrders(game, orders);
       expect(next.worldState.oldWorld.units, isEmpty);
@@ -105,7 +105,7 @@ void main() {
         newWorld: const RegionData(),
       );
       final game = Game(id: 'g', worldState: world, players: [player]);
-      final orders = _ordersFor('peasant_levies');
+      final orders = ordersFor('peasant_levies');
 
       final next = applyBuildAndWorkOrders(game, orders);
       final nextPlayer = next.players.single;
@@ -129,7 +129,7 @@ void main() {
     });
 
     test('returns game unchanged when no build or work orders', () {
-      final game = _baseGame(peasants: 2, treasury: 100);
+      final game = baseGame(peasants: 2, treasury: 100);
       final next = applyBuildAndWorkOrders(game, const Orders());
       expect(
         next.worldState.oldWorld.units.length,

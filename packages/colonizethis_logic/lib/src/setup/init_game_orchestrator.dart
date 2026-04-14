@@ -4,17 +4,19 @@
 import 'dart:typed_data';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../ai/hidden_agenda_assignment.dart';
 import '../constants.dart';
 import '../world/unit_lookup.dart';
+import 'effective_setup_seed.dart';
 import 'game_setup.dart';
+import 'setup_exceptions.dart';
 import 'warp_zone_generator.dart';
 
-final _log = logicLogger();
+final _log = packageLogger();
 
 /// Result of running init game.
 class InitGameResult {
@@ -83,20 +85,18 @@ InitGameResult runInitGame({
   TileMapRegionGenerator? generateRegion,
 }) {
   if (config.numProvincesOldWorld < config.greatPowerCount) {
-    throw ArgumentError(
-      'Config requests ${config.numProvincesOldWorld} Old World provinces but '
-      '${config.greatPowerCount} Great Powers need at least one each',
+    throw SetupConfigConstraintException(
+      code: 'insufficient_old_world_provinces_for_great_powers',
+      details:
+          'Config requests ${config.numProvincesOldWorld} Old World provinces but '
+          '${config.greatPowerCount} Great Powers need at least one each',
     );
   }
 
   _log.i(
     'init game start OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
   );
-  // Derive an effective seed: non-zero config seeds are used as-is for
-  // reproducible runs; a zero seed means "choose a time-based seed".
-  final effectiveSeed = config.seed == 0
-      ? DateTime.now().millisecondsSinceEpoch
-      : config.seed;
+  final effectiveSeed = resolveEffectiveSetupSeed(config.seed);
 
   final mapGenParams = MapGenerationParams(
     numContinents: config.continentCount,
@@ -227,9 +227,9 @@ InitGameResult runInitGame({
 
   // Phase 4: set AI seeds and GP colour override for determinism / display
   var game = setupResult.game;
-  final gpColorOverrideList = mapColorTuples == null
-      ? null
-      : mapColorTuples.map((k, v) => MapEntry(k, [v.$1, v.$2, v.$3]));
+  final gpColorOverrideList = mapColorTuples?.map(
+    (k, v) => MapEntry(k, [v.$1, v.$2, v.$3]),
+  );
   game = game.copyWith(
     globalGameSeed: effectiveSeed,
     aiSeedByGpId: {
