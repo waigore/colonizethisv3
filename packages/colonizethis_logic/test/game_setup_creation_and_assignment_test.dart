@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' show RegionData;
 
 void main() {
   group('GameSetup', () {
@@ -785,6 +786,102 @@ void main() {
           reason:
               'when no sea-zone-adjacent tile exists, seaboard town selection '
               'falls back to all tiles with centroid-then-BFS ordering',
+        );
+      },
+    );
+
+    test(
+      'overseas province (capital in other region, no port) picks town by centroid',
+      () {
+        final owGrid = [
+          ['p1', 'sea1'],
+          ['p1', 'p1'],
+        ];
+        final owTopology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'sea1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [TopologyEdge(id1: 'p1', id2: 'sea1')],
+        );
+        final owTileMap = TileMapResult(width: 2, height: 2, grid: owGrid);
+
+        final nwGrid = [
+          ['col', 'col', 'col'],
+          ['col', 'col', 'col'],
+        ];
+        final nwTopology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'col',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final nwTileMap = TileMapResult(width: 3, height: 2, grid: nwGrid);
+
+        final config = GameSetupConfig(
+          selectedGreatPowerIds: ['england'],
+          continentCount: 1,
+          minorNationCount: 0,
+          tribeCount: 0,
+          numProvincesOldWorld: 1,
+          numProvincesNewWorld: 1,
+          minProvincesPerMinor: 0,
+          initTownRoadWiringRegionIds: <String>{},
+        );
+
+        final result = createGameFromGeneratedMaps(
+          config: config,
+          tileMapOldWorld: owTileMap,
+          topologyOldWorld: owTopology,
+          tileMapNewWorld: nwTileMap,
+          topologyNewWorld: nwTopology,
+          gameId: 'test-overseas-centroid',
+        );
+
+        var game = result.game;
+        final nwProvinces = game.worldState.newWorld.provinces.map((p) {
+          if (p.id == 'newWorld|col') {
+            return p.copyWith(ownerId: 'gp1');
+          }
+          return p;
+        }).toList();
+        game = game.copyWith(
+          worldState: game.worldState.copyWith(
+            newWorld: RegionData(
+              provinces: nwProvinces,
+              units: game.worldState.newWorld.units,
+            ),
+          ),
+        );
+
+        game = assignProvinceTownsForTesting(
+          game: game,
+          topologyByRegion: result.topologyByRegion,
+          tileMapByRegion: result.tileMapByRegion,
+        );
+
+        final col = game.worldState.newWorld.provinces.firstWhere(
+          (p) => p.id == 'newWorld|col',
+        );
+        expect(
+          col.townTileKey,
+          'newWorld|col|1|1',
+          reason:
+              'GP capital in oldWorld; inland NW province has no port — town is '
+              'the tile at rounded centroid (1,1), with lexicographic key as '
+              'final tie-break when BFS to capital is not applicable',
         );
       },
     );
