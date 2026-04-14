@@ -4,12 +4,14 @@ class MapViewState {
     this.showProvinceOverlay = true,
     this.showProvinceOwnershipTint = false,
     this.showProvinceNamesLayer = true,
+    this.showPlayerTurnEventsFeed = false,
   });
 
   final double zoomMultiplier;
   final bool showProvinceOverlay;
   final bool showProvinceOwnershipTint;
   final bool showProvinceNamesLayer;
+  final bool showPlayerTurnEventsFeed;
 
   static const MapViewState defaults = MapViewState();
 
@@ -18,6 +20,7 @@ class MapViewState {
     'showProvinceOverlay': showProvinceOverlay,
     'showProvinceOwnershipTint': showProvinceOwnershipTint,
     'showProvinceNamesLayer': showProvinceNamesLayer,
+    'showPlayerTurnEventsFeed': showPlayerTurnEventsFeed,
   };
 
   static MapViewState fromJson(Map<String, dynamic> json) {
@@ -27,6 +30,8 @@ class MapViewState {
       showProvinceOwnershipTint:
           json['showProvinceOwnershipTint'] as bool? ?? false,
       showProvinceNamesLayer: json['showProvinceNamesLayer'] as bool? ?? true,
+      showPlayerTurnEventsFeed:
+          json['showPlayerTurnEventsFeed'] as bool? ?? false,
     );
   }
 
@@ -35,6 +40,7 @@ class MapViewState {
     bool? showProvinceOverlay,
     bool? showProvinceOwnershipTint,
     bool? showProvinceNamesLayer,
+    bool? showPlayerTurnEventsFeed,
   }) {
     return MapViewState(
       zoomMultiplier: zoomMultiplier ?? this.zoomMultiplier,
@@ -43,6 +49,8 @@ class MapViewState {
           showProvinceOwnershipTint ?? this.showProvinceOwnershipTint,
       showProvinceNamesLayer:
           showProvinceNamesLayer ?? this.showProvinceNamesLayer,
+      showPlayerTurnEventsFeed:
+          showPlayerTurnEventsFeed ?? this.showPlayerTurnEventsFeed,
     );
   }
 
@@ -54,7 +62,8 @@ class MapViewState {
           zoomMultiplier == other.zoomMultiplier &&
           showProvinceOverlay == other.showProvinceOverlay &&
           showProvinceOwnershipTint == other.showProvinceOwnershipTint &&
-          showProvinceNamesLayer == other.showProvinceNamesLayer;
+          showProvinceNamesLayer == other.showProvinceNamesLayer &&
+          showPlayerTurnEventsFeed == other.showPlayerTurnEventsFeed;
 
   @override
   int get hashCode => Object.hash(
@@ -62,5 +71,6 @@ class MapViewState {
     showProvinceOverlay,
     showProvinceOwnershipTint,
     showProvinceNamesLayer,
+    showPlayerTurnEventsFeed,
   );
 }

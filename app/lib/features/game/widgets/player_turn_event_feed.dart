@@ -10,20 +10,15 @@ class PlayerTurnEventFeedEntry {
 class PlayerTurnEventFeedCard extends StatelessWidget {
   const PlayerTurnEventFeedCard({
     super.key,
-    required this.resolvedTurnNumber,
     required this.entries,
     required this.emptyLabel,
   });
 
-  final int? resolvedTurnNumber;
   final List<PlayerTurnEventFeedEntry> entries;
   final String emptyLabel;
 
   @override
   Widget build(BuildContext context) {
-    final turnLabel = resolvedTurnNumber != null
-        ? 'Events (Turn $resolvedTurnNumber)'
-        : 'Events';
     return Material(
       color: Colors.black.withValues(alpha: 0.62),
       borderRadius: BorderRadius.circular(10),
@@ -35,14 +30,6 @@ class PlayerTurnEventFeedCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                turnLabel,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 220),
                 child: entries.isEmpty

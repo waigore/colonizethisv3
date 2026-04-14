@@ -465,6 +465,7 @@ void main() {
           showProvinceOverlay: false,
           showProvinceOwnershipTint: true,
           showProvinceNamesLayer: false,
+          showPlayerTurnEventsFeed: true,
         ),
       );
       adapter.save(box, game);
@@ -474,6 +475,7 @@ void main() {
       expect(loaded.mapViewState.showProvinceOverlay, isFalse);
       expect(loaded.mapViewState.showProvinceOwnershipTint, isTrue);
       expect(loaded.mapViewState.showProvinceNamesLayer, isFalse);
+      expect(loaded.mapViewState.showPlayerTurnEventsFeed, isTrue);
 
       final legacyGameJson = Map<String, dynamic>.from(game.toJson())
         ..remove('mapViewState');
@@ -484,6 +486,7 @@ void main() {
       final legacyLoaded = adapter.load(box, 'legacyMapViewStateSave');
       expect(legacyLoaded, isNotNull);
       expect(legacyLoaded!.mapViewState, MapViewState.defaults);
+      expect(legacyLoaded.mapViewState.showPlayerTurnEventsFeed, isFalse);
     });
 
     test(
