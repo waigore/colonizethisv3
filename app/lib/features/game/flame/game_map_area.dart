@@ -515,6 +515,23 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         seaZoneId;
   }
 
+  String _diplomacyOutcomeLine({
+    required String actorId,
+    required String targetId,
+    required String changeType,
+  }) {
+    final actor = _factionLabel(actorId);
+    final target = _factionLabel(targetId);
+    final normalized = changeType.toLowerCase();
+    return switch (normalized) {
+      'declare_war' => '$actor declared war on $target!',
+      'peace' => '$actor and $target signed peace!',
+      'alliance' => '$actor and $target formed an alliance!',
+      'break_alliance' => '$actor and $target broke their alliance!',
+      _ => '$actor and $target diplomacy changed! ${changeType.toUpperCase()}!',
+    };
+  }
+
   Set<String> _seaZoneRegionCandidates(String seaZoneId) {
     if (seaZoneId.contains('|')) {
       final parts = seaZoneId.split('|');
@@ -672,8 +689,11 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
               :final changeType,
             ) =>
               PlayerTurnEventFeedEntry(
-                text:
-                    '${_factionLabel(actorId)} and ${_factionLabel(targetId)} diplomacy changed! ${changeType.toUpperCase()}!',
+                text: _diplomacyOutcomeLine(
+                  actorId: actorId,
+                  targetId: targetId,
+                  changeType: changeType,
+                ),
               ),
             ct_models.AppResearchCompleteEvent(:final techId) =>
               PlayerTurnEventFeedEntry(

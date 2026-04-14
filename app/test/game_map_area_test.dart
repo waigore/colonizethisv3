@@ -299,4 +299,63 @@ void main() {
       expect(locateEvents, isEmpty);
     },
   );
+
+  testWidgets('Player turn event feed uses specific diplomacy war copy', (
+    WidgetTester tester,
+  ) async {
+    final init = getDebugInitGameResult();
+    final game = init.game;
+    final mapViewData = init.mapViewData;
+    final humanId = game.players.firstWhere((p) => p.isHuman).id;
+    final otherId = game.players.firstWhere((p) => p.id != humanId).id;
+    final humanName = game.players
+        .firstWhere((p) => p.id == humanId)
+        .displayName;
+    final otherName = game.players
+        .firstWhere((p) => p.id == otherId)
+        .displayName;
+    final bus = AppEventBus.create();
+    addTearDown(bus.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appEventBusProvider.overrideWith((ref) => bus),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          mapViewDataProvider.overrideWith((ref) => mapViewData),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: GameMapArea(game: game, mapViewData: mapViewData),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+
+    bus.emit(
+      AppDiplomacyChangeEvent(
+        actorId: humanId,
+        targetId: otherId,
+        changeType: 'declare_war',
+        turnNumber: 1,
+      ),
+    );
+    bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(
+      find.textContaining('$humanName declared war on $otherName!'),
+      findsOneWidget,
+    );
+  });
 }
