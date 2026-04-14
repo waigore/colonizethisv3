@@ -86,12 +86,14 @@ const String _seaZoneLabelWarpIconId = 'map_warp_zone';
 const Color _seaZoneLabelPlateColor = Color.fromRGBO(173, 216, 230, 0.55);
 const Color _seaZoneLabelTextColor = Color(0xFF000000);
 
-/// World-space center for a sea zone name plate (inverse zoom applied to size).
+/// World-space center for a map label plate (inverse zoom applied to size).
 ///
-/// Prefers placement above the centroid cell without overlapping it; if that
-/// would clip the map top, uses below. Clamps into the region world rect and
-/// resolves residual overlap with the centroid cell. SPEC/ui/map-widget.md § Sea
-/// zone name plates; issue #1756.
+/// Prefers placement above the centroid cell without overlapping the avoided
+/// tile; if that would clip the map top, uses below. Clamps into the region
+/// world rect and resolves residual overlap with the avoided tile.
+///
+/// By default, the avoided tile is the centroid tile. Callers may pass an
+/// alternate avoided tile for reuse in province-label placement.
 Offset resolveSeaZoneNamePlateCenterWorld({
   required int centroidTileX,
   required int centroidTileY,
@@ -101,14 +103,18 @@ Offset resolveSeaZoneNamePlateCenterWorld({
   required double plateWidthLogicalPx,
   required double plateHeightLogicalPx,
   required double cameraZoom,
+  int? avoidedTileX,
+  int? avoidedTileY,
 }) {
+  final avoidTileX = avoidedTileX ?? centroidTileX;
+  final avoidTileY = avoidedTileY ?? centroidTileY;
   final invZ = 1.0 / cameraZoom.clamp(0.25, 4.0);
   final ww = plateWidthLogicalPx * invZ / 2;
   final hh = plateHeightLogicalPx * invZ / 2;
   final mapW = gridWidth * cellSize;
   final mapH = gridHeight * cellSize;
-  final cellL = centroidTileX * cellSize;
-  final cellT = centroidTileY * cellSize;
+  final cellL = avoidTileX * cellSize;
+  final cellT = avoidTileY * cellSize;
   final cellR = cellL + cellSize;
   final cellB = cellT + cellSize;
   const gap = 1.0;
@@ -360,6 +366,38 @@ bool shouldApplyFogToInteriorPlainsVariantOverlay({
   return tileVisibility == TileVisibility.fogged;
 }
 
+/// Returns true when transport sprites should render for the selected base mode.
+bool shouldRenderTransportOverlay({
+  required BaseLayerDisplayMode baseLayerDisplayMode,
+}) {
+  return baseLayerDisplayMode ==
+      BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
+}
+
+/// Returns true when a road level should use the rail transport family.
+///
+/// Current v1 behavior uses rail sprites only for level 4.
+bool isRailTransportLevel(int roadLevel) => roadLevel == 4;
+
+/// Returns true when a given cell is eligible for transport overlay rendering.
+///
+/// Overlay is land-only, requires `roadLevel > 0`, and is hidden for unrevealed
+/// cells in player-constrained visibility mode.
+bool shouldPaintTransportOverlayForCell({
+  required CellViewData cell,
+  required CtMapVisibilityMode visibilityMode,
+  required TileVisibility tileVisibility,
+}) {
+  if (cell.isSea || (cell.roadLevel ?? 0) <= 0) {
+    return false;
+  }
+  if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+      tileVisibility == TileVisibility.unrevealed) {
+    return false;
+  }
+  return true;
+}
+
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
 /// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
 bool _isFeatureTerrain(TerrainType terrain) {
@@ -440,20 +478,22 @@ void assertCtMapPlayerViewRequired({
   }
 }
 
-/// Base layer display mode: terrain, resource icons, improvement/road labels.
+/// Base layer display mode: terrain, resource icons, improvement labels, and
+/// road/rail transport sprite overlays.
 /// SPEC/ui/map-widget.md § Base layer display mode.
 enum BaseLayerDisplayMode {
-  /// Terrain only; no resource icons or improvement/road labels.
+  /// Terrain only; no resource icons, improvement labels, or transport overlay.
   terrainOnly,
 
-  /// Terrain + resource icons; no improvement or road labels.
+  /// Terrain + resource icons; no improvement labels or transport overlay.
   terrainAndResources,
 
-  /// Terrain + resource icons + improvement labels (`I{n}` when n > 0); no road labels.
+  /// Terrain + resource icons + improvement labels (`I{n}` when n > 0); no
+  /// transport overlay.
   terrainAndResourcesImprovementLabels,
 
-  /// Terrain + resource icons + improvement labels + road/rail labels (`R{n}` when n > 0).
-  /// Roads are painted after improvements (on top). Road labels require improvement mode on.
+  /// Terrain + resource icons + improvement labels + road/rail transport
+  /// overlay (`roadLevel > 0`).
   terrainAndResourcesImprovementsRoads,
 }
 

@@ -21,12 +21,62 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
       }
     }
 
+    _paintTransportOverlayTiles(canvas);
+
     for (final cell in region.cells) {
       if (!cell.isSea &&
           cell.terrainType != null &&
           _isFeatureTerrain(cell.terrainType!)) {
         _paintFeatureCell(canvas, cell);
       }
+    }
+  }
+
+  void _paintTransportOverlayTiles(Canvas canvas) {
+    if (!shouldRenderTransportOverlay(
+      baseLayerDisplayMode: baseLayerDisplayMode,
+    )) {
+      return;
+    }
+    if (!transportOverlayTilesetCache.isLoaded) {
+      return;
+    }
+    for (final cell in region.cells) {
+      final tileVisibility = _visibilityForTerrain(cell);
+      if (!shouldPaintTransportOverlayForCell(
+        cell: cell,
+        visibilityMode: visibilityMode,
+        tileVisibility: tileVisibility,
+      )) {
+        continue;
+      }
+      final roadLevel = cell.roadLevel ?? 0;
+      final family = isRailTransportLevel(roadLevel)
+          ? TransportTileFamily.rail
+          : TransportTileFamily.road;
+      final tileset = transportOverlayTilesetCache.getTileset(family);
+      if (tileset == null) {
+        continue;
+      }
+      final mask = computeTransportConnectivityMask(
+        x: cell.x,
+        y: cell.y,
+        getCellAt: _getCellAt,
+      );
+      final srcRect = tileset.tileRectForMask(mask);
+      if (srcRect == null) {
+        _log.w('Transport tile missing for family=$family mask=$mask');
+        continue;
+      }
+      final tileLeft = cell.x * cellSize;
+      final tileTop = cell.y * cellSize;
+      final dstRect = Rect.fromLTWH(tileLeft, tileTop, cellSize, cellSize);
+      canvas.drawImageRect(
+        tileset.image,
+        srcRect,
+        dstRect,
+        _resourceOverlayPaintForCell(cell),
+      );
     }
   }
 
@@ -485,10 +535,6 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
             BaseLayerDisplayMode.terrainAndResourcesImprovementLabels ||
         baseLayerDisplayMode ==
             BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
-    final showRoadLabels =
-        baseLayerDisplayMode ==
-        BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
-
     for (final cell in region.cells) {
       if (cell.isSea) continue;
       if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
@@ -553,19 +599,6 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
         final imp = cell.improvementLevel ?? 0;
         if (imp <= 0) continue;
         _paintTileCornerLabel(canvas, cell, 'I$imp', alignEnd: false);
-      }
-    }
-
-    if (showRoadLabels) {
-      for (final cell in region.cells) {
-        if (cell.isSea) continue;
-        if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-            _visibilityForTerrain(cell) == TileVisibility.unrevealed) {
-          continue;
-        }
-        final road = cell.roadLevel ?? 0;
-        if (road <= 0) continue;
-        _paintTileCornerLabel(canvas, cell, 'R$road', alignEnd: true);
       }
     }
   }

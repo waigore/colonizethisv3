@@ -34,6 +34,7 @@ import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/transport_overlay_tileset.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
 
@@ -57,6 +58,7 @@ void main() {
       // CtRegionMapComponent.onLoad awaits these; without a warm cache, a single
       // pump() is not enough when tests run alone (e.g. CI --total-shards).
       await terrainTilesetCache.load();
+      await transportOverlayTilesetCache.load();
       await resourceIconCache.load();
       await civilianIconCache.load();
       await townIconCache.load();
@@ -557,6 +559,29 @@ void main() {
         expect(afterPresence!.civilianCount, 1);
         expect(afterPresence.regimentCount, 1);
         expect(afterPresence.shipCount, 1);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'required transport overlay atlas/spec assets are present in test bundle',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        const paths = [
+          'assets/images/terrain/tilesets/tileset_transport_road_64.png',
+          'assets/images/terrain/tilesets/tileset_transport_road_64.json',
+          'assets/images/terrain/tilesets/tileset_transport_rail_64.png',
+          'assets/images/terrain/tilesets/tileset_transport_rail_64.json',
+        ];
+        for (final path in paths) {
+          final data = await rootBundle.load(path);
+          expect(
+            data.lengthInBytes,
+            greaterThan(0),
+            reason: 'Transport overlay asset $path is empty',
+          );
+        }
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
@@ -1647,6 +1672,7 @@ void main() {
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
+          await transportOverlayTilesetCache.load();
           await resourceIconCache.load();
         });
 
@@ -1663,6 +1689,32 @@ void main() {
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'roads mode renders for non-64 cell sizes with transport overlay assets preloaded',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await transportOverlayTilesetCache.load();
+          await resourceIconCache.load();
+        });
+
+        final region = ctRegionMapTestOldWorldRegion();
+        for (final cellSize in [16.0, 32.0, 96.0]) {
+          await tester.pumpWidget(
+            ctRegionMapTestHarness(
+              region: region,
+              cellSizePx: cellSize,
+              baseLayerDisplayMode:
+                  BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+            ),
+          );
+          await tester.pump();
+          expect(find.byType(CtRegionMap), findsOneWidget);
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 12)),
     );
 
     testWidgets(
@@ -2117,6 +2169,83 @@ void main() {
           cameraZoom: zoom,
         );
         expect(overlaps(c, ww, hh, 5, 5, cellSize), isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld supports avoidedTile overrides for province town collision behavior',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        bool overlaps(
+          Offset c,
+          double ww,
+          double hh,
+          int tcx,
+          int tcy,
+          double cs,
+        ) {
+          final cl = tcx * cs;
+          final cr = cl + cs;
+          final ct = tcy * cs;
+          final cb = ct + cs;
+          final l = c.dx - ww;
+          final r = c.dx + ww;
+          final t = c.dy - hh;
+          final b = c.dy + hh;
+          return !(r <= cl || l >= cr || b <= ct || t >= cb);
+        }
+
+        const cellSize = 24.0;
+        const plateW = 80.0;
+        const plateH = 16.0;
+        const zoom = 1.0;
+        final ww = plateW / 2;
+        final hh = plateH / 2;
+        final c = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 4,
+          centroidTileY: 3,
+          avoidedTileX: 4,
+          avoidedTileY: 3,
+          cellSize: cellSize,
+          gridWidth: 20,
+          gridHeight: 20,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        expect(overlaps(c, ww, hh, 4, 3, cellSize), isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld with avoidedTile uses below fallback when above clips top',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        const cellSize = 24.0;
+        const plateW = 70.0;
+        const plateH = 18.0;
+        const zoom = 1.0;
+        final hh = plateH / 2;
+        final center = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 1,
+          centroidTileY: 0,
+          avoidedTileX: 1,
+          avoidedTileY: 0,
+          cellSize: cellSize,
+          gridWidth: 10,
+          gridHeight: 10,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        expect(
+          center.dy,
+          greaterThanOrEqualTo(cellSize + 1 + hh - 1e-6),
+          reason:
+              'Fallback should mirror sea-zone semantics for province/town avoidance',
+        );
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );

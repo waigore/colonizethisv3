@@ -18,6 +18,8 @@ import 'resource_icon_cache.dart';
 import 'province_label_icon_cache.dart';
 import 'terrain_tileset.dart';
 import 'town_icon_cache.dart';
+import 'transport_overlay_mask.dart';
+import 'transport_overlay_tileset.dart';
 import 'warp_zone_edge_geometry.dart';
 
 part 'region_map_component_shared.dart';
@@ -113,6 +115,8 @@ class CtRegionMapComponent extends PositionComponent {
       String provinceId,
       Color plateColor,
       bool isCapital,
+      int? avoidTileX,
+      int? avoidTileY,
     })
   >?
   _provinceLabelsCached;
@@ -130,6 +134,7 @@ class CtRegionMapComponent extends PositionComponent {
     await super.onLoad();
     await Future.wait([
       terrainTilesetCache.load(),
+      transportOverlayTilesetCache.load(),
       resourceIconCache.load(),
       civilianIconCache.load(),
       townIconCache.load(),
@@ -147,6 +152,7 @@ class CtRegionMapComponent extends PositionComponent {
       'sea_plains: ${terrainTilesetCache.getSeaPlainsTileset() != null}, '
       'sea_desert: ${terrainTilesetCache.getSeaDesertTileset() != null}, '
       'plains_desert: ${terrainTilesetCache.getPlainsDesertTileset() != null}. '
+      'TransportOverlayTilesetCache loaded: ${transportOverlayTilesetCache.isLoaded}. '
       'ResourceIconCache loaded: ${resourceIconCache.isLoaded}. '
       'CivilianIconCache loaded: ${civilianIconCache.isLoaded}. '
       'TownIconCache loaded: ${townIconCache.isLoaded}. '
