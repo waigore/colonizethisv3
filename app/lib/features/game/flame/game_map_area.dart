@@ -1187,7 +1187,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                           children: [
                             _buildPlayerTurnEventsToggleButton(
                               eventCount: feedEntries.length,
-                              tooltipLabel: l10n.playerTurnFeed_eventsTitle,
+                              tooltipLabel: 'Events',
                             ),
                           ],
                         ),
