@@ -22,8 +22,9 @@
 
 ## 3. Filters
 
-- **Package (prefix):** Multiselect. Options are the known log prefixes used in the project: **ctdev**, **logic**, **ai**, **data**, **map**, **save**, **game**, **app** (and dotted sub-tags such as `ctdev.running_game:` when the first segment matches a known prefix). A line is shown if its message or logger name matches any of the selected prefixes (prefix match). Default: all selected (show all).
-- **Level:** Multiselect. Options: **debug**, **info**, **warn**, **error**. A line is shown if its level is in the selected set. Default: all selected (show all).
+- **Package (prefix):** Multiselect. Filter options use the known log prefixes from the session buffer (`knownPrefixes` in `session_log_buffer.dart`): **ctdev**, **logic**, **ai**, **data**, **map**, **save**, **game**, **app** (and dotted sub-tags such as `ctdev.running_game:` when the first segment matches a known prefix). A line is shown if its message or logger name matches any of the selected prefixes (prefix match).
+- **App viewer UI (defaults and visibility):** The Flutter app debug log viewer focuses on app debugging: the **ctdev** prefix is **not** shown as a package filter chip (users cannot toggle it from this screen). **Default** selected package filter is **app** only (other visible chips start deselected). **ctdev**-tagged lines remain in the session buffer and are still emitted by loggers; only this viewer’s default selection and chip list change.
+- **Level:** Multiselect. Options: **debug**, **info**, **warning**, **error** (names match `Level` from the Dart `logger` package). A line is shown if its level is in the selected set. **Default** selected levels in the app viewer are **info**, **warning**, and **error**; **debug** is off until the user selects it.
 - Filtering is applied to the in-memory buffer when rendering; changing filters updates the visible list without altering the buffer.
 
 ---
@@ -59,8 +60,11 @@
 - **Given** the Flutter app is running on macOS with a menubar, **when** the user chooses the Debug log menu item, **then** the debug log viewer opens and displays session logs with package and level filters available.
 - **Given** the Flutter app is in-game on mobile (pre-map), **when** the user opens the pause menu and selects Debug log, **then** the debug log viewer opens and displays session logs with package and level filters available.
 - **Given** the Flutter app is in-game with the map view shown (any viewport), **when** the user opens the side menu (menu icon) and selects Debug log, **then** the debug log viewer opens and displays session logs with package and level filters available.
-- **Given** the debug log viewer is open with all packages and all levels selected, **when** the user deselects one package (e.g. **logic**), **then** lines whose prefix matches **logic** are hidden; when the user reselects **logic**, **then** those lines are shown again.
-- **Given** the debug log viewer is open with all levels selected, **when** the user deselects **debug**, **then** only info, warn, and error lines are shown.
+- **Given** the debug log viewer has just opened in the Flutter app, **when** the package filter row is first rendered, **then** the UI layer shows no package chip whose label is **ctdev**, and exactly one package chip is in the selected state with label **app**.
+- **Given** the debug log viewer has just opened in the Flutter app, **when** the level filter row is first rendered, **then** the UI layer shows the **debug**, **info**, **warning**, and **error** chips with **info**, **warning**, and **error** selected and **debug** not selected.
+- **Given** the debug log viewer is open with default package and level filters, **when** the user selects the **debug** level chip, **then** the **debug** chip becomes selected and any buffered log line whose level is **debug** and whose prefix matches a currently selected package filter is shown in the list.
+- **Given** the debug log viewer is open with every visible package filter (all package chips except the omitted **ctdev** chip) selected and all level filters selected, **when** the user deselects one package (e.g. **logic**), **then** lines whose prefix matches **logic** are hidden; when the user reselects **logic**, **then** those lines are shown again.
+- **Given** the debug log viewer is open with all level filters selected, **when** the user deselects **debug**, **then** only info, warning, and error lines are shown.
 - **Given** the app process exits, **when** the user starts a new process, **then** the new session’s viewer shows only logs from that process; no previous-session logs are shown.
 
 ---

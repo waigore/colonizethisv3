@@ -16,23 +16,18 @@ String? seaZoneCentroidTileKey({
   if (!seaZoneNodeIds.contains(localSeaZoneId)) {
     return null;
   }
-  var sumX = 0;
-  var sumY = 0;
-  var n = 0;
+  final points = <(int, int)>[];
   for (var y = 0; y < tileMap.height; y++) {
     for (var x = 0; x < tileMap.width; x++) {
       if (tileMap.cell(x, y) != localSeaZoneId) {
         continue;
       }
-      sumX += x;
-      sumY += y;
-      n++;
+      points.add((x, y));
     }
   }
-  if (n == 0) {
+  final c = roundedCentroidIntCoords(points);
+  if (c == null) {
     return null;
   }
-  final cx = (sumX / n).round();
-  final cy = (sumY / n).round();
-  return '$regionId|$localSeaZoneId|$cx|$cy';
+  return '$regionId|$localSeaZoneId|${c.x}|${c.y}';
 }

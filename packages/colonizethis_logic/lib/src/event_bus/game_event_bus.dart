@@ -31,6 +31,16 @@ String _gameEventPayloadSummary(GameEvent event) {
       'turn=${e.turnNumber} winnerPlayerId=${e.winnerPlayerId} victoryType=${e.victoryType}',
     OrderRejectedEvent e =>
       'playerId=${e.playerId} reasonCode=${e.reasonCode} orderSummary=${e.orderSummary}',
+    WorkOrderCompletedEvent e =>
+      'turn=${e.turnNumber} playerId=${e.playerId} unitId=${e.unitId} '
+          'workTarget=${e.workTarget} targetTileKey=${e.targetTileKey} provinceId=${e.provinceId}',
+    PlayerProvinceDiscoveredEvent e =>
+      'turn=${e.turnNumber} playerId=${e.playerId} provinceId=${e.provinceId}',
+    PlayerSeaZoneDiscoveredEvent e =>
+      'turn=${e.turnNumber} playerId=${e.playerId} seaZoneId=${e.seaZoneId}',
+    OvertureAdvancedEvent e =>
+      'turn=${e.turnNumber} offererGpId=${e.offererGpId} targetFactionId=${e.targetFactionId} '
+          'newStage=${e.newStage}',
   };
 }
 
