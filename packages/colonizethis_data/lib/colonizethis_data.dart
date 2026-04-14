@@ -38,3 +38,4 @@ export 'src/ai_personality_config.dart';
 export 'src/hidden_agenda_config.dart';
 export 'src/dialogue_catalog.dart';
 export 'src/great_power_colors.dart';
+export 'src/grid_centroid.dart';
