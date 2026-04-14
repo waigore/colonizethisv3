@@ -515,6 +515,58 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         seaZoneId;
   }
 
+  Set<String> _seaZoneRegionCandidates(String seaZoneId) {
+    if (seaZoneId.contains('|')) {
+      final parts = seaZoneId.split('|');
+      if (parts.length >= 2 && parts.first.isNotEmpty) {
+        return {parts.first};
+      }
+    }
+    final localSeaZoneId = seaZoneId.contains('|')
+        ? seaZoneId.split('|').last
+        : seaZoneId;
+    final fromPorts = <String>{};
+    for (final key in widget.game.worldState.portsByProvinceSeaboard.keys) {
+      final parts = key.split('|');
+      if (parts.length < 2) {
+        continue;
+      }
+      if (parts.last == localSeaZoneId && parts.first.isNotEmpty) {
+        fromPorts.add(parts.first);
+      }
+    }
+    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
+    final fromTopology = <String>{};
+    if (mapData == null) {
+      return fromPorts;
+    }
+    for (final entry in mapData.topologyByRegion.entries) {
+      if (entry.value.nodes.any(
+        (node) =>
+            node.type == TopologyNodeType.seaZone && node.id == localSeaZoneId,
+      )) {
+        fromTopology.add(entry.key);
+      }
+    }
+    return {...fromPorts, ...fromTopology};
+  }
+
+  String? _tileKeyForSeaZoneEvent(String seaZoneId) {
+    final candidates = _seaZoneRegionCandidates(seaZoneId);
+    if (candidates.length != 1) {
+      return null;
+    }
+    final regionId = candidates.first;
+    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
+    return tileKeyForNavalFleetAtSea(
+      game: widget.game,
+      regionId: regionId,
+      seaZoneId: seaZoneId,
+      tileMap: mapData?.tileMapByRegion[regionId],
+      regionTopology: mapData?.topologyByRegion[regionId],
+    );
+  }
+
   ct_models.Province? _provinceByPrefixedId(String prefixedProvinceId) {
     for (final region in [
       widget.game.worldState.oldWorld,
@@ -595,6 +647,24 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
               PlayerTurnEventFeedEntry(
                 text:
                     '${_seaZoneLabel(seaZoneId)} naval battle resolved! Outcome: $outcomeName!',
+                onTap: () {
+                  final tileKey = _tileKeyForSeaZoneEvent(seaZoneId);
+                  if (tileKey == null) {
+                    return;
+                  }
+                  final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
+                  if (regionId == null) {
+                    return;
+                  }
+                  ref
+                      .read(appEventBusProvider)
+                      .emit(
+                        ct_models.LocateMapTileEvent(
+                          tileKey: tileKey,
+                          regionId: regionId,
+                        ),
+                      );
+                },
               ),
             ct_models.AppDiplomacyChangeEvent(
               :final actorId,

@@ -170,4 +170,133 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'Player turn event feed naval line emits LocateMapTileEvent on tap',
+    (WidgetTester tester) async {
+      final init = getDebugInitGameResult();
+      final game = init.game;
+      final mapViewData = init.mapViewData;
+      final humanId = game.players.firstWhere((p) => p.isHuman).id;
+      final opponentId = game.players.firstWhere((p) => p.id != humanId).id;
+      final seaKey = game.worldState.portsByProvinceSeaboard.keys.first;
+      final seaParts = seaKey.split('|');
+      final seaZoneId = '${seaParts.first}|${seaParts.last}';
+      final bus = AppEventBus.create();
+      final locateEvents = <LocateMapTileEvent>[];
+      final sub = bus.on<LocateMapTileEvent>().listen(locateEvents.add);
+      addTearDown(() async {
+        await sub.cancel();
+        bus.dispose();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appEventBusProvider.overrideWith((ref) => bus),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentOrdersProvider.overrideWith(
+              () => CurrentOrdersNotifier(const Orders()),
+            ),
+            mapViewDataProvider.overrideWith((ref) => mapViewData),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: GameMapArea(game: game, mapViewData: mapViewData),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      bus.emit(
+        AppNavalCombatResultEvent(
+          seaZoneId: seaZoneId,
+          side1OwnerId: humanId,
+          side2OwnerId: opponentId,
+          outcomeName: 'side1Victory',
+          turnNumber: 1,
+        ),
+      );
+      bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      final navalLine = find.textContaining('naval battle resolved');
+      expect(navalLine, findsOneWidget);
+      await tester.tap(navalLine);
+      await tester.pump();
+
+      expect(locateEvents, hasLength(1));
+      expect(locateEvents.single.tileKey, isNotEmpty);
+      expect(locateEvents.single.regionId, isNotEmpty);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed unresolved naval anchor is non-tappable',
+    (WidgetTester tester) async {
+      final init = getDebugInitGameResult();
+      final game = init.game;
+      final mapViewData = init.mapViewData;
+      final humanId = game.players.firstWhere((p) => p.isHuman).id;
+      final opponentId = game.players.firstWhere((p) => p.id != humanId).id;
+      final bus = AppEventBus.create();
+      final locateEvents = <LocateMapTileEvent>[];
+      final sub = bus.on<LocateMapTileEvent>().listen(locateEvents.add);
+      addTearDown(() async {
+        await sub.cancel();
+        bus.dispose();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appEventBusProvider.overrideWith((ref) => bus),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentOrdersProvider.overrideWith(
+              () => CurrentOrdersNotifier(const Orders()),
+            ),
+            mapViewDataProvider.overrideWith((ref) => mapViewData),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: GameMapArea(game: game, mapViewData: mapViewData),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      bus.emit(
+        AppNavalCombatResultEvent(
+          seaZoneId: 'missing_zone_anchor',
+          side1OwnerId: humanId,
+          side2OwnerId: opponentId,
+          outcomeName: 'side1Victory',
+          turnNumber: 1,
+        ),
+      );
+      bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      final navalLine = find.textContaining('naval battle resolved');
+      expect(navalLine, findsOneWidget);
+      await tester.tap(navalLine);
+      await tester.pump();
+
+      expect(locateEvents, isEmpty);
+    },
+  );
 }

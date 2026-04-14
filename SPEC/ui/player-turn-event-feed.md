@@ -29,7 +29,8 @@
 
 - Row tap:
   - Province-scoped lines (land combat, province capture) attempt map focus to that province.
-  - Other lines are non-tappable in v1.
+- Naval combat lines attempt map focus to a sea-zone anchor tile (centroid when available, otherwise an adjacent mapped port tile).
+- Other lines are non-tappable in v1.
 - Fallback: if no valid map anchor can be resolved for a tappable row, render it non-tappable and keep app stable.
 
 ---
@@ -48,4 +49,5 @@
 - Given wide layout, when the feed has lines, then a right-side non-modal map overlay shows those lines and allows scrolling.
 - Given narrow layout, when the user taps the `Events` chip, then a dialog opens and renders the same line texts in the same order as the current-turn feed.
 - Given a tappable province-scoped line whose province anchor resolves to a tile key, when the user taps that row, then the app emits `LocateMapTileEvent` for that tile.
+- Given a tappable naval-combat line whose sea-zone anchor resolves to a tile key, when the user taps that row, then the app emits `LocateMapTileEvent` for that tile.
 - Given a non-tappable line or unresolved anchor, when the user taps the row, then no map-focus event is emitted and the app remains stable.
