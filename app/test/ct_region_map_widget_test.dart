@@ -34,6 +34,7 @@ import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/transport_overlay_tileset.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
 
@@ -57,6 +58,7 @@ void main() {
       // CtRegionMapComponent.onLoad awaits these; without a warm cache, a single
       // pump() is not enough when tests run alone (e.g. CI --total-shards).
       await terrainTilesetCache.load();
+      await transportOverlayTilesetCache.load();
       await resourceIconCache.load();
       await civilianIconCache.load();
       await townIconCache.load();
@@ -557,6 +559,29 @@ void main() {
         expect(afterPresence!.civilianCount, 1);
         expect(afterPresence.regimentCount, 1);
         expect(afterPresence.shipCount, 1);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'required transport overlay atlas/spec assets are present in test bundle',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        const paths = [
+          'assets/images/terrain/tilesets/tileset_transport_road_64.png',
+          'assets/images/terrain/tilesets/tileset_transport_road_64.json',
+          'assets/images/terrain/tilesets/tileset_transport_rail_64.png',
+          'assets/images/terrain/tilesets/tileset_transport_rail_64.json',
+        ];
+        for (final path in paths) {
+          final data = await rootBundle.load(path);
+          expect(
+            data.lengthInBytes,
+            greaterThan(0),
+            reason: 'Transport overlay asset $path is empty',
+          );
+        }
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
@@ -1652,6 +1677,7 @@ void main() {
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
+          await transportOverlayTilesetCache.load();
           await resourceIconCache.load();
         });
 
@@ -1668,6 +1694,32 @@ void main() {
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'roads mode renders for non-64 cell sizes with transport overlay assets preloaded',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await transportOverlayTilesetCache.load();
+          await resourceIconCache.load();
+        });
+
+        final region = ctRegionMapTestOldWorldRegion();
+        for (final cellSize in [16.0, 32.0, 96.0]) {
+          await tester.pumpWidget(
+            ctRegionMapTestHarness(
+              region: region,
+              cellSizePx: cellSize,
+              baseLayerDisplayMode:
+                  BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+            ),
+          );
+          await tester.pump();
+          expect(find.byType(CtRegionMap), findsOneWidget);
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 12)),
     );
 
     testWidgets(

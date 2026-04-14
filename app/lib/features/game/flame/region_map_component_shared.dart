@@ -364,6 +364,38 @@ bool shouldApplyFogToInteriorPlainsVariantOverlay({
   return tileVisibility == TileVisibility.fogged;
 }
 
+/// Returns true when transport sprites should render for the selected base mode.
+bool shouldRenderTransportOverlay({
+  required BaseLayerDisplayMode baseLayerDisplayMode,
+}) {
+  return baseLayerDisplayMode ==
+      BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
+}
+
+/// Returns true when a road level should use the rail transport family.
+///
+/// Current v1 behavior uses rail sprites only for level 4.
+bool isRailTransportLevel(int roadLevel) => roadLevel == 4;
+
+/// Returns true when a given cell is eligible for transport overlay rendering.
+///
+/// Overlay is land-only, requires `roadLevel > 0`, and is hidden for unrevealed
+/// cells in player-constrained visibility mode.
+bool shouldPaintTransportOverlayForCell({
+  required CellViewData cell,
+  required CtMapVisibilityMode visibilityMode,
+  required TileVisibility tileVisibility,
+}) {
+  if (cell.isSea || (cell.roadLevel ?? 0) <= 0) {
+    return false;
+  }
+  if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+      tileVisibility == TileVisibility.unrevealed) {
+    return false;
+  }
+  return true;
+}
+
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
 /// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
 bool _isFeatureTerrain(TerrainType terrain) {
@@ -444,20 +476,22 @@ void assertCtMapPlayerViewRequired({
   }
 }
 
-/// Base layer display mode: terrain, resource icons, improvement/road labels.
+/// Base layer display mode: terrain, resource icons, improvement labels, and
+/// road/rail transport sprite overlays.
 /// SPEC/ui/map-widget.md § Base layer display mode.
 enum BaseLayerDisplayMode {
-  /// Terrain only; no resource icons or improvement/road labels.
+  /// Terrain only; no resource icons, improvement labels, or transport overlay.
   terrainOnly,
 
-  /// Terrain + resource icons; no improvement or road labels.
+  /// Terrain + resource icons; no improvement labels or transport overlay.
   terrainAndResources,
 
-  /// Terrain + resource icons + improvement labels (`I{n}` when n > 0); no road labels.
+  /// Terrain + resource icons + improvement labels (`I{n}` when n > 0); no
+  /// transport overlay.
   terrainAndResourcesImprovementLabels,
 
-  /// Terrain + resource icons + improvement labels + road/rail labels (`R{n}` when n > 0).
-  /// Roads are painted after improvements (on top). Road labels require improvement mode on.
+  /// Terrain + resource icons + improvement labels + road/rail transport
+  /// overlay (`roadLevel > 0`).
   terrainAndResourcesImprovementsRoads,
 }
 

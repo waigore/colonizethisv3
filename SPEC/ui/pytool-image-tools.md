@@ -175,6 +175,59 @@ python3 pytool/wang_incremental_64.py --run-dir /path/to/other_run --init
 
 ---
 
+### Transport overlay atlas production contract (road/rail)
+
+**Purpose:** Define the reproducible asset contract for road/rail transport atlases used by region map bitmask rendering (`roadLevel` based, masks `0..15`).
+
+**Families:**
+
+- `tileset_transport_road_64` (road levels `1/2`)
+- `tileset_transport_rail_64` (road level `4`)
+
+**Generation pattern:**
+
+1. Start from a shared **64x64** straight reference tile using a centered **14px** transport corridor.
+2. Build cardinal edge contracts (`N`, `E`, `S`, `W`) and combine to produce masks `0..15` (bits: `N=1`, `E=2`, `S=4`, `W=8`).
+3. Use the same incremental inpaint/composite style as Wang tooling where style blending is required (`POST /v2/inpaint-v3`); use Pillow compositing helpers for deterministic assembly/cropping.
+4. Pack each family to a 16-tile atlas and emit matching JSON (`tile_size=64x64`, one tile entry per mask id).
+
+**Required validation before commit:**
+
+- All masks `0..15` exist for both families.
+- Every tile `bounding_box` is unique, 64px grid-aligned, and inside atlas dimensions.
+- `app/assets/data/map_terrain_tilesets.json` includes `transport_tilesets.road` and `transport_tilesets.rail` entries pointing to the emitted atlas/spec files.
+- App tests covering transport contract pass (`flutter test test/transport_overlay_assets_test.dart` and `flutter test test/transport_overlay_tileset_cache_test.dart`).
+
+This contract is normative for issue #1775 transport overlays and future atlas refreshes.
+
+**Resumable generation workflow (`pytool/generate_transport_overlay_tiles_64.py`):**
+
+1. Initialize family contracts from Pixflux (once per family, or when reseeding style):
+
+```bash
+uv run --directory pytool python generate_transport_overlay_tiles_64.py --family road --init-seed
+uv run --directory pytool python generate_transport_overlay_tiles_64.py --family rail --init-seed
+```
+
+2. Generate masks one-by-one (`inpaint-v3` heavy step), with resume safety:
+
+```bash
+uv run --directory pytool python generate_transport_overlay_tiles_64.py --family road --mask 1 --resume
+uv run --directory pytool python generate_transport_overlay_tiles_64.py --family road --mask 2 --resume
+# ...continue through mask 15, repeat for --family rail
+```
+
+3. Rebuild atlas PNG after all `tile_mask_00..15.png` exist for that family:
+
+```bash
+uv run --directory pytool python generate_transport_overlay_tiles_64.py --family road --rebuild-atlas
+uv run --directory pytool python generate_transport_overlay_tiles_64.py --family rail --rebuild-atlas
+```
+
+4. Resume point for handoff: `pytool/out/transport_edge_contracts_64/state.json` stores completed masks by family and is authoritative for `--resume`.
+
+---
+
 ### wang_reference_legal_layout_64.py
 
 **Purpose:** Compute a **4×4** **`reference_layout.json`** that places each **`wang_index` 0–15** once so **every internal edge** satisfies **shared-corner** rules (horizontal: **`A.NE==B.NW`**, **`A.SE==B.SW`**; vertical: **`A.SW==B.NW`**, **`A.SE==B.NE`**). **Corner bits** match [plains-sea-wang-inpaint-64.md](tileset/plains-sea-wang-inpaint-64.md). **Backtracking** + **forward checking**; **`--seed`** shuffles candidate order. Spec: [wang-reference-legal-layout-64.md](tileset/wang-reference-legal-layout-64.md).
