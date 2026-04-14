@@ -62,9 +62,11 @@ const Color _kProvinceLabelShadowColor = Color(0x8A000000);
 
 /// Fogged land tiles: modulate alpha for resource icons (linear 0–1).
 const double _kFoggedResourceIconModulateAlpha = 0.6;
-const double _kExtractionDiscRadiusPx = 3.0;
-const double _kExtractionDiscStepXPx = 2.5;
-const double _kExtractionDiscStartInsetXPx = 2.0;
+const double _kExtractionIndicatorSizeBoostPx = 2.0;
+const double _kExtractionIndicatorOverlapFactor = 0.45;
+const double _kExtractionIndicatorStartInsetXPx = 2.0;
+const Color _kExtractionIndicatorGoldTint = Color(0xFFFFD54A);
+const Color _kExtractionIndicatorGrayTint = Color(0xFF9E9E9E);
 
 /// Political (faction) border stroke — indigo, visible over terrain.
 const Color _kFactionPoliticalBorderColor = Color(0xFF1A237E);
@@ -495,8 +497,8 @@ enum BaseLayerDisplayMode {
   terrainAndResourcesImprovementsRoads,
 }
 
-/// Returns true when extraction unit discs are allowed for the current base mode.
-bool shouldShowExtractionUnitDiscs({
+/// Returns true when extraction indicators are allowed for the current base mode.
+bool shouldShowExtractionUnitIndicators({
   required BaseLayerDisplayMode baseLayerDisplayMode,
 }) {
   return baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
@@ -514,22 +516,28 @@ double resourceIconDisplaySizePx(double cellSize) {
       : ResourceIconCache.iconSize;
 }
 
-/// Returns circle centers for a right-fan extraction-disc layout.
-List<Offset> extractionDiscCentersForIconRect({
+double extractionIndicatorDisplaySizePx(double resourceIconDisplaySizePx) {
+  return math.min(
+    ResourceIconCache.iconSize,
+    resourceIconDisplaySizePx + _kExtractionIndicatorSizeBoostPx,
+  );
+}
+
+List<Rect> extractionIndicatorRectsForIconRect({
   required Rect iconRect,
   required int units,
-  double radius = _kExtractionDiscRadiusPx,
-  double stepX = _kExtractionDiscStepXPx,
-  double startInsetX = _kExtractionDiscStartInsetXPx,
 }) {
   if (units <= 0) {
-    return const <Offset>[];
+    return const <Rect>[];
   }
-  final centerY = iconRect.center.dy;
-  final startX = iconRect.right + startInsetX + radius;
-  return List<Offset>.generate(
+  final indicatorSize = extractionIndicatorDisplaySizePx(iconRect.width);
+  final stepX = indicatorSize * (1.0 - _kExtractionIndicatorOverlapFactor);
+  final startX = iconRect.right + _kExtractionIndicatorStartInsetXPx;
+  final top = iconRect.bottom - indicatorSize;
+  return List<Rect>.generate(
     units,
-    (i) => Offset(startX + (i * stepX), centerY),
+    (i) =>
+        Rect.fromLTWH(startX + (i * stepX), top, indicatorSize, indicatorSize),
     growable: false,
   );
 }
