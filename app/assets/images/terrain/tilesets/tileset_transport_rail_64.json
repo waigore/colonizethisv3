@@ -1,0 +1,25 @@
+{
+  "family": "rail",
+  "tile_size": {
+    "width": 64,
+    "height": 64
+  },
+  "tiles": [
+    {"mask": 0, "bounding_box": {"x": 0, "y": 0, "width": 64, "height": 64}},
+    {"mask": 1, "bounding_box": {"x": 64, "y": 0, "width": 64, "height": 64}},
+    {"mask": 2, "bounding_box": {"x": 128, "y": 0, "width": 64, "height": 64}},
+    {"mask": 3, "bounding_box": {"x": 192, "y": 0, "width": 64, "height": 64}},
+    {"mask": 4, "bounding_box": {"x": 0, "y": 64, "width": 64, "height": 64}},
+    {"mask": 5, "bounding_box": {"x": 64, "y": 64, "width": 64, "height": 64}},
+    {"mask": 6, "bounding_box": {"x": 128, "y": 64, "width": 64, "height": 64}},
+    {"mask": 7, "bounding_box": {"x": 192, "y": 64, "width": 64, "height": 64}},
+    {"mask": 8, "bounding_box": {"x": 0, "y": 128, "width": 64, "height": 64}},
+    {"mask": 9, "bounding_box": {"x": 64, "y": 128, "width": 64, "height": 64}},
+    {"mask": 10, "bounding_box": {"x": 128, "y": 128, "width": 64, "height": 64}},
+    {"mask": 11, "bounding_box": {"x": 192, "y": 128, "width": 64, "height": 64}},
+    {"mask": 12, "bounding_box": {"x": 0, "y": 192, "width": 64, "height": 64}},
+    {"mask": 13, "bounding_box": {"x": 64, "y": 192, "width": 64, "height": 64}},
+    {"mask": 14, "bounding_box": {"x": 128, "y": 192, "width": 64, "height": 64}},
+    {"mask": 15, "bounding_box": {"x": 192, "y": 192, "width": 64, "height": 64}}
+  ]
+}

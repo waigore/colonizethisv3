@@ -16,5 +16,17 @@
       "atlas_png": "assets/images/terrain/tilesets/tileset_plains_desert.png",
       "tile_px": 32
     }
+  },
+  "transport_tilesets": {
+    "road": {
+      "spec_json": "assets/images/terrain/tilesets/tileset_transport_road_64.json",
+      "atlas_png": "assets/images/terrain/tilesets/tileset_transport_road_64.png",
+      "tile_px": 64
+    },
+    "rail": {
+      "spec_json": "assets/images/terrain/tilesets/tileset_transport_rail_64.json",
+      "atlas_png": "assets/images/terrain/tilesets/tileset_transport_rail_64.png",
+      "tile_px": 64
+    }
   }
 }

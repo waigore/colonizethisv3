@@ -4,6 +4,7 @@ import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/transport_overlay_tileset.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show CtMapVisibilityMode, CtRegionMap;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -14,8 +15,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'ct_region_map_test_support.dart';
 
-/// Max wall time ~4.5s; stops early once the map reports a stable fit baseline (no [pumpAndSettle] — Flame never idles).
-const int _kCtRegionMapReadyMaxSteps = 120;
+/// Max wall time ~9.1s; stops early once the map reports a stable fit baseline
+/// (no [pumpAndSettle] — Flame never idles).
+///
+/// CI shard load can delay first snapshot emission for a few extra seconds.
+const int _kCtRegionMapReadyMaxSteps = 240;
 const Duration _kCtRegionMapReadyStep = Duration(milliseconds: 38);
 
 bool _snapshotAtFitBaseline(RegionMapViewportSnapshot? s) {
@@ -78,6 +82,7 @@ void main() {
 
   setUpAll(() async {
     await terrainTilesetCache.load();
+    await transportOverlayTilesetCache.load();
     await resourceIconCache.load();
     await civilianIconCache.load();
     await townIconCache.load();

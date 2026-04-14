@@ -98,6 +98,8 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
     );
     final connectivityForHuman = connectivity[humanPlayer.id];
     final resourceExtractionUnitsByTile = <String, int>{};
+    final resourceExtractionEffectiveUnitsByTile = <String, int>{};
+    final resourceExtractionBlockedUnitsByTile = <String, int>{};
     if (connectivityForHuman != null) {
       final portTileKeys = game.worldState.portsByProvinceSeaboard.values
           .toSet();
@@ -105,6 +107,24 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
           game.worldState.playerProspectedTiles[humanPlayer.id] ??
           const <String>{};
       for (final tileKey in connectivityForHuman.connected) {
+        final parts = tileKey.split('|');
+        if (parts.length != 4) {
+          continue;
+        }
+        final regionId = parts[0];
+        final localProvinceId = parts[1];
+        final ownedByHuman =
+            (regionId == 'oldWorld'
+                    ? game.worldState.oldWorld.provinces
+                    : game.worldState.newWorld.provinces)
+                .any(
+                  (province) =>
+                      province.id == '$regionId|$localProvinceId' &&
+                      province.ownerId == humanPlayer.id,
+                );
+        if (!ownedByHuman) {
+          continue;
+        }
         final contribution = computeTileExtractionContributionForPlayer(
           game: game,
           tileMapByRegion: mapData.tileMapByRegion,
@@ -124,7 +144,23 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
         if (contribution == null) {
           continue;
         }
-        resourceExtractionUnitsByTile[tileKey] = contribution.units;
+        final improvementLevel = game.worldState.tileState
+            .improvementLevel(tileKey)
+            .clamp(0, 4);
+        final techCap = extractionCapForUnlocked(humanPlayer.techUnlocked);
+        final productionUnits =
+            (improvementLevel < techCap ? improvementLevel : techCap).clamp(
+              0,
+              4,
+            );
+        final effectiveUnits = contribution.units.clamp(0, productionUnits);
+        final blockedUnits = (productionUnits - effectiveUnits).clamp(0, 4);
+        if (productionUnits <= 0) {
+          continue;
+        }
+        resourceExtractionUnitsByTile[tileKey] = productionUnits;
+        resourceExtractionEffectiveUnitsByTile[tileKey] = effectiveUnits;
+        resourceExtractionBlockedUnitsByTile[tileKey] = blockedUnits;
       }
     }
 
@@ -137,6 +173,10 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       visibilityByTile: visibilityByTile,
       warpLinks: mapData.warpLinks,
       resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
+      resourceExtractionEffectiveUnitsByTile:
+          resourceExtractionEffectiveUnitsByTile,
+      resourceExtractionBlockedUnitsByTile:
+          resourceExtractionBlockedUnitsByTile,
     );
   });
 });
