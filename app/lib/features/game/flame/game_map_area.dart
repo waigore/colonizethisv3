@@ -1104,12 +1104,14 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: ActionChip(
-                          label: Text('Events (${feedEntries.length})'),
+                          label: Text(
+                            l10n.playerTurnFeed_eventsChip(feedEntries.length),
+                          ),
                           onPressed: () {
                             showDialog<void>(
                               context: context,
                               builder: (_) => AlertDialog(
-                                title: const Text('Events'),
+                                title: Text(l10n.playerTurnFeed_eventsTitle),
                                 content: PlayerTurnEventFeedCard(
                                   resolvedTurnNumber: _resolvedFeedTurnNumber,
                                   entries: feedEntries,
