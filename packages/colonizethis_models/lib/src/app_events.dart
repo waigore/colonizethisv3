@@ -136,10 +136,7 @@ class OpenNavalUnitsPanelEvent extends UIActionEvent {
 /// Request to center/highlight a map tile. To close a units sheet first, emit [ClosePanelEvent]
 /// before this event (same synchronous turn or after [SchedulerBinding] frame); do not dismiss sheets from the map widget.
 class LocateMapTileEvent extends UIActionEvent {
-  const LocateMapTileEvent({
-    required this.tileKey,
-    required this.regionId,
-  });
+  const LocateMapTileEvent({required this.tileKey, required this.regionId});
 
   final String tileKey;
   final String regionId;
@@ -497,6 +494,7 @@ class TurnResolutionCompleteEvent extends GameToUIEvent {
   });
   final String gameId;
   final int turnNumber;
+
   /// Prior-turn digest for the news dialog; null when victory was set this resolution.
   final TurnNewsDigest? turnNewsDigest;
 }
@@ -516,6 +514,7 @@ class InterventionRequiredEvent extends GameToUIEvent {
 /// Emitted when human ally must accept or refuse call to arms after a GP war declaration.
 class CallToArmsRequiredEvent extends GameToUIEvent {
   const CallToArmsRequiredEvent({required this.pending});
+
   /// [CallToArmsPending] from colonizethis_logic (kept as Object to avoid package cycle).
   final List<Object> pending;
 }
@@ -639,4 +638,60 @@ class AppOrderRejectedEvent extends GameToUIEvent {
   final String playerId;
   final String orderSummary;
   final String reasonCode;
+}
+
+/// Civilian work order completed. Mirrors colonizethis_logic WorkOrderCompletedEvent.
+class AppWorkOrderCompletedEvent extends GameToUIEvent {
+  const AppWorkOrderCompletedEvent({
+    required this.playerId,
+    required this.unitId,
+    required this.workTarget,
+    required this.targetTileKey,
+    required this.provinceId,
+    required this.turnNumber,
+  });
+  final String playerId;
+  final String unitId;
+  final String workTarget;
+  final String targetTileKey;
+  final String provinceId;
+  final int turnNumber;
+}
+
+/// Player-scoped province discovery. Mirrors colonizethis_logic PlayerProvinceDiscoveredEvent.
+class AppPlayerProvinceDiscoveredEvent extends GameToUIEvent {
+  const AppPlayerProvinceDiscoveredEvent({
+    required this.playerId,
+    required this.provinceId,
+    required this.turnNumber,
+  });
+  final String playerId;
+  final String provinceId;
+  final int turnNumber;
+}
+
+/// Player-scoped sea-zone charting. Mirrors colonizethis_logic PlayerSeaZoneDiscoveredEvent.
+class AppPlayerSeaZoneDiscoveredEvent extends GameToUIEvent {
+  const AppPlayerSeaZoneDiscoveredEvent({
+    required this.playerId,
+    required this.seaZoneId,
+    required this.turnNumber,
+  });
+  final String playerId;
+  final String seaZoneId;
+  final int turnNumber;
+}
+
+/// Overture stage advanced. Mirrors colonizethis_logic OvertureAdvancedEvent.
+class AppOvertureAdvancedEvent extends GameToUIEvent {
+  const AppOvertureAdvancedEvent({
+    required this.offererGpId,
+    required this.targetFactionId,
+    required this.newStage,
+    required this.turnNumber,
+  });
+  final String offererGpId;
+  final String targetFactionId;
+  final String newStage;
+  final int turnNumber;
 }

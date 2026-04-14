@@ -168,3 +168,194 @@ void emitVictorySetEvent(
     deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
   }
 }
+
+bool _isKnownVisibility(String? raw) => raw != null && raw != 'unknown';
+
+String _prefixedProvinceId(Province province) => province.id.contains('|')
+    ? province.id
+    : ProvinceId.full(province.regionId, province.id);
+
+bool _provinceKnownToPlayer(Game game, String playerId, Province province) {
+  final prefixedProvinceId = _prefixedProvinceId(province);
+  final localProvinceId = ProvinceId.localIdFrom(prefixedProvinceId);
+  final tileKeys =
+      game.worldState.tileKeysByRegionAndProvince[province
+          .regionId]?[localProvinceId] ??
+      game.worldState.tileKeysByRegionAndProvince[province
+          .regionId]?[prefixedProvinceId] ??
+      const <String>[];
+  if (tileKeys.isEmpty) {
+    return false;
+  }
+  final visibility =
+      game.worldState.playerVisibilityByTile[playerId] ??
+      const <String, String>{};
+  for (final tileKey in tileKeys) {
+    if (_isKnownVisibility(visibility[tileKey])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+Set<String> _seaZonesAtSeaForPlayer(Game game, String playerId) {
+  final zones = <String>{};
+  for (final fleet in game.worldState.fleets) {
+    if (fleet.ownerId != playerId ||
+        !fleet.isAtSea ||
+        fleet.seaZoneId == null) {
+      continue;
+    }
+    final localSeaZoneId = fleet.seaZoneId!;
+    final prefixed = localSeaZoneId.contains('|')
+        ? localSeaZoneId
+        : ProvinceId.full(fleet.regionId, localSeaZoneId);
+    zones.add(prefixed);
+  }
+  return zones;
+}
+
+/// Emit work_order_completed for units that finished deterministic build/work targets.
+void emitWorkOrderCompletedEvents(
+  Game stateBefore,
+  Game stateAfter,
+  int turn,
+  GameEventBus? eventBus,
+  void Function(GameEvent)? onGameEvent,
+) {
+  final beforeById = <String, Unit>{
+    for (final unit in stateBefore.worldState.oldWorld.units) unit.id: unit,
+    for (final unit in stateBefore.worldState.newWorld.units) unit.id: unit,
+  };
+  final afterById = <String, Unit>{
+    for (final unit in stateAfter.worldState.oldWorld.units) unit.id: unit,
+    for (final unit in stateAfter.worldState.newWorld.units) unit.id: unit,
+  };
+  final supportedTargets = <String>{
+    kWorkTargetBuildImprovement,
+    kWorkTargetUpgradeTown,
+    kWorkTargetBuildRoad,
+    kWorkTargetBuildPort,
+    kWorkTargetBuildFort,
+    kWorkTargetBuildRail,
+    kWorkTargetExplore,
+  };
+  for (final entry in beforeById.entries) {
+    final beforeUnit = entry.value;
+    final beforeWork = beforeUnit.currentWork;
+    if (beforeWork == null ||
+        beforeWork.remainingTurns > 1 ||
+        !supportedTargets.contains(beforeWork.workTarget)) {
+      continue;
+    }
+    final afterUnit = afterById[entry.key];
+    if (afterUnit == null || afterUnit.currentWork != null) {
+      continue;
+    }
+    final provinceId =
+        Unit.provinceIdFromTileKey(beforeWork.tileKey) ??
+        beforeUnit.locationProvinceId;
+    final event = WorkOrderCompletedEvent(
+      playerId: beforeUnit.ownerId,
+      unitId: beforeUnit.id,
+      workTarget: beforeWork.workTarget,
+      targetTileKey: beforeWork.tileKey,
+      provinceId: provinceId,
+      turnNumber: turn,
+    );
+    deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+  }
+}
+
+/// Emit player-scoped province/sea discovery outcomes for this resolved turn.
+void emitPlayerDiscoveryEvents(
+  Game stateBefore,
+  Game stateAfter,
+  int turn,
+  GameEventBus? eventBus,
+  void Function(GameEvent)? onGameEvent,
+) {
+  final sortedPlayers = List<Player>.from(stateAfter.players)
+    ..sort((a, b) => a.id.compareTo(b.id));
+  for (final player in sortedPlayers) {
+    _emitPlayerProvinceDiscoveryEvents(
+      stateBefore: stateBefore,
+      stateAfter: stateAfter,
+      playerId: player.id,
+      turn: turn,
+      eventBus: eventBus,
+      onGameEvent: onGameEvent,
+    );
+    final beforeSea = _seaZonesAtSeaForPlayer(stateBefore, player.id);
+    final afterSea = _seaZonesAtSeaForPlayer(stateAfter, player.id);
+    final newlyDiscovered = afterSea.difference(beforeSea).toList()..sort();
+    for (final seaZoneId in newlyDiscovered) {
+      final event = PlayerSeaZoneDiscoveredEvent(
+        playerId: player.id,
+        seaZoneId: seaZoneId,
+        turnNumber: turn,
+      );
+      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+    }
+  }
+}
+
+void _emitPlayerProvinceDiscoveryEvents({
+  required Game stateBefore,
+  required Game stateAfter,
+  required String playerId,
+  required int turn,
+  required GameEventBus? eventBus,
+  required void Function(GameEvent)? onGameEvent,
+}) {
+  for (final region in [
+    stateAfter.worldState.oldWorld,
+    stateAfter.worldState.newWorld,
+  ]) {
+    for (final province in region.provinces) {
+      final wasKnown = _provinceKnownToPlayer(stateBefore, playerId, province);
+      final nowKnown = _provinceKnownToPlayer(stateAfter, playerId, province);
+      if (wasKnown || !nowKnown) {
+        continue;
+      }
+      final event = PlayerProvinceDiscoveredEvent(
+        playerId: playerId,
+        provinceId: _prefixedProvinceId(province),
+        turnNumber: turn,
+      );
+      deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+    }
+  }
+}
+
+/// Emit overture_advanced lines for stage increases in this resolved turn.
+void emitOvertureAdvancedEvents(
+  Game stateBefore,
+  Game stateAfter,
+  int turn,
+  GameEventBus? eventBus,
+  void Function(GameEvent)? onGameEvent,
+) {
+  OvertureStage beforeStage(String gpId, String targetId) {
+    for (final state in stateBefore.overtureStates) {
+      if (state.gpId == gpId && state.targetId == targetId) {
+        return state.stage;
+      }
+    }
+    return OvertureStage.none;
+  }
+
+  for (final overture in stateAfter.overtureStates) {
+    final previous = beforeStage(overture.gpId, overture.targetId);
+    if (overture.stage.index <= previous.index) {
+      continue;
+    }
+    final event = OvertureAdvancedEvent(
+      offererGpId: overture.gpId,
+      targetFactionId: overture.targetId,
+      newStage: overture.stage.name,
+      turnNumber: turn,
+    );
+    deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
+  }
+}

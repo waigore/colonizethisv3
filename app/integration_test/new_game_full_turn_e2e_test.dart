@@ -104,6 +104,34 @@ Future<void> _openCivilianPanel(
   );
 }
 
+Future<void> _openPanelFromMarker(
+  WidgetTester tester, {
+  required Finder markerButton,
+  required Finder panelRoot,
+  Duration timeout = const Duration(seconds: 20),
+}) async {
+  final sw = Stopwatch()..start();
+  while (sw.elapsed < timeout) {
+    await tester.pump(const Duration(milliseconds: 100));
+    if (panelRoot.evaluate().isNotEmpty) {
+      return;
+    }
+    final tappable = markerButton.hitTestable();
+    if (tappable.evaluate().isEmpty) {
+      // Clear transient overlays/scrims that can block marker taps.
+      await tester.tapAt(const Offset(1200, 360));
+      await _pumpFor(tester, const Duration(milliseconds: 150));
+      continue;
+    }
+    await tester.tap(tappable.first, warnIfMissed: false);
+    await _pumpFor(tester, const Duration(milliseconds: 300));
+  }
+  fail(
+    'Timed out after ${timeout.inSeconds}s opening marker panel. '
+    'marker=$markerButton panel=$panelRoot Last exception: ${tester.takeException()}',
+  );
+}
+
 void _collectTextPreorder(Element element, List<String> out) {
   final w = element.widget;
   if (w is Text) {
@@ -544,13 +572,19 @@ void main() {
       await _closeBottomSheet(tester);
 
       // --- Civilian + naval from first map markers (tile scope) ---
-      await tester.tap(find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey));
-      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await _openPanelFromMarker(
+        tester,
+        markerButton: find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey),
+        panelRoot: find.byKey(kCtE2ECivilianPanelRootKey),
+      );
       await expectCivilianPanelTexts();
       await _closeBottomSheet(tester);
 
-      await tester.tap(find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey));
-      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await _openPanelFromMarker(
+        tester,
+        markerButton: find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey),
+        panelRoot: find.byKey(kCtE2ENavalPanelRootKey),
+      );
       await expectNavalPanelTexts(expanded: false);
       await _closeBottomSheet(tester);
 
