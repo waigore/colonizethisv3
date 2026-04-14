@@ -9,6 +9,15 @@ import 'package:session_log_buffer/session_log_buffer.dart';
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/debug_log/debug_log_viewer_screen.dart';
 
+FilterChip _chipWithLabel(WidgetTester tester, String label) {
+  return tester.widget<FilterChip>(
+    find.ancestor(
+      of: find.text(label),
+      matching: find.byType(FilterChip),
+    ),
+  );
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -48,6 +57,55 @@ void main() {
       expect(find.text('debug'), findsOneWidget);
     });
 
+    testWidgets('default package filter is app only and ctdev chip is hidden', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.light,
+          home: const DebugLogViewerScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('ctdev'), findsNothing);
+      expect(_chipWithLabel(tester, 'app').selected, isTrue);
+      expect(_chipWithLabel(tester, 'logic').selected, isFalse);
+    });
+
+    testWidgets('default level filter is info warning error without debug', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.light,
+          home: const DebugLogViewerScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(_chipWithLabel(tester, 'debug').selected, isFalse);
+      expect(_chipWithLabel(tester, 'info').selected, isTrue);
+      expect(_chipWithLabel(tester, 'warning').selected, isTrue);
+      expect(_chipWithLabel(tester, 'error').selected, isTrue);
+    });
+
+    testWidgets('selecting debug level shows app debug lines', (WidgetTester tester) async {
+      SessionLogBuffer.instance.add(LogEvent(Level.debug, 'app: hidden until debug'));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppThemes.light,
+          home: const DebugLogViewerScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('hidden until debug'), findsNothing);
+
+      await tester.ensureVisible(find.text('debug'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('debug'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('hidden until debug'), findsOneWidget);
+    });
+
     testWidgets('close button pops route', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -81,7 +139,7 @@ void main() {
     });
 
     testWidgets('displays session log entries when present', (WidgetTester tester) async {
-      SessionLogBuffer.instance.add(LogEvent(Level.info, 'logic: test message'));
+      SessionLogBuffer.instance.add(LogEvent(Level.info, 'app: test message'));
       await tester.pumpWidget(
         MaterialApp(
           theme: AppThemes.light,
