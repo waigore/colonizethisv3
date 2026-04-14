@@ -255,6 +255,31 @@ def reinforce_contract_edges(tile: Image.Image, contract_base: Image.Image) -> I
     return out
 
 
+def has_any_alpha_pixels(image: Image.Image) -> bool:
+    alpha = image.getchannel("A")
+    return alpha.getbbox() is not None
+
+
+def verify_written_tile(tile_path: Path, *, mask: int) -> None:
+    if not tile_path.is_file():
+        raise RuntimeError(f"Expected generated tile missing on disk: {tile_path}")
+    with Image.open(tile_path) as tile_file:
+        tile = tile_file.convert("RGBA")
+    if tile.size != (TILE, TILE):
+        raise RuntimeError(
+            f"Generated tile {tile_path.name} has unexpected size {tile.size}; expected {(TILE, TILE)}",
+        )
+    has_alpha = has_any_alpha_pixels(tile)
+    if mask == 0 and has_alpha:
+        raise RuntimeError(
+            f"mask=0 tile should be fully transparent but found opaque pixels: {tile_path.name}",
+        )
+    if mask != 0 and not has_alpha:
+        raise RuntimeError(
+            f"mask={mask} tile is fully transparent; generation failed: {tile_path.name}",
+        )
+
+
 def load_state(state_path: Path) -> dict[str, Any]:
     if not state_path.is_file():
         return {"families": {}}
@@ -396,11 +421,12 @@ def process_family_masks(
             final_tile = reinforce_contract_edges(inpainted, composed)
 
         final_tile.save(tile_out)
+        verify_written_tile(tile_out, mask=mask)
         completed.add(mask)
         family_state["completed_masks"] = sorted(completed)
         family_state["updated_at_epoch_s"] = int(time.time())
         save_state(state_path, state)
-        print(f"[{family.key}] wrote {tile_out.name}")
+        print(f"[{family.key}] wrote+verified {tile_out.name}")
 
     if rebuild_atlas:
         build_atlas_from_tiles(family_contract_dir, atlas_path)
