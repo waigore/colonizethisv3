@@ -2179,6 +2179,83 @@ void main() {
     );
 
     testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld supports avoidedTile overrides for province town collision behavior',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        bool overlaps(
+          Offset c,
+          double ww,
+          double hh,
+          int tcx,
+          int tcy,
+          double cs,
+        ) {
+          final cl = tcx * cs;
+          final cr = cl + cs;
+          final ct = tcy * cs;
+          final cb = ct + cs;
+          final l = c.dx - ww;
+          final r = c.dx + ww;
+          final t = c.dy - hh;
+          final b = c.dy + hh;
+          return !(r <= cl || l >= cr || b <= ct || t >= cb);
+        }
+
+        const cellSize = 24.0;
+        const plateW = 80.0;
+        const plateH = 16.0;
+        const zoom = 1.0;
+        final ww = plateW / 2;
+        final hh = plateH / 2;
+        final c = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 4,
+          centroidTileY: 3,
+          avoidedTileX: 4,
+          avoidedTileY: 3,
+          cellSize: cellSize,
+          gridWidth: 20,
+          gridHeight: 20,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        expect(overlaps(c, ww, hh, 4, 3, cellSize), isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld with avoidedTile uses below fallback when above clips top',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        const cellSize = 24.0;
+        const plateW = 70.0;
+        const plateH = 18.0;
+        const zoom = 1.0;
+        final hh = plateH / 2;
+        final center = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 1,
+          centroidTileY: 0,
+          avoidedTileX: 1,
+          avoidedTileY: 0,
+          cellSize: cellSize,
+          gridWidth: 10,
+          gridHeight: 10,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        expect(
+          center.dy,
+          greaterThanOrEqualTo(cellSize + 1 + hh - 1e-6),
+          reason:
+              'Fallback should mirror sea-zone semantics for province/town avoidance',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
       'sea zone label TextPainter lays out full long string without ellipsis',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());

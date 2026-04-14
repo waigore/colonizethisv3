@@ -84,12 +84,14 @@ const String _seaZoneLabelWarpIconId = 'map_warp_zone';
 const Color _seaZoneLabelPlateColor = Color.fromRGBO(173, 216, 230, 0.55);
 const Color _seaZoneLabelTextColor = Color(0xFF000000);
 
-/// World-space center for a sea zone name plate (inverse zoom applied to size).
+/// World-space center for a map label plate (inverse zoom applied to size).
 ///
-/// Prefers placement above the centroid cell without overlapping it; if that
-/// would clip the map top, uses below. Clamps into the region world rect and
-/// resolves residual overlap with the centroid cell. SPEC/ui/map-widget.md § Sea
-/// zone name plates; issue #1756.
+/// Prefers placement above the centroid cell without overlapping the avoided
+/// tile; if that would clip the map top, uses below. Clamps into the region
+/// world rect and resolves residual overlap with the avoided tile.
+///
+/// By default, the avoided tile is the centroid tile. Callers may pass an
+/// alternate avoided tile for reuse in province-label placement.
 Offset resolveSeaZoneNamePlateCenterWorld({
   required int centroidTileX,
   required int centroidTileY,
@@ -99,14 +101,18 @@ Offset resolveSeaZoneNamePlateCenterWorld({
   required double plateWidthLogicalPx,
   required double plateHeightLogicalPx,
   required double cameraZoom,
+  int? avoidedTileX,
+  int? avoidedTileY,
 }) {
+  final avoidTileX = avoidedTileX ?? centroidTileX;
+  final avoidTileY = avoidedTileY ?? centroidTileY;
   final invZ = 1.0 / cameraZoom.clamp(0.25, 4.0);
   final ww = plateWidthLogicalPx * invZ / 2;
   final hh = plateHeightLogicalPx * invZ / 2;
   final mapW = gridWidth * cellSize;
   final mapH = gridHeight * cellSize;
-  final cellL = centroidTileX * cellSize;
-  final cellT = centroidTileY * cellSize;
+  final cellL = avoidTileX * cellSize;
+  final cellT = avoidTileY * cellSize;
   final cellR = cellL + cellSize;
   final cellB = cellT + cellSize;
   const gap = 1.0;
