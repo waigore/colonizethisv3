@@ -435,20 +435,30 @@ Future<void> _tapAssignOnCivilianRowWithTitle(
 }
 
 Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
-  final tiles = find.byType(ExpansionTile);
-  final n = tiles.evaluate().length;
-  for (var j = 0; j < n; j++) {
-    final expandIcon = find.descendant(
-      of: tiles.at(j),
-      matching: find.byIcon(Icons.expand_more),
-    );
-    if (expandIcon.evaluate().isNotEmpty) {
+  // Re-query after each tap: expanding one tile rebuilds the panel, so a
+  // cached `ExpansionTile` count / `tiles.at(j)` from a prior frame can throw
+  // (e.g. index 1 when only one tile remains).
+  for (var safety = 0; safety < 32; safety++) {
+    final tiles = find.byType(ExpansionTile);
+    final n = tiles.evaluate().length;
+    if (n == 0) return;
+
+    var expandedOne = false;
+    for (var j = 0; j < n; j++) {
+      final expandIcon = find.descendant(
+        of: tiles.at(j),
+        matching: find.byIcon(Icons.expand_more),
+      );
+      if (expandIcon.evaluate().isEmpty) continue;
       final iconHit = expandIcon.first;
       await tester.ensureVisible(iconHit);
       await _pumpFor(tester, const Duration(milliseconds: 80));
-      await tester.tap(iconHit);
+      await tester.tap(iconHit, warnIfMissed: false);
       await _pumpFor(tester, const Duration(milliseconds: 250));
+      expandedOne = true;
+      break;
     }
+    if (!expandedOne) return;
   }
 }
 
