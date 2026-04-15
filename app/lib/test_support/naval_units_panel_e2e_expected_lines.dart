@@ -15,15 +15,16 @@ void _addFleetRowTexts({
   required bool expansionTilesOpen,
 }) {
   out.add(row.label);
+  // UnitsEntityActionRow: label (details) then Move/Split; then ExpansionTile subtitle.
+  if (!row.isHomeFleet) {
+    out.add(l10n.common_move);
+  }
+  out.add(l10n.common_split);
   out.add(row.locationLabel);
   out.add(l10n.naval_units_mission(row.missionLabel));
   if (row.draftNavalMoveLine != null) {
     out.add(row.draftNavalMoveLine!);
   }
-  if (!row.isHomeFleet) {
-    out.add(l10n.common_move);
-  }
-  out.add(l10n.common_split);
   if (!expansionTilesOpen) {
     return;
   }
@@ -40,6 +41,13 @@ void _addFleetRowTexts({
     }
   }
   out.add(l10n.naval_units_strength(row.strength.toStringAsFixed(1)));
+  out.add(l10n.naval_units_totalShips(row.totalShips));
+  if (row.warshipCount > 0) {
+    out.add(l10n.naval_units_warships(row.warshipCount));
+  }
+  if (row.merchantCount > 0) {
+    out.add(l10n.naval_units_merchants(row.merchantCount));
+  }
   out.add(
     row.isHomeFleet
         ? l10n.naval_units_cargoCapacity(row.cargoCapacity)

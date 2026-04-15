@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -165,6 +166,7 @@ void main() {
           return;
         }
         expect(listTiles, findsAtLeastNWidgets(1));
+        expect(find.byType(UnitsEntityActionRow), findsAtLeastNWidgets(1));
         expect(find.textContaining('Status:'), findsAtLeastNWidgets(1));
         expect(find.textContaining('Location:'), findsAtLeastNWidgets(1));
         expect(find.textContaining('Assigned to:'), findsAtLeastNWidgets(1));
