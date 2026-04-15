@@ -449,6 +449,7 @@ class GameService {
     GameSetupConfig cfg,
     int effectiveSeed,
   ) {
+    (TileMapResult, MapTopology)? fallback;
     for (var attempt = 0; attempt <= _kLockedOldWorldRetryCount; attempt++) {
       final attemptSeed = effectiveSeed + attempt;
       final mapGenParams = MapGenerationParams(
@@ -476,11 +477,17 @@ class GameService {
       if (_matchesLockedOldWorldPartition(generated.$2)) {
         return generated;
       }
+      fallback ??= generated;
+    }
+    if (fallback != null) {
+      packageLogger().w(
+        'map: OW partition 21/21/18 not reached in ${_kLockedOldWorldRetryCount + 1} attempts; using deterministic fallback map',
+      );
+      return fallback;
     }
     throw SetupTopologyDataException(
       code: 'old_world_partition_retry_exhausted',
-      details:
-          'Old World generation could not satisfy continent partition 21/21/18 in ${_kLockedOldWorldRetryCount + 1} deterministic attempt(s).',
+      details: 'Old World generation failed before producing a fallback map.',
     );
   }
 
