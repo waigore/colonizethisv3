@@ -43,7 +43,11 @@ class WangTilesetAssetConfig {
 ///
 /// Edit [kDefaultMapTerrainTilesetsAsset] only to switch tilesets or cell size.
 class MapTerrainConfig {
-  MapTerrainConfig._({required this.mapCellSizePx, required this.wangTilesets});
+  MapTerrainConfig._({
+    required this.mapCellSizePx,
+    required this.wangTilesets,
+    required this.transportTilesets,
+  });
 
   static const String kDefaultMapTerrainTilesetsAsset =
       kMapTerrainTilesetsAsset;
@@ -55,6 +59,9 @@ class MapTerrainConfig {
 
   /// Keys: `sea_plains`, `sea_desert`, `plains_desert`.
   final Map<String, WangTilesetAssetConfig> wangTilesets;
+
+  /// Keys: `road`, `rail` for 4-bit (N/E/S/W) transport overlays.
+  final Map<String, WangTilesetAssetConfig> transportTilesets;
 
   static MapTerrainConfig get instance {
     final i = _instance;
@@ -104,7 +111,34 @@ class MapTerrainConfig {
         );
       }
     }
-    _instance = MapTerrainConfig._(mapCellSizePx: cell, wangTilesets: wang);
+    final transportRaw = json['transport_tilesets'];
+    if (transportRaw is! Map<String, dynamic>) {
+      throw const FormatException(
+        'map_terrain_tilesets.json: transport_tilesets must be an object',
+      );
+    }
+    final transport = <String, WangTilesetAssetConfig>{};
+    for (final e in transportRaw.entries) {
+      final v = e.value;
+      if (v is! Map<String, dynamic>) {
+        throw FormatException(
+          'map_terrain_tilesets.json: transport_tilesets.${e.key} must be an object',
+        );
+      }
+      transport[e.key] = WangTilesetAssetConfig.fromJson(v);
+    }
+    for (final key in ['road', 'rail']) {
+      if (!transport.containsKey(key)) {
+        throw FormatException(
+          'map_terrain_tilesets.json: missing transport_tilesets.$key',
+        );
+      }
+    }
+    _instance = MapTerrainConfig._(
+      mapCellSizePx: cell,
+      wangTilesets: wang,
+      transportTilesets: transport,
+    );
     _log.i('map: terrain config loaded map_cell_size_px=$cell');
   }
 

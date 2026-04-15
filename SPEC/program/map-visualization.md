@@ -48,14 +48,21 @@ Render tile maps and topology to PNG; provide view models for tools. Two visuali
 
 ## Map view model
 
-`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel, **`resourceExtractionUnits`**); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the **province ownership** (GP land tint) layer to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model).
+`RegionMapViewData`: regionId, width, height, cellSize; per-cell `CellViewData` (x, y, regionCellId, isSea, terrainTypeId, resourceId, ownerFactionId, provinceDisplayName, improvementLevel, transportLevel, **`resourceExtractionUnits`**, **`resourceExtractionEffectiveUnits`**, **`resourceExtractionBlockedUnits`**); overlays (capitalMarkers, portMarkers, unitMarkers); factionColors, terrainColors; **`greatPowerFactionIds`** — set of runtime Great Power faction ids (`Game.players` ids) used by the app map to restrict the **province ownership** (GP land tint) layer to GP-held land only ([map-widget.md](../ui/map-widget.md) § Layer model).
 
 `CellViewData.resourceExtractionUnits` semantics:
 
 - Nullable integer for **land** cells only; `null` for sea cells.
-- Value is the **human-player** per-tile extraction units used by map extraction-disc overlays.
+- Value is the **human-player** per-tile extraction units used by map extraction throughput indicators.
 - Value is derived from the same extraction pipeline branch as `computeExtraction` tile `effectiveCapped` (improvement, tech cap, path/tile transport cap, town-development branch rules), and excludes economy-wide aggregate-only lines not attributable to a tile.
-- The extraction-disc count path does **not** include `Game.capitalTileGrainBonusPerTurn` (or equivalent aggregate-only adjustments).
+- The map extraction indicator path does **not** include `Game.capitalTileGrainBonusPerTurn` (or equivalent aggregate-only adjustments).
+
+`CellViewData.resourceExtractionEffectiveUnits` and `CellViewData.resourceExtractionBlockedUnits` semantics:
+
+- Nullable integers for **land** cells only; `null` for sea cells.
+- `resourceExtractionEffectiveUnits` is the subset effectively transported/connected to capital for the human player tile path.
+- `resourceExtractionBlockedUnits` equals produced tile units that are blocked by transport/path bottlenecks for that same tile path.
+- For a tile in scope, `resourceExtractionUnits = resourceExtractionEffectiveUnits + resourceExtractionBlockedUnits`.
 
 For province-name overlays, `RegionMapViewData` may also carry province-level unit-presence data keyed by full province id:
 

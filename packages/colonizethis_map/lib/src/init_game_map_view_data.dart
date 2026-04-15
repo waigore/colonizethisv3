@@ -34,6 +34,8 @@ class CellViewData {
     this.improvementLevel,
     this.roadLevel,
     this.resourceExtractionUnits,
+    this.resourceExtractionEffectiveUnits,
+    this.resourceExtractionBlockedUnits,
     this.visibility = TileVisibility.visible,
   });
 
@@ -70,6 +72,14 @@ class CellViewData {
   /// Human-player per-tile extraction units (integer >= 0) used by map
   /// extraction-disc overlays. Null for sea or when not populated.
   final int? resourceExtractionUnits;
+
+  /// Human-player per-tile extracted units that are effectively transported.
+  /// Null for sea or when not populated.
+  final int? resourceExtractionEffectiveUnits;
+
+  /// Human-player per-tile units blocked by transport/path bottlenecks.
+  /// Null for sea or when not populated.
+  final int? resourceExtractionBlockedUnits;
 
   /// Per-tile visibility for the current player view. Defaults to [TileVisibility.visible].
   final TileVisibility visibility;

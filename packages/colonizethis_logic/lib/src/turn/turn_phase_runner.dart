@@ -40,6 +40,13 @@ TurnResolutionResult runTurnResolutionPipeline({
   }
 
   _log.i('turn $turn resolve end');
+  emitPlayerDiscoveryEvents(
+    gameAtResolutionStart,
+    acc.game,
+    turn,
+    config.eventBus,
+    config.onGameEvent,
+  );
   final news = buildTurnNewsDigestForComplete(
     start: gameAtResolutionStart,
     end: acc.game,
@@ -98,6 +105,7 @@ TurnPhaseStepOutcome _applyTurnPhase(
       }
     case TurnPhase.diplomacy:
       {
+        final stateBeforeDiplomacy = acc.game;
         final previousRelations = <String, Map<String, RelationState>>{};
         for (final rel in acc.game.diplomacyRelations) {
           previousRelations.putIfAbsent(rel.factionId1, () => {});
@@ -145,6 +153,13 @@ TurnPhaseStepOutcome _applyTurnPhase(
         }
         emitDiplomacyChangeEvents(
           previousRelations,
+          diploResult.game,
+          turn,
+          config.eventBus,
+          config.onGameEvent,
+        );
+        emitOvertureAdvancedEvents(
+          stateBeforeDiplomacy,
           diploResult.game,
           turn,
           config.eventBus,
@@ -205,17 +220,24 @@ TurnPhaseStepOutcome _applyTurnPhase(
         return TurnPhaseStepContinue(acc.copyWith(game: afterCombat));
       }
     case TurnPhase.buildWork:
-      return TurnPhaseStepContinue(
-        acc.copyWith(
-          game: runBuildWorkPhase(
-            acc.game,
-            config.orders,
-            config.topology,
-            config.tileMapByRegion,
-            onDialogue: config.onDialogue,
-          ),
-        ),
-      );
+      {
+        final stateBeforeBuildWork = acc.game;
+        final afterBuildWork = runBuildWorkPhase(
+          acc.game,
+          config.orders,
+          config.topology,
+          config.tileMapByRegion,
+          onDialogue: config.onDialogue,
+        );
+        emitWorkOrderCompletedEvents(
+          stateBeforeBuildWork,
+          afterBuildWork,
+          turn,
+          config.eventBus,
+          config.onGameEvent,
+        );
+        return TurnPhaseStepContinue(acc.copyWith(game: afterBuildWork));
+      }
     case TurnPhase.endOfTurn:
       {
         final after = runEndOfTurnPhase(

@@ -210,6 +210,95 @@ void main() {
       expect(evt.reasonCode, 'insufficient_treasury');
     });
 
+    test('forwards WorkOrderCompletedEvent', () async {
+      final received = <AppWorkOrderCompletedEvent>[];
+      appBus.on<AppWorkOrderCompletedEvent>().listen(received.add);
+      bridge.start();
+
+      logicBus.publish(
+        WorkOrderCompletedEvent(
+          playerId: 'gp1',
+          unitId: 'u1',
+          workTarget: 'build_road',
+          targetTileKey: 'oldWorld|p1|3|4',
+          provinceId: 'oldWorld|p1',
+          turnNumber: 2,
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(received, hasLength(1));
+      final evt = received.first;
+      expect(evt.playerId, 'gp1');
+      expect(evt.unitId, 'u1');
+      expect(evt.workTarget, 'build_road');
+      expect(evt.targetTileKey, 'oldWorld|p1|3|4');
+      expect(evt.provinceId, 'oldWorld|p1');
+      expect(evt.turnNumber, 2);
+    });
+
+    test('forwards PlayerProvinceDiscoveredEvent', () async {
+      final received = <AppPlayerProvinceDiscoveredEvent>[];
+      appBus.on<AppPlayerProvinceDiscoveredEvent>().listen(received.add);
+      bridge.start();
+
+      logicBus.publish(
+        PlayerProvinceDiscoveredEvent(
+          playerId: 'gp1',
+          provinceId: 'newWorld|p3',
+          turnNumber: 6,
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(received, hasLength(1));
+      expect(received.first.playerId, 'gp1');
+      expect(received.first.provinceId, 'newWorld|p3');
+      expect(received.first.turnNumber, 6);
+    });
+
+    test('forwards PlayerSeaZoneDiscoveredEvent', () async {
+      final received = <AppPlayerSeaZoneDiscoveredEvent>[];
+      appBus.on<AppPlayerSeaZoneDiscoveredEvent>().listen(received.add);
+      bridge.start();
+
+      logicBus.publish(
+        PlayerSeaZoneDiscoveredEvent(
+          playerId: 'gp1',
+          seaZoneId: 'oldWorld|s3',
+          turnNumber: 6,
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(received, hasLength(1));
+      expect(received.first.playerId, 'gp1');
+      expect(received.first.seaZoneId, 'oldWorld|s3');
+      expect(received.first.turnNumber, 6);
+    });
+
+    test('forwards OvertureAdvancedEvent', () async {
+      final received = <AppOvertureAdvancedEvent>[];
+      appBus.on<AppOvertureAdvancedEvent>().listen(received.add);
+      bridge.start();
+
+      logicBus.publish(
+        OvertureAdvancedEvent(
+          offererGpId: 'gp1',
+          targetFactionId: 'gp2',
+          newStage: 'embassy',
+          turnNumber: 8,
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(received, hasLength(1));
+      expect(received.first.offererGpId, 'gp1');
+      expect(received.first.targetFactionId, 'gp2');
+      expect(received.first.newStage, 'embassy');
+      expect(received.first.turnNumber, 8);
+    });
+
     test('forwarded events maintain emission order', () async {
       final received = <GameToUIEvent>[];
       appBus.on<GameToUIEvent>().listen(received.add);

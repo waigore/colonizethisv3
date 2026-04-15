@@ -94,6 +94,42 @@ class GameEventBridge {
             reasonCode: event.reasonCode,
           ),
         );
+      case WorkOrderCompletedEvent():
+        _appBus.emit(
+          AppWorkOrderCompletedEvent(
+            playerId: event.playerId,
+            unitId: event.unitId,
+            workTarget: event.workTarget,
+            targetTileKey: event.targetTileKey,
+            provinceId: event.provinceId,
+            turnNumber: event.turnNumber,
+          ),
+        );
+      case PlayerProvinceDiscoveredEvent():
+        _appBus.emit(
+          AppPlayerProvinceDiscoveredEvent(
+            playerId: event.playerId,
+            provinceId: event.provinceId,
+            turnNumber: event.turnNumber,
+          ),
+        );
+      case PlayerSeaZoneDiscoveredEvent():
+        _appBus.emit(
+          AppPlayerSeaZoneDiscoveredEvent(
+            playerId: event.playerId,
+            seaZoneId: event.seaZoneId,
+            turnNumber: event.turnNumber,
+          ),
+        );
+      case OvertureAdvancedEvent():
+        _appBus.emit(
+          AppOvertureAdvancedEvent(
+            offererGpId: event.offererGpId,
+            targetFactionId: event.targetFactionId,
+            newStage: event.newStage,
+            turnNumber: event.turnNumber,
+          ),
+        );
     }
   }
 }
