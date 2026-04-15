@@ -147,10 +147,7 @@ List<FleetTileMarkerView> _buildFleetTileMarkersForRegion({
   }
 
   final provinceMap = <String, Province>{
-    for (final p in provinces) ...{
-      '${p.regionId}|${p.id}': p,
-      p.id: p,
-    },
+    for (final p in provinces) ...{'${p.regionId}|${p.id}': p, p.id: p},
   };
 
   final byLocation = <String, List<Fleet>>{};
@@ -213,8 +210,7 @@ List<FleetTileMarkerView> _buildFleetTileMarkersForRegion({
   final markers = <FleetTileMarkerView>[];
   for (final entry in byLocation.entries) {
     final scopeKey = entry.key;
-    final fleets = entry.value.toList()
-      ..sort((a, b) => a.id.compareTo(b.id));
+    final fleets = entry.value.toList()..sort((a, b) => a.id.compareTo(b.id));
     final fleetIds = fleets.map((fl) => fl.id).toList();
 
     String? tileKey;
@@ -294,6 +290,12 @@ InitGameMapViewData buildInitGameMapViewData({
   /// Optional per-tile extraction units for map overlays, keyed by tile key
   /// `regionId|provinceId|x|y`.
   Map<String, int>? resourceExtractionUnitsByTile,
+
+  /// Optional per-tile effective transported extraction units for map overlays.
+  Map<String, int>? resourceExtractionEffectiveUnitsByTile,
+
+  /// Optional per-tile transport-blocked extraction units for map overlays.
+  Map<String, int>? resourceExtractionBlockedUnitsByTile,
 }) {
   _log.i('buildInitGameMapViewData start gameId=${game.id}');
   final owTileMap = tileMapByRegion[_regionOldWorld]!;
@@ -312,6 +314,9 @@ InitGameMapViewData buildInitGameMapViewData({
     visibilityByTile: visibilityByTile,
     warpLinks: warpLinks,
     resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
+    resourceExtractionEffectiveUnitsByTile:
+        resourceExtractionEffectiveUnitsByTile,
+    resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
   );
   final nwRegion = _buildRegionViewData(
     regionId: _regionNewWorld,
@@ -324,6 +329,9 @@ InitGameMapViewData buildInitGameMapViewData({
     visibilityByTile: visibilityByTile,
     warpLinks: warpLinks,
     resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
+    resourceExtractionEffectiveUnitsByTile:
+        resourceExtractionEffectiveUnitsByTile,
+    resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
   );
 
   _log.i('buildInitGameMapViewData end');
@@ -351,6 +359,8 @@ RegionMapViewData _buildRegionViewData({
   Map<String, TileVisibility>? visibilityByTile,
   List<WarpLink>? warpLinks,
   Map<String, int>? resourceExtractionUnitsByTile,
+  Map<String, int>? resourceExtractionEffectiveUnitsByTile,
+  Map<String, int>? resourceExtractionBlockedUnitsByTile,
 }) {
   final seaZoneIds = {
     for (final n in topology.nodes)
@@ -425,6 +435,12 @@ RegionMapViewData _buildRegionViewData({
       final extractionUnits = isSea
           ? null
           : resourceExtractionUnitsByTile?[tileKey];
+      final extractionEffectiveUnits = isSea
+          ? null
+          : resourceExtractionEffectiveUnitsByTile?[tileKey];
+      final extractionBlockedUnits = isSea
+          ? null
+          : resourceExtractionBlockedUnitsByTile?[tileKey];
       final fullProvinceId = isSea ? null : ProvinceId.full(regionId, localId);
       cells.add(
         CellViewData(
@@ -446,6 +462,8 @@ RegionMapViewData _buildRegionViewData({
           improvementLevel: isSea ? null : improvement,
           roadLevel: isSea ? null : road,
           resourceExtractionUnits: extractionUnits,
+          resourceExtractionEffectiveUnits: extractionEffectiveUnits,
+          resourceExtractionBlockedUnits: extractionBlockedUnits,
           visibility: visibility,
         ),
       );

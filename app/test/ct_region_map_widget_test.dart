@@ -14,7 +14,8 @@ import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
     show
         CtRegionMapComponent,
-        extractionDiscCentersForIconRect,
+        extractionIndicatorDisplaySizePx,
+        extractionIndicatorRectsForIconRect,
         isCellUnderFleetRevealHalo,
         resolveProvinceLabelIconIds,
         resolveProvinceLabelPresenceIconIds,
@@ -22,18 +23,18 @@ import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
         resolveSeaZoneNamePlateCenterWorld,
         resourceIconDisplaySizePx,
         shouldEllipsizeProvinceLabelText,
-        shouldShowExtractionUnitDiscs,
+        shouldShowExtractionUnitIndicators,
         shouldApplyFogToFeatureOverlay,
         shouldApplyFogToInteriorPlainsVariantBase,
         shouldApplyFogToInteriorPlainsVariantOverlay,
         shouldApplyFogToLandBase,
         shouldWrapProvinceLabelPresenceIcons,
         visibilityForTerrainForMapCell;
-import 'package:colonizethis_app/features/game/flame/resource_icon_disc_palette.dart';
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/terrain_tileset.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/transport_overlay_tileset.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
 
@@ -57,6 +58,7 @@ void main() {
       // CtRegionMapComponent.onLoad awaits these; without a warm cache, a single
       // pump() is not enough when tests run alone (e.g. CI --total-shards).
       await terrainTilesetCache.load();
+      await transportOverlayTilesetCache.load();
       await resourceIconCache.load();
       await civilianIconCache.load();
       await townIconCache.load();
@@ -562,6 +564,29 @@ void main() {
     );
 
     testWidgets(
+      'required transport overlay atlas/spec assets are present in test bundle',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        const paths = [
+          'assets/images/terrain/tilesets/tileset_transport_road_64.png',
+          'assets/images/terrain/tilesets/tileset_transport_road_64.json',
+          'assets/images/terrain/tilesets/tileset_transport_rail_64.png',
+          'assets/images/terrain/tilesets/tileset_transport_rail_64.json',
+        ];
+        for (final path in paths) {
+          final data = await rootBundle.load(path);
+          expect(
+            data.lengthInBytes,
+            greaterThan(0),
+            reason: 'Transport overlay asset $path is empty',
+          );
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
       'required Wang tileset asset files are present in test asset bundle',
       (WidgetTester tester) async {
         // Pump a minimal widget tree so the test binding and asset bundle are initialized.
@@ -829,24 +854,24 @@ void main() {
     );
 
     testWidgets(
-      'extraction disc visibility follows base-layer resource visibility mode',
+      'extraction indicator visibility follows base-layer resource visibility mode',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
 
         expect(
-          shouldShowExtractionUnitDiscs(
+          shouldShowExtractionUnitIndicators(
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
           ),
           isFalse,
         );
         expect(
-          shouldShowExtractionUnitDiscs(
+          shouldShowExtractionUnitIndicators(
             baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
           ),
           isTrue,
         );
         expect(
-          shouldShowExtractionUnitDiscs(
+          shouldShowExtractionUnitIndicators(
             baseLayerDisplayMode:
                 BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
           ),
@@ -857,37 +882,32 @@ void main() {
     );
 
     testWidgets(
-      'extraction disc fan layout advances right with overlap',
+      'extraction indicator stack layout advances right with overlap',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
 
-        final centers = extractionDiscCentersForIconRect(
+        final rects = extractionIndicatorRectsForIconRect(
           iconRect: const Rect.fromLTWH(10, 20, 64, 64),
           units: 3,
         );
-        expect(centers, hasLength(3));
-        expect(centers[1].dx, greaterThan(centers[0].dx));
-        expect(centers[2].dx, greaterThan(centers[1].dx));
-        expect(centers[0].dy, equals(centers[1].dy));
-        expect(centers[1].dy, equals(centers[2].dy));
+        expect(rects, hasLength(3));
+        expect(rects[1].left, greaterThan(rects[0].left));
+        expect(rects[2].left, greaterThan(rects[1].left));
+        expect(rects[0].top, equals(rects[1].top));
+        expect(rects[1].top, equals(rects[2].top));
+        expect(rects[1].left, lessThan(rects[0].right));
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );
 
     testWidgets(
-      'resource extraction disc palette is fixed and complete for icon ids',
+      'extraction indicator size is at least resource icon display size',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
 
-        for (final resourceId in kResourceIconIds) {
-          expect(
-            kResourceIconDiscPalette.containsKey(resourceId),
-            isTrue,
-            reason: 'Missing extraction disc palette entry for $resourceId',
-          );
-          final color = discColorForResourceId(resourceId);
-          expect(color.a, equals(1.0));
-        }
+        expect(extractionIndicatorDisplaySizePx(16), greaterThanOrEqualTo(16));
+        expect(extractionIndicatorDisplaySizePx(24), greaterThanOrEqualTo(24));
+        expect(extractionIndicatorDisplaySizePx(64), equals(64));
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );
@@ -1652,6 +1672,7 @@ void main() {
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
+          await transportOverlayTilesetCache.load();
           await resourceIconCache.load();
         });
 
@@ -1668,6 +1689,32 @@ void main() {
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'roads mode renders for non-64 cell sizes with transport overlay assets preloaded',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await transportOverlayTilesetCache.load();
+          await resourceIconCache.load();
+        });
+
+        final region = ctRegionMapTestOldWorldRegion();
+        for (final cellSize in [16.0, 32.0, 96.0]) {
+          await tester.pumpWidget(
+            ctRegionMapTestHarness(
+              region: region,
+              cellSizePx: cellSize,
+              baseLayerDisplayMode:
+                  BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+            ),
+          );
+          await tester.pump();
+          expect(find.byType(CtRegionMap), findsOneWidget);
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 12)),
     );
 
     testWidgets(

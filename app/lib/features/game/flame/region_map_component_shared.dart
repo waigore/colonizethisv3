@@ -62,9 +62,11 @@ const Color _kProvinceLabelShadowColor = Color(0x8A000000);
 
 /// Fogged land tiles: modulate alpha for resource icons (linear 0–1).
 const double _kFoggedResourceIconModulateAlpha = 0.6;
-const double _kExtractionDiscRadiusPx = 3.0;
-const double _kExtractionDiscStepXPx = 2.5;
-const double _kExtractionDiscStartInsetXPx = 2.0;
+const double _kExtractionIndicatorSizeBoostPx = 2.0;
+const double _kExtractionIndicatorOverlapFactor = 0.45;
+const double _kExtractionIndicatorStartInsetXPx = 2.0;
+const Color _kExtractionIndicatorGoldTint = Color(0xFFFFD54A);
+const Color _kExtractionIndicatorGrayTint = Color(0xFF9E9E9E);
 
 /// Political (faction) border stroke — indigo, visible over terrain.
 const Color _kFactionPoliticalBorderColor = Color(0xFF1A237E);
@@ -364,6 +366,38 @@ bool shouldApplyFogToInteriorPlainsVariantOverlay({
   return tileVisibility == TileVisibility.fogged;
 }
 
+/// Returns true when transport sprites should render for the selected base mode.
+bool shouldRenderTransportOverlay({
+  required BaseLayerDisplayMode baseLayerDisplayMode,
+}) {
+  return baseLayerDisplayMode ==
+      BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
+}
+
+/// Returns true when a road level should use the rail transport family.
+///
+/// Current v1 behavior uses rail sprites only for level 4.
+bool isRailTransportLevel(int roadLevel) => roadLevel == 4;
+
+/// Returns true when a given cell is eligible for transport overlay rendering.
+///
+/// Overlay is land-only, requires `roadLevel > 0`, and is hidden for unrevealed
+/// cells in player-constrained visibility mode.
+bool shouldPaintTransportOverlayForCell({
+  required CellViewData cell,
+  required CtMapVisibilityMode visibilityMode,
+  required TileVisibility tileVisibility,
+}) {
+  if (cell.isSea || (cell.roadLevel ?? 0) <= 0) {
+    return false;
+  }
+  if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+      tileVisibility == TileVisibility.unrevealed) {
+    return false;
+  }
+  return true;
+}
+
 /// Check if a terrain type uses L2+ standalone tile rendering (features).
 /// L0: Sea (Wang). L1: Plains/Desert (Wang). L2+: Features (standalone).
 bool _isFeatureTerrain(TerrainType terrain) {
@@ -444,25 +478,27 @@ void assertCtMapPlayerViewRequired({
   }
 }
 
-/// Base layer display mode: terrain, resource icons, improvement/road labels.
+/// Base layer display mode: terrain, resource icons, improvement labels, and
+/// road/rail transport sprite overlays.
 /// SPEC/ui/map-widget.md § Base layer display mode.
 enum BaseLayerDisplayMode {
-  /// Terrain only; no resource icons or improvement/road labels.
+  /// Terrain only; no resource icons, improvement labels, or transport overlay.
   terrainOnly,
 
-  /// Terrain + resource icons; no improvement or road labels.
+  /// Terrain + resource icons; no improvement labels or transport overlay.
   terrainAndResources,
 
-  /// Terrain + resource icons + improvement labels (`I{n}` when n > 0); no road labels.
+  /// Terrain + resource icons + improvement labels (`I{n}` when n > 0); no
+  /// transport overlay.
   terrainAndResourcesImprovementLabels,
 
-  /// Terrain + resource icons + improvement labels + road/rail labels (`R{n}` when n > 0).
-  /// Roads are painted after improvements (on top). Road labels require improvement mode on.
+  /// Terrain + resource icons + improvement labels + road/rail transport
+  /// overlay (`roadLevel > 0`).
   terrainAndResourcesImprovementsRoads,
 }
 
-/// Returns true when extraction unit discs are allowed for the current base mode.
-bool shouldShowExtractionUnitDiscs({
+/// Returns true when extraction indicators are allowed for the current base mode.
+bool shouldShowExtractionUnitIndicators({
   required BaseLayerDisplayMode baseLayerDisplayMode,
 }) {
   return baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
@@ -480,22 +516,28 @@ double resourceIconDisplaySizePx(double cellSize) {
       : ResourceIconCache.iconSize;
 }
 
-/// Returns circle centers for a right-fan extraction-disc layout.
-List<Offset> extractionDiscCentersForIconRect({
+double extractionIndicatorDisplaySizePx(double resourceIconDisplaySizePx) {
+  return math.min(
+    ResourceIconCache.iconSize,
+    resourceIconDisplaySizePx + _kExtractionIndicatorSizeBoostPx,
+  );
+}
+
+List<Rect> extractionIndicatorRectsForIconRect({
   required Rect iconRect,
   required int units,
-  double radius = _kExtractionDiscRadiusPx,
-  double stepX = _kExtractionDiscStepXPx,
-  double startInsetX = _kExtractionDiscStartInsetXPx,
 }) {
   if (units <= 0) {
-    return const <Offset>[];
+    return const <Rect>[];
   }
-  final centerY = iconRect.center.dy;
-  final startX = iconRect.right + startInsetX + radius;
-  return List<Offset>.generate(
+  final indicatorSize = extractionIndicatorDisplaySizePx(iconRect.width);
+  final stepX = indicatorSize * (1.0 - _kExtractionIndicatorOverlapFactor);
+  final startX = iconRect.right + _kExtractionIndicatorStartInsetXPx;
+  final top = iconRect.bottom - indicatorSize;
+  return List<Rect>.generate(
     units,
-    (i) => Offset(startX + (i * stepX), centerY),
+    (i) =>
+        Rect.fromLTWH(startX + (i * stepX), top, indicatorSize, indicatorSize),
     growable: false,
   );
 }
