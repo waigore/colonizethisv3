@@ -427,6 +427,7 @@ void main() {
       '20 random seeds keep strict continent split and contain no enclosed OW lakes',
       () {
         const seeds = [
+          42,
           101,
           203,
           307,
@@ -495,6 +496,27 @@ void main() {
         }
       },
     );
+
+    test('seed 42 keeps Spain contiguous when fair assignment is enabled', () {
+      final result = runInitGame(
+        config: GameSetupConfig(seed: 42, enforceFairGpOldWorldAssignment: true),
+        options: const InitGameOptions(cellSize: 8, renderPng: false),
+      );
+      final topo = result.topologyByRegion[kRegionOldWorld]!;
+      final neighbours = _provincePpNeighboursForInitGameTest(topo);
+      final owners = <String, String>{
+        for (final p in result.game.worldState.oldWorld.provinces)
+          if (p.ownerId != null) ProvinceId.localIdFrom(p.id): p.ownerId!,
+      };
+      final spainPlayer = result.game.players.firstWhere(
+        (p) => p.displayName.toLowerCase().contains('spain'),
+      );
+      expect(
+        gpProvincesAreLandConnected(spainPlayer.id, owners, neighbours),
+        isTrue,
+        reason: 'Spain (${spainPlayer.id}) should be one P–P component for seed 42',
+      );
+    });
   });
 }
 
