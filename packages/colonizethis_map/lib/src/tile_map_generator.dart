@@ -103,6 +103,11 @@ class _LakeAndProvinceService {
     Map<String, (int x, int y)> provinceSeeds,
     String seaZoneId,
   ) => _impl.assignProvincesFromSeeds(grid, provinceSeeds, seaZoneId);
+
+  List<List<String>> subsumeEnclosedSeasIntoBorderingProvinces(
+    List<List<String>> grid,
+    String seaZoneId,
+  ) => _impl.subsumeEnclosedSeasIntoBorderingProvinces(grid, seaZoneId);
 }
 
 class _TerrainResourceService {
@@ -336,6 +341,17 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     if (params.borderNoise > 0) {
       grid = _lakeAndProvinceService.borderNoise(grid, seaZoneId, rnd);
       onLog?.call('Pass 5: Border noise applied');
+      if (!params.skipFillLakes) {
+        // Border swaps can create tiny enclosed sea pockets; run lake fill again
+        // so downstream province assignment never inherits inland lakes.
+        grid = _lakeAndProvinceService.fillLakes(
+          grid,
+          seaZoneId,
+          landSeeds,
+          continentBySeedIndex,
+        );
+        onLog?.call('Pass 5b: Post-noise lake fill done');
+      }
     } else {
       onLog?.call('Pass 5: Border noise skipped (0)');
     }
@@ -409,6 +425,19 @@ class TileMapGenerator extends _TileMapGeneratorShell {
       }
     }
 
+    final preLakeSubsumptionGrid = grid;
+    grid = _lakeAndProvinceService.subsumeEnclosedSeasIntoBorderingProvinces(
+      grid,
+      seaZoneId,
+    );
+    _backfillTerrainAndResourcesForSubsumedLakeCells(
+      previousGrid: preLakeSubsumptionGrid,
+      nextGrid: grid,
+      terrainGrid: terrainGrid,
+      resourceGrid: resourceGrid,
+      seaZoneId: seaZoneId,
+    );
+
     // Optional Pass 10b: province-aware terrain jitter (tiles without resources only).
     if (terrainGrid != null && resourceGrid != null) {
       _joinAndSeaService.jitterTerrainByProvince(
@@ -449,5 +478,40 @@ class TileMapGenerator extends _TileMapGeneratorShell {
       'TileMapGenerator.generate end regionId=$regionId provinces=$provincesCount continents=$continentsCount success=true',
     );
     return (result, topology);
+  }
+
+  void _backfillTerrainAndResourcesForSubsumedLakeCells({
+    required List<List<String>> previousGrid,
+    required List<List<String>> nextGrid,
+    required List<List<TerrainType?>>? terrainGrid,
+    required List<List<Resource?>>? resourceGrid,
+    required String seaZoneId,
+  }) {
+    if (terrainGrid == null || resourceGrid == null) return;
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (previousGrid[y][x] != seaZoneId) continue;
+        if (nextGrid[y][x] == seaZoneId) continue;
+        if (terrainGrid[y][x] != null) continue;
+        for (final (dx, dy) in const <(int, int)>[
+          (0, -1),
+          (0, 1),
+          (-1, 0),
+          (1, 0),
+        ]) {
+          final nx = x + dx;
+          final ny = y + dy;
+          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+            continue;
+          }
+          if (nextGrid[ny][nx] != nextGrid[y][x]) continue;
+          final terrain = terrainGrid[ny][nx];
+          if (terrain == null) continue;
+          terrainGrid[y][x] = terrain;
+          resourceGrid[y][x] = resourceGrid[ny][nx];
+          break;
+        }
+      }
+    }
   }
 }

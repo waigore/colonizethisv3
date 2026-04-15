@@ -26,9 +26,8 @@ final _mapGenPassLog = packageLogger('tile_map');
 const int _kLockedGreatPowerCount = 6;
 const int _kLockedMinorNationCount = 6;
 const int _kLockedOldWorldProvinceCount = 60;
-const int _kLockedOldWorldContinentCount = 3;
+const int _kLockedOldWorldContinentCount = 4;
 const int _kLockedOldWorldRetryCount = 5;
-const List<int> _kLockedOldWorldPartition = [18, 21, 21];
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
 /// Phase 2: createNewGame uses full game-setup pipeline; nextTurn requires cached/persisted map data.
@@ -449,7 +448,6 @@ class GameService {
     GameSetupConfig cfg,
     int effectiveSeed,
   ) {
-    (TileMapResult, MapTopology)? fallback;
     for (var attempt = 0; attempt <= _kLockedOldWorldRetryCount; attempt++) {
       final attemptSeed = effectiveSeed + attempt;
       final mapGenParams = MapGenerationParams(
@@ -477,17 +475,12 @@ class GameService {
       if (_matchesLockedOldWorldPartition(generated.$2)) {
         return generated;
       }
-      fallback ??= generated;
-    }
-    if (fallback != null) {
-      packageLogger().w(
-        'map: OW partition 21/21/18 not reached in ${_kLockedOldWorldRetryCount + 1} attempts; using deterministic fallback map',
-      );
-      return fallback;
     }
     throw SetupTopologyDataException(
       code: 'old_world_partition_retry_exhausted',
-      details: 'Old World generation failed before producing a fallback map.',
+      details:
+          'Old World generation did not reach 4-continent partition '
+          'in ${_kLockedOldWorldRetryCount + 1} attempts.',
     );
   }
 
@@ -640,11 +633,7 @@ bool _matchesLockedOldWorldPartition(MapTopology topology) {
       ),
     );
   }
-  sizes.sort();
-  return sizes.length == _kLockedOldWorldPartition.length &&
-      sizes[0] == _kLockedOldWorldPartition[0] &&
-      sizes[1] == _kLockedOldWorldPartition[1] &&
-      sizes[2] == _kLockedOldWorldPartition[2];
+  return sizes.length == _kLockedOldWorldContinentCount;
 }
 
 int _lockedOwConnectedComponentSize({

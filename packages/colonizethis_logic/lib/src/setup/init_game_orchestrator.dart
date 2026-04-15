@@ -20,9 +20,8 @@ final _log = packageLogger();
 const int _kLockedGreatPowerCount = 6;
 const int _kLockedMinorNationCount = 6;
 const int _kLockedOldWorldProvinceCount = 60;
-const int _kLockedOldWorldContinentCount = 3;
+const int _kLockedOldWorldContinentCount = 4;
 const int _kLockedOldWorldRetryCount = 5;
-const List<int> _kLockedOldWorldPartition = [18, 21, 21];
 
 /// Result of running init game.
 class InitGameResult {
@@ -79,7 +78,7 @@ class InitGameOptions {
   /// markdown are still produced.
   final bool renderPng;
 
-  /// When true, normalizes setup to the locked Old World profile (6/6/60/3).
+  /// When true, normalizes setup to the locked Old World profile (6/6/60/4).
   final bool enforceLockedOldWorldProfile;
 
   /// Optional GP id → (r, g, b) for map ownership colours; stored on Game and in result.
@@ -286,7 +285,6 @@ GameSetupConfig _withLockedOldWorldConfig(GameSetupConfig config) {
   required int effectiveSeed,
   required TileMapRegionGenerator generateRegionFn,
 }) {
-  (TileMapResult, MapTopology)? fallback;
   for (var attempt = 0; attempt <= _kLockedOldWorldRetryCount; attempt++) {
     final attemptSeed = effectiveSeed + attempt;
     final mapGenParams = MapGenerationParams(
@@ -312,21 +310,16 @@ GameSetupConfig _withLockedOldWorldConfig(GameSetupConfig config) {
       regionId: kRegionOldWorld,
       resourceRules: ResourceRules.defaultRules,
     );
-    fallback ??= (tileMapOW, topoOW);
     if (_matchesLockedOldWorldPartition(topoOW)) {
       return (tileMapOW, topoOW);
     }
   }
-  _log.w(
-    'locked OW partition 21/21/18 not reached in ${_kLockedOldWorldRetryCount + 1} attempts; using deterministic fallback map',
+  throw SetupTopologyDataException(
+    code: 'old_world_partition_retry_exhausted',
+    details:
+        'Old World generation did not reach 4-continent partition '
+        'in ${_kLockedOldWorldRetryCount + 1} attempts.',
   );
-  if (fallback == null) {
-    throw SetupTopologyDataException(
-      code: 'old_world_partition_retry_exhausted',
-      details: 'Old World generation failed before producing a fallback map.',
-    );
-  }
-  return fallback;
 }
 
 bool _matchesLockedOldWorldPartition(MapTopology topology) {
@@ -358,10 +351,7 @@ bool _matchesLockedOldWorldPartition(MapTopology topology) {
     );
   }
   componentSizes.sort();
-  return componentSizes.length == _kLockedOldWorldPartition.length &&
-      componentSizes[0] == _kLockedOldWorldPartition[0] &&
-      componentSizes[1] == _kLockedOldWorldPartition[1] &&
-      componentSizes[2] == _kLockedOldWorldPartition[2];
+  return componentSizes.length == _kLockedOldWorldContinentCount;
 }
 
 int _lockedOwConnectedComponentSize({

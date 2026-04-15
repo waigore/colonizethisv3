@@ -8,7 +8,8 @@ class _TileMapGenLakesProvinces {
   final TileMapGridGraph _graph;
   final _TileMapGenJoinSea _join;
 
-  /// Fill lakes: convert lake (sea not in ocean) to land; skip lakes that border 2+ continents (straits).
+  /// Fill lakes: convert every enclosed sea pocket (sea not in ocean) to land.
+  /// Cells are subsumed into bordering landmass tiles so assignment never sees inland lakes.
   List<List<String>> fillLakes(
     List<List<String>> grid,
     String seaZoneId,
@@ -49,7 +50,6 @@ class _TileMapGenLakesProvinces {
           _graph.continentForLandCell(lx, ly, landSeeds, continentBySeedIndex),
         );
       }
-      if (continentsBordering.length >= 2) continue;
       for (final (x, y) in component) {
         next[y][x] = _landSentinel;
         lakesFilled++;
@@ -281,6 +281,59 @@ class _TileMapGenLakesProvinces {
     for (final entry in assignment.entries) {
       final (x, y) = entry.key;
       next[y][x] = entry.value;
+    }
+    return next;
+  }
+
+  /// Final safeguard after province assignment: subsume enclosed sea pockets
+  /// into bordering provinces so generated maps do not keep inland lakes.
+  List<List<String>> subsumeEnclosedSeasIntoBorderingProvinces(
+    List<List<String>> grid,
+    String seaZoneId,
+  ) {
+    final ocean = _graph.oceanCells(grid, seaZoneId);
+    final next = grid.map((row) => row.toList()).toList();
+    final enclosedSea = <(int x, int y)>[];
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (grid[y][x] != seaZoneId) continue;
+        if (ocean.contains((x, y))) continue;
+        enclosedSea.add((x, y));
+      }
+    }
+    if (enclosedSea.isEmpty) return grid;
+
+    final components = _graph.connectedComponentsOfLand(enclosedSea.toSet());
+    for (final component in components) {
+      final borderingProvinceCount = <String, int>{};
+      for (final (x, y) in component) {
+        for (final (dx, dy) in const <(int, int)>[
+          (0, -1),
+          (0, 1),
+          (-1, 0),
+          (1, 0),
+        ]) {
+          final nx = x + dx;
+          final ny = y + dy;
+          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+            continue;
+          }
+          final id = next[ny][nx];
+          if (id == seaZoneId) continue;
+          borderingProvinceCount[id] = (borderingProvinceCount[id] ?? 0) + 1;
+        }
+      }
+      if (borderingProvinceCount.isEmpty) continue;
+      final targetProvince = borderingProvinceCount.entries.toList()
+        ..sort((a, b) {
+          final countCmp = b.value.compareTo(a.value);
+          if (countCmp != 0) return countCmp;
+          return a.key.compareTo(b.key);
+        });
+      final winner = targetProvince.first.key;
+      for (final (x, y) in component) {
+        next[y][x] = winner;
+      }
     }
     return next;
   }

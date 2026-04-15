@@ -330,7 +330,7 @@ void main() {
     });
 
     test(
-      'default config locks 60 OW, 6 GPs, 6 minors with 21/21/18 partition',
+      'default config locks 60 OW, 6 GPs, 6 minors with strict 4-continent role split',
       () {
         final base = GameSetupConfig.defaultConfig;
         expect(base.numProvincesOldWorld, 60);
@@ -364,14 +364,13 @@ void main() {
           for (final p in game.worldState.oldWorld.provinces)
             ProvinceId.localIdFrom(p.id): p.ownerId ?? '',
         };
-        for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6']) {
-          expect(
-            owLocalOwners.values.where((owner) => owner == gpId).length,
-            7,
-            reason: '$gpId should own exactly 7 OW provinces',
-          );
-        }
-        for (final minorId in [
+        for (final factionId in [
+          'gp1',
+          'gp2',
+          'gp3',
+          'gp4',
+          'gp5',
+          'gp6',
           'minor1',
           'minor2',
           'minor3',
@@ -380,9 +379,9 @@ void main() {
           'minor6',
         ]) {
           expect(
-            owLocalOwners.values.where((owner) => owner == minorId).length,
-            3,
-            reason: '$minorId should own exactly 3 OW provinces',
+            owLocalOwners.values.where((owner) => owner == factionId).length,
+            greaterThan(0),
+            reason: '$factionId should own at least one OW province',
           );
         }
         final topo = result.topologyByRegion[kRegionOldWorld]!;
@@ -398,6 +397,11 @@ void main() {
             reason: '$gpId OW territory must be one P–P component',
           );
         }
+        final landmassByProvince = _landmassIdsForTopology(topo);
+        _expectLockedRoleSplit(
+          owners: owners,
+          landmassByProvince: landmassByProvince,
+        );
       },
     );
 
@@ -418,61 +422,77 @@ void main() {
       },
     );
 
-    test('20 random seeds satisfy locked faction province counts', () {
-      const seeds = [
-        101,
-        203,
-        307,
-        401,
-        509,
-        601,
-        709,
-        809,
-        907,
-        1009,
-        1103,
-        1201,
-        1303,
-        1409,
-        1511,
-        1601,
-        1709,
-        1801,
-        1907,
-        2003,
-      ];
-      for (final seed in seeds) {
-        final result = runInitGame(
-          config: GameSetupConfig(seed: seed),
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
-        );
-        final owners = <String, String>{
-          for (final p in result.game.worldState.oldWorld.provinces)
-            ProvinceId.localIdFrom(p.id): p.ownerId ?? '',
-        };
-        for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6']) {
+    test(
+      '20 random seeds keep strict continent split and contain no enclosed OW lakes',
+      () {
+        const seeds = [
+          101,
+          203,
+          307,
+          401,
+          509,
+          601,
+          709,
+          809,
+          907,
+          1009,
+          1103,
+          1201,
+          1303,
+          1409,
+          1511,
+          1601,
+          1709,
+          1801,
+          1907,
+          2003,
+        ];
+        for (final seed in seeds) {
+          final result = runInitGame(
+            config: GameSetupConfig(seed: seed),
+            options: const InitGameOptions(cellSize: 8, renderPng: false),
+          );
+          final owners = <String, String>{
+            for (final p in result.game.worldState.oldWorld.provinces)
+              ProvinceId.localIdFrom(p.id): p.ownerId ?? '',
+          };
+          for (final factionId in [
+            'gp1',
+            'gp2',
+            'gp3',
+            'gp4',
+            'gp5',
+            'gp6',
+            'minor1',
+            'minor2',
+            'minor3',
+            'minor4',
+            'minor5',
+            'minor6',
+          ]) {
+            expect(
+              owners.values.where((owner) => owner == factionId).length,
+              greaterThan(0),
+              reason: 'seed=$seed $factionId should own at least one province',
+            );
+          }
+          final landmassByProvince = _landmassIdsForTopology(
+            result.topologyByRegion[kRegionOldWorld]!,
+          );
+          _expectLockedRoleSplit(
+            owners: owners,
+            landmassByProvince: landmassByProvince,
+          );
+          final owTileMap = result.tileMapByRegion[kRegionOldWorld]!;
+          final owTopology = result.topologyByRegion[kRegionOldWorld]!;
           expect(
-            owners.values.where((owner) => owner == gpId).length,
-            7,
-            reason: 'seed=$seed $gpId count',
+            _hasEnclosedSeaPocket(owTileMap, owTopology),
+            isFalse,
+            reason: 'seed=$seed should not contain enclosed lakes',
           );
         }
-        for (final minorId in [
-          'minor1',
-          'minor2',
-          'minor3',
-          'minor4',
-          'minor5',
-          'minor6',
-        ]) {
-          expect(
-            owners.values.where((owner) => owner == minorId).length,
-            3,
-            reason: 'seed=$seed $minorId count',
-          );
-        }
-      }
-    });
+      },
+    );
   });
 }
 
@@ -494,4 +514,134 @@ Map<String, Set<String>> _provincePpNeighboursForInitGameTest(
     neighbours[b]!.add(a);
   }
   return neighbours;
+}
+
+Map<String, int> _landmassIdsForTopology(MapTopology topology) {
+  final neighbours = _provincePpNeighboursForInitGameTest(topology);
+  final landmassByProvince = <String, int>{};
+  var landmassId = 0;
+  final provinceIds = neighbours.keys.toList()..sort();
+  for (final provinceId in provinceIds) {
+    if (landmassByProvince.containsKey(provinceId)) continue;
+    final stack = <String>[provinceId];
+    landmassByProvince[provinceId] = landmassId;
+    while (stack.isNotEmpty) {
+      final current = stack.removeLast();
+      for (final next in neighbours[current] ?? const <String>{}) {
+        if (landmassByProvince.containsKey(next)) continue;
+        landmassByProvince[next] = landmassId;
+        stack.add(next);
+      }
+    }
+    landmassId++;
+  }
+  return landmassByProvince;
+}
+
+int _singleOwnedLandmass(
+  String factionId,
+  Map<String, String> owners,
+  Map<String, int> landmassByProvince,
+) {
+  final ownedLandmasses = owners.entries
+      .where((entry) => entry.value == factionId)
+      .map((entry) => landmassByProvince[entry.key])
+      .whereType<int>()
+      .toSet();
+  expect(
+    ownedLandmasses.length,
+    1,
+    reason: '$factionId should own one landmass',
+  );
+  return ownedLandmasses.single;
+}
+
+void _expectLockedRoleSplit({
+  required Map<String, String> owners,
+  required Map<String, int> landmassByProvince,
+}) {
+  final gpLandmassById = {
+    for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6'])
+      gpId: _singleOwnedLandmass(gpId, owners, landmassByProvince),
+  };
+  final minorLandmassById = {
+    for (final minorId in [
+      'minor1',
+      'minor2',
+      'minor3',
+      'minor4',
+      'minor5',
+      'minor6',
+    ])
+      minorId: _singleOwnedLandmass(minorId, owners, landmassByProvince),
+  };
+  final factionCountByLandmass = <int, ({int gp, int minor})>{};
+  for (final lm in landmassByProvince.values.toSet()) {
+    factionCountByLandmass[lm] = (gp: 0, minor: 0);
+  }
+  for (final lm in gpLandmassById.values) {
+    final counts = factionCountByLandmass[lm]!;
+    factionCountByLandmass[lm] = (gp: counts.gp + 1, minor: counts.minor);
+  }
+  for (final lm in minorLandmassById.values) {
+    final counts = factionCountByLandmass[lm]!;
+    factionCountByLandmass[lm] = (gp: counts.gp, minor: counts.minor + 1);
+  }
+  final observedSplit = factionCountByLandmass.values.toList()
+    ..sort((a, b) {
+      final gpCmp = b.gp.compareTo(a.gp);
+      if (gpCmp != 0) return gpCmp;
+      return b.minor.compareTo(a.minor);
+    });
+  expect(observedSplit, [
+    (gp: 2, minor: 1),
+    (gp: 2, minor: 1),
+    (gp: 1, minor: 2),
+    (gp: 1, minor: 2),
+  ]);
+}
+
+bool _hasEnclosedSeaPocket(TileMapResult map, MapTopology topology) {
+  final provinceIds = {
+    for (final node in topology.nodes)
+      if (node.type == TopologyNodeType.province) node.id,
+  };
+  final isSea = List.generate(
+    map.height,
+    (y) =>
+        List.generate(map.width, (x) => !provinceIds.contains(map.cell(x, y))),
+  );
+  final visited = <String>{};
+  final stack = <(int x, int y)>[];
+  void pushIfSea(int x, int y) {
+    if (x < 0 || x >= map.width || y < 0 || y >= map.height) return;
+    if (!isSea[y][x]) return;
+    final key = '$x|$y';
+    if (!visited.add(key)) return;
+    stack.add((x, y));
+  }
+
+  for (var x = 0; x < map.width; x++) {
+    pushIfSea(x, 0);
+    pushIfSea(x, map.height - 1);
+  }
+  for (var y = 0; y < map.height; y++) {
+    pushIfSea(0, y);
+    pushIfSea(map.width - 1, y);
+  }
+  while (stack.isNotEmpty) {
+    final (x, y) = stack.removeLast();
+    pushIfSea(x - 1, y);
+    pushIfSea(x + 1, y);
+    pushIfSea(x, y - 1);
+    pushIfSea(x, y + 1);
+  }
+
+  for (var y = 0; y < map.height; y++) {
+    for (var x = 0; x < map.width; x++) {
+      if (!isSea[y][x]) continue;
+      if (!visited.contains('$x|$y')) return true;
+    }
+  }
+  return false;
 }
