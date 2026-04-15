@@ -388,7 +388,10 @@ Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
       matching: find.byIcon(Icons.expand_more),
     );
     if (expandIcon.evaluate().isNotEmpty) {
-      await tester.tap(expandIcon.first);
+      final iconHit = expandIcon.first;
+      await tester.ensureVisible(iconHit);
+      await _pumpFor(tester, const Duration(milliseconds: 80));
+      await tester.tap(iconHit);
       await _pumpFor(tester, const Duration(milliseconds: 250));
     }
   }
