@@ -50,6 +50,30 @@ Future<void> _waitUntilFound(
   );
 }
 
+Future<void> _dismissTransientUi(WidgetTester tester) async {
+  if (find.byType(BottomSheet).evaluate().isNotEmpty) {
+    await _closeBottomSheet(tester);
+  }
+  if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
+    final closeCandidates = <Finder>[
+      find.text('Cancel'),
+      find.text('Close'),
+      find.byIcon(Icons.close),
+      find.byIcon(Icons.arrow_back),
+    ];
+    for (final candidate in closeCandidates) {
+      final tappable = candidate.hitTestable();
+      if (tappable.evaluate().isNotEmpty) {
+        await tester.tap(tappable.first, warnIfMissed: false);
+        await _pumpFor(tester, const Duration(milliseconds: 150));
+        return;
+      }
+    }
+    await tester.binding.handlePopRoute();
+    await _pumpFor(tester, const Duration(milliseconds: 150));
+  }
+}
+
 Future<void> _openCivilianPanel(
   WidgetTester tester, {
   Duration timeout = const Duration(seconds: 20),
@@ -62,9 +86,8 @@ Future<void> _openCivilianPanel(
   Future<bool> tryOpen(Finder trigger) async {
     final tappable = trigger.hitTestable();
     if (tappable.evaluate().isEmpty) {
-      // Dismiss blocking overlays (for example, side menu scrim) before retrying.
-      await tester.tapAt(const Offset(1200, 360));
-      await _pumpFor(tester, const Duration(milliseconds: 120));
+      // Dismiss blocking overlays/dialogs before retrying.
+      await _dismissTransientUi(tester);
       return false;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
@@ -118,9 +141,8 @@ Future<void> _openPanelFromMarker(
     }
     final tappable = markerButton.hitTestable();
     if (tappable.evaluate().isEmpty) {
-      // Clear transient overlays/scrims that can block marker taps.
-      await tester.tapAt(const Offset(1200, 360));
-      await _pumpFor(tester, const Duration(milliseconds: 150));
+      // Clear transient overlays/dialogs that can block marker taps.
+      await _dismissTransientUi(tester);
       continue;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
@@ -312,9 +334,8 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
         return;
       }
     } else {
-      // Dismiss transient overlays/scrims and retry opening from the rail.
-      await tester.tapAt(const Offset(1200, 360));
-      await _pumpFor(tester, const Duration(milliseconds: 150));
+      // Dismiss transient overlays/dialogs and retry opening from the rail.
+      await _dismissTransientUi(tester);
     }
   }
 
@@ -348,35 +369,21 @@ Future<void> _tapAssignOnCivilianRowWithTitle(
   final root = find.byKey(kCtE2ECivilianPanelRootKey);
   final listView = find.descendant(of: root, matching: find.byType(ListView));
   expect(listView, findsOneWidget);
-  for (var attempt = 0; attempt < 25; attempt++) {
-    final titleMatches = find.descendant(
-      of: root,
-      matching: find.text(unitTypeTitle),
-    );
-    final count = titleMatches.evaluate().length;
-    for (var i = 0; i < count; i++) {
-      final listTile = find.ancestor(
-        of: titleMatches.at(i),
-        matching: find.byType(ListTile),
-      );
-      final assign = find.descendant(
-        of: listTile,
-        matching: find.text('Assign'),
-      );
-      if (assign.evaluate().isNotEmpty) {
-        final assignHit = assign.first;
-        await tester.scrollUntilVisible(assignHit, 120);
-        await tester.ensureVisible(assignHit);
-        await _pumpFor(tester, const Duration(milliseconds: 100));
-        await tester.tap(assignHit);
-        await _pumpFor(tester, const Duration(milliseconds: 300));
-        return;
-      }
-    }
-    await tester.drag(listView, const Offset(0, -120));
-    await _pumpFor(tester, const Duration(milliseconds: 120));
-  }
-  fail('No idle Assign row for unit type "$unitTypeTitle" in civilian panel');
+  final title = find.descendant(of: root, matching: find.text(unitTypeTitle));
+  await tester.scrollUntilVisible(
+    title.first,
+    120,
+    scrollable: listView.first,
+  );
+  await tester.ensureVisible(title.first);
+  final listTile = find.ancestor(of: title.first, matching: find.byType(ListTile));
+  final assign = find.descendant(of: listTile, matching: find.text('Assign'));
+  expect(assign, findsWidgets);
+  final assignHit = assign.first;
+  await tester.ensureVisible(assignHit);
+  await _pumpFor(tester, const Duration(milliseconds: 100));
+  await tester.tap(assignHit);
+  await _pumpFor(tester, const Duration(milliseconds: 300));
 }
 
 Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
