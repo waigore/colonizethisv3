@@ -21,7 +21,7 @@ const int _kLockedGreatPowerCount = 6;
 const int _kLockedMinorNationCount = 6;
 const int _kLockedOldWorldProvinceCount = 60;
 const int _kLockedOldWorldContinentCount = 4;
-const int _kLockedOldWorldRetryCount = 5;
+const int _kLockedOldWorldRetryCount = 50;
 
 /// Result of running init game.
 class InitGameResult {
@@ -286,7 +286,9 @@ GameSetupConfig _withLockedOldWorldConfig(GameSetupConfig config) {
   required TileMapRegionGenerator generateRegionFn,
 }) {
   for (var attempt = 0; attempt <= _kLockedOldWorldRetryCount; attempt++) {
-    final attemptSeed = effectiveSeed + attempt;
+    final attemptSeed = attempt == 0
+        ? effectiveSeed
+        : Object.hash(0x4f575245, effectiveSeed, attempt) & 0x7fffffff;
     final mapGenParams = MapGenerationParams(
       numContinents: _kLockedOldWorldContinentCount,
       seed: attemptSeed,
@@ -354,7 +356,14 @@ bool _matchesLockedOldWorldPartition(MapTopology topology) {
     );
   }
   componentSizes.sort();
-  return componentSizes.length == _kLockedOldWorldContinentCount;
+  if (componentSizes.length != _kLockedOldWorldContinentCount) {
+    return false;
+  }
+  componentSizes.sort();
+  return componentSizes[0] == 13 &&
+      componentSizes[1] == 13 &&
+      componentSizes[2] == 17 &&
+      componentSizes[3] == 17;
 }
 
 int _lockedOwConnectedComponentSize({

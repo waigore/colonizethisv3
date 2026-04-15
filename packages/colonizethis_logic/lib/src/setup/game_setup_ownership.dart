@@ -264,18 +264,24 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
         'locked OW continent-role assignment skipped; partition is $landmassSizes',
       );
     } else {
-      final continentFactions = <int, List<String>>{
-        landmassesByRole[0]: [gpIds[0], gpIds[1], minorIds[0]],
-        landmassesByRole[1]: [gpIds[2], gpIds[3], minorIds[1]],
-        landmassesByRole[2]: [gpIds[4], minorIds[2], minorIds[3]],
-        landmassesByRole[3]: [gpIds[5], minorIds[4], minorIds[5]],
+      const gpTarget = 7;
+      const minorTarget = 3;
+      final requiredByLandmass = <int, int>{
+        landmassesByRole[0]: gpTarget + gpTarget + minorTarget, // 17
+        landmassesByRole[1]: gpTarget + gpTarget + minorTarget, // 17
+        landmassesByRole[2]: gpTarget + minorTarget + minorTarget, // 13
+        landmassesByRole[3]: gpTarget + minorTarget + minorTarget, // 13
       };
-      final targetPerFaction = <String, int>{};
-      for (final entry in continentFactions.entries) {
-        final lm = entry.key;
-        final factions = entry.value;
-        final fair = computeFairTargets(factions, landmassSizes[lm]!);
-        targetPerFaction.addAll(fair);
+      for (final entry in requiredByLandmass.entries) {
+        final actual = landmassSizes[entry.key] ?? 0;
+        if (actual < entry.value) {
+          throw SetupTopologyDataException(
+            code: 'locked_ow_role_split_infeasible',
+            details:
+                'Landmass ${entry.key} has $actual provinces but role split needs '
+                '${entry.value} for hard quotas (GP=7, minor=3).',
+          );
+        }
       }
       final gpLandmassAssignments = <String, int>{
         gpIds[0]: landmassesByRole[0],
@@ -286,7 +292,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
         gpIds[5]: landmassesByRole[3],
       };
       final targetPerGp = <String, int>{
-        for (final gpId in gpIds) gpId: targetPerFaction[gpId]!,
+        for (final gpId in gpIds) gpId: gpTarget,
       };
       final gpSeeds = _selectGpSeedsForLandmass(
         gpIdsInAssignmentOrder: gpIds,
@@ -317,7 +323,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
         minorIds[5]: landmassesByRole[3],
       };
       final targetPerMinor = <String, int>{
-        for (final minorId in minorIds) minorId: targetPerFaction[minorId]!,
+        for (final minorId in minorIds) minorId: minorTarget,
       };
       final minorSeeds = _selectFactionSeedsForLandmass(
         factionIdsInAssignmentOrder: minorIds,

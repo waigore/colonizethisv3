@@ -27,7 +27,7 @@ const int _kLockedGreatPowerCount = 6;
 const int _kLockedMinorNationCount = 6;
 const int _kLockedOldWorldProvinceCount = 60;
 const int _kLockedOldWorldContinentCount = 4;
-const int _kLockedOldWorldRetryCount = 5;
+const int _kLockedOldWorldRetryCount = 50;
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
 /// Phase 2: createNewGame uses full game-setup pipeline; nextTurn requires cached/persisted map data.
@@ -449,7 +449,9 @@ class GameService {
     int effectiveSeed,
   ) {
     for (var attempt = 0; attempt <= _kLockedOldWorldRetryCount; attempt++) {
-      final attemptSeed = effectiveSeed + attempt;
+      final attemptSeed = attempt == 0
+          ? effectiveSeed
+          : Object.hash(0x4f575245, effectiveSeed, attempt) & 0x7fffffff;
       final mapGenParams = MapGenerationParams(
         numContinents: _kLockedOldWorldContinentCount,
         seed: attemptSeed,
@@ -636,7 +638,11 @@ bool _matchesLockedOldWorldPartition(MapTopology topology) {
       ),
     );
   }
-  return sizes.length == _kLockedOldWorldContinentCount;
+  if (sizes.length != _kLockedOldWorldContinentCount) {
+    return false;
+  }
+  sizes.sort();
+  return sizes[0] == 13 && sizes[1] == 13 && sizes[2] == 17 && sizes[3] == 17;
 }
 
 int _lockedOwConnectedComponentSize({

@@ -87,6 +87,20 @@ Map<String, int> buildProvinceToContinentMap(
 ) {
   if (numProvinces <= 0 || numContinents <= 0) return {};
   final result = <String, int>{};
+  // Locked OW setup profile requires hard quota feasibility for strict role split:
+  // two continents sized for 2 GP + 1 minor (17), two for 1 GP + 2 minors (13).
+  if (numProvinces == 60 && numContinents == 4) {
+    final lockedSizes = [17, 17, 13, 13];
+    var idx = 0;
+    for (var c = 0; c < lockedSizes.length; c++) {
+      final size = lockedSizes[c];
+      for (var i = 0; i < size; i++) {
+        result['p${idx + 1}'] = c;
+        idx++;
+      }
+    }
+    return result;
+  }
   final continentSize = numProvinces ~/ numContinents;
   final remainder = numProvinces % numContinents;
   var idx = 0;

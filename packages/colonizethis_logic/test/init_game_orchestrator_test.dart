@@ -364,13 +364,14 @@ void main() {
           for (final p in game.worldState.oldWorld.provinces)
             ProvinceId.localIdFrom(p.id): p.ownerId ?? '',
         };
-        for (final factionId in [
-          'gp1',
-          'gp2',
-          'gp3',
-          'gp4',
-          'gp5',
-          'gp6',
+        for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6']) {
+          expect(
+            owLocalOwners.values.where((owner) => owner == gpId).length,
+            7,
+            reason: '$gpId should own exactly 7 OW provinces',
+          );
+        }
+        for (final minorId in [
           'minor1',
           'minor2',
           'minor3',
@@ -379,9 +380,9 @@ void main() {
           'minor6',
         ]) {
           expect(
-            owLocalOwners.values.where((owner) => owner == factionId).length,
-            greaterThan(0),
-            reason: '$factionId should own at least one OW province',
+            owLocalOwners.values.where((owner) => owner == minorId).length,
+            3,
+            reason: '$minorId should own exactly 3 OW provinces',
           );
         }
         final topo = result.topologyByRegion[kRegionOldWorld]!;
@@ -456,13 +457,14 @@ void main() {
             for (final p in result.game.worldState.oldWorld.provinces)
               ProvinceId.localIdFrom(p.id): p.ownerId ?? '',
           };
-          for (final factionId in [
-            'gp1',
-            'gp2',
-            'gp3',
-            'gp4',
-            'gp5',
-            'gp6',
+          for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6']) {
+            expect(
+              owners.values.where((owner) => owner == gpId).length,
+              7,
+              reason: 'seed=$seed $gpId should own exactly 7 provinces',
+            );
+          }
+          for (final minorId in [
             'minor1',
             'minor2',
             'minor3',
@@ -471,9 +473,9 @@ void main() {
             'minor6',
           ]) {
             expect(
-              owners.values.where((owner) => owner == factionId).length,
-              greaterThan(0),
-              reason: 'seed=$seed $factionId should own at least one province',
+              owners.values.where((owner) => owner == minorId).length,
+              3,
+              reason: 'seed=$seed $minorId should own exactly 3 provinces',
             );
           }
           final landmassByProvince = _landmassIdsForTopology(

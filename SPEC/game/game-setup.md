@@ -10,9 +10,9 @@ Pre-game phases that configure, generate, and populate the game world before tur
 
 **Config:** Old World setup is locked for all map-generating clients to one algorithm profile: **6 Great Powers**, **6 Minor Nations**, **60 Old World provinces**, and **4 continents**. Tribe count, New World province count, and seed remain configurable. Values are resolved into `GameSetupConfig` (colonizethis_data). **current product:** There is no Base → Difficulty → Scenario JSON merge yet; values come from **program defaults** plus client inputs, then the locked Old World profile is applied in setup orchestration. Full ruleset-backed resolution is specified in [ruleset-config.md](ruleset-config.md) and tracked with ruleset-loader work (e.g. #57 / #58). These locked Old World values apply whether **`enforceFairGpOldWorldAssignment`** is **false** or **true**.
 
-**World Generation:** Generate procedural maps for Old World and New World (one per region). Old World generation must produce exactly **four** P–P continents (order-insensitive by size). Lake filling must consume enclosed inland seas by subsuming their cells into bordering landmass tiles so no enclosed lake pockets remain. Setup retries Old World generation with deterministic seed offsets for up to **5** retries (6 attempts total including initial). If no attempt yields 4 continents, setup fails with explicit error `old_world_partition_retry_exhausted`. Map seed: if configured seed is non-zero, use it directly; if zero or missing, derive from current time in milliseconds.
+**World Generation:** Generate procedural maps for Old World and New World (one per region). Old World generation must produce exactly **four** P–P continents with sorted sizes **`13, 13, 17, 17`** (equivalently `17/17/13/13`, order-insensitive). Lake filling must consume enclosed inland seas by subsuming their cells into bordering landmass tiles so no enclosed lake pockets remain. Setup retries Old World generation with deterministic seed offsets for up to **50** retries (51 attempts total including initial). If no attempt yields that 4-continent layout, setup fails with explicit error `old_world_partition_retry_exhausted`. Map seed: if configured seed is non-zero, use it directly; if zero or missing, derive from current time in milliseconds.
 
-**GP Assignment:** Assign Old World provinces to Great Powers in contiguous clusters, with each GP restricted to one continent. In continent-role allocation, two continents host **2 GPs + 1 Minor** each, and two continents host **1 GP + 2 Minors** each.
+**GP Assignment:** Assign Old World provinces to Great Powers in contiguous clusters, with each GP restricted to one continent. **Hard requirement:** each GP owns exactly **7** Old World provinces (6 GPs = 42 total). In continent-role allocation, two continents host **2 GPs + 1 Minor** each, and two continents host **1 GP + 2 Minors** each.
 
 **One continent per Great Power (hard rule when fair assignment is on):** **Continent** = P–P connected land component in [map-topology.md](map-topology.md). When **`enforceFairGpOldWorldAssignment`** is **true**, each GP’s OW provinces after GP Assignment, repair, and retries lie in **one** component only and form **one** P–P connected component among provinces that GP owns. When **`enforceFairGpOldWorldAssignment`** is **false**, each GP still has provinces on **one** P–P landmass only (assignment constraint unchanged), but a GP may own **multiple disconnected** P–P components on that landmass until/unless the player enables fair assignment on a future run.
 
@@ -21,6 +21,8 @@ Pre-game phases that configure, generate, and populate the game world before tur
 - **Feasibility:** If targets, minor reservation, and sea-bound slots cannot be satisfied without violating the rule, setup **fails** with a clear error (no cross-continent GP fallback).
 
 **Minor Nation Assignment:** Assign the remaining **18** Old World provinces to Minor Nations as contiguous clusters with exact target **3 provinces per minor** (6 minors). Minor assignment must preserve the strict continent-role split (two continents with 1 minor each; two continents with 2 minors each). Capital assigned at setup (any owned province; sea-bound not required).
+
+**Quota invariants (hard requirements):** Old World ownership quotas are fixed to **7 per GP** and **3 per minor**, totaling exactly **60** assigned Old World provinces. These invariants apply whether **`enforceFairGpOldWorldAssignment`** is **false** or **true**.
 
 **GP land connectivity repair (Old World only):** When **`enforceFairGpOldWorldAssignment`** is **true**, after GP and Minor Nation assignment, each Great Power’s owned provinces must form one P–P connected component. Repair uses deterministic **DFS over ownership swap states**, where each edge is one legal **same-landmass** 1:1 swap between a GP province and a partner province owned by another GP or a Minor Nation. The search preserves one-landmass-per-GP and at-least-one-sea-bound-per-GP. If DFS cannot reach a valid connected state within repair limits, setup fails with `gp_land_connectivity_exhausted`. The repair path does **not** trigger map regeneration or assignment regeneration loops.
 
@@ -80,6 +82,10 @@ Pre-game phases that configure, generate, and populate the game world before tur
 - Given GP Assignment has completed for the Old World  
   When ownership is checked against P–P continents per [map-topology.md](map-topology.md)  
   Then each Great Power’s provinces occupy **one** continent only; if GP count exceeds continent count, multiple GPs may share a continent but no GP spans two.
+
+- Given setup completes Old World ownership assignment  
+  When ownership counts are inspected  
+  Then each Great Power owns exactly **7** Old World provinces, each Minor Nation owns exactly **3** Old World provinces, and the owned-province total is exactly **60**.
 
 - Given fair targets, minor reservation, and sea-bound seeds cannot all be satisfied per the one-continent-per-GP rule  
   When the System runs GP Assignment  
