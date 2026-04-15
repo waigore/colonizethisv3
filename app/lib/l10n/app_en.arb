@@ -3139,5 +3139,18 @@
   "techEffectSummary_wind_saw_mill_1": "Unlocks: Circular Saw",
   "@techEffectSummary_wind_saw_mill_1": {
     "description": "Tech tree dialog effect line (techEffectSummary_wind_saw_mill_1)."
+  },
+  "playerTurnFeed_eventsChip": "Events ({count})",
+  "@playerTurnFeed_eventsChip": {
+    "description": "Label for narrow-layout player turn event feed chip.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playerTurnFeed_eventsTitle": "Events",
+  "@playerTurnFeed_eventsTitle": {
+    "description": "Title for the narrow-layout player turn events dialog."
   }
 }

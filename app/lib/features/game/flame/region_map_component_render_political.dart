@@ -39,6 +39,8 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
       String provinceId,
       Color plateColor,
       bool isCapital,
+      int? avoidTileX,
+      int? avoidTileY,
     })
   >
   _computeProvinceLabels() {
@@ -60,8 +62,14 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
             String provinceId,
             Color plateColor,
             bool isCapital,
+            int? avoidTileX,
+            int? avoidTileY,
           })
         >[];
+    final townMarkerByProvinceId = <String, TownMarkerView>{};
+    for (final marker in region.townMarkers) {
+      townMarkerByProvinceId.putIfAbsent(marker.provinceId, () => marker);
+    }
     final capitalProvinceIds = <String>{};
     for (final cap in region.capitalMarkers) {
       if (cap.x < 0 ||
@@ -88,6 +96,14 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
       final n = cells.length;
       final cx = sx / n;
       final cy = sy / n;
+      var tileSx = 0;
+      var tileSy = 0;
+      for (final c in cells) {
+        tileSx += c.x;
+        tileSy += c.y;
+      }
+      final centroidTileX = (tileSx / n).round();
+      final centroidTileY = (tileSy / n).round();
       String? name;
       for (final c in cells) {
         final dn = c.provinceDisplayName;
@@ -98,6 +114,11 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
       }
       final text = name ?? e.key;
       final prefixedId = '${region.regionId}|${e.key}';
+      final townMarker = townMarkerByProvinceId[e.key];
+      final shouldAvoidTownTile =
+          townMarker != null &&
+          townMarker.x == centroidTileX &&
+          townMarker.y == centroidTileY;
       out.add((
         cx: cx,
         cy: cy,
@@ -108,6 +129,8 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
           qualifyingLandCells: cells,
         ),
         isCapital: capitalProvinceIds.contains(prefixedId),
+        avoidTileX: shouldAvoidTownTile ? townMarker!.x : null,
+        avoidTileY: shouldAvoidTownTile ? townMarker!.y : null,
       ));
     }
     return out;
@@ -191,9 +214,23 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
       const pad = _provinceLabelPlatePaddingPx;
       final bw = contentWidth + pad * 2;
       final bh = contentHeight + pad * 2;
+      final center = item.avoidTileX != null && item.avoidTileY != null
+          ? resolveSeaZoneNamePlateCenterWorld(
+              centroidTileX: item.avoidTileX!,
+              centroidTileY: item.avoidTileY!,
+              avoidedTileX: item.avoidTileX!,
+              avoidedTileY: item.avoidTileY!,
+              cellSize: cellSize,
+              gridWidth: region.width,
+              gridHeight: region.height,
+              plateWidthLogicalPx: bw,
+              plateHeightLogicalPx: bh,
+              cameraZoom: cameraZoom,
+            )
+          : Offset(item.cx, item.cy);
 
       canvas.save();
-      canvas.translate(item.cx, item.cy);
+      canvas.translate(center.dx, center.dy);
       canvas.scale(invZ);
       final rect = RRect.fromRectAndRadius(
         Rect.fromCenter(center: Offset.zero, width: bw, height: bh),
