@@ -21,7 +21,8 @@ Cursor rules are the source of truth for implementation and review behavior.
 | Rule file | Applies to | Focus |
 |-----------|------------|-------|
 | `colonizethis-tools.mdc` | `tool/**` | Thin facades + Melos execution + docs |
-| `colonizethis-testing.mdc` | `**/*_test.dart`, `**/test/**/*.dart` | Test layers, critical paths, coverage policy |
+| `colonizethis-testing.mdc` | `**/*_test.dart`, `**/test/**/*.dart`, `**/integration_test/**/*.dart` | Test layers, critical paths, coverage policy |
+| `colonizethis-e2e-ui-stability.mdc` | `**/integration_test/**/*.dart`, `**/*_e2e_test.dart` | UI e2e stability: deterministic locators and visibility-first interactions |
 | `colonizethis-ui-design.mdc` | `SPEC/ui/**`, `**/lib/widgets/**`, `**/lib/ui/**` | UI specs, wireframes, Widgetbook/catalog, pixel-art process |
 | `colonizethis-component-structure.mdc` | `**/*.dart` | Folder conventions, extraction/reuse, naming |
 | `colonizethis-code-review.mdc` | `**/*.dart` | Review checklist and quality gates |
@@ -40,8 +41,9 @@ Multiple context-specific rules may apply to a single file (e.g., a UI widget ma
 3. **Thin screens**: Prefer reuse; keep screens thin and delegate logic to services/controllers/components. See `colonizethis-component-structure.mdc`.
 4. **Coverage policy**: **90% for logic/ai/map packages; 80% everywhere else**. See `colonizethis-testing.mdc`.
 5. **Widget tests**: Run app/ctdev widget tests with `flutter test` (or `melos run test_app`), not `dart test app/...`. See `colonizethis-testing.mdc`.
-6. **Logging**: Policy and annexes: `SPEC/program/logging/logging.md`; ctdev file/Sim Log: `SPEC/program/ctdev-logging.md`; use `basic_logger_file` per `colonizethis-logging-file.mdc` where file sinks apply.
-7. **Cross-panel UI orchestration**: "Panels" refers to app panels/dialogs/components. Panels should **not** directly invoke or depend on each other unless absolutely necessary. Use `AppEventBus` for cross-panel communication. See `SPEC/program/app-ui-wiring.md` and `SPEC/program/app-event-bus.md`.
+6. **E2E UI stability**: In UI-heavy e2e tests, prefer deterministic widget locators, scope finders to roots, and ensure visibility before taps; avoid coordinate-based gestures unless unavoidable. See `colonizethis-e2e-ui-stability.mdc`.
+7. **Logging**: Policy and annexes: `SPEC/program/logging/logging.md`; ctdev file/Sim Log: `SPEC/program/ctdev-logging.md`; use `basic_logger_file` per `colonizethis-logging-file.mdc` where file sinks apply.
+8. **Cross-panel UI orchestration**: "Panels" refers to app panels/dialogs/components. Panels should **not** directly invoke or depend on each other unless absolutely necessary. Use `AppEventBus` for cross-panel communication. See `SPEC/program/app-ui-wiring.md` and `SPEC/program/app-event-bus.md`.
 
 For complete details, read the relevant rule file(s) in `.cursor/rules/`.
 

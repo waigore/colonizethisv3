@@ -346,22 +346,34 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
 }
 
 Future<void> _tapFirstAssignInCivilianPanel(WidgetTester tester) async {
+  final root = find.byKey(kCtE2ECivilianPanelRootKey);
+  final listView = find.descendant(of: root, matching: find.byType(ListView));
+  expect(listView, findsOneWidget);
+  final panelScrollable = find.descendant(
+    of: listView,
+    matching: find.byType(Scrollable),
+  );
+  expect(panelScrollable, findsOneWidget);
   final assign = find.descendant(
-    of: find.byKey(kCtE2ECivilianPanelRootKey),
+    of: root,
     matching: find.text('Assign'),
   );
   expect(assign, findsWidgets);
   final firstAssign = assign.first;
-  await tester.scrollUntilVisible(firstAssign, 120);
+  await tester.scrollUntilVisible(
+    firstAssign,
+    120,
+    scrollable: panelScrollable,
+  );
   await tester.ensureVisible(firstAssign);
   await _pumpFor(tester, const Duration(milliseconds: 100));
   await tester.tap(firstAssign);
   await _pumpFor(tester, const Duration(milliseconds: 300));
 }
 
-/// Taps Assign on a visible [ListTile] whose title is exactly [unitTypeTitle]
-/// (e.g. [Unit.type] like `Explorer`). Scrolls the panel [ListView] between
-/// attempts so rows below the fold can be reached.
+/// Taps Assign on a [ListTile] whose title is exactly [unitTypeTitle]
+/// (e.g. [Unit.type] like `Explorer`). Scrolls the panel [Scrollable] until the
+/// row is visible, then taps Assign.
 Future<void> _tapAssignOnCivilianRowWithTitle(
   WidgetTester tester,
   String unitTypeTitle,
@@ -369,11 +381,16 @@ Future<void> _tapAssignOnCivilianRowWithTitle(
   final root = find.byKey(kCtE2ECivilianPanelRootKey);
   final listView = find.descendant(of: root, matching: find.byType(ListView));
   expect(listView, findsOneWidget);
+  final panelScrollable = find.descendant(
+    of: listView,
+    matching: find.byType(Scrollable),
+  );
+  expect(panelScrollable, findsOneWidget);
   final title = find.descendant(of: root, matching: find.text(unitTypeTitle));
   await tester.scrollUntilVisible(
     title.first,
     120,
-    scrollable: listView.first,
+    scrollable: panelScrollable,
   );
   await tester.ensureVisible(title.first);
   final listTile = find.ancestor(of: title.first, matching: find.byType(ListTile));
