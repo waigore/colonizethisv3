@@ -386,21 +386,39 @@ Future<void> _tapAssignOnCivilianRowWithTitle(
     matching: find.byType(Scrollable),
   );
   expect(panelScrollable, findsOneWidget);
-  final title = find.descendant(of: root, matching: find.text(unitTypeTitle));
-  await tester.scrollUntilVisible(
-    title.first,
-    120,
-    scrollable: panelScrollable,
+  // Scope titles to the list: several units share the same display title
+  // (e.g. multiple `Explorer` rows); `find.text` under the root can match
+  // unrelated widgets and break `scrollUntilVisible`.
+  final titlesInList = find.descendant(
+    of: listView,
+    matching: find.text(unitTypeTitle),
   );
-  await tester.ensureVisible(title.first);
-  final listTile = find.ancestor(of: title.first, matching: find.byType(ListTile));
-  final assign = find.descendant(of: listTile, matching: find.text('Assign'));
-  expect(assign, findsWidgets);
-  final assignHit = assign.first;
-  await tester.ensureVisible(assignHit);
-  await _pumpFor(tester, const Duration(milliseconds: 100));
-  await tester.tap(assignHit);
-  await _pumpFor(tester, const Duration(milliseconds: 300));
+  expect(titlesInList, findsWidgets);
+  final n = titlesInList.evaluate().length;
+  for (var i = 0; i < n; i++) {
+    final titleAt = titlesInList.at(i);
+    await tester.scrollUntilVisible(
+      titleAt,
+      120,
+      scrollable: panelScrollable,
+    );
+    await tester.ensureVisible(titleAt);
+    final listTile = find.ancestor(
+      of: titleAt,
+      matching: find.byType(ListTile),
+    );
+    final assign = find.descendant(of: listTile, matching: find.text('Assign'));
+    if (assign.evaluate().isEmpty) {
+      continue;
+    }
+    final assignHit = assign.first;
+    await tester.ensureVisible(assignHit);
+    await _pumpFor(tester, const Duration(milliseconds: 100));
+    await tester.tap(assignHit);
+    await _pumpFor(tester, const Duration(milliseconds: 300));
+    return;
+  }
+  fail('No idle Assign row for unit type "$unitTypeTitle" in civilian panel');
 }
 
 Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
