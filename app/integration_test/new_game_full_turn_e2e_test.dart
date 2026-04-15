@@ -330,8 +330,11 @@ Future<void> _tapFirstAssignInCivilianPanel(WidgetTester tester) async {
     matching: find.text('Assign'),
   );
   expect(assign, findsWidgets);
-  await tester.ensureVisible(assign.first);
-  await tester.tap(assign.first);
+  final firstAssign = assign.first;
+  await tester.scrollUntilVisible(firstAssign, 120);
+  await tester.ensureVisible(firstAssign);
+  await _pumpFor(tester, const Duration(milliseconds: 100));
+  await tester.tap(firstAssign);
   await _pumpFor(tester, const Duration(milliseconds: 300));
 }
 
@@ -361,8 +364,11 @@ Future<void> _tapAssignOnCivilianRowWithTitle(
         matching: find.text('Assign'),
       );
       if (assign.evaluate().isNotEmpty) {
-        await tester.ensureVisible(assign);
-        await tester.tap(assign);
+        final assignHit = assign.first;
+        await tester.scrollUntilVisible(assignHit, 120);
+        await tester.ensureVisible(assignHit);
+        await _pumpFor(tester, const Duration(milliseconds: 100));
+        await tester.tap(assignHit);
         await _pumpFor(tester, const Duration(milliseconds: 300));
         return;
       }
