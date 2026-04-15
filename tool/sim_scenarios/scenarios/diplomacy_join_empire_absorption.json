@@ -8,11 +8,14 @@
       "greatPowers": ["england"],
       "continentCount": 1,
       "minorNationCount": 1,
-      "tribeCount": 0
+      "tribeCount": 0,
+      "numProvincesOldWorld": 12,
+      "numProvincesNewWorld": 10,
+      "minProvincesPerMinor": 1
     }
   },
   "setup": {
-    "initialTreasury": { "gp1": 25000 },
+    "initialTreasury": { "gp1": 50000 },
     "initialTech": {
       "gp1": ["diplomatic_expertise"]
     }

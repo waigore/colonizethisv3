@@ -65,6 +65,7 @@ class InitGameOptions {
     this.cellSize = 24,
     this.skipFillLakes = false,
     this.renderPng = true,
+    this.enforceLockedOldWorldProfile = true,
     this.greatPowerColorOverride,
   });
 
@@ -78,6 +79,9 @@ class InitGameOptions {
   /// markdown are still produced.
   final bool renderPng;
 
+  /// When true, normalizes setup to the locked Old World profile (6/6/60/3).
+  final bool enforceLockedOldWorldProfile;
+
   /// Optional GP id → (r, g, b) for map ownership colours; stored on Game and in result.
   final Map<String, (int r, int g, int b)>? greatPowerColorOverride;
 }
@@ -90,7 +94,9 @@ InitGameResult runInitGame({
   InitGameOptions options = const InitGameOptions(),
   TileMapRegionGenerator? generateRegion,
 }) {
-  final effectiveConfig = _withLockedOldWorldConfig(config);
+  final effectiveConfig = options.enforceLockedOldWorldProfile
+      ? _withLockedOldWorldConfig(config)
+      : config;
   if (effectiveConfig.numProvincesOldWorld < effectiveConfig.greatPowerCount) {
     throw SetupConfigConstraintException(
       code: 'insufficient_old_world_provinces_for_great_powers',

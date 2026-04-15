@@ -43,7 +43,10 @@ class GameFactory {
   Future<GameInitResult> createFreshGame(GameSetupConfig config) async {
     final result = runInitGame(
       config: config,
-      options: const InitGameOptions(renderPng: false),
+      options: const InitGameOptions(
+        renderPng: false,
+        enforceLockedOldWorldProfile: false,
+      ),
     );
     return GameInitResult(
       game: result.game,

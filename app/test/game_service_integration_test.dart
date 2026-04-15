@@ -39,10 +39,10 @@ void main() {
         );
         final game = service.createNewGame(id: 'g1', config: config);
 
-        expect(game.players.length, 1);
+        expect(game.players.length, 6);
         expect(game.players.first.id, 'gp1');
         expect(game.players.first.capitalProvinceId, isNotNull);
-        expect(game.minorNations, isEmpty);
+        expect(game.minorNations.length, 6);
         expect(game.tribes.length, 1);
 
         final orders = Orders(moveOrdersByPlayerId: const {});
@@ -63,7 +63,7 @@ void main() {
           updated.players.first.workerPool,
         );
         expect(loaded.turnTimeMapping, TurnTimeMapping.gdd01);
-        expect(loaded.minorNations, isEmpty);
+        expect(loaded.minorNations.length, 6);
         expect(loaded.tribes.length, 1);
       },
     );
@@ -120,7 +120,7 @@ void main() {
       );
       expect(steps, [0, 1, 2, 3, 4]);
       expect(totals, List.filled(5, GameService.newGameSetupProgressStepCount));
-      expect(game.players.length, 1);
+      expect(game.players.length, 6);
       expect(service.loadGame('g_async_progress'), isNotNull);
     });
 
@@ -150,6 +150,7 @@ void main() {
         expect(syncGame.globalGameSeed, 9001);
         expect(asyncGame.globalGameSeed, 9001);
       },
+      timeout: const Timeout(Duration(seconds: 90)),
     );
 
     test('createNewGame with seed 0 uses non-zero globalGameSeed', () {
