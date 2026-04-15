@@ -274,7 +274,7 @@ GameSetupConfig _withLockedOldWorldConfig(GameSetupConfig config) {
     minProvincesPerMinor: 3,
     seed: config.seed,
     startingResources: config.startingResources,
-    enforceFairGpOldWorldAssignment: config.enforceFairGpOldWorldAssignment,
+    enforceFairAssignment: config.enforceFairAssignment,
     preferredInitialMapZoomMultiplier: config.preferredInitialMapZoomMultiplier,
     initTownRoadWiringRegionIds: config.initTownRoadWiringRegionIds,
   );

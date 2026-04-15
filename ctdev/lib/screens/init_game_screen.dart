@@ -27,7 +27,7 @@ class _InitGameScreenState extends State<InitGameScreen> {
   late Map<String, (int r, int g, int b)> _greatPowerColorByGpId;
   bool _skipFillLakes = false;
   bool _renderPng = false;
-  bool _enforceFairGpOldWorldAssignment = false;
+  bool _enforceFairAssignment = false;
   bool _isRunning = false;
 
   @override
@@ -43,7 +43,7 @@ class _InitGameScreenState extends State<InitGameScreen> {
     _minProvincesPerMinor = cfg.minProvincesPerMinor;
     _prussiaLeaderVariantId =
         cfg.leaderVariantByGpId['prussia'] ?? prussiaVariantFrederickTheGreat;
-    _enforceFairGpOldWorldAssignment = cfg.enforceFairGpOldWorldAssignment;
+    _enforceFairAssignment = cfg.enforceFairAssignment;
     _greatPowerColorByGpId = {
       for (final id in allGreatPowerIds) id: greatPowerDefaultColorRgb[id]!,
     };
@@ -70,9 +70,7 @@ class _InitGameScreenState extends State<InitGameScreen> {
 
     if (_selectedGreatPowerIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Select at least one Great Power'),
-        ),
+        const SnackBar(content: Text('Select at least one Great Power')),
       );
       return;
     }
@@ -90,7 +88,7 @@ class _InitGameScreenState extends State<InitGameScreen> {
       numProvincesNewWorld: _numProvincesNewWorld,
       minProvincesPerMinor: _minProvincesPerMinor,
       seed: _seed,
-      enforceFairGpOldWorldAssignment: _enforceFairGpOldWorldAssignment,
+      enforceFairAssignment: _enforceFairAssignment,
     );
 
     // Basic runtime guard to surface config/topology mismatches early in dev.
@@ -114,7 +112,8 @@ class _InitGameScreenState extends State<InitGameScreen> {
       skipFillLakes: _skipFillLakes,
       renderPng: _renderPng,
       greatPowerColorOverride: {
-        for (final id in _selectedGreatPowerIds) id: _greatPowerColorByGpId[id]!,
+        for (final id in _selectedGreatPowerIds)
+          id: _greatPowerColorByGpId[id]!,
       },
     );
 
@@ -127,20 +126,15 @@ class _InitGameScreenState extends State<InitGameScreen> {
       // can paint before heavy work starts.
       await Future<void>.delayed(Duration.zero);
 
-      final result = runInitGame(
-        config: cfg,
-        options: options,
-      );
+      final result = runInitGame(config: cfg, options: options);
       if (!mounted) return;
       await saveGameAndMapData(result.game, result);
       if (!mounted) return;
       final baseSeed = result.game.globalGameSeed ?? _seed;
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => InitGameDebugMapScreen(
-            initResult: result,
-            baseSeed: baseSeed,
-          ),
+          builder: (_) =>
+              InitGameDebugMapScreen(initResult: result, baseSeed: baseSeed),
         ),
       );
     } finally {
@@ -183,10 +177,14 @@ class _InitGameScreenState extends State<InitGameScreen> {
                     onSelected: (v) {
                       setState(() {
                         if (v == true) {
-                          _selectedGreatPowerIds = {..._selectedGreatPowerIds, id};
+                          _selectedGreatPowerIds = {
+                            ..._selectedGreatPowerIds,
+                            id,
+                          };
                         } else {
-                          _selectedGreatPowerIds =
-                              Set.from(_selectedGreatPowerIds)..remove(id);
+                          _selectedGreatPowerIds = Set.from(
+                            _selectedGreatPowerIds,
+                          )..remove(id);
                         }
                       });
                     },
@@ -260,12 +258,20 @@ class _InitGameScreenState extends State<InitGameScreen> {
                                 width: 16,
                                 height: 16,
                                 decoration: BoxDecoration(
-                                  color: Color.fromARGB(255, rgb.$1, rgb.$2, rgb.$3),
+                                  color: Color.fromARGB(
+                                    255,
+                                    rgb.$1,
+                                    rgb.$2,
+                                    rgb.$3,
+                                  ),
                                   border: Border.all(color: Colors.grey),
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              Text(opt.$2, style: const TextStyle(fontSize: 13)),
+                              Text(
+                                opt.$2,
+                                style: const TextStyle(fontSize: 13),
+                              ),
                             ],
                           ),
                         );
@@ -274,12 +280,14 @@ class _InitGameScreenState extends State<InitGameScreen> {
                         if (newRgb == null || newRgb == currentRgb) return;
                         setState(() {
                           final others = _greatPowerColorByGpId.entries
-                              .where((e) =>
-                                  e.key != gpId &&
-                                  _selectedGreatPowerIds.contains(e.key) &&
-                                  e.value.$1 == newRgb.$1 &&
-                                  e.value.$2 == newRgb.$2 &&
-                                  e.value.$3 == newRgb.$3)
+                              .where(
+                                (e) =>
+                                    e.key != gpId &&
+                                    _selectedGreatPowerIds.contains(e.key) &&
+                                    e.value.$1 == newRgb.$1 &&
+                                    e.value.$2 == newRgb.$2 &&
+                                    e.value.$3 == newRgb.$3,
+                              )
                               .map((e) => e.key)
                               .toList();
                           final other = others.isNotEmpty ? others.first : null;
@@ -299,112 +307,101 @@ class _InitGameScreenState extends State<InitGameScreen> {
               spacing: 16,
               runSpacing: 12,
               children: [
-                    SizedBox(
-                      width: 160,
-                      child: TextFormField(
-                        initialValue: '$_minorNationCount',
-                        decoration: const InputDecoration(
-                          labelText: 'Minor Nations',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (v) =>
-                            _validatePositiveInt(v, allowZero: true),
-                        onSaved: (v) =>
-                            _minorNationCount = int.parse(v!.trim()),
-                      ),
+                SizedBox(
+                  width: 160,
+                  child: TextFormField(
+                    initialValue: '$_minorNationCount',
+                    decoration: const InputDecoration(
+                      labelText: 'Minor Nations',
                     ),
-                    SizedBox(
-                      width: 160,
-                      child: TextFormField(
-                        initialValue: '$_tribeCount',
-                        decoration: const InputDecoration(
-                          labelText: 'Tribes',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (v) =>
-                            _validatePositiveInt(v, allowZero: true),
-                        onSaved: (v) => _tribeCount = int.parse(v!.trim()),
-                      ),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => _validatePositiveInt(v, allowZero: true),
+                    onSaved: (v) => _minorNationCount = int.parse(v!.trim()),
+                  ),
+                ),
+                SizedBox(
+                  width: 160,
+                  child: TextFormField(
+                    initialValue: '$_tribeCount',
+                    decoration: const InputDecoration(labelText: 'Tribes'),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => _validatePositiveInt(v, allowZero: true),
+                    onSaved: (v) => _tribeCount = int.parse(v!.trim()),
+                  ),
+                ),
+                SizedBox(
+                  width: 180,
+                  child: TextFormField(
+                    initialValue: '$_numProvincesOldWorld',
+                    decoration: const InputDecoration(
+                      labelText: 'Old World provinces',
                     ),
-                    SizedBox(
-                      width: 180,
-                      child: TextFormField(
-                        initialValue: '$_numProvincesOldWorld',
-                        decoration: const InputDecoration(
-                          labelText: 'Old World provinces',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (v) => _validatePositiveInt(v),
-                        onSaved: (v) =>
-                            _numProvincesOldWorld = int.parse(v!.trim()),
-                      ),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => _validatePositiveInt(v),
+                    onSaved: (v) =>
+                        _numProvincesOldWorld = int.parse(v!.trim()),
+                  ),
+                ),
+                SizedBox(
+                  width: 180,
+                  child: TextFormField(
+                    initialValue: '$_numProvincesNewWorld',
+                    decoration: const InputDecoration(
+                      labelText: 'New World provinces',
                     ),
-                    SizedBox(
-                      width: 180,
-                      child: TextFormField(
-                        initialValue: '$_numProvincesNewWorld',
-                        decoration: const InputDecoration(
-                          labelText: 'New World provinces',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (v) => _validatePositiveInt(v),
-                        onSaved: (v) =>
-                            _numProvincesNewWorld = int.parse(v!.trim()),
-                      ),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => _validatePositiveInt(v),
+                    onSaved: (v) =>
+                        _numProvincesNewWorld = int.parse(v!.trim()),
+                  ),
+                ),
+                SizedBox(
+                  width: 160,
+                  child: TextFormField(
+                    initialValue: '$_continentCount',
+                    decoration: const InputDecoration(labelText: 'Continents'),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => _validatePositiveInt(v),
+                    onSaved: (v) => _continentCount = int.parse(v!.trim()),
+                  ),
+                ),
+                SizedBox(
+                  width: 200,
+                  child: TextFormField(
+                    initialValue: '$_minProvincesPerMinor',
+                    decoration: const InputDecoration(
+                      labelText: 'Min provinces per minor',
                     ),
-                    SizedBox(
-                      width: 160,
-                      child: TextFormField(
-                        initialValue: '$_continentCount',
-                        decoration: const InputDecoration(
-                          labelText: 'Continents',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (v) => _validatePositiveInt(v),
-                        onSaved: (v) =>
-                            _continentCount = int.parse(v!.trim()),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 200,
-                      child: TextFormField(
-                        initialValue: '$_minProvincesPerMinor',
-                        decoration: const InputDecoration(
-                          labelText: 'Min provinces per minor',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (v) =>
-                            _validatePositiveInt(v, allowZero: true),
-                        onSaved: (v) =>
-                            _minProvincesPerMinor = int.parse(v!.trim()),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 160,
-                      child: TextFormField(
-                        // Start blank each time; user may optionally enter a seed.
-                        initialValue: '',
-                        decoration: const InputDecoration(
-                          labelText: 'Seed',
-                        ),
-                        keyboardType: TextInputType.number,
-                        // Seed is optional: blank or 0 means "use time-based seed".
-                        validator: (v) {
-                          final trimmed = v?.trim() ?? '';
-                          if (trimmed.isEmpty) {
-                            return null;
-                          }
-                          return _validatePositiveInt(trimmed, allowZero: true);
-                        },
-                        onSaved: (v) {
-                          final trimmed = v?.trim() ?? '';
-                          if (trimmed.isEmpty) {
-                            _seed = 0;
-                          } else {
-                            _seed = int.parse(trimmed);
-                          }
-                        },
-                      ),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => _validatePositiveInt(v, allowZero: true),
+                    onSaved: (v) =>
+                        _minProvincesPerMinor = int.parse(v!.trim()),
+                  ),
+                ),
+                SizedBox(
+                  width: 160,
+                  child: TextFormField(
+                    // Start blank each time; user may optionally enter a seed.
+                    initialValue: '',
+                    decoration: const InputDecoration(labelText: 'Seed'),
+                    keyboardType: TextInputType.number,
+                    // Seed is optional: blank or 0 means "use time-based seed".
+                    validator: (v) {
+                      final trimmed = v?.trim() ?? '';
+                      if (trimmed.isEmpty) {
+                        return null;
+                      }
+                      return _validatePositiveInt(trimmed, allowZero: true);
+                    },
+                    onSaved: (v) {
+                      final trimmed = v?.trim() ?? '';
+                      if (trimmed.isEmpty) {
+                        _seed = 0;
+                      } else {
+                        _seed = int.parse(trimmed);
+                      }
+                    },
+                  ),
                 ),
               ],
             ),
@@ -412,14 +409,13 @@ class _InitGameScreenState extends State<InitGameScreen> {
             Row(
               children: [
                 Checkbox(
-                  value: _enforceFairGpOldWorldAssignment,
-                  onChanged: (v) => setState(
-                    () => _enforceFairGpOldWorldAssignment = v ?? false,
-                  ),
+                  value: _enforceFairAssignment,
+                  onChanged: (v) =>
+                      setState(() => _enforceFairAssignment = v ?? false),
                 ),
                 const Flexible(
                   child: Text(
-                    'Enforce fair GP assignment (OW connectivity repair; slower)',
+                    'Enforce fair assignment (OW+NW connectivity repair; slower)',
                   ),
                 ),
               ],
@@ -429,12 +425,9 @@ class _InitGameScreenState extends State<InitGameScreen> {
               children: [
                 Checkbox(
                   value: _skipFillLakes,
-                  onChanged: (v) =>
-                      setState(() => _skipFillLakes = v ?? false),
+                  onChanged: (v) => setState(() => _skipFillLakes = v ?? false),
                 ),
-                const Flexible(
-                  child: Text('Skip Fill Lakes (Pass 4)'),
-                ),
+                const Flexible(child: Text('Skip Fill Lakes (Pass 4)')),
               ],
             ),
             const SizedBox(height: 12),
@@ -442,12 +435,9 @@ class _InitGameScreenState extends State<InitGameScreen> {
               children: [
                 Checkbox(
                   value: _renderPng,
-                  onChanged: (v) =>
-                      setState(() => _renderPng = v ?? false),
+                  onChanged: (v) => setState(() => _renderPng = v ?? false),
                 ),
-                const Flexible(
-                  child: Text('Render PNG snapshot (slower)'),
-                ),
+                const Flexible(child: Text('Render PNG snapshot (slower)')),
               ],
             ),
             const SizedBox(height: 16),
@@ -477,9 +467,7 @@ class _InitGameScreenState extends State<InitGameScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Init Game (ctdev config)'),
-      ),
+      appBar: AppBar(title: const Text('Init Game (ctdev config)')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Stack(
@@ -488,9 +476,7 @@ class _InitGameScreenState extends State<InitGameScreen> {
             if (_isRunning)
               Positioned.fill(
                 child: AbsorbPointer(
-                  child: Container(
-                    color: Colors.black.withValues(alpha: 0.1),
-                  ),
+                  child: Container(color: Colors.black.withValues(alpha: 0.1)),
                 ),
               ),
           ],

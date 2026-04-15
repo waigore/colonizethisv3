@@ -22,8 +22,10 @@ class GameInitResult {
   });
 
   final Game game;
+
   /// Combined topology (prefixed ids) for turn resolution.
   final MapTopology? topology;
+
   /// Per-region topology with local node ids (capital setup, map drawable checks).
   final Map<String, MapTopology>? topologyByRegion;
   final Map<String, TileMapResult>? tileMapByRegion;
@@ -136,8 +138,7 @@ class GameFactory {
       minProvincesPerMinor: 0, // fromTopology: no reservation for minors
       seed: baseConfig.seed,
       startingResources: baseConfig.startingResources,
-      enforceFairGpOldWorldAssignment:
-          baseConfig.enforceFairGpOldWorldAssignment,
+      enforceFairAssignment: baseConfig.enforceFairAssignment,
       initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
     );
 
@@ -286,7 +287,8 @@ class GameFactory {
       minProvincesPerMinor: json['minProvincesPerMinor'] as int? ?? 3,
       seed: json['seed'] as int? ?? 42,
       startingResources: startingResources,
-      enforceFairGpOldWorldAssignment:
+      enforceFairAssignment:
+          json['enforceFairAssignment'] == true ||
           json['enforceFairGpOldWorldAssignment'] == true,
       initTownRoadWiringRegionIds: _parseInitTownRoadWiringRegionIds(
         json['initTownRoadWiringRegionIds'],

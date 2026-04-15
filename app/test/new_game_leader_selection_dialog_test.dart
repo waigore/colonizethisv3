@@ -56,7 +56,7 @@ void main() {
       required void Function(
         List<String> orderedGreatPowerIds,
         Map<String, String> leaderVariantByGpId,
-        bool enforceFairGpOldWorldAssignment,
+        bool enforceFairAssignment,
         int seed,
       )
       onConfirmed,
@@ -135,10 +135,7 @@ void main() {
 
         final shell = find.byType(CtDialogShell);
         expect(
-          find.descendant(
-            of: shell,
-            matching: find.byType(CustomScrollView),
-          ),
+          find.descendant(of: shell, matching: find.byType(CustomScrollView)),
           findsOneWidget,
         );
 
@@ -221,28 +218,27 @@ void main() {
       expect(find.text('New game — Setup'), findsNothing);
     });
 
-    testWidgets(
-      'Start passes enforceFairGpOldWorldAssignment when checkbox toggled',
-      (WidgetTester tester) async {
-        bool? gotFair;
-        await pumpDialog(
-          tester,
-          onConfirmed: (_, _, fair, _) {
-            gotFair = fair;
-          },
-        );
+    testWidgets('Start passes enforceFairAssignment when checkbox toggled', (
+      WidgetTester tester,
+    ) async {
+      bool? gotFair;
+      await pumpDialog(
+        tester,
+        onConfirmed: (_, _, fair, _) {
+          gotFair = fair;
+        },
+      );
 
-        final checkbox = find.byType(Checkbox);
-        await tester.ensureVisible(checkbox);
-        await tester.pumpAndSettle();
-        await tester.tap(checkbox);
-        await tester.pumpAndSettle();
+      final checkbox = find.byType(Checkbox);
+      await tester.ensureVisible(checkbox);
+      await tester.pumpAndSettle();
+      await tester.tap(checkbox);
+      await tester.pumpAndSettle();
 
-        await _ensureTapStart(tester);
+      await _ensureTapStart(tester);
 
-        expect(gotFair, isTrue);
-      },
-    );
+      expect(gotFair, isTrue);
+    });
 
     testWidgets('changing slot 1 nation to Sweden updates order and leader', (
       WidgetTester tester,

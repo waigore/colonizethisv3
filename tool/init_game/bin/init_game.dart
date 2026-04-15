@@ -28,7 +28,7 @@ Future<void> main(List<String> arguments) async {
   int? numProvincesOldWorld;
   int? numProvincesNewWorld;
   String? prussiaLeaderOverride;
-  var enforceFairGpFromCli = false;
+  var enforceFairAssignmentFromCli = false;
 
   for (var i = 0; i < arguments.length; i++) {
     final arg = arguments[i];
@@ -114,7 +114,7 @@ Future<void> main(List<String> arguments) async {
     } else if (arg.startsWith('--prussia-leader=')) {
       prussiaLeaderOverride = arg.substring('--prussia-leader='.length).trim();
     } else if (arg == '--enforce-fair-gp-assignment') {
-      enforceFairGpFromCli = true;
+      enforceFairAssignmentFromCli = true;
     }
   }
 
@@ -159,10 +159,11 @@ Future<void> main(List<String> arguments) async {
           (json['numProvincesNewWorld'] as num?)?.toInt() ??
           config.numProvincesNewWorld,
       seed: (json['seed'] as num?)?.toInt() ?? config.seed,
-      enforceFairGpOldWorldAssignment:
-          json['enforceFairGpOldWorldAssignment'] is bool
-          ? json['enforceFairGpOldWorldAssignment'] as bool
-          : config.enforceFairGpOldWorldAssignment,
+      enforceFairAssignment: json['enforceFairAssignment'] is bool
+          ? json['enforceFairAssignment'] as bool
+          : (json['enforceFairGpOldWorldAssignment'] is bool
+                ? json['enforceFairGpOldWorldAssignment'] as bool
+                : config.enforceFairAssignment),
       initTownRoadWiringRegionIds:
           json['initTownRoadWiringRegionIds'] is List<dynamic>
           ? (json['initTownRoadWiringRegionIds'] as List<dynamic>)
@@ -182,7 +183,7 @@ Future<void> main(List<String> arguments) async {
       numProvincesOldWorld: config.numProvincesOldWorld,
       numProvincesNewWorld: config.numProvincesNewWorld,
       seed: seedOverride,
-      enforceFairGpOldWorldAssignment: config.enforceFairGpOldWorldAssignment,
+      enforceFairAssignment: config.enforceFairAssignment,
       initTownRoadWiringRegionIds: config.initTownRoadWiringRegionIds,
     );
   }
@@ -222,12 +223,12 @@ Future<void> main(List<String> arguments) async {
       numProvincesOldWorld: numProvincesOldWorld ?? config.numProvincesOldWorld,
       numProvincesNewWorld: numProvincesNewWorld ?? config.numProvincesNewWorld,
       seed: config.seed,
-      enforceFairGpOldWorldAssignment: config.enforceFairGpOldWorldAssignment,
+      enforceFairAssignment: config.enforceFairAssignment,
       initTownRoadWiringRegionIds: config.initTownRoadWiringRegionIds,
     );
   }
 
-  if (enforceFairGpFromCli) {
+  if (enforceFairAssignmentFromCli) {
     config = GameSetupConfig(
       selectedGreatPowerIds: config.selectedGreatPowerIds,
       leaderVariantByGpId: config.leaderVariantByGpId,
@@ -239,7 +240,7 @@ Future<void> main(List<String> arguments) async {
       minProvincesPerMinor: config.minProvincesPerMinor,
       seed: config.seed,
       startingResources: config.startingResources,
-      enforceFairGpOldWorldAssignment: true,
+      enforceFairAssignment: true,
       initTownRoadWiringRegionIds: config.initTownRoadWiringRegionIds,
     );
   }

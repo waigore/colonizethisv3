@@ -317,10 +317,10 @@ void main() {
         // pack: three GPs on A plus one on B; with only eight on A the greedy
         // packer drops the GP budget to 11 and repair often exhausts.
         TopologyNode p(String id) => TopologyNode(
-              id: id,
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            );
+          id: id,
+          regionId: 'oldWorld',
+          type: TopologyNodeType.province,
+        );
         const seaA = TopologyNode(
           id: 'sea_a',
           regionId: 'oldWorld',
@@ -412,12 +412,7 @@ void main() {
         final nwTileMap = TileMapResult(width: 2, height: 1, grid: nwGrid);
 
         final config = GameSetupConfig(
-          selectedGreatPowerIds: [
-            'england',
-            'france',
-            'spain',
-            'portugal',
-          ],
+          selectedGreatPowerIds: ['england', 'france', 'spain', 'portugal'],
           continentCount: 3,
           minorNationCount: 2,
           tribeCount: 1,
@@ -425,7 +420,7 @@ void main() {
           numProvincesNewWorld: 1,
           minProvincesPerMinor: 2,
           seed: 42,
-          enforceFairGpOldWorldAssignment: true,
+          enforceFairAssignment: true,
         );
 
         final result = createGameFromGeneratedMaps(
@@ -448,8 +443,7 @@ void main() {
         final owPpNeighbours = _provincePpNeighboursForTest(owTopology);
         final ownersLocal = <String, String>{
           for (final p in result.game.worldState.oldWorld.provinces)
-            if (p.ownerId != null)
-              ProvinceId.localIdFrom(p.id): p.ownerId!,
+            if (p.ownerId != null) ProvinceId.localIdFrom(p.id): p.ownerId!,
         };
         for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4']) {
           expect(
@@ -479,6 +473,7 @@ void main() {
     );
   });
 }
+
 /// P–P adjacency only (mirrors game_setup private helper) for setup tests.
 Map<String, Set<String>> _provincePpNeighboursForTest(MapTopology topology) {
   final provinces = {

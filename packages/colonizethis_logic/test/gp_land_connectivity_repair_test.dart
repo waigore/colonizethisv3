@@ -36,11 +36,7 @@ void main() {
 
   group('repairGpLandOwnershipMutating', () {
     test('1:1 swap with minor connects GP exclave (line graph)', () {
-      final owners = <String, String>{
-        'p1': 'gp1',
-        'p2': 'minor1',
-        'p3': 'gp1',
-      };
+      final owners = <String, String>{'p1': 'gp1', 'p2': 'minor1', 'p3': 'gp1'};
       final neighbours = <String, Set<String>>{
         'p1': {'p2'},
         'p2': {'p1', 'p3'},
@@ -110,37 +106,73 @@ void main() {
       expect(owners['p2'], 'gp1');
     });
 
-    test('maxRounds zero skips repair and reports failure when disconnected', () {
+    test(
+      'maxRounds zero skips repair and reports failure when disconnected',
+      () {
+        final owners = <String, String>{
+          'p1': 'gp1',
+          'p2': 'minor1',
+          'p3': 'gp1',
+        };
+        final neighbours = <String, Set<String>>{
+          'p1': {'p2'},
+          'p2': {'p1', 'p3'},
+          'p3': {'p2'},
+        };
+        final landmass = <String, int>{'p1': 0, 'p2': 0, 'p3': 0};
+        final ok = repairGpLandOwnershipMutating(
+          owners: owners,
+          gpIdsSorted: ['gp1'],
+          neighbours: neighbours,
+          landmassIds: landmass,
+          seaBoundLocalIds: {'p1'},
+          allProvinceIdsSorted: ['p1', 'p2', 'p3'],
+          maxRounds: 0,
+        );
+        expect(ok, false);
+        expect(gpProvincesAreLandConnected('gp1', owners, neighbours), false);
+      },
+    );
+  });
+
+  group('repairFactionLandOwnershipMutating', () {
+    test('can repair disconnected minor while preserving GP hard rules', () {
       final owners = <String, String>{
         'p1': 'gp1',
         'p2': 'minor1',
-        'p3': 'gp1',
+        'p3': 'minor1',
+        'p4': 'gp1',
       };
       final neighbours = <String, Set<String>>{
         'p1': {'p2'},
         'p2': {'p1', 'p3'},
-        'p3': {'p2'},
+        'p3': {'p2', 'p4'},
+        'p4': {'p3'},
       };
-      final landmass = <String, int>{'p1': 0, 'p2': 0, 'p3': 0};
-      final ok = repairGpLandOwnershipMutating(
+      final landmass = <String, int>{'p1': 0, 'p2': 0, 'p3': 0, 'p4': 0};
+      final ok = repairFactionLandOwnershipMutating(
         owners: owners,
+        requiredConnectedFactionIdsSorted: ['gp1', 'minor1'],
         gpIdsSorted: ['gp1'],
         neighbours: neighbours,
         landmassIds: landmass,
         seaBoundLocalIds: {'p1'},
-        allProvinceIdsSorted: ['p1', 'p2', 'p3'],
-        maxRounds: 0,
+        allProvinceIdsSorted: ['p1', 'p2', 'p3', 'p4'],
       );
-      expect(ok, false);
-      expect(gpProvincesAreLandConnected('gp1', owners, neighbours), false);
+      expect(ok, true);
+      expect(factionProvincesAreLandConnected('gp1', owners, neighbours), true);
+      expect(
+        factionProvincesAreLandConnected('minor1', owners, neighbours),
+        true,
+      );
     });
   });
 
   group('GameSetupConnectivityFailure', () {
     test('exposes reason code', () {
       final e = GameSetupConnectivityFailure('msg');
-      expect(e.reasonCode, 'gp_land_connectivity_exhausted');
-      expect(e.toString(), contains('gp_land_connectivity_exhausted'));
+      expect(e.reasonCode, 'fair_assignment_connectivity_exhausted');
+      expect(e.toString(), contains('fair_assignment_connectivity_exhausted'));
     });
   });
 }

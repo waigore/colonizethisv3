@@ -28,9 +28,9 @@ CLI entry point for game creation. Thin facade over the setup pipeline in [game-
 | `--tribe-count N` | Override Tribe count. |
 | `--num-provinces-old-world N` | Accepted for compatibility; map-generating setup normalizes Old World provinces to 60. |
 | `--num-provinces-new-world N` | Override NW province count. |
-| `--enforce-fair-gp-assignment` | After other config merges, force `enforceFairGpOldWorldAssignment` to **true** (GP OW connectivity repair + retries). |
+| `--enforce-fair-gp-assignment` | After other config merges, force `enforceFairAssignment` to **true** (OW+NW fair-assignment connectivity repair + retries). |
 
-**JSON config** (single source for CLI): supported keys are `selectedGreatPowerIds` (array), `greatPowerCount` (fallback), `leaderVariantByGpId` (map GP id → leader variant), `continentCount`, `minorNationCount`, `tribeCount`, `numProvincesOldWorld`, `numProvincesNewWorld`, `seed`, `enforceFairGpOldWorldAssignment` (bool). In map-generating setup paths, Old World values are normalized to the locked profile (`GP=6`, `minor=6`, `OW=60`, `continents=4`) before generation and assignment. Ownership quotas are hard-enforced by setup to `7 provinces per GP` and `3 provinces per minor` (total OW ownership = 60), including fair-assignment mode. Paths (config and outputs) are relative to the **current working directory** unless absolute.
+**JSON config** (single source for CLI): supported keys are `selectedGreatPowerIds` (array), `greatPowerCount` (fallback), `leaderVariantByGpId` (map GP id → leader variant), `continentCount`, `minorNationCount`, `tribeCount`, `numProvincesOldWorld`, `numProvincesNewWorld`, `seed`, `enforceFairAssignment` (bool). Legacy key `enforceFairGpOldWorldAssignment` is accepted for backward compatibility. In map-generating setup paths, Old World values are normalized to the locked profile (`GP=6`, `minor=6`, `OW=60`, `continents=4`) before generation and assignment. Ownership quotas are hard-enforced by setup to `7 provinces per GP` and `3 provinces per minor` (total OW ownership = 60), including fair-assignment mode.
 
 ## Output Artifacts
 

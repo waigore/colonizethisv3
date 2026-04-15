@@ -32,7 +32,7 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
   final void Function(
     List<String> orderedGreatPowerIds,
     Map<String, String> leaderVariantByGpId,
-    bool enforceFairGpOldWorldAssignment,
+    bool enforceFairAssignment,
     int seed,
   )
   onConfirmed;
@@ -59,7 +59,7 @@ class _NewGameLeaderSelectionDialogState
     extends State<NewGameLeaderSelectionDialog> {
   late List<String> _orderedGpIdsBySlot;
   late Map<String, String> _leaderByGpId;
-  var _enforceFairGpOldWorldAssignment = false;
+  var _enforceFairAssignment = false;
   late final TextEditingController _seedController;
 
   List<String> get _allGpIds =>
@@ -179,17 +179,16 @@ class _NewGameLeaderSelectionDialogState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Checkbox(
-                value: _enforceFairGpOldWorldAssignment,
+                value: _enforceFairAssignment,
                 onChanged: (v) {
-                  setState(() => _enforceFairGpOldWorldAssignment = v ?? false);
+                  setState(() => _enforceFairAssignment = v ?? false);
                 },
               ),
               Expanded(
                 child: GestureDetector(
                   onTap: () {
                     setState(
-                      () => _enforceFairGpOldWorldAssignment =
-                          !_enforceFairGpOldWorldAssignment,
+                      () => _enforceFairAssignment = !_enforceFairAssignment,
                     );
                   },
                   child: Padding(
@@ -247,7 +246,7 @@ class _NewGameLeaderSelectionDialogState
                         widget.onConfirmed(
                           List<String>.from(_orderedGpIdsBySlot),
                           Map<String, String>.from(_leaderByGpId),
-                          _enforceFairGpOldWorldAssignment,
+                          _enforceFairAssignment,
                           seed,
                         );
                       }

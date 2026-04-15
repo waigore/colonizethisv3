@@ -166,7 +166,7 @@ void main() {
         minProvincesPerMinor: base.minProvincesPerMinor,
         seed: k,
         startingResources: base.startingResources,
-        enforceFairGpOldWorldAssignment: base.enforceFairGpOldWorldAssignment,
+        enforceFairAssignment: base.enforceFairAssignment,
       );
       final result = runInitGame(
         config: config,
@@ -195,7 +195,7 @@ void main() {
           minProvincesPerMinor: base.minProvincesPerMinor,
           seed: k,
           startingResources: base.startingResources,
-          enforceFairGpOldWorldAssignment: base.enforceFairGpOldWorldAssignment,
+          enforceFairAssignment: base.enforceFairAssignment,
         );
         const options = InitGameOptions(cellSize: 8, renderPng: false);
         final first = runInitGame(config: config, options: options);
@@ -252,7 +252,7 @@ void main() {
         minProvincesPerMinor: base.minProvincesPerMinor,
         seed: k,
         startingResources: base.startingResources,
-        enforceFairGpOldWorldAssignment: base.enforceFairGpOldWorldAssignment,
+        enforceFairAssignment: base.enforceFairAssignment,
       );
 
       runInitGame(
@@ -349,7 +349,7 @@ void main() {
           minProvincesPerMinor: base.minProvincesPerMinor,
           seed: base.seed,
           startingResources: base.startingResources,
-          enforceFairGpOldWorldAssignment: true,
+          enforceFairAssignment: true,
         );
 
         final result = runInitGame(
@@ -396,6 +396,45 @@ void main() {
             gpProvincesAreLandConnected(gpId, owners, nbr),
             isTrue,
             reason: '$gpId OW territory must be one P–P component',
+          );
+        }
+        for (final minorId in [
+          'minor1',
+          'minor2',
+          'minor3',
+          'minor4',
+          'minor5',
+          'minor6',
+        ]) {
+          expect(
+            factionProvincesAreLandConnected(minorId, owners, nbr),
+            isTrue,
+            reason: '$minorId OW territory must be one P–P component',
+          );
+        }
+        final nwTopo = result.topologyByRegion[kRegionNewWorld]!;
+        final nwNbr = _provincePpNeighboursForInitGameTest(nwTopo);
+        final nwOwners = <String, String>{
+          for (final p in game.worldState.newWorld.provinces)
+            if (p.ownerId != null) ProvinceId.localIdFrom(p.id): p.ownerId!,
+        };
+        for (final tribeId in [
+          'tribe1',
+          'tribe2',
+          'tribe3',
+          'tribe4',
+          'tribe5',
+          'tribe6',
+          'tribe7',
+          'tribe8',
+          'tribe9',
+          'tribe10',
+        ]) {
+          if (!nwOwners.containsValue(tribeId)) continue;
+          expect(
+            factionProvincesAreLandConnected(tribeId, nwOwners, nwNbr),
+            isTrue,
+            reason: '$tribeId NW territory must be one P–P component',
           );
         }
         final landmassByProvince = _landmassIdsForTopology(topo);
@@ -451,7 +490,7 @@ void main() {
         ];
         for (final seed in seeds) {
           final result = runInitGame(
-            config: GameSetupConfig(seed: seed),
+            config: GameSetupConfig(seed: seed, enforceFairAssignment: true),
             options: const InitGameOptions(cellSize: 8, renderPng: false),
           );
           final owners = <String, String>{
@@ -482,6 +521,44 @@ void main() {
           final landmassByProvince = _landmassIdsForTopology(
             result.topologyByRegion[kRegionOldWorld]!,
           );
+          final owNeighbours = _provincePpNeighboursForInitGameTest(
+            result.topologyByRegion[kRegionOldWorld]!,
+          );
+          for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6']) {
+            expect(
+              factionProvincesAreLandConnected(gpId, owners, owNeighbours),
+              isTrue,
+              reason: 'seed=$seed $gpId should be contiguous',
+            );
+          }
+          for (final minorId in [
+            'minor1',
+            'minor2',
+            'minor3',
+            'minor4',
+            'minor5',
+            'minor6',
+          ]) {
+            expect(
+              factionProvincesAreLandConnected(minorId, owners, owNeighbours),
+              isTrue,
+              reason: 'seed=$seed $minorId should be contiguous',
+            );
+          }
+          final nwOwners = <String, String>{
+            for (final p in result.game.worldState.newWorld.provinces)
+              if (p.ownerId != null) ProvinceId.localIdFrom(p.id): p.ownerId!,
+          };
+          final nwNeighbours = _provincePpNeighboursForInitGameTest(
+            result.topologyByRegion[kRegionNewWorld]!,
+          );
+          for (final tribeId in result.game.tribes.map((t) => t.id)) {
+            expect(
+              factionProvincesAreLandConnected(tribeId, nwOwners, nwNeighbours),
+              isTrue,
+              reason: 'seed=$seed $tribeId should be contiguous',
+            );
+          }
           _expectLockedRoleSplit(
             owners: owners,
             landmassByProvince: landmassByProvince,
@@ -499,7 +576,7 @@ void main() {
 
     test('seed 42 keeps Spain contiguous when fair assignment is enabled', () {
       final result = runInitGame(
-        config: GameSetupConfig(seed: 42, enforceFairGpOldWorldAssignment: true),
+        config: GameSetupConfig(seed: 42, enforceFairAssignment: true),
         options: const InitGameOptions(cellSize: 8, renderPng: false),
       );
       final topo = result.topologyByRegion[kRegionOldWorld]!;
@@ -514,7 +591,8 @@ void main() {
       expect(
         gpProvincesAreLandConnected(spainPlayer.id, owners, neighbours),
         isTrue,
-        reason: 'Spain (${spainPlayer.id}) should be one P–P component for seed 42',
+        reason:
+            'Spain (${spainPlayer.id}) should be one P–P component for seed 42',
       );
     });
   });

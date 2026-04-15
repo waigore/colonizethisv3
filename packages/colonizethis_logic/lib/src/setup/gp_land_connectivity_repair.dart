@@ -1,12 +1,12 @@
-// SPEC/game/game-setup.md § GP land connectivity repair.
-// Old World only: 1:1 swaps so each GP's provinces are one P–P component.
+// SPEC/game/game-setup.md § fair assignment connectivity repair.
+// Ownership 1:1 swaps so required factions remain one P–P component.
 
-/// Setup failed after maximum Old World assignment attempts and connectivity repair.
-/// [reasonCode] is `gp_land_connectivity_exhausted` per SPEC/game/game-setup.md.
+/// Setup failed after maximum assignment attempts and connectivity repair.
+/// [reasonCode] is `fair_assignment_connectivity_exhausted` per SPEC/game/game-setup.md.
 class GameSetupConnectivityFailure implements Exception {
   GameSetupConnectivityFailure(
     this.message, {
-    this.reasonCode = 'gp_land_connectivity_exhausted',
+    this.reasonCode = 'fair_assignment_connectivity_exhausted',
   });
 
   final String message;
@@ -18,17 +18,17 @@ class GameSetupConnectivityFailure implements Exception {
 
 /// Maximum repair rounds per assignment attempt (SPEC/game/game-setup.md).
 const kGpLandConnectivityRepairRounds = 10;
-const _kSwapStateSearchDepthLimit = 3;
-const _kSwapStateBranchLimit = 48;
+const _kSwapStateSearchDepthLimit = 6;
+const _kSwapStateBranchLimit = 256;
 
-/// True if [gpId]'s provinces induce a single connected component on [neighbours] (P–P only).
-bool gpProvincesAreLandConnected(
-  String gpId,
+/// True if [factionId]'s provinces induce a single connected component on [neighbours] (P–P only).
+bool factionProvincesAreLandConnected(
+  String factionId,
   Map<String, String> owners,
   Map<String, Set<String>> neighbours,
 ) {
   final mine = owners.entries
-      .where((e) => e.value == gpId)
+      .where((e) => e.value == factionId)
       .map((e) => e.key)
       .toSet();
   if (mine.length <= 1) return true;
@@ -45,6 +45,13 @@ bool gpProvincesAreLandConnected(
   }
   return seen.length == mine.length;
 }
+
+/// Backward-compatible alias retained for GP-specific callers/tests.
+bool gpProvincesAreLandConnected(
+  String gpId,
+  Map<String, String> owners,
+  Map<String, Set<String>> neighbours,
+) => factionProvincesAreLandConnected(gpId, owners, neighbours);
 
 bool _gpOneLandmass(
   String gpId,
@@ -82,9 +89,22 @@ bool _allGpsSatisfyHardRules(
   Set<String> seaBoundLocalIds,
 ) {
   for (final gp in gpIdsSorted) {
-    if (!gpProvincesAreLandConnected(gp, owners, neighbours)) return false;
+    if (!factionProvincesAreLandConnected(gp, owners, neighbours)) return false;
     if (!_gpOneLandmass(gp, owners, landmassIds)) return false;
     if (!_gpHasSeaBoundProvince(gp, owners, seaBoundLocalIds)) return false;
+  }
+  return true;
+}
+
+bool _allRequiredFactionsConnected(
+  Map<String, String> owners,
+  List<String> requiredConnectedFactionIdsSorted,
+  Map<String, Set<String>> neighbours,
+) {
+  for (final factionId in requiredConnectedFactionIdsSorted) {
+    if (!factionProvincesAreLandConnected(factionId, owners, neighbours)) {
+      return false;
+    }
   }
   return true;
 }
@@ -96,30 +116,32 @@ String _ownerStateKey(
 
 Iterable<(String a, String b)> _candidateSameLandmassSwaps({
   required Map<String, String> owners,
-  required List<String> gpIdsSorted,
+  required List<String> requiredConnectedFactionIdsSorted,
   required Map<String, Set<String>> neighbours,
   required Map<String, int> landmassIds,
   required List<String> allProvinceIdsSorted,
 }) sync* {
-  final gpSet = gpIdsSorted.toSet();
-  final disconnectedGps = <String>[
-    for (final gpId in gpIdsSorted)
-      if (!gpProvincesAreLandConnected(gpId, owners, neighbours)) gpId,
+  final disconnectedFactions = <String>[
+    for (final factionId in requiredConnectedFactionIdsSorted)
+      if (!factionProvincesAreLandConnected(factionId, owners, neighbours))
+        factionId,
   ];
-  final primaryGp = disconnectedGps.isEmpty
-      ? gpIdsSorted.first
-      : disconnectedGps.first;
-  final ownedByGp = allProvinceIdsSorted.where((id) => owners[id] == primaryGp);
+  final primaryFaction = disconnectedFactions.isEmpty
+      ? requiredConnectedFactionIdsSorted.first
+      : disconnectedFactions.first;
+  final ownedByPrimary = allProvinceIdsSorted.where(
+    (id) => owners[id] == primaryFaction,
+  );
   var yielded = 0;
-  for (final a in ownedByGp) {
+  for (final a in ownedByPrimary) {
     final landmass = landmassIds[a];
     if (landmass == null) continue;
     for (final b in allProvinceIdsSorted) {
       if (a == b) continue;
       if (landmassIds[b] != landmass) continue;
       final ownerB = owners[b];
-      if (ownerB == null || ownerB == primaryGp) continue;
-      if (!gpSet.contains(ownerB) && !ownerB.startsWith('minor')) continue;
+      if (ownerB == null || ownerB == primaryFaction) continue;
+      if (ownerB.isEmpty) continue;
       yield (a, b);
       yielded++;
       if (yielded >= _kSwapStateBranchLimit) {
@@ -131,6 +153,7 @@ Iterable<(String a, String b)> _candidateSameLandmassSwaps({
 
 bool _dfsSwapStateSearch({
   required Map<String, String> owners,
+  required List<String> requiredConnectedFactionIdsSorted,
   required List<String> gpIdsSorted,
   required Map<String, Set<String>> neighbours,
   required Map<String, int> landmassIds,
@@ -139,13 +162,18 @@ bool _dfsSwapStateSearch({
   required Set<String> visited,
   required int depth,
 }) {
-  if (_allGpsSatisfyHardRules(
-    owners,
-    gpIdsSorted,
-    neighbours,
-    landmassIds,
-    seaBoundLocalIds,
-  )) {
+  if (_allRequiredFactionsConnected(
+        owners,
+        requiredConnectedFactionIdsSorted,
+        neighbours,
+      ) &&
+      _allGpsSatisfyHardRules(
+        owners,
+        gpIdsSorted,
+        neighbours,
+        landmassIds,
+        seaBoundLocalIds,
+      )) {
     return true;
   }
   if (depth >= _kSwapStateSearchDepthLimit) {
@@ -157,7 +185,7 @@ bool _dfsSwapStateSearch({
   }
   for (final swap in _candidateSameLandmassSwaps(
     owners: owners,
-    gpIdsSorted: gpIdsSorted,
+    requiredConnectedFactionIdsSorted: requiredConnectedFactionIdsSorted,
     neighbours: neighbours,
     landmassIds: landmassIds,
     allProvinceIdsSorted: allProvinceIdsSorted,
@@ -166,19 +194,44 @@ bool _dfsSwapStateSearch({
     final b = swap.$2;
     final ownerA = owners[a]!;
     final ownerB = owners[b]!;
+    final ownerAConnectedBefore = factionProvincesAreLandConnected(
+      ownerA,
+      owners,
+      neighbours,
+    );
+    final ownerBConnectedBefore = factionProvincesAreLandConnected(
+      ownerB,
+      owners,
+      neighbours,
+    );
     owners[a] = ownerB;
     owners[b] = ownerA;
-    final keepSearching =
-        _gpOneLandmass(ownerA, owners, landmassIds) &&
-        _gpHasSeaBoundProvince(ownerA, owners, seaBoundLocalIds);
-    final otherIsGp = gpIdsSorted.contains(ownerB);
-    final keepOther =
-        !otherIsGp ||
-        (_gpOneLandmass(ownerB, owners, landmassIds) &&
-            _gpHasSeaBoundProvince(ownerB, owners, seaBoundLocalIds));
-    if (keepSearching && keepOther) {
+    var keepSearching = true;
+    if (ownerAConnectedBefore &&
+        !factionProvincesAreLandConnected(ownerA, owners, neighbours)) {
+      keepSearching = false;
+    }
+    if (keepSearching &&
+        ownerBConnectedBefore &&
+        !factionProvincesAreLandConnected(ownerB, owners, neighbours)) {
+      keepSearching = false;
+    }
+    final ownerAIsGp = gpIdsSorted.contains(ownerA);
+    if (keepSearching && ownerAIsGp) {
+      keepSearching =
+          _gpOneLandmass(ownerA, owners, landmassIds) &&
+          _gpHasSeaBoundProvince(ownerA, owners, seaBoundLocalIds);
+    }
+    final ownerBIsGp = gpIdsSorted.contains(ownerB);
+    if (keepSearching && ownerBIsGp) {
+      keepSearching =
+          _gpOneLandmass(ownerB, owners, landmassIds) &&
+          _gpHasSeaBoundProvince(ownerB, owners, seaBoundLocalIds);
+    }
+    if (keepSearching) {
       final solved = _dfsSwapStateSearch(
         owners: owners,
+        requiredConnectedFactionIdsSorted: requiredConnectedFactionIdsSorted,
         gpIdsSorted: gpIdsSorted,
         neighbours: neighbours,
         landmassIds: landmassIds,
@@ -198,8 +251,9 @@ bool _dfsSwapStateSearch({
 }
 
 /// Mutates [owners]. Returns true if every GP is land-connected and hard rules hold.
-bool repairGpLandOwnershipMutating({
+bool repairFactionLandOwnershipMutating({
   required Map<String, String> owners,
+  required List<String> requiredConnectedFactionIdsSorted,
   required List<String> gpIdsSorted,
   required Map<String, Set<String>> neighbours,
   required Map<String, int> landmassIds,
@@ -207,19 +261,25 @@ bool repairGpLandOwnershipMutating({
   required List<String> allProvinceIdsSorted,
   int maxRounds = kGpLandConnectivityRepairRounds,
 }) {
-  if (_allGpsSatisfyHardRules(
-    owners,
-    gpIdsSorted,
-    neighbours,
-    landmassIds,
-    seaBoundLocalIds,
-  )) {
+  if (_allRequiredFactionsConnected(
+        owners,
+        requiredConnectedFactionIdsSorted,
+        neighbours,
+      ) &&
+      _allGpsSatisfyHardRules(
+        owners,
+        gpIdsSorted,
+        neighbours,
+        landmassIds,
+        seaBoundLocalIds,
+      )) {
     return true;
   }
 
   for (var round = 0; round < maxRounds; round++) {
     final solved = _dfsSwapStateSearch(
       owners: owners,
+      requiredConnectedFactionIdsSorted: requiredConnectedFactionIdsSorted,
       gpIdsSorted: gpIdsSorted,
       neighbours: neighbours,
       landmassIds: landmassIds,
@@ -233,11 +293,36 @@ bool repairGpLandOwnershipMutating({
     }
   }
 
-  return _allGpsSatisfyHardRules(
-    owners,
-    gpIdsSorted,
-    neighbours,
-    landmassIds,
-    seaBoundLocalIds,
-  );
+  return _allRequiredFactionsConnected(
+        owners,
+        requiredConnectedFactionIdsSorted,
+        neighbours,
+      ) &&
+      _allGpsSatisfyHardRules(
+        owners,
+        gpIdsSorted,
+        neighbours,
+        landmassIds,
+        seaBoundLocalIds,
+      );
 }
+
+/// Backward-compatible wrapper retained for GP-only callers/tests.
+bool repairGpLandOwnershipMutating({
+  required Map<String, String> owners,
+  required List<String> gpIdsSorted,
+  required Map<String, Set<String>> neighbours,
+  required Map<String, int> landmassIds,
+  required Set<String> seaBoundLocalIds,
+  required List<String> allProvinceIdsSorted,
+  int maxRounds = kGpLandConnectivityRepairRounds,
+}) => repairFactionLandOwnershipMutating(
+  owners: owners,
+  requiredConnectedFactionIdsSorted: gpIdsSorted,
+  gpIdsSorted: gpIdsSorted,
+  neighbours: neighbours,
+  landmassIds: landmassIds,
+  seaBoundLocalIds: seaBoundLocalIds,
+  allProvinceIdsSorted: allProvinceIdsSorted,
+  maxRounds: maxRounds,
+);

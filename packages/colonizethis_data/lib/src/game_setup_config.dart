@@ -21,7 +21,7 @@ class GameSetupConfig {
     this.minProvincesPerMinor = 3,
     this.seed = 42,
     this.startingResources = const StartingResourcesConfig(),
-    this.enforceFairGpOldWorldAssignment = false,
+    this.enforceFairAssignment = false,
     this.preferredInitialMapZoomMultiplier,
     Set<String>? initTownRoadWiringRegionIds,
   }) : initTownRoadWiringRegionIds =
@@ -70,10 +70,11 @@ class GameSetupConfig {
   final int seed;
   final StartingResourcesConfig startingResources;
 
-  /// When true, run GP Old World land connectivity repair and assignment retries
-  /// per SPEC/game/game-setup.md. When false, use a single assignment pass with no
-  /// repair (faster; a GP may own disconnected P–P components).
-  final bool enforceFairGpOldWorldAssignment;
+  /// When true, run fair-assignment connectivity repair and assignment retries
+  /// per SPEC/game/game-setup.md. Applies to GP+minor ownership in Old World and
+  /// tribe ownership in New World. When false, use a single assignment pass with no
+  /// repair (faster; factions may own disconnected P–P components).
+  final bool enforceFairAssignment;
 
   /// Optional explicit fit-relative map zoom multiplier (`m`) for fresh campaign
   /// initialization. When null, setup uses pipeline default behavior.

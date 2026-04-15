@@ -184,7 +184,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
                 (
                   orderedGreatPowerIds,
                   leaderVariantByGpId,
-                  enforceFairGpOldWorldAssignment,
+                  enforceFairAssignment,
                   seed,
                 ) {
                   final navCtx = appNavigatorKey.currentContext;
@@ -206,8 +206,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
                     minProvincesPerMinor: baseConfig.minProvincesPerMinor,
                     seed: seed,
                     startingResources: baseConfig.startingResources,
-                    enforceFairGpOldWorldAssignment:
-                        enforceFairGpOldWorldAssignment,
+                    enforceFairAssignment: enforceFairAssignment,
                     initTownRoadWiringRegionIds:
                         baseConfig.initTownRoadWiringRegionIds,
                   );

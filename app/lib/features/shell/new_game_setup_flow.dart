@@ -67,8 +67,7 @@ Future<void> runNewGameSetupAfterLeaderPick({
       minProvincesPerMinor: templateConfig.minProvincesPerMinor,
       seed: perAttemptSeed,
       startingResources: templateConfig.startingResources,
-      enforceFairGpOldWorldAssignment:
-          templateConfig.enforceFairGpOldWorldAssignment,
+      enforceFairAssignment: templateConfig.enforceFairAssignment,
       initTownRoadWiringRegionIds: templateConfig.initTownRoadWiringRegionIds,
     );
 
