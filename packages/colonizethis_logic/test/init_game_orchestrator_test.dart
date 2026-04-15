@@ -261,8 +261,10 @@ void main() {
         generateRegion: captureSeeds,
       );
 
-      expect(seedsByRegion[kRegionOldWorld], k);
-      expect(seedsByRegion[kRegionNewWorld], k + 1);
+      final owSeed = seedsByRegion[kRegionOldWorld]!;
+      final nwSeed = seedsByRegion[kRegionNewWorld]!;
+      expect(nwSeed, k + 1);
+      expect(owSeed, greaterThanOrEqualTo(k));
     });
 
     test('after runInitGame worldState.turnState is orders at turn 0', () {
@@ -323,17 +325,17 @@ void main() {
         generateRegion: countingGen,
       );
 
-      expect(callCount, 2);
+      expect(callCount, greaterThanOrEqualTo(2));
       expect(result.game, isNotNull);
     });
 
     test(
-      'default config: 60 OW, 6 GPs, 3 minors × min 3 provinces; init succeeds and GPs are P–P connected',
+      'default config locks 60 OW, 6 GPs, 6 minors with 21/21/18 partition',
       () {
         final base = GameSetupConfig.defaultConfig;
         expect(base.numProvincesOldWorld, 60);
         expect(base.greatPowerCount, 6);
-        expect(base.minorNationCount, 3);
+        expect(base.minorNationCount, 6);
         expect(base.minProvincesPerMinor, 3);
 
         final config = GameSetupConfig(
@@ -357,8 +359,32 @@ void main() {
         final game = result.game;
         expect(game.worldState.oldWorld.provinces.length, 60);
         expect(game.players.length, 6);
-        expect(game.minorNations.length, 3);
-
+        expect(game.minorNations.length, 6);
+        final owLocalOwners = {
+          for (final p in game.worldState.oldWorld.provinces)
+            ProvinceId.localIdFrom(p.id): p.ownerId ?? '',
+        };
+        for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6']) {
+          expect(
+            owLocalOwners.values.where((owner) => owner == gpId).length,
+            7,
+            reason: '$gpId should own exactly 7 OW provinces',
+          );
+        }
+        for (final minorId in [
+          'minor1',
+          'minor2',
+          'minor3',
+          'minor4',
+          'minor5',
+          'minor6',
+        ]) {
+          expect(
+            owLocalOwners.values.where((owner) => owner == minorId).length,
+            3,
+            reason: '$minorId should own exactly 3 OW provinces',
+          );
+        }
         final topo = result.topologyByRegion[kRegionOldWorld]!;
         final nbr = _provincePpNeighboursForInitGameTest(topo);
         final owners = <String, String>{
@@ -376,33 +402,77 @@ void main() {
     );
 
     test(
-      'throws setup config exception when OW provinces fewer than Great Powers',
+      'runInitGame normalizes OW config and does not fail on tiny OW request',
       () {
-        // Config with 6 GPs but only 2 OW provinces: createGameFromGeneratedMaps throws
-        // (either "provinces" or "sea-bound provinces" check). Accept either message.
         final config = GameSetupConfig(
           selectedGreatPowerIds:
               GameSetupConfig.defaultConfig.selectedGreatPowerIds,
           numProvincesOldWorld: 2,
           numProvincesNewWorld: 5,
         );
-        expect(
-          () => runInitGame(
-            config: config,
-            options: const InitGameOptions(cellSize: 8, renderPng: false),
-          ),
-          throwsA(
-            isA<SetupConfigConstraintException>()
-                .having(
-                  (e) => e.code,
-                  'code',
-                  'insufficient_old_world_provinces_for_great_powers',
-                )
-                .having((e) => e.message, 'message', contains('Great Powers')),
-          ),
+        final result = runInitGame(
+          config: config,
+          options: const InitGameOptions(cellSize: 8, renderPng: false),
         );
+        expect(result.game.worldState.oldWorld.provinces.length, 60);
       },
     );
+
+    test('20 random seeds satisfy locked faction province counts', () {
+      const seeds = [
+        101,
+        203,
+        307,
+        401,
+        509,
+        601,
+        709,
+        809,
+        907,
+        1009,
+        1103,
+        1201,
+        1303,
+        1409,
+        1511,
+        1601,
+        1709,
+        1801,
+        1907,
+        2003,
+      ];
+      for (final seed in seeds) {
+        final result = runInitGame(
+          config: GameSetupConfig(seed: seed),
+          options: const InitGameOptions(cellSize: 8, renderPng: false),
+        );
+        final owners = <String, String>{
+          for (final p in result.game.worldState.oldWorld.provinces)
+            ProvinceId.localIdFrom(p.id): p.ownerId ?? '',
+        };
+        for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6']) {
+          expect(
+            owners.values.where((owner) => owner == gpId).length,
+            7,
+            reason: 'seed=$seed $gpId count',
+          );
+        }
+        for (final minorId in [
+          'minor1',
+          'minor2',
+          'minor3',
+          'minor4',
+          'minor5',
+          'minor6',
+        ]) {
+          expect(
+            owners.values.where((owner) => owner == minorId).length,
+            3,
+            reason: 'seed=$seed $minorId count',
+          );
+        }
+      }
+    });
   });
 }
 

@@ -13,8 +13,8 @@ class GameSetupConfig {
   GameSetupConfig({
     this.selectedGreatPowerIds = _defaultSelectedGreatPowerIds,
     this.leaderVariantByGpId = const {},
-    this.continentCount = 4,
-    this.minorNationCount = 3,
+    this.continentCount = 3,
+    this.minorNationCount = 6,
     this.tribeCount = 10,
     this.numProvincesOldWorld = 60,
     this.numProvincesNewWorld = 80,

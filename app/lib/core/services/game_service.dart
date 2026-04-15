@@ -23,6 +23,12 @@ class _GameMapCache {
 
 /// Pass milestones for in-app tile map generation (SPEC/program/logging/map-generation.md).
 final _mapGenPassLog = packageLogger('tile_map');
+const int _kLockedGreatPowerCount = 6;
+const int _kLockedMinorNationCount = 6;
+const int _kLockedOldWorldProvinceCount = 60;
+const int _kLockedOldWorldContinentCount = 3;
+const int _kLockedOldWorldRetryCount = 5;
+const List<int> _kLockedOldWorldPartition = [18, 21, 21];
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
 /// Phase 2: createNewGame uses full game-setup pipeline; nextTurn requires cached/persisted map data.
@@ -320,7 +326,9 @@ class GameService {
   /// Uses [config] (defaults to GameSetupConfig.defaultConfig) and saves the game; map data is cached for nextTurn.
   Game createNewGame({String? id, GameSetupConfig? config}) {
     final gameId = id ?? 'game_${DateTime.now().millisecondsSinceEpoch}';
-    final cfg = config ?? GameSetupConfig.defaultConfig;
+    final cfg = _withLockedOldWorldConfig(
+      config ?? GameSetupConfig.defaultConfig,
+    );
     final effectiveSeed = resolveEffectiveSetupSeed(cfg.seed);
     final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg, effectiveSeed);
     final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg, effectiveSeed);
@@ -356,7 +364,9 @@ class GameService {
     void Function(int stepIndex, int totalSteps)? onProgress,
   }) async {
     final gameId = id ?? 'game_${DateTime.now().millisecondsSinceEpoch}';
-    final cfg = config ?? GameSetupConfig.defaultConfig;
+    final cfg = _withLockedOldWorldConfig(
+      config ?? GameSetupConfig.defaultConfig,
+    );
     final effectiveSeed = resolveEffectiveSetupSeed(cfg.seed);
     const total = newGameSetupProgressStepCount;
     final log = packageLogger();
@@ -439,27 +449,38 @@ class GameService {
     GameSetupConfig cfg,
     int effectiveSeed,
   ) {
-    final mapGenParams = MapGenerationParams(
-      numContinents: cfg.continentCount,
-      seed: effectiveSeed,
-      seaFraction: kDefaultSeaFraction,
-    );
-    final sizeOW = computeGridSizeFromParams(
-      cfg.numProvincesOldWorld,
-      mapGenParams,
-    );
-    final paramsOW = TileMapParams(
-      width: sizeOW.width,
-      height: sizeOW.height,
-      seed: effectiveSeed,
-      seaFraction: kDefaultSeaFraction,
-    );
-    return TileMapGenerator(params: paramsOW).generate(
-      numProvinces: cfg.numProvincesOldWorld,
-      numContinents: cfg.continentCount,
-      regionId: 'oldWorld',
-      resourceRules: ResourceRules.defaultRules,
-      onLog: _mapGenPassLog.d,
+    for (var attempt = 0; attempt <= _kLockedOldWorldRetryCount; attempt++) {
+      final attemptSeed = effectiveSeed + attempt;
+      final mapGenParams = MapGenerationParams(
+        numContinents: _kLockedOldWorldContinentCount,
+        seed: attemptSeed,
+        seaFraction: kDefaultSeaFraction,
+      );
+      final sizeOW = computeGridSizeFromParams(
+        _kLockedOldWorldProvinceCount,
+        mapGenParams,
+      );
+      final paramsOW = TileMapParams(
+        width: sizeOW.width,
+        height: sizeOW.height,
+        seed: attemptSeed,
+        seaFraction: kDefaultSeaFraction,
+      );
+      final generated = TileMapGenerator(params: paramsOW).generate(
+        numProvinces: _kLockedOldWorldProvinceCount,
+        numContinents: _kLockedOldWorldContinentCount,
+        regionId: 'oldWorld',
+        resourceRules: ResourceRules.defaultRules,
+        onLog: _mapGenPassLog.d,
+      );
+      if (_matchesLockedOldWorldPartition(generated.$2)) {
+        return generated;
+      }
+    }
+    throw SetupTopologyDataException(
+      code: 'old_world_partition_retry_exhausted',
+      details:
+          'Old World generation could not satisfy continent partition 21/21/18 in ${_kLockedOldWorldRetryCount + 1} deterministic attempt(s).',
     );
   }
 
@@ -558,4 +579,68 @@ class GameService {
       );
     }
   }
+}
+
+GameSetupConfig _withLockedOldWorldConfig(GameSetupConfig config) {
+  final selectedIds =
+      config.selectedGreatPowerIds.length == _kLockedGreatPowerCount
+      ? config.selectedGreatPowerIds
+      : GameSetupConfig.defaultConfig.selectedGreatPowerIds
+            .take(_kLockedGreatPowerCount)
+            .toList();
+  return GameSetupConfig(
+    selectedGreatPowerIds: selectedIds,
+    leaderVariantByGpId: config.leaderVariantByGpId,
+    continentCount: _kLockedOldWorldContinentCount,
+    minorNationCount: _kLockedMinorNationCount,
+    tribeCount: config.tribeCount,
+    numProvincesOldWorld: _kLockedOldWorldProvinceCount,
+    numProvincesNewWorld: config.numProvincesNewWorld,
+    minProvincesPerMinor: 3,
+    seed: config.seed,
+    startingResources: config.startingResources,
+    enforceFairGpOldWorldAssignment: config.enforceFairGpOldWorldAssignment,
+    preferredInitialMapZoomMultiplier: config.preferredInitialMapZoomMultiplier,
+    initTownRoadWiringRegionIds: config.initTownRoadWiringRegionIds,
+  );
+}
+
+bool _matchesLockedOldWorldPartition(MapTopology topology) {
+  final provinceIds = <String>{
+    for (final node in topology.nodes)
+      if (node.type == TopologyNodeType.province) node.id,
+  };
+  final neighbours = <String, Set<String>>{
+    for (final id in provinceIds) id: <String>{},
+  };
+  for (final edge in topology.edges) {
+    if (!provinceIds.contains(edge.id1) || !provinceIds.contains(edge.id2)) {
+      continue;
+    }
+    neighbours[edge.id1]!.add(edge.id2);
+    neighbours[edge.id2]!.add(edge.id1);
+  }
+  final sizes = <int>[];
+  final seen = <String>{};
+  final idsSorted = provinceIds.toList()..sort();
+  for (final id in idsSorted) {
+    if (!seen.add(id)) continue;
+    var size = 0;
+    final stack = <String>[id];
+    while (stack.isNotEmpty) {
+      final current = stack.removeLast();
+      size++;
+      for (final n in neighbours[current] ?? const <String>{}) {
+        if (seen.add(n)) {
+          stack.add(n);
+        }
+      }
+    }
+    sizes.add(size);
+  }
+  sizes.sort();
+  return sizes.length == _kLockedOldWorldPartition.length &&
+      sizes[0] == _kLockedOldWorldPartition[0] &&
+      sizes[1] == _kLockedOldWorldPartition[1] &&
+      sizes[2] == _kLockedOldWorldPartition[2];
 }

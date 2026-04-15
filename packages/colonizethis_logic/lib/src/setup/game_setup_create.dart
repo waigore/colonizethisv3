@@ -99,49 +99,32 @@ GameSetupResult createGameFromGeneratedMaps({
   final perturbBase = assignmentPerturbationBase ?? namingSeed ?? config.seed;
 
   Map<String, String> owOwner = {};
-  var owAssignmentOk = false;
   if (config.enforceFairGpOldWorldAssignment) {
-    for (var attempt = 0; attempt < kMaxOldWorldAssignmentAttempts; attempt++) {
-      final assignmentRandom = attempt == 0
-          ? null
-          : Random(Object.hash(0x47504f77, perturbBase, attempt));
-      try {
-        owOwner = _assignOldWorldOwnershipContiguous(
-          neighbours: owNeighbours,
-          provinceIds: owProvinceIds,
-          seaBoundProvinceIds: seaBoundOW,
-          gpIds: gpIds,
-          minorIds: minorIds,
-          minProvincesPerMinor: config.minProvincesPerMinor,
-          assignmentRandom: assignmentRandom,
-        );
-      } on StateError catch (e, st) {
-        _log.w('OW assignment attempt $attempt failed: $e');
-        _log.d('stack $st');
-        continue;
-      }
-      final ownersRepair = Map<String, String>.from(owOwner);
-      final repaired = repairGpLandOwnershipMutating(
-        owners: ownersRepair,
-        gpIdsSorted: gpIds,
-        neighbours: owNeighbours,
-        landmassIds: owLandmassIds,
-        seaBoundLocalIds: seaBoundOwSet,
-        allProvinceIdsSorted: owProvincesSorted,
-      );
-      if (repaired) {
-        owOwner = ownersRepair;
-        owAssignmentOk = true;
-        break;
-      }
-    }
-    if (!owAssignmentOk) {
+    final assignmentRandom = Random(Object.hash(0x47504f77, perturbBase, 0));
+    owOwner = _assignOldWorldOwnershipContiguous(
+      neighbours: owNeighbours,
+      provinceIds: owProvinceIds,
+      seaBoundProvinceIds: seaBoundOW,
+      gpIds: gpIds,
+      minorIds: minorIds,
+      minProvincesPerMinor: config.minProvincesPerMinor,
+      assignmentRandom: assignmentRandom,
+    );
+    final ownersRepair = Map<String, String>.from(owOwner);
+    final repaired = repairGpLandOwnershipMutating(
+      owners: ownersRepair,
+      gpIdsSorted: gpIds,
+      neighbours: owNeighbours,
+      landmassIds: owLandmassIds,
+      seaBoundLocalIds: seaBoundOwSet,
+      allProvinceIdsSorted: owProvincesSorted,
+    );
+    if (!repaired) {
       throw GameSetupConnectivityFailure(
-        'Old World GP land connectivity could not be satisfied after '
-        '$kMaxOldWorldAssignmentAttempts assignment attempt(s) and up to '
-        '$kGpLandConnectivityRepairRounds repair round(s) each.',
+        'Old World GP land connectivity could not be satisfied by same-landmass swap-state repair.',
       );
     }
+    owOwner = ownersRepair;
   } else {
     _log.i('OW assignment fast path (no GP land connectivity repair)');
     owOwner = _assignOldWorldOwnershipContiguous(

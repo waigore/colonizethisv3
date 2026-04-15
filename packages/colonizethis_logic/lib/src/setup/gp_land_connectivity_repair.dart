@@ -4,7 +4,10 @@
 /// Setup failed after maximum Old World assignment attempts and connectivity repair.
 /// [reasonCode] is `gp_land_connectivity_exhausted` per SPEC/game/game-setup.md.
 class GameSetupConnectivityFailure implements Exception {
-  GameSetupConnectivityFailure(this.message, {this.reasonCode = 'gp_land_connectivity_exhausted'});
+  GameSetupConnectivityFailure(
+    this.message, {
+    this.reasonCode = 'gp_land_connectivity_exhausted',
+  });
 
   final String message;
   final String reasonCode;
@@ -15,9 +18,8 @@ class GameSetupConnectivityFailure implements Exception {
 
 /// Maximum repair rounds per assignment attempt (SPEC/game/game-setup.md).
 const kGpLandConnectivityRepairRounds = 10;
-
-/// Maximum full Old World assignment retries on the same map (implementation cap).
-const kMaxOldWorldAssignmentAttempts = 256;
+const _kSwapStateSearchDepthLimit = 3;
+const _kSwapStateBranchLimit = 48;
 
 /// True if [gpId]'s provinces induce a single connected component on [neighbours] (P–P only).
 bool gpProvincesAreLandConnected(
@@ -87,103 +89,110 @@ bool _allGpsSatisfyHardRules(
   return true;
 }
 
-bool _tryApplyFirstLegalSwap(
+String _ownerStateKey(
   Map<String, String> owners,
-  String disconnectedGp,
-  List<String> gpIdsSorted,
-  Map<String, Set<String>> neighbours,
-  Map<String, int> landmassIds,
-  Set<String> seaBoundLocalIds,
   List<String> allProvinceIdsSorted,
-) {
-  final mine = owners.entries
-      .where((e) => e.value == disconnectedGp)
-      .map((e) => e.key)
-      .toList()
-    ..sort();
+) => allProvinceIdsSorted.map((id) => owners[id] ?? '').join('|');
 
-  for (final a in mine) {
+Iterable<(String a, String b)> _candidateSameLandmassSwaps({
+  required Map<String, String> owners,
+  required List<String> gpIdsSorted,
+  required Map<String, Set<String>> neighbours,
+  required Map<String, int> landmassIds,
+  required List<String> allProvinceIdsSorted,
+}) sync* {
+  final gpSet = gpIdsSorted.toSet();
+  final disconnectedGps = <String>[
+    for (final gpId in gpIdsSorted)
+      if (!gpProvincesAreLandConnected(gpId, owners, neighbours)) gpId,
+  ];
+  final primaryGp = disconnectedGps.isEmpty
+      ? gpIdsSorted.first
+      : disconnectedGps.first;
+  final ownedByGp = allProvinceIdsSorted.where((id) => owners[id] == primaryGp);
+  var yielded = 0;
+  for (final a in ownedByGp) {
+    final landmass = landmassIds[a];
+    if (landmass == null) continue;
     for (final b in allProvinceIdsSorted) {
       if (a == b) continue;
-      final ob = owners[b];
-      if (ob == null) continue;
-      if (ob == disconnectedGp) continue;
-
-      final oa = owners[a]!;
-      owners[a] = ob;
-      owners[b] = oa;
-
-      final ok = _allGpsSatisfyHardRules(
-        owners,
-        gpIdsSorted,
-        neighbours,
-        landmassIds,
-        seaBoundLocalIds,
-      );
-
-      if (!ok) {
-        owners[a] = oa;
-        owners[b] = ob;
-        continue;
+      if (landmassIds[b] != landmass) continue;
+      final ownerB = owners[b];
+      if (ownerB == null || ownerB == primaryGp) continue;
+      if (!gpSet.contains(ownerB) && !ownerB.startsWith('minor')) continue;
+      yield (a, b);
+      yielded++;
+      if (yielded >= _kSwapStateBranchLimit) {
+        return;
       }
-      return true;
     }
   }
-  return false;
 }
 
-/// Two sequential 1:1 exchanges on four distinct provinces; legality checked only after both.
-/// See SPEC/game/game-setup.md § GP land connectivity repair (compound repair).
-bool _tryApplyCompoundTwoExchange(
-  Map<String, String> owners,
-  String disconnectedGp,
-  List<String> gpIdsSorted,
-  Map<String, Set<String>> neighbours,
-  Map<String, int> landmassIds,
-  Set<String> seaBoundLocalIds,
-  List<String> allProvinceIdsSorted,
-) {
-  final mine = owners.entries
-      .where((e) => e.value == disconnectedGp)
-      .map((e) => e.key)
-      .toList()
-    ..sort();
-
-  for (final a in mine) {
-    for (final b in allProvinceIdsSorted) {
-      if (a == b) continue;
-      final ob = owners[b];
-      if (ob == null || ob == disconnectedGp) continue;
-      final oa = owners[a]!;
-      owners[a] = ob;
-      owners[b] = oa;
-
-      for (final c in allProvinceIdsSorted) {
-        if (c == a || c == b) continue;
-        for (final d in allProvinceIdsSorted) {
-          if (d == a || d == b || c == d) continue;
-          final oc = owners[c]!;
-          final od = owners[d]!;
-          owners[c] = od;
-          owners[d] = oc;
-          final ok = _allGpsSatisfyHardRules(
-            owners,
-            gpIdsSorted,
-            neighbours,
-            landmassIds,
-            seaBoundLocalIds,
-          );
-          if (ok) {
-            return true;
-          }
-          owners[c] = oc;
-          owners[d] = od;
-        }
+bool _dfsSwapStateSearch({
+  required Map<String, String> owners,
+  required List<String> gpIdsSorted,
+  required Map<String, Set<String>> neighbours,
+  required Map<String, int> landmassIds,
+  required Set<String> seaBoundLocalIds,
+  required List<String> allProvinceIdsSorted,
+  required Set<String> visited,
+  required int depth,
+}) {
+  if (_allGpsSatisfyHardRules(
+    owners,
+    gpIdsSorted,
+    neighbours,
+    landmassIds,
+    seaBoundLocalIds,
+  )) {
+    return true;
+  }
+  if (depth >= _kSwapStateSearchDepthLimit) {
+    return false;
+  }
+  final stateKey = _ownerStateKey(owners, allProvinceIdsSorted);
+  if (!visited.add(stateKey)) {
+    return false;
+  }
+  for (final swap in _candidateSameLandmassSwaps(
+    owners: owners,
+    gpIdsSorted: gpIdsSorted,
+    neighbours: neighbours,
+    landmassIds: landmassIds,
+    allProvinceIdsSorted: allProvinceIdsSorted,
+  )) {
+    final a = swap.$1;
+    final b = swap.$2;
+    final ownerA = owners[a]!;
+    final ownerB = owners[b]!;
+    owners[a] = ownerB;
+    owners[b] = ownerA;
+    final keepSearching =
+        _gpOneLandmass(ownerA, owners, landmassIds) &&
+        _gpHasSeaBoundProvince(ownerA, owners, seaBoundLocalIds);
+    final otherIsGp = gpIdsSorted.contains(ownerB);
+    final keepOther =
+        !otherIsGp ||
+        (_gpOneLandmass(ownerB, owners, landmassIds) &&
+            _gpHasSeaBoundProvince(ownerB, owners, seaBoundLocalIds));
+    if (keepSearching && keepOther) {
+      final solved = _dfsSwapStateSearch(
+        owners: owners,
+        gpIdsSorted: gpIdsSorted,
+        neighbours: neighbours,
+        landmassIds: landmassIds,
+        seaBoundLocalIds: seaBoundLocalIds,
+        allProvinceIdsSorted: allProvinceIdsSorted,
+        visited: visited,
+        depth: depth + 1,
+      );
+      if (solved) {
+        return true;
       }
-
-      owners[a] = oa;
-      owners[b] = ob;
     }
+    owners[a] = ownerA;
+    owners[b] = ownerB;
   }
   return false;
 }
@@ -208,61 +217,20 @@ bool repairGpLandOwnershipMutating({
     return true;
   }
 
-  /// Inner sweeps per round so multiple 1:1 swaps can chain before the next round.
-  const maxInnerSweepsPerRound = 200;
-
   for (var round = 0; round < maxRounds; round++) {
-    if (_allGpsSatisfyHardRules(
-      owners,
-      gpIdsSorted,
-      neighbours,
-      landmassIds,
-      seaBoundLocalIds,
-    )) {
+    final solved = _dfsSwapStateSearch(
+      owners: owners,
+      gpIdsSorted: gpIdsSorted,
+      neighbours: neighbours,
+      landmassIds: landmassIds,
+      seaBoundLocalIds: seaBoundLocalIds,
+      allProvinceIdsSorted: allProvinceIdsSorted,
+      visited: <String>{},
+      depth: 0,
+    );
+    if (solved) {
       return true;
     }
-
-    var roundMadeSwap = false;
-    for (var inner = 0; inner < maxInnerSweepsPerRound; inner++) {
-      var sweepMadeSwap = false;
-      for (final gp in gpIdsSorted) {
-        if (gpProvincesAreLandConnected(gp, owners, neighbours)) continue;
-        final fixed = _tryApplyFirstLegalSwap(
-          owners,
-          gp,
-          gpIdsSorted,
-          neighbours,
-          landmassIds,
-          seaBoundLocalIds,
-          allProvinceIdsSorted,
-        ) ||
-            _tryApplyCompoundTwoExchange(
-              owners,
-              gp,
-              gpIdsSorted,
-              neighbours,
-              landmassIds,
-              seaBoundLocalIds,
-              allProvinceIdsSorted,
-            );
-        if (fixed) {
-          sweepMadeSwap = true;
-          roundMadeSwap = true;
-        }
-      }
-      if (_allGpsSatisfyHardRules(
-        owners,
-        gpIdsSorted,
-        neighbours,
-        landmassIds,
-        seaBoundLocalIds,
-      )) {
-        return true;
-      }
-      if (!sweepMadeSwap) break;
-    }
-
-    if (!roundMadeSwap) break;
   }
 
   return _allGpsSatisfyHardRules(

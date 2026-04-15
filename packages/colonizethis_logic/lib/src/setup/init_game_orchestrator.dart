@@ -17,6 +17,12 @@ import 'setup_exceptions.dart';
 import 'warp_zone_generator.dart';
 
 final _log = packageLogger();
+const int _kLockedGreatPowerCount = 6;
+const int _kLockedMinorNationCount = 6;
+const int _kLockedOldWorldProvinceCount = 60;
+const int _kLockedOldWorldContinentCount = 3;
+const int _kLockedOldWorldRetryCount = 5;
+const List<int> _kLockedOldWorldPartition = [18, 21, 21];
 
 /// Result of running init game.
 class InitGameResult {
@@ -84,49 +90,37 @@ InitGameResult runInitGame({
   InitGameOptions options = const InitGameOptions(),
   TileMapRegionGenerator? generateRegion,
 }) {
-  if (config.numProvincesOldWorld < config.greatPowerCount) {
+  final effectiveConfig = _withLockedOldWorldConfig(config);
+  if (effectiveConfig.numProvincesOldWorld < effectiveConfig.greatPowerCount) {
     throw SetupConfigConstraintException(
       code: 'insufficient_old_world_provinces_for_great_powers',
       details:
-          'Config requests ${config.numProvincesOldWorld} Old World provinces but '
-          '${config.greatPowerCount} Great Powers need at least one each',
+          'Config requests ${effectiveConfig.numProvincesOldWorld} Old World provinces but '
+          '${effectiveConfig.greatPowerCount} Great Powers need at least one each',
     );
   }
 
   _log.i(
-    'init game start OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
+    'init game start OW:${effectiveConfig.numProvincesOldWorld} NW:${effectiveConfig.numProvincesNewWorld}',
   );
-  final effectiveSeed = resolveEffectiveSetupSeed(config.seed);
+  final effectiveSeed = resolveEffectiveSetupSeed(effectiveConfig.seed);
 
   final mapGenParams = MapGenerationParams(
-    numContinents: config.continentCount,
+    numContinents: effectiveConfig.continentCount,
     seed: effectiveSeed,
     seaFraction: kDefaultSeaFraction,
-  );
-  final sizeOW = computeGridSizeFromParams(
-    config.numProvincesOldWorld,
-    mapGenParams,
-  );
-  final paramsOW = TileMapParams(
-    width: sizeOW.width,
-    height: sizeOW.height,
-    seed: effectiveSeed,
-    seaFraction: kDefaultSeaFraction,
-    skipFillLakes: options.skipFillLakes,
   );
   final gen = generateRegion ?? defaultTileMapRegionGenerator;
-  _log.d('init game generating OW map');
-  final (tileMapOW, topoOW) = gen(
-    params: paramsOW,
-    numProvinces: config.numProvincesOldWorld,
-    numContinents: config.continentCount,
-    regionId: kRegionOldWorld,
-    resourceRules: ResourceRules.defaultRules,
+  _log.d('init game generating OW map with locked partition retries');
+  final (tileMapOW, topoOW) = _generateLockedOldWorldMap(
+    options: options,
+    effectiveSeed: effectiveSeed,
+    generateRegionFn: gen,
   );
 
   _log.d('init game generating NW map');
   final sizeNW = computeGridSizeFromParams(
-    config.numProvincesNewWorld,
+    effectiveConfig.numProvincesNewWorld,
     mapGenParams,
   );
   final paramsNW = TileMapParams(
@@ -138,8 +132,11 @@ InitGameResult runInitGame({
   );
   final (tileMapNW, topoNW) = gen(
     params: paramsNW,
-    numProvinces: config.numProvincesNewWorld,
-    numContinents: config.continentCount.clamp(1, config.numProvincesNewWorld),
+    numProvinces: effectiveConfig.numProvincesNewWorld,
+    numContinents: effectiveConfig.continentCount.clamp(
+      1,
+      effectiveConfig.numProvincesNewWorld,
+    ),
     regionId: kRegionNewWorld,
     resourceRules: ResourceRules.defaultRules,
   );
@@ -155,7 +152,7 @@ InitGameResult runInitGame({
   );
 
   final setupResult = createGameFromGeneratedMaps(
-    config: config,
+    config: effectiveConfig,
     tileMapOldWorld: tileMapOW,
     topologyOldWorld: topoOW,
     tileMapNewWorld: tileMapNW,
@@ -214,7 +211,7 @@ InitGameResult runInitGame({
     cellSize: options.cellSize,
     seed: effectiveSeed,
     configSummary:
-        'GP:${config.selectedGreatPowerIds.join(",")} MN:${config.minorNationCount} TR:${config.tribeCount} OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
+        'GP:${effectiveConfig.selectedGreatPowerIds.join(",")} MN:${effectiveConfig.minorNationCount} TR:${effectiveConfig.tribeCount} OW:${effectiveConfig.numProvincesOldWorld} NW:${effectiveConfig.numProvincesNewWorld}',
     greatPowerColorOverride: mapColorTuples,
     warpLinks: warpLinks,
   );
@@ -252,6 +249,118 @@ InitGameResult runInitGame({
     warpLinks: setupResult.warpLinks,
     greatPowerColorOverride: mapColorTuples,
   );
+}
+
+GameSetupConfig _withLockedOldWorldConfig(GameSetupConfig config) {
+  final selectedIds =
+      config.selectedGreatPowerIds.length == _kLockedGreatPowerCount
+      ? config.selectedGreatPowerIds
+      : GameSetupConfig.defaultConfig.selectedGreatPowerIds
+            .take(_kLockedGreatPowerCount)
+            .toList();
+  return GameSetupConfig(
+    selectedGreatPowerIds: selectedIds,
+    leaderVariantByGpId: config.leaderVariantByGpId,
+    continentCount: _kLockedOldWorldContinentCount,
+    minorNationCount: _kLockedMinorNationCount,
+    tribeCount: config.tribeCount,
+    numProvincesOldWorld: _kLockedOldWorldProvinceCount,
+    numProvincesNewWorld: config.numProvincesNewWorld,
+    minProvincesPerMinor: 3,
+    seed: config.seed,
+    startingResources: config.startingResources,
+    enforceFairGpOldWorldAssignment: config.enforceFairGpOldWorldAssignment,
+    preferredInitialMapZoomMultiplier: config.preferredInitialMapZoomMultiplier,
+    initTownRoadWiringRegionIds: config.initTownRoadWiringRegionIds,
+  );
+}
+
+(TileMapResult, MapTopology) _generateLockedOldWorldMap({
+  required InitGameOptions options,
+  required int effectiveSeed,
+  required TileMapRegionGenerator generateRegionFn,
+}) {
+  (TileMapResult, MapTopology)? fallback;
+  for (var attempt = 0; attempt <= _kLockedOldWorldRetryCount; attempt++) {
+    final attemptSeed = effectiveSeed + attempt;
+    final mapGenParams = MapGenerationParams(
+      numContinents: _kLockedOldWorldContinentCount,
+      seed: attemptSeed,
+      seaFraction: kDefaultSeaFraction,
+    );
+    final sizeOW = computeGridSizeFromParams(
+      _kLockedOldWorldProvinceCount,
+      mapGenParams,
+    );
+    final paramsOW = TileMapParams(
+      width: sizeOW.width,
+      height: sizeOW.height,
+      seed: attemptSeed,
+      seaFraction: kDefaultSeaFraction,
+      skipFillLakes: options.skipFillLakes,
+    );
+    final (tileMapOW, topoOW) = generateRegionFn(
+      params: paramsOW,
+      numProvinces: _kLockedOldWorldProvinceCount,
+      numContinents: _kLockedOldWorldContinentCount,
+      regionId: kRegionOldWorld,
+      resourceRules: ResourceRules.defaultRules,
+    );
+    fallback ??= (tileMapOW, topoOW);
+    if (_matchesLockedOldWorldPartition(topoOW)) {
+      return (tileMapOW, topoOW);
+    }
+  }
+  _log.w(
+    'locked OW partition 21/21/18 not reached in ${_kLockedOldWorldRetryCount + 1} attempts; using deterministic fallback map',
+  );
+  if (fallback == null) {
+    throw SetupTopologyDataException(
+      code: 'old_world_partition_retry_exhausted',
+      details: 'Old World generation failed before producing a fallback map.',
+    );
+  }
+  return fallback;
+}
+
+bool _matchesLockedOldWorldPartition(MapTopology topology) {
+  final provinceIds = <String>{
+    for (final node in topology.nodes)
+      if (node.type == TopologyNodeType.province) node.id,
+  };
+  final neighbours = <String, Set<String>>{
+    for (final id in provinceIds) id: <String>{},
+  };
+  for (final edge in topology.edges) {
+    if (!provinceIds.contains(edge.id1) || !provinceIds.contains(edge.id2)) {
+      continue;
+    }
+    neighbours[edge.id1]!.add(edge.id2);
+    neighbours[edge.id2]!.add(edge.id1);
+  }
+  final componentSizes = <int>[];
+  final seen = <String>{};
+  final idsSorted = provinceIds.toList()..sort();
+  for (final id in idsSorted) {
+    if (!seen.add(id)) continue;
+    var size = 0;
+    final stack = <String>[id];
+    while (stack.isNotEmpty) {
+      final current = stack.removeLast();
+      size++;
+      for (final n in neighbours[current] ?? const <String>{}) {
+        if (seen.add(n)) {
+          stack.add(n);
+        }
+      }
+    }
+    componentSizes.add(size);
+  }
+  componentSizes.sort();
+  return componentSizes.length == _kLockedOldWorldPartition.length &&
+      componentSizes[0] == _kLockedOldWorldPartition[0] &&
+      componentSizes[1] == _kLockedOldWorldPartition[1] &&
+      componentSizes[2] == _kLockedOldWorldPartition[2];
 }
 
 /// Formats faction setup and starting state as markdown tables.

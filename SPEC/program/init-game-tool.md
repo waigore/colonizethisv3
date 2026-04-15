@@ -21,16 +21,16 @@ CLI entry point for game creation. Thin facade over the setup pipeline in [game-
 | `--output-game <path>` | Path for saving the game (colonizethis_save). Optional. Save is written when this is set unless `--no-save` is given. |
 | `--no-save` | Do not save the game. Overrides `--output-game`. |
 | `--seed <int>` | RNG seed; overrides config seed. Non-zero = reproducible; 0/absent = time-based. |
-| `--great-powers id1,id2,...` | Comma-separated GP semantic ids. Overrides selectedGreatPowerIds. |
-| `--great-power-count N` | First N default GP ids (backward compat; superseded by `--great-powers`). |
+| `--great-powers id1,id2,...` | Comma-separated GP semantic ids. Setup uses exactly 6 GPs; if fewer/more are provided, setup normalizes to 6 before generation. |
+| `--great-power-count N` | Backward-compat flag. Setup normalizes to 6 GPs in map-generating paths. |
 | `--prussia-leader ID` | When prussia is selected: leader variant (e.g. frederick_the_great \| frederick_william). |
-| `--minor-nation-count N` | Override Minor Nation count. |
+| `--minor-nation-count N` | Accepted for compatibility; map-generating setup normalizes Old World minors to 6. |
 | `--tribe-count N` | Override Tribe count. |
-| `--num-provinces-old-world N` | Override OW province count. |
+| `--num-provinces-old-world N` | Accepted for compatibility; map-generating setup normalizes Old World provinces to 60. |
 | `--num-provinces-new-world N` | Override NW province count. |
 | `--enforce-fair-gp-assignment` | After other config merges, force `enforceFairGpOldWorldAssignment` to **true** (GP OW connectivity repair + retries). |
 
-**JSON config** (single source for CLI): supported keys are `selectedGreatPowerIds` (array), `greatPowerCount` (fallback), `leaderVariantByGpId` (map GP id → leader variant), `continentCount`, `minorNationCount`, `tribeCount`, `numProvincesOldWorld`, `numProvincesNewWorld`, `seed`, `enforceFairGpOldWorldAssignment` (bool). Keys not listed (e.g. `minProvincesPerMinor`) are not read. Paths (config and outputs) are relative to the **current working directory** unless absolute.
+**JSON config** (single source for CLI): supported keys are `selectedGreatPowerIds` (array), `greatPowerCount` (fallback), `leaderVariantByGpId` (map GP id → leader variant), `continentCount`, `minorNationCount`, `tribeCount`, `numProvincesOldWorld`, `numProvincesNewWorld`, `seed`, `enforceFairGpOldWorldAssignment` (bool). In map-generating setup paths, Old World values are normalized to the locked profile (`GP=6`, `minor=6`, `OW=60`, `continents=3`) before generation and assignment. Paths (config and outputs) are relative to the **current working directory** unless absolute.
 
 ## Output Artifacts
 

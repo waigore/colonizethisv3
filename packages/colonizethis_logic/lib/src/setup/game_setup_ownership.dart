@@ -221,6 +221,11 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
 
   final gpCount = gpIds.length;
   final minorCount = minorIds.length;
+  final lockedOwLayout =
+      gpCount == 6 &&
+      minorCount == 6 &&
+      provinceIds.length == 60 &&
+      minProvincesPerMinor == 3;
 
   final totalOw = provinceIds.length;
   final reservedForMinors = minorCount * minProvincesPerMinor;
@@ -245,6 +250,81 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
   );
   final sortedLandmasses = landmassSizes.keys.toList()
     ..sort((a, b) => landmassSizes[b]!.compareTo(landmassSizes[a]!));
+  if (lockedOwLayout) {
+    final landmassesByRole = sortedLandmasses.toList()
+      ..sort((a, b) {
+        final sizeCmp = landmassSizes[b]!.compareTo(landmassSizes[a]!);
+        if (sizeCmp != 0) return sizeCmp;
+        final aMin = (landmassToProvinces[a]!..sort()).first;
+        final bMin = (landmassToProvinces[b]!..sort()).first;
+        return aMin.compareTo(bMin);
+      });
+    if (landmassesByRole.length != 3 ||
+        landmassSizes[landmassesByRole[0]] != 21 ||
+        landmassSizes[landmassesByRole[1]] != 21 ||
+        landmassSizes[landmassesByRole[2]] != 18) {
+      _log.w(
+        'locked OW continent-role assignment skipped; partition is $landmassSizes',
+      );
+    } else {
+      final gpLandmassAssignments = <String, int>{
+        gpIds[0]: landmassesByRole[0],
+        gpIds[1]: landmassesByRole[0],
+        gpIds[2]: landmassesByRole[0],
+        gpIds[3]: landmassesByRole[1],
+        gpIds[4]: landmassesByRole[1],
+        gpIds[5]: landmassesByRole[1],
+      };
+      final targetPerGp = <String, int>{for (final gpId in gpIds) gpId: 7};
+      final gpSeeds = _selectGpSeedsForLandmass(
+        gpIdsInAssignmentOrder: gpIds,
+        seaBoundProvinceIds: seaBoundProvinceIds,
+        landmassIds: landmassIds,
+        gpLandmassAssignments: gpLandmassAssignments,
+        seedShuffleRandom: assignmentRandom,
+      );
+      final gpAvailable = provinceIds.toSet();
+      final gpOwners = assignTerritoriesByBfsGrowth(
+        neighbours: neighbours,
+        landmassIds: landmassIds,
+        factionLandmassIds: gpLandmassAssignments,
+        factionIds: gpIds,
+        seeds: gpSeeds,
+        targetPerFaction: targetPerGp,
+        available: gpAvailable,
+        maxTotal: 42,
+        neighborShuffleRandom: assignmentRandom,
+      );
+      final owners = Map<String, String>.from(gpOwners);
+      final minorLandmass = landmassesByRole[2];
+      final remainingForMinors =
+          gpAvailable
+              .where((provinceId) => landmassIds[provinceId] == minorLandmass)
+              .toList()
+            ..sort();
+      final targetPerMinor = <String, int>{
+        for (final minorId in minorIds) minorId: 3,
+      };
+      final minorSeeds = pickSimpleSeeds(
+        factionIds: minorIds,
+        candidateIds: remainingForMinors,
+        available: gpAvailable,
+      );
+      final minorOwners = assignTerritoriesByBfsGrowth(
+        neighbours: neighbours,
+        landmassIds: landmassIds,
+        factionLandmassIds: {for (final m in minorIds) m: minorLandmass},
+        factionIds: minorIds,
+        seeds: minorSeeds,
+        targetPerFaction: targetPerMinor,
+        available: gpAvailable,
+        maxTotal: 18,
+        neighborShuffleRandom: assignmentRandom,
+      );
+      owners.addAll(minorOwners);
+      return owners;
+    }
+  }
 
   // Sea-bound slots per landmass (each GP needs one sea-bound seed on its landmass).
   final seaBoundCountByLandmass = <int, int>{};
