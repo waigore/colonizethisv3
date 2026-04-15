@@ -343,24 +343,37 @@ bool _matchesLockedOldWorldPartition(MapTopology topology) {
   final idsSorted = provinceIds.toList()..sort();
   for (final id in idsSorted) {
     if (!seen.add(id)) continue;
-    var size = 0;
-    final stack = <String>[id];
-    while (stack.isNotEmpty) {
-      final current = stack.removeLast();
-      size++;
-      for (final n in neighbours[current] ?? const <String>{}) {
-        if (seen.add(n)) {
-          stack.add(n);
-        }
-      }
-    }
-    componentSizes.add(size);
+    componentSizes.add(
+      _lockedOwConnectedComponentSize(
+        startId: id,
+        neighbours: neighbours,
+        seen: seen,
+      ),
+    );
   }
   componentSizes.sort();
   return componentSizes.length == _kLockedOldWorldPartition.length &&
       componentSizes[0] == _kLockedOldWorldPartition[0] &&
       componentSizes[1] == _kLockedOldWorldPartition[1] &&
       componentSizes[2] == _kLockedOldWorldPartition[2];
+}
+
+int _lockedOwConnectedComponentSize({
+  required String startId,
+  required Map<String, Set<String>> neighbours,
+  required Set<String> seen,
+}) {
+  var size = 0;
+  final stack = <String>[startId];
+  while (stack.isNotEmpty) {
+    final current = stack.removeLast();
+    size++;
+    for (final neighbour in neighbours[current] ?? const <String>{}) {
+      if (!seen.add(neighbour)) continue;
+      stack.add(neighbour);
+    }
+  }
+  return size;
 }
 
 /// Formats faction setup and starting state as markdown tables.
