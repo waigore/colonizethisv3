@@ -319,15 +319,12 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
       final targetPerMinor = <String, int>{
         for (final minorId in minorIds) minorId: targetPerFaction[minorId]!,
       };
-      final remainingForMinors = gpAvailable.toList()..sort();
-      final minorSeeds = pickSimpleSeeds(
-        factionIds: minorIds,
-        candidateIds: remainingForMinors.where((provinceId) {
-          final lm = landmassIds[provinceId];
-          if (lm == null) return false;
-          return minorLandmassAssignments.values.contains(lm);
-        }).toList(),
-        available: gpAvailable,
+      final minorSeeds = _selectFactionSeedsForLandmass(
+        factionIdsInAssignmentOrder: minorIds,
+        candidateProvinceIds: gpAvailable.toList()..sort(),
+        landmassIds: landmassIds,
+        factionLandmassAssignments: minorLandmassAssignments,
+        seedShuffleRandom: assignmentRandom,
       );
       final minorOwners = assignTerritoriesByBfsGrowth(
         neighbours: neighbours,
@@ -337,7 +334,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
         seeds: minorSeeds,
         targetPerFaction: targetPerMinor,
         available: gpAvailable,
-        maxTotal: 18,
+        maxTotal: targetPerMinor.values.fold<int>(0, (a, b) => a + b),
         neighborShuffleRandom: assignmentRandom,
       );
       owners.addAll(minorOwners);
@@ -527,6 +524,45 @@ Map<String, String> _selectGpSeedsForLandmass({
   }
 
   return gpSeeds;
+}
+
+Map<String, String> _selectFactionSeedsForLandmass({
+  required List<String> factionIdsInAssignmentOrder,
+  required List<String> candidateProvinceIds,
+  required Map<String, int> landmassIds,
+  required Map<String, int> factionLandmassAssignments,
+  Random? seedShuffleRandom,
+}) {
+  final byLandmass = <int, List<String>>{};
+  for (final provinceId in candidateProvinceIds) {
+    final lm = landmassIds[provinceId];
+    if (lm == null) continue;
+    byLandmass.putIfAbsent(lm, () => <String>[]).add(provinceId);
+  }
+  for (final list in byLandmass.values) {
+    list.sort();
+    if (seedShuffleRandom != null) list.shuffle(seedShuffleRandom);
+  }
+
+  final seeds = <String, String>{};
+  for (final factionId in factionIdsInAssignmentOrder) {
+    final lm = factionLandmassAssignments[factionId];
+    if (lm == null) {
+      throw SetupTopologyDataException(
+        code: 'missing_faction_landmass_assignment',
+        details: 'Faction $factionId has no landmass assignment.',
+      );
+    }
+    final candidates = byLandmass[lm];
+    if (candidates == null || candidates.isEmpty) {
+      throw StateError(
+        'No candidate province left on landmass $lm for faction $factionId',
+      );
+    }
+    final seed = candidates.removeAt(0);
+    seeds[seed] = factionId;
+  }
+  return seeds;
 }
 
 Map<String, String> _assignNewWorldOwnershipContiguous({

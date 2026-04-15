@@ -610,6 +610,9 @@ bool _matchesLockedOldWorldPartition(MapTopology topology) {
     for (final node in topology.nodes)
       if (node.type == TopologyNodeType.province) node.id,
   };
+  if (provinceIds.length != _kLockedOldWorldProvinceCount) {
+    return false;
+  }
   final neighbours = <String, Set<String>>{
     for (final id in provinceIds) id: <String>{},
   };
