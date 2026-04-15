@@ -393,7 +393,20 @@ Future<void> _tapAssignOnCivilianRowWithTitle(
     of: listView,
     matching: find.text(unitTypeTitle),
   );
-  expect(titlesInList, findsWidgets);
+  // ListView lazy-builds off-screen rows; taller rows (shared action row) can
+  // push unit types below the first viewport without any Text in the element tree.
+  final sw = Stopwatch()..start();
+  while (titlesInList.evaluate().isEmpty &&
+      sw.elapsed < const Duration(seconds: 20)) {
+    await tester.drag(panelScrollable, const Offset(0, -120));
+    await _pumpFor(tester, const Duration(milliseconds: 120));
+  }
+  expect(
+    titlesInList,
+    findsWidgets,
+    reason:
+        'Timed out scrolling civilian panel for a visible "$unitTypeTitle" row',
+  );
   final n = titlesInList.evaluate().length;
   for (var i = 0; i < n; i++) {
     final titleAt = titlesInList.at(i);
