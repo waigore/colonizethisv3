@@ -353,28 +353,43 @@ Map<String, String> pickLandmassSpacedSeeds({
   final usedLandmasses = <int>{};
   for (final factionId in factionIds) {
     if (available.isEmpty) break;
-    String? seed;
-    for (final p in candidateIds) {
-      if (!available.contains(p)) continue;
-      final lm = landmassIds[p];
-      if (lm == null) continue;
-      if (!usedLandmasses.contains(lm)) {
-        seed = p;
-        usedLandmasses.add(lm);
-        break;
-      }
-    }
-    if (seed == null) {
-      for (final p in candidateIds) {
-        if (available.contains(p)) {
-          seed = p;
-          break;
-        }
-      }
-    }
+    final seed =
+        _firstAvailableOnUnusedLandmass(
+          candidateIds: candidateIds,
+          available: available,
+          landmassIds: landmassIds,
+          usedLandmasses: usedLandmasses,
+        ) ??
+        _firstAvailableCandidate(candidateIds, available);
     if (seed == null) break;
     seeds[seed] = factionId;
     available.remove(seed);
   }
   return seeds;
+}
+
+String? _firstAvailableOnUnusedLandmass({
+  required List<String> candidateIds,
+  required Set<String> available,
+  required Map<String, int> landmassIds,
+  required Set<int> usedLandmasses,
+}) {
+  for (final p in candidateIds) {
+    if (!available.contains(p)) continue;
+    final lm = landmassIds[p];
+    if (lm == null || usedLandmasses.contains(lm)) continue;
+    usedLandmasses.add(lm);
+    return p;
+  }
+  return null;
+}
+
+String? _firstAvailableCandidate(
+  List<String> candidateIds,
+  Set<String> available,
+) {
+  for (final p in candidateIds) {
+    if (available.contains(p)) return p;
+  }
+  return null;
 }

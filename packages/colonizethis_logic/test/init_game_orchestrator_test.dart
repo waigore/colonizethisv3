@@ -474,7 +474,7 @@ void main() {
               buildMapViewData: false,
             ),
           ),
-          throwsA(isA<ArgumentError>()),
+          throwsA(isA<SetupConfigConstraintException>()),
         );
       },
     );

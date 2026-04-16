@@ -143,25 +143,39 @@ int _factionFragmentationExcess({
         .map((e) => e.key)
         .toList();
     if (mine.length <= 1) continue;
-    mine.sort();
+    final mineSet = mine.toSet();
     final seen = <String>{};
     var components = 0;
-    for (final start in mine) {
+    for (final start in mineSet) {
       if (seen.contains(start)) continue;
       components++;
-      final stack = <String>[start];
-      seen.add(start);
-      while (stack.isNotEmpty) {
-        final u = stack.removeLast();
-        for (final v in neighbours[u] ?? const <String>{}) {
-          if (!mine.contains(v)) continue;
-          if (seen.add(v)) stack.add(v);
-        }
-      }
+      _markOwnedConnectedComponent(
+        start: start,
+        owned: mineSet,
+        neighbours: neighbours,
+        seen: seen,
+      );
     }
     excess += components - 1;
   }
   return excess;
+}
+
+void _markOwnedConnectedComponent({
+  required String start,
+  required Set<String> owned,
+  required Map<String, Set<String>> neighbours,
+  required Set<String> seen,
+}) {
+  final stack = <String>[start];
+  seen.add(start);
+  while (stack.isNotEmpty) {
+    final u = stack.removeLast();
+    for (final v in neighbours[u] ?? const <String>{}) {
+      if (!owned.contains(v)) continue;
+      if (seen.add(v)) stack.add(v);
+    }
+  }
 }
 
 (int, int) _repairProgressTuple({

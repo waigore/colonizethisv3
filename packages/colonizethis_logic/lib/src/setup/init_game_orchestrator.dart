@@ -100,9 +100,11 @@ InitGameResult runInitGame({
   TileMapRegionGenerator? generateRegion,
 }) {
   if (options.renderPng && !options.buildMapViewData) {
-    throw ArgumentError(
-      'InitGameOptions: renderPng requires buildMapViewData (cannot render PNG '
-      'without full map view data).',
+    throw SetupConfigConstraintException(
+      code: 'invalid_init_game_options',
+      details:
+          'InitGameOptions.renderPng=true requires buildMapViewData=true '
+          '(cannot render PNG without full map view data).',
     );
   }
   final effectiveConfig = options.enforceLockedOldWorldProfile
