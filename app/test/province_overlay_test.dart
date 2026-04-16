@@ -438,9 +438,11 @@ void main() {
       'Tile section shows ??? for unrevealed tiles in player-constrained view',
       (WidgetTester tester) async {
         final baseRegion = demoRegionForOverlay;
+        final hoveredCell = baseRegion.cells.firstWhere((c) => !c.isSea);
         final cells = <CellViewData>[];
         for (var i = 0; i < baseRegion.cells.length; i++) {
           final c = baseRegion.cells[i];
+          final shouldHideCell = c.x == hoveredCell.x && c.y == hoveredCell.y;
           cells.add(
             CellViewData(
               x: c.x,
@@ -454,7 +456,9 @@ void main() {
               provinceDisplayName: c.provinceDisplayName,
               improvementLevel: c.improvementLevel,
               roadLevel: c.roadLevel,
-              visibility: i == 0 ? TileVisibility.unrevealed : c.visibility,
+              visibility: shouldHideCell
+                  ? TileVisibility.unrevealed
+                  : c.visibility,
             ),
           );
         }
@@ -472,7 +476,6 @@ void main() {
           unitMarkers: baseRegion.unitMarkers,
         );
 
-        final hoveredCell = region.cells.first;
         final selectedTileKey =
             '${region.regionId}|${hoveredCell.regionCellId}|${hoveredCell.x}|${hoveredCell.y}';
         final provinceId = '${region.regionId}|${hoveredCell.regionCellId}';
