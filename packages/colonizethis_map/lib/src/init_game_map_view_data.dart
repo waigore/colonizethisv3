@@ -401,6 +401,42 @@ class InitGameMapViewData {
     this.configSummary,
   });
 
+  /// Minimal placeholder when init_game skips [buildInitGameMapViewData] (tests,
+  /// headless checks). [combinedTopology] must be the real combined topology;
+  /// per-region cells are not populated and must not be used for rendering.
+  factory InitGameMapViewData.stubForSkippedMapViewBuild({
+    required MapTopology combinedTopology,
+    int? seed,
+    String? configSummary,
+  }) {
+    const cellSize = 8;
+    const stubCell = CellViewData(
+      x: 0,
+      y: 0,
+      regionCellId: 's0',
+      isSea: true,
+    );
+    RegionMapViewData stubRegion(String regionId) => RegionMapViewData(
+      regionId: regionId,
+      width: 1,
+      height: 1,
+      cellSize: cellSize,
+      cells: const [stubCell],
+      capitalMarkers: const [],
+      portMarkers: const [],
+      factionColors: {},
+      greatPowerFactionIds: {},
+      terrainColors: const {},
+    );
+    return InitGameMapViewData(
+      oldWorld: stubRegion('oldWorld'),
+      newWorld: stubRegion('newWorld'),
+      combinedTopology: combinedTopology,
+      seed: seed,
+      configSummary: configSummary,
+    );
+  }
+
   final RegionMapViewData oldWorld;
   final RegionMapViewData newWorld;
 

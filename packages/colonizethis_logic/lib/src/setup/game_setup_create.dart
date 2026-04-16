@@ -90,7 +90,8 @@ GameSetupResult createGameFromGeneratedMaps({
   // - Great Powers: each GP locked to one P–P landmass (connected component); multiple
   //   GPs may share a landmass when gpCount exceeds landmass count. Sea-bound seeds per landmass.
   // - Minor Nations: contiguous clusters on remaining OW provinces.
-  // - GP land connectivity repair + reassignment on same map: gp_land_connectivity_repair.dart
+  // - GP/minor fair-assignment: greedy same-landmass swap repair + OW assignment retries
+  //   (gp_land_connectivity_repair.dart).
   // - Tribes: contiguous clusters on NW provinces.
   final owNeighbours = _provinceNeighboursFromTopology(topologyOldWorld);
   final owLandmassIds = _landmassIdsFromNeighbours(owNeighbours);
@@ -133,7 +134,7 @@ GameSetupResult createGameFromGeneratedMaps({
     }
     if (!repairedOw) {
       throw GameSetupConnectivityFailure(
-        'Old World fair-assignment connectivity could not be satisfied by same-landmass swap-state repair across assignment retries.',
+        'Old World fair-assignment connectivity could not be satisfied by same-landmass swap repair across assignment retries.',
       );
     }
   } else {
@@ -149,30 +150,50 @@ GameSetupResult createGameFromGeneratedMaps({
     );
   }
 
-  var nwOwner = _assignNewWorldOwnershipContiguous(
-    topologyNewWorld: topologyNewWorld,
-    provinceIds: nwProvinceIds,
-    tribeIds: tribeIds,
-  );
+  late final Map<String, String> nwOwner;
   if (config.enforceFairAssignment && tribeIds.isNotEmpty) {
     final nwNeighbours = _provinceNeighboursFromTopology(topologyNewWorld);
     final nwLandmassIds = _landmassIdsFromNeighbours(nwNeighbours);
-    final nwOwnersRepair = Map<String, String>.from(nwOwner);
-    final nwRepaired = repairFactionLandOwnershipMutating(
-      owners: nwOwnersRepair,
-      requiredConnectedFactionIdsSorted: tribeIds.toList()..sort(),
-      gpIdsSorted: const [],
-      neighbours: nwNeighbours,
-      landmassIds: nwLandmassIds,
-      seaBoundLocalIds: const {},
-      allProvinceIdsSorted: nwProvinceIds.toList()..sort(),
-    );
-    if (!nwRepaired) {
+    final nwProvincesSorted = nwProvinceIds.toList()..sort();
+    const maxNwAttempts = 64;
+    var repairedNw = false;
+    for (var attempt = 0; attempt < maxNwAttempts; attempt++) {
+      final assignmentRandom = Random(
+        Object.hash(0x4e574f72, perturbBase, attempt),
+      );
+      final attemptedOwner = _assignNewWorldOwnershipContiguous(
+        topologyNewWorld: topologyNewWorld,
+        provinceIds: nwProvinceIds,
+        tribeIds: tribeIds,
+        assignmentRandom: assignmentRandom,
+      );
+      final nwOwnersRepair = Map<String, String>.from(attemptedOwner);
+      final nwRepaired = repairFactionLandOwnershipMutating(
+        owners: nwOwnersRepair,
+        requiredConnectedFactionIdsSorted: tribeIds.toList()..sort(),
+        gpIdsSorted: const [],
+        neighbours: nwNeighbours,
+        landmassIds: nwLandmassIds,
+        seaBoundLocalIds: const {},
+        allProvinceIdsSorted: nwProvincesSorted,
+      );
+      if (nwRepaired) {
+        nwOwner = nwOwnersRepair;
+        repairedNw = true;
+        break;
+      }
+    }
+    if (!repairedNw) {
       throw GameSetupConnectivityFailure(
-        'New World fair-assignment connectivity could not be satisfied by same-landmass swap-state repair.',
+        'New World fair-assignment connectivity could not be satisfied by same-landmass swap repair across assignment retries.',
       );
     }
-    nwOwner = nwOwnersRepair;
+  } else {
+    nwOwner = _assignNewWorldOwnershipContiguous(
+      topologyNewWorld: topologyNewWorld,
+      provinceIds: nwProvinceIds,
+      tribeIds: tribeIds,
+    );
   }
 
   final oldWorldProvinces = owOwner.entries

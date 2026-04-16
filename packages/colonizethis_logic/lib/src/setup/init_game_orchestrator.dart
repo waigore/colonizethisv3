@@ -66,6 +66,7 @@ class InitGameOptions {
     this.renderPng = true,
     this.enforceLockedOldWorldProfile = true,
     this.greatPowerColorOverride,
+    this.buildMapViewData = true,
   });
 
   final int cellSize;
@@ -83,6 +84,11 @@ class InitGameOptions {
 
   /// Optional GP id → (r, g, b) for map ownership colours; stored on Game and in result.
   final Map<String, (int r, int g, int b)>? greatPowerColorOverride;
+
+  /// When false, skips [buildInitGameMapViewData] and returns a stub
+  /// [InitGameMapViewData] (real [InitGameMapViewData.combinedTopology] only).
+  /// Incompatible with [renderPng] true. Markdown is still produced.
+  final bool buildMapViewData;
 }
 
 /// Runs the full game creation process: generate OW+NW maps, create game, render map, format markdown.
@@ -93,6 +99,12 @@ InitGameResult runInitGame({
   InitGameOptions options = const InitGameOptions(),
   TileMapRegionGenerator? generateRegion,
 }) {
+  if (options.renderPng && !options.buildMapViewData) {
+    throw ArgumentError(
+      'InitGameOptions: renderPng requires buildMapViewData (cannot render PNG '
+      'without full map view data).',
+    );
+  }
   final effectiveConfig = options.enforceLockedOldWorldProfile
       ? _withLockedOldWorldConfig(config)
       : config;
@@ -209,17 +221,28 @@ InitGameResult runInitGame({
       ? null
       : mergedGpColorTuples;
 
-  final mapViewData = buildInitGameMapViewData(
-    game: setupResult.game,
-    tileMapByRegion: setupResult.tileMapByRegion,
-    topologyByRegion: setupResult.topologyByRegion,
-    cellSize: options.cellSize,
-    seed: effectiveSeed,
-    configSummary:
-        'GP:${effectiveConfig.selectedGreatPowerIds.join(",")} MN:${effectiveConfig.minorNationCount} TR:${effectiveConfig.tribeCount} OW:${effectiveConfig.numProvincesOldWorld} NW:${effectiveConfig.numProvincesNewWorld}',
-    greatPowerColorOverride: mapColorTuples,
-    warpLinks: warpLinks,
-  );
+  final configSummary =
+      'GP:${effectiveConfig.selectedGreatPowerIds.join(",")} MN:${effectiveConfig.minorNationCount} TR:${effectiveConfig.tribeCount} OW:${effectiveConfig.numProvincesOldWorld} NW:${effectiveConfig.numProvincesNewWorld}';
+
+  final InitGameMapViewData mapViewData;
+  if (options.buildMapViewData) {
+    mapViewData = buildInitGameMapViewData(
+      game: setupResult.game,
+      tileMapByRegion: setupResult.tileMapByRegion,
+      topologyByRegion: setupResult.topologyByRegion,
+      cellSize: options.cellSize,
+      seed: effectiveSeed,
+      configSummary: configSummary,
+      greatPowerColorOverride: mapColorTuples,
+      warpLinks: warpLinks,
+    );
+  } else {
+    mapViewData = InitGameMapViewData.stubForSkippedMapViewBuild(
+      combinedTopology: setupResult.combinedTopology,
+      seed: effectiveSeed,
+      configSummary: configSummary,
+    );
+  }
 
   final mapPngBytes = options.renderPng
       ? renderInitGameMapToPngFromViewData(viewData: mapViewData)

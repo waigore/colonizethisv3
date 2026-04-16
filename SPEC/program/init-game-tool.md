@@ -6,7 +6,7 @@ CLI entry point for game creation. Thin facade over the setup pipeline in [game-
 
 ## Data Model
 
-- **InitGameOptions:** `cellSize` (int, default 24), `skipFillLakes` (bool, default false), `renderPng` (bool, default true). Implementation may extend options (e.g. `greatPowerColorOverride` for ctdev).
+- **InitGameOptions:** `cellSize` (int, default 24), `skipFillLakes` (bool, default false), `renderPng` (bool, default true), `buildMapViewData` (bool, default true; when false, init_game skips building full per-cell map view data and returns a stub view model with the real combined topology—tests/headless only; incompatible with `renderPng` true). Implementation may extend options (e.g. `greatPowerColorOverride` for ctdev).
 - CLI sets `renderPng` based on whether `--output-map` is provided.
 
 ## CLI Interface

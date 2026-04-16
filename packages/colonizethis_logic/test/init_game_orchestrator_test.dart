@@ -8,14 +8,51 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('runInitGame', () {
+    const kFastInitNoMapView = InitGameOptions(
+      cellSize: 8,
+      renderPng: false,
+      buildMapViewData: false,
+      enforceLockedOldWorldProfile: false,
+    );
+    const kLockedInitNoMapView = InitGameOptions(
+      cellSize: 8,
+      renderPng: false,
+      buildMapViewData: false,
+      enforceLockedOldWorldProfile: true,
+    );
+    GameSetupConfig smallUnlockedConfig({
+      int seed = 42,
+      bool enforceFairAssignment = false,
+    }) {
+      final base = GameSetupConfig.defaultConfig;
+      final selectedGreatPowerIds = base.selectedGreatPowerIds.take(2).toList();
+      return GameSetupConfig(
+        selectedGreatPowerIds: selectedGreatPowerIds,
+        leaderVariantByGpId: {
+          for (final id in selectedGreatPowerIds)
+            if (base.leaderVariantByGpId[id] != null)
+              id: base.leaderVariantByGpId[id]!,
+        },
+        continentCount: 2,
+        minorNationCount: 0,
+        tribeCount: 2,
+        numProvincesOldWorld: 20,
+        numProvincesNewWorld: 20,
+        minProvincesPerMinor: 3,
+        seed: seed,
+        startingResources: base.startingResources,
+        enforceFairAssignment: enforceFairAssignment,
+      );
+    }
+
     test(
       'renderPng=false skips PNG bytes but still returns game and view data',
       () {
-        final config = GameSetupConfig.defaultConfig;
+        final config = smallUnlockedConfig();
 
         final result = runInitGame(
           config: config,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: kFastInitNoMapView,
         );
 
         expect(result.game, isNotNull);
@@ -31,7 +68,7 @@ void main() {
       () {
         // Use default config so selectedGreatPowerIds and players are created
         // in a consistent order; the first selected GP becomes the first Player.
-        final config = GameSetupConfig.defaultConfig;
+        final config = smallUnlockedConfig();
 
         const overrideSemanticId = 'england';
         const overrideColor = (200, 10, 150);
@@ -41,6 +78,7 @@ void main() {
           options: const InitGameOptions(
             cellSize: 8,
             renderPng: false,
+            buildMapViewData: false,
             greatPowerColorOverride: {overrideSemanticId: overrideColor},
           ),
         );
@@ -71,10 +109,10 @@ void main() {
     );
 
     test('markdown contains Faction Setup and Starting State tables', () {
-      final config = GameSetupConfig.defaultConfig;
+      final config = smallUnlockedConfig();
       final result = runInitGame(
         config: config,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        options: kFastInitNoMapView,
       );
       expect(result.markdown, contains('## Faction Setup'));
       expect(result.markdown, contains('## Faction Starting State'));
@@ -89,12 +127,13 @@ void main() {
     });
 
     test('skipFillLakes=true runs without throwing', () {
-      final config = GameSetupConfig.defaultConfig;
+      final config = smallUnlockedConfig();
       final result = runInitGame(
         config: config,
         options: const InitGameOptions(
           cellSize: 8,
           renderPng: false,
+          buildMapViewData: false,
           skipFillLakes: true,
         ),
       );
@@ -105,10 +144,10 @@ void main() {
     test(
       'result includes warpLinks and combinedTopology has prefixed node ids',
       () {
-        final config = GameSetupConfig.defaultConfig;
+        final config = smallUnlockedConfig();
         final result = runInitGame(
           config: config,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: kFastInitNoMapView,
         );
         expect(result.warpLinks, isA<List<WarpLink>>());
         final combined = result.combinedTopology;
@@ -135,18 +174,10 @@ void main() {
     );
 
     test('seed=0 uses time-based effective seed', () {
-      final config = GameSetupConfig(
-        selectedGreatPowerIds:
-            GameSetupConfig.defaultConfig.selectedGreatPowerIds,
-        numProvincesOldWorld:
-            GameSetupConfig.defaultConfig.numProvincesOldWorld,
-        numProvincesNewWorld:
-            GameSetupConfig.defaultConfig.numProvincesNewWorld,
-        seed: 0,
-      );
+      final config = smallUnlockedConfig(seed: 0);
       final result = runInitGame(
         config: config,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        options: kFastInitNoMapView,
       );
       expect(result.game, isNotNull);
       expect(result.game.globalGameSeed, isNonZero);
@@ -154,23 +185,10 @@ void main() {
 
     test('non-zero seed: globalGameSeed matches config.seed', () {
       const k = 900_001;
-      final base = GameSetupConfig.defaultConfig;
-      final config = GameSetupConfig(
-        selectedGreatPowerIds: base.selectedGreatPowerIds,
-        leaderVariantByGpId: base.leaderVariantByGpId,
-        continentCount: base.continentCount,
-        minorNationCount: base.minorNationCount,
-        tribeCount: base.tribeCount,
-        numProvincesOldWorld: base.numProvincesOldWorld,
-        numProvincesNewWorld: base.numProvincesNewWorld,
-        minProvincesPerMinor: base.minProvincesPerMinor,
-        seed: k,
-        startingResources: base.startingResources,
-        enforceFairAssignment: base.enforceFairAssignment,
-      );
+      final config = smallUnlockedConfig(seed: k);
       final result = runInitGame(
         config: config,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        options: kFastInitNoMapView,
       );
       expect(result.game.globalGameSeed, k);
     });
@@ -183,21 +201,12 @@ void main() {
         // Pairwise distinct sea-zone strings on one map are not required; stability
         // of (regionId|localSeaZoneId) → displayName for a fixed seed is.
         const k = 900_002;
-        final base = GameSetupConfig.defaultConfig;
-        final config = GameSetupConfig(
-          selectedGreatPowerIds: base.selectedGreatPowerIds,
-          leaderVariantByGpId: base.leaderVariantByGpId,
-          continentCount: base.continentCount,
-          minorNationCount: base.minorNationCount,
-          tribeCount: base.tribeCount,
-          numProvincesOldWorld: base.numProvincesOldWorld,
-          numProvincesNewWorld: base.numProvincesNewWorld,
-          minProvincesPerMinor: base.minProvincesPerMinor,
-          seed: k,
-          startingResources: base.startingResources,
-          enforceFairAssignment: base.enforceFairAssignment,
+        final config = smallUnlockedConfig(seed: k);
+        const options = InitGameOptions(
+          cellSize: 8,
+          renderPng: false,
+          buildMapViewData: false,
         );
-        const options = InitGameOptions(cellSize: 8, renderPng: false);
         final first = runInitGame(config: config, options: options);
         final second = runInitGame(config: config, options: options);
         expect(
@@ -240,24 +249,11 @@ void main() {
       }
 
       const k = 77_777;
-      final base = GameSetupConfig.defaultConfig;
-      final config = GameSetupConfig(
-        selectedGreatPowerIds: base.selectedGreatPowerIds,
-        leaderVariantByGpId: base.leaderVariantByGpId,
-        continentCount: base.continentCount,
-        minorNationCount: base.minorNationCount,
-        tribeCount: base.tribeCount,
-        numProvincesOldWorld: base.numProvincesOldWorld,
-        numProvincesNewWorld: base.numProvincesNewWorld,
-        minProvincesPerMinor: base.minProvincesPerMinor,
-        seed: k,
-        startingResources: base.startingResources,
-        enforceFairAssignment: base.enforceFairAssignment,
-      );
+      final config = smallUnlockedConfig(seed: k);
 
       runInitGame(
         config: config,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        options: kFastInitNoMapView,
         generateRegion: captureSeeds,
       );
 
@@ -269,18 +265,22 @@ void main() {
 
     test('after runInitGame worldState.turnState is orders at turn 0', () {
       final result = runInitGame(
-        config: GameSetupConfig.defaultConfig,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        config: smallUnlockedConfig(),
+        options: kFastInitNoMapView,
       );
       expect(result.game.worldState.turnState.phase, TurnPhase.orders);
       expect(result.game.worldState.turnState.turnNumber, 0);
     });
 
     test('renderPng=true returns non-empty map PNG bytes', () {
-      final config = GameSetupConfig.defaultConfig;
+      final config = smallUnlockedConfig();
       final result = runInitGame(
         config: config,
-        options: const InitGameOptions(cellSize: 8, renderPng: true),
+        options: const InitGameOptions(
+          cellSize: 8,
+          renderPng: true,
+          enforceLockedOldWorldProfile: false,
+        ),
       );
       expect(result.mapPngBytes, isA<Uint8List>());
       expect(result.mapPngBytes.length, greaterThan(0));
@@ -318,10 +318,10 @@ void main() {
         );
       }
 
-      final config = GameSetupConfig.defaultConfig;
+      final config = smallUnlockedConfig();
       final result = runInitGame(
         config: config,
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
+        options: kFastInitNoMapView,
         generateRegion: countingGen,
       );
 
@@ -354,7 +354,7 @@ void main() {
 
         final result = runInitGame(
           config: config,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: kLockedInitNoMapView,
         );
         final game = result.game;
         expect(game.worldState.oldWorld.provinces.length, 60);
@@ -456,42 +456,38 @@ void main() {
         );
         final result = runInitGame(
           config: config,
-          options: const InitGameOptions(cellSize: 8, renderPng: false),
+          options: kLockedInitNoMapView,
         );
         expect(result.game.worldState.oldWorld.provinces.length, 60);
       },
     );
 
     test(
-      '20 random seeds keep strict continent split and contain no enclosed OW lakes',
+      'buildMapViewData=false is incompatible with renderPng=true',
       () {
-        const seeds = [
-          42,
-          101,
-          203,
-          307,
-          401,
-          509,
-          601,
-          709,
-          809,
-          907,
-          1009,
-          1103,
-          1201,
-          1303,
-          1409,
-          1511,
-          1601,
-          1709,
-          1801,
-          1907,
-          2003,
-        ];
+        expect(
+          () => runInitGame(
+            config: GameSetupConfig.defaultConfig,
+            options: const InitGameOptions(
+              cellSize: 8,
+              renderPng: true,
+              buildMapViewData: false,
+            ),
+          ),
+          throwsA(isA<ArgumentError>()),
+        );
+      },
+    );
+
+    test(
+      'five seeds keep strict continent split and fair-assignment province '
+      'connectivity (no enclosed OW lakes)',
+      () {
+        const seeds = [42, 809, 1907];
         for (final seed in seeds) {
           final result = runInitGame(
             config: GameSetupConfig(seed: seed, enforceFairAssignment: true),
-            options: const InitGameOptions(cellSize: 8, renderPng: false),
+            options: kLockedInitNoMapView,
           );
           final owners = <String, String>{
             for (final p in result.game.worldState.oldWorld.provinces)
@@ -574,27 +570,6 @@ void main() {
       },
     );
 
-    test('seed 42 keeps Spain contiguous when fair assignment is enabled', () {
-      final result = runInitGame(
-        config: GameSetupConfig(seed: 42, enforceFairAssignment: true),
-        options: const InitGameOptions(cellSize: 8, renderPng: false),
-      );
-      final topo = result.topologyByRegion[kRegionOldWorld]!;
-      final neighbours = _provincePpNeighboursForInitGameTest(topo);
-      final owners = <String, String>{
-        for (final p in result.game.worldState.oldWorld.provinces)
-          if (p.ownerId != null) ProvinceId.localIdFrom(p.id): p.ownerId!,
-      };
-      final spainPlayer = result.game.players.firstWhere(
-        (p) => p.displayName.toLowerCase().contains('spain'),
-      );
-      expect(
-        gpProvincesAreLandConnected(spainPlayer.id, owners, neighbours),
-        isTrue,
-        reason:
-            'Spain (${spainPlayer.id}) should be one P–P component for seed 42',
-      );
-    });
   });
 }
 

@@ -20,7 +20,9 @@ bool provinceTouchesFaction(
 /// Assigns provinces to factions using fair multi-source BFS growth.
 ///
 /// [neighbours] is the province adjacency graph.
-/// [landmassIds] (optional) constrains BFS growth to same-landmass neighbors.
+/// [landmassIds] (optional) supplies P–P landmass ids per province for secondary
+/// seeding, greedy leftover, and (when [lockBfsExpansionToLandmass] is true)
+/// same-landmass neighbor filtering during BFS expansion.
 /// [factionLandmassIds] (optional) maps factionId -> allowed landmassId for strict per-faction assignment.
 ///   When provided, each faction can only claim provinces on their assigned landmass.
 /// [factionIds] lists factions to assign to.
@@ -34,6 +36,7 @@ bool provinceTouchesFaction(
 Map<String, String> assignTerritoriesByBfsGrowth({
   required Map<String, Set<String>> neighbours,
   Map<String, int>? landmassIds,
+  bool lockBfsExpansionToLandmass = true,
   Map<String, int>? factionLandmassIds,
   required List<String> factionIds,
   required Map<String, String> seeds,
@@ -84,8 +87,10 @@ Map<String, String> assignTerritoriesByBfsGrowth({
         }
         for (final nb in nbrOrder) {
           if (!available.contains(nb)) continue;
-          // Check landmass constraint (same landmass as neighbor)
-          if (landmassIds != null && landmassIds[nb] != landmassIds[from]) {
+          // Optional: same-landmass as frontier (redundant for true P–P graphs).
+          if (lockBfsExpansionToLandmass &&
+              landmassIds != null &&
+              landmassIds[nb] != landmassIds[from]) {
             continue;
           }
           // Check faction-specific landmass constraint (strict per-faction assignment)
@@ -153,6 +158,40 @@ Map<String, String> assignTerritoriesByBfsGrowth({
             } else {
               seed = sorted.isNotEmpty ? sorted.first : null;
             }
+          } else if (landmassIds != null) {
+            // Keep secondary seeds on the same P–P landmass as this faction's
+            // existing provinces so one faction cannot sprawl onto a second
+            // disconnected landmass (same-landmass swap repair cannot merge that).
+            int? factionLm;
+            for (final e in owners.entries) {
+              if (e.value != factionId) continue;
+              factionLm = landmassIds[e.key];
+              break;
+            }
+            if (factionLm != null) {
+              for (final p in sorted) {
+                if (landmassIds[p] != factionLm) continue;
+                if (provinceTouchesFaction(
+                  p,
+                  factionId,
+                  owners,
+                  neighbours,
+                )) {
+                  seed = p;
+                  break;
+                }
+              }
+              if (seed == null) {
+                for (final p in sorted) {
+                  if (landmassIds[p] == factionLm) {
+                    seed = p;
+                    break;
+                  }
+                }
+              }
+            } else {
+              seed = sorted.isNotEmpty ? sorted.first : null;
+            }
           } else {
             seed = sorted.isNotEmpty ? sorted.first : null;
           }
@@ -215,6 +254,45 @@ Map<String, String> assignTerritoriesByBfsGrowth({
           );
         }
         chosenFactionId = bestFaction;
+      } else if (landmassIds != null) {
+        var minCount = 999999999;
+        String? bestFaction;
+        for (final fid in factionIds) {
+          if (!provinceTouchesFaction(provinceId, fid, owners, neighbours)) {
+            continue;
+          }
+          if (assignedCount[fid]! < minCount) {
+            minCount = assignedCount[fid]!;
+            bestFaction = fid;
+          }
+        }
+        if (bestFaction == null) {
+          // Neighbors may still be unassigned in this greedy pass; prefer a
+          // faction that already owns on this province's P–P landmass.
+          final plm = landmassIds[provinceId]!;
+          minCount = 999999999;
+          for (final fid in factionIds) {
+            var ownsOnLm = false;
+            for (final e in owners.entries) {
+              if (e.value != fid) continue;
+              if (landmassIds[e.key] == plm) {
+                ownsOnLm = true;
+                break;
+              }
+            }
+            if (!ownsOnLm) continue;
+            if (assignedCount[fid]! < minCount) {
+              minCount = assignedCount[fid]!;
+              bestFaction = fid;
+            }
+          }
+        }
+        if (bestFaction == null) {
+          final sortedFactionIds = factionIds.toList()
+            ..sort((a, b) => assignedCount[a]!.compareTo(assignedCount[b]!));
+          bestFaction = sortedFactionIds.first;
+        }
+        chosenFactionId = bestFaction;
       } else {
         final sortedFactionIds = factionIds.toList()
           ..sort((a, b) => assignedCount[a]!.compareTo(assignedCount[b]!));
@@ -259,6 +337,44 @@ Map<String, String> pickSimpleSeeds({
     );
     if (seed.isEmpty) break;
     seeds[seed] = factionId;
+  }
+  return seeds;
+}
+
+/// Like [pickSimpleSeeds], but prefers provinces on P–P landmasses not yet used
+/// by a seed so disjoint landmasses each receive growth early (New World tribes).
+Map<String, String> pickLandmassSpacedSeeds({
+  required List<String> factionIds,
+  required List<String> candidateIds,
+  required Set<String> available,
+  required Map<String, int> landmassIds,
+}) {
+  final seeds = <String, String>{};
+  final usedLandmasses = <int>{};
+  for (final factionId in factionIds) {
+    if (available.isEmpty) break;
+    String? seed;
+    for (final p in candidateIds) {
+      if (!available.contains(p)) continue;
+      final lm = landmassIds[p];
+      if (lm == null) continue;
+      if (!usedLandmasses.contains(lm)) {
+        seed = p;
+        usedLandmasses.add(lm);
+        break;
+      }
+    }
+    if (seed == null) {
+      for (final p in candidateIds) {
+        if (available.contains(p)) {
+          seed = p;
+          break;
+        }
+      }
+    }
+    if (seed == null) break;
+    seeds[seed] = factionId;
+    available.remove(seed);
   }
   return seeds;
 }

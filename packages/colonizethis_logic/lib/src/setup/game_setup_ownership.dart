@@ -575,26 +575,40 @@ Map<String, String> _assignNewWorldOwnershipContiguous({
   required MapTopology topologyNewWorld,
   required List<String> provinceIds,
   required List<String> tribeIds,
+  Random? assignmentRandom,
 }) {
   if (tribeIds.isEmpty) {
     return {for (final p in provinceIds) p: ''};
   }
 
   final neighbours = _provinceNeighboursFromTopology(topologyNewWorld);
+  final landmassIds = _landmassIdsFromNeighbours(neighbours);
   final sorted = provinceIds.toList()..sort();
+  final candidateIds = List<String>.from(sorted);
+  if (assignmentRandom != null) {
+    candidateIds.shuffle(assignmentRandom);
+  }
+  final factionOrder = List<String>.from(tribeIds);
+  if (assignmentRandom != null) {
+    factionOrder.shuffle(assignmentRandom);
+  }
   final available = provinceIds.toSet();
   final targetPerTribe = computeFairTargets(tribeIds, provinceIds.length);
-  final seeds = pickSimpleSeeds(
+  final seeds = pickLandmassSpacedSeeds(
     factionIds: tribeIds,
-    candidateIds: sorted,
+    candidateIds: candidateIds,
     available: available,
+    landmassIds: landmassIds,
   );
 
   return assignTerritoriesByBfsGrowth(
     neighbours: neighbours,
-    factionIds: tribeIds,
+    landmassIds: landmassIds,
+    lockBfsExpansionToLandmass: false,
+    factionIds: factionOrder,
     seeds: seeds,
     targetPerFaction: targetPerTribe,
     available: available,
+    neighborShuffleRandom: assignmentRandom,
   );
 }
