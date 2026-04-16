@@ -154,7 +154,10 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
 
     final terrain = cell.terrainType;
     if (terrain == null) {
-      throw StateError('Cell has no terrain type: $cell');
+      _log.w(
+        'Cell has no terrain type in region ${region.regionId} at '
+        '(${cell.x}, ${cell.y}); defaulting to plains for rendering.',
+      );
     }
     _paintLandBaseTile(canvas, cell);
   }
@@ -215,11 +218,7 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
   void _paintLandBaseTile(Canvas canvas, CellViewData cell) {
     final left = cell.x * cellSize;
     final top = cell.y * cellSize;
-    final terrainNullable = cell.terrainType;
-    if (terrainNullable == null) {
-      throw StateError('Cell has no terrain type: $cell');
-    }
-    final terrain = terrainNullable;
+    final terrain = cell.terrainType ?? TerrainType.plains;
 
     final isPlains =
         terrain == TerrainType.plains || _isFeatureTerrain(terrain);

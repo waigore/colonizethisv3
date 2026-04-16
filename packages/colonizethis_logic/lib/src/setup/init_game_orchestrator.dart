@@ -23,6 +23,14 @@ const int _kLockedOldWorldProvinceCount = 60;
 const int _kLockedOldWorldContinentCount = 4;
 const int _kLockedOldWorldRetryCount = 50;
 
+int _stableStringHash(String value) {
+  var hash = 0;
+  for (final codeUnit in value.codeUnits) {
+    hash = (hash * 31 + codeUnit) & 0x7fffffff;
+  }
+  return hash;
+}
+
 /// Result of running init game.
 class InitGameResult {
   const InitGameResult({
@@ -260,7 +268,7 @@ InitGameResult runInitGame({
   game = game.copyWith(
     globalGameSeed: effectiveSeed,
     aiSeedByGpId: {
-      for (final p in game.players) p.id: effectiveSeed + p.id.hashCode,
+      for (final p in game.players) p.id: effectiveSeed + _stableStringHash(p.id),
     },
     greatPowerColorOverride: gpColorOverrideList,
   );

@@ -11,17 +11,12 @@
       "tribeCount": 10
     }
   },
-  "turns": [
-    {
-      "turn": 1,
-      "orders": []
-    }
-  ],
+  "turns": [],
   "assertions": [
-    { "turn": 1, "province": "oldWorld|p1", "hasUnit": "gp1_explorer_1" },
-    { "turn": 1, "province": "oldWorld|p1", "hasUnit": "gp1_explorer_2" },
-    { "turn": 1, "province": "oldWorld|p1", "hasUnit": "gp1_builder_1" },
-    { "turn": 1, "province": "oldWorld|p1", "hasUnit": "gp1_builder_2" },
-    { "turn": 1, "province": "oldWorld|p1", "hasUnit": "gp1_engineer_1" }
+    { "player": "gp1", "playerCapitalHasUnit": "gp1_explorer_1" },
+    { "player": "gp1", "playerCapitalHasUnit": "gp1_explorer_2" },
+    { "player": "gp1", "playerCapitalHasUnit": "gp1_builder_1" },
+    { "player": "gp1", "playerCapitalHasUnit": "gp1_builder_2" },
+    { "player": "gp1", "playerCapitalHasUnit": "gp1_engineer_1" }
   ]
 }

@@ -83,10 +83,12 @@ MapTopology buildCombinedTopology({
 }
 
 List<String> _provinceIdsFromTopology(MapTopology topology) {
-  return topology.nodes
+  final ids = topology.nodes
       .where((n) => n.type == TopologyNodeType.province)
       .map((n) => n.id)
       .toList();
+  ids.sort();
+  return ids;
 }
 
 ({int x, int y}) _provinceTownCentroidFromTileKeys(List<String> tiles) {

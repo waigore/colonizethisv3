@@ -240,11 +240,48 @@ class StateVerifier {
 
     // Player-based assertions (stockpile, treasury, diplomacy) — only for game.players
     if (assertion.player != null &&
-        (assertion.stockpile != null || assertion.treasury != null)) {
+        (assertion.stockpile != null ||
+            assertion.treasury != null ||
+            assertion.playerCapitalHasUnit != null ||
+            assertion.playerCapitalUnitCount != null)) {
       final player = game.players.firstWhere(
         (p) => p.id == assertion.player,
         orElse: () => throw StateError('Player ${assertion.player} not found'),
       );
+
+      if (assertion.playerCapitalHasUnit != null ||
+          assertion.playerCapitalUnitCount != null) {
+        final capitalProvinceId = player.capitalProvinceId;
+        if (capitalProvinceId == null) {
+          failures.add(
+            'Player ${assertion.player} has no capitalProvinceId for capital-unit assertion',
+          );
+        } else {
+          final units = _getUnitsInProvince(game, null, capitalProvinceId);
+          if (assertion.playerCapitalHasUnit != null) {
+            final hasUnit = units.any(
+              (u) => u.id == assertion.playerCapitalHasUnit,
+            );
+            if (!hasUnit) {
+              failures.add(
+                'Player ${assertion.player} capital $capitalProvinceId: expected unit '
+                '"${assertion.playerCapitalHasUnit}" not found',
+              );
+            }
+          }
+          if (assertion.playerCapitalUnitCount != null) {
+            final ownedCount = units
+                .where((u) => u.ownerId == assertion.player)
+                .length;
+            if (ownedCount != assertion.playerCapitalUnitCount) {
+              failures.add(
+                'Player ${assertion.player} capital $capitalProvinceId: expected '
+                '${assertion.playerCapitalUnitCount} owned units, got $ownedCount',
+              );
+            }
+          }
+        }
+      }
 
       if (assertion.stockpile != null) {
         // Sum all commodity quantities in stockpile

@@ -238,6 +238,12 @@ String _formatAssertion(Assertion assertion) {
   if (assertion.stockpile != null) {
     return 'stockpile ${assertion.stockpile}';
   }
+  if (assertion.player != null && assertion.playerCapitalHasUnit != null) {
+    return 'player.${assertion.player}.capital.hasUnit == ${assertion.playerCapitalHasUnit}';
+  }
+  if (assertion.player != null && assertion.playerCapitalUnitCount != null) {
+    return 'player.${assertion.player}.capital.ownedUnitCount == ${assertion.playerCapitalUnitCount}';
+  }
   if (assertion.workerPeasants != null) {
     return 'player.${assertion.player}.workerPeasants == ${assertion.workerPeasants}';
   }

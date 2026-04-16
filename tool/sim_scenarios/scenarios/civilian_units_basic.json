@@ -11,14 +11,8 @@
       "tribeCount": 10
     }
   },
-  "turns": [
-    {
-      "turn": 1,
-      "orders": []
-    }
-  ],
+  "turns": [],
   "assertions": [
-    {"turn": 1, "province": "oldWorld|p1", "owner": "gp1"},
-    {"turn": 1, "province": "oldWorld|p1", "hasPlayerUnits": "gp1", "unitCount": 8}
+    {"player": "gp1", "playerCapitalUnitCount": 8}
   ]
 }

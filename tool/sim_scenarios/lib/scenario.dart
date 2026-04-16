@@ -283,6 +283,8 @@ class Assertion {
     this.unitCount,
     this.hasUnit,
     this.hasPlayerUnits,
+    this.playerCapitalHasUnit,
+    this.playerCapitalUnitCount,
     this.stockpile,
     this.stockpileCommodity,
     this.commodity,
@@ -344,6 +346,8 @@ class Assertion {
   final int? unitCount;
   final String? hasUnit;
   final String? hasPlayerUnits;
+  final String? playerCapitalHasUnit;
+  final int? playerCapitalUnitCount;
   final int? stockpile;
 
   /// With [player] and [commodity]: expected quantity of that commodity in stockpile. SPEC/game/production-recipes.md.
@@ -746,6 +750,8 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     unitCount: json['unitCount'] as int?,
     hasUnit: json['hasUnit'] as String?,
     hasPlayerUnits: json['hasPlayerUnits'] as String?,
+    playerCapitalHasUnit: json['playerCapitalHasUnit'] as String?,
+    playerCapitalUnitCount: json['playerCapitalUnitCount'] as int?,
     stockpile: json['stockpile'] as int?,
     stockpileCommodity: json['stockpileCommodity'] as int?,
     commodity: json['commodity'] as String?,
