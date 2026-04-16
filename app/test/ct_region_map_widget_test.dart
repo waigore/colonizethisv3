@@ -1327,7 +1327,6 @@ void main() {
       'tapping non-civilian tile still opens tile detail',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();
-        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
         const selectedCivilianTileKey = 'oldWorld|pMissing|9|9';
         final region = RegionMapViewData(
           regionId: 'oldWorld',
@@ -1340,9 +1339,9 @@ void main() {
               y: 0,
               regionCellId: 'pTest',
               isSea: false,
-              terrainTypeId: landTemplate.terrainTypeId,
-              terrainType: landTemplate.terrainType,
-              ownerFactionId: landTemplate.ownerFactionId,
+              terrainTypeId: 'plains',
+              terrainType: TerrainType.plains,
+              ownerFactionId: base.cells.firstWhere((c) => !c.isSea).ownerFactionId,
             ),
           ],
           capitalMarkers: const [],
