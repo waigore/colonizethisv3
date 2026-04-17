@@ -7,6 +7,10 @@ import 'player_view.dart';
 import 'province_lookup.dart';
 import 'unit_lookup.dart';
 
+String _localSeaZoneId(String seaZoneId) => ProvinceId.isPrefixed(seaZoneId)
+    ? ProvinceId.localIdFrom(seaZoneId)
+    : seaZoneId;
+
 /// Spy 5-turn fog decay: decrement timers; when they expire, set other-faction
 /// provinces back to fogged for that player. Timers MUST NOT affect a player's
 /// own provinces; own provinces remain fully visible. SPEC/program/fog-and-exploration-resolution.md.
@@ -235,9 +239,12 @@ bool _playerHasFleetAtSeaInZone(
   String regionId,
   String seaZoneLocalId,
 ) {
+  final expectedLocalSeaZoneId = _localSeaZoneId(seaZoneLocalId);
   for (final f in game.worldState.fleets) {
     if (f.ownerId != playerId) continue;
-    if (!f.isAtSea || f.seaZoneId != seaZoneLocalId) continue;
+    if (!f.isAtSea || f.seaZoneId == null) continue;
+    final fleetSeaZoneLocalId = _localSeaZoneId(f.seaZoneId!);
+    if (fleetSeaZoneLocalId != expectedLocalSeaZoneId) continue;
     if (f.regionId != regionId) continue;
     return true;
   }
@@ -295,7 +302,7 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
         if (_playerHasFleetAtSeaInZone(game, playerId, regionId, seaZoneId)) {
           continue;
         }
-        final keys = regionTileKeys[seaZoneId];
+        final keys = regionTileKeys[_localSeaZoneId(seaZoneId)];
         if (keys == null) continue;
         for (final tk in keys) {
           final cur = vis[tk];
