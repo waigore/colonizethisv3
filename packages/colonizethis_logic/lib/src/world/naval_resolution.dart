@@ -26,6 +26,14 @@ final _log = packageLogger();
   return (x: x, y: y);
 }
 
+/// [tileKeysByRegionAndProvince] indexes sea zones by **local** sea id (raster cell id),
+/// while turn resolution may use a **combined** topology whose sea node ids are prefixed
+/// (`regionId|localSeaId`). Normalize for lookups only; fleet orders still use topology ids.
+String _localSeaZoneIdForTileIndex(String seaZoneTopologyId) =>
+    ProvinceId.isPrefixed(seaZoneTopologyId)
+        ? ProvinceId.localIdFrom(seaZoneTopologyId)
+        : seaZoneTopologyId;
+
 Set<String> _coastalTileKeysAdjacentToSeaZone({
   required List<String> provinceTileKeys,
   required List<String> seaWaterTileKeys,
@@ -368,11 +376,12 @@ Game applyNavalMovesAndShipReveal(
           regionId: destRegionId,
         );
         final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
+        final seaZoneKeyForTiles = _localSeaZoneIdForTileIndex(destZoneId);
         final seaWaterKeys = game
             .worldState
-            .tileKeysByRegionAndProvince[destRegionId]?[destZoneId];
-        for (final localProvinceId in provinceIds) {
-          final fullProvinceId = ProvinceId.full(destRegionId, localProvinceId);
+            .tileKeysByRegionAndProvince[destRegionId]?[seaZoneKeyForTiles];
+        for (final provinceNodeId in provinceIds) {
+          final fullProvinceId = toFullProvinceId(destRegionId, provinceNodeId);
           final provinceTileKeys =
               game
                   .worldState
