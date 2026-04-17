@@ -13,6 +13,7 @@ import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/home_fleet_cargo_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
+import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
@@ -42,6 +43,7 @@ void main() {
   gameShellOverrides({
     required Game game,
     required InitGameMapViewData? mapViewData,
+    TreasurySummary treasurySummary = const TreasurySummary(treasury: 12345),
   }) => [
     gamesBoxProvider.overrideWith((ref) => gamesBox),
     gameServiceProvider.overrideWith(
@@ -63,6 +65,7 @@ void main() {
     homeFleetCargoSummaryProvider.overrideWith(
       (ref) => const HomeFleetCargoSummary(used: 0, capacity: 0),
     ),
+    treasurySummaryProvider.overrideWith((ref) => treasurySummary),
   ];
 
   Widget buildGameScreen({required double width, required double height}) {
@@ -140,6 +143,163 @@ void main() {
         expect(iconWidget.assetPath, 'assets/icons/32/ui_icon_cargo_hold.png');
       },
       timeout: const Timeout(Duration(seconds: 15)),
+    );
+
+    testWidgets(
+      'AC: treasury indicator appears between New World and cargo with exact value and dedicated icon',
+      (WidgetTester tester) async {
+        final dpr = tester.view.devicePixelRatio;
+        tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: gameShellOverrides(
+              game: debugResult.game,
+              mapViewData: debugResult.mapViewData,
+              treasurySummary: const TreasurySummary(
+                treasury: 12345,
+                projectedDelta: 250,
+              ),
+            ),
+            child: AppEventHandlerScope(
+              child: MaterialApp(
+                navigatorKey: appNavigatorKey,
+                theme: AppThemes.colonial,
+                home: MediaQuery(
+                  data: const MediaQueryData(size: Size(1500, 700)),
+                  child: const GameScreen(),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final treasuryIndicator = find.byKey(kTreasuryIndicatorKey);
+        final cargoIndicator = find.byKey(kCargoHoldIndicatorKey);
+        expect(treasuryIndicator, findsOneWidget);
+        expect(cargoIndicator, findsOneWidget);
+        expect(find.text('12,345'), findsOneWidget);
+        expect(find.text('+250'), findsOneWidget);
+
+        final iconFinder = find.descendant(
+          of: treasuryIndicator,
+          matching: find.byType(StrictAssetIcon),
+        );
+        expect(iconFinder, findsOneWidget);
+        final iconWidget = tester.widget<StrictAssetIcon>(iconFinder);
+        expect(
+          iconWidget.assetPath,
+          'assets/icons/32/ui_icon_treasury_coin.png',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
+
+    testWidgets(
+      'AC: tapping treasury indicator toggles exact and abbreviated display',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(buildGameScreen(width: 1500, height: 700));
+        await tester.pump();
+
+        final treasuryIndicator = find.byKey(kTreasuryIndicatorKey);
+        expect(treasuryIndicator, findsOneWidget);
+        expect(find.text('12,345'), findsOneWidget);
+
+        await tester.tap(treasuryIndicator);
+        await tester.pump();
+        expect(find.text('12.3k'), findsOneWidget);
+
+        await tester.tap(treasuryIndicator);
+        await tester.pump();
+        expect(find.text('12,345'), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
+
+    testWidgets(
+      'AC: treasury delta shows signed text for positive values',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: gameShellOverrides(
+              game: debugResult.game,
+              mapViewData: debugResult.mapViewData,
+              treasurySummary: const TreasurySummary(
+                treasury: 12345,
+                projectedDelta: 250,
+              ),
+            ),
+            child: AppEventHandlerScope(
+              child: MaterialApp(
+                navigatorKey: appNavigatorKey,
+                theme: AppThemes.colonial,
+                home: const GameScreen(),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        expect(find.text('+250'), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'AC: treasury delta shows signed text for negative values',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: gameShellOverrides(
+              game: debugResult.game,
+              mapViewData: debugResult.mapViewData,
+              treasurySummary: const TreasurySummary(
+                treasury: 12345,
+                projectedDelta: -400,
+              ),
+            ),
+            child: AppEventHandlerScope(
+              child: MaterialApp(
+                navigatorKey: appNavigatorKey,
+                theme: AppThemes.colonial,
+                home: const GameScreen(),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        expect(find.textContaining('400'), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
+
+    testWidgets(
+      'AC: treasury delta hides when projected delta is zero',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: gameShellOverrides(
+              game: debugResult.game,
+              mapViewData: debugResult.mapViewData,
+              treasurySummary: const TreasurySummary(
+                treasury: 12345,
+                projectedDelta: 0,
+              ),
+            ),
+            child: AppEventHandlerScope(
+              child: MaterialApp(
+                navigatorKey: appNavigatorKey,
+                theme: AppThemes.colonial,
+                home: const GameScreen(),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        expect(find.text('+250'), findsNothing);
+        expect(find.text('-400'), findsNothing);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
     );
 
     testWidgets(
@@ -495,6 +655,9 @@ void main() {
           }),
           homeFleetCargoSummaryProvider.overrideWith(
             (ref) => const HomeFleetCargoSummary(used: 0, capacity: 0),
+          ),
+          treasurySummaryProvider.overrideWith(
+            (ref) => const TreasurySummary(treasury: 12345),
           ),
         ],
         child: AppEventHandlerScope(

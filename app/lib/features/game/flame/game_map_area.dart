@@ -19,6 +19,7 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../providers/region_minimap_provider.dart';
+import '../../../../providers/treasury_summary_provider.dart';
 import 'region_map_viewport_snapshot.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
 
@@ -971,6 +972,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       ),
     );
     final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
+    final treasurySummary = ref.watch(treasurySummaryProvider);
     final feedEntries = _feedEntries();
     final feedButtonTopInset = kMapOverlayEdgeInset;
     final feedButtonRightInset = kCtE2EEnabled
@@ -990,6 +992,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
           cargoUsed: cargoSummary.used,
           cargoCapacity: cargoSummary.capacity,
           isCargoUsedReliable: cargoSummary.isCargoUsedReliable,
+          treasury: treasurySummary.treasury,
+          treasuryDelta: treasurySummary.projectedDelta,
         ),
         Expanded(
           child: Stack(
