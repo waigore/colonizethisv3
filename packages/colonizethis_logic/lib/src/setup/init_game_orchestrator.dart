@@ -140,7 +140,7 @@ InitGameResult runInitGame({
   late final GameSetupResult setupResult;
   late final List<WarpLink> warpLinks;
   if (options.enforceLockedOldWorldProfile) {
-    const maxLockedSetupAttempts = 256;
+    const maxLockedSetupAttempts = 512;
     GameSetupResult? lockedResult;
     List<WarpLink> lockedWarpLinks = const [];
     for (var attempt = 0; attempt < maxLockedSetupAttempts; attempt++) {
