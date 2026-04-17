@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../config/app_assets.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'game_screen_shared.dart'
-    show kCargoHoldIndicatorKey, kGameMapNextTurnButtonKey;
+    show
+        kCargoHoldIndicatorKey,
+        kGameMapNextTurnButtonKey,
+        kTreasuryIndicatorKey;
 
 /// Top bar and region chips for the in-game map shell.
-class GameMapControls extends StatelessWidget {
+class GameMapControls extends StatefulWidget {
   const GameMapControls({
     required this.sideMenuOpen,
     required this.onToggleSideMenu,
@@ -18,6 +22,8 @@ class GameMapControls extends StatelessWidget {
     required this.nextTurnText,
     required this.cargoUsed,
     required this.cargoCapacity,
+    required this.treasury,
+    required this.treasuryDelta,
     this.isCargoUsedReliable = true,
     super.key,
   });
@@ -30,11 +36,57 @@ class GameMapControls extends StatelessWidget {
   final String nextTurnText;
   final int cargoUsed;
   final int cargoCapacity;
+  final int treasury;
+  final int? treasuryDelta;
   final bool isCargoUsedReliable;
+
+  @override
+  State<GameMapControls> createState() => _GameMapControlsState();
+}
+
+class _GameMapControlsState extends State<GameMapControls> {
+  static final NumberFormat _exactTreasuryFormat =
+      NumberFormat.decimalPattern();
+  static final NumberFormat _abbrevTreasuryFormat = NumberFormat.compact(
+    locale: 'en_US',
+  );
+  bool _showExactTreasury = true;
+
+  String _formatTreasury(int value) {
+    if (_showExactTreasury) {
+      return _exactTreasuryFormat.format(value);
+    }
+    final compactRaw = _abbrevTreasuryFormat.format(value);
+    final compact = compactRaw.replaceAll('K', 'k');
+    if (compact.contains('.') || !compact.endsWith('k')) {
+      return compact;
+    }
+    return compact.replaceFirst('k', '.0k');
+  }
+
+  Color? _treasuryDeltaColor(int? delta) {
+    if (delta == null || delta == 0) {
+      return null;
+    }
+    return delta > 0 ? Colors.green : Colors.red;
+  }
+
+  String? _treasuryDeltaLabel(int? delta) {
+    if (delta == null || delta == 0) {
+      return null;
+    }
+    if (delta > 0) {
+      return '+$delta';
+    }
+    return '$delta';
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
+    final treasuryLabel = _formatTreasury(widget.treasury);
+    final deltaLabel = _treasuryDeltaLabel(widget.treasuryDelta);
+    final deltaColor = _treasuryDeltaColor(widget.treasuryDelta);
     return Column(
       children: [
         Padding(
@@ -43,14 +95,14 @@ class GameMapControls extends StatelessWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.menu),
-                onPressed: onToggleSideMenu,
+                onPressed: widget.onToggleSideMenu,
                 tooltip: l10n.gameMap_menuTooltip,
               ),
               Expanded(
                 child: CtNinePatchButton(
                   key: kGameMapNextTurnButtonKey,
-                  onPressed: () => onNextTurn(),
-                  child: Text(nextTurnText),
+                  onPressed: () => widget.onNextTurn(),
+                  child: Text(widget.nextTurnText),
                 ),
               ),
             ],
@@ -63,14 +115,44 @@ class GameMapControls extends StatelessWidget {
             children: [
               CtChoiceChip(
                 label: Text(l10n.region_oldWorld),
-                selected: regionIndex == 0,
-                onSelected: (_) => onRegionIndexChanged(0),
+                selected: widget.regionIndex == 0,
+                onSelected: (_) => widget.onRegionIndexChanged(0),
               ),
               const SizedBox(width: 8),
               CtChoiceChip(
                 label: Text(l10n.region_newWorld),
-                selected: regionIndex == 1,
-                onSelected: (_) => onRegionIndexChanged(1),
+                selected: widget.regionIndex == 1,
+                onSelected: (_) => widget.onRegionIndexChanged(1),
+              ),
+              const SizedBox(width: 10),
+              GestureDetector(
+                key: kTreasuryIndicatorKey,
+                onTap: () =>
+                    setState(() => _showExactTreasury = !_showExactTreasury),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
+                  color: Colors.black.withValues(alpha: 0.1),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const StrictAssetIcon(
+                        assetPath:
+                            '${kAppIconAssetPrefix}ui_icon_treasury_coin.png',
+                        width: 16,
+                        height: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(treasuryLabel),
+                      if (deltaLabel != null) ...[
+                        const SizedBox(width: 4),
+                        Text(deltaLabel, style: TextStyle(color: deltaColor)),
+                      ],
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(width: 10),
               Container(
@@ -88,8 +170,10 @@ class GameMapControls extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       l10n.mapControls_cargoHold(
-                        isCargoUsedReliable ? '$cargoUsed' : '—',
-                        '$cargoCapacity',
+                        widget.isCargoUsedReliable
+                            ? '${widget.cargoUsed}'
+                            : '—',
+                        '${widget.cargoCapacity}',
                       ),
                     ),
                   ],
