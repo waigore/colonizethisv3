@@ -26,6 +26,8 @@ const int _kLockedOldWorldRetryCount = 500;
 const int _kLockedNewWorldProvinceCount = 30;
 const int _kLockedNewWorldContinentCount = 4;
 const int _kLockedNewWorldRetryCount = 500;
+const int _kLockedMapRetryCount = 24;
+const int _kLockedAssignmentRetryPerMap = 4;
 
 int _stableStringHash(String value) {
   var hash = 0;
@@ -140,10 +142,9 @@ InitGameResult runInitGame({
   late final GameSetupResult setupResult;
   late final List<WarpLink> warpLinks;
   if (options.enforceLockedOldWorldProfile) {
-    const maxLockedSetupAttempts = 512;
     GameSetupResult? lockedResult;
     List<WarpLink> lockedWarpLinks = const [];
-    for (var attempt = 0; attempt < maxLockedSetupAttempts; attempt++) {
+    for (var attempt = 0; attempt < _kLockedMapRetryCount; attempt++) {
       final attemptSeed = attempt == 0
           ? effectiveSeed
           : Object.hash(0x4c4b5345, effectiveSeed, attempt) &
@@ -168,24 +169,37 @@ InitGameResult runInitGame({
         regionIdNew: kRegionNewWorld,
         seed: attemptSeed,
       );
-      try {
-        lockedResult = createGameFromGeneratedMaps(
-          config: effectiveConfig,
-          tileMapOldWorld: tileMapOW,
-          topologyOldWorld: topoOW,
-          tileMapNewWorld: tileMapNW,
-          topologyNewWorld: topoNW,
-          gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
-          namingSeed: attemptSeed,
-          assignmentPerturbationBase: attemptSeed,
-          warpLinks: localWarpLinks,
-        );
-        lockedWarpLinks = localWarpLinks;
-        break;
-      } on StateError catch (e) {
-        if (!e.message.toString().contains('locked OW assignment')) {
-          rethrow;
+      for (
+        var assignmentAttempt = 0;
+        assignmentAttempt < _kLockedAssignmentRetryPerMap;
+        assignmentAttempt++
+      ) {
+        final assignmentSeed = assignmentAttempt == 0
+            ? attemptSeed
+            : Object.hash(0x4c4b4153, attemptSeed, assignmentAttempt) &
+                  kDeterministicLcg31Mask;
+        try {
+          lockedResult = createGameFromGeneratedMaps(
+            config: effectiveConfig,
+            tileMapOldWorld: tileMapOW,
+            topologyOldWorld: topoOW,
+            tileMapNewWorld: tileMapNW,
+            topologyNewWorld: topoNW,
+            gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
+            namingSeed: assignmentSeed,
+            assignmentPerturbationBase: assignmentSeed,
+            warpLinks: localWarpLinks,
+          );
+          lockedWarpLinks = localWarpLinks;
+          break;
+        } on StateError catch (e) {
+          if (!e.message.toString().contains('locked OW assignment')) {
+            rethrow;
+          }
         }
+      }
+      if (lockedResult != null) {
+        break;
       }
     }
     if (lockedResult == null) {
@@ -193,7 +207,9 @@ InitGameResult runInitGame({
         code: 'locked_ow_assignment_retry_exhausted',
         details:
             'Locked setup could not produce contiguous OW ownership in '
-            '$maxLockedSetupAttempts attempts.',
+            '${_kLockedMapRetryCount * _kLockedAssignmentRetryPerMap} attempts '
+            '(${_kLockedMapRetryCount} map seeds × '
+            '$_kLockedAssignmentRetryPerMap assignment retries).',
       );
     }
     setupResult = lockedResult;

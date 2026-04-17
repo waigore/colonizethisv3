@@ -146,7 +146,7 @@ GameSetupResult createGameFromGeneratedMaps({
       gpIds: gpIds,
       minorIds: minorIds,
       minProvincesPerMinor: config.minProvincesPerMinor,
-      assignmentRandom: null,
+      assignmentRandom: Random(Object.hash(0x47504f77, perturbBase)),
     );
   }
 
