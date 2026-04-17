@@ -111,7 +111,13 @@ Like military and civilian **units**, each ship **hull** in play has a **stable 
 
 When a fleet **enters** a sea zone (move order), all **coastal land tiles** of provinces adjacent to that sea zone are set to **revealed** for that player, and all **water** tiles in that sea zone are set **fully visible** for that player (see [fog-and-exploration.md](fog-and-exploration.md) § Distant sea zone fog for End-of-turn re-fog when no owned adjacent coast and no fleet at sea there). This enables Explorer deployment to New World (at least one coastal tile must be revealed first). Reference: I2 03-units-civilian — "first terrain tile is uncovered when a ship enters a sea zone adjacent to the New World."
 
-Province identity for visibility updates must use **full** province id (`regionId|localId`) and **region-scoped** lookup (only provinces in the destination sea zone's region); see [world-model-identity.md](world-model-identity.md).
+Province identity for visibility updates must use **full** province id (`regionId|localId`) and **region-scoped** lookup (only provinces in the destination sea zone's region); see [world-model-identity.md](world-model-identity.md). Runtime **combined** topology uses prefixed sea/province node ids (`regionId|localId`); `WorldState.tileKeysByRegionAndProvince[regionId]` keys sea zones by **local** sea id (same as raster cell id). Ship reveal must resolve **local** sea id for water-tile lookup and **full** province id for land-tile lists (use `toFullProvinceId` / equivalent; do not double-prefix).
+
+**Acceptance (strict coastal ring on first entry into destination sea zone S in region R):**
+
+- Given fleet owner P and successful naval movement that ends in sea zone S in region R, when the System applies ship reveal for that entry, then the System sets `revealed` on P’s visibility map only for land tile keys that share a cell-grid orthogonal neighbor with at least one water tile key stored under `tileKeysByRegionAndProvince[R][L]`, where `L` is the **local** sea zone id for S (strip a leading `R|` prefix from S’s topology node id when present).
+- Given the same entry, when a land tile in a province adjacent to S in topology is not orthogonally adjacent to any water cell of S on the grid, then the System leaves that land tile’s visibility for P unchanged (typically `unknown` in the New World on first contact).
+- Given a naval move into S that is rejected or not executed, when movement resolution finishes, then the System does not apply ship reveal from that failed order for P.
 
 ---
 
