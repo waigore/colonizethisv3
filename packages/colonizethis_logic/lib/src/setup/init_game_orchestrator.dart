@@ -19,9 +19,13 @@ import 'warp_zone_generator.dart';
 final _log = packageLogger();
 const int _kLockedGreatPowerCount = 6;
 const int _kLockedMinorNationCount = 6;
+const int _kLockedTribeCount = 10;
 const int _kLockedOldWorldProvinceCount = 60;
 const int _kLockedOldWorldContinentCount = 4;
-const int _kLockedOldWorldRetryCount = 50;
+const int _kLockedOldWorldRetryCount = 500;
+const int _kLockedNewWorldProvinceCount = 30;
+const int _kLockedNewWorldContinentCount = 4;
+const int _kLockedNewWorldRetryCount = 500;
 
 int _stableStringHash(String value) {
   var hash = 0;
@@ -132,63 +136,143 @@ InitGameResult runInitGame({
   );
   final effectiveSeed = resolveEffectiveSetupSeed(effectiveConfig.seed);
 
-  final mapGenParams = MapGenerationParams(
-    numContinents: effectiveConfig.continentCount,
-    seed: effectiveSeed,
-    seaFraction: kDefaultSeaFraction,
-  );
   final gen = generateRegion ?? defaultTileMapRegionGenerator;
-  _log.d('init game generating OW map with locked partition retries');
-  final (tileMapOW, topoOW) = _generateLockedOldWorldMap(
-    options: options,
-    effectiveSeed: effectiveSeed,
-    generateRegionFn: gen,
-  );
-
-  _log.d('init game generating NW map');
-  final sizeNW = computeGridSizeFromParams(
-    effectiveConfig.numProvincesNewWorld,
-    mapGenParams,
-  );
-  final paramsNW = TileMapParams(
-    width: sizeNW.width,
-    height: sizeNW.height,
-    seed: effectiveSeed + 1,
-    seaFraction: kDefaultSeaFraction,
-    skipFillLakes: options.skipFillLakes,
-  );
-  final (tileMapNW, topoNW) = gen(
-    params: paramsNW,
-    numProvinces: effectiveConfig.numProvincesNewWorld,
-    numContinents: effectiveConfig.continentCount.clamp(
-      1,
+  late final GameSetupResult setupResult;
+  late final List<WarpLink> warpLinks;
+  if (options.enforceLockedOldWorldProfile) {
+    const maxLockedSetupAttempts = 128;
+    GameSetupResult? lockedResult;
+    List<WarpLink> lockedWarpLinks = const [];
+    for (var attempt = 0; attempt < maxLockedSetupAttempts; attempt++) {
+      final attemptSeed = attempt == 0
+          ? effectiveSeed
+          : Object.hash(0x4c4b5345, effectiveSeed, attempt) & 0x7fffffff;
+      _log.d('init game locked setup attempt=$attempt seed=$attemptSeed');
+      final (tileMapOW, topoOW) = _generateLockedOldWorldMap(
+        options: options,
+        effectiveSeed: attemptSeed,
+        generateRegionFn: gen,
+      );
+      final (tileMapNW, topoNW) = _generateLockedNewWorldMap(
+        options: options,
+        effectiveSeed: attemptSeed + 1,
+        generateRegionFn: gen,
+      );
+      final localWarpLinks = generateWarpZones(
+        tileMapOldWorld: tileMapOW,
+        topologyOldWorld: topoOW,
+        tileMapNewWorld: tileMapNW,
+        topologyNewWorld: topoNW,
+        regionIdOld: kRegionOldWorld,
+        regionIdNew: kRegionNewWorld,
+        seed: attemptSeed,
+      );
+      try {
+        lockedResult = createGameFromGeneratedMaps(
+          config: effectiveConfig,
+          tileMapOldWorld: tileMapOW,
+          topologyOldWorld: topoOW,
+          tileMapNewWorld: tileMapNW,
+          topologyNewWorld: topoNW,
+          gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
+          namingSeed: attemptSeed,
+          assignmentPerturbationBase: attemptSeed,
+          warpLinks: localWarpLinks,
+        );
+        lockedWarpLinks = localWarpLinks;
+        break;
+      } on StateError catch (e) {
+        if (!e.message.toString().contains('locked OW assignment')) {
+          rethrow;
+        }
+      }
+    }
+    if (lockedResult == null) {
+      throw SetupTopologyDataException(
+        code: 'locked_ow_assignment_retry_exhausted',
+        details:
+            'Locked setup could not produce contiguous OW ownership in '
+            '$maxLockedSetupAttempts attempts.',
+      );
+    }
+    setupResult = lockedResult;
+    warpLinks = lockedWarpLinks;
+  } else {
+    _log.d('init game generating OW map');
+    final mapGenParams = MapGenerationParams(
+      numContinents: effectiveConfig.continentCount,
+      seed: effectiveSeed,
+      seaFraction: kDefaultSeaFraction,
+    );
+    final sizeOW = computeGridSizeFromParams(
+      effectiveConfig.numProvincesOldWorld,
+      mapGenParams,
+    );
+    final paramsOW = TileMapParams(
+      width: sizeOW.width,
+      height: sizeOW.height,
+      seed: effectiveSeed,
+      seaFraction: kDefaultSeaFraction,
+      skipFillLakes: options.skipFillLakes,
+    );
+    final (tileMapOW, topoOW) = gen(
+      params: paramsOW,
+      numProvinces: effectiveConfig.numProvincesOldWorld,
+      numContinents: effectiveConfig.continentCount.clamp(
+        1,
+        effectiveConfig.numProvincesOldWorld,
+      ),
+      regionId: kRegionOldWorld,
+      resourceRules: ResourceRules.defaultRules,
+    );
+    _log.d('init game generating NW map');
+    final mapGenParamsNw = MapGenerationParams(
+      numContinents: effectiveConfig.continentCount,
+      seed: effectiveSeed + 1,
+      seaFraction: kDefaultSeaFraction,
+    );
+    final sizeNW = computeGridSizeFromParams(
       effectiveConfig.numProvincesNewWorld,
-    ),
-    regionId: kRegionNewWorld,
-    resourceRules: ResourceRules.defaultRules,
-  );
-
-  final warpLinks = generateWarpZones(
-    tileMapOldWorld: tileMapOW,
-    topologyOldWorld: topoOW,
-    tileMapNewWorld: tileMapNW,
-    topologyNewWorld: topoNW,
-    regionIdOld: kRegionOldWorld,
-    regionIdNew: kRegionNewWorld,
-    seed: effectiveSeed,
-  );
-
-  final setupResult = createGameFromGeneratedMaps(
-    config: effectiveConfig,
-    tileMapOldWorld: tileMapOW,
-    topologyOldWorld: topoOW,
-    tileMapNewWorld: tileMapNW,
-    topologyNewWorld: topoNW,
-    gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
-    namingSeed: effectiveSeed,
-    assignmentPerturbationBase: effectiveSeed,
-    warpLinks: warpLinks,
-  );
+      mapGenParamsNw,
+    );
+    final paramsNW = TileMapParams(
+      width: sizeNW.width,
+      height: sizeNW.height,
+      seed: effectiveSeed + 1,
+      seaFraction: kDefaultSeaFraction,
+      skipFillLakes: options.skipFillLakes,
+    );
+    final (tileMapNW, topoNW) = gen(
+      params: paramsNW,
+      numProvinces: effectiveConfig.numProvincesNewWorld,
+      numContinents: effectiveConfig.continentCount.clamp(
+        1,
+        effectiveConfig.numProvincesNewWorld,
+      ),
+      regionId: kRegionNewWorld,
+      resourceRules: ResourceRules.defaultRules,
+    );
+    warpLinks = generateWarpZones(
+      tileMapOldWorld: tileMapOW,
+      topologyOldWorld: topoOW,
+      tileMapNewWorld: tileMapNW,
+      topologyNewWorld: topoNW,
+      regionIdOld: kRegionOldWorld,
+      regionIdNew: kRegionNewWorld,
+      seed: effectiveSeed,
+    );
+    setupResult = createGameFromGeneratedMaps(
+      config: effectiveConfig,
+      tileMapOldWorld: tileMapOW,
+      topologyOldWorld: topoOW,
+      tileMapNewWorld: tileMapNW,
+      topologyNewWorld: topoNW,
+      gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
+      namingSeed: effectiveSeed,
+      assignmentPerturbationBase: effectiveSeed,
+      warpLinks: warpLinks,
+    );
+  }
 
   // Map semantic GP ids from config.selectedGreatPowerIds to runtime Player ids
   // so colour overrides can be keyed by Player.id for map builders and saves.
@@ -268,7 +352,8 @@ InitGameResult runInitGame({
   game = game.copyWith(
     globalGameSeed: effectiveSeed,
     aiSeedByGpId: {
-      for (final p in game.players) p.id: effectiveSeed + _stableStringHash(p.id),
+      for (final p in game.players)
+        p.id: effectiveSeed + _stableStringHash(p.id),
     },
     greatPowerColorOverride: gpColorOverrideList,
   );
@@ -301,13 +386,13 @@ GameSetupConfig _withLockedOldWorldConfig(GameSetupConfig config) {
     leaderVariantByGpId: config.leaderVariantByGpId,
     continentCount: _kLockedOldWorldContinentCount,
     minorNationCount: _kLockedMinorNationCount,
-    tribeCount: config.tribeCount,
+    tribeCount: _kLockedTribeCount,
     numProvincesOldWorld: _kLockedOldWorldProvinceCount,
-    numProvincesNewWorld: config.numProvincesNewWorld,
+    numProvincesNewWorld: _kLockedNewWorldProvinceCount,
     minProvincesPerMinor: 3,
     seed: config.seed,
     startingResources: config.startingResources,
-    enforceFairAssignment: config.enforceFairAssignment,
+    enforceFairAssignment: false,
     preferredInitialMapZoomMultiplier: config.preferredInitialMapZoomMultiplier,
     initTownRoadWiringRegionIds: config.initTownRoadWiringRegionIds,
   );
@@ -345,7 +430,7 @@ GameSetupConfig _withLockedOldWorldConfig(GameSetupConfig config) {
       regionId: kRegionOldWorld,
       resourceRules: ResourceRules.defaultRules,
     );
-    if (_matchesLockedOldWorldPartition(topoOW)) {
+    if (lockedOldWorldTopologyReadyForMapGeneratingSetup(topoOW)) {
       return (tileMapOW, topoOW);
     }
   }
@@ -357,12 +442,74 @@ GameSetupConfig _withLockedOldWorldConfig(GameSetupConfig config) {
   );
 }
 
-bool _matchesLockedOldWorldPartition(MapTopology topology) {
+Set<String> _lockedOwCollectConnectedComponent({
+  required String startId,
+  required Map<String, Set<String>> neighbours,
+  required Set<String> seen,
+}) {
+  final component = <String>{};
+  final stack = <String>[startId];
+  while (stack.isNotEmpty) {
+    final current = stack.removeLast();
+    component.add(current);
+    for (final neighbour in neighbours[current] ?? const <String>{}) {
+      if (!seen.add(neighbour)) continue;
+      stack.add(neighbour);
+    }
+  }
+  return component;
+}
+
+(TileMapResult, MapTopology) _generateLockedNewWorldMap({
+  required InitGameOptions options,
+  required int effectiveSeed,
+  required TileMapRegionGenerator generateRegionFn,
+}) {
+  for (var attempt = 0; attempt <= _kLockedNewWorldRetryCount; attempt++) {
+    final attemptSeed = attempt == 0
+        ? effectiveSeed
+        : Object.hash(0x4e575245, effectiveSeed, attempt) & 0x7fffffff;
+    final mapGenParams = MapGenerationParams(
+      numContinents: _kLockedNewWorldContinentCount,
+      seed: attemptSeed,
+      seaFraction: kDefaultSeaFraction,
+    );
+    final sizeNW = computeGridSizeFromParams(
+      _kLockedNewWorldProvinceCount,
+      mapGenParams,
+    );
+    final paramsNW = TileMapParams(
+      width: sizeNW.width,
+      height: sizeNW.height,
+      seed: attemptSeed,
+      seaFraction: kDefaultSeaFraction,
+      skipFillLakes: options.skipFillLakes,
+    );
+    final (tileMapNW, topoNW) = generateRegionFn(
+      params: paramsNW,
+      numProvinces: _kLockedNewWorldProvinceCount,
+      numContinents: _kLockedNewWorldContinentCount,
+      regionId: kRegionNewWorld,
+      resourceRules: ResourceRules.defaultRules,
+    );
+    if (_matchesLockedNewWorldPartition(topoNW)) {
+      return (tileMapNW, topoNW);
+    }
+  }
+  throw SetupTopologyDataException(
+    code: 'new_world_partition_retry_exhausted',
+    details:
+        'New World generation did not reach 4-continent partition '
+        'in ${_kLockedNewWorldRetryCount + 1} attempts.',
+  );
+}
+
+bool _matchesLockedNewWorldPartition(MapTopology topology) {
   final provinceIds = <String>{
     for (final node in topology.nodes)
       if (node.type == TopologyNodeType.province) node.id,
   };
-  if (provinceIds.length != _kLockedOldWorldProvinceCount) {
+  if (provinceIds.length != _kLockedNewWorldProvinceCount) {
     return false;
   }
   final neighbours = <String, Set<String>>{
@@ -381,40 +528,21 @@ bool _matchesLockedOldWorldPartition(MapTopology topology) {
   for (final id in idsSorted) {
     if (!seen.add(id)) continue;
     componentSizes.add(
-      _lockedOwConnectedComponentSize(
+      _lockedOwCollectConnectedComponent(
         startId: id,
         neighbours: neighbours,
         seen: seen,
-      ),
+      ).length,
     );
   }
   componentSizes.sort();
-  if (componentSizes.length != _kLockedOldWorldContinentCount) {
+  if (componentSizes.length != _kLockedNewWorldContinentCount) {
     return false;
   }
-  componentSizes.sort();
-  return componentSizes[0] == 13 &&
-      componentSizes[1] == 13 &&
-      componentSizes[2] == 17 &&
-      componentSizes[3] == 17;
-}
-
-int _lockedOwConnectedComponentSize({
-  required String startId,
-  required Map<String, Set<String>> neighbours,
-  required Set<String> seen,
-}) {
-  var size = 0;
-  final stack = <String>[startId];
-  while (stack.isNotEmpty) {
-    final current = stack.removeLast();
-    size++;
-    for (final neighbour in neighbours[current] ?? const <String>{}) {
-      if (!seen.add(neighbour)) continue;
-      stack.add(neighbour);
-    }
-  }
-  return size;
+  return componentSizes[0] == 6 &&
+      componentSizes[1] == 6 &&
+      componentSizes[2] == 9 &&
+      componentSizes[3] == 9;
 }
 
 /// Formats faction setup and starting state as markdown tables.

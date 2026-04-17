@@ -101,6 +101,20 @@ Map<String, int> buildProvinceToContinentMap(
     }
     return result;
   }
+  // Locked NW setup profile requires strict role split feasibility:
+  // two continents sized for 3 tribes (9), two for 2 tribes (6).
+  if (numProvinces == 30 && numContinents == 4) {
+    final lockedSizes = [9, 9, 6, 6];
+    var idx = 0;
+    for (var c = 0; c < lockedSizes.length; c++) {
+      final size = lockedSizes[c];
+      for (var i = 0; i < size; i++) {
+        result['p${idx + 1}'] = c;
+        idx++;
+      }
+    }
+    return result;
+  }
   final continentSize = numProvinces ~/ numContinents;
   final remainder = numProvinces % numContinents;
   var idx = 0;

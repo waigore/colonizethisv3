@@ -37,6 +37,8 @@ Map<String, String> assignTerritoriesByBfsGrowth({
   required Map<String, Set<String>> neighbours,
   Map<String, int>? landmassIds,
   bool lockBfsExpansionToLandmass = true,
+  bool requireContiguousWhenConstrained = false,
+  bool strictSingleSeedGrowth = false,
   Map<String, int>? factionLandmassIds,
   required List<String> factionIds,
   required Map<String, String> seeds,
@@ -51,9 +53,7 @@ Map<String, String> assignTerritoriesByBfsGrowth({
   final queues = <String, List<String>>{
     for (final id in factionIds) id: <String>[],
   };
-  final assignedCount = <String, int>{
-    for (final id in factionIds) id: 0,
-  };
+  final assignedCount = <String, int>{for (final id in factionIds) id: 0};
   var totalAssigned = 0;
 
   for (final entry in seeds.entries) {
@@ -81,7 +81,8 @@ Map<String, String> assignTerritoriesByBfsGrowth({
 
       while (queue.isNotEmpty && !expanded && totalAssigned < total) {
         final from = queue.removeAt(0);
-        final nbrOrder = (neighbours[from] ?? const <String>{}).toList()..sort();
+        final nbrOrder = (neighbours[from] ?? const <String>{}).toList()
+          ..sort();
         if (neighborShuffleRandom != null) {
           nbrOrder.shuffle(neighborShuffleRandom);
         }
@@ -96,7 +97,8 @@ Map<String, String> assignTerritoriesByBfsGrowth({
           // Check faction-specific landmass constraint (strict per-faction assignment)
           if (factionLandmassIds != null) {
             final allowedLandmass = factionLandmassIds[factionId];
-            if (allowedLandmass != null && landmassIds?[nb] != allowedLandmass) {
+            if (allowedLandmass != null &&
+                landmassIds?[nb] != allowedLandmass) {
               continue;
             }
           }
@@ -112,14 +114,18 @@ Map<String, String> assignTerritoriesByBfsGrowth({
       }
     }
 
-    if (!anyProgress && available.isNotEmpty && totalAssigned < total) {
+    if (!strictSingleSeedGrowth &&
+        !anyProgress &&
+        available.isNotEmpty &&
+        totalAssigned < total) {
       final underTarget = factionIds
           .where((id) => assignedCount[id]! < targetPerFaction[id]!)
           .toList();
       if (underTarget.isNotEmpty) {
         // When factionLandmassIds is provided, only consider provinces on the faction's assigned landmass
         final sorted = available.toList()..sort();
-        if (neighborShuffleRandom != null) sorted.shuffle(neighborShuffleRandom);
+        if (neighborShuffleRandom != null)
+          sorted.shuffle(neighborShuffleRandom);
         for (final factionId in underTarget) {
           if (assignedCount[factionId]! >= targetPerFaction[factionId]!) {
             continue;
@@ -131,29 +137,24 @@ Map<String, String> assignTerritoriesByBfsGrowth({
             if (allowedLandmass != null) {
               for (final p in sorted) {
                 if (landmassIds?[p] != allowedLandmass) continue;
-                if (provinceTouchesFaction(
-                  p,
-                  factionId,
-                  owners,
-                  neighbours,
-                )                ) {
+                if (provinceTouchesFaction(p, factionId, owners, neighbours)) {
                   seed = p;
                   break;
                 }
               }
               if (seed == null) {
+                if (requireContiguousWhenConstrained) {
+                  throw StateError(
+                    'assignTerritoriesByBfsGrowth: faction $factionId cannot grow '
+                    'contiguously on landmass $allowedLandmass',
+                  );
+                }
                 for (final p in sorted) {
                   if (landmassIds?[p] == allowedLandmass) {
                     seed = p;
                     break;
                   }
                 }
-              }
-              if (seed == null) {
-                throw StateError(
-                  'assignTerritoriesByBfsGrowth: faction $factionId has no '
-                  'province on landmass $allowedLandmass',
-                );
               }
             } else {
               seed = sorted.isNotEmpty ? sorted.first : null;
@@ -171,12 +172,7 @@ Map<String, String> assignTerritoriesByBfsGrowth({
             if (factionLm != null) {
               for (final p in sorted) {
                 if (landmassIds[p] != factionLm) continue;
-                if (provinceTouchesFaction(
-                  p,
-                  factionId,
-                  owners,
-                  neighbours,
-                )) {
+                if (provinceTouchesFaction(p, factionId, owners, neighbours)) {
                   seed = p;
                   break;
                 }
@@ -210,7 +206,9 @@ Map<String, String> assignTerritoriesByBfsGrowth({
 
   // Greedy leftover: assign remaining to faction with fewest provinces,
   // still respecting the total cap and faction landmass constraints.
-  if (available.isNotEmpty && totalAssigned < total) {
+  if (!strictSingleSeedGrowth &&
+      available.isNotEmpty &&
+      totalAssigned < total) {
     final remaining = available.toList()..sort();
     if (neighborShuffleRandom != null) remaining.shuffle(neighborShuffleRandom);
     while (remaining.isNotEmpty && totalAssigned < total) {
@@ -236,9 +234,16 @@ Map<String, String> assignTerritoriesByBfsGrowth({
           }
         }
         if (bestFaction == null) {
+          if (requireContiguousWhenConstrained) {
+            throw StateError(
+              'assignTerritoriesByBfsGrowth: no contiguous claimant for $provinceId '
+              'under factionLandmassIds constraints',
+            );
+          }
           for (final fid in factionIds) {
             final allowedLandmass = factionLandmassIds[fid];
-            if (allowedLandmass != null && allowedLandmass != provinceLandmass) {
+            if (allowedLandmass != null &&
+                allowedLandmass != provinceLandmass) {
               continue;
             }
             if (assignedCount[fid]! < minCount) {
@@ -246,12 +251,12 @@ Map<String, String> assignTerritoriesByBfsGrowth({
               bestFaction = fid;
             }
           }
-        }
-        if (bestFaction == null) {
-          throw StateError(
-            'assignTerritoriesByBfsGrowth: no faction can claim province $provinceId '
-            'under factionLandmassIds constraints',
-          );
+          if (bestFaction == null) {
+            throw StateError(
+              'assignTerritoriesByBfsGrowth: no faction can claim province $provinceId '
+              'under factionLandmassIds constraints',
+            );
+          }
         }
         chosenFactionId = bestFaction;
       } else if (landmassIds != null) {

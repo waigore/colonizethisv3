@@ -208,6 +208,121 @@ int _largestFeasibleGpProvinceBudgetByPacking({
   return best;
 }
 
+/// Exact locked-role OW ownership (pairing search); null if no layout works.
+Map<String, String>? _tryLockedOldWorldExactOwnershipPairings({
+  required Map<String, Set<String>> neighbours,
+  required List<int> landmassesByRole,
+  required Map<int, List<String>> landmassToProvinces,
+  required List<String> seaBoundProvinceIds,
+  required List<String> gpIds,
+  required List<String> minorIds,
+  required int gpTarget,
+  required int minorTarget,
+}) {
+  final seaBoundGlobal = seaBoundProvinceIds.toSet();
+  final lm17Slot0 = landmassesByRole[0];
+  final lm17Slot1 = landmassesByRole[1];
+  Map<String, String>? tryLockedLayout({
+    required List<(int, int)> seventeenPairing,
+    required bool flipSeventeenPairs,
+    required bool swap13Pair,
+  }) {
+    final lm13First = swap13Pair
+        ? landmassesByRole[3]
+        : landmassesByRole[2];
+    final lm13Second = swap13Pair
+        ? landmassesByRole[2]
+        : landmassesByRole[3];
+    final firstPair = flipSeventeenPairs
+        ? seventeenPairing[1]
+        : seventeenPairing[0];
+    final secondPair = flipSeventeenPairs
+        ? seventeenPairing[0]
+        : seventeenPairing[1];
+    final gpLandmassAssignments = <String, int>{
+      gpIds[firstPair.$1]: lm17Slot0,
+      gpIds[firstPair.$2]: lm17Slot0,
+      gpIds[secondPair.$1]: lm17Slot1,
+      gpIds[secondPair.$2]: lm17Slot1,
+      gpIds[4]: lm13First,
+      gpIds[5]: lm13Second,
+    };
+    final minorLandmassAssignments = <String, int>{
+      minorIds[0]: lm17Slot0,
+      minorIds[1]: lm17Slot1,
+      minorIds[2]: lm13First,
+      minorIds[3]: lm13First,
+      minorIds[4]: lm13Second,
+      minorIds[5]: lm13Second,
+    };
+    final owners = <String, String>{};
+    for (final landmassId in landmassesByRole) {
+      final factionIdsForLandmass =
+          <String>[
+            ...gpLandmassAssignments.entries
+                .where((entry) => entry.value == landmassId)
+                .map((entry) => entry.key),
+            ...minorLandmassAssignments.entries
+                .where((entry) => entry.value == landmassId)
+                .map((entry) => entry.key),
+          ]..sort((a, b) {
+            final ta = a.startsWith('gp') ? gpTarget : minorTarget;
+            final tb = b.startsWith('gp') ? gpTarget : minorTarget;
+            final cmp = tb.compareTo(ta);
+            if (cmp != 0) return cmp;
+            return a.compareTo(b);
+          });
+      final targetPerFaction = <String, int>{
+        for (final fid in factionIdsForLandmass)
+          fid: fid.startsWith('gp') ? gpTarget : minorTarget,
+      };
+      final landProvinces = List<String>.from(
+        landmassToProvinces[landmassId]!,
+      )..sort();
+      final seaBoundHere = landProvinces.where(seaBoundGlobal.contains).toSet();
+      final mustIncludeSeaBoundFor = <String, Set<String>>{
+        for (final fid in factionIdsForLandmass.where(
+          (id) => id.startsWith('gp'),
+        ))
+          fid: seaBoundHere,
+      };
+      final landmassOwners = _assignExactLandmassTryFactionOrders(
+        allNeighbours: neighbours,
+        landmassProvinceIds: landProvinces,
+        baseFactionOrderDesc: factionIdsForLandmass,
+        targetPerFaction: targetPerFaction,
+        mustIncludeAnyOfByFaction: mustIncludeSeaBoundFor,
+      );
+      if (landmassOwners == null) {
+        return null;
+      }
+      owners.addAll(landmassOwners);
+    }
+    return owners;
+  }
+
+  const seventeenPairings = <List<(int, int)>>[
+    [(0, 1), (2, 3)],
+    [(0, 2), (1, 3)],
+    [(0, 3), (1, 2)],
+  ];
+  for (final pairing in seventeenPairings) {
+    for (var flip17 = 0; flip17 < 2; flip17++) {
+      for (final swap13 in <bool>[false, true]) {
+        final attempt = tryLockedLayout(
+          seventeenPairing: pairing,
+          flipSeventeenPairs: flip17 == 1,
+          swap13Pair: swap13,
+        );
+        if (attempt != null) {
+          return attempt;
+        }
+      }
+    }
+  }
+  return null;
+}
+
 Map<String, String> _assignOldWorldOwnershipContiguous({
   required Map<String, Set<String>> neighbours,
   required List<String> provinceIds,
@@ -283,68 +398,23 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
           );
         }
       }
-      final gpLandmassAssignments = <String, int>{
-        gpIds[0]: landmassesByRole[0],
-        gpIds[1]: landmassesByRole[0],
-        gpIds[2]: landmassesByRole[1],
-        gpIds[3]: landmassesByRole[1],
-        gpIds[4]: landmassesByRole[2],
-        gpIds[5]: landmassesByRole[3],
-      };
-      final targetPerGp = <String, int>{
-        for (final gpId in gpIds) gpId: gpTarget,
-      };
-      final gpSeeds = _selectGpSeedsForLandmass(
-        gpIdsInAssignmentOrder: gpIds,
+      final lockedOwners = _tryLockedOldWorldExactOwnershipPairings(
+        neighbours: neighbours,
+        landmassesByRole: landmassesByRole,
+        landmassToProvinces: landmassToProvinces,
         seaBoundProvinceIds: seaBoundProvinceIds,
-        landmassIds: landmassIds,
-        gpLandmassAssignments: gpLandmassAssignments,
-        seedShuffleRandom: assignmentRandom,
+        gpIds: gpIds,
+        minorIds: minorIds,
+        gpTarget: gpTarget,
+        minorTarget: minorTarget,
       );
-      final gpAvailable = provinceIds.toSet();
-      final gpOwners = assignTerritoriesByBfsGrowth(
-        neighbours: neighbours,
-        landmassIds: landmassIds,
-        factionLandmassIds: gpLandmassAssignments,
-        factionIds: gpIds,
-        seeds: gpSeeds,
-        targetPerFaction: targetPerGp,
-        available: gpAvailable,
-        maxTotal: targetPerGp.values.fold<int>(0, (a, b) => a + b),
-        neighborShuffleRandom: assignmentRandom,
-      );
-      final owners = Map<String, String>.from(gpOwners);
-      final minorLandmassAssignments = <String, int>{
-        minorIds[0]: landmassesByRole[0],
-        minorIds[1]: landmassesByRole[1],
-        minorIds[2]: landmassesByRole[2],
-        minorIds[3]: landmassesByRole[2],
-        minorIds[4]: landmassesByRole[3],
-        minorIds[5]: landmassesByRole[3],
-      };
-      final targetPerMinor = <String, int>{
-        for (final minorId in minorIds) minorId: minorTarget,
-      };
-      final minorSeeds = _selectFactionSeedsForLandmass(
-        factionIdsInAssignmentOrder: minorIds,
-        candidateProvinceIds: gpAvailable.toList()..sort(),
-        landmassIds: landmassIds,
-        factionLandmassAssignments: minorLandmassAssignments,
-        seedShuffleRandom: assignmentRandom,
-      );
-      final minorOwners = assignTerritoriesByBfsGrowth(
-        neighbours: neighbours,
-        landmassIds: landmassIds,
-        factionLandmassIds: minorLandmassAssignments,
-        factionIds: minorIds,
-        seeds: minorSeeds,
-        targetPerFaction: targetPerMinor,
-        available: gpAvailable,
-        maxTotal: targetPerMinor.values.fold<int>(0, (a, b) => a + b),
-        neighborShuffleRandom: assignmentRandom,
-      );
-      owners.addAll(minorOwners);
-      return owners;
+      if (lockedOwners == null) {
+        throw StateError(
+          'locked OW assignment could not satisfy contiguous ownership '
+          'for any GP pairing, 13-landmass swap, or same-target faction order',
+        );
+      }
+      return lockedOwners;
     }
   }
 
@@ -532,45 +602,6 @@ Map<String, String> _selectGpSeedsForLandmass({
   return gpSeeds;
 }
 
-Map<String, String> _selectFactionSeedsForLandmass({
-  required List<String> factionIdsInAssignmentOrder,
-  required List<String> candidateProvinceIds,
-  required Map<String, int> landmassIds,
-  required Map<String, int> factionLandmassAssignments,
-  Random? seedShuffleRandom,
-}) {
-  final byLandmass = <int, List<String>>{};
-  for (final provinceId in candidateProvinceIds) {
-    final lm = landmassIds[provinceId];
-    if (lm == null) continue;
-    byLandmass.putIfAbsent(lm, () => <String>[]).add(provinceId);
-  }
-  for (final list in byLandmass.values) {
-    list.sort();
-    if (seedShuffleRandom != null) list.shuffle(seedShuffleRandom);
-  }
-
-  final seeds = <String, String>{};
-  for (final factionId in factionIdsInAssignmentOrder) {
-    final lm = factionLandmassAssignments[factionId];
-    if (lm == null) {
-      throw SetupTopologyDataException(
-        code: 'missing_faction_landmass_assignment',
-        details: 'Faction $factionId has no landmass assignment.',
-      );
-    }
-    final candidates = byLandmass[lm];
-    if (candidates == null || candidates.isEmpty) {
-      throw StateError(
-        'No candidate province left on landmass $lm for faction $factionId',
-      );
-    }
-    final seed = candidates.removeAt(0);
-    seeds[seed] = factionId;
-  }
-  return seeds;
-}
-
 Map<String, String> _assignNewWorldOwnershipContiguous({
   required MapTopology topologyNewWorld,
   required List<String> provinceIds,
@@ -593,6 +624,92 @@ Map<String, String> _assignNewWorldOwnershipContiguous({
     factionOrder.shuffle(assignmentRandom);
   }
   final available = provinceIds.toSet();
+  final lockedNwLayout = tribeIds.length == 10 && provinceIds.length == 30;
+  if (lockedNwLayout) {
+    final provincesByLandmass = <int, List<String>>{};
+    for (final provinceId in provinceIds) {
+      final landmassId = landmassIds[provinceId];
+      if (landmassId == null) continue;
+      provincesByLandmass
+          .putIfAbsent(landmassId, () => <String>[])
+          .add(provinceId);
+    }
+    final sortedLandmasses = provincesByLandmass.keys.toList()
+      ..sort((a, b) {
+        final sizeCmp = provincesByLandmass[b]!.length.compareTo(
+          provincesByLandmass[a]!.length,
+        );
+        if (sizeCmp != 0) return sizeCmp;
+        final aMin = (provincesByLandmass[a]!..sort()).first;
+        final bMin = (provincesByLandmass[b]!..sort()).first;
+        return aMin.compareTo(bMin);
+      });
+    if (sortedLandmasses.length != 4) {
+      throw SetupTopologyDataException(
+        code: 'locked_nw_role_split_infeasible',
+        details:
+            'Expected 4 New World landmasses, got ${sortedLandmasses.length}.',
+      );
+    }
+    final requiredByLandmass = <int, int>{
+      sortedLandmasses[0]: 9,
+      sortedLandmasses[1]: 9,
+      sortedLandmasses[2]: 6,
+      sortedLandmasses[3]: 6,
+    };
+    for (final entry in requiredByLandmass.entries) {
+      final actual = provincesByLandmass[entry.key]?.length ?? 0;
+      if (actual != entry.value) {
+        throw SetupTopologyDataException(
+          code: 'locked_nw_partition_mismatch',
+          details:
+              'Landmass ${entry.key} has $actual provinces but locked profile requires ${entry.value}.',
+        );
+      }
+    }
+    final tribeLandmassAssignments = <String, int>{
+      tribeIds[0]: sortedLandmasses[0],
+      tribeIds[1]: sortedLandmasses[0],
+      tribeIds[2]: sortedLandmasses[0],
+      tribeIds[3]: sortedLandmasses[1],
+      tribeIds[4]: sortedLandmasses[1],
+      tribeIds[5]: sortedLandmasses[1],
+      tribeIds[6]: sortedLandmasses[2],
+      tribeIds[7]: sortedLandmasses[2],
+      tribeIds[8]: sortedLandmasses[3],
+      tribeIds[9]: sortedLandmasses[3],
+    };
+    final owners = <String, String>{};
+    for (final landmassId in sortedLandmasses) {
+      final tribeIdsForLandmass =
+          tribeLandmassAssignments.entries
+              .where((entry) => entry.value == landmassId)
+              .map((entry) => entry.key)
+              .toList()
+            ..sort();
+      final targetPerFaction = <String, int>{
+        for (final tribeId in tribeIdsForLandmass) tribeId: 3,
+      };
+      final landProvinces = List<String>.from(
+        provincesByLandmass[landmassId]!,
+      )..sort();
+      final landmassOwners = _assignExactLandmassTryFactionOrders(
+        allNeighbours: neighbours,
+        landmassProvinceIds: landProvinces,
+        baseFactionOrderDesc: tribeIdsForLandmass,
+        targetPerFaction: targetPerFaction,
+      );
+      if (landmassOwners == null) {
+        throw StateError(
+          'locked NW assignment could not satisfy contiguous ownership '
+          'on landmass $landmassId',
+        );
+      }
+      owners.addAll(landmassOwners);
+    }
+    return owners;
+  }
+
   final targetPerTribe = computeFairTargets(tribeIds, provinceIds.length);
   final seeds = pickLandmassSpacedSeeds(
     factionIds: tribeIds,
@@ -600,7 +717,6 @@ Map<String, String> _assignNewWorldOwnershipContiguous({
     available: available,
     landmassIds: landmassIds,
   );
-
   return assignTerritoriesByBfsGrowth(
     neighbours: neighbours,
     landmassIds: landmassIds,
@@ -611,4 +727,322 @@ Map<String, String> _assignNewWorldOwnershipContiguous({
     available: available,
     neighborShuffleRandom: assignmentRandom,
   );
+}
+
+/// All permutations of [ids] (length ≤ 6 in this codebase).
+List<List<String>> _permutationsOf(List<String> ids) {
+  if (ids.isEmpty) {
+    return [const <String>[]];
+  }
+  if (ids.length == 1) {
+    return [ids.toList()];
+  }
+  final out = <List<String>>[];
+  for (var i = 0; i < ids.length; i++) {
+    final head = ids[i];
+    final rest = List<String>.from(ids)..removeAt(i);
+    for (final tail in _permutationsOf(rest)) {
+      out.add([head, ...tail]);
+    }
+  }
+  return out;
+}
+
+/// [baseOrderDesc] is non-increasing by [targetPerFaction]; yields every
+/// order that only permutes within equal-target runs (SPEC: within-continent
+/// tie-break; geometry may require trying those permutations).
+Iterable<List<String>> _permutationsPreservingTargetOrder(
+  List<String> baseOrderDesc,
+  Map<String, int> targetPerFaction,
+) sync* {
+  if (baseOrderDesc.isEmpty) {
+    yield const [];
+    return;
+  }
+  final bands = <List<String>>[];
+  for (final id in baseOrderDesc) {
+    if (bands.isEmpty) {
+      bands.add([id]);
+      continue;
+    }
+    final prevTarget = targetPerFaction[bands.last.first] ?? 0;
+    final curTarget = targetPerFaction[id] ?? 0;
+    if (prevTarget == curTarget) {
+      bands.last.add(id);
+    } else {
+      bands.add([id]);
+    }
+  }
+  Iterable<List<String>> combine(int bi, List<String> prefix) sync* {
+    if (bi >= bands.length) {
+      yield prefix;
+      return;
+    }
+    for (final perm in _permutationsOf(bands[bi])) {
+      yield* combine(bi + 1, [...prefix, ...perm]);
+    }
+  }
+
+  yield* combine(0, []);
+}
+
+bool _listIdenticalStrings(List<String> a, List<String> b) {
+  if (a.length != b.length) {
+    return false;
+  }
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+Map<String, String>? _assignExactLandmassTryFactionOrders({
+  required Map<String, Set<String>> allNeighbours,
+  required List<String> landmassProvinceIds,
+  required List<String> baseFactionOrderDesc,
+  required Map<String, int> targetPerFaction,
+  Map<String, Set<String>> mustIncludeAnyOfByFaction = const {},
+}) {
+  final direct = _assignExactConnectedOwnershipForLandmass(
+    allNeighbours: allNeighbours,
+    landmassProvinceIds: landmassProvinceIds,
+    orderedFactionIds: baseFactionOrderDesc,
+    targetPerFaction: targetPerFaction,
+    mustIncludeAnyOfByFaction: mustIncludeAnyOfByFaction,
+  );
+  if (direct != null) {
+    return direct;
+  }
+  for (final order in _permutationsPreservingTargetOrder(
+    baseFactionOrderDesc,
+    targetPerFaction,
+  )) {
+    if (_listIdenticalStrings(order, baseFactionOrderDesc)) {
+      continue;
+    }
+    final r = _assignExactConnectedOwnershipForLandmass(
+      allNeighbours: allNeighbours,
+      landmassProvinceIds: landmassProvinceIds,
+      orderedFactionIds: order,
+      targetPerFaction: targetPerFaction,
+      mustIncludeAnyOfByFaction: mustIncludeAnyOfByFaction,
+    );
+    if (r != null) {
+      return r;
+    }
+  }
+  return null;
+}
+
+Map<String, String>? _assignExactConnectedOwnershipForLandmass({
+  required Map<String, Set<String>> allNeighbours,
+  required List<String> landmassProvinceIds,
+  required List<String> orderedFactionIds,
+  required Map<String, int> targetPerFaction,
+  Map<String, Set<String>> mustIncludeAnyOfByFaction = const {},
+}) {
+  final available = {...landmassProvinceIds};
+  final memo = <String, Map<String, String>?>{};
+  return _assignExactConnectedOwnershipRecursive(
+    allNeighbours: allNeighbours,
+    available: available,
+    orderedFactionIds: orderedFactionIds,
+    targetPerFaction: targetPerFaction,
+    mustIncludeAnyOfByFaction: mustIncludeAnyOfByFaction,
+    index: 0,
+    memo: memo,
+  );
+}
+
+String _exactOwnershipMemoKey(int index, Set<String> available) {
+  final sorted = available.toList()..sort();
+  return '$index|${sorted.join(':')}';
+}
+
+Map<String, String>? _assignExactConnectedOwnershipRecursive({
+  required Map<String, Set<String>> allNeighbours,
+  required Set<String> available,
+  required List<String> orderedFactionIds,
+  required Map<String, int> targetPerFaction,
+  required Map<String, Set<String>> mustIncludeAnyOfByFaction,
+  required int index,
+  required Map<String, Map<String, String>?> memo,
+}) {
+  if (index >= orderedFactionIds.length) {
+    return available.isEmpty ? <String, String>{} : null;
+  }
+  final factionId = orderedFactionIds[index];
+  final target = targetPerFaction[factionId] ?? 0;
+  if (target <= 0) {
+    return _assignExactConnectedOwnershipRecursive(
+      allNeighbours: allNeighbours,
+      available: available,
+      orderedFactionIds: orderedFactionIds,
+      targetPerFaction: targetPerFaction,
+      mustIncludeAnyOfByFaction: mustIncludeAnyOfByFaction,
+      index: index + 1,
+      memo: memo,
+    );
+  }
+  if (target > available.length) {
+    return null;
+  }
+  final memoKey = _exactOwnershipMemoKey(index, available);
+  if (memo.containsKey(memoKey)) {
+    final cached = memo[memoKey];
+    if (cached == null) {
+      return null;
+    }
+    return Map<String, String>.from(cached);
+  }
+  final mustInclude = mustIncludeAnyOfByFaction[factionId] ?? const <String>{};
+  final subsets = _connectedSubsetsOfSize(
+    available: available,
+    neighbours: allNeighbours,
+    targetSize: target,
+    mustIncludeAnyOf: mustInclude,
+  );
+  final subsetList = subsets.toList();
+  if (mustInclude.isNotEmpty) {
+    int subsetScore(Set<String> s) {
+      var score = 0;
+      for (final p in s) {
+        if (mustInclude.contains(p)) {
+          score += 10000;
+        }
+        score += allNeighbours[p]?.length ?? 0;
+      }
+      return score;
+    }
+
+    subsetList.sort((a, b) => subsetScore(b).compareTo(subsetScore(a)));
+  }
+  final remainingTarget = orderedFactionIds
+      .skip(index + 1)
+      .fold<int>(0, (sum, id) => sum + (targetPerFaction[id] ?? 0));
+  for (final subset in subsetList) {
+    final remaining = <String>{...available}..removeAll(subset);
+    if (remaining.length < remainingTarget) {
+      continue;
+    }
+    final next = _assignExactConnectedOwnershipRecursive(
+      allNeighbours: allNeighbours,
+      available: remaining,
+      orderedFactionIds: orderedFactionIds,
+      targetPerFaction: targetPerFaction,
+      mustIncludeAnyOfByFaction: mustIncludeAnyOfByFaction,
+      index: index + 1,
+      memo: memo,
+    );
+    if (next == null) continue;
+    final merged = Map<String, String>.from(next);
+    for (final provinceId in subset) {
+      merged[provinceId] = factionId;
+    }
+    memo[memoKey] = merged;
+    return merged;
+  }
+  memo[memoKey] = null;
+  return null;
+}
+
+/// Caps worst-case enumeration on large landmasses (keeps CI / AC-13 runtime bounded).
+const int _kMaxConnectedSubsetResultsLargeLandmass = 8192;
+
+List<Set<String>> _connectedSubsetsOfSize({
+  required Set<String> available,
+  required Map<String, Set<String>> neighbours,
+  required int targetSize,
+  Set<String> mustIncludeAnyOf = const <String>{},
+  int? maxResults,
+}) {
+  final effectiveMax = maxResults ??
+      (available.length <= 12 ? 65536 : _kMaxConnectedSubsetResultsLargeLandmass);
+  final availableSorted = available.toList()
+    ..sort((a, b) {
+      final da = neighbours[a]?.length ?? 0;
+      final db = neighbours[b]?.length ?? 0;
+      final c = db.compareTo(da);
+      if (c != 0) {
+        return c;
+      }
+      return a.compareTo(b);
+    });
+  final out = <Set<String>>[];
+  for (final root in availableSorted) {
+    if (out.length >= effectiveMax) {
+      break;
+    }
+    final initial = <String>{root};
+    final frontier = <String>{
+      for (final n in neighbours[root] ?? const <String>{})
+        if (available.contains(n)) n,
+    };
+    _expandConnectedSubset(
+      available: available,
+      neighbours: neighbours,
+      targetSize: targetSize,
+      current: initial,
+      frontier: frontier,
+      root: root,
+      mustIncludeAnyOf: mustIncludeAnyOf,
+      out: out,
+      maxResults: effectiveMax,
+    );
+  }
+  return out;
+}
+
+void _expandConnectedSubset({
+  required Set<String> available,
+  required Map<String, Set<String>> neighbours,
+  required int targetSize,
+  required Set<String> current,
+  required Set<String> frontier,
+  required String root,
+  required Set<String> mustIncludeAnyOf,
+  required List<Set<String>> out,
+  required int maxResults,
+}) {
+  if (out.length >= maxResults) {
+    return;
+  }
+  if (current.length == targetSize) {
+    if (mustIncludeAnyOf.isEmpty || current.any(mustIncludeAnyOf.contains)) {
+      if (out.length < maxResults) {
+        out.add({...current});
+      }
+    }
+    return;
+  }
+  if (current.length + frontier.length < targetSize) {
+    return;
+  }
+  final frontierSorted = frontier.toList()..sort();
+  for (final next in frontierSorted) {
+    if (out.length >= maxResults) {
+      return;
+    }
+    if (next.compareTo(root) < 0) continue;
+    final nextCurrent = <String>{...current, next};
+    final nextFrontier = <String>{...frontier}..remove(next);
+    for (final n in neighbours[next] ?? const <String>{}) {
+      if (!available.contains(n) || nextCurrent.contains(n)) continue;
+      if (n.compareTo(root) < 0) continue;
+      nextFrontier.add(n);
+    }
+    _expandConnectedSubset(
+      available: available,
+      neighbours: neighbours,
+      targetSize: targetSize,
+      current: nextCurrent,
+      frontier: nextFrontier,
+      root: root,
+      mustIncludeAnyOf: mustIncludeAnyOf,
+      out: out,
+      maxResults: maxResults,
+    );
+  }
 }

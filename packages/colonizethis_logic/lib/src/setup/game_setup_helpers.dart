@@ -871,3 +871,129 @@ Game assignProvinceTownsForTesting({
     tileMapByRegion: tileMapByRegion,
   );
 }
+
+/// Sorted P–P continent sizes for Old World provinces, or null if not exactly
+/// four land components or not 60 provinces.
+List<int>? _lockedOldWorldSortedPpContinentSizes(MapTopology topology) {
+  final provinceIds = <String>{
+    for (final node in topology.nodes)
+      if (node.type == TopologyNodeType.province) node.id,
+  };
+  if (provinceIds.length != 60) {
+    return null;
+  }
+  final neighbours = <String, Set<String>>{
+    for (final id in provinceIds) id: <String>{},
+  };
+  for (final edge in topology.edges) {
+    if (!provinceIds.contains(edge.id1) || !provinceIds.contains(edge.id2)) {
+      continue;
+    }
+    neighbours[edge.id1]!.add(edge.id2);
+    neighbours[edge.id2]!.add(edge.id1);
+  }
+  final componentSizes = <int>[];
+  final seen = <String>{};
+  final idsSorted = provinceIds.toList()..sort();
+  for (final id in idsSorted) {
+    if (!seen.add(id)) {
+      continue;
+    }
+    var count = 0;
+    final stack = <String>[id];
+    while (stack.isNotEmpty) {
+      final current = stack.removeLast();
+      count++;
+      for (final n in neighbours[current] ?? const <String>{}) {
+        if (seen.add(n)) {
+          stack.add(n);
+        }
+      }
+    }
+    componentSizes.add(count);
+  }
+  if (componentSizes.length != 4) {
+    return null;
+  }
+  componentSizes.sort();
+  return componentSizes;
+}
+
+/// True when topology has the locked **13, 13, 17, 17** P–P partition and passes a
+/// **fast** sea-bound capacity check for the locked role split (two GPs per 17-continent,
+/// one GP per 13-continent). Exact contiguous placement is still validated once in
+/// [createGameFromGeneratedMaps] — this gate only rejects obvious non-starters cheaply.
+bool lockedOldWorldTopologyReadyForMapGeneratingSetup(MapTopology topology) {
+  final sizes = _lockedOldWorldSortedPpContinentSizes(topology);
+  if (sizes == null) {
+    return false;
+  }
+  if (sizes[0] != 13 ||
+      sizes[1] != 13 ||
+      sizes[2] != 17 ||
+      sizes[3] != 17) {
+    return false;
+  }
+  final provinceIds = _provinceIdsFromTopology(topology);
+  final neighbours = _provinceNeighboursFromTopology(topology);
+  final landmassIds = _landmassIdsFromNeighbours(neighbours);
+  final landmassToProvinces = <int, List<String>>{};
+  for (final pid in provinceIds) {
+    final lm = landmassIds[pid]!;
+    landmassToProvinces.putIfAbsent(lm, () => <String>[]).add(pid);
+  }
+  final landmassSizes = landmassToProvinces.map(
+    (k, v) => MapEntry(k, v.length),
+  );
+  final sortedLandmasses = landmassSizes.keys.toList()
+    ..sort((a, b) => landmassSizes[b]!.compareTo(landmassSizes[a]!));
+  final landmassesByRole = sortedLandmasses.toList()
+    ..sort((a, b) {
+      final sizeCmp = landmassSizes[b]!.compareTo(landmassSizes[a]!);
+      if (sizeCmp != 0) {
+        return sizeCmp;
+      }
+      final aMin = (List<String>.from(landmassToProvinces[a]!)..sort()).first;
+      final bMin = (List<String>.from(landmassToProvinces[b]!)..sort()).first;
+      return aMin.compareTo(bMin);
+    });
+  if (landmassesByRole.length != 4) {
+    return false;
+  }
+  const gpTarget = 7;
+  const minorTarget = 3;
+  final requiredByLandmass = <int, int>{
+    landmassesByRole[0]: gpTarget + gpTarget + minorTarget,
+    landmassesByRole[1]: gpTarget + gpTarget + minorTarget,
+    landmassesByRole[2]: gpTarget + minorTarget + minorTarget,
+    landmassesByRole[3]: gpTarget + minorTarget + minorTarget,
+  };
+  for (final entry in requiredByLandmass.entries) {
+    final actual = landmassSizes[entry.key] ?? 0;
+    if (actual < entry.value) {
+      return false;
+    }
+  }
+  final seaByLandmass = <int, int>{};
+  for (final pid in provinceIds) {
+    if (!isProvinceSeaBound(topology, pid)) {
+      continue;
+    }
+    final lm = landmassIds[pid]!;
+    seaByLandmass[lm] = (seaByLandmass[lm] ?? 0) + 1;
+  }
+  if (seaByLandmass.values.fold<int>(0, (a, b) => a + b) < 6) {
+    return false;
+  }
+  for (var i = 0; i < 2; i++) {
+    if ((seaByLandmass[landmassesByRole[i]] ?? 0) < 2) {
+      return false;
+    }
+  }
+  for (var i = 2; i < 4; i++) {
+    if ((seaByLandmass[landmassesByRole[i]] ?? 0) < 1) {
+      return false;
+    }
+  }
+  return true;
+}

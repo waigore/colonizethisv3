@@ -25,12 +25,12 @@ CLI entry point for game creation. Thin facade over the setup pipeline in [game-
 | `--great-power-count N` | Backward-compat flag. Setup normalizes to 6 GPs in map-generating paths. |
 | `--prussia-leader ID` | When prussia is selected: leader variant (e.g. frederick_the_great \| frederick_william). |
 | `--minor-nation-count N` | Accepted for compatibility; map-generating setup normalizes Old World minors to 6. |
-| `--tribe-count N` | Override Tribe count. |
+| `--tribe-count N` | Accepted for compatibility; map-generating setup normalizes tribes to 10. |
 | `--num-provinces-old-world N` | Accepted for compatibility; map-generating setup normalizes Old World provinces to 60. |
-| `--num-provinces-new-world N` | Override NW province count. |
-| `--enforce-fair-gp-assignment` | After other config merges, force `enforceFairAssignment` to **true** (OW+NW fair-assignment connectivity repair + retries). |
+| `--num-provinces-new-world N` | Accepted for compatibility; map-generating setup normalizes New World provinces to 30. |
+| `--enforce-fair-gp-assignment` | Accepted for compatibility; map-generating locked setup ignores this toggle and uses assigner output without post-assignment repair. |
 
-**JSON config** (single source for CLI): supported keys are `selectedGreatPowerIds` (array), `greatPowerCount` (fallback), `leaderVariantByGpId` (map GP id → leader variant), `continentCount`, `minorNationCount`, `tribeCount`, `numProvincesOldWorld`, `numProvincesNewWorld`, `seed`, `enforceFairAssignment` (bool). Legacy key `enforceFairGpOldWorldAssignment` is accepted for backward compatibility. In map-generating setup paths, Old World values are normalized to the locked profile (`GP=6`, `minor=6`, `OW=60`, `continents=4`) before generation and assignment. Ownership quotas are hard-enforced by setup to `7 provinces per GP` and `3 provinces per minor` (total OW ownership = 60), including fair-assignment mode.
+**JSON config** (single source for CLI): supported keys are `selectedGreatPowerIds` (array), `greatPowerCount` (fallback), `leaderVariantByGpId` (map GP id → leader variant), `continentCount`, `minorNationCount`, `tribeCount`, `numProvincesOldWorld`, `numProvincesNewWorld`, `seed`, `enforceFairAssignment` (bool). Legacy key `enforceFairGpOldWorldAssignment` is accepted for backward compatibility. In map-generating setup paths, setup normalizes to the locked profile (`GP=6`, `minor=6`, `OW=60`, `tribes=10`, `NW=30`, `continents=4`) before generation and assignment. Ownership quotas are hard-enforced by setup to `7 provinces per GP`, `3 provinces per minor`, and `3 provinces per tribe`.
 
 ## Output Artifacts
 
