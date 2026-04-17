@@ -240,7 +240,7 @@ class OrderCommand {
 
   final String player;
   final String
-      type; // move, build, work, diplomatic, research, naval_move, naval_mission
+  type; // move, build, work, diplomatic, research, naval_move, naval_mission
   // Move fields
   final String? unit;
   final String? to;
@@ -305,6 +305,7 @@ class Assertion {
     this.relationLastInteractionTurn,
     this.overtureStage,
     this.capitalProvince,
+    this.playerOwnsCapitalProvince,
     this.workerPeasants,
     this.workerApprentices,
     this.workerJourneymen,
@@ -384,6 +385,10 @@ class Assertion {
   /// Capital province for [player] (Great Power). Full province id, e.g. oldWorld|p1. SPEC/game/capital-choice-phase.md.
   final String? capitalProvince;
 
+  /// With [player] (Great Power id): that player's [Player.capitalProvinceId] must reference a province whose
+  /// [Province.ownerId] equals the player id (SPEC/game/capital-and-connectivity.md § Capital).
+  final bool? playerOwnsCapitalProvince;
+
   /// Capital assertion: expected capital province id (full id, e.g. oldWorld|p1). Used with player (faction id).
   final String? capitalProvinceId;
 
@@ -443,12 +448,7 @@ class Assertion {
 }
 
 /// Type of value matching for assertions.
-enum MatchType {
-  exact,
-  range,
-  atLeast,
-  atMost,
-}
+enum MatchType { exact, range, atLeast, atMost }
 
 // JSON Parsing
 
@@ -461,11 +461,13 @@ Scenario parseScenarioFromJson(Map<String, dynamic> json) {
     setup: json['setup'] != null
         ? _parseScenarioSetup(json['setup'] as Map<String, dynamic>)
         : null,
-    turns: (json['turns'] as List<dynamic>?)
+    turns:
+        (json['turns'] as List<dynamic>?)
             ?.map((t) => _parseTurnScript(t as Map<String, dynamic>))
             .toList() ??
         [],
-    assertions: (json['assertions'] as List<dynamic>?)
+    assertions:
+        (json['assertions'] as List<dynamic>?)
             ?.map((a) => _parseAssertion(a as Map<String, dynamic>))
             .toList() ??
         [],
@@ -557,14 +559,17 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
         ?.map((k, v) => MapEntry(k, v.toInt())),
     initialWorkers: _parseInitialWorkers(json['initialWorkers']),
     initialStockpile: _parseInitialStockpile(json['initialStockpile']),
-    productionAssignments:
-        _parseProductionAssignments(json['productionAssignments']),
+    productionAssignments: _parseProductionAssignments(
+      json['productionAssignments'],
+    ),
     initialTileState: _parseInitialTileState(json['initialTileState']),
     leaderKeys: _parseLeaderKeys(json['leaderKeys']),
     initialTech: _parseInitialTech(json['initialTech']),
     initialTreasury: _parseInitialTreasury(json['initialTreasury']),
     defaultCombatMode: json['defaultCombatMode'] as String?,
-    purchasedTilesByTileKey: _parsePurchasedTilesByTileKey(json['purchasedTilesByTileKey']),
+    purchasedTilesByTileKey: _parsePurchasedTilesByTileKey(
+      json['purchasedTilesByTileKey'],
+    ),
   );
 }
 
@@ -620,10 +625,12 @@ List<ProductionAssignment>? _parseProductionAssignments(dynamic raw) {
     final recipeId = e['recipeId'] as String?;
     final labour = e['assignedLabour'];
     if (recipeId == null || recipeId.isEmpty || labour == null) continue;
-    out.add(ProductionAssignment(
-      recipeId: recipeId,
-      assignedLabour: (labour as num).toInt(),
-    ));
+    out.add(
+      ProductionAssignment(
+        recipeId: recipeId,
+        assignedLabour: (labour as num).toInt(),
+      ),
+    );
   }
   return out.isEmpty ? null : out;
 }
@@ -655,7 +662,8 @@ TurnScript _parseTurnScript(Map<String, dynamic> json) {
 
   return TurnScript(
     turn: json['turn'] as int,
-    orders: (json['orders'] as List<dynamic>?)
+    orders:
+        (json['orders'] as List<dynamic>?)
             ?.map((o) => _parseOrderCommand(o as Map<String, dynamic>))
             .toList() ??
         [],
@@ -680,12 +688,14 @@ List<CallToArmsDecisionScript>? _parseCallToArmsDecisions(dynamic raw) {
         accepted == null) {
       continue;
     }
-    list.add(CallToArmsDecisionScript(
-      allyGpId: allyGpId,
-      defenderGpId: defenderGpId,
-      aggressorGpId: aggressorGpId,
-      accepted: accepted,
-    ));
+    list.add(
+      CallToArmsDecisionScript(
+        allyGpId: allyGpId,
+        defenderGpId: defenderGpId,
+        aggressorGpId: aggressorGpId,
+        accepted: accepted,
+      ),
+    );
   }
   return list.isEmpty ? null : list;
 }
@@ -702,13 +712,16 @@ List<OvertureDecisionScript>? _parseOvertureDecisions(dynamic raw) {
     if (offererGpId == null ||
         targetFactionId == null ||
         stage == null ||
-        accepted == null) continue;
-    list.add(OvertureDecisionScript(
-      offererGpId: offererGpId,
-      targetFactionId: targetFactionId,
-      stage: stage,
-      accepted: accepted,
-    ));
+        accepted == null)
+      continue;
+    list.add(
+      OvertureDecisionScript(
+        offererGpId: offererGpId,
+        targetFactionId: targetFactionId,
+        stage: stage,
+        accepted: accepted,
+      ),
+    );
   }
   return list.isEmpty ? null : list;
 }
@@ -773,6 +786,7 @@ Assertion _parseAssertion(Map<String, dynamic> json) {
     relationLastInteractionTurn: json['relationLastInteractionTurn'] as int?,
     overtureStage: json['overtureStage'] as String?,
     capitalProvince: json['capitalProvince'] as String?,
+    playerOwnsCapitalProvince: json['playerOwnsCapitalProvince'] as bool?,
     workerPeasants: json['workerPeasants'] as int?,
     workerApprentices: json['workerApprentices'] as int?,
     workerJourneymen: json['workerJourneymen'] as int?,

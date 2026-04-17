@@ -1,6 +1,6 @@
 {
   "name": "basic_turn_1",
-  "description": "Tests basic game initialization - verify oldWorld has provinces (province format: oldWorld|p1, etc., player format: gp1, gp2)",
+  "description": "Tests basic game initialization — gp1 owns their capital province after init (player format: gp1, gp2).",
   "init": {
     "type": "fresh",
     "config": {
@@ -18,6 +18,6 @@
     }
   ],
   "assertions": [
-    {"turn": 1, "province": "oldWorld|p1", "owner": "gp1"}
+    {"turn": 1, "player": "gp1", "playerOwnsCapitalProvince": true}
   ]
 }

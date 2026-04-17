@@ -168,6 +168,7 @@ Assertion fields:
 **Worker and stockpile assertions** (SPEC/game/workers-and-population.md): use `player` with optional `workerPeasants`, `workerApprentices`, `workerJourneymen`, `workerMasters` (expected count each). Use `player` with `commodity` (commodity id, e.g. `grain`) and `stockpileCommodity` (expected quantity) for per-commodity stockpile checks.
 
 **Capital assertions** (SPEC/game/capital-choice-phase.md):
+- Use `player` (Great Power id, e.g. `gp1`) with `playerOwnsCapitalProvince` **true** — the province at that player's `capitalProvinceId` must exist and have `ownerId` equal to that player (SPEC/game/capital-and-connectivity.md § Capital). Use this for **fresh** procedural setups where local province ids are not stable across assigner changes.
 - Use `player` (Great Power id, e.g. `gp1`) with `capitalProvince` — expected full province id (e.g. `oldWorld|p1`) for that player's capital. Verifies the capital-choice phase selected the expected province.
 - `player` (faction id: `gp1`, `minor1`, `tribe1`, etc.) + `capitalProvinceId` — the faction's capital province must equal this full province id (e.g. `oldWorld|p1`). Optional `capitalTileKey` — the faction's capital tile must equal this key (format `regionId|provinceId|x|y`). Example: `{"turn": 1, "player": "gp1", "capitalProvinceId": "oldWorld|p1", "capitalTileKey": "oldWorld|p1|0|0"}`.
 

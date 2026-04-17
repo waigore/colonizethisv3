@@ -7,10 +7,7 @@ import 'scenario.dart';
 
 /// Result of verification.
 class VerificationResult {
-  const VerificationResult({
-    required this.passed,
-    required this.failures,
-  });
+  const VerificationResult({required this.passed, required this.failures});
 
   final bool passed;
   final List<String> failures;
@@ -41,10 +38,7 @@ class StateVerifier {
       }
     }
 
-    return VerificationResult(
-      passed: failures.isEmpty,
-      failures: failures,
-    );
+    return VerificationResult(passed: failures.isEmpty, failures: failures);
   }
 
   VerificationResult _verifyAssertion(Game game, Assertion assertion) {
@@ -112,11 +106,15 @@ class StateVerifier {
 
     // Province-based assertions
     if (assertion.province != null) {
-      final province =
-          _findProvince(game, assertion.region, assertion.province!);
+      final province = _findProvince(
+        game,
+        assertion.region,
+        assertion.province!,
+      );
       if (province == null) {
-        final regionStr =
-            assertion.region != null ? '${assertion.region}:' : '';
+        final regionStr = assertion.region != null
+            ? '${assertion.region}:'
+            : '';
         failures.add('Province "$regionStr${assertion.province}" not found');
         return VerificationResult(passed: false, failures: failures);
       }
@@ -153,8 +151,11 @@ class StateVerifier {
       if (assertion.unitCount != null ||
           assertion.hasUnit != null ||
           assertion.hasPlayerUnits != null) {
-        final units =
-            _getUnitsInProvince(game, assertion.region, assertion.province!);
+        final units = _getUnitsInProvince(
+          game,
+          assertion.region,
+          assertion.province!,
+        );
 
         if (assertion.unitCount != null) {
           final matchResult = _matchCount(
@@ -183,11 +184,44 @@ class StateVerifier {
 
         // Check player units
         if (assertion.hasPlayerUnits != null) {
-          final hasPlayerUnits =
-              units.any((u) => u.ownerId == assertion.hasPlayerUnits);
+          final hasPlayerUnits = units.any(
+            (u) => u.ownerId == assertion.hasPlayerUnits,
+          );
           if (!hasPlayerUnits) {
             failures.add(
               'Province ${assertion.province}: no units found for player "${assertion.hasPlayerUnits}"',
+            );
+          }
+        }
+      }
+    }
+
+    // Great Power owns their capital province (SPEC/game/capital-and-connectivity.md § Capital).
+    if (assertion.player != null &&
+        assertion.playerOwnsCapitalProvince == true) {
+      final playerId = assertion.player!;
+      final idx = game.players.indexWhere((p) => p.id == playerId);
+      if (idx < 0) {
+        failures.add(
+          'playerOwnsCapitalProvince: Great Power "$playerId" not found',
+        );
+      } else {
+        final gp = game.players[idx];
+        final capId = gp.capitalProvinceId;
+        if (capId == null || capId.isEmpty) {
+          failures.add(
+            'playerOwnsCapitalProvince: Player "${gp.id}" has no capitalProvinceId',
+          );
+        } else {
+          final capProvince = _findProvince(game, null, capId);
+          if (capProvince == null) {
+            failures.add(
+              'playerOwnsCapitalProvince: capital province "$capId" not found for "${gp.id}"',
+            );
+          } else if (capProvince.ownerId != gp.id) {
+            failures.add(
+              'Player ${gp.id} capital province $capId: expected owner "${gp.id}", '
+              'got "${capProvince.ownerId}"',
             );
           }
         }
@@ -215,7 +249,8 @@ class StateVerifier {
         actualTileKey = t.capitalTile?.toTileKey();
       } else {
         failures.add(
-            'Faction "$factionId" not found (players, minorNations, tribes)');
+          'Faction "$factionId" not found (players, minorNations, tribes)',
+        );
       }
       if (actualProvinceId != null || actualTileKey != null) {
         if (assertion.capitalProvinceId != null &&
@@ -285,8 +320,10 @@ class StateVerifier {
 
       if (assertion.stockpile != null) {
         // Sum all commodity quantities in stockpile
-        final totalStockpile =
-            player.stockpile.quantities.values.fold<int>(0, (a, b) => a + b);
+        final totalStockpile = player.stockpile.quantities.values.fold<int>(
+          0,
+          (a, b) => a + b,
+        );
         final matchResult = _matchCount(
           totalStockpile,
           assertion.stockpile!,
@@ -405,8 +442,11 @@ class StateVerifier {
 
       // Diplomacy relation assertions between [player] and [relationWith]
       if (assertion.relationWith != null) {
-        final rel =
-            _findRelation(game, assertion.player!, assertion.relationWith!);
+        final rel = _findRelation(
+          game,
+          assertion.player!,
+          assertion.relationWith!,
+        );
         if (rel == null) {
           failures.add(
             'Relation between ${assertion.player} and ${assertion.relationWith} not found',
@@ -453,8 +493,11 @@ class StateVerifier {
 
         // Overture stage (GP–Minor/Tribe) between [player] and [relationWith]
         if (assertion.overtureStage != null) {
-          final overture =
-              _findOverture(game, assertion.player!, assertion.relationWith!);
+          final overture = _findOverture(
+            game,
+            assertion.player!,
+            assertion.relationWith!,
+          );
           if (overture == null) {
             failures.add(
               'Overture between ${assertion.player} and ${assertion.relationWith} not found',
@@ -546,7 +589,8 @@ class StateVerifier {
         }
       } on StateError {
         failures.add(
-            'Player ${assertion.player} not found for leaderKey assertion');
+          'Player ${assertion.player} not found for leaderKey assertion',
+        );
       }
     }
 
@@ -573,7 +617,9 @@ class StateVerifier {
 
     // General count assertion (SPEC/game/military-generals.md): player must have expected number of generals
     if (assertion.player != null && assertion.generalCount != null) {
-      final count = game.generals.where((g) => g.ownerId == assertion.player).length;
+      final count = game.generals
+          .where((g) => g.ownerId == assertion.player)
+          .length;
       if (count != assertion.generalCount) {
         failures.add(
           'Player ${assertion.player} generalCount: expected ${assertion.generalCount}, got $count',
@@ -591,17 +637,20 @@ class StateVerifier {
           'Victory: expected victory to be set (winner=${assertion.victoryWinner}, type=${assertion.victoryType}, turn=${assertion.victoryTurn}), but Game.victory is null',
         );
       } else {
-        if (assertion.victoryWinner != null && v.winnerPlayerId != assertion.victoryWinner) {
+        if (assertion.victoryWinner != null &&
+            v.winnerPlayerId != assertion.victoryWinner) {
           failures.add(
             'Victory winner: expected "${assertion.victoryWinner}", got "${v.winnerPlayerId}"',
           );
         }
-        if (assertion.victoryType != null && v.type.name != assertion.victoryType) {
+        if (assertion.victoryType != null &&
+            v.type.name != assertion.victoryType) {
           failures.add(
             'Victory type: expected "${assertion.victoryType}", got "${v.type.name}"',
           );
         }
-        if (assertion.victoryTurn != null && v.turnNumber != assertion.victoryTurn) {
+        if (assertion.victoryTurn != null &&
+            v.turnNumber != assertion.victoryTurn) {
           failures.add(
             'Victory turn: expected ${assertion.victoryTurn}, got ${v.turnNumber}',
           );
@@ -648,10 +697,7 @@ class StateVerifier {
       }
     }
 
-    return VerificationResult(
-      passed: failures.isEmpty,
-      failures: failures,
-    );
+    return VerificationResult(passed: failures.isEmpty, failures: failures);
   }
 
   /// Tile key format: regionId|provinceId|x|y. Returns region id or empty if invalid.
@@ -734,7 +780,7 @@ class StateVerifier {
       message: passed
           ? ''
           : 'Region $region: both-fraction $fraction (${bothCount}/$totalCount) '
-              'exceeds maxBothFraction $maxBothFraction',
+                'exceeds maxBothFraction $maxBothFraction',
     );
   }
 
@@ -772,7 +818,10 @@ class StateVerifier {
   }
 
   List<Unit> _getUnitsInProvince(
-      Game game, String? regionId, String provinceId) {
+    Game game,
+    String? regionId,
+    String provinceId,
+  ) {
     final units = <Unit>[];
 
     // If region is specified, only check that region's units
@@ -853,11 +902,7 @@ class StateVerifier {
     return null;
   }
 
-  OvertureState? _findOverture(
-    Game game,
-    String gpId,
-    String targetId,
-  ) {
+  OvertureState? _findOverture(Game game, String gpId, String targetId) {
     for (final o in game.overtureStates) {
       if (o.gpId == gpId && o.targetId == targetId) return o;
     }

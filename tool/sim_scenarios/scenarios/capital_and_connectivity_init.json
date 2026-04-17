@@ -1,6 +1,6 @@
 {
   "name": "capital_and_connectivity_init",
-  "description": "Capital and connectivity: after init each GP owns their capital province (SPEC/game/capital-and-connectivity.md § Capital, Capital Setup). Deterministic init with seed 42 and 2 GPs.",
+  "description": "Capital and connectivity: after init each GP owns the province chosen as their capital (SPEC/game/capital-and-connectivity.md § Capital, Capital Setup). Deterministic init with seed 42 and 2 GPs.",
   "init": {
     "type": "fresh",
     "config": {
@@ -17,13 +17,13 @@
   "assertions": [
     {
       "turn": 1,
-      "province": "oldWorld|p1",
-      "owner": "gp1"
+      "player": "gp1",
+      "playerOwnsCapitalProvince": true
     },
     {
       "turn": 1,
-      "province": "oldWorld|p1",
-      "notOwner": "gp2"
+      "player": "gp2",
+      "playerOwnsCapitalProvince": true
     }
   ]
 }
