@@ -26,8 +26,8 @@ const int _kLockedOldWorldRetryCount = 500;
 const int _kLockedNewWorldProvinceCount = 30;
 const int _kLockedNewWorldContinentCount = 4;
 const int _kLockedNewWorldRetryCount = 500;
-const int _kLockedMapRetryCount = 24;
-const int _kLockedAssignmentRetryPerMap = 4;
+const int _kLockedMapRetryCount = 64;
+const int _kLockedAssignmentRetryPerMap = 16;
 
 int _stableStringHash(String value) {
   var hash = 0;
