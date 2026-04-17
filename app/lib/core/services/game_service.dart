@@ -451,7 +451,8 @@ class GameService {
     for (var attempt = 0; attempt <= _kLockedOldWorldRetryCount; attempt++) {
       final attemptSeed = attempt == 0
           ? effectiveSeed
-          : Object.hash(0x4f575245, effectiveSeed, attempt) & 0x7fffffff;
+          : Object.hash(0x4f575245, effectiveSeed, attempt) &
+                kDeterministicLcg31Mask;
       final mapGenParams = MapGenerationParams(
         numContinents: _kLockedOldWorldContinentCount,
         seed: attemptSeed,

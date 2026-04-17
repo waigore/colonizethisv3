@@ -896,27 +896,38 @@ List<int>? _lockedOldWorldSortedPpContinentSizes(MapTopology topology) {
   final seen = <String>{};
   final idsSorted = provinceIds.toList()..sort();
   for (final id in idsSorted) {
-    if (!seen.add(id)) {
-      continue;
-    }
-    var count = 0;
-    final stack = <String>[id];
-    while (stack.isNotEmpty) {
-      final current = stack.removeLast();
-      count++;
-      for (final n in neighbours[current] ?? const <String>{}) {
-        if (seen.add(n)) {
-          stack.add(n);
-        }
-      }
-    }
-    componentSizes.add(count);
+    if (!seen.add(id)) continue;
+    componentSizes.add(
+      _collectConnectedComponentSize(
+        startId: id,
+        neighbours: neighbours,
+        seen: seen,
+      ),
+    );
   }
   if (componentSizes.length != 4) {
     return null;
   }
   componentSizes.sort();
   return componentSizes;
+}
+
+int _collectConnectedComponentSize({
+  required String startId,
+  required Map<String, Set<String>> neighbours,
+  required Set<String> seen,
+}) {
+  var count = 0;
+  final stack = <String>[startId];
+  while (stack.isNotEmpty) {
+    final current = stack.removeLast();
+    count++;
+    for (final n in neighbours[current] ?? const <String>{}) {
+      if (!seen.add(n)) continue;
+      stack.add(n);
+    }
+  }
+  return count;
 }
 
 /// True when topology has the locked **13, 13, 17, 17** P–P partition and passes a
@@ -928,10 +939,7 @@ bool lockedOldWorldTopologyReadyForMapGeneratingSetup(MapTopology topology) {
   if (sizes == null) {
     return false;
   }
-  if (sizes[0] != 13 ||
-      sizes[1] != 13 ||
-      sizes[2] != 17 ||
-      sizes[3] != 17) {
+  if (sizes[0] != 13 || sizes[1] != 13 || sizes[2] != 17 || sizes[3] != 17) {
     return false;
   }
   final provinceIds = _provinceIdsFromTopology(topology);

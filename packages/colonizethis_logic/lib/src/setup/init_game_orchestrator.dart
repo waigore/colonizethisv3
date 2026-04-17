@@ -30,7 +30,7 @@ const int _kLockedNewWorldRetryCount = 500;
 int _stableStringHash(String value) {
   var hash = 0;
   for (final codeUnit in value.codeUnits) {
-    hash = (hash * 31 + codeUnit) & 0x7fffffff;
+    hash = (hash * 31 + codeUnit) & kDeterministicLcg31Mask;
   }
   return hash;
 }
@@ -146,7 +146,8 @@ InitGameResult runInitGame({
     for (var attempt = 0; attempt < maxLockedSetupAttempts; attempt++) {
       final attemptSeed = attempt == 0
           ? effectiveSeed
-          : Object.hash(0x4c4b5345, effectiveSeed, attempt) & 0x7fffffff;
+          : Object.hash(0x4c4b5345, effectiveSeed, attempt) &
+                kDeterministicLcg31Mask;
       _log.d('init game locked setup attempt=$attempt seed=$attemptSeed');
       final (tileMapOW, topoOW) = _generateLockedOldWorldMap(
         options: options,
@@ -406,7 +407,8 @@ GameSetupConfig _withLockedOldWorldConfig(GameSetupConfig config) {
   for (var attempt = 0; attempt <= _kLockedOldWorldRetryCount; attempt++) {
     final attemptSeed = attempt == 0
         ? effectiveSeed
-        : Object.hash(0x4f575245, effectiveSeed, attempt) & 0x7fffffff;
+        : Object.hash(0x4f575245, effectiveSeed, attempt) &
+              kDeterministicLcg31Mask;
     final mapGenParams = MapGenerationParams(
       numContinents: _kLockedOldWorldContinentCount,
       seed: attemptSeed,
@@ -468,7 +470,8 @@ Set<String> _lockedOwCollectConnectedComponent({
   for (var attempt = 0; attempt <= _kLockedNewWorldRetryCount; attempt++) {
     final attemptSeed = attempt == 0
         ? effectiveSeed
-        : Object.hash(0x4e575245, effectiveSeed, attempt) & 0x7fffffff;
+        : Object.hash(0x4e575245, effectiveSeed, attempt) &
+              kDeterministicLcg31Mask;
     final mapGenParams = MapGenerationParams(
       numContinents: _kLockedNewWorldContinentCount,
       seed: attemptSeed,
