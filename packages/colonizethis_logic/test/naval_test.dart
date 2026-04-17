@@ -304,6 +304,118 @@ void main() {
       expect(visibility?[owTile], isNull);
     });
 
+    test(
+      'combined-topology ship reveal uses local sea bucket and coastal ring only',
+      () {
+      const nw = 'newWorld';
+      const fullProv = '$nw|provA';
+      const localSeaDest = 'seaDest';
+      const localSeaOrigin = 'seaOrigin';
+      const prefixedDest = '$nw|$localSeaDest';
+      const prefixedOrigin = '$nw|$localSeaOrigin';
+      const coastalLand = '$nw|provA|1|0';
+      const inlandLand = '$nw|provA|0|0';
+      const seaDestWater = '$nw|$localSeaDest|2|0';
+      const seaDestWaterB = '$nw|$localSeaDest|2|1';
+
+      final combinedTopology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: fullProv,
+            regionId: nw,
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: prefixedDest,
+            regionId: nw,
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: prefixedOrigin,
+            regionId: nw,
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: '$nw|seaFar',
+            regionId: nw,
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [
+          TopologyEdge(id1: fullProv, id2: prefixedDest),
+          TopologyEdge(id1: prefixedOrigin, id2: prefixedDest),
+        ],
+      );
+
+      final visStart = <String, String>{
+        for (final k in [
+          coastalLand,
+          inlandLand,
+          seaDestWater,
+          seaDestWaterB,
+          '$nw|$localSeaOrigin|0|2',
+        ])
+          k: VisibilityLevel.unknown.name,
+      };
+
+      final game = Game(
+        id: 'gCombined',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.movement, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'fNw',
+              ownerId: 'gp1',
+              seaZoneId: prefixedOrigin,
+              regionId: nw,
+              shipTypeIds: ['carrack'],
+            ),
+          ],
+          tileKeysByRegionAndProvince: {
+            nw: {
+              fullProv: [coastalLand, inlandLand, '$nw|provA|0|1', '$nw|provA|1|1'],
+              localSeaDest: [seaDestWater, seaDestWaterB],
+              localSeaOrigin: ['$nw|$localSeaOrigin|0|2'],
+            },
+          },
+          playerVisibilityByTile: {'gp1': visStart},
+        ),
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+      );
+
+      final ordersOk = {
+        'gp1': [
+          NavalMoveOrder(fleetId: 'fNw', destinationSeaZoneId: prefixedDest),
+        ],
+      };
+      final afterOk = applyNavalMovesAndShipReveal(
+        game,
+        combinedTopology,
+        ordersOk,
+      );
+      final visOk = afterOk.worldState.playerVisibilityByTile['gp1']!;
+      expect(visOk[coastalLand], VisibilityLevel.revealed.name);
+      expect(visOk[inlandLand], VisibilityLevel.unknown.name);
+      expect(visOk[seaDestWater], VisibilityLevel.fullyVisible.name);
+      expect(visOk[seaDestWaterB], VisibilityLevel.fullyVisible.name);
+
+      final ordersBad = {
+        'gp1': [
+          NavalMoveOrder(fleetId: 'fNw', destinationSeaZoneId: '$nw|seaFar'),
+        ],
+      };
+      final afterBad = applyNavalMovesAndShipReveal(
+        game,
+        combinedTopology,
+        ordersBad,
+      );
+      final visBad = afterBad.worldState.playerVisibilityByTile['gp1']!;
+      expect(visBad[coastalLand], VisibilityLevel.unknown.name);
+      expect(visBad[seaDestWater], VisibilityLevel.unknown.name);
+    });
+
     group('firstAdjacentSeaZone', () {
       test('returns id2 when id1 matches seaZoneId', () {
         final seaOnly = MapTopology(

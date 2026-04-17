@@ -77,8 +77,11 @@ List<String> roadRailTileDetailLinesForTests({required int? transportLevel}) {
 }) {
   final parts = selectedTileKey.split('|');
   if (parts.length < 4 || parts[0] != regionId) return null;
-  final x = int.tryParse(parts[2]) ?? 0;
-  final y = int.tryParse(parts[3]) ?? 0;
+  final x = int.tryParse(parts[parts.length - 2]);
+  final y = int.tryParse(parts[parts.length - 1]);
+  if (x == null || y == null) {
+    return null;
+  }
   if (x < 0 || x >= regionWidth || y < 0 || y >= regionHeight) {
     return null;
   }
