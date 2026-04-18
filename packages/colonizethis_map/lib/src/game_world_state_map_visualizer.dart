@@ -20,7 +20,8 @@ const String _regionNewWorld = 'newWorld';
   CellViewData cell,
   RegionMapViewData region,
 ) {
-  final terrain = cell.terrainType ??
+  final terrain =
+      cell.terrainType ??
       (cell.terrainTypeId != null
           ? TerrainType.values.byName(cell.terrainTypeId!)
           : null);
@@ -34,15 +35,17 @@ const String _regionNewWorld = 'newWorld';
 Uint8List renderSingleRegionGameStateMapToPng({
   required TileMapResult result,
   required MapTopology topology,
+  required String regionId,
   required Map<String, String> ownerByProvinceId,
-  required List<({String factionId, String displayName, int x, int y})> capitalTiles,
+  required List<({String factionId, String displayName, int x, int y})>
+  capitalTiles,
   int cellSize = 24,
   Map<String, (int r, int g, int b)>? factionColorsOverride,
   List<({int x, int y})> portTiles = const [],
 }) {
   final seaZoneIds = {
     for (final n in topology.nodes)
-      if (n.type == TopologyNodeType.seaZone) n.id
+      if (n.type == TopologyNodeType.seaZone) n.id,
   };
 
   final List<String> factionIds;
@@ -80,9 +83,12 @@ Uint8List renderSingleRegionGameStateMapToPng({
   for (var y = 0; y < result.height; y++) {
     for (var x = 0; x < result.width; x++) {
       final id = result.cell(x, y);
-      final (r, g, b) = seaZoneIds.contains(id)
+      final isSea = seaZoneIds.contains(id);
+      final fullProvinceId = isSea ? null : ProvinceId.full(regionId, id);
+      final (r, g, b) = isSea
           ? seaColorRgb
-          : (factionColors[ownerByProvinceId[id] ?? ''] ?? (128, 128, 128));
+          : (factionColors[ownerByProvinceId[fullProvinceId] ?? ''] ??
+                (128, 128, 128));
       final color = image.getColor(r, g, b);
       img.fillRect(
         image,
@@ -149,7 +155,13 @@ Uint8List renderSingleRegionGameStateMapToPng({
         radius: capitalRadius - 1,
         color: capitalColor,
       );
-      img.drawCircle(image, x: cx, y: cy, radius: capitalRadius - 1, color: black);
+      img.drawCircle(
+        image,
+        x: cx,
+        y: cy,
+        radius: capitalRadius - 1,
+        color: black,
+      );
       img.drawString(
         image,
         'Capital of ${cap.displayName}',
@@ -259,6 +271,7 @@ Uint8List renderInitGameMapToPng({
   final owPng = renderSingleRegionGameStateMapToPng(
     result: owResult,
     topology: owTopo,
+    regionId: _regionOldWorld,
     ownerByProvinceId: owOwnerByProvinceId,
     capitalTiles: owCapitals,
     cellSize: cellSize,
@@ -268,6 +281,7 @@ Uint8List renderInitGameMapToPng({
   final nwPng = renderSingleRegionGameStateMapToPng(
     result: nwResult,
     topology: nwTopo,
+    regionId: _regionNewWorld,
     ownerByProvinceId: nwOwnerByProvinceId,
     capitalTiles: nwCapitals,
     cellSize: cellSize,
@@ -275,10 +289,7 @@ Uint8List renderInitGameMapToPng({
     portTiles: nwPortTiles,
   );
 
-  return composeMultiRegionMapPng(
-    oldWorldPng: owPng,
-    newWorldPng: nwPng,
-  );
+  return composeMultiRegionMapPng(oldWorldPng: owPng, newWorldPng: nwPng);
 }
 
 /// Renders the combined Old World + New World map from InitGameMapViewData.
@@ -290,7 +301,7 @@ Uint8List renderInitGameMapToPngFromViewData({
   final ow = viewData.oldWorld;
   final nw = viewData.newWorld;
 
-  Uint8List _renderRegion(RegionMapViewData region) {
+  Uint8List renderRegion(RegionMapViewData region) {
     final mapW = region.width * region.cellSize;
     final mapH = region.height * region.cellSize;
 
@@ -304,10 +315,15 @@ Uint8List renderInitGameMapToPngFromViewData({
 
     // Legend height: geographic = title + Sea + terrains + "Resources:" + g/t/i + ports; else title + factions + ports.
     final legendLines = geographicMode
-        ? (1 + 1 + region.terrainColors.length + 1 + 3 +
-            (region.portMarkers.isNotEmpty ? 1 : 0))
-        : (2 + region.factionColors.length +
-            (region.portMarkers.isNotEmpty ? 1 : 0));
+        ? (1 +
+              1 +
+              region.terrainColors.length +
+              1 +
+              geographicGameWorldLegendResources.length +
+              (region.portMarkers.isNotEmpty ? 1 : 0))
+        : (2 +
+              region.factionColors.length +
+              (region.portMarkers.isNotEmpty ? 1 : 0));
     final legendHeight = legendPadding * 2 + legendLines * legendLineHeight;
 
     final image = img.Image(width: mapW, height: mapH + legendHeight);
@@ -325,9 +341,9 @@ Uint8List renderInitGameMapToPngFromViewData({
       final (r, g, b) = cell.isSea
           ? seaColorRgb
           : (geographicMode
-              ? _terrainRgbForCell(cell, region)
-              : (region.factionColors[cell.ownerFactionId ?? ''] ??
-                  (128, 128, 128)));
+                ? _terrainRgbForCell(cell, region)
+                : (region.factionColors[cell.ownerFactionId ?? ''] ??
+                      (128, 128, 128)));
       final color = image.getColor(r, g, b);
       img.fillRect(
         image,
@@ -351,25 +367,25 @@ Uint8List renderInitGameMapToPngFromViewData({
         ),
       ),
     );
-    drawBorders(image, tmpResult, seaZoneIds, region.cellSize, seaZoneBorderColor);
+    drawBorders(
+      image,
+      tmpResult,
+      seaZoneIds,
+      region.cellSize,
+      seaZoneBorderColor,
+    );
 
     // Resource glyphs (geographic mode): g/t/i only per SPEC/program/map-visualization.md § Geographic legend scope.
     if (geographicMode) {
-      const geographicLegendResources = {'grain': 'g', 'timber': 't', 'iron': 'i'};
-      for (final cell in region.cells) {
-        final letter = cell.resourceId != null ? geographicLegendResources[cell.resourceId] : null;
-        if (letter == null) continue;
-        final cx = cell.x * region.cellSize + region.cellSize ~/ 2;
-        final cy = cell.y * region.cellSize + region.cellSize ~/ 2;
-        const letterOffsetX = 4;
-        const letterOffsetY = 6;
-        img.drawString(
+      for (final glyph in geographicGameWorldResourceGlyphs(region.cells)) {
+        drawResourceLetterAtCellCenter(
           image,
-          letter,
-          font: img.arial14,
-          x: cx - letterOffsetX,
-          y: cy - letterOffsetY,
+          letter: glyph.letter,
+          cellX: glyph.x,
+          cellY: glyph.y,
+          cellSize: region.cellSize,
           color: black,
+          offsetY: 6,
         );
       }
     }
@@ -424,11 +440,9 @@ Uint8List renderInitGameMapToPngFromViewData({
         color: black,
       );
       legendY += legendLineHeight;
-      for (final (letter, label) in [
-        ('g', 'Grain'),
-        ('t', 'Timber'),
-        ('i', 'Iron'),
-      ]) {
+      for (final r in geographicGameWorldLegendResources) {
+        final letter = resourceToLegendLetter(r);
+        final label = resourceToLegendLabel(r);
         img.drawString(
           image,
           '$letter  $label',
@@ -467,11 +481,8 @@ Uint8List renderInitGameMapToPngFromViewData({
     return img.encodePng(image);
   }
 
-  final owPng = _renderRegion(ow);
-  final nwPng = _renderRegion(nw);
+  final owPng = renderRegion(ow);
+  final nwPng = renderRegion(nw);
 
-  return composeMultiRegionMapPng(
-    oldWorldPng: owPng,
-    newWorldPng: nwPng,
-  );
+  return composeMultiRegionMapPng(oldWorldPng: owPng, newWorldPng: nwPng);
 }

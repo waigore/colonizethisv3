@@ -47,6 +47,18 @@ After each resolved turn: turn number, calendar year (if [turn-time-mapping.md](
 
 ---
 
+## Acceptance criteria
+
+- Given the same initial `Game` and `baseSeed`, when sim_game runs in any mode, then the sequence of game states is identical (determinism).
+- Given any simulation mode (player-by-player, turn-by-turn, fast-forward 10), when the user triggers resolution, then the system calls `resolveTurnForGame` with combined per-player orders for the full phase sequence including Combat.
+- Given player-by-player mode, when the user advances, then the system generates orders for one GP at a time and resolves the turn only after all GPs have orders.
+- Given turn-by-turn mode, when the user advances, then the system generates all GP orders and resolves one full turn.
+- Given fast-forward 10 mode, when the user triggers it, then the system runs 10 full turns and shows an aggregated summary.
+- Given a resolved turn, when the system updates output, then it includes turn number, calendar year (if turn-time-mapping in use), combat events (province, attacker, defender, casualties, flips), and optional metrics (province counts, stockpile deltas).
+- Entry from ctdev Running Game screen; depends on [game-setup-pipeline.md](game-setup-pipeline.md) for init and [order-engine.md](order-engine.md) for validation as stated in Integration.
+
+---
+
 ## Integration
 
 - Entry: ctdev Running Game screen (see [ctdev-app-running-game.md](ctdev-app-running-game.md))

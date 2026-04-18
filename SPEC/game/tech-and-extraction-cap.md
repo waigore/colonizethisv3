@@ -1,6 +1,6 @@
 # Tech and Extraction Cap
 
-**SPEC/game** — Per-player tech and its effect on extraction. Derived from GDD 04b. Reference: Imperialism II 02-economy (production level 0–4; technology caps). Tech tree: [tech-tree.md](tech-tree.md). Extraction: [extraction-and-improvements.md](extraction-and-improvements.md).
+**SPEC/game** — Per-player tech and its effect on extraction. Derived from GDD 04b. Reference: Imperialism II 02-economy (production level 0–4; technology caps). Tech tree: [tech-tree.md](tech-tree.md). Gathering and related caps (GDD): [tech-tree-gathering.md](tech-tree-gathering.md). New World resource chains: [tech-tree-new-world.md](tech-tree-new-world.md). Extraction: [extraction-and-improvements.md](extraction-and-improvements.md).
 
 ---
 
@@ -14,30 +14,32 @@ Each player has a **tech table**: a map from tech id to unlocked (e.g. `Map<Stri
 
 The **max effective extraction level** (1–4) per resource or improvement type is **derived from the tech tree catalog**: which techs grant which max improvement level for each resource (grain, timber, iron, coal, etc.). Effective extraction per tile = min(improvement level, **owner’s tech cap** for that resource). The improvement level on the tile is unchanged; only the amount that counts for extraction is capped.
 
-**MVP:** The implementation uses a **single scalar** cap per player (one value for all resources) as a temporary simplification; the catalog is program-level (e.g. gathering_1/2/3). The full model will use **per-resource** caps from the category sub-docs (e.g. [tech-tree-gathering.md](tech-tree-gathering.md)).
+The System resolves caps with a **resource-specific** mapping in `packages/colonizethis_data/lib/src/tech_extraction.dart` (`_extractionCapByResourceByTechId`, consumed by `extractionCapForResourceForUnlocked`). For a given resource, the cap is the highest level granted by unlocked techs for that resource. If no cap-raising tech is unlocked for that resource, the cap is **1**.
 
-**MVP scalar mapping:** For the MVP scalar cap, the **gathering** techs map to max effective extraction levels as follows (highest unlocked applies):
+Some resources may be intentionally capped below 4 by design. These exceptions must be declared in `extractionCapDesignExceptions` in `tech_extraction.dart` and mirrored in this SPEC:
+- `horses`: cap 1 (no extraction upgrade chain in current design)
+- `wool`: cap 3 (current design chain ends at `scientific_sheep_breeding`)
 
-- `gathering_1` → max effective extraction level **2**
-- `gathering_2` → max effective extraction level **3**
-- `gathering_3` → max effective extraction level **4**
-
-If a player has multiple gathering techs unlocked, the System uses the maximum cap implied by any unlocked gathering tech for that player.
-
-**Fallback:** When the full tech model is not yet loaded, when the tech table is missing or empty, or when a player has no gathering tech unlocked (null or all false), the System uses a **constant fallback cap of 4** per player so extraction resolution can run. The full model derives caps from [tech-tree.md](tech-tree.md) and category sub-docs. Ruleset: MVP program-level constants (including the fallback cap); future ruleset per [ruleset-config.md](../program/ruleset-config.md).
+Static catalog validation must enforce extraction cap coverage:
+- Every upgradeable extraction resource must have a progression reaching cap 4, **unless** that resource is explicitly declared in the design exception map above.
+- Exception caps must be within 1–4 and require explicit rationale in SPEC.
 
 ---
 
 ## Acceptance Criteria
 
-- Given a player has a tech table where each tech id is either unlocked or locked and a program-level catalog that maps tech ids to extraction caps per resource  
-  When the System computes the player’s current extraction caps from the tech table  
-  Then the System derives, for each relevant resource, a non-negative integer cap between 1 and 4 inclusive based only on the unlocked techs and the catalog, and does not assign any cap that contradicts the catalog.
+- Given a player has no grain-cap tech unlocked and a grain tile at improvement level 1  
+  When the player submits `build_improvement` on that tile  
+  Then the System rejects the order with a reason that includes `grain`, insufficient tech for the next level, and extraction cap **1**.
 
-- Given the implementation is running in the MVP mode where a single scalar extraction cap is used per player for all resources  
-  When the System evaluates extraction for any tile owned by that player as described in [extraction-and-improvements.md](extraction-and-improvements.md)  
-  Then the System sets the production for that tile to the minimum of the tile’s improvement level and that player’s scalar cap and applies this same cap regardless of which resource is present on the tile.
+- Given a player has unlocked `land_enclosure` and has a grain tile at improvement level 1  
+  When the player submits `build_improvement` on that tile  
+  Then the System accepts the order because the grain cap is 2 and level 2 is allowed.
 
-- Given the full tech model is not yet loaded or a resource does not have any associated tech-gated cap in the catalog  
-  When the System computes extraction caps for that resource for any player  
-  Then the System uses the configured constant fallback cap (for example 4) so that extraction resolution can run, and applies this fallback in the same way as a tech-derived cap when computing per-tile production.
+- Given an extraction resource that is not listed in `extractionCapDesignExceptions`  
+  When static extraction-cap catalog validation runs  
+  Then the System verifies that the resource has a valid cap progression up to level 4 in `_extractionCapByResourceByTechId`.
+
+- Given an extraction resource listed in `extractionCapDesignExceptions`  
+  When static extraction-cap catalog validation runs  
+  Then the System accepts that resource only when the declared exception cap is an integer in 1–4 and the same resource/cap is documented in this SPEC.

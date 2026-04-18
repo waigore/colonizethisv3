@@ -1,5 +1,5 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 void main() {
   group('computeFairTargets', () {
@@ -35,6 +35,15 @@ void main() {
   });
 
   group('pickSimpleSeeds', () {
+    test('one faction one candidate in available assigns seed', () {
+      final available = {'p1'};
+      final seeds = pickSimpleSeeds(
+        factionIds: ['f1'],
+        candidateIds: ['p1'],
+        available: available,
+      );
+      expect(seeds, {'p1': 'f1'});
+    });
     test('last faction wins when candidates are not consumed', () {
       // pickSimpleSeeds does not remove assigned candidates from available,
       // so repeated iterations overwrite the same seed. The downstream

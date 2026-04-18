@@ -17,7 +17,21 @@
     "connectivity_no_road_to_capital.json",
     "connectivity_no_road_to_port.json"
   ],
-  "game/military-generals.md": ["military_generals_deployment_limit.json"],
+  "game/military-generals.md": [
+    "military_generals_initial_one.json",
+    "military_generals_cap_increase_tech.json",
+    "military_generals_cap_two_organised_regiments.json",
+    "military_generals_cap_three.json",
+    "military_generals_cap_four_nationalism.json",
+    "military_generals_cap_three_no_stack.json",
+    "military_generals_attack_cap.json",
+    "military_generals_defend_without_general.json",
+    "military_generals_defender_assigned.json",
+    "military_generals_medal_gain_win.json",
+    "military_generals_medal_cap_four.json",
+    "military_generals_medal_no_gain_loss.json",
+    "military_generals_deployment_limit.json"
+  ],
   "game/military-units.md": ["military_units_buildability.json"],
   "game/naming.md": ["naming_basic.json"],
   "game/production-recipes.md": ["production_recipes_basic.json"],
@@ -39,7 +53,7 @@
   "game/tech-tree-transport.md": [],
   "game/tile-map-and-generation.md": [],
   "game/turn-time-mapping.md": [],
-  "game/victory.md": [],
+  "game/victory.md": ["victory_basic.json"],
   "game/workers-and-population.md": ["workers_consumption_starvation.json", "workers_luxury_consumption.json", "workers_luxury_zero_labour.json"],
   "game/world-model.md": [],
   "game/world-model-identity.md": ["world_model_identity_prefixed_provinces.json"]

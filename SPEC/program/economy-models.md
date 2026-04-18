@@ -10,7 +10,7 @@ Defines core data structures for the player economy: stockpiles, worker pools, a
 
 ### Stockpile
 
-Per-player map of commodity id → quantity. No per-province storage. Extraction, production, and consumption all operate on this structure.
+Per-player map of commodity id → quantity. No per-province storage. Extraction, production, and consumption all operate on this structure. The type models a **strategic national resource pool**; **warehouse logistics** are not simulated ([stockpiles-and-production.md](../game/stockpiles-and-production.md) § Strategic abstraction). Quantities are unbounded aside from integer limits.
 
 ### WorkerPool
 
@@ -23,9 +23,24 @@ Per-player population for production, distinct from military/civilian units. Tie
 Turn economic phases (in order):
 
 1. **Extraction:** Province tiles produce; resources flow to player stockpile via auto-transport. Per game/extraction-and-improvements.md.
-2. **Riches-to-treasury:** Riches in stockpile convert to treasury at base price; removed from stockpile. The list of riches commodity ids and base price per commodity is defined at program level in package **colonizethis_data** (riches catalog). Scenario overrides may apply a **richesCashMultiplier** (e.g. 1.5) to the treasury conversion; see [turn-resolution-phase-details.md](turn-resolution-phase-details.md) (Riches to treasury) and resolution API.
-3. **Production:** Consume commodities and labour; produce outputs to stockpile. **Effective labour** for production is capped by worker luxury: peasants×1 + min(apprentices, stockpile.refinedSugar)×4 + min(journeymen, stockpile.cigars)×6 + min(masters, stockpile.furHats)×8 (stockpile at start of Production phase). Per game/stockpiles-and-production.md and [workers-and-population.md](../game/workers-and-population.md) § Luxury consumption.
-4. **Consumption:** Military regiments consume food upkeep first, then workers and navy consume food and materials from remainder; then luxury deduction (refinedSugar/cigars/furHats per trained tier per workers-and-population.md). Military food shortfalls reduce morale/strength rather than removing regiments. Feeding coverage (military-first) is converted to a morale/strength modifier used in combat; see [turn-resolution-phase-details.md](turn-resolution-phase-details.md) (Consumption) and [combat-resolution.md](combat-resolution.md), [military-strength.md](military-strength.md). **Navy consumption** (food/materials for ships) is **deferred**: not implemented in MVP; resolution API currently implements military-first and worker feeding only. Implementation status: [#349](https://github.com/waigore/colonizethisv3/issues/349).
+2. **Riches-to-treasury:** Riches in stockpile convert to treasury at base price; removed from stockpile. The list of riches commodity ids and base price per commodity is defined at program level in package **colonizethis_data** (riches catalog). Scenario overrides may apply a **richesCashMultiplier** (e.g. 1.5) to the treasury conversion; see [turn-resolution-phase-details.md](turn-resolution-phase-details.md) (Riches to treasury) and resolution API. In the **default ColonizeThis ruleset**, `game.richesCashMultiplier` is 1.0 unless a scenario or ruleset explicitly overrides it; tests and sim_economy may pass higher multipliers (such as 1.5) to explore variant economies without changing the default balance.
+3. **Consumption:** Land military regiments consume food upkeep first, then **navy** (ships in the player's fleets; per-ship food from `ShipEconomyCatalog`), then **workers** (food priority Masters→Journeymen→Apprentices→Peasants; strike for missing food/luxury, **not removed**; luxury only for food-fed trained workers who receive a unit). Military and navy food shortfalls do not remove units; **land** feeding coverage drives land combat morale multipliers; **naval** feeding coverage (`fullyFedShips / totalShips`, or 1.0 when there are no ships) drives the **same** morale multipliers for **naval** strength in sea battles per [turn-resolution-phase-details.md](turn-resolution-phase-details.md) and [naval-combat-resolution.md](naval-combat-resolution.md). `WorkerIdleCounts` / `ConsumptionResult.idleLabour` capture post-consumption labour. Unknown `ship_type_id` in fleets fails turn resolution.
+4. **Production:** Runs **after** Consumption. Consume commodities and **idle labour** from post-Consumption `WorkerIdleCounts`; produce outputs to stockpile. `resolveProduction` takes `idleLabour` from the consumption pass. Per game/stockpiles-and-production.md and workers-and-population.md.
+
+---
+
+## Research treasury debt (labour techs)
+
+**Scope:** Negative treasury allowed **only** as a result of **research funding** in the Research phase, and only within the cap below. Other phases keep their existing treasury rules unless a future spec extends debt.
+
+| Condition | Max debt (ducats) | Treasury floor |
+|-----------|-------------------|----------------|
+| `money_lending` not unlocked | 0 | 0 |
+| `money_lending` unlocked | 500 | −500 |
+
+**Implementation:** `maxDebtForPlayer(Player)` in `packages/colonizethis_logic/lib/src/turn/economy_debt_rules.dart`. The research resolver rejects a slot’s spend if `treasury - spend < -maxDebt`. **`banking`:** prerequisite-only for other techs in current product; does not change `maxDebtForPlayer` until specified in GDD/TDD.
+
+**Game source of truth:** [tech-tree-labour-economy.md](../game/tech-tree-labour-economy.md) § Effect implementation status. **Resolution:** [research-resolution.md](research-resolution.md).
 
 ---
 
@@ -33,7 +48,7 @@ Turn economic phases (in order):
 
 | Aspect | Detail |
 |---|---|
-| Phase | Spans extraction through consumption |
+| Phase | Spans extraction through production (consumption before production) |
 | Upstream | Extraction pipeline, game rules (stockpiles-and-production, workers-and-population) |
 | Downstream | Player treasury, military morale, production output |
 
@@ -46,13 +61,14 @@ Turn economic phases (in order):
 
 ## Acceptance criteria and testing
 
-- **Phase order:** Extraction → Riches → Production → Consumption is fixed and tested (e.g. turn resolver and integration tests).
+- **Phase order:** Extraction → Riches → Consumption → Production is fixed and tested (e.g. turn resolver and integration tests).
 - **Serialization:** Stockpile and WorkerPool are serializable for save/load; tests cover round-trip or snapshot behaviour.
-- **Riches:** Conversion uses base price from colonizethis_data; riches are removed from stockpile; optional richesCashMultiplier scales treasury delta when provided.
-- **Consumption:** Military fed first, then workers/navy (food, then starvation, then luxury deduction per tier); military shortfalls yield feeding coverage used in combat (e.g. ConsumptionResult.fullyFedRegiments / coverage ratio → morale multiplier per turn-resolution-phase-details). Navy food/materials consumption is **deferred** (not implemented in MVP); status tracked in [#349](https://github.com/waigore/colonizethisv3/issues/349).
-- **Production:** Effective labour capped by luxury availability at start of Production phase (workers-and-population.md). Inputs and labour consumed; outputs added to stockpile; insufficient input skips or partial per recipe spec.
+- **Riches:** Conversion uses base price from colonizethis_data; riches are removed from stockpile; optional richesCashMultiplier scales treasury delta when provided. When no scenario override is active, the main game uses a multiplier of exactly 1.0.
+- **Consumption:** Land military fed first, then navy (per catalog food upkeep per ship), then workers (food priority Masters→Peasants; luxury for food-fed trained only). Workers are not removed for missing food (strike). Land and naval feeding coverage from `ConsumptionResult` feed land and sea combat (same multiplier tiers). `resolveConsumption` throws if a fleet references an unknown ship type id.
+- **Production:** Effective labour from `WorkerIdleCounts` after Consumption (workers-and-population.md). Inputs and labour consumed; outputs added to stockpile; insufficient input skips or partial per recipe spec.
+- **Research treasury debt:** `maxDebtForPlayer` returns 0 without `money_lending`, 500 with it; research resolver enforces treasury ≥ −`maxDebt` for research spending only (see [research-resolution.md](research-resolution.md)).
 
-Unit tests: Stockpile/WorkerPool serialization; resolveRichesToTreasury; resolveConsumption (military-first, worker feeding, starve order); resolveProduction. Integration: turn resolver runs phases in order; consumption result flows to combat morale where applicable.
+Unit tests: Stockpile/WorkerPool serialization; resolveRichesToTreasury; resolveConsumption (military-first, navy-before-workers, worker food priority, strike / idle counts, unknown ship id error); resolveProduction (with `idleLabour`); `maxDebtForPlayer` (economy debt rules). Integration: turn resolver runs phases in order; consumption coverage flows to land and naval combat morale and production labour where applicable.
 
 ---
 
@@ -60,4 +76,4 @@ Unit tests: Stockpile/WorkerPool serialization; resolveRichesToTreasury; resolve
 
 - Stockpile and WorkerPool types must be serializable for save/load.
 - Worker tier definitions, labour values, recruiting/training rules are defined in game/workers-and-population.md; this module references them.
-- **Config:** Program-level in MVP (no JSON rulesets for economy in MVP). Economy-related config (worker tiers, riches list/prices) may move to ruleset per [ruleset-config.md](ruleset-config.md) in a later phase.
+- **Config:** Program-level in current product (no JSON rulesets for economy in current product). Economy-related config (worker tiers, riches list/prices) may move to ruleset per [ruleset-config.md](ruleset-config.md) in a later phase.

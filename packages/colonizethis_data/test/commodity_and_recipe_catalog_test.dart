@@ -1,5 +1,5 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 
 void main() {
   group('CommodityCatalog', () {
@@ -95,8 +95,8 @@ void main() {
         2,
       );
       expect(
-        castIron.inputQuantities[CommodityCatalog.coal.id],
-        1,
+        castIron.inputQuantities.containsKey(CommodityCatalog.coal.id),
+        isFalse,
       );
     });
   });

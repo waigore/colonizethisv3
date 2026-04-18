@@ -1,0 +1,10 @@
+---
+description: Whenever file logging is needed, use basic_logger_file. Do not implement custom file logging.
+alwaysApply: true
+---
+
+# File logging
+
+- **Library:** Use [basic_logger_file](https://pub.dev/packages/basic_logger_file) for any file logging (e.g. writing logs to a file such as `ctdev.log`).
+- **Do not:** Implement your own file logging (e.g. raw `dart:io` `File`/`IOSink`, or manual `Logger.addLogListener` that writes to a file). Use the library instead.
+- **Usage:** `BasicLogger` + `FileOutputLogger` from `basic_logger` and `basic_logger_file`. Attach `FileOutputLogger` with `dir`, `ext`, and optional `bufferSize`; forward app log events to the BasicLogger so the library handles buffering and writing.

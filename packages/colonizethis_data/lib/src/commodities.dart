@@ -87,6 +87,24 @@ class CommodityCatalog {
     displayName: 'Furs',
   );
 
+  static const Commodity copper = Commodity(
+    id: 'copper',
+    category: CommodityCategory.rawMaterial,
+    displayName: 'Copper',
+  );
+
+  static const Commodity tin = Commodity(
+    id: 'tin',
+    category: CommodityCategory.rawMaterial,
+    displayName: 'Tin',
+  );
+
+  static const Commodity horses = Commodity(
+    id: 'horses',
+    category: CommodityCategory.rawMaterial,
+    displayName: 'Horses',
+  );
+
   static const Commodity lumber = Commodity(
     id: 'lumber',
     category: CommodityCategory.manufactured,
@@ -183,6 +201,9 @@ class CommodityCatalog {
     sugarCane,
     tobacco,
     furs,
+    copper,
+    tin,
+    horses,
     lumber,
     castIron,
     fabric,
@@ -204,4 +225,3 @@ class CommodityCatalog {
     for (final c in all) c.id: c,
   };
 }
-

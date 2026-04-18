@@ -1,0 +1,90 @@
+{
+  "name": "victory_basic",
+  "description": "SPEC/game/victory.md: military victory when one GP controls ≥31 OW provinces. End-of-turn phase sets Game.victory; idempotence and tie-break covered in unit tests.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42,
+      "minorNationCount": 0
+    },
+    "oldWorld": {
+      "grid": [
+        ["sea1", "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p22", "p23", "p24", "p25", "p26", "p27", "p28", "p29", "p30", "p31"]
+      ],
+      "nodes": [
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"},
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "p2", "regionId": "oldWorld", "type": "province"},
+        {"id": "p3", "regionId": "oldWorld", "type": "province"},
+        {"id": "p4", "regionId": "oldWorld", "type": "province"},
+        {"id": "p5", "regionId": "oldWorld", "type": "province"},
+        {"id": "p6", "regionId": "oldWorld", "type": "province"},
+        {"id": "p7", "regionId": "oldWorld", "type": "province"},
+        {"id": "p8", "regionId": "oldWorld", "type": "province"},
+        {"id": "p9", "regionId": "oldWorld", "type": "province"},
+        {"id": "p10", "regionId": "oldWorld", "type": "province"},
+        {"id": "p11", "regionId": "oldWorld", "type": "province"},
+        {"id": "p12", "regionId": "oldWorld", "type": "province"},
+        {"id": "p13", "regionId": "oldWorld", "type": "province"},
+        {"id": "p14", "regionId": "oldWorld", "type": "province"},
+        {"id": "p15", "regionId": "oldWorld", "type": "province"},
+        {"id": "p16", "regionId": "oldWorld", "type": "province"},
+        {"id": "p17", "regionId": "oldWorld", "type": "province"},
+        {"id": "p18", "regionId": "oldWorld", "type": "province"},
+        {"id": "p19", "regionId": "oldWorld", "type": "province"},
+        {"id": "p20", "regionId": "oldWorld", "type": "province"},
+        {"id": "p21", "regionId": "oldWorld", "type": "province"},
+        {"id": "p22", "regionId": "oldWorld", "type": "province"},
+        {"id": "p23", "regionId": "oldWorld", "type": "province"},
+        {"id": "p24", "regionId": "oldWorld", "type": "province"},
+        {"id": "p25", "regionId": "oldWorld", "type": "province"},
+        {"id": "p26", "regionId": "oldWorld", "type": "province"},
+        {"id": "p27", "regionId": "oldWorld", "type": "province"},
+        {"id": "p28", "regionId": "oldWorld", "type": "province"},
+        {"id": "p29", "regionId": "oldWorld", "type": "province"},
+        {"id": "p30", "regionId": "oldWorld", "type": "province"},
+        {"id": "p31", "regionId": "oldWorld", "type": "province"}
+      ],
+      "edges": [
+        {"id1": "sea1", "id2": "p1"},
+        {"id1": "p1", "id2": "p2"},
+        {"id1": "p2", "id2": "p3"},
+        {"id1": "p3", "id2": "p4"},
+        {"id1": "p4", "id2": "p5"},
+        {"id1": "p5", "id2": "p6"},
+        {"id1": "p6", "id2": "p7"},
+        {"id1": "p7", "id2": "p8"},
+        {"id1": "p8", "id2": "p9"},
+        {"id1": "p9", "id2": "p10"},
+        {"id1": "p10", "id2": "p11"},
+        {"id1": "p11", "id2": "p12"},
+        {"id1": "p12", "id2": "p13"},
+        {"id1": "p13", "id2": "p14"},
+        {"id1": "p14", "id2": "p15"},
+        {"id1": "p15", "id2": "p16"},
+        {"id1": "p16", "id2": "p17"},
+        {"id1": "p17", "id2": "p18"},
+        {"id1": "p18", "id2": "p19"},
+        {"id1": "p19", "id2": "p20"},
+        {"id1": "p20", "id2": "p21"},
+        {"id1": "p21", "id2": "p22"},
+        {"id1": "p22", "id2": "p23"},
+        {"id1": "p23", "id2": "p24"},
+        {"id1": "p24", "id2": "p25"},
+        {"id1": "p25", "id2": "p26"},
+        {"id1": "p26", "id2": "p27"},
+        {"id1": "p27", "id2": "p28"},
+        {"id1": "p28", "id2": "p29"},
+        {"id1": "p29", "id2": "p30"},
+        {"id1": "p30", "id2": "p31"}
+      ]
+    }
+  },
+  "turns": [
+    { "turn": 1, "orders": [] }
+  ],
+  "assertions": [
+    { "turn": 1, "victoryWinner": "gp1", "victoryType": "military", "victoryTurn": 0 }
+  ]
+}

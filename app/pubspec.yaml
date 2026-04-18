@@ -5,16 +5,21 @@ publish_to: none
 resolution: workspace
 
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.11.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  flame: ^1.18.0
+  flutter_localizations:
+    sdk: flutter
+  flame: ^1.36.0
+  jenny: ^1.5.1
   logger: ^2.0.2
-  flutter_riverpod: ^2.6.1
+  flutter_riverpod: ^3.3.1
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  session_log_buffer:
+  colonizethis_logger:
   colonizethis_map:
   colonizethis_models:
   colonizethis_data:
@@ -22,18 +27,32 @@ dependencies:
   colonizethis_logic:
   colonizethis_ai:
   widgetbook: ^3.22.0
+  google_fonts: ^6.3.3
 
 dev_dependencies:
   colonizethis_test:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
   flutter_lints: ^6.0.0
+  colonizethis_exception_lint:
+    path: ../packages/colonizethis_exception_lint
+  custom_lint: ^0.8.1
+  hardcoded_strings_lint: ^1.0.4
 
 flutter:
+  generate: true
   uses-material-design: true
   assets:
+    - assets/data/
+    - assets/icons/
+    - assets/icons/32/
+    - assets/icons/64/
     - assets/images/
-    - assets/images/ui_main_menu_logo.png
-    - assets/images/ui_main_menu_button.png
-    - assets/images/ui_main_menu_panel.png
+    - assets/images/terrain/
+    - assets/images/terrain/base_64/
+    - assets/images/terrain/base_32/
+    - assets/images/terrain/tilesets/
+    - assets/dialogue/
 

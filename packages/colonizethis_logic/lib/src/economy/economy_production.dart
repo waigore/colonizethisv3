@@ -1,50 +1,28 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
-final Logger _log = Logger();
-
-/// Computes effective available labour for production, capped by luxury
-/// availability per SPEC/program/economy-models.md and
-/// SPEC/game/workers-and-population.md.
-int _effectiveLabourForWorkers({
-  required WorkerPool workers,
-  required Stockpile stockpile,
-}) {
-  final peasantsLabour = workers.peasants * 1;
-
-  final refinedSugar = stockpile.quantityOf(CommodityCatalog.refinedSugar.id);
-  final cigars = stockpile.quantityOf(CommodityCatalog.cigars.id);
-  final furHats = stockpile.quantityOf(CommodityCatalog.furHats.id);
-
-  final apprenticesWithLuxury = workers.apprentices <= 0
-      ? 0
-      : (refinedSugar < workers.apprentices ? refinedSugar : workers.apprentices);
-  final journeymenWithLuxury = workers.journeymen <= 0
-      ? 0
-      : (cigars < workers.journeymen ? cigars : workers.journeymen);
-  final mastersWithLuxury = workers.masters <= 0
-      ? 0
-      : (furHats < workers.masters ? furHats : workers.masters);
-
-  return peasantsLabour +
-      apprenticesWithLuxury * 4 +
-      journeymenWithLuxury * 6 +
-      mastersWithLuxury * 8;
-}
+final _log = packageLogger();
 
 /// Production resolution helpers.
 /// SPEC/game/production-recipes.md
 /// SPEC/game/workers-and-population.md
 
-class AssignedRecipe {
-  const AssignedRecipe({
-    required this.recipeId,
-    required this.assignedLabour,
-  }) : assert(assignedLabour >= 0, 'assignedLabour must be non-negative');
-
-  final String recipeId;
-  final int assignedLabour;
+/// Builds production assignments from the production panel’s desired output
+/// per recipe (units of output). SPEC/ui/production-panel.md.
+List<AssignedRecipe> assignedRecipesFromDesiredOutput(
+  Map<String, int> desiredByRecipe,
+) {
+  final list = <AssignedRecipe>[];
+  for (final entry in desiredByRecipe.entries) {
+    if (entry.value <= 0) continue;
+    final recipe = ProductionRecipesCatalog.byId[entry.key];
+    if (recipe == null) continue;
+    final labour = entry.value * recipe.labourPerOutput;
+    if (labour <= 0) continue;
+    list.add(AssignedRecipe(recipeId: entry.key, assignedLabour: labour));
+  }
+  return list;
 }
 
 class ProductionResult {
@@ -63,8 +41,9 @@ class ProductionResult {
 
 /// Resolves production for a single player for one turn.
 ///
-/// - [stockpile]: starting stockpile.
+/// - [stockpile]: starting stockpile (after Consumption for a normal turn).
 /// - [workers]: starting WorkerPool (unchanged by production itself).
+/// - [idleLabour]: idle worker headcounts from Consumption (fed + luxury when required).
 /// - [assignments]: per-recipe labour assignments for this turn.
 ///
 /// For each assignment, the number of runs is limited by:
@@ -73,21 +52,19 @@ class ProductionResult {
 ProductionResult resolveProduction({
   required Stockpile stockpile,
   required WorkerPool workers,
+  required WorkerIdleCounts idleLabour,
   required List<AssignedRecipe> assignments,
 }) {
   Stockpile current = stockpile;
   final productionByRecipe = <String, int>{};
 
-  final effectiveLabour = _effectiveLabourForWorkers(
-    workers: workers,
-    stockpile: stockpile,
-  );
+  final effectiveLabour = idleLabour.effectiveLabour;
   var remainingEffectiveLabour = effectiveLabour;
 
   for (final assignment in assignments) {
     final recipe = ProductionRecipesCatalog.byId[assignment.recipeId];
     if (recipe == null) {
-      _log.w('logic: production skip unknown recipe id ${assignment.recipeId}');
+      _log.w('production skip unknown recipe id ${assignment.recipeId}');
       continue;
     }
     if (assignment.assignedLabour <= 0) continue;
@@ -96,12 +73,13 @@ ProductionResult resolveProduction({
     final labourPerOutput = recipe.labourPerOutput;
     if (labourPerOutput <= 0) {
       _log.w(
-        'logic: production recipe ${recipe.id} has non-positive labourPerOutput; skipping',
+        'production recipe ${recipe.id} has non-positive labourPerOutput; skipping',
       );
       continue;
     }
 
-    final labourBudgetForAssignment = assignment.assignedLabour <= remainingEffectiveLabour
+    final labourBudgetForAssignment =
+        assignment.assignedLabour <= remainingEffectiveLabour
         ? assignment.assignedLabour
         : remainingEffectiveLabour;
     if (labourBudgetForAssignment <= 0) continue;
@@ -145,7 +123,7 @@ ProductionResult resolveProduction({
   }
 
   _log.d(
-    'logic: production assignments=${assignments.length} effectiveLabour=$effectiveLabour',
+    'production assignments=${assignments.length} effectiveLabour=$effectiveLabour',
   );
   return ProductionResult(
     stockpile: current,
@@ -153,4 +131,3 @@ ProductionResult resolveProduction({
     productionByRecipe: productionByRecipe,
   );
 }
-

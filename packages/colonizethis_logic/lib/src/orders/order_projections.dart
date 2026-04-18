@@ -1,13 +1,13 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
-import '../economy/economy_production.dart';
 import '../constants.dart';
+import '../world/unit_lookup.dart';
 import 'projected_effects.dart';
 import '../turn/turn_resolver.dart';
 
-final Logger _log = Logger();
+final _log = packageLogger();
 
 /// Projects effects of unresolved orders. SPEC/program/order-projections.md.
 /// Dry-run of resolveTurnForGame; no world state mutation.
@@ -22,20 +22,24 @@ ProjectedEffects projectOrderEffects({
   required String playerId,
   List<AssignedRecipe> defaultAssignments = const [],
 }) {
-  _log.d('logic: projectOrderEffects run for player $playerId');
+  _log.d('projectOrderEffects run for player $playerId');
   if (tileMapByRegion.isEmpty) {
-    _log.d('logic: projectOrderEffects with empty tileMapByRegion; extraction will be zero');
+    _log.d(
+      'projectOrderEffects with empty tileMapByRegion; extraction will be zero',
+    );
   }
   Map<String, Map<String, int>>? productionByRecipeByPlayerId;
-  final next = resolveTurnForGame(
-    game: game,
-    topology: topology,
-    orders: orders,
-    tileMapByRegion: tileMapByRegion,
-    defaultAssignments: defaultAssignments,
-    onProductionComplete: defaultAssignments.isNotEmpty
-        ? (map) => productionByRecipeByPlayerId = map
-        : null,
+  final next = requireTurnResolutionComplete(
+    resolveTurnForGame(
+      game: game,
+      topology: topology,
+      orders: orders,
+      tileMapByRegion: tileMapByRegion,
+      defaultAssignments: defaultAssignments,
+      onProductionComplete: defaultAssignments.isNotEmpty
+          ? (map) => productionByRecipeByPlayerId = map
+          : null,
+    ),
   );
   final player = next.playerById(playerId);
   if (player == null) return const ProjectedEffects();
@@ -44,10 +48,7 @@ ProjectedEffects projectOrderEffects({
 
   // Unit locations after resolution (province identity: use locationProvinceId per SPEC/game/world-model.md).
   final unitLocations = <String, String>{};
-  for (final u in next.worldState.oldWorld.units) {
-    if (u.ownerId == playerId) unitLocations[u.id] = u.locationProvinceId;
-  }
-  for (final u in next.worldState.newWorld.units) {
+  for (final u in allUnitsFromWorld(next.worldState)) {
     if (u.ownerId == playerId) unitLocations[u.id] = u.locationProvinceId;
   }
 
@@ -70,10 +71,13 @@ ProjectedEffects projectOrderEffects({
 
   return ProjectedEffects(
     workerCount: player.workerPool.totalWorkers,
-    treasuryDelta: origPlayer != null ? player.treasury - origPlayer.treasury : null,
+    treasuryDelta: origPlayer != null
+        ? player.treasury - origPlayer.treasury
+        : null,
     unitLocations: unitLocations,
     stockpileDeltas: stockpileDeltas.isNotEmpty ? stockpileDeltas : null,
-    productionByRecipe: productionByRecipe != null && productionByRecipe.isNotEmpty
+    productionByRecipe:
+        productionByRecipe != null && productionByRecipe.isNotEmpty
         ? productionByRecipe
         : null,
   );

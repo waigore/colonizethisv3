@@ -7,5 +7,41 @@
     "category": "screen",
     "source": "pipeline",
     "widgetbook_story_path": "Main Menu"
+  },
+  {
+    "id": "ct_game_setup",
+    "name": "CtGameSetup",
+    "dart_file_path": "lib/widgets/game_setup.dart",
+    "constructor_props": "variant: GameSetupVariant, state: GameSetupState, naming: ResolvedNamingConfig, initialOrderedGpIds: List<String>, initialLeaderVariantByGpId: Map<String, String>, onStartGame: void Function(List<String>, Map<String, String>), onBack: VoidCallback",
+    "category": "screen",
+    "source": "pipeline",
+    "widgetbook_story_path": "Game Setup"
+  },
+  {
+    "id": "ct_region_map",
+    "name": "CtRegionMap",
+    "dart_file_path": "lib/widgets/ct_region_map.dart",
+    "constructor_props": "region: RegionMapViewData, showPoliticalOverlay: bool, cellSizePx: double, visibilityMode: CtMapVisibilityMode, onProvinceSelected: void Function(String)?, onRegionViewChanged: VoidCallback?, onProvinceHovered: void Function(String?)?, onTileHovered: void Function(String?)?, highlightedTileKey: String?, centerOnTileKey: String?, validTileKeys: Set<String>?, onTileSelected: void Function(String)?, onWorkTargetSelectionCancelled: VoidCallback?",
+    "category": "game/map",
+    "source": "pipeline",
+    "widgetbook_story_path": "Map Widget"
+  },
+  {
+    "id": "ct_province_sea_zone_detail_overlay",
+    "name": "ProvinceSeaZoneDetailOverlay",
+    "dart_file_path": "lib/features/game/widgets/province_sea_zone_detail_overlay.dart",
+    "constructor_props": "game: Game, region: RegionMapViewData, selectedId: String, humanPlayerId: String, onHighlightTile: void Function(String?)?, onClose: VoidCallback?",
+    "category": "game/overlay",
+    "source": "pipeline",
+    "widgetbook_story_path": "Province Overlay"
+  },
+  {
+    "id": "ct_production_panel",
+    "name": "ProductionPanel",
+    "dart_file_path": "lib/features/game/widgets/production_panel.dart",
+    "constructor_props": "game: Game, player: Player, desiredOutputByRecipe: Map<String, int>, onDesiredOutputChanged: ValueChanged<Map<String, int>>",
+    "category": "game/panel",
+    "source": "pipeline",
+    "widgetbook_story_path": "Production Panel"
   }
 ]

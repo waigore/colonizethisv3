@@ -1,6 +1,6 @@
 # AI Architecture (Phase 6)
 
-**SPEC/ai** — Hybrid AI stack for MVP. Source: GDD 10b.
+**SPEC/ai** — Hybrid AI stack for current product. Source: GDD 10b.
 
 ---
 
@@ -25,12 +25,12 @@ Characterful, deterministic AI using only observable game state. Difficulty affe
 
 Behavior trees pick top-level goals; utility AI scores and selects concrete objectives; tactical layer produces combat and movement orders.
 
-**Goal selection implementation:** Goal selection may be implemented as **weighted choice** over strategic goals (expand, defend, trade, conquer, tech, diplomacy) using personality weights, agenda modifiers, and situational snapshot. This satisfies the "behavior tree" requirement when interpreted as hierarchical goal selection. Strict behavior-tree node structure (sequences, selectors) is optional and may be used where designer-editable trees are desired.
+**Goal selection implementation:** Goal selection may be implemented as **weighted choice** over strategic goals (expand, defend, trade, conquer, tech, diplomacy) using personality weights, agenda modifiers, and situational snapshot. This satisfies the "behavior tree" requirement when interpreted as hierarchical goal selection. Strict behavior-tree node structure (sequences, selectors) is optional and may be used where designer-editable trees are desired. **Weighted choice is the current implemented approach**; strict behavior-tree structure is deferred to future phases when designer-editable AI trees are required (e.g. for mod support or external AI editors).
 
 ### Turn Pipeline (per AI Great Power)
 1. **Perception** — Derive observable snapshot: threats, opportunities, economy, relations. All from PlayerView; no hidden data.
 2. **Goal selection** — Choose strategy (e.g. weighted choice over goals) using personality weights and hidden agenda modifiers.
-3. **Domain planning** — Economy, military, diplomacy, research planners score candidates via personality and agenda weights; each emits candidate orders.
+3. **Domain planning** — Economy, military, diplomacy, research planners score candidates via personality and agenda weights; each emits candidate orders. The **economy planner** also produces **production assignments** (worker allocation to recipes) and a **cargo preference** for naval/build; see [economy-planner.md](economy-planner.md).
 4. **Execution** — Combine, cap, and validate orders; emit dialogue/mood events. Strategic AI may emit **optional** agenda-flavoured dialogue and a matching base PortraitMoodEvent for each AI leader on a deterministic cadence derived from the dialogue seed (see [dialogue-and-mood.md](dialogue-and-mood.md) § When to emit for `kDialogueTurnsBetweenComments` and cadence rules).
 5. **Tactical** — Quick Battle: CP-based actions per lane, deterministic given state and seed.
 
@@ -44,8 +44,18 @@ Behavior trees pick top-level goals; utility AI scores and selects concrete obje
 ### Strategic Behavior Preferences
 AI uses the order suggestion API and applies:
 - **Movement:** Prefer contested or enemy territory (at war); avoid factions at peace.
+  - **Filter:** All AI paths (simple heuristics and full-AI domain planner) must drop move orders whose destination is owned by a faction at peace with the mover (or by a Minor with no war). No move into at-peace or minor-without-war territory.
+  - **Prefer enemy:** When choosing among valid move candidates, score moves into enemy (at-war) territory higher than moves into unowned or own territory; weighted selection then prefers enemy/contested. Default bonus +20 to score when destination owner is at war with the mover.
+  - **Army parity with human rules:** AI `ArmyMoveOrder` generation uses the same legality as human move assignment: any player-owned destination province is valid across regions (no adjacency requirement), while non-owned destinations require normal adjacency/war validation.
 - **Build/work:** Prefer cheaper orders improving owned, visible provinces.
 - **Research:** Prefer lower-era, cheaper techs unlocking core capabilities.
+- **Diplomacy (Full AI):**
+  - Compute a per-pair `warDesireScore` (0..100) for GP↔target where target can be GP, Minor, or Tribe.
+  - Use the same composite power basis as diplomacy power score (military + province + naval) for strength ratio.
+  - Compute improve-relations desire as `100 - warDesireScore`.
+  - Keep relation gate for war declarations.
+  - Apply per GP-target pair cooldowns for war-declare and improve-relations retries.
+  - While at war, recompute war desire each turn to decide continue-war vs offer-peace bias and adjust desired territory objective.
 - **Province identity:** Movement targets, build provinces, and visibility use the **prefixed** form `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md).
 
 Seeded randomness selects among acceptable candidates; personality weights bias selection.
@@ -54,6 +64,7 @@ Seeded randomness selects among acceptable candidates; personality weights bias 
 Per-turn seed: `turnSeed[P, T] = hash(globalGameSeed, aiSeed[P], T)`. Sub-seeds: perception, goals, economy, military, diplomacy, research, tactical, dialogue, agenda. Same save + seeds → same orders and events.
 
 ## Interactions
+- [economy-planner.md](economy-planner.md) — worker allocation (production), cargo preference
 - [ai-personalities.md](ai-personalities.md) — per-leader weights
 - [hidden-agendas.md](hidden-agendas.md) — agenda modifiers
 - [dialogue-and-mood.md](dialogue-and-mood.md) — event emission
@@ -70,4 +81,6 @@ AI order generation runs so that orders are available for the **Orders** phase o
 - **Turn pipeline:** AI emits orders that are merged with human orders in the Orders phase; phase sequence and application order per [turn-resolution-phases.md](../program/turn-resolution-phases.md), [turn-resolution-phase-details.md](../program/turn-resolution-phase-details.md).
 - **Goal selection and domains:** Behavior tree or weighted goal selection drives strategy; utility AI (economy, military, diplomacy, research) scores candidates; personality and hidden agendas bias selection per § Rules.
 - **Province identity:** Movement targets, build provinces, and visibility use prefixed form `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md).
+- **Movement (filter and prefer):** Move orders are filtered by diplomacy (no move to at-peace or minor-without-war). Among valid moves, selection prefers moves into enemy/contested territory via configurable score bonus.
+- **Army movement parity:** AI-generated `ArmyMoveOrder` uses the same destination legality as human orders, including cross-region moves to any AI-owned province in prefixed province-id form.
 - **Difficulty:** Difficulty affects starting parameters and ruleset modifiers only, not AI logic or personality.

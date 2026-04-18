@@ -3,7 +3,7 @@
 **SPEC/program** — Event data and flows for dialogue, mood, evidence, dossier. Province identity: [world-model-identity.md](../game/world-model-identity.md).
 
 ## Responsibility
-Event data models and data flows for dialogue, mood, evidence, and dossier. Behavior rules: [dialogue-and-mood.md](../ai/dialogue-and-mood.md), [ai-dossier.md](../ai/ai-dossier.md), [hidden-agendas.md](../ai/hidden-agendas.md).
+Event data models and data flows for dialogue, mood, evidence, and dossier. Behavior rules: [dialogue-and-mood.md](../ai/dialogue-and-mood.md), [ai-dossier.md](../ai/ai-dossier.md), [hidden-agendas.md](../ai/hidden-agendas.md). For AI–human dialogue that requires a player response (overtures, intervention, etc.), see [dialogue-system.md](dialogue-system.md) and [dialogue-management.md](../ai/dialogue-management.md).
 
 ## Data Model
 
@@ -21,11 +21,11 @@ Internal record appended when an action matches an evidence rule. Fields: observ
 ### Dialogue and Mood
 1. AI calls `onDialogue(DialogueEvent)` and `onMood(PortraitMoodEvent)` callbacks during order generation.
 2. Caller guarantees deterministic invocation order.
-3. **Negotiation mood:** App updates offer state and stall count; mood state machine computes next mood and emits event on transition. Inputs deterministic for replay.
+3. **Negotiation mood:** App updates offer state and stall count; mood state machine computes next mood and emits event on transition. Inputs deterministic for replay. Canonical integration helper computes `toMood` with `computeNextNegotiationMood` and emits `PortraitMoodEvent` when `toMood != currentMood`.
 4. UI subscribes and resolves to text/portrait assets. No asset paths in events.
 
 ### Evidence and Dossier
-1. Evidence rules evaluated when actions are applied (turn resolution or post-resolution hook). Rules per [hidden-agendas.md](../ai/hidden-agendas.md). Which triggers are in scope (MVP) vs deferred is defined in that doc (§ Evidence rule coverage).
+1. Evidence rules evaluated when actions are applied (turn resolution or post-resolution hook). Rules per [hidden-agendas.md](../ai/hidden-agendas.md) § **Evidence rule coverage (current product)**.
 2. Storage: per (observer, subject, agenda type) counter + optional (turn, description) list. Deterministic: same actions → same evidence.
 3. Dossier projection: read API returning PlayerView-safe data (basic intel, suspicion levels, evidence list, behavioral notes). True hidden agenda never exposed.
 4. **Confidence % mapping:** Best-guess agenda confidence (display %) is derived from the highest suspicion score for that agenda. Mapping: score 0–2 → 0%; 3–5 → 25%; 6–8 → 60%; 9–10 → 85%; 11+ → 100%. Implementation must use this mapping for consistency with display bands (see [ai-dossier.md](../ai/ai-dossier.md) § PlayerView-safe rules).

@@ -1,0 +1,65 @@
+{
+  "name": "civilian_tile_exclusivity_dev",
+  "description": "Per-player tile exclusivity for Builder/Engineer work (SPEC/game/civilian-units.md, SPEC/program/orders.md): when a player assigns both Builder and Engineer work to the same tile in one turn, only the first work order is accepted; the second is rejected so that no road is built on that tile in the same turn.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42,
+      "minorNationCount": 0
+    },
+    "oldWorld": {
+      "grid": [["p1", "sea1"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "p1", "id2": "sea1"}],
+      "resourceGrid": [["grain", null]]
+    }
+  },
+  "setup": {
+    "initialStockpile": {
+      "gp1": {
+        "lumber": 10,
+        "castIron": 10
+      }
+    },
+    "initialTileState": {
+      "oldWorld|p1|0|0": { "improvementLevel": 0, "roadLevel": 0 }
+    },
+    "units": [
+      { "player": "gp1", "type": "Builder", "province": "oldWorld|p1", "count": 1 },
+      { "player": "gp1", "type": "Engineer", "province": "oldWorld|p1", "count": 1 }
+    ]
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "work",
+          "unit": "gp1_builder_1",
+          "workType": "build_improvement",
+          "targetTileKey": "oldWorld|p1|0|0"
+        },
+        {
+          "player": "gp1",
+          "type": "work",
+          "unit": "gp1_engineer_1",
+          "workType": "build_road",
+          "targetTileKey": "oldWorld|p1|0|0"
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "tileKey": "oldWorld|p1|0|0",
+      "tileRoadLevel": 0
+    }
+  ]
+}
+

@@ -1,5 +1,7 @@
 // Reusable Voronoi assignment for grid cells. SPEC/program/tile-map-gen-algorithm.md § Voronoi assignment.
 
+import 'package:colonizethis_models/colonizethis_models.dart';
+
 /// Deterministic noise in [-1, 1] for Voronoi boundary irregularity.
 /// Same formula as tile_map_generator so land/province/sea boundaries behave consistently.
 double deterministicNoise(int seed, int x, int y) {
@@ -7,7 +9,7 @@ double deterministicNoise(int seed, int x, int y) {
   h = (h ^ (h >> 16)) * 0x85ebca6b;
   h = (h ^ (h >> 13)) * 0xc2b2ae35;
   h = h ^ (h >> 16);
-  return (h & 0x7FFFFFFF) / 0x7FFFFFFF * 2 - 1;
+  return (h & kDeterministicLcg31Mask) / kDeterministicLcg31Mask * 2 - 1;
 }
 
 /// Assigns each cell to the id of the nearest seed by Euclidean distance (squared).
@@ -41,4 +43,3 @@ Map<(int x, int y), String> assignCellsToNearestSeed(
   }
   return result;
 }
-

@@ -1,6 +1,6 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('detectConflicts', () {
@@ -20,13 +20,13 @@ void main() {
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: 'player1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
               Unit(
                 id: 'u2',
                 type: 'pikemen',
                 ownerId: 'player2',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
             ],
           ),
@@ -69,8 +69,8 @@ void main() {
               Province(id: '$nw|N1', regionId: nw, ownerId: 'p2'),
             ],
             units: [
-              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', provinceId: '$nw|N1'),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', provinceId: '$nw|N1'),
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', locationProvinceId: '$nw|N1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', locationProvinceId: '$nw|N1'),
             ],
           ),
         ),
@@ -105,7 +105,7 @@ void main() {
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: 'player1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
             ],
           ),
@@ -139,25 +139,25 @@ void main() {
                 id: 'u1',
                 type: 'musketeers',
                 ownerId: 'player1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
               Unit(
                 id: 'u2',
                 type: 'pikemen',
                 ownerId: 'player2',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
               Unit(
                 id: 'u3',
                 type: 'musketeers',
                 ownerId: 'player2',
-                provinceId: '$ow|P2',
+                locationProvinceId: '$ow|P2',
               ),
               Unit(
                 id: 'u4',
                 type: 'pikemen',
                 ownerId: 'player1',
-                provinceId: '$ow|P2',
+                locationProvinceId: '$ow|P2',
               ),
             ],
           ),
@@ -206,13 +206,13 @@ void main() {
                 id: 'u1',
                 type: 'Explorer',
                 ownerId: 'player1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
               Unit(
                 id: 'u2',
                 type: 'Builder',
                 ownerId: 'player2',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
             ],
           ),
@@ -247,8 +247,8 @@ void main() {
               Province(id: '$ow|P1', regionId: ow),
             ],
             units: [
-              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', provinceId: '$ow|P1'),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', provinceId: '$ow|P1'),
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', locationProvinceId: '$ow|P1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -270,8 +270,40 @@ void main() {
       expect(battles[0].attackers[0].factionId, 'p1');
     });
 
-    test('returns no battles when oldWorld has no units', () {
+    test('unowned province: defender is lexicographically first when all moved in', () {
       const ow = 'oldWorld';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow),
+            ],
+            units: [
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', locationProvinceId: '$ow|P1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', locationProvinceId: '$ow|P1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+      );
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P1')],
+          'p2': [MoveOrder(unitId: 'u2', destinationProvinceId: '$ow|P1')],
+        },
+      );
+      final battles = detectConflicts(game, orders);
+      expect(battles.length, 1);
+      expect(battles[0].defenderFactionId, 'p1');
+    });
+
+    test('returns no battles when oldWorld has no units', () {
       const nw = 'newWorld';
       final game = Game(
         id: 'g1',
@@ -283,8 +315,8 @@ void main() {
               Province(id: '$nw|N1', regionId: nw, ownerId: 'p2'),
             ],
             units: [
-              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', provinceId: '$nw|N1'),
-              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', provinceId: '$nw|N1'),
+              Unit(id: 'u1', type: 'musketeers', ownerId: 'p1', locationProvinceId: '$nw|N1'),
+              Unit(id: 'u2', type: 'pikemen', ownerId: 'p2', locationProvinceId: '$nw|N1'),
             ],
           ),
         ),
@@ -301,6 +333,65 @@ void main() {
       final battles = detectConflicts(game, orders);
       expect(battles.length, 1);
       expect(battles[0].regionId, nw);
+    });
+
+    test('army move order contributes moved-in attacker detection', () {
+      const ow = 'oldWorld';
+      final p1 = '$ow|P1';
+      final game = Game(
+        id: 'g_army',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: p1, regionId: ow, ownerId: 'player2'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'player1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'musketeers',
+                ownerId: 'player1',
+                locationProvinceId: p1,
+              ),
+              Unit(
+                id: 'u2',
+                type: 'pikemen',
+                ownerId: 'player2',
+                locationProvinceId: p1,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          armies: [
+            Army(
+              id: 'arm_a',
+              ownerId: 'player1',
+              regionId: ow,
+              stationedProvinceId: p1,
+              regimentUnitIds: const ['u1'],
+              isHomeArmy: false,
+            ),
+          ],
+        ),
+        players: [
+          Player(id: 'player1', displayName: 'P1', isHuman: true),
+          Player(id: 'player2', displayName: 'P2', isHuman: true),
+        ],
+      );
+
+      final orders = Orders(
+        armyMoveOrdersByPlayerId: {
+          'player1': [
+            ArmyMoveOrder(armyId: 'arm_a', destinationProvinceId: p1),
+          ],
+        },
+      );
+
+      final battles = detectConflicts(game, orders);
+      expect(battles.length, 1);
+      expect(battles[0].attackers.single.factionId, 'player1');
+      expect(battles[0].attackers.single.unitIds, ['u1']);
     });
   });
 }

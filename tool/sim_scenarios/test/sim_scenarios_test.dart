@@ -1,6 +1,6 @@
 import 'dart:io';
-
 import 'package:colonizethis_test/test.dart';
+
 
 import 'package:sim_scenarios/scenario.dart';
 
@@ -210,6 +210,36 @@ void main() {
         expect(scenario.assertions[1].stockpileCommodity, 0);
       });
 
+      test('parses setup initialFleets', () {
+        final json = {
+          'name': 'fleet_setup',
+          'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
+          'setup': {
+            'initialFleets': [
+              {
+                'id': 'f1',
+                'ownerId': 'gp1',
+                'regionId': 'oldWorld',
+                'seaZoneId': 'sea1',
+                'shipTypeIds': ['carrack', 'fluyte'],
+                'mission': 'patrol',
+              },
+            ],
+          },
+          'turns': [],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+        expect(scenario.setup, isNotNull);
+        expect(scenario.setup!.initialFleets, isNotNull);
+        expect(scenario.setup!.initialFleets!.length, 1);
+        expect(scenario.setup!.initialFleets!.first.id, 'f1');
+        expect(scenario.setup!.initialFleets!.first.ownerId, 'gp1');
+        expect(scenario.setup!.initialFleets!.first.shipTypeIds, ['carrack', 'fluyte']);
+        expect(scenario.setup!.initialFleets!.first.mission, 'patrol');
+      });
+
       test('parses setup productionAssignments', () {
         final json = {
           'name': 'production_setup',
@@ -231,6 +261,70 @@ void main() {
         expect(scenario.setup!.productionAssignments![0].assignedLabour, 4);
         expect(scenario.setup!.productionAssignments![1].recipeId, 'castIron_from_timber_iron_coal');
         expect(scenario.setup!.productionAssignments![1].assignedLabour, 5);
+      });
+
+      test('parses turn with overtureDecisions (blocking human GP target)', () {
+        final json = {
+          'name': 'overture_decisions',
+          'init': {'type': 'fresh', 'config': {'seed': 42, 'greatPowers': ['england', 'france']}},
+          'turns': [
+            {
+              'turn': 1,
+              'orders': [
+                {'player': 'gp2', 'type': 'diplomatic', 'diplomaticType': 'establishOverture', 'targetFactionId': 'gp1', 'overtureStage': 'tradeConsulate'},
+              ],
+              'overtureDecisions': [
+                {'offererGpId': 'gp2', 'targetFactionId': 'gp1', 'stage': 'tradeConsulate', 'accepted': true},
+              ],
+            },
+          ],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.turns.length, 1);
+        expect(scenario.turns[0].overtureDecisions, isNotNull);
+        expect(scenario.turns[0].overtureDecisions!.length, 1);
+        expect(scenario.turns[0].overtureDecisions![0].offererGpId, 'gp2');
+        expect(scenario.turns[0].overtureDecisions![0].targetFactionId, 'gp1');
+        expect(scenario.turns[0].overtureDecisions![0].stage, 'tradeConsulate');
+        expect(scenario.turns[0].overtureDecisions![0].accepted, isTrue);
+      });
+
+      test('parses turn with callToArmsDecisions', () {
+        final json = {
+          'name': 'cta_decisions',
+          'init': {
+            'type': 'fresh',
+            'config': {'seed': 42, 'greatPowers': ['england', 'france']},
+          },
+          'turns': [
+            {
+              'turn': 1,
+              'orders': [],
+              'callToArmsDecisions': [
+                {
+                  'allyGpId': 'gp1',
+                  'defenderGpId': 'gp2',
+                  'aggressorGpId': 'gp3',
+                  'accepted': false,
+                },
+              ],
+            },
+          ],
+          'assertions': [],
+        };
+
+        final scenario = parseScenarioFromJson(json);
+
+        expect(scenario.turns[0].callToArmsDecisions, isNotNull);
+        expect(scenario.turns[0].callToArmsDecisions!.length, 1);
+        final d = scenario.turns[0].callToArmsDecisions![0];
+        expect(d.allyGpId, 'gp1');
+        expect(d.defenderGpId, 'gp2');
+        expect(d.aggressorGpId, 'gp3');
+        expect(d.accepted, isFalse);
       });
 
       test('parses setup leaderKeys and assertion leaderKey', () {

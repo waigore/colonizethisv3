@@ -1,0 +1,23 @@
+{
+  "name": "military_generals_initial_one",
+  "description": "SPEC/game/military-generals.md AC: At game start the system creates exactly one general per Great Power (general cap 1), medals 0.",
+  "init": {
+    "type": "fromTopology",
+    "config": {"greatPowers": ["england", "france"], "seed": 42, "minorNationCount": 0},
+    "oldWorld": {
+      "grid": [["p1", "sea1", "p2"], ["p1", "sea1", "p2"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "p2", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "p1", "id2": "p2"}, {"id1": "p1", "id2": "sea1"}, {"id1": "p2", "id2": "sea1"}]
+    }
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "player": "gp1", "generalCount": 1},
+    {"turn": 1, "player": "gp2", "generalCount": 1},
+    {"turn": 1, "greatPowerCount": 2}
+  ]
+}

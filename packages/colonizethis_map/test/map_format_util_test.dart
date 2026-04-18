@@ -1,6 +1,6 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('formatTileKey', () {

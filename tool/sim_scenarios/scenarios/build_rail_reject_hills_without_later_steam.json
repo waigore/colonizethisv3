@@ -1,0 +1,51 @@
+{
+  "name": "build_rail_reject_hills_without_later_steam",
+  "description": "SPEC/game/tech-tree-transport.md: hills require Later Steam or Dynamite; Early Steam only rejects build_rail.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42,
+      "minorNationCount": 0,
+      "numProvincesOldWorld": 1,
+      "numProvincesNewWorld": 0,
+      "tribeCount": 0
+    },
+    "oldWorld": {
+      "grid": [["p1", "sea1"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [{"id1": "p1", "id2": "sea1"}],
+      "terrainGrid": [["hills", null]]
+    }
+  },
+  "setup": {
+    "units": [
+      {"player": "gp1", "type": "Rail Builder", "province": "p1", "count": 1}
+    ],
+    "initialTech": {"gp1": ["early_steam_engine"]},
+    "initialStockpile": {"gp1": {"lumber": 20, "steel": 20}},
+    "initialTileState": {
+      "oldWorld|p1|0|0": {"roadLevel": 1}
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "work",
+          "unit": "gp1_rail_builder_0",
+          "workType": "build_rail",
+          "targetTileKey": "oldWorld|p1|0|0"
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {"turn": 1, "tileKey": "oldWorld|p1|0|0", "tileRoadLevel": 1}
+  ]
+}

@@ -18,17 +18,24 @@ All AI randomness flows from these seeds. Same save + seeds → same orders and 
 
 ## Algorithm / Flow
 
+### When to Use Each Phase
+
+- **Phase 4 (Minimal / Simple Heuristics):** Legacy/default heuristics path retained for compatibility and diagnostics.
+
+- **Phase 6 (Full AI):** Advanced AI for simulation, testing, or optional hard mode. Used by ctdev Sim Game when "Use Full AI" is enabled. May be offered as an optional setting in the main game (e.g., "Advanced AI" difficulty toggle). Note: Full AI requires hidden agenda assignment at game setup (see below).
+- **Main app turn flow:** Main app turn advancement uses Phase 6 Full AI order generation for AI-controlled Great Powers (human orders merged with full-AI orders before turn resolution).
+
 ### Phase 4 (Minimal)
 1. Build PlayerView for each AI GP.
-2. Query order suggestion API for candidate orders (move, build/work, research).
-3. Apply preferences and seeded randomness to select; see [ai-architecture.md](../ai/ai-architecture.md) for behavior rules.
+2. Query order suggestion API for candidate orders (move, build/work, research). Callers that hold region tile maps (sim_game, app next-turn flow) pass `tileMapByRegion` into `generateOrdersForPlayer` / `generateOrdersForGame` / `defaultSimGameAi` so `suggestWorkOrders` can suggest `build_rail` and terrain-aware `prospect` the same way as [order-suggestions.md](order-suggestions.md) describes for UI and turn resolution.
+3. Apply preferences and seeded randomness to select; see [ai-architecture.md](../ai/ai-architecture.md) for behavior rules. Shared simple heuristics use the same category rules as [sim-game-default-ai.md](sim-game-default-ai.md) (including seeded fair choice between move and work when both have candidates).
 4. Append to order list until no more suggestions or cap reached.
 5. For Quick Battle, provide tactical actions using `tacticalSeed`; see [ai-architecture.md](../ai/ai-architecture.md).
 
-Both AIPlanner and the sim-game default AI share the same simple heuristics core: PlayerView, order suggestion API, category order (move → work → build → research), seeded random choice, diplomacy post-filter. Entry points remain separate.
+Both AIPlanner and the sim-game default AI share the same simple heuristics core: PlayerView, order suggestion API, category selection per [sim-game-default-ai.md](sim-game-default-ai.md), seeded random choice within a category, diplomacy post-filter. Entry points remain separate.
 
 ### Phase 6 (Full AI)
-Full hybrid AI in `colonizethis_ai` generates orders via behavior trees, utility AI, and domain planners per [SPEC/ai/](../ai/). Same control rules, seeding, and order merge apply.
+Full hybrid AI in `colonizethis_ai` generates orders via behavior trees, utility AI, and domain planners per [SPEC/ai/](../ai/). Same control rules, seeding, and order merge apply. `generateOrdersForPlayerFullAI` / `generateStrategicOrders` accept optional `tileMapByRegion` and pass it to `suggestWorkOrders` in domain planners so full AI sees the same rail and terrain-aware prospect eligibility as Phase 4 when maps are available.
 
 **Hidden agenda assignment:** Games using full AI have hidden agendas assigned at setup or init, per [hidden-agendas.md](../ai/hidden-agendas.md). Before the first call to full AI order generation (`generateOrdersForPlayerFullAI`), the caller must invoke `assignHiddenAgendasForGame` (colonizethis_ai) so that `game.hiddenAgendaByGpId` is populated for all AI-controlled GPs. **Where invoked:** Main game path: `runInitGame` (colonizethis_logic init_game_orchestrator) calls `assignHiddenAgendasForGame` before returning InitGameResult, so the main app receives a game with agendas set. Sim path: ctdev `SimGameController` calls it when `useFullAI` is true (when starting a sim game). See [game-setup-pipeline.md](game-setup-pipeline.md) step 9.
 
@@ -37,6 +44,8 @@ Combined human + AI orders into deterministic list for turn resolution:
 - Stable ordering (player id → unit id → order type).
 - Human-controlled units cannot receive AI orders; AI emits at most one order per unit.
 - All merged orders validated; invalid orders dropped without breaking determinism.
+
+When full AI (Phase 6) runs, the economy planner produces **production assignments** and **cargo preference** per AI GP ([economy-planner.md](../ai/economy-planner.md)). The caller must pass per-player production assignments into the turn resolver (Production phase) and may pass cargo preference to the naval planner. Human production choices come from UI or saved state; merge semantics for production are per-player (each player's assignments used for that player only).
 
 ## Integration
 
@@ -51,7 +60,9 @@ Combined human + AI orders into deterministic list for turn resolution:
 - **Seeding and determinism:** Per-AI seeds and per-turn `turnSeed` (with documented sub-seeds) are the only randomness inputs; given the same game state and seeds, AIPlanner produces the same strategic and tactical decisions.
 - **Phase 4 behaviour:** Minimal AI uses PlayerView and the order suggestion API with the documented category order and caps; it does not construct raw orders, and Quick Battle actions depend only on `tacticalSeed` and battle state.
 - **Phase 6 delegation:** Full Phase 6 AI delegates order generation to `colonizethis_ai` per [ai-architecture.md](../ai/ai-architecture.md) and [ai-systems-impl.md](ai-systems-impl.md); control rules, seeding, and order merge remain consistent with this spec. Games using full AI have hidden agendas assigned at setup/init; the caller (game setup or sim controller) invokes `assignHiddenAgendasForGame` before the first `generateOrdersForPlayerFullAI` call.
+- **Full AI diplomacy scoring:** For GP↔GP and GP↔Minor/Tribe pairs, full AI computes per-pair war desire and inverse improve-relations desire using composite power ratio (military + province + naval), relation factors, legal relation gate, and per GP-target cooldowns; wartime re-evaluation influences continue-war vs offer-peace output.
 - **Order merge:** Merged order list preserves stable ordering (player → unit → type), respects human precedence, emits at most one AI order per unit, and is fully validated and deterministic.
+- **Army move parity with human rules:** When AI emits `ArmyMoveOrder`, destination legality matches human rules from [movement.md](movement.md): any AI-owned province in any region is valid (cross-region allowed), and non-owned destinations follow normal adjacency/validation constraints.
 
 ## Constraints
 - AIPlanner only produces orders for AI-controlled GPs.

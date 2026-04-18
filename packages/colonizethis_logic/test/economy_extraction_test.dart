@@ -1,7 +1,7 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 /// Tests for economy_extraction.dart. SPEC/program/auto-transport.md.
 void main() {
@@ -66,6 +66,21 @@ void main() {
 
       expect(updated.quantityOf(CommodityCatalog.grain.id), 5);
     });
+
+    test(
+      'adds large extraction without storage cap (unbounded strategic stockpile)',
+      () {
+        const existing = 1000000;
+        const incoming = 500000;
+        var stockpile = const Stockpile()
+            .applyDelta(CommodityCatalog.grain.id, existing);
+        final extracted = {CommodityCatalog.grain.id: incoming};
+
+        final updated = applyExtractionToStockpile(stockpile, extracted);
+
+        expect(updated.quantityOf(CommodityCatalog.grain.id), existing + incoming);
+      },
+    );
   });
 
   group('applyExtractionForPlayers', () {

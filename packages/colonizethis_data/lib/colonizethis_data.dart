@@ -3,12 +3,19 @@
 library colonizethis_data;
 
 export 'src/combat_config.dart';
+export 'src/regiment_type_display_name.dart';
+export 'src/ship_type_display_name.dart';
 export 'src/quick_battle_config.dart';
 export 'src/commodities.dart';
 export 'src/game_setup_config.dart';
 export 'src/naming_rules.dart';
+export 'src/deterministic_pool_shuffle.dart';
+export 'src/sea_zone_naming.dart';
 export 'src/map_topology.dart';
+export 'src/tech_definition.dart';
+export 'src/tech_ids.dart';
 export 'src/tech_extraction.dart';
+export 'src/tech_effect_summary.dart';
 export 'src/riches_prices.dart';
 export 'src/production_recipes.dart';
 export 'src/resource.dart';
@@ -28,5 +35,7 @@ export 'src/starting_resources_config.dart';
 export 'src/unit_roles.dart';
 export 'src/leader_bonuses.dart';
 export 'src/ai_personality_config.dart';
+export 'src/hidden_agenda_config.dart';
 export 'src/dialogue_catalog.dart';
 export 'src/great_power_colors.dart';
+export 'src/grid_centroid.dart';

@@ -71,12 +71,13 @@ class _LoadSavegameScreenState extends State<LoadSavegameScreen> {
       );
       return;
     }
+    final greatPowerColorOverride = greatPowerColorOverrideFromGame(game);
     final viewData = buildInitGameMapViewData(
       game: game,
       tileMapByRegion: mapData.tileMapByRegion,
       topologyByRegion: mapData.topologyByRegion,
       cellSize: 24,
-      greatPowerColorOverride: greatPowerColorOverrideFromGame(game),
+      greatPowerColorOverride: greatPowerColorOverride,
     );
     final initResult = InitGameResult(
       game: game,
@@ -86,6 +87,7 @@ class _LoadSavegameScreenState extends State<LoadSavegameScreen> {
       tileMapByRegion: mapData.tileMapByRegion,
       topologyByRegion: mapData.topologyByRegion,
       combinedTopology: mapData.combinedTopology,
+      greatPowerColorOverride: greatPowerColorOverride,
     );
     final baseSeed = game.globalGameSeed ?? 0;
     await Navigator.of(context).push(

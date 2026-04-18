@@ -3,7 +3,10 @@ name: Enable PR auto-merge
 on:
   pull_request:
     types: [opened, reopened]
-    branches: [main, dev]
+    branches:
+      - main
+      - dev
+      - 'build/**'
 
 permissions:
   pull-requests: write
@@ -14,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Enable auto-merge
         run: gh pr merge --auto --squash "${{ github.event.pull_request.number }}"

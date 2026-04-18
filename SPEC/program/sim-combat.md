@@ -38,7 +38,9 @@ Each battle object (required keys: `id`, `attacker`, `defender`, `province`; mis
 - `attacker`: `{ "units": [ { "type": string, "medals": int } ], "generalMedals": int (optional) }`.
 - `defender`: same structure. `type` must match regiment ids from [military-units.md](../game/military-units.md).
 - `province`: `{ "fortLevel": 0|1|2|3, "terrain": string }` (terrain from config: e.g. plains, mountain, forest).
-- `defenderFaction`: optional; `"greatPower" | "minorNation" | "tribe"` for parity rules.
+- `defenderFaction`: optional; `"greatPower" | "minorNation" | "tribe"` (accepted for script format parity; see below).
+
+**Defender effective level:** The sim_combat tool uses a **fixed defender effective military level** (4) for all battles. The script field `defenderFaction` is accepted for script format parity (e.g. with [sim-combat-montecarlo.md](sim-combat-montecarlo.md) and battle script reuse) but does not change the effective level in this tool; in-game parity rules for minor/tribe are defined in [factions.md](../game/factions.md).
 
 ---
 

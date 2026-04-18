@@ -1,28 +1,48 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-const int _defaultResearchSlots = 3;
+import '../constants.dart';
+import '../dossier/evidence_rules.dart';
+import '../world/player_view.dart';
+import 'economy_debt_rules.dart';
+import 'economy_tech_effects.dart';
+import 'research_rules.dart';
+
+final _log = packageLogger();
 
 /// Research phase resolution. SPEC/program/research-resolution.md.
 Game resolveResearchPhase(Game game, Orders orders) {
+  final turn = game.worldState.turnState.turnNumber;
   final researchByPlayer = orders.researchOrdersByPlayerId;
+  _log.i('research phase start turn=$turn');
+
   if (researchByPlayer.isEmpty) {
+    _log.i('research phase end turn=$turn playersWithOrders=0');
     return game;
   }
 
+  final playersWithOrders = researchByPlayer.values
+      .where((o) => o.isNotEmpty)
+      .length;
+  var state = game;
+  final extraEvidence = <DossierEvidenceEntry>[];
   final updatedPlayers = <Player>[];
 
   for (final p in game.players) {
-    final player = p;
-    final playerOrders =
-        researchByPlayer[player.id] ?? const <ResearchOrder>[];
+    final player = state.playerById(p.id)!;
+    final playerOrders = researchByPlayer[player.id] ?? const <ResearchOrder>[];
     if (playerOrders.isEmpty) {
       updatedPlayers.add(player);
       continue;
     }
 
-    final slots = player.researchSlots ?? _defaultResearchSlots;
+    final slots = player.researchSlots ?? defaultResearchSlots;
     if (slots <= 0) {
+      _log.i(
+        'research apply turn=$turn playerId=${player.id} '
+        'orders=${playerOrders.length} skipped=true reason=no_research_slots',
+      );
       updatedPlayers.add(player);
       continue;
     }
@@ -34,38 +54,8 @@ Game resolveResearchPhase(Game game, Orders orders) {
     final progress = Map<String, int>.from(
       player.researchProgressByTechId ?? const <String, int>{},
     );
+    final maxDebt = maxDebtForPlayer(player);
     var treasury = player.treasury;
-
-    int _pointsForFunding(ResearchFundingLevel level) {
-      switch (level) {
-        case ResearchFundingLevel.none:
-          return 0;
-        case ResearchFundingLevel.low:
-          return 100;
-        case ResearchFundingLevel.medium:
-          return 300;
-        case ResearchFundingLevel.high:
-          return 800;
-        case ResearchFundingLevel.maximum:
-          // Maximum funding has 2.5x efficiency bonus
-          return 2500;
-      }
-    }
-
-    int _treasuryForFunding(ResearchFundingLevel level) {
-      switch (level) {
-        case ResearchFundingLevel.none:
-          return 0;
-        case ResearchFundingLevel.low:
-          return 50;
-        case ResearchFundingLevel.medium:
-          return 150;
-        case ResearchFundingLevel.high:
-          return 400;
-        case ResearchFundingLevel.maximum:
-          return 1000;
-      }
-    }
 
     // One order per slot (SPEC: each slot holds at most one active tech). Duplicate slotIndex
     // in the list: last wins, so only one assignment per slot is applied and no double spend.
@@ -75,6 +65,24 @@ Game resolveResearchPhase(Game game, Orders orders) {
     }
     final ordersPerSlot = bySlot.values.toList();
 
+    // SPEC/program/research-resolution.md: clearing a slot loses progress for that
+    // tech. Progress is keyed by techId only; derive "still researching this turn"
+    // from non-empty slot assignments (empty techId = cancel slot).
+    final assignedNonEmptyTechIds = <String>{};
+    for (final order in ordersPerSlot) {
+      if (order.slotIndex < 0 || order.slotIndex >= slots) {
+        continue;
+      }
+      final id = order.techId;
+      if (id.isEmpty) {
+        continue;
+      }
+      assignedNonEmptyTechIds.add(id);
+    }
+    progress.removeWhere(
+      (techId, _) => !assignedNonEmptyTechIds.contains(techId),
+    );
+
     // 1–4: validate, deduct treasury, and add progress per slot.
     for (final order in ordersPerSlot) {
       if (order.slotIndex < 0 || order.slotIndex >= slots) {
@@ -82,8 +90,6 @@ Game resolveResearchPhase(Game game, Orders orders) {
       }
       final techId = order.techId;
       if (techId.isEmpty) {
-        // Cancel slot: Phase 5 spec says cancelling loses progress; with a
-        // per-tech progress map we treat this as a no-op here.
         continue;
       }
 
@@ -106,17 +112,39 @@ Game resolveResearchPhase(Game game, Orders orders) {
         continue;
       }
 
-      final spend = _treasuryForFunding(order.funding);
-      if (spend <= 0 || treasury < spend) {
+      // Discovery techs: researchable only if player has revealed (and if prospect-required, prospected) a tile with the resource. SPEC/game/tech-tree.md.
+      final discoveryIds = tech.discoveryResourceIds;
+      if (discoveryIds != null && discoveryIds.isNotEmpty) {
+        var discoveryOk = false;
+        for (final r in discoveryIds) {
+          if (hasRevealedResourceForPlayer(game, player.id, r)) {
+            discoveryOk = true;
+            break;
+          }
+        }
+        if (!discoveryOk) continue;
+      }
+
+      final spend = treasuryCostForFunding(order.funding);
+      if (spend <= 0) {
+        continue;
+      }
+      final nextTreasury = treasury - spend;
+      if (nextTreasury < -maxDebt) {
         continue;
       }
 
-      final points = _pointsForFunding(order.funding);
+      final basePoints = pointsForFunding(order.funding);
+      final points = effectiveResearchPointsForTechAllocation(
+        player,
+        tech,
+        basePoints,
+      );
       if (points <= 0) {
         continue;
       }
 
-      treasury -= spend;
+      treasury = nextTreasury;
       progress[techId] = (progress[techId] ?? 0) + points;
     }
 
@@ -134,21 +162,57 @@ Game resolveResearchPhase(Game game, Orders orders) {
       progress.remove(techId);
     }
 
+    for (final techId in toUnlock) {
+      final techMeta = techById(techId);
+      final cat = techMeta?.category;
+      if (cat != null && cat.isNotEmpty && player.isHuman) {
+        state = state.copyWith(
+          lastHumanCompletedResearchCategory: cat,
+          lastHumanResearchCategoryCompletionTurn: turn,
+        );
+      }
+    }
+    for (final techId in toUnlock) {
+      final techMeta = techById(techId);
+      final cat = techMeta?.category;
+      if (cat != null &&
+          cat.isNotEmpty &&
+          !player.isHuman &&
+          isAiControlledForEvidence(state, player.id)) {
+        extraEvidence.addAll(
+          evidenceForEnvyResearchMirror(
+            state,
+            player.id,
+            cat,
+            turn,
+            extraEvidence,
+          ),
+        );
+      }
+    }
+
     Map<String, bool>? nextUnlocked;
     if (workingUnlocked.isNotEmpty) {
       nextUnlocked = workingUnlocked;
     }
 
-    Map<String, int>? nextProgress;
-    if (progress.isNotEmpty) {
-      nextProgress = progress;
-    }
-
     final nextUnlockedForLevel = nextUnlocked ?? workingUnlocked;
     final militaryLevel = militaryLevelForUnlocked(nextUnlockedForLevel);
-    // SPEC/game/tech-tree.md: 4 slots with University tech.
-    final nextResearchSlots =
-        (nextUnlockedForLevel['university'] == true) ? 4 : null;
+    final nextResearchSlots = researchSlotsForUnlockedTechs(
+      player,
+      nextUnlockedForLevel,
+    );
+
+    // `Player.copyWith` treats null map fields as "keep previous"; use an explicit
+    // empty map when there is no in-progress research so clears persist (e.g. cancel slot).
+    final nextProgress = progress.isNotEmpty ? progress : const <String, int>{};
+
+    final treasuryDelta = treasury - player.treasury;
+    _log.i(
+      'research apply turn=$turn playerId=${player.id} '
+      'orders=${playerOrders.length} treasuryDelta=$treasuryDelta '
+      'completedTechs=${toUnlock.length} inProgressTechs=${nextProgress.length}',
+    );
 
     updatedPlayers.add(
       player.copyWith(
@@ -156,11 +220,14 @@ Game resolveResearchPhase(Game game, Orders orders) {
         techUnlocked: nextUnlocked,
         researchProgressByTechId: nextProgress,
         militaryLevel: militaryLevel,
-        researchSlots: nextResearchSlots ?? player.researchSlots,
+        researchSlots: nextResearchSlots,
       ),
     );
   }
 
-  return game.copyWith(players: updatedPlayers);
+  _log.i('research phase end turn=$turn playersWithOrders=$playersWithOrders');
+  return state.copyWith(
+    players: updatedPlayers,
+    dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...extraEvidence],
+  );
 }
-

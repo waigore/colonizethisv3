@@ -1,14 +1,21 @@
 // Warp zone generation. SPEC/game/map-topology.md § Warp zones, game-setup-pipeline.md step 4.
 // One warp zone per map edge (sea zone on grid boundary); equal count per map; 1:1 pairing.
 
+import 'dart:math';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:logger/logger.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 
-final Logger _log = Logger();
+final _log = packageLogger();
 
-/// Returns sea zone ids that have at least one tile on the grid boundary (edge) of [tileMap].
-/// Used to pick warp zones per spec: one per map edge, using a sea zone on the edge.
-Set<String> seaZonesOnEdge(TileMapResult tileMap, MapTopology topology) {
+/// Picks one representative sea zone per map edge (top, bottom, left, right).
+/// Returns a map of edge name ('top', 'bottom', 'left', 'right') to sea zone id.
+/// Uses deterministic selection based on [seed] for reproducibility.
+Map<String, String> seaZonesPerEdge(
+  TileMapResult tileMap,
+  MapTopology topology,
+  int seed,
+) {
   final seaZoneIds = topology.nodes
       .where((n) => n.type == TopologyNodeType.seaZone)
       .map((n) => n.id)
@@ -16,27 +23,55 @@ Set<String> seaZonesOnEdge(TileMapResult tileMap, MapTopology topology) {
   if (seaZoneIds.isEmpty || tileMap.width == 0 || tileMap.height == 0) {
     return {};
   }
-  final onEdge = <String>{};
+
+  final rng = Random(seed);
+  final result = <String, String>{};
   final w = tileMap.width;
   final h = tileMap.height;
+
+  // Collect sea zones on each edge.
+  final topZones = <String>{};
+  final bottomZones = <String>{};
+  final leftZones = <String>{};
+  final rightZones = <String>{};
+
   for (var x = 0; x < w; x++) {
     final top = tileMap.cell(x, 0);
     final bottom = tileMap.cell(x, h - 1);
-    if (seaZoneIds.contains(top)) onEdge.add(top);
-    if (seaZoneIds.contains(bottom)) onEdge.add(bottom);
+    if (seaZoneIds.contains(top)) topZones.add(top);
+    if (seaZoneIds.contains(bottom)) bottomZones.add(bottom);
   }
   for (var y = 0; y < h; y++) {
     final left = tileMap.cell(0, y);
     final right = tileMap.cell(w - 1, y);
-    if (seaZoneIds.contains(left)) onEdge.add(left);
-    if (seaZoneIds.contains(right)) onEdge.add(right);
+    if (seaZoneIds.contains(left)) leftZones.add(left);
+    if (seaZoneIds.contains(right)) rightZones.add(right);
   }
-  return onEdge;
+
+  // Pick one representative per edge (deterministic random selection).
+  if (topZones.isNotEmpty) {
+    final list = topZones.toList()..sort();
+    result['top'] = list[rng.nextInt(list.length)];
+  }
+  if (bottomZones.isNotEmpty) {
+    final list = bottomZones.toList()..sort();
+    result['bottom'] = list[rng.nextInt(list.length)];
+  }
+  if (leftZones.isNotEmpty) {
+    final list = leftZones.toList()..sort();
+    result['left'] = list[rng.nextInt(list.length)];
+  }
+  if (rightZones.isNotEmpty) {
+    final list = rightZones.toList()..sort();
+    result['right'] = list[rng.nextInt(list.length)];
+  }
+
+  return result;
 }
 
-/// Generates warp links between OW and NW. Aims for one warp zone per map edge (sea zone on edge);
-/// if not possible, the number of warp zones on each map is still equal (each links to exactly one on the other map).
-/// Deterministic for given [seed].
+/// Generates warp links between OW and NW. Aims for one warp zone per map edge;
+/// pairs edges between the two maps deterministically based on [seed].
+/// Maximum 4 warp links (one per edge: top, bottom, left, right).
 List<WarpLink> generateWarpZones({
   required TileMapResult tileMapOldWorld,
   required MapTopology topologyOldWorld,
@@ -46,25 +81,32 @@ List<WarpLink> generateWarpZones({
   required String regionIdNew,
   int seed = 42,
 }) {
-  final owEdge = seaZonesOnEdge(tileMapOldWorld, topologyOldWorld);
-  final nwEdge = seaZonesOnEdge(tileMapNewWorld, topologyNewWorld);
-  if (owEdge.isEmpty || nwEdge.isEmpty) {
-    _log.d('logic: warp zones: no edge sea zones (OW=${owEdge.length}, NW=${nwEdge.length}), skipping');
+  final owZones = seaZonesPerEdge(tileMapOldWorld, topologyOldWorld, seed);
+  final nwZones = seaZonesPerEdge(tileMapNewWorld, topologyNewWorld, seed + 1);
+
+  // Find common edges that have sea zones on both maps.
+  final commonEdges = owZones.keys.where((e) => nwZones.containsKey(e)).toList()
+    ..sort();
+
+  if (commonEdges.isEmpty) {
+    _log.d('warp zones: no common edges with sea zones, skipping');
     return [];
   }
-  final owList = owEdge.toList()..sort();
-  final nwList = nwEdge.toList()..sort();
-  final n = owList.length < nwList.length ? owList.length : nwList.length;
-  if (n == 0) return [];
+
   final links = <WarpLink>[];
-  for (var i = 0; i < n; i++) {
-    links.add(WarpLink(
-      regionId: regionIdOld,
-      seaZoneId: owList[i],
-      otherRegionId: regionIdNew,
-      otherSeaZoneId: nwList[i],
-    ));
+  for (final edge in commonEdges) {
+    links.add(
+      WarpLink(
+        regionId: regionIdOld,
+        seaZoneId: owZones[edge]!,
+        otherRegionId: regionIdNew,
+        otherSeaZoneId: nwZones[edge]!,
+      ),
+    );
   }
-  _log.d('logic: warp zones: ${links.length} links (OW edge=${owList.length}, NW edge=${nwList.length})');
+
+  _log.d(
+    'warp zones: ${links.length} links on edges ${commonEdges.join(", ")}',
+  );
   return links;
 }

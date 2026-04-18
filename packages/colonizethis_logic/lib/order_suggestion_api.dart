@@ -1,0 +1,6 @@
+/// Narrow export for AI composition. Includes interface + default implementation.
+/// SPEC/program/dependency-injection.md.
+library;
+
+export 'src/orders/order_suggestion_api.dart';
+export 'src/orders/order_suggestion_api_impl.dart' show DefaultOrderSuggestionAPI;

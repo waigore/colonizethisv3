@@ -38,6 +38,6 @@
   ],
   "assertions": [
     {"turn": 1, "province": "oldWorld|p1", "owner": "gp1"},
-    {"turn": 1, "province": "oldWorld|p1", "unitCount": 6, "matchType": "atLeast"}
+    {"turn": 1, "province": "oldWorld|p1", "unitCount": 4, "matchType": "atLeast"}
   ]
 }

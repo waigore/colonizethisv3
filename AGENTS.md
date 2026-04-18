@@ -1,42 +1,65 @@
 # Agent instructions (ColonizeThis)
 
-This project uses **Cursor rules** as the source of truth for how to work in the codebase. Agents (including Cursor AI) should follow these rules when editing code, adding features, or reviewing.
+Cursor rules are the source of truth for implementation and review behavior.
 
-## Where the rules live
+## Rule location
 
-- **Path:** `.cursor/rules/`
-- **Format:** Markdown with optional front matter (`.mdc`). Each file describes one concern (SPEC, testing, UI, tools, etc.).
+- Path: `.cursor/rules/`
+- Format: Markdown `.mdc` with front matter (`description`, optional `globs`, `alwaysApply`)
 
 ## Always-applied rules
 
-These rules are applied in every context; follow them for all changes.
-
-| Rule file | Summary |
-|-----------|---------|
-| **colonizethis-spec-required.mdc** | SPEC-first: specify before implementing; no behavior that contradicts specs. GDD `SPEC/game/`, TDD `SPEC/program/`, AI `SPEC/ai/`, UI `SPEC/ui/` (sub-specs, max 1000 words). Source of truth: GDD for game/AI, TDD for architecture. Conflicts: resolve GDD/TDD first. Rulesets: configurable; specify where/how in GDD/TDD. New behavior: point to authorizing spec or add/extend spec first. |
-| **colonizethis-core-principles.mdc** | Stack: Flutter (UI), Flame (game/simulation), Dart. Strict typing, null safety, logger (no `print`). Thin screens; delegate to services/controllers/Flame. Province lookup: always use `(regionId, provinceId)` or prefixed id; never province id alone. |
+| Rule file | Focus |
+|-----------|-------|
+| `colonizethis-spec-required.mdc` | SPEC-first workflow and source-of-truth boundaries |
+| `colonizethis-core-principles.mdc` | Dart/Flutter/Flame coding principles and architecture boundaries |
+| `colonizethis-logging-file.mdc` | Required file logging approach (`basic_logger_file`) |
+| `colonizethis-logic-ai-decoupling.mdc` | Enforces one-way architecture boundary between `colonizethis_logic` and `colonizethis_ai` |
 
 ## Context-specific rules
 
-Apply these when working in the indicated areas (by path or topic).
+| Rule file | Applies to | Focus |
+|-----------|------------|-------|
+| `colonizethis-tools.mdc` | `tool/**` | Thin facades + Melos execution + docs |
+| `colonizethis-testing.mdc` | `**/*_test.dart`, `**/test/**/*.dart`, `**/integration_test/**/*.dart` | Test layers, critical paths, coverage policy |
+| `colonizethis-e2e-ui-stability.mdc` | `**/integration_test/**/*.dart`, `**/*_e2e_test.dart` | UI e2e stability: deterministic locators and visibility-first interactions |
+| `colonizethis-ui-design.mdc` | `SPEC/ui/**`, `**/lib/widgets/**`, `**/lib/ui/**` | UI specs, wireframes, Widgetbook/catalog, pixel-art process |
+| `colonizethis-component-structure.mdc` | `**/*.dart` | Folder conventions, extraction/reuse, naming |
+| `colonizethis-code-review.mdc` | `**/*.dart` | Review checklist and quality gates |
+| `colonizethis-lifecycle.mdc` | `**/*.dart` | Flame/Flutter lifecycle conventions |
+| `colonizethis-assets.mdc` | `**/*.dart`, `**/pubspec.yaml`, `**/assets/**` | Asset structure, naming, loading |
+| `colonizethis-acceptance-criteria.mdc` | `SPEC/ai/**`, `SPEC/game/**`, `SPEC/program/**`, `SPEC/ui/**` | Given–When–Then, testable AC quality |
 
-| Rule file | When to apply | Summary |
-|-----------|----------------|---------|
-| **colonizethis-tools.mdc** | `tool/**` | Tools are thin facades; logic lives in packages. Run from root via Melos: `melos run <tool_name> -- [args]`. Document in `docs/project-tools.md`. |
-| **colonizethis-testing.mdc** | `**/*_test.dart`, `**/test/**/*.dart` | 90% per-package coverage. Unit / widget / game-component layers. Mocks (mockito/mocktail). Critical paths: combat, economy, save/load, ruleset loading. |
-| **colonizethis-ui-design.mdc** | `SPEC/ui/**`, `**/lib/widgets/**`, `**/lib/ui/**` | Wireframes in UI spec; Widgetbook + widget catalog for components; pixel art via spec and PixelLab; UXD 02/03/04/05/07. Flame vs Flutter division. |
-| **colonizethis-component-structure.mdc** | `**/*.dart` | Folder layout: `lib/game/`, `lib/widgets/`, `lib/screens/`, etc. Reuse at 2+ places; Flame `*Component`, Flutter catalog + Widgetbook. |
-| **colonizethis-code-review.mdc** | `**/*.dart` | Checklist: function &lt; 20 lines, widget &lt; ~60 lines, no UI+logic mix, constants for strings, explicit types, spec alignment, logging, reuse, tests. |
-| **colonizethis-lifecycle.mdc** | `**/*.dart` | Flame: `onLoad` (init), `onMount`/`onRemove` (subscribe/cleanup), `update`/`render` (tick/paint). Flutter: `initState`/`dispose`. |
-| **colonizethis-assets.mdc** | `**/*.dart`, `**/pubspec.yaml`, `**/assets/**` | Asset dirs: `assets/images/`, `assets/audio/`, `assets/data/`. Snake_case naming. Load in Flame `onLoad()`; use caches. |
+## Rule interaction
 
-## Quick reference for agents
+Multiple context-specific rules may apply to a single file (e.g., a UI widget may match both `ui-design` and `component-structure`). All applicable rules are **additive**; when they conflict, the more specific rule takes precedence (e.g., testing rules override general code-review for test files).
 
-1. **Before implementing:** Check GDD/TDD/UI spec; implement only what is specified; if missing, add or extend the spec first.
-2. **Code style:** Strict Dart, logger (no `print`), thin screens, single responsibility. Province lookup: always `(regionId, provinceId)` or prefixed id.
-3. **When touching UI:** Wireframes in spec; Widgetbook + catalog; pixel art per UXD (exact prompts in spec; check assets first, don’t regenerate if suitable asset exists); Flame for canvas, Flutter for shell/overlays/menus.
-4. **When adding a tool:** Thin facade in `tool/<name>`; logic in packages; Melos script and `docs/project-tools.md` updated.
-5. **When writing tests:** 90% per package; unit/widget/game-component layers; cover combat, economy, save/load, ruleset loading.
-6. **When reviewing/generating code:** Use the code-review checklist (lengths, types, spec, logging, reuse, tests).
+## Quick reference
 
-For full text of each rule, read the files in `.cursor/rules/`.
+1. **SPEC-first**: Check/extend SPEC first; implement only spec-authorized behavior. See `colonizethis-spec-required.mdc`.
+2. **Separation of concerns**: Keep Flutter UI and Flame simulation concerns separated. See `colonizethis-core-principles.mdc`.
+3. **Thin screens**: Prefer reuse; keep screens thin and delegate logic to services/controllers/components. See `colonizethis-component-structure.mdc`.
+4. **Coverage policy**: **90% for logic/ai/map packages; 80% everywhere else**. See `colonizethis-testing.mdc`.
+5. **Widget tests**: Run app/ctdev widget tests with `flutter test` (or `melos run test_app`), not `dart test app/...`. See `colonizethis-testing.mdc`.
+6. **E2E UI stability**: In UI-heavy e2e tests, prefer deterministic widget locators, scope finders to roots, and ensure visibility before taps; avoid coordinate-based gestures unless unavoidable. See `colonizethis-e2e-ui-stability.mdc`.
+7. **Logging**: Policy and annexes: `SPEC/program/logging/logging.md`; ctdev file/Sim Log: `SPEC/program/ctdev-logging.md`; use `basic_logger_file` per `colonizethis-logging-file.mdc` where file sinks apply.
+8. **Cross-panel UI orchestration**: "Panels" refers to app panels/dialogs/components. Panels should **not** directly invoke or depend on each other unless absolutely necessary. Use `AppEventBus` for cross-panel communication. See `SPEC/program/app-ui-wiring.md` and `SPEC/program/app-event-bus.md`.
+
+For complete details, read the relevant rule file(s) in `.cursor/rules/`.
+
+## Project agent skills
+
+Skills live under `.cursor/skills/<name>/SKILL.md`. When a skill matches the task, read and follow it.
+
+| Skill | Use when |
+|-------|----------|
+| `create-github-issue-from-report` | Turn an informal bug/report into a structured GitHub issue (read-only repo work; may use `gh`). |
+| `fix-pr-checks` | Unblock a PR by fixing failing checks and quality gates. |
+| `implement-github-issue-fix` | User gives an issue **#** or **URL**; validate problem/design/testable ACs, update **SPEC** if needed, implement, add positive/negative tests, open PR to **`dev`** with **`Refs #…`** (do **not** auto-close). Very large issues: one isolatable slice only. |
+| `merge-dev-into-android-build` | Merge `dev` into `build/app/android` for APK build workflows. |
+| `plan-feature-github-issue` | Scope a feature from SPEC/code (read-only), then open a capturing issue—no implementation. |
+| `verify-github-issue` | Verify one open issue against ACs/specs/tests; gap analysis or closure steps. |
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution guidelines.

@@ -1,0 +1,94 @@
+{
+  "name": "fog_and_exploration_spy_timers_own_vs_other",
+  "description": "SPEC/game/fog-and-exploration.md & SPEC/program/fog-and-exploration-resolution.md: Spy timers only apply to other-faction provinces; own provinces never decay. Scenario: gp1 Spy leaves gp2 province (timer + eventual fog) and later leaves own province (no timer, own tiles stay fullyVisible).",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england", "france"],
+      "seed": 101,
+      "minorNationCount": 0
+    },
+    "oldWorld": {
+      "grid": [
+        ["p1", "sea1", "p2"]
+      ],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "p2", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [
+        {"id1": "p1", "id2": "sea1"},
+        {"id1": "p2", "id2": "sea1"}
+      ]
+    }
+  },
+  "setup": {
+    "units": [
+      {
+        "player": "gp1",
+        "type": "Spy",
+        "province": "oldWorld|p2",
+        "count": 1
+      }
+    ]
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "move",
+          "unit": "gp1_spy_0",
+          "to": "oldWorld|p1"
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "orders": []
+    },
+    {
+      "turn": 3,
+      "orders": []
+    },
+    {
+      "turn": 4,
+      "orders": []
+    },
+    {
+      "turn": 5,
+      "orders": []
+    },
+    {
+      "turn": 6,
+      "orders": []
+    }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "province": "oldWorld|p1",
+      "owner": "gp1"
+    },
+    {
+      "turn": 1,
+      "province": "oldWorld|p2",
+      "owner": "gp2"
+    },
+    {
+      "turn": 5,
+      "player": "gp1",
+      "tileKey": "oldWorld|p2|2|0",
+      "tileVisibility": "fogged"
+    },
+    {
+      "turn": 6,
+      "player": "gp1",
+      "tileKey": "oldWorld|p1|0|0",
+      "tileVisibility": "fullyVisible"
+    }
+  ]
+}
+

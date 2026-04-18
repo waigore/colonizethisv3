@@ -3,7 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
-  PlayerView _view({
+  PlayerView view0({
     Map<String, VisibilityLevel> visibilityByTile = const {},
     Map<String, Province> provincesById = const {},
   }) {
@@ -26,7 +26,7 @@ void main() {
 
   group('provinceHasAtLeastVisibility', () {
     test('false when no tile has 4-part key for region/province', () {
-      final view = _view(
+      final view = view0(
         visibilityByTile: {
           'oldWorld|p1|0|0': VisibilityLevel.revealed,
         },
@@ -40,7 +40,7 @@ void main() {
     });
 
     test('true when a tile in province has at least min visibility', () {
-      final view = _view(
+      final view = view0(
         visibilityByTile: {
           'oldWorld|p1|0|0': VisibilityLevel.fogged,
         },
@@ -54,7 +54,7 @@ void main() {
     });
 
     test('ignores tile keys with wrong number of parts', () {
-      final view = _view(
+      final view = view0(
         visibilityByTile: {
           'badkey': VisibilityLevel.fullyVisible,
         },
@@ -70,7 +70,7 @@ void main() {
 
   group('tileHasAtLeastVisibility', () {
     test('true when tile has at least min level', () {
-      final view = _view(
+      final view = view0(
         visibilityByTile: {'t1': VisibilityLevel.fullyVisible},
       );
       expect(
@@ -79,7 +79,7 @@ void main() {
       );
     });
     test('false when tile unknown', () {
-      final view = _view();
+      final view = view0();
       expect(
         tileHasAtLeastVisibility(view, 'missing', VisibilityLevel.revealed),
         isFalse,
@@ -89,7 +89,7 @@ void main() {
 
   group('moveSourceVisibilityOk', () {
     test('true when province has at least revealed', () {
-      final view = _view(
+      final view = view0(
         visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.revealed},
       );
       expect(moveSourceVisibilityOk(view, 'oldWorld', 'p1'), isTrue);
@@ -98,7 +98,7 @@ void main() {
 
   group('moveDestVisibilityOk', () {
     test('true when province has at least revealed', () {
-      final view = _view(
+      final view = view0(
         visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.revealed},
       );
       expect(
@@ -110,30 +110,34 @@ void main() {
 
   group('workOrderVisibilityOk', () {
     test('explore requires at least revealed', () {
-      final view = _view(
+      final view = view0(
         visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.revealed},
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'inf',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p1',
+        locationProvinceId: 'oldWorld|p1',
       );
       expect(
         workOrderVisibilityOk(view, unit, 'explore'),
         isTrue,
       );
+      expect(
+        workOrderVisibilityOk(view, unit, kWorkTargetExplore),
+        isTrue,
+      );
     });
 
     test('prospect requires at least fogged', () {
-      final view = _view(
+      final view = view0(
         visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.fogged},
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'inf',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p1',
+        locationProvinceId: 'oldWorld|p1',
       );
       expect(
         workOrderVisibilityOk(view, unit, 'prospect'),
@@ -144,7 +148,7 @@ void main() {
     test('build_improvement allows owned province', () {
       const r = 'oldWorld', p = 'p1';
       final fullId = '$r|$p';
-      final view = _view(
+      final view = view0(
         provincesById: {
           fullId: Province(
             id: fullId,
@@ -154,11 +158,11 @@ void main() {
           ),
         },
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'inf',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p1',
+        locationProvinceId: 'oldWorld|p1',
       );
       expect(
         workOrderVisibilityOk(view, unit, 'build_improvement'),
@@ -167,14 +171,14 @@ void main() {
     });
 
     test('unknown workTarget returns false', () {
-      final view = _view(
+      final view = view0(
         visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.fullyVisible},
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'inf',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p1',
+        locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
       expect(workOrderVisibilityOk(view, unit, 'unknown_work'), isFalse);
@@ -183,7 +187,7 @@ void main() {
     test('counter_spy allows owned province without fogged', () {
       const r = 'oldWorld', p = 'p1';
       final fullId = '$r|$p';
-      final view = _view(
+      final view = view0(
         provincesById: {
           fullId: Province(
             id: fullId,
@@ -193,11 +197,11 @@ void main() {
           ),
         },
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'Spy',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p1',
+        locationProvinceId: 'oldWorld|p1',
       );
       expect(
         workOrderVisibilityOk(view, unit, 'counter_spy'),
@@ -208,7 +212,7 @@ void main() {
     test('build_fort with fogged visibility on owned province', () {
       const r = 'oldWorld', p = 'p1';
       final fullId = '$r|$p';
-      final view = _view(
+      final view = view0(
         provincesById: {
           fullId: Province(
             id: fullId,
@@ -219,11 +223,11 @@ void main() {
         },
         visibilityByTile: {'$r|$p|0|0': VisibilityLevel.fogged},
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'inf',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p1',
+        locationProvinceId: 'oldWorld|p1',
       );
       expect(
         workOrderVisibilityOk(view, unit, 'build_fort'),
@@ -232,7 +236,7 @@ void main() {
     });
 
     test('build_road with targetTileKey uses tile key for region and province', () {
-      final view = _view(
+      final view = view0(
         visibilityByTile: {'oldWorld|p2|1|1': VisibilityLevel.fogged},
         provincesById: {
           'oldWorld|p2': Province(
@@ -243,11 +247,11 @@ void main() {
           ),
         },
       );
-      const unit = Unit(
+      final unit = Unit(
         id: 'u1',
         type: 'engineer',
         ownerId: 'gp1',
-        provinceId: 'oldWorld|p2',
+        locationProvinceId: 'oldWorld|p2',
       );
       expect(
         workOrderVisibilityOk(view, unit, 'build_road', 'oldWorld|p2|1|1'),
@@ -256,7 +260,7 @@ void main() {
     });
 
     test('provinceHasAtLeastVisibility returns false when parts.length != 4', () {
-      final view = _view(
+      final view = view0(
         visibilityByTile: {'oldWorld|p1|0': VisibilityLevel.fullyVisible},
       );
       expect(

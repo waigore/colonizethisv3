@@ -8,14 +8,14 @@
 
 | id | name | era | prerequisites | effects |
 |----|------|-----|---------------|--------|
-| superior_hull_design | Superior Hull Design | 1 | — | Construct Fluytes |
-| improved_sail_design | Improved Sail Design | 2 | wind_saw_mill, superior_hull_design | Construct Trader |
-| convoying | Convoying | 2 | merchant_companies | Construct Galleons |
-| navigation | Navigation | 1 | superior_hull_design | Construct Sloops |
-| large_hulls | Large Hulls | 2 | wind_saw_mill, navigation, convoying | Construct Indiaman |
-| clipper_ships | Clipper Ships | 4 | circular_saw, advanced_hull_design | Construct Clipper |
-| paddlewheels | Paddlewheels | 3 | advanced_hull_design, early_steam_engine | Construct Raider |
-| merchant_steamships | Merchant Steamships | 4 | paddlewheels, riverboats | Construct Merchant Steamship |
+| superior_hull_design | Superior Hull Design | 1 | — | **Unlocks:** construct **Fluyte** merchant hull. **Unlocks:** prerequisite for `improved_sail_design` and `navigation`. |
+| improved_sail_design | Improved Sail Design | 2 | wind_saw_mill, superior_hull_design | **Unlocks:** construct **Trader**. **Unlocks:** prerequisite for `advanced_hull_design` (with `university` and `privateering_companies`). |
+| convoying | Convoying | 2 | merchant_companies | **Unlocks:** construct **Galleon**. **Unlocks:** prerequisite for `large_hulls` (with `wind_saw_mill` and `navigation`). |
+| navigation | Navigation | 1 | superior_hull_design | **Unlocks:** construct **Sloop**. **Unlocks:** prerequisite for `large_hulls` and `privateering_companies`. |
+| large_hulls | Large Hulls | 2 | wind_saw_mill, navigation, convoying | **Unlocks:** construct **Indiaman**. **Unlocks:** prerequisite for `ship_of_the_line` (with `large_copper_and_tin_mines`). |
+| clipper_ships | Clipper Ships | 4 | circular_saw, advanced_hull_design | **Unlocks:** construct **Clipper** fast merchant hull. |
+| paddlewheels | Paddlewheels | 3 | advanced_hull_design, early_steam_engine | **Unlocks:** construct **Raider**. **Unlocks:** prerequisite for `merchant_steamships` (with `riverboats`). |
+| merchant_steamships | Merchant Steamships | 4 | paddlewheels, riverboats | **Unlocks:** construct **Merchant Steamship** steam cargo hull. |
 
 ---
 
@@ -23,10 +23,10 @@
 
 | id | name | era | prerequisites | effects |
 |----|------|-----|---------------|--------|
-| advanced_hull_design | Advanced Hull Design | 3 | university, improved_sail_design, privateering_companies | Construct Frigates (high intercept rating, moderate flee rating) |
-| ship_of_the_line | Ship of the Line | 3 | large_hulls, large_copper_and_tin_mines | Construct Ships-of-the-Line |
-| privateering_companies | Privateering Companies | 2 | navigation, diplomatic_expertise | Improves naval interception (Patrol/Blockade) and trade-raid chance; unlocks privateering doctrines required for advanced warships |
-| advanced_iron_working | Advanced Iron Working | 4 | ship_of_the_line, industrial_funding_of_research, paddlewheels | Construct Ironclads |
+| advanced_hull_design | Advanced Hull Design | 3 | university, improved_sail_design, privateering_companies | **Unlocks:** construct **Frigate** (high **intercept**, moderate **flee** — fast interceptor role per Notes below). **Unlocks:** prerequisite for `clipper_ships` and `paddlewheels`. |
+| ship_of_the_line | Ship of the Line | 3 | large_hulls, large_copper_and_tin_mines | **Unlocks:** construct **Ship of the Line** battle-line capital hull. **Unlocks:** prerequisite for `advanced_iron_working` (with `industrial_funding_of_research` and `paddlewheels`). |
+| privateering_companies | Privateering Companies | 2 | navigation, diplomatic_expertise | **Improves:** naval **interception** and **trade-raid** effectiveness on **Patrol** / **Blockade** when those rules apply. **Unlocks:** prerequisite for `advanced_hull_design` (privateering-doctrine path to frigates and later hulls). |
+| advanced_iron_working | Advanced Iron Working | 4 | ship_of_the_line, industrial_funding_of_research, paddlewheels | **Unlocks:** construct **Ironclad** armored steam warship. |
 
 ---
 
@@ -44,7 +44,7 @@
 
 - Given the naval tech table in this doc and the global tech catalog  
   When the System validates the catalog at startup  
-  Then the System ensures that each naval tech id is unique, that its prerequisites refer to techs present in the catalog, and that each ship type unlocked by these techs has a corresponding ship definition in the naval unit specs referenced by [ships-and-naval.md](ships-and-naval.md).
+  Then the System ensures that each naval tech id is unique, that its prerequisites refer to techs present in the catalog, and that each ship type unlocked by these techs has corresponding **build economy** and **naval stats** rows in the canonical tables under [ships-and-naval.md](ships-and-naval.md) (ship build economy and ship combat/cargo stats), with implementation catalogs matching those tables.
 
 - Given a player has unlocked a naval tech such as `superior_hull_design`, `improved_sail_design`, `convoying`, `large_hulls`, `clipper_ships`, `paddlewheels`, `merchant_steamships`, `advanced_hull_design`, `ship_of_the_line`, `privateering_companies`, or `advanced_iron_working`  
   When the System evaluates which ship types are buildable for that player during a build phase per [ships-and-naval.md](ships-and-naval.md)  

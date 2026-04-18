@@ -6,15 +6,15 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:generate_map/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
-final _log = Logger();
+final _log = packageLogger();
 
 void _errExit(String message) {
   stderr.writeln(message);
-  _log.w('map: $message');
+  _log.w(message);
   exit(1);
 }
 
@@ -23,7 +23,50 @@ const int _defaultContinents = 3;
 const int _minContinents = 2;
 const int _maxContinents = 4;
 
-void main(List<String> arguments) {
+/// Parsed CLI arguments for map generation.
+class ParsedMapArgs {
+  const ParsedMapArgs({
+    required this.numProvinces,
+    required this.numContinents,
+    required this.regionId,
+    required this.seedUsed,
+    required this.tilesPerProvince,
+    required this.seaFraction,
+    required this.joinContinents,
+    required this.seedBeforeAssignment,
+    required this.skipFillLakes,
+    required this.continentBuffer,
+    required this.interactive,
+    required this.withTileMapImage,
+    this.tileMapImagePath,
+    this.topologyGraphPath,
+    this.worldStatePath,
+    this.tileSize,
+    this.writeTileMapJsonPath,
+  });
+
+  final int numProvinces;
+  final int numContinents;
+  final String regionId;
+  final int seedUsed;
+  final int tilesPerProvince;
+  final double seaFraction;
+  final bool joinContinents;
+  final bool seedBeforeAssignment;
+  final bool skipFillLakes;
+  final int continentBuffer;
+  final bool interactive;
+  final bool withTileMapImage;
+  final String? tileMapImagePath;
+  final String? topologyGraphPath;
+  final String? worldStatePath;
+  final int? tileSize;
+  /// When set, writes [TileMapResult.toJson] after generation (grid only; terrain/resource optional).
+  final String? writeTileMapJsonPath;
+}
+
+/// Pure argument parsing helper. Validates all arguments and returns parsed values.
+ParsedMapArgs parseMapArguments(List<String> arguments) {
   var interactive = false;
   var withTileMapImage = false;
   String? tileMapImagePath;
@@ -40,6 +83,7 @@ void main(List<String> arguments) {
   var skipFillLakes = false;
   int? continentBufferOverride;
   int? tileSizeOverride;
+  String? writeTileMapJsonPath;
 
   for (var i = 0; i < arguments.length; i++) {
     final arg = arguments[i];
@@ -182,25 +226,63 @@ void main(List<String> arguments) {
         _errExit('Error: --tile-size requires a positive integer, got: $value');
       }
       tileSizeOverride = parsed;
+    } else if (arg == '--write-tile-map-json' && i + 1 < arguments.length) {
+      writeTileMapJsonPath = arguments[++i];
+    } else if (arg.startsWith('--write-tile-map-json=')) {
+      writeTileMapJsonPath = arg.substring('--write-tile-map-json='.length).trim();
+      if (writeTileMapJsonPath.isEmpty) {
+        _errExit('Error: --write-tile-map-json= requires a non-empty path');
+      }
     }
   }
 
   final numProvinces = provincesOverride ?? _defaultProvinces;
   final numContinents = continentsOverride ?? _defaultContinents;
-  final   regionId = regionOverride ?? 'oldWorld';
+  final regionId = regionOverride ?? 'oldWorld';
   final seedUsed = seedOverride ?? Random().nextInt(0x7FFFFFFF);
 
-  final mapGenParams = MapGenerationParams(
-    targetTilesPerProvince: tilesPerProvinceOverride ?? 35,
-    seaFraction: seaFractionOverride ?? 0.6,
+  return ParsedMapArgs(
+    numProvinces: numProvinces,
     numContinents: numContinents,
-    seed: seedUsed,
+    regionId: regionId,
+    seedUsed: seedUsed,
+    tilesPerProvince: tilesPerProvinceOverride ?? 35,
+    seaFraction: seaFractionOverride ?? 0.6,
     joinContinents: joinContinents,
     seedBeforeAssignment: seedBeforeAssignment,
     skipFillLakes: skipFillLakes,
-    continentBufferTiles: continentBufferOverride ?? 2,
+    continentBuffer: continentBufferOverride ?? 2,
+    interactive: interactive,
+    withTileMapImage: withTileMapImage,
+    tileMapImagePath: tileMapImagePath,
+    topologyGraphPath: topologyGraphPath,
+    worldStatePath: worldStatePath,
+    tileSize: tileSizeOverride,
+    writeTileMapJsonPath: writeTileMapJsonPath,
   );
-  final size = computeGridSizeFromParams(numProvinces, mapGenParams);
+}
+
+/// Result of map generation.
+typedef MapGenerationResult = ({
+  TileMapResult tileMapResult,
+  MapTopology topology,
+  Map<String, int> tileCounts,
+  Map<String, String?>? ownerByProvinceId,
+});
+
+/// Runs map generation and exports based on parsed arguments.
+MapGenerationResult runMapGeneration(ParsedMapArgs args) {
+  final mapGenParams = MapGenerationParams(
+    targetTilesPerProvince: args.tilesPerProvince,
+    seaFraction: args.seaFraction,
+    numContinents: args.numContinents,
+    seed: args.seedUsed,
+    joinContinents: args.joinContinents,
+    seedBeforeAssignment: args.seedBeforeAssignment,
+    skipFillLakes: args.skipFillLakes,
+    continentBufferTiles: args.continentBuffer,
+  );
+  final size = computeGridSizeFromParams(args.numProvinces, mapGenParams);
   final params = TileMapParams(
     width: size.width,
     height: size.height,
@@ -216,18 +298,20 @@ void main(List<String> arguments) {
     continentBufferTiles: mapGenParams.continentBufferTiles,
   );
 
-  _log.i('map: === Map generation ===');
-  _log.i('map: Generating map: $numProvinces provinces, $numContinents continents, region $regionId (seed: $seedUsed)');
-  stdout.writeln('Generating map: $numProvinces provinces, $numContinents continents, region $regionId (seed: $seedUsed)');
+  _log.i('=== Map generation ===');
+  _log.i(
+    'Generating map: ${args.numProvinces} provinces, ${args.numContinents} continents, region ${args.regionId} (seed: ${args.seedUsed})',
+  );
+  stdout.writeln('Generating map: ${args.numProvinces} provinces, ${args.numContinents} continents, region ${args.regionId} (seed: ${args.seedUsed})');
   List<(int x, int y)>? landSeeds;
   List<int>? landSeedContinentIndices;
   List<(int x, int y)>? continentSeeds;
   final (tileMapResult, topology) = TileMapGenerator(params: params).generate(
-    numProvinces: numProvinces,
-    numContinents: numContinents,
-    regionId: regionId,
+    numProvinces: args.numProvinces,
+    numContinents: args.numContinents,
+    regionId: args.regionId,
     resourceRules: ResourceRules.defaultRules,
-    onLog: (msg) => _log.i('map: $msg'),
+    onLog: _log.i,
     onLandSeedsPlaced: (s, indices) {
       landSeeds = List.from(s);
       landSeedContinentIndices = List.from(indices);
@@ -237,13 +321,24 @@ void main(List<String> arguments) {
 
   final tileCounts = computeTileCountsPerRegion(tileMapResult);
   final centroids = computeCentroidsPerRegion(tileMapResult);
-  _log.i('map: Tile map seed: $seedUsed');
+  _log.i('Tile map seed: ${args.seedUsed}');
 
-  if (withTileMapImage) {
-    final cellSize = tileSizeOverride;
+  final jsonOut = args.writeTileMapJsonPath;
+  if (jsonOut != null && jsonOut.isNotEmpty) {
+    final outFile = File(jsonOut);
+    outFile.parent.createSync(recursive: true);
+    outFile.writeAsStringSync(
+      const JsonEncoder.withIndent('  ').convert(tileMapResult.toJson()),
+    );
+    _log.i('Tile map JSON: ${outFile.absolute.path}');
+    stdout.writeln('Tile map JSON: ${outFile.absolute.path}');
+  }
+
+  if (args.withTileMapImage) {
+    final cellSize = args.tileSize;
     final String imagePath;
-    if (tileMapImagePath != null && tileMapImagePath.isNotEmpty) {
-      final outFile = File(tileMapImagePath);
+    if (args.tileMapImagePath != null && args.tileMapImagePath!.isNotEmpty) {
+      final outFile = File(args.tileMapImagePath!);
       writeTileMapImageToFile(
         outFile,
         tileMapResult,
@@ -265,24 +360,24 @@ void main(List<String> arguments) {
       );
     }
     final opened = openInDefaultViewer(imagePath);
-    _log.i('map: Tile map image: $imagePath');
+    _log.i('Tile map image: $imagePath');
     stdout.writeln('Tile map image: $imagePath');
     if (!opened) {
-      _log.w('map: Could not open in viewer. Saved to: $imagePath');
+      _log.w('Could not open in viewer. Saved to: $imagePath');
     }
   }
 
   // Topology graph (DOT + PNG when Graphviz installed)
-  final dotPath = topologyGraphPath != null
-      ? (topologyGraphPath.isEmpty
-          ? (withTileMapImage && tileMapImagePath != null
-              ? tileMapImagePath.replaceAll(RegExp(r'\.png$'), '_topology.dot')
+  final dotPath = args.topologyGraphPath != null
+      ? (args.topologyGraphPath!.isEmpty
+          ? (args.withTileMapImage && args.tileMapImagePath != null
+              ? args.tileMapImagePath!.replaceAll(RegExp(r'\.png$'), '_topology.dot')
               : null)
-          : topologyGraphPath.endsWith('.dot')
-              ? topologyGraphPath
-              : '$topologyGraphPath.dot')
+          : args.topologyGraphPath!.endsWith('.dot')
+              ? args.topologyGraphPath!
+              : '${args.topologyGraphPath}.dot')
       : null;
-  final shouldWriteTopologyGraph = withTileMapImage || topologyGraphPath != null;
+  final shouldWriteTopologyGraph = args.withTileMapImage || args.topologyGraphPath != null;
   if (shouldWriteTopologyGraph) {
     final dotContent = topologyToDot(
       topology,
@@ -291,7 +386,7 @@ void main(List<String> arguments) {
     );
     final dotFile = dotPath ?? _tempDotPath();
     File(dotFile).writeAsStringSync(dotContent);
-    _log.i('map: Topology graph (DOT): $dotFile');
+    _log.i('Topology graph (DOT): $dotFile');
     stdout.writeln('Topology graph (DOT): $dotFile');
 
     try {
@@ -299,9 +394,9 @@ void main(List<String> arguments) {
       final proc = Process.runSync('neato', ['-n', '-Tpng', '-o', pngPath, dotFile]);
       if (proc.exitCode == 0) {
         final opened = openInDefaultViewer(pngPath);
-        _log.i('map: Topology graph (PNG): $pngPath');
+        _log.i('Topology graph (PNG): $pngPath');
         if (!opened) {
-          _log.w('map: Could not open topology graph in viewer. Saved to: $pngPath');
+          _log.w('Could not open topology graph in viewer. Saved to: $pngPath');
         }
       } else {
         _warnGraphviz();
@@ -312,10 +407,10 @@ void main(List<String> arguments) {
   }
 
   Map<String, String?>? ownerByProvinceId;
-  if (worldStatePath != null) {
-    final wsFile = File(worldStatePath);
+  if (args.worldStatePath != null) {
+    final wsFile = File(args.worldStatePath!);
     if (!wsFile.existsSync()) {
-      _errExit('Error: world state file not found: $worldStatePath');
+      _errExit('Error: world state file not found: ${args.worldStatePath}');
     }
     final ws = WorldState.fromJson(
       jsonDecode(wsFile.readAsStringSync()) as Map<String, dynamic>,
@@ -337,9 +432,16 @@ void main(List<String> arguments) {
   print('');
   print(formatMapSummary(topology, tileCounts));
 
-  if (interactive) {
+  if (args.interactive) {
     _interactiveLoop(topology, tileCounts, ownerByProvinceId);
   }
+
+  return (
+    tileMapResult: tileMapResult,
+    topology: topology,
+    tileCounts: tileCounts,
+    ownerByProvinceId: ownerByProvinceId,
+  );
 }
 
 String _tempDotPath() {
@@ -351,7 +453,7 @@ String _tempDotPath() {
 void _warnGraphviz() {
   const msg = 'Warning: Graphviz not installed; run `brew install graphviz` to render topology graph to PNG.';
   stderr.writeln(msg);
-  _log.w('map: $msg');
+  _log.w(msg);
 }
 
 void _printUsage() {
@@ -376,6 +478,7 @@ void _printUsage() {
   print('  --seed-before-assignment  Use legacy land assignment (default: off)');
   print('  --skip-fill-lakes  Skip Pass 4 (fill lakes); default off');
   print('  --continent-buffer N  Min sea tiles between continents (default: 2)');
+  print('  --write-tile-map-json <path>  Write TileMapResult JSON (grid; optional terrain/resource)');
 }
 
 void _interactiveLoop(
@@ -406,3 +509,10 @@ void _interactiveLoop(
     print('');
   }
 }
+
+/// Main entry point. Orchestrates argument parsing and map generation.
+void main(List<String> arguments) {
+  final args = parseMapArguments(arguments);
+  runMapGeneration(args);
+}
+

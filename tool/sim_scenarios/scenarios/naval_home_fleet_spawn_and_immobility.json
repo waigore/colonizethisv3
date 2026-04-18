@@ -1,0 +1,82 @@
+{
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "seed": 12345,
+      "greatPowers": ["gp1"]
+    },
+    "oldWorld": {
+      "grid": [["p1", "sea1"]],
+      "nodes": [
+        { "id": "p1", "regionId": "oldWorld", "type": "province" },
+        { "id": "sea1", "regionId": "oldWorld", "type": "seaZone" }
+      ],
+      "edges": [
+        { "id1": "p1", "id2": "sea1" }
+      ]
+    }
+  },
+  "setup": {
+    "initialTech": {
+      "gp1": ["galleys_1"]
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "build",
+          "unitType": "carrack",
+          "in": "oldWorld|p1"
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "naval_move",
+          "fleetId": "fleet_gp1",
+          "destinationSeaZoneId": "sea1"
+        },
+        {
+          "player": "gp1",
+          "type": "naval_mission",
+          "fleetId": "fleet_gp1",
+          "mission": "patrol"
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "province": "oldWorld|p1",
+      "owner": "gp1"
+    },
+    {
+      "turn": 1,
+      "player": "gp1",
+      "capitalProvinceId": "oldWorld|p1"
+    },
+    {
+      "turn": 1,
+      "fleetId": "fleet_gp1",
+      "seaZoneId": "sea1"
+    },
+    {
+      "turn": 2,
+      "fleetId": "fleet_gp1",
+      "seaZoneId": "sea1"
+    },
+    {
+      "turn": 2,
+      "fleetId": "fleet_gp1",
+      "fleetMission": "none"
+    }
+  ]
+}
+

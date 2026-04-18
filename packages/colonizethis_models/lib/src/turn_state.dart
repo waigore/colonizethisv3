@@ -1,3 +1,5 @@
+import 'model_validation_exception.dart';
+
 /// Turn phase in resolution sequence. SPEC/program/turn-resolution.
 /// SPEC/program/turn-resolution-phases.md
 enum TurnPhase {
@@ -9,6 +11,7 @@ enum TurnPhase {
   research,
   diplomacy,
   movement,
+  minorRegimentUpgrade,
   navalInterceptionCombat,
   combat,
   buildWork,
@@ -19,7 +22,11 @@ extension TurnPhaseJson on TurnPhase {
   static TurnPhase fromJson(String value) {
     return TurnPhase.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => throw ArgumentError.value(value, 'value', 'Unknown TurnPhase'),
+      orElse: () => throw ModelValidationException.value(
+        value,
+        'value',
+        'Unknown TurnPhase',
+      ),
     );
   }
 
@@ -28,18 +35,15 @@ extension TurnPhaseJson on TurnPhase {
 
 /// Turn state: phase and turn number. Part of WorldState.
 class TurnState {
-  const TurnState({
-    required this.phase,
-    required this.turnNumber,
-  });
+  const TurnState({required this.phase, required this.turnNumber});
 
   final TurnPhase phase;
   final int turnNumber;
 
   Map<String, dynamic> toJson() => {
-        'phase': phase.toJson(),
-        'turnNumber': turnNumber,
-      };
+    'phase': phase.toJson(),
+    'turnNumber': turnNumber,
+  };
 
   static TurnState fromJson(Map<String, dynamic> json) {
     return TurnState(

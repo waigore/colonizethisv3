@@ -3,8 +3,8 @@
 ## Responsibility
 Load, merge, and expose ruleset configuration at game creation. Game rules: [ruleset-config.md](../game/ruleset-config.md).
 
-## Scope (MVP)
-**MVP uses program-level config only.** No JSON load or merge from `rules/` asset path in MVP. Base → Difficulty → Scenario merge is deferred until the ruleset loader is implemented. Current behaviour: config (e.g. GameSetupConfig, default naming) is supplied from code constants / colonizethis_data. See [game-setup-pipeline.md](game-setup-pipeline.md) § Data Model (GameSetupConfig), #57 (loader tracking), and #235 for current behaviour.
+## Scope (current product)
+**current product uses program-level config only.** No JSON load or merge from `rules/` asset path in current product. Base → Difficulty → Scenario merge is deferred until the ruleset loader is implemented. Current behaviour: config (e.g. GameSetupConfig, default naming) is supplied from code constants / colonizethis_data. See [game-setup-pipeline.md](game-setup-pipeline.md) § Data Model (GameSetupConfig), #57 (loader tracking), and #235 for current behaviour.
 
 ## Data Model
 

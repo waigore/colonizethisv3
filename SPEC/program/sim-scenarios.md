@@ -25,7 +25,9 @@ Run composite integration tests that verify game systems work correctly together
 |------|-------------|
 | **Single scenario** | Run one scenario file (`--scenario=path.json`) |
 | **Batch** | Run all JSON files in directory (`--directory=scenarios/`) |
-| **Generate** | Run scenario and output current state as assertions (`--generate-assertions`) |
+| **Generate** | Run scenario and output current state as assertions (`--generate-assertions`); **not yet implemented** (see below) |
+
+**Generate mode (`--generate-assertions`):** The CLI accepts the flag but this mode is **not yet implemented**. The tool does not currently serialize the current game state to assertion JSON. When implemented, it will run the scenario (or a subset of turns) and output the resulting state in the assertion format for use as a scaffold in scenario authoring.
 
 ---
 
@@ -56,7 +58,7 @@ Two initialization types:
 }
 ```
 
-**From-topology (connectivity scenarios)** — Builds game from a fixed Old World (and optional New World) topology and grid. Used for connectivity and capital assertions. `init.type`: `"fromTopology"`. `init.config`: optional `greatPowers`, `seed`, `tribeCount` (for NW). `init.oldWorld` / `init.newWorld`: `{ "grid": [[...]], "nodes": [...], "edges": [...] }`. Optional **resourceGrid**: same dimensions as grid; each cell is a resource name (e.g. `"grain"`) or null; used for extraction scenarios (SPEC/game/extraction-and-improvements.md). **Behaviour:** No Minor Nations (minor count and min provinces per minor are forced to 0) so that province assignment only assigns to Great Powers and, when present, Tribes on the New World. Aligns with [game-setup.md](../game/game-setup.md) (config from scenario).
+**From-topology (connectivity scenarios)** — Builds game from a fixed Old World (and optional New World) topology and grid. Used for connectivity and capital assertions. `init.type`: `"fromTopology"`. `init.config`: optional `greatPowers`, `seed`, `tribeCount` (for NW). `init.oldWorld` / `init.newWorld`: `{ "grid": [[...]], "nodes": [...], "edges": [...] }`. Optional **resourceGrid**: same dimensions as grid; each cell is a resource name (e.g. `"grain"`) or null; used for extraction scenarios (SPEC/game/extraction-and-improvements.md). Optional **terrainGrid**: same dimensions as grid; each cell is a `TerrainType` name (e.g. `"plains"`, `"hills"`) or null for sea cells; used when scenarios need per-tile terrain (e.g. `build_rail` validation per SPEC/game/tech-tree-transport.md). **Behaviour:** No Minor Nations (minor count and min provinces per minor are forced to 0) so that province assignment only assigns to Great Powers and, when present, Tribes on the New World. Aligns with [game-setup.md](../game/game-setup.md) (config from scenario).
 
 For saved games (or after fresh/fromTopology init), optional `setup` block injects units and can override player economy for specific test scenarios:
 ```json
@@ -74,7 +76,7 @@ For saved games (or after fresh/fromTopology init), optional `setup` block injec
   }
 }
 ```
-- **initialWorkers:** Optional. Map player id → `{ "peasants", "apprentices", "journeymen", "masters" }`. Overrides that player's worker pool before the first turn. Used for consumption/starvation scenarios (SPEC/game/workers-and-population.md).
+- **initialWorkers:** Optional. Map player id → `{ "peasants", "apprentices", "journeymen", "masters" }`. Overrides that player's worker pool before the first turn. Used for consumption / food-strike scenarios (SPEC/game/workers-and-population.md).
 - **initialStockpile:** Optional. Map player id → `{ commodityId: quantity, ... }`. Overrides that player's stockpile (replaces) before the first turn. Commodity ids are canonical (e.g. `grain`, `meat`).
 - **productionAssignments:** Optional. List of `{ "recipeId": "<id>", "assignedLabour": <n> }`. Passed to the Production phase for each turn so scenarios can verify SPEC/game/stockpiles-and-production.md (inputs consumed, outputs added to central stockpile). Same list is used for every turn in the scenario. Recipe ids are from the program-level catalog (e.g. `lumber_from_timber`, `castIron_from_timber_iron_coal`).
 - **initialTileState:** Optional. Map tile key (e.g. `"oldWorld|p1|0|0"`) → `{ "improvementLevel": 0–4, "roadLevel": 0|1|2|4 }`. Applied to `worldState.tileState` before the first turn. Used for extraction scenarios (SPEC/game/extraction-and-improvements.md).
@@ -104,6 +106,11 @@ Each turn specifies orders for one or more players:
 ```
 
 Supported order types: `move`, `build`, `work`, `diplomatic`, `research`, `naval_move`, `naval_mission`.
+
+- **work orders:** Use `type: "work"` with:
+  - `unit` — unit id in the game state.
+  - `workType` — work target id (`explore`, `prospect`, `build_improvement`, `build_road`, `build_port`, `build_fort`, `build_rail`, `steal_tech`, `counter_spy`, `purchase_land`).
+  - `targetTileKey` (optional but **required** for tile-level work such as `build_improvement`, `build_road`, `build_port`, `build_fort`, `build_rail`): tile key string in format `regionId|provinceId|x|y`. When omitted, the runner uses the work target’s own default behaviour (e.g. province-level `explore`). For **build_improvement**, the target tile must have a resource in world state and the ordering player's tech cap must allow the next improvement level; otherwise the order engine rejects the order (see [extraction-and-improvements.md](../game/extraction-and-improvements.md), [development-resolution.md](development-resolution.md)). For **build_rail**, the tile must have transport level 1 or 2, the scenario must supply **terrainGrid** (or otherwise provide tile map terrain) so terrain is known, and the player's unlocked tech must allow rail on that terrain; otherwise validation rejects the order (see [tech-tree-transport.md](../game/tech-tree-transport.md)).
 
 Each turn may optionally include **workerAssignments** (production phase): a list of `{ "recipeId": "<id>", "assignedLabour": <n> }`. These are passed as default production assignments for that turn so the Production phase can run recipes; see SPEC/game/production-recipes.md. Scenario setup may include **initialStockpile** and **initialWorkers** per player (map from player id to commodity quantities or worker counts) to set economy state before turns run.
 
@@ -182,11 +189,19 @@ Assertion fields:
 
 **Faction count assertions** (SPEC/game/factions.md): use `greatPowerCount`, `minorNationCount`, `tribeCount` (expected integer counts) to verify that game setup created the configured Great Powers, Minor Nations, and Tribes. Example: `{"turn": 1, "greatPowerCount": 1, "minorNationCount": 1, "tribeCount": 1}`.
 
-**Fog/exploration assertions** (SPEC/game/fog-and-exploration.md): use `player`, `tileKey` (format `regionId|provinceId|x|y`), and optionally `tileVisibility` (expected level: `unknown`, `revealed`, `fogged`, `fullyVisible`) and/or `tileProspected` (boolean). Example: `{"turn": 1, "player": "gp1", "tileKey": "oldWorld|p1|0|0", "tileVisibility": "fullyVisible"}`; `{"player": "gp1", "tileKey": "oldWorld|p2|2|0", "tileVisibility": "fogged", "tileProspected": false}`.
+**Faction effective military level** (SPEC/game/factions.md): use `player` (Minor or Tribe faction id, e.g. `minor1`, `tribe1`) and `effectiveMilitaryLevel` (expected integer 1–4) to verify parity step: minors get max GP level; tribes always 1. Example: `{"turn": 1, "player": "tribe1", "effectiveMilitaryLevel": 1}`.
+
+**Fog/exploration assertions** (SPEC/game/fog-and-exploration.md): use `player`, `tileKey` (format `regionId|provinceId|x|y`), and optionally `tileVisibility` (expected level: `unknown`, `revealed`, `fogged`, `fullyVisible`) and/or `tileProspected` (boolean). Example: `{"turn": 1, "player": "gp1", "tileKey": "oldWorld|p1|0|0", "tileVisibility": "fullyVisible"}`; `{"player": "gp1", "tileKey": "oldWorld|p2|2|0", "tileVisibility": "fogged", "tileProspected": false}`. For **sea zone tiles**, the second segment of `tileKey` is the sea zone local id (e.g. `oldWorld|s1|0|0` for a cell in sea zone `s1`). Visibility scenario coverage (including coastal sea zone full visibility) is defined in [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md) § Visibility test scenarios.
+
+**Improvement naming assertions** (SPEC/game/extraction-and-improvements.md): when the scenario runner exposes a UI-facing view for tiles, use `tileKey` (format `regionId|provinceId|x|y`) with `tileImprovementName` (expected string) to verify that the improvement naming table is applied correctly. Example: `{"turn": 1, "tileKey": "oldWorld|p1|0|0", "tileImprovementName": "Farm"}` for a tile whose resource id is `grain` and improvement level is between 1 and 4 inclusive.
+  
+**Road / transport-level assertions** (SPEC/game/capital-and-connectivity.md, SPEC/program/development-resolution.md): use `tileKey` with `tileRoadLevel` (expected integer in `{0,1,2,4}`) to verify the per-tile road/transport level in `worldState.tileState`. Example: `{"turn": 2, "tileKey": "oldWorld|p1|1|1", "tileRoadLevel": 2}` for a tile that should have been upgraded by a `build_road` work order and any adjacency propagation rules.
 
 **Leader assertions** (SPEC/game/leader-bonuses.md): use `player` (Great Power id) and `leaderKey` (expected leader key, e.g. `napoleon`, `frederick`, `reserve`). Example: `{"turn": 1, "player": "gp1", "leaderKey": "napoleon"}`.
 
 **Research-state assertions** (SPEC/game/research-state.md): use `player` and `techUnlocked` (array of tech ids that must be true in that player’s techUnlocked map). Example: `{"turn": 1, "player": "gp1", "techUnlocked": ["gathering_1", "road_construction"]}`.
+
+**Victory assertions** (SPEC/game/victory.md): use `victoryWinner` (expected winner player id), `victoryType` (e.g. `military`), and optionally `victoryTurn` (turn number when victory was set). Verifies `Game.victory` after end-of-turn. Example: `{"turn": 1, "victoryWinner": "gp1", "victoryType": "military", "victoryTurn": 0}`.
 
 ---
 
@@ -237,3 +252,25 @@ Markdown report with:
 - Entry: `melos run sim_scenarios`
 - Depends on: `runInitGame()` from colonizethis_logic, `GameSaveAdapter` from colonizethis_save
 - Shares init code with ctdev via `init_game_orchestrator.dart`
+
+---
+
+## Seaboard and port audit (GitHub [#1766](https://github.com/waigore/colonizethisv3/issues/1766))
+
+**Purpose:** After each scenario’s game is initialized and optional `setup` is applied, the runner performs a **seaboard / port data audit** so invalid `portsByProvinceSeaboard` geometry or missing capital-port registry entries fail **before** map view construction. Complements strict harbor placement in [town-port-icons.md](../ui/town-port-icons.md) (GitHub [#1761](https://github.com/waigore/colonizethisv3/issues/1761)).
+
+**Where:** `tool/sim_scenarios/lib/seaboard_port_audit.dart`, invoked from `tool/sim_scenarios/lib/scenario_runner.dart` immediately after setup.
+
+**Predicate (summary):**
+
+- **Seaboard province:** same as map view / capital setup — province node with a **P↔S** topology edge to a **sea zone** node in that region’s topology (local sea zone ids), per [map-topology.md](../game/map-topology.md) and `init_game_map_view_builder` coastal detection.
+- **Drawable sea cell:** for every `portsByProvinceSeaboard` entry, `computePortDrawableSeaCellForMap` (colonizethis_map) must not throw for that entry’s port tile key and the region’s tile map + sea zone id set.
+- **Capital port completeness:** for each Great Power, Minor Nation, and Tribe with a **capital tile** in a region whose topology marks that capital province as **sea-bound** (`isProvinceSeaBound`), every adjacent sea zone in that topology must have a matching `portsByProvinceSeaboard` key `fullProvinceId|seaZoneId` (same shape as `applyCapitalPortAndRoad` in capital setup). Inland capitals are not checked for port registry completeness.
+
+- **Unowned provinces:** [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Town per province applies only to **owned** provinces; unowned provinces get a default town tile from setup (first tile in the province). The audit **does not** require or check `portsByProvinceSeaboard` entries for provinces with **no** `ownerId`.
+
+- **Overseas owned provinces (town vs port):** Per [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Town per province, a province **overseas** for its owner (province `regionId` ≠ capital province’s region) with **at least one** port registry entry for that full province id must have **`townTileKey` equal to one of those port tile values** (same rule as init town assignment’s overseas branch). Failure kind: `overseas_town_not_port_tile`.
+
+**Skipped audit:** Init paths without both `tileMapByRegion` and `topologyByRegion` (e.g. `saved` scenarios that load a game without map data in the runner) skip the audit and record `skipped: true` in the JSON summary; they do **not** fail the scenario on that basis alone.
+
+**Output:** Batch and single-scenario runs append a fenced **JSON** block after the markdown report with `seaboardPortAuditVersion` and per-scenario `portAudit` objects (`skipped`, `skipReason`, `failures` with structured fields). Any non-skipped audit failure fails the scenario run and exits non-zero (same CI gate as `melos run sim_scenarios`).

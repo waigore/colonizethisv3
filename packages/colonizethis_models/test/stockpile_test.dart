@@ -1,5 +1,5 @@
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('Stockpile', () {
@@ -18,6 +18,15 @@ void main() {
 
       final s4 = s3.applyDelta('grain', -10);
       expect(s4.quantityOf('grain'), 0);
+    });
+
+    test('applyDelta has no upper cap on quantity (strategic stockpile)', () {
+      const s = Stockpile();
+      const large = 2000000;
+      final s2 = s.applyDelta('iron', large);
+      expect(s2.quantityOf('iron'), large);
+      final s3 = s2.applyDelta('iron', 1);
+      expect(s3.quantityOf('iron'), large + 1);
     });
 
     test('merge sums quantities', () {

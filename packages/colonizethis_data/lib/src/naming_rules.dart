@@ -14,6 +14,7 @@ class LeaderVariant {
   final String id;
   final String name;
   final String leaderKey;
+
   /// Homeland province names (9 non-capital). Capital applied separately.
   final List<String> provinceNamePool;
 }
@@ -37,11 +38,10 @@ class GreatPowerNaming {
   final String capitalCityName;
   final List<LeaderVariant> leaderVariants;
 
-  LeaderVariant variantById(String variantId) =>
-      leaderVariants.firstWhere(
-        (v) => v.id == variantId,
-        orElse: () => leaderVariants.first,
-      );
+  LeaderVariant variantById(String variantId) => leaderVariants.firstWhere(
+    (v) => v.id == variantId,
+    orElse: () => leaderVariants.first,
+  );
 
   bool get hasMultipleVariants => leaderVariants.length > 1;
 
@@ -87,9 +87,12 @@ class ResolvedNamingConfig {
   final List<TribeNaming> tribes;
 
   GreatPowerNaming? gpById(String id) =>
-      greatPowers.firstWhere((g) => g.id == id, orElse: () => _emptyGp).id.isEmpty
-          ? null
-          : greatPowers.firstWhere((g) => g.id == id);
+      greatPowers
+          .firstWhere((g) => g.id == id, orElse: () => _emptyGp)
+          .id
+          .isEmpty
+      ? null
+      : greatPowers.firstWhere((g) => g.id == id);
 
   static const GreatPowerNaming _emptyGp = GreatPowerNaming(
     id: '',
@@ -111,21 +114,30 @@ class ResolvedNamingConfig {
   }
 
   MinorNationNaming? minorById(String id) =>
-      minorNations.firstWhere((m) => m.id == id, orElse: () => const MinorNationNaming(
-            id: '',
-            displayName: '',
-          )).id.isEmpty
-          ? null
-          : minorNations.firstWhere((m) => m.id == id);
+      minorNations
+          .firstWhere(
+            (m) => m.id == id,
+            orElse: () => const MinorNationNaming(id: '', displayName: ''),
+          )
+          .id
+          .isEmpty
+      ? null
+      : minorNations.firstWhere((m) => m.id == id);
 
   TribeNaming? tribeById(String id) =>
-      tribes.firstWhere((t) => t.id == id, orElse: () => const TribeNaming(
-            id: '',
-            displayName: '',
-            provinceNamePool: [],
-          )).id.isEmpty
-          ? null
-          : tribes.firstWhere((t) => t.id == id);
+      tribes
+          .firstWhere(
+            (t) => t.id == id,
+            orElse: () => const TribeNaming(
+              id: '',
+              displayName: '',
+              provinceNamePool: [],
+            ),
+          )
+          .id
+          .isEmpty
+      ? null
+      : tribes.firstWhere((t) => t.id == id);
 }
 
 /// All selectable Great Power semantic ids. GDD 09. Each GP appears at most once per game.
@@ -143,7 +155,7 @@ const List<String> allGreatPowerIds = [
 const String prussiaVariantFrederickTheGreat = 'frederick_the_great';
 const String prussiaVariantFrederickWilliam = 'frederick_william';
 
-/// Default historically inspired naming config for the MVP ruleset.
+/// Default historically inspired naming config (program-level; current product).
 ///
 /// This is a program-level stand-in for a future JSON-driven ruleset; it is
 /// deterministic and aligned with the Great Power identities from GDD 09.
@@ -339,22 +351,46 @@ const ResolvedNamingConfig defaultNamingConfig = ResolvedNamingConfig(
     MinorNationNaming(
       id: 'minor1',
       displayName: 'Italy',
-      provinceNamePool: ['Papal States', 'Venice', 'Milan', 'Naples', 'Tuscany'],
+      provinceNamePool: [
+        'Papal States',
+        'Venice',
+        'Milan',
+        'Naples',
+        'Tuscany',
+      ],
     ),
     MinorNationNaming(
       id: 'minor2',
       displayName: 'Germany',
-      provinceNamePool: ['Bavaria', 'Saxony', 'Brandenburg', 'Hanover', 'Palatinate'],
+      provinceNamePool: [
+        'Bavaria',
+        'Saxony',
+        'Brandenburg',
+        'Hanover',
+        'Palatinate',
+      ],
     ),
     MinorNationNaming(
       id: 'minor3',
       displayName: 'Austria',
-      provinceNamePool: ['Lower Austria', 'Upper Austria', 'Styria', 'Tyrol', 'Carinthia'],
+      provinceNamePool: [
+        'Lower Austria',
+        'Upper Austria',
+        'Styria',
+        'Tyrol',
+        'Carinthia',
+      ],
     ),
     MinorNationNaming(
       id: 'minor4',
       displayName: 'Poland',
-      provinceNamePool: ['Greater Poland', 'Lesser Poland', 'Mazovia', 'Lithuania', 'Livonia'],
+      provinceNamePool: [
+        'Greater Poland',
+        'Lesser Poland',
+        'Mazovia',
+        'Lithuania',
+        'Livonia',
+      ],
     ),
     MinorNationNaming(
       id: 'minor5',
@@ -364,7 +400,13 @@ const ResolvedNamingConfig defaultNamingConfig = ResolvedNamingConfig(
     MinorNationNaming(
       id: 'minor6',
       displayName: 'Scotland',
-      provinceNamePool: ['Lothian', 'Fife', 'Strathclyde', 'Grampian', 'Highlands'],
+      provinceNamePool: [
+        'Lothian',
+        'Fife',
+        'Strathclyde',
+        'Grampian',
+        'Highlands',
+      ],
     ),
   ],
   tribes: [
@@ -372,7 +414,13 @@ const ResolvedNamingConfig defaultNamingConfig = ResolvedNamingConfig(
     TribeNaming(
       id: 'tribe1',
       displayName: 'Aztec',
-      provinceNamePool: ['Mexica', 'Acolhua', 'Tepanec', 'Tlaxcala', 'Cuauhnahuac'],
+      provinceNamePool: [
+        'Mexica',
+        'Acolhua',
+        'Tepanec',
+        'Tlaxcala',
+        'Cuauhnahuac',
+      ],
     ),
     TribeNaming(
       id: 'tribe2',
@@ -382,7 +430,13 @@ const ResolvedNamingConfig defaultNamingConfig = ResolvedNamingConfig(
     TribeNaming(
       id: 'tribe3',
       displayName: 'Inca',
-      provinceNamePool: ['Cuzco', 'Chinchaysuyu', 'Antisuyu', 'Qullasuyu', 'Kuntisuyu'],
+      provinceNamePool: [
+        'Cuzco',
+        'Chinchaysuyu',
+        'Antisuyu',
+        'Qullasuyu',
+        'Kuntisuyu',
+      ],
     ),
     TribeNaming(
       id: 'tribe4',
@@ -397,7 +451,13 @@ const ResolvedNamingConfig defaultNamingConfig = ResolvedNamingConfig(
     TribeNaming(
       id: 'tribe6',
       displayName: 'Powhatan',
-      provinceNamePool: ['Powhatan', 'Pamunkey', 'Chickahominy', 'Appomattoc', 'Weanoc'],
+      provinceNamePool: [
+        'Powhatan',
+        'Pamunkey',
+        'Chickahominy',
+        'Appomattoc',
+        'Weanoc',
+      ],
     ),
     TribeNaming(
       id: 'tribe7',

@@ -2,10 +2,13 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:ctdev/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
+import 'package:meta/meta.dart';
 
 import 'ctdev_log.dart';
+
+final _ctdevSimLog = packageLogger();
 
 /// One order entry in the sim game order history (for UI display).
 class SimOrderHistoryEntry {
@@ -78,7 +81,10 @@ class SimGameController {
   int get baseSeed => _baseSeed;
 
   final Map<String, Orders> _pendingOrdersByPlayerId = {};
+  /// When using full AI, economy plans per player for production phase. Cleared on resolve.
+  final Map<String, EconomyPlan> _pendingEconomyPlansByPlayerId = {};
   final List<SimOrderHistoryEntry> _orderHistory = [];
+  final List<String> _lastTurnCombatSummaries = [];
 
   Game get game => _game;
   Map<String, Orders> get pendingOrdersByPlayerId =>
@@ -101,6 +107,40 @@ class SimGameController {
   List<SimOrderHistoryEntry> get orderHistory =>
       List.unmodifiable(_orderHistory);
 
+  /// Land + naval combat lines from the last resolved turn (Overview tab).
+  List<String> get lastTurnCombatSummaries =>
+      List.unmodifiable(_lastTurnCombatSummaries);
+
+  /// True when at least one GP has non-empty pending orders (for projections).
+  bool get hasPendingOrdersForProjection {
+    for (final p in _game.players) {
+      final o = _pendingOrdersByPlayerId[p.id];
+      if (o != null && !_isOrdersEffectivelyEmpty(o)) return true;
+    }
+    return false;
+  }
+
+  /// Dry-run effects for [playerId] from merged pending orders; null if no pending.
+  ProjectedEffects? projectedEffectsForPlayer(String playerId) {
+    if (!hasPendingOrdersForProjection) return null;
+    return projectOrderEffects(
+      game: _game,
+      orders: mergePendingOrdersForProjection(),
+      topology: _topology,
+      tileMapByRegion: _tileMapByRegion,
+      playerId: playerId,
+    );
+  }
+
+  /// Merges per-GP pending orders with empty [Orders] for GPs not yet filled.
+  Orders mergePendingOrdersForProjection() {
+    final list = <Orders>[
+      for (final p in _game.players)
+        _pendingOrdersByPlayerId[p.id] ?? const Orders(),
+    ];
+    return _combineOrders(list);
+  }
+
   bool get allPlayersHaveOrders {
     final ids = _game.players.map((p) => p.id).toList();
     return ids.every(_pendingOrdersByPlayerId.containsKey);
@@ -112,19 +152,35 @@ class SimGameController {
     final currentTurn = _game.worldState.turnState.turnNumber;
     for (final player in _game.players) {
       if (_pendingOrdersByPlayerId.containsKey(player.id)) continue;
-      final orders = useSimGameAi
-          ? defaultSimGameAi(
-              game: _game,
-              player: player,
-              topology: _topology,
-              baseSeed: _baseSeed,
-            )
-          : (useFullAI
-              ? generateOrdersForPlayerFullAI(_game, _topology, player.id)
-              : generateOrdersForPlayer(_game, _topology, player.id));
-      _pendingOrdersByPlayerId[player.id] = orders;
-      Logger().i(
-        'ctdev: Turn $currentTurn: generated orders for ${player.displayName} (${player.id})',
+      if (useSimGameAi) {
+        final orders = defaultSimGameAi(
+          game: _game,
+          player: player,
+          topology: _topology,
+          baseSeed: _baseSeed,
+          tileMapByRegion: _tileMapByRegion,
+        );
+        _pendingOrdersByPlayerId[player.id] = orders;
+      } else if (useFullAI) {
+        final result = generateOrdersForPlayerFullAI(
+          _game,
+          _topology,
+          player.id,
+          tileMapByRegion: _tileMapByRegion,
+        );
+        _pendingOrdersByPlayerId[player.id] = result.orders;
+        _pendingEconomyPlansByPlayerId[player.id] = result.economyPlan;
+      } else {
+        final orders = generateOrdersForPlayer(
+          _game,
+          _topology,
+          player.id,
+          tileMapByRegion: _tileMapByRegion,
+        );
+        _pendingOrdersByPlayerId[player.id] = orders;
+      }
+      _ctdevSimLog.i(
+        'Turn $currentTurn: generated orders for ${player.displayName} (${player.id})',
       );
       break;
     }
@@ -135,35 +191,60 @@ class SimGameController {
     if (!allPlayersHaveOrders) return;
     clearUiLog();
     final combined = _combineOrders(_pendingOrdersByPlayerId.values.toList());
+    final defaultAssignmentsByPlayerId = _pendingEconomyPlansByPlayerId.isEmpty
+        ? null
+        : _pendingEconomyPlansByPlayerId.map(
+            (pid, plan) => MapEntry(pid, plan.productionAssignments),
+          );
     _pendingOrdersByPlayerId.clear();
-    _advanceOneTurnFromOrders(combined);
+    _pendingEconomyPlansByPlayerId.clear();
+    _advanceOneTurnFromOrders(
+      combined,
+      defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    );
   }
 
   /// Generates orders for all Great Powers and advances one full turn.
   /// All GPs use the selected AI (Sim Game AI or AI Planner).
   void stepFullTurn() {
     clearUiLog();
-    final List<Orders> ordersList;
     if (useSimGameAi) {
-      ordersList = [
+      final ordersList = [
         for (final player in _game.players)
           defaultSimGameAi(
             game: _game,
             player: player,
             topology: _topology,
             baseSeed: _baseSeed,
+            tileMapByRegion: _tileMapByRegion,
           ),
       ];
+      final combined = _combineOrders(ordersList);
+      _pendingOrdersByPlayerId.clear();
+      _advanceOneTurnFromOrders(combined);
+    } else if (useFullAI) {
+      final result = generateOrdersForGameFullAI(
+        _game,
+        _topology,
+        tileMapByRegion: _tileMapByRegion,
+      );
+      final defaultAssignmentsByPlayerId = result.economyPlansByPlayerId.map(
+        (pid, plan) => MapEntry(pid, plan.productionAssignments),
+      );
+      _pendingOrdersByPlayerId.clear();
+      _advanceOneTurnFromOrders(
+        result.orders,
+        defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+      );
     } else {
-      ordersList = [
-        useFullAI
-            ? generateOrdersForGameFullAI(_game, _topology)
-            : generateOrdersForGame(_game, _topology),
-      ];
+      final combined = generateOrdersForGame(
+        _game,
+        _topology,
+        tileMapByRegion: _tileMapByRegion,
+      );
+      _pendingOrdersByPlayerId.clear();
+      _advanceOneTurnFromOrders(combined);
     }
-    final combined = _combineOrders(ordersList);
-    _pendingOrdersByPlayerId.clear();
-    _advanceOneTurnFromOrders(combined);
   }
 
   /// Advances the game by [turns] full turns using the default AI.
@@ -171,6 +252,12 @@ class SimGameController {
     for (var i = 0; i < turns; i++) {
       stepFullTurn();
     }
+  }
+
+  /// Resolves one turn from explicit [orders] (tests and scripted runs).
+  @visibleForTesting
+  void advanceTurnForTesting(Orders orders) {
+    _advanceOneTurnFromOrders(orders);
   }
 
   Orders _combineOrders(List<Orders> all) {
@@ -217,19 +304,41 @@ class SimGameController {
     );
   }
 
-  void _advanceOneTurnFromOrders(Orders orders) {
+  void _advanceOneTurnFromOrders(
+    Orders orders, {
+    Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  }) {
     _recordOrderHistory(orders);
+    _lastTurnCombatSummaries.clear();
     final before = _game;
-    final next = validateOrdersAndResolveTurn(
+    final next = requireTurnResolutionComplete(validateOrdersAndResolveTurn(
       game: _game,
       topology: _topology,
       orders: orders,
       tileMapByRegion: _tileMapByRegion,
       defaultAssignments: const [],
-    );
+      defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+      onGameEvent: _recordCombatGameEvent,
+    ));
     _game = next;
     _recordTurnLog(before: before, after: next);
   }
+
+  void _recordCombatGameEvent(GameEvent event) {
+    final line = _combatEventUiLine(event);
+    if (line == null) return;
+    _lastTurnCombatSummaries.add(line);
+    _ctdevSimLog.i(line);
+  }
+
+  bool _isOrdersEffectivelyEmpty(Orders o) =>
+      o.moveOrdersByPlayerId.isEmpty &&
+      o.buildUnitOrdersByPlayerId.isEmpty &&
+      o.workOrdersByPlayerId.isEmpty &&
+      o.diplomaticOrdersByPlayerId.isEmpty &&
+      o.researchOrdersByPlayerId.isEmpty &&
+      o.navalMoveOrdersByPlayerId.isEmpty &&
+      o.navalMissionOrdersByPlayerId.isEmpty;
 
   void _recordOrderHistory(Orders orders) {
     if (orders.moveOrdersByPlayerId.isEmpty &&
@@ -412,6 +521,60 @@ class SimGameController {
           ),
         );
       }
+
+      // Research is not part of [OrderEngine.validatePlayerOrdersWithContext] results;
+      // resolution applies rules in the research phase. Log submissions for the Orders tab.
+      for (final o in research) {
+        final techLabel = o.techId.isEmpty
+            ? 'cancel slot'
+            : techDisplayName(o.techId);
+        _orderHistory.add(
+          SimOrderHistoryEntry(
+            turnNumber: currentTurn,
+            playerId: playerId,
+            playerName: player.displayName,
+            orderType: 'research',
+            summary:
+                'Research slot ${o.slotIndex}: $techLabel (${o.funding.name})',
+            status: OrderValidationStatus.accepted,
+            reason: null,
+          ),
+        );
+      }
+
+      for (final o in naval) {
+        final dest = o.isDock
+            ? 'dock ${o.destinationPortProvinceId}'
+            : 'sea ${o.destinationSeaZoneId}';
+        final validation = nextResult();
+        _orderHistory.add(
+          SimOrderHistoryEntry(
+            turnNumber: currentTurn,
+            playerId: playerId,
+            playerName: player.displayName,
+            orderType: 'naval_move',
+            summary: 'Naval move fleet ${o.fleetId} → $dest',
+            status: validation.status,
+            reason: validation.reason,
+          ),
+        );
+      }
+
+      for (final o in mission) {
+        final target = o.targetProvinceId ?? o.targetPortId ?? '—';
+        final validation = nextResult();
+        _orderHistory.add(
+          SimOrderHistoryEntry(
+            turnNumber: currentTurn,
+            playerId: playerId,
+            playerName: player.displayName,
+            orderType: 'naval_mission',
+            summary: 'Naval mission fleet ${o.fleetId}: ${o.mission} ($target)',
+            status: validation.status,
+            reason: validation.reason,
+          ),
+        );
+      }
     }
   }
 
@@ -442,11 +605,46 @@ class SimGameController {
     }
 
     if (flips.isEmpty) {
-      Logger().i('ctdev: Turn $turn ($year): no province ownership changes');
+      _ctdevSimLog.i('Turn $turn ($year): no province ownership changes');
     } else {
-      Logger().i(
-        'ctdev: Turn $turn ($year): province ownership changes: ${flips.join(', ')}',
+      _ctdevSimLog.i(
+        'Turn $turn ($year): province ownership changes: ${flips.join(', ')}',
       );
     }
+  }
+}
+
+String? _combatEventUiLine(GameEvent event) {
+  switch (event) {
+    case CombatResultEvent(
+        :final provinceId,
+        :final attackerId,
+        :final defenderId,
+        :final winnerId,
+        :final casualties,
+      ):
+      final cas = casualties.isEmpty ? '' : ' casualties=$casualties';
+      return 'Land combat $provinceId: $attackerId vs $defenderId → '
+          '$winnerId$cas';
+    case NavalCombatResultEvent(
+        :final seaZoneId,
+        :final side1OwnerId,
+        :final side2OwnerId,
+        :final outcomeName,
+        :final winnerOwnerId,
+        :final side1Retreated,
+        :final side2Retreated,
+      ):
+      final w = winnerOwnerId != null ? ' winner=$winnerOwnerId' : '';
+      final r = (side1Retreated || side2Retreated)
+          ? ' retreat=${[
+              if (side1Retreated) 'side1',
+              if (side2Retreated) 'side2',
+            ].join(',')}'
+          : '';
+      return 'Naval combat sea $seaZoneId: $side1OwnerId vs '
+          '$side2OwnerId → $outcomeName$w$r';
+    default:
+      return null;
   }
 }

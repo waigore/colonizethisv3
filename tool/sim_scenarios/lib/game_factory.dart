@@ -9,6 +9,7 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
 
 import 'scenario.dart';
+import 'sim_scenarios_validation_exception.dart';
 
 /// Result of creating a game for a scenario.
 /// Includes the game and supporting data for turn resolution.
@@ -16,11 +17,15 @@ class GameInitResult {
   const GameInitResult({
     required this.game,
     this.topology,
+    this.topologyByRegion,
     this.tileMapByRegion,
   });
 
   final Game game;
+  /// Combined topology (prefixed ids) for turn resolution.
   final MapTopology? topology;
+  /// Per-region topology with local node ids (capital setup, map drawable checks).
+  final Map<String, MapTopology>? topologyByRegion;
   final Map<String, TileMapResult>? tileMapByRegion;
 }
 
@@ -43,12 +48,15 @@ class GameFactory {
     return GameInitResult(
       game: result.game,
       topology: result.combinedTopology,
+      topologyByRegion: result.topologyByRegion,
       tileMapByRegion: result.tileMapByRegion,
     );
   }
 
   /// Creates a fresh game from a JSON config map.
-  Future<GameInitResult> createFreshGameFromJson(Map<String, dynamic> json) async {
+  Future<GameInitResult> createFreshGameFromJson(
+    Map<String, dynamic> json,
+  ) async {
     final config = _parseGameSetupConfig(json);
     return createFreshGame(config);
   }
@@ -58,7 +66,9 @@ class GameFactory {
   /// oldWorld: { grid: List<List<String>>, nodes: [...], edges: [...] }, and optional newWorld.
   Future<GameInitResult> createFromTopology(ScenarioInit init) async {
     if (init.type != 'fromTopology' || init.oldWorld == null) {
-      throw ArgumentError('createFromTopology requires init.type==fromTopology and init.oldWorld');
+      throw SimScenariosValidationException(
+        'createFromTopology requires init.type==fromTopology and init.oldWorld',
+      );
     }
     final ow = init.oldWorld!;
     final tileMapOW = _tileMapFromTopologyJson(ow);
@@ -74,10 +84,20 @@ class GameFactory {
       topologyNW = MapTopology.fromJson(Map<String, dynamic>.from(nw));
     } else {
       // Minimal NW (config requires numProvincesNewWorld >= 1): one province for tribes.
-      tileMapNW = TileMapResult(width: 1, height: 1, grid: [['nw1']]);
+      tileMapNW = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: [
+          ['nw1'],
+        ],
+      );
       topologyNW = MapTopology(
         nodes: const [
-          TopologyNode(id: 'nw1', regionId: 'newWorld', type: TopologyNodeType.province),
+          TopologyNode(
+            id: 'nw1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [],
       );
@@ -93,7 +113,7 @@ class GameFactory {
     final baseConfig = init.config != null
         ? _parseGameSetupConfig(init.config!)
         : GameSetupConfig(
-            selectedGreatPowerIds: ['england'],
+            selectedGreatPowerIds: const ['england'],
             continentCount: 1,
             minorNationCount: 0,
             tribeCount: 1,
@@ -105,12 +125,17 @@ class GameFactory {
     final config = GameSetupConfig(
       selectedGreatPowerIds: baseConfig.selectedGreatPowerIds,
       continentCount: baseConfig.continentCount,
-      minorNationCount: 0, // fromTopology: fixed topology, no minor nations (SPEC/program/sim-scenarios.md)
+      minorNationCount:
+          0, // fromTopology: fixed topology, no minor nations (SPEC/program/sim-scenarios.md)
       tribeCount: numNW > 0 ? baseConfig.tribeCount : 0,
       numProvincesOldWorld: numOW,
       numProvincesNewWorld: numNW >= 1 ? numNW : 1,
       minProvincesPerMinor: 0, // fromTopology: no reservation for minors
       seed: baseConfig.seed,
+      startingResources: baseConfig.startingResources,
+      enforceFairGpOldWorldAssignment:
+          baseConfig.enforceFairGpOldWorldAssignment,
+      initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
     );
 
     final warpLinks = generateWarpZones(
@@ -134,9 +159,18 @@ class GameFactory {
       warpLinks: warpLinks,
     );
 
+    // SPEC/game/military-generals.md: at game start each Great Power has one general (cap 1).
+    var game = setupResult.game;
+    final initialGenerals = [
+      for (final p in game.players)
+        General(id: '${p.id}_gen_0', ownerId: p.id, medals: 0),
+    ];
+    game = game.copyWith(generals: initialGenerals);
+
     return GameInitResult(
-      game: setupResult.game,
+      game: game,
       topology: setupResult.combinedTopology,
+      topologyByRegion: setupResult.topologyByRegion,
       tileMapByRegion: setupResult.tileMapByRegion,
     );
   }
@@ -156,14 +190,37 @@ class GameFactory {
     final rg = json['resourceGrid'] as List<dynamic>?;
     if (rg != null && rg.length == height) {
       resourceGrid = rg
-          .map((row) => (row as List<dynamic>)
-              .map((e) => e == null || e == ''
-                  ? null
-                  : Resource.values.byName(e as String))
-              .toList())
+          .map(
+            (row) => (row as List<dynamic>)
+                .map(
+                  (e) => e == null || e == ''
+                      ? null
+                      : Resource.values.byName(e as String),
+                )
+                .toList(),
+          )
           .toList();
-      if (resourceGrid!.any((row) => row.length != width)) {
+      if (resourceGrid.any((row) => row.length != width)) {
         resourceGrid = null;
+      }
+    }
+
+    List<List<TerrainType?>>? terrainGrid;
+    final tg = json['terrainGrid'] as List<dynamic>?;
+    if (tg != null && tg.length == height) {
+      terrainGrid = tg
+          .map(
+            (row) => (row as List<dynamic>)
+                .map(
+                  (e) => e == null || (e is String && e.isEmpty)
+                      ? null
+                      : TerrainType.values.byName(e as String),
+                )
+                .toList(),
+          )
+          .toList();
+      if (terrainGrid.any((row) => row.length != width)) {
+        terrainGrid = null;
       }
     }
 
@@ -171,6 +228,7 @@ class GameFactory {
       width: width,
       height: height,
       grid: grid,
+      terrainGrid: terrainGrid,
       resourceGrid: resourceGrid,
     );
   }
@@ -186,17 +244,62 @@ class GameFactory {
 
   /// Parses a JSON map into GameSetupConfig.
   GameSetupConfig _parseGameSetupConfig(Map<String, dynamic> json) {
+    StartingResourcesConfig _parseStartingResources(Map<String, dynamic>? raw) {
+      if (raw == null) return const StartingResourcesConfig();
+      return StartingResourcesConfig(
+        initialPeasants: (raw['initialPeasants'] as num?)?.toInt() ?? 4,
+        initialGrainTurns: (raw['initialGrainTurns'] as num?)?.toInt() ?? 10,
+        initialTreasury: (raw['initialTreasury'] as num?)?.toInt() ?? 5000,
+        initialImprovementSlots:
+            (raw['initialImprovementSlots'] as num?)?.toInt() ?? 5,
+        initialWool: (raw['initialWool'] as num?)?.toInt() ?? 4,
+        initialPaper: (raw['initialPaper'] as num?)?.toInt() ?? 2,
+        initialMilitaryRegiments:
+            (raw['initialMilitaryRegiments'] as num?)?.toInt() ?? 3,
+        initialNavalShips: (raw['initialNavalShips'] as num?)?.toInt() ?? 1,
+        capitalTileGrainBonusPerTurn:
+            (raw['capitalTileGrainBonusPerTurn'] as num?)?.toInt() ?? 5,
+        startingCivilianUnits: Map<String, int>.from(
+          (raw['startingCivilianUnits'] as Map<String, dynamic>? ??
+                  const <String, int>{})
+              .map((k, v) => MapEntry(k, (v as num).toInt())),
+        ),
+      );
+    }
+
+    final startingResources = _parseStartingResources(
+      json['startingResources'] as Map<String, dynamic>?,
+    );
+
     return GameSetupConfig(
-      selectedGreatPowerIds: (json['greatPowers'] as List<dynamic>?)
-              ?.cast<String>() ??
+      selectedGreatPowerIds:
+          (json['greatPowers'] as List<dynamic>?)?.cast<String>() ??
           GameSetupConfig.defaultConfig.selectedGreatPowerIds,
       continentCount: json['continentCount'] as int? ?? 4,
-      minorNationCount: json['minorNationCount'] as int? ?? 6,
+      minorNationCount: json['minorNationCount'] as int? ?? 3,
       tribeCount: json['tribeCount'] as int? ?? 10,
       numProvincesOldWorld: json['numProvincesOldWorld'] as int? ?? 60,
       numProvincesNewWorld: json['numProvincesNewWorld'] as int? ?? 80,
       minProvincesPerMinor: json['minProvincesPerMinor'] as int? ?? 3,
       seed: json['seed'] as int? ?? 42,
+      startingResources: startingResources,
+      enforceFairGpOldWorldAssignment:
+          json['enforceFairGpOldWorldAssignment'] == true,
+      initTownRoadWiringRegionIds: _parseInitTownRoadWiringRegionIds(
+        json['initTownRoadWiringRegionIds'],
+      ),
     );
+  }
+
+  static Set<String> _parseInitTownRoadWiringRegionIds(dynamic raw) {
+    if (raw == null) {
+      return GameSetupConfig.defaultConfig.initTownRoadWiringRegionIds;
+    }
+    if (raw is! List<dynamic>) {
+      throw SimScenariosValidationException(
+        'initTownRoadWiringRegionIds must be a JSON array of region id strings',
+      );
+    }
+    return raw.map((e) => e.toString()).toSet();
   }
 }

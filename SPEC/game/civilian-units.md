@@ -32,30 +32,42 @@ Canonical list of WorkOrder targets per civilian type. Order engine and suggesti
 | Target | Unit | Cost / gates | Duration | Notes |
 |--------|------|--------------|----------|-------|
 | explore | Explorer | Free | Multi-turn (province size) | Province-level; reveals tiles |
-| prospect | Explorer | Free | 1 turn | Tile-level; mineral-eligible |
-| build_improvement | Builder | Lumber + cast iron per level | Config (default 1) | Tile-level; level 1–4 |
+| prospect | Explorer | Free | Instant (Build/Work phase) | Tile-level; mineral-eligible; resolved immediately when order is accepted |
+| build_improvement | Builder | Lumber + cast iron per level | Config (default 1) | Tile-level; level 1–4; prospect-required minerals → tile must be prospected (same gate as extraction / `purchase_land`) |
 | upgrade_town | Builder | Per ruleset | Config | Town tile; town development level |
 | build_road | Engineer | 1 lumber + 1 cast iron (level 1); Road Construction for level 2 | Config | 0→1→2; tech for 2 |
 | build_port | Engineer | Lumber + metal | Config | Coastal/river; transport 4 |
 | build_fort | Engineer | Per siege-mechanics | Config (1+ turn per level) | Town tile; fort level 1–3 |
-| build_rail | Rail Builder | Steel + lumber | Config | Road→4; rail tech |
+| build_rail | Rail Builder | 2 lumber + 2 steel | Config | Road 1–2→4; rail tech vs terrain |
 | steal_tech | Spy | — | Up to 5 turns | Target = **GP capital province**; 8%/turn success; random tech player lacks |
 | counter_spy | Spy | — | Ongoing | Target = **owned province**; +5% per friendly spy/turn (cap 30%) to kill enemy spies |
 | purchase_land | Merchant | 15 × resource base price (treasury); embassy in Minor/Tribe | 1 turn | Tile in Minor/Tribe with resource; not at war; mineral → must be prospected |
 
 Spy does not have explore/prospect; Spy's garrison reveal is handled by visibility (see [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md)), not a work order.
 
+**UI:** The Civilian Units panel shows pending-turn cost previews (commodity icons + quantities or treasury for `purchase_land`) per [civilian-units-panel.md](../ui/civilian-units-panel.md); it does not restate affordability.
+
 ---
 
 ## Work Types and Multi-Turn Builds
 
-- **Explorer work:** Uses `WorkOrder` targets `explore` and `prospect`. Explore is **province-level** and completes over multiple turns per [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md); prospect is **tile-level** (one tile per completed order).
+- **Explorer work:** Uses `WorkOrder` targets `explore` and `prospect`. Explore is **province-level** and completes over multiple turns per [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md); prospect is **tile-level** and is resolved immediately when the order is accepted (instantaneous in Build/Work phase).
 - **WorkOrder** specifies both an **action** (e.g. `build_improvement`, `build_road`) and a **target tile** (`targetTileKey`). Civilians can move to and act on a tile different from their current tile (Imperialism-style).
 - **Builder work:** Uses `WorkOrder` targets `build_improvement` and `upgrade_town`. Each completed order increases the tile's improvement level by 1 (or upgrades a town) after a **multi-turn build** whose duration increases with target level and terrain; costs and turn counts derive from Imperialism II (e.g. Level 1 cheaper/faster than Level 4). See [extraction-and-improvements.md](extraction-and-improvements.md) and [development-resolution.md](../program/development-resolution.md).
 - **Engineer work:** Uses `WorkOrder` targets `build_road`, `build_port`, and `build_fort`. Each completed order constructs or upgrades transport/fortification on the **target tile** after one or more turns, consuming lumber and metal per [02-economy](../../Obsidian/obsidian-shared/Projects/ColonizeThisV3/Imperialism II/02-economy.md) mirrored in ruleset config.
-- **Rail Builder work:** Uses `WorkOrder` target `build_rail`. Each completed order upgrades an existing road tile to railroad (transport level 4) over multiple turns, costing steel + lumber; only available after the relevant transport techs. See [tech-tree-transport.md](tech-tree-transport.md).
+- **Rail Builder work:** Uses `WorkOrder` target `build_rail`. Each completed order upgrades an existing road tile (transport level 1 or 2) to railroad (transport level 4) over multiple turns, costing 2 lumber + 2 steel; validation requires per-tile terrain from the region tile map and the transport tech appropriate to that terrain per [tech-tree-transport.md](tech-tree-transport.md). Authoritative material cost: `packages/colonizethis_data` `work_order_costs.dart` (`workOrderCostBuildRail`).
 - **Spy:** (1) **Presence reveal:** While a Spy is in a non-owner province, that province is fully visible to the Spy's owner; when the Spy leaves, the province returns to fogged after 5 turns (turn timer). (2) **steal_tech:** WorkOrder target = other GP's **capital province**; up to 5 turns; 8% per turn to steal a random tech the player does not have; completion or expiry clears work. (3) **counter_spy:** WorkOrder target = any **owned** province; each friendly Spy in that province adds 5% per turn (capped 30%) chance to kill an enemy Spy there. (4) **Invisibility:** Spy province locations are invisible to all players except the Spy's owner.
-- **Merchant:** **purchase_land** WorkOrder: target = tile in Minor/Tribe province that has a resource; if resource requires prospecting, player must have prospected that tile; player must not be at war with that Minor/Tribe; cost = 15 × resource base price (treasury); requires **embassy** with that Minor/Tribe. Building a Merchant unit requires Merchant Companies tech; purchasing land requires embassy (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)).
+- **Merchant:** **purchase_land** WorkOrder: target = tile in Minor/Tribe province that has a resource; if resource requires prospecting, player must have prospected that tile; player must not be at war with that Minor/Tribe; cost = 15 × resource base price (treasury); requires **embassy** with that Minor/Tribe. **A tile may be purchased by at most one GP;** once recorded in `purchasedTilesByTileKey`, no other GP may purchase that tile (validation rejects). Building a Merchant unit requires Merchant Companies tech; purchasing land requires embassy (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)).
+
+---
+
+### Per-player tile exclusivity (Builder, Engineer, Merchant)
+
+- **Rule:** For a given **player** and **tile** (`targetTileKey`), at most **one** of that player's **Builder**, **Engineer**, or **Merchant** units may have **active or newly assigned** work targeting that tile in a turn. This applies to:
+  - Multi-turn development work (`build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`) on owned tiles.
+  - Tile-level **purchase_land** work by Merchants on Minor/Tribe tiles.
+  - Both existing `Unit.currentWork` (multi-turn work already in progress) and newly submitted `WorkOrder`s for the same tile in the current turn.
+- **Scope:** This exclusivity is **per player** only — other factions may still have their own development or purchase work on the same tile when game rules allow them to be present there. Explorers, Spies, and Rail Builders are **not** subject to this exclusivity rule.
 
 Multi-turn progress for all civilian work is tracked in the model and resolved during the Build/Work phase; `Unit.status` is **idle** or **working** only (on completion, status is set to idle). See [orders.md](../program/orders.md) and [development-resolution.md](../program/development-resolution.md).
 
@@ -91,9 +103,13 @@ Multi-turn progress for all civilian work is tracked in the model and resolved d
   When the system resolves that `purchase_land` order  
   Then the system deducts treasury cash equal to 15 times the resource base price, transfers ownership of that tile (and its resource) to the player, and leaves diplomatic status with that Minor/Tribe unchanged.
 
-- Given a Rail Builder civilian unit controlled by the player has an active `build_rail` `WorkOrder` targeting a tile that currently has a road and the required transport technology is unlocked  
+- Given a Rail Builder civilian unit controlled by the player has an active `build_rail` `WorkOrder` targeting a tile that currently has transport level 1 or 2, per-tile terrain is present on the region tile map, and the player's unlocked transport techs allow railroad on that terrain per [tech-tree-transport.md](tech-tree-transport.md)  
   When the system completes that work after the configured duration  
-  Then the system upgrades the tile's transport level to railroad (transport level 4), deducts the specified steel and lumber once for that work, and does not allow another `build_rail` order on that tile while it already has transport level 4.
+  Then the system upgrades the tile's transport level to railroad (transport level 4), deducts 2 lumber and 2 steel once for that work, and does not allow another `build_rail` order on that tile while it already has transport level 4.
+
+- Given the player submits a `build_rail` `WorkOrder` for a tile whose transport level is not 1 or 2, or whose terrain cannot be read from the tile map, or whose terrain is not yet covered by the player's unlocked rail techs  
+  When the system validates work orders at order submit time  
+  Then the system rejects the order with a clear reason and does not assign `build_rail` work to that unit.
 
 - Given a civilian `Unit` of any type exists on the map  
   When the system evaluates that unit's `location` and any `WorkOrder.targetTileKey` for rules that depend on province or region identity  
@@ -103,11 +119,20 @@ Multi-turn progress for all civilian work is tracked in the model and resolved d
   When it completes processing of all active `WorkOrder`s for that turn  
   Then every civilian unit has `status` equal to either `idle` or `working` (no other values), with `working` only for units that still have an active, incomplete multi-turn `WorkOrder`.
 
+- Given a player controls at least one Builder, Engineer, or Merchant unit and any of those units already has active multi-turn `currentWork` whose `tileKey` is `T`  
+  When the player submits a new `WorkOrder` for any of their Builder, Engineer, or Merchant units with `targetTileKey = T` in the same turn  
+  Then the system rejects the new work order during validation with a reason that clearly indicates the tile already has development or purchase work for that player, and the new order is not added to that player's `workOrdersByPlayerId`.
+
+- Given a player submits multiple `WorkOrder`s in the same turn for their Builder, Engineer, or Merchant units where two or more of those work orders have `targetTileKey` equal to the same tile `T`  
+  When the system validates that player's work orders in submission order  
+  Then the first valid work order for tile `T` may be accepted, and every subsequent Builder/Engineer/Merchant work order for tile `T` from that player in that turn is rejected with a reason indicating per-player tile exclusivity.
+
 ---
 
 ## Relations
 
 - **Unit** (type = civilian) → has owner (player id) and **location** = **tileKey** only (required, format `regionId|provinceId|x|y`); province and region are derived from tileKey. Work is ordered via WorkOrder (unitId, action, targetTileKey). Military and naval units do not have tileKey. See [fog-and-exploration.md](fog-and-exploration.md).
+- **Assignment tracking (current schema):** Civilian units may persist `originTileKey` (tile before current assignment) and `assignedTileKey` (current assignment destination). While work is in progress, `tileKey` represents rendered intent placement (typically equal to `assignedTileKey`). On completion, both tracking fields are cleared; on cancel, `tileKey` is restored from `originTileKey` and both tracking fields are cleared.
 - **Province identity:** Civilian **location** (tileKey) and WorkOrder **targetTileKey** use the prefixed tile key format `regionId|provinceId|x|y`. Province and region for a civilian are derived from tileKey; any province lookup (e.g. for work cancel, build_port, steal_tech target) must use the full province id (`regionId|localId`). See [world-model-identity.md](world-model-identity.md).
 - Civilian units have a **training cost**: cash is deducted from the player's **treasury** and paper from the player's **stockpile** when the unit is built. Work orders consume materials (lumber, metal, etc.) as defined in extraction-and-improvements and siege-mechanics. Materials are deducted when the work is **assigned** (during Build/Work phase application of WorkOrder); validation checks treasury/stockpile at order submit time.
 - Civilian units do not eat food; they do not consume workers when built (unlike military/naval).

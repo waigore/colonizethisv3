@@ -16,6 +16,15 @@ Module boundaries and APIs for the full AI system. AI behavior: [SPEC/ai/](../ai
 
 AI reads world state only via PlayerView and shared config. No Flutter or platform dependencies.
 
+### AI-facing logic contracts
+
+- `colonizethis_ai` imports logic through narrow contract libraries:
+  - `package:colonizethis_logic/order_suggestion_api.dart` for order suggestions.
+  - `package:colonizethis_logic/ai_api.dart` for PlayerView construction and
+    AI-required helpers.
+- `colonizethis_ai` must not import the broad logic barrel
+  `package:colonizethis_logic/colonizethis_logic.dart`.
+
 ## Algorithm / Flow
 
 ### Strategic Order Generation
@@ -34,18 +43,17 @@ Orders generateStrategicOrders({
 });
 ```
 
-`view` is the only visibility source; `config` holds personality, hidden agenda, difficulty modifiers; `seeds` per [ai-planner.md](ai-planner.md). Output: valid Orders. Callbacks for deterministic dialogue/mood events.
+`view` is the only visibility source; `config` holds personality, hidden agenda, difficulty modifiers; `seeds` per [ai-planner.md](ai-planner.md). Output: valid Orders. Strategic AI runs the **economy planner** first, then passes the resulting **economy plan** (including `cargoPreference`) into the domain planners so the build planner can weight ship vs land builds (cargo need, goal, personality). The strategic AI also produces **production assignments** per AI GP; see [economy-planner.md](../ai/economy-planner.md). The turn-resolution caller supplies per-player production assignments to the resolver (e.g. `defaultAssignmentsByPlayerId`). Callbacks for deterministic dialogue/mood events.
 
 Personality-related fields in **AIConfig** follow [ai-personalities.md](../ai/ai-personalities.md):
 
-- `leaderId` is the canonical leader id and is the only id used for personality lookups and dossier/archetype display.
-- `personalityId` is an optional archetype handle; in MVP it is not read by `colonizethis_ai`, and callers typically pass the same value as `leaderId`.
+- `leaderId` is the canonical leader id used for dossier, dialogue, and display.
+- `personalityId` is the **primary lookup key** for domain/goal/threshold weights (`getDomainWeightsForLeader`, etc.). It is resolved from optional `Player.personalityId` when that id matches a known archetype; otherwise from `canonicalLeaderIdForPersonality(Player.leaderKey ?? player.id)` (`personalityLookupKeyForAi` in `ai_personality_config.dart`).
 
-When `ai_planner.generateOrdersForPlayerFullAI` constructs **AIConfig** for an AI-controlled Great Power, it:
+When `generateOrdersForPlayerFullAI` constructs **AIConfig**:
 
-- Reads `Player.leaderKey` from the `Game` model (variant key from the naming ruleset, e.g. `england_leader`, `france_leader`, `prussia_reserve_leader`).
-- Calls into `colonizethis_data` to resolve this value to a **canonical leader id** for personality lookups (see `ai_personality_config.dart` and [ai-personalities.md](../ai/ai-personalities.md) § Leader identity and `Player.leaderKey`).
-- Passes the resolved canonical id as both `leaderId` and (in MVP) `personalityId` when creating **AIConfig**, so that domain planners, goal selection, and dossier projection all use the same canonical identity regardless of which variant leader key is stored on the Player.
+- Resolves `leaderId` from `Player.leaderKey` / id via `canonicalLeaderIdForPersonality`.
+- Sets `personalityId` to `personalityLookupKeyForAi(leaderKeyOrId: …, personalityId: Player.personalityId)` so planners use the override archetype when valid.
 
 ### Tactical (Quick Battle)
 
@@ -67,11 +75,12 @@ AI calls the suggestion API with PlayerView and current orders, scores candidate
 
 - **Phase:** Called during turn resolution for each AI GP.
 - **Upstream:** PlayerView, order suggestion API, personality/agenda config.
-- **Downstream:** Orders → order merge → TurnResolver. Events → UI. Evidence → game state.
+- **Downstream:** Orders → order merge → TurnResolver; production assignments → Production phase (per-player defaultAssignments); cargo preference → naval/build planners. Events → UI. Evidence → game state.
 
 ## Acceptance criteria
 
 - **Module boundaries:** Implemented code respects the package ownership in the table above; colonizethis_ai owns perception, behavior-tree, planners, hidden agenda, dialogue/mood, dossier; colonizethis_logic owns game state, TurnResolver, OrderEngine, PlayerView and invokes AI for orders; no AI logic in colonizethis_data.
+- **Narrow logic contracts:** AI imports logic only through `order_suggestion_api.dart` and `ai_api.dart`; AI does not import `colonizethis_logic.dart`.
 - **Strategic order generation:** `generateStrategicOrders` is deterministic given Game, view, config, and seeds; returns valid Orders; dialogue/mood are emitted only via the provided callbacks.
 - **Tactical (quick battle):** `decideQuickBattleActions` is deterministic given state and tacticalSeed; returns CP-based actions per lane per [quick-battle-resolution](quick-battle-resolution.md).
 - **Order suggestion API:** AI obtains and submits orders only via the suggestion API; province identifiers in API inputs and candidates use prefixed form per [world-model-identity.md](../game/world-model-identity.md).

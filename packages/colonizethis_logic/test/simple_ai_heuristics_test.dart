@@ -1,7 +1,7 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('turnSeedForPlayer', () {
@@ -104,15 +104,15 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: const [
-              Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1'),
-              Province(id: 'P2', regionId: 'oldWorld', ownerId: 'gp2'),
+              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp1'),
+              Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'gp2'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'gp1',
-                provinceId: 'P1',
+                locationProvinceId: 'oldWorld|P1',
               ),
             ],
           ),
@@ -127,6 +127,15 @@ void main() {
         players: const [
           Player(id: 'gp1', displayName: 'AI', isHuman: false),
           Player(id: 'gp2', displayName: 'Other', isHuman: true),
+        ],
+        // At war so that attacking move into gp2 province is rules-legal
+        // per SPEC/game/diplomacy.md and OrderEngine movement validation.
+        diplomacyRelations: const [
+          DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            state: RelationState.atWar,
+          ),
         ],
         globalGameSeed: 0,
         aiSeedByGpId: {'gp1': 42},
@@ -149,9 +158,9 @@ void main() {
         turnSeedForPlayer(game, 'gp1', 1),
       );
 
-      expect(orders.moveOrdersByPlayerId['gp1'], isNotNull);
-      for (final m in orders.moveOrdersByPlayerId['gp1']!) {
-        expect(m.unitId, equals('u1'));
+      expect(orders.armyMoveOrdersByPlayerId['gp1'], isNotNull);
+      for (final m in orders.armyMoveOrdersByPlayerId['gp1']!) {
+        expect(m.armyId, contains('gp1'));
         expect(m.destinationProvinceId, anyOf('oldWorld|P1', 'oldWorld|P2'));
       }
     });
@@ -167,12 +176,12 @@ void main() {
               Province(id: '$ow|P1', regionId: ow, ownerId: 'gp1'),
               Province(id: '$ow|M1', regionId: ow, ownerId: 'minor1'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'gp1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
             ],
           ),
@@ -224,12 +233,12 @@ void main() {
               Province(id: '$ow|P1', regionId: ow, ownerId: 'gp1'),
               Province(id: '$ow|P2', regionId: ow, ownerId: 'gp2'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'gp1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
             ],
           ),
@@ -285,7 +294,7 @@ void main() {
             provinces: const [
               Province(id: '$ow|P1', regionId: ow, ownerId: 'gp1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
           playerVisibilityByTile: const {
@@ -297,7 +306,7 @@ void main() {
             id: 'gp1',
             displayName: 'AI',
             isHuman: false,
-            capitalProvinceId: 'P1',
+            capitalProvinceId: 'oldWorld|P1',
             capitalTile: CapitalTile(regionId: ow, provinceId: 'P1', x: 0, y: 0),
           ),
         ],
@@ -319,6 +328,108 @@ void main() {
       expect(orders.researchOrdersByPlayerId['gp1'], isNotNull);
     });
 
+    test('can generate work order when only work suggestions available', () {
+      const ow = 'oldWorld';
+      const tileKey = '$ow|P1|0|0';
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'gp1'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'Explorer',
+                ownerId: 'gp1',
+                locationProvinceId: '$ow|P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {tileKey: 'fogged'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {'$ow|P1': [tileKey]},
+          },
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'AI', isHuman: false),
+        ],
+        globalGameSeed: 0,
+        aiSeedByGpId: const {'gp1': 1},
+      );
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final orders = generateOrdersWithSimpleHeuristics(
+        game,
+        topology,
+        'gp1',
+        turnSeedForPlayer(game, 'gp1', 1),
+      );
+      final works = orders.workOrdersByPlayerId['gp1'] ?? const [];
+      expect(works, isNotEmpty);
+    });
+
+    test('can generate build order when only build suggestions available', () {
+      const ow = 'oldWorld';
+      final econ = RegimentEconomyCatalog.byId['peasant_levies']!;
+      var stockpile = const Stockpile();
+      for (final e in econ.buildInputs.entries) {
+        stockpile = stockpile.applyDelta(e.key, e.value + 1);
+      }
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'gp1'),
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'gp1': {'oldWorld|P1|0|0': 'fullyVisible'},
+          },
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'AI',
+            isHuman: false,
+            capitalProvinceId: '$ow|P1',
+            stockpile: stockpile,
+            workerPool: const WorkerPool(peasants: 3),
+            treasury: econ.buildTreasuryCost + 100,
+          ),
+        ],
+        globalGameSeed: 0,
+        aiSeedByGpId: const {'gp1': 7},
+      );
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+      final orders = generateOrdersWithSimpleHeuristics(
+        game,
+        topology,
+        'gp1',
+        turnSeedForPlayer(game, 'gp1', 1),
+      );
+      final builds = orders.buildUnitOrdersByPlayerId['gp1'] ?? const [];
+      expect(builds, isNotEmpty);
+    });
+
     test('diplomacy filter works when Province has local id (full id used for lookup)', () {
       // Game state may store Province.id as local id (e.g. P2). Order suggestion
       // emits full province id (oldWorld|P2). Owner map must key by full id.
@@ -332,12 +443,12 @@ void main() {
               Province(id: 'P1', regionId: ow, ownerId: 'gp1'),
               Province(id: 'P2', regionId: ow, ownerId: 'gp2'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'gp1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
               ),
             ],
           ),
@@ -393,7 +504,7 @@ void main() {
             provinces: const [
               Province(id: 'P1', regionId: ow, ownerId: 'gp1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
           playerVisibilityByTile: const {
@@ -435,12 +546,12 @@ void main() {
             provinces: const [
               Province(id: '$nw|N1', regionId: nw, ownerId: 'gp1'),
             ],
-            units: const [
+            units: [
               Unit(
                 id: 'u1',
                 type: 'grenadiers',
                 ownerId: 'gp1',
-                provinceId: '$nw|N1',
+                locationProvinceId: '$nw|N1',
               ),
             ],
           ),

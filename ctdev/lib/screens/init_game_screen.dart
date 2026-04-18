@@ -27,6 +27,7 @@ class _InitGameScreenState extends State<InitGameScreen> {
   late Map<String, (int r, int g, int b)> _greatPowerColorByGpId;
   bool _skipFillLakes = false;
   bool _renderPng = false;
+  bool _enforceFairGpOldWorldAssignment = false;
   bool _isRunning = false;
 
   @override
@@ -42,6 +43,7 @@ class _InitGameScreenState extends State<InitGameScreen> {
     _minProvincesPerMinor = cfg.minProvincesPerMinor;
     _prussiaLeaderVariantId =
         cfg.leaderVariantByGpId['prussia'] ?? prussiaVariantFrederickTheGreat;
+    _enforceFairGpOldWorldAssignment = cfg.enforceFairGpOldWorldAssignment;
     _greatPowerColorByGpId = {
       for (final id in allGreatPowerIds) id: greatPowerDefaultColorRgb[id]!,
     };
@@ -88,6 +90,7 @@ class _InitGameScreenState extends State<InitGameScreen> {
       numProvincesNewWorld: _numProvincesNewWorld,
       minProvincesPerMinor: _minProvincesPerMinor,
       seed: _seed,
+      enforceFairGpOldWorldAssignment: _enforceFairGpOldWorldAssignment,
     );
 
     // Basic runtime guard to surface config/topology mismatches early in dev.
@@ -409,6 +412,22 @@ class _InitGameScreenState extends State<InitGameScreen> {
             Row(
               children: [
                 Checkbox(
+                  value: _enforceFairGpOldWorldAssignment,
+                  onChanged: (v) => setState(
+                    () => _enforceFairGpOldWorldAssignment = v ?? false,
+                  ),
+                ),
+                const Flexible(
+                  child: Text(
+                    'Enforce fair GP assignment (OW connectivity repair; slower)',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Checkbox(
                   value: _skipFillLakes,
                   onChanged: (v) =>
                       setState(() => _skipFillLakes = v ?? false),
@@ -470,7 +489,7 @@ class _InitGameScreenState extends State<InitGameScreen> {
               Positioned.fill(
                 child: AbsorbPointer(
                   child: Container(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                   ),
                 ),
               ),

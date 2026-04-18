@@ -1,5 +1,5 @@
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('TurnState', () {
@@ -26,6 +26,12 @@ void main() {
         final s = TurnState(phase: phase, turnNumber: 0);
         expect(TurnState.fromJson(s.toJson()).phase, phase);
       }
+    });
+    test('fromJson rejects unknown phase string', () {
+      expect(
+        () => TurnState.fromJson({'phase': 'notARealPhase', 'turnNumber': 0}),
+        throwsArgumentError,
+      );
     });
   });
 }
