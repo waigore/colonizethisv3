@@ -258,7 +258,7 @@ jobs:
         uses: GabrielBB/xvfb-action@v1.7
         with:
           working-directory: app
-          run: bash -lc "set -euo pipefail; flutter test integration_test/new_game_capital_panel_e2e_test.dart -d linux --dart-define=CT_E2E=true --reporter=compact; flutter test integration_test/new_game_full_turn_e2e_test.dart -d linux --dart-define=CT_E2E=true --reporter=compact"
+          run: bash -lc "set -euo pipefail; flutter test integration_test/new_game_capital_panel_e2e_test.dart -d linux --dart-define=CT_E2E=true --reporter=compact; flutter test integration_test/new_game_full_turn_e2e_test.dart -d linux --dart-define=CT_E2E=true --reporter=compact; flutter test integration_test/new_game_fleet_reaches_new_world_e2e_test.dart -d linux --dart-define=CT_E2E=true --reporter=compact"
 
   quality:
     needs: changes
