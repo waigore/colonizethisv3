@@ -19,6 +19,15 @@ Before opening a pull request, ensure the following:
 - [ ] **Coverage quality gate met**: I have ensured that test coverage meets the project's quality gate requirements (90% for logic/ai/map packages; 80% elsewhere).
 - [ ] **OpenCode / help wanted**: I have read [OpenCode review and the help wanted label](#opencode-review-and-the-help-wanted-label) and applied the label when appropriate (see that section if I cannot add labels myself).
 
+## UI issues: verification screenshot (quality gate)
+
+When a pull request addresses a **UI-related GitHub issue** (anything user-visible: Flutter or Flame screens, map or tile rendering, dialogs, controls, typography, spacing, or pixel-art presentation in the app), treat a **verification screenshot** as part of the quality gate:
+
+- Post a comment on the **linked issue** that includes an image showing the fixed or intended behavior (same or comparable view as the report), **before the issue is closed**.
+- If there is **no** linked issue, put the screenshot in the **PR description** instead.
+
+This complements automated tests and code review; reviewers may treat missing visual evidence as blocking when the change is not already covered by golden or e2e visual checks.
+
 ## OpenCode review and the help wanted label
 
 The Quality workflow can run an **OpenCode** post–e2e PR review when the PR is in scope for that gate. To **request** that review, add the GitHub label **`help wanted`** (exact name). Heuristics—use your judgment; **when in doubt, add the label**:
