@@ -76,6 +76,30 @@ int _countResourceOnGpTiles({
   return n;
 }
 
+int _countResourceTilesForGp({
+  required TileMapResult map,
+  required Map<String, String> ownerByLocal,
+  required Set<String> gpSet,
+  required Set<String> forbidden,
+  required String gp,
+  required Resource r,
+}) {
+  var a = 0;
+  for (var y = 0; y < map.height; y++) {
+    for (var x = 0; x < map.width; x++) {
+      final local = map.cell(x, y);
+      final owner = ownerByLocal[local];
+      if (owner == null || owner != gp) continue;
+      if (!_isGpId(owner, gpSet)) continue;
+      if (map.terrainAt(x, y) == null) continue;
+      final key = _owTileKey(local, x, y);
+      if (forbidden.contains(key)) continue;
+      if (map.resourceAt(x, y) == r) a++;
+    }
+  }
+  return a;
+}
+
 /// After redistribution: counts [resource] on GP-owned OW land (excl. town/capital).
 int countResourceOnGpOldWorldTiles({
   required Game game,
@@ -111,19 +135,14 @@ double _fairnessScore({
     for (final r in resourceSet) {
       final nR = inventoryN[r] ?? 0;
       final expected = nR / g;
-      var a = 0;
-      for (var y = 0; y < map.height; y++) {
-        for (var x = 0; x < map.width; x++) {
-          final local = map.cell(x, y);
-          final owner = ownerByLocal[local];
-          if (owner == null || owner != gp) continue;
-          if (!_isGpId(owner, gpSet)) continue;
-          if (map.terrainAt(x, y) == null) continue;
-          final key = _owTileKey(local, x, y);
-          if (forbidden.contains(key)) continue;
-          if (map.resourceAt(x, y) == r) a++;
-        }
-      }
+      final a = _countResourceTilesForGp(
+        map: map,
+        ownerByLocal: ownerByLocal,
+        gpSet: gpSet,
+        forbidden: forbidden,
+        gp: gp,
+        r: r,
+      );
       final dev = (a - expected).abs();
       if (dev > maxDev) maxDev = dev;
     }
@@ -234,6 +253,168 @@ TileMapResult _placeResourceAtKey(TileMapResult map, String key, Resource r) {
   return map.withResourceAt(x, y, r);
 }
 
+int _sumPlacedAll(Map<String, int> placed, List<String> gpIdsSorted) {
+  var sumPlaced = 0;
+  for (final id in gpIdsSorted) {
+    sumPlaced += placed[id] ?? 0;
+  }
+  return sumPlaced;
+}
+
+/// One pass: place resources for each GP until targets met or no eligible tile.
+TileMapResult _runGpPlacementPass({
+  required TileMapResult mapIn,
+  required Map<String, String> resMap,
+  required List<String> shuffled,
+  required Map<String, int> targets,
+  required Map<String, int> placed,
+  required Set<String> used,
+  required Resource r,
+  required ResourceRules resourceRules,
+  required Map<String, String> ownerByLocal,
+  required Set<String> gpIds,
+  required Set<String> forbidden,
+}) {
+  var map = mapIn;
+  for (final gp in shuffled) {
+    while (true) {
+      if ((targets[gp] ?? 0) <= (placed[gp] ?? 0)) break;
+      final key = _firstLexEligibleEmptyTileForGp(
+        map: map,
+        r: r,
+        rules: resourceRules,
+        gp: gp,
+        ownerByLocal: ownerByLocal,
+        gpIds: gpIds,
+        forbidden: forbidden,
+        used: used,
+      );
+      if (key == null) break;
+      map = _placeResourceAtKey(map, key, r);
+      used.add(key);
+      placed[gp] = (placed[gp] ?? 0) + 1;
+      resMap[key] = r.name;
+    }
+  }
+  return map;
+}
+
+/// Caps targets to reachable counts; returns surplus moved into [pool].
+int _accumulateSpilloverPool({
+  required List<String> shuffled,
+  required Map<String, int> targets,
+  required Map<String, int> placed,
+  required TileMapResult map,
+  required Resource r,
+  required ResourceRules resourceRules,
+  required Map<String, String> ownerByLocal,
+  required Set<String> gpIds,
+  required Set<String> forbidden,
+  required Set<String> used,
+}) {
+  var pool = 0;
+  for (final gp in shuffled) {
+    final tgt = targets[gp] ?? 0;
+    final pl = placed[gp] ?? 0;
+    final deficit = tgt - pl;
+    if (deficit <= 0) continue;
+    final eg = _eligibleEmptyCountForGp(
+      map: map,
+      r: r,
+      rules: resourceRules,
+      gp: gp,
+      ownerByLocal: ownerByLocal,
+      gpIds: gpIds,
+      forbidden: forbidden,
+      used: used,
+    );
+    final maxTarget = pl + eg;
+    if (tgt <= maxTarget) continue;
+    pool += tgt - maxTarget;
+    targets[gp] = maxTarget;
+  }
+  return pool;
+}
+
+({int newPool, bool anyIncrement}) _applyOneQuotaPoolRound({
+  required int pool,
+  required List<String> shuffled,
+  required Map<String, int> targets,
+  required Map<String, int> placed,
+  required TileMapResult map,
+  required Resource r,
+  required ResourceRules resourceRules,
+  required Map<String, String> ownerByLocal,
+  required Set<String> gpIds,
+  required Set<String> forbidden,
+  required Set<String> used,
+}) {
+  var p = pool;
+  var moved = false;
+  for (final h in shuffled) {
+    if (p <= 0) break;
+    final pl = placed[h] ?? 0;
+    final tgt = targets[h] ?? 0;
+    final eg = _eligibleEmptyCountForGp(
+      map: map,
+      r: r,
+      rules: resourceRules,
+      gp: h,
+      ownerByLocal: ownerByLocal,
+      gpIds: gpIds,
+      forbidden: forbidden,
+      used: used,
+    );
+    final maxTarget = pl + eg;
+    if (tgt >= maxTarget) continue;
+    targets[h] = tgt + 1;
+    p--;
+    moved = true;
+  }
+  return (newPool: p, anyIncrement: moved);
+}
+
+void _distributeQuotaPool({
+  required int initialPool,
+  required List<String> shuffled,
+  required Map<String, int> targets,
+  required Map<String, int> placed,
+  required TileMapResult map,
+  required Resource r,
+  required ResourceRules resourceRules,
+  required Map<String, String> ownerByLocal,
+  required Set<String> gpIds,
+  required Set<String> forbidden,
+  required Set<String> used,
+  required int sumPlaced,
+  required int nR,
+}) {
+  var pool = initialPool;
+  while (pool > 0) {
+    final round = _applyOneQuotaPoolRound(
+      pool: pool,
+      shuffled: shuffled,
+      targets: targets,
+      placed: placed,
+      map: map,
+      r: r,
+      resourceRules: resourceRules,
+      ownerByLocal: ownerByLocal,
+      gpIds: gpIds,
+      forbidden: forbidden,
+      used: used,
+    );
+    pool = round.newPool;
+    if (!round.anyIncrement) {
+      throw GpOldWorldResourceRedistributionInfeasibleException(
+        resource: r,
+        details:
+            'cannot distribute quota pool=$pool sumPlaced=$sumPlaced nR=$nR',
+      );
+    }
+  }
+}
+
 ({TileMapResult map, Map<String, String> resMap}) _redistributeOneResource({
   required TileMapResult mapIn,
   required Map<String, String> resMapIn,
@@ -286,56 +467,37 @@ TileMapResult _placeResourceAtKey(TileMapResult map, String key, Resource r) {
   }
 
   while (true) {
-    for (final gp in shuffled) {
-      while ((targets[gp] ?? 0) > (placed[gp] ?? 0)) {
-        final key = _firstLexEligibleEmptyTileForGp(
-          map: map,
-          r: r,
-          rules: resourceRules,
-          gp: gp,
-          ownerByLocal: ownerByLocal,
-          gpIds: gpIds,
-          forbidden: forbidden,
-          used: used,
-        );
-        if (key == null) break;
-        map = _placeResourceAtKey(map, key, r);
-        used.add(key);
-        placed[gp] = (placed[gp] ?? 0) + 1;
-        resMap[key] = r.name;
-      }
-    }
+    map = _runGpPlacementPass(
+      mapIn: map,
+      resMap: resMap,
+      shuffled: shuffled,
+      targets: targets,
+      placed: placed,
+      used: used,
+      r: r,
+      resourceRules: resourceRules,
+      ownerByLocal: ownerByLocal,
+      gpIds: gpIds,
+      forbidden: forbidden,
+    );
 
-    var sumPlaced = 0;
-    for (final id in gpIdsSorted) {
-      sumPlaced += placed[id] ?? 0;
-    }
+    final sumPlaced = _sumPlacedAll(placed, gpIdsSorted);
     if (sumPlaced >= nR) {
       return (map: map, resMap: resMap);
     }
 
-    var pool = 0;
-    for (final gp in shuffled) {
-      final tgt = targets[gp] ?? 0;
-      final pl = placed[gp] ?? 0;
-      final deficit = tgt - pl;
-      if (deficit <= 0) continue;
-      final eg = _eligibleEmptyCountForGp(
-        map: map,
-        r: r,
-        rules: resourceRules,
-        gp: gp,
-        ownerByLocal: ownerByLocal,
-        gpIds: gpIds,
-        forbidden: forbidden,
-        used: used,
-      );
-      final maxTarget = pl + eg;
-      if (tgt > maxTarget) {
-        pool += tgt - maxTarget;
-        targets[gp] = maxTarget;
-      }
-    }
+    final pool = _accumulateSpilloverPool(
+      shuffled: shuffled,
+      targets: targets,
+      placed: placed,
+      map: map,
+      r: r,
+      resourceRules: resourceRules,
+      ownerByLocal: ownerByLocal,
+      gpIds: gpIds,
+      forbidden: forbidden,
+      used: used,
+    );
 
     if (pool == 0) {
       throw GpOldWorldResourceRedistributionInfeasibleException(
@@ -345,37 +507,21 @@ TileMapResult _placeResourceAtKey(TileMapResult map, String key, Resource r) {
       );
     }
 
-    while (pool > 0) {
-      var movedThisRound = false;
-      for (final h in shuffled) {
-        if (pool <= 0) break;
-        final pl = placed[h] ?? 0;
-        final tgt = targets[h] ?? 0;
-        final eg = _eligibleEmptyCountForGp(
-          map: map,
-          r: r,
-          rules: resourceRules,
-          gp: h,
-          ownerByLocal: ownerByLocal,
-          gpIds: gpIds,
-          forbidden: forbidden,
-          used: used,
-        );
-        final maxTarget = pl + eg;
-        if (tgt < maxTarget) {
-          targets[h] = tgt + 1;
-          pool--;
-          movedThisRound = true;
-        }
-      }
-      if (!movedThisRound) {
-        throw GpOldWorldResourceRedistributionInfeasibleException(
-          resource: r,
-          details:
-              'cannot distribute quota pool=$pool sumPlaced=$sumPlaced nR=$nR',
-        );
-      }
-    }
+    _distributeQuotaPool(
+      initialPool: pool,
+      shuffled: shuffled,
+      targets: targets,
+      placed: placed,
+      map: map,
+      r: r,
+      resourceRules: resourceRules,
+      ownerByLocal: ownerByLocal,
+      gpIds: gpIds,
+      forbidden: forbidden,
+      used: used,
+      sumPlaced: sumPlaced,
+      nR: nR,
+    );
   }
 }
 
