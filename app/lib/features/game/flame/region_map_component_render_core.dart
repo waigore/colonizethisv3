@@ -524,6 +524,20 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
     return paint;
   }
 
+  Paint _resourceReadabilityBackdropPaintForCell(CellViewData cell) {
+    final paint = Paint()..color = _kResourceIconTransportReadabilityBackdrop;
+    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        _visibilityForTerrain(cell) == TileVisibility.fogged) {
+      paint.colorFilter = ColorFilter.mode(
+        _kMapHoverSelectorIdle.withValues(
+          alpha: _kFoggedResourceIconModulateAlpha,
+        ),
+        BlendMode.modulate,
+      );
+    }
+    return paint;
+  }
+
   void _paintOverlay(Canvas canvas) {
     final showResources =
         baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
@@ -557,6 +571,26 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
           final dstRect = Rect.fromLTWH(iconX, iconY, displaySize, displaySize);
           final srcRect = Rect.fromLTWH(0, 0, assetSize, assetSize);
           final paint = _resourceOverlayPaintForCell(cell);
+          final tileVisibility = _visibilityForTerrain(cell);
+          final drawTransportReadabilityBackdrop =
+              shouldRenderTransportOverlay(
+                baseLayerDisplayMode: baseLayerDisplayMode,
+              ) &&
+              shouldPaintTransportOverlayForCell(
+                cell: cell,
+                visibilityMode: visibilityMode,
+                tileVisibility: tileVisibility,
+              );
+          if (drawTransportReadabilityBackdrop) {
+            final plate = RRect.fromRectAndRadius(
+              dstRect,
+              const Radius.circular(1.5),
+            );
+            canvas.drawRRect(
+              plate,
+              _resourceReadabilityBackdropPaintForCell(cell),
+            );
+          }
           canvas.drawImageRect(icon, srcRect, dstRect, paint);
           final effectiveUnits =
               cell.resourceExtractionEffectiveUnits ??
