@@ -1,5 +1,7 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
@@ -385,6 +387,23 @@ bool _textLooksLikeNewWorldLocationLine(String? data) {
   return rest.startsWith('—') || rest.startsWith('–') || rest.startsWith('-');
 }
 
+/// While the naval bottom sheet is open, [ctE2eNavalPanelSnapshot] mirrors the same
+/// [Game] the panel uses (`SPEC/program/e2e-integration-tests.md`). Prefer this on
+/// Linux CI: [ExpansionTile] / [Text] preorder can diverge from macOS while world
+/// state still shows the voyage completed.
+bool _nonHomeHumanFleetInNewWorldFromCtSnapshot() {
+  final snap = ctE2eNavalPanelSnapshot;
+  if (snap == null) return false;
+  final human = snap.humanPlayerId;
+  final homeId = homeFleetIdFor(human);
+  for (final f in snap.game.worldState.fleets) {
+    if (f.ownerId != human) continue;
+    if (f.id == homeId) continue;
+    if (f.regionId == 'newWorld') return true;
+  }
+  return false;
+}
+
 /// Widget-only: a **non–home** fleet row shows [unitsPanelRegionLabel] for New World
 /// in the subtitle location line (`New World — …` per `naval_tree_builder.dart`).
 bool _navalPanelShowsNonHomeFleetInNewWorld(WidgetTester tester) {
@@ -420,6 +439,10 @@ bool _navalPanelShowsNonHomeFleetInNewWorld(WidgetTester tester) {
   }
   return false;
 }
+
+bool _harnessDetectsNonHomeFleetInNewWorld(WidgetTester tester) =>
+    _nonHomeHumanFleetInNewWorldFromCtSnapshot() ||
+    _navalPanelShowsNonHomeFleetInNewWorld(tester);
 
 Future<void> _splitHomeFleetOnce(
   WidgetTester tester,
@@ -498,7 +521,7 @@ void main() {
         await _dismissTransientUi(tester);
         await _tapNewWorldRegionTabIfPresent(tester);
         await _openNavalPanel(tester);
-        if (_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
+        if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
           await _closeBottomSheet(tester);
           return;
         }
@@ -507,7 +530,7 @@ void main() {
         await _tryNavalMoveSegment(tester, l10n);
         await _closeBottomSheet(tester);
 
-        if (_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
+        if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
           return;
         }
 
@@ -518,11 +541,11 @@ void main() {
       await _dismissTransientUi(tester);
       await _tapNewWorldRegionTabIfPresent(tester);
       await _openNavalPanel(tester);
-      if (!_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
+      if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
         fail(
-          'After 28 Next turn resolutions, no non-home fleet row shows '
-          'location text starting with "New World" + dash under '
-          'kCtE2ENavalPanelRootKey. Last exception: ${tester.takeException()}',
+          'After 28 Next turn resolutions, no non-home human fleet in region '
+          'newWorld (ctE2eNavalPanelSnapshot / naval panel UI). '
+          'Last exception: ${tester.takeException()}',
         );
       }
       await _closeBottomSheet(tester);
