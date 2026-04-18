@@ -512,6 +512,9 @@ Map<String, String> _assignOldWorldSingleLandmass({
     for (final g in gpHere) g: lmId,
     for (final m in minorHere) m: lmId,
   };
+  // Cap total assignments so greedy leftovers cannot consume provinces reserved
+  // for minors assigned later on the OW remainder (non-locked painting path).
+  final maxTotalAssignment = targets.values.fold<int>(0, (a, b) => a + b);
   return assignTerritoriesByBfsGrowth(
     neighbours: neighbours,
     landmassIds: landmassIds,
@@ -520,6 +523,7 @@ Map<String, String> _assignOldWorldSingleLandmass({
     seeds: seeds,
     targetPerFaction: targets,
     available: avail,
+    maxTotal: maxTotalAssignment,
     neighborShuffleRandom: assignmentRandom,
   );
 }
