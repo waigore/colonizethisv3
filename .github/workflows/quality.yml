@@ -581,7 +581,16 @@ jobs:
           for _ in $(seq 1 36); do
             body="$(
               gh api "repos/${GITHUB_REPOSITORY}/issues/${{ github.event.pull_request.number }}/comments?per_page=100" \
-                --jq '([.[] | select(.body | contains("<!-- ct-opencode-quality-review -->"))] | sort_by(.id) | reverse | .[0].body) // empty'
+                --jq '
+                  [.[] | select(
+                    (.body | startswith("PASS\n"))
+                    or (.body | startswith("FAIL\n"))
+                    or (.body | startswith("<!-- ct-opencode-quality-review -->"))
+                  )]
+                  | sort_by(.id)
+                  | .[-1].body
+                  // empty
+                '
             )"
             if [ -n "${body}" ]; then
               line1="$(printf '%s\n' "${body}" | sed -n '1p' | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
@@ -592,6 +601,19 @@ jobs:
               sticky='<!-- ct-opencode-quality-review -->'
               vpass='<!-- ct-opencode-verdict:PASS -->'
               vfail='<!-- ct-opencode-verdict:FAIL -->'
+              line2t="$(printf '%s\n' "${line2}" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+              if [ "${line1}" = "${sticky}" ]; then
+                if [ "${line2t}" = "${vfail}" ]; then
+                  echo "::error::OpenCode verdict is FAIL — see sticky PR comment."
+                  exit 1
+                fi
+                if [ "${line2t}" = "${vpass}" ]; then
+                  echo "OpenCode verdict: PASS (legacy sticky-first layout)"
+                  exit 0
+                fi
+                echo "::error::Legacy OpenCode sticky comment: line 2 must be ${vpass} or ${vfail}."
+                exit 1
+              fi
               if [ "${line1}" != PASS ] && [ "${line1}" != FAIL ]; then
                 echo "::error::OpenCode sticky comment line 1 must be exactly PASS or FAIL (got: '${line1}'). Re-run review after updating the prompt format."
                 exit 1
