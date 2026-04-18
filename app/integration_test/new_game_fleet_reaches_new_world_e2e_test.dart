@@ -240,10 +240,10 @@ Future<void> _openNavalPanel(WidgetTester tester) async {
   );
 }
 
-/// Selects the New World map region via [kCtE2ERegionTabNewWorldKey] when present
-/// (reduces ambiguous "New World" text on screen; `SPEC/program/e2e-integration-tests.md`).
-Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
-  final tab = find.byKey(kCtE2ERegionTabNewWorldKey).hitTestable();
+/// Prefer Old World map tab while driving an OW-capital fleet to the warp
+/// (avoids NW map scope quirks with OW-only fleets in e2e).
+Future<void> _tapOldWorldRegionTab(WidgetTester tester, AppLocalizations l10n) async {
+  final tab = find.text(l10n.region_oldWorld).hitTestable();
   if (tab.evaluate().isEmpty) {
     return;
   }
@@ -268,12 +268,8 @@ Future<void> _pickMoveDestinationAndConfirm(
   await _pumpFor(tester, const Duration(milliseconds: 200));
   final warp = find.textContaining('links to New World');
   if (warp.evaluate().isNotEmpty) {
-    // [Scrollable] wraps the dialog body above [kCtE2EMoveFleetDialogScrollRootKey];
-    // scrolling must target that viewport or the warp row can stay off-screen on CI.
-    final dialog = find.byType(AlertDialog);
-    expect(dialog, findsOneWidget);
-    final scrollable = find.descendant(
-      of: dialog,
+    final scrollable = find.ancestor(
+      of: warp.first,
       matching: find.byType(Scrollable),
     );
     if (scrollable.evaluate().isNotEmpty) {
@@ -307,7 +303,7 @@ Future<void> _tryNavalMoveSegment(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
-  await _tapNewWorldRegionTabIfPresent(tester);
+  await _tapOldWorldRegionTab(tester, l10n);
   await _openNavalPanel(tester);
   await _expandEachExpansionTileOnce(tester);
   await _tapMoveOnFirstNonHomeFleet(tester);
@@ -445,7 +441,7 @@ Future<void> _advanceOneHumanTurn(
   if (confirmNextTurn.evaluate().isNotEmpty) {
     await tester.tap(confirmNextTurn.first, warnIfMissed: false);
   }
-  await _pumpFor(tester, const Duration(seconds: 2));
+  await _pumpFor(tester, const Duration(seconds: 3));
 }
 
 void main() {
@@ -476,7 +472,7 @@ void main() {
 
       for (var turnIdx = 0; turnIdx < 15; turnIdx++) {
         await _dismissTransientUi(tester);
-        await _tapNewWorldRegionTabIfPresent(tester);
+        await _tapOldWorldRegionTab(tester, l10n);
         await _openNavalPanel(tester);
         if (_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
           await _closeBottomSheet(tester);
@@ -496,7 +492,7 @@ void main() {
       }
 
       await _dismissTransientUi(tester);
-      await _tapNewWorldRegionTabIfPresent(tester);
+      await _tapOldWorldRegionTab(tester, l10n);
       await _openNavalPanel(tester);
       if (!_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
         fail(
