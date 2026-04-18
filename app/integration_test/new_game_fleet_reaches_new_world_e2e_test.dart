@@ -280,7 +280,16 @@ Future<void> _pickMoveDestinationAndConfirm(
     }
     final hit = warp.hitTestable();
     expect(hit, findsWidgets);
-    await tester.tap(hit.first, warnIfMissed: false);
+    // Tap the RadioListTile, not only the inner Text, so the tile's selection
+    // updates before Confirm (Linux CI / headless can miss implicit tile taps).
+    final warpTile = find.ancestor(
+      of: hit.first,
+      matching: find.byWidgetPredicate(
+        (w) => w.runtimeType.toString().startsWith('RadioListTile<'),
+      ),
+    );
+    expect(warpTile, findsWidgets);
+    await tester.tap(warpTile.first, warnIfMissed: false);
   } else {
     final seaRadio = _radioListTilesInAlertDialogs();
     expect(seaRadio, findsWidgets);
