@@ -20,7 +20,6 @@ import '../world/army_migration.dart';
 import '../world/naval.dart';
 import '../world/ship_instance_allocate.dart';
 import 'locked_province_assigner.dart';
-import 'locked_topology_gates.dart';
 import 'province_assignment.dart';
 import 'province_name_fallback.dart';
 

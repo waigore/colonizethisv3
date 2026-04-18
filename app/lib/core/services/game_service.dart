@@ -322,25 +322,37 @@ class GameService {
     final gameId = id ?? 'game_${DateTime.now().millisecondsSinceEpoch}';
     final cfg = config ?? GameSetupConfig.defaultConfig;
     final effectiveSeed = resolveEffectiveSetupSeed(cfg.seed);
-    final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg, effectiveSeed);
-    final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg, effectiveSeed);
-    final warpLinks = _generateWarpLinks(
-      effectiveSeed: effectiveSeed,
-      tileMapOW: tileMapOW,
-      topoOW: topoOW,
-      tileMapNW: tileMapNW,
-      topoNW: topoNW,
-    );
-    final setupResult = createGameFromGeneratedMaps(
-      config: cfg,
-      tileMapOldWorld: tileMapOW,
-      topologyOldWorld: topoOW,
-      tileMapNewWorld: tileMapNW,
-      topologyNewWorld: topoNW,
-      gameId: gameId,
-      namingSeed: effectiveSeed,
-      warpLinks: warpLinks,
-    );
+    late final GameSetupResult setupResult;
+    if (cfg.isLockedFullInitProfile) {
+      setupResult = _lockedFullInitMapsWarpSetupWithRetry(
+        cfg: cfg,
+        gameId: gameId,
+        effectiveSeed: effectiveSeed,
+      );
+    } else {
+      final maps = _generateTileMapsForNewGame(cfg, effectiveSeed);
+      final tileMapOW = maps.tileOw;
+      final topoOW = maps.topoOw;
+      final tileMapNW = maps.tileNw;
+      final topoNW = maps.topoNw;
+      final warpLinks = _generateWarpLinks(
+        effectiveSeed: effectiveSeed,
+        tileMapOW: tileMapOW,
+        topoOW: topoOW,
+        tileMapNW: tileMapNW,
+        topoNW: topoNW,
+      );
+      setupResult = createGameFromGeneratedMaps(
+        config: cfg,
+        tileMapOldWorld: tileMapOW,
+        topologyOldWorld: topoOW,
+        tileMapNewWorld: tileMapNW,
+        topologyNewWorld: topoNW,
+        gameId: gameId,
+        namingSeed: effectiveSeed,
+        warpLinks: warpLinks,
+      );
+    }
     final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);
     _persistNewGame(gameId: gameId, result: result);
     return result.game;
@@ -375,34 +387,52 @@ class GameService {
 
     reportPhase(0);
     await yieldUi();
-    final (tileMapOW, topoOW) = _generateTileMapOldWorld(cfg, effectiveSeed);
+    late final GameSetupResult setupResult;
+    if (cfg.isLockedFullInitProfile) {
+      setupResult = _lockedFullInitMapsWarpSetupWithRetry(
+        cfg: cfg,
+        gameId: gameId,
+        effectiveSeed: effectiveSeed,
+      );
+      reportPhase(1);
+      await yieldUi();
+      reportPhase(2);
+      await yieldUi();
+      reportPhase(3);
+      await yieldUi();
+    } else {
+      final maps = _generateTileMapsForNewGame(cfg, effectiveSeed);
+      final tileMapOW = maps.tileOw;
+      final topoOW = maps.topoOw;
+      final tileMapNW = maps.tileNw;
+      final topoNW = maps.topoNw;
 
-    reportPhase(1);
-    await yieldUi();
-    final (tileMapNW, topoNW) = _generateTileMapNewWorld(cfg, effectiveSeed);
+      reportPhase(1);
+      await yieldUi();
 
-    reportPhase(2);
-    await yieldUi();
-    final warpLinks = _generateWarpLinks(
-      effectiveSeed: effectiveSeed,
-      tileMapOW: tileMapOW,
-      topoOW: topoOW,
-      tileMapNW: tileMapNW,
-      topoNW: topoNW,
-    );
+      reportPhase(2);
+      await yieldUi();
+      final warpLinks = _generateWarpLinks(
+        effectiveSeed: effectiveSeed,
+        tileMapOW: tileMapOW,
+        topoOW: topoOW,
+        tileMapNW: tileMapNW,
+        topoNW: topoNW,
+      );
 
-    reportPhase(3);
-    await yieldUi();
-    final setupResult = createGameFromGeneratedMaps(
-      config: cfg,
-      tileMapOldWorld: tileMapOW,
-      topologyOldWorld: topoOW,
-      tileMapNewWorld: tileMapNW,
-      topologyNewWorld: topoNW,
-      gameId: gameId,
-      namingSeed: effectiveSeed,
-      warpLinks: warpLinks,
-    );
+      reportPhase(3);
+      await yieldUi();
+      setupResult = createGameFromGeneratedMaps(
+        config: cfg,
+        tileMapOldWorld: tileMapOW,
+        topologyOldWorld: topoOW,
+        tileMapNewWorld: tileMapNW,
+        topologyNewWorld: topoNW,
+        gameId: gameId,
+        namingSeed: effectiveSeed,
+        warpLinks: warpLinks,
+      );
+    }
     final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);
 
     reportPhase(4);
@@ -430,6 +460,116 @@ class GameService {
       topologyByRegion: setup.topologyByRegion,
       combinedTopology: setup.combinedTopology,
       warpLinks: setup.warpLinks,
+    );
+  }
+
+  /// OW+NW maps, warp, and [createGameFromGeneratedMaps] with bounded retries when
+  /// partition gates or locked assigner fail (SPEC: locked full-init default).
+  static const int _kLockedFullInitPipelineMaxAttempts = 64;
+
+  GameSetupResult _lockedFullInitMapsWarpSetupWithRetry({
+    required GameSetupConfig cfg,
+    required String gameId,
+    required int effectiveSeed,
+  }) {
+    final log = packageLogger();
+    for (var attempt = 0;
+        attempt < _kLockedFullInitPipelineMaxAttempts;
+        attempt++) {
+      final mapSeed = effectiveSeed + attempt * 100003;
+      try {
+        final r = generateLockedFullInitTileMapPair(
+          config: cfg,
+          effectiveSeed: mapSeed,
+          onLog: _mapGenPassLog.d,
+        );
+        final warpLinks = _generateWarpLinks(
+          effectiveSeed: effectiveSeed,
+          tileMapOW: r.tileOw,
+          topoOW: r.topoOw,
+          tileMapNW: r.tileNw,
+          topoNW: r.topoNw,
+        );
+        return createGameFromGeneratedMaps(
+          config: cfg,
+          tileMapOldWorld: r.tileOw,
+          topologyOldWorld: r.topoOw,
+          tileMapNewWorld: r.tileNw,
+          topologyNewWorld: r.topoNw,
+          gameId: gameId,
+          namingSeed: effectiveSeed,
+          warpLinks: warpLinks,
+        );
+      } on MapPartitionGatesExhaustedException catch (e) {
+        if (attempt < _kLockedFullInitPipelineMaxAttempts - 1) {
+          log.w(
+            'app: locked full-init partition gates exhausted; retrying '
+            '(attempt=$attempt mapSeed=$mapSeed): $e',
+          );
+          continue;
+        }
+        throw SetupTopologyDataException(
+          code: MapPartitionGatesExhaustedException.codeValue,
+          details: e.toString(),
+        );
+      } on SetupTopologyDataException catch (e, st) {
+        if (e.code == 'assigner_exhausted' &&
+            attempt < _kLockedFullInitPipelineMaxAttempts - 1) {
+          log.w(
+            'app: locked full-init assigner exhausted; retrying '
+            '(attempt=$attempt mapSeed=$mapSeed): $e',
+          );
+          continue;
+        }
+        log.e(
+          'app: locked full-init setup failed: $e',
+          error: e,
+          stackTrace: st,
+        );
+        rethrow;
+      }
+    }
+    throw SetupTopologyDataException(
+      code: 'assigner_exhausted',
+      details:
+          'Locked full-init pipeline exhausted after '
+          '$_kLockedFullInitPipelineMaxAttempts attempts',
+    );
+  }
+
+  ({
+    TileMapResult tileOw,
+    MapTopology topoOw,
+    TileMapResult tileNw,
+    MapTopology topoNw,
+  }) _generateTileMapsForNewGame(GameSetupConfig cfg, int effectiveSeed) {
+    if (cfg.isLockedFullInitProfile) {
+      try {
+        final r = generateLockedFullInitTileMapPair(
+          config: cfg,
+          effectiveSeed: effectiveSeed,
+          onLog: _mapGenPassLog.d,
+        );
+        return (
+          tileOw: r.tileOw,
+          topoOw: r.topoOw,
+          tileNw: r.tileNw,
+          topoNw: r.topoNw,
+        );
+      } on MapPartitionGatesExhaustedException catch (e) {
+        throw SetupTopologyDataException(
+          code: MapPartitionGatesExhaustedException.codeValue,
+          details: e.toString(),
+        );
+      }
+    }
+    final ow = _generateTileMapOldWorld(cfg, effectiveSeed);
+    final nw = _generateTileMapNewWorld(cfg, effectiveSeed);
+    return (
+      tileOw: ow.$1,
+      topoOw: ow.$2,
+      tileNw: nw.$1,
+      topoNw: nw.$2,
     );
   }
 

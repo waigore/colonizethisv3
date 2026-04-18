@@ -294,7 +294,7 @@ Map<String, String> _assignFactionsSingleComponentLocked({
   required Set<String> universe,
   required Map<String, Set<String>> neighbours,
   required Random? assignmentRandom,
-  required int backtrackLimitPerLandmass,
+  required int backtrackLimitPerFaction,
 }) {
   if (factionIds.isEmpty || universe.isEmpty) return {};
   final targets = computeFairTargets(factionIds, universe.length);
@@ -309,20 +309,14 @@ Map<String, String> _assignFactionsSingleComponentLocked({
   }
   final land = comps.single;
   final order = _lockedGrowthOrder(factionIds, targets);
-  final cand = land.toList()..sort();
-  if (assignmentRandom != null) cand.shuffle(assignmentRandom);
-  final seeds = pickSimpleSeeds(
-    factionIds: order,
-    candidateIds: cand,
-    available: Set<String>.from(land),
-  );
   return assignTerritoriesLockedOnLandmass(
     landmassProvinceIds: land,
     neighbours: neighbours,
     growthOrder: order,
     targetPerFaction: targets,
-    seeds: seeds,
-    backtrackLimitPerLandmass: backtrackLimitPerLandmass,
+    mandatorySeedProvinceByFaction: const {},
+    seedPickerRandom: assignmentRandom,
+    backtrackLimitPerFaction: backtrackLimitPerFaction,
     observation: null,
   );
 }
@@ -332,7 +326,7 @@ Map<String, String> _assignFactionsMultiComponentLocked({
   required Set<String> universe,
   required Map<String, Set<String>> neighbours,
   required Random? assignmentRandom,
-  required int backtrackLimitPerLandmass,
+  required int backtrackLimitPerFaction,
 }) {
   if (factionIds.isEmpty || universe.isEmpty) return {};
   final targets = computeFairTargets(factionIds, universe.length);
@@ -387,21 +381,15 @@ Map<String, String> _assignFactionsMultiComponentLocked({
       });
     final localTargets = {for (final f in fs) f: targets[f]!};
     final order = _lockedGrowthOrder(fs, localTargets);
-    final cand = land.toList()..sort();
-    if (assignmentRandom != null) cand.shuffle(assignmentRandom);
-    final seeds = pickSimpleSeeds(
-      factionIds: order,
-      candidateIds: cand,
-      available: Set<String>.from(land),
-    );
     out.addAll(
       assignTerritoriesLockedOnLandmass(
         landmassProvinceIds: land,
         neighbours: neighbours,
         growthOrder: order,
         targetPerFaction: localTargets,
-        seeds: seeds,
-        backtrackLimitPerLandmass: backtrackLimitPerLandmass,
+        mandatorySeedProvinceByFaction: const {},
+        seedPickerRandom: assignmentRandom,
+        backtrackLimitPerFaction: backtrackLimitPerFaction,
         observation: null,
       ),
     );
@@ -414,7 +402,7 @@ Map<String, String> _assignFactionsOnRemainderAuto({
   required Set<String> universe,
   required Map<String, Set<String>> neighbours,
   required Random? assignmentRandom,
-  required int backtrackLimitPerLandmass,
+  required int backtrackLimitPerFaction,
 }) {
   final comps = _ppComponentsInSubset(universe, neighbours);
   if (comps.length == 1) {
@@ -423,7 +411,7 @@ Map<String, String> _assignFactionsOnRemainderAuto({
       universe: universe,
       neighbours: neighbours,
       assignmentRandom: assignmentRandom,
-      backtrackLimitPerLandmass: backtrackLimitPerLandmass,
+      backtrackLimitPerFaction: backtrackLimitPerFaction,
     );
   }
   return _assignFactionsMultiComponentLocked(
@@ -431,7 +419,7 @@ Map<String, String> _assignFactionsOnRemainderAuto({
     universe: universe,
     neighbours: neighbours,
     assignmentRandom: assignmentRandom,
-    backtrackLimitPerLandmass: backtrackLimitPerLandmass,
+    backtrackLimitPerFaction: backtrackLimitPerFaction,
   );
 }
 
@@ -471,7 +459,7 @@ Map<String, String> _assignOldWorldSingleLandmass({
     for (final m in minorHere) m: minProvincesPerMinor,
   };
 
-  final seeds = <String, String>{};
+  final mandatoryGpSeedProvinceByFaction = <String, String>{};
   for (final g in gpHere) {
     final seedEntry = gpSeeds.entries.firstWhere((e) => e.value == g);
     final sp = seedEntry.key;
@@ -480,15 +468,7 @@ Map<String, String> _assignOldWorldSingleLandmass({
         'GP $g sea-bound seed $sp not on expected landmass provinces',
       );
     }
-    seeds[sp] = g;
-  }
-  for (final m in minorHere) {
-    final candidates = provs.difference(seeds.keys.toSet()).toList()..sort();
-    if (candidates.isEmpty) {
-      throw StateError('No province left for minor $m seed on landmass $lmId');
-    }
-    if (assignmentRandom != null) candidates.shuffle(assignmentRandom);
-    seeds[candidates.first] = m;
+    mandatoryGpSeedProvinceByFaction[g] = sp;
   }
 
   final growthOrder = _lockedGrowthOrder([...gpHere, ...minorHere], targets);
@@ -502,10 +482,23 @@ Map<String, String> _assignOldWorldSingleLandmass({
       neighbours: neighbours,
       growthOrder: growthOrder,
       targetPerFaction: targets,
-      seeds: seeds,
-      backtrackLimitPerLandmass: kMaxBacktracksPerLandmassBeforeCapitalRestart,
+      mandatorySeedProvinceByFaction: mandatoryGpSeedProvinceByFaction,
+      seedPickerRandom: assignmentRandom,
+      backtrackLimitPerFaction: kDefaultBacktrackLimitPerFaction,
       observation: null,
     );
+  }
+
+  final seeds = <String, String>{
+    for (final e in mandatoryGpSeedProvinceByFaction.entries) e.value: e.key,
+  };
+  for (final m in minorHere) {
+    final candidates = provs.difference(seeds.keys.toSet()).toList()..sort();
+    if (candidates.isEmpty) {
+      throw StateError('No province left for minor $m seed on landmass $lmId');
+    }
+    if (assignmentRandom != null) candidates.shuffle(assignmentRandom);
+    seeds[candidates.first] = m;
   }
   final avail = Set<String>.from(provs);
   final factionLandmassIds = {
@@ -767,29 +760,6 @@ Map<String, String> _selectGpSeedsForLandmass({
   return gpSeeds;
 }
 
-Map<String, String> _assignNewWorldTribesByBfs({
-  required Set<String> universe,
-  required List<String> tribeIds,
-  required Map<String, Set<String>> neighbours,
-}) {
-  final targets = computeFairTargets(tribeIds, universe.length);
-  final growthOrder = _lockedGrowthOrder(tribeIds, targets);
-  final cand = universe.toList()..sort();
-  final seeds = pickSimpleSeeds(
-    factionIds: growthOrder,
-    candidateIds: cand,
-    available: Set<String>.from(universe),
-  );
-  return assignTerritoriesByBfsGrowth(
-    neighbours: neighbours,
-    factionIds: growthOrder,
-    seeds: seeds,
-    targetPerFaction: targets,
-    available: Set<String>.from(universe),
-    neighborShuffleRandom: null,
-  );
-}
-
 Map<String, String> _assignNewWorldOwnershipContiguous({
   required MapTopology topologyNewWorld,
   required List<String> provinceIds,
@@ -801,32 +771,11 @@ Map<String, String> _assignNewWorldOwnershipContiguous({
 
   final neighbours = _provinceNeighboursFromTopology(topologyNewWorld);
   final universe = provinceIds.toSet();
-  try {
-    return _assignFactionsOnRemainderAuto(
-      factionIds: tribeIds,
-      universe: Set<String>.from(universe),
-      neighbours: neighbours,
-      assignmentRandom: null,
-      backtrackLimitPerLandmass: kMaxBacktracksPerLandmassBeforeCapitalRestart,
-    );
-  } on SetupTopologyDataException catch (e) {
-    if (e.code != 'faction_component_bin_pack_failed' &&
-        e.code != 'assignment_remainder_not_connected') {
-      rethrow;
-    }
-    return _assignNewWorldTribesByBfs(
-      universe: universe,
-      tribeIds: tribeIds,
-      neighbours: neighbours,
-    );
-  } on StateError catch (e) {
-    if (e.message != 'locked province assigner: search failed on landmass') {
-      rethrow;
-    }
-    return _assignNewWorldTribesByBfs(
-      universe: universe,
-      tribeIds: tribeIds,
-      neighbours: neighbours,
-    );
-  }
+  return _assignFactionsOnRemainderAuto(
+    factionIds: tribeIds,
+    universe: Set<String>.from(universe),
+    neighbours: neighbours,
+    assignmentRandom: null,
+    backtrackLimitPerFaction: kDefaultBacktrackLimitPerFaction,
+  );
 }

@@ -85,13 +85,17 @@ GameSetupResult createGameFromGeneratedMaps({
   // Province assignment per SPEC/program/game-setup-pipeline.md and
   // SPEC/program/locked-province-assigner.md (locked growth + backtrack; no repair pass).
   final owNeighbours = _provinceNeighboursFromTopology(topologyOldWorld);
-  final useLockedSixMinorContinentPainting =
-      config.isLockedFullInitProfile &&
+  // Locked assigner + six-minor-per-continent layout apply only when OW topology
+  // matches the delivery profile (see locked_partition_topology_gates.dart).
+  final useLockedSixMinorContinentPainting = config.isLockedFullInitProfile &&
       oldWorldPartitionMatchesLockedProfile(topologyOldWorld) &&
       lockedOldWorldRoleFeasibilityHolds(
         topology: topologyOldWorld,
         neighbours: owNeighbours,
       );
+  final owAssignmentRandom = useLockedSixMinorContinentPainting
+      ? Random(config.seed)
+      : null;
   Map<String, String> owOwner;
   try {
     owOwner = _assignOldWorldOwnershipContiguous(
@@ -101,22 +105,51 @@ GameSetupResult createGameFromGeneratedMaps({
       gpIds: gpIds,
       minorIds: minorIds,
       minProvincesPerMinor: config.minProvincesPerMinor,
-      assignmentRandom: null,
+      assignmentRandom: owAssignmentRandom,
       useLockedSixMinorContinentPainting: useLockedSixMinorContinentPainting,
     );
   } on StateError catch (e, st) {
-    _log.e('logic: OW locked assignment failed: $e', error: e, stackTrace: st);
+    if (useLockedSixMinorContinentPainting) {
+      _log.e(
+        'logic: OW locked assignment failed. '
+        '${_lockedOwAssignFailureDiagnostics(config: config, topology: topologyOldWorld, seaBoundIds: seaBoundOW)} '
+        'raw=$e',
+        error: e,
+        stackTrace: st,
+      );
+    } else {
+      _log.e('logic: OW assignment failed: $e', error: e, stackTrace: st);
+    }
     throw SetupTopologyDataException(
       code: 'assigner_exhausted',
       details: 'Old World locked assigner exhausted: $e',
     );
   }
 
-  final nwOwner = _assignNewWorldOwnershipContiguous(
-    topologyNewWorld: topologyNewWorld,
-    provinceIds: nwProvinceIds,
-    tribeIds: tribeIds,
-  );
+  Map<String, String> nwOwner;
+  try {
+    nwOwner = _assignNewWorldOwnershipContiguous(
+      topologyNewWorld: topologyNewWorld,
+      provinceIds: nwProvinceIds,
+      tribeIds: tribeIds,
+    );
+  } on StateError catch (e, st) {
+    if (config.isLockedFullInitProfile) {
+      _log.e(
+        'logic: NW locked assignment failed. '
+        '${_lockedNwAssignFailureDiagnostics(config: config, topology: topologyNewWorld)} '
+        'raw=$e',
+        error: e,
+        stackTrace: st,
+      );
+    } else {
+      _log.e('logic: NW assignment failed: $e', error: e, stackTrace: st);
+    }
+    throw SetupTopologyDataException(
+      code: 'assigner_exhausted',
+      details: 'New World locked assigner exhausted: $e',
+    );
+  }
 
   final oldWorldProvinces = owOwner.entries
       .map(

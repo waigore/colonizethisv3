@@ -19,17 +19,17 @@ The **design** locked full-init layout assumes four Old World P–P land compone
 
 ## Assigner search
 
-**API:** `assignTerritoriesLockedOnLandmass` — parameters include landmass province set, P–P `neighbours`, **growth order** (faction ids), `targetPerFaction`, initial `seeds` (one seed province per faction in order), `backtrackLimitPerLandmass`, optional `LockedAssignerObservation` (backtrack / capital-restart counters for tests).
+**API:** `assignTerritoriesLockedOnLandmass` — parameters include landmass province set, P–P `neighbours`, **growth order** (faction ids), `targetPerFaction`, optional **`mandatorySeedProvinceByFaction`** (faction id → province id that must be used when that faction is **seeded**), optional **`seedPickerRandom`** for shuffling non-mandatory seed candidates, **`backtrackLimitPerFaction`** (default **`kDefaultBacktrackLimitPerFaction` = 20**), and optional **`LockedAssignerObservation`** (backtrack / capital-restart counters for tests).
 
-**Backtrack budget (product):** `kMaxBacktracksPerLandmassBeforeCapitalRestart` in `locked_province_assigner.dart` is **`100`** (#1830). Production OW/NW locked paths pass this value as `backtrackLimitPerLandmass`; tests may override for harness scenarios.
+**Phased seeding:** Factions are grown **strictly in `growthOrder`**. When a faction becomes active (all earlier factions already at target), it receives a **seed** on the landmass: either its mandatory province (if provided) or a **non-mandatory** seed chosen from remaining unassigned provinces (sorted, then optionally shuffled). Earlier factions **do not** receive seed tiles until their turn; no multi-faction seed map is supplied up front.
 
-**Growth:** Active faction is the first in `growthOrder` under its target; only that faction may claim from the frontier of its already-owned tiles. Legal neighbors are ranked by higher P–P degree on the landmass, then fewer post-claim unassigned island components, then lexicographic province id.
+**Growth:** Within a faction’s growth phase, only that faction may claim from the frontier of its already-owned tiles (same neighbor ranking as before: higher P–P degree, then fewer post-claim unassigned island components, then lexicographic province id).
 
 **Island check:** Before committing a trial tile, `islandResidualsFeasibleGreedy` checks that sorted unfinished faction residuals can each fit on some unassigned island (greedy match on sizes sorted descending).
 
-**Backtrack / tabu:** On failed subtree, undo placement, increment backtrack count, add `(capitalGeneration, depth, provinceId)` to tabu, remove tabu entries at same `capitalGeneration` with depth ≥ `depth + 1`. If backtracks exceed `backtrackLimitPerLandmass`, increment `capitalGeneration`, clear tabu, reset to seeds, and restart DFS (capital-generation restart), bounded (implementation cap).
+**Backtrack / tabu (per faction):** On failed subtree, undo placement, increment that faction’s per-search backtrack count, add `(capitalGeneration, depth, provinceId)` to tabu, remove tabu entries at same `capitalGeneration` with depth ≥ `depth + 1`. If backtracks for the **active** faction reach **`backtrackLimitPerFaction`**, search returns a budget-exhausted outcome: the outer loop **unwinds** the last **non-mandatory** province placed for the **previous** faction in `growthOrder` (and all later placements), clears tabu, and retries. If no such unwind exists (e.g. first faction), a **capital-generation restart** clears the landmass and retries (bounded; implementation cap).
 
-If search fails: **`StateError`** from assigner; orchestration maps assigner failure to **`SetupTopologyDataException`** with code **`assigner_exhausted`** where specified in the pipeline.
+If search still fails: **`StateError`** from assigner; orchestration maps assigner failure to **`SetupTopologyDataException`** with code **`assigner_exhausted`** where specified in the pipeline.
 
 ## Tests
 

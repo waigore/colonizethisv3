@@ -1,5 +1,4 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/src/setup/locked_topology_gates.dart';
 import 'package:colonizethis_test/test.dart';
 
 MapTopology _pathLandmass({

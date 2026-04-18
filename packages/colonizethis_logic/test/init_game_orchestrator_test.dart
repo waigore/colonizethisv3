@@ -3,7 +3,6 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_logic/src/setup/locked_topology_gates.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -223,6 +222,7 @@ void main() {
         onLandSeedsPlaced,
         void Function(List<(int x, int y)> continentSeeds)?
         onContinentSeedsPlaced,
+        List<int>? continentProvinceSizes,
       }) {
         seedsByRegion[regionId] = params.seed;
         return defaultTileMapRegionGenerator(
@@ -235,6 +235,7 @@ void main() {
           onLog: onLog,
           onLandSeedsPlaced: onLandSeedsPlaced,
           onContinentSeedsPlaced: onContinentSeedsPlaced,
+          continentProvinceSizes: continentProvinceSizes,
         );
       }
 
@@ -299,8 +300,16 @@ void main() {
         onLandSeedsPlaced,
         void Function(List<(int x, int y)> continentSeeds)?
         onContinentSeedsPlaced,
+        List<int>? continentProvinceSizes,
       }) {
         callCount++;
+        final forcedSizes =
+            continentProvinceSizes ??
+            (numContinents == 4 && numProvinces == 60 && regionId == kRegionOldWorld
+                ? const [13, 13, 17, 17]
+                : numContinents == 4 && numProvinces == 30 && regionId == kRegionNewWorld
+                    ? const [6, 6, 9, 9]
+                    : null);
         return defaultTileMapRegionGenerator(
           params: params,
           numProvinces: numProvinces,
@@ -311,6 +320,7 @@ void main() {
           onLog: onLog,
           onLandSeedsPlaced: onLandSeedsPlaced,
           onContinentSeedsPlaced: onContinentSeedsPlaced,
+          continentProvinceSizes: forcedSizes,
         );
       }
 

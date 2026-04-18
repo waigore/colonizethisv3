@@ -1,7 +1,8 @@
-// SPEC/program/locked-province-assigner.md — topology acceptance for locked OW painting.
-import 'package:colonizethis_data/colonizethis_data.dart';
+// SPEC/program/locked-province-assigner.md — topology acceptance for locked OW/NW painting.
+import 'map_topology.dart';
+import 'topology_node.dart';
 
-import 'capital_choice.dart' show isProvinceSeaBound;
+import 'topology_sea_bound.dart';
 
 /// P–P province-only adjacency from [topology].
 Map<String, Set<String>> provincePpNeighbours(MapTopology topology) {

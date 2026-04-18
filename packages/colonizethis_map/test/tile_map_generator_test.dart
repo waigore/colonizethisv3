@@ -70,6 +70,21 @@ void main() {
     });
   });
 
+  group('buildProvinceToContinentMapFromCounts', () {
+    test('maps explicit per-continent sizes (locked OW / NW buckets)', () {
+      final map = buildProvinceToContinentMapFromCounts([13, 13, 17, 17]);
+      expect(map.length, 60);
+      expect(map['p1'], 0);
+      expect(map['p13'], 0);
+      expect(map['p14'], 1);
+      expect(map['p26'], 1);
+      expect(map['p27'], 2);
+      expect(map['p43'], 2);
+      expect(map['p44'], 3);
+      expect(map['p60'], 3);
+    });
+  });
+
   group('computeContinentMembership', () {
     test('returns two components for 2 continents', () {
       final topology = generateTopology(TopologyGeneratorParams(

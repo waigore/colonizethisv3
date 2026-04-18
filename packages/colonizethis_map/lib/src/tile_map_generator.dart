@@ -216,6 +216,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)?
     onLandSeedsPlaced,
     void Function(List<(int x, int y)> continentSeeds)? onContinentSeedsPlaced,
+    List<int>? continentProvinceSizes,
   }) {
     final log = packageLogger();
     log.i(
@@ -240,10 +241,29 @@ class TileMapGenerator extends _TileMapGeneratorShell {
       'skipFillLakes=${params.skipFillLakes} '
       'seedBeforeAssignment=${params.seedBeforeAssignment}',
     );
-    final provinceToContinent = buildProvinceToContinentMap(
-      numProvinces,
-      numContinents,
-    );
+    final Map<String, int> provinceToContinent;
+    if (continentProvinceSizes != null) {
+      if (continentProvinceSizes.length != numContinents) {
+        throw MapValidationException(
+          'continentProvinceSizes.length (${continentProvinceSizes.length}) '
+          'must equal numContinents ($numContinents)',
+        );
+      }
+      final sum = continentProvinceSizes.fold<int>(0, (a, b) => a + b);
+      if (sum != numProvinces) {
+        throw MapValidationException(
+          'continentProvinceSizes sum ($sum) must equal numProvinces ($numProvinces)',
+        );
+      }
+      provinceToContinent = buildProvinceToContinentMapFromCounts(
+        continentProvinceSizes,
+      );
+    } else {
+      provinceToContinent = buildProvinceToContinentMap(
+        numProvinces,
+        numContinents,
+      );
+    }
     final rnd = Random(params.seed);
 
     // Pass 1: Initialize grid (all sea)

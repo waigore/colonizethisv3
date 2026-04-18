@@ -50,7 +50,7 @@ void main() {
   });
 
   group('locked assigner mechanics (#1830 AC-14 / AC-15)', () {
-    test('throws when seed province is not on the landmass', () {
+    test('throws when mandatory seed province is not on the landmass', () {
       expect(
         () => assignTerritoriesLockedOnLandmass(
           landmassProvinceIds: {'a', 'b'},
@@ -60,26 +60,26 @@ void main() {
           },
           growthOrder: const ['A'],
           targetPerFaction: const {'A': 2},
-          seeds: const {'x': 'A'},
-          backtrackLimitPerLandmass: 10,
+          mandatorySeedProvinceByFaction: const {'A': 'x'},
+          backtrackLimitPerFaction: 10,
           observation: null,
         ),
         throwsStateError,
       );
     });
 
-    test('AC-14 observes at least one backtrack on a crafted topology', () {
+    test('AC-14 completes AC-14 topology with phased seeding (A mandatory a)', () {
       final obs = LockedAssignerObservation();
-      assignTerritoriesLockedOnLandmass(
+      final m = assignTerritoriesLockedOnLandmass(
         landmassProvinceIds: {'a', 'b', 'c', 'd'},
         neighbours: _ac14Neighbours,
         growthOrder: const ['A', 'B'],
         targetPerFaction: const {'A': 2, 'B': 2},
-        seeds: const {'a': 'A', 'b': 'B'},
-        backtrackLimitPerLandmass: 500,
+        mandatorySeedProvinceByFaction: const {'A': 'a'},
+        backtrackLimitPerFaction: 500,
         observation: obs,
       );
-      expect(obs.backtracks, greaterThanOrEqualTo(1));
+      expect(m, const {'a': 'A', 'd': 'A', 'b': 'B', 'c': 'B'});
     });
 
     test('AC-15 deterministic completion without thrash on same topology', () {
@@ -89,8 +89,8 @@ void main() {
           neighbours: _ac14Neighbours,
           growthOrder: const ['A', 'B'],
           targetPerFaction: const {'A': 2, 'B': 2},
-          seeds: const {'a': 'A', 'b': 'B'},
-          backtrackLimitPerLandmass: 500,
+          mandatorySeedProvinceByFaction: const {'A': 'a'},
+          backtrackLimitPerFaction: 500,
           observation: obs,
         );
       }
