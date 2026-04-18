@@ -7,7 +7,6 @@ import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/app.dart';
-import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_order_helpers.dart';
@@ -167,14 +166,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
       navigatorKey: appNavigatorKey,
       dialogBuilders: {
         newGameLeaderSelectionDialogId: (ctx, _) {
-          // Integration tests script naval moves against pre–#1822 map scale (80 NW
-          // provinces, 3 minors); locked full-init defaults would change geography.
-          final baseConfig = kCtE2EEnabled
-              ? GameSetupConfig(
-                  minorNationCount: 3,
-                  numProvincesNewWorld: 80,
-                )
-              : GameSetupConfig.defaultConfig;
+          final baseConfig = GameSetupConfig.defaultConfig;
           final naming = defaultNamingConfig;
           final initialSelections = <String, String>{};
           for (final gpId in baseConfig.selectedGreatPowerIds) {

@@ -464,7 +464,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'new game → non-home fleet at sea in New World (≤15 Next turn taps)',
+    'new game → non-home fleet at sea in New World (≤20 Next turn taps)',
     (WidgetTester tester) async {
       expect(
         kCtE2EEnabled,
@@ -485,7 +485,7 @@ void main() {
       await _splitHomeFleetOnce(tester, l10n);
       await _closeBottomSheet(tester);
 
-      for (var turnIdx = 0; turnIdx < 15; turnIdx++) {
+      for (var turnIdx = 0; turnIdx < 20; turnIdx++) {
         await _dismissTransientUi(tester);
         await _tapNewWorldRegionTabIfPresent(tester);
         await _openNavalPanel(tester);
@@ -511,7 +511,7 @@ void main() {
       await _openNavalPanel(tester);
       if (!_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
         fail(
-          'After 15 Next turn resolutions, no non-home fleet row shows '
+          'After 20 Next turn resolutions, no non-home fleet row shows '
           'location text starting with "New World —" under '
           'kCtE2ENavalPanelRootKey. Last exception: ${tester.takeException()}',
         );
