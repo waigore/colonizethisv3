@@ -2,6 +2,12 @@ name: Quality
 
 on:
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - labeled
     branches:
       - main
       - dev
@@ -492,7 +498,8 @@ jobs:
         run: tool/check_coverage_threshold.sh 80 app
 
   # OpenCode post-e2e review: same workflow as Quality; runs only for same-repo PRs into dev after
-  # app_e2e_linux succeeds, and when the PR changes paths outside dot-prefixed meta dirs (see changes.opencode_scope).
+  # app_e2e_linux succeeds, when the PR changes paths outside dot-prefixed meta dirs (see changes.opencode_scope),
+  # and when either the PR has the `help wanted` label or more than 10 files changed (otherwise skipped).
   # The model posts/updates a PR comment; the verdict job greps that comment for
   # <!-- ct-opencode-verdict:PASS --> or <!-- ct-opencode-verdict:FAIL --> (see prompt).
   opencode_review:
@@ -503,7 +510,8 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository &&
       needs.changes.result == 'success' &&
       needs.changes.outputs.opencode_scope == 'true' &&
-      needs.app_e2e_linux.result == 'success'
+      needs.app_e2e_linux.result == 'success' &&
+      (contains(github.event.pull_request.labels.*.name, 'help wanted') || github.event.pull_request.changed_files > 10)
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -564,7 +572,10 @@ jobs:
     steps:
       - name: Skip when OpenCode review did not run
         if: needs.opencode_review.result == 'skipped'
-        run: echo "OpenCode review not applicable for this run."; exit 0
+        run: |
+          echo "OpenCode review did not run (skipped): not applicable for this PR run—for example wrong base branch,"
+          echo "fork PR, path-only meta changes, e2e not green, or gate scope (needs label 'help wanted' or >10 changed files per workflow)."
+          exit 0
 
       - name: Fail when OpenCode review job failed or was cancelled
         if: needs.opencode_review.result != 'skipped' && needs.opencode_review.result != 'success'
