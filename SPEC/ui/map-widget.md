@@ -168,7 +168,14 @@ All icons are 64×64 PNG with RGBA transparency, colonial-era pixel art style ma
 
 - **Asset vs display:** Source samples are always the full **64×64** PNG. The **destination** `Rect` uses edge length `displaySize = min(cellSize / 4, 64)` (same width and height). `drawImageRect` maps the full source rect to that destination (downscale when `displaySize &lt; 64`; at `displaySize == 64` the marker matches native asset pixel density for that cell scale).
 - **Position:** **Bottom-left** anchor in tile/world coordinates: `iconX = tileLeft`, `iconY = tileTop + cellSize - displaySize` (with `tileLeft` / `tileTop` and `cellSize` in the same space). The marker fits within the cell horizontally and vertically (width and height ≤ `cellSize` given the cap above).
+- **Transport overlap (readability):** When the base-layer mode draws **road/rail transport** on a **land** cell (`roadLevel > 0`, same gating as the transport overlay pass) and a resource icon is drawn on that cell, the renderer draws a **small semi-opaque rounded plate** in **destination icon space** (same rect as the scaled resource glyph) **before** the resource `drawImageRect`, so transparent pixels in the icon do not reveal transport corridor art alone. Fogged tiles apply the **same fog modulation** to this plate as to the icon. Z-order remains **transport in the tile pass, then resource icon in the overlay pass**; the plate is part of the resource overlay group (not transport).
 - **Visibility:** Icons are subject to the same visibility rules as terrain (visible/fogged/unrevealed). Fogged tiles render icons with reduced opacity; unrevealed tiles show nothing.
+
+#### Acceptance criteria (resource vs transport readability)
+
+- Given the region map uses `terrainAndResourcesImprovementsRoads` and a **land** cell has `roadLevel > 0` and a **non-null** resource id that passes resource visibility rules  
+- When the map finishes painting that cell’s base overlays  
+- Then the resource marker’s destination rect includes the semi-opaque readability plate under the icon art (per **Transport overlap**) and the composed result is **pixel-regression covered** in automated tests (golden or equivalent) for at least one fixture cell.
 
 ### Per-tile extraction throughput indicators
 
