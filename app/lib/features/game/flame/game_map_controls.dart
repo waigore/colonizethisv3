@@ -120,6 +120,8 @@ class _GameMapControlsState extends State<GameMapControls> {
                 onSelected: (_) => widget.onRegionIndexChanged(0),
               ),
               const SizedBox(width: 8),
+              // E2E-only wrapper: same layout as bare chip; adds a stable subtree key
+              // for integration tests (`kCtE2ERegionTabNewWorldKey`).
               if (kCtE2EEnabled)
                 KeyedSubtree(
                   key: kCtE2ERegionTabNewWorldKey,

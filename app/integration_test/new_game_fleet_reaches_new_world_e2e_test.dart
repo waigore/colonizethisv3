@@ -39,6 +39,10 @@ Future<void> _waitUntilFound(
 }
 
 /// Dismisses blocking bottom sheets, dialog shells, snackbars, and generic OKs.
+///
+/// [AlertDialog] handling uses common action labels (including **Close** for
+/// prior-turn [TurnNewsDialog], `SPEC/ui/turn-news-dialog.md`) plus
+/// [WidgetsBinding.handlePopRoute] if none match.
 Future<void> _dismissTransientUi(WidgetTester tester) async {
   if (find.byType(SnackBar).evaluate().isNotEmpty) {
     final snackAction = find.descendant(
@@ -58,7 +62,7 @@ Future<void> _dismissTransientUi(WidgetTester tester) async {
     return;
   }
   if (find.byType(AlertDialog).evaluate().isNotEmpty) {
-    for (final label in ['Close', 'OK', 'Cancel']) {
+    for (final label in ['Close', 'OK', 'Cancel', 'Yes']) {
       final hit = find
           .descendant(of: find.byType(AlertDialog), matching: find.text(label))
           .hitTestable();
@@ -236,6 +240,17 @@ Future<void> _openNavalPanel(WidgetTester tester) async {
   );
 }
 
+/// Selects the New World map region via [kCtE2ERegionTabNewWorldKey] when present
+/// (reduces ambiguous "New World" text on screen; `SPEC/program/e2e-integration-tests.md`).
+Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
+  final tab = find.byKey(kCtE2ERegionTabNewWorldKey).hitTestable();
+  if (tab.evaluate().isEmpty) {
+    return;
+  }
+  await tester.tap(tab.first, warnIfMissed: false);
+  await _pumpFor(tester, const Duration(milliseconds: 250));
+}
+
 Finder _radioListTilesInAlertDialogs() {
   return find.descendant(
     of: find.byType(AlertDialog),
@@ -246,7 +261,10 @@ Finder _radioListTilesInAlertDialogs() {
 }
 
 /// Prefer cross-region warp row (English copy); else first adjacent sea tile.
-Future<void> _pickMoveDestinationAndConfirm(WidgetTester tester) async {
+Future<void> _pickMoveDestinationAndConfirm(
+  WidgetTester tester,
+  AppLocalizations l10n,
+) async {
   await _pumpFor(tester, const Duration(milliseconds: 200));
   final warp = find.textContaining('links to New World');
   if (warp.evaluate().isNotEmpty) {
@@ -269,7 +287,7 @@ Future<void> _pickMoveDestinationAndConfirm(WidgetTester tester) async {
     await tester.tap(seaRadio.first, warnIfMissed: false);
   }
   await _pumpFor(tester, const Duration(milliseconds: 200));
-  final confirm = find.text('Confirm').hitTestable();
+  final confirm = find.text(l10n.common_confirm).hitTestable();
   expect(confirm, findsWidgets);
   await tester.tap(confirm.first, warnIfMissed: false);
   await _pumpFor(tester, const Duration(seconds: 1));
@@ -279,10 +297,13 @@ Future<void> _tryNavalMoveSegment(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
+  await _tapNewWorldRegionTabIfPresent(tester);
   await _openNavalPanel(tester);
   await _expandEachExpansionTileOnce(tester);
   await _tapMoveOnFirstNonHomeFleet(tester);
   await _pumpFor(tester, const Duration(milliseconds: 300));
+  // No legal sea-step this turn: close dialog and rely on the outer loop +
+  // next turn (Refs #1831 heuristic path).
   if (find.text(l10n.moveFleet_noAdjacentSeaZones).evaluate().isNotEmpty) {
     final cancel = find.text(l10n.common_cancel).hitTestable();
     expect(cancel, findsOneWidget);
@@ -291,7 +312,7 @@ Future<void> _tryNavalMoveSegment(
     return;
   }
   if (find.byType(AlertDialog).evaluate().isNotEmpty) {
-    await _pickMoveDestinationAndConfirm(tester);
+    await _pickMoveDestinationAndConfirm(tester, l10n);
   }
 }
 
@@ -371,7 +392,10 @@ bool _navalPanelShowsNonHomeFleetInNewWorld(WidgetTester tester) {
   return false;
 }
 
-Future<void> _splitHomeFleetOnce(WidgetTester tester) async {
+Future<void> _splitHomeFleetOnce(
+  WidgetTester tester,
+  AppLocalizations l10n,
+) async {
   await tester.tap(find.byKey(kEmpireNavalUnitsButtonKey));
   await _pumpFor(tester, const Duration(milliseconds: 400));
   await _waitUntilFound(
@@ -396,7 +420,7 @@ Future<void> _splitHomeFleetOnce(WidgetTester tester) async {
   expect(moveOneRight, findsWidgets);
   await tester.tap(moveOneRight.first);
   await _pumpFor(tester, const Duration(milliseconds: 200));
-  await tester.tap(find.text('Confirm Split'));
+  await tester.tap(find.text(l10n.splitFleet_confirm));
   await _pumpFor(tester, const Duration(seconds: 1));
   await _expandEachExpansionTileOnce(tester);
 }
@@ -437,11 +461,12 @@ void main() {
 
       final l10n = lookupAppLocalizations(const Locale('en'));
 
-      await _splitHomeFleetOnce(tester);
+      await _splitHomeFleetOnce(tester, l10n);
       await _closeBottomSheet(tester);
 
       for (var turnIdx = 0; turnIdx < 10; turnIdx++) {
         await _dismissTransientUi(tester);
+        await _tapNewWorldRegionTabIfPresent(tester);
         await _openNavalPanel(tester);
         if (_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
           await _closeBottomSheet(tester);
@@ -461,6 +486,7 @@ void main() {
       }
 
       await _dismissTransientUi(tester);
+      await _tapNewWorldRegionTabIfPresent(tester);
       await _openNavalPanel(tester);
       if (!_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
         fail(
