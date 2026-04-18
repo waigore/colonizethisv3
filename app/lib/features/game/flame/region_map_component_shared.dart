@@ -66,11 +66,12 @@ const double _kFoggedResourceIconModulateAlpha = 0.6;
 /// Plate drawn under resource map glyphs when road/rail transport art is painted
 /// on the same land cell, so transparent icon pixels do not reveal corridor-only
 /// pixels from the transport layer alone (SPEC/ui/map-widget.md § Resource Icons).
+/// Light tone so semi-transparent icon pixels read as soft tint, not a black box.
 const Color _kResourceIconTransportReadabilityBackdrop = Color.fromRGBO(
-  22,
-  18,
-  14,
-  0.78,
+  228,
+  236,
+  208,
+  0.82,
 );
 const double _kExtractionIndicatorSizeBoostPx = 2.0;
 const double _kExtractionIndicatorOverlapFactor = 0.45;

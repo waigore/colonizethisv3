@@ -82,7 +82,7 @@ void main() {
 
     testWidgets(
       'terrainAndResourcesImprovementsRoads: road + grain cell golden '
-      '(resource overlay includes readability plate; Refs #1848)',
+      '(L1 plains decal above transport; readability plate; Refs #1848)',
       (WidgetTester tester) async {
         final region = oneCellRoadResourceRegion();
         await tester.pumpWidget(
@@ -117,6 +117,81 @@ void main() {
           find.byKey(const ValueKey('region_map_transport_resource_golden')),
           matchesGoldenFile(
             'goldens/region_map_transport_resource_grain_64.png',
+          ),
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 30)),
+    );
+
+    RegionMapViewData oneCellRoadHorsesRegion() {
+      return RegionMapViewData(
+        regionId: 'goldenRegionHorses',
+        width: 1,
+        height: 1,
+        cellSize: 64,
+        cells: const [
+          CellViewData(
+            x: 0,
+            y: 0,
+            regionCellId: 'pGoldenH',
+            isSea: false,
+            terrainType: TerrainType.plains,
+            resourceId: 'horses',
+            roadLevel: 2,
+            provinceDisplayName: 'Golden',
+          ),
+        ],
+        capitalMarkers: const [],
+        portMarkers: const [],
+        townMarkers: const [],
+        factionColors: const {},
+        greatPowerFactionIds: const {},
+        terrainColors: const {TerrainType.plains: (120, 160, 90)},
+        warpMarkers: const [],
+      );
+    }
+
+    testWidgets(
+      'terrainAndResourcesImprovementsRoads: road + horses golden '
+      '(tile_plains_horses above transport; icon plate not dark matte; Refs #1848)',
+      (WidgetTester tester) async {
+        final region = oneCellRoadHorsesRegion();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Center(
+              child: RepaintBoundary(
+                key: const ValueKey(
+                  'region_map_transport_resource_horses_golden',
+                ),
+                child: SizedBox(
+                  width: 64,
+                  height: 64,
+                  child: CtRegionMap(
+                    region: region,
+                    cellSizePx: 64,
+                    visibilityMode: CtMapVisibilityMode.full,
+                    showPoliticalOverlay: false,
+                    showProvinceOverlay: false,
+                    showProvinceNamesLayer: false,
+                    baseLayerDisplayMode: BaseLayerDisplayMode
+                        .terrainAndResourcesImprovementsRoads,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        for (var i = 0; i < 40; i++) {
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+
+        await expectLater(
+          find.byKey(
+            const ValueKey('region_map_transport_resource_horses_golden'),
+          ),
+          matchesGoldenFile(
+            'goldens/region_map_transport_resource_horses_64.png',
           ),
         );
       },
