@@ -24,6 +24,20 @@ int _ppDegreeOnLand(
   return d;
 }
 
+void _pushUnassignedPpNeighbors(
+  String u,
+  Set<String> inSet,
+  Map<String, Set<String>> neighbours,
+  Set<String> seen,
+  List<String> stack,
+) {
+  for (final v in neighbours[u] ?? const <String>{}) {
+    if (!inSet.contains(v)) continue;
+    if (seen.contains(v)) continue;
+    stack.add(v);
+  }
+}
+
 int _unassignedIslandCountOnLand(
   Set<String> unassigned,
   Map<String, Set<String>> neighbours,
@@ -40,9 +54,7 @@ int _unassignedIslandCountOnLand(
     while (stack.isNotEmpty) {
       final u = stack.removeLast();
       if (!seen.add(u)) continue;
-      for (final v in neighbours[u] ?? const <String>{}) {
-        if (inSet.contains(v) && !seen.contains(v)) stack.add(v);
-      }
+      _pushUnassignedPpNeighbors(u, inSet, neighbours, seen, stack);
     }
   }
   return components;
@@ -65,9 +77,7 @@ List<int> _islandSizesOnLand(
       final u = stack.removeLast();
       if (!seen.add(u)) continue;
       sz++;
-      for (final v in neighbours[u] ?? const <String>{}) {
-        if (inSet.contains(v) && !seen.contains(v)) stack.add(v);
-      }
+      _pushUnassignedPpNeighbors(u, inSet, neighbours, seen, stack);
     }
     sizes.add(sz);
   }
@@ -261,9 +271,8 @@ Map<String, String> assignTerritoriesLockedOnLandmass({
         capitalGeneration++;
         tabu.clear();
         owners.clear();
-        unassigned
-          ..clear()
-          ..addAll(land);
+        unassigned.clear();
+        unassigned.addAll(land);
         for (final e in seeds.entries) {
           owners[e.key] = e.value;
           unassigned.remove(e.key);

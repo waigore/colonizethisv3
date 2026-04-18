@@ -23,6 +23,18 @@ Map<String, Set<String>> provincePpNeighbours(MapTopology topology) {
   return neighbours;
 }
 
+void _pushUnvisitedPpNeighbors(
+  String u,
+  Map<String, Set<String>> neighbours,
+  Set<String> visited,
+  List<String> stack,
+) {
+  for (final v in neighbours[u] ?? const <String>{}) {
+    if (visited.contains(v)) continue;
+    stack.add(v);
+  }
+}
+
 /// Sorted multiset of P–P connected component sizes among province nodes.
 List<int> ppLandComponentSizesSorted(MapTopology topology) {
   final neighbours = provincePpNeighbours(topology);
@@ -37,9 +49,7 @@ List<int> ppLandComponentSizesSorted(MapTopology topology) {
       final u = stack.removeLast();
       if (!visited.add(u)) continue;
       size++;
-      for (final v in neighbours[u] ?? const <String>{}) {
-        if (!visited.contains(v)) stack.add(v);
-      }
+      _pushUnvisitedPpNeighbors(u, neighbours, visited, stack);
     }
     sizes.add(size);
   }
@@ -92,9 +102,7 @@ List<_LandmassInfo> _landmassesSortedDesc(Map<String, Set<String>> neighbours) {
       final u = stack.removeLast();
       if (!visited.add(u)) continue;
       comp.add(u);
-      for (final v in neighbours[u] ?? const <String>{}) {
-        if (!visited.contains(v)) stack.add(v);
-      }
+      _pushUnvisitedPpNeighbors(u, neighbours, visited, stack);
     }
     final minId = comp.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
     out.add((size: comp.length, minProvinceId: minId, provinces: comp));

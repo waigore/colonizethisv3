@@ -208,6 +208,20 @@ int _largestFeasibleGpProvinceBudgetByPacking({
   return best;
 }
 
+void _pushSubsetNeighbors(
+  String u,
+  Set<String> nodes,
+  Set<String> unseen,
+  Map<String, Set<String>> neighbours,
+  List<String> stack,
+) {
+  for (final v in neighbours[u] ?? const <String>{}) {
+    if (!nodes.contains(v)) continue;
+    if (!unseen.contains(v)) continue;
+    stack.add(v);
+  }
+}
+
 List<Set<String>> _ppComponentsInSubset(
   Set<String> nodes,
   Map<String, Set<String>> neighbours,
@@ -222,9 +236,7 @@ List<Set<String>> _ppComponentsInSubset(
       final u = stack.removeLast();
       if (!unseen.remove(u)) continue;
       comp.add(u);
-      for (final v in neighbours[u] ?? const <String>{}) {
-        if (nodes.contains(v) && unseen.contains(v)) stack.add(v);
-      }
+      _pushSubsetNeighbors(u, nodes, unseen, neighbours, stack);
     }
     comps.add(comp);
   }
@@ -423,6 +435,95 @@ Map<String, String> _assignFactionsOnRemainderAuto({
   );
 }
 
+void _assertGpProvincesOnAssignedLandmass({
+  required String gpId,
+  required int expectedLm,
+  required Map<String, String> owners,
+  required Map<String, int> landmassIds,
+}) {
+  for (final e in owners.entries) {
+    if (e.value != gpId) continue;
+    final pidLm = landmassIds[e.key];
+    if (pidLm != expectedLm) {
+      throw StateError(
+        'GP $gpId violates one-continent rule: province ${e.key} is on '
+        'landmass $pidLm but GP is assigned to $expectedLm',
+      );
+    }
+  }
+}
+
+Map<String, String> _assignOldWorldSingleLandmass({
+  required int lmId,
+  required Set<String> provs,
+  required List<String> gpHere,
+  required List<String> minorHere,
+  required Map<String, int> targetPerGp,
+  required int minProvincesPerMinor,
+  required Map<String, String> gpSeeds,
+  required Map<String, Set<String>> neighbours,
+  required Map<String, int> landmassIds,
+  required Random? assignmentRandom,
+  required bool lockedSixMinorsOnFourContinents,
+}) {
+  final targets = <String, int>{
+    for (final g in gpHere) g: targetPerGp[g]!,
+    for (final m in minorHere) m: minProvincesPerMinor,
+  };
+
+  final seeds = <String, String>{};
+  for (final g in gpHere) {
+    final seedEntry = gpSeeds.entries.firstWhere((e) => e.value == g);
+    final sp = seedEntry.key;
+    if (!provs.contains(sp)) {
+      throw StateError(
+        'GP $g sea-bound seed $sp not on expected landmass provinces',
+      );
+    }
+    seeds[sp] = g;
+  }
+  for (final m in minorHere) {
+    final candidates = provs.difference(seeds.keys.toSet()).toList()..sort();
+    if (candidates.isEmpty) {
+      throw StateError('No province left for minor $m seed on landmass $lmId');
+    }
+    if (assignmentRandom != null) candidates.shuffle(assignmentRandom);
+    seeds[candidates.first] = m;
+  }
+
+  final growthOrder = _lockedGrowthOrder([...gpHere, ...minorHere], targets);
+
+  if (growthOrder.isEmpty) {
+    return {};
+  }
+  if (lockedSixMinorsOnFourContinents) {
+    return assignTerritoriesLockedOnLandmass(
+      landmassProvinceIds: provs,
+      neighbours: neighbours,
+      growthOrder: growthOrder,
+      targetPerFaction: targets,
+      seeds: seeds,
+      backtrackLimitPerLandmass: 32000,
+      observation: null,
+    );
+  }
+  final avail = Set<String>.from(provs);
+  final factionLandmassIds = {
+    for (final g in gpHere) g: lmId,
+    for (final m in minorHere) m: lmId,
+  };
+  return assignTerritoriesByBfsGrowth(
+    neighbours: neighbours,
+    landmassIds: landmassIds,
+    factionLandmassIds: factionLandmassIds,
+    factionIds: growthOrder,
+    seeds: seeds,
+    targetPerFaction: targets,
+    available: avail,
+    neighborShuffleRandom: assignmentRandom,
+  );
+}
+
 Map<String, String> _assignOldWorldOwnershipContiguous({
   required Map<String, Set<String>> neighbours,
   required List<String> provinceIds,
@@ -549,65 +650,19 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
           )
         : <String>[];
 
-    final targets = <String, int>{
-      for (final g in gpHere) g: targetPerGp[g]!,
-      for (final m in minorHere) m: minProvincesPerMinor,
-    };
-
-    final seeds = <String, String>{};
-    for (final g in gpHere) {
-      final seedEntry = gpSeeds.entries.firstWhere((e) => e.value == g);
-      final sp = seedEntry.key;
-      if (!provs.contains(sp)) {
-        throw StateError(
-          'GP $g sea-bound seed $sp not on expected landmass provinces',
-        );
-      }
-      seeds[sp] = g;
-    }
-    for (final m in minorHere) {
-      final candidates = provs.difference(seeds.keys.toSet()).toList()..sort();
-      if (candidates.isEmpty) {
-        throw StateError(
-          'No province left for minor $m seed on landmass $lmId',
-        );
-      }
-      if (assignmentRandom != null) candidates.shuffle(assignmentRandom);
-      seeds[candidates.first] = m;
-    }
-
-    final growthOrder = _lockedGrowthOrder([...gpHere, ...minorHere], targets);
-
-    final Map<String, String> part;
-    if (growthOrder.isEmpty) {
-      part = {};
-    } else if (lockedSixMinorsOnFourContinents) {
-      part = assignTerritoriesLockedOnLandmass(
-        landmassProvinceIds: provs,
-        neighbours: neighbours,
-        growthOrder: growthOrder,
-        targetPerFaction: targets,
-        seeds: seeds,
-        backtrackLimitPerLandmass: 32000,
-        observation: null,
-      );
-    } else {
-      final avail = Set<String>.from(provs);
-      final factionLandmassIds = {
-        for (final g in gpHere) g: lmId,
-        for (final m in minorHere) m: lmId,
-      };
-      part = assignTerritoriesByBfsGrowth(
-        neighbours: neighbours,
-        landmassIds: landmassIds,
-        factionLandmassIds: factionLandmassIds,
-        factionIds: growthOrder,
-        seeds: seeds,
-        targetPerFaction: targets,
-        available: avail,
-        neighborShuffleRandom: assignmentRandom,
-      );
-    }
+    final part = _assignOldWorldSingleLandmass(
+      lmId: lmId,
+      provs: provs,
+      gpHere: gpHere,
+      minorHere: minorHere,
+      targetPerGp: targetPerGp,
+      minProvincesPerMinor: minProvincesPerMinor,
+      gpSeeds: gpSeeds,
+      neighbours: neighbours,
+      landmassIds: landmassIds,
+      assignmentRandom: assignmentRandom,
+      lockedSixMinorsOnFourContinents: lockedSixMinorsOnFourContinents,
+    );
     owners.addAll(part);
     for (final p in part.keys) {
       gpAvailable.remove(p);
@@ -617,16 +672,12 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
   for (final gpId in gpIds) {
     final expectedLm = gpLandmassAssignments[gpId];
     if (expectedLm == null) continue;
-    for (final e in owners.entries) {
-      if (e.value != gpId) continue;
-      final pidLm = landmassIds[e.key];
-      if (pidLm != expectedLm) {
-        throw StateError(
-          'GP $gpId violates one-continent rule: province ${e.key} is on '
-          'landmass $pidLm but GP is assigned to $expectedLm',
-        );
-      }
-    }
+    _assertGpProvincesOnAssignedLandmass(
+      gpId: gpId,
+      expectedLm: expectedLm,
+      owners: owners,
+      landmassIds: landmassIds,
+    );
   }
 
   if (minorCount > 0 &&
