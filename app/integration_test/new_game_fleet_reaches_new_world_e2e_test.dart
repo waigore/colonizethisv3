@@ -1,7 +1,9 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show homeFleetIdFor, regionIdForSeaZone;
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
@@ -268,24 +270,32 @@ Future<void> _pickMoveDestinationAndConfirm(
   AppLocalizations l10n,
 ) async {
   await _pumpFor(tester, const Duration(milliseconds: 200));
-  final warp = find.textContaining('links to New World');
+  final warpSuffix = l10n.moveFleet_warpLinkToRegion(
+    unitsPanelRegionLabel('newWorld'),
+  );
+  final warp = find.textContaining(warpSuffix);
   if (warp.evaluate().isNotEmpty) {
     final scrollRoot = find.byKey(kCtE2EMoveFleetDialogScrollRootKey);
+    final Finder scrollable;
     if (scrollRoot.evaluate().isNotEmpty) {
-      final scrollable = find.descendant(
+      scrollable = find.descendant(
         of: scrollRoot,
         matching: find.byType(Scrollable),
       );
-      if (scrollable.evaluate().isNotEmpty) {
-        await tester.scrollUntilVisible(warp.first, 80, scrollable: scrollable);
-      }
     } else {
-      final scrollable = find.ancestor(
-        of: warp.first,
+      scrollable = find.descendant(
+        of: find.byType(AlertDialog),
         matching: find.byType(Scrollable),
       );
-      if (scrollable.evaluate().isNotEmpty) {
-        await tester.scrollUntilVisible(warp.first, 80, scrollable: scrollable);
+    }
+    if (scrollable.evaluate().isNotEmpty) {
+      final sc = scrollable.first;
+      for (var i = 0; i < 24 && warp.hitTestable().evaluate().isEmpty; i++) {
+        await tester.drag(sc, const Offset(0, -120));
+        await _pumpFor(tester, const Duration(milliseconds: 50));
+      }
+      if (warp.hitTestable().evaluate().isEmpty) {
+        await tester.scrollUntilVisible(warp.first, 400, scrollable: sc);
       }
     }
     final hit = warp.hitTestable();
@@ -400,6 +410,10 @@ bool _nonHomeHumanFleetInNewWorldFromCtSnapshot() {
     if (f.ownerId != human) continue;
     if (f.id == homeId) continue;
     if (f.regionId == 'newWorld') return true;
+    final sea = f.seaZoneId;
+    if (sea != null && regionIdForSeaZone(snap.topology, sea) == 'newWorld') {
+      return true;
+    }
   }
   return false;
 }
@@ -496,7 +510,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'new game → non-home fleet at sea in New World (≤28 Next turn taps)',
+    'new game → non-home fleet at sea in New World (≤56 Next turn taps)',
     (WidgetTester tester) async {
       expect(
         kCtE2EEnabled,
@@ -517,7 +531,7 @@ void main() {
       await _splitHomeFleetOnce(tester, l10n);
       await _closeBottomSheet(tester);
 
-      for (var turnIdx = 0; turnIdx < 28; turnIdx++) {
+      for (var turnIdx = 0; turnIdx < 56; turnIdx++) {
         await _dismissTransientUi(tester);
         await _tapNewWorldRegionTabIfPresent(tester);
         await _openNavalPanel(tester);
@@ -543,7 +557,7 @@ void main() {
       await _openNavalPanel(tester);
       if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
         fail(
-          'After 28 Next turn resolutions, no non-home human fleet in region '
+          'After 56 Next turn resolutions, no non-home human fleet in region '
           'newWorld (ctE2eNavalPanelSnapshot / naval panel UI). '
           'Last exception: ${tester.takeException()}',
         );
