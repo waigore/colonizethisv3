@@ -36,9 +36,14 @@ GameSetupResult createGameFromGeneratedMaps({
   required MapTopology topologyNewWorld,
   required String gameId,
   int? namingSeed,
+
+  /// Base for salted assignment perturbation on OW reassignment retries.
+  /// Defaults to [namingSeed] if set, else [GameSetupConfig.seed].
+  int? assignmentPerturbationBase,
   List<WarpLink>? warpLinks,
 }) {
   _log.i('game setup start gameId=$gameId');
+  final perturbBase = assignmentPerturbationBase ?? namingSeed ?? config.seed;
   final tileMapByRegion = {
     kRegionOldWorld: tileMapOldWorld,
     kRegionNewWorld: tileMapNewWorld,
@@ -339,6 +344,17 @@ GameSetupResult createGameFromGeneratedMaps({
       tileMapByRegion[e.key] = e.value;
     }
   }
+
+  // §7d.redist GP Old World terrain resource redistribution (always-on when OW grids exist).
+  // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.
+  final gpRedist = applyGreatPowerOldWorldResourceRedistribution(
+    game: game,
+    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
+    resourceRules: ResourceRules.defaultRules,
+    setupSeedBase: perturbBase,
+  );
+  game = gpRedist.game;
+  tileMapByRegion[kRegionOldWorld] = gpRedist.tileMap;
 
   // Great Power starting grain (bootstrap). SPEC/game/tile-map-and-generation.md.
   final gpGrain = applyGreatPowerStartingGrainBootstrap(
