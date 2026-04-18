@@ -107,8 +107,8 @@ void main() {
     );
 
     testWidgets(
-      'paintResourceExtractionDiscIndicators fills effective with palette '
-      'and blocked with neutral gray',
+      'paintResourceExtractionDiscIndicators fills effective with gold '
+      'and blocked with brown (transport semantics; Refs #1847)',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           final recorder = ui.PictureRecorder();
@@ -123,7 +123,6 @@ void main() {
             canvas: canvas,
             indicatorRects: rects,
             effectiveCount: 1,
-            resourceId: 'grain',
             fogCompatibleOverlayPaint: Paint(),
           );
           final picture = recorder.endRecording();
@@ -140,8 +139,19 @@ void main() {
           expect(bytes!.getUint8(offset(c0x, c0y) + 3), greaterThan(200));
           expect(bytes.getUint8(offset(c1x, c1y) + 3), greaterThan(200));
           final r0 = bytes.getUint8(offset(c0x, c0y));
+          final g0 = bytes.getUint8(offset(c0x, c0y) + 1);
+          final b0 = bytes.getUint8(offset(c0x, c0y) + 2);
           final r1 = bytes.getUint8(offset(c1x, c1y));
-          expect((r0 - r1).abs(), greaterThan(15));
+          final g1 = bytes.getUint8(offset(c1x, c1y) + 1);
+          final b1 = bytes.getUint8(offset(c1x, c1y) + 2);
+          // Effective: gold ~ (255, 215, 0).
+          expect(r0, greaterThan(230));
+          expect(g0, greaterThan(180));
+          expect(b0, lessThan(80));
+          // Blocked: brown, not gold.
+          expect(r1, lessThan(180));
+          expect((r0 - r1).abs(), greaterThan(40));
+          expect((g0 - g1).abs() + (b0 - b1).abs(), greaterThan(30));
         });
         await tester.pump();
       },

@@ -66,16 +66,19 @@ const double _kFoggedResourceIconModulateAlpha = 0.6;
 /// Plate drawn under resource map glyphs when road/rail transport art is painted
 /// on the same land cell, so transparent icon pixels do not reveal corridor-only
 /// pixels from the transport layer alone (SPEC/ui/map-widget.md § Resource Icons).
+/// Light tone so semi-transparent icon pixels read as soft tint, not a black box.
 const Color _kResourceIconTransportReadabilityBackdrop = Color.fromRGBO(
-  22,
-  18,
-  14,
-  0.78,
+  228,
+  236,
+  208,
+  0.82,
 );
 const double _kExtractionIndicatorSizeBoostPx = 2.0;
 const double _kExtractionIndicatorOverlapFactor = 0.45;
 const double _kExtractionIndicatorStartInsetXPx = 2.0;
-const Color _kExtractionIndicatorGrayTint = Color(0xFF9E9E9E);
+
+/// Blocked extraction throughput (not reaching the capital under transport rules).
+const Color _kExtractionDiscBlockedBrown = Color(0xFF5C4033);
 
 /// Political (faction) border stroke — indigo, visible over terrain.
 const Color _kFactionPoliticalBorderColor = Color(0xFF1A237E);
@@ -552,9 +555,10 @@ List<Rect> extractionIndicatorRectsForIconRect({
 }
 
 /// Paints per-tile extraction throughput as **filled discs** (not commodity
-/// sprites). Effective slots use [discColorForResourceId]; blocked slots use
-/// neutral gray. [fogCompatibleOverlayPaint] supplies the same fog
-/// `ColorFilter` as resource icons when the tile is fogged.
+/// sprites). Effective slots use [_kMapSelectionGold] (transported toward
+/// capital); blocked slots use [_kExtractionDiscBlockedBrown].
+/// [fogCompatibleOverlayPaint] supplies the same fog `ColorFilter` as resource
+/// icons when the tile is fogged.
 ///
 /// SPEC/ui/map-widget.md § Per-tile extraction throughput indicators;
 /// SPEC/program/map-region-map-render.md (`_paintOverlay` extraction discs).
@@ -562,7 +566,6 @@ void paintResourceExtractionDiscIndicators({
   required Canvas canvas,
   required List<Rect> indicatorRects,
   required int effectiveCount,
-  required String resourceId,
   required Paint fogCompatibleOverlayPaint,
 }) {
   if (indicatorRects.isEmpty) {
@@ -572,8 +575,8 @@ void paintResourceExtractionDiscIndicators({
   for (var i = 0; i < indicatorRects.length; i++) {
     final isEffective = i < effectiveCount;
     final fillColor = isEffective
-        ? discColorForResourceId(resourceId)
-        : _kExtractionIndicatorGrayTint;
+        ? _kMapSelectionGold
+        : _kExtractionDiscBlockedBrown;
     final discPaint = Paint()
       ..style = PaintingStyle.fill
       ..color = fillColor;
