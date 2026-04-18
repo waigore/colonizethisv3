@@ -58,7 +58,7 @@ Skills live under `.cursor/skills/<name>/SKILL.md`. When a skill matches the tas
 | `implement-github-issue-fix` | User gives an issue **#** or **URL**; validate problem/design/testable ACs, update **SPEC** if needed, implement, add positive/negative tests, open PR to **`dev`** with **`Refs #…`** (do **not** auto-close). Very large issues: one isolatable slice only. |
 | `merge-dev-into-android-build` | Merge `dev` into `build/app/android` for APK build workflows. |
 | `plan-feature-github-issue` | Scope a feature from SPEC/code (read-only), then open a capturing issue—no implementation. |
-| `review-github-issue` | Review an issue against code/specs/tests to identify gaps, inconsistencies, and misalignments. Proposes consolidated comment with priorities and remedies. |
+| `review-github-issue` | Review an issue for **purpose ↔ proposed method** coherence and internal consistency; repo/SPEC/test evidence only when needed to show the method cannot satisfy the purpose. Consolidated comment with priorities and remedies; use **`verify-github-issue`** for AC↔implementation closure. |
 | `verify-github-issue` | Verify one open issue against ACs/specs/tests; gap analysis or closure steps. |
 
 ## Contributing

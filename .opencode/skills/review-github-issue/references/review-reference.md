@@ -1,4 +1,6 @@
-# Reference: Code, Specs, and Tests for Issue Review
+# Reference: Issue review (purpose ↔ method) and optional repo trace
+
+Use this reference when **`review-github-issue`** needs a **conditional** repo/SPEC/test trace: only to show that a **proposed method** in the issue **cannot satisfy** the issue’s **stated purpose** (architecture boundaries, SPEC-first conflicts, missing assumed hooks). Full **acceptance criteria ↔ implementation ↔ tests** mapping for closure is **`verify-github-issue`**, not this skill.
 
 ## Finding the purpose (SPEC structure)
 
