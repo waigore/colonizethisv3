@@ -330,27 +330,10 @@ class GameService {
         effectiveSeed: effectiveSeed,
       );
     } else {
-      final maps = _generateTileMapsForNewGame(cfg, effectiveSeed);
-      final tileMapOW = maps.tileOw;
-      final topoOW = maps.topoOw;
-      final tileMapNW = maps.tileNw;
-      final topoNW = maps.topoNw;
-      final warpLinks = _generateWarpLinks(
-        effectiveSeed: effectiveSeed,
-        tileMapOW: tileMapOW,
-        topoOW: topoOW,
-        tileMapNW: tileMapNW,
-        topoNW: topoNW,
-      );
-      setupResult = createGameFromGeneratedMaps(
-        config: cfg,
-        tileMapOldWorld: tileMapOW,
-        topologyOldWorld: topoOW,
-        tileMapNewWorld: tileMapNW,
-        topologyNewWorld: topoNW,
+      setupResult = _freeformMapsWarpSetupWithRetry(
+        cfg: cfg,
         gameId: gameId,
-        namingSeed: effectiveSeed,
-        warpLinks: warpLinks,
+        effectiveSeed: effectiveSeed,
       );
     }
     final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);
@@ -401,37 +384,17 @@ class GameService {
       reportPhase(3);
       await yieldUi();
     } else {
-      final maps = _generateTileMapsForNewGame(cfg, effectiveSeed);
-      final tileMapOW = maps.tileOw;
-      final topoOW = maps.topoOw;
-      final tileMapNW = maps.tileNw;
-      final topoNW = maps.topoNw;
-
+      setupResult = _freeformMapsWarpSetupWithRetry(
+        cfg: cfg,
+        gameId: gameId,
+        effectiveSeed: effectiveSeed,
+      );
       reportPhase(1);
       await yieldUi();
-
       reportPhase(2);
       await yieldUi();
-      final warpLinks = _generateWarpLinks(
-        effectiveSeed: effectiveSeed,
-        tileMapOW: tileMapOW,
-        topoOW: topoOW,
-        tileMapNW: tileMapNW,
-        topoNW: topoNW,
-      );
-
       reportPhase(3);
       await yieldUi();
-      setupResult = createGameFromGeneratedMaps(
-        config: cfg,
-        tileMapOldWorld: tileMapOW,
-        topologyOldWorld: topoOW,
-        tileMapNewWorld: tileMapNW,
-        topologyNewWorld: topoNW,
-        gameId: gameId,
-        namingSeed: effectiveSeed,
-        warpLinks: warpLinks,
-      );
     }
     final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);
 
@@ -466,6 +429,67 @@ class GameService {
   /// OW+NW maps, warp, and [createGameFromGeneratedMaps] with bounded retries when
   /// partition gates or locked assigner fail (SPEC: locked full-init default).
   static const int _kLockedFullInitPipelineMaxAttempts = 64;
+
+  /// Same retriable topology codes as [runInitGame] freeform path (`init_game_orchestrator.dart`).
+  static const int _kFreeformPipelineMaxAttempts = 64;
+
+  GameSetupResult _freeformMapsWarpSetupWithRetry({
+    required GameSetupConfig cfg,
+    required String gameId,
+    required int effectiveSeed,
+  }) {
+    final log = packageLogger();
+    for (var attempt = 0;
+        attempt < _kFreeformPipelineMaxAttempts;
+        attempt++) {
+      final mapSeed = effectiveSeed + attempt * 100003;
+      try {
+        final ow = _generateTileMapOldWorld(cfg, mapSeed);
+        final nw = _generateTileMapNewWorld(cfg, mapSeed);
+        final warpLinks = _generateWarpLinks(
+          effectiveSeed: mapSeed,
+          tileMapOW: ow.$1,
+          topoOW: ow.$2,
+          tileMapNW: nw.$1,
+          topoNW: nw.$2,
+        );
+        return createGameFromGeneratedMaps(
+          config: cfg,
+          tileMapOldWorld: ow.$1,
+          topologyOldWorld: ow.$2,
+          tileMapNewWorld: nw.$1,
+          topologyNewWorld: nw.$2,
+          gameId: gameId,
+          namingSeed: effectiveSeed,
+          warpLinks: warpLinks,
+        );
+      } on SetupTopologyDataException catch (e, st) {
+        final retriableTopology =
+            e.code == 'assigner_exhausted' ||
+            e.code == 'faction_component_bin_pack_failed' ||
+            e.code == 'assignment_remainder_not_connected';
+        if (retriableTopology && attempt < _kFreeformPipelineMaxAttempts - 1) {
+          log.w(
+            'app: freeform init topology retry at attempt=$attempt '
+            '(code=${e.code}; mapSeed=$mapSeed): $e',
+          );
+          continue;
+        }
+        log.e(
+          'app: freeform init setup failed: $e',
+          error: e,
+          stackTrace: st,
+        );
+        rethrow;
+      }
+    }
+    throw SetupTopologyDataException(
+      code: 'assigner_exhausted',
+      details:
+          'Freeform init pipeline exhausted after '
+          '$_kFreeformPipelineMaxAttempts attempts',
+    );
+  }
 
   GameSetupResult _lockedFullInitMapsWarpSetupWithRetry({
     required GameSetupConfig cfg,
@@ -513,11 +537,15 @@ class GameService {
           details: e.toString(),
         );
       } on SetupTopologyDataException catch (e, st) {
-        if (e.code == 'assigner_exhausted' &&
+        final retriableTopology =
+            e.code == 'assigner_exhausted' ||
+            e.code == 'faction_component_bin_pack_failed' ||
+            e.code == 'assignment_remainder_not_connected';
+        if (retriableTopology &&
             attempt < _kLockedFullInitPipelineMaxAttempts - 1) {
           log.w(
-            'app: locked full-init assigner exhausted; retrying '
-            '(attempt=$attempt mapSeed=$mapSeed): $e',
+            'app: locked full-init setup topology retry '
+            '(attempt=$attempt mapSeed=$mapSeed code=${e.code}): $e',
           );
           continue;
         }
@@ -534,42 +562,6 @@ class GameService {
       details:
           'Locked full-init pipeline exhausted after '
           '$_kLockedFullInitPipelineMaxAttempts attempts',
-    );
-  }
-
-  ({
-    TileMapResult tileOw,
-    MapTopology topoOw,
-    TileMapResult tileNw,
-    MapTopology topoNw,
-  }) _generateTileMapsForNewGame(GameSetupConfig cfg, int effectiveSeed) {
-    if (cfg.isLockedFullInitProfile) {
-      try {
-        final r = generateLockedFullInitTileMapPair(
-          config: cfg,
-          effectiveSeed: effectiveSeed,
-          onLog: _mapGenPassLog.d,
-        );
-        return (
-          tileOw: r.tileOw,
-          topoOw: r.topoOw,
-          tileNw: r.tileNw,
-          topoNw: r.topoNw,
-        );
-      } on MapPartitionGatesExhaustedException catch (e) {
-        throw SetupTopologyDataException(
-          code: MapPartitionGatesExhaustedException.codeValue,
-          details: e.toString(),
-        );
-      }
-    }
-    final ow = _generateTileMapOldWorld(cfg, effectiveSeed);
-    final nw = _generateTileMapNewWorld(cfg, effectiveSeed);
-    return (
-      tileOw: ow.$1,
-      topoOw: ow.$2,
-      tileNw: nw.$1,
-      topoNw: nw.$2,
     );
   }
 

@@ -240,10 +240,10 @@ Future<void> _openNavalPanel(WidgetTester tester) async {
   );
 }
 
-/// Prefer Old World map tab while driving an OW-capital fleet to the warp
-/// (avoids NW map scope quirks with OW-only fleets in e2e).
-Future<void> _tapOldWorldRegionTab(WidgetTester tester, AppLocalizations l10n) async {
-  final tab = find.text(l10n.region_oldWorld).hitTestable();
+/// Selects the New World map region via [kCtE2ERegionTabNewWorldKey] when present
+/// (reduces ambiguous "New World" text on screen; `SPEC/program/e2e-integration-tests.md`).
+Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
+  final tab = find.byKey(kCtE2ERegionTabNewWorldKey).hitTestable();
   if (tab.evaluate().isEmpty) {
     return;
   }
@@ -268,12 +268,27 @@ Future<void> _pickMoveDestinationAndConfirm(
   await _pumpFor(tester, const Duration(milliseconds: 200));
   final warp = find.textContaining('links to New World');
   if (warp.evaluate().isNotEmpty) {
-    final scrollable = find.ancestor(
-      of: warp.first,
-      matching: find.byType(Scrollable),
-    );
-    if (scrollable.evaluate().isNotEmpty) {
-      await tester.scrollUntilVisible(warp.first, 80, scrollable: scrollable);
+    final scrollRoot = find.byKey(kCtE2EMoveFleetDialogScrollRootKey);
+    if (scrollRoot.evaluate().isNotEmpty) {
+      final scrollable = find.descendant(
+        of: scrollRoot,
+        matching: find.byType(Scrollable),
+      );
+      if (scrollable.evaluate().isNotEmpty) {
+        await tester.scrollUntilVisible(warp.first, 80, scrollable: scrollable);
+      }
+    } else {
+      final scrollable = find.ancestor(
+        of: warp.first,
+        matching: find.byType(Scrollable),
+      );
+      if (scrollable.evaluate().isNotEmpty) {
+        await tester.scrollUntilVisible(
+          warp.first,
+          80,
+          scrollable: scrollable,
+        );
+      }
     }
     final hit = warp.hitTestable();
     expect(hit, findsWidgets);
@@ -303,7 +318,7 @@ Future<void> _tryNavalMoveSegment(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
-  await _tapOldWorldRegionTab(tester, l10n);
+  await _tapNewWorldRegionTabIfPresent(tester);
   await _openNavalPanel(tester);
   await _expandEachExpansionTileOnce(tester);
   await _tapMoveOnFirstNonHomeFleet(tester);
@@ -472,7 +487,7 @@ void main() {
 
       for (var turnIdx = 0; turnIdx < 15; turnIdx++) {
         await _dismissTransientUi(tester);
-        await _tapOldWorldRegionTab(tester, l10n);
+        await _tapNewWorldRegionTabIfPresent(tester);
         await _openNavalPanel(tester);
         if (_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
           await _closeBottomSheet(tester);
@@ -492,7 +507,7 @@ void main() {
       }
 
       await _dismissTransientUi(tester);
-      await _tapOldWorldRegionTab(tester, l10n);
+      await _tapNewWorldRegionTabIfPresent(tester);
       await _openNavalPanel(tester);
       if (!_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
         fail(
