@@ -1,6 +1,6 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('GameSetup characterization', () {
@@ -38,6 +38,7 @@ void main() {
           const TopologyEdge(id1: 'p4', id2: 'p8'),
           const TopologyEdge(id1: 'p5', id2: 'p9'),
           const TopologyEdge(id1: 'p6', id2: 'p10'),
+          const TopologyEdge(id1: 'p7', id2: 'sea1'),
         ],
       );
       final owTileMap = TileMapResult(width: 6, height: 2, grid: owGrid);
@@ -77,6 +78,7 @@ void main() {
         numProvincesNewWorld: 3,
         minProvincesPerMinor: 2,
         seed: 42,
+        enforceFairGpOldWorldAssignment: true,
       );
 
       result = createGameFromGeneratedMaps(
@@ -148,17 +150,11 @@ void main() {
     });
 
     test('naming is applied to all provinces', () {
-      for (final p in result.game.worldState.oldWorld.provinces) {
+      for (final p in allProvinces(result.game.worldState)) {
         expect(p.displayName, isNotNull,
-            reason: 'OW ${p.id} must have name');
+            reason: '${p.id} must have name');
         expect(p.displayName, isNotEmpty,
-            reason: 'OW ${p.id} must have non-empty name');
-      }
-      for (final p in result.game.worldState.newWorld.provinces) {
-        expect(p.displayName, isNotNull,
-            reason: 'NW ${p.id} must have name');
-        expect(p.displayName, isNotEmpty,
-            reason: 'NW ${p.id} must have non-empty name');
+            reason: '${p.id} must have non-empty name');
       }
     });
 
@@ -189,7 +185,7 @@ void main() {
         expect(playerUnits, isNotEmpty,
             reason: '${p.id} must have starting units');
         for (final u in playerUnits) {
-          expect(u.provinceId, p.capitalProvinceId,
+          expect(u.locationProvinceId, p.capitalProvinceId,
               reason:
                   'Unit ${u.id} must be in capital ${p.capitalProvinceId}');
         }

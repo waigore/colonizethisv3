@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
+import '../config/app_assets.dart';
+import '../config/themes.dart';
+import 'ct_nine_patch_button.dart';
 
 /// Visual variant of the main menu. SPEC/ui/main-menu.md; UXD 03a.
 enum MainMenuVariant {
@@ -9,10 +12,6 @@ enum MainMenuVariant {
   /// Same layout with pixel-art assets from SPEC/ui/main-menu.md.
   pixelArt,
 }
-
-/// Asset paths for pixel-art variant. SPEC/ui/main-menu.md.
-const String _kAssetLogo = 'assets/images/ui_main_menu_logo.png';
-const String _kAssetButton = 'assets/images/ui_main_menu_button.png';
 
 /// Content state of the main menu. SPEC/ui/main-menu.md; UXD 03a.
 enum MainMenuState {
@@ -36,15 +35,22 @@ class CtMainMenu extends StatelessWidget {
     required this.state,
     required this.version,
     required this.onNewGame,
+    this.resumeGameVisible = false,
+    this.onResumeGame,
     required this.onLoadGame,
     required this.onSettings,
     required this.onQuit,
-  });
+  }) : assert(
+         !resumeGameVisible || onResumeGame != null,
+         'onResumeGame is required when resumeGameVisible is true',
+       );
 
   final MainMenuVariant variant;
   final MainMenuState state;
   final String version;
   final VoidCallback onNewGame;
+  final bool resumeGameVisible;
+  final VoidCallback? onResumeGame;
   final VoidCallback onLoadGame;
   final VoidCallback onSettings;
   final VoidCallback onQuit;
@@ -54,34 +60,44 @@ class CtMainMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
+    final l10n = appL10n(context);
+    final Widget content = SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Spacer(flex: 2),
+                  const SizedBox(height: 48),
                   _buildLogo(context),
                   if (_showAfterVictorySubtitle) ...[
                     const SizedBox(height: 12),
                     Text(
-                      'Congratulations, you won your last game.',
+                      l10n.mainMenu_subtitleAfterVictory,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontStyle: FontStyle.italic,
-                          ),
+                        fontStyle: FontStyle.italic,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],
-                  const Spacer(flex: 2),
+                  const SizedBox(height: 32),
                   _MenuButton(
-                    label: 'New Game',
+                    label: l10n.mainMenu_newGame,
                     variant: variant,
                     onPressed: onNewGame,
                   ),
+                  if (resumeGameVisible) ...[
+                    const SizedBox(height: 12),
+                    _MenuButton(
+                      label: l10n.mainMenu_resumeGame,
+                      variant: variant,
+                      onPressed: onResumeGame!,
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   _LoadGameButton(
                     enabled: _loadGameEnabled,
@@ -90,18 +106,15 @@ class CtMainMenu extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   _MenuButton(
-                    label: 'Settings',
+                    label: l10n.mainMenu_settings,
                     variant: variant,
                     onPressed: onSettings,
                   ),
-                  const Spacer(flex: 2),
-                  Text(
-                    version,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  const SizedBox(height: 32),
+                  Text(version, style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 8),
                   _MenuButton(
-                    label: 'Quit',
+                    label: l10n.mainMenu_quit,
                     variant: variant,
                     onPressed: onQuit,
                   ),
@@ -113,34 +126,48 @@ class CtMainMenu extends StatelessWidget {
         ),
       ),
     );
+
+    if (variant == MainMenuVariant.pixelArt) {
+      return Scaffold(
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                kMainMenuBackgroundAsset,
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.none,
+                errorBuilder: (_, _, _) =>
+                    Container(color: const Color(0xFF5D3A1A)),
+              ),
+            ),
+            Theme(data: AppThemes.colonialPixelArt, child: content),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(body: content);
   }
 
   Widget _buildLogo(BuildContext context) {
     if (variant == MainMenuVariant.plain) {
       return Text(
-        'ColonizeThis V3',
+        appL10n(context).mainMenu_title,
         style: Theme.of(context).textTheme.headlineMedium,
         textAlign: TextAlign.center,
       );
     }
+    // Pixel-art logo asset already contains "ColonizeThis"; no overlay. SPEC/ui/main-menu.md.
     return SizedBox(
       height: 64,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Image.asset(
-            _kAssetLogo,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) {
-              return const SizedBox.shrink();
-            },
-          ),
-          Text(
-            'ColonizeThis V3',
-            style: Theme.of(context).textTheme.headlineMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
+      child: Image.asset(
+        kMainMenuLogoAsset,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.none,
+        errorBuilder: (_, _, _) {
+          return const SizedBox.shrink();
+        },
       ),
     );
   }
@@ -164,15 +191,12 @@ class _MenuButton extends StatelessWidget {
     }
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        child: Text(label),
-      ),
+      child: CtNinePatchButton(onPressed: onPressed, child: Text(label)),
     );
   }
 }
 
-class _PixelArtButton extends StatelessWidget {
+class _PixelArtButton extends StatefulWidget {
   const _PixelArtButton({
     required this.label,
     required this.onPressed,
@@ -184,39 +208,78 @@ class _PixelArtButton extends StatelessWidget {
   final bool enabled;
 
   @override
+  State<_PixelArtButton> createState() => _PixelArtButtonState();
+}
+
+class _PixelArtButtonState extends State<_PixelArtButton>
+    with SingleTickerProviderStateMixin {
+  bool _hovered = false;
+  static const double _bobAmount = 2.5;
+  static const Duration _bobDuration = Duration(milliseconds: 800);
+
+  late final AnimationController _bobController;
+  late final Animation<double> _bobAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _bobController = AnimationController(vsync: this, duration: _bobDuration);
+    _bobAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _bobController, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _bobController.dispose();
+    super.dispose();
+  }
+
+  void _onHoverEnter(PointerEvent _) {
+    if (!widget.enabled) return;
+    setState(() => _hovered = true);
+    _bobController.repeat(reverse: true);
+  }
+
+  void _onHoverExit(PointerEvent _) {
+    setState(() => _hovered = false);
+    _bobController.stop();
+    _bobController.reset();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       height: 48,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: enabled ? onPressed : null,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                _kAssetButton,
-                // 9-slice: keep ornate gold corners/bars fixed, stretch only inner panel.
-                centerSlice: const Rect.fromLTWH(24, 18, 75, 21),
-                fit: BoxFit.fill,
-                filterQuality: FilterQuality.none,
-                errorBuilder: (_, __, ___) {
-                  Logger().w('ctdev: main_menu button asset not found, using fallback');
-                  return Container(
-                    color: const Color(0xFF5D3A1A),
-                  );
-                },
-              ),
-              Center(
-                child: Text(
-                  label,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: enabled ? const Color(0xFFF5F5DC) : Colors.grey,
-                      ),
-                ),
-              ),
-            ],
+      child: MouseRegion(
+        onEnter: _onHoverEnter,
+        onExit: _onHoverExit,
+        cursor: widget.enabled
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
+        child: AnimatedBuilder(
+          animation: _bobAnimation,
+          builder: (context, child) {
+            final double dy = _hovered
+                ? (_bobAnimation.value * 2 * _bobAmount - _bobAmount)
+                : 0;
+            return Transform.translate(offset: Offset(0, dy), child: child);
+          },
+          child: ColorFiltered(
+            colorFilter: _hovered && widget.enabled
+                ? ColorFilter.mode(
+                    Colors.black.withValues(alpha: 0.15),
+                    BlendMode.darken,
+                  )
+                : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
+            child: CtNinePatchButton(
+              onPressed: widget.enabled ? widget.onPressed : null,
+              enabled: widget.enabled,
+              minHeight: 48,
+              child: Text(widget.label),
+            ),
           ),
         ),
       ),
@@ -237,23 +300,25 @@ class _LoadGameButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     if (variant == MainMenuVariant.pixelArt) {
       return Tooltip(
-        message: enabled ? '' : 'No saved games. Start a new game first.',
+        message: enabled ? '' : l10n.mainMenu_noSavesTooltip,
         child: _PixelArtButton(
-          label: 'Load Game',
+          label: l10n.mainMenu_loadGame,
           enabled: enabled,
           onPressed: onPressed,
         ),
       );
     }
     return Tooltip(
-      message: enabled ? '' : 'No saved games. Start a new game first.',
+      message: enabled ? '' : l10n.mainMenu_noSavesTooltip,
       child: SizedBox(
         width: double.infinity,
-        child: ElevatedButton(
+        child: CtNinePatchButton(
           onPressed: enabled ? onPressed : null,
-          child: const Text('Load Game'),
+          enabled: enabled,
+          child: Text(l10n.mainMenu_loadGame),
         ),
       ),
     );

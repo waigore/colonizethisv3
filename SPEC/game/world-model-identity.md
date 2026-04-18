@@ -14,6 +14,8 @@ In a multi-region world, **province lookup must always use regionId + provinceId
 
 All province ids stored in game state (e.g. Province id, Unit province location, Player capital, order fields) use a **prefixed** form: `regionId|localId` (e.g. `oldWorld|p1`, `newWorld|nw1`). This makes every province id globally unique and prevents a province from being resolved in the wrong region.
 
+**Unit placement in code:** The [Unit](world-model.md) model’s public canonical field is `locationProvinceId` (tile-derived when `tileKey` is set). Saves use the JSON property `provinceId` as the serialized canonical value, not a second competing concept; `fromJson` may repair legacy drift between `tileKey` and an old `provinceId` on load.
+
 ---
 
 ## Tile Key Format
@@ -34,7 +36,9 @@ When turning topology/tile maps into view models (ownership fill, per-player map
 
 ## Lookup Rule
 
-Logic must never locate a province by province id alone. Use (regionId, provinceId) or a prefixed full id, and resolve the province only within that region. Do **not** infer region by searching regions in sequence or by string heuristics. If a province cannot be found, treat it as a logic error; do not fall back to a default region.
+Province lookup **MUST** be by **full disambiguated id** (`regionId|localId`). Resolution is **region-scoped**: the system resolves the province only within the region indicated by that id. Logic must never locate a province by bare local id when the region is unknown. Do **not** infer region by searching regions in sequence or by string heuristics. If a province cannot be found in the given region, treat it as a logic error; do not fall back to another region.
+
+**API (required):** `getProvince` and `tryGetProvince` **require** a full, prefixed province id and resolve only within that region. Non-prefixed ids are invalid: `getProvince` throws; `tryGetProvince` returns null. There is no legacy short-id resolution—do not search regions by bare local id. `getProvinceByRegion` and `tryGetProvinceByRegion` accept explicit `(regionId, localId)` for region-scoped lookup. `resolveToFullProvinceId` accepts only prefixed ids and returns the id as-is; non-prefixed id throws.
 
 ---
 
@@ -59,3 +63,12 @@ Logic must never locate a province by province id alone. Use (regionId, province
 - Given any game logic that is asked to resolve a province identifier and provided with a string that does not contain a `|` prefix separator or a pair of `(regionId, provinceId)` values that match a known province  
   When the System attempts to perform the lookup  
   Then the System treats the request as a logic error and does not fall back to a default region, does not guess a region by name pattern, and does not silently resolve the identifier to a different region’s province.
+
+
+---
+
+## Implementation (TDD)
+
+**Modules:** colonizethis_models (Game, WorldState, Province, Unit, Player, ProvinceId); colonizethis_logic province_lookup (getProvince, tryGetProvince, getProvinceByRegion, tryGetProvinceByRegion, resolveToFullProvinceId). Map and province identity in program layer: [map-data.md](../program/map-data.md).
+
+**Contract:** Lookup requires full disambiguated id or explicit (regionId, localId). No short-id resolution: `getProvince`, `tryGetProvince`, and `resolveToFullProvinceId` accept only prefixed ids (non-prefixed: getProvince/resolveToFullProvinceId throw, tryGetProvince returns null). Use prefixed id (`regionId|localId`) or `getProvinceByRegion`/`tryGetProvinceByRegion`. Resolution is region-scoped within the given region; the implementation does not search other regions.

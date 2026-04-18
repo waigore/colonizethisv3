@@ -10,9 +10,19 @@ doc/api/
 .pub/
 .pub-cache/
 
+# Per-app build/tooling (widgetbook_host)
+/widgetbook_host/build/
+/widgetbook_host/.dart_tool/
+/widgetbook_host/.flutter-plugins
+/widgetbook_host/.flutter-plugins-dependencies
+
 # Environment
 .env
 .envrc
+
+# Python (pytool)
+pytool/.venv/
+**/__pycache__/
 
 # Generated / compiled (dart2js)
 *.dart.js
@@ -25,6 +35,11 @@ doc/api/
 # Coverage
 coverage/
 coverage_merged/
+app/coverage_report/
+
+# Flutter localization (generated)
+app/lib/l10n/app_localizations*.dart
+app/lib/l10n/untranslated.json
 
 # IDE
 .idea/
@@ -33,6 +48,7 @@ coverage_merged/
 # Temporary files and logs
 tmp/
 logs/
+out/
 .test_output.txt
 
 # Flutter generated

@@ -1,12 +1,14 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
+
 import 'commodities.dart';
 
-/// Work order material costs and durations. SPEC/game/civilian-units.md, extraction-and-improvements.md, siege-mechanics.md.
-/// Single source of truth for order engine validation and orders_application deduction.
+/// Work order material costs and durations. SPEC/game/civilian-units.md, extraction-and-improvements.md, siege-mechanics.md. Single source of truth for stockpile costs in order validation and application.
+/// Durations: SPEC/program/development-resolution.md — `totalTurnsForWork` is authoritative for assign-time `currentWork.totalTurns` for standard material-backed targets (see `applyBuildAndWorkOrders`).
 
 /// Material cost for a work order: commodity id -> quantity.
 typedef WorkOrderCost = Map<String, int>;
 
-/// Default duration in turns when not specified by level. Config can override later.
+/// Duration in turns for a work target. Used when assigning `currentWork` for standard development orders.
 int totalTurnsForWork(String workTarget, {int? improvementLevel, int? fortLevel}) {
   switch (workTarget) {
     case 'explore':
@@ -83,10 +85,10 @@ WorkOrderCost workOrderCostBuildFort(int currentFortLevel) {
   }
 }
 
-/// Material cost for build_rail. SPEC: 2 lumber + 2 cast iron (extraction-and-improvements says "2 lumber + 2 cast iron per tile").
+/// Material cost for build_rail. SPEC: 2 lumber + 2 steel per tile.
 WorkOrderCost get workOrderCostBuildRail => {
       CommodityCatalog.lumber.id: 2,
-      CommodityCatalog.castIron.id: 2,
+      CommodityCatalog.steel.id: 2,
     };
 
 /// Material cost for upgrade_town. Per ruleset; use level-1 improvement cost as default.
@@ -125,12 +127,12 @@ WorkOrderCost? workOrderMaterialCost(
 
 /// Allowed work order targets per unit type. SPEC/game/civilian-units.md Work Order Summary.
 const Map<String, List<String>> workOrderTargetsByUnitType = {
-  'Explorer': ['explore', 'prospect'],
-  'Builder': ['build_improvement', 'upgrade_town'],
-  'Engineer': ['build_road', 'build_port', 'build_fort'],
-  'Rail Builder': ['build_rail'],
-  'Spy': ['steal_tech', 'counter_spy'],
-  'Merchant': ['purchase_land'],
+  kUnitTypeExplorer: ['explore', 'prospect'],
+  kUnitTypeBuilder: ['build_improvement', 'upgrade_town'],
+  kUnitTypeEngineer: ['build_road', 'build_port', 'build_fort'],
+  kUnitTypeRailBuilder: ['build_rail'],
+  kUnitTypeSpy: ['steal_tech', 'counter_spy'],
+  kUnitTypeMerchant: ['purchase_land'],
 };
 
 /// Returns true if [unitType] can perform work order [target].

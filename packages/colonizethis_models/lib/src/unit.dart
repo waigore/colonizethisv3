@@ -1,32 +1,56 @@
 import 'current_work.dart';
 
+/// Normalizes persisted province id: tile-derived wins when [tileKey] is set.
+String _storedProvinceIdForTileAndLocation(
+  String? tileKey,
+  String locationHint,
+) {
+  if (tileKey != null && tileKey.isNotEmpty) {
+    final derived = Unit.provinceIdFromTileKey(tileKey);
+    if (derived != null) return derived;
+  }
+  return locationHint;
+}
+
 /// Military or civilian unit. SPEC/game/world-model.
 /// Phase 3: medals (0–4) for military experience per SPEC/game/military-units.md.
+///
+/// Canonical placement is [locationProvinceId] (tile-first). JSON key `provinceId`
+/// always reads/writes that canonical value.
 class Unit {
-  const Unit({
+  Unit({
     required this.id,
     required this.type,
     required this.ownerId,
-    required this.provinceId,
+    required String locationProvinceId,
     this.status = UnitStatus.idle,
-    this.movementPoints = 0,
     this.medals = 0,
     this.tileKey,
+    this.originTileKey,
+    this.assignedTileKey,
     this.currentWork,
-  });
+  }) : _storedProvinceId = _storedProvinceIdForTileAndLocation(
+         tileKey,
+         locationProvinceId,
+       );
 
   final String id;
   final String type;
   final String ownerId;
-  final String provinceId;
+  final String _storedProvinceId;
   final UnitStatus status;
-  final int movementPoints;
 
   /// Experience medals (0–4); multiplies FPN/FPM in combat. SPEC/game/military-units.md.
   final int medals;
 
   /// Tile-level position for civilians only (format regionId|provinceId|x|y). Null for military/naval.
   final String? tileKey;
+
+  /// Original tile before current assignment started; null when idle or after work resolves.
+  final String? originTileKey;
+
+  /// Assigned target tile for current in-progress work; null when idle or after work resolves.
+  final String? assignedTileKey;
 
   /// Province id parsed from [tileKey]; null if tileKey is null or invalid format.
   /// Use [Unit.provinceIdFromTileKey] for static parsing.
@@ -64,67 +88,94 @@ class Unit {
     return r;
   }
 
-  /// Effective province id for this unit: from tileKey for civilians, from provinceId for military/naval.
-  String get locationProvinceId =>
-      (tileKey != null && tileKey!.isNotEmpty)
-          ? (provinceIdFromTileKey(tileKey) ?? provinceId)
-          : provinceId;
+  /// Canonical province id: derived from [tileKey] when set, else stored placement (military / no tile).
+  String get locationProvinceId => (tileKey != null && tileKey!.isNotEmpty)
+      ? (provinceIdFromTileKey(tileKey) ?? _storedProvinceId)
+      : _storedProvinceId;
 
   /// Multi-turn work in progress. SPEC/program/development-resolution.md.
   final CurrentWork? currentWork;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'ownerId': ownerId,
-        'provinceId': provinceId,
-        'status': status.name,
-        'movementPoints': movementPoints,
-        if (medals != 0) 'medals': medals,
-        if (tileKey != null && tileKey!.isNotEmpty) 'tileKey': tileKey,
-        if (currentWork != null) 'currentWork': currentWork!.toJson(),
-      };
+    'id': id,
+    'type': type,
+    'ownerId': ownerId,
+    'provinceId': locationProvinceId,
+    'status': status.name,
+    if (medals != 0) 'medals': medals,
+    if (tileKey != null && tileKey!.isNotEmpty) 'tileKey': tileKey,
+    if (originTileKey != null && originTileKey!.isNotEmpty)
+      'originTileKey': originTileKey,
+    if (assignedTileKey != null && assignedTileKey!.isNotEmpty)
+      'assignedTileKey': assignedTileKey,
+    if (currentWork != null) 'currentWork': currentWork!.toJson(),
+  };
 
   static Unit fromJson(Map<String, dynamic> json) {
     final cw = json['currentWork'];
+    final tileKey = json['tileKey'] as String?;
+    final rawProvince = json['provinceId'] as String;
+    final normalizedStored = _storedProvinceIdForTileAndLocation(
+      tileKey,
+      rawProvince,
+    );
     return Unit(
       id: json['id'] as String,
       type: json['type'] as String,
       ownerId: json['ownerId'] as String,
-      provinceId: json['provinceId'] as String,
+      locationProvinceId: normalizedStored,
       status: _statusFromJson(json['status'] as String?),
-      movementPoints: (json['movementPoints'] as int?) ?? 0,
       medals: (json['medals'] as int?) ?? 0,
-      tileKey: json['tileKey'] as String?,
+      tileKey: tileKey,
+      originTileKey: json['originTileKey'] as String?,
+      assignedTileKey: json['assignedTileKey'] as String?,
       currentWork: cw is Map<String, dynamic>
           ? CurrentWork.fromJson(cw)
           : cw is Map
-              ? CurrentWork.fromJson(Map<String, dynamic>.from(cw))
-              : null,
+          ? CurrentWork.fromJson(Map<String, dynamic>.from(cw))
+          : null,
     );
   }
 
+  /// [clearCurrentWork] when true sets [currentWork] to null (use when cancelling work).
+  /// Otherwise [currentWork] is used if provided, else kept.
+  /// [clearOriginTileKey] / [clearAssignedTileKey] clear their tracking fields.
   Unit copyWith({
     String? id,
     String? type,
     String? ownerId,
-    String? provinceId,
+    String? locationProvinceId,
     UnitStatus? status,
-    int? movementPoints,
     int? medals,
     String? tileKey,
+    String? originTileKey,
+    String? assignedTileKey,
     CurrentWork? currentWork,
+    bool clearCurrentWork = false,
+    bool clearOriginTileKey = false,
+    bool clearAssignedTileKey = false,
   }) {
+    final nextTile = tileKey ?? this.tileKey;
+    final canonicalHint =
+        locationProvinceId ??
+        ((nextTile != null && nextTile.isNotEmpty)
+            ? (Unit.provinceIdFromTileKey(nextTile) ?? _storedProvinceId)
+            : _storedProvinceId);
     return Unit(
       id: id ?? this.id,
       type: type ?? this.type,
       ownerId: ownerId ?? this.ownerId,
-      provinceId: provinceId ?? this.provinceId,
+      locationProvinceId: canonicalHint,
       status: status ?? this.status,
-      movementPoints: movementPoints ?? this.movementPoints,
       medals: medals ?? this.medals,
-      tileKey: tileKey ?? this.tileKey,
-      currentWork: currentWork ?? this.currentWork,
+      tileKey: nextTile,
+      originTileKey: clearOriginTileKey
+          ? null
+          : (originTileKey ?? this.originTileKey),
+      assignedTileKey: clearAssignedTileKey
+          ? null
+          : (assignedTileKey ?? this.assignedTileKey),
+      currentWork: clearCurrentWork ? null : (currentWork ?? this.currentWork),
     );
   }
 
@@ -136,33 +187,31 @@ class Unit {
           id == other.id &&
           type == other.type &&
           ownerId == other.ownerId &&
-          provinceId == other.provinceId &&
+          _storedProvinceId == other._storedProvinceId &&
           status == other.status &&
-          movementPoints == other.movementPoints &&
           medals == other.medals &&
           tileKey == other.tileKey &&
+          originTileKey == other.originTileKey &&
+          assignedTileKey == other.assignedTileKey &&
           currentWork == other.currentWork;
 
   @override
   int get hashCode => Object.hash(
-        id,
-        type,
-        ownerId,
-        provinceId,
-        status,
-        movementPoints,
-        medals,
-        tileKey,
-        currentWork,
-      );
+    id,
+    type,
+    ownerId,
+    _storedProvinceId,
+    status,
+    medals,
+    tileKey,
+    originTileKey,
+    assignedTileKey,
+    currentWork,
+  );
 }
 
 /// Minimal status for Phase 2 work and movement.
-enum UnitStatus {
-  idle,
-  working,
-  done,
-}
+enum UnitStatus { idle, working }
 
 UnitStatus _statusFromJson(String? value) {
   if (value == null) return UnitStatus.idle;

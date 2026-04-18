@@ -5,10 +5,16 @@ publish_to: none
 resolution: workspace
 
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.11.0 <4.0.0'
 
 dependencies:
+  colonizethis_logger: any
   path: ^1.9.0
+
+dev_dependencies:
+  colonizethis_exception_lint:
+    path: ../../packages/colonizethis_exception_lint
+  custom_lint: ^0.8.1
 
 executables:
   check_gdd_coverage: bin/check_gdd_coverage.dart

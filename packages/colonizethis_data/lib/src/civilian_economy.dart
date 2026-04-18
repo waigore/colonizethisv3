@@ -52,37 +52,37 @@ class CivilianEconomyCatalog {
   static const int _costPaperHigh = 4;
 
   static final CivilianEconomy builder = CivilianEconomy(
-    id: 'Builder',
+    id: kUnitTypeBuilder,
     buildTreasuryCost: _costCashLow,
     buildInputs: {CommodityCatalog.paper.id: _costPaperLow},
   );
 
   static final CivilianEconomy engineer = CivilianEconomy(
-    id: 'Engineer',
+    id: kUnitTypeEngineer,
     buildTreasuryCost: _costCashLow,
     buildInputs: {CommodityCatalog.paper.id: _costPaperLow},
   );
 
   static final CivilianEconomy explorer = CivilianEconomy(
-    id: 'Explorer',
+    id: kUnitTypeExplorer,
     buildTreasuryCost: _costCashLow,
     buildInputs: {CommodityCatalog.paper.id: _costPaperLow},
   );
 
   static final CivilianEconomy spy = CivilianEconomy(
-    id: 'Spy',
+    id: kUnitTypeSpy,
     buildTreasuryCost: _costCashHigh,
     buildInputs: {CommodityCatalog.paper.id: _costPaperHigh},
   );
 
   static final CivilianEconomy merchant = CivilianEconomy(
-    id: 'Merchant',
+    id: kUnitTypeMerchant,
     buildTreasuryCost: _costCashHigh,
     buildInputs: {CommodityCatalog.paper.id: _costPaperHigh},
   );
 
   static final CivilianEconomy railBuilder = CivilianEconomy(
-    id: 'Rail Builder',
+    id: kUnitTypeRailBuilder,
     buildTreasuryCost: _costCashHigh,
     buildInputs: {CommodityCatalog.paper.id: _costPaperHigh},
   );
@@ -104,6 +104,6 @@ class CivilianEconomyCatalog {
 /// Civilian unit type id → tech id that unlocks it. Absent = buildable from start.
 /// SPEC/game/tech-tree-diplomacy-civilian.md, tech-tree-transport.md.
 const Map<String, String> unlockingTechByCivilianId = {
-  'Merchant': 'merchant_companies',
-  'Rail Builder': 'early_steam_engine',
+  kUnitTypeMerchant: 'merchant_companies',
+  kUnitTypeRailBuilder: 'early_steam_engine',
 };

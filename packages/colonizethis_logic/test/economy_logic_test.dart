@@ -1,9 +1,20 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
+  group('effectiveLabourForWorkers', () {
+    test('masters with luxury capped by furHats after food', () {
+      const workers = WorkerPool(peasants: 2, masters: 3);
+      final stockpile = const Stockpile()
+          .applyDelta(CommodityCatalog.grain.id, 8)
+          .applyDelta(CommodityCatalog.furHats.id, 1);
+      final labour = effectiveLabourForWorkers(workers: workers, stockpile: stockpile);
+      expect(labour, 2 * 1 + 1 * 8);
+    });
+  });
+
   group('applyExtractionToStockpile', () {
     test('adds extracted quantities', () {
       const stockpile = Stockpile();
@@ -55,7 +66,7 @@ void main() {
 
   group('resolveProduction', () {
     test('consumes inputs and produces outputs', () {
-      // Start with enough timber, iron, and coal.
+      // Start with enough timber and iron; coal is present but not consumed.
       var stockpile = const Stockpile()
           .applyDelta(CommodityCatalog.timber.id, 10)
           .applyDelta(CommodityCatalog.iron.id, 10)
@@ -65,6 +76,7 @@ void main() {
       final result = resolveProduction(
         stockpile: stockpile,
         workers: workers,
+        idleLabour: WorkerIdleCounts(peasants: 10),
         assignments: const [
           AssignedRecipe(
             recipeId: 'castIron_from_timber_iron_coal',
@@ -75,11 +87,12 @@ void main() {
 
       // labourPerOutput = 5, assigned 20, but effective labour from 10 peasants
       // is 10 → max 2 runs.
-      // Inputs per run: 2 timber, 2 iron, 1 coal.
+      // Inputs per run: 2 timber, 2 iron (no coal).
       expect(result.stockpile.quantityOf(CommodityCatalog.castIron.id), 2);
       expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 10 - 2 * 2);
       expect(result.stockpile.quantityOf(CommodityCatalog.iron.id), 10 - 2 * 2);
-      expect(result.stockpile.quantityOf(CommodityCatalog.coal.id), 5 - 1 * 2);
+      // Cast iron recipe no longer consumes coal; coal remains unchanged.
+      expect(result.stockpile.quantityOf(CommodityCatalog.coal.id), 5);
     });
 
     test('effective labour counts only trained workers with luxury', () {
@@ -97,6 +110,7 @@ void main() {
       final result = resolveProduction(
         stockpile: stockpile,
         workers: workers,
+        idleLabour: const WorkerIdleCounts(apprentices: 1),
         assignments: const [
           AssignedRecipe(
             recipeId: 'lumber_from_timber',
@@ -124,6 +138,7 @@ void main() {
       final result = resolveProduction(
         stockpile: stockpile,
         workers: workers,
+        idleLabour: WorkerIdleCounts.zero,
         assignments: const [
           AssignedRecipe(
             recipeId: 'lumber_from_timber',
@@ -132,7 +147,7 @@ void main() {
         ],
       );
 
-      // No luxury → no runs, inputs unchanged.
+      // No idle trained labour → no runs, inputs unchanged.
       expect(result.stockpile.quantityOf(CommodityCatalog.lumber.id), 0);
       expect(result.stockpile.quantityOf(CommodityCatalog.timber.id), 10);
     });
@@ -140,10 +155,12 @@ void main() {
 
   group('resolveConsumption', () {
     test('workers consume food from stockpile without starving (no military)', () {
-      // 3 peasants + 2 trained tiers => 3 * 1 + 2 * 2 = 7 food required.
+      // 3 peasants + 2 trained tiers => 3 * 1 + 2 * 2 = 7 food required + luxuries.
       var stockpile = const Stockpile()
           .applyDelta(CommodityCatalog.grain.id, 5)
-          .applyDelta(CommodityCatalog.meat.id, 5);
+          .applyDelta(CommodityCatalog.meat.id, 5)
+          .applyDelta(CommodityCatalog.refinedSugar.id, 1)
+          .applyDelta(CommodityCatalog.cigars.id, 1);
       const workers = WorkerPool(
         peasants: 3,
         apprentices: 1,
@@ -166,13 +183,17 @@ void main() {
       expect(result.workerPool.apprentices, 1);
       expect(result.workerPool.journeymen, 1);
       expect(result.workerPool.masters, 0);
+      expect(result.idleLabour.peasants, 3);
+      expect(result.idleLabour.apprentices, 1);
+      expect(result.idleLabour.journeymen, 1);
     });
 
-    test('workers starve when food is insufficient (no military)', () {
-      // Require 7 food as above, but provide only 3.
+    test('food strike: journeyman before apprentice; peasants last', () {
+      // 3 food: journeyman (2) fed first; remainder cannot complete apprentice (2); peasants may get none after grain/meat mix.
       var stockpile = const Stockpile()
           .applyDelta(CommodityCatalog.grain.id, 1)
-          .applyDelta(CommodityCatalog.meat.id, 2);
+          .applyDelta(CommodityCatalog.meat.id, 2)
+          .applyDelta(CommodityCatalog.cigars.id, 1);
       const workers = WorkerPool(
         peasants: 3,
         apprentices: 1,
@@ -185,12 +206,10 @@ void main() {
         workers: workers,
       );
 
-      // Only 3 food available; peasants are fed first.
-      expect(result.workerPool.peasants, 3);
-      // No food remains for trained tiers; they starve.
-      expect(result.workerPool.apprentices, 0);
-      expect(result.workerPool.journeymen, 0);
-      expect(result.workerPool.masters, 0);
+      expect(result.workerPool, workers);
+      expect(result.idleLabour.journeymen, 1);
+      expect(result.idleLabour.apprentices, 0);
+      expect(result.idleLabour.peasants, 0);
     });
 
     test('military consumes food from stockpile before workers when present', () {
@@ -221,14 +240,16 @@ void main() {
       expect(totalFood, lessThanOrEqualTo(3));
 
       // Peasants may starve if insufficient food remains, but never increase.
-      expect(result.workerPool.peasants, lessThanOrEqualTo(workers.peasants));
+      expect(result.workerPool.peasants, workers.peasants);
     });
 
-    test('starvation order: peasants fed first, then apprentices, then journeymen, then masters', () {
-      // SPEC/game/workers-and-population.md: peasants removed first when food insufficient.
+    test('food strike priority: apprentices fed before peasants', () {
+      // 3 food: apprentices (2 each) before peasants → one full apprentice (2 food); 1 food
+      // goes to the apprentice pass as partial (no idle apprentice); peasants get nothing.
       var stockpile = const Stockpile()
           .applyDelta(CommodityCatalog.grain.id, 2)
-          .applyDelta(CommodityCatalog.meat.id, 1);
+          .applyDelta(CommodityCatalog.meat.id, 1)
+          .applyDelta(CommodityCatalog.refinedSugar.id, 2);
       const workers = WorkerPool(
         peasants: 2,
         apprentices: 2,
@@ -236,10 +257,9 @@ void main() {
         masters: 0,
       );
       final result = resolveConsumption(stockpile: stockpile, workers: workers);
-      expect(result.workerPool.peasants, 2);
-      expect(result.workerPool.apprentices, 0);
-      expect(result.workerPool.journeymen, 0);
-      expect(result.workerPool.masters, 0);
+      expect(result.workerPool, workers);
+      expect(result.idleLabour.apprentices, 1);
+      expect(result.idleLabour.peasants, 0);
     });
   });
 

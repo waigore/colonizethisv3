@@ -1,7 +1,7 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('Turn resolution characterization', () {
@@ -43,14 +43,14 @@ void main() {
                 id: 'inf1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: '$ow|P1',
+                locationProvinceId: '$ow|P1',
                 medals: 2,
               ),
               Unit(
                 id: 'def1',
                 type: 'peasant_levies',
                 ownerId: 'p2',
-                provinceId: '$ow|P3',
+                locationProvinceId: '$ow|P3',
               ),
             ],
           ),
@@ -92,12 +92,12 @@ void main() {
         'p2': {'grain': 1},
       };
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
         extractedByPlayerId: extracted,
-      );
+      ));
 
       // Turn advanced
       expect(next.worldState.turnState.turnNumber, 1);
@@ -108,11 +108,11 @@ void main() {
           .where((u) => u.id == 'inf1')
           .firstOrNull;
       expect(movedUnit, isNotNull);
-      expect(movedUnit!.provinceId, '$ow|P2');
+      expect(movedUnit!.locationProvinceId, '$ow|P2');
 
       // Extraction applied (grain added to stockpile, then consumption deducted)
-      final p1 = next.players.firstWhere((p) => p.id == 'p1');
-      final p2 = next.players.firstWhere((p) => p.id == 'p2');
+      final p1 = next.playerById('p1')!;
+      final p2 = next.playerById('p2')!;
       // p1 started with 10 grain, extracted 3 = 13, then consumption deducted
       expect(p1.stockpile.quantityOf('grain'), lessThanOrEqualTo(13));
       // p2 started with 5 grain, extracted 1 = 6, then consumption deducted
@@ -147,11 +147,11 @@ void main() {
         ],
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: const Orders(),
-      );
+      ));
 
       expect(next.worldState.turnState.turnNumber, 6);
     });
@@ -172,11 +172,12 @@ void main() {
         TurnPhase.orders,
         TurnPhase.extraction,
         TurnPhase.richesToTreasury,
-        TurnPhase.production,
         TurnPhase.consumption,
+        TurnPhase.production,
         TurnPhase.research,
         TurnPhase.diplomacy,
         TurnPhase.movement,
+        TurnPhase.minorRegimentUpgrade,
         TurnPhase.navalInterceptionCombat,
         TurnPhase.combat,
         TurnPhase.buildWork,
@@ -214,21 +215,21 @@ void main() {
                 id: 'att1',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: '$ow|A',
+                locationProvinceId: '$ow|A',
                 medals: 3,
               ),
               Unit(
                 id: 'att2',
                 type: 'grenadiers',
                 ownerId: 'p1',
-                provinceId: '$ow|A',
+                locationProvinceId: '$ow|A',
                 medals: 2,
               ),
               Unit(
                 id: 'def1',
                 type: 'peasant_levies',
                 ownerId: 'p2',
-                provinceId: '$ow|B',
+                locationProvinceId: '$ow|B',
               ),
             ],
           ),
@@ -249,11 +250,11 @@ void main() {
         },
       );
 
-      final next = resolveTurnForGame(
+      final next = requireTurnResolutionComplete(resolveTurnForGame(
         game: game,
         topology: topology,
         orders: orders,
-      );
+      ));
 
       expect(next.worldState.turnState.turnNumber, 1);
       final provinceB = next.worldState.oldWorld.provinces

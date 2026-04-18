@@ -1,7 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
-
 import 'package:colonizethis_test/test.dart';
+
 import 'package:path/path.dart' as p;
+
+// Import the bin file directly to access the parseMapArguments function.
+// ignore: avoid_relative_lib_imports
+import '../bin/generate_map.dart' as generate_map;
 
 /// Package root: tool/generate_map. Works when run from package dir or repo root.
 String get _packageRoot {
@@ -293,5 +298,88 @@ void main() {
       expect(result.exitCode, 1);
       expect(result.stderr, contains('not found'));
     });
+  });
+
+  group('parseMapArguments', () {
+    test('parses default values when no args provided', () {
+      final args = generate_map.parseMapArguments([]);
+      expect(args.numProvinces, 60);
+      expect(args.numContinents, 3);
+      expect(args.regionId, 'oldWorld');
+      expect(args.interactive, false);
+      expect(args.withTileMapImage, false);
+    });
+
+    test('parses explicit --provinces and --continents', () {
+      final args = generate_map.parseMapArguments(['--provinces', '20', '--continents', '2']);
+      expect(args.numProvinces, 20);
+      expect(args.numContinents, 2);
+    });
+
+    test('parses --region newWorld', () {
+      final args = generate_map.parseMapArguments(['--region', 'newWorld']);
+      expect(args.regionId, 'newWorld');
+    });
+
+    test('parses --interactive flag', () {
+      final args = generate_map.parseMapArguments(['--interactive']);
+      expect(args.interactive, true);
+    });
+
+    test('parses --tile-map-image with path', () {
+      final args = generate_map.parseMapArguments(['--tile-map-image=/tmp/map.png']);
+      expect(args.withTileMapImage, true);
+      expect(args.tileMapImagePath, '/tmp/map.png');
+    });
+
+    test('parses --seed', () {
+      final args = generate_map.parseMapArguments(['--seed', '12345']);
+      expect(args.seedUsed, 12345);
+    });
+
+    test('parses --write-tile-map-json', () {
+      final args = generate_map.parseMapArguments([
+        '--write-tile-map-json',
+        '/tmp/tm.json',
+      ]);
+      expect(args.writeTileMapJsonPath, '/tmp/tm.json');
+    });
+
+    test('parses --write-tile-map-json=', () {
+      final args = generate_map.parseMapArguments([
+        '--write-tile-map-json=out/tile_map.json',
+      ]);
+      expect(args.writeTileMapJsonPath, 'out/tile_map.json');
+    });
+  });
+
+  test('writes TileMapResult JSON when --write-tile-map-json is set', () async {
+    final dir = await Directory.systemTemp.createTemp('genmap_json_');
+    final outPath = p.join(dir.path, 'tile_map.json');
+    final result = await Process.run(
+      'dart',
+      [
+        'run',
+        'generate_map',
+        '--provinces',
+        '4',
+        '--continents',
+        '2',
+        '--seed',
+        '7',
+        '--write-tile-map-json',
+        outPath,
+      ],
+      runInShell: false,
+      workingDirectory: _packageRoot,
+    );
+    expect(result.exitCode, 0, reason: result.stderr.toString());
+    final file = File(outPath);
+    expect(file.existsSync(), isTrue);
+    final decoded = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+    expect(decoded['width'], isA<int>());
+    expect(decoded['height'], isA<int>());
+    expect(decoded['grid'], isA<List<dynamic>>());
+    await dir.delete(recursive: true);
   });
 }

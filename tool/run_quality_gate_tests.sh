@@ -11,6 +11,17 @@ echo "=== Resolve dependencies ==="
 dart pub get
 
 echo ""
+echo "=== Check test import convention (SPEC/program/test-logging.md) ==="
+tool/check_test_imports.sh
+
+echo ""
+echo "=== Wang incremental assets gate (Python) ==="
+if ! python3 -c "import PIL" 2>/dev/null; then
+  python3 -m pip install -q pillow
+fi
+(cd pytool && python3 test_wang_incremental_assets_and_preview.py)
+
+echo ""
 echo "=== Test packages (Dart) ==="
 for dir in packages/colonizethis_models packages/colonizethis_data packages/colonizethis_save packages/colonizethis_logic packages/colonizethis_ai packages/colonizethis_map; do
   [ -d "$dir/test" ] || continue
@@ -19,15 +30,43 @@ for dir in packages/colonizethis_models packages/colonizethis_data packages/colo
 done
 
 echo ""
-echo "=== Test app (Flutter) ==="
+echo "=== App localizations + analyze (before app tests; CI: app_tests_cache job) ==="
 if [ -d app ]; then
-  (cd app && flutter test --coverage --reporter=compact)
+  (cd app && flutter gen-l10n)
+  cd app
+  output=$(flutter analyze 2>&1 || true)
+  echo "$output"
+  error_count=$(echo "$output" | grep -c "^[[:space:]]*error" || true)
+  cd "$ROOT"
+  if [ "${error_count:-0}" -gt 0 ]; then
+    echo "Errors found: $error_count"
+    exit 1
+  fi
+fi
+
+echo ""
+echo "=== App hardcoded UI string gate (AST, app/lib/** -> l10n) ==="
+dart run "$ROOT/tool/check_app_hardcoded_ui_strings.dart"
+
+echo ""
+echo "=== Work target constants convention gate ==="
+bash "$ROOT/tool/check_work_target_constants.sh"
+
+echo ""
+echo "=== Test app (Flutter) ==="
+# CI runs sharded app tests with a shared deps artifact (.github/workflows/quality.yml).
+# Locally: single process is enough; use the same flags as shards for parity.
+if [ -d app ]; then
+  (cd app && flutter test test/ --coverage --reporter=compact -j 1 --no-track-widget-creation)
+  echo ""
+  echo "=== App coverage gate (>= 80% for app/lib/) ==="
+  "$ROOT/tool/check_coverage_threshold.sh" 80 app
 fi
 
 echo ""
 echo "=== Test ctdev (Flutter) ==="
 if [ -d ctdev/test ]; then
-  (cd ctdev && flutter test --coverage --reporter=compact)
+  (cd ctdev && flutter test --coverage --reporter=compact -j 1 --no-track-widget-creation)
 fi
 
 echo ""

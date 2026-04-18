@@ -1,0 +1,22 @@
+name: colonizethis_exception_lint
+description: >
+  Custom lint + shared AST helpers forbidding generic throws in ColonizeThis
+  domain runtime code. SPEC/program/exception-enforcement.md
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: '>=3.11.0 <4.0.0'
+
+dependencies:
+  analyzer: ^8.4.0
+  analyzer_plugin: ^0.13.7
+  custom_lint_builder: ^0.8.1
+
+dev_dependencies:
+  colonizethis_test:
+  custom_lint: ^0.8.1
+  lints: ^6.0.0
+  path: ^1.9.1
+  test: ^1.24.0

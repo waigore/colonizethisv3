@@ -28,6 +28,14 @@ class RegimentStats {
       category == RegimentCategory.lightCavalry ||
       category == RegimentCategory.spearCavalry ||
       category == RegimentCategory.heavyCavalry;
+
+  bool get isArtillery =>
+      category == RegimentCategory.lightArtillery ||
+      category == RegimentCategory.heavyArtillery;
+
+  /// Eligible for mutual-annihilation garrison recovery type: not cavalry, not artillery.
+  /// SPEC/game/combat.md (bowmen and other non-cav / non-arty roster types count).
+  bool get isEligibleGarrisonRecoveryInfantry => !isCavalry && !isArtillery;
 }
 
 /// Regiment category per Imperialism II military roster.
@@ -43,7 +51,7 @@ enum RegimentCategory {
   heavyArtillery,
 }
 
-/// Full regiment table: 28 types across 8 categories and 4 eras.
+/// Full regiment table: 29 types across 8 categories and 4 eras.
 /// SPEC/game/military-units.md.
 const List<RegimentStats> regimentCatalog = [
   RegimentStats(
@@ -338,6 +346,40 @@ const List<RegimentStats> regimentCatalog = [
   ),
 ];
 
+/// Deterministic pick for mutual-annihilation garrison recovery regiment type.
+/// Chooses maximum `(FPN + FPM)` among [eligible]; tie-break: lexicographically
+/// smallest `id`. Empty [eligible] is allowed (caller passes filtered catalog).
+/// SPEC/game/combat.md § Garrison recovery type.
+String selectGarrisonRecoveryRegimentType(Iterable<RegimentStats> eligible) {
+  RegimentStats? best;
+  for (final r in eligible) {
+    if (best == null) {
+      best = r;
+      continue;
+    }
+    final bestSum = best.fpn + best.fpm;
+    final sum = r.fpn + r.fpm;
+    if (sum > bestSum) {
+      best = r;
+    } else if (sum == bestSum && r.id.compareTo(best.id) < 0) {
+      best = r;
+    }
+  }
+  if (best == null) return 'peasant_levies';
+  return best.id;
+}
+
+/// Regiment id for recovered garrison units after mutual annihilation when the chain continues.
+/// Uses [regimentCatalog] entries for `era` in 1..4: eligible types are [RegimentStats.isEligibleGarrisonRecoveryInfantry].
+/// SPEC/game/combat.md § Garrison recovery type; implemented in `combat_resolver.dart`.
+String garrisonRecoveryRegimentTypeForEra(int era) {
+  final e = era.clamp(1, 4);
+  final eligible = regimentCatalog.where(
+    (r) => r.era == e && r.isEligibleGarrisonRecoveryInfantry,
+  );
+  return selectGarrisonRecoveryRegimentType(eligible);
+}
+
 /// Registry of regiment stats by id.
 RegimentStats? regimentStatsById(String id) {
   for (final r in regimentCatalog) {
@@ -355,12 +397,7 @@ double medalMultiplierFor(int medals) {
 }
 
 /// Difficulty level for combat modifiers.
-enum DifficultyLevel {
-  introductory,
-  normal,
-  hard,
-  impossible,
-}
+enum DifficultyLevel { introductory, normal, hard, impossible }
 
 /// Terrain modifier: multiplier applied to attacker or defender strength.
 /// Key: terrain id (plains, forest, hills, mountain, swamp, desert).
@@ -384,6 +421,39 @@ const List<double> fortEmplacedStrength = [0.0, 3.0, 4.0, 5.0];
 /// Number of emplaced guns per fort level.
 const List<int> fortGunCount = [0, 1, 2, 3];
 
+/// Max HP per virtual emplaced gun by fort level (index 0 unused). SPEC/game/siege-mechanics.md, quick-battle-resolution.md.
+const List<int> emplacedVirtualGunMaxHpByFortLevel = [0, 6, 8, 10];
+
+/// Tech ids for emplaced quality (Royal → Heavy → Siege). SPEC/game/tech-tree-military.md.
+const String kTechHeavyEmplacedArtillery = 'heavy_emplaced_artillery';
+const String kTechEmplacedSiegeGuns = 'emplaced_siege_guns';
+
+/// Strength multiplier on virtual emplaced guns from emplaced-quality tech tier.
+double emplacedVirtualGunTierMultiplier(Map<String, bool>? techUnlocked) {
+  final m = techUnlocked;
+  if (m != null && m[kTechEmplacedSiegeGuns] == true) return 1.30;
+  if (m != null && m[kTechHeavyEmplacedArtillery] == true) return 1.15;
+  return 1.0;
+}
+
+/// RNG of same-era heavy artillery regiment (baseline for +1 emplaced RNG). [militaryLevel] is 1–4.
+int heavyArtilleryBaselineRngForMilitaryLevel(int militaryLevel) {
+  final era = militaryLevel.clamp(1, 4);
+  for (final r in regimentCatalog) {
+    if (r.category == RegimentCategory.heavyArtillery && r.era == era) {
+      return r.rng;
+    }
+  }
+  return 10;
+}
+
+/// Resolved emplaced gun RNG: baseline + 1 per GDD.
+int emplacedVirtualGunRngForMilitaryLevel(int militaryLevel) =>
+    heavyArtilleryBaselineRngForMilitaryLevel(militaryLevel) + 1;
+
+/// Per-point RNG above heavy-artillery baseline scales Quick Battle scalar strength (stub until FPN/FPM/RNG wired).
+const double kEmplacedRngStrengthWeight = 0.04;
+
 /// Wall HP per fort level (0 = no wall). Damage to defenders is applied after wall soaks this much.
 /// SPEC/game/siege-mechanics.md (Wall Strength: Light / Medium / Heavy).
 const List<double> wallHpByFortLevel = [0.0, 10.0, 20.0, 30.0];
@@ -406,5 +476,18 @@ const double initiativeGeneralMedalWeight = 10.0;
 /// Base regiments per side; +1 per general medal (added in resolver).
 const int deploymentLimitBase = 10;
 const int deploymentLimitWithNationalism = 12;
+
 /// Tech id that raises base deployment to [deploymentLimitWithNationalism]. SPEC/game/tech-tree-diplomacy-civilian.md.
 const String kTechIdNationalism = 'nationalism';
+
+/// Tech id required for Trade Consulate / Embassy / NAP overtures toward Minor Nations and Tribes. SPEC/game/tech-tree-diplomacy-civilian.md, diplomacy.md.
+const String kTechIdDiplomaticExpertise = 'diplomatic_expertise';
+
+/// Tech id required for Builder `upgrade_town` work orders. SPEC/game/tech-tree-diplomacy-civilian.md.
+const String kTechIdNationalBureaucracy = 'national_bureaucracy';
+
+/// Tech id that reduces third-party relation penalties when the aggressor declares war (e.g. intervention). SPEC/game/tech-tree-diplomacy-civilian.md.
+const String kTechIdPropaganda = 'propaganda';
+
+/// Tech id required for Join Empire toward another Great Power. SPEC/game/tech-tree-diplomacy-civilian.md, diplomacy.md.
+const String kTechIdEmpireBuilding = 'empire_building';

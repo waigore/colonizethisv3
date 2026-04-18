@@ -1,7 +1,12 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-/// Displays Quick Battle result. SPEC/program/quick-battle-resolution.
+import '../../../l10n/l10n.dart';
+import '../../../widgets/ct_dialog_shell.dart';
+import '../../../widgets/ct_nine_patch_button.dart';
+
+/// Displays Quick Battle result. Open via `OpenDialogEvent('quick_battle_result', params)`.
+/// SPEC/program/quick-battle-resolution.
 class QuickBattleResultDialog extends StatelessWidget {
   const QuickBattleResultDialog({
     super.key,
@@ -14,48 +19,54 @@ class QuickBattleResultDialog extends StatelessWidget {
   final String attackerName;
   final String defenderName;
 
-  static Future<void> show(
-    BuildContext context, {
-    required QuickBattleResult result,
-    String attackerName = 'Attacker',
-    String defenderName = 'Defender',
-  }) {
-    return showDialog(
-      context: context,
-      builder: (context) => QuickBattleResultDialog(
-        result: result,
-        attackerName: attackerName,
-        defenderName: defenderName,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final winnerText = switch (result.winner) {
-      QuickBattleWinner.attacker => '$attackerName wins',
-      QuickBattleWinner.defender => '$defenderName holds',
-      QuickBattleWinner.mutualExhaustion => 'Mutual exhaustion',
+      QuickBattleWinner.attacker => l10n.quickBattle_attackerWins(attackerName),
+      QuickBattleWinner.defender => l10n.quickBattle_defenderHolds(
+        defenderName,
+      ),
+      QuickBattleWinner.mutualExhaustion => l10n.quickBattle_mutualExhaustion,
     };
-    return AlertDialog(
-      title: Text('Battle Result: $winnerText'),
-      content: Column(
+    return CtDialogShell(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (result.provinceFlips)
-            const Text('Province captured.', style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            l10n.quickBattle_battleResult(winnerText),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
-          Text('$attackerName casualties: ${result.attackerCasualties.length}'),
-          Text('$defenderName casualties: ${result.defenderCasualties.length}'),
+          if (result.provinceFlips)
+            Text(
+              l10n.quickBattle_provinceCaptured,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.quickBattle_casualties(
+              attackerName,
+              result.attackerCasualties.length,
+            ),
+          ),
+          Text(
+            l10n.quickBattle_casualties(
+              defenderName,
+              result.defenderCasualties.length,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: CtNinePatchButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.quickBattle_ok),
+            ),
+          ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('OK'),
-        ),
-      ],
     );
   }
 }

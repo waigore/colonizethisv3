@@ -1,6 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/ai_api.dart';
+
+final _log = packageLogger();
 
 // Perception: PlayerView → AIWorldSnapshot. SPEC/ai/ai-architecture.md.
 // All data derived from PlayerView only; no hidden state.
@@ -66,20 +69,40 @@ class AIWorldSnapshot {
   /// Builds snapshot from [view]. When [topology] is provided, computes
   /// neighborProvincesHostile, capitalThreatened, weakNeighbors, and
   /// richUnexploitedProvinces from view + topology. Deterministic: same view → same snapshot.
-  static AIWorldSnapshot fromPlayerView(PlayerView view, {MapTopology? topology}) {
+  static AIWorldSnapshot fromPlayerView(
+    PlayerView view, {
+    MapTopology? topology,
+  }) {
     final threats = _buildThreatSummary(view, topology);
     final opportunities = _buildOpportunitySummary(view, topology);
     final economy = _buildEconomySummary(view);
-    return AIWorldSnapshot(
+    final snapshot = AIWorldSnapshot(
       playerId: view.playerId,
       threats: threats,
       opportunities: opportunities,
       economy: economy,
       relations: Map<String, DiplomacyRelation>.from(view.diplomacyByOtherId),
     );
+    _log.d(
+      'snapshot playerId=${snapshot.playerId} '
+      'atWarWith=${snapshot.threats.atWarWith} '
+      'neighborProvincesHostile=${snapshot.threats.neighborProvincesHostile} '
+      'capitalThreatened=${snapshot.threats.capitalThreatened} '
+      'weakNeighbors=${snapshot.opportunities.weakNeighbors} '
+      'richUnexploitedProvinces=${snapshot.opportunities.richUnexploitedProvinces} '
+      'unclaimedProvinces=${snapshot.opportunities.unclaimedProvinces} '
+      'workerCount=${snapshot.economy.workerCount} '
+      'treasury=${snapshot.economy.treasury} '
+      'ownProvinceCount=${snapshot.economy.ownProvinceCount} '
+      'relationsKeys=${snapshot.relations.keys.toList()}',
+    );
+    return snapshot;
   }
 
-  static ThreatSummary _buildThreatSummary(PlayerView view, MapTopology? topology) {
+  static ThreatSummary _buildThreatSummary(
+    PlayerView view,
+    MapTopology? topology,
+  ) {
     final atWarWith = <String>[];
     for (final e in view.diplomacyByOtherId.entries) {
       final rel = e.value;
@@ -95,12 +118,17 @@ class AIWorldSnapshot {
       if (p.value.ownerId == view.playerId) ownedIds.add(p.key);
     }
     int neighborProvincesHostile = 0;
-    final neighborProvinceIds = _neighborProvinceIdsFromTopology(topology, ownedIds, view);
+    final neighborProvinceIds = _neighborProvinceIdsFromTopology(
+      topology,
+      ownedIds,
+      view,
+    );
     for (final neighborFullId in neighborProvinceIds) {
       final prov = view.provincesById[neighborFullId];
       if (prov == null) continue;
       final ownerId = prov.ownerId;
-      if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) continue;
+      if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId)
+        continue;
       final rel = view.diplomacyByOtherId[ownerId];
       if (rel != null && rel.state == RelationState.atWar) {
         neighborProvincesHostile++;
@@ -108,17 +136,18 @@ class AIWorldSnapshot {
     }
     bool capitalThreatened = false;
     final capitalId = view.player.capitalProvinceId;
-    if (capitalId != null && capitalId.isNotEmpty && ownedIds.contains(capitalId)) {
-      final capitalNeighbors = _neighborProvinceIdsFromTopology(
-        topology,
-        {capitalId},
-        view,
-      );
+    if (capitalId != null &&
+        capitalId.isNotEmpty &&
+        ownedIds.contains(capitalId)) {
+      final capitalNeighbors = _neighborProvinceIdsFromTopology(topology, {
+        capitalId,
+      }, view);
       for (final neighborFullId in capitalNeighbors) {
         final prov = view.provincesById[neighborFullId];
         if (prov == null) continue;
         final ownerId = prov.ownerId;
-        if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) continue;
+        if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId)
+          continue;
         final rel = view.diplomacyByOtherId[ownerId];
         if (rel != null && rel.state == RelationState.atWar) {
           capitalThreatened = true;
@@ -158,16 +187,24 @@ class AIWorldSnapshot {
             break;
           }
         }
-        if (neighborNode == null || neighborNode.type != TopologyNodeType.province) continue;
+        if (neighborNode == null ||
+            neighborNode.type != TopologyNodeType.province)
+          continue;
         if (neighborNode.regionId != regionId) continue;
-        final neighborFullId = ProvinceId.full(neighborNode.regionId, neighborNode.id);
+        final neighborFullId = ProvinceId.full(
+          neighborNode.regionId,
+          neighborNode.id,
+        );
         if (!ownedFullIds.contains(neighborFullId)) out.add(neighborFullId);
       }
     }
     return out;
   }
 
-  static OpportunitySummary _buildOpportunitySummary(PlayerView view, MapTopology? topology) {
+  static OpportunitySummary _buildOpportunitySummary(
+    PlayerView view,
+    MapTopology? topology,
+  ) {
     int unclaimed = 0;
     int richUnexploited = 0;
     for (final p in view.provincesById.values) {
@@ -184,7 +221,11 @@ class AIWorldSnapshot {
       for (final p in view.provincesById.entries) {
         if (p.value.ownerId == view.playerId) ownedIds.add(p.key);
       }
-      final neighborIds = _neighborProvinceIdsFromTopology(topology, ownedIds, view);
+      final neighborIds = _neighborProvinceIdsFromTopology(
+        topology,
+        ownedIds,
+        view,
+      );
       for (final fid in neighborIds) {
         final prov = view.provincesById[fid];
         if (prov == null) continue;

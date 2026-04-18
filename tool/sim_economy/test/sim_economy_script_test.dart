@@ -1,6 +1,6 @@
 import 'dart:convert';
-
 import 'package:colonizethis_test/test.dart';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -53,22 +53,23 @@ void main() {
       final stockpileAfterRiches = richesResult.stockpile;
       final treasuryEndOfTurn = 100 + richesResult.treasuryDelta;
 
-      // Production
-      final production = resolveProduction(
+      // Consumption before production
+      final consumption = resolveConsumption(
         stockpile: stockpileAfterRiches,
         workers: workersStart,
+      );
+      final stockpileAfterConsumption = consumption.stockpile;
+      final workersAfterConsumption = consumption.workerPool;
+
+      final production = resolveProduction(
+        stockpile: stockpileAfterConsumption,
+        workers: workersAfterConsumption,
+        idleLabour: consumption.idleLabour,
         assignments: turn.assignments,
       );
       final stockpileAfterProduction = production.stockpile;
-      final workersAfterProduction = production.workerPool;
-
-      // Consumption
-      final consumption = resolveConsumption(
-        stockpile: stockpileAfterProduction,
-        workers: workersAfterProduction,
-      );
-      final stockpileEnd = consumption.stockpile;
-      final workersEnd = consumption.workerPool;
+      final workersEnd = production.workerPool;
+      final stockpileEnd = stockpileAfterProduction;
 
       // Build turn log entry and verify conservation identity.
       final entry = cli.buildTurnLogEntry(
@@ -76,6 +77,7 @@ void main() {
         stockpileStart: stockpileStart,
         stockpileAfterExtraction: stockpileAfterExtraction,
         stockpileAfterRiches: stockpileAfterRiches,
+        stockpileAfterConsumption: stockpileAfterConsumption,
         stockpileAfterProduction: stockpileAfterProduction,
         stockpileEnd: stockpileEnd,
         workersStart: workersStart,
@@ -177,25 +179,27 @@ void main() {
       final richesResult = resolveRichesToTreasury(stockpile: stockpileAfterExtraction);
       final stockpileAfterRiches = richesResult.stockpile;
       final treasuryEndOfTurn = parsed.initialTreasury + richesResult.treasuryDelta;
-      final production = resolveProduction(
+      final consumption = resolveConsumption(
         stockpile: stockpileAfterRiches,
         workers: workersStart,
+      );
+      final stockpileAfterConsumption = consumption.stockpile;
+      final production = resolveProduction(
+        stockpile: stockpileAfterConsumption,
+        workers: workersStart,
+        idleLabour: consumption.idleLabour,
         assignments: turn.assignments,
       );
       final stockpileAfterProduction = production.stockpile;
-      final workersAfterProduction = production.workerPool;
-      final consumption = resolveConsumption(
-        stockpile: stockpileAfterProduction,
-        workers: workersAfterProduction,
-      );
-      final stockpileEnd = consumption.stockpile;
-      final workersEnd = consumption.workerPool;
+      final stockpileEnd = stockpileAfterProduction;
+      final workersEnd = workersStart;
 
       final entry = cli.buildTurnLogEntry(
         turn: 1,
         stockpileStart: stockpileStart,
         stockpileAfterExtraction: stockpileAfterExtraction,
         stockpileAfterRiches: stockpileAfterRiches,
+        stockpileAfterConsumption: stockpileAfterConsumption,
         stockpileAfterProduction: stockpileAfterProduction,
         stockpileEnd: stockpileEnd,
         workersStart: workersStart,
@@ -385,7 +389,7 @@ void main() {
 
       final parsed = cli.parseSimEconomyScript(scriptJson);
       var stockpile = parsed.initialStockpile;
-      var workers = parsed.initialWorkers;
+      // Workers are not used in this test case
       var treasury = parsed.initialTreasury;
       final turn = parsed.turns.single;
 

@@ -1,14 +1,15 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import 'order_suggestion.dart' as suggestion;
+import 'order_suggestion_api.dart';
 import '../world/player_view.dart';
 
-final Logger _log = Logger();
+final _log = packageLogger();
 
 /// Default implementation of [OrderSuggestionAPI] using the top-level suggest* functions.
-class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
+class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
   const DefaultOrderSuggestionAPI();
 
   @override
@@ -18,8 +19,28 @@ class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders,
   ) {
-    _log.i('logic: order suggestion API suggestMoveOrders player=${view.playerId} turn=${game.worldState.turnState.turnNumber}');
+    _log.i(
+      'order suggestion API suggestMoveOrders player=${view.playerId} turn=${game.worldState.turnState.turnNumber}',
+    );
     return suggestion.suggestMoveOrders(view, game, topology, currentOrders);
+  }
+
+  @override
+  List<ArmyMoveOrder> suggestArmyMoveOrders(
+    PlayerView view,
+    Game game,
+    MapTopology topology,
+    Orders currentOrders,
+  ) {
+    _log.i(
+      'order suggestion API suggestArmyMoveOrders player=${view.playerId}',
+    );
+    return suggestion.suggestArmyMoveOrders(
+      view,
+      game,
+      topology,
+      currentOrders,
+    );
   }
 
   @override
@@ -27,10 +48,19 @@ class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) {
-    _log.i('logic: order suggestion API suggestWorkOrders player=${view.playerId}');
-    return suggestion.suggestWorkOrders(view, game, topology, currentOrders);
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) {
+    _log.i(
+      'order suggestion API suggestWorkOrders player=${view.playerId}',
+    );
+    return suggestion.suggestWorkOrders(
+      view,
+      game,
+      topology,
+      currentOrders,
+      tileMapByRegion: tileMapByRegion,
+    );
   }
 
   @override
@@ -40,7 +70,9 @@ class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders,
   ) {
-    _log.i('logic: order suggestion API suggestBuildOrders player=${view.playerId}');
+    _log.i(
+      'order suggestion API suggestBuildOrders player=${view.playerId}',
+    );
     return suggestion.suggestBuildOrders(view, game, topology, currentOrders);
   }
 
@@ -51,8 +83,15 @@ class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders,
   ) {
-    _log.i('logic: order suggestion API suggestResearchOrders player=${view.playerId}');
-    return suggestion.suggestResearchOrders(view, game, topology, currentOrders);
+    _log.i(
+      'order suggestion API suggestResearchOrders player=${view.playerId}',
+    );
+    return suggestion.suggestResearchOrders(
+      view,
+      game,
+      topology,
+      currentOrders,
+    );
   }
 
   @override
@@ -62,8 +101,15 @@ class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders,
   ) {
-    _log.i('logic: order suggestion API suggestNavalMoveOrders player=${view.playerId}');
-    return suggestion.suggestNavalMoveOrders(view, game, topology, currentOrders);
+    _log.i(
+      'order suggestion API suggestNavalMoveOrders player=${view.playerId}',
+    );
+    return suggestion.suggestNavalMoveOrders(
+      view,
+      game,
+      topology,
+      currentOrders,
+    );
   }
 
   @override
@@ -73,8 +119,15 @@ class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
     MapTopology topology,
     Orders currentOrders,
   ) {
-    _log.i('logic: order suggestion API suggestNavalMissionOrders player=${view.playerId}');
-    return suggestion.suggestNavalMissionOrders(view, game, topology, currentOrders);
+    _log.i(
+      'order suggestion API suggestNavalMissionOrders player=${view.playerId}',
+    );
+    return suggestion.suggestNavalMissionOrders(
+      view,
+      game,
+      topology,
+      currentOrders,
+    );
   }
 
   @override
@@ -82,9 +135,18 @@ class DefaultOrderSuggestionAPI implements suggestion.OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) {
-    _log.i('logic: order suggestion API suggestDiplomaticOrders player=${view.playerId}');
-    return suggestion.suggestDiplomaticOrders(view, game, topology, currentOrders);
+    Orders currentOrders, {
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) {
+    _log.i(
+      'order suggestion API suggestDiplomaticOrders player=${view.playerId}',
+    );
+    return suggestion.suggestDiplomaticOrders(
+      view,
+      game,
+      topology,
+      currentOrders,
+      tileMapByRegion: tileMapByRegion,
+    );
   }
 }

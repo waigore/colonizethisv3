@@ -1,0 +1,212 @@
+import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/package_logger.dart';
+import 'package:colonizethis_app/perf/app_perf_trace.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
+import 'package:jenny/jenny.dart';
+
+import '../../../../l10n/l10n.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import 'ct_dialogue_view.dart';
+
+/// Spinner while intro dialogue lines are not yet available. Uses [ThemeData.colorScheme]
+/// so the control matches the app shell (GitHub #1710).
+class GameStartIntroLoadingIndicator extends StatelessWidget {
+  const GameStartIntroLoadingIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        color: theme.colorScheme.primary,
+      ),
+    );
+  }
+}
+
+/// Modal overlay that shows the game-start intro dialogue (archaic language) and
+/// blocks until the player dismisses it. SPEC/ai/dialogue-management.md § First dialogue emission point.
+class GameStartIntroOverlay extends StatefulWidget {
+  const GameStartIntroOverlay({
+    super.key,
+    required this.onDismissed,
+    required this.child,
+    this.logger,
+
+    /// When set (e.g. in tests), used to load the Yarn asset instead of [rootBundle].
+    this.assetBundle,
+  });
+
+  final VoidCallback onDismissed;
+  final Widget child;
+  final CtLogger? logger;
+  final AssetBundle? assetBundle;
+
+  @override
+  State<GameStartIntroOverlay> createState() => _GameStartIntroOverlayState();
+}
+
+class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
+  static const String _kIntroNode = 'game_start_intro';
+
+  CtDialogueView? _view;
+  DialogueRunner? _runner;
+  Object? _loadError;
+  bool _dialogueFinished = false;
+  bool _loggedFirstLine = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAndRun();
+  }
+
+  Future<void> _loadAndRun() async {
+    final log = widget.logger ?? packageLogger('dialogue');
+    try {
+      final bundle = widget.assetBundle ?? rootBundle;
+      ctAppPerfInstant('intro.asset_load.begin');
+      log.i('game_intro asset_load begin asset=$kDialogueGameIntroAsset');
+      final text = await bundle.loadString(kDialogueGameIntroAsset);
+      ctAppPerfInstant('intro.asset_load.end');
+      log.i('game_intro asset_load end chars=${text.length}');
+      final project = YarnProject();
+      project.parse(text);
+      if (!project.nodes.containsKey(_kIntroNode)) {
+        throw StateError(
+          'Intro node "$_kIntroNode" not found in $kDialogueGameIntroAsset',
+        );
+      }
+      final view = CtDialogueView(logger: log);
+      final runner = DialogueRunner(
+        yarnProject: project,
+        dialogueViews: [view],
+      );
+      view.onStateChanged = (line, choice) {
+        if (!_loggedFirstLine && line != null) {
+          _loggedFirstLine = true;
+          ctAppPerfInstant('intro.first_line');
+          log.i('game_intro first_line_shown');
+        }
+        if (mounted) setState(() {});
+      };
+      if (!mounted) return;
+      setState(() {
+        _view = view;
+        _runner = runner;
+      });
+      ctAppPerfInstant('intro.dialogue_begin');
+      log.i('game_intro dialogue_begin node=$_kIntroNode');
+      await runner.startDialogue(_kIntroNode);
+      if (!mounted) return;
+      setState(() => _dialogueFinished = true);
+      widget.onDismissed();
+    } catch (e, st) {
+      log.e(
+        'ui:dialogue: failed to load or run intro',
+        error: e,
+        stackTrace: st,
+      );
+      if (mounted) {
+        setState(() => _loadError = e);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    final theme = Theme.of(context);
+    if (_loadError != null) {
+      return Stack(
+        children: [
+          widget.child,
+          Material(
+            color: Colors.black54,
+            child: Center(
+              child: CtDialogShell(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(l10n.game_intro_loadError('$_loadError')),
+                      const SizedBox(height: 16),
+                      CtNinePatchButton(
+                        onPressed: () {
+                          setState(() => _loadError = null);
+                          widget.onDismissed();
+                        },
+                        child: Text(l10n.game_intervention_continue),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_dialogueFinished || _view == null || _runner == null) {
+      return widget.child;
+    }
+
+    final line = _view!.currentLine;
+    final choice = _view!.currentChoice;
+
+    return Stack(
+      children: [
+        widget.child,
+        Material(
+          color: Colors.black54,
+          child: Center(
+            child: CtDialogShell(
+              maxWidth: 520,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (line != null) ...[
+                      Text(
+                        line.text,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: CtNinePatchButton(
+                          onPressed: () => _view!.advanceLine(),
+                          child: Text(l10n.game_intervention_continue),
+                        ),
+                      ),
+                    ] else if (choice != null) ...[
+                      ...choice.options.asMap().entries.map(
+                        (entry) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: CtNinePatchButton(
+                            onPressed: () => _view!.selectOption(entry.key),
+                            child: Text(entry.value.text),
+                          ),
+                        ),
+                      ),
+                    ] else
+                      const GameStartIntroLoadingIndicator(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

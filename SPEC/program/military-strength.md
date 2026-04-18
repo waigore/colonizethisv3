@@ -1,6 +1,6 @@
 # Military Strength Aggregation
 
-**SPEC/program** — API for computing a faction's total military strength for display (e.g. Game Overview tab in ctdev). Uses the same formula as the auto-resolve combat simulator. Reference: [combat-resolution.md](combat-resolution.md), [military-units.md](../game/military-units.md), [combat_resolver.dart](../../packages/colonizethis_logic/lib/src/combat_resolver.dart). This API uses **faction id** for ownership only and does **not** use province id (no province lookup); for identity rules see [world-model-identity.md](../game/world-model-identity.md).
+**SPEC/program** — API for computing a faction's total military strength for display (e.g. Game Overview tab in ctdev). Uses the same formula as the auto-resolve combat simulator. Reference: [combat-resolution.md](combat-resolution.md), [military-units.md](../game/military-units.md). Implementation: colonizethis_logic (combat resolver, `aggregateMilitaryStrengthForPlayer`). This API uses **faction id** for ownership only and does **not** use province id (no province lookup); for identity rules see [world-model-identity.md](../game/world-model-identity.md).
 
 ---
 
@@ -12,13 +12,13 @@ colonizethis_logic provides a public function that aggregates military strength 
 
 ## Formula
 
-Military strength = sum of army strengths = sum of unit strengths. Uses the same logic as `_aggregateStrength` in the combat resolver:
+Military strength = sum of **per-army** strengths = sum of unit strengths. Uses the same logic as `_aggregateStrength` in the combat resolver:
 
 - **Unit strength:** (FPN + FPM) × medal multiplier. Medal multiplier: 1.0 (0 medals), 1.1 (1), 1.2 (2), 1.3 (3), 1.4 (4). Stats and multiplier from colonizethis_data.
-- **Army strength:** Sum of unit strengths in that army.
-- **Player/faction military strength:** Sum of all unit strengths owned by that faction (equivalently, sum of army strengths).
+- **Army strength (aggregation):** Sum of unit strengths of all regiment members of that [military army](../game/military-armies.md).
+- **Player/faction military strength:** Sum of all unit strengths owned by that faction (equivalently, sum over armies of that faction’s army strengths).
 
-Effective era: Great Powers use era 4; Minor Nations and Tribes use `effectiveMilitaryLevel`. Units with stats above the effective era are downgraded to the era-equivalent regiment in the same category.
+Effective era: Great Powers use era 4; Minor Nations use their `effectiveMilitaryLevel` (parity with max GP); Tribes use their `effectiveMilitaryLevel` (always 1, no parity). Units with stats above the effective era are downgraded to the era-equivalent regiment in the same category.
 
 ---
 
@@ -38,7 +38,7 @@ Effective era: Great Powers use era 4; Minor Nations and Tribes use `effectiveMi
 - Given a `Game` and a faction id (player, minor, or tribe), when the system calls the aggregation API, then the output equals the sum of unit strengths for all military units owned by that faction, with effective-era downgrade and medal multiplier (0–4 medals; multiplier 1.0–1.4 per Formula).
 - Given the same `Game` and faction id, when the system calls the aggregation API multiple times, then the output is identical each time (deterministic; no RNG).
 - Given a `Game`, when the system aggregates military strength for a faction, then only units in Old World and New World `RegionData.units` with `ownerId ==` that faction id are included; only units that have regiment stats (FPN, FPM, medal multiplier) count—civilians and ships are skipped.
-- Given a Great Power faction, when the system applies effective era for strength calculation, then the effective era is 4. Given a Minor Nation or Tribe, then the effective era is that faction's `effectiveMilitaryLevel` per [factions.md](../game/factions.md).
+- Given a Great Power faction, when the system applies effective era for strength calculation, then the effective era is 4. Given a Minor Nation, then the effective era is that faction's `effectiveMilitaryLevel` (parity). Given a Tribe, then the effective era is 1 per [factions.md](../game/factions.md).
 - Given any caller, when the system aggregates military strength, then the API uses faction id for ownership only and does not perform province id lookups; see [world-model-identity.md](../game/world-model-identity.md) for identity rules.
 
 ---

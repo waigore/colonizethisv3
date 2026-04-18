@@ -1,0 +1,58 @@
+{
+  "name": "build_improvement_reject_foreign_unpurchased",
+  "description": "SPEC/game/extraction-and-improvements.md, SPEC/program/development-resolution.md, SPEC/program/orders.md: build_improvement work order rejected when target tile is in a foreign province that has not been purchased by the player (not under player control). Order engine must reject; tile improvement level remains 0.",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england", "france"],
+      "seed": 42,
+      "minorNationCount": 0,
+      "numProvincesOldWorld": 2,
+      "numProvincesNewWorld": 0,
+      "tribeCount": 0
+    },
+    "oldWorld": {
+      "grid": [["p1", "sea1"], ["p2", "sea1"]],
+      "nodes": [
+        {"id": "p1", "regionId": "oldWorld", "type": "province"},
+        {"id": "p2", "regionId": "oldWorld", "type": "province"},
+        {"id": "sea1", "regionId": "oldWorld", "type": "seaZone"}
+      ],
+      "edges": [
+        {"id1": "p1", "id2": "sea1"},
+        {"id1": "p2", "id2": "sea1"}
+      ],
+      "resourceGrid": [["grain", null], ["grain", null]]
+    }
+  },
+  "setup": {
+    "initialTech": {"gp1": ["gathering_3"]},
+    "initialStockpile": {"gp1": {"lumber": 2, "castIron": 2}},
+    "initialTileState": {
+      "oldWorld|p1|0|0": {"improvementLevel": 0, "roadLevel": 1},
+      "oldWorld|p2|0|1": {"improvementLevel": 0, "roadLevel": 1}
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        {
+          "player": "gp1",
+          "type": "work",
+          "unit": "gp1_builder_0",
+          "workType": "build_improvement",
+          "targetTileKey": "oldWorld|p2|0|1"
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "turn": 1,
+      "tileKey": "oldWorld|p2|0|1",
+      "tileImprovementLevel": 0
+    }
+  ]
+}
+

@@ -11,15 +11,34 @@ Each **production recipe** has:
 - **Output:** One commodity, quantity per run (e.g. 1).
 - **Inputs:** Map of commodity id → quantity consumed per output unit.
 - **Labour:** Labour points required per output unit (e.g. 2 timber → 1 lumber = 2 labour). Production consumes labour from the player's WorkerPool.
-- **Turns per unit:** Optional; default 1 turn per output unit. **MVP:** All recipes behave as 1 turn per output unit; multi-turn recipes (e.g. >1 turn per unit) are out of scope for MVP and deferred.
+- **Turns per unit:** Optional; default 1 turn per output unit. **current product:** All recipes behave as 1 turn per output unit; multi-turn recipes (e.g. >1 turn per unit) are out of scope for current product and deferred.
 
 Industry consumes inputs and labour from stockpile and WorkerPool; produces output into stockpile. When available inputs or labour do not allow all theoretically possible runs for a recipe, the System executes the recipe as many whole times as possible (maximum complete runs) and scales inputs and outputs accordingly; production-phase ordering and stockpile updates follow [stockpiles-and-production.md](stockpiles-and-production.md) and [economy-models.md](../program/economy-models.md).
 
 ---
 
+## Recipe Catalog
+
+The following recipes are defined for current product:
+
+| Recipe | Output | Inputs | Labour |
+|--------|--------|--------|--------|
+| Lumber | lumber (1) | timber ×2 | 2 |
+| Fabric (wool) | fabric (1) | wool ×2 | 2 |
+| Fabric (cotton) | fabric (1) | cotton ×2 | 2 |
+| Cast Iron | castIron (1) | timber ×2, iron ×2 | 5 |
+| Refined Sugar | refinedSugar (1) | sugarCane ×2 | 2 |
+| Cigars | cigars (1) | tobacco ×3 | 3 |
+| Fur Hats | furHats (1) | furs ×2 | 2 |
+| Steel | steel (1) | castIron ×2, coal ×1 | 5 |
+| Paper | paper (1) | timber ×3 | 3 |
+| Bronze | bronze (1) | copper ×1, tin ×1 | 3 |
+
+---
+
 ## Examples
 
-- Timber ×2, Iron ×2, Coal ×1 → Cast Iron (labour per unit from constants).
+- Timber ×2, Iron ×2 → Cast Iron (labour per unit from constants).
 - Wool or Cotton ×2 → Fabric.
 - Sugar Cane ×2 → Refined Sugar.
 
@@ -29,19 +48,19 @@ Worker tiers supply labour: Peasant 1, Apprentice 4, Journeyman 6, Master 8 per 
 
 ## Where Stored
 
-**Production recipes** are program-level constants defined in config (list or map of recipe definitions). Program-level config only; no JSON rulesets in MVP.
+**Production recipes** are program-level constants defined in config (list or map of recipe definitions). Program-level config only; no JSON rulesets in current product.
 
 ---
 
-## Scope (MVP vs deferred)
+## Scope (current product vs deferred)
 
-- **MVP:** One turn per output unit only; recipe config may omit turns-per-unit (default 1). Multi-turn recipes are not implemented and are **deferred**.
+- **current product:** One turn per output unit only; recipe config may omit turns-per-unit (default 1). Multi-turn recipes are not implemented and are **deferred**.
 
 ---
 
 ## Acceptance Criteria
 
-Testable conditions for "done": recipe structure (output commodity + quantity, inputs map, labour per output, optional turns per unit default 1); recipes stored as program-level constants (no JSON rulesets in MVP); Production phase consumes inputs and labour and adds output to stockpile; insufficient inputs or labour for even a single run → recipe does not run; if inputs or labour limit the number of runs, the System executes an integer number of complete runs (no fractional runs) bounded by available inputs and labour; recipe-run results recorded (e.g. productionByRecipe) for inspection and order projections. Implementation: [stockpiles-and-production.md](stockpiles-and-production.md), [economy-models.md](../program/economy-models.md), [order-projections.md](../program/order-projections.md).
+Testable conditions for "done": recipe structure (output commodity + quantity, inputs map, labour per output, optional turns per unit default 1); recipes stored as program-level constants (no JSON rulesets in current product); Production phase consumes inputs and labour and adds output to stockpile; insufficient inputs or labour for even a single run → recipe does not run; if inputs or labour limit the number of runs, the System executes an integer number of complete runs (no fractional runs) bounded by available inputs and labour; recipe-run results recorded (e.g. productionByRecipe) for inspection and order projections. Implementation: [stockpiles-and-production.md](stockpiles-and-production.md), [economy-models.md](../program/economy-models.md), [order-projections.md](../program/order-projections.md).
 
 - Given the program-level config defines a list or map of production recipes where each recipe has a non-empty output commodity id, a non-negative integer output quantity, a map of input commodity ids to non-negative integer quantities, a non-negative integer labour requirement, and optionally a positive integer turns per unit (default 1 when omitted)  
   When the System loads the economy configuration at game start  

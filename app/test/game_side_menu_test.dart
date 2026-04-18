@@ -1,0 +1,182 @@
+import 'package:colonizethis_app/app.dart';
+import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/config/routes.dart';
+import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
+import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/features/game/flame/game_side_menu.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_box_provider.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_save/colonizethis_save.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
+
+void main() {
+  suppressLogsForTests();
+
+  late Game game;
+  late Box<dynamic> gamesBox;
+
+  setUpAll(() async {
+    final result = getDebugInitGameResult();
+    game = result.game;
+
+    Hive.init('./.dart_tool/test_hive_side_menu');
+    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
+  });
+
+  testWidgets(
+    'GameSideMenu builds Debug log and close invokes onClose',
+    (WidgetTester tester) async {
+      var closed = false;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+            currentOrdersProvider.overrideWith(
+              () => CurrentOrdersNotifier(const Orders()),
+            ),
+            appEventBusProvider.overrideWith((ref) {
+              final bus = AppEventBus.create();
+              ref.onDispose(bus.dispose);
+              return bus;
+            }),
+          ],
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: Scaffold(
+                body: Stack(
+                  children: [
+                    GameSideMenu(
+                      sideMenuOpen: true,
+                      onClose: () => closed = true,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Debug log'), findsOneWidget);
+      expect(find.text('×'), findsOneWidget);
+
+      await tester.tap(find.text('×'));
+      await tester.pumpAndSettle();
+
+      expect(closed, isTrue);
+    },
+  );
+
+  testWidgets('GameSideMenu Debug log navigates to named route', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
+        ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            routes: {
+              Routes.debugLog: (_) => const Scaffold(
+                body: Center(child: Text('debug-route-marker')),
+              ),
+            },
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    sideMenuOpen: true,
+                    onClose: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Debug log'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('debug-route-marker'), findsOneWidget);
+  });
+
+  testWidgets('GameSideMenu horizontal drag left invokes onClose', (
+    WidgetTester tester,
+  ) async {
+    var closed = false;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          appEventBusProvider.overrideWith((ref) {
+            final bus = AppEventBus.create();
+            ref.onDispose(bus.dispose);
+            return bus;
+          }),
+        ],
+        child: AppEventHandlerScope(
+          child: MaterialApp(
+            navigatorKey: appNavigatorKey,
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  GameSideMenu(
+                    sideMenuOpen: true,
+                    onClose: () => closed = true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byType(GameSideMenu), const Offset(-40, 0));
+    await tester.pumpAndSettle();
+
+    expect(closed, isTrue);
+  });
+}

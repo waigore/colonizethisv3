@@ -1,0 +1,43 @@
+{
+  "name": "connectivity_road_adjacent_capital_and_port",
+  "description": "Capital port and transport: after init the capital tile for gp1 is coastal, has a port, and its road/transport level is 4 (SPEC/game/capital-and-connectivity.md § Capital Setup).",
+  "init": {
+    "type": "fromTopology",
+    "config": {
+      "greatPowers": ["england"],
+      "seed": 42,
+      "minorNationCount": 0
+    },
+    "oldWorld": {
+      "grid": [
+        ["p1", "p1", "p1"],
+        ["p1", "p1", "p1"],
+        ["sea1", "p1", "p1"]
+      ],
+      "nodes": [
+        { "id": "p1", "regionId": "oldWorld", "type": "province" },
+        { "id": "sea1", "regionId": "oldWorld", "type": "seaZone" }
+      ],
+      "edges": [
+        { "id1": "p1", "id2": "sea1" }
+      ]
+    }
+  },
+  "setup": {
+    "initialTech": {
+      "gp1": ["road_construction"]
+    }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": []
+    }
+  ],
+  "assertions": [
+    { "turn": 1, "province": "oldWorld|p1", "owner": "gp1" },
+    { "turn": 1, "player": "gp1", "capitalProvinceId": "oldWorld|p1", "capitalTileKey": "oldWorld|p1|0|1" },
+    { "turn": 1, "tileKey": "oldWorld|p1|0|1", "tileRoadLevel": 4 }
+  ]
+}
+

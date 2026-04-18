@@ -1,0 +1,28 @@
+{
+  "name": "diplomacy_overture_minor_two_way_by_rule",
+  "description": "Two-way overture (SPEC/game/diplomacy.md): GP establishes Trade Consulate with Minor; Minor accepts by rule (no blocking). Asserts overture stage advances.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 12345,
+      "greatPowers": ["england"],
+      "continentCount": 1,
+      "minorNationCount": 1,
+      "tribeCount": 0
+    }
+  },
+  "setup": {
+    "initialTreasury": { "gp1": 5000 }
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "orders": [
+        { "player": "gp1", "type": "diplomatic", "diplomaticType": "establishOverture", "targetFactionId": "minor1", "overtureStage": "tradeConsulate" }
+      ]
+    }
+  ],
+  "assertions": [
+    { "turn": 1, "player": "gp1", "relationWith": "minor1", "overtureStage": "tradeConsulate" }
+  ]
+}

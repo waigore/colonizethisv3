@@ -28,8 +28,9 @@ CLI entry point for game creation. Thin facade over the setup pipeline in [game-
 | `--tribe-count N` | Override Tribe count. |
 | `--num-provinces-old-world N` | Override OW province count. |
 | `--num-provinces-new-world N` | Override NW province count. |
+| `--enforce-fair-gp-assignment` | After other config merges, force `enforceFairGpOldWorldAssignment` to **true** (GP OW connectivity repair + retries). |
 
-**JSON config** (single source for CLI): supported keys are `selectedGreatPowerIds` (array), `greatPowerCount` (fallback), `leaderVariantByGpId` (map GP id → leader variant), `continentCount`, `minorNationCount`, `tribeCount`, `numProvincesOldWorld`, `numProvincesNewWorld`, `seed`. Keys not listed (e.g. `minProvincesPerMinor`) are not read. Paths (config and outputs) are relative to the **current working directory** unless absolute.
+**JSON config** (single source for CLI): supported keys are `selectedGreatPowerIds` (array), `greatPowerCount` (fallback), `leaderVariantByGpId` (map GP id → leader variant), `continentCount`, `minorNationCount`, `tribeCount`, `numProvincesOldWorld`, `numProvincesNewWorld`, `seed`, `enforceFairGpOldWorldAssignment` (bool). Keys not listed (e.g. `minProvincesPerMinor`) are not read. Paths (config and outputs) are relative to the **current working directory** unless absolute.
 
 ## Output Artifacts
 
@@ -41,7 +42,7 @@ CLI entry point for game creation. Thin facade over the setup pipeline in [game-
 
 ## Integration
 
-- **Upstream:** [game-setup-pipeline.md](game-setup-pipeline.md) (`runInitGame` in colonizethis_logic).
+- **Upstream:** [game-setup-pipeline.md](game-setup-pipeline.md) (`runInitGame` in colonizethis_logic). **current product:** CLI/JSON only overrides `GameSetupConfig` fields supported here; there is no ruleset JSON merge yet (see [game-setup.md](../game/game-setup.md) § Config, [ruleset-config.md](../game/ruleset-config.md)).
 - **Owner:** `tool/init_game` (Dart CLI).
 
 ## Constraints

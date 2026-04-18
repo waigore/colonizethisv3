@@ -1,0 +1,26 @@
+{
+  "name": "minor_parity_tribe_capped",
+  "description": "SPEC/game/factions.md: Tribes have no parity (effective military level always 1). Fresh game with 1 GP, 1 minor, 1 tribe; after turn 1 Combat phase, tribe remains 1 regardless of GP level.",
+  "init": {
+    "type": "fresh",
+    "config": {
+      "seed": 42,
+      "greatPowers": ["england"],
+      "continentCount": 1,
+      "minorNationCount": 1,
+      "tribeCount": 1,
+      "numProvincesOldWorld": 4,
+      "numProvincesNewWorld": 2
+    }
+  },
+  "setup": {
+    "initialTech": {
+      "gp1": ["organised_regiments"]
+    }
+  },
+  "turns": [{"turn": 1, "orders": []}],
+  "assertions": [
+    {"turn": 1, "greatPowerCount": 1, "minorNationCount": 1, "tribeCount": 1},
+    {"turn": 1, "player": "tribe1", "effectiveMilitaryLevel": 1}
+  ]
+}

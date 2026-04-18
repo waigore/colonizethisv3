@@ -1,5 +1,5 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 void main() {
   group('generateUniqueProvinceName', () {
@@ -40,6 +40,18 @@ void main() {
       }
       expect(used.length, 50);
       expect(names.toSet().length, 50);
+    });
+
+    test('exhausted retries use seed-based fallback', () {
+      const seed = 0;
+      final base = generateUniqueProvinceName(seed, <String>{});
+      final used = <String>{base};
+      for (var n = 2; n <= 100; n++) {
+        used.add('$base $n');
+      }
+      final result = generateUniqueProvinceName(seed, used);
+      expect(result, endsWith(' (${seed & 0xFFFF})'));
+      expect(used, contains(result));
     });
   });
 }

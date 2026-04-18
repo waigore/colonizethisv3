@@ -1,6 +1,6 @@
 # Map Data: Topology and Tile Maps
 
-**SPEC/program** — Data model for static map data (topology, tile maps). Visualization: [map-visualization.md](map-visualization.md). Game semantics: [SPEC/game/world-model.md](../game/world-model.md), [SPEC/game/map-topology.md](../game/map-topology.md). Tile map generation: [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md), [tile-map-gen-resources.md](tile-map-gen-resources.md), [tile-map-gen-config.md](tile-map-gen-config.md).
+**SPEC/program** — Data model for runtime map data (topology, tile maps). Visualization: [map-visualization.md](map-visualization.md). Game semantics: [SPEC/game/world-model.md](../game/world-model.md), [SPEC/game/map-topology.md](../game/map-topology.md). Tile map generation: [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md), [tile-map-gen-resources.md](tile-map-gen-resources.md), [tile-map-gen-config.md](tile-map-gen-config.md).
 
 ---
 
@@ -10,9 +10,9 @@ Define topology format, tile map data structures, province identity, and tile ke
 
 ---
 
-## Scope (MVP)
+## Scope (current product)
 
-For MVP, map topology and tile maps are **produced in-memory** by the map generation tool (`generate_map`) and/or by init_game when creating a new game. **Loading from static files** (e.g. hand-edited topology or tile-map JSON for custom scenarios) is **deferred**; when added, it will be tracked as a separate feature and this spec will define the loading API (file layout, schema, error handling). Optional map data stored **in saves** (round-trip with game save) is defined in [save-load.md](save-load.md); that path uses the same JSON structures and is for ctdev/init tooling, not standalone file load.
+For current product, map topology and tile maps are **produced only in-memory** by the map generation tool (`generate_map`) and/or by init_game when creating a new game. **Hand-crafted or static file loading** of topology/tile maps for gameplay is **out of scope**; there is no supported path to load arbitrary map files into a running session. Persisted map data exists **only** as part of the Hive save bundle (same JSON structures; round-trip with [save-load.md](save-load.md)) for resume/playable sessions and tooling—not as a standalone map import feature.
 
 ---
 
@@ -25,22 +25,82 @@ For MVP, map topology and tile maps are **produced in-memory** by the map genera
 - **Nodes:** List with id, region id, and type (province | sea zone). All nodes in a region graph belong to that region.
 - **Edges:** Undirected (id1, id2). Semantics: P↔P (contiguous land), P↔S (province–sea), S↔S (sea paths). All edges are **within** the same region.
 - **Warp zones:** Separate structure (warp links) that pairs a sea zone in one region with exactly one sea zone in another. Each link is 1:1; a sea zone can be a warp zone to one or more other maps (one link per other map). **Generation:** On each map, aim for **one warp zone per map edge**, each using a sea zone on the edge (tiles on the grid boundary); if not possible, the number of warp zones on each map must still be **equal** so every warp zone has exactly one counterpart on each linked map. **Warp links are produced during world generation** (after OW and NW topology are generated) per [game-setup-pipeline.md](game-setup-pipeline.md) step 4; they are stored with the init result and used when building combined topology / connectivity.
-- **Storage (MVP):** Topology is **not** loaded from standalone files in MVP; it is **inferred** from the tile map during generation (see Map generation tool). File-per-region storage and a colonizethis_data API to load topology/tile maps from static files are **deferred**. colonizethis_data owns the data structures and JSON (de)serialization; when static-file loading is added, this spec will define the loading contract (file layout, schema, error handling). When generating maps, topology is inferred from the tile map per region; warp zones are **generated** and linked in the setup pipeline.
+- **Storage (current product):** Topology is **not** loaded from standalone files. It is inferred from the tile map during generation (see Map generation tool) and persisted only through save/load envelopes. `colonizethis_data` owns the topology/tile-map data structures and JSON (de)serialization used by runtime generation and save round-trip flows.
+
+### JSON schema and loading contract
+
+**Source of truth:** The `colonizethis_data` package owns the JSON (de)serialization via `MapTopology.toJson/fromJson`, `TopologyNode.toJson/fromJson`, and `TileMapResult.toJson/fromJson`. This section documents the current schema; any changes must update both the code and this spec.
+
+#### MapTopology JSON
+
+```json
+{
+  "nodes": [
+    { "id": "p1", "regionId": "oldWorld", "type": "province" },
+    { "id": "s1", "regionId": "oldWorld", "type": "seaZone" }
+  ],
+  "edges": [
+    { "id1": "p1", "id2": "p2" },
+    { "id1": "p1", "id2": "s1" }
+  ]
+}
+```
+
+- **`nodes`**: Array of topology nodes.
+  - **`id`**: String. Local province or sea zone id (e.g. `p1`, `s1`).
+  - **`regionId`**: String. Region identifier (e.g. `oldWorld`, `newWorld`).
+  - **`type`**: String. Either `"province"` or `"seaZone"`.
+- **`edges`**: Array of undirected edges.
+  - Each edge is either an object `{ "id1": string, "id2": string }` or a 2-element list `[id1, id2]`.
+  - Semantics: P↔P (contiguous land), P↔S (province–sea), S↔S (sea paths).
+
+#### TileMapResult JSON
+
+```json
+{
+  "width": 20,
+  "height": 15,
+  "grid": [
+    ["p1", "p1", "s1", "s1"],
+    ["p2", "p2", "s1", "s1"]
+  ],
+  "terrainGrid": [
+    ["plains", "plains", null, null],
+    ["forest", "hills", null, null]
+  ],
+  "resourceGrid": [
+    [null, "gold", null, null],
+    [null, null, null, null]
+  ]
+}
+```
+
+- **`width`**: Integer. Number of columns.
+- **`height`**: Integer. Number of rows.
+- **`grid`**: 2D array of strings. Each cell contains a province or sea zone id.
+- **`terrainGrid`**: Optional 2D array of terrain names (e.g. `"plains"`, `"forest"`, `"hills"`). `null` = water or not set. Must match `grid` dimensions.
+- **`resourceGrid`**: Optional 2D array of resource names (e.g. `"gold"`, `"spices"`). `null` = no resource. Must match `grid` dimensions.
+
+#### Testing guidance
+
+- **Round-trip tests:** Serialize → deserialize → compare for `MapTopology` and `TileMapResult` with small hand-crafted examples.
+- **Failure mode tests:** Validate malformed JSON payloads and inconsistent dimensions for runtime JSON parsing paths used by generation/save round-trip.
 
 ---
 
 ## Province identity and tile key format
 
 - **Province ids:** Topology and tile maps use **local** ids (e.g. `p1`, `p2`). Game state uses **prefixed** ids (`regionId|localId`). Local ids are **not** globally unique across regions (e.g. `p1` can exist in oldWorld and newWorld). Movement and other topology queries (e.g. adjacency, connectivity) must scope by **region** when duplicate local ids exist. Always resolve by regionId + provinceId; never by province id alone. See [world-model.md](../game/world-model.md), [world-model-identity.md](../game/world-model-identity.md).
+- **Combined world topology:** `buildCombinedTopology` in game setup merges per-region graphs into one `MapTopology` whose **node ids and edge endpoints are prefixed** (`regionId|localId`), plus warp edges. The running app and turn resolver use this graph. Logic helpers that take a **local** province id and **regionId** for region-scoped P↔S lookup (e.g. `seaZoneIdForProvince` in colonizethis_logic) must resolve provinces and edges correctly for **both** per-region (local ids in the graph) and combined (prefixed ids) representations.
 - **Tile key format:** `regionId|provinceId|x|y` for mutable game state (extraction, transport, ports). Map visualizers must convert local ids to full province ids before querying ownership.
 
 ---
 
 ## Tile map format
 
-**Per-region 2D grid (static per scenario).** Each cell: region id (province or sea zone), type (land/water), **terrain type** (land), **resource** (optional; at most one). Resource must be allowed for region and terrain; rules in colonizethis_data. Extraction level and road are **mutable** game state (keyed by tile), not part of static tile map. For MVP, produced by [tile-map-gen-*](tile-map-gen-algorithm.md) or supplied from init_game; optional map data in saves is per [save-load.md](save-load.md). Loading from static tile-map files is deferred.
+**Per-region 2D grid (runtime generation + save payload).** Each cell: region id (province or sea zone), type (land/water), **terrain type** (land), **resource** (optional; at most one). Resource must be allowed for region and terrain; rules in colonizethis_data. Extraction level and road are **mutable** game state (keyed by tile), not part of tile map topology data. For current product, tile maps are produced by [tile-map-gen-*](tile-map-gen-algorithm.md) or supplied from `init_game`; required save payload map data is specified in [save-load.md](save-load.md). There is no supported gameplay path that loads tile maps from standalone static files.
 
-**Persistence (MVP):** The tile map is **not** part of the mandatory game save payload; only world state (e.g. province ownership) is required to load a game. When a save is created by **ctdev** or **init_game** with map output, tile maps may be stored as **optional map data** per [save-load.md](save-load.md) (keys `_tileMapByRegion`, etc.). That serialization uses the same TileMapResult JSON format and is for **ctdev/init tooling** (e.g. Load Savegame map view); the main game does not require map data to load. Format and semantics of the tile map are defined in this spec; the save/load contract for optional map data is in save-load.md.
+**Persistence (current product):** The tile map is part of the required playable save payload together with topology and combined topology per [save-load.md](save-load.md) (keys `_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`). Saves missing required map data are invalid for gameplay load. Format and semantics of the tile map are defined in this spec; the save/load contract is in save-load.md.
 
 ---
 
@@ -48,7 +108,7 @@ For MVP, map topology and tile maps are **produced in-memory** by the map genera
 
 **Place:** `tool/generate_map/`. **Mode:** Generate from N and C via `--provinces`, `--continents`. Infer topology. Always output: topology graph description and map summary on stdout. Optionally: tile map PNG (via `--tile-map-image`), topology DOT and PNG (when `--tile-map-image` or `--topology-graph` is used). **Run:** `melos run generate_map -- [options]`. **Logging:** Operational and diagnostic output follows [ctdev-logging.md](ctdev-logging.md) (logger with `map:` prefix; errors to stderr and non-zero exit).
 
-### CLI options (MVP)
+### CLI options (current product)
 
 | Option | Form | Default | Validation / semantics |
 |--------|------|---------|------------------------|
@@ -78,18 +138,38 @@ There is no separate `--tile-map` flag: topology and map summary are always prod
 
 ### Acceptance criteria
 
+**Topology and tile map contracts**
+
+- **MapTopology and TileMapResult** are the single source of truth for topology and tile map format; the JSON schemas (keys, structure) are documented in this spec (Topology format, Tile map format). The `colonizethis_data` package owns (de)serialization via `MapTopology.toJson/fromJson`, `TopologyNode.toJson/fromJson`, and `TileMapResult.toJson/fromJson`; any schema change must update both code and this spec.
+- **TileMapResult** defines the on-disk/in-memory format for tile maps used by tools: required keys `width`, `height`, `grid`; optional `terrainGrid`, `resourceGrid` with dimensions matching `grid`; rectangular grids; constraints are described in this spec and validated in colonizethis_data.
+- **Adjacency semantics** for topology (P↔P, P↔S, S↔S) and centroid/tile-count helpers are described in this spec and in [map-topology.md](../game/map-topology.md); behaviour is testable against a small sample grid (unit tests in colonizethis_data).
+
+**Map generation tool (generate_map)**
+
+- All options listed in the Map generation tool section (`--provinces`, `--continents`, `--region`, `--tiles-per-province`, `--sea-fraction`, `--interactive`, `--tile-map-image`, `--tile-size`, `--topology-graph`, `--seed`, `--world-state`, `--join-continents`, `--seed-before-assignment`, `--skip-fill-lakes`, `--continent-buffer`) are supported by the CLI and validated per the table; invalid values (e.g. negative `--provinces`, out-of-range `--continents`, bad `--region`) cause exit code 1, a clear error message to stderr, and no partial output files.
 - Given valid options and no invalid numeric/range values, when the user runs `melos run generate_map -- [options]`, then the tool exits with code 0 and stdout contains the topology graph section and map summary with province and sea-zone counts.
 - Given `--provinces` with a non-positive value (or non-integer), when the user runs the CLI, then the tool exits with code 1 and writes an error message to stderr.
 - Given `--continents` outside [2, 4], when the user runs the CLI, then the tool exits with code 1 and writes an error message to stderr (e.g. indicating the valid range).
 - Given `--region` with a value other than `oldWorld` or `newWorld`, when the user runs the CLI, then the tool exits with code 1 and writes an error message to stderr.
 - Given `--tile-map-image=path` and a valid run, when the tool completes, then the file at `path` exists and is a PNG; if topology graph is written, the DOT path is printed and the DOT file exists.
 - Given `--world-state path` and a non-existent file, when the user runs the CLI, then the tool exits with code 1 and writes an error message to stderr.
+- A basic CLI integration test (e.g. via `Process.run` or tool test) generates a small map with valid options and asserts: when `--tile-map-image` and/or `--topology-graph` are used, the tile map PNG and topology DOT files are created; stdout includes the map summary with province and sea-zone counts; the process exits with code 0.
+
+**Integration with map-visualization and world-model**
+
+- Ownership overlays in the game world state visualizer use the full province id (`regionId|localId`) consistently, matching [world-model-identity.md](../game/world-model-identity.md) and this spec. Operational behaviour is tested in map-visualization tests; this spec states the contract.
+
+**Test and implementation references**
+
+- **Unit / round-trip tests** for `MapTopology` and `TileMapResult` (de)serialization and topology helpers: `colonizethis_data` package.
+- **CLI tests** for generate_map (exit codes, invalid args, output files): `tool/generate_map` (or equivalent integration test location).
+- **Ownership overlay** behaviour and province id usage: map-visualization spec and tests.
 
 ---
 
 ## Integration
 
-colonizethis_data owns the data structures and (de)serialization for topology and tile maps. For MVP, map data is produced by **generation** (colonizethis_map per [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md)) or supplied from init_game; loading from static files is deferred. Consumed by App, init_game, ctdev.
+colonizethis_data owns the data structures and (de)serialization for topology and tile maps. For current product, map data is produced by **generation** (colonizethis_map per [tile-map-gen-algorithm.md](tile-map-gen-algorithm.md)) or supplied from init_game, then persisted only via save/load round-trip. Static standalone map-file loading is not part of the product contract. Consumed by App, init_game, ctdev.
 
 ---
 

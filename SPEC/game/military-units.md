@@ -6,11 +6,11 @@
 
 ## Overview
 
-Land military forces consist of **regiments** and **generals**. Regiments are organized into 8 categories across 4 eras. Each regiment has tactical stats (FPN, FPM, RNG, DEF, MVR) used for auto-resolve and Quick Battle. Tech unlocks determine which types a Great Power can build; older types are replaced within their category.
+Land military forces consist of **regiments** grouped into **armies**, and **generals**. Every regiment belongs to exactly one army; armies are first-class containers ([military-armies.md](military-armies.md)). Regiments are organized into 8 categories across 4 eras. Each regiment has tactical stats (FPN, FPM, RNG, DEF, MVR) used for auto-resolve and Quick Battle. Tech unlocks determine which types a Great Power can build; older types are replaced within their category.
 
 **Regiment buildability:** A regiment type is **buildable** iff the player has researched the **tech that unlocks that regiment** (per [tech-tree-military.md](tech-tree-military.md)). There is **no era gate**: if the unlocking tech is in the player's techUnlocked set, that regiment can be built regardless of era. Build validation (order engine) and recruitment UI must consult the tech catalog.
 
-**Minor military parity:** `maxGreatPowerMilitaryLevel` is derived from the set of regiment types any Great Power can build (e.g. the highest era among those types). Each Minor Nation and Tribe's `effectiveMilitaryLevel` is set to this maximum at the start of the Combat phase (see [factions.md](factions.md)).
+**Minor military parity:** `maxGreatPowerMilitaryLevel` is derived from the set of **land regiment** types any Great Power can build (e.g. the highest era among those types). In the turn-resolution **Minor Regiment Upgrade** phase (after Movement; before all combat phases), each **Old World Minor Nation** `effectiveMilitaryLevel` is set to this maximum and minor land regiments are upgraded in place; **Tribes** do not receive parity and remain `effectiveMilitaryLevel = 1` (see [factions.md](factions.md)).
 
 ---
 
@@ -63,6 +63,32 @@ Stats are configurable per [ruleset-config.md](ruleset-config.md). Experience (m
 | Siege Guns | 17 | 2 | 12 | 3 | 3 | Heavy Artillery | 4 |
 
 Bowmen, Knights, Lancers: no upgrade path; obsolete in later eras.
+
+**UI display labels:** Player-facing regiment names mirror the first column of this table via `regimentTypeDisplayName` in `colonizethis_data/lib/src/regiment_type_display_name.dart`. When adding or renaming a regiment type, update `regimentCatalog`, `RegimentEconomyCatalog`, and that display map together (tests enforce catalog coverage).
+
+---
+
+## Training Costs
+
+Each regiment type has training costs defined in program-level config (`colonizethis_data/lib/src/regiment_economy.dart`). Costs include commodities consumed from stockpile and food upkeep per turn.
+
+### Cavalry Input Requirements
+
+Cavalry regiments require **horses** as input in addition to other commodities:
+
+| Regiment | Fabric | Cast Iron | Lumber | Horses | Food Upkeep |
+|----------|--------|-----------|--------|--------|-------------|
+| Squires | 1 | 1 | - | 2 | 3 |
+| Knights | 1 | 2 | - | 2 | 3 |
+| Cossacks | 1 | 2 | - | 2 | 3 |
+| Lancers | 1 | 2 | - | - | 3 |
+| Harquebusiers | 1 | 2 | - | - | 3 |
+| Hussars | 1 | 2 | - | - | 3 |
+| Cuirassiers | 1 | 2 | - | - | 3 |
+| Scouts | 1 | 2 | - | - | 3 |
+| Carbine Cavalry | 1 | 2 | - | - | 3 |
+
+Note: Horses are a raw material commodity (see [commodity-catalog.md](commodity-catalog.md)) that must be extracted from provinces with suitable terrain (plains) or acquired through trade.
 
 ---
 

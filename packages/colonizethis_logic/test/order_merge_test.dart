@@ -1,6 +1,6 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('mergeOrderLists', () {
@@ -67,7 +67,7 @@ void main() {
             DiplomaticOrder(
               type: DiplomaticOrderType.grantAid,
               targetFactionId: 'minor1',
-              amount: 100,
+              amount: 1000,
             ),
           ],
         },

@@ -1,7 +1,7 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart';
 
 const String _lumberRecipeId = 'lumber_from_timber';
 
@@ -62,7 +62,7 @@ void main() {
                 id: 'u1',
                 type: 'Regiment',
                 ownerId: 'p1',
-                provinceId: 'oldWorld|P1',
+                locationProvinceId: 'oldWorld|P1',
               ),
             ],
           ),
@@ -75,7 +75,7 @@ void main() {
       final orders = Orders(
         moveOrdersByPlayerId: {
           'p1': const [
-            MoveOrder(unitId: 'u1', destinationProvinceId: 'P2'),
+            MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
           ],
         },
       );
@@ -106,7 +106,7 @@ void main() {
             provinces: const [
               Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),
@@ -141,12 +141,12 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
           oldWorld: RegionData(
             provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
-            units: const [],
+            units: [],
           ),
           newWorld: RegionData(
             provinces: [Province(id: '$nw|N1', regionId: nw, ownerId: 'p1')],
             units: [
-              Unit(id: 'u1', type: 'Regiment', ownerId: 'p1', provinceId: '$nw|N1'),
+              Unit(id: 'u1', type: 'Regiment', ownerId: 'p1', locationProvinceId: '$nw|N1'),
             ],
           ),
         ),
@@ -178,7 +178,7 @@ void main() {
             provinces: const [
               Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),
@@ -219,7 +219,7 @@ void main() {
             provinces: const [
               Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),
@@ -260,7 +260,7 @@ void main() {
             provinces: const [
               Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),
@@ -269,8 +269,8 @@ void main() {
             id: 'p1',
             displayName: 'A',
             isHuman: true,
-            stockpile: Stockpile(quantities: {'timber': 4}),
-            // 4 peasants → 4 labour; assignedLabour=4 can be fully used.
+            stockpile: Stockpile(quantities: {'timber': 4, 'grain': 4}),
+            // Consumption before production: peasants need food to be idle for labour.
             workerPool: WorkerPool(peasants: 4),
           ),
         ],
@@ -304,7 +304,7 @@ void main() {
             provinces: const [
               Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1'),
             ],
-            units: const [],
+            units: [],
           ),
           newWorld: const RegionData(),
         ),

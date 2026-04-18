@@ -1,0 +1,267 @@
+// Tests for ProvinceSeaZoneDetailOverlay tile selection and branching paths.
+// Covers SPEC/ui/province-sea-zone-detail-overlay.md conditional content.
+
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart';
+import 'package:colonizethis_app/features/game/widgets/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
+import 'package:colonizethis_app/widgets/debug_init_game.dart';
+
+void main() {
+  suppressLogsForTests();
+
+  Widget buildOverlay({
+    required Game game,
+    required RegionMapViewData region,
+    required String displayId,
+    required String humanPlayerId,
+    String? selectedTileKey,
+    VoidCallback? onClose,
+  }) {
+    final init = getDebugInitGameResult();
+    final playerView =
+        buildPlayerView(game, init.combinedTopology, humanPlayerId);
+    return MaterialApp(
+      home: Scaffold(
+        body: ProvinceSeaZoneDetailOverlay(
+          game: game,
+          region: region,
+          displayId: displayId,
+          selectedTileKey: selectedTileKey,
+          humanPlayerId: humanPlayerId,
+          playerView: playerView,
+          onClose: onClose,
+        ),
+      ),
+    );
+  }
+
+  ({int x, int y}) coordsFromTileKey(String tileKey) {
+    final parts = tileKey.split('|');
+    // Tile keys are expected to include x/y at indexes 2 and 3.
+    final xPart = parts.length > 2 ? parts[2] : '';
+    final yPart = parts.length > 3 ? parts[3] : '';
+    final x = int.tryParse(xPart) ?? -1;
+    final y = int.tryParse(yPart) ?? -1;
+    return (x: x, y: y);
+  }
+
+  group('ProvinceSeaZoneDetailOverlay - selected tile + branching paths', () {
+    testWidgets(
+        'AC: Revealed selected tile renders coordinates + terrain + prospected fields',
+        (WidgetTester tester) async {
+      final game = demoGameForOverlay;
+      final region = demoRegionForOverlay;
+      final humanPlayerId = game.players.first.id;
+
+      // Pick a land province with at least one revealed tile for hovering.
+      final landCell = region.cells.firstWhere(
+        (c) => !c.isSea && c.visibility != TileVisibility.unrevealed,
+      );
+      final provinceId = '${region.regionId}|${landCell.regionCellId}';
+      final possibleTiles =
+          game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId] ??
+              const <String>[];
+
+      String? selectedTileKey;
+      ({int x, int y}) coords = (x: -1, y: -1);
+      for (final tk in possibleTiles) {
+        final c = coordsFromTileKey(tk);
+        // Mirror overlay lookup: it uses region.cellAt(x,y) and checks visibility.
+        if (c.x < 0 || c.x >= region.width || c.y < 0 || c.y >= region.height) {
+          continue;
+        }
+        final cell = region.cellAt(c.x, c.y);
+        if (cell.visibility != TileVisibility.unrevealed) {
+          selectedTileKey = tk;
+          coords = c;
+          break;
+        }
+      }
+
+      // If demo data is unexpectedly unrevealed, fail with a clear message.
+      expect(selectedTileKey, isNotNull, reason: 'No revealed tile found in demo overlay data');
+
+      await tester.pumpWidget(
+        buildOverlay(
+          game: game,
+          region: region,
+          displayId: provinceId,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tile'), findsOneWidget);
+      expect(find.text('Coordinates: (${coords.x}, ${coords.y})'), findsOneWidget);
+      expect(find.textContaining('Terrain:'), findsOneWidget);
+      expect(find.textContaining('Prospected:'), findsOneWidget);
+    });
+
+    testWidgets('AC: Out-of-bounds selected tile shows placeholder "—"', (
+      WidgetTester tester,
+    ) async {
+      final game = demoGameForOverlay;
+      final region = demoRegionForOverlay;
+      final humanPlayerId = game.players.first.id;
+
+      // Use the overlay's expected tile-key format but push x outside bounds.
+      final firstLandCell = region.cells.firstWhere((c) => !c.isSea);
+      final provinceId = '${region.regionId}|${firstLandCell.regionCellId}';
+      final badTileKey = '${region.regionId}|${firstLandCell.regionCellId}|${region.width + 5}|0';
+
+      await tester.pumpWidget(
+        buildOverlay(
+          game: game,
+          region: region,
+          displayId: provinceId,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: badTileKey,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tile'), findsOneWidget);
+      expect(find.textContaining('Coordinates:'), findsNothing);
+      expect(find.text('—'), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets(
+        'AC: Sea zone display never renders Tile section even when selectedTileKey is provided',
+        (WidgetTester tester) async {
+      final game = demoGameForOverlay;
+      final region = demoRegionForOverlay;
+      final humanPlayerId = game.players.first.id;
+
+      final seaZoneId = sampleSeaZoneIdForOverlay;
+
+      // Provide some hovered tile key; it should be ignored in sea-zone mode.
+      String? anyTileKey;
+      final byRegion =
+          game.worldState.tileKeysByRegionAndProvince[region.regionId];
+      if (byRegion != null) {
+        for (final tiles in byRegion.values) {
+          if (tiles.isNotEmpty) {
+            anyTileKey = tiles.first;
+            break;
+          }
+        }
+      }
+      anyTileKey ??= '${region.regionId}|s0|0|0';
+
+      await tester.pumpWidget(
+        buildOverlay(
+          game: game,
+          region: region,
+          displayId: seaZoneId,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: anyTileKey,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sea zone'), findsOneWidget);
+      expect(find.text('Political'), findsOneWidget);
+      expect(find.text('Naval'), findsOneWidget);
+      expect(find.text('Tile'), findsNothing);
+      expect(find.textContaining('Coordinates:'), findsNothing);
+    });
+
+    testWidgets('AC: New World province overlay resolves units from newWorld state', (
+      WidgetTester tester,
+    ) async {
+      final init = getDebugInitGameResult();
+      final region = init.mapViewData.newWorld;
+      final game = init.game;
+      final humanPlayerId = game.players.first.id;
+      final landCell = region.cells.firstWhere((c) => !c.isSea);
+      final provinceId = '${region.regionId}|${landCell.regionCellId}';
+      final possibleTiles =
+          game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId] ??
+              const <String>[];
+      String? selectedTileKey;
+      for (final tk in possibleTiles) {
+        final c = coordsFromTileKey(tk);
+        if (c.x < 0 || c.x >= region.width || c.y < 0 || c.y >= region.height) continue;
+        final cell = region.cellAt(c.x, c.y);
+        if (cell.visibility != TileVisibility.unrevealed) {
+          selectedTileKey = tk;
+          break;
+        }
+      }
+      expect(selectedTileKey, isNotNull, reason: 'No revealed tile in New World demo province');
+
+      await tester.pumpWidget(
+        buildOverlay(
+          game: game,
+          region: region,
+          displayId: provinceId,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Province'), findsOneWidget);
+      expect(find.text('Tile'), findsOneWidget);
+    });
+
+    testWidgets('AC: Narrow layout uses tab strip for overlay sections', (
+      WidgetTester tester,
+    ) async {
+      final binding = tester.view;
+      final oldSize = binding.physicalSize;
+      final oldRatio = binding.devicePixelRatio;
+      addTearDown(() {
+        binding.physicalSize = oldSize;
+        binding.devicePixelRatio = oldRatio;
+      });
+      // Tall surface so narrow maxHeight (⅓ screen) fits tab content without overflow.
+      binding.physicalSize = const Size(400, 2000);
+      binding.devicePixelRatio = 1.0;
+
+      final game = demoGameForOverlay;
+      final region = demoRegionForOverlay;
+      final humanPlayerId = game.players.first.id;
+      final landCell = region.cells.firstWhere(
+        (c) => !c.isSea && c.visibility != TileVisibility.unrevealed,
+      );
+      final provinceId = '${region.regionId}|${landCell.regionCellId}';
+      final possibleTiles =
+          game.worldState.tileKeysByRegionAndProvince[region.regionId]?[provinceId] ??
+              const <String>[];
+      String? selectedTileKey;
+      for (final tk in possibleTiles) {
+        final c = coordsFromTileKey(tk);
+        if (c.x < 0 || c.x >= region.width || c.y < 0 || c.y >= region.height) continue;
+        final cell = region.cellAt(c.x, c.y);
+        if (cell.visibility != TileVisibility.unrevealed) {
+          selectedTileKey = tk;
+          break;
+        }
+      }
+      expect(selectedTileKey, isNotNull);
+
+      await tester.pumpWidget(
+        buildOverlay(
+          game: game,
+          region: region,
+          displayId: provinceId,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CtTabStrip), findsOneWidget);
+    });
+  });
+}
+

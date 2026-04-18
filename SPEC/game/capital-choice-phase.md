@@ -31,7 +31,8 @@ When UI is deferred, capitals are set automatically during game setup. Runs once
 - **Class A:** Coastal tiles not adjacent to any other province.
 - **Class B:** Interior tiles not adjacent to any other province.
 - **Class C:** All remaining tiles.
-- Pick first tile in Class A (row-major scan), then B, then C. GPs require coastal; Minors/Tribes do not.
+- **Great Powers:** Pick first tile in Class A (row-major scan). If Class A is empty, pick the first coastal tile in Class C (row-major scan). If no coastal tile exists in the selected province, setup is invalid.
+- **Minor Nations / Tribes:** Pick first tile in Class A (row-major scan), then Class B, then Class C.
 
 **3. Apply:** Set capitalProvinceId and capitalTile. For sea-bound provinces, apply port/road auto-build per [capital-and-connectivity.md](capital-and-connectivity.md) § Capital Setup. For inland Minors/Tribes, skip port/road.
 
@@ -47,7 +48,7 @@ The border-avoidance heuristic is purely aesthetic; it does not affect connectiv
 
 - Given a Great Power owns no provinces marked as sea-bound in the map topology (no P–S edges on any owned province)  
   When the system runs the capital auto-choice phase for that Great Power during game setup  
-  Then the system marks game setup as invalid for that game configuration and surfaces an error reason `no_sea_bound_capital_province` for that Great Power
+  Then the system marks game setup as invalid for that game configuration and surfaces an error reason `no_sea_bound_capital_province` for that Great Power via a setup validation exception code
 
 - Given a Minor Nation or Tribe owns at least one sea-bound province and at least one inland province  
   When the system runs the capital auto-choice phase for that faction during game setup  
@@ -64,6 +65,10 @@ The border-avoidance heuristic is purely aesthetic; it does not affect connectiv
 - Given the system has selected a capital province for a Great Power that is sea-bound and the province contains no tiles in Class A but contains at least one coastal tile in Class C (remaining tiles)  
   When the system selects the capital tile for that Great Power during game setup  
   Then the system selects the first coastal tile in Class C in row-major order and sets that tile as the capital tile
+
+- Given the system has selected a capital province for a Great Power that is sea-bound and the province contains no coastal tiles in Class A or Class C  
+  When the system selects the capital tile for that Great Power during game setup  
+  Then the system marks game setup as invalid for that game configuration and surfaces an error reason `no_coastal_capital_tile_for_gp` for that Great Power via a setup validation exception code
 
 - Given the system has selected a capital province for a Minor Nation or Tribe and classified its tiles into Class A (coastal, no foreign border), Class B (interior, no foreign border), and Class C (remaining)  
   When the system selects the capital tile for that faction during game setup  

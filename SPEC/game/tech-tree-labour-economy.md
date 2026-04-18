@@ -8,14 +8,37 @@
 
 | id | name | era | prerequisites | effects |
 |----|------|-----|---------------|--------|
-| printing_press | Printing Press | 1 | — | Leads to Journeymen, tactics, siege engineering |
-| apprentice_workers | Apprentice Workers | 2 | land_enclosure, sugar_refining | 4× labour; consume refined sugar |
-| trained_journeymen | Trained Journeymen | 2 | cigar_production, printing_press | 6× labour; consume cigars |
-| master_artisans | Master Artisans | 3 | apprentice_workers, university, hat_production | 8× labour; consume fur hats |
-| money_lending | Money Lending | 1 | land_enclosure | Borrow more; lower interest; leads to bureaucracy |
-| banking | Banking | 3 | master_artisans, trade_fairs | Lower interest; larger negative spending; military funding |
-| trade_fairs | Trade Fairs | 2 | merchant_companies, sugar_refining | Bid on 6 commodities (vs 3) |
-| university | University | 3 | money_lending, apprentice_workers, printing_press | Fourth research slot; leads to many advances |
+| printing_press | Printing Press | 1 | — | Unlocks: prerequisite for `trained_journeymen`, `university`, `improved_infantry_tactics`, `siege_engineering`, and `national_bureaucracy`. Prerequisite-only: no direct production or treasury modifier in current product. |
+| apprentice_workers | Apprentice Workers | 2 | land_enclosure, sugar_refining | Enables: Apprentice worker tier with **4x labour output** and refined sugar luxury consumption per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `master_artisans` and `university`. |
+| trained_journeymen | Trained Journeymen | 2 | cigar_production, printing_press | Enables: Journeyman worker tier with **6x labour output** and cigar luxury consumption per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `cotton_gin` and `steppe_horsemen` recruitment path. |
+| master_artisans | Master Artisans | 3 | apprentice_workers, university, hat_production | Enables: Master worker tier with **8x labour output** and fur hat luxury consumption per [workers-and-population.md](workers-and-population.md). Unlocks: prerequisite for `banking`, `nationalism`, and `scientific_cattle_breeding`. |
+| money_lending | Money Lending | 1 | land_enclosure | Research treasury floor **−500** (see below); general borrowing/interest remains deferred |
+| banking | Banking | 3 | master_artisans, trade_fairs | Extends research treasury floor to **−1000** when combined with `money_lending` (see below). Unlocks: prerequisite for `dynamite`, `empire_building`, and `modern_military_funding`. |
+| trade_fairs | Trade Fairs | 2 | merchant_companies, sugar_refining | Diplomacy trade agreements use **6** commodity slots (vs baseline **3**) when the GP has embassy access; see [diplomacy-resolution.md](../program/diplomacy-resolution.md). Unlocks: prerequisite for `banking`. |
+| university | University | 3 | money_lending, apprentice_workers, printing_press | Increases research slots from 3 to 4 (permanent per player); leads to many advances |
+
+---
+
+## Effect implementation status (current product)
+
+This section resolves ambiguity called out for **#145**: which table rows are **live rules** vs **prerequisite-only** vs **deferred**.
+
+### money_lending
+
+- **Implemented:** During the **Research phase** only, research funding may reduce treasury to a floor of **−500** ducats (inclusive) when `money_lending` is unlocked and `banking` is not. Without `money_lending`, the floor is **0**. Owner: `maxDebtForPlayer` in `economy_debt_rules.dart`. [research-resolution.md](../program/research-resolution.md).
+- **Deferred:** General borrowing, loans, and interest rates outside the research-phase debt floor.
+
+### banking
+
+- **Implemented:** With **`money_lending` + `banking`**, the research treasury floor extends to **−1000** ducats. `banking` without `money_lending` does not change the floor. Unlock graph: prerequisite for `modern_military_funding`, `empire_building`, `dynamite`, etc.
+
+### trade_fairs
+
+- **Implemented:** `tradeSlotsForGp` returns **0** without embassy toward the target, **3** with embassy (baseline commodity capacity), **6** with embassy when `trade_fairs` is unlocked on the ordering GP. See [diplomacy-resolution.md](../program/diplomacy-resolution.md).
+
+### “Leads to” wording (e.g. Printing Press, University)
+
+- **Semantics:** Phrases such as “Leads to Journeymen…” or “leads to many advances” are **narrative hints** for the tech tree. **Authoritative unlock relationships** are **`prerequisiteIds`** in the global catalog (and prerequisite columns in tech-tree docs). There is **no** separate runtime “leads to” flag beyond prerequisites and discovery rules.
 
 ---
 
@@ -30,7 +53,23 @@
 
 - Given the Labour and Economy tech table in this doc and the global tech catalog built from all tech-tree docs  
   When the System validates the catalog at startup  
-  Then the System ensures that each id in this table is unique, that its prerequisites refer to techs present in the global catalog, and that the effects (worker tiers, trade slots, research slots, banking) are consistent with the economy specs that consume them.
+  Then the System ensures that each id in this table is unique, that its prerequisites refer to techs present in the global catalog, and that **implemented** effects (worker tiers, research slots, Money Lending research debt floor, **Banking** extended research debt floor with Money Lending, **Trade Fairs** commodity-slot capacity per [diplomacy-resolution.md](../program/diplomacy-resolution.md)) match [economy-models.md](../program/economy-models.md) and [research-resolution.md](../program/research-resolution.md). General borrowing / interest outside the research-phase floor remains explicitly out of scope in this doc.
+
+- Given a player does **not** have `money_lending` in `techUnlocked`  
+  When the Research phase applies research funding that would spend treasury  
+  Then the System does not reduce treasury below **0**.
+
+- Given a player has `money_lending` in `techUnlocked`  
+  When the Research phase applies research funding  
+  Then the System does not reduce treasury below **−500** inclusive for that phase’s research spending.
+
+- Given a player has `banking` in `techUnlocked` but **not** `money_lending`  
+  When the System computes the research treasury floor for the Research phase  
+  Then the System uses a floor of **0** (Banking extends the floor only when `money_lending` is also unlocked).
+
+- Given the global tech catalog  
+  When a designer reads a “Leads to …” cell in this doc’s table  
+  Then the only gameplay unlock graph required to match implementation is **prerequisite ids** (and discovery rules where applicable); “Leads to” text has no separate runtime effect.
 
 - Given a player has `apprentice_workers`, `trained_journeymen`, or `master_artisans` in `techUnlocked` as defined in this table  
   When the System computes available labour for Production and food and luxury consumption for the Consumption phase per [workers-and-population.md](workers-and-population.md)  

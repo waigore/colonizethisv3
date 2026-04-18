@@ -27,7 +27,15 @@ for dir in "${TARGETS[@]}"; do
     echo "Skip $dir (no coverage/lcov.info — run tool/test_coverage.py first)"
     continue
   fi
-  summary=$(lcov --summary "$lcov_file" 2>/dev/null) || true
+  # App: use full lcov (widgetbook/catalog.dart uses Dart coverage:ignore-file).
+  # Copy so consumers of lcov.filtered.info always get a fresh file.
+  filtered_lcov="$lcov_file"
+  if [ "$dir" = "app" ]; then
+    filtered_lcov="$ROOT/$dir/coverage/lcov.filtered.info"
+    cp "$lcov_file" "$filtered_lcov"
+  fi
+
+  summary=$(lcov --summary "$filtered_lcov" 2>/dev/null) || true
   line_pct=$(echo "$summary" | grep -E '^\s*lines' | sed -E 's/.*: ([0-9.]+)%.*/\1/') || true
   if [ -z "$line_pct" ]; then
     echo "Skip $dir (could not parse coverage)"

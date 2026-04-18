@@ -1,0 +1,30 @@
+title: DialoguePoint/intervention_intro
+---
+Heavy tidings cross thy desk from distant shores. A fellow sovereign hath drawn sword against a lesser state wherein thy nation maintaineth commerce, embassy, or solemn bond. The Crown looketh to thee: thou must answer ere the courts of Christendom take the measure of thy honour.
+Each matter before thee shall be judged in turn.
+-> Continue
+===
+
+title: DialoguePoint/intervention_situation
+---
+Dispatch from thy minister: {$aggressorName} hath proclaimed open war against {$defenderName}. Thine own envoy standeth witness; the interest of {$interveningName} cannot feign ignorance.
+-> Continue
+===
+
+title: DialoguePoint/intervention_reaction_intervene
+---
+{$aggressorName} rendeth the air with oaths. "So!" he crieth. "Thou wouldst take arms against me? Know then that I account thee mine enemy from this hour, and thy protestations shall avail thee naught."
+-> Continue
+===
+
+title: DialoguePoint/intervention_reaction_do_nothing
+---
+{$aggressorName} smirketh as if at a court fool. "I thought thee a power of some account; thou art but parchment, wax, and delay." Thy ministers murmur at the slight, yet none may say thou didst overleap thy counsel unadvisedly.
+-> Continue
+===
+
+title: DialoguePoint/intervention_reaction_protest
+---
+{$aggressorName} returneth a chill and formal note. "Thy protest is entered in the record. Speak softly; the world hath long ears, and little mercy for scolds who lack the stomach for steel."
+-> Continue
+===

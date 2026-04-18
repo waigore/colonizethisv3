@@ -2,14 +2,16 @@ import 'dart:math' as math;
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:ctdev/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
 
 import '../ctdev_log.dart';
 import '../debug_map_painter.dart';
 import '../player_view_map_painter.dart';
 import '../sim_game_controller.dart';
+
+final _runningGameLog = packageLogger('running_game');
 
 /// Running Game Screen: sim game with control bar and tabs.
 class RunningGameScreen extends StatefulWidget {
@@ -68,6 +70,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       seed: widget.baseSeed,
       configSummary: widget.initResult.mapViewData.configSummary,
       greatPowerColorOverride: widget.initResult.greatPowerColorOverride,
+      warpLinks: widget.initResult.warpLinks,
     );
     final tabCount = 3 + _controller.game.players.length;
     _tabController = TabController(length: tabCount, vsync: this);
@@ -81,6 +84,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
         seed: _viewData.seed,
         configSummary: _viewData.configSummary,
         greatPowerColorOverride: widget.initResult.greatPowerColorOverride,
+        warpLinks: widget.initResult.warpLinks,
       );
 
   @override
@@ -107,7 +111,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       _controller.resolveFromPendingOrders();
       _refresh();
     } catch (e, st) {
-      Logger().e('ctdev: resolve turn failed', error: e, stackTrace: st);
+      _runningGameLog.e('resolve turn failed', error: e, stackTrace: st);
       rethrow;
     } finally {
       if (mounted) setState(() => _isSimulatingBatch = false);
@@ -121,7 +125,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       _controller.stepFullTurn();
       _refresh();
     } catch (e, st) {
-      Logger().e('ctdev: step full turn failed', error: e, stackTrace: st);
+      _runningGameLog.e('step full turn failed', error: e, stackTrace: st);
       rethrow;
     } finally {
       if (mounted) setState(() => _isSimulatingBatch = false);
@@ -135,7 +139,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
       _controller.fastForward(turns: 10);
       _refresh();
     } catch (e, st) {
-      Logger().e('ctdev: fast-forward failed', error: e, stackTrace: st);
+      _runningGameLog.e('fast-forward failed', error: e, stackTrace: st);
       rethrow;
     } finally {
       if (mounted) setState(() => _isSimulatingBatch = false);
@@ -314,6 +318,7 @@ class _RunningGameScreenState extends State<RunningGameScreen>
                   geographicMode: _geographicMode,
                   showImprovements: _showImprovements,
                   showUnits: _showUnits,
+                  fleets: _controller.game.worldState.fleets,
                 ),
               ),
             ),
@@ -362,6 +367,43 @@ class _RunningGameScreenState extends State<RunningGameScreen>
             final str = aggregateMilitaryStrengthForPlayer(game, p.id);
             return Text('${p.displayName}: ${str.toStringAsFixed(1)}');
           }),
+          const SizedBox(height: 16),
+          const Text('Diplomacy', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          if (game.diplomacyRelations.isEmpty)
+            const Text('—')
+          else
+            ...() {
+              final rels = List<DiplomacyRelation>.from(game.diplomacyRelations)
+                ..sort((a, b) {
+                  final c = a.factionId1.compareTo(b.factionId1);
+                  return c != 0 ? c : a.factionId2.compareTo(b.factionId2);
+                });
+              return rels
+                  .map(
+                    (rel) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '${_ctdevFactionLabel(game, rel.factionId1)} ↔ '
+                        '${_ctdevFactionLabel(game, rel.factionId2)}: '
+                        '${rel.state.name}, ${rel.level.name}, score=${rel.score}',
+                      ),
+                    ),
+                  )
+                  .toList();
+            }(),
+          const SizedBox(height: 16),
+          const Text('Last turn combat', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          if (_controller.lastTurnCombatSummaries.isEmpty)
+            const Text('—')
+          else
+            ..._controller.lastTurnCombatSummaries.map(
+              (s) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(s),
+              ),
+            ),
           const SizedBox(height: 16),
           const Text('Sim Log', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
@@ -492,7 +534,13 @@ class _RunningGameScreenState extends State<RunningGameScreen>
     const suggestionApi = DefaultOrderSuggestionAPI();
     final suggestedMoves = suggestionApi.suggestMoveOrders(view, game, topology, currentOrders);
     final suggestedBuilds = suggestionApi.suggestBuildOrders(view, game, topology, currentOrders);
-    final suggestedWorks = suggestionApi.suggestWorkOrders(view, game, topology, currentOrders);
+    final suggestedWorks = suggestionApi.suggestWorkOrders(
+      view,
+      game,
+      topology,
+      currentOrders,
+      tileMapByRegion: _controller.tileMapByRegion,
+    );
     final suggestedResearch = suggestionApi.suggestResearchOrders(view, game, topology, currentOrders);
 
     // Key by regionId|id so OW and NW can share province ids (e.g. p1).
@@ -546,9 +594,20 @@ class _RunningGameScreenState extends State<RunningGameScreen>
                 geographicMode: _geographicMode,
                 showImprovements: _showImprovements,
                 showUnits: _showUnits,
+                fleets: game.worldState.fleets,
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          const Text(
+            'Projected end of turn (pending orders)',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          if (!_controller.hasPendingOrdersForProjection)
+            const Text('— (no pending orders for this turn)')
+          else
+            _buildProjectedEffectsForPlayer(player),
           const SizedBox(height: 16),
           const Text('Stockpile', style: TextStyle(fontWeight: FontWeight.bold)),
           Text(player.stockpile.quantities.isEmpty
@@ -700,6 +759,49 @@ class _RunningGameScreenState extends State<RunningGameScreen>
     );
   }
 
+  Widget _buildProjectedEffectsForPlayer(Player player) {
+    final fx = _controller.projectedEffectsForPlayer(player.id);
+    if (fx == null) {
+      return const Text('—');
+    }
+    final lines = <String>[];
+    if (fx.workerCount != null) {
+      lines.add('Workers after resolve: ${fx.workerCount}');
+    }
+    if (fx.treasuryDelta != null && fx.treasuryDelta != 0) {
+      lines.add('Treasury Δ: ${fx.treasuryDelta}');
+    }
+    if (fx.stockpileDeltas != null && fx.stockpileDeltas!.isNotEmpty) {
+      lines.add(
+        'Stockpile Δ: '
+        '${fx.stockpileDeltas!.entries.map((e) => '${e.key}:${e.value}').join(', ')}',
+      );
+    }
+    if (fx.unitLocations != null && fx.unitLocations!.isNotEmpty) {
+      final entries = fx.unitLocations!.entries.toList();
+      const maxU = 12;
+      final shown = entries.take(maxU).map((e) => '${e.key}→${e.value}').join('; ');
+      final more = entries.length > maxU ? ' …' : '';
+      lines.add('Unit provinces: $shown$more');
+    }
+    if (fx.productionByRecipe != null && fx.productionByRecipe!.isNotEmpty) {
+      lines.add(
+        'Production: '
+        '${fx.productionByRecipe!.entries.map((e) => '${e.key}×${e.value}').join(', ')}',
+      );
+    }
+    if (lines.isEmpty) {
+      return Text(
+        '(projection run; no worker/treasury/stockpile/unit/production deltas)',
+        style: Theme.of(context).textTheme.bodySmall,
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [for (final line in lines) Text(line)],
+    );
+  }
+
   static const _civilianUnitCapabilities = {
     'Explorer': 'Prospect, explore',
     'Builder': 'Develop tile',
@@ -737,4 +839,17 @@ class _CheckRow extends StatelessWidget {
           Text(label),
         ],
       );
+}
+
+String _ctdevFactionLabel(Game game, String factionId) {
+  for (final p in game.players) {
+    if (p.id == factionId) return '${p.displayName} ($factionId)';
+  }
+  for (final m in game.minorNations) {
+    if (m.id == factionId) return '${m.displayName} ($factionId)';
+  }
+  for (final t in game.tribes) {
+    if (t.id == factionId) return '${t.displayName} ($factionId)';
+  }
+  return factionId;
 }

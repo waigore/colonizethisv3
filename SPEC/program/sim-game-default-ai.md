@@ -1,64 +1,53 @@
 # sim_game — Default AI Behaviour
 
-**SPEC/program** — Deterministic default AI used by [sim-game.md](sim-game.md). Produces orders for one Great Power when ctdev has selected **Sim Game AI** for the run; in that mode this function is used for **all** GPs. Uses the **same channels and strategy** as the minimal AIPlanner. References: [factions.md](../game/factions.md), [orders.md](orders.md), [movement.md](movement.md), [combat.md](combat.md), [order-engine.md](order-engine.md), [player-view.md](player-view.md), [ai-planner.md](ai-planner.md).
+**SPEC/program** — Deterministic default AI used by [sim-game.md](sim-game.md). Produces one-turn orders for a single Great Power. In Sim Game AI mode, sim_game uses this function for all GPs. It shares channels and strategy with the minimal AIPlanner.
 
 ---
 
 ## Purpose
 
-Define a **pure function** that, given the current game state and a single Great Power, produces that player's orders for one turn in sim_game. It uses the **same channels and strategy** as the minimal AIPlanner: [PlayerView](player-view.md), the [order suggestion API](order-engine.md), valid-only orders, the same diplomacy post-filter on moves, and the **shared simple heuristics** (move/work/build/research from suggestions, same category order and seeded choice). No raw construction of orders from topology; all order types come from the suggestion API.
+Define a pure function that, given game state and one GP, produces that player’s one-turn orders in sim_game. It uses the same channels and strategy as minimal AIPlanner: [PlayerView](player-view.md), [order suggestion API](order-engine.md), shared simple heuristics, and diplomacy move filtering. No raw construction from topology.
 
 ---
 
-## Function Signature
+## Function contract
 
-Conceptual signature (Dart, colonizethis_logic):
+`defaultSimGameAi(game, player, topology, baseSeed, { tileMapByRegion }) -> Orders`
 
-```dart
-Orders defaultSimGameAi({
-  required Game game,
-  required Player player,
-  required MapTopology topology,
-  required int baseSeed,
-});
-```
-
-- **Input:** `game` (current state), `player` (GP), `topology` (adjacency), `baseSeed` (fallback when `game.aiSeedByGpId[player.id]` is missing; same turnSeed formula as AIPlanner).
-- **Output:** `Orders` for that player only (move, build, work, research from shared heuristics, validated).
-
-The function must be **pure and side-effect free**: it does not mutate `game` or any global state; it only inspects inputs and returns a new `Orders`.
+- Input: current `game`, one GP `player`, `topology`, and `baseSeed` fallback when `aiSeedByGpId[player.id]` is missing. Optional `tileMapByRegion` matches [order-suggestions.md](order-suggestions.md) / turn resolution: when provided (e.g. sim_game controller), `suggestWorkOrders` can evaluate `build_rail` and terrain-aware `prospect`.
+- Output: validated `Orders` for that player only (move/build/work/research).
+- Purity: no mutation of `game` or global state.
 
 ---
 
 ## Order generation
 
-All order types (MoveOrders, BuildUnitOrders, WorkOrders, ResearchOrders) are produced by the **shared simple heuristics** used by both AIPlanner and defaultSimGameAi:
+All order types are produced by shared simple heuristics used by both AIPlanner and defaultSimGameAi:
 
-- Build [PlayerView](player-view.md) for the player; call the **order suggestion API** for candidate move, work, build, and research orders.
-- Apply the same category preference (moves → work → build → research) and **seeded random choice within category** (including research when multiple options exist).
-- Apply the **diplomacy post-filter** to moves: drop moves to provinces owned by factions at peace; drop moves to minors when relation is unknown. Province owner lookup uses full province id (regionId|localId) per [world-model-identity.md](../game/world-model-identity.md).
-- **Iteration cap:** Heuristics cap iterations per player per turn (constant in code, e.g. 32) to avoid unbounded loops.
-- No raw construction from topology; every order comes from the suggestion API and is valid by construction after validation.
+- Build [PlayerView](player-view.md) and call the order suggestion API for candidate move/work/build/research orders (passing `tileMapByRegion` when the caller supplies it).
+- Apply category order: among **move**, **work**, **build**, **research**, prefer lower-index categories except when **both** move and work have candidates — then use a **seeded fair choice** between move and work for that iteration so work (e.g. `build_rail`) is not always starved by perpetual move suggestions. Within a chosen category, use seeded random choice among candidates.
+- Apply diplomacy post-filter to moves: drop moves to at-peace factions; drop moves to minors when relation is unknown. Province owner lookup uses full ids (`regionId|localId`) per [world-model-identity.md](../game/world-model-identity.md).
+- Apply per-player iteration cap (implementation constant) to avoid unbounded loops.
 
 ---
 
 ## Determinism
 
-- **Per-call determinism:** Given the same `(game, player, topology, baseSeed)` and the same implied turn number, `defaultSimGameAi` must return the same `Orders`.
-- **Run-level determinism:** When sim_game calls `defaultSimGameAi` in a fixed GP order each turn (see [sim-game.md](sim-game.md)), the overall sim run is reproducible for a given initial `Game`, `topology`, and `baseSeed`.
-- The seed used is the same as AIPlanner's `turnSeed[P, T]` when the same game state and player are used (Option A). All randomness is derived from that turn seed; no global RNG.
+- Per-call determinism: same `(game, player, topology, baseSeed)` and turn -> same `Orders`.
+- Run-level determinism: fixed GP call order each turn yields reproducible runs for same initial state and seeds.
+- Seed source matches AIPlanner turn seed derivation; no global RNG.
 
 ---
 
 ## Acceptance criteria
 
-- Same `(game, player, topology, baseSeed)` and turn number → same `Orders`.
+- Same `(game, player, topology, baseSeed)` and turn number -> same `Orders`.
 - Function does not mutate `game` or global state.
-- Category order (moves → work → build → research) and diplomacy post-filter are applied; province owner lookup uses full province id so moves to GPs at peace or to minors (unknown relation) are dropped correctly.
-- Run-level determinism when sim calls in fixed GP order each turn.
+- Category selection (including move vs work when both have candidates) and diplomacy post-filter are applied; full province ids are used for owner lookup so moves to at-peace GPs or unknown-relation minors are dropped.
+- Run-level determinism holds when sim calls AI in fixed GP order.
 
 ---
 
 ## References
 
-[sim-game.md](sim-game.md) · [ai-planner.md](ai-planner.md) · [order-engine.md](order-engine.md) · [player-view.md](player-view.md) · [combat-resolution.md](combat-resolution.md)
+[sim-game.md](sim-game.md) · [ai-planner.md](ai-planner.md) · [order-engine.md](order-engine.md) · [player-view.md](player-view.md)

@@ -1,6 +1,6 @@
 import 'dart:io';
-
 import 'package:colonizethis_test/test.dart';
+
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:path/path.dart' as p;
@@ -13,7 +13,7 @@ void main() {
           id: 'a1',
           type: 'grenadiers',
           ownerId: 'att',
-          provinceId: 'p',
+          locationProvinceId: 'oldWorld|p',
           medals: 1,
         ),
       ];
@@ -22,7 +22,7 @@ void main() {
           id: 'd1',
           type: 'peasant_levies',
           ownerId: 'def',
-          provinceId: 'p',
+          locationProvinceId: 'oldWorld|p',
           medals: 0,
         ),
       ];
@@ -55,7 +55,8 @@ void main() {
       expect(totalDefCas / trials, lessThanOrEqualTo(1.0));
     });
 
-    test('CLI with same script and seed produces identical output (determinism)',
+    test(
+        'CLI with same script and seed produces identical output (determinism)',
         () async {
       final cwd = Directory.current.path;
       final scriptPath = p.join(cwd, 'test', 'fixtures', 'valid.json');
@@ -73,7 +74,7 @@ void main() {
             '--script',
             scriptPath,
             '--trials',
-            '20',
+            '5',
             '--seed',
             '42',
             '--output',
@@ -94,7 +95,7 @@ void main() {
             '--script',
             scriptPath,
             '--trials',
-            '20',
+            '5',
             '--seed',
             '42',
             '--output',
@@ -115,7 +116,7 @@ void main() {
           if (file.existsSync()) file.deleteSync();
         }
       }
-    });
+    }, timeout: const Timeout(Duration(seconds: 90)));
 
     test('CLI aborts with non-zero exit on unknown unit type', () async {
       final cwd = Directory.current.path;

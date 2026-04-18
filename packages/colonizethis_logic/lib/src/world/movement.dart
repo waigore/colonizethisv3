@@ -1,5 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'province_lookup.dart';
+import 'topology_helpers.dart';
+import 'unit_lookup.dart';
+
+final _log = packageLogger();
 
 /// Movement validation and application.
 /// SPEC/program/movement.md
@@ -13,11 +20,7 @@ Iterable<String> neighborProvinceIdsInRegion(
   String regionId,
   String localProvinceId,
 ) sync* {
-  final nodeIdsInRegion = topology.nodes
-      .where((n) =>
-          n.regionId == regionId && n.type == TopologyNodeType.province)
-      .map((n) => n.id)
-      .toSet();
+  final nodeIdsInRegion = provinceNodeIdsForRegion(topology, regionId);
   final localIdsInRegion = nodeIdsInRegion
       .map((id) => ProvinceId.localIdFrom(id))
       .toSet();
@@ -75,6 +78,10 @@ bool isValidLandMove(
 /// Applies all MoveOrders in [orders] to the units in [regionData], returning
 /// an updated RegionData. Invalid moves are ignored.
 ///
+/// When [isDestinationOwnedByPlayer] is provided and returns true for
+/// (playerId, destFullProvinceId), the move is allowed without adjacency
+/// (movement within own provinces). SPEC/program/movement.md.
+///
 /// For **civilian** units (have [tileKey]), sets [tileKey] to a tile in the destination
 /// province when [tileKeysByRegionAndProvince] and [regionId] are provided; otherwise
 /// only [provinceId] is updated. For **military** units (no tileKey), updates [provinceId] only.
@@ -84,39 +91,75 @@ RegionData applyMoveOrdersToRegion(
   Map<String, List<MoveOrder>> moveOrdersByPlayerId, {
   String? regionId,
   Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
+  bool Function(String playerId, String destFullProvinceId)?
+      isDestinationOwnedByPlayer,
 }) {
-  if (moveOrdersByPlayerId.isEmpty || regionData.units.isEmpty) {
+  if (moveOrdersByPlayerId.isEmpty) {
     return regionData;
   }
 
-  final unitsById = {
-    for (final u in regionData.units) u.id: u,
-  };
+  final unitsById = Map<String, Unit>.from(unitsByIdFromRegion(regionData));
+  var ordersForRegion = 0;
+  var applied = 0;
+  var ignored = 0;
 
   for (final entry in moveOrdersByPlayerId.entries) {
     final playerId = entry.key;
     for (final order in entry.value) {
       final unit = unitsById[order.unitId];
-      if (unit == null || unit.ownerId != playerId) continue;
+      if (unit == null) {
+        ordersForRegion++;
+        ignored++;
+        _log.d(
+          'movement ignored reason=unit_not_found '
+          'unitId=${order.unitId} orderPlayerId=$playerId',
+        );
+        continue;
+      }
+      ordersForRegion++;
+      if (unit.ownerId != playerId) {
+        ignored++;
+        _log.d(
+          'movement ignored reason=owner_mismatch '
+          'unitId=${order.unitId} orderPlayerId=$playerId unitOwnerId=${unit.ownerId}',
+        );
+        continue;
+      }
       final currentProvinceId = unit.locationProvinceId;
       final destProvinceId = order.destinationProvinceId;
       if (regionId != null && ProvinceId.isPrefixed(destProvinceId) &&
           ProvinceId.regionIdFrom(destProvinceId) != regionId) {
+        ignored++;
+        _log.d(
+          'movement ignored reason=region_mismatch '
+          'unitId=${order.unitId} destRegion=${ProvinceId.regionIdFrom(destProvinceId)} '
+          'expectedRegion=$regionId',
+        );
         continue; // Land move cannot cross regions.
       }
       // Normalize to prefixed form when regionId known (SPEC/game/world-model-identity.md).
       final destFullId = regionId != null && !ProvinceId.isPrefixed(destProvinceId)
-          ? ProvinceId.full(regionId, destProvinceId)
+          ? toFullProvinceId(regionId, destProvinceId)
           : destProvinceId;
       // Topology uses local province ids; validate using region-scoped adjacency when region known.
+      // Movement within own provinces: no adjacency required. SPEC/program/movement.md.
+      final ownProvinceMove = isDestinationOwnedByPlayer != null &&
+          isDestinationOwnedByPlayer(playerId, destFullId);
       final fromLocal = ProvinceId.localIdFrom(currentProvinceId);
       final toLocal = ProvinceId.localIdFrom(destFullId);
-      final valid = regionId != null
-          ? isValidLandMoveInRegion(topology, regionId!, fromLocal, toLocal)
-          : isValidLandMove(topology, fromLocal, toLocal);
+      final valid = ownProvinceMove ||
+          (regionId != null
+              ? isValidLandMoveInRegion(topology, regionId, fromLocal, toLocal)
+              : isValidLandMove(topology, fromLocal, toLocal));
       if (!valid) {
+        ignored++;
+        _log.d(
+          'movement ignored reason=invalid_adjacency '
+          'unitId=${order.unitId} from=$fromLocal to=$toLocal',
+        );
         continue;
       }
+      applied++;
       final isCivilian = unit.tileKey != null && unit.tileKey!.isNotEmpty;
       final firstTileInDest = regionId != null &&
               tileKeysByRegionAndProvince != null &&
@@ -125,13 +168,21 @@ RegionData applyMoveOrdersToRegion(
           : null;
       if (isCivilian && firstTileInDest != null) {
         unitsById[unit.id] = unit.copyWith(
-          provinceId: destFullId,
+          locationProvinceId: destFullId,
           tileKey: firstTileInDest,
         );
       } else {
-        unitsById[unit.id] = unit.copyWith(provinceId: destFullId);
+        unitsById[unit.id] = unit.copyWith(locationProvinceId: destFullId);
       }
     }
+  }
+
+  if (ordersForRegion > 0) {
+    final regionLabel = regionId ?? 'unspecified';
+    _log.i(
+      'movement apply regionId=$regionLabel '
+      'orders=$ordersForRegion applied=$applied ignored=$ignored',
+    );
   }
 
   return RegionData(

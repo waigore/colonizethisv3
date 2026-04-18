@@ -2,11 +2,15 @@ name: colonizethis
 publish_to: none
 
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.11.0 <4.0.0'
 
 workspace:
   - app
+  - widgetbook_host
   - ctdev
+  - packages/colonizethis_exception_lint
+  - packages/session_log_buffer
+  - packages/colonizethis_logger
   - packages/colonizethis_models
   - packages/colonizethis_data
   - packages/colonizethis_save
@@ -24,10 +28,20 @@ workspace:
   - tool/check_gdd_coverage
 
 dev_dependencies:
+  analyzer: ^8.4.0
+  colonizethis_exception_lint:
+    path: packages/colonizethis_exception_lint
+  image: ^4.5.4
   melos: ^7.0.0
+  path: ^1.9.1
+  test: ^1.24.0
+  yaml: ^3.1.3
 
 melos:
   scripts:
+    test_app:
+      description: Run Flutter widget tests for the app (use this, not dart test app/...).
+      run: bash -c "cd app && flutter test test/"
     generate_map:
       description: End-to-end map generation (topology + tile map + PNG) or load topology. SPEC/program/map-data.md.
       run: dart run generate_map
@@ -52,3 +66,24 @@ melos:
     check_gdd_coverage:
       description: Report which GDD specs (SPEC/game) are covered by sim_scenarios. SPEC/project/gdd-scenario-coverage.md.
       run: dart run check_gdd_coverage
+    check_custom_exceptions:
+      description: AST check that forbids generic exceptions in runtime domain code. SPEC/program/exception-enforcement.md.
+      run: dart run tool/check_custom_exceptions.dart
+    custom_lint_domain_exceptions:
+      description: Run custom_lint in packages wired for colonizethis_exception_lint. SPEC/program/exception-enforcement.md.
+      run: bash tool/run_custom_lint_domain_exceptions.sh
+    check_app_hardcoded_ui_strings:
+      description: AST check that forbids hardcoded user-visible UI strings in app/lib. SPEC/program/localization.md.
+      run: dart run tool/check_app_hardcoded_ui_strings.dart
+    check_disallowed_ast_patterns:
+      description: Config-driven AST check for disallowed structural patterns. SPEC/program/disallowed-ast-patterns.md.
+      run: dart run tool/check_disallowed_ast_patterns.dart
+    codegen_order_engine:
+      description: Regenerate OrderEngine slot wiring from order_engine_manifest.yaml. SPEC/program/order-engine.md.
+      run: dart run tool/generate_order_engine_slots.dart
+    codegen_verify:
+      description: Regenerate OrderEngine slots and fail if order_engine.g.dart is out of sync (CI gate).
+      run: bash tool/verify_order_engine_codegen.sh
+    ct_repo_lint:
+      description: Unified manifest-driven repo convention checks. SPEC/program/repo-lint.md.
+      run: dart run tool/ct_repo_lint.dart

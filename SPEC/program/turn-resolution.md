@@ -17,7 +17,7 @@ At least one phase exists; resolver advances turn number so that “next turn”
 
 ## Resolution Sequence
 
-**TurnResolver** runs a defined **phase sequence**. Order of phases is fixed (see [turn-resolution-phases.md](turn-resolution-phases.md)); the full phase list includes **Combat**, which runs after Movement when combat is in scope. Each phase is a step; resolver executes steps in order. The **movement** phase uses **map topology** (adjacency) from colonizethis_data to validate and resolve moves (e.g. armies only to adjacent provinces). The **Combat** phase takes WorldState after movement, runs conflict detection and the combat resolver, and applies casualties and province flips.
+**TurnResolver** runs a defined **phase sequence**. Order of phases is fixed (see [turn-resolution-phases.md](turn-resolution-phases.md)); when combat is in scope, the full phase list includes **Minor Regiment Upgrade** after Movement and before all combat phases, followed by naval combat phases and land **Combat**. Each phase is a step; resolver executes steps in order. The **movement** phase uses **map topology** (adjacency) from colonizethis_data to validate and resolve **civilian** `MoveOrder`s and **`ArmyMoveOrder`**s ([military-armies.md](../game/military-armies.md), [movement.md](movement.md)). The **Combat** phase takes WorldState after movement and pre-combat updates, runs conflict detection and the combat resolver, and applies casualties and province flips.
 
 **Stub:** Sequence and interfaces exist. Each phase can be no-op or minimal (e.g. end-of-turn advances turn number only) until economy, movement, and other logic are implemented.
 
@@ -35,7 +35,7 @@ Signature (conceptual): `WorldState resolve(WorldState current)` or `Game resolv
 ## Responsibilities
 
 - **colonizethis_logic** owns TurnResolver and phase sequence. Stub: no game rules beyond turn advance until full phases are implemented.
-- **App** (or a service) calls TurnResolver when user (or AI) commits “next turn”; then persists the returned state via colonizethis_save.
+- **App** (or a service) calls TurnResolver when user (or AI) commits “next turn”; then persists the returned state via colonizethis_save. After each **completed** resolution, the Flutter app also mirrors the same playable state into the **auto-save** slot ([save-load.md](save-load.md) § Auto-save slot).
 - **Load game** restores Game/WorldState from storage; “next turn” runs on that state and overwrites or replaces the saved state after resolve.
 
 ---
@@ -45,3 +45,17 @@ Signature (conceptual): `WorldState resolve(WorldState current)` or `Game resolv
 - Resolver has a **defined phase list** (e.g. list of enum values or named steps).
 - **At least one phase** performs a minimal change: e.g. increment turn number in WorldState.
 - Unit tests: resolve(currentState) returns new state; new state’s turn number is current + 1 (or equivalent); no other game logic required until full phases are implemented.
+
+## Loaded Game Behavior
+
+Map data required for resolution (`tileMapByRegion`, `topologyByRegion`, and combined topology used for AI) is mandatory for playable saves. Turn resolution call sites must not execute with missing topology data.
+
+**Acceptance Criteria:**
+
+- Given a game load attempt where required map data is missing or invalid
+- When the app/service prepares turn resolution or AI order generation
+- Then the app/service rejects the save with an explicit error and does not run turn resolution
+
+- Given a playable loaded game with required map data present
+- When TurnResolver runs the next turn
+- Then extraction, movement, combat, and AI order generation execute with map topology provided by the loaded map data

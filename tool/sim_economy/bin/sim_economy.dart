@@ -6,10 +6,10 @@ import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:sim_economy/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
-final _log = Logger();
+final _log = packageLogger('sim_economy');
 
 void main(List<String> arguments) {
   String? scriptPath;
@@ -31,28 +31,28 @@ void main(List<String> arguments) {
       final value = arguments[++i];
       turns = int.tryParse(value);
       if (turns == null || turns < 1) {
-        _log.e('logic: sim_economy: Error: --turns must be a positive integer, got: $value');
+        _log.e('Error: --turns must be a positive integer, got: $value');
         exit(1);
       }
     } else if (arg.startsWith('--turns=')) {
       final value = arg.substring('--turns='.length).trim();
       turns = int.tryParse(value);
       if (turns == null || turns < 1) {
-        _log.e('logic: sim_economy: Error: --turns must be a positive integer, got: $value');
+        _log.e('Error: --turns must be a positive integer, got: $value');
         exit(1);
       }
     } else if (arg == '--seed' && i + 1 < arguments.length) {
       final value = arguments[++i];
       seed = int.tryParse(value);
       if (seed == null) {
-        _log.e('logic: sim_economy: Error: --seed requires an integer, got: $value');
+        _log.e('Error: --seed requires an integer, got: $value');
         exit(1);
       }
     } else if (arg.startsWith('--seed=')) {
       final value = arg.substring('--seed='.length).trim();
       seed = int.tryParse(value);
       if (seed == null) {
-        _log.e('logic: sim_economy: Error: --seed requires an integer, got: $value');
+        _log.e('Error: --seed requires an integer, got: $value');
         exit(1);
       }
     } else if (arg == '--output' && i + 1 < arguments.length) {
@@ -68,7 +68,7 @@ void main(List<String> arguments) {
 
   final useScript = scriptPath != null && scriptPath.isNotEmpty;
   if (!useScript && turns == null) {
-    _log.e('logic: sim_economy: Error: --turns is required when no --script is provided.');
+    _log.e('Error: --turns is required when no --script is provided.');
     _printUsage();
     exit(1);
   }
@@ -86,7 +86,7 @@ void main(List<String> arguments) {
   if (useScript) {
     final file = File(scriptPath);
     if (!file.existsSync()) {
-      _log.e('logic: sim_economy: Error: script file not found: $scriptPath');
+      _log.e('Error: script file not found: $scriptPath');
       exit(1);
     }
     final decoded = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
@@ -129,19 +129,7 @@ void main(List<String> arguments) {
     treasury += richesResult.treasuryDelta;
     final stockpileAfterRiches = stockpile;
 
-    // 4. Production
-    final assignments = scriptTurn?.assignments ??
-        _defaultAssignments(workers, stockpile, rng);
-    final productionResult = resolveProduction(
-      stockpile: stockpile,
-      workers: workers,
-      assignments: assignments,
-    );
-    stockpile = productionResult.stockpile;
-    workers = productionResult.workerPool;
-    final stockpileAfterProduction = stockpile;
-
-    // 5. Consumption
+    // 4. Consumption (before production; workers are not removed on strike)
     final consumptionResult = resolveConsumption(
       stockpile: stockpile,
       workers: workers,
@@ -149,6 +137,21 @@ void main(List<String> arguments) {
     );
     stockpile = consumptionResult.stockpile;
     workers = consumptionResult.workerPool;
+    final stockpileAfterConsumption = stockpile;
+
+    // 5. Production
+    final assignments = scriptTurn?.assignments ??
+        _defaultAssignments(workers, stockpile, rng);
+    final productionResult = resolveProduction(
+      stockpile: stockpile,
+      workers: workers,
+      idleLabour: consumptionResult.idleLabour,
+      assignments: assignments,
+    );
+    stockpile = productionResult.stockpile;
+    workers = productionResult.workerPool;
+    final stockpileAfterProduction = stockpile;
+
     final stockpileEnd = stockpile;
     final workersEnd = workers;
 
@@ -157,6 +160,7 @@ void main(List<String> arguments) {
       stockpileStart: stockpileStart,
       stockpileAfterExtraction: stockpileAfterExtraction,
       stockpileAfterRiches: stockpileAfterRiches,
+      stockpileAfterConsumption: stockpileAfterConsumption,
       stockpileAfterProduction: stockpileAfterProduction,
       stockpileEnd: stockpileEnd,
       workersStart: workersStart,
@@ -187,21 +191,21 @@ void main(List<String> arguments) {
 
   final markdownFile = File(outputConfig.markdownPath);
   markdownFile.writeAsStringSync(markdown);
-  _log.i('logic: sim_economy: Wrote Markdown report to ${markdownFile.absolute.path}');
+  _log.i('Wrote Markdown report to ${markdownFile.absolute.path}');
 
   if (outputConfig.jsonPath != null) {
     final jsonFile = File(outputConfig.jsonPath!);
     jsonFile.writeAsStringSync(jsonEncode(turnsLog));
-    _log.i('logic: sim_economy: Wrote JSON log to ${jsonFile.absolute.path}');
+    _log.i('Wrote JSON log to ${jsonFile.absolute.path}');
   }
 }
 
 void _printUsage() {
-  _log.i('logic: sim_economy: Usage:');
+  _log.i('Usage:');
   _log.i(
-      'logic: sim_economy:   melos run sim_economy -- [--script path] [--turns N] [--seed S] [--output path] [--json-output path]');
-  _log.i('logic: sim_economy: ');
-  _log.i('logic: sim_economy: Simulates a single player economy using Phase 2 rules.');
+      '  melos run sim_economy -- [--script path] [--turns N] [--seed S] [--output path] [--json-output path]');
+  _log.i('');
+  _log.i('Simulates a single player economy using Phase 2 rules.');
 }
 
 Map<String, int> _quantitiesFromStockpile(Stockpile stockpile) {
@@ -257,6 +261,7 @@ Map<String, dynamic> buildTurnLogEntry({
   required Stockpile stockpileStart,
   required Stockpile stockpileAfterExtraction,
   required Stockpile stockpileAfterRiches,
+  required Stockpile stockpileAfterConsumption,
   required Stockpile stockpileAfterProduction,
   required Stockpile stockpileEnd,
   required WorkerPool workersStart,
@@ -269,13 +274,15 @@ Map<String, dynamic> buildTurnLogEntry({
   final startMap = _quantitiesFromStockpile(stockpileStart);
   final afterExtractionMap = _quantitiesFromStockpile(stockpileAfterExtraction);
   final afterRichesMap = _quantitiesFromStockpile(stockpileAfterRiches);
+  final afterConsumptionMap =
+      _quantitiesFromStockpile(stockpileAfterConsumption);
   final afterProductionMap = _quantitiesFromStockpile(stockpileAfterProduction);
   final endMap = _quantitiesFromStockpile(stockpileEnd);
 
   final deltaExtraction = _deltaMap(startMap, afterExtractionMap);
   final deltaRiches = _deltaMap(afterExtractionMap, afterRichesMap);
-  final deltaProduction = _deltaMap(afterRichesMap, afterProductionMap);
-  final deltaConsumption = _deltaMap(afterProductionMap, endMap);
+  final deltaConsumption = _deltaMap(afterRichesMap, afterConsumptionMap);
+  final deltaProduction = _deltaMap(afterConsumptionMap, afterProductionMap);
 
   final extractionJson = <String, int>{
     for (final entry in extractionVector.entries) entry.key: entry.value,
@@ -295,6 +302,7 @@ Map<String, dynamic> buildTurnLogEntry({
     'stockpileStart': startMap,
     'stockpileAfterExtraction': afterExtractionMap,
     'stockpileAfterRiches': afterRichesMap,
+    'stockpileAfterConsumption': afterConsumptionMap,
     'stockpileAfterProduction': afterProductionMap,
     'stockpileEnd': endMap,
     'workersStart': workersStart.toJson(),
@@ -664,8 +672,7 @@ List<AssignedRecipe> _defaultAssignments(
   Random rng,
 ) {
   // Simple baseline: distribute a fixed amount of labour to core recipes.
-  final totalLabour =
-      workers.peasants * 1 + workers.apprentices * 4 + workers.journeymen * 6;
+  final totalLabour = workers.labourSupplyPerTurn;
   if (totalLabour <= 0) return const [];
 
   final toFabric = (totalLabour * 0.4).round();

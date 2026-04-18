@@ -2,6 +2,20 @@ import 'dart:io';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+String _categoryLabelEn(String category) {
+  return switch (category) {
+    'gathering' => 'Gathering',
+    'transport' => 'Transport',
+    'labour' => 'Labour',
+    'civilian' => 'Civilian',
+    'diplomacy' => 'Diplomacy',
+    'naval' => 'Naval',
+    'military' => 'Military',
+    'new-world' => 'New World',
+    _ => category,
+  };
+}
+
 void main(List<String> args) {
   String? outputPath;
   bool interactive = false;
@@ -53,7 +67,8 @@ void _printTechDiagram({String? outputPath}) {
           ? '-'
           : tech.prerequisiteIds.join(', ');
       buffer.writeln(
-          '- `${tech.id}` *(category: ${tech.category}, cost: ${tech.cost}, prereqs: $prereqs)*');
+        '- `${tech.id}` *(category: ${tech.category}, cost: ${tech.cost}, prereqs: $prereqs)*',
+      );
     }
     buffer.writeln();
   }
@@ -83,7 +98,25 @@ void _printTechDetails(String id) {
     '- Prerequisites: ${tech.prerequisiteIds.isEmpty ? '-' : tech.prerequisiteIds.join(', ')}',
   );
   if (tech.regimentUnlockIds.isNotEmpty) {
-    stdout.writeln('- Effects — Unlocks regiments: ${tech.regimentUnlockIds.join(', ')}');
+    stdout.writeln(
+      '- Effects — Unlocks regiments: ${tech.regimentUnlockIds.join(', ')}',
+    );
+  }
+  if (tech.shipUnlockIds.isNotEmpty) {
+    stdout.writeln(
+      '- Effects — Unlocks ships: ${tech.shipUnlockIds.join(', ')}',
+    );
+  }
+  final lineIds = techEffectSummaryLineIdsFor(tech.id);
+  if (lineIds.isNotEmpty) {
+    stdout.writeln('- Effect summary:');
+    for (final id in lineIds) {
+      stdout.writeln('  - ${techEffectSummaryMessageEn(id)}');
+    }
+  } else if (tech.regimentUnlockIds.isEmpty && tech.shipUnlockIds.isEmpty) {
+    stdout.writeln(
+      '- Effect summary: Improves ${_categoryLabelEn(tech.category)} capabilities',
+    );
   }
   stdout.writeln();
 }

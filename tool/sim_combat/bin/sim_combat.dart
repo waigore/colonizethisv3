@@ -5,10 +5,10 @@ import 'dart:io';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:sim_combat/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
-final _log = Logger();
+final _log = packageLogger('sim_combat');
 
 void main(List<String> arguments) {
   String? scriptPath;
@@ -36,14 +36,14 @@ void main(List<String> arguments) {
     } else if (arg == '--seed' && i + 1 < arguments.length) {
       final v = int.tryParse(arguments[++i]);
       if (v == null) {
-        _log.e('logic: sim_combat: Error: --seed requires an integer');
+        _log.e('Error: --seed requires an integer');
         exit(1);
       }
       seed = v;
     } else if (arg.startsWith('--seed=')) {
       final v = int.tryParse(arg.substring('--seed='.length).trim());
       if (v == null) {
-        _log.e('logic: sim_combat: Error: --seed requires an integer');
+        _log.e('Error: --seed requires an integer');
         exit(1);
       }
       seed = v;
@@ -51,14 +51,14 @@ void main(List<String> arguments) {
   }
 
   if (scriptPath == null || scriptPath.isEmpty) {
-    _log.e('logic: sim_combat: Error: --script <path> is required');
+    _log.e('Error: --script <path> is required');
     _printUsage();
     exit(1);
   }
 
   final file = File(scriptPath);
   if (!file.existsSync()) {
-    _log.e('logic: sim_combat: Error: script file not found: $scriptPath');
+    _log.e('Error: script file not found: $scriptPath');
     exit(1);
   }
 
@@ -84,7 +84,7 @@ void main(List<String> arguments) {
     final terrain = provinceRaw['terrain'] as String? ?? 'plains';
 
     if (fortLevel < 0 || fortLevel > 3) {
-      _log.e('logic: sim_combat: Error: battle $id: fortLevel must be 0-3, got $fortLevel');
+      _log.e('Error: battle $id: fortLevel must be 0-3, got $fortLevel');
       exit(1);
     }
 
@@ -154,7 +154,7 @@ void main(List<String> arguments) {
 
   final outPath = outputPath ?? 'sim_combat.md';
   File(outPath).writeAsStringSync(markdown);
-  _log.i('logic: sim_combat: Wrote Markdown report to ${File(outPath).absolute.path}');
+  _log.i('Wrote Markdown report to ${File(outPath).absolute.path}');
 
   if (jsonOutputPath != null && jsonOutputPath.isNotEmpty) {
     final jsonResults = results.map((r) {
@@ -169,7 +169,7 @@ void main(List<String> arguments) {
       return m;
     }).toList();
     File(jsonOutputPath).writeAsStringSync(jsonEncode(jsonResults));
-    _log.i('logic: sim_combat: Wrote JSON log to ${File(jsonOutputPath).absolute.path}');
+    _log.i('Wrote JSON log to ${File(jsonOutputPath).absolute.path}');
   }
 }
 
@@ -184,7 +184,7 @@ List<Unit> _parseUnits(
     final u = Map<String, dynamic>.from(unitsRaw[i] as Map);
     final type = u['type'] as String? ?? 'peasant_levies';
     if (regimentStatsById(type) == null) {
-      _log.e('logic: sim_combat: Error: battle $battleId: unknown unit type "$type"');
+      _log.e('Error: battle $battleId: unknown unit type "$type"');
       exit(1);
     }
     final medals = (u['medals'] as int?) ?? 0;
@@ -192,7 +192,7 @@ List<Unit> _parseUnits(
       id: '${prefix}_${battleId}_$i',
       type: type,
       ownerId: prefix,
-      provinceId: 'prov',
+      locationProvinceId: 'oldWorld|prov',
       medals: medals.clamp(0, 4),
     ));
   }
@@ -277,8 +277,8 @@ String _buildMarkdownReport({
 }
 
 void _printUsage() {
-  _log.i('logic: sim_combat: Usage:');
-  _log.i('logic: sim_combat:   melos run sim_combat -- --script <path> [--output <path>] [--json-output <path>] [--seed <int>]');
-  _log.i('logic: sim_combat: ');
-  _log.i('logic: sim_combat: Simulates probabilistic combat resolution on scripted scenarios. SPEC/program/sim-combat.md.');
+  _log.i('Usage:');
+  _log.i('  melos run sim_combat -- --script <path> [--output <path>] [--json-output <path>] [--seed <int>]');
+  _log.i('');
+  _log.i('Simulates probabilistic combat resolution on scripted scenarios. SPEC/program/sim-combat.md.');
 }

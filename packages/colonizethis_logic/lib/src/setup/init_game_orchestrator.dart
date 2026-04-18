@@ -1,18 +1,22 @@
-// init_game orchestration. SPEC/program/init-game-tool.md.
+// init_game orchestration. SPEC/program/init-game-tool.md, game-setup-pipeline.md
+// (effective seed, OW vs NW tile-map seeds).
 
 import 'dart:typed_data';
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
+import '../ai/hidden_agenda_assignment.dart';
 import '../constants.dart';
+import '../world/unit_lookup.dart';
+import 'effective_setup_seed.dart';
 import 'game_setup.dart';
+import 'setup_exceptions.dart';
 import 'warp_zone_generator.dart';
 
-final Logger _log = Logger();
+final _log = packageLogger();
 
 /// Result of running init game.
 class InitGameResult {
@@ -32,14 +36,19 @@ class InitGameResult {
   final Uint8List mapPngBytes;
   final String markdown;
   final InitGameMapViewData mapViewData;
+
   /// Tile maps per region (e.g. 'oldWorld', 'newWorld'); needed for extraction.
   final Map<String, TileMapResult> tileMapByRegion;
+
   /// Topology per region; used by visualizers and debug tooling.
   final Map<String, MapTopology> topologyByRegion;
+
   /// Single topology with prefixed node ids and warp edges for resolveTurnForGame.
   final MapTopology combinedTopology;
+
   /// Warp zone links between OW and NW. SPEC/game/map-topology.md.
   final List<WarpLink> warpLinks;
+
   /// GP id → (r, g, b) used for map view; ctdev uses this when rebuilding view data.
   final Map<String, (int r, int g, int b)>? greatPowerColorOverride;
 }
@@ -54,60 +63,81 @@ class InitGameOptions {
   });
 
   final int cellSize;
+
   /// When true, forward skipFillLakes to TileMapParams so Pass 4 (fill lakes)
   /// is skipped in tile-map generation for both Old World and New World.
   final bool skipFillLakes;
+
   /// When false, skips PNG rendering inside runInitGame; mapViewData and
   /// markdown are still produced.
   final bool renderPng;
+
   /// Optional GP id → (r, g, b) for map ownership colours; stored on Game and in result.
   final Map<String, (int r, int g, int b)>? greatPowerColorOverride;
 }
 
 /// Runs the full game creation process: generate OW+NW maps, create game, render map, format markdown.
 /// Returns InitGameResult; does not save the game.
+/// When [generateRegion] is null, uses [defaultTileMapRegionGenerator].
 InitGameResult runInitGame({
   required GameSetupConfig config,
   InitGameOptions options = const InitGameOptions(),
+  TileMapRegionGenerator? generateRegion,
 }) {
-  _log.i('logic: init game start OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}');
-  // Derive an effective seed: non-zero config seeds are used as-is for
-  // reproducible runs; a zero seed means "choose a time-based seed".
-  final effectiveSeed = config.seed == 0
-      ? DateTime.now().millisecondsSinceEpoch
-      : config.seed;
+  if (config.numProvincesOldWorld < config.greatPowerCount) {
+    throw SetupConfigConstraintException(
+      code: 'insufficient_old_world_provinces_for_great_powers',
+      details:
+          'Config requests ${config.numProvincesOldWorld} Old World provinces but '
+          '${config.greatPowerCount} Great Powers need at least one each',
+    );
+  }
+
+  _log.i(
+    'init game start OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
+  );
+  final effectiveSeed = resolveEffectiveSetupSeed(config.seed);
 
   final mapGenParams = MapGenerationParams(
     numContinents: config.continentCount,
     seed: effectiveSeed,
-    seaFraction: 0.6,
+    seaFraction: kDefaultSeaFraction,
   );
-  final sizeOW = computeGridSizeFromParams(config.numProvincesOldWorld, mapGenParams);
+  final sizeOW = computeGridSizeFromParams(
+    config.numProvincesOldWorld,
+    mapGenParams,
+  );
   final paramsOW = TileMapParams(
     width: sizeOW.width,
     height: sizeOW.height,
     seed: effectiveSeed,
-    seaFraction: 0.6,
+    seaFraction: kDefaultSeaFraction,
     skipFillLakes: options.skipFillLakes,
   );
-  _log.d('logic: init game generating OW map');
-  final (tileMapOW, topoOW) = TileMapGenerator(params: paramsOW).generate(
+  final gen = generateRegion ?? defaultTileMapRegionGenerator;
+  _log.d('init game generating OW map');
+  final (tileMapOW, topoOW) = gen(
+    params: paramsOW,
     numProvinces: config.numProvincesOldWorld,
     numContinents: config.continentCount,
     regionId: kRegionOldWorld,
     resourceRules: ResourceRules.defaultRules,
   );
 
-  _log.d('logic: init game generating NW map');
-  final sizeNW = computeGridSizeFromParams(config.numProvincesNewWorld, mapGenParams);
+  _log.d('init game generating NW map');
+  final sizeNW = computeGridSizeFromParams(
+    config.numProvincesNewWorld,
+    mapGenParams,
+  );
   final paramsNW = TileMapParams(
     width: sizeNW.width,
     height: sizeNW.height,
     seed: effectiveSeed + 1,
-    seaFraction: 0.6,
+    seaFraction: kDefaultSeaFraction,
     skipFillLakes: options.skipFillLakes,
   );
-  final (tileMapNW, topoNW) = TileMapGenerator(params: paramsNW).generate(
+  final (tileMapNW, topoNW) = gen(
+    params: paramsNW,
     numProvinces: config.numProvincesNewWorld,
     numContinents: config.continentCount.clamp(1, config.numProvincesNewWorld),
     regionId: kRegionNewWorld,
@@ -132,6 +162,7 @@ InitGameResult runInitGame({
     topologyNewWorld: topoNW,
     gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
     namingSeed: effectiveSeed,
+    assignmentPerturbationBase: effectiveSeed,
     warpLinks: warpLinks,
   );
 
@@ -145,20 +176,36 @@ InitGameResult runInitGame({
     semanticToPlayerId[semanticId] = playerId;
   }
 
-  Map<String, (int r, int g, int b)>? effectiveGpColorOverride;
+  Map<String, (int r, int g, int b)>? toolGpColorTuples;
   final rawOverride = options.greatPowerColorOverride;
   if (rawOverride != null && rawOverride.isNotEmpty) {
-    effectiveGpColorOverride = <String, (int, int, int)>{};
+    toolGpColorTuples = <String, (int, int, int)>{};
     rawOverride.forEach((semanticId, rgb) {
       final playerId = semanticToPlayerId[semanticId];
       if (playerId != null) {
-        effectiveGpColorOverride![playerId] = rgb;
+        toolGpColorTuples![playerId] = rgb;
       }
     });
-    if (effectiveGpColorOverride.isEmpty) {
-      effectiveGpColorOverride = null;
+    if (toolGpColorTuples.isEmpty) {
+      toolGpColorTuples = null;
     }
   }
+
+  final mergedGpColorTuples = <String, (int r, int g, int b)>{};
+  final baseOverride = setupResult.game.greatPowerColorOverride;
+  if (baseOverride != null) {
+    baseOverride.forEach((playerId, rgb) {
+      if (rgb.length >= 3) {
+        mergedGpColorTuples[playerId] = (rgb[0], rgb[1], rgb[2]);
+      }
+    });
+  }
+  if (toolGpColorTuples != null) {
+    mergedGpColorTuples.addAll(toolGpColorTuples);
+  }
+  final mapColorTuples = mergedGpColorTuples.isEmpty
+      ? null
+      : mergedGpColorTuples;
 
   final mapViewData = buildInitGameMapViewData(
     game: setupResult.game,
@@ -168,31 +215,32 @@ InitGameResult runInitGame({
     seed: effectiveSeed,
     configSummary:
         'GP:${config.selectedGreatPowerIds.join(",")} MN:${config.minorNationCount} TR:${config.tribeCount} OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
-    greatPowerColorOverride: effectiveGpColorOverride,
+    greatPowerColorOverride: mapColorTuples,
+    warpLinks: warpLinks,
   );
 
   final mapPngBytes = options.renderPng
-      ? renderInitGameMapToPngFromViewData(
-          viewData: mapViewData,
-        )
+      ? renderInitGameMapToPngFromViewData(viewData: mapViewData)
       : Uint8List(0);
 
   final markdown = formatInitGameSetupMarkdown(setupResult.game);
 
   // Phase 4: set AI seeds and GP colour override for determinism / display
   var game = setupResult.game;
-  final gpColorOverrideList = effectiveGpColorOverride?.map(
+  final gpColorOverrideList = mapColorTuples?.map(
     (k, v) => MapEntry(k, [v.$1, v.$2, v.$3]),
   );
   game = game.copyWith(
     globalGameSeed: effectiveSeed,
-    aiSeedByGpId: {for (final p in game.players) p.id: effectiveSeed + p.id.hashCode},
+    aiSeedByGpId: {
+      for (final p in game.players) p.id: effectiveSeed + p.id.hashCode,
+    },
     greatPowerColorOverride: gpColorOverrideList,
   );
   // Phase 6 full AI: populate hidden agendas before first AI order generation. SPEC: game-setup-pipeline.md step 9, ai-planner.md § Phase 6.
   game = assignHiddenAgendasForGame(game);
 
-  _log.i('logic: init game end seed=$effectiveSeed gameId=${game.id}');
+  _log.i('init game end seed=$effectiveSeed gameId=${game.id}');
   return InitGameResult(
     game: game,
     mapPngBytes: mapPngBytes,
@@ -202,7 +250,7 @@ InitGameResult runInitGame({
     topologyByRegion: setupResult.topologyByRegion,
     combinedTopology: setupResult.combinedTopology,
     warpLinks: setupResult.warpLinks,
-    greatPowerColorOverride: effectiveGpColorOverride,
+    greatPowerColorOverride: mapColorTuples,
   );
 }
 
@@ -217,31 +265,40 @@ String formatInitGameSetupMarkdown(Game game) {
   buf.writeln('|---------|------|------------------|-----------------|');
 
   for (final p in game.players) {
-    final owned = game.worldState.oldWorld.provinces
-        .where((pr) => pr.ownerId == p.id)
-        .map((pr) => pr.id)
-        .toList()
-      ..sort();
+    final owned =
+        game.worldState.oldWorld.provinces
+            .where((pr) => pr.ownerId == p.id)
+            .map((pr) => pr.id)
+            .toList()
+          ..sort();
     final capital = p.capitalProvinceId ?? '—';
-    buf.writeln('| ${p.displayName} (${p.id}) | Great Power | $capital | ${owned.join(", ")} |');
+    buf.writeln(
+      '| ${p.displayName} (${p.id}) | Great Power | $capital | ${owned.join(", ")} |',
+    );
   }
   for (final m in game.minorNations) {
-    final owned = game.worldState.oldWorld.provinces
-        .where((pr) => pr.ownerId == m.id)
-        .map((pr) => pr.id)
-        .toList()
-      ..sort();
+    final owned =
+        game.worldState.oldWorld.provinces
+            .where((pr) => pr.ownerId == m.id)
+            .map((pr) => pr.id)
+            .toList()
+          ..sort();
     final capital = m.capitalProvinceId ?? '—';
-    buf.writeln('| ${m.displayName ?? m.id} (${m.id}) | Minor Nation | $capital | ${owned.join(", ")} |');
+    buf.writeln(
+      '| ${m.displayName ?? m.id} (${m.id}) | Minor Nation | $capital | ${owned.join(", ")} |',
+    );
   }
   for (final t in game.tribes) {
-    final owned = game.worldState.newWorld.provinces
-        .where((pr) => pr.ownerId == t.id)
-        .map((pr) => pr.id)
-        .toList()
-      ..sort();
+    final owned =
+        game.worldState.newWorld.provinces
+            .where((pr) => pr.ownerId == t.id)
+            .map((pr) => pr.id)
+            .toList()
+          ..sort();
     final capital = t.capitalProvinceId ?? '—';
-    buf.writeln('| ${t.displayName ?? t.id} (${t.id}) | Tribe | $capital | ${owned.join(", ")} |');
+    buf.writeln(
+      '| ${t.displayName ?? t.id} (${t.id}) | Tribe | $capital | ${owned.join(", ")} |',
+    );
   }
 
   buf.writeln();
@@ -255,12 +312,14 @@ String formatInitGameSetupMarkdown(Game game) {
         .where((e) => e.value > 0)
         .map((e) => '${e.key}:${e.value}')
         .join(', ');
-    final workers = '${p.workerPool.peasants}p/${p.workerPool.apprentices}a/${p.workerPool.journeymen}j/${p.workerPool.masters}m';
-    final units = game.worldState.oldWorld.units
-            .where((u) => u.ownerId == p.id)
-            .length +
-        game.worldState.newWorld.units.where((u) => u.ownerId == p.id).length;
-    buf.writeln('| ${p.displayName} (${p.id}) | ${stock.isEmpty ? "—" : stock} | $workers | ${p.treasury} | $units |');
+    final workers =
+        '${p.workerPool.peasants}p/${p.workerPool.apprentices}a/${p.workerPool.journeymen}j/${p.workerPool.masters}m';
+    final units = allUnitsFromWorld(
+      game.worldState,
+    ).where((u) => u.ownerId == p.id).length;
+    buf.writeln(
+      '| ${p.displayName} (${p.id}) | ${stock.isEmpty ? "—" : stock} | $workers | ${p.treasury} | $units |',
+    );
   }
   for (final m in game.minorNations) {
     buf.writeln('| ${m.displayName ?? m.id} (${m.id}) | — | — | — | — |');

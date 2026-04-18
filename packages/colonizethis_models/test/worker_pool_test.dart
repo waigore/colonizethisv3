@@ -1,5 +1,5 @@
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('WorkerPool', () {
@@ -40,6 +40,27 @@ void main() {
       expect(pool.apprentices, 2);
       expect(pool.journeymen, 0);
       expect(pool.masters, 0);
+    });
+
+    test('labourSupplyPerTurn sums GDD tier labour (incl. masters)', () {
+      const pool = WorkerPool(
+        peasants: 1,
+        apprentices: 1,
+        journeymen: 1,
+        masters: 1,
+      );
+      expect(
+        pool.labourSupplyPerTurn,
+        WorkerPool.labourPerPeasantTurn +
+            WorkerPool.labourPerApprenticeTurn +
+            WorkerPool.labourPerJourneymanTurn +
+            WorkerPool.labourPerMasterTurn,
+      );
+      const mastersOnly = WorkerPool(masters: 2);
+      expect(
+        mastersOnly.labourSupplyPerTurn,
+        2 * WorkerPool.labourPerMasterTurn,
+      );
     });
   });
 }

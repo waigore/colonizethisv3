@@ -1,8 +1,8 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:image/image.dart' as img;
-import 'package:colonizethis_test/test.dart';
 
 void main() {
   final topology = MapTopology(
@@ -27,6 +27,7 @@ void main() {
       final bytes = renderSingleRegionGameStateMapToPng(
         result: smallResult,
         topology: topology,
+        regionId: 'oldWorld',
         ownerByProvinceId: {'oldWorld|p1': 'gp1'},
         capitalTiles: [],
         cellSize: 8,
@@ -42,6 +43,7 @@ void main() {
       final bytes = renderSingleRegionGameStateMapToPng(
         result: smallResult,
         topology: topology,
+        regionId: 'oldWorld',
         ownerByProvinceId: {'oldWorld|p1': 'gp1'},
         capitalTiles: [
           (factionId: 'gp1', displayName: 'GP1', x: 0, y: 0),
@@ -54,6 +56,24 @@ void main() {
       final decoded = img.decodeImage(bytes);
       expect(decoded, isNotNull);
       expect(decoded!.height, greaterThan(2 * 8));
+    });
+
+    test('resolves ownership via full province id and colors land tile', () {
+      final bytes = renderSingleRegionGameStateMapToPng(
+        result: smallResult,
+        topology: topology,
+        regionId: 'oldWorld',
+        ownerByProvinceId: {'oldWorld|p1': 'gp1'},
+        capitalTiles: [],
+        cellSize: 8,
+        factionColorsOverride: {'gp1': (10, 20, 30)},
+      );
+      final decoded = img.decodeImage(bytes);
+      expect(decoded, isNotNull);
+      final pixel = decoded!.getPixel(4, 4);
+      expect(pixel.r.toInt(), equals(10));
+      expect(pixel.g.toInt(), equals(20));
+      expect(pixel.b.toInt(), equals(30));
     });
   });
 

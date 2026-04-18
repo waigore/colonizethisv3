@@ -6,7 +6,9 @@
 
 ## Categories
 
-Commodities are grouped by **category**: food, rawMaterial, manufactured, luxury, riches, advanced. Categories drive transport priority, UI grouping, and (later) trade. Per GDD 04.
+Commodities are grouped by **category**: food, rawMaterial, manufactured, luxury, riches, advanced. Categories determine which priority **bucket** each commodity belongs to for overseas sea transport (fill order is **fixed** in [auto-transport.md](../program/auto-transport.md); not player-, AI-, or ruleset-configurable). Categories also drive UI grouping and (later) trade. Per GDD 04.
+
+For the **current product ruleset**, all trained-worker luxury consumption is modelled via **manufactured** commodities (refinedSugar, cigars, furHats) rather than a separate `luxury` category. The `luxury` category is reserved as a future extension hook: no commodity currently uses `luxury` as its primary category, and any code that needs to reason about worker luxuries MUST do so via the manufactured entries and [workers-and-population.md](workers-and-population.md) rather than by checking for a `luxury` category.
 
 ---
 
@@ -17,7 +19,7 @@ Commodities are grouped by **category**: food, rawMaterial, manufactured, luxury
 | **Food** | grain, meat |
 | **Raw materials** | timber, iron, wool, cotton, coal, copper, tin, sugarCane, tobacco, furs, horses |
 | **Manufactured** | lumber, castIron, fabric, refinedSugar, cigars, furHats, steel, paper, bronze |
-| **Luxury** | (consumed by trained workers; e.g. refinedSugar, cigars, furHats) |
+| **Luxury** | _None in current product (reserved tag); luxuries are represented by manufactured refinedSugar, cigars, furHats consumed per [workers-and-population.md](workers-and-population.md)._ |
 | **Riches** | gold, silver, gems, diamonds |
 | **Advanced** | spices |
 
@@ -39,7 +41,7 @@ The **commodity catalog** (id list, category per commodity, default price for sp
 
 ## Overflow and Capacity
 
-For the **MVP ruleset**, capacity for all commodities is effectively infinite: there is no per-commodity or total stockpile cap, and the System does **not** apply any overflow behavior such as discarding excess or auto-selling to market. Any future per-era capacity limits or overflow rules are **deferred**; if and when they are introduced, their authoritative behavior and acceptance criteria will be defined in [stockpiles-and-production.md](stockpiles-and-production.md), and this section will cross-reference that definition.
+By **permanent game design**, each player’s **central stockpile** is **unbounded**: there is no per-commodity maximum, no total stockpile maximum, and no ruleset-defined storage ceiling. The System does **not** discard goods, auto-sell to market, or apply any other **storage** overflow behavior because storage cannot be exceeded. The stockpile represents a **national strategic resource pool**, not simulated warehouse logistics ([stockpiles-and-production.md](stockpiles-and-production.md) § Strategic abstraction). Per-turn **cargo holds** still limit how much **overseas** extraction reaches the stockpile; that is transport throughput, not warehouse capacity — see [auto-transport.md](../program/auto-transport.md).
 
 ---
 
@@ -61,6 +63,6 @@ For the **MVP ruleset**, capacity for all commodities is effectively infinite: t
   When the system runs the riches-to-treasury phase for any turn and converts stored `spices` from any province into treasury  
   Then the system uses a fixed base price of exactly 50 treasury units per unit of `spices` regardless of any other price modifiers, and includes this price in the `riches_to_treasury` turn log entry for that turn
 
-- Given a game is running with a ruleset era that has not defined per-commodity or total stockpile capacity limits  
-  When any game logic (such as production, trade, or riches conversion) increases a province’s stockpile for any commodity to a non-negative integer amount  
-  Then the system does not discard or sell any overflow for that commodity in that era, and tests that attempt to store arbitrarily large quantities (within engine integer limits) complete without triggering overflow-related discard or market-sale behavior
+- Given the game rules define no maximum quantity for any commodity in the player’s **central** stockpile (unbounded storage by design)  
+  When any game logic (such as extraction delivery, production, trade, consumption, or riches-to-treasury) changes that player’s central stockpile quantities during a turn  
+  Then the System does not apply any storage cap, discard excess for storage reasons, or auto-sell to market due to a full warehouse, and all quantities remain non-negative integers within the engine’s integer range

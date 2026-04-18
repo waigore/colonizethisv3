@@ -1,5 +1,5 @@
-import 'package:colonizethis_map/src/tile_map_visualization_shared.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_map/src/tile_map_visualization_shared.dart';
 
 void main() {
   group('factionOwnershipColorMap', () {

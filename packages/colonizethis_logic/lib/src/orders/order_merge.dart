@@ -18,6 +18,10 @@ Orders mergeOrderLists({
       humanOrders.moveOrdersByPlayerId,
       aiOrders.moveOrdersByPlayerId,
     ),
+    armyMoveOrdersByPlayerId: _mergeArmyMoveOrders(
+      humanOrders.armyMoveOrdersByPlayerId,
+      aiOrders.armyMoveOrdersByPlayerId,
+    ),
     buildUnitOrdersByPlayerId: _mergeBuildOrders(
       humanOrders.buildUnitOrdersByPlayerId,
       aiOrders.buildUnitOrdersByPlayerId,
@@ -48,6 +52,7 @@ Orders mergeOrderLists({
 
 bool _isEmpty(Orders o) =>
     o.moveOrdersByPlayerId.isEmpty &&
+    o.armyMoveOrdersByPlayerId.isEmpty &&
     o.buildUnitOrdersByPlayerId.isEmpty &&
     o.workOrdersByPlayerId.isEmpty &&
     o.diplomaticOrdersByPlayerId.isEmpty &&
@@ -60,6 +65,12 @@ Map<String, List<MoveOrder>> _mergeMoveOrders(
   Map<String, List<MoveOrder>> ai,
 ) =>
     _mergeByConflictKey(human, ai, (o) => o.unitId);
+
+Map<String, List<ArmyMoveOrder>> _mergeArmyMoveOrders(
+  Map<String, List<ArmyMoveOrder>> human,
+  Map<String, List<ArmyMoveOrder>> ai,
+) =>
+    _mergeByConflictKey(human, ai, (o) => o.armyId);
 
 Map<String, List<BuildUnitOrder>> _mergeBuildOrders(
   Map<String, List<BuildUnitOrder>> human,

@@ -1,16 +1,20 @@
 /// Shared simple heuristics for AI order generation. SPEC/program/ai-planner.md,
 /// sim-game-default-ai.md. Used by AIPlanner and defaultSimGameAi.
+library;
 
 import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import '../constants.dart';
-import '../diplomacy/diplomacy_resolver.dart';
+import '../orders/draft_orders_mutations.dart';
 import '../orders/order_suggestion.dart';
+import '../world/army_migration.dart';
 import '../world/player_view.dart';
+
+final _log = packageLogger();
 
 /// Derives turn seed per ai-planner: turnSeed = hash(globalGameSeed, aiSeed[P], T).
 /// When [fallbackAiSeed] is provided and [game.aiSeedByGpId] has no entry for
@@ -22,40 +26,31 @@ int turnSeedForPlayer(
   int? fallbackAiSeed,
 }) {
   final global = game.globalGameSeed ?? 0;
-  final aiSeed = game.aiSeedByGpId[playerId] ??
-      fallbackAiSeed ??
-      playerId.hashCode;
-  const int prime = 0x9E3779B1;
-  var h = global ^ (turnNumber * prime);
-  h ^= aiSeed * prime;
-  return h & 0x7fffffff;
+  final aiSeed =
+      game.aiSeedByGpId[playerId] ?? fallbackAiSeed ?? playerId.hashCode;
+  var h = global ^ (turnNumber * kDeterministicHashMixPrime32);
+  h ^= aiSeed * kDeterministicHashMixPrime32;
+  return h & kDeterministicLcg31Mask;
 }
 
-enum _SuggestionCategory {
-  moves,
-  work,
-  build,
-  research,
-}
+enum _SuggestionCategory { moves, work, build, research }
 
-/// Builds a map from full province id (regionId|localId) to owner faction id.
-/// Keys must match [MoveOrder.destinationProvinceId] format from the order
-/// suggestion API (SPEC/game/world-model-identity.md).
-Map<String, String> _provinceOwnerMap(Game game) {
-  final out = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      final key = ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id));
-      out[key] = p.ownerId!;
-    }
+/// Picks the next suggestion category. When both move and work have candidates,
+/// uses [rng] so work (e.g. `build_rail` with tile maps) is not always starved.
+/// SPEC/program/sim-game-default-ai.md, ai-planner.md.
+_SuggestionCategory _chooseSuggestionCategory(
+  List<_SuggestionCategory> categories,
+  math.Random rng,
+) {
+  categories.sort((a, b) => a.index.compareTo(b.index));
+  final hasMoves = categories.contains(_SuggestionCategory.moves);
+  final hasWork = categories.contains(_SuggestionCategory.work);
+  if (hasMoves && hasWork) {
+    return rng.nextBool()
+        ? _SuggestionCategory.moves
+        : _SuggestionCategory.work;
   }
-  for (final p in game.worldState.newWorld.provinces) {
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      final key = ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id));
-      out[key] = p.ownerId!;
-    }
-  }
-  return out;
+  return categories.first;
 }
 
 /// Generates orders for a single player using the shared simple heuristics:
@@ -66,30 +61,47 @@ Orders generateOrdersWithSimpleHeuristics(
   Game game,
   MapTopology topology,
   String playerId,
-  int turnSeed,
-) {
+  int turnSeed, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
   final player = game.playerById(playerId);
   if (player == null) {
     return const Orders();
   }
 
-  final provinceOwner = _provinceOwnerMap(game);
+  final g = ensureMilitaryArmiesForGame(game);
   final rng = math.Random(turnSeed);
   var current = const Orders();
-  final view = buildPlayerView(game, topology, player.id);
+  final view = buildPlayerView(g, topology, player.id);
 
   /// Max iterations per player per turn (cap to avoid unbounded loops).
   /// Documented in SPEC/program/sim-game-default-ai.md.
   const maxIterationsPerPlayer = 32;
   for (var i = 0; i < maxIterationsPerPlayer; i++) {
-    final moveSuggestions = suggestMoveOrders(view, game, topology, current);
-    final workSuggestions = suggestWorkOrders(view, game, topology, current);
-    final buildSuggestions = suggestBuildOrders(view, game, topology, current);
-    final researchSuggestions =
-        suggestResearchOrders(view, game, topology, current);
+    final moveSuggestions = suggestMoveOrders(view, g, topology, current);
+    final armyMoveSuggestions = suggestArmyMoveOrders(
+      view,
+      g,
+      topology,
+      current,
+    );
+    final workSuggestions = suggestWorkOrders(
+      view,
+      g,
+      topology,
+      current,
+      tileMapByRegion: tileMapByRegion,
+    );
+    final buildSuggestions = suggestBuildOrders(view, g, topology, current);
+    final researchSuggestions = suggestResearchOrders(
+      view,
+      g,
+      topology,
+      current,
+    );
 
     final categories = <_SuggestionCategory>[];
-    if (moveSuggestions.isNotEmpty) {
+    if (moveSuggestions.isNotEmpty || armyMoveSuggestions.isNotEmpty) {
       categories.add(_SuggestionCategory.moves);
     }
     if (workSuggestions.isNotEmpty) {
@@ -104,26 +116,48 @@ Orders generateOrdersWithSimpleHeuristics(
 
     if (categories.isEmpty) break;
 
-    categories.sort((a, b) => a.index.compareTo(b.index));
-    final chosenCategory = categories.first;
+    final chosenCategory = _chooseSuggestionCategory(
+      List<_SuggestionCategory>.from(categories),
+      rng,
+    );
 
     switch (chosenCategory) {
       case _SuggestionCategory.moves:
-        final idx = rng.nextInt(moveSuggestions.length);
-        final chosen = moveSuggestions[idx];
-        final list = List<MoveOrder>.from(
-          current.moveOrdersByPlayerId[player.id] ?? const [],
-        )..add(chosen);
-        current = Orders(
-          moveOrdersByPlayerId: {
-            ...current.moveOrdersByPlayerId,
-            player.id: list,
-          },
-          buildUnitOrdersByPlayerId: current.buildUnitOrdersByPlayerId,
-          workOrdersByPlayerId: current.workOrdersByPlayerId,
-          diplomaticOrdersByPlayerId: current.diplomaticOrdersByPlayerId,
-          researchOrdersByPlayerId: current.researchOrdersByPlayerId,
-        );
+        if (moveSuggestions.isEmpty) {
+          final idx = rng.nextInt(armyMoveSuggestions.length);
+          final chosen = armyMoveSuggestions[idx];
+          current = applyArmyMoveOrderForPlayer(current, player.id, chosen);
+        } else if (armyMoveSuggestions.isEmpty) {
+          final idx = rng.nextInt(moveSuggestions.length);
+          final chosen = moveSuggestions[idx];
+          final list = List<MoveOrder>.from(
+            current.moveOrdersByPlayerId[player.id] ?? const [],
+          )..add(chosen);
+          current = current.copyWith(
+            moveOrdersByPlayerId: {
+              ...current.moveOrdersByPlayerId,
+              player.id: list,
+            },
+          );
+        } else {
+          if (rng.nextBool()) {
+            final idx = rng.nextInt(moveSuggestions.length);
+            final chosen = moveSuggestions[idx];
+            final list = List<MoveOrder>.from(
+              current.moveOrdersByPlayerId[player.id] ?? const [],
+            )..add(chosen);
+            current = current.copyWith(
+              moveOrdersByPlayerId: {
+                ...current.moveOrdersByPlayerId,
+                player.id: list,
+              },
+            );
+          } else {
+            final idx = rng.nextInt(armyMoveSuggestions.length);
+            final chosen = armyMoveSuggestions[idx];
+            current = applyArmyMoveOrderForPlayer(current, player.id, chosen);
+          }
+        }
         break;
       case _SuggestionCategory.work:
         final idx = rng.nextInt(workSuggestions.length);
@@ -131,15 +165,11 @@ Orders generateOrdersWithSimpleHeuristics(
         final list = List<WorkOrder>.from(
           current.workOrdersByPlayerId[player.id] ?? const [],
         )..add(chosen);
-        current = Orders(
-          moveOrdersByPlayerId: current.moveOrdersByPlayerId,
-          buildUnitOrdersByPlayerId: current.buildUnitOrdersByPlayerId,
+        current = current.copyWith(
           workOrdersByPlayerId: {
             ...current.workOrdersByPlayerId,
             player.id: list,
           },
-          diplomaticOrdersByPlayerId: current.diplomaticOrdersByPlayerId,
-          researchOrdersByPlayerId: current.researchOrdersByPlayerId,
         );
         break;
       case _SuggestionCategory.build:
@@ -148,15 +178,11 @@ Orders generateOrdersWithSimpleHeuristics(
         final list = List<BuildUnitOrder>.from(
           current.buildUnitOrdersByPlayerId[player.id] ?? const [],
         )..add(chosen);
-        current = Orders(
-          moveOrdersByPlayerId: current.moveOrdersByPlayerId,
+        current = current.copyWith(
           buildUnitOrdersByPlayerId: {
             ...current.buildUnitOrdersByPlayerId,
             player.id: list,
           },
-          workOrdersByPlayerId: current.workOrdersByPlayerId,
-          diplomaticOrdersByPlayerId: current.diplomaticOrdersByPlayerId,
-          researchOrdersByPlayerId: current.researchOrdersByPlayerId,
         );
         break;
       case _SuggestionCategory.research:
@@ -166,11 +192,7 @@ Orders generateOrdersWithSimpleHeuristics(
           ...current.researchOrdersByPlayerId[player.id] ?? const [],
           chosen,
         ];
-        current = Orders(
-          moveOrdersByPlayerId: current.moveOrdersByPlayerId,
-          buildUnitOrdersByPlayerId: current.buildUnitOrdersByPlayerId,
-          workOrdersByPlayerId: current.workOrdersByPlayerId,
-          diplomaticOrdersByPlayerId: current.diplomaticOrdersByPlayerId,
+        current = current.copyWith(
           researchOrdersByPlayerId: {
             ...current.researchOrdersByPlayerId,
             player.id: list,
@@ -181,55 +203,57 @@ Orders generateOrdersWithSimpleHeuristics(
   }
 
   final moveByPlayer = <String, List<MoveOrder>>{};
+  final armyMoveByPlayer = <String, List<ArmyMoveOrder>>{};
   final buildByPlayer = <String, List<BuildUnitOrder>>{};
   final workByPlayer = <String, List<WorkOrder>>{};
   final researchByPlayer = <String, List<ResearchOrder>>{};
 
   final rawMoves = current.moveOrdersByPlayerId[player.id];
   if (rawMoves != null && rawMoves.isNotEmpty) {
-    final filtered = <MoveOrder>[];
-    for (final m in rawMoves) {
-      final destOwner = provinceOwner[m.destinationProvinceId];
-      if (destOwner == null || destOwner == player.id) {
-        filtered.add(m);
-        continue;
-      }
-      final rel = getRelation(game, player.id, destOwner);
-      if (rel != null && rel.atPeace) {
-        continue;
-      }
-      if (rel == null) {
-        final isMinor =
-            game.minorNations.any((mn) => mn.id == destOwner);
-        if (isMinor) continue;
-      }
-      filtered.add(m);
-    }
+    final filtered = filterMoveOrdersByDiplomacy(g, player.id, rawMoves);
     if (filtered.isNotEmpty) {
       moveByPlayer[player.id] = filtered;
     }
   }
+  final rawArmyMoves = current.armyMoveOrdersByPlayerId[player.id];
+  if (rawArmyMoves != null && rawArmyMoves.isNotEmpty) {
+    final filtered = filterArmyMoveOrdersByDiplomacy(
+      g,
+      player.id,
+      rawArmyMoves,
+    );
+    if (filtered.isNotEmpty) {
+      armyMoveByPlayer[player.id] = filtered;
+    }
+  }
   if (current.buildUnitOrdersByPlayerId.containsKey(player.id)) {
-    buildByPlayer[player.id] =
-        List<BuildUnitOrder>.from(current.buildUnitOrdersByPlayerId[player.id]!);
+    buildByPlayer[player.id] = List<BuildUnitOrder>.from(
+      current.buildUnitOrdersByPlayerId[player.id]!,
+    );
   }
   if (current.workOrdersByPlayerId.containsKey(player.id)) {
-    workByPlayer[player.id] =
-        List<WorkOrder>.from(current.workOrdersByPlayerId[player.id]!);
+    workByPlayer[player.id] = List<WorkOrder>.from(
+      current.workOrdersByPlayerId[player.id]!,
+    );
   }
   if (current.researchOrdersByPlayerId.containsKey(player.id)) {
-    researchByPlayer[player.id] =
-        List<ResearchOrder>.from(current.researchOrdersByPlayerId[player.id]!);
+    researchByPlayer[player.id] = List<ResearchOrder>.from(
+      current.researchOrdersByPlayerId[player.id]!,
+    );
   }
 
   final m = moveByPlayer[player.id]?.length ?? 0;
+  final a = armyMoveByPlayer[player.id]?.length ?? 0;
   final b = buildByPlayer[player.id]?.length ?? 0;
   final w = workByPlayer[player.id]?.length ?? 0;
   final r = researchByPlayer[player.id]?.length ?? 0;
-  Logger().i('ai: simple heuristics generated orders player=${player.id} move=$m build=$b work=$w research=$r');
+  _log.i(
+    'simple heuristics generated orders player=${player.id} move=$m armyMove=$a build=$b work=$w research=$r',
+  );
 
   return Orders(
     moveOrdersByPlayerId: moveByPlayer,
+    armyMoveOrdersByPlayerId: armyMoveByPlayer,
     buildUnitOrdersByPlayerId: buildByPlayer,
     workOrdersByPlayerId: workByPlayer,
     diplomaticOrdersByPlayerId: const {},

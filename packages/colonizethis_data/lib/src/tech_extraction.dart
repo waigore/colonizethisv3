@@ -1,233 +1,251 @@
 /// Tech ids and extraction cap. SPEC/game/tech-and-extraction-cap.md.
 ///
-/// Phase 2 used only a constant cap; Phase 5 derives the cap from techUnlocked
-/// when possible, with a constant fallback.
+/// Full catalog (113 techs) from SPEC/game/tech-tree.md and category sub-docs.
 
 import 'combat_config.dart';
+import 'tech_catalog.dart';
+import 'tech_definition.dart';
 
-/// All tech ids (same for every player). Used for tech table keys.
-const List<String> techIds = [
-  'road_construction',
-  'early_steam_engine',
-  'gathering_1',
-  'gathering_2',
-  'gathering_3',
-  'organised_regiments',
-  'improved_iron_weapons',
-  'improved_infantry_tactics',
-  'weapon_craftsmanship',
-  'recruit_steppe_horsemen',
-  'horse_artillery',
-  'siege_engineering',
-  'university',
-  // Diplomacy/Civilian techs (SPEC/game/tech-tree-diplomacy-civilian.md)
-  'diplomatic_expertise',
-  'merchant_companies',
-  'national_bureaucracy',
-  'propaganda',
-  'nationalism',
-  'empire_building',
-];
+/// Full tech catalog (113 techs). Built from [buildTechCatalog].
+final Map<String, TechDefinition> techCatalog = buildTechCatalog();
 
-/// Default max effective extraction level when player has no tech or no extraction-cap tech.
-/// Imperialism II: production level 0-4; tech caps effective level.
-const int defaultExtractionCap = 4;
+/// All tech ids (same for every player). Order = catalog insertion order.
+final List<String> techIds = techCatalog.keys.toList();
 
-/// Simple tech definition used by the MVP tech catalog.
-/// Effects: regimentUnlockIds = regiment types this tech unlocks (buildability).
-class TechDefinition {
-  const TechDefinition({
-    required this.id,
-    required this.era,
-    required this.category,
-    required this.cost,
-    this.prerequisiteIds = const [],
-    this.regimentUnlockIds = const [],
-  });
+/// Default max effective extraction level for a resource with no cap-raising tech unlocked.
+/// This allows base level-1 extraction while requiring tech for upgrades.
+const int defaultExtractionCap = 1;
 
-  final String id;
-  final int era;
-  final String category;
-  final int cost;
-  final List<String> prerequisiteIds;
-  /// Regiment ids this tech unlocks. SPEC/game/tech-tree-military.md.
-  final List<String> regimentUnlockIds;
-}
-
-/// Minimal tech catalog backing extraction and research for Phase 5.
-///
-/// The full catalog is defined in SPEC/game/tech-tree.md and category sub-docs
-/// (e.g. SPEC/game/tech-tree-gathering.md); this structure is a program-level
-/// representation.
-const Map<String, TechDefinition> techCatalog = {
-  'road_construction': TechDefinition(
-    id: 'road_construction',
-    era: 1,
-    category: 'transport',
-    cost: 100,
-  ),
-  'early_steam_engine': TechDefinition(
-    id: 'early_steam_engine',
-    era: 4,
-    category: 'transport',
-    cost: 200,
-    prerequisiteIds: ['road_construction'],
-  ),
-  'gathering_1': TechDefinition(
-    id: 'gathering_1',
-    era: 1,
-    category: 'gathering',
-    cost: 80,
-  ),
-  'gathering_2': TechDefinition(
-    id: 'gathering_2',
-    era: 2,
-    category: 'gathering',
-    cost: 120,
-    prerequisiteIds: ['gathering_1'],
-  ),
-  'gathering_3': TechDefinition(
-    id: 'gathering_3',
-    era: 3,
-    category: 'gathering',
-    cost: 160,
-    prerequisiteIds: ['gathering_2'],
-  ),
-  // Military (SPEC/game/tech-tree-military.md). Prereqs simplified for MVP.
-  'organised_regiments': TechDefinition(
-    id: 'organised_regiments',
-    era: 1,
-    category: 'military',
-    cost: 100,
-    regimentUnlockIds: ['lancers'],
-  ),
-  'improved_iron_weapons': TechDefinition(
-    id: 'improved_iron_weapons',
-    era: 1,
-    category: 'military',
-    cost: 100,
-    prerequisiteIds: ['organised_regiments'],
-    regimentUnlockIds: ['halberdiers'],
-  ),
-  'improved_infantry_tactics': TechDefinition(
-    id: 'improved_infantry_tactics',
-    era: 2,
-    category: 'military',
-    cost: 120,
-    prerequisiteIds: ['organised_regiments'],
-    regimentUnlockIds: ['calivermen'],
-  ),
-  'weapon_craftsmanship': TechDefinition(
-    id: 'weapon_craftsmanship',
-    era: 2,
-    category: 'military',
-    cost: 120,
-    prerequisiteIds: ['organised_regiments'],
-    regimentUnlockIds: ['musketeers'],
-  ),
-  'recruit_steppe_horsemen': TechDefinition(
-    id: 'recruit_steppe_horsemen',
-    era: 1,
-    category: 'military',
-    cost: 100,
-    regimentUnlockIds: ['cossacks'],
-  ),
-  'horse_artillery': TechDefinition(
-    id: 'horse_artillery',
-    era: 1,
-    category: 'military',
-    cost: 100,
-    regimentUnlockIds: ['horse_artillery'],
-  ),
-  'siege_engineering': TechDefinition(
-    id: 'siege_engineering',
-    era: 2,
-    category: 'military',
-    cost: 120,
-    regimentUnlockIds: ['royal_artillery'],
-  ),
-  // Labour/economy (SPEC/game/tech-tree-labour-economy.md). University grants 4th research slot.
-  'university': TechDefinition(
-    id: 'university',
-    era: 3,
-    category: 'labour',
-    cost: 200,
-    prerequisiteIds: const [],
-  ),
-  // Diplomacy/Civilian techs (SPEC/game/tech-tree-diplomacy-civilian.md)
-  'diplomatic_expertise': TechDefinition(
-    id: 'diplomatic_expertise',
-    era: 1,
-    category: 'diplomacy',
-    cost: 100,
-  ),
-  'merchant_companies': TechDefinition(
-    id: 'merchant_companies',
-    era: 1,
-    category: 'civilian',
-    cost: 100,
-    prerequisiteIds: ['diplomatic_expertise'],
-  ),
-  'national_bureaucracy': TechDefinition(
-    id: 'national_bureaucracy',
-    era: 2,
-    category: 'civilian',
-    cost: 150,
-  ),
-  'propaganda': TechDefinition(
-    id: 'propaganda',
-    era: 3,
-    category: 'diplomacy',
-    cost: 150,
-  ),
-  'nationalism': TechDefinition(
-    id: 'nationalism',
-    era: 3,
-    category: 'diplomacy',
-    cost: 200,
-  ),
-  'empire_building': TechDefinition(
-    id: 'empire_building',
-    era: 4,
-    category: 'diplomacy',
-    cost: 250,
-    prerequisiteIds: ['nationalism'],
-  ),
+/// Resource-specific extraction cap tech map.
+/// resource id -> (tech id -> max extraction level for that resource).
+const Map<String, Map<String, int>> _extractionCapByResourceByTechId = {
+  'grain': {'land_enclosure': 2, 'seed_drill': 3, 'moldboard_plow': 4},
+  'timber': {'saw_mill': 2, 'wind_saw_mill': 3, 'circular_saw': 4},
+  'iron': {'iron_mining': 2, 'steam_in_mining': 3, 'industrial_iron_mining': 4},
+  'copper': {
+    'copper_and_tin_mining': 2,
+    'large_copper_and_tin_mines': 3,
+    'efficient_extraction_of_copper_and_tin': 4,
+  },
+  'tin': {
+    'copper_and_tin_mining': 2,
+    'large_copper_and_tin_mines': 3,
+    'efficient_extraction_of_copper_and_tin': 4,
+  },
+  'coal': {
+    'coal_mining': 1,
+    'square_set_timbering': 2,
+    'large_coal_mines': 3,
+    'safety_lamp': 4,
+  },
+  'wool': {'sheep_ranching': 2, 'scientific_sheep_breeding': 3},
+  'meat': {'animal_husbandry': 3, 'scientific_cattle_breeding': 4},
+  'sugarCane': {
+    'sugar_planting': 2,
+    'large_sugar_plantations': 3,
+    'sugar_industry': 4,
+  },
+  'tobacco': {
+    'tobacco_planting': 2,
+    'large_tobacco_plantations': 3,
+    'tobacco_industry': 4,
+  },
+  'cotton': {
+    'cotton_planting': 2,
+    'large_cotton_plantations': 3,
+    'cotton_gin': 4,
+  },
+  'furs': {
+    'improved_trapping_techniques': 2,
+    'riverboats': 3,
+    'excessive_fur_harvesting': 4,
+  },
+  'spices': {
+    'improved_sea_routes': 2,
+    'large_spice_plantations': 3,
+    'improved_food_preservation': 4,
+  },
+  'silver': {
+    'precious_metals_mining': 2,
+    'extraction_of_precious_metals': 3,
+    'amalgamation_process': 4,
+  },
+  'gold': {
+    'precious_metals_mining': 2,
+    'extraction_of_precious_metals': 3,
+    'amalgamation_process': 4,
+  },
+  'gems': {
+    'precious_stone_mining': 2,
+    'large_precious_stone_mines': 3,
+    'geological_prospecting': 4,
+  },
+  'diamonds': {
+    'precious_stone_mining': 2,
+    'large_precious_stone_mines': 3,
+    'geological_prospecting': 4,
+  },
 };
+
+/// Resources intentionally capped below level 4 by design.
+/// Keep in sync with SPEC/game/tech-and-extraction-cap.md.
+const Map<String, int> extractionCapDesignExceptions = {'horses': 1, 'wool': 3};
+
+/// Tech catalog category used for Envy hidden-agenda mirror scoring when a player
+/// completes an extraction [build_improvement] on a tile whose [resourceId] is in
+/// the extraction-cap map. All such improvements map to **gathering** (tech tree).
+/// Returns null when the tile has no extraction resource or an unlisted resource.
+String? envyMirrorTechCategoryForExtractionResource(String? resourceId) {
+  if (resourceId == null || resourceId.isEmpty) {
+    return null;
+  }
+  if (!_extractionCapByResourceByTechId.containsKey(resourceId)) {
+    return null;
+  }
+  return 'gathering';
+}
 
 TechDefinition? techById(String id) => techCatalog[id];
 
-/// Simple extraction-cap mapping for the Phase 5 MVP. In the full model the
-/// cap is per resource; here we keep a single scalar cap derived from
-/// "gathering" techs:
-/// - gathering_1 => cap 2
-/// - gathering_2 => cap 3
-/// - gathering_3 => cap 4
-///
-/// When no gathering tech is unlocked (null, empty, or only non-gathering techs),
-/// [defaultExtractionCap] is used per SPEC/game/tech-and-extraction-cap.md.
+/// Humanized display name for a tech id. Uses catalog displayName when set; otherwise
+/// title-case of id (e.g. road_construction → "Road Construction"). SPEC/ui/tech-tree-widget.md.
+String techDisplayName(String id) {
+  if (id.isEmpty) return id;
+  final def = techCatalog[id];
+  if (def?.displayName != null && def!.displayName!.isNotEmpty) {
+    return def.displayName!;
+  }
+  return id
+      .split('_')
+      .map(
+        (s) => s.isEmpty
+            ? s
+            : '${s[0].toUpperCase()}${s.substring(1).toLowerCase()}',
+      )
+      .join(' ');
+}
+
+/// Tech ids that the player can research next (all prerequisites in [techUnlocked], tech not yet unlocked).
+/// When [hasDiscoveredResource] is null, discovery techs are treated as researchable (tests/contexts without game).
+/// When provided, techs with [TechDefinition.discoveryResourceIds] are included only if
+/// [hasDiscoveredResource](r) is true for at least one r in that list. SPEC/game/research-state.md.
+Set<String> researchableTechIds(
+  Map<String, bool>? techUnlocked, {
+  bool Function(String resourceId)? hasDiscoveredResource,
+}) {
+  final unlocked = techUnlocked ?? const {};
+  final result = <String>{};
+  for (final tech in techCatalog.values) {
+    if (unlocked[tech.id] == true) continue;
+    final allPrereqsMet = tech.prerequisiteIds.every(
+      (p) => unlocked[p] == true,
+    );
+    if (!allPrereqsMet) continue;
+    final discoveryIds = tech.discoveryResourceIds;
+    if (discoveryIds != null && discoveryIds.isNotEmpty) {
+      if (hasDiscoveredResource == null) {
+        result.add(tech.id);
+        continue;
+      }
+      final anyDiscovered = discoveryIds.any((r) => hasDiscoveredResource(r));
+      if (anyDiscovered) result.add(tech.id);
+    } else {
+      result.add(tech.id);
+    }
+  }
+  return result;
+}
+
+/// Resource-specific extraction cap from gathering/new-world tech progression.
+/// Returns max cap unlocked for [resourceId], or [defaultExtractionCap] when no cap tech is unlocked.
+int extractionCapForResourceForUnlocked(
+  Map<String, bool>? techUnlocked,
+  String resourceId,
+) {
+  final unlocked = techUnlocked ?? const <String, bool>{};
+  final perTech = _extractionCapByResourceByTechId[resourceId];
+  if (perTech == null || perTech.isEmpty) {
+    return extractionCapDesignExceptions[resourceId] ?? defaultExtractionCap;
+  }
+  var cap = 0;
+  for (final e in perTech.entries) {
+    if (unlocked[e.key] == true && e.value > cap) {
+      cap = e.value;
+    }
+  }
+  return cap > 0 ? cap : defaultExtractionCap;
+}
+
+/// Legacy scalar extraction cap (max across all resources).
+/// Maintained for backward compatibility in callsites/tests that still use a scalar.
 int extractionCapForUnlocked(Map<String, bool>? techUnlocked) {
-  if (techUnlocked == null || techUnlocked.isEmpty) {
-    return defaultExtractionCap;
+  var cap = defaultExtractionCap;
+  for (final resourceId in _extractionCapByResourceByTechId.keys) {
+    final resourceCap = extractionCapForResourceForUnlocked(
+      techUnlocked,
+      resourceId,
+    );
+    if (resourceCap > cap) {
+      cap = resourceCap;
+    }
   }
-  final hasGathering = techUnlocked['gathering_1'] == true ||
-      techUnlocked['gathering_2'] == true ||
-      techUnlocked['gathering_3'] == true;
-  if (!hasGathering) {
-    return defaultExtractionCap;
-  }
-  var cap = 1;
-  if (techUnlocked['gathering_1'] == true) {
-    cap = cap < 2 ? 2 : cap;
-  }
-  if (techUnlocked['gathering_2'] == true) {
-    cap = cap < 3 ? 3 : cap;
-  }
-  if (techUnlocked['gathering_3'] == true) {
-    cap = cap < 4 ? 4 : cap;
+  for (final e in extractionCapDesignExceptions.entries) {
+    if (e.value > cap) {
+      cap = e.value;
+    }
   }
   return cap;
 }
+
+void _validateExtractionCapProgression() {
+  const upgradeableResources = <String>{
+    'grain',
+    'meat',
+    'wool',
+    'horses',
+    'timber',
+    'iron',
+    'copper',
+    'tin',
+    'coal',
+    'sugarCane',
+    'tobacco',
+    'cotton',
+    'furs',
+    'spices',
+    'silver',
+    'gold',
+    'gems',
+    'diamonds',
+  };
+  for (final resourceId in upgradeableResources) {
+    final explicitCap = extractionCapDesignExceptions[resourceId];
+    if (explicitCap != null) {
+      if (explicitCap < 1 || explicitCap > 4) {
+        throw StateError(
+          'Invalid design exception cap for $resourceId: $explicitCap',
+        );
+      }
+      continue;
+    }
+    final perTech = _extractionCapByResourceByTechId[resourceId] ?? const {};
+    final maxCap = perTech.values.fold<int>(
+      defaultExtractionCap,
+      (acc, value) => value > acc ? value : acc,
+    );
+    if (maxCap < 4) {
+      throw StateError(
+        'Extraction cap progression for $resourceId does not reach level 4 '
+        'and has no declared design exception.',
+      );
+    }
+  }
+}
+
+final bool _extractionCapCatalogValidated = (() {
+  _validateExtractionCapProgression();
+  return true;
+})();
 
 /// Regiment id -> tech id that unlocks it. Derived from catalog. Absent = buildable without tech.
 /// SPEC/game/tech-tree-military.md.
@@ -236,6 +254,18 @@ Map<String, String> get unlockingTechByRegimentId {
   for (final t in techCatalog.values) {
     for (final rid in t.regimentUnlockIds) {
       m[rid] = t.id;
+    }
+  }
+  return m;
+}
+
+/// Ship type id -> tech id that unlocks it. Derived from catalog. Absent = buildable without tech (e.g. carrack).
+/// SPEC/game/tech-tree-naval.md.
+Map<String, String> get unlockingTechByShipId {
+  final m = <String, String>{};
+  for (final t in techCatalog.values) {
+    for (final sid in t.shipUnlockIds) {
+      m[sid] = t.id;
     }
   }
   return m;

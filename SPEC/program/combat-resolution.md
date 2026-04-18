@@ -6,7 +6,7 @@ Conflict detection, auto-resolve pipeline, and application of combat outcomes to
 
 ## Data Model
 
-**BattleContext:** Province id, defender side (faction id + unit ids), list of attacking sides (each: faction id + unit ids + optional general id), battle type (field / siege), province terrain and fort level snapshot.
+**BattleContext:** Province id, defender side (faction id + unit ids), list of attacking sides (each: faction id + unit ids + **army id** + optional general id bound in pre-Combat), battle type (field / siege), province terrain and fort level snapshot. Province ids in BattleContext and in all conflict-detection inputs (unit locations, move-order destinations) are always the **prefixed** form `regionId|localId` per [../game/world-model-identity.md](../game/world-model-identity.md); conflict detection and resolution MUST NOT use bare local province ids. Land armies: [../game/military-armies.md](../game/military-armies.md).
 
 **EngagementResult:** Winner side (attacker / defender / stalemate / mutual annihilation), casualty unit ids per side.
 
@@ -22,33 +22,57 @@ For each province with units from multiple factions:
 2. Determine defender and attacker sides per game/combat.md § Rules (Attacker / Defender).
 3. If ≥ 1 attacker and a defender exist, create a BattleContext.
 
-**Output:** List of BattleContexts, ordered deterministically by province id.
+**Output:** List of BattleContexts, ordered deterministically by province id (the prefixed `regionId|localId` form).
 
 ### 2. Initiative Ordering
 
-Per BattleContext, compute initiative per attacking side per game/combat.md § Rules (Initiative). Sort descending; tie-break by faction id.
+Per BattleContext, compute initiative per attacking side per game/combat.md § Rules (Initiative). Sort descending. For exact ties, use one deterministic RNG tie-break for the whole BattleContext (seeded from combat seed + context identity), not lexical faction id.
 
-### 3. Deployment Limit (per side)
+### 3. Pre-Combat general binding and ledger
 
-Before running the per-engagement resolver, cap each side’s participating regiments to the deployment limit per [military-generals.md](../game/military-generals.md): **base 10** (or **12** if the faction has Nationalism tech) **+1 per general medal**. Only the capped subset participates in strength and casualty computation; excess units do not take or deal damage in that engagement. Defender general medals are not yet modelled (treated as 0).
+**Pre-Combat step (once per Combat phase, before §1 conflict detection or immediately before first battle — same ordering as turn-resolution orchestration):** Bind generals to **armies** per [military-generals.md](../game/military-generals.md): each **attacking army** that will appear in any `BattleContext` this phase receives at most one general from its faction’s pool; each **defending army** in a contested province receives defender binding when the pool allows. Persist bindings on `BattleContext` attacking sides (`generalId`, `generalMedals`) and defender side medals from the **primary defending army** rule in [military-armies.md](../game/military-armies.md). If binding cannot assign a general, set `generalMedals` from leader fallback mapping (same as below) and null `generalId` for that side.
 
-### 4. Per-Engagement Resolver
+**Combat phase ledger (turn-wide attack cap):** The Combat phase maintains a mutable **ledger** (not a global singleton), created at the start of the phase. For each faction id, the ledger records which general ids are **already bound to an attacking army** this phase. Pre-Combat binding **consumes** generals for attacking armies subject to: no general id may be bound to two **attacking** armies in the same phase. **Completed battle** steps append attacking `generalId` to the ledger when non-null (for parity with prior replay tests) **or** ledger is fully established at pre-Combat — TDD chooses one approach; Quick Battle and auto-resolve must match. Defender binding does **not** consume attacking ledger slots. **Any** faction id present as `General.ownerId` uses the same rules (not only Great Powers).
 
-**Input:** One attacker side (capped unit list), current defender side (capped unit list), province snapshot, ruleset config, optional RNG seed.
+**Binding RNG:** Pre-Combat binding for auto-resolve and Quick Battle uses the same deterministic seed recipe: `hash(globalGameSeed, turnNumber, "preCombatGenerals")` extended with per-army tie-breaks as needed (program-level `Object.hash` or equivalent).
+
+**Quick Battle:** `buildQuickBattleInput` must use the same pre-Combat bindings + ledger + fallback rules as auto-resolve. **Primary attacker** for Quick Battle initiative and attacker medal inputs is the **first** entry in `BattleContext.attackers` (same as `QuickBattleInput.attackerFactionId`). Defender medal inputs use the defender binding from the same pre-Combat pass.
+
+If a side has no assignable general (empty pool after exclusions), derive fallback `generalMedals` from leader combat multiplier (`leader-bonuses.md`) using this mapping:
+
+- multiplier `>= 1.25` => 4 medals
+- multiplier `>= 1.20` => 3 medals
+- multiplier `>= 1.15` => 2 medals
+- multiplier `>= 1.10` => 1 medal
+- else => 0 medals
+
+In multi-attacker chains, when the winner of engagement _n_ becomes defender in engagement _n+1_, reuse that winner side's assigned/fallback `generalMedals` for the carried defender role.
+
+When an engagement is won by a side with an assigned general record, increment that general's medals by exactly `+1` (cap at 4) and persist to game state immediately so later engagements in the same BattleContext observe updated medals. Medal gain is per engagement win, not per BattleContext aggregate.
+
+When the **entire** Combat phase ends, **release** all general–army bindings for the next turn. If the implementation records attacking `generalId` on the ledger per **completed** battle instead of only at pre-Combat, **after** each completed land battle append each attacking side’s `generalId` (when non-null) for that attacker’s `factionId` consistent with [military-generals.md](../game/military-generals.md).
+
+### 4. Deployment Limit (per side)
+
+Before running the per-engagement resolver, cap each side’s participating regiments to the deployment limit per [military-generals.md](../game/military-generals.md): **base 10** (or **12** if the faction has Nationalism tech) **+1 per general medal**. Only the capped subset participates in strength and casualty computation; excess units do not take or deal damage in that engagement. Defender general medals come from the defender’s assigned general (or 0 if no general assigned).
+
+### 5. Per-Engagement Resolver
+
+**Input:** One attacker side (capped unit list, generalMedals set per §3), current defender side (capped unit list, defender generalMedals set per §3), province snapshot, ruleset config, optional RNG seed.
 
 Steps:
 
 1. Aggregate strength per side per game/combat.md § Rules (Strength).
-2. For Minor Nation / Tribe defenders, apply effective military level per [factions.md](../game/factions.md).
+2. For Minor Nation defenders, apply effective military level per [factions.md](../game/factions.md); for Tribe defenders, effective military level is always 1 (no parity).
 3. Apply siege modifiers if fort present per [siege-mechanics.md](../game/siege-mechanics.md).
-4. Apply terrain, difficulty, general, and feeding modifiers per game/combat.md § Rules (Modifiers). Apply **leader bonus** per [leader-bonuses.md](../game/leader-bonuses.md): multiplier from each side's GP leaderKey (attackerLeaderMultiplier, defenderLeaderMultiplier). **General morale aura** (bonus scaling with general medals) is deferred until general/medal state is modelled. **Difficulty** is not yet passed into the resolver; when game/config provides difficulty, apply it in this step. **Strength aggregation** (step 1): currently (FPN + FPM) × medalMult per unit only; DEF/9 and damaged-unit health scaling are deferred per GDD.
+4. Apply terrain, difficulty, general, and feeding modifiers per game/combat.md § Rules (Modifiers). Apply **leader bonus** per [leader-bonuses.md](../game/leader-bonuses.md): multiplier from each side's GP leaderKey (attackerLeaderMultiplier, defenderLeaderMultiplier). Apply **general morale aura** per [military-generals.md](../game/military-generals.md): 5% strength bonus per general medal, max 20%. **Difficulty** is not yet passed into the resolver; when game/config provides difficulty, apply it in this step. **Strength aggregation** (step 1): currently (FPN + FPM) × medalMult per unit only; DEF/9 and damaged-unit health scaling are deferred per GDD.
 5. Compute winner and casualties. Pure function; no side effects.
 
 **Output:** EngagementResult.
 
-**Deferred:** General medals are not yet read from game state (conflict detection passes 0); initiative still uses cavalry share. When general/medal state exists, populate `AttackingSide.generalMedals` in conflict detection and apply general morale aura in step 4. DEF/9 in strength/casualties and unit health scaling are deferred. Difficulty is not wired from game config into the resolver.
+**Implementation note:** Conflict detection supplies **army id** per attacking side; **generalMedals** and `generalId` come from **pre-Combat binding** (§3) unless TDD merges binding into conflict detection in one pass. Record which general commanded each side so medal gain can be applied to the winning general per military-generals.md and this spec's per-engagement medal progression rule. DEF/9 in strength/casualties and unit health scaling are deferred. Difficulty is not wired from game config into the resolver.
 
-### 5. Resolution Chain
+### 6. Resolution Chain
 
 Per BattleContext:
 
@@ -57,15 +81,18 @@ Per BattleContext:
    - Run per-engagement resolver.
    - Apply casualties to local views.
    - Interpret outcome per game/combat.md § Rules (Outcomes).
-   - On mutual annihilation with remaining attackers: recover garrison per game/combat.md § Configurable Values (Recovery %).
+   - On mutual annihilation with remaining attackers: recover garrison per game/combat.md — regiment **count** from Recovery % (§ Configurable Values) and regiment **type** from § Garrison recovery type (most-advanced infantry at defender effective era `E`, deterministic tie-break, `peasant_levies` fallback). Logic: `garrisonRecoveryRegimentTypeForEra` in `packages/colonizethis_data/.../combat_config.dart`; applied when `resolveBattleContext` spawns `recover_*` units.
 3. After chain completes, apply to world state in a single pass:
    - Remove casualty units.
    - Flip province ownership if defender eliminated per game/combat.md § Rules (Province Flip).
-   - **Fort downgrade (when implemented):** When the fort-downgrade condition is defined and implemented (per [siege-mechanics.md](../game/siege-mechanics.md) and issue #25), apply it in this same pass: if the condition holds for the battle province (e.g. all emplaced guns destroyed), set `province.fortLevel = (current - 1).clamp(0, 3)` when building the updated province list for that BattleContext.
+   - **Clear purchased land on conquest:** When a province changes hands (ownerId updated due to attacker victory), remove any entries in `purchasedTilesByTileKey` whose tile keys belong to that province (tile’s province id matches the conquered province id). This models the rule “if the aggressor conquers the province, any purchased land will revert to the new province owner”: after conquest, extraction/connectivity treat the province as owned entirely by the new owner, and no GP retains special purchased-land rights in that province.
+   - **Fort downgrade (auto-resolve path):** Not yet tied to “all emplaced guns destroyed” — auto-resolve uses aggregate emplaced strength without per-gun HP. When a future spec defines an aggregate proxy for fort downgrade, apply `province.fortLevel = (current - 1).clamp(0, 3)` in this pass when that condition holds.
 
-**Where ownership and fort level are applied:** The same application step that updates province ownership and unit lists is the single place that must also apply fort level change when the condition holds. In the main game loop this is the logic inside `resolveBattleContext` that builds the updated region (provinces and units). The quick-battle path (`applyQuickBattleResultToGame`) applies outcomes in a separate code path; when fort downgrade is implemented, that path must apply the same fort-level update so both resolution paths keep the TDD as source of truth. See issue #24 for implementation.
+**Quick Battle path — fort downgrade:** Per [siege-mechanics.md](../game/siege-mechanics.md) and [quick-battle-resolution.md](quick-battle-resolution.md), when combat is resolved via Quick Battle and **all virtual emplaced guns** are destroyed in that battle, `applyQuickBattleResultToGame` (or equivalent) **must** set `province.fortLevel = max(0, current - 1)` for that province **even if** the defender holds the province or the outcome is mutual exhaustion. This is independent of the auto-resolve application step above until auto-resolve gains a matching rule.
 
-### 6. Probabilistic Resolver (Simulation Only)
+**Where ownership and regiment fort snapshot apply:** Regiment casualties and province ownership updates use the existing chain. Fort level changes from Quick Battle emplaced destruction apply in the Quick Battle result application path only (until auto-resolve is aligned).
+
+### 7. Probabilistic Resolver (Simulation Only)
 
 Separate resolver for simulation and Monte Carlo analysis; **not** used in the main game loop.
 
@@ -75,6 +102,10 @@ Separate resolver for simulation and Monte Carlo analysis; **not** used in the m
 - Casualty selection: strength-weighted (weight ∝ 1 / (strength + 0.1)).
 - Deterministic given same seed.
 
+## Observability
+
+Structured **land** combat logs (`combat …` tokens after the `logic` prefix) are specified in [logging/turn-resolution.md](logging/turn-resolution.md) § Land combat: conflict detection, `battle_start`, per-engagement (debug, auto-resolve), and `battle_apply`. Global logger emission does not change resolver return values or determinism of game state.
+
 ## Integration
 
 - **Phase:** Combat phase, after Movement.
@@ -83,7 +114,30 @@ Separate resolver for simulation and Monte Carlo analysis; **not** used in the m
 
 ## Constraints
 
-- Resolver is a pure function: same inputs (including seed) → same output.
+- Per `BattleContext`, given the same `Game` snapshot, `BattleContext`, feeding coverage map, pre-Combat binding RNG seed (§3), and **ledger state** (whether established at pre-Combat or updated per battle per TDD), resolution is deterministic; the turn-wide attack cap is enforced via general–**army** binding rules in [military-generals.md](../game/military-generals.md).
+- Resolver is a pure function: same inputs (including seed) → same **returned** `Game` / world state. Emitting logs via the global Dart `logger` is allowed for observability and is not part of the functional output.
 - No global RNG access; callers provide explicit seed when randomness is needed.
-- Province battles are independent; processing order is deterministic (province id).
+- Province battles are independent; processing order is deterministic (prefixed province id `regionId|localId`).
 - Results applied in a single pass after full chain resolution per BattleContext.
+
+## Acceptance criteria (program)
+
+- Given pre-Combat binding runs and a faction has general cap **G** with **G** distinct generals, when **G** distinct **attacking armies** of that faction enter land combat this phase, then each of those armies receives a **different** bound `generalId` when RNG selects from the pool, and no `generalId` is bound to two attacking armies in the same phase.
+
+- Given one general **G1** for faction **F** and **G1** is already bound to an attacking army this Combat phase, when pre-Combat binding runs for **another** attacking army of **F** and no other general is free, then that army’s attacking side receives **fallback** leader-derived medals and no assigned attacking `generalId`.
+
+- Given general **D** was bound to a defending army that fought earlier in the same Combat phase, when pre-Combat binding runs for a later defender (or the same faction defends again under pool rules), then **D** may be eligible again per [military-generals.md](../game/military-generals.md) (defender binding does not use the attacking ledger).
+
+- Given identical `Game` (including `globalGameSeed`), turn number, and the same set of `BattleContext`s, when the system runs **pre-Combat binding** for auto-resolve and for Quick Battle input build, then both use the same binding RNG recipe and produce the same bound general ids and medal counts for attacker (per attacking army) and defender.
+
+- Given `buildQuickBattleInput` is called with a defender faction that has an assigned general with **M** medals (0 ≤ M ≤ 4) under §3 rules  
+  When the built `QuickBattleInput` is read  
+  Then `defenderGeneralMedals` equals **M** (or fallback count when no defender general is assigned).
+
+- Given `BattleContext.attackers` has a first entry for faction **A** with **M** attacker medals under §3 for that battle  
+  When `buildQuickBattleInput` runs for that context  
+  Then `attackerGeneralMedals` equals **M** for that primary attacker (first list entry), not a sum of `AttackingSide.generalMedals` from conflict detection alone.
+
+- Given an engagement ends in mutual annihilation, at least one attacker remains later in the multi-attacker chain, and the defending faction’s effective military era is **E** (per game/factions.md and resolver inputs)  
+  When `resolveBattleContext` applies garrison recovery  
+  Then every spawned recovered regiment’s `type` equals `garrisonRecoveryRegimentTypeForEra(E)` from `combat_config.dart` (same value as game/combat.md § Garrison recovery type).

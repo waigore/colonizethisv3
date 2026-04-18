@@ -1,11 +1,16 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /// Probabilistic multi-round combat resolver for simulation tools.
 /// SPEC/program/combat-resolution.md, SPEC/program/sim-combat.md.
+library;
+
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'combat_resolver.dart';
+import 'military_strength.dart';
 
 /// Maximum number of combat rounds per engagement.
 const int maxCombatRounds = 5;
@@ -227,7 +232,7 @@ List<String> _selectCasualtiesWeighted(
 
   final weights = <double>[];
   for (final u in units) {
-    final s = _unitStrength(u, effectiveEra);
+    final s = unitStrength(u, effectiveEra);
     weights.add(1.0 / (s + 0.1));
   }
   final ids = units.map((u) => u.id).toList();
@@ -250,27 +255,11 @@ List<String> _selectCasualtiesWeighted(
   return chosen;
 }
 
-double _unitStrength(Unit u, int effectiveEra) {
-  var stats = regimentStatsById(u.type);
-  if (stats == null) return 0.0;
-  if (stats.era > effectiveEra) {
-    stats = _downgradeToEra(stats, effectiveEra) ?? stats;
-  }
-  final mult = medalMultiplierFor(u.medals.clamp(0, 4));
-  return (stats.fpn + stats.fpm) * mult;
-}
-
+/// Aggregates strength for a list of units (probabilistic version with helper).
 double _aggregateStrength(List<Unit> units, int effectiveEra) {
   var total = 0.0;
   for (final u in units) {
-    total += _unitStrength(u, effectiveEra);
+    total += unitStrength(u, effectiveEra);
   }
   return total;
-}
-
-RegimentStats? _downgradeToEra(RegimentStats stats, int era) {
-  final sameCategory = regimentCatalog
-      .where((r) => r.category == stats.category && r.era == era)
-      .toList();
-  return sameCategory.isNotEmpty ? sameCategory.first : null;
 }
