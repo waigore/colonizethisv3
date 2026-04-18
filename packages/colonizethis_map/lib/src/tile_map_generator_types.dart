@@ -272,6 +272,45 @@ class TileMapParams {
   // --- Pass 7 (resources)
   /// Max fraction of placed resources that may be multi-region ("both") per map. Default 0.30.
   final double multiRegionResourceCapFraction;
+
+  /// Returns a copy with selected fields overridden (e.g. bumped map seed for tests/tools).
+  TileMapParams copyWith({int? seed}) {
+    return TileMapParams(
+      width: width,
+      height: height,
+      seed: seed ?? this.seed,
+      seaFraction: seaFraction,
+      borderNoise: borderNoise,
+      maxEnforceIterations: maxEnforceIterations,
+      clusterShape: clusterShape,
+      voronoiNoiseScale: voronoiNoiseScale,
+      continentBufferTiles: continentBufferTiles,
+      skipFillLakes: skipFillLakes,
+      joinContinents: joinContinents,
+      seedBeforeAssignment: seedBeforeAssignment,
+      maxSeaZoneFraction: maxSeaZoneFraction,
+      mountainRangesFactor: mountainRangesFactor,
+      mountainRangesMin: mountainRangesMin,
+      mountainRangesMax: mountainRangesMax,
+      mountainRangeMinLength: mountainRangeMinLength,
+      terrainSeedsFactor: terrainSeedsFactor,
+      terrainSeedsMin: terrainSeedsMin,
+      terrainSeedsMax: terrainSeedsMax,
+      terrainMacroFraction: terrainMacroFraction,
+      patternMinBlobSize: patternMinBlobSize,
+      patternMaxFractionPerBlob: patternMaxFractionPerBlob,
+      patternSeedFactor: patternSeedFactor,
+      patternMaxSeedsPerBlob: patternMaxSeedsPerBlob,
+      patternMaxChangesPerSeed: patternMaxChangesPerSeed,
+      patternMaxRadius: patternMaxRadius,
+      jitterHomogeneityThreshold: jitterHomogeneityThreshold,
+      jitterMaxFraction: jitterMaxFraction,
+      jitterProbability: jitterProbability,
+      jitterMinProvinceSize: jitterMinProvinceSize,
+      jitterNeighborSupportThreshold: jitterNeighborSupportThreshold,
+      multiRegionResourceCapFraction: multiRegionResourceCapFraction,
+    );
+  }
 }
 
 /// Tracks both-count and total for multi-region resource cap (Pass 7). SPEC/game/resource-terrain-region-rules.md.

@@ -9,7 +9,6 @@ import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'capital_choice.dart';
-import 'gp_land_connectivity_repair.dart';
 import 'gp_starting_grain.dart';
 import 'town_capital_occupancy.dart';
 import 'init_town_roads.dart';
@@ -20,6 +19,8 @@ import 'initial_visibility.dart';
 import '../world/army_migration.dart';
 import '../world/naval.dart';
 import '../world/ship_instance_allocate.dart';
+import 'locked_province_assigner.dart';
+import 'locked_topology_gates.dart';
 import 'province_assignment.dart';
 import 'province_name_fallback.dart';
 

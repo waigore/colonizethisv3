@@ -32,7 +32,6 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
   final void Function(
     List<String> orderedGreatPowerIds,
     Map<String, String> leaderVariantByGpId,
-    bool enforceFairGpOldWorldAssignment,
     int seed,
   )
   onConfirmed;
@@ -59,7 +58,6 @@ class _NewGameLeaderSelectionDialogState
     extends State<NewGameLeaderSelectionDialog> {
   late List<String> _orderedGpIdsBySlot;
   late Map<String, String> _leaderByGpId;
-  var _enforceFairGpOldWorldAssignment = false;
   late final TextEditingController _seedController;
 
   List<String> get _allGpIds =>
@@ -175,35 +173,6 @@ class _NewGameLeaderSelectionDialogState
             children: slotWidgets,
           ),
           const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Checkbox(
-                value: _enforceFairGpOldWorldAssignment,
-                onChanged: (v) {
-                  setState(() => _enforceFairGpOldWorldAssignment = v ?? false);
-                },
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(
-                      () => _enforceFairGpOldWorldAssignment =
-                          !_enforceFairGpOldWorldAssignment,
-                    );
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Text(
-                      l10n.shell_leaderDialog_enforceFairGpAssignment,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
           Text(
             l10n.shell_leaderDialog_seedLabel,
             style: Theme.of(
@@ -247,7 +216,6 @@ class _NewGameLeaderSelectionDialogState
                         widget.onConfirmed(
                           List<String>.from(_orderedGpIdsBySlot),
                           Map<String, String>.from(_leaderByGpId),
-                          _enforceFairGpOldWorldAssignment,
                           seed,
                         );
                       }

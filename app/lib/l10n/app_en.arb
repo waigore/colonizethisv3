@@ -222,11 +222,6 @@
       }
     }
   },
-  "shell_leaderDialog_enforceFairGpAssignment": "Enforce fair GP assignment (slower)",
-  "@shell_leaderDialog_enforceFairGpAssignment": {
-    "description": "Checkbox label: run Old World GP land connectivity repair and assignment retries per game-setup spec."
-  },
-
   "shell_leaderDialog_seedLabel": "Game / world seed",
   "@shell_leaderDialog_seedLabel": {
     "description": "Label for the numeric seed field in the new-game leader dialog."

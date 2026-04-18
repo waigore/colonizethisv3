@@ -180,13 +180,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             naming: naming,
             initialLeaderByGpId: initialSelections,
             onCancel: () => Navigator.of(ctx).pop(),
-            onConfirmed:
-                (
-                  orderedGreatPowerIds,
-                  leaderVariantByGpId,
-                  enforceFairGpOldWorldAssignment,
-                  seed,
-                ) {
+            onConfirmed: (orderedGreatPowerIds, leaderVariantByGpId, seed) {
                   final navCtx = appNavigatorKey.currentContext;
                   if (navCtx == null) {
                     _logShell.w(
@@ -206,8 +200,6 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
                     minProvincesPerMinor: baseConfig.minProvincesPerMinor,
                     seed: seed,
                     startingResources: baseConfig.startingResources,
-                    enforceFairGpOldWorldAssignment:
-                        enforceFairGpOldWorldAssignment,
                     initTownRoadWiringRegionIds:
                         baseConfig.initTownRoadWiringRegionIds,
                   );

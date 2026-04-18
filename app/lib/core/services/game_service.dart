@@ -339,7 +339,6 @@ class GameService {
       topologyNewWorld: topoNW,
       gameId: gameId,
       namingSeed: effectiveSeed,
-      assignmentPerturbationBase: effectiveSeed,
       warpLinks: warpLinks,
     );
     final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);
@@ -402,7 +401,6 @@ class GameService {
       topologyNewWorld: topoNW,
       gameId: gameId,
       namingSeed: effectiveSeed,
-      assignmentPerturbationBase: effectiveSeed,
       warpLinks: warpLinks,
     );
     final result = _setupResultWithFinalizedGame(setupResult, effectiveSeed);

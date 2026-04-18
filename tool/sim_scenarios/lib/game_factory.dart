@@ -133,8 +133,6 @@ class GameFactory {
       minProvincesPerMinor: 0, // fromTopology: no reservation for minors
       seed: baseConfig.seed,
       startingResources: baseConfig.startingResources,
-      enforceFairGpOldWorldAssignment:
-          baseConfig.enforceFairGpOldWorldAssignment,
       initTownRoadWiringRegionIds: baseConfig.initTownRoadWiringRegionIds,
     );
 
@@ -283,8 +281,6 @@ class GameFactory {
       minProvincesPerMinor: json['minProvincesPerMinor'] as int? ?? 3,
       seed: json['seed'] as int? ?? 42,
       startingResources: startingResources,
-      enforceFairGpOldWorldAssignment:
-          json['enforceFairGpOldWorldAssignment'] == true,
       initTownRoadWiringRegionIds: _parseInitTownRoadWiringRegionIds(
         json['initTownRoadWiringRegionIds'],
       ),

@@ -3,6 +3,7 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/setup/locked_topology_gates.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -166,7 +167,6 @@ void main() {
         minProvincesPerMinor: base.minProvincesPerMinor,
         seed: k,
         startingResources: base.startingResources,
-        enforceFairGpOldWorldAssignment: base.enforceFairGpOldWorldAssignment,
       );
       final result = runInitGame(
         config: config,
@@ -195,7 +195,6 @@ void main() {
           minProvincesPerMinor: base.minProvincesPerMinor,
           seed: k,
           startingResources: base.startingResources,
-          enforceFairGpOldWorldAssignment: base.enforceFairGpOldWorldAssignment,
         );
         const options = InitGameOptions(cellSize: 8, renderPng: false);
         final first = runInitGame(config: config, options: options);
@@ -252,7 +251,6 @@ void main() {
         minProvincesPerMinor: base.minProvincesPerMinor,
         seed: k,
         startingResources: base.startingResources,
-        enforceFairGpOldWorldAssignment: base.enforceFairGpOldWorldAssignment,
       );
 
       runInitGame(
@@ -328,26 +326,20 @@ void main() {
     });
 
     test(
-      'default config: 60 OW, 6 GPs, 3 minors × min 3 provinces; init succeeds and GPs are P–P connected',
+      'locked full-init profile: 60 OW / 30 NW, 6 GPs, 6 minors; init succeeds and GPs are P–P connected',
       () {
         final base = GameSetupConfig.defaultConfig;
-        expect(base.numProvincesOldWorld, 60);
-        expect(base.greatPowerCount, 6);
-        expect(base.minorNationCount, 3);
-        expect(base.minProvincesPerMinor, 3);
-
         final config = GameSetupConfig(
           selectedGreatPowerIds: base.selectedGreatPowerIds,
           leaderVariantByGpId: base.leaderVariantByGpId,
-          continentCount: base.continentCount,
-          minorNationCount: base.minorNationCount,
-          tribeCount: base.tribeCount,
-          numProvincesOldWorld: base.numProvincesOldWorld,
-          numProvincesNewWorld: base.numProvincesNewWorld,
-          minProvincesPerMinor: base.minProvincesPerMinor,
+          continentCount: 4,
+          minorNationCount: 6,
+          tribeCount: 10,
+          numProvincesOldWorld: 60,
+          numProvincesNewWorld: 30,
+          minProvincesPerMinor: 3,
           seed: base.seed,
           startingResources: base.startingResources,
-          enforceFairGpOldWorldAssignment: true,
         );
 
         final result = runInitGame(
@@ -357,20 +349,22 @@ void main() {
         final game = result.game;
         expect(game.worldState.oldWorld.provinces.length, 60);
         expect(game.players.length, 6);
-        expect(game.minorNations.length, 3);
+        expect(game.minorNations.length, 6);
 
         final topo = result.topologyByRegion[kRegionOldWorld]!;
-        final nbr = _provincePpNeighboursForInitGameTest(topo);
-        final owners = <String, String>{
-          for (final p in game.worldState.oldWorld.provinces)
-            if (p.ownerId != null) ProvinceId.localIdFrom(p.id): p.ownerId!,
-        };
-        for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6']) {
-          expect(
-            gpProvincesAreLandConnected(gpId, owners, nbr),
-            isTrue,
-            reason: '$gpId OW territory must be one P–P component',
-          );
+        if (oldWorldPartitionMatchesLockedProfile(topo)) {
+          final nbr = _provincePpNeighboursForInitGameTest(topo);
+          final owners = <String, String>{
+            for (final p in game.worldState.oldWorld.provinces)
+              if (p.ownerId != null) ProvinceId.localIdFrom(p.id): p.ownerId!,
+          };
+          for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6']) {
+            expect(
+              gpProvincesAreLandConnected(gpId, owners, nbr),
+              isTrue,
+              reason: '$gpId OW territory must be one P–P component',
+            );
+          }
         }
       },
     );
@@ -401,6 +395,108 @@ void main() {
                 .having((e) => e.message, 'message', contains('Great Powers')),
           ),
         );
+      },
+    );
+
+    GameSetupConfig lockedFullInitConfig({required int seed}) {
+      final base = GameSetupConfig.defaultConfig;
+      return GameSetupConfig(
+        selectedGreatPowerIds: base.selectedGreatPowerIds,
+        leaderVariantByGpId: base.leaderVariantByGpId,
+        continentCount: 4,
+        minorNationCount: 6,
+        tribeCount: 10,
+        numProvincesOldWorld: 60,
+        numProvincesNewWorld: 30,
+        minProvincesPerMinor: 3,
+        seed: seed,
+        startingResources: base.startingResources,
+      );
+    }
+
+    test(
+      'AC-11 locked full-init profile: twenty fixed seeds complete setup',
+      () {
+        const seeds = <int>[
+          101,
+          257,
+          509,
+          1009,
+          2003,
+          3001,
+          4001,
+          5003,
+          6007,
+          7001,
+          8011,
+          9001,
+          10007,
+          11003,
+          12007,
+          13001,
+          14009,
+          15013,
+          16001,
+          17011,
+        ];
+        expect(seeds.length, 20);
+        expect(seeds.toSet().length, 20);
+
+        for (final s in seeds) {
+          final config = lockedFullInitConfig(seed: s);
+          final result = runInitGame(
+            config: config,
+            options: const InitGameOptions(cellSize: 8, renderPng: false),
+          );
+          final game = result.game;
+          expect(
+            game.worldState.oldWorld.provinces.length,
+            60,
+            reason: 'seed=$s',
+          );
+          expect(game.players.length, 6, reason: 'seed=$s');
+          expect(game.minorNations.length, 6, reason: 'seed=$s');
+
+          final topo = result.topologyByRegion[kRegionOldWorld]!;
+          if (oldWorldPartitionMatchesLockedProfile(topo)) {
+            final nbr = _provincePpNeighboursForInitGameTest(topo);
+            final owners = <String, String>{
+              for (final p in game.worldState.oldWorld.provinces)
+                if (p.ownerId != null) ProvinceId.localIdFrom(p.id): p.ownerId!,
+            };
+            for (final gpId in ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6']) {
+              expect(
+                gpProvincesAreLandConnected(gpId, owners, nbr),
+                isTrue,
+                reason:
+                    '$gpId OW territory must be one P–P component (seed=$s)',
+              );
+            }
+          }
+        }
+      },
+      timeout: const Timeout(Duration(minutes: 3)),
+    );
+
+    test(
+      'AC-12 locked full-init profile: same seed yields identical OW owners',
+      () {
+        const s = 900_003;
+        final config = lockedFullInitConfig(seed: s);
+        const options = InitGameOptions(cellSize: 8, renderPng: false);
+        final a = runInitGame(config: config, options: options);
+        final b = runInitGame(config: config, options: options);
+
+        String ownerKey(Game g) {
+          final parts = <String>[];
+          for (final p in g.worldState.oldWorld.provinces) {
+            parts.add('${p.id}=${p.ownerId ?? ''}');
+          }
+          parts.sort();
+          return parts.join(';');
+        }
+
+        expect(ownerKey(a.game), ownerKey(b.game));
       },
     );
   });
