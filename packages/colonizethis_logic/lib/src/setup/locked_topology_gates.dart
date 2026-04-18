@@ -1,6 +1,5 @@
 // SPEC/program/locked-province-assigner.md — topology acceptance for locked OW painting.
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'capital_choice.dart' show isProvinceSeaBound;
 

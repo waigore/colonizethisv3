@@ -11,7 +11,63 @@ const _ac14Neighbours = <String, Set<String>>{
 };
 
 void main() {
+  group('islandResidualsFeasibleGreedy', () {
+    test('returns true for empty residuals list', () {
+      expect(
+        islandResidualsFeasibleGreedy(
+          unassignedOnLand: {'x'},
+          neighbours: const {},
+          land: const {'x'},
+          residualsSortedDesc: const [],
+        ),
+        true,
+      );
+    });
+
+    test('empty unassigned and all-zero residuals is feasible', () {
+      expect(
+        islandResidualsFeasibleGreedy(
+          unassignedOnLand: {},
+          neighbours: const {},
+          land: const {'a'},
+          residualsSortedDesc: const [0, 0],
+        ),
+        true,
+      );
+    });
+
+    test('empty unassigned with positive residual is infeasible', () {
+      expect(
+        islandResidualsFeasibleGreedy(
+          unassignedOnLand: {},
+          neighbours: const {},
+          land: const {'a', 'b'},
+          residualsSortedDesc: const [1],
+        ),
+        false,
+      );
+    });
+  });
+
   group('locked assigner mechanics (#1830 AC-14 / AC-15)', () {
+    test('throws when seed province is not on the landmass', () {
+      expect(
+        () => assignTerritoriesLockedOnLandmass(
+          landmassProvinceIds: {'a', 'b'},
+          neighbours: const {
+            'a': {'b'},
+            'b': {'a'},
+          },
+          growthOrder: const ['A'],
+          targetPerFaction: const {'A': 2},
+          seeds: const {'x': 'A'},
+          backtrackLimitPerLandmass: 10,
+          observation: null,
+        ),
+        throwsStateError,
+      );
+    });
+
     test('AC-14 observes at least one backtrack on a crafted topology', () {
       final obs = LockedAssignerObservation();
       assignTerritoriesLockedOnLandmass(
