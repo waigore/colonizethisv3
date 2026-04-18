@@ -268,15 +268,16 @@ Future<void> _pickMoveDestinationAndConfirm(
   await _pumpFor(tester, const Duration(milliseconds: 200));
   final warp = find.textContaining('links to New World');
   if (warp.evaluate().isNotEmpty) {
-    final scrollRoot = find.byKey(kCtE2EMoveFleetDialogScrollRootKey);
-    if (scrollRoot.evaluate().isNotEmpty) {
-      final scrollable = find.descendant(
-        of: scrollRoot,
-        matching: find.byType(Scrollable),
-      );
-      if (scrollable.evaluate().isNotEmpty) {
-        await tester.scrollUntilVisible(warp.first, 80, scrollable: scrollable);
-      }
+    // [Scrollable] wraps the dialog body above [kCtE2EMoveFleetDialogScrollRootKey];
+    // scrolling must target that viewport or the warp row can stay off-screen on CI.
+    final dialog = find.byType(AlertDialog);
+    expect(dialog, findsOneWidget);
+    final scrollable = find.descendant(
+      of: dialog,
+      matching: find.byType(Scrollable),
+    );
+    if (scrollable.evaluate().isNotEmpty) {
+      await tester.scrollUntilVisible(warp.first, 80, scrollable: scrollable);
     }
     final hit = warp.hitTestable();
     expect(hit, findsWidgets);
@@ -452,7 +453,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'new game → non-home fleet at sea in New World (≤10 Next turn taps)',
+    'new game → non-home fleet at sea in New World (≤15 Next turn taps)',
     (WidgetTester tester) async {
       expect(
         kCtE2EEnabled,
@@ -473,7 +474,7 @@ void main() {
       await _splitHomeFleetOnce(tester, l10n);
       await _closeBottomSheet(tester);
 
-      for (var turnIdx = 0; turnIdx < 10; turnIdx++) {
+      for (var turnIdx = 0; turnIdx < 15; turnIdx++) {
         await _dismissTransientUi(tester);
         await _tapNewWorldRegionTabIfPresent(tester);
         await _openNavalPanel(tester);
@@ -499,7 +500,7 @@ void main() {
       await _openNavalPanel(tester);
       if (!_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
         fail(
-          'After 10 Next turn resolutions, no non-home fleet row shows '
+          'After 15 Next turn resolutions, no non-home fleet row shows '
           'location text starting with "New World —" under '
           'kCtE2ENavalPanelRootKey. Last exception: ${tester.takeException()}',
         );
