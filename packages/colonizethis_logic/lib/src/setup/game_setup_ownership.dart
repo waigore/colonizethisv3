@@ -321,6 +321,56 @@ Map<String, String> _assignFactionsSingleComponentLocked({
   );
 }
 
+/// DFS over component choices (largest slack first) finds a feasible packing
+/// when one exists; bounded for pathological branching.
+const _kMultiComponentPackSearchNodeCap = 500000;
+
+bool _tryPackFactionsOntoPpComponentsDfs({
+  required List<String> facsOrdered,
+  required Map<String, int> targets,
+  required List<Set<String>> components,
+  required List<int> allocated,
+  required Map<String, int> compForFaction,
+  required int idx,
+  required int Function() bumpSearchNodes,
+}) {
+  if (idx >= facsOrdered.length) return true;
+  if (bumpSearchNodes() > _kMultiComponentPackSearchNodeCap) return false;
+  final f = facsOrdered[idx];
+  final t = targets[f]!;
+  final candidates = <int>[];
+  for (var ci = 0; ci < components.length; ci++) {
+    final slack = components[ci].length - allocated[ci];
+    if (slack >= t) candidates.add(ci);
+  }
+  if (candidates.isEmpty) return false;
+  candidates.sort((a, b) {
+    final sa = components[a].length - allocated[a];
+    final sb = components[b].length - allocated[b];
+    final c = sb.compareTo(sa);
+    if (c != 0) return c;
+    return a.compareTo(b);
+  });
+  for (final ci in candidates) {
+    allocated[ci] += t;
+    compForFaction[f] = ci;
+    if (_tryPackFactionsOntoPpComponentsDfs(
+      facsOrdered: facsOrdered,
+      targets: targets,
+      components: components,
+      allocated: allocated,
+      compForFaction: compForFaction,
+      idx: idx + 1,
+      bumpSearchNodes: bumpSearchNodes,
+    )) {
+      return true;
+    }
+    allocated[ci] -= t;
+    compForFaction.remove(f);
+  }
+  return false;
+}
+
 Map<String, String> _assignFactionsMultiComponentLocked({
   required List<String> factionIds,
   required Set<String> universe,
@@ -346,25 +396,24 @@ Map<String, String> _assignFactionsMultiComponentLocked({
       if (c != 0) return c;
       return a.compareTo(b);
     });
-  for (final f in facsOrdered) {
-    final t = targets[f]!;
-    var bestCi = -1;
-    var bestSlack = -1;
-    for (var ci = 0; ci < components.length; ci++) {
-      final slack = components[ci].length - allocated[ci];
-      if (slack >= t && slack > bestSlack) {
-        bestSlack = slack;
-        bestCi = ci;
-      }
-    }
-    if (bestCi < 0) {
-      throw SetupTopologyDataException(
-        code: 'faction_component_bin_pack_failed',
-        details: 'Cannot place faction $f with target $t on remainder graph',
-      );
-    }
-    compForFaction[f] = bestCi;
-    allocated[bestCi] += t;
+  var searchNodes = 0;
+  int bump() => ++searchNodes;
+  if (!_tryPackFactionsOntoPpComponentsDfs(
+    facsOrdered: facsOrdered,
+    targets: targets,
+    components: components,
+    allocated: allocated,
+    compForFaction: compForFaction,
+    idx: 0,
+    bumpSearchNodes: bump,
+  )) {
+    throw SetupTopologyDataException(
+      code: 'faction_component_bin_pack_failed',
+      details:
+          'Cannot assign factions ${facsOrdered.join(",")} with targets '
+          '$targets to remainder P–P components (sizes '
+          '${components.map((c) => c.length).join(",")}; searchNodes=$searchNodes)',
+    );
   }
   final byComp = <int, List<String>>{};
   for (final f in factionIds) {
