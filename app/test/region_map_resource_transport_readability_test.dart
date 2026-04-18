@@ -51,7 +51,7 @@ void main() {
       },
     );
 
-    /// Single land tile: plains + road + horses; 64px cell matches native icon cap.
+    /// Single land tile: plains + road + grain; 64px cell matches native icon cap.
     RegionMapViewData oneCellRoadResourceRegion() {
       return RegionMapViewData(
         regionId: 'goldenRegion',
@@ -65,7 +65,7 @@ void main() {
             regionCellId: 'pGolden',
             isSea: false,
             terrainType: TerrainType.plains,
-            resourceId: 'horses',
+            resourceId: 'grain',
             roadLevel: 2,
             provinceDisplayName: 'Golden',
           ),
@@ -81,7 +81,7 @@ void main() {
     }
 
     testWidgets(
-      'terrainAndResourcesImprovementsRoads: road + horses cell golden '
+      'terrainAndResourcesImprovementsRoads: road + grain cell golden '
       '(resource overlay includes readability plate; Refs #1848)',
       (WidgetTester tester) async {
         final region = oneCellRoadResourceRegion();
@@ -116,7 +116,7 @@ void main() {
         await expectLater(
           find.byKey(const ValueKey('region_map_transport_resource_golden')),
           matchesGoldenFile(
-            'goldens/region_map_transport_resource_horses_64.png',
+            'goldens/region_map_transport_resource_grain_64.png',
           ),
         );
       },
