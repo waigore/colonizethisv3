@@ -569,21 +569,13 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
               iconRect: dstRect,
               units: totalUnits,
             );
-            for (var i = 0; i < indicatorRects.length; i++) {
-              final indicatorPaint = _resourceOverlayPaintForCell(cell)
-                ..colorFilter = ColorFilter.mode(
-                  i < effectiveUnits
-                      ? _kExtractionIndicatorGoldTint
-                      : _kExtractionIndicatorGrayTint,
-                  BlendMode.modulate,
-                );
-              canvas.drawImageRect(
-                icon,
-                srcRect,
-                indicatorRects[i],
-                indicatorPaint,
-              );
-            }
+            paintResourceExtractionDiscIndicators(
+              canvas: canvas,
+              indicatorRects: indicatorRects,
+              effectiveCount: effectiveUnits,
+              resourceId: resourceForIcon,
+              fogCompatibleOverlayPaint: _resourceOverlayPaintForCell(cell),
+            );
           }
         }
       }
