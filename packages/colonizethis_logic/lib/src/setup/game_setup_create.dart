@@ -36,6 +36,10 @@ GameSetupResult createGameFromGeneratedMaps({
   required MapTopology topologyNewWorld,
   required String gameId,
   int? namingSeed,
+
+  /// Base for salted assignment perturbation on OW reassignment retries.
+  /// Defaults to [namingSeed] if set, else [GameSetupConfig.seed].
+  int? assignmentPerturbationBase,
   List<WarpLink>? warpLinks,
 }) {
   _log.i('game setup start gameId=$gameId');
@@ -48,6 +52,7 @@ GameSetupResult createGameFromGeneratedMaps({
     kRegionNewWorld: topologyNewWorld,
   };
   final links = warpLinks ?? [];
+  final perturbBase = assignmentPerturbationBase ?? namingSeed ?? config.seed;
   final initialMapZoomMultiplier = _resolveInitialMapZoomMultiplier(config);
 
   final owProvinceIds = _provinceIdsFromTopology(topologyOldWorld);
