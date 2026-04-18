@@ -30,7 +30,7 @@ The shell may use a **modal progress dialog** (blocking the shell) or a dedicate
 | 0 | Generating Old World map |
 | 1 | Generating New World map |
 | 2 | Linking Old World and New World (warp zones) |
-| 3 | Building world (`createGameFromGeneratedMaps`: assignment, connectivity repair, capitals, naming, initial units) |
+| 3 | Building world (`createGameFromGeneratedMaps`: province assignment, capitals, naming, initial units) |
 | 4 | Saving game (cache, map persistence, save, `NewGameCreatedEvent` when configured) |
 
 The implementation may merge adjacent steps for fewer on-screen updates if every listed phase still runs in order before the next.
@@ -61,7 +61,7 @@ The implementation may merge adjacent steps for fewer on-screen updates if every
 - Given the user confirmed **Start** on the leader selection dialog, when the shell begins new-game setup, then the UI layer shows a progress UI with a title and the first coarse step label (Old World map generation) before that step’s heavy work completes.
 - Given the progress UI is visible, when the pipeline completes the Old World map phase and begins the New World map phase, then the displayed step label updates to reflect New World map generation (or a merged label that still includes that phase per the minimum set above).
 - Given the progress UI is visible, when the pipeline completes New World map generation and begins warp generation, then the displayed step label updates to reflect linking regions / warp zones.
-- Given the progress UI is visible, when the pipeline enters `createGameFromGeneratedMaps` (assignment, repair, capitals, naming, units), then the displayed step label updates to reflect building the world.
+- Given the progress UI is visible, when the pipeline enters `createGameFromGeneratedMaps` (assignment, capitals, naming, units), then the displayed step label updates to reflect building the world.
 - Given the progress UI is visible, when the pipeline begins persisting the game and map data, then the displayed step label updates to reflect saving.
 - Given new-game setup completes without error, when the pipeline finishes, then the progress UI is closed, the created `Game` is stored as the current game, the shell navigates to `Routes.game`, and the `GameService` emits `NewGameCreatedEvent` on the app event bus when configured.
 - Given new-game setup throws an error during any phase, when the error propagates to the shell handler, then the progress UI is closed and the UI layer shows an error dialog with a Retry control and a Close (or OK) control, and the error’s `toString()` text (or equivalent) is shown to the user.
