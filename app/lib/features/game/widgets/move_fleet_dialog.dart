@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../config/ct_e2e.dart';
 import '../../../l10n/l10n.dart';
 import '../utils/map_location_resolver.dart';
 import '../utils/sea_zone_name_resolver.dart';
@@ -198,6 +199,28 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
         ? l10n.moveFleet_title(fleetLabel)
         : l10n.moveFleet_titleWithDestinations(fleetLabel, picks.length);
 
+    final moveColumns = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (seaPicks.isNotEmpty) ...[
+          Text(
+            l10n.moveFleet_seaZonesSection,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          ...seaPicks.map(_row),
+        ],
+        if (portPicks.isNotEmpty) ...[
+          if (seaPicks.isNotEmpty) const SizedBox(height: 12),
+          Text(
+            l10n.moveFleet_provincesDockSection,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          ...portPicks.map(_row),
+        ],
+      ],
+    );
+
     return AlertDialog(
       title: Text(titleText),
       content: SizedBox(
@@ -205,27 +228,12 @@ class _MoveFleetDialogState extends State<MoveFleetDialog> {
         child: picks.isEmpty
             ? Text(l10n.moveFleet_noAdjacentSeaZones)
             : SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (seaPicks.isNotEmpty) ...[
-                      Text(
-                        l10n.moveFleet_seaZonesSection,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      ...seaPicks.map(_row),
-                    ],
-                    if (portPicks.isNotEmpty) ...[
-                      if (seaPicks.isNotEmpty) const SizedBox(height: 12),
-                      Text(
-                        l10n.moveFleet_provincesDockSection,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      ...portPicks.map(_row),
-                    ],
-                  ],
-                ),
+                child: kCtE2EEnabled
+                    ? KeyedSubtree(
+                        key: kCtE2EMoveFleetDialogScrollRootKey,
+                        child: moveColumns,
+                      )
+                    : moveColumns,
               ),
       ),
       actions: [

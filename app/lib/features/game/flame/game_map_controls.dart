@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../config/app_assets.dart';
+import '../../../config/ct_e2e.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -119,11 +120,21 @@ class _GameMapControlsState extends State<GameMapControls> {
                 onSelected: (_) => widget.onRegionIndexChanged(0),
               ),
               const SizedBox(width: 8),
-              CtChoiceChip(
-                label: Text(l10n.region_newWorld),
-                selected: widget.regionIndex == 1,
-                onSelected: (_) => widget.onRegionIndexChanged(1),
-              ),
+              if (kCtE2EEnabled)
+                KeyedSubtree(
+                  key: kCtE2ERegionTabNewWorldKey,
+                  child: CtChoiceChip(
+                    label: Text(l10n.region_newWorld),
+                    selected: widget.regionIndex == 1,
+                    onSelected: (_) => widget.onRegionIndexChanged(1),
+                  ),
+                )
+              else
+                CtChoiceChip(
+                  label: Text(l10n.region_newWorld),
+                  selected: widget.regionIndex == 1,
+                  onSelected: (_) => widget.onRegionIndexChanged(1),
+                ),
               const SizedBox(width: 10),
               GestureDetector(
                 key: kTreasuryIndicatorKey,
