@@ -539,14 +539,19 @@ jobs:
             Deliverables (must all be satisfied):
             1) Put **all** detailed review text in **one** GitHub pull request **issue comment** on this PR (the main PR conversation). Do not rely on CI or workflow logs for the long-form review; the PR comment is the source of truth for details.
 
-            2) **Single sticky comment**: If a PR issue comment already exists whose body contains the literal HTML marker `<!-- ct-opencode-quality-review -->`, **edit that same comment** with your updated review (keep the marker in the updated body). If none exists, create **one** new PR issue comment that includes that marker exactly once.
+            2) **Single sticky comment only**: If a PR issue comment already exists whose body contains the literal HTML marker `<!-- ct-opencode-quality-review -->`, **edit that same comment** with your updated review (keep the marker in the updated body). If none exists, create **one** new PR issue comment that includes that marker exactly once. **Do not** post any **other** new issue comments on this PR for this review (no follow-up “review complete”, session recap, or duplicate summaries—optional links may appear only inside that sticky comment body).
 
-            3) **Machine-readable verdict** (strict): The comment body MUST contain **exactly one** of the following literal substrings, copied verbatim (including angle brackets and colons), and MUST NOT contain the other:
-            - `<!-- ct-opencode-verdict:PASS -->` when the outcome is pass
-            - `<!-- ct-opencode-verdict:FAIL -->` when the outcome is fail
-            CI greps the latest sticky review comment for these markers. Put the verdict marker on its own line near the top (after the sticky marker is fine).
+            3) **Comment body layout** (strict — CI parses line 1 and HTML markers):
+            - **Line 1** must be exactly the ASCII word `PASS` or `FAIL` (uppercase, no backticks, no markdown, no leading/trailing spaces).
+            - **Line 2** must be empty (no spaces).
+            - **Line 3** must be exactly: `<!-- ct-opencode-quality-review -->`
+            - **Line 4** must be exactly one of the following (must match line 1: use PASS line only with `PASS` on line 1, FAIL line only with `FAIL` on line 1):
+              - `<!-- ct-opencode-verdict:PASS -->`
+              - `<!-- ct-opencode-verdict:FAIL -->`
+            - **Line 5** must be empty.
+            - From **line 6** onward, use Markdown for the full human-readable review.
 
-            4) Choose `<!-- ct-opencode-verdict:FAIL -->` if anything material must change before merge (bugs, spec violations, missing tests for critical behavior, violations of the rule files above, or mismatch with linked issue intent). Otherwise choose `<!-- ct-opencode-verdict:PASS -->`. Use Markdown for all human-readable detail around the markers as you see fit.
+            4) Use line 1 `FAIL` and line 4 `<!-- ct-opencode-verdict:FAIL -->` if anything material must change before merge (bugs, spec violations, missing tests for critical behavior, violations of the rule files above, or mismatch with linked issue intent). Otherwise use `PASS` and `<!-- ct-opencode-verdict:PASS -->`.
 
   opencode_review_verdict:
     name: OpenCode review verdict
@@ -576,19 +581,63 @@ jobs:
           for _ in $(seq 1 36); do
             body="$(
               gh api "repos/${GITHUB_REPOSITORY}/issues/${{ github.event.pull_request.number }}/comments?per_page=100" \
-                --jq '([.[] | select(.body | contains("<!-- ct-opencode-quality-review -->"))] | sort_by(.id) | reverse | .[0].body) // empty'
+                --jq '
+                  [.[] | select(
+                    (.body | startswith("PASS\n"))
+                    or (.body | startswith("FAIL\n"))
+                    or (.body | startswith("<!-- ct-opencode-quality-review -->"))
+                  )]
+                  | sort_by(.id)
+                  | .[-1].body
+                  // empty
+                '
             )"
             if [ -n "${body}" ]; then
-              if printf '%s' "${body}" | grep -Fq '<!-- ct-opencode-verdict:FAIL -->'; then
-                echo "::error::OpenCode verdict is FAIL (<!-- ct-opencode-verdict:FAIL -->) — see the sticky PR comment."
+              line1="$(printf '%s\n' "${body}" | sed -n '1p' | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+              line2="$(printf '%s\n' "${body}" | sed -n '2p' | tr -d '\r')"
+              line3="$(printf '%s\n' "${body}" | sed -n '3p' | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+              line4="$(printf '%s\n' "${body}" | sed -n '4p' | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+              line5="$(printf '%s\n' "${body}" | sed -n '5p' | tr -d '\r')"
+              sticky='<!-- ct-opencode-quality-review -->'
+              vpass='<!-- ct-opencode-verdict:PASS -->'
+              vfail='<!-- ct-opencode-verdict:FAIL -->'
+              line2t="$(printf '%s\n' "${line2}" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+              if [ "${line1}" = "${sticky}" ]; then
+                if [ "${line2t}" = "${vfail}" ]; then
+                  echo "::error::OpenCode verdict is FAIL — see sticky PR comment."
+                  exit 1
+                fi
+                if [ "${line2t}" = "${vpass}" ]; then
+                  echo "OpenCode verdict: PASS (legacy sticky-first layout)"
+                  exit 0
+                fi
+                echo "::error::Legacy OpenCode sticky comment: line 2 must be ${vpass} or ${vfail}."
                 exit 1
               fi
-              if printf '%s' "${body}" | grep -Fq '<!-- ct-opencode-verdict:PASS -->'; then
+              if [ "${line1}" != PASS ] && [ "${line1}" != FAIL ]; then
+                echo "::error::OpenCode sticky comment line 1 must be exactly PASS or FAIL (got: '${line1}'). Re-run review after updating the prompt format."
+                exit 1
+              fi
+              if [ -n "$(printf '%s' "${line2}" | tr -d '\n' | tr -d '[:space:]')" ] || [ -n "$(printf '%s' "${line5}" | tr -d '\n' | tr -d '[:space:]')" ]; then
+                echo "::error::OpenCode sticky comment lines 2 and 5 must be blank (see workflow prompt)."
+                exit 1
+              fi
+              if [ "${line3}" != "${sticky}" ]; then
+                echo "::error::OpenCode sticky comment line 3 must be exactly ${sticky}"
+                exit 1
+              fi
+              if [ "${line1}" = FAIL ] && [ "${line4}" = "${vfail}" ]; then
+                echo "::error::OpenCode verdict is FAIL — see sticky PR comment."
+                exit 1
+              fi
+              if [ "${line1}" = PASS ] && [ "${line4}" = "${vpass}" ]; then
                 echo "OpenCode verdict: PASS"
                 exit 0
               fi
+              echo "::error::OpenCode line 1 (${line1}) does not match line 4 verdict marker (expected ${vpass} or ${vfail})."
+              exit 1
             fi
             sleep 5
           done
-          echo "::error::Timed out waiting for sticky OpenCode comment with <!-- ct-opencode-verdict:PASS --> or <!-- ct-opencode-verdict:FAIL -->"
+          echo "::error::Timed out waiting for a sticky OpenCode comment matching the PASS/FAIL layout (see workflow prompt)."
           exit 1
