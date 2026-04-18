@@ -1,5 +1,9 @@
 // SPEC/program/locked-province-assigner.md — sequential growth + backtrack + tabu.
 
+/// Per landmass: when backtracks exceed this count, the assigner clears tabu and
+/// restarts DFS from seeds (capital-generation restart). GitHub #1830 / SPEC.
+const int kMaxBacktracksPerLandmassBeforeCapitalRestart = 100;
+
 /// Optional counters for tests (AC-14 / AC-15).
 final class LockedAssignerObservation {
   int backtracks = 0;

@@ -503,7 +503,7 @@ Map<String, String> _assignOldWorldSingleLandmass({
       growthOrder: growthOrder,
       targetPerFaction: targets,
       seeds: seeds,
-      backtrackLimitPerLandmass: 32000,
+      backtrackLimitPerLandmass: kMaxBacktracksPerLandmassBeforeCapitalRestart,
       observation: null,
     );
   }
@@ -807,7 +807,7 @@ Map<String, String> _assignNewWorldOwnershipContiguous({
       universe: Set<String>.from(universe),
       neighbours: neighbours,
       assignmentRandom: null,
-      backtrackLimitPerLandmass: 8000,
+      backtrackLimitPerLandmass: kMaxBacktracksPerLandmassBeforeCapitalRestart,
     );
   } on SetupTopologyDataException catch (e) {
     if (e.code != 'faction_component_bin_pack_failed' &&

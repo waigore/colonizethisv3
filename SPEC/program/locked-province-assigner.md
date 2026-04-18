@@ -15,11 +15,13 @@ There is **no** post-pass GP Old World connectivity repair. For configs **other 
 
 ## Topology vs generator (current product)
 
-The **design** locked full-init layout assumes four Old World P–P land components with province-count multiset **`[13, 13, 17, 17]`** and four New World components **`[6, 6, 9, 9]`**, with enough sea-bound provinces per continent for seeds (see GDD / #1830). **Current** procedural tile maps do not enforce those multisets at generation time; `runInitGame` performs **one** map generation per region (effective seed / NW offset per [game-setup-pipeline.md](game-setup-pipeline.md)). Painting then uses **`assignTerritoriesLockedOnLandmass`** only when `game_setup_ownership` detects the full six-minor / four-landmass / 60 OW layout; otherwise it uses **`assignTerritoriesByBfsGrowth`** on each landmass as documented above.
+The **design** locked full-init layout assumes four Old World P–P land components with province-count multiset **`[13, 13, 17, 17]`** and four New World components **`[6, 6, 9, 9]`**, with enough sea-bound provinces per continent for seeds (see GDD / #1830). **Current** procedural tile maps do not enforce those multisets at generation time; `runInitGame` performs **one** map generation per region (effective seed / NW offset per [game-setup-pipeline.md](game-setup-pipeline.md)). GitHub **#1830** also calls for generator-side regen until multisets hit; that work belongs in **`colonizethis_map`** (gated generation / rejection) and is **not** implemented in `runInitGame` until the map package exposes it—see pipeline doc. Painting then uses **`assignTerritoriesLockedOnLandmass`** only when `createGameFromGeneratedMaps` sees the locked full-init profile **and** OW topology matches the locked multiset **and** `lockedOldWorldRoleFeasibilityHolds`; otherwise it uses **`assignTerritoriesByBfsGrowth`** on each landmass as documented above.
 
 ## Assigner search
 
 **API:** `assignTerritoriesLockedOnLandmass` — parameters include landmass province set, P–P `neighbours`, **growth order** (faction ids), `targetPerFaction`, initial `seeds` (one seed province per faction in order), `backtrackLimitPerLandmass`, optional `LockedAssignerObservation` (backtrack / capital-restart counters for tests).
+
+**Backtrack budget (product):** `kMaxBacktracksPerLandmassBeforeCapitalRestart` in `locked_province_assigner.dart` is **`100`** (#1830). Production OW/NW locked paths pass this value as `backtrackLimitPerLandmass`; tests may override for harness scenarios.
 
 **Growth:** Active faction is the first in `growthOrder` under its target; only that faction may claim from the frontier of its already-owned tiles. Legal neighbors are ranked by higher P–P degree on the landmass, then fewer post-claim unassigned island components, then lexicographic province id.
 
@@ -32,7 +34,7 @@ If search fails: **`StateError`** from assigner; orchestration maps assigner fai
 ## Tests
 
 - **AC-14 / AC-15:** `packages/colonizethis_logic/test/locked_assigner_mechanics_test.dart` — small hand-crafted topology; AC-14 asserts ≥1 backtrack; AC-15 asserts deterministic owner map and bounded backtracks across duplicate runs.
-- **AC-11 / AC-12:** `init_game_orchestrator_test.dart` — twenty fixed seeds for locked profile; determinism of OW ownership string for one seed.
+- **AC-11 / AC-12:** `init_game_orchestrator_test.dart` — twenty fixed seeds for locked profile; determinism of OW ownership string for one seed. When a run’s OW **and** NW topologies both match the locked multisets, tests assert **AC-1–AC-9** predicates (province quotas, P–P connectivity, sea-bound seeds, continent role counts, NW tribe layout); when multisets do not match procedural output, those ACs are out of scope for that run until generator gates land.
 
 ## Shared helpers
 
