@@ -11,6 +11,15 @@ import '../../../widgets/ct_panel.dart';
 import '../../../widgets/ct_slider.dart';
 import '../../../widgets/resource_icon.dart';
 import '../production_recipe_affordance.dart';
+import 'production_allocation_mutations.dart';
+import 'production_allocation_row_buttons.dart';
+
+const _uiIconProductionAllocDecrement =
+    'ui_icon_production_alloc_decrement.png';
+const _uiIconProductionAllocIncrement =
+    'ui_icon_production_alloc_increment.png';
+const _uiIconProductionAllocMaximize = 'ui_icon_production_alloc_maximize.png';
+const _uiIconProductionAllocClear = 'ui_icon_production_alloc_clear.png';
 
 class ProductionPanel extends StatelessWidget {
   const ProductionPanel({
@@ -145,9 +154,7 @@ class _AvailableSubpanel extends StatelessWidget {
 
   Widget _buildCommodityRow(Commodity c, int qty, int change, ThemeData theme) {
     final name = c.displayName ?? c.id;
-    final changeSeg = change == 0
-        ? ''
-        : ' (${change > 0 ? '+' : ''}$change)';
+    final changeSeg = change == 0 ? '' : ' (${change > 0 ? '+' : ''}$change)';
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -193,10 +200,7 @@ class _AvailableSubpanel extends StatelessWidget {
         const SizedBox(width: 4),
         Flexible(
           child: Text(
-            l10n.production_workerCount(
-              _workerDisplayName(workerType),
-              count,
-            ),
+            l10n.production_workerCount(_workerDisplayName(workerType), count),
             style: theme.textTheme.bodySmall,
             overflow: TextOverflow.ellipsis,
           ),
@@ -427,8 +431,13 @@ class _AllocationSubpanel extends StatelessWidget {
                 desiredOutputByRecipe: desiredOutputByRecipe,
                 effectiveLabour: effectiveLabour,
               );
+              final canDecrement = desired > 0;
+              final canIncrement = maxAchievable > 0 && desired < maxAchievable;
+              final canMaximize = canIncrement;
+              final canClearRow = desired > 0;
 
               return Padding(
+                key: ValueKey<String>('production_alloc_row_${recipe.id}'),
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -456,6 +465,7 @@ class _AllocationSubpanel extends StatelessWidget {
                       ],
                     ),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
                           child: CtSlider(
@@ -483,13 +493,88 @@ class _AllocationSubpanel extends StatelessWidget {
                             },
                           ),
                         ),
-                        SizedBox(
-                          width: 36,
-                          child: Text(
-                            desired.toString(),
-                            textAlign: TextAlign.right,
-                            style: theme.textTheme.bodySmall,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 30,
+                              child: Text(
+                                desired.toString(),
+                                textAlign: TextAlign.right,
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ),
+                            ProductionAllocationStepButton(
+                              enabled: canDecrement,
+                              readDesired: () => desiredOutputByRecipe,
+                              tryStepFromCurrent: (cur) =>
+                                  applyProductionRecipeDecrement(
+                                    recipe: recipe,
+                                    player: player,
+                                    effectiveLabour: effectiveLabour,
+                                    current: cur,
+                                    onDesiredOutputChanged:
+                                        onDesiredOutputChanged,
+                                  ),
+                              semanticLabel:
+                                  l10n.production_allocationDecrementRecipe,
+                              tooltip:
+                                  l10n.production_allocationDecrementRecipe,
+                              assetFileName: _uiIconProductionAllocDecrement,
+                            ),
+                            ProductionAllocationStepButton(
+                              enabled: canIncrement,
+                              readDesired: () => desiredOutputByRecipe,
+                              tryStepFromCurrent: (cur) =>
+                                  applyProductionRecipeIncrement(
+                                    recipe: recipe,
+                                    player: player,
+                                    effectiveLabour: effectiveLabour,
+                                    current: cur,
+                                    onDesiredOutputChanged:
+                                        onDesiredOutputChanged,
+                                  ),
+                              semanticLabel:
+                                  l10n.production_allocationIncrementRecipe,
+                              tooltip:
+                                  l10n.production_allocationIncrementRecipe,
+                              assetFileName: _uiIconProductionAllocIncrement,
+                            ),
+                            ProductionAllocationActionIconButton(
+                              enabled: canMaximize,
+                              readDesired: () => desiredOutputByRecipe,
+                              onPressedFromCurrent: (cur) {
+                                applyProductionRecipeMaximize(
+                                  recipe: recipe,
+                                  player: player,
+                                  effectiveLabour: effectiveLabour,
+                                  current: cur,
+                                  onDesiredOutputChanged:
+                                      onDesiredOutputChanged,
+                                );
+                              },
+                              semanticLabel:
+                                  l10n.production_allocationMaximizeRecipe,
+                              tooltip: l10n.production_allocationMaximizeRecipe,
+                              assetFileName: _uiIconProductionAllocMaximize,
+                            ),
+                            ProductionAllocationActionIconButton(
+                              enabled: canClearRow,
+                              readDesired: () => desiredOutputByRecipe,
+                              onPressedFromCurrent: (cur) {
+                                applyProductionRecipeClear(
+                                  recipe: recipe,
+                                  current: cur,
+                                  onDesiredOutputChanged:
+                                      onDesiredOutputChanged,
+                                );
+                              },
+                              semanticLabel:
+                                  l10n.production_allocationClearRecipe,
+                              tooltip: l10n.production_allocationClearRecipe,
+                              assetFileName: _uiIconProductionAllocClear,
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -499,10 +584,7 @@ class _AllocationSubpanel extends StatelessWidget {
             }),
             const SizedBox(height: 8),
             Text(
-              l10n.production_totalLabour(
-                totalRequiredLabour,
-                effectiveLabour,
-              ),
+              l10n.production_totalLabour(totalRequiredLabour, effectiveLabour),
               style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: labourInsufficient ? theme.colorScheme.error : null,
