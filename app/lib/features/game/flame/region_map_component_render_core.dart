@@ -641,7 +641,6 @@ extension _CtRegionMapRenderCore on CtRegionMapComponent {
               canvas: canvas,
               indicatorRects: indicatorRects,
               effectiveCount: effectiveUnits,
-              resourceId: resourceForIcon,
               fogCompatibleOverlayPaint: _resourceOverlayPaintForCell(cell),
             );
           }
