@@ -484,7 +484,7 @@ class GameService {
           onLog: _mapGenPassLog.d,
         );
         final warpLinks = _generateWarpLinks(
-          effectiveSeed: effectiveSeed,
+          effectiveSeed: mapSeed,
           tileMapOW: r.tileOw,
           topoOW: r.topoOw,
           tileMapNW: r.tileNw,

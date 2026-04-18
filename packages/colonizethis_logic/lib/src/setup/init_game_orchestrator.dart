@@ -129,7 +129,7 @@ InitGameResult runInitGame({
           topologyNewWorld: locked.topoNw,
           regionIdOld: kRegionOldWorld,
           regionIdNew: kRegionNewWorld,
-          seed: effectiveSeed,
+          seed: mapSeed,
         );
         final sr = createGameFromGeneratedMaps(
           config: config,
