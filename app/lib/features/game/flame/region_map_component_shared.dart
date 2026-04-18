@@ -75,7 +75,6 @@ const Color _kResourceIconTransportReadabilityBackdrop = Color.fromRGBO(
 const double _kExtractionIndicatorSizeBoostPx = 2.0;
 const double _kExtractionIndicatorOverlapFactor = 0.45;
 const double _kExtractionIndicatorStartInsetXPx = 2.0;
-const Color _kExtractionIndicatorGoldTint = Color(0xFFFFD54A);
 const Color _kExtractionIndicatorGrayTint = Color(0xFF9E9E9E);
 
 /// Political (faction) border stroke — indigo, visible over terrain.
@@ -550,4 +549,39 @@ List<Rect> extractionIndicatorRectsForIconRect({
         Rect.fromLTWH(startX + (i * stepX), top, indicatorSize, indicatorSize),
     growable: false,
   );
+}
+
+/// Paints per-tile extraction throughput as **filled discs** (not commodity
+/// sprites). Effective slots use [discColorForResourceId]; blocked slots use
+/// neutral gray. [fogCompatibleOverlayPaint] supplies the same fog
+/// `ColorFilter` as resource icons when the tile is fogged.
+///
+/// SPEC/ui/map-widget.md § Per-tile extraction throughput indicators;
+/// SPEC/program/map-region-map-render.md (`_paintOverlay` extraction discs).
+void paintResourceExtractionDiscIndicators({
+  required Canvas canvas,
+  required List<Rect> indicatorRects,
+  required int effectiveCount,
+  required String resourceId,
+  required Paint fogCompatibleOverlayPaint,
+}) {
+  if (indicatorRects.isEmpty) {
+    return;
+  }
+  final fogFilter = fogCompatibleOverlayPaint.colorFilter;
+  for (var i = 0; i < indicatorRects.length; i++) {
+    final isEffective = i < effectiveCount;
+    final fillColor = isEffective
+        ? discColorForResourceId(resourceId)
+        : _kExtractionIndicatorGrayTint;
+    final discPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = fillColor;
+    if (fogFilter != null) {
+      discPaint.colorFilter = fogFilter;
+    }
+    final r = indicatorRects[i];
+    final radius = r.shortestSide * 0.5;
+    canvas.drawCircle(r.center, radius, discPaint);
+  }
 }
