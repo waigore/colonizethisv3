@@ -573,9 +573,8 @@ Map<String, String> assignTerritoriesLockedOnLandmass({
     );
     capitalGeneration++;
     owners.clear();
-    unassigned
-      ..clear()
-      ..addAll(land);
+    unassigned.clear();
+    unassigned.addAll(land);
     placementStack.clear();
     for (final f in growthOrder) {
       countPerFaction[f] = 0;

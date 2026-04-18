@@ -24,7 +24,7 @@ generateLockedFullInitTileMapPair({
   int maxAttempts = kMaxLockedFullInitPartitionAttempts,
 }) {
   if (!config.isLockedFullInitProfile) {
-    throw ArgumentError(
+    throw LockedFullInitProfileRequiredException(
       'generateLockedFullInitTileMapPair requires isLockedFullInitProfile',
     );
   }
