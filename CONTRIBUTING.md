@@ -17,6 +17,20 @@ Before opening a pull request, ensure the following:
 - [ ] **Implementation aligned**: I have aligned the implementation (and tests) with the updated specs and ACs.
 - [ ] **Logging aligned**: If the change adds or alters logging (messages, levels, prefixes, or new emissions such as game events), I have checked it against **[SPEC/program/logging/logging.md](./SPEC/program/logging/logging.md)** and the relevant annexes ([map-generation](./SPEC/program/logging/map-generation.md), [turn-resolution](./SPEC/program/logging/turn-resolution.md), [ai-actions](./SPEC/program/logging/ai-actions.md), [events](./SPEC/program/logging/events.md)) and against host sink specs where applicable ([ctdev-logging.md](./SPEC/program/ctdev-logging.md), [debug-log-viewer.md](./SPEC/program/debug-log-viewer.md), [test-logging.md](./SPEC/program/test-logging.md)).
 - [ ] **Coverage quality gate met**: I have ensured that test coverage meets the project's quality gate requirements (90% for logic/ai/map packages; 80% elsewhere).
+- [ ] **OpenCode / help wanted**: I have read [OpenCode review and the help wanted label](#opencode-review-and-the-help-wanted-label) and applied the label when appropriate (see that section if I cannot add labels myself).
+
+## OpenCode review and the help wanted label
+
+The Quality workflow can run an **OpenCode** post–e2e PR review when the PR is in scope for that gate. To **request** that review, add the GitHub label **`help wanted`** (exact name). Heuristics—use your judgment; **when in doubt, add the label**:
+
+- The PR **touches multiple packages** (or crosses major boundaries such as app + logic + map in one change set).
+- The PR is a **large refactor** (wide renames, structural moves, or behavior changes across many call sites).
+
+Apply **`help wanted` for any PR you consider sufficiently complex by the above**, **even if** the PR already changes **more than ten files** (the workflow may also run OpenCode on large diffs without the label; the label makes intent explicit).
+
+**When to add the label:** Prefer adding **`help wanted` when you open the PR** so a passing run can pick up OpenCode without an extra cycle. If you add it later, the **Quality** workflow also runs on the **`labeled`** event, so adding `help wanted` after open will **re-run** checks and allow the gate to apply on the new run (subject to the same branch and path rules as always).
+
+If your GitHub role **cannot add labels**, state in the PR description that you want the **`help wanted`** label applied for OpenCode review (or ask a maintainer during triage).
 
 ## Repo convention lint
 

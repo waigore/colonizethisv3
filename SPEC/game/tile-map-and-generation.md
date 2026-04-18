@@ -46,9 +46,17 @@ Pass 7 may still roll RNG resources on land cells that **later** become town or 
 
 ---
 
+## GP Old World resource redistribution (setup)
+
+**When:** Immediately after **§7d.strip** (town/capital occupancy clear) and **before** Great Power starting grain bootstrap. **Program order** matches `createGameFromGeneratedMaps` in `colonizethis_logic` (after strip, **before** `applyGreatPowerStartingGrainBootstrap`, **before** init town→capital roads). **Mandatory** whenever the Old World map has both `terrainGrid` and `resourceGrid`; skipped only when either grid is missing (same applicability as grain bootstrap). **Not** configurable off via `GameSetupConfig`, ruleset JSON, or CLI for the current product.
+
+**What:** Rebalances **terrain resources** on **Great Power–owned** Old World land tiles only; **minor-owned** Old World tiles are untouched. Clears all resources and extraction improvements on GP in-scope land (including town/capital tiles on GP land), then places back each resource type `r` in the active **S** set per [resource-terrain-region-rules.md](resource-terrain-region-rules.md) / `ResourceRules` so per-type totals match pre-clear inventory on GP tiles (town/capital excluded from counts). **Pass 7’s global 30% multi-region resource cap is not re-evaluated** during this pass (only rearranges resources already present on GP tiles). **Fairness diagnostic** (before grain bootstrap): `max_{g,r} |A_{g,r} − N_r/G|` per [game-setup-pipeline.md](../program/game-setup-pipeline.md) §7d.redist.
+
+---
+
 ## Great Power starting grain (bootstrap)
 
-**When:** After the tile map for the relevant region is complete (**province assignment** finished), each **Great Power** has a **capital tile** fixed, **§7d** towns are assigned, and **town/capital occupancy** strip has run. **Not** part of Pass 7 resource RNG — a **deterministic post-pass** on the grid and/or scenario overlay applied during **game setup**.
+**When:** After **§7d.strip**, after **§7d.redist** (when OW grids exist), each **Great Power** has a **capital tile** fixed, **§7d** towns are assigned, and **town/capital occupancy** strip has run. **Not** part of Pass 7 resource RNG — a **deterministic post-pass** on the grid and/or scenario overlay applied during **game setup**.
 
 **Who:** **Great Powers only** for the four farms. **Occupancy** rules apply to **all** factions.
 
@@ -79,6 +87,10 @@ Pass 7 may still roll RNG resources on land cells that **later** become town or 
 - Given `createGameFromGeneratedMaps` (or equivalent setup) completes with terrain and resource grids  
   When The System finishes province town assignment  
   Then **no** town tile and **no** capital tile has a terrain **resource** or **extraction improvement**; **road/rail/port** levels on those tiles may be non-zero  
+
+- Given the Old World `TileMapResult` includes `terrainGrid` and `resourceGrid` and `createGameFromGeneratedMaps` reaches §7d.strip  
+  When The System proceeds toward Great Power starting grain bootstrap  
+  Then The System runs **§7d.redist** GP Old World resource redistribution **before** grain bootstrap, **does not** re-apply Pass 7’s global 30% multi-region resource cap during that redistribution pass, and **does not** modify **minor-owned** Old World land tiles in that pass.
 
 - Given a Great Power’s capital province contains at least **four** **eligible** land tiles (excluding its capital/town tile) that may host resource `grain` per [resource-terrain-region-rules.md](resource-terrain-region-rules.md) and the capital tile is fixed  
   When the System runs the **Great Power starting grain (bootstrap)** post-pass then initial road networking per [capital-and-connectivity.md](capital-and-connectivity.md)  
