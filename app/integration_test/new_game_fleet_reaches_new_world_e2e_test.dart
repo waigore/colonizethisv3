@@ -8,6 +8,7 @@ import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
+import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
@@ -283,6 +284,21 @@ Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
   await _pumpFor(tester, const Duration(milliseconds: 250));
 }
 
+/// Map HUD must show **Old World** before issuing naval moves so OW-split
+/// fleets and warp orders stay coherent on Linux CI (`SPEC/program/e2e-integration-tests.md`).
+Future<void> _tapOldWorldRegionTab(
+  WidgetTester tester,
+  AppLocalizations l10n,
+) async {
+  final hit =
+      find.widgetWithText(CtChoiceChip, l10n.region_oldWorld).hitTestable();
+  if (hit.evaluate().isEmpty) {
+    return;
+  }
+  await tester.tap(hit.first, warnIfMissed: false);
+  await _pumpFor(tester, const Duration(milliseconds: 250));
+}
+
 Finder _radioListTilesInAlertDialogs() {
   return find.descendant(
     of: find.byType(AlertDialog),
@@ -372,7 +388,7 @@ Future<void> _tryNavalMoveSegment(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
-  await _tapNewWorldRegionTabIfPresent(tester);
+  await _tapOldWorldRegionTab(tester, l10n);
   await _openNavalPanel(tester);
   await _expandEachExpansionTileOnce(tester);
   await _tapMoveOnFirstNonHomeFleet(tester);
