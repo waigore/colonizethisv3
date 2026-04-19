@@ -20,8 +20,13 @@ import 'package:integration_test/integration_test.dart';
 /// worst observed CI need (Refs #1849 / PR 1849).
 const int _kMaxNextTurnTapsForNwFleetReach = 84;
 
-/// Post–Next-turn pump: Linux CI needs enough time for multi-player resolution.
-const Duration _kPostNextTurnPump = Duration(milliseconds: 3200);
+/// Hard cap for any single “wait until UI shows X” poll (`_waitUntilFound`,
+/// next-turn label settle, panel-open loops). Fail immediately when exceeded.
+const Duration _kMaxUiResponseWait = Duration(seconds: 5);
+
+/// Overall cap for async new-game setup (map gen + intro), not a single widget
+/// poll; still bounded so hung runs exit (`SPEC/program/e2e-integration-tests.md`).
+const Duration _kBootstrapNewGameOverallCap = Duration(seconds: 60);
 
 /// Drive frames without [WidgetTester.pumpAndSettle] (Flame + progress spinners).
 Future<void> _pumpFor(WidgetTester tester, Duration total) async {
@@ -36,17 +41,19 @@ Future<void> _pumpFor(WidgetTester tester, Duration total) async {
 Future<void> _waitUntilFound(
   WidgetTester tester,
   Finder finder, {
-  required Duration timeout,
+  Duration timeout = _kMaxUiResponseWait,
 }) async {
+  final cap = timeout > _kMaxUiResponseWait ? _kMaxUiResponseWait : timeout;
   final sw = Stopwatch()..start();
-  while (sw.elapsed < timeout) {
-    await tester.pump(const Duration(milliseconds: 100));
+  while (sw.elapsed < cap) {
+    await tester.pump(const Duration(milliseconds: 50));
     if (finder.evaluate().isNotEmpty) {
       return;
     }
   }
   fail(
-    'Timed out after ${timeout.inSeconds}s waiting for $finder. '
+    'Timed out after ${cap.inSeconds}s waiting for $finder '
+    '(max UI response ${_kMaxUiResponseWait.inSeconds}s). '
     'Last exception: ${tester.takeException()}',
   );
 }
@@ -120,7 +127,7 @@ Future<void> _closeBottomSheet(WidgetTester tester) async {
   }
 
   final sw = Stopwatch()..start();
-  while (sw.elapsed < const Duration(seconds: 5)) {
+  while (sw.elapsed < _kMaxUiResponseWait) {
     if (!anyPanelOpen()) {
       return;
     }
@@ -128,16 +135,15 @@ Future<void> _closeBottomSheet(WidgetTester tester) async {
     await _pumpFor(tester, const Duration(milliseconds: 250));
   }
 
-  fail('Timed out closing bottom sheet; panels remained visible');
+  fail(
+    'Timed out after ${_kMaxUiResponseWait.inSeconds}s closing bottom sheet; '
+    'panels remained visible',
+  );
 }
 
 Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
   await tester.tap(find.text('New Game'));
-  await _waitUntilFound(
-    tester,
-    find.text('Start'),
-    timeout: const Duration(seconds: 30),
-  );
+  await _waitUntilFound(tester, find.text('Start'));
 
   final startButton = find.ancestor(
     of: find.text('Start'),
@@ -159,7 +165,7 @@ Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
   await tester.tap(startButton);
   await tester.pump();
 
-  final setupDeadline = DateTime.now().add(const Duration(minutes: 6));
+  final setupDeadline = DateTime.now().add(_kBootstrapNewGameOverallCap);
   var reachedMap = false;
   while (DateTime.now().isBefore(setupDeadline)) {
     await tester.pump(const Duration(milliseconds: 100));
@@ -189,13 +195,25 @@ Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
       break;
     }
   }
-  expect(reachedMap, isTrue);
+  if (!reachedMap) {
+    fail(
+      'Timed out after ${_kBootstrapNewGameOverallCap.inSeconds}s waiting for '
+      'map (home→capital). Last exception: ${tester.takeException()}',
+    );
+  }
   expect(find.byKey(kHomeToCapitalButtonKey), findsOneWidget);
   await tester.pump(const Duration(milliseconds: 500));
 }
 
 Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
+  final overall = Stopwatch()..start();
   for (var safety = 0; safety < 32; safety++) {
+    if (overall.elapsed > _kMaxUiResponseWait) {
+      fail(
+        'ExpansionTile expand exceeded ${_kMaxUiResponseWait.inSeconds}s '
+        '(UI response cap).',
+      );
+    }
     final tiles = find.byType(ExpansionTile);
     final n = tiles.evaluate().length;
     if (n == 0) return;
@@ -223,7 +241,7 @@ Future<void> _openNavalPanel(WidgetTester tester) async {
   final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
   final btn = find.byKey(kEmpireNavalUnitsButtonKey);
   final sw = Stopwatch()..start();
-  while (sw.elapsed < const Duration(seconds: 45)) {
+  while (sw.elapsed < _kMaxUiResponseWait) {
     await tester.pump(const Duration(milliseconds: 100));
     if (navalPanel.evaluate().isNotEmpty) {
       return;
@@ -249,7 +267,8 @@ Future<void> _openNavalPanel(WidgetTester tester) async {
     }
   }
   fail(
-    'Timed out opening naval panel. Last exception: ${tester.takeException()}',
+    'Timed out after ${_kMaxUiResponseWait.inSeconds}s opening naval panel. '
+    'Last exception: ${tester.takeException()}',
   );
 }
 
@@ -278,6 +297,16 @@ Future<void> _pickMoveDestinationAndConfirm(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
+  final budget = Stopwatch()..start();
+  void ensureBudget(String step) {
+    if (budget.elapsed > _kMaxUiResponseWait) {
+      fail(
+        'Move fleet dialog exceeded ${_kMaxUiResponseWait.inSeconds}s at $step',
+      );
+    }
+  }
+
+  ensureBudget('start');
   await _pumpFor(tester, const Duration(milliseconds: 200));
   final warpSuffix = l10n.moveFleet_warpLinkToRegion(
     unitsPanelRegionLabel('newWorld'),
@@ -300,13 +329,18 @@ Future<void> _pickMoveDestinationAndConfirm(
     if (scrollable.evaluate().isNotEmpty) {
       final sc = scrollable.first;
       for (var i = 0; i < 36 && warp.hitTestable().evaluate().isEmpty; i++) {
+        ensureBudget('warp drag $i');
         await tester.drag(sc, const Offset(0, -120));
         await _pumpFor(tester, const Duration(milliseconds: 50));
       }
       if (warp.hitTestable().evaluate().isEmpty) {
-        await tester.scrollUntilVisible(warp.first, 400, scrollable: sc);
+        fail(
+          'Warp row not hit-testable after drag attempts '
+          '(within ${_kMaxUiResponseWait.inSeconds}s dialog budget).',
+        );
       }
     }
+    ensureBudget('before warp tap');
     final hit = warp.hitTestable();
     expect(hit, findsWidgets);
     // Tap the RadioListTile, not only the inner Text, so the tile's selection
@@ -320,15 +354,18 @@ Future<void> _pickMoveDestinationAndConfirm(
     expect(warpTile, findsWidgets);
     await tester.tap(warpTile.first, warnIfMissed: false);
   } else {
+    ensureBudget('sea radio');
     final seaRadio = _radioListTilesInAlertDialogs();
     expect(seaRadio, findsWidgets);
     await tester.tap(seaRadio.first, warnIfMissed: false);
   }
   await _pumpFor(tester, const Duration(milliseconds: 200));
+  ensureBudget('confirm');
   final confirm = find.text(l10n.common_confirm).hitTestable();
   expect(confirm, findsWidgets);
   await tester.tap(confirm.first, warnIfMissed: false);
-  await _pumpFor(tester, const Duration(seconds: 1));
+  await _pumpFor(tester, const Duration(milliseconds: 300));
+  ensureBudget('after confirm');
 }
 
 Future<void> _tryNavalMoveSegment(
@@ -473,11 +510,7 @@ Future<void> _splitHomeFleetOnce(
 ) async {
   await tester.tap(find.byKey(kEmpireNavalUnitsButtonKey));
   await _pumpFor(tester, const Duration(milliseconds: 400));
-  await _waitUntilFound(
-    tester,
-    find.byKey(kCtE2ENavalPanelRootKey),
-    timeout: const Duration(seconds: 20),
-  );
+  await _waitUntilFound(tester, find.byKey(kCtE2ENavalPanelRootKey));
   await _expandEachExpansionTileOnce(tester);
   final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
   final split = find.descendant(
@@ -496,22 +529,47 @@ Future<void> _splitHomeFleetOnce(
   await tester.tap(moveOneRight.first);
   await _pumpFor(tester, const Duration(milliseconds: 200));
   await tester.tap(find.text(l10n.splitFleet_confirm));
-  await _pumpFor(tester, const Duration(seconds: 1));
+  await _pumpFor(tester, const Duration(milliseconds: 300));
   await _expandEachExpansionTileOnce(tester);
+}
+
+/// Text inside the map HUD next-turn [CtNinePatchButton] (`game_nextTurnButton`).
+String? _readNextTurnButtonLabel(WidgetTester tester) {
+  final inner = find.descendant(
+    of: find.byKey(kGameMapNextTurnButtonKey),
+    matching: find.byType(Text),
+  );
+  if (inner.evaluate().length != 1) {
+    return null;
+  }
+  final w = inner.evaluate().single.widget;
+  return w is Text ? w.data : null;
 }
 
 Future<void> _advanceOneHumanTurn(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
+  final before = _readNextTurnButtonLabel(tester);
   await tester.tap(find.byKey(kGameMapNextTurnButtonKey));
-  await _pumpFor(tester, const Duration(milliseconds: 400));
+  await _pumpFor(tester, const Duration(milliseconds: 200));
   final confirmNextTurn = find.text(l10n.common_yes).hitTestable();
   if (confirmNextTurn.evaluate().isNotEmpty) {
     await tester.tap(confirmNextTurn.first, warnIfMissed: false);
+    await _pumpFor(tester, const Duration(milliseconds: 150));
   }
-  // Headless Linux CI can lag behind macOS on turn resolution + naval UI.
-  await _pumpFor(tester, _kPostNextTurnPump);
+  final sw = Stopwatch()..start();
+  while (sw.elapsed < _kMaxUiResponseWait) {
+    await tester.pump(const Duration(milliseconds: 50));
+    final after = _readNextTurnButtonLabel(tester);
+    if (after != null && after != before) {
+      return;
+    }
+  }
+  fail(
+    'Next turn label did not change within ${_kMaxUiResponseWait.inSeconds}s '
+    '(before=${before ?? '(null)'}). Last exception: ${tester.takeException()}',
+  );
 }
 
 void main() {
@@ -532,7 +590,7 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1280, 720));
       await bootstrapForIntegrationTest();
       await tester.pump();
-      await tester.pump(const Duration(seconds: 2));
+      await _pumpFor(tester, const Duration(milliseconds: 500));
 
       await _bootstrapNewGameToMap(tester);
 

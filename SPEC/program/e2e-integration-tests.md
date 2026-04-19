@@ -23,7 +23,7 @@
 | `kCtE2EOpenFirstCivilianMarkerPanelKey` | Map overlay: open tile-scoped civilian panel for first civilian marker. |
 | `kCtE2EOpenFirstFleetMarkerPanelKey` | Map overlay: open tile-scoped naval panel for first fleet marker. |
 | `kCtE2ERegionTabNewWorldKey` | Map HUD: **New World** region `CtChoiceChip` (Keyed subtree for e2e taps / finders). |
-| `kCtE2EMoveFleetDialogScrollRootKey` | `MoveFleetDialog` scroll body (`SingleChildScrollView` child) for `scrollUntilVisible` on long destination lists. |
+| `kCtE2EMoveFleetDialogScrollRootKey` | `MoveFleetDialog` scroll body (`SingleChildScrollView` child); fleet e2e uses bounded drags within a strict UI-response time cap (see Determinism). |
 | `kGameMapNextTurnButtonKey` | Next-turn control on the map HUD (`game_screen_shared.dart`). |
 | `ctE2eLastPanelSnapshot` | Province overlay: updated while open with valid `selectedTileKey`; cleared when closed. Separate **civilian / naval / production** snapshot updaters in `ct_e2e_last_panel_snapshot.dart` for those panels. |
 
@@ -35,6 +35,7 @@
 
 - E2E relies on **`GameSetupConfig.seed == 42`** (see `packages/colonizethis_data/lib/src/game_setup_config.dart`) and **`attemptIndex == 0`** on first successful `createNewGameAsync` (see `runNewGameSetupAfterLeaderPick` in `app/lib/features/shell/new_game_setup_flow.dart`).
 - **Locked full-init note:** `GameService` may still regenerate maps with a bumped `mapSeed` (`effectiveSeed + 100003`, …) after a topology/assigner failure on the first try (`app/lib/core/services/game_service.dart`). That can lengthen coast→warp→New World sailing versus a first-try seed-42 pair; the New World fleet e2e therefore allows a **higher Next-turn budget** than the nominal seed alone would suggest.
+- **NW fleet e2e fail-fast waits:** `new_game_fleet_reaches_new_world_e2e_test.dart` treats **any single UI-response wait** (finder poll, naval panel open, next-turn label change after tap, move-fleet dialog steps, bottom-sheet close, expansion pass) as **failed if it exceeds 5 seconds**. **Overall** async setup from **Start** tap until the map HUD (`kHomeToCapitalButtonKey`) is capped separately at **60 seconds** so hung map generation still terminates.
 - Assertions use **English** `AppLocalizations` (**`Locale('en')`**, matching `MaterialApp` lookup in `app/lib/app.dart`).
 
 ## Local run
