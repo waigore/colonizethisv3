@@ -19,7 +19,7 @@ void _addExplorerWorkSuggestionsForUnit({
     view,
     regionId,
     provinceId,
-    VisibilityLevel.revealed,
+    VisibilityLevel.fogged,
   )) {
     final hasPartiallyHiddenTile = view.visibilityByTile.entries.any((e) {
       final parts = e.key.split('|');

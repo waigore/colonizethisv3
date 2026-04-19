@@ -72,7 +72,7 @@ Map<String, Map<String, String>> _revealProvinceTilesForPlayer(
   if (tileKeys.isEmpty) return visibilityByTile;
   final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
   for (final tk in tileKeys) {
-    vis[tk] = VisibilityLevel.revealed.name;
+    vis[tk] = VisibilityLevel.fullyVisible.name;
   }
   return Map<String, Map<String, String>>.from(visibilityByTile)
     ..[playerId] = vis;
@@ -392,7 +392,7 @@ Game applyNavalMovesAndShipReveal(
             seaWaterTileKeys: seaWaterKeys ?? const [],
           );
           for (final tk in coastalTileKeys) {
-            vis[tk] = VisibilityLevel.revealed.name;
+            vis[tk] = VisibilityLevel.fullyVisible.name;
           }
         }
         if (seaWaterKeys != null) {
