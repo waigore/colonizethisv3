@@ -388,6 +388,73 @@ Game _assignProvinceTowns({
   );
 }
 
+const int _kNamingCapitalCollisionSalt = 919_393;
+const int _kNamingPoolExhaustedSalt = 271_828;
+const int _kNamingHybridExhaustedSalt = 314_159;
+const int _kNamingFinalEmptySalt = 161_803;
+
+String _namingResolveCapitalDisplayName({
+  required String capitalName,
+  required int rowSalt,
+  required Set<String> usedProvinceNames,
+  required String Function(int seedOffset) generateFallback,
+}) {
+  if (capitalName.isEmpty) {
+    return generateFallback(rowSalt);
+  }
+  if (usedProvinceNames.contains(capitalName)) {
+    return generateFallback(rowSalt + _kNamingCapitalCollisionSalt);
+  }
+  usedProvinceNames.add(capitalName);
+  return capitalName;
+}
+
+({String name, int nextPoolScan}) _namingPickNonCapitalPoolName({
+  required List<String> pool,
+  required List<int> poolIndices,
+  required int poolScan,
+  required Set<String> usedProvinceNames,
+  required int rowSalt,
+  required String Function(int seedOffset) generateFallback,
+}) {
+  final permLen = poolIndices.length;
+  for (var j = 0; j < permLen; j++) {
+    final pos = (poolScan + j) % permLen;
+    final candidate = pool[poolIndices[pos]];
+    if (usedProvinceNames.contains(candidate)) {
+      continue;
+    }
+    usedProvinceNames.add(candidate);
+    final nextPoolScan = (poolScan + j + 1) % permLen;
+    return (name: candidate, nextPoolScan: nextPoolScan);
+  }
+  final name = generateFallback(rowSalt + _kNamingPoolExhaustedSalt);
+  return (name: name, nextPoolScan: poolScan);
+}
+
+String _namingResolveEmptyPoolNonCapital({
+  required int rowIndex,
+  required int iterationSalt,
+  required String fallbackPrefix,
+  required Set<String> usedProvinceNames,
+  required String Function(int seedOffset) generateFallback,
+}) {
+  var ordinal = rowIndex + 1;
+  var name = '$fallbackPrefix $ordinal';
+  if (name.isEmpty) {
+    return generateFallback(iterationSalt);
+  }
+  while (usedProvinceNames.contains(name) && ordinal < 1_000_000) {
+    ordinal++;
+    name = '$fallbackPrefix $ordinal';
+  }
+  if (usedProvinceNames.contains(name)) {
+    return generateFallback(iterationSalt + _kNamingHybridExhaustedSalt);
+  }
+  usedProvinceNames.add(name);
+  return name;
+}
+
 Game _applyNaming({
   required Game game,
   required List<String> selectedGreatPowerIds,
@@ -400,18 +467,22 @@ Game _applyNaming({
   final nwProvinces = game.worldState.newWorld.provinces;
   final owById = {for (final p in owProvinces) p.id: p};
   final nwById = {for (final p in nwProvinces) p.id: p};
-  final usedProvinceNames = <String>{};
+  final usedOwProvinceDisplayNames = <String>{};
+  final usedNwProvinceDisplayNames = <String>{};
   var proceduralFallbackCount = 0;
 
-  String generateFallback(int seedOffset) {
-    proceduralFallbackCount++;
-    return generateUniqueProvinceName(
-      namingSeed + seedOffset,
-      usedProvinceNames,
-    );
+  String Function(int seedOffset) fallbackFactory(Set<String> usedInRegion) {
+    return (int seedOffset) {
+      proceduralFallbackCount++;
+      return generateUniqueProvinceName(namingSeed + seedOffset, usedInRegion);
+    };
   }
 
-  // Helper: assign names to provinces from pool (random order). Capital gets capitalName; others get shuffled pool, wrap if needed.
+  final fallbackOw = fallbackFactory(usedOwProvinceDisplayNames);
+  final fallbackNw = fallbackFactory(usedNwProvinceDisplayNames);
+
+  // Helper: assign names from pool / capital / procedural so that every name
+  // is unique within the region's land provinces (SPEC/game/naming.md).
   void assignProvinceNames({
     required List<Province> provinces,
     required String? capitalProvinceId,
@@ -422,7 +493,6 @@ Game _applyNaming({
     required Set<String> usedProvinceNames,
     required String Function(int seedOffset) generateFallback,
     required Map<String, Province> outById,
-    required String regionId,
   }) {
     if (provinces.isEmpty) return;
     provinces = List.of(provinces)..sort((a, b) => a.id.compareTo(b.id));
@@ -430,18 +500,44 @@ Game _applyNaming({
       poolLength: pool.length,
       seed: rngSeed,
     );
-    var poolIndex = 0;
+    var poolScan = 0;
+
     for (var i = 0; i < provinces.length; i++) {
       final p = provinces[i];
-      var name = p.id == capitalProvinceId
-          ? capitalName
-          : (pool.isNotEmpty
-                ? pool[poolIndices[poolIndex % poolIndices.length]]
-                : '$fallbackPrefix ${i + 1}');
-      if (name.isEmpty) name = generateFallback(rngSeed + i);
-      if (p.id != capitalProvinceId && pool.isNotEmpty) poolIndex++;
-      final updated = p.copyWith(displayName: name);
-      outById[p.id] = updated;
+      final rowSalt = rngSeed + i;
+      final String name;
+      if (p.id == capitalProvinceId) {
+        name = _namingResolveCapitalDisplayName(
+          capitalName: capitalName,
+          rowSalt: rowSalt,
+          usedProvinceNames: usedProvinceNames,
+          generateFallback: generateFallback,
+        );
+      } else if (pool.isNotEmpty) {
+        final picked = _namingPickNonCapitalPoolName(
+          pool: pool,
+          poolIndices: poolIndices,
+          poolScan: poolScan,
+          usedProvinceNames: usedProvinceNames,
+          rowSalt: rowSalt,
+          generateFallback: generateFallback,
+        );
+        name = picked.name;
+        poolScan = picked.nextPoolScan;
+      } else {
+        name = _namingResolveEmptyPoolNonCapital(
+          rowIndex: i,
+          iterationSalt: rowSalt,
+          fallbackPrefix: fallbackPrefix,
+          usedProvinceNames: usedProvinceNames,
+          generateFallback: generateFallback,
+        );
+      }
+
+      final resolved = name.isEmpty
+          ? generateFallback(rowSalt + _kNamingFinalEmptySalt)
+          : name;
+      outById[p.id] = p.copyWith(displayName: resolved);
     }
   }
 
@@ -455,6 +551,8 @@ Game _applyNaming({
     required String fallbackPrefix,
     required int rngSeed,
     required Map<String, Province> outById,
+    required Set<String> usedInRegion,
+    required String Function(int seedOffset) generateFallback,
   }) {
     if (ownedProvinces.isEmpty) return;
     assignProvinceNames(
@@ -464,10 +562,9 @@ Game _applyNaming({
       pool: pool,
       fallbackPrefix: fallbackPrefix,
       rngSeed: rngSeed,
-      usedProvinceNames: usedProvinceNames,
+      usedProvinceNames: usedInRegion,
       generateFallback: generateFallback,
       outById: outById,
-      regionId: outById == owById ? kRegionOldWorld : kRegionNewWorld,
     );
   }
 
@@ -493,6 +590,8 @@ Game _applyNaming({
       fallbackPrefix: gpNaming.countryName,
       rngSeed: namingSeed + player.id.hashCode,
       outById: owById,
+      usedInRegion: usedOwProvinceDisplayNames,
+      generateFallback: fallbackOw,
     );
   }
 
@@ -508,7 +607,7 @@ Game _applyNaming({
     if (owned.isEmpty) continue;
     final capitalProvId = minor.capitalProvinceId;
     final capitalName = namingMinor.id.isEmpty
-        ? generateFallback(namingSeed + minor.id.hashCode)
+        ? fallbackOw(namingSeed + minor.id.hashCode)
         : (namingMinor.provinceNamePool.isNotEmpty
               ? namingMinor.provinceNamePool.first
               : namingMinor.displayName);
@@ -523,6 +622,8 @@ Game _applyNaming({
       fallbackPrefix: fallbackPrefix,
       rngSeed: namingSeed + minor.id.hashCode,
       outById: owById,
+      usedInRegion: usedOwProvinceDisplayNames,
+      generateFallback: fallbackOw,
     );
   }
 
@@ -539,7 +640,7 @@ Game _applyNaming({
     if (owned.isEmpty) continue;
     final capitalProvId = tribe.capitalProvinceId;
     final capitalName = namingTribe.id.isEmpty
-        ? generateFallback(namingSeed + tribe.id.hashCode)
+        ? fallbackNw(namingSeed + tribe.id.hashCode)
         : (namingTribe.provinceNamePool.isNotEmpty
               ? namingTribe.provinceNamePool.first
               : namingTribe.displayName);
@@ -554,6 +655,8 @@ Game _applyNaming({
       fallbackPrefix: fallbackPrefix,
       rngSeed: namingSeed + tribe.id.hashCode,
       outById: nwById,
+      usedInRegion: usedNwProvinceDisplayNames,
+      generateFallback: fallbackNw,
     );
   }
 
@@ -852,6 +955,118 @@ String _startingRegimentTypeForPlayer(Player player) {
 /// Merchant ship type for starting home fleets (baseline era).
 String _startingShipTypeForPlayer(Player _) {
   return ShipEconomyCatalog.carrack.shipTypeId;
+}
+
+void _pushUnvisitedPpNeighborsDiag(
+  String u,
+  Map<String, Set<String>> neighbours,
+  Set<String> visited,
+  List<String> stack,
+) {
+  for (final v in neighbours[u] ?? const <String>{}) {
+    if (visited.contains(v)) continue;
+    stack.add(v);
+  }
+}
+
+typedef _LmDiag = ({int size, String minProvinceId, Set<String> provinces});
+
+List<_LmDiag> _landmassesSortedDescDiag(Map<String, Set<String>> neighbours) {
+  final visited = <String>{};
+  final out = <_LmDiag>[];
+  for (final start in neighbours.keys.toList()..sort()) {
+    if (visited.contains(start)) continue;
+    final comp = <String>{};
+    final stack = <String>[start];
+    while (stack.isNotEmpty) {
+      final u = stack.removeLast();
+      if (!visited.add(u)) continue;
+      comp.add(u);
+      _pushUnvisitedPpNeighborsDiag(u, neighbours, visited, stack);
+    }
+    final minId = comp.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
+    out.add((size: comp.length, minProvinceId: minId, provinces: comp));
+  }
+  out.sort((a, b) {
+    final c = b.size.compareTo(a.size);
+    if (c != 0) return c;
+    return a.minProvinceId.compareTo(b.minProvinceId);
+  });
+  return out;
+}
+
+/// One-line topology summary when locked OW assigner fails (#1834 investigation).
+String _lockedOwAssignFailureDiagnostics({
+  required GameSetupConfig config,
+  required MapTopology topology,
+  required List<String> seaBoundIds,
+}) {
+  final ppNbr = provincePpNeighbours(topology);
+  final sizes = ppLandComponentSizesSorted(topology);
+  final partitionOk = oldWorldPartitionMatchesLockedProfile(topology);
+  final feasibilityOk = lockedOldWorldRoleFeasibilityHolds(
+    topology: topology,
+    neighbours: ppNbr,
+  );
+  final lms = _landmassesSortedDescDiag(ppNbr);
+  final lmParts = <String>[];
+  for (var i = 0; i < lms.length; i++) {
+    final lm = lms[i];
+    var sea = 0;
+    for (final p in lm.provinces) {
+      if (isProvinceSeaBound(topology, p)) sea++;
+    }
+    lmParts.add('i=$i|sz=${lm.size}|sea=$sea|min=${lm.minProvinceId}');
+  }
+  var degMin = 1 << 30;
+  var degMax = 0;
+  var degSum = 0;
+  for (final pid in ppNbr.keys) {
+    final d = ppNbr[pid]?.length ?? 0;
+    degSum += d;
+    if (d < degMin) degMin = d;
+    if (d > degMax) degMax = d;
+  }
+  final nProv = ppNbr.length;
+  final degMean = nProv == 0 ? 0.0 : degSum / nProv;
+  const cap = 16;
+  final seaSample = seaBoundIds.length <= cap
+      ? seaBoundIds.join(',')
+      : '${seaBoundIds.take(cap).join(',')}…(+${seaBoundIds.length - cap})';
+  return 'lockedOW_diag seed=${config.seed} nodes=${topology.nodes.length} '
+      'edges=${topology.edges.length} nProv=$nProv ppSizes=$sizes '
+      'partitionOk=$partitionOk feasibilityOk=$feasibilityOk '
+      'seaboundCount=${seaBoundIds.length} seaboundSample=[$seaSample] '
+      'ppDegMin=$degMin ppDegMax=$degMax ppDegMean=${degMean.toStringAsFixed(2)} '
+      'landmasses=[${lmParts.join('; ')}]';
+}
+
+/// One-line topology summary when locked NW assigner fails (#1834 investigation).
+String _lockedNwAssignFailureDiagnostics({
+  required GameSetupConfig config,
+  required MapTopology topology,
+}) {
+  final ppNbr = provincePpNeighbours(topology);
+  final sizes = ppLandComponentSizesSorted(topology);
+  final partitionOk = newWorldPartitionMatchesLockedProfile(topology);
+  final feasibilityOk = lockedNewWorldRoleFeasibilityHolds(
+    topology: topology,
+    neighbours: ppNbr,
+  );
+  final lms = _landmassesSortedDescDiag(ppNbr);
+  final lmParts = <String>[];
+  for (var i = 0; i < lms.length; i++) {
+    final lm = lms[i];
+    var sea = 0;
+    for (final p in lm.provinces) {
+      if (isProvinceSeaBound(topology, p)) sea++;
+    }
+    lmParts.add('i=$i|sz=${lm.size}|sea=$sea|min=${lm.minProvinceId}');
+  }
+  return 'lockedNW_diag seed=${config.seed} nodes=${topology.nodes.length} '
+      'edges=${topology.edges.length} nProv=${ppNbr.length} ppSizes=$sizes '
+      'partitionOk=$partitionOk feasibilityOk=$feasibilityOk '
+      'landmasses=[${lmParts.join('; ')}]';
 }
 
 /// Re-runs §7d province town assignment after the caller mutates provinces or maps.

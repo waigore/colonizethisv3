@@ -54,6 +54,7 @@ Skills live under `.cursor/skills/<name>/SKILL.md`. When a skill matches the tas
 | Skill | Use when |
 |-------|----------|
 | `create-github-issue-from-report` | Turn an informal bug/report into a structured GitHub issue (read-only repo work; may use `gh`). |
+| `clean-local-branches` | Prune local branch refs, keeping `dev` and open-PR heads; never delete remote branches. |
 | `fix-pr-checks` | Unblock a PR by fixing failing checks and quality gates. |
 | `implement-github-issue-fix` | User gives an issue **#** or **URL**; validate problem/design/testable ACs, update **SPEC** if needed, implement, add positive/negative tests, open PR to **`dev`** with **`Refs #…`** (do **not** auto-close). Very large issues: one isolatable slice only. |
 | `merge-dev-into-android-build` | Merge `dev` into `build/app/android` for APK build workflows. |

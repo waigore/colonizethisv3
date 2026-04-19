@@ -15,6 +15,7 @@ typedef TileMapRegionGenerator = (TileMapResult, MapTopology) Function({
   void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)?
       onLandSeedsPlaced,
   void Function(List<(int x, int y)> continentSeeds)? onContinentSeedsPlaced,
+  List<int>? continentProvinceSizes,
 });
 
 /// Default implementation delegating to [TileMapGenerator].
@@ -29,6 +30,7 @@ typedef TileMapRegionGenerator = (TileMapResult, MapTopology) Function({
   void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)?
       onLandSeedsPlaced,
   void Function(List<(int x, int y)> continentSeeds)? onContinentSeedsPlaced,
+  List<int>? continentProvinceSizes,
 }) {
   return TileMapGenerator(params: params).generate(
     numProvinces: numProvinces,
@@ -39,5 +41,6 @@ typedef TileMapRegionGenerator = (TileMapResult, MapTopology) Function({
     onLog: onLog,
     onLandSeedsPlaced: onLandSeedsPlaced,
     onContinentSeedsPlaced: onContinentSeedsPlaced,
+    continentProvinceSizes: continentProvinceSizes,
   );
 }

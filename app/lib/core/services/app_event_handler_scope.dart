@@ -7,6 +7,7 @@ import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/app.dart';
+import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_order_helpers.dart';
@@ -34,6 +35,27 @@ const String grantOrSubsidyDialogId = 'grant_or_subsidy';
 
 /// [OpenDialogEvent] id for [NewGameLeaderSelectionDialog]. SPEC/program/app-ui-wiring.md.
 const String newGameLeaderSelectionDialogId = 'new_game_leader_selection';
+
+/// Smaller than [GameSetupConfig.defaultConfig]: integration tests compile with
+/// `CT_E2E=true` and must stay inside CI wall clocks (not the locked full-init
+/// 60/30 profile). Production `main` / widget tests use [GameSetupConfig.defaultConfig].
+GameSetupConfig _ctE2eNewGameLeaderTemplateConfig() {
+  final d = GameSetupConfig.defaultConfig;
+  return GameSetupConfig(
+    selectedGreatPowerIds: d.selectedGreatPowerIds,
+    leaderVariantByGpId: d.leaderVariantByGpId,
+    continentCount: 2,
+    minorNationCount: 2,
+    tribeCount: 4,
+    numProvincesOldWorld: 24,
+    numProvincesNewWorld: 12,
+    minProvincesPerMinor: 2,
+    seed: d.seed,
+    startingResources: d.startingResources,
+    preferredInitialMapZoomMultiplier: d.preferredInitialMapZoomMultiplier,
+    initTownRoadWiringRegionIds: d.initTownRoadWiringRegionIds,
+  );
+}
 
 /// [OpenDialogEvent] id for [CombatModeChoiceDialog]. SPEC/program/app-ui-wiring.md.
 const String combatModeChoiceDialogId = 'combat_mode_choice';
@@ -166,7 +188,9 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
       navigatorKey: appNavigatorKey,
       dialogBuilders: {
         newGameLeaderSelectionDialogId: (ctx, _) {
-          final baseConfig = GameSetupConfig.defaultConfig;
+          final baseConfig = kCtE2EEnabled
+              ? _ctE2eNewGameLeaderTemplateConfig()
+              : GameSetupConfig.defaultConfig;
           final naming = defaultNamingConfig;
           final initialSelections = <String, String>{};
           for (final gpId in baseConfig.selectedGreatPowerIds) {
@@ -180,13 +204,7 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             naming: naming,
             initialLeaderByGpId: initialSelections,
             onCancel: () => Navigator.of(ctx).pop(),
-            onConfirmed:
-                (
-                  orderedGreatPowerIds,
-                  leaderVariantByGpId,
-                  enforceFairGpOldWorldAssignment,
-                  seed,
-                ) {
+            onConfirmed: (orderedGreatPowerIds, leaderVariantByGpId, seed) {
                   final navCtx = appNavigatorKey.currentContext;
                   if (navCtx == null) {
                     _logShell.w(
@@ -206,8 +224,6 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
                     minProvincesPerMinor: baseConfig.minProvincesPerMinor,
                     seed: seed,
                     startingResources: baseConfig.startingResources,
-                    enforceFairGpOldWorldAssignment:
-                        enforceFairGpOldWorldAssignment,
                     initTownRoadWiringRegionIds:
                         baseConfig.initTownRoadWiringRegionIds,
                   );

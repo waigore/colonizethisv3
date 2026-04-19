@@ -14,14 +14,13 @@ class GameSetupConfig {
     this.selectedGreatPowerIds = _defaultSelectedGreatPowerIds,
     this.leaderVariantByGpId = const {},
     this.continentCount = 4,
-    this.minorNationCount = 3,
+    this.minorNationCount = 6,
     this.tribeCount = 10,
     this.numProvincesOldWorld = 60,
-    this.numProvincesNewWorld = 80,
+    this.numProvincesNewWorld = 30,
     this.minProvincesPerMinor = 3,
     this.seed = 42,
     this.startingResources = const StartingResourcesConfig(),
-    this.enforceFairGpOldWorldAssignment = false,
     this.preferredInitialMapZoomMultiplier,
     Set<String>? initTownRoadWiringRegionIds,
   }) : initTownRoadWiringRegionIds =
@@ -70,11 +69,6 @@ class GameSetupConfig {
   final int seed;
   final StartingResourcesConfig startingResources;
 
-  /// When true, run GP Old World land connectivity repair and assignment retries
-  /// per SPEC/game/game-setup.md. When false, use a single assignment pass with no
-  /// repair (faster; a GP may own disconnected P–P components).
-  final bool enforceFairGpOldWorldAssignment;
-
   /// Optional explicit fit-relative map zoom multiplier (`m`) for fresh campaign
   /// initialization. When null, setup uses pipeline default behavior.
   final double? preferredInitialMapZoomMultiplier;
@@ -87,4 +81,14 @@ class GameSetupConfig {
 
   /// Default config for Phase 2.
   static final GameSetupConfig defaultConfig = GameSetupConfig();
+
+  /// True for the locked full-init delivery profile (GitHub #1822 / #1830).
+  bool get isLockedFullInitProfile =>
+      greatPowerCount == 6 &&
+      minorNationCount == 6 &&
+      continentCount == 4 &&
+      tribeCount == 10 &&
+      numProvincesOldWorld == 60 &&
+      numProvincesNewWorld == 30 &&
+      minProvincesPerMinor == 3;
 }
