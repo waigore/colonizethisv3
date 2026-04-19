@@ -38,7 +38,6 @@ InitGameMapViewData debugMapViewDataWithVisibilityForFirstPlayer() {
         visibility = TileVisibility.visible;
         break;
       case VisibilityLevel.fogged:
-      case VisibilityLevel.revealed:
         visibility = TileVisibility.fogged;
         break;
       case VisibilityLevel.unknown:

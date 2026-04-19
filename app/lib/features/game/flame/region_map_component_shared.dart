@@ -62,11 +62,13 @@ const Color _kProvinceLabelShadowColor = Color(0x8A000000);
 
 /// Fogged land tiles: modulate alpha for resource icons (linear 0–1).
 const double _kFoggedResourceIconModulateAlpha = 0.6;
+
 const double _kExtractionIndicatorSizeBoostPx = 2.0;
 const double _kExtractionIndicatorOverlapFactor = 0.45;
 const double _kExtractionIndicatorStartInsetXPx = 2.0;
-const Color _kExtractionIndicatorGoldTint = Color(0xFFFFD54A);
-const Color _kExtractionIndicatorGrayTint = Color(0xFF9E9E9E);
+
+/// Blocked extraction throughput (not reaching the capital under transport rules).
+const Color _kExtractionDiscBlockedBrown = Color(0xFF5C4033);
 
 /// Political (faction) border stroke — indigo, visible over terrain.
 const Color _kFactionPoliticalBorderColor = Color(0xFF1A237E);
@@ -540,4 +542,39 @@ List<Rect> extractionIndicatorRectsForIconRect({
         Rect.fromLTWH(startX + (i * stepX), top, indicatorSize, indicatorSize),
     growable: false,
   );
+}
+
+/// Paints per-tile extraction throughput as **filled discs** (not commodity
+/// sprites). Effective slots use [_kMapSelectionGold] (transported toward
+/// capital); blocked slots use [_kExtractionDiscBlockedBrown].
+/// [fogCompatibleOverlayPaint] supplies the same fog `ColorFilter` as resource
+/// icons when the tile is fogged.
+///
+/// SPEC/ui/map-widget.md § Per-tile extraction throughput indicators;
+/// SPEC/program/map-region-map-render.md (`_paintOverlay` extraction discs).
+void paintResourceExtractionDiscIndicators({
+  required Canvas canvas,
+  required List<Rect> indicatorRects,
+  required int effectiveCount,
+  required Paint fogCompatibleOverlayPaint,
+}) {
+  if (indicatorRects.isEmpty) {
+    return;
+  }
+  final fogFilter = fogCompatibleOverlayPaint.colorFilter;
+  for (var i = 0; i < indicatorRects.length; i++) {
+    final isEffective = i < effectiveCount;
+    final fillColor = isEffective
+        ? _kMapSelectionGold
+        : _kExtractionDiscBlockedBrown;
+    final discPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = fillColor;
+    if (fogFilter != null) {
+      discPaint.colorFilter = fogFilter;
+    }
+    final r = indicatorRects[i];
+    final radius = r.shortestSide * 0.5;
+    canvas.drawCircle(r.center, radius, discPaint);
+  }
 }

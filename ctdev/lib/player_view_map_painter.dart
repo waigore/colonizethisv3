@@ -14,7 +14,7 @@ String tileKeyForCell(RegionMapViewData region, CellViewData cell) {
   return '${region.regionId}|${cell.regionCellId}|${cell.x}|${cell.y}';
 }
 
-/// Paints OW + NW map filtered by [PlayerView]: per-tile visibility (unknown/revealed/fogged/fullyVisible),
+/// Paints OW + NW map filtered by [PlayerView]: per-tile visibility (unknown/fogged/fullyVisible),
 /// only the viewing player's units, capitals/ports only for fogged and fully visible provinces.
 /// SPEC/program/ctdev-app.md § Per-player map.
 class PlayerViewMapPainter extends CustomPainter {
@@ -41,7 +41,6 @@ class PlayerViewMapPainter extends CustomPainter {
   final List<Fleet> fleets;
 
   static const Color _unknownColor = Colors.black;
-  static const Color _revealedColor = Color(0xFF606060);
   static const Color _seaColor = Color(0xFF003366);
   static const Color _landFallbackColor = Color(0xFF808080);
   static const Color _landBorderColor = Colors.black;
@@ -93,12 +92,6 @@ class PlayerViewMapPainter extends CustomPainter {
         canvas.drawRect(rect, fillPaint);
         continue;
       }
-      if (vis == VisibilityLevel.revealed) {
-        fillPaint.color = _revealedColor;
-        canvas.drawRect(rect, fillPaint);
-        continue;
-      }
-
       // fogged or fullyVisible: draw full colours
       if (cell.isSea) {
         fillPaint.color = _seaColor;

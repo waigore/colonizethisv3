@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/units/shared/location_section_header.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/region_section_header.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 
@@ -108,6 +109,64 @@ void main() {
         ),
       );
       expect(find.text('Action'), findsOneWidget);
+    });
+  });
+
+  group('UnitsEntityActionRow', () {
+    testWidgets('renders details with text action label on wide width', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 420,
+              child: UnitsEntityActionRow(
+                details: const Text('Left details'),
+                actions: [
+                  UnitsEntityAction(
+                    tooltip: 'Move',
+                    icon: Icons.route,
+                    label: 'Move',
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Left details'), findsOneWidget);
+      expect(find.text('Move'), findsOneWidget);
+    });
+
+    testWidgets('switches action button to icon-only on narrow width', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 220,
+              child: UnitsEntityActionRow(
+                details: const Text('Left details'),
+                actions: [
+                  UnitsEntityAction(
+                    tooltip: 'Move',
+                    icon: Icons.route,
+                    label: 'Move',
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.route), findsOneWidget);
+      expect(find.text('Move'), findsNothing);
     });
   });
 }

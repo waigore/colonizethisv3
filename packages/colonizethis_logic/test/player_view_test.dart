@@ -163,11 +163,11 @@ void main() {
       },
     );
 
-    test('resourceIdVisibleToPlayer hides all resources when revealed', () {
+    test('resourceIdVisibleToPlayer hides all resources when unknown', () {
       expect(
         resourceIdVisibleToPlayer(
           authoritativeResourceId: 'grain',
-          visibility: VisibilityLevel.revealed,
+          visibility: VisibilityLevel.unknown,
           tileProspectedByPlayer: false,
         ),
         isNull,

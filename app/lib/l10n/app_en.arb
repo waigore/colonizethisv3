@@ -1434,6 +1434,22 @@
   "@production_allocation": {
     "description": "Production panel subheader for allocation controls."
   },
+  "production_allocationDecrementRecipe": "Decrease desired output for this recipe",
+  "@production_allocationDecrementRecipe": {
+    "description": "Semantics and tooltip for production allocation minus control."
+  },
+  "production_allocationIncrementRecipe": "Increase desired output for this recipe",
+  "@production_allocationIncrementRecipe": {
+    "description": "Semantics and tooltip for production allocation plus control."
+  },
+  "production_allocationMaximizeRecipe": "Set this recipe to maximum desired output",
+  "@production_allocationMaximizeRecipe": {
+    "description": "Semantics and tooltip for production allocation maximize control."
+  },
+  "production_allocationClearRecipe": "Clear desired output for this recipe",
+  "@production_allocationClearRecipe": {
+    "description": "Semantics and tooltip for production allocation clear control."
+  },
   "splitArmy_title": "Split Army",
   "@splitArmy_title": {
     "description": "Split army dialog title."

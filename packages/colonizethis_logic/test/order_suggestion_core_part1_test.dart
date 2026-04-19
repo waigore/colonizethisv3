@@ -251,7 +251,7 @@ void main() {
         playerVisibilityByTile: const {
           playerId: {
             t0: 'fullyVisible',
-            t1: 'revealed',
+            t1: 'fogged',
           },
         },
         tileKeysByRegionAndProvince: {
@@ -295,13 +295,13 @@ void main() {
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
       );
-      // p1 only revealed (not fogged) — prospect requires fogged or better.
+      // Province tiles unknown only — prospect requires fogged or better.
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
         oldWorld: RegionData(provinces: [p1], units: [unit]),
         newWorld: const RegionData(),
         playerVisibilityByTile: const {
-          playerId: {'oldWorld|p1|0|0': 'revealed'},
+          playerId: {'oldWorld|p1|0|0': 'unknown'},
         },
       );
       final game = Game(

@@ -50,6 +50,30 @@ Future<void> _waitUntilFound(
   );
 }
 
+Future<void> _dismissTransientUi(WidgetTester tester) async {
+  if (find.byType(BottomSheet).evaluate().isNotEmpty) {
+    await _closeBottomSheet(tester);
+  }
+  if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
+    final closeCandidates = <Finder>[
+      find.text('Cancel'),
+      find.text('Close'),
+      find.byIcon(Icons.close),
+      find.byIcon(Icons.arrow_back),
+    ];
+    for (final candidate in closeCandidates) {
+      final tappable = candidate.hitTestable();
+      if (tappable.evaluate().isNotEmpty) {
+        await tester.tap(tappable.first, warnIfMissed: false);
+        await _pumpFor(tester, const Duration(milliseconds: 150));
+        return;
+      }
+    }
+    await tester.binding.handlePopRoute();
+    await _pumpFor(tester, const Duration(milliseconds: 150));
+  }
+}
+
 Future<void> _openCivilianPanel(
   WidgetTester tester, {
   Duration timeout = const Duration(seconds: 20),
@@ -62,9 +86,8 @@ Future<void> _openCivilianPanel(
   Future<bool> tryOpen(Finder trigger) async {
     final tappable = trigger.hitTestable();
     if (tappable.evaluate().isEmpty) {
-      // Dismiss blocking overlays (for example, side menu scrim) before retrying.
-      await tester.tapAt(const Offset(1200, 360));
-      await _pumpFor(tester, const Duration(milliseconds: 120));
+      // Dismiss blocking overlays/dialogs before retrying.
+      await _dismissTransientUi(tester);
       return false;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
@@ -118,9 +141,8 @@ Future<void> _openPanelFromMarker(
     }
     final tappable = markerButton.hitTestable();
     if (tappable.evaluate().isEmpty) {
-      // Clear transient overlays/scrims that can block marker taps.
-      await tester.tapAt(const Offset(1200, 360));
-      await _pumpFor(tester, const Duration(milliseconds: 150));
+      // Clear transient overlays/dialogs that can block marker taps.
+      await _dismissTransientUi(tester);
       continue;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
@@ -312,9 +334,8 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
         return;
       }
     } else {
-      // Dismiss transient overlays/scrims and retry opening from the rail.
-      await tester.tapAt(const Offset(1200, 360));
-      await _pumpFor(tester, const Duration(milliseconds: 150));
+      // Dismiss transient overlays/dialogs and retry opening from the rail.
+      await _dismissTransientUi(tester);
     }
   }
 
@@ -325,18 +346,34 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
 }
 
 Future<void> _tapFirstAssignInCivilianPanel(WidgetTester tester) async {
+  final root = find.byKey(kCtE2ECivilianPanelRootKey);
+  final listView = find.descendant(of: root, matching: find.byType(ListView));
+  expect(listView, findsOneWidget);
+  final panelScrollable = find.descendant(
+    of: listView,
+    matching: find.byType(Scrollable),
+  );
+  expect(panelScrollable, findsOneWidget);
   final assign = find.descendant(
-    of: find.byKey(kCtE2ECivilianPanelRootKey),
+    of: root,
     matching: find.text('Assign'),
   );
   expect(assign, findsWidgets);
-  await tester.tap(assign.first);
+  final firstAssign = assign.first;
+  await tester.scrollUntilVisible(
+    firstAssign,
+    120,
+    scrollable: panelScrollable,
+  );
+  await tester.ensureVisible(firstAssign);
+  await _pumpFor(tester, const Duration(milliseconds: 100));
+  await tester.tap(firstAssign);
   await _pumpFor(tester, const Duration(milliseconds: 300));
 }
 
-/// Taps Assign on a visible [ListTile] whose title is exactly [unitTypeTitle]
-/// (e.g. [Unit.type] like `Explorer`). Scrolls the panel [ListView] between
-/// attempts so rows below the fold can be reached.
+/// Taps Assign on a [ListTile] whose title is exactly [unitTypeTitle]
+/// (e.g. [Unit.type] like `Explorer`). Scrolls the panel [Scrollable] until the
+/// row is visible, then taps Assign.
 Future<void> _tapAssignOnCivilianRowWithTitle(
   WidgetTester tester,
   String unitTypeTitle,
@@ -344,45 +381,84 @@ Future<void> _tapAssignOnCivilianRowWithTitle(
   final root = find.byKey(kCtE2ECivilianPanelRootKey);
   final listView = find.descendant(of: root, matching: find.byType(ListView));
   expect(listView, findsOneWidget);
-  for (var attempt = 0; attempt < 25; attempt++) {
-    final titleMatches = find.descendant(
-      of: root,
-      matching: find.text(unitTypeTitle),
-    );
-    final count = titleMatches.evaluate().length;
-    for (var i = 0; i < count; i++) {
-      final listTile = find.ancestor(
-        of: titleMatches.at(i),
-        matching: find.byType(ListTile),
-      );
-      final assign = find.descendant(
-        of: listTile,
-        matching: find.text('Assign'),
-      );
-      if (assign.evaluate().isNotEmpty) {
-        await tester.tap(assign);
-        await _pumpFor(tester, const Duration(milliseconds: 300));
-        return;
-      }
-    }
-    await tester.drag(listView, const Offset(0, -120));
+  final panelScrollable = find.descendant(
+    of: listView,
+    matching: find.byType(Scrollable),
+  );
+  expect(panelScrollable, findsOneWidget);
+  // Scope titles to the list: several units share the same display title
+  // (e.g. multiple `Explorer` rows); `find.text` under the root can match
+  // unrelated widgets and break `scrollUntilVisible`.
+  final titlesInList = find.descendant(
+    of: listView,
+    matching: find.text(unitTypeTitle),
+  );
+  // ListView lazy-builds off-screen rows; taller rows (shared action row) can
+  // push unit types below the first viewport without any Text in the element tree.
+  final sw = Stopwatch()..start();
+  while (titlesInList.evaluate().isEmpty &&
+      sw.elapsed < const Duration(seconds: 20)) {
+    await tester.drag(panelScrollable, const Offset(0, -120));
     await _pumpFor(tester, const Duration(milliseconds: 120));
+  }
+  expect(
+    titlesInList,
+    findsWidgets,
+    reason:
+        'Timed out scrolling civilian panel for a visible "$unitTypeTitle" row',
+  );
+  final n = titlesInList.evaluate().length;
+  for (var i = 0; i < n; i++) {
+    final titleAt = titlesInList.at(i);
+    await tester.scrollUntilVisible(
+      titleAt,
+      120,
+      scrollable: panelScrollable,
+    );
+    await tester.ensureVisible(titleAt);
+    final listTile = find.ancestor(
+      of: titleAt,
+      matching: find.byType(ListTile),
+    );
+    final assign = find.descendant(of: listTile, matching: find.text('Assign'));
+    if (assign.evaluate().isEmpty) {
+      continue;
+    }
+    final assignHit = assign.first;
+    await tester.ensureVisible(assignHit);
+    await _pumpFor(tester, const Duration(milliseconds: 100));
+    await tester.tap(assignHit);
+    await _pumpFor(tester, const Duration(milliseconds: 300));
+    return;
   }
   fail('No idle Assign row for unit type "$unitTypeTitle" in civilian panel');
 }
 
 Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
-  final tiles = find.byType(ExpansionTile);
-  final n = tiles.evaluate().length;
-  for (var j = 0; j < n; j++) {
-    final expandIcon = find.descendant(
-      of: tiles.at(j),
-      matching: find.byIcon(Icons.expand_more),
-    );
-    if (expandIcon.evaluate().isNotEmpty) {
-      await tester.tap(expandIcon.first);
+  // Re-query after each tap: expanding one tile rebuilds the panel, so a
+  // cached `ExpansionTile` count / `tiles.at(j)` from a prior frame can throw
+  // (e.g. index 1 when only one tile remains).
+  for (var safety = 0; safety < 32; safety++) {
+    final tiles = find.byType(ExpansionTile);
+    final n = tiles.evaluate().length;
+    if (n == 0) return;
+
+    var expandedOne = false;
+    for (var j = 0; j < n; j++) {
+      final expandIcon = find.descendant(
+        of: tiles.at(j),
+        matching: find.byIcon(Icons.expand_more),
+      );
+      if (expandIcon.evaluate().isEmpty) continue;
+      final iconHit = expandIcon.first;
+      await tester.ensureVisible(iconHit);
+      await _pumpFor(tester, const Duration(milliseconds: 80));
+      await tester.tap(iconHit, warnIfMissed: false);
       await _pumpFor(tester, const Duration(milliseconds: 250));
+      expandedOne = true;
+      break;
     }
+    if (!expandedOne) return;
   }
 }
 

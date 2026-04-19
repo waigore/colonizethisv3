@@ -129,7 +129,7 @@ void main() {
         ],
         edges: const [],
       );
-      // P1 only revealed (not fogged) — prospect requires fogged or fullyVisible.
+      // P1 tiles unknown — prospect requires fogged or fullyVisible.
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -150,7 +150,7 @@ void main() {
           ),
           newWorld: const RegionData(),
           playerVisibilityByTile: const {
-            'p1': {'oldWorld|P1|0|0': 'revealed'},
+            'p1': {'oldWorld|P1|0|0': 'unknown'},
           },
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],

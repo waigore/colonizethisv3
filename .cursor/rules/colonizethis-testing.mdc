@@ -1,6 +1,6 @@
 ---
 description: Test layers and package-specific coverage thresholds
-globs: "**/*_test.dart,**/test/**/*.dart"
+globs: "**/*_test.dart,**/test/**/*.dart,**/integration_test/**/*.dart"
 alwaysApply: false
 ---
 
@@ -9,6 +9,7 @@ alwaysApply: false
 - **Coverage policy:** `logic`, `ai`, and `map` packages require **90%** line coverage. All other packages require **80%** line coverage.
 - **App scope note:** In `app`, the 80% threshold is enforced on **widget-unit code only** (`lib/widgets/`); entry points, config, providers, and features are excluded. Enforcement uses `tool/run_quality_gate_tests.sh` and `tool/check_coverage_threshold.sh 80 app` (see `SPEC/program/test-logging.md`).
 - **How to run:** App and ctdev use Flutter widget tests. Run with **`flutter test`** from the package dir (e.g. `cd app && flutter test`) or `melos run test_app`. Do **not** use `dart test app/test/...` — that breaks (Flutter bindings missing).
+- **E2E / integration UI tests:** For `**/integration_test/**` and other UI-heavy e2e, follow `colonizethis-e2e-ui-stability.mdc` (deterministic finders, visibility before interaction, avoid layout-coupled `tapAt`/gestures unless unavoidable).
 - **Layers:** **Unit** — pure logic, models, services (no Flutter/Flame); mock deps. **Widget** — Flutter; `flutter_test`, `pumpWidget`; mock state/providers. **Game/component** — Flame in isolation (minimal `FlameGame` + component); test `onLoad`, `update`, removal.
 - **Layout:** `test/` mirrors `lib/`; **`*_test.dart`**; group by feature or class.
 - **Mocks:** mockito or mocktail; for Flame use minimal game or mock `Game`.

@@ -24,6 +24,7 @@ The in-game screen (game_screen.dart) has a toolbar with buttons for Civilian Un
 | `home_capital` | Home to Capital | Flag/pole icon for centering on capital |32×32 |
 | `map_options` | Map Display Options | Gear/cog icon for map display settings | 32×32 |
 | `region_minimap` | Region minimap toggle | Globe / New World–style compass icon (`ui_icon_region_minimap.png`; may match `ui_icon_tech_new_world` style) | 32×32 |
+| `treasury_coin` | Treasury indicator | Gold coin icon for map control-row treasury display (`ui_icon_treasury_coin.png`) | 32×32 |
 
 **File naming:** `ui_icon_<icon_id>.png` in `app/assets/icons/`. Example: `ui_icon_diplomacy.png`. List `assets/icons/` in `pubspec.yaml` under `flutter: assets:` (directory entry is enough).
 
@@ -330,6 +331,7 @@ To regenerate an icon:
 | layer_toggle | ui_icon_layer_toggle.png | ✅ Generated | 2026-03-16 |
 | home_capital | ui_icon_home_capital.png | ✅ Generated | 2026-03-16 |
 | map_options | ui_icon_map_options.png | ✅ Generated | 2026-03-18 |
+| treasury_coin | ui_icon_treasury_coin.png | ☐ Pending | — |
 
 ### Resource & Worker Icons (Production Panel)
 
@@ -391,3 +393,20 @@ Per [production-panel.md](production-panel.md) § Resource and Worker Icons.
 | master | ui_icon_worker_master.png | Master craftsman |
 
 All icons verified: 32×32 PNG with RGBA transparency. Generated 2026-03-17.
+
+---
+
+## Production allocation row controls (32×32)
+
+**Panel:** Production → Allocation recipe rows (`production_panel.dart`). **Display:** `StrictAssetIcon` with `kAppIconAssetPrefix` at ~14–16 logical px in the slider row.
+
+**Generation:** PixelLab **`generate_image_pixflux`** (standalone UI icon, `no_background: true`) — same class of tool as [naval units](#ui_icon_naval_unitspng-3232) when `pixellab_create_map_object` is unavailable in the MCP toolchain. Colonial palette per § Style lock (`#3E1F1A`–`#5A332C` frame, `#A85C3A`–`#C87A5B` inner, `#E8C838`–`#FFED7F` gold accents).
+
+| Asset filename | Role | Pixflux prompt (summary) |
+|----------------|------|---------------------------|
+| `ui_icon_production_alloc_decrement.png` | **−** stepper | pixel art minus sign button, colonial UI, terracotta/gold, transparent background |
+| `ui_icon_production_alloc_increment.png` | **+** stepper | pixel art plus sign button, colonial UI, terracotta/gold, transparent background |
+| `ui_icon_production_alloc_maximize.png` | **Maximize** row | fill-to-cap / stacked bars upward, colonial UI, transparent background |
+| `ui_icon_production_alloc_clear.png` | **Clear** row | X or zero-row clear motif, colonial UI, transparent background |
+
+**Semantics / l10n:** `production_allocationDecrementRecipe`, `production_allocationIncrementRecipe`, `production_allocationMaximizeRecipe`, `production_allocationClearRecipe` in `app_en.arb`.

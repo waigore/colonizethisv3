@@ -74,22 +74,27 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
         game.players.first;
 
     final visibilityByTile = <String, TileVisibility>{};
-    view.visibilityByTile.forEach((tileKey, level) {
-      late TileVisibility visibility;
-      switch (level) {
-        case VisibilityLevel.fullyVisible:
-          visibility = TileVisibility.visible;
-          break;
-        case VisibilityLevel.fogged:
-        case VisibilityLevel.revealed:
-          visibility = TileVisibility.fogged;
-          break;
-        case VisibilityLevel.unknown:
-          visibility = TileVisibility.unrevealed;
-          break;
+    final byRegion = game.worldState.tileKeysByRegionAndProvince;
+    for (final provinceMap in byRegion.values) {
+      for (final tileKeys in provinceMap.values) {
+        for (final tileKey in tileKeys) {
+          final level = view.visibilityForTile(tileKey);
+          late TileVisibility visibility;
+          switch (level) {
+            case VisibilityLevel.fullyVisible:
+              visibility = TileVisibility.visible;
+              break;
+            case VisibilityLevel.fogged:
+              visibility = TileVisibility.fogged;
+              break;
+            case VisibilityLevel.unknown:
+              visibility = TileVisibility.unrevealed;
+              break;
+          }
+          visibilityByTile[tileKey] = visibility;
+        }
       }
-      visibilityByTile[tileKey] = visibility;
-    });
+    }
 
     final connectivity = resolveConnectivity(
       game: game,

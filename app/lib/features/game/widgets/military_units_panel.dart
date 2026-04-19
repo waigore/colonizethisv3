@@ -14,6 +14,7 @@ import 'move_army_dialog.dart';
 import 'split_army_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
+import 'units/shared/units_entity_action_row.dart';
 import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
 
@@ -269,28 +270,46 @@ class _ArmyExpansionTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 8),
       child: ExpansionTile(
-        title: Row(
-          children: [
-            Checkbox(
-              value: isSelectedForCombine,
-              onChanged: (_) => onCombineSelectionToggle(),
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(_armyTitle(), overflow: TextOverflow.ellipsis),
-            ),
-            if (onLocate != null) ...[
-              const SizedBox(width: 4),
-              IconButton(
-                tooltip: l10n.common_locate,
-                onPressed: onLocate,
-                icon: const Icon(Icons.my_location),
-                iconSize: 18,
+        title: UnitsEntityActionRow(
+          details: Row(
+            children: [
+              Checkbox(
+                value: isSelectedForCombine,
+                onChanged: (_) => onCombineSelectionToggle(),
                 visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(_armyTitle(), overflow: TextOverflow.ellipsis),
+              ),
+              if (onLocate != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: l10n.common_locate,
+                  onPressed: onLocate,
+                  icon: const Icon(Icons.my_location),
+                  iconSize: 18,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
             ],
+          ),
+          actions: [
+            if (onMove != null)
+              UnitsEntityAction(
+                tooltip: l10n.common_move,
+                icon: Icons.route,
+                label: l10n.common_move,
+                onPressed: onMove,
+              ),
+            if (onSplit != null)
+              UnitsEntityAction(
+                tooltip: l10n.common_split,
+                icon: Icons.call_split,
+                label: l10n.common_split,
+                onPressed: onSplit,
+              ),
           ],
         ),
         subtitle: Text(
