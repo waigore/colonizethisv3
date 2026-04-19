@@ -258,6 +258,14 @@ void _addUnitRowTexts({
   final showActions = !isTileScope || resolvedSelectedUnitId == unit.id;
 
   out.add(unit.type);
+  if (showActions) {
+    if (_isIdleNoPending(unit, currentOrders, humanPlayerId)) {
+      out.add(l10n.civilian_units_assign);
+    }
+    if (_hasWork(unit, currentOrders, humanPlayerId)) {
+      out.add(l10n.common_cancel);
+    }
+  }
   out.add(l10n.civilian_units_status(statusLabel));
   out.add(
     l10n.civilian_units_location(
@@ -273,14 +281,6 @@ void _addUnitRowTexts({
     provinceNames,
     l10n,
   );
-  if (showActions) {
-    if (_isIdleNoPending(unit, currentOrders, humanPlayerId)) {
-      out.add(l10n.civilian_units_assign);
-    }
-    if (_hasWork(unit, currentOrders, humanPlayerId)) {
-      out.add(l10n.common_cancel);
-    }
-  }
 }
 
 /// In-order [Text.data] strings for [CivilianUnitsPanel] preorder traversal.

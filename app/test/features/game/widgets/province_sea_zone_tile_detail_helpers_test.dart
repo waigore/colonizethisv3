@@ -41,6 +41,18 @@ void main() {
       expect(c!.x, 3);
       expect(c.y, 4);
     });
+
+    test('parses x|y from last two segments when local id contains a pipe', () {
+      final c = tryParseProvinceOverlayTileCoords(
+        regionId: 'newWorld',
+        regionWidth: 20,
+        regionHeight: 15,
+        selectedTileKey: 'newWorld|newWorld|provA|3|4',
+      );
+      expect(c, isNotNull);
+      expect(c!.x, 3);
+      expect(c.y, 4);
+    });
   });
 
   group('tileDetailProspectedDisplayLabel', () {

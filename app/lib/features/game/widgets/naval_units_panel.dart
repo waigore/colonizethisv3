@@ -15,6 +15,7 @@ import 'move_fleet_dialog.dart';
 import 'split_fleet_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
+import 'units/shared/units_entity_action_row.dart';
 import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
 
@@ -466,103 +467,59 @@ class _FleetExpansionTile extends StatelessWidget {
   final VoidCallback? onMoveFleet;
   final bool isSplitAllowed;
 
-  Widget _actionButton({
-    required String tooltip,
-    required IconData icon,
-    required String text,
-    required bool iconOnly,
-    required VoidCallback? onPressed,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: CtNinePatchButton(
-        onPressed: onPressed,
-        enabled: onPressed != null,
-        padding: EdgeInsets.symmetric(
-          horizontal: iconOnly ? 8 : 10,
-          vertical: 6,
-        ),
-        minHeight: 32,
-        child: iconOnly
-            ? Icon(icon, size: 16)
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, size: 16),
-                  const SizedBox(width: 4),
-                  Text(text),
-                ],
-              ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final missionText = l10n.naval_units_mission(row.missionLabel);
     return Padding(
       padding: const EdgeInsets.only(left: 8),
       child: ExpansionTile(
-        title: Row(
-          children: [
-            Checkbox(
-              value: isSelectedForCombine,
-              onChanged: (_) => onCombineSelectionToggle(),
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            const SizedBox(width: 4),
-            Flexible(child: Text(row.label, overflow: TextOverflow.ellipsis)),
-            if (onTap != null) ...[
-              const SizedBox(width: 4),
-              IconButton(
-                tooltip: l10n.naval_units_locateFleet,
-                onPressed: onTap,
-                icon: const Icon(Icons.my_location),
-                iconSize: 18,
+        title: UnitsEntityActionRow(
+          details: Row(
+            children: [
+              Checkbox(
+                value: isSelectedForCombine,
+                onChanged: (_) => onCombineSelectionToggle(),
                 visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
+              const SizedBox(width: 4),
+              Flexible(child: Text(row.label, overflow: TextOverflow.ellipsis)),
+              if (onTap != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: l10n.naval_units_locateFleet,
+                  onPressed: onTap,
+                  icon: const Icon(Icons.my_location),
+                  iconSize: 18,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
             ],
+          ),
+          actions: [
+            if (onMoveFleet != null)
+              UnitsEntityAction(
+                tooltip: l10n.common_move,
+                icon: Icons.route,
+                label: l10n.common_move,
+                onPressed: onMoveFleet,
+              ),
+            if (isSplitAllowed)
+              UnitsEntityAction(
+                tooltip: l10n.common_split,
+                icon: Icons.call_split,
+                label: l10n.common_split,
+                onPressed: onSplitFleet,
+              ),
           ],
         ),
-        subtitle: LayoutBuilder(
-          builder: (context, constraints) {
-            final iconOnly = constraints.maxWidth < 240;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(row.locationLabel),
-                Text(missionText),
-                if (row.draftNavalMoveLine != null)
-                  Text(row.draftNavalMoveLine!),
-                if (isSplitAllowed)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        if (onMoveFleet != null)
-                          _actionButton(
-                            tooltip: l10n.common_move,
-                            icon: Icons.route,
-                            text: l10n.common_move,
-                            iconOnly: iconOnly,
-                            onPressed: onMoveFleet,
-                          ),
-                        _actionButton(
-                          tooltip: l10n.common_split,
-                          icon: Icons.call_split,
-                          text: l10n.common_split,
-                          iconOnly: iconOnly,
-                          onPressed: onSplitFleet,
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            );
-          },
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(row.locationLabel),
+            Text(missionText),
+            if (row.draftNavalMoveLine != null) Text(row.draftNavalMoveLine!),
+          ],
         ),
         dense: true,
         children: [

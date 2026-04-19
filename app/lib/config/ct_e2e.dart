@@ -44,3 +44,13 @@ const Key kCtE2EOpenFirstCivilianMarkerPanelKey = Key(
 const Key kCtE2EOpenFirstFleetMarkerPanelKey = Key(
   'ct_e2e_open_first_fleet_marker_panel',
 );
+
+// ignore: public_member_api_docs
+/// Map controls: region chip for **New World** (narrow finder surface for e2e).
+const Key kCtE2ERegionTabNewWorldKey = Key('ct_e2e_region_tab_new_world');
+
+// ignore: public_member_api_docs
+/// [MoveFleetDialog] scroll body root (destinations list) for e2e scroll-until-visible.
+const Key kCtE2EMoveFleetDialogScrollRootKey = Key(
+  'ct_e2e_move_fleet_dialog_scroll_root',
+);

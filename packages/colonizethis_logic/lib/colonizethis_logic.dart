@@ -15,6 +15,7 @@ export 'src/turn_to_year.dart';
 export 'src/setup/capital_choice.dart';
 export 'src/setup/game_setup.dart';
 export 'src/setup/setup_validation_exception.dart';
+export 'src/setup/gp_old_world_resource_redistribution.dart';
 export 'src/setup/gp_starting_grain.dart';
 export 'src/setup/town_capital_occupancy.dart';
 export 'src/setup/effective_setup_seed.dart';

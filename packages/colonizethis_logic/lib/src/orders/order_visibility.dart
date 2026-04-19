@@ -8,7 +8,7 @@ import '../world/player_view.dart';
 /// Shared helpers used by the order engine and order suggestion API so both
 /// enforce the same visibility rules using the same data (PlayerView).
 
-/// Visibility level ordering: unknown < revealed < fogged < fullyVisible.
+/// Visibility level ordering: unknown < fogged < fullyVisible.
 bool _visibilityAtLeast(VisibilityLevel actual, VisibilityLevel min) {
   return actual.index >= min.index;
 }
@@ -50,20 +50,20 @@ bool moveSourceVisibilityOk(
     view,
     regionId,
     provinceId,
-    VisibilityLevel.revealed,
+    VisibilityLevel.fogged,
   );
 }
 
 /// Move order: destination province must be known (not unknown).
 /// Optional refinement: non-explorer civilians could require fogged+; for now
-/// we require at least revealed (same as source).
+/// we require at least fogged (same as source).
 bool moveDestVisibilityOk(
   PlayerView view,
   String regionId,
   String provinceId,
   String unitType,
 ) {
-  final min = VisibilityLevel.revealed;
+  final min = VisibilityLevel.fogged;
   return provinceHasAtLeastVisibility(view, regionId, provinceId, min);
 }
 
@@ -99,7 +99,7 @@ typedef _WorkTargetVisibilityFn =
       bool isOwned,
     );
 
-bool _workVisRevealedProvince(
+bool _workVisFoggedOrBetterProvince(
   PlayerView view,
   String regionId,
   String provinceId,
@@ -109,7 +109,7 @@ bool _workVisRevealedProvince(
     view,
     regionId,
     provinceId,
-    VisibilityLevel.revealed,
+    VisibilityLevel.fogged,
   );
 }
 
@@ -145,7 +145,7 @@ bool _workVisOwnedOrFoggedProvince(
 /// Map dispatch for work-target visibility (Refs #1531); unknown targets use default.
 final Map<String, _WorkTargetVisibilityFn> _workOrderVisibilityByTarget =
     <String, _WorkTargetVisibilityFn>{
-      kWorkTargetExplore: _workVisRevealedProvince,
+      kWorkTargetExplore: _workVisFoggedOrBetterProvince,
       kWorkTargetProspect: _workVisFoggedProvince,
       kWorkTargetBuildImprovement: _workVisOwnedOrFoggedProvince,
       kWorkTargetUpgradeTown: _workVisOwnedOrFoggedProvince,
@@ -153,8 +153,8 @@ final Map<String, _WorkTargetVisibilityFn> _workOrderVisibilityByTarget =
       kWorkTargetBuildPort: _workVisOwnedOrFoggedProvince,
       kWorkTargetBuildFort: _workVisOwnedOrFoggedProvince,
       'build_rail': _workVisOwnedOrFoggedProvince,
-      kWorkTargetPurchaseLand: _workVisRevealedProvince,
-      kWorkTargetStealTech: _workVisRevealedProvince,
+      kWorkTargetPurchaseLand: _workVisFoggedOrBetterProvince,
+      kWorkTargetStealTech: _workVisFoggedOrBetterProvince,
       kWorkTargetCounterSpy: _workVisOwnedOrFoggedProvince,
     };
 

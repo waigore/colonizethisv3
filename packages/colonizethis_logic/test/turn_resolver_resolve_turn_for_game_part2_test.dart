@@ -1081,7 +1081,7 @@ void main() {
       expect(home.isInPort, isTrue);
       expect(
         next.worldState.playerVisibilityByTile['p1']?[tileKey],
-        'revealed',
+        'fullyVisible',
       );
     });
 
