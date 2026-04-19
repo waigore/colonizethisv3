@@ -388,6 +388,73 @@ Game _assignProvinceTowns({
   );
 }
 
+const int _kNamingCapitalCollisionSalt = 919_393;
+const int _kNamingPoolExhaustedSalt = 271_828;
+const int _kNamingHybridExhaustedSalt = 314_159;
+const int _kNamingFinalEmptySalt = 161_803;
+
+String _namingResolveCapitalDisplayName({
+  required String capitalName,
+  required int rowSalt,
+  required Set<String> usedProvinceNames,
+  required String Function(int seedOffset) generateFallback,
+}) {
+  if (capitalName.isEmpty) {
+    return generateFallback(rowSalt);
+  }
+  if (usedProvinceNames.contains(capitalName)) {
+    return generateFallback(rowSalt + _kNamingCapitalCollisionSalt);
+  }
+  usedProvinceNames.add(capitalName);
+  return capitalName;
+}
+
+({String name, int nextPoolScan}) _namingPickNonCapitalPoolName({
+  required List<String> pool,
+  required List<int> poolIndices,
+  required int poolScan,
+  required Set<String> usedProvinceNames,
+  required int rowSalt,
+  required String Function(int seedOffset) generateFallback,
+}) {
+  final permLen = poolIndices.length;
+  for (var j = 0; j < permLen; j++) {
+    final pos = (poolScan + j) % permLen;
+    final candidate = pool[poolIndices[pos]];
+    if (usedProvinceNames.contains(candidate)) {
+      continue;
+    }
+    usedProvinceNames.add(candidate);
+    final nextPoolScan = (poolScan + j + 1) % permLen;
+    return (name: candidate, nextPoolScan: nextPoolScan);
+  }
+  final name = generateFallback(rowSalt + _kNamingPoolExhaustedSalt);
+  return (name: name, nextPoolScan: poolScan);
+}
+
+String _namingResolveEmptyPoolNonCapital({
+  required int rowIndex,
+  required int iterationSalt,
+  required String fallbackPrefix,
+  required Set<String> usedProvinceNames,
+  required String Function(int seedOffset) generateFallback,
+}) {
+  var ordinal = rowIndex + 1;
+  var name = '$fallbackPrefix $ordinal';
+  if (name.isEmpty) {
+    return generateFallback(iterationSalt);
+  }
+  while (usedProvinceNames.contains(name) && ordinal < 1_000_000) {
+    ordinal++;
+    name = '$fallbackPrefix $ordinal';
+  }
+  if (usedProvinceNames.contains(name)) {
+    return generateFallback(iterationSalt + _kNamingHybridExhaustedSalt);
+  }
+  usedProvinceNames.add(name);
+  return name;
+}
+
 Game _applyNaming({
   required Game game,
   required List<String> selectedGreatPowerIds,
@@ -437,59 +504,40 @@ Game _applyNaming({
 
     for (var i = 0; i < provinces.length; i++) {
       final p = provinces[i];
-      final isCapital = p.id == capitalProvinceId;
-      late String name;
-
-      if (isCapital) {
-        name = capitalName;
-        if (name.isEmpty) {
-          name = generateFallback(rngSeed + i);
-        } else if (usedProvinceNames.contains(name)) {
-          name = generateFallback(rngSeed + i + 919_393);
-        } else {
-          usedProvinceNames.add(name);
-        }
+      final rowSalt = rngSeed + i;
+      final String name;
+      if (p.id == capitalProvinceId) {
+        name = _namingResolveCapitalDisplayName(
+          capitalName: capitalName,
+          rowSalt: rowSalt,
+          usedProvinceNames: usedProvinceNames,
+          generateFallback: generateFallback,
+        );
       } else if (pool.isNotEmpty) {
-        final permLen = poolIndices.length;
-        String? picked;
-        for (var j = 0; j < permLen; j++) {
-          final pos = (poolScan + j) % permLen;
-          final candidate = pool[poolIndices[pos]];
-          if (!usedProvinceNames.contains(candidate)) {
-            picked = candidate;
-            poolScan = (poolScan + j + 1) % permLen;
-            break;
-          }
-        }
-        if (picked != null) {
-          name = picked;
-          usedProvinceNames.add(name);
-        } else {
-          name = generateFallback(rngSeed + i + 271_828);
-        }
+        final picked = _namingPickNonCapitalPoolName(
+          pool: pool,
+          poolIndices: poolIndices,
+          poolScan: poolScan,
+          usedProvinceNames: usedProvinceNames,
+          rowSalt: rowSalt,
+          generateFallback: generateFallback,
+        );
+        name = picked.name;
+        poolScan = picked.nextPoolScan;
       } else {
-        var ordinal = i + 1;
-        name = '$fallbackPrefix $ordinal';
-        if (name.isEmpty) {
-          name = generateFallback(rngSeed + i);
-        } else {
-          while (usedProvinceNames.contains(name) && ordinal < 1_000_000) {
-            ordinal++;
-            name = '$fallbackPrefix $ordinal';
-          }
-          if (usedProvinceNames.contains(name)) {
-            name = generateFallback(rngSeed + i + 314_159);
-          } else {
-            usedProvinceNames.add(name);
-          }
-        }
+        name = _namingResolveEmptyPoolNonCapital(
+          rowIndex: i,
+          iterationSalt: rowSalt,
+          fallbackPrefix: fallbackPrefix,
+          usedProvinceNames: usedProvinceNames,
+          generateFallback: generateFallback,
+        );
       }
 
-      if (name.isEmpty) {
-        name = generateFallback(rngSeed + i + 161_803);
-      }
-
-      outById[p.id] = p.copyWith(displayName: name);
+      final resolved = name.isEmpty
+          ? generateFallback(rowSalt + _kNamingFinalEmptySalt)
+          : name;
+      outById[p.id] = p.copyWith(displayName: resolved);
     }
   }
 
