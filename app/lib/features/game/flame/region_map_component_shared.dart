@@ -63,16 +63,6 @@ const Color _kProvinceLabelShadowColor = Color(0x8A000000);
 /// Fogged land tiles: modulate alpha for resource icons (linear 0–1).
 const double _kFoggedResourceIconModulateAlpha = 0.6;
 
-/// Plate drawn under resource map glyphs when road/rail transport art is painted
-/// on the same land cell, so transparent icon pixels do not reveal corridor-only
-/// pixels from the transport layer alone (SPEC/ui/map-widget.md § Resource Icons).
-/// Light tone so semi-transparent icon pixels read as soft tint, not a black box.
-const Color _kResourceIconTransportReadabilityBackdrop = Color.fromRGBO(
-  228,
-  236,
-  208,
-  0.82,
-);
 const double _kExtractionIndicatorSizeBoostPx = 2.0;
 const double _kExtractionIndicatorOverlapFactor = 0.45;
 const double _kExtractionIndicatorStartInsetXPx = 2.0;

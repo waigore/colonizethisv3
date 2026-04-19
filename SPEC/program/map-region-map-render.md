@@ -23,7 +23,7 @@ Normative sequence (bottom → top):
 
 1. **`_paintTiles`** — sea cells; land base tiles (without L1 interior plains resource decals); **road/rail transport sprites** (when base-layer mode includes roads, land only); **L1 interior plains resource decals** (`tile_plains_grain` / `meat` / `horses`, same gating as land base); L2 feature terrain overlays (forest/mountains on plains, etc.).
 2. **`_paintGreatPowerLandOwnershipTint`** — when the ownership tint toggle is on.
-3. **`_paintOverlay`** — resource icons (including optional **transport-readability plate** under a glyph when road/rail was drawn on the same land cell; see `SPEC/ui/map-widget.md` § Resource Icons), extraction discs, improvement corner labels.
+3. **`_paintOverlay`** — resource icons, extraction discs, improvement corner labels.
 4. Province borders, hover glow, political borders, province/sea names, capitals, towns, warp, civilians, fleets, selection/hover chrome — per `region_map_component_render_orchestrator.dart`.
 
 Steps 1–3 must remain consistent with **Base overlay paint order** in `SPEC/ui/map-widget.md`.
