@@ -52,7 +52,10 @@ Future<void> bootstrapApp({
 Future<void> bootstrapForIntegrationTest() async {
   await bootstrapApp(
     ensureBindingInitialized: () {},
-    initSessionLogBuffer: SessionLogBuffer.init,
+    // Skip SessionLogBuffer.init: it sets Logger.level to debug and replaces
+    // Logger.defaultFilter, undoing suppressLogsForTests() and adding listener
+    // overhead — Linux e2e then misses fleet NW wall-clock (Quality workflow).
+    initSessionLogBuffer: kCtE2EEnabled ? () {} : SessionLogBuffer.init,
     ensureMapTerrainLoaded: MapTerrainConfig.ensureLoaded,
     initHive: () async {
       if (kCtE2EEnabled) {
