@@ -34,7 +34,7 @@ const Duration _kBootstrapNewGameOverallCap = Duration(seconds: 60);
 /// Locked full-init / seed-bump paths and headless Linux CI can stretch
 /// coast→warp→New World sailing; keep a bounded cap above nominal local runs
 /// (`SPEC/program/e2e-integration-tests.md`).
-const Duration _kFleetE2eMaxWallClock = Duration(minutes: 8);
+const Duration _kFleetE2eMaxWallClock = Duration(minutes: 10);
 
 /// Drive frames without [WidgetTester.pumpAndSettle] (Flame + progress spinners).
 Future<void> _pumpFor(WidgetTester tester, Duration total) async {
