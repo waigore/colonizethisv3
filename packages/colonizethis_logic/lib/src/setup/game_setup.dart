@@ -21,6 +21,7 @@ import 'initial_visibility.dart';
 import '../world/army_migration.dart';
 import '../world/naval.dart';
 import '../world/ship_instance_allocate.dart';
+import 'locked_province_assigner.dart';
 import 'province_assignment.dart';
 import 'province_name_fallback.dart';
 

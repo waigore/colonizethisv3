@@ -854,6 +854,122 @@ String _startingShipTypeForPlayer(Player _) {
   return ShipEconomyCatalog.carrack.shipTypeId;
 }
 
+void _pushUnvisitedPpNeighborsDiag(
+  String u,
+  Map<String, Set<String>> neighbours,
+  Set<String> visited,
+  List<String> stack,
+) {
+  for (final v in neighbours[u] ?? const <String>{}) {
+    if (visited.contains(v)) continue;
+    stack.add(v);
+  }
+}
+
+typedef _LmDiag = ({
+  int size,
+  String minProvinceId,
+  Set<String> provinces,
+});
+
+List<_LmDiag> _landmassesSortedDescDiag(Map<String, Set<String>> neighbours) {
+  final visited = <String>{};
+  final out = <_LmDiag>[];
+  for (final start in neighbours.keys.toList()..sort()) {
+    if (visited.contains(start)) continue;
+    final comp = <String>{};
+    final stack = <String>[start];
+    while (stack.isNotEmpty) {
+      final u = stack.removeLast();
+      if (!visited.add(u)) continue;
+      comp.add(u);
+      _pushUnvisitedPpNeighborsDiag(u, neighbours, visited, stack);
+    }
+    final minId = comp.reduce((a, b) => a.compareTo(b) < 0 ? a : b);
+    out.add((size: comp.length, minProvinceId: minId, provinces: comp));
+  }
+  out.sort((a, b) {
+    final c = b.size.compareTo(a.size);
+    if (c != 0) return c;
+    return a.minProvinceId.compareTo(b.minProvinceId);
+  });
+  return out;
+}
+
+/// One-line topology summary when locked OW assigner fails (#1834 investigation).
+String _lockedOwAssignFailureDiagnostics({
+  required GameSetupConfig config,
+  required MapTopology topology,
+  required List<String> seaBoundIds,
+}) {
+  final ppNbr = provincePpNeighbours(topology);
+  final sizes = ppLandComponentSizesSorted(topology);
+  final partitionOk = oldWorldPartitionMatchesLockedProfile(topology);
+  final feasibilityOk = lockedOldWorldRoleFeasibilityHolds(
+    topology: topology,
+    neighbours: ppNbr,
+  );
+  final lms = _landmassesSortedDescDiag(ppNbr);
+  final lmParts = <String>[];
+  for (var i = 0; i < lms.length; i++) {
+    final lm = lms[i];
+    var sea = 0;
+    for (final p in lm.provinces) {
+      if (isProvinceSeaBound(topology, p)) sea++;
+    }
+    lmParts.add('i=$i|sz=${lm.size}|sea=$sea|min=${lm.minProvinceId}');
+  }
+  var degMin = 1 << 30;
+  var degMax = 0;
+  var degSum = 0;
+  for (final pid in ppNbr.keys) {
+    final d = ppNbr[pid]?.length ?? 0;
+    degSum += d;
+    if (d < degMin) degMin = d;
+    if (d > degMax) degMax = d;
+  }
+  final nProv = ppNbr.length;
+  final degMean = nProv == 0 ? 0.0 : degSum / nProv;
+  const cap = 16;
+  final seaSample = seaBoundIds.length <= cap
+      ? seaBoundIds.join(',')
+      : '${seaBoundIds.take(cap).join(',')}…(+${seaBoundIds.length - cap})';
+  return 'lockedOW_diag seed=${config.seed} nodes=${topology.nodes.length} '
+      'edges=${topology.edges.length} nProv=$nProv ppSizes=$sizes '
+      'partitionOk=$partitionOk feasibilityOk=$feasibilityOk '
+      'seaboundCount=${seaBoundIds.length} seaboundSample=[$seaSample] '
+      'ppDegMin=$degMin ppDegMax=$degMax ppDegMean=${degMean.toStringAsFixed(2)} '
+      'landmasses=[${lmParts.join('; ')}]';
+}
+
+/// One-line topology summary when locked NW assigner fails (#1834 investigation).
+String _lockedNwAssignFailureDiagnostics({
+  required GameSetupConfig config,
+  required MapTopology topology,
+}) {
+  final ppNbr = provincePpNeighbours(topology);
+  final sizes = ppLandComponentSizesSorted(topology);
+  final partitionOk = newWorldPartitionMatchesLockedProfile(topology);
+  final feasibilityOk = lockedNewWorldRoleFeasibilityHolds(
+    topology: topology,
+    neighbours: ppNbr,
+  );
+  final lms = _landmassesSortedDescDiag(ppNbr);
+  final lmParts = <String>[];
+  for (var i = 0; i < lms.length; i++) {
+    final lm = lms[i];
+    var sea = 0;
+    for (final p in lm.provinces) {
+      if (isProvinceSeaBound(topology, p)) sea++;
+    }
+    lmParts.add('i=$i|sz=${lm.size}|sea=$sea|min=${lm.minProvinceId}');
+  }
+  return 'lockedNW_diag seed=${config.seed} nodes=${topology.nodes.length} '
+      'edges=${topology.edges.length} nProv=${ppNbr.length} ppSizes=$sizes '
+      'partitionOk=$partitionOk feasibilityOk=$feasibilityOk '
+      'landmasses=[${lmParts.join('; ')}]';
+}
+
 /// Re-runs §7d province town assignment after the caller mutates provinces or maps.
 ///
 /// For integration tests that need fixtures (e.g. overseas ownership) that

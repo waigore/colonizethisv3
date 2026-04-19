@@ -12,6 +12,8 @@ export 'src/naming_rules.dart';
 export 'src/deterministic_pool_shuffle.dart';
 export 'src/sea_zone_naming.dart';
 export 'src/map_topology.dart';
+export 'src/topology_sea_bound.dart';
+export 'src/locked_partition_topology_gates.dart';
 export 'src/tech_definition.dart';
 export 'src/tech_ids.dart';
 export 'src/tech_extraction.dart';

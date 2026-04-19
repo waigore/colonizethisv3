@@ -78,7 +78,6 @@ void main() {
         numProvincesNewWorld: 3,
         minProvincesPerMinor: 2,
         seed: 42,
-        enforceFairGpOldWorldAssignment: true,
       );
 
       result = createGameFromGeneratedMaps(

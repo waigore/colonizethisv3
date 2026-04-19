@@ -68,10 +68,7 @@ stripResourcesAndExtractionImprovementsOnTileKeys(
   }
 
   final nextGame = game.copyWith(
-    worldState: ws.copyWith(
-      tileState: tileState,
-      resourceByTileKey: resMap,
-    ),
+    worldState: ws.copyWith(tileState: tileState, resourceByTileKey: resMap),
   );
   return (nextGame, maps);
 }

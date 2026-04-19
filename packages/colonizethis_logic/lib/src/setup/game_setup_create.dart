@@ -52,6 +52,7 @@ GameSetupResult createGameFromGeneratedMaps({
     kRegionNewWorld: topologyNewWorld,
   };
   final links = warpLinks ?? [];
+  final perturbBase = assignmentPerturbationBase ?? namingSeed ?? config.seed;
   final initialMapZoomMultiplier = _resolveInitialMapZoomMultiplier(config);
 
   final owProvinceIds = _provinceIdsFromTopology(topologyOldWorld);
@@ -86,64 +87,22 @@ GameSetupResult createGameFromGeneratedMaps({
   final minorIds = List.generate(minorCount, (i) => 'minor${i + 1}');
   final tribeIds = List.generate(tribeCount, (i) => 'tribe${i + 1}');
 
-  // Province assignment per SPEC/program/game-setup-pipeline.md:
-  // - Great Powers: each GP locked to one P–P landmass (connected component); multiple
-  //   GPs may share a landmass when gpCount exceeds landmass count. Sea-bound seeds per landmass.
-  // - Minor Nations: contiguous clusters on remaining OW provinces.
-  // - GP land connectivity repair + reassignment on same map: gp_land_connectivity_repair.dart
-  // - Tribes: contiguous clusters on NW provinces.
+  // Province assignment per SPEC/program/game-setup-pipeline.md and
+  // SPEC/program/locked-province-assigner.md (locked growth + backtrack; no repair pass).
   final owNeighbours = _provinceNeighboursFromTopology(topologyOldWorld);
-  final owLandmassIds = _landmassIdsFromNeighbours(owNeighbours);
-  final owProvincesSorted = owProvinceIds.toList()..sort();
-  final seaBoundOwSet = seaBoundOW.toSet();
-  final perturbBase = assignmentPerturbationBase ?? namingSeed ?? config.seed;
-
-  Map<String, String> owOwner = {};
-  var owAssignmentOk = false;
-  if (config.enforceFairGpOldWorldAssignment) {
-    for (var attempt = 0; attempt < kMaxOldWorldAssignmentAttempts; attempt++) {
-      final assignmentRandom = attempt == 0
-          ? null
-          : Random(Object.hash(0x47504f77, perturbBase, attempt));
-      try {
-        owOwner = _assignOldWorldOwnershipContiguous(
-          neighbours: owNeighbours,
-          provinceIds: owProvinceIds,
-          seaBoundProvinceIds: seaBoundOW,
-          gpIds: gpIds,
-          minorIds: minorIds,
-          minProvincesPerMinor: config.minProvincesPerMinor,
-          assignmentRandom: assignmentRandom,
-        );
-      } on StateError catch (e, st) {
-        _log.w('OW assignment attempt $attempt failed: $e');
-        _log.d('stack $st');
-        continue;
-      }
-      final ownersRepair = Map<String, String>.from(owOwner);
-      final repaired = repairGpLandOwnershipMutating(
-        owners: ownersRepair,
-        gpIdsSorted: gpIds,
+  // Locked assigner + six-minor-per-continent layout apply only when OW topology
+  // matches the delivery profile (see locked_partition_topology_gates.dart).
+  final useLockedSixMinorContinentPainting = config.isLockedFullInitProfile &&
+      oldWorldPartitionMatchesLockedProfile(topologyOldWorld) &&
+      lockedOldWorldRoleFeasibilityHolds(
+        topology: topologyOldWorld,
         neighbours: owNeighbours,
-        landmassIds: owLandmassIds,
-        seaBoundLocalIds: seaBoundOwSet,
-        allProvinceIdsSorted: owProvincesSorted,
       );
-      if (repaired) {
-        owOwner = ownersRepair;
-        owAssignmentOk = true;
-        break;
-      }
-    }
-    if (!owAssignmentOk) {
-      throw GameSetupConnectivityFailure(
-        'Old World GP land connectivity could not be satisfied after '
-        '$kMaxOldWorldAssignmentAttempts assignment attempt(s) and up to '
-        '$kGpLandConnectivityRepairRounds repair round(s) each.',
-      );
-    }
-  } else {
-    _log.i('OW assignment fast path (no GP land connectivity repair)');
+  final owAssignmentRandom = useLockedSixMinorContinentPainting
+      ? Random(config.seed)
+      : null;
+  Map<String, String> owOwner;
+  try {
     owOwner = _assignOldWorldOwnershipContiguous(
       neighbours: owNeighbours,
       provinceIds: owProvinceIds,
@@ -151,15 +110,51 @@ GameSetupResult createGameFromGeneratedMaps({
       gpIds: gpIds,
       minorIds: minorIds,
       minProvincesPerMinor: config.minProvincesPerMinor,
-      assignmentRandom: null,
+      assignmentRandom: owAssignmentRandom,
+      useLockedSixMinorContinentPainting: useLockedSixMinorContinentPainting,
+    );
+  } on StateError catch (e, st) {
+    if (useLockedSixMinorContinentPainting) {
+      _log.e(
+        'logic: OW locked assignment failed. '
+        '${_lockedOwAssignFailureDiagnostics(config: config, topology: topologyOldWorld, seaBoundIds: seaBoundOW)} '
+        'raw=$e',
+        error: e,
+        stackTrace: st,
+      );
+    } else {
+      _log.e('logic: OW assignment failed: $e', error: e, stackTrace: st);
+    }
+    throw SetupTopologyDataException(
+      code: 'assigner_exhausted',
+      details: 'Old World locked assigner exhausted: $e',
     );
   }
 
-  final nwOwner = _assignNewWorldOwnershipContiguous(
-    topologyNewWorld: topologyNewWorld,
-    provinceIds: nwProvinceIds,
-    tribeIds: tribeIds,
-  );
+  Map<String, String> nwOwner;
+  try {
+    nwOwner = _assignNewWorldOwnershipContiguous(
+      topologyNewWorld: topologyNewWorld,
+      provinceIds: nwProvinceIds,
+      tribeIds: tribeIds,
+    );
+  } on StateError catch (e, st) {
+    if (config.isLockedFullInitProfile) {
+      _log.e(
+        'logic: NW locked assignment failed. '
+        '${_lockedNwAssignFailureDiagnostics(config: config, topology: topologyNewWorld)} '
+        'raw=$e',
+        error: e,
+        stackTrace: st,
+      );
+    } else {
+      _log.e('logic: NW assignment failed: $e', error: e, stackTrace: st);
+    }
+    throw SetupTopologyDataException(
+      code: 'assigner_exhausted',
+      details: 'New World locked assigner exhausted: $e',
+    );
+  }
 
   final oldWorldProvinces = owOwner.entries
       .map(

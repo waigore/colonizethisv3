@@ -100,6 +100,24 @@ Map<String, int> buildProvinceToContinentMap(
   return result;
 }
 
+/// Maps `p1`..`pN` to continent indices `0..C-1` using explicit per-continent province
+/// counts (locked full-init OW `[13,13,17,17]`, NW `[6,6,9,9]` — GitHub #1834).
+Map<String, int> buildProvinceToContinentMapFromCounts(
+  List<int> provinceCountsPerContinent,
+) {
+  if (provinceCountsPerContinent.isEmpty) return {};
+  final result = <String, int>{};
+  var idx = 0;
+  for (var c = 0; c < provinceCountsPerContinent.length; c++) {
+    final n = provinceCountsPerContinent[c];
+    for (var i = 0; i < n; i++) {
+      result['p${idx + 1}'] = c;
+      idx++;
+    }
+  }
+  return result;
+}
+
 /// Returns continent index (0, 1, …) per province id from topology.
 /// Continents = connected components of the land subgraph (P–P edges only). Sea zone is not in the result.
 Map<String, int> computeContinentMembership(MapTopology topology) {
@@ -272,6 +290,45 @@ class TileMapParams {
   // --- Pass 7 (resources)
   /// Max fraction of placed resources that may be multi-region ("both") per map. Default 0.30.
   final double multiRegionResourceCapFraction;
+
+  /// Returns a copy with selected fields overridden (e.g. bumped map seed for tests/tools).
+  TileMapParams copyWith({int? seed}) {
+    return TileMapParams(
+      width: width,
+      height: height,
+      seed: seed ?? this.seed,
+      seaFraction: seaFraction,
+      borderNoise: borderNoise,
+      maxEnforceIterations: maxEnforceIterations,
+      clusterShape: clusterShape,
+      voronoiNoiseScale: voronoiNoiseScale,
+      continentBufferTiles: continentBufferTiles,
+      skipFillLakes: skipFillLakes,
+      joinContinents: joinContinents,
+      seedBeforeAssignment: seedBeforeAssignment,
+      maxSeaZoneFraction: maxSeaZoneFraction,
+      mountainRangesFactor: mountainRangesFactor,
+      mountainRangesMin: mountainRangesMin,
+      mountainRangesMax: mountainRangesMax,
+      mountainRangeMinLength: mountainRangeMinLength,
+      terrainSeedsFactor: terrainSeedsFactor,
+      terrainSeedsMin: terrainSeedsMin,
+      terrainSeedsMax: terrainSeedsMax,
+      terrainMacroFraction: terrainMacroFraction,
+      patternMinBlobSize: patternMinBlobSize,
+      patternMaxFractionPerBlob: patternMaxFractionPerBlob,
+      patternSeedFactor: patternSeedFactor,
+      patternMaxSeedsPerBlob: patternMaxSeedsPerBlob,
+      patternMaxChangesPerSeed: patternMaxChangesPerSeed,
+      patternMaxRadius: patternMaxRadius,
+      jitterHomogeneityThreshold: jitterHomogeneityThreshold,
+      jitterMaxFraction: jitterMaxFraction,
+      jitterProbability: jitterProbability,
+      jitterMinProvinceSize: jitterMinProvinceSize,
+      jitterNeighborSupportThreshold: jitterNeighborSupportThreshold,
+      multiRegionResourceCapFraction: multiRegionResourceCapFraction,
+    );
+  }
 }
 
 /// Tracks both-count and total for multi-region resource cap (Pass 7). SPEC/game/resource-terrain-region-rules.md.
