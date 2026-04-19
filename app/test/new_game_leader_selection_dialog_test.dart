@@ -56,7 +56,6 @@ void main() {
       required void Function(
         List<String> orderedGreatPowerIds,
         Map<String, String> leaderVariantByGpId,
-        bool enforceFairGpOldWorldAssignment,
         int seed,
       )
       onConfirmed,
@@ -110,7 +109,7 @@ void main() {
     testWidgets('shows six GP colour swatches and default nation labels', (
       WidgetTester tester,
     ) async {
-      await pumpDialog(tester, onConfirmed: (_, _, _, _) {});
+      await pumpDialog(tester, onConfirmed: (_, _, _) {});
 
       expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
       expect(find.text('England'), findsWidgets);
@@ -129,7 +128,7 @@ void main() {
         await pumpDialog(
           tester,
           surfaceSize: const Size(900, 1600),
-          onConfirmed: (_, _, _, _) {},
+          onConfirmed: (_, _, _) {},
         );
         await tester.pumpAndSettle();
 
@@ -158,7 +157,7 @@ void main() {
       await pumpDialog(
         tester,
         surfaceSize: const Size(520, 420),
-        onConfirmed: (_, _, _, _) {},
+        onConfirmed: (_, _, _) {},
       );
       await tester.pumpAndSettle();
 
@@ -181,15 +180,13 @@ void main() {
     ) async {
       List<String>? gotIds;
       Map<String, String>? gotLeaders;
-      bool? gotFair;
       int? gotSeed;
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, fair, seed) {
+        onConfirmed: (ids, leaders, seed) {
           gotIds = ids;
           gotLeaders = leaders;
-          gotFair = fair;
           gotSeed = seed;
         },
       );
@@ -200,7 +197,6 @@ void main() {
       expect(gotLeaders, isNotNull);
       expect(gotLeaders!.length, 6);
       expect(gotLeaders!['england'], 'queen_victoria');
-      expect(gotFair, isFalse);
       expect(gotSeed, 42);
     });
 
@@ -210,7 +206,7 @@ void main() {
       var confirmed = false;
       await pumpDialog(
         tester,
-        onConfirmed: (_, _, _, _) {
+        onConfirmed: (_, _, _) {
           confirmed = true;
         },
       );
@@ -221,29 +217,6 @@ void main() {
       expect(find.text('New game — Setup'), findsNothing);
     });
 
-    testWidgets(
-      'Start passes enforceFairGpOldWorldAssignment when checkbox toggled',
-      (WidgetTester tester) async {
-        bool? gotFair;
-        await pumpDialog(
-          tester,
-          onConfirmed: (_, _, fair, _) {
-            gotFair = fair;
-          },
-        );
-
-        final checkbox = find.byType(Checkbox);
-        await tester.ensureVisible(checkbox);
-        await tester.pumpAndSettle();
-        await tester.tap(checkbox);
-        await tester.pumpAndSettle();
-
-        await _ensureTapStart(tester);
-
-        expect(gotFair, isTrue);
-      },
-    );
-
     testWidgets('changing slot 1 nation to Sweden updates order and leader', (
       WidgetTester tester,
     ) async {
@@ -252,7 +225,7 @@ void main() {
 
       await pumpDialog(
         tester,
-        onConfirmed: (ids, leaders, _, _) {
+        onConfirmed: (ids, leaders, _) {
           gotIds = ids;
           gotLeaders = leaders;
         },
@@ -275,7 +248,7 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, _, s) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();
@@ -289,7 +262,7 @@ void main() {
       WidgetTester tester,
     ) async {
       int? gotSeed;
-      await pumpDialog(tester, onConfirmed: (_, _, _, s) => gotSeed = s);
+      await pumpDialog(tester, onConfirmed: (_, _, s) => gotSeed = s);
       final field = find.byType(TextField);
       await tester.ensureVisible(field);
       await tester.pumpAndSettle();

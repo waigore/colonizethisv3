@@ -1,14 +1,40 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show homeFleetIdFor, regionIdForSeaZone;
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
+import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+
+/// Locked full-init may succeed only after [GameService] bumps `mapSeed` on a
+/// topology/assigner retry (`effectiveSeed + 100003`, …), producing longer
+/// coast→warp→New World paths than nominal seed-42 alone. Keep this above the
+/// worst observed CI need (Refs #1849 / PR 1849).
+const int _kMaxNextTurnTapsForNwFleetReach = 84;
+
+/// Hard cap for any single “wait until UI shows X” poll (`_waitUntilFound`,
+/// next-turn label settle, panel-open loops). Fail immediately when exceeded.
+const Duration _kMaxUiResponseWait = Duration(seconds: 5);
+
+/// Overall cap for async new-game setup (map gen + intro), not a single widget
+/// poll; still bounded so hung runs exit (`SPEC/program/e2e-integration-tests.md`).
+const Duration _kBootstrapNewGameOverallCap = Duration(seconds: 60);
+
+/// Entire fleet e2e must finish within this wall clock (success or guarded fail).
+///
+/// Locked full-init / seed-bump paths and headless Linux CI can stretch
+/// coast→warp→New World sailing; keep a bounded cap above nominal local runs
+/// (`SPEC/program/e2e-integration-tests.md`).
+const Duration _kFleetE2eMaxWallClock = Duration(minutes: 10);
 
 /// Drive frames without [WidgetTester.pumpAndSettle] (Flame + progress spinners).
 Future<void> _pumpFor(WidgetTester tester, Duration total) async {
@@ -23,17 +49,19 @@ Future<void> _pumpFor(WidgetTester tester, Duration total) async {
 Future<void> _waitUntilFound(
   WidgetTester tester,
   Finder finder, {
-  required Duration timeout,
+  Duration timeout = _kMaxUiResponseWait,
 }) async {
+  final cap = timeout > _kMaxUiResponseWait ? _kMaxUiResponseWait : timeout;
   final sw = Stopwatch()..start();
-  while (sw.elapsed < timeout) {
-    await tester.pump(const Duration(milliseconds: 100));
+  while (sw.elapsed < cap) {
+    await tester.pump(const Duration(milliseconds: 50));
     if (finder.evaluate().isNotEmpty) {
       return;
     }
   }
   fail(
-    'Timed out after ${timeout.inSeconds}s waiting for $finder. '
+    'Timed out after ${cap.inSeconds}s waiting for $finder '
+    '(max UI response ${_kMaxUiResponseWait.inSeconds}s). '
     'Last exception: ${tester.takeException()}',
   );
 }
@@ -107,7 +135,7 @@ Future<void> _closeBottomSheet(WidgetTester tester) async {
   }
 
   final sw = Stopwatch()..start();
-  while (sw.elapsed < const Duration(seconds: 5)) {
+  while (sw.elapsed < _kMaxUiResponseWait) {
     if (!anyPanelOpen()) {
       return;
     }
@@ -115,16 +143,15 @@ Future<void> _closeBottomSheet(WidgetTester tester) async {
     await _pumpFor(tester, const Duration(milliseconds: 250));
   }
 
-  fail('Timed out closing bottom sheet; panels remained visible');
+  fail(
+    'Timed out after ${_kMaxUiResponseWait.inSeconds}s closing bottom sheet; '
+    'panels remained visible',
+  );
 }
 
 Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
   await tester.tap(find.text('New Game'));
-  await _waitUntilFound(
-    tester,
-    find.text('Start'),
-    timeout: const Duration(seconds: 30),
-  );
+  await _waitUntilFound(tester, find.text('Start'));
 
   final startButton = find.ancestor(
     of: find.text('Start'),
@@ -146,7 +173,7 @@ Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
   await tester.tap(startButton);
   await tester.pump();
 
-  final setupDeadline = DateTime.now().add(const Duration(minutes: 6));
+  final setupDeadline = DateTime.now().add(_kBootstrapNewGameOverallCap);
   var reachedMap = false;
   while (DateTime.now().isBefore(setupDeadline)) {
     await tester.pump(const Duration(milliseconds: 100));
@@ -176,7 +203,12 @@ Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
       break;
     }
   }
-  expect(reachedMap, isTrue);
+  if (!reachedMap) {
+    fail(
+      'Timed out after ${_kBootstrapNewGameOverallCap.inSeconds}s waiting for '
+      'map (home→capital). Last exception: ${tester.takeException()}',
+    );
+  }
   expect(find.byKey(kHomeToCapitalButtonKey), findsOneWidget);
   await tester.pump(const Duration(milliseconds: 500));
 }
@@ -210,7 +242,7 @@ Future<void> _openNavalPanel(WidgetTester tester) async {
   final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
   final btn = find.byKey(kEmpireNavalUnitsButtonKey);
   final sw = Stopwatch()..start();
-  while (sw.elapsed < const Duration(seconds: 45)) {
+  while (sw.elapsed < _kMaxUiResponseWait) {
     await tester.pump(const Duration(milliseconds: 100));
     if (navalPanel.evaluate().isNotEmpty) {
       return;
@@ -236,7 +268,8 @@ Future<void> _openNavalPanel(WidgetTester tester) async {
     }
   }
   fail(
-    'Timed out opening naval panel. Last exception: ${tester.takeException()}',
+    'Timed out after ${_kMaxUiResponseWait.inSeconds}s opening naval panel. '
+    'Last exception: ${tester.takeException()}',
   );
 }
 
@@ -248,6 +281,21 @@ Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
     return;
   }
   await tester.tap(tab.first, warnIfMissed: false);
+  await _pumpFor(tester, const Duration(milliseconds: 250));
+}
+
+/// Map HUD must show **Old World** before issuing naval moves so OW-split
+/// fleets and warp orders stay coherent on Linux CI (`SPEC/program/e2e-integration-tests.md`).
+Future<void> _tapOldWorldRegionTab(
+  WidgetTester tester,
+  AppLocalizations l10n,
+) async {
+  final hit =
+      find.widgetWithText(CtChoiceChip, l10n.region_oldWorld).hitTestable();
+  if (hit.evaluate().isEmpty) {
+    return;
+  }
+  await tester.tap(hit.first, warnIfMissed: false);
   await _pumpFor(tester, const Duration(milliseconds: 250));
 }
 
@@ -265,39 +313,82 @@ Future<void> _pickMoveDestinationAndConfirm(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
+  final budget = Stopwatch()..start();
+  void ensureBudget(String step) {
+    if (budget.elapsed > _kMaxUiResponseWait) {
+      fail(
+        'Move fleet dialog exceeded ${_kMaxUiResponseWait.inSeconds}s at $step',
+      );
+    }
+  }
+
+  ensureBudget('start');
   await _pumpFor(tester, const Duration(milliseconds: 200));
-  final warp = find.textContaining('links to New World');
+  final warpSuffix = l10n.moveFleet_warpLinkToRegion(
+    unitsPanelRegionLabel('newWorld'),
+  );
+  final warp = find.textContaining(warpSuffix);
   if (warp.evaluate().isNotEmpty) {
     final scrollRoot = find.byKey(kCtE2EMoveFleetDialogScrollRootKey);
+    final Finder scrollable;
     if (scrollRoot.evaluate().isNotEmpty) {
-      final scrollable = find.descendant(
+      scrollable = find.descendant(
         of: scrollRoot,
         matching: find.byType(Scrollable),
       );
-      if (scrollable.evaluate().isNotEmpty) {
-        await tester.scrollUntilVisible(warp.first, 80, scrollable: scrollable);
+    } else {
+      scrollable = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(Scrollable),
+      );
+    }
+    if (scrollable.evaluate().isNotEmpty) {
+      final sc = scrollable.first;
+      for (var i = 0; i < 36 && warp.hitTestable().evaluate().isEmpty; i++) {
+        ensureBudget('warp drag $i');
+        await tester.drag(sc, const Offset(0, -120));
+        await _pumpFor(tester, const Duration(milliseconds: 50));
+      }
+      if (warp.hitTestable().evaluate().isEmpty) {
+        fail(
+          'Warp row not hit-testable after drag attempts '
+          '(within ${_kMaxUiResponseWait.inSeconds}s dialog budget).',
+        );
       }
     }
+    ensureBudget('before warp tap');
     final hit = warp.hitTestable();
     expect(hit, findsWidgets);
-    await tester.tap(hit.first, warnIfMissed: false);
+    // Tap the RadioListTile, not only the inner Text, so the tile's selection
+    // updates before Confirm (Linux CI / headless can miss implicit tile taps).
+    final warpTile = find.ancestor(
+      of: hit.first,
+      matching: find.byWidgetPredicate(
+        (w) => w.runtimeType.toString().startsWith('RadioListTile<'),
+      ),
+    );
+    expect(warpTile, findsWidgets);
+    await tester.tap(warpTile.first, warnIfMissed: false);
   } else {
+    ensureBudget('sea radio');
     final seaRadio = _radioListTilesInAlertDialogs();
     expect(seaRadio, findsWidgets);
     await tester.tap(seaRadio.first, warnIfMissed: false);
   }
   await _pumpFor(tester, const Duration(milliseconds: 200));
+  ensureBudget('confirm');
   final confirm = find.text(l10n.common_confirm).hitTestable();
   expect(confirm, findsWidgets);
   await tester.tap(confirm.first, warnIfMissed: false);
-  await _pumpFor(tester, const Duration(seconds: 1));
+  await _pumpFor(tester, const Duration(milliseconds: 300));
+  ensureBudget('after confirm');
 }
 
 Future<void> _tryNavalMoveSegment(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
-  await _tapNewWorldRegionTabIfPresent(tester);
+  await _tapOldWorldRegionTab(tester, l10n);
   await _openNavalPanel(tester);
   await _expandEachExpansionTileOnce(tester);
   await _tapMoveOnFirstNonHomeFleet(tester);
@@ -355,6 +446,40 @@ Future<void> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
   );
 }
 
+/// `naval_tree_builder.dart` uses an em dash; accept common dash glyphs for CI.
+bool _textLooksLikeNewWorldLocationLine(String? data) {
+  if (data == null) return false;
+  final t = data.trimLeft();
+  const prefix = 'New World';
+  if (!t.startsWith(prefix)) return false;
+  final after = t.substring(prefix.length);
+  if (after.isEmpty) return false;
+  // Em dash (UI), en dash, hyphen-minus, optional spaces.
+  final rest = after.trimLeft();
+  return rest.startsWith('—') || rest.startsWith('–') || rest.startsWith('-');
+}
+
+/// While the naval bottom sheet is open, [ctE2eNavalPanelSnapshot] mirrors the same
+/// [Game] the panel uses (`SPEC/program/e2e-integration-tests.md`). Prefer this on
+/// Linux CI: [ExpansionTile] / [Text] preorder can diverge from macOS while world
+/// state still shows the voyage completed.
+bool _nonHomeHumanFleetInNewWorldFromCtSnapshot() {
+  final snap = ctE2eNavalPanelSnapshot;
+  if (snap == null) return false;
+  final human = snap.humanPlayerId;
+  final homeId = homeFleetIdFor(human);
+  for (final f in snap.game.worldState.fleets) {
+    if (f.ownerId != human) continue;
+    if (f.id == homeId) continue;
+    if (f.regionId == 'newWorld') return true;
+    final sea = f.seaZoneId;
+    if (sea != null && regionIdForSeaZone(snap.topology, sea) == 'newWorld') {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Widget-only: a **non–home** fleet row shows [unitsPanelRegionLabel] for New World
 /// in the subtitle location line (`New World — …` per `naval_tree_builder.dart`).
 bool _navalPanelShowsNonHomeFleetInNewWorld(WidgetTester tester) {
@@ -381,8 +506,7 @@ bool _navalPanelShowsNonHomeFleetInNewWorld(WidgetTester tester) {
     final loc = find.descendant(
       of: sub,
       matching: find.byWidgetPredicate(
-        (w) =>
-            w is Text && (w.data != null) && w.data!.startsWith('New World —'),
+        (w) => w is Text && _textLooksLikeNewWorldLocationLine(w.data),
       ),
     );
     if (loc.evaluate().isNotEmpty) {
@@ -392,17 +516,17 @@ bool _navalPanelShowsNonHomeFleetInNewWorld(WidgetTester tester) {
   return false;
 }
 
+bool _harnessDetectsNonHomeFleetInNewWorld(WidgetTester tester) =>
+    _nonHomeHumanFleetInNewWorldFromCtSnapshot() ||
+    _navalPanelShowsNonHomeFleetInNewWorld(tester);
+
 Future<void> _splitHomeFleetOnce(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
   await tester.tap(find.byKey(kEmpireNavalUnitsButtonKey));
   await _pumpFor(tester, const Duration(milliseconds: 400));
-  await _waitUntilFound(
-    tester,
-    find.byKey(kCtE2ENavalPanelRootKey),
-    timeout: const Duration(seconds: 20),
-  );
+  await _waitUntilFound(tester, find.byKey(kCtE2ENavalPanelRootKey));
   await _expandEachExpansionTileOnce(tester);
   final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
   final split = find.descendant(
@@ -421,21 +545,47 @@ Future<void> _splitHomeFleetOnce(
   await tester.tap(moveOneRight.first);
   await _pumpFor(tester, const Duration(milliseconds: 200));
   await tester.tap(find.text(l10n.splitFleet_confirm));
-  await _pumpFor(tester, const Duration(seconds: 1));
+  await _pumpFor(tester, const Duration(milliseconds: 300));
   await _expandEachExpansionTileOnce(tester);
+}
+
+/// Text inside the map HUD next-turn [CtNinePatchButton] (`game_nextTurnButton`).
+String? _readNextTurnButtonLabel(WidgetTester tester) {
+  final inner = find.descendant(
+    of: find.byKey(kGameMapNextTurnButtonKey),
+    matching: find.byType(Text),
+  );
+  if (inner.evaluate().length != 1) {
+    return null;
+  }
+  final w = inner.evaluate().single.widget;
+  return w is Text ? w.data : null;
 }
 
 Future<void> _advanceOneHumanTurn(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
+  final before = _readNextTurnButtonLabel(tester);
   await tester.tap(find.byKey(kGameMapNextTurnButtonKey));
-  await _pumpFor(tester, const Duration(milliseconds: 400));
+  await _pumpFor(tester, const Duration(milliseconds: 200));
   final confirmNextTurn = find.text(l10n.common_yes).hitTestable();
   if (confirmNextTurn.evaluate().isNotEmpty) {
     await tester.tap(confirmNextTurn.first, warnIfMissed: false);
+    await _pumpFor(tester, const Duration(milliseconds: 150));
   }
-  await _pumpFor(tester, const Duration(seconds: 2));
+  final sw = Stopwatch()..start();
+  while (sw.elapsed < _kMaxUiResponseWait) {
+    await tester.pump(const Duration(milliseconds: 50));
+    final after = _readNextTurnButtonLabel(tester);
+    if (after != null && after != before) {
+      return;
+    }
+  }
+  fail(
+    'Next turn label did not change within ${_kMaxUiResponseWait.inSeconds}s '
+    '(before=${before ?? '(null)'}). Last exception: ${tester.takeException()}',
+  );
 }
 
 void main() {
@@ -443,7 +593,8 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'new game → non-home fleet at sea in New World (≤10 Next turn taps)',
+    'new game → non-home fleet at sea in New World '
+    '(≤$_kMaxNextTurnTapsForNwFleetReach Next turn taps)',
     (WidgetTester tester) async {
       expect(
         kCtE2EEnabled,
@@ -455,20 +606,33 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1280, 720));
       await bootstrapForIntegrationTest();
       await tester.pump();
-      await tester.pump(const Duration(seconds: 2));
+      await _pumpFor(tester, const Duration(milliseconds: 500));
+
+      final wallClock = Stopwatch()..start();
+      void ensureUnderWallClock(String step) {
+        if (wallClock.elapsed > _kFleetE2eMaxWallClock) {
+          fail(
+            'Fleet e2e exceeded ${_kFleetE2eMaxWallClock.inMinutes} minute wall clock '
+            'at $step (elapsed=${wallClock.elapsed.inSeconds}s).',
+          );
+        }
+      }
 
       await _bootstrapNewGameToMap(tester);
+      ensureUnderWallClock('after bootstrap');
 
       final l10n = lookupAppLocalizations(const Locale('en'));
 
       await _splitHomeFleetOnce(tester, l10n);
       await _closeBottomSheet(tester);
+      ensureUnderWallClock('after split fleet');
 
-      for (var turnIdx = 0; turnIdx < 10; turnIdx++) {
+      for (var turnIdx = 0; turnIdx < _kMaxNextTurnTapsForNwFleetReach; turnIdx++) {
+        ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
         await _dismissTransientUi(tester);
         await _tapNewWorldRegionTabIfPresent(tester);
         await _openNavalPanel(tester);
-        if (_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
+        if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
           await _closeBottomSheet(tester);
           return;
         }
@@ -477,25 +641,28 @@ void main() {
         await _tryNavalMoveSegment(tester, l10n);
         await _closeBottomSheet(tester);
 
-        if (_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
+        if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
           return;
         }
 
         await _advanceOneHumanTurn(tester, l10n);
         await _dismissTransientUi(tester);
+        ensureUnderWallClock('after turn advance turnIdx=$turnIdx');
       }
 
+      ensureUnderWallClock('before final naval check');
       await _dismissTransientUi(tester);
       await _tapNewWorldRegionTabIfPresent(tester);
       await _openNavalPanel(tester);
-      if (!_navalPanelShowsNonHomeFleetInNewWorld(tester)) {
+      if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
         fail(
-          'After 10 Next turn resolutions, no non-home fleet row shows '
-          'location text starting with "New World —" under '
-          'kCtE2ENavalPanelRootKey. Last exception: ${tester.takeException()}',
+          'After $_kMaxNextTurnTapsForNwFleetReach Next turn resolutions, no non-home human fleet in region '
+          'newWorld (ctE2eNavalPanelSnapshot / naval panel UI). '
+          'Last exception: ${tester.takeException()}',
         );
       }
       await _closeBottomSheet(tester);
+      ensureUnderWallClock('test complete');
     },
   );
 }

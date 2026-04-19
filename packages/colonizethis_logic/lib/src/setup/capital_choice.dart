@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import 'setup_exceptions.dart';
 
+export 'package:colonizethis_data/colonizethis_data.dart' show isProvinceSeaBound;
+
 /// Capital-choice phase stub. SPEC/game/capital-choice-phase.
 ///
 /// setCapital validates province is sea-bound, sets player capital, and
@@ -14,24 +16,6 @@ import 'setup_exceptions.dart';
 /// - B: interior and not adjacent to another province
 /// - C: all remaining tiles
 enum CapitalTileClass { a, b, c }
-
-/// Returns true if [provinceId] has at least one P–S edge in [topology].
-bool isProvinceSeaBound(MapTopology topology, String provinceId) {
-  for (final edge in topology.edges) {
-    if (edge.id1 != provinceId && edge.id2 != provinceId) continue;
-    final other = edge.id1 == provinceId ? edge.id2 : edge.id1;
-    final node = _nodeById(topology, other);
-    if (node != null && node.type == TopologyNodeType.seaZone) return true;
-  }
-  return false;
-}
-
-TopologyNode? _nodeById(MapTopology topology, String id) {
-  for (final n in topology.nodes) {
-    if (n.id == id) return n;
-  }
-  return null;
-}
 
 /// Picks a capital province and tile for a faction. SPEC/game/capital-choice-phase#auto-choice-game-setup.
 /// [ownedProvinceIds] and [regionId] come from assignment; [topology] and [tileMap] are for that region.
@@ -489,6 +473,13 @@ CapitalTileClass classifyCapitalTile({
   return CapitalTileClass.c;
 }
 
+TopologyNode? _topologyNodeById(MapTopology topology, String id) {
+  for (final n in topology.nodes) {
+    if (n.id == id) return n;
+  }
+  return null;
+}
+
 Set<String> _seaZonesAdjacentToProvince(
   MapTopology topology,
   String provinceId,
@@ -497,7 +488,7 @@ Set<String> _seaZonesAdjacentToProvince(
   for (final edge in topology.edges) {
     if (edge.id1 != provinceId && edge.id2 != provinceId) continue;
     final other = edge.id1 == provinceId ? edge.id2 : edge.id1;
-    final node = _nodeById(topology, other);
+    final node = _topologyNodeById(topology, other);
     if (node != null && node.type == TopologyNodeType.seaZone) out.add(other);
   }
   return out;
