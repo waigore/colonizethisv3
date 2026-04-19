@@ -43,8 +43,7 @@ void main() {
 
       // Timer should be removed after reaching zero.
       expect(timers['p1'], isNull);
-      // Visibility change is handled by the subsequent fog-decay pass, not here.
-      expect(visibility['p1']?[tileKeyP2], 'fullyVisible');
+      expect(visibility['p1']?[tileKeyP2], VisibilityLevel.fogged.name);
     });
 
     test('never applies timers to own provinces', () {
@@ -82,6 +81,44 @@ void main() {
       // Own-province timer should be dropped without affecting visibility.
       expect(timers['p1'], isNull);
       expect(visibility['p1']?[tileKeyP1], VisibilityLevel.fullyVisible.name);
+    });
+
+    test('leaves unknown tiles unchanged when timer expires', () {
+      const ow = 'oldWorld';
+      const tileKeyP2 = 'oldWorld|P2|0|0';
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {tileKeyP2: 'unknown'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              'P2': [tileKeyP2],
+            },
+          },
+          spyRevealTurnsByPlayer: const {
+            'p1': {'$ow|P2': 1},
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+
+      final (visibility, timers) = applySpyRevealTimerDecay(game);
+
+      expect(timers['p1'], isNull);
+      expect(visibility['p1']?[tileKeyP2], VisibilityLevel.unknown.name);
     });
   });
 
@@ -207,6 +244,70 @@ void main() {
         );
       },
     );
+
+    test('does not promote unknown tiles in other-faction province', () {
+      const nw = 'newWorld';
+      const tileKeyNw = 'newWorld|P2|0|0';
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(
+            phase: TurnPhase.endOfTurn,
+            turnNumber: 1,
+          ),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(
+            provinces: const [
+              Province(id: '$nw|P2', regionId: nw, ownerId: 'p2'),
+            ],
+          ),
+          playerVisibilityByTile: const {
+            'p1': {tileKeyNw: 'unknown'},
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+
+      final nextVisibility = applyFogDecay(game);
+
+      expect(nextVisibility['p1']?[tileKeyNw], VisibilityLevel.unknown.name);
+    });
+
+    test('does not change fogged tiles in other-faction province', () {
+      const ow = 'oldWorld';
+      const tileKeyP2 = 'oldWorld|P2|0|0';
+
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(
+            phase: TurnPhase.endOfTurn,
+            turnNumber: 1,
+          ),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {tileKeyP2: 'fogged'},
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+
+      final nextVisibility = applyFogDecay(game);
+
+      expect(nextVisibility['p1']?[tileKeyP2], VisibilityLevel.fogged.name);
+    });
   });
 
   group('clearSpyRevealTimersForProvince', () {
@@ -512,6 +613,71 @@ void main() {
         VisibilityLevel.fullyVisible.name,
       );
     });
+
+    test(
+      'runEndOfTurnPhase leaves unknown New World land unknown (turn 0→1)',
+      () {
+        const ow = 'oldWorld';
+        const nw = 'newWorld';
+        const nwTile = 'newWorld|P2|0|0';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.endOfTurn,
+              turnNumber: 0,
+            ),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+              ],
+            ),
+            newWorld: RegionData(
+              provinces: const [
+                Province(id: '$nw|P2', regionId: nw, ownerId: 'p2'),
+              ],
+            ),
+            playerVisibilityByTile: {
+              'gp1': {
+                'oldWorld|p1|0|0': VisibilityLevel.fullyVisible.name,
+                nwTile: VisibilityLevel.unknown.name,
+              },
+            },
+            tileKeysByRegionAndProvince: {
+              ow: {
+                'p1': ['oldWorld|p1|0|0'],
+              },
+              nw: {
+                'P2': [nwTile],
+              },
+            },
+            fleets: const [],
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+            Player(id: 'p2', displayName: 'P2', isHuman: false),
+          ],
+        );
+
+        final next = runEndOfTurnPhase(game, topology: topology);
+
+        expect(next.worldState.turnState.turnNumber, 1);
+        expect(
+          next.worldState.playerVisibilityByTile['gp1']![nwTile],
+          VisibilityLevel.unknown.name,
+        );
+      },
+    );
   });
 
   group('applyCoastalSeaZoneFullVisibility', () {

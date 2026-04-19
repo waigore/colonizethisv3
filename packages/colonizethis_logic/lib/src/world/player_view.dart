@@ -8,7 +8,7 @@ import 'unit_lookup.dart';
 
 /// Visibility level for a tile from a single player's perspective.
 /// Mirrors SPEC/game/fog-and-exploration.md.
-enum VisibilityLevel { unknown, revealed, fogged, fullyVisible }
+enum VisibilityLevel { unknown, fogged, fullyVisible }
 
 /// Read-only projection of [Game] for a single player under fog-of-war.
 ///
@@ -177,8 +177,6 @@ String? resourceIdVisibleToPlayer({
   switch (visibility) {
     case VisibilityLevel.unknown:
       return null;
-    case VisibilityLevel.revealed:
-      return null;
     case VisibilityLevel.fogged:
       if (kProspectRequiredResourceIds.contains(id)) {
         return tileProspectedByPlayer ? id : null;
@@ -205,8 +203,8 @@ String? resourceIdVisibleInPlayerView(
   );
 }
 
-/// True if [playerId] has at least one revealed tile containing [resourceId].
-/// Revealed = visibility fully visible, fogged, or revealed. For prospect-required
+/// True if [playerId] has at least one non-unknown tile containing [resourceId].
+/// For prospect-required
 /// resources (gold, silver, gems, diamonds, etc.), the tile must also be
 /// prospected by that player. SPEC/game/tech-tree.md Discovery prerequisites.
 bool hasRevealedResourceForPlayer(

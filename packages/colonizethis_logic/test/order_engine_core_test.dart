@@ -449,7 +449,7 @@ void main() {
           playerVisibilityByTile: const {
             'p1': {
               'oldWorld|P1|0|0': 'fullyVisible',
-              'oldWorld|P2|0|0': 'revealed',
+              'oldWorld|P2|0|0': 'fogged',
             },
           },
         ),
@@ -530,7 +530,7 @@ void main() {
             playerVisibilityByTile: const {
               'p1': {
                 'oldWorld|P1|0|0': 'fullyVisible',
-                'oldWorld|P2|0|0': 'revealed',
+                'oldWorld|P2|0|0': 'fogged',
               },
             },
           ),
@@ -610,7 +610,7 @@ void main() {
           playerVisibilityByTile: const {
             'p1': {
               'oldWorld|P1|0|0': 'fullyVisible',
-              'oldWorld|P2|0|0': 'revealed',
+              'oldWorld|P2|0|0': 'fogged',
             },
           },
         ),
