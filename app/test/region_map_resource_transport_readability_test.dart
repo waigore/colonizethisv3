@@ -1,5 +1,5 @@
-// Golden regression for resource markers over transport (#1848).
-// SPEC/ui/map-widget.md § Resource Icons (transport overlap).
+// Golden regression for resource markers over transport (#1848, #1856).
+// SPEC/ui/map-widget.md § Resource Icons (transport overlap; no icon-local plate).
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_data/colonizethis_data.dart' show TerrainType;
@@ -30,9 +30,9 @@ void main() {
     await provinceLabelIconCache.load();
   });
 
-  group('Region map resource vs transport (#1848)', () {
+  group('Region map resource vs transport (#1848, #1856)', () {
     test(
-      'transport readability plate is gated to roads base mode (negative: labels mode)',
+      'road/rail transport overlay is active only in roads base mode (negative: labels mode)',
       () {
         expect(
           shouldRenderTransportOverlay(
@@ -82,7 +82,7 @@ void main() {
 
     testWidgets(
       'terrainAndResourcesImprovementsRoads: road + grain cell golden '
-      '(L1 plains decal above transport; readability plate; Refs #1848)',
+      '(L1 plains decal above transport; icon above road, no plate; Refs #1848 #1856)',
       (WidgetTester tester) async {
         final region = oneCellRoadResourceRegion();
         await tester.pumpWidget(
@@ -153,7 +153,7 @@ void main() {
 
     testWidgets(
       'terrainAndResourcesImprovementsRoads: road + horses golden '
-      '(tile_plains_horses above transport; icon plate not dark matte; Refs #1848)',
+      '(tile_plains_horses above transport; icon above road, no plate; Refs #1848 #1856)',
       (WidgetTester tester) async {
         final region = oneCellRoadHorsesRegion();
         await tester.pumpWidget(
