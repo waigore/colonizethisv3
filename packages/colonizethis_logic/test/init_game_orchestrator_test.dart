@@ -305,11 +305,15 @@ void main() {
         callCount++;
         final forcedSizes =
             continentProvinceSizes ??
-            (numContinents == 4 && numProvinces == 60 && regionId == kRegionOldWorld
+            (numContinents == 4 &&
+                    numProvinces == 60 &&
+                    regionId == kRegionOldWorld
                 ? const [13, 13, 17, 17]
-                : numContinents == 4 && numProvinces == 30 && regionId == kRegionNewWorld
-                    ? const [6, 6, 9, 9]
-                    : null);
+                : numContinents == 4 &&
+                      numProvinces == 30 &&
+                      regionId == kRegionNewWorld
+                ? const [6, 6, 9, 9]
+                : null);
         return defaultTileMapRegionGenerator(
           params: params,
           numProvinces: numProvinces,
@@ -363,6 +367,71 @@ void main() {
 
         expectLockedFullInitAcWhenPartitionsMatch(result, seed: config.seed);
       },
+    );
+
+    test(
+      'seed 42 full init: land province display names unique per region; '
+      'Poland minor4 has at most one Greater Poland when locked partitions match',
+      () {
+        final base = GameSetupConfig.defaultConfig;
+        final config = GameSetupConfig(
+          selectedGreatPowerIds: base.selectedGreatPowerIds,
+          leaderVariantByGpId: base.leaderVariantByGpId,
+          continentCount: 4,
+          minorNationCount: 6,
+          tribeCount: 10,
+          numProvincesOldWorld: 60,
+          numProvincesNewWorld: 30,
+          minProvincesPerMinor: 3,
+          seed: 42,
+          startingResources: base.startingResources,
+        );
+        final result = runInitGame(
+          config: config,
+          options: const InitGameOptions(cellSize: 8, renderPng: false),
+        );
+        final game = result.game;
+        void assertDistinct(Iterable<String?> names, String label) {
+          final strings = names
+              .map((e) => e ?? '')
+              .where((e) => e.isNotEmpty)
+              .toList();
+          expect(
+            strings.length,
+            strings.toSet().length,
+            reason: '$label displayName values must be pairwise distinct',
+          );
+        }
+
+        assertDistinct(
+          game.worldState.oldWorld.provinces.map((p) => p.displayName),
+          'oldWorld',
+        );
+        assertDistinct(
+          game.worldState.newWorld.provinces.map((p) => p.displayName),
+          'newWorld',
+        );
+
+        final topoOw = result.topologyByRegion[kRegionOldWorld]!;
+        final topoNw = result.topologyByRegion[kRegionNewWorld]!;
+        if (!oldWorldPartitionMatchesLockedProfile(topoOw) ||
+            !newWorldPartitionMatchesLockedProfile(topoNw)) {
+          return;
+        }
+        final poland = game.worldState.oldWorld.provinces.where(
+          (p) => p.ownerId == 'minor4',
+        );
+        final greaterPolandCount = poland
+            .where((p) => p.displayName == 'Greater Poland')
+            .length;
+        expect(
+          greaterPolandCount,
+          lessThanOrEqualTo(1),
+          reason:
+              'Poland pool capital string must not repeat on multiple provinces',
+        );
+      },
+      timeout: const Timeout(Duration(minutes: 2)),
     );
 
     test(
@@ -557,16 +626,18 @@ void expectLockedFullInitAc1To9(InitGameResult r, {required int seed}) {
     isTrue,
     reason: 'AC-3 $rs',
   );
-  expect(
-    ppLandComponentSizesSorted(topoOw),
-    [13, 13, 17, 17],
-    reason: 'AC-2 multiset $rs',
-  );
-  expect(
-    ppLandComponentSizesSorted(topoNw),
-    [6, 6, 9, 9],
-    reason: 'AC-3 multiset $rs',
-  );
+  expect(ppLandComponentSizesSorted(topoOw), [
+    13,
+    13,
+    17,
+    17,
+  ], reason: 'AC-2 multiset $rs');
+  expect(ppLandComponentSizesSorted(topoNw), [
+    6,
+    6,
+    9,
+    9,
+  ], reason: 'AC-3 multiset $rs');
 
   final game = r.game;
   expect(game.worldState.newWorld.provinces.length, 30, reason: 'AC-1 $rs');

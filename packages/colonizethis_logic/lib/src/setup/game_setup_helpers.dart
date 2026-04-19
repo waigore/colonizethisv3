@@ -400,18 +400,22 @@ Game _applyNaming({
   final nwProvinces = game.worldState.newWorld.provinces;
   final owById = {for (final p in owProvinces) p.id: p};
   final nwById = {for (final p in nwProvinces) p.id: p};
-  final usedProvinceNames = <String>{};
+  final usedOwProvinceDisplayNames = <String>{};
+  final usedNwProvinceDisplayNames = <String>{};
   var proceduralFallbackCount = 0;
 
-  String generateFallback(int seedOffset) {
-    proceduralFallbackCount++;
-    return generateUniqueProvinceName(
-      namingSeed + seedOffset,
-      usedProvinceNames,
-    );
+  String Function(int seedOffset) fallbackFactory(Set<String> usedInRegion) {
+    return (int seedOffset) {
+      proceduralFallbackCount++;
+      return generateUniqueProvinceName(namingSeed + seedOffset, usedInRegion);
+    };
   }
 
-  // Helper: assign names to provinces from pool (random order). Capital gets capitalName; others get shuffled pool, wrap if needed.
+  final fallbackOw = fallbackFactory(usedOwProvinceDisplayNames);
+  final fallbackNw = fallbackFactory(usedNwProvinceDisplayNames);
+
+  // Helper: assign names from pool / capital / procedural so that every name
+  // is unique within the region's land provinces (SPEC/game/naming.md).
   void assignProvinceNames({
     required List<Province> provinces,
     required String? capitalProvinceId,
@@ -422,7 +426,6 @@ Game _applyNaming({
     required Set<String> usedProvinceNames,
     required String Function(int seedOffset) generateFallback,
     required Map<String, Province> outById,
-    required String regionId,
   }) {
     if (provinces.isEmpty) return;
     provinces = List.of(provinces)..sort((a, b) => a.id.compareTo(b.id));
@@ -430,18 +433,63 @@ Game _applyNaming({
       poolLength: pool.length,
       seed: rngSeed,
     );
-    var poolIndex = 0;
+    var poolScan = 0;
+
     for (var i = 0; i < provinces.length; i++) {
       final p = provinces[i];
-      var name = p.id == capitalProvinceId
-          ? capitalName
-          : (pool.isNotEmpty
-                ? pool[poolIndices[poolIndex % poolIndices.length]]
-                : '$fallbackPrefix ${i + 1}');
-      if (name.isEmpty) name = generateFallback(rngSeed + i);
-      if (p.id != capitalProvinceId && pool.isNotEmpty) poolIndex++;
-      final updated = p.copyWith(displayName: name);
-      outById[p.id] = updated;
+      final isCapital = p.id == capitalProvinceId;
+      late String name;
+
+      if (isCapital) {
+        name = capitalName;
+        if (name.isEmpty) {
+          name = generateFallback(rngSeed + i);
+        } else if (usedProvinceNames.contains(name)) {
+          name = generateFallback(rngSeed + i + 919_393);
+        } else {
+          usedProvinceNames.add(name);
+        }
+      } else if (pool.isNotEmpty) {
+        final permLen = poolIndices.length;
+        String? picked;
+        for (var j = 0; j < permLen; j++) {
+          final pos = (poolScan + j) % permLen;
+          final candidate = pool[poolIndices[pos]];
+          if (!usedProvinceNames.contains(candidate)) {
+            picked = candidate;
+            poolScan = (poolScan + j + 1) % permLen;
+            break;
+          }
+        }
+        if (picked != null) {
+          name = picked;
+          usedProvinceNames.add(name);
+        } else {
+          name = generateFallback(rngSeed + i + 271_828);
+        }
+      } else {
+        var ordinal = i + 1;
+        name = '$fallbackPrefix $ordinal';
+        if (name.isEmpty) {
+          name = generateFallback(rngSeed + i);
+        } else {
+          while (usedProvinceNames.contains(name) && ordinal < 1_000_000) {
+            ordinal++;
+            name = '$fallbackPrefix $ordinal';
+          }
+          if (usedProvinceNames.contains(name)) {
+            name = generateFallback(rngSeed + i + 314_159);
+          } else {
+            usedProvinceNames.add(name);
+          }
+        }
+      }
+
+      if (name.isEmpty) {
+        name = generateFallback(rngSeed + i + 161_803);
+      }
+
+      outById[p.id] = p.copyWith(displayName: name);
     }
   }
 
@@ -455,6 +503,8 @@ Game _applyNaming({
     required String fallbackPrefix,
     required int rngSeed,
     required Map<String, Province> outById,
+    required Set<String> usedInRegion,
+    required String Function(int seedOffset) generateFallback,
   }) {
     if (ownedProvinces.isEmpty) return;
     assignProvinceNames(
@@ -464,10 +514,9 @@ Game _applyNaming({
       pool: pool,
       fallbackPrefix: fallbackPrefix,
       rngSeed: rngSeed,
-      usedProvinceNames: usedProvinceNames,
+      usedProvinceNames: usedInRegion,
       generateFallback: generateFallback,
       outById: outById,
-      regionId: outById == owById ? kRegionOldWorld : kRegionNewWorld,
     );
   }
 
@@ -493,6 +542,8 @@ Game _applyNaming({
       fallbackPrefix: gpNaming.countryName,
       rngSeed: namingSeed + player.id.hashCode,
       outById: owById,
+      usedInRegion: usedOwProvinceDisplayNames,
+      generateFallback: fallbackOw,
     );
   }
 
@@ -508,7 +559,7 @@ Game _applyNaming({
     if (owned.isEmpty) continue;
     final capitalProvId = minor.capitalProvinceId;
     final capitalName = namingMinor.id.isEmpty
-        ? generateFallback(namingSeed + minor.id.hashCode)
+        ? fallbackOw(namingSeed + minor.id.hashCode)
         : (namingMinor.provinceNamePool.isNotEmpty
               ? namingMinor.provinceNamePool.first
               : namingMinor.displayName);
@@ -523,6 +574,8 @@ Game _applyNaming({
       fallbackPrefix: fallbackPrefix,
       rngSeed: namingSeed + minor.id.hashCode,
       outById: owById,
+      usedInRegion: usedOwProvinceDisplayNames,
+      generateFallback: fallbackOw,
     );
   }
 
@@ -539,7 +592,7 @@ Game _applyNaming({
     if (owned.isEmpty) continue;
     final capitalProvId = tribe.capitalProvinceId;
     final capitalName = namingTribe.id.isEmpty
-        ? generateFallback(namingSeed + tribe.id.hashCode)
+        ? fallbackNw(namingSeed + tribe.id.hashCode)
         : (namingTribe.provinceNamePool.isNotEmpty
               ? namingTribe.provinceNamePool.first
               : namingTribe.displayName);
@@ -554,6 +607,8 @@ Game _applyNaming({
       fallbackPrefix: fallbackPrefix,
       rngSeed: namingSeed + tribe.id.hashCode,
       outById: nwById,
+      usedInRegion: usedNwProvinceDisplayNames,
+      generateFallback: fallbackNw,
     );
   }
 
@@ -866,11 +921,7 @@ void _pushUnvisitedPpNeighborsDiag(
   }
 }
 
-typedef _LmDiag = ({
-  int size,
-  String minProvinceId,
-  Set<String> provinces,
-});
+typedef _LmDiag = ({int size, String minProvinceId, Set<String> provinces});
 
 List<_LmDiag> _landmassesSortedDescDiag(Map<String, Set<String>> neighbours) {
   final visited = <String>{};

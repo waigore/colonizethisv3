@@ -537,6 +537,97 @@ void main() {
       }
     });
 
+    test(
+      'single tribe with more NW provinces than pool uses procedural names without duplicates',
+      () {
+        final nwNodes = <TopologyNode>[
+          const TopologyNode(
+            id: 'sea',
+            regionId: 'newWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          for (var i = 1; i <= 6; i++)
+            TopologyNode(
+              id: 'n$i',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+        ];
+        final nwEdges = <TopologyEdge>[
+          for (var i = 1; i <= 6; i++) TopologyEdge(id1: 'n$i', id2: 'sea'),
+          for (var i = 1; i < 6; i++)
+            TopologyEdge(id1: 'n$i', id2: 'n${i + 1}'),
+        ];
+        final nwTopology = MapTopology(nodes: nwNodes, edges: nwEdges);
+        final nwTileMap = TileMapResult(
+          width: 6,
+          height: 2,
+          grid: const [
+            ['n1', 'n2', 'n3', 'n4', 'n5', 'n6'],
+            ['sea', 'sea', 'sea', 'sea', 'sea', 'sea'],
+          ],
+        );
+
+        final owTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'sea1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'p1', id2: 'sea1')],
+        );
+        final owTileMap = TileMapResult(
+          width: 1,
+          height: 2,
+          grid: const [
+            ['p1'],
+            ['sea1'],
+          ],
+        );
+
+        final config = GameSetupConfig(
+          selectedGreatPowerIds: ['england'],
+          continentCount: 1,
+          minorNationCount: 0,
+          tribeCount: 1,
+          numProvincesOldWorld: 1,
+          numProvincesNewWorld: 6,
+          minProvincesPerMinor: 0,
+          seed: 77,
+        );
+
+        final result = createGameFromGeneratedMaps(
+          config: config,
+          tileMapOldWorld: owTileMap,
+          topologyOldWorld: owTopology,
+          tileMapNewWorld: nwTileMap,
+          topologyNewWorld: nwTopology,
+          gameId: 'tribe-pool-overflow',
+          namingSeed: 77,
+        );
+
+        final nwProvinces = result.game.worldState.newWorld.provinces;
+        final names = nwProvinces.map((p) => p.displayName!).toList();
+        expect(names.length, 6);
+        expect(
+          names.length,
+          names.toSet().length,
+          reason: 'all NW province display names must be distinct',
+        );
+        for (final p in nwProvinces) {
+          expect(p.displayName, isNotNull);
+          expect(p.displayName!.isNotEmpty, isTrue, reason: p.id);
+        }
+      },
+    );
+
     test('sea-zone naming is deterministic for same seed/topology', () {
       final topology = MapTopology(
         nodes: const [
