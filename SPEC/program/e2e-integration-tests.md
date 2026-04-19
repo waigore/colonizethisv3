@@ -34,6 +34,7 @@
 ## Determinism
 
 - E2E relies on **`GameSetupConfig.seed == 42`** (see `packages/colonizethis_data/lib/src/game_setup_config.dart`) and **`attemptIndex == 0`** on first successful `createNewGameAsync` (see `runNewGameSetupAfterLeaderPick` in `app/lib/features/shell/new_game_setup_flow.dart`).
+- **Locked full-init note:** `GameService` may still regenerate maps with a bumped `mapSeed` (`effectiveSeed + 100003`, …) after a topology/assigner failure on the first try (`app/lib/core/services/game_service.dart`). That can lengthen coast→warp→New World sailing versus a first-try seed-42 pair; the New World fleet e2e therefore allows a **higher Next-turn budget** than the nominal seed alone would suggest.
 - Assertions use **English** `AppLocalizations` (**`Locale('en')`**, matching `MaterialApp` lookup in `app/lib/app.dart`).
 
 ## Local run

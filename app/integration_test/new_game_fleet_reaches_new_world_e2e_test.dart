@@ -14,6 +14,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+/// Locked full-init may succeed only after [GameService] bumps `mapSeed` on a
+/// topology/assigner retry (`effectiveSeed + 100003`, …), producing longer
+/// coast→warp→New World paths than nominal seed-42 alone. Keep this above the
+/// worst observed CI need (Refs #1849 / PR 1849).
+const int _kMaxNextTurnTapsForNwFleetReach = 84;
+
+/// Post–Next-turn pump: Linux CI needs enough time for multi-player resolution.
+const Duration _kPostNextTurnPump = Duration(milliseconds: 3200);
+
 /// Drive frames without [WidgetTester.pumpAndSettle] (Flame + progress spinners).
 Future<void> _pumpFor(WidgetTester tester, Duration total) async {
   const step = Duration(milliseconds: 50);
@@ -290,7 +299,7 @@ Future<void> _pickMoveDestinationAndConfirm(
     }
     if (scrollable.evaluate().isNotEmpty) {
       final sc = scrollable.first;
-      for (var i = 0; i < 24 && warp.hitTestable().evaluate().isEmpty; i++) {
+      for (var i = 0; i < 36 && warp.hitTestable().evaluate().isEmpty; i++) {
         await tester.drag(sc, const Offset(0, -120));
         await _pumpFor(tester, const Duration(milliseconds: 50));
       }
@@ -502,7 +511,7 @@ Future<void> _advanceOneHumanTurn(
     await tester.tap(confirmNextTurn.first, warnIfMissed: false);
   }
   // Headless Linux CI can lag behind macOS on turn resolution + naval UI.
-  await _pumpFor(tester, const Duration(seconds: 4));
+  await _pumpFor(tester, _kPostNextTurnPump);
 }
 
 void main() {
@@ -510,7 +519,8 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'new game → non-home fleet at sea in New World (≤56 Next turn taps)',
+    'new game → non-home fleet at sea in New World '
+    '(≤$_kMaxNextTurnTapsForNwFleetReach Next turn taps)',
     (WidgetTester tester) async {
       expect(
         kCtE2EEnabled,
@@ -531,7 +541,7 @@ void main() {
       await _splitHomeFleetOnce(tester, l10n);
       await _closeBottomSheet(tester);
 
-      for (var turnIdx = 0; turnIdx < 56; turnIdx++) {
+      for (var turnIdx = 0; turnIdx < _kMaxNextTurnTapsForNwFleetReach; turnIdx++) {
         await _dismissTransientUi(tester);
         await _tapNewWorldRegionTabIfPresent(tester);
         await _openNavalPanel(tester);
@@ -557,7 +567,7 @@ void main() {
       await _openNavalPanel(tester);
       if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
         fail(
-          'After 56 Next turn resolutions, no non-home human fleet in region '
+          'After $_kMaxNextTurnTapsForNwFleetReach Next turn resolutions, no non-home human fleet in region '
           'newWorld (ctE2eNavalPanelSnapshot / naval panel UI). '
           'Last exception: ${tester.takeException()}',
         );
