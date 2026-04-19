@@ -104,13 +104,11 @@ Map<String, Map<String, String>> applyFogDecay(Game game) {
       final fullProvinceId = ProvinceId.full(parts[0], parts[1]);
       final ownerId = ownerByProvince[fullProvinceId];
       if (ownerId == null || ownerId == playerId) continue;
-      if (!hasExplorerIn.contains(fullProvinceId) &&
-          !hasSpyTimerIn.contains(fullProvinceId)) {
-        final cur = visibility[tileKey];
-        if (cur == VisibilityLevel.fullyVisible.name) {
-          visibility[tileKey] = VisibilityLevel.fogged.name;
-        }
-      }
+      if (hasExplorerIn.contains(fullProvinceId)) continue;
+      if (hasSpyTimerIn.contains(fullProvinceId)) continue;
+      final cur = visibility[tileKey];
+      if (cur != VisibilityLevel.fullyVisible.name) continue;
+      visibility[tileKey] = VisibilityLevel.fogged.name;
     }
     result[playerId] = visibility;
   }
