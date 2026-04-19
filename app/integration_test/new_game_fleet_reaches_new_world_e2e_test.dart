@@ -29,7 +29,11 @@ const Duration _kMaxUiResponseWait = Duration(seconds: 5);
 const Duration _kBootstrapNewGameOverallCap = Duration(seconds: 60);
 
 /// Entire fleet e2e must finish within this wall clock (success or guarded fail).
-const Duration _kFleetE2eMaxWallClock = Duration(minutes: 5);
+///
+/// Locked full-init / seed-bump paths and headless Linux CI can stretch
+/// coast→warp→New World sailing; keep a bounded cap above nominal local runs
+/// (`SPEC/program/e2e-integration-tests.md`).
+const Duration _kFleetE2eMaxWallClock = Duration(minutes: 8);
 
 /// Drive frames without [WidgetTester.pumpAndSettle] (Flame + progress spinners).
 Future<void> _pumpFor(WidgetTester tester, Duration total) async {
