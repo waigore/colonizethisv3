@@ -8,7 +8,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 
 ## Data Model
 
-**Visibility state:** `Map<playerId, Map<tileKey, VisibilityLevel>>` — enum: unknown, revealed, fogged, fullyVisible. Tile key format: `regionId|provinceId|x|y` (second segment = local province id; full province id = `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md)). Any province id used in visibility or Spy timer state (e.g. keys keyed by province) must be the **prefixed** form (`regionId|localId`) per world-model-identity.md for multi-region correctness. Stored on WorldState.
+**Visibility state:** `Map<playerId, Map<tileKey, VisibilityLevel>>` — enum: `unknown`, `fogged`, `fullyVisible` (ordering `unknown` < `fogged` < `fullyVisible`). Legacy persisted value `revealed` is not loaded or migrated. Tile key format: `regionId|provinceId|x|y` (second segment = local province id; full province id = `regionId|localId` per [world-model-identity.md](../game/world-model-identity.md)). Any province id used in visibility or Spy timer state (e.g. keys keyed by province) must be the **prefixed** form (`regionId|localId`) per world-model-identity.md for multi-region correctness. Stored on WorldState.
 
 **Prospected state:** `Map<playerId, Set<tileKey>>` — tiles the player has prospected. Only mineral-eligible terrain per game rules.
 
@@ -33,12 +33,12 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 
 **Spy presence reveal:** When building visibility (or PlayerView), for each Spy in a **non-owner** province, that province's tiles are treated as **fully visible** for the Spy's owner for as long as the Spy is there.
 
-**Fog decay (Spy):** When a Spy **leaves** an **other-faction** province (move or removal), start a timer for (Spy owner, that province) with duration = Spy fog decay turns (**fixed at 5 for current product, not ruleset-configurable**). **Do not start timers when a Spy leaves their own provinces.** At end of turn: decrement all spy-reveal timers; for each (player, province) where timer reaches 0, set all tiles in that province to fogged for that player. (Explorer/Spy fog decay: if no Explorer/Spy remain in an other-faction province, also set tiles to fogged unless a Spy timer is active.)
+**Fog decay (Spy):** When a Spy **leaves** an **other-faction** province (move or removal), start a timer for (Spy owner, that province) with duration = Spy fog decay turns (**fixed at 5 for current product, not ruleset-configurable**). **Do not start timers when a Spy leaves their own provinces.** At end of turn: decrement all spy-reveal timers; for each (player, province) where timer reaches 0, for each tile in that province, **only** if stored visibility is `fullyVisible`, set it to `fogged`; leave `unknown` and `fogged` unchanged. Explorer/Spy fog decay (below) uses the same downgrade rule when no Explorer/Spy remain and no Spy timer applies.
 
 **Fog decay** (End-of-turn phase):
 
-1. Decrement spy reveal timers; where timer hits 0, set that province's tiles to fogged for that player **only when the province is owned by another faction**. Timers for a player's own provinces are ignored and cleared without changing visibility.
-2. For each other-faction province where player had Explorer/Spy, if none remain (and no Spy timer), set all tiles to fogged (retain last-known state).
+1. Decrement spy reveal timers; where timer hits 0, apply **only** `fullyVisible` → `fogged` per tile for that province for that player **only when the province is owned by another faction**. Timers for a player's own provinces are ignored and cleared without changing visibility.
+2. For each other-faction province where the player had Explorer/Spy, if none remain (and no Spy timer), for each tile in that province, **only** if stored visibility is `fullyVisible`, set it to `fogged`; `unknown` and `fogged` unchanged.
 3. Own provinces never decay.
 
 **Initial visibility** (Game Setup phase):
@@ -66,7 +66,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 
 **Ship reveal** (Naval Movement phase):
 
-1. When fleet enters sea zone S, set all coastal land tiles of adjacent provinces to revealed for that player.
+1. When fleet **successfully** enters sea zone S, set **coastal ring** land tiles (orthogonal neighbor to a water tile of S) of adjacent provinces in S’s region to `fullyVisible` for that player; **inland** land in those provinces stays unchanged (typically `unknown` in the New World until exploration). Set all **water** tile keys for S to `fullyVisible` for that player.
 2. Delegated to [naval-movement-resolution.md](naval-movement-resolution.md).
 
 **PlayerView construction:**
@@ -82,7 +82,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 | Phase | Action |
 |---|---|
 | Game Setup | Initial visibility (OW: own fully visible, others fogged; NW: unknown); **coastal sea zone full visibility** (for each GP, set all tiles in sea zones adjacent to owned provinces to fullyVisible) |
-| Naval Movement | Ship reveal (coastal land tiles → revealed) |
+| Naval Movement | Ship reveal (coastal ring land → `fullyVisible`; sea water in S → `fullyVisible`) |
 | Build/Work | Exploration progress; prospect resolution |
 | End-of-turn | Fog decay (Spy timer + Explorer/Spy); **distant sea zone fog** (sea zones not adjacent to owned coast and with no player fleet at sea in that zone → water tiles fogged, unknown unchanged); **coastal sea zone full visibility** (for each GP, set all tiles in sea zones adjacent to owned provinces to fullyVisible) |
 
@@ -105,9 +105,9 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 
 - **Exploration timing and scope:** Exploration work orders use the region-scoped timing formula (`ceil(3 * tilesInP / maxTilesInAnyProvinceInRegion)`) and, on completion, set all tiles in the target province to fullyVisible for the exploring player only.
 - **Prospecting:** Prospect work orders validate that the target tile is mineral-eligible per game rules, is not already in that player's `playerProspectedTiles`, and meets visibility (province at least fogged); on application the tile is added to the player's prospected set in WorldState and does not change visibility by itself. Order validation uses the same mineral-eligibility helper as application (including optional per-region tile maps when provided at validation time).
-- **Spy reveal and decay:** While a Spy is present in a non-owner province, that province is fully visible to the Spy's owner via PlayerView; when the Spy leaves, a per-(player, province) timer (duration = Spy fog decay turns, **fixed at 5 for current product**) is started **only if the province is owned by another faction** and, when it reaches 0, tiles in that province decay to fogged for that player. Spy timers MUST NOT be created for a player's own provinces and MUST NOT change visibility in own provinces.
-- **Explorer/Spy fog decay:** At end of turn, for each other-faction province where the player previously had Explorer/Spy presence, if no Explorer/Spy remains and no Spy timer is active, all tiles in that province decay to fogged while preserving last-known state.
-- **Ship reveal and integration:** When a fleet enters a sea zone, coastal tiles of adjacent provinces become **revealed** and **water** tiles in that sea zone become **fully visible** for that player, delegated to naval-movement-resolution; PlayerView construction (including Spy invisibility rules) is the single source for AI and order-suggestion visibility, never reading visibility directly from WorldState.
+- **Spy reveal and decay:** While a Spy is present in a non-owner province, that province is fully visible to the Spy's owner via PlayerView; when the Spy leaves, a per-(player, province) timer (duration = Spy fog decay turns, **fixed at 5 for current product**) is started **only if the province is owned by another faction** and, when it reaches 0, **only** tiles stored as `fullyVisible` in that province become `fogged` for that player (`unknown` / `fogged` unchanged). Spy timers MUST NOT be created for a player's own provinces and MUST NOT change visibility in own provinces.
+- **Explorer/Spy fog decay:** At end of turn, for each other-faction province where the player previously had Explorer/Spy presence, if no Explorer/Spy remains and no Spy timer is active, **only** `fullyVisible` tiles in that province become `fogged`; `unknown` and `fogged` are unchanged.
+- **Ship reveal and integration:** When a fleet successfully enters a sea zone, **coastal ring** land tiles of adjacent provinces become **`fullyVisible`** and **water** tiles in that sea zone become **`fullyVisible`** for that player, delegated to naval-movement-resolution; PlayerView construction (including Spy invisibility rules) is the single source for AI and order-suggestion visibility, never reading visibility directly from WorldState.
 - **Coastal sea zone full visibility:** During Game Setup (after initial visibility) and every turn in End-of-turn (after fog decay), for each Great Power (including human): all tiles in sea zones that are adjacent (P–S in topology) to provinces that player fully owns are set to fullyVisible in WorldState; PlayerView reflects this; Tribes and Minor Nations do not receive this rule.
 
 - **Distant sea zone fog:** given a Great Power player, a sea zone S in region R, and water tile keys for S in `tileKeysByRegionAndProvince`, when End-of-turn runs after Movement and S is **not** P–S adjacent to any province owned by that player and that player has **no** fleet **at sea** in S, then every such water tile that is **not** `unknown` in that player’s visibility map is set to **fogged** before the coastal sea zone visibility pass; when that player **does** have a fleet **at sea** in S, water tiles in S are **not** forced to fogged by this rule solely due to lack of adjacent owned coast.

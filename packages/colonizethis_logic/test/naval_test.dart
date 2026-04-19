@@ -220,8 +220,8 @@ void main() {
         final next = applyNavalMovesAndShipReveal(game, revealTopology, orders);
         final visibility = next.worldState.playerVisibilityByTile['gp1'];
 
-        expect(visibility?[p1CoastalTile], VisibilityLevel.revealed.name);
-        expect(visibility?[p2CoastalTile], VisibilityLevel.revealed.name);
+        expect(visibility?[p1CoastalTile], VisibilityLevel.fullyVisible.name);
+        expect(visibility?[p2CoastalTile], VisibilityLevel.fullyVisible.name);
         expect(visibility?[p1InlandTile], isNull);
         expect(visibility?[sea2WaterA], VisibilityLevel.fullyVisible.name);
         expect(visibility?[sea2WaterB], VisibilityLevel.fullyVisible.name);
@@ -300,7 +300,7 @@ void main() {
 
       final next = applyNavalMovesAndShipReveal(game, revealTopology, orders);
       final visibility = next.worldState.playerVisibilityByTile['gp1'];
-      expect(visibility?[nwCoastalTile], VisibilityLevel.revealed.name);
+      expect(visibility?[nwCoastalTile], VisibilityLevel.fullyVisible.name);
       expect(visibility?[nwSea2Tile], VisibilityLevel.fullyVisible.name);
       expect(visibility?[owTile], isNull);
     });
@@ -405,7 +405,7 @@ void main() {
           ordersOk,
         );
         final visOk = afterOk.worldState.playerVisibilityByTile['gp1']!;
-        expect(visOk[coastalLand], VisibilityLevel.revealed.name);
+        expect(visOk[coastalLand], VisibilityLevel.fullyVisible.name);
         expect(visOk[inlandLand], VisibilityLevel.unknown.name);
         expect(visOk[seaDestWater], VisibilityLevel.fullyVisible.name);
         expect(visOk[seaDestWaterB], VisibilityLevel.fullyVisible.name);

@@ -28,12 +28,12 @@ void main() {
     test('false when no tile has 4-part key for region/province', () {
       final view = view0(
         visibilityByTile: {
-          'oldWorld|p1|0|0': VisibilityLevel.revealed,
+          'oldWorld|p1|0|0': VisibilityLevel.fogged,
         },
       );
       expect(
         provinceHasAtLeastVisibility(
-          view, 'oldWorld', 'p2', VisibilityLevel.revealed,
+          view, 'oldWorld', 'p2', VisibilityLevel.fogged,
         ),
         isFalse,
       );
@@ -47,7 +47,7 @@ void main() {
       );
       expect(
         provinceHasAtLeastVisibility(
-          view, 'oldWorld', 'p1', VisibilityLevel.revealed,
+          view, 'oldWorld', 'p1', VisibilityLevel.fogged,
         ),
         isTrue,
       );
@@ -61,7 +61,7 @@ void main() {
       );
       expect(
         provinceHasAtLeastVisibility(
-          view, 'oldWorld', 'p1', VisibilityLevel.revealed,
+          view, 'oldWorld', 'p1', VisibilityLevel.fogged,
         ),
         isFalse,
       );
@@ -74,32 +74,32 @@ void main() {
         visibilityByTile: {'t1': VisibilityLevel.fullyVisible},
       );
       expect(
-        tileHasAtLeastVisibility(view, 't1', VisibilityLevel.revealed),
+        tileHasAtLeastVisibility(view, 't1', VisibilityLevel.fogged),
         isTrue,
       );
     });
     test('false when tile unknown', () {
       final view = view0();
       expect(
-        tileHasAtLeastVisibility(view, 'missing', VisibilityLevel.revealed),
+        tileHasAtLeastVisibility(view, 'missing', VisibilityLevel.fogged),
         isFalse,
       );
     });
   });
 
   group('moveSourceVisibilityOk', () {
-    test('true when province has at least revealed', () {
+    test('true when province has at least fogged', () {
       final view = view0(
-        visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.revealed},
+        visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.fogged},
       );
       expect(moveSourceVisibilityOk(view, 'oldWorld', 'p1'), isTrue);
     });
   });
 
   group('moveDestVisibilityOk', () {
-    test('true when province has at least revealed', () {
+    test('true when province has at least fogged', () {
       final view = view0(
-        visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.revealed},
+        visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.fogged},
       );
       expect(
         moveDestVisibilityOk(view, 'oldWorld', 'p1', 'inf'),
@@ -109,9 +109,9 @@ void main() {
   });
 
   group('workOrderVisibilityOk', () {
-    test('explore requires at least revealed', () {
+    test('explore requires at least fogged', () {
       final view = view0(
-        visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.revealed},
+        visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.fogged},
       );
       final unit = Unit(
         id: 'u1',
@@ -265,7 +265,7 @@ void main() {
       );
       expect(
         provinceHasAtLeastVisibility(
-          view, 'oldWorld', 'p1', VisibilityLevel.revealed,
+          view, 'oldWorld', 'p1', VisibilityLevel.fogged,
         ),
         isFalse,
       );

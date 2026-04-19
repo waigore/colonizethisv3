@@ -48,9 +48,14 @@ applySpyRevealTimerDecay(Game game) {
       final nextTurns = turns - 1;
       if (nextTurns <= 0) {
         final regionId = ProvinceId.regionIdFrom(provinceId);
-        final tileKeys = tileKeysByRegion[regionId]?[provinceId] ?? [];
+        final localProvinceId = ProvinceId.localIdFrom(provinceId);
+        final tileKeys =
+            tileKeysByRegion[regionId]?[localProvinceId] ?? const [];
         for (final tk in tileKeys) {
-          vis[tk] = VisibilityLevel.fogged.name;
+          final cur = vis[tk];
+          if (cur == VisibilityLevel.fullyVisible.name) {
+            vis[tk] = VisibilityLevel.fogged.name;
+          }
         }
       } else {
         newByProvince[provinceId] = nextTurns;
@@ -99,10 +104,11 @@ Map<String, Map<String, String>> applyFogDecay(Game game) {
       final fullProvinceId = ProvinceId.full(parts[0], parts[1]);
       final ownerId = ownerByProvince[fullProvinceId];
       if (ownerId == null || ownerId == playerId) continue;
-      if (!hasExplorerIn.contains(fullProvinceId) &&
-          !hasSpyTimerIn.contains(fullProvinceId)) {
-        visibility[tileKey] = VisibilityLevel.fogged.name;
-      }
+      if (hasExplorerIn.contains(fullProvinceId)) continue;
+      if (hasSpyTimerIn.contains(fullProvinceId)) continue;
+      final cur = visibility[tileKey];
+      if (cur != VisibilityLevel.fullyVisible.name) continue;
+      visibility[tileKey] = VisibilityLevel.fogged.name;
     }
     result[playerId] = visibility;
   }

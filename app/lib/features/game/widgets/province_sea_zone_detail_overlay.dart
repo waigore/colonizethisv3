@@ -662,9 +662,6 @@ String _improvementBaseNameForPlayer({
   if (visibleResourceId != null) {
     return _improvementNameForResource(visibleResourceId);
   }
-  if (visLevel == VisibilityLevel.revealed) {
-    return 'Improvement';
-  }
   if (rawResourceId != null &&
       kProspectRequiredResourceIds.contains(rawResourceId)) {
     return 'Mine';

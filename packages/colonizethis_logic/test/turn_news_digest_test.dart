@@ -121,7 +121,7 @@ void main() {
           fullProvinceId: fullPid,
           regionId: regionId,
           localProvinceId: localPid,
-          visibility: 'revealed',
+          visibility: 'fogged',
         );
         final r = buildTurnNewsDigestForComplete(start: start, end: end);
         expect(
@@ -366,7 +366,7 @@ void main() {
           fullProvinceId: fullPid,
           regionId: regionId,
           localProvinceId: localPid,
-          visibility: 'revealed',
+          visibility: 'fogged',
           revealDone: [fullPid],
         );
         final r = buildTurnNewsDigestForComplete(start: start, end: end);
