@@ -462,7 +462,8 @@ void main() {
     test(
       'AC-12 locked full-init profile: same seed yields identical OW owners',
       () {
-        const s = 900_003;
+        // Must match one of the AC-11 regression seeds (#1861 / #1822).
+        const s = 17011;
         final config = lockedFullInitConfig(seed: s);
         const options = InitGameOptions(cellSize: 8, renderPng: false);
         final a = runInitGame(config: config, options: options);

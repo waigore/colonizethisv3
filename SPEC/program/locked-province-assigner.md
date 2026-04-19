@@ -35,8 +35,8 @@ If search still fails: **`StateError`** from assigner; orchestration maps assign
 
 ## Tests
 
-- **AC-14 / AC-15:** `packages/colonizethis_logic/test/locked_assigner_mechanics_test.dart` — small hand-crafted topology; AC-14 asserts ≥1 backtrack; AC-15 asserts deterministic owner map and bounded backtracks across duplicate runs.
-- **AC-11 / AC-12:** `init_game_orchestrator_test.dart` — twenty fixed seeds for locked profile; determinism of OW ownership string for one seed. When a run’s OW **and** NW topologies both match the locked multisets, tests assert **AC-1–AC-9** predicates (province quotas, P–P connectivity, sea-bound seeds, continent role counts, NW tribe layout); when multisets do not match procedural output, those ACs are out of scope for that run until generator gates land.
+- **AC-14 / AC-15:** `packages/colonizethis_logic/test/locked_assigner_mechanics_test.dart` — five-province hand-crafted topology (`a–m–{d,g}`, `d–w`) with mandatory seed `a`, targets `A:3` / `B:2`, ranked neighbor choice at depth **2** (stack length after `a` and `m`) so the first tried expansion is infeasible for `B` and the assigner performs **exactly one** undo (`LockedAssignerObservation.backtracks == 1`). **AC-14** asserts that map plus `backtracks >= 1` (golden `1`). **AC-15** runs the same call twice and asserts identical owner maps, identical `backtracks`, identical `capitalRestarts` (fixture expects `0`), and `backtracks < 50` (non-thrash guard), so duplicate runs exercise the same DFS / tabu bookkeeping surface as the single-run AC-14 test.
+- **AC-11 / AC-12:** `init_game_orchestrator_test.dart` — twenty fixed seeds for locked profile; **AC-12** repeats full setup twice using **one of those same seeds** (currently `17011`) and asserts identical Old World `province id → owner id` strings. When a run’s OW **and** NW topologies both match the locked multisets, tests assert **AC-1–AC-9** predicates (province quotas, P–P connectivity, sea-bound seeds, continent role counts, NW tribe layout); when multisets do not match procedural output, those ACs are out of scope for that run until generator gates land.
 
 ## Shared helpers
 
