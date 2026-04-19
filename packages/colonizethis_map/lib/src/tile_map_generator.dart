@@ -129,6 +129,8 @@ class _JoinAndSeaService {
     Map<String, int> provinceToContinent,
     String seaZoneId,
     String regionId,
+    List<(int x, int y)> landSeeds,
+    List<int> continentBySeedIndex,
     ResourceRules? resourceRules,
     Random rnd,
   ) => _impl.joinContinents(
@@ -138,6 +140,8 @@ class _JoinAndSeaService {
     provinceToContinent,
     seaZoneId,
     regionId,
+    landSeeds,
+    continentBySeedIndex,
     resourceRules,
     rnd,
   );
@@ -332,7 +336,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
       'Pass 3: Land assignment complete ($landCount land, ${params.width * params.height - landCount} sea)',
     );
 
-    // Pass 4: Fill lakes (ocean = sea connected to edge; lake → land; optional coastal swap)
+    // Pass 4: Fill lakes (ocean / lake per SPEC § Pass 4; lake → land; optional coastal swap)
     if (params.skipFillLakes) {
       onLog?.call('Pass 4: Fill lakes and moats skipped');
     } else {
@@ -418,6 +422,8 @@ class TileMapGenerator extends _TileMapGeneratorShell {
         provinceToContinent,
         seaZoneId,
         regionId,
+        landSeeds,
+        continentBySeedIndex,
         resourceRules,
         rnd,
       );
@@ -469,5 +475,26 @@ class TileMapGenerator extends _TileMapGeneratorShell {
       'TileMapGenerator.generate end regionId=$regionId provinces=$provincesCount continents=$continentsCount success=true',
     );
     return (result, topology);
+  }
+
+  /// Runs Pass 4 **lake fill only** on a grid at post-Pass-3 semantics (sea =
+  /// [seaZoneId], land = `_land` sentinel). Intended for **automated tests**;
+  /// production code should use [generate].
+  static List<List<String>> fillLakesPass4ForTest({
+    required TileMapParams params,
+    required List<List<String>> grid,
+    String seaZoneId = 's1',
+    required List<(int x, int y)> landSeeds,
+    required List<int> continentBySeedIndex,
+  }) {
+    final graph = TileMapGridGraph(params);
+    final joinImpl = _TileMapGenJoinSea(params, packageLogger(), graph);
+    final lakesImpl = _TileMapGenLakesProvinces(params, graph, joinImpl);
+    return lakesImpl.fillLakes(
+      grid,
+      seaZoneId,
+      landSeeds,
+      continentBySeedIndex,
+    );
   }
 }

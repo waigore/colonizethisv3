@@ -15,7 +15,12 @@ class _TileMapGenLakesProvinces {
     List<(int x, int y)> landSeeds,
     List<int> continentBySeedIndex,
   ) {
-    final ocean = _graph.oceanCells(grid, seaZoneId);
+    final ocean = _graph.oceanCells(
+      grid,
+      seaZoneId,
+      landSeeds,
+      continentBySeedIndex,
+    );
     final next = grid.map((row) => row.toList()).toList();
     final lakeCells = <(int x, int y)>[];
     for (var y = 0; y < params.height; y++) {
@@ -29,27 +34,6 @@ class _TileMapGenLakesProvinces {
     var lakesFilled = 0;
     final coastalLandCandidates = <(int x, int y)>{};
     for (final component in lakeComponents) {
-      final borderingLand = <(int x, int y)>{};
-      for (final (x, y) in component) {
-        for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
-          final nx = x + dx;
-          final ny = y + dy;
-          if (nx >= 0 &&
-              nx < params.width &&
-              ny >= 0 &&
-              ny < params.height &&
-              grid[ny][nx] != seaZoneId) {
-            borderingLand.add((nx, ny));
-          }
-        }
-      }
-      final continentsBordering = <int>{};
-      for (final (lx, ly) in borderingLand) {
-        continentsBordering.add(
-          _graph.continentForLandCell(lx, ly, landSeeds, continentBySeedIndex),
-        );
-      }
-      if (continentsBordering.length >= 2) continue;
       for (final (x, y) in component) {
         next[y][x] = _landSentinel;
         lakesFilled++;
@@ -105,7 +89,12 @@ class _TileMapGenLakesProvinces {
     List<int> continentBySeedIndex,
     Random rnd,
   ) {
-    final ocean = _graph.oceanCells(grid, seaZoneId);
+    final ocean = _graph.oceanCells(
+      grid,
+      seaZoneId,
+      landSeeds,
+      continentBySeedIndex,
+    );
     if (ocean.isEmpty) return grid;
 
     final next = grid.map((row) => row.toList()).toList();

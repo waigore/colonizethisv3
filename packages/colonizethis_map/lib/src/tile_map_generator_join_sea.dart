@@ -154,6 +154,8 @@ class _TileMapGenJoinSea {
     Map<String, int> provinceToContinent,
     String seaZoneId,
     String? mapRegionId,
+    List<(int x, int y)> landSeeds,
+    List<int> continentBySeedIndex,
     ResourceRules? resourceRules,
     Random rnd,
   ) {
@@ -165,7 +167,12 @@ class _TileMapGenJoinSea {
     var g = grid.map((row) => row.toList()).toList();
     var tg = terrainGrid?.map((row) => row.toList()).toList();
     var rg = resourceGrid?.map((row) => row.toList()).toList();
-    final ocean = _graph.oceanCells(g, seaZoneId);
+    final ocean = _graph.oceanCells(
+      g,
+      seaZoneId,
+      landSeeds,
+      continentBySeedIndex,
+    );
     // Upper bound so we cannot spin forever if sea-fraction preservation undoes a bridge.
     final maxJoinIterationsPerContinent = params.width * params.height;
 
