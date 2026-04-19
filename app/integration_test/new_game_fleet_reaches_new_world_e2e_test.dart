@@ -28,6 +28,9 @@ const Duration _kMaxUiResponseWait = Duration(seconds: 5);
 /// poll; still bounded so hung runs exit (`SPEC/program/e2e-integration-tests.md`).
 const Duration _kBootstrapNewGameOverallCap = Duration(seconds: 60);
 
+/// Entire fleet e2e must finish within this wall clock (success or guarded fail).
+const Duration _kFleetE2eMaxWallClock = Duration(minutes: 5);
+
 /// Drive frames without [WidgetTester.pumpAndSettle] (Flame + progress spinners).
 Future<void> _pumpFor(WidgetTester tester, Duration total) async {
   const step = Duration(milliseconds: 50);
@@ -206,14 +209,7 @@ Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
 }
 
 Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
-  final overall = Stopwatch()..start();
   for (var safety = 0; safety < 32; safety++) {
-    if (overall.elapsed > _kMaxUiResponseWait) {
-      fail(
-        'ExpansionTile expand exceeded ${_kMaxUiResponseWait.inSeconds}s '
-        '(UI response cap).',
-      );
-    }
     final tiles = find.byType(ExpansionTile);
     final n = tiles.evaluate().length;
     if (n == 0) return;
@@ -592,14 +588,27 @@ void main() {
       await tester.pump();
       await _pumpFor(tester, const Duration(milliseconds: 500));
 
+      final wallClock = Stopwatch()..start();
+      void ensureUnderWallClock(String step) {
+        if (wallClock.elapsed > _kFleetE2eMaxWallClock) {
+          fail(
+            'Fleet e2e exceeded ${_kFleetE2eMaxWallClock.inMinutes} minute wall clock '
+            'at $step (elapsed=${wallClock.elapsed.inSeconds}s).',
+          );
+        }
+      }
+
       await _bootstrapNewGameToMap(tester);
+      ensureUnderWallClock('after bootstrap');
 
       final l10n = lookupAppLocalizations(const Locale('en'));
 
       await _splitHomeFleetOnce(tester, l10n);
       await _closeBottomSheet(tester);
+      ensureUnderWallClock('after split fleet');
 
       for (var turnIdx = 0; turnIdx < _kMaxNextTurnTapsForNwFleetReach; turnIdx++) {
+        ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
         await _dismissTransientUi(tester);
         await _tapNewWorldRegionTabIfPresent(tester);
         await _openNavalPanel(tester);
@@ -618,8 +627,10 @@ void main() {
 
         await _advanceOneHumanTurn(tester, l10n);
         await _dismissTransientUi(tester);
+        ensureUnderWallClock('after turn advance turnIdx=$turnIdx');
       }
 
+      ensureUnderWallClock('before final naval check');
       await _dismissTransientUi(tester);
       await _tapNewWorldRegionTabIfPresent(tester);
       await _openNavalPanel(tester);
@@ -631,6 +642,7 @@ void main() {
         );
       }
       await _closeBottomSheet(tester);
+      ensureUnderWallClock('test complete');
     },
   );
 }
