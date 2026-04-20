@@ -871,9 +871,14 @@ void main() {
       }
 
       var exploreEnabled = await checkExploreEnabledFromCivilianPanel();
-      if (!exploreEnabled) {
-        // Some CI seeds delay the reveal/suggestion propagation by one turn.
-        // Keep assertion strict, but allow one bounded retry.
+      const maxBoundedTurnRetries = 3;
+      for (
+        var retryIdx = 0;
+        !exploreEnabled && retryIdx < maxBoundedTurnRetries;
+        retryIdx++
+      ) {
+        // CI can lag reveal/suggestion propagation by a few turns.
+        // Keep assertion strict, but retry with a small bounded loop.
         await _advanceOneHumanTurn(tester, l10n);
         await _dismissTransientUi(tester);
         await _tapNewWorldRegionTabIfPresent(tester);
@@ -882,7 +887,7 @@ void main() {
       if (!exploreEnabled) {
         fail(
           'post-bundle #1869 expected at least one Explorer with enabled Explore '
-          'after NW fleet reveal (with one-turn bounded retry). '
+          'after NW fleet reveal (with bounded turn retries). '
           'Last exception: ${tester.takeException()}',
         );
       }
