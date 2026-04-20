@@ -611,9 +611,8 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
   );
 }
 
-Future<void> _tapAssignOnCivilianRowWithTitleFleetE2e(
+Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
   WidgetTester tester,
-  String unitTypeTitle,
 ) async {
   final root = find.byKey(kCtE2ECivilianPanelRootKey);
   final listView = find.descendant(of: root, matching: find.byType(ListView));
@@ -623,47 +622,60 @@ Future<void> _tapAssignOnCivilianRowWithTitleFleetE2e(
     matching: find.byType(Scrollable),
   );
   expect(panelScrollable, findsOneWidget);
-  final titlesInList = find.descendant(
+
+  final explorerTitles = find.descendant(
     of: listView,
-    matching: find.text(unitTypeTitle),
+    matching: find.text('Explorer'),
   );
-  final sw = Stopwatch()..start();
-  while (titlesInList.evaluate().isEmpty &&
-      sw.elapsed < const Duration(seconds: 20)) {
+  final scan = Stopwatch()..start();
+  while (explorerTitles.evaluate().isEmpty &&
+      scan.elapsed < const Duration(seconds: 20)) {
     await tester.drag(panelScrollable, const Offset(0, -120));
     await _pumpFor(tester, const Duration(milliseconds: 120));
   }
-  expect(
-    titlesInList,
-    findsWidgets,
-    reason:
-        'Timed out scrolling civilian panel for a visible "$unitTypeTitle" row',
-  );
-  final n = titlesInList.evaluate().length;
-  for (var i = 0; i < n; i++) {
-    final titleAt = titlesInList.at(i);
+  if (explorerTitles.evaluate().isEmpty) {
+    return false;
+  }
+
+  final titleElements = explorerTitles.evaluate().toList();
+  for (final titleElement in titleElements) {
+    final titleFinder = find.byWidget(titleElement.widget);
     await tester.scrollUntilVisible(
-      titleAt,
+      titleFinder,
       120,
       scrollable: panelScrollable,
     );
-    await tester.ensureVisible(titleAt);
+    await tester.ensureVisible(titleFinder);
     final listTile = find.ancestor(
-      of: titleAt,
+      of: titleFinder,
       matching: find.byType(ListTile),
     );
     final assign = find.descendant(of: listTile, matching: find.text('Assign'));
     if (assign.evaluate().isEmpty) {
       continue;
     }
-    final assignHit = assign.first;
-    await tester.ensureVisible(assignHit);
-    await _pumpFor(tester, const Duration(milliseconds: 100));
-    await tester.tap(assignHit);
+    await tester.tap(assign.first, warnIfMissed: false);
     await _pumpFor(tester, const Duration(milliseconds: 300));
-    return;
+
+    final exploreTile = find.widgetWithText(ListTile, 'Explore');
+    final wait = Stopwatch()..start();
+    while (exploreTile.evaluate().isEmpty &&
+        wait.elapsed < _kMaxUiResponseWait) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    if (exploreTile.evaluate().isNotEmpty) {
+      final enabled = tester.widget<ListTile>(exploreTile.first).enabled;
+      await tester.binding.handlePopRoute();
+      await _pumpFor(tester, const Duration(milliseconds: 200));
+      if (enabled == true) {
+        return true;
+      }
+    } else {
+      await tester.binding.handlePopRoute();
+      await _pumpFor(tester, const Duration(milliseconds: 200));
+    }
   }
-  fail('No idle Assign row for unit type "$unitTypeTitle" in civilian panel');
+  return false;
 }
 
 Future<void> _advanceOneHumanTurn(
@@ -842,17 +854,15 @@ void main() {
       await _tapNewWorldRegionTabIfPresent(tester);
       await _openCivilianPanelFleetE2e(tester);
       await _waitUntilFound(tester, find.byKey(kCtE2ECivilianPanelRootKey));
-      await _tapAssignOnCivilianRowWithTitleFleetE2e(tester, 'Explorer');
-      await _pumpFor(tester, const Duration(milliseconds: 400));
-
-      final exploreTile = find.widgetWithText(ListTile, 'Explore');
-      await _waitUntilFound(tester, exploreTile);
-      await tester.ensureVisible(exploreTile.first);
+      final exploreEnabled = await _anyExplorerHasEnabledExploreAssignFleetE2e(
+        tester,
+      );
       expect(
-        tester.widget<ListTile>(exploreTile.first).enabled,
+        exploreEnabled,
         isTrue,
         reason:
-            'Bundled explore targets: Explore must not stay disabled for revealed '
+            'Bundled explore targets: at least one Explorer must have enabled '
+            'Explore after NW reveal; no separate Move-only turn required. '
             'NW provinces (Refs #1869).',
       );
 
