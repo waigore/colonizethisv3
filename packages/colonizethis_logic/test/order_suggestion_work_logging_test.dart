@@ -5,9 +5,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
 List<String> _suggestWorkLines(List<LogEvent> events) => [
-      for (final e in events)
-        if (e.message.contains('suggest_work')) e.message,
-    ];
+  for (final e in events)
+    if (e.message.contains('suggest_work')) e.message,
+];
 
 void main() {
   suppressLogsForTests();
@@ -28,7 +28,7 @@ void main() {
       Logger.level = Level.info;
     });
 
-    test('emits suggest_work summaries for Explorer and Builder', () {
+    test('emits suggest_work summaries for Explorer/Builder/Spy/Merchant', () {
       const playerId = 'gp1';
       const ow = 'oldWorld';
       final player = const Player(
@@ -57,19 +57,32 @@ void main() {
         tileKey: '$ow|p1|0|0',
         status: UnitStatus.idle,
       );
+      final spy = Unit(
+        id: 'u_spy',
+        type: 'Spy',
+        ownerId: playerId,
+        locationProvinceId: p1.id,
+        tileKey: '$ow|p1|0|0',
+        status: UnitStatus.idle,
+      );
+      final merchant = Unit(
+        id: 'u_merchant',
+        type: 'Merchant',
+        ownerId: playerId,
+        locationProvinceId: p1.id,
+        tileKey: '$ow|p1|0|0',
+        status: UnitStatus.idle,
+      );
 
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
         oldWorld: RegionData(
           provinces: [p1, p2],
-          units: [explorer, builder],
+          units: [explorer, builder, spy, merchant],
         ),
         newWorld: const RegionData(),
         playerVisibilityByTile: {
-          playerId: {
-            '$ow|p1|0|0': 'fullyVisible',
-            '$ow|p2|0|0': 'fogged',
-          },
+          playerId: {'$ow|p1|0|0': 'fullyVisible', '$ow|p2|0|0': 'fogged'},
         },
         tileKeysByRegionAndProvince: {
           ow: {
@@ -77,9 +90,7 @@ void main() {
             p2.id: ['$ow|p2|0|0'],
           },
         },
-        resourceByTileKey: {
-          '$ow|p1|0|0': 'grain',
-        },
+        resourceByTileKey: {'$ow|p1|0|0': 'grain'},
       );
 
       final game = Game(
@@ -100,12 +111,7 @@ void main() {
 
       final view = buildPlayerView(game, topology, playerId);
 
-      suggestWorkOrders(
-        view,
-        game,
-        topology,
-        const Orders(),
-      );
+      suggestWorkOrders(view, game, topology, const Orders());
 
       final lines = _suggestWorkLines(capturedEvents);
       expect(lines, isNotEmpty);
@@ -123,6 +129,35 @@ void main() {
           (m) =>
               m.contains('unitId=u_builder') &&
               m.contains('target=build_improvement') &&
+              m.contains('outcome=') &&
+              m.contains('reason='),
+        ),
+        isTrue,
+      );
+      expect(
+        lines.any(
+          (m) =>
+              m.contains('unitId=u_spy') &&
+              m.contains('target=counter_spy') &&
+              m.contains('outcome='),
+        ),
+        isTrue,
+      );
+      expect(
+        lines.any(
+          (m) =>
+              m.contains('unitId=u_spy') &&
+              m.contains('target=steal_tech') &&
+              m.contains('outcome=') &&
+              m.contains('reason='),
+        ),
+        isTrue,
+      );
+      expect(
+        lines.any(
+          (m) =>
+              m.contains('unitId=u_merchant') &&
+              m.contains('target=purchase_land') &&
               m.contains('outcome=') &&
               m.contains('reason='),
         ),

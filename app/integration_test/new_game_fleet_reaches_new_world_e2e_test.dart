@@ -19,7 +19,7 @@ import 'package:integration_test/integration_test.dart';
 /// topology/assigner retry (`effectiveSeed + 100003`, …), producing longer
 /// coast→warp→New World paths than nominal seed-42 alone. Keep this above the
 /// worst observed CI need (Refs #1849 / PR 1849).
-const int _kMaxNextTurnTapsForNwFleetReach = 84;
+const int _kMaxNextTurnTapsForNwFleetReach = 20;
 
 /// Hard cap for any single “wait until UI shows X” poll (`_waitUntilFound`,
 /// next-turn label settle, panel-open loops). Fail immediately when exceeded.
@@ -290,8 +290,9 @@ Future<void> _tapOldWorldRegionTab(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
-  final hit =
-      find.widgetWithText(CtChoiceChip, l10n.region_oldWorld).hitTestable();
+  final hit = find
+      .widgetWithText(CtChoiceChip, l10n.region_oldWorld)
+      .hitTestable();
   if (hit.evaluate().isEmpty) {
     return;
   }
@@ -708,79 +709,82 @@ void main() {
   suppressLogsForTests();
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets(
-    'new game → non-home fleet at sea in New World '
-    '(≤$_kMaxNextTurnTapsForNwFleetReach Next turn taps)',
-    (WidgetTester tester) async {
-      expect(
-        kCtE2EEnabled,
-        isTrue,
-        reason:
-            'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
-      );
+  testWidgets('new game → non-home fleet at sea in New World '
+      '(≤$_kMaxNextTurnTapsForNwFleetReach Next turn taps)', (
+    WidgetTester tester,
+  ) async {
+    expect(
+      kCtE2EEnabled,
+      isTrue,
+      reason:
+          'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
+    );
 
-      await tester.binding.setSurfaceSize(const Size(1280, 720));
-      await bootstrapForIntegrationTest();
-      await tester.pump();
-      await _pumpFor(tester, const Duration(milliseconds: 500));
+    await tester.binding.setSurfaceSize(const Size(1280, 720));
+    await bootstrapForIntegrationTest();
+    await tester.pump();
+    await _pumpFor(tester, const Duration(milliseconds: 500));
 
-      final wallClock = Stopwatch()..start();
-      void ensureUnderWallClock(String step) {
-        if (wallClock.elapsed > _kFleetE2eMaxWallClock) {
-          fail(
-            'Fleet e2e exceeded ${_kFleetE2eMaxWallClock.inMinutes} minute wall clock '
-            'at $step (elapsed=${wallClock.elapsed.inSeconds}s).',
-          );
-        }
+    final wallClock = Stopwatch()..start();
+    void ensureUnderWallClock(String step) {
+      if (wallClock.elapsed > _kFleetE2eMaxWallClock) {
+        fail(
+          'Fleet e2e exceeded ${_kFleetE2eMaxWallClock.inMinutes} minute wall clock '
+          'at $step (elapsed=${wallClock.elapsed.inSeconds}s).',
+        );
       }
+    }
 
-      await _bootstrapNewGameToMap(tester);
-      ensureUnderWallClock('after bootstrap');
+    await _bootstrapNewGameToMap(tester);
+    ensureUnderWallClock('after bootstrap');
 
-      final l10n = lookupAppLocalizations(const Locale('en'));
+    final l10n = lookupAppLocalizations(const Locale('en'));
 
-      await _splitHomeFleetOnce(tester, l10n);
-      await _closeBottomSheet(tester);
-      ensureUnderWallClock('after split fleet');
+    await _splitHomeFleetOnce(tester, l10n);
+    await _closeBottomSheet(tester);
+    ensureUnderWallClock('after split fleet');
 
-      for (var turnIdx = 0; turnIdx < _kMaxNextTurnTapsForNwFleetReach; turnIdx++) {
-        ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
-        await _dismissTransientUi(tester);
-        await _tapNewWorldRegionTabIfPresent(tester);
-        await _openNavalPanel(tester);
-        if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
-          await _closeBottomSheet(tester);
-          return;
-        }
-        await _closeBottomSheet(tester);
-
-        await _tryNavalMoveSegment(tester, l10n);
-        await _closeBottomSheet(tester);
-
-        if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
-          return;
-        }
-
-        await _advanceOneHumanTurn(tester, l10n);
-        await _dismissTransientUi(tester);
-        ensureUnderWallClock('after turn advance turnIdx=$turnIdx');
-      }
-
-      ensureUnderWallClock('before final naval check');
+    for (
+      var turnIdx = 0;
+      turnIdx < _kMaxNextTurnTapsForNwFleetReach;
+      turnIdx++
+    ) {
+      ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
       await _dismissTransientUi(tester);
       await _tapNewWorldRegionTabIfPresent(tester);
       await _openNavalPanel(tester);
-      if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
-        fail(
-          'After $_kMaxNextTurnTapsForNwFleetReach Next turn resolutions, no non-home human fleet in region '
-          'newWorld (ctE2eNavalPanelSnapshot / naval panel UI). '
-          'Last exception: ${tester.takeException()}',
-        );
+      if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
+        await _closeBottomSheet(tester);
+        return;
       }
       await _closeBottomSheet(tester);
-      ensureUnderWallClock('test complete');
-    },
-  );
+
+      await _tryNavalMoveSegment(tester, l10n);
+      await _closeBottomSheet(tester);
+
+      if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
+        return;
+      }
+
+      await _advanceOneHumanTurn(tester, l10n);
+      await _dismissTransientUi(tester);
+      ensureUnderWallClock('after turn advance turnIdx=$turnIdx');
+    }
+
+    ensureUnderWallClock('before final naval check');
+    await _dismissTransientUi(tester);
+    await _tapNewWorldRegionTabIfPresent(tester);
+    await _openNavalPanel(tester);
+    if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
+      fail(
+        'After $_kMaxNextTurnTapsForNwFleetReach Next turn resolutions, no non-home human fleet in region '
+        'newWorld (ctE2eNavalPanelSnapshot / naval panel UI). '
+        'Last exception: ${tester.takeException()}',
+      );
+    }
+    await _closeBottomSheet(tester);
+    ensureUnderWallClock('test complete');
+  });
 
   testWidgets(
     'post-bundle GitHub #1869: after NW fleet, Explorer Assign → Explore enabled',
@@ -816,7 +820,11 @@ void main() {
       await _closeBottomSheet(tester);
       ensureUnderWallClock('after split fleet');
 
-      for (var turnIdx = 0; turnIdx < _kMaxNextTurnTapsForNwFleetReach; turnIdx++) {
+      for (
+        var turnIdx = 0;
+        turnIdx < _kMaxNextTurnTapsForNwFleetReach;
+        turnIdx++
+      ) {
         ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
         await _dismissTransientUi(tester);
         await _tapNewWorldRegionTabIfPresent(tester);
@@ -857,16 +865,12 @@ void main() {
       final exploreEnabled = await _anyExplorerHasEnabledExploreAssignFleetE2e(
         tester,
       );
-      if (!exploreEnabled) {
-        // Linux CI map/visibility variance can still produce a run where no
-        // Explorer row exposes an enabled Explore action for this seed path.
-        // Keep the post-bundle flow exercised, but avoid making this a flaky
-        // hard gate for unrelated PRs.
-        debugPrint(
-          'post_bundle_explore_not_enabled_any_explorer '
-          'refs=1869 note=non_deterministic_seed_path',
-        );
-      }
+      expect(
+        exploreEnabled,
+        isTrue,
+        reason:
+            'Expected at least one Explorer row with Explore enabled after NW reveal under post-bundle semantics (Refs #1869).',
+      );
 
       await _closeBottomSheet(tester);
       ensureUnderWallClock('test complete');
