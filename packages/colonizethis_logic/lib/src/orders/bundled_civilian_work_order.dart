@@ -36,13 +36,28 @@ bool civilianBundledWorkNeedsProvinceMoveLeg(
   WorkOrder o,
 ) {
   if (unit.tileKey == null || unit.tileKey!.isEmpty) return false;
+  // steal_tech: spy work uses target-specific validation (war/visibility, GP
+  // capital rules); no implicit civilian MoveOrder-equivalent leg through
+  // MoveValidator in the bundled helper (see suggestWorkOrders spy tests).
+  if (o.target == kWorkTargetStealTech) {
+    return false;
+  }
   final dest = executionProvinceFullIdFromWorkOrder(game, o);
   if (dest == null) return false;
   final current = resolveToFullProvinceId(
     game.worldState,
     unit.locationProvinceId,
   );
-  return current != dest;
+  if (current == dest) return false;
+  // Purchased enclave: work targets player-bought land in another power's
+  // province — no implicit MoveOrder-equivalent leg (MoveValidator cannot
+  // express this case). Work apply handles placement. See
+  // order_engine_validate_work_build_improvement_test (Refs #1869).
+  if (game.worldState.purchasedTilesByTileKey[o.targetTileKey] ==
+      unit.ownerId) {
+    return false;
+  }
+  return true;
 }
 
 /// First deterministic candidate entry tile in [destProvinceFullId] for bundled
