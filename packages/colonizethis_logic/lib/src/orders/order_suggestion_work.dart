@@ -163,6 +163,59 @@ void _addExplorerWorkSuggestionsForUnit({
   );
 }
 
+({String? tileKey, String lastReason}) _firstAcceptedProspectTileInProvince({
+  required PlayerView view,
+  required Game game,
+  required MapTopology topology,
+  required Orders currentOrders,
+  required String playerId,
+  required Unit unit,
+  required List<String> tilesInProvince,
+  required Set<String> prospected,
+  required Map<String, Unit> unitsById,
+  required List<DiplomaticOrder> diplomaticOrders,
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  var lastReason = 'no_valid_tile';
+  for (final tk in tilesInProvince) {
+    if (prospected.contains(tk)) continue;
+    if (!isMineralEligibleTile(game, tileMapByRegion, tk)) continue;
+    final candidate = WorkOrder(
+      unitId: unit.id,
+      target: kWorkTargetProspect,
+      targetTileKey: tk,
+    );
+    if (civilianBundledWorkNeedsProvinceMoveLeg(game, unit, candidate)) {
+      final bundled = validateCivilianBundledWorkMoveLeg(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        unit: unit,
+        order: candidate,
+        view: view,
+        unitsById: unitsById,
+        diplomaticOrders: diplomaticOrders,
+      );
+      if (!bundled.isAccepted) {
+        lastReason = bundled.reason ?? 'no_single_hop';
+        continue;
+      }
+    }
+    if (_isWorkOrderAccepted(
+      game,
+      topology,
+      playerId,
+      currentOrders,
+      candidate,
+      tileMapByRegion: tileMapByRegion,
+    )) {
+      return (tileKey: tk, lastReason: lastReason);
+    }
+    lastReason = 'engine_rejected';
+  }
+  return (tileKey: null, lastReason: lastReason);
+}
+
 void _addProspectSuggestionIfEligible({
   required PlayerView view,
   required Game game,
@@ -221,44 +274,24 @@ void _addProspectSuggestionIfEligible({
       lastReason = 'no_valid_tile';
       continue;
     }
-    for (final tk in tilesInP) {
-      if (prospected.contains(tk)) continue;
-      if (!isMineralEligibleTile(game, tileMapByRegion, tk)) continue;
-      final candidate = WorkOrder(
-        unitId: unit.id,
-        target: kWorkTargetProspect,
-        targetTileKey: tk,
-      );
-      if (civilianBundledWorkNeedsProvinceMoveLeg(game, unit, candidate)) {
-        final bundled = validateCivilianBundledWorkMoveLeg(
-          game: game,
-          topology: topology,
-          playerId: playerId,
-          unit: unit,
-          order: candidate,
-          view: view,
-          unitsById: unitsById,
-          diplomaticOrders: diplomatic,
-        );
-        if (!bundled.isAccepted) {
-          lastReason = bundled.reason ?? 'no_single_hop';
-          continue;
-        }
-      }
-      if (_isWorkOrderAccepted(
-        game,
-        topology,
-        playerId,
-        currentOrders,
-        candidate,
-        tileMapByRegion: tileMapByRegion,
-      )) {
-        prospectTileKey = tk;
-        break;
-      }
-      lastReason = 'engine_rejected';
+    final scan = _firstAcceptedProspectTileInProvince(
+      view: view,
+      game: game,
+      topology: topology,
+      currentOrders: currentOrders,
+      playerId: playerId,
+      unit: unit,
+      tilesInProvince: tilesInP,
+      prospected: prospected,
+      unitsById: unitsById,
+      diplomaticOrders: diplomatic,
+      tileMapByRegion: tileMapByRegion,
+    );
+    lastReason = scan.lastReason;
+    prospectTileKey = scan.tileKey;
+    if (prospectTileKey != null) {
+      break;
     }
-    if (prospectTileKey != null) break;
   }
   if (prospectTileKey == null) {
     _suggestionWorkLog(
