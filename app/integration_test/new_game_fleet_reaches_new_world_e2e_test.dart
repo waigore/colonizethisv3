@@ -880,11 +880,10 @@ void main() {
         exploreEnabled = await checkExploreEnabledFromCivilianPanel();
       }
       if (!exploreEnabled) {
-        // Keep the post-bundle flow exercised even when CI seed variance
-        // prevents an enabled Explore row in this run.
-        debugPrint(
-          'post_bundle_explore_not_enabled_any_explorer '
-          'refs=1869 note=non_deterministic_seed_path',
+        fail(
+          'post-bundle #1869 expected at least one Explorer with enabled Explore '
+          'after NW fleet reveal (with one-turn bounded retry). '
+          'Last exception: ${tester.takeException()}',
         );
       }
 
