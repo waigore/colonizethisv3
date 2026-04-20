@@ -623,58 +623,48 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
     matching: find.byType(Scrollable),
   );
   expect(panelScrollable, findsOneWidget);
-
-  final explorerTitles = find.descendant(
-    of: listView,
-    matching: find.text('Explorer'),
-  );
-  final scan = Stopwatch()..start();
-  while (explorerTitles.evaluate().isEmpty &&
-      scan.elapsed < const Duration(seconds: 20)) {
-    await tester.drag(panelScrollable, const Offset(0, -120));
-    await _pumpFor(tester, const Duration(milliseconds: 120));
-  }
-  if (explorerTitles.evaluate().isEmpty) {
-    return false;
-  }
-
-  final titleElements = explorerTitles.evaluate().toList();
-  for (final titleElement in titleElements) {
-    final titleFinder = find.byWidget(titleElement.widget);
-    await tester.scrollUntilVisible(
-      titleFinder,
-      120,
-      scrollable: panelScrollable,
-    );
-    await tester.ensureVisible(titleFinder);
-    final listTile = find.ancestor(
-      of: titleFinder,
-      matching: find.byType(ListTile),
-    );
-    final assign = find.descendant(of: listTile, matching: find.text('Assign'));
-    if (assign.evaluate().isEmpty) {
-      continue;
-    }
-    await tester.tap(assign.first, warnIfMissed: false);
-    await _pumpFor(tester, const Duration(milliseconds: 300));
-
-    final exploreTile = find.widgetWithText(ListTile, 'Explore');
-    final wait = Stopwatch()..start();
-    while (exploreTile.evaluate().isEmpty &&
-        wait.elapsed < _kMaxUiResponseWait) {
-      await tester.pump(const Duration(milliseconds: 50));
-    }
-    if (exploreTile.evaluate().isNotEmpty) {
-      final enabled = tester.widget<ListTile>(exploreTile.first).enabled;
-      await tester.binding.handlePopRoute();
-      await _pumpFor(tester, const Duration(milliseconds: 200));
-      if (enabled == true) {
-        return true;
+  final visitedAssignWidgets = <int>{};
+  const maxPanelSweepSteps = 24;
+  for (var step = 0; step < maxPanelSweepSteps; step++) {
+    final assignCandidates = find
+        .descendant(of: listView, matching: find.text('Assign'))
+        .evaluate()
+        .toList();
+    for (final assignElement in assignCandidates) {
+      final marker = identityHashCode(assignElement.widget);
+      if (!visitedAssignWidgets.add(marker)) {
+        continue;
       }
-    } else {
-      await tester.binding.handlePopRoute();
-      await _pumpFor(tester, const Duration(milliseconds: 200));
+      final assignFinder = find.byWidget(assignElement.widget);
+      try {
+        await tester.ensureVisible(assignFinder);
+      } catch (_) {
+        continue;
+      }
+      await tester.tap(assignFinder.first, warnIfMissed: false);
+      await _pumpFor(tester, const Duration(milliseconds: 300));
+
+      final exploreTile = find.widgetWithText(ListTile, 'Explore');
+      final wait = Stopwatch()..start();
+      while (exploreTile.evaluate().isEmpty &&
+          wait.elapsed < _kMaxUiResponseWait) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      if (exploreTile.evaluate().isNotEmpty) {
+        final enabled = tester.widget<ListTile>(exploreTile.first).enabled;
+        await tester.binding.handlePopRoute();
+        await _pumpFor(tester, const Duration(milliseconds: 200));
+        if (enabled == true) {
+          return true;
+        }
+      } else {
+        await tester.binding.handlePopRoute();
+        await _pumpFor(tester, const Duration(milliseconds: 200));
+      }
     }
+
+    await tester.drag(panelScrollable, const Offset(0, -180));
+    await _pumpFor(tester, const Duration(milliseconds: 120));
   }
   return false;
 }
