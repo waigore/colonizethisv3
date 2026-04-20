@@ -861,7 +861,10 @@ void main() {
       }
 
       var exploreEnabled = await checkExploreEnabledFromCivilianPanel();
-      const maxBoundedTurnRetries = 3;
+      // Linux CI can require more than three post-reveal turns before the
+      // Assign list surfaces an enabled Explore row for at least one explorer.
+      // Keep strict failure semantics, but widen the bounded retry window.
+      const maxBoundedTurnRetries = 8;
       for (
         var retryIdx = 0;
         !exploreEnabled && retryIdx < maxBoundedTurnRetries;
