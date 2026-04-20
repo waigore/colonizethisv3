@@ -49,10 +49,17 @@ class MoveValidator extends OrderValidator {
         final destOwnerId = destProvince?.ownerId;
         // Movement within own provinces: always allowed. SPEC/program/movement.md.
         final moveToOwnProvince = destOwnerId == playerId;
-        if (!moveToOwnProvince && destRegion != unitRegion) {
+        final isExplorerCrossRegionNonGpMove =
+            !moveToOwnProvince &&
+            destRegion != unitRegion &&
+            isExplorerUnit(unit.type) &&
+            (destOwnerId == null || !isGreatPower(game, destOwnerId));
+        if (!moveToOwnProvince &&
+            destRegion != unitRegion &&
+            !isExplorerCrossRegionNonGpMove) {
           return OrderValidationResult.rejected('Invalid move');
         }
-        if (!moveToOwnProvince) {
+        if (!moveToOwnProvince && !isExplorerCrossRegionNonGpMove) {
           final unitLocalId = ProvinceId.localIdFrom(unit.locationProvinceId);
           final destLocalId = ProvinceId.localIdFrom(destFullId);
           if (!isValidLandMoveInRegion(

@@ -12,7 +12,7 @@
 
 ## Scope
 
-**Land movement — civilians:** Civilian **units** move between **provinces** only (P<->P), via `MoveOrder`.
+**Land movement — civilians:** Civilian **units** move between **provinces** only (P<->P), via `MoveOrder`. **Explorer exception:** Explorers may enter **non-GP** foreign provinces (Minor/Tribe/unowned), including cross-region, when visibility and diplomatic-war gates pass.
 
 **Land movement — military:** **Armies** move between provinces; each `ArmyMoveOrder` moves **all** regiments in that army together ([orders.md](orders.md)). The Home Army **cannot** leave the capital province ([military-armies.md](../game/military-armies.md)).
 
@@ -34,7 +34,7 @@
 
 Before applying a move order:
 
-- **Civilian land:** Destination must be a **province** (not sea zone). If the destination province is **owned by the ordering player**, the move is valid regardless of adjacency **or region**. Otherwise the destination must be **adjacent** (P<->P edge) within the same region as the unit.
+- **Civilian land:** Destination must be a **province** (not sea zone). If the destination province is **owned by the ordering player**, the move is valid regardless of adjacency **or region**. Otherwise the destination must be **adjacent** (P<->P edge) within the same region as the unit, **except** an **Explorer** may move into a **non-GP** destination (Minor/Tribe/unowned) across regions without adjacency when visibility and diplomatic-war gates pass.
 - **Army land:** Same as civilian, but the mover is the **army**; reject if army is the **Home Army** and destination is not the capital province. If the destination province is **owned by the ordering player**, the move is valid regardless of adjacency **or region**. Otherwise the destination must be **adjacent** within the same region as the army’s current province.
 - **Naval (Phase 5+):** Destination must be a **sea zone**; must be adjacent to current sea zone (S<->S or P<->S).
 
@@ -76,4 +76,12 @@ Then during the Movement phase the system removes `c1` from the Old World unit l
 
 Given the OrderEngine validates **civilian** `MoveOrder` and **ArmyMoveOrder** instances for a player in a world with region-scoped topology and prefixed province ids  
 When it evaluates a sequence of those orders against the current `Game` and `MapTopology`  
-Then it accepts any **civilian** or **army** move whose destination province is owned by that player (including cross-region moves), rejects non-adjacent moves into provinces the player does not own, rejects **Home Army** moves whose destination is not the capital province, rejects orders for units or armies that do not exist or are not owned by the player, and uses local province ids only for topology lookups while storing and comparing province ids in prefixed form.
+Then it accepts any **civilian** or **army** move whose destination province is owned by that player (including cross-region moves), accepts Explorer moves into non-GP destinations (Minor/Tribe/unowned) when visibility and diplomatic-war gates pass even if cross-region and non-adjacent, rejects non-adjacent non-owned moves for other civilian unit types, rejects **Home Army** moves whose destination is not the capital province, rejects orders for units or armies that do not exist or are not owned by the player, and uses local province ids only for topology lookups while storing and comparing province ids in prefixed form.
+
+Given a player controls an Explorer `e1` at `oldWorld|p1`, the destination `newWorld|p2` exists, `newWorld|p2` is owned by a Tribe, and both source and destination are at least fogged in that player’s `PlayerView`  
+When the player submits `MoveOrder(unitId: e1, destinationProvinceId: newWorld|p2)`  
+Then the system accepts the move even though the destination is cross-region and not adjacent, because Explorer non-GP cross-region movement is allowed.
+
+Given a player controls a Builder `b1` at `oldWorld|p1`, the destination `newWorld|p2` exists, `newWorld|p2` is owned by a Tribe, and both source and destination are at least fogged in that player’s `PlayerView`  
+When the player submits `MoveOrder(unitId: b1, destinationProvinceId: newWorld|p2)`  
+Then the system rejects the move with `Invalid move` because the non-adjacent cross-region non-owned exception does not apply to Builder units.
