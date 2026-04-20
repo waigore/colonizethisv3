@@ -875,9 +875,12 @@ void main() {
         exploreEnabled = await checkExploreEnabledFromCivilianPanel();
       }
       if (!exploreEnabled) {
-        // Keep the post-bundle path exercised in CI even when scenario seed
-        // variance does not surface an enabled Explore row in this run.
-        return;
+        fail(
+          'Post-bundle #1869 regression: Explorer Assign never surfaced an enabled '
+          'Explore row after New World fleet confirmation and '
+          '$maxBoundedTurnRetries bounded Next turn retries. '
+          'Last exception: ${tester.takeException()}',
+        );
       }
 
       ensureUnderWallClock('test complete');
