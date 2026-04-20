@@ -1,5 +1,21 @@
 part of 'order_suggestion.dart';
 
+void _suggestionWorkLog({
+  required String unitId,
+  required String unitType,
+  required String unitRegionId,
+  required String atProvinceId,
+  required String workTarget,
+  required String outcome,
+  String reason = '-',
+  String tile = '-',
+}) {
+  _log.d(
+    'suggest_work unitId=$unitId unitType=$unitType region=$unitRegionId '
+    'at=$atProvinceId target=$workTarget outcome=$outcome reason=$reason tile=$tile',
+  );
+}
+
 void _addExplorerWorkSuggestionsForUnit({
   required PlayerView view,
   required Game game,
@@ -10,44 +26,124 @@ void _addExplorerWorkSuggestionsForUnit({
   required String regionId,
   required String provinceId,
   required String localId,
-  required List<String> tilesInProvince,
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  if (provinceHasAtLeastVisibility(
-    view,
-    regionId,
-    provinceId,
-    VisibilityLevel.fogged,
-  )) {
-    final hasPartiallyHiddenTile = view.visibilityByTile.entries.any((e) {
-      final parts = e.key.split('|');
-      if (parts.length != 4) return false;
-      if (parts[0] != regionId || parts[1] != localId) return false;
-      return e.value != VisibilityLevel.fullyVisible;
-    });
+  final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
+  final diplomatic =
+      currentOrders.diplomaticOrdersByPlayerId[playerId] ?? const [];
 
-    if (hasPartiallyHiddenTile) {
-      final existing = existingTargetsByUnit[unit.id];
-      if (existing == null || !existing.contains(kWorkTargetExplore)) {
-        final targetTileKey = '$regionId|$localId|0|0';
-        final candidate = WorkOrder(
-          unitId: unit.id,
-          target: kWorkTargetExplore,
-          targetTileKey: targetTileKey,
+  final existing = existingTargetsByUnit[unit.id];
+  if (existing != null && existing.contains(kWorkTargetExplore)) {
+    _suggestionWorkLog(
+      unitId: unit.id,
+      unitType: unit.type,
+      unitRegionId: regionId,
+      atProvinceId: provinceId,
+      workTarget: kWorkTargetExplore,
+      outcome: 'excluded',
+      reason: 'duplicate_pending',
+    );
+  } else {
+    final provinces = allProvinces(game.worldState).toList()
+      ..sort((a, b) => a.id.compareTo(b.id));
+    WorkOrder? chosen;
+    var lastReason = 'no_valid_tile';
+    for (final prov in provinces) {
+      final regionIdP = prov.regionId;
+      final provinceIdFull = prov.id;
+      final localIdP = ProvinceId.localIdFrom(provinceIdFull);
+      final targetTileKey = '$regionIdP|$localIdP|0|0';
+      final tilesInP =
+          tileKeysByRegion[regionIdP]?[provinceIdFull] ?? const <String>[];
+
+      if (!workOrderVisibilityOk(
+        view,
+        unit,
+        kWorkTargetExplore,
+        targetTileKey,
+      )) {
+        lastReason = 'visibility';
+        continue;
+      }
+      if (!provinceHasAtLeastVisibility(
+        view,
+        regionIdP,
+        provinceIdFull,
+        VisibilityLevel.fogged,
+      )) {
+        lastReason = 'visibility';
+        continue;
+      }
+      if (!exploreProvinceStillUsefulFromAuthoritativeTiles(view, tilesInP)) {
+        lastReason = 'not_applicable';
+        continue;
+      }
+      final probe = WorkOrder(
+        unitId: unit.id,
+        target: kWorkTargetExplore,
+        targetTileKey: targetTileKey,
+      );
+      if (civilianBundledWorkNeedsProvinceMoveLeg(game, unit, probe)) {
+        final bundled = validateCivilianBundledWorkMoveLeg(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+          unit: unit,
+          order: probe,
+          view: view,
+          unitsById: unitsById,
+          diplomaticOrders: diplomatic,
         );
-        if (_isWorkOrderAccepted(
-          game,
-          topology,
-          playerId,
-          currentOrders,
-          candidate,
-          tileMapByRegion: tileMapByRegion,
-        )) {
-          suggestions.add(candidate);
+        if (!bundled.isAccepted) {
+          lastReason = bundled.reason ?? 'no_single_hop';
+          continue;
         }
       }
+      final candidate = WorkOrder(
+        unitId: unit.id,
+        target: kWorkTargetExplore,
+        targetTileKey: targetTileKey,
+      );
+      if (_isWorkOrderAccepted(
+        game,
+        topology,
+        playerId,
+        currentOrders,
+        candidate,
+        tileMapByRegion: tileMapByRegion,
+      )) {
+        chosen = candidate;
+        break;
+      }
+      lastReason = 'engine_rejected';
+    }
+    if (chosen != null) {
+      suggestions.add(chosen);
+      existingTargetsByUnit.putIfAbsent(unit.id, () => <String>{}).add(
+            kWorkTargetExplore,
+          );
+      _suggestionWorkLog(
+        unitId: unit.id,
+        unitType: unit.type,
+        unitRegionId: regionId,
+        atProvinceId: provinceId,
+        workTarget: kWorkTargetExplore,
+        outcome: 'included',
+        tile: chosen.targetTileKey,
+      );
+    } else {
+      _suggestionWorkLog(
+        unitId: unit.id,
+        unitType: unit.type,
+        unitRegionId: regionId,
+        atProvinceId: provinceId,
+        workTarget: kWorkTargetExplore,
+        outcome: 'excluded',
+        reason: lastReason,
+      );
     }
   }
 
@@ -60,7 +156,7 @@ void _addExplorerWorkSuggestionsForUnit({
     unit: unit,
     regionId: regionId,
     provinceId: provinceId,
-    tilesInProvince: tilesInProvince,
+    tileKeysByRegion: tileKeysByRegion,
     existingTargetsByUnit: existingTargetsByUnit,
     suggestions: suggestions,
     tileMapByRegion: tileMapByRegion,
@@ -76,37 +172,104 @@ void _addProspectSuggestionIfEligible({
   required Unit unit,
   required String regionId,
   required String provinceId,
-  required List<String> tilesInProvince,
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  if (!provinceHasAtLeastVisibility(
-        view,
-        regionId,
-        provinceId,
-        VisibilityLevel.fogged,
-      ) ||
-      tilesInProvince.isEmpty) {
-    return;
-  }
-
   final existingProspect = existingTargetsByUnit[unit.id];
   if (existingProspect != null &&
       existingProspect.contains(kWorkTargetProspect)) {
+    _suggestionWorkLog(
+      unitId: unit.id,
+      unitType: unit.type,
+      unitRegionId: regionId,
+      atProvinceId: provinceId,
+      workTarget: kWorkTargetProspect,
+      outcome: 'excluded',
+      reason: 'duplicate_pending',
+    );
     return;
   }
 
+  final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
+  final diplomatic =
+      currentOrders.diplomaticOrdersByPlayerId[playerId] ?? const [];
+
   final prospected =
       game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
+  final provinces = allProvinces(game.worldState).toList()
+    ..sort((a, b) => a.id.compareTo(b.id));
+
   String? prospectTileKey;
-  for (final tk in tilesInProvince) {
-    if (prospected.contains(tk)) continue;
-    if (!isMineralEligibleTile(game, null, tk)) continue;
-    prospectTileKey = tk;
-    break;
+  var lastReason = 'no_valid_tile';
+  for (final prov in provinces) {
+    final regionIdP = prov.regionId;
+    final provinceIdFull = prov.id;
+    if (!provinceHasAtLeastVisibility(
+      view,
+      regionIdP,
+      provinceIdFull,
+      VisibilityLevel.fogged,
+    )) {
+      lastReason = 'visibility';
+      continue;
+    }
+    final tilesInP =
+        tileKeysByRegion[regionIdP]?[provinceIdFull] ?? const <String>[];
+    if (tilesInP.isEmpty) {
+      lastReason = 'no_valid_tile';
+      continue;
+    }
+    for (final tk in tilesInP) {
+      if (prospected.contains(tk)) continue;
+      if (!isMineralEligibleTile(game, tileMapByRegion, tk)) continue;
+      final candidate = WorkOrder(
+        unitId: unit.id,
+        target: kWorkTargetProspect,
+        targetTileKey: tk,
+      );
+      if (civilianBundledWorkNeedsProvinceMoveLeg(game, unit, candidate)) {
+        final bundled = validateCivilianBundledWorkMoveLeg(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+          unit: unit,
+          order: candidate,
+          view: view,
+          unitsById: unitsById,
+          diplomaticOrders: diplomatic,
+        );
+        if (!bundled.isAccepted) {
+          lastReason = bundled.reason ?? 'no_single_hop';
+          continue;
+        }
+      }
+      if (_isWorkOrderAccepted(
+        game,
+        topology,
+        playerId,
+        currentOrders,
+        candidate,
+        tileMapByRegion: tileMapByRegion,
+      )) {
+        prospectTileKey = tk;
+        break;
+      }
+      lastReason = 'engine_rejected';
+    }
+    if (prospectTileKey != null) break;
   }
   if (prospectTileKey == null) {
+    _suggestionWorkLog(
+      unitId: unit.id,
+      unitType: unit.type,
+      unitRegionId: regionId,
+      atProvinceId: provinceId,
+      workTarget: kWorkTargetProspect,
+      outcome: 'excluded',
+      reason: lastReason,
+    );
     return;
   }
 
@@ -115,16 +278,19 @@ void _addProspectSuggestionIfEligible({
     target: kWorkTargetProspect,
     targetTileKey: prospectTileKey,
   );
-  if (_isWorkOrderAccepted(
-    game,
-    topology,
-    playerId,
-    currentOrders,
-    candidate,
-    tileMapByRegion: tileMapByRegion,
-  )) {
-    suggestions.add(candidate);
-  }
+  suggestions.add(candidate);
+  existingTargetsByUnit.putIfAbsent(unit.id, () => <String>{}).add(
+        kWorkTargetProspect,
+      );
+  _suggestionWorkLog(
+    unitId: unit.id,
+    unitType: unit.type,
+    unitRegionId: regionId,
+    atProvinceId: provinceId,
+    workTarget: kWorkTargetProspect,
+    outcome: 'included',
+    tile: prospectTileKey,
+  );
 }
 
 /// Suggests candidate work orders for explorers and civilian workers owned by
@@ -244,7 +410,7 @@ void _addWorkSuggestionsForUnit({
       regionId: regionId,
       provinceId: provinceId,
       localId: localId,
-      tilesInProvince: tilesInProvince,
+      tileKeysByRegion: tileKeysByRegion,
       existingTargetsByUnit: existingTargetsByUnit,
       suggestions: suggestions,
       tileMapByRegion: tileMapByRegion,
@@ -261,6 +427,8 @@ void _addWorkSuggestionsForUnit({
       playerId: playerId,
       unit: unit,
       type: type,
+      unitRegionId: regionId,
+      atProvinceId: provinceId,
       existingTargetsByUnit: existingTargetsByUnit,
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
@@ -309,6 +477,8 @@ void _addWorkerSuggestionsForUnit({
   required String playerId,
   required Unit unit,
   required String type,
+  required String unitRegionId,
+  required String atProvinceId,
   required Map<String, Set<String>> existingTargetsByUnit,
   required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
   required Set<String> devExclusiveReservedTiles,
@@ -320,7 +490,18 @@ void _addWorkerSuggestionsForUnit({
 
   for (final target in allowedTargets) {
     final existing = existingTargetsByUnit[unit.id];
-    if (existing != null && existing.contains(target)) continue;
+    if (existing != null && existing.contains(target)) {
+      _suggestionWorkLog(
+        unitId: unit.id,
+        unitType: type,
+        unitRegionId: unitRegionId,
+        atProvinceId: atProvinceId,
+        workTarget: target,
+        outcome: 'excluded',
+        reason: 'duplicate_pending',
+      );
+      continue;
+    }
 
     final sortedVisible = visibleCandidatesSortedByWorkTarget.putIfAbsent(
       target,
@@ -349,9 +530,29 @@ void _addWorkerSuggestionsForUnit({
     if (accepted != null) {
       _log.d('suggestWorkOrders candidate=$accepted');
       suggestions.add(accepted);
+      _suggestionWorkLog(
+        unitId: unit.id,
+        unitType: type,
+        unitRegionId: unitRegionId,
+        atProvinceId: atProvinceId,
+        workTarget: target,
+        outcome: 'included',
+        tile: accepted.targetTileKey,
+      );
       continue;
     }
 
+    final reason =
+        sortedVisible.isEmpty ? 'no_valid_tile' : 'engine_rejected';
+    _suggestionWorkLog(
+      unitId: unit.id,
+      unitType: type,
+      unitRegionId: unitRegionId,
+      atProvinceId: atProvinceId,
+      workTarget: target,
+      outcome: 'excluded',
+      reason: reason,
+    );
     _log.d(
       'suggestWorkOrders rejected target=$target unit=${unit.id} (no valid tile)',
     );

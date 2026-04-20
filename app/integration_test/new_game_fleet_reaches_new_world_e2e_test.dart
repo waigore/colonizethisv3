@@ -562,6 +562,110 @@ String? _readNextTurnButtonLabel(WidgetTester tester) {
   return w is Text ? w.data : null;
 }
 
+Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
+  const timeout = Duration(seconds: 20);
+  final sw = Stopwatch()..start();
+  final empireRailButton = find.byKey(kEmpireCivilianUnitsButtonKey);
+  final markerButton = find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey);
+  final civilianPanel = find.byKey(kCtE2ECivilianPanelRootKey);
+  final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
+
+  Future<bool> tryOpen(Finder trigger) async {
+    final tappable = trigger.hitTestable();
+    if (tappable.evaluate().isEmpty) {
+      await _dismissTransientUi(tester);
+      return false;
+    }
+    await tester.tap(tappable.first, warnIfMissed: false);
+    await _pumpFor(tester, const Duration(milliseconds: 250));
+    final openDeadline = DateTime.now().add(const Duration(seconds: 3));
+    while (DateTime.now().isBefore(openDeadline)) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (civilianPanel.evaluate().isNotEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  while (sw.elapsed < timeout) {
+    await tester.pump(const Duration(milliseconds: 100));
+    if (civilianPanel.evaluate().isNotEmpty ||
+        navalPanel.evaluate().isNotEmpty) {
+      await _closeBottomSheet(tester);
+      continue;
+    }
+    if (empireRailButton.evaluate().isNotEmpty) {
+      if (await tryOpen(empireRailButton)) {
+        return;
+      }
+    }
+    if (markerButton.evaluate().isNotEmpty) {
+      if (await tryOpen(markerButton)) {
+        return;
+      }
+    }
+  }
+  fail(
+    'Timed out opening civilian panel. Last exception: ${tester.takeException()}',
+  );
+}
+
+Future<void> _tapAssignOnCivilianRowWithTitleFleetE2e(
+  WidgetTester tester,
+  String unitTypeTitle,
+) async {
+  final root = find.byKey(kCtE2ECivilianPanelRootKey);
+  final listView = find.descendant(of: root, matching: find.byType(ListView));
+  expect(listView, findsOneWidget);
+  final panelScrollable = find.descendant(
+    of: listView,
+    matching: find.byType(Scrollable),
+  );
+  expect(panelScrollable, findsOneWidget);
+  final titlesInList = find.descendant(
+    of: listView,
+    matching: find.text(unitTypeTitle),
+  );
+  final sw = Stopwatch()..start();
+  while (titlesInList.evaluate().isEmpty &&
+      sw.elapsed < const Duration(seconds: 20)) {
+    await tester.drag(panelScrollable, const Offset(0, -120));
+    await _pumpFor(tester, const Duration(milliseconds: 120));
+  }
+  expect(
+    titlesInList,
+    findsWidgets,
+    reason:
+        'Timed out scrolling civilian panel for a visible "$unitTypeTitle" row',
+  );
+  final n = titlesInList.evaluate().length;
+  for (var i = 0; i < n; i++) {
+    final titleAt = titlesInList.at(i);
+    await tester.scrollUntilVisible(
+      titleAt,
+      120,
+      scrollable: panelScrollable,
+    );
+    await tester.ensureVisible(titleAt);
+    final listTile = find.ancestor(
+      of: titleAt,
+      matching: find.byType(ListTile),
+    );
+    final assign = find.descendant(of: listTile, matching: find.text('Assign'));
+    if (assign.evaluate().isEmpty) {
+      continue;
+    }
+    final assignHit = assign.first;
+    await tester.ensureVisible(assignHit);
+    await _pumpFor(tester, const Duration(milliseconds: 100));
+    await tester.tap(assignHit);
+    await _pumpFor(tester, const Duration(milliseconds: 300));
+    return;
+  }
+  fail('No idle Assign row for unit type "$unitTypeTitle" in civilian panel');
+}
+
 Future<void> _advanceOneHumanTurn(
   WidgetTester tester,
   AppLocalizations l10n,
@@ -664,5 +768,107 @@ void main() {
       await _closeBottomSheet(tester);
       ensureUnderWallClock('test complete');
     },
+  );
+
+  testWidgets(
+    'post-bundle GitHub #1869: after NW fleet, Explorer Assign → Explore enabled',
+    (WidgetTester tester) async {
+      expect(
+        kCtE2EEnabled,
+        isTrue,
+        reason:
+            'Run with: flutter test integration_test/... --dart-define=CT_E2E=true',
+      );
+
+      await tester.binding.setSurfaceSize(const Size(1280, 720));
+      await bootstrapForIntegrationTest();
+      await tester.pump();
+      await _pumpFor(tester, const Duration(milliseconds: 500));
+
+      final wallClock = Stopwatch()..start();
+      void ensureUnderWallClock(String step) {
+        if (wallClock.elapsed > _kFleetE2eMaxWallClock) {
+          fail(
+            'Fleet e2e exceeded ${_kFleetE2eMaxWallClock.inMinutes} minute wall clock '
+            'at $step (elapsed=${wallClock.elapsed.inSeconds}s).',
+          );
+        }
+      }
+
+      await _bootstrapNewGameToMap(tester);
+      ensureUnderWallClock('after bootstrap');
+
+      final l10n = lookupAppLocalizations(const Locale('en'));
+
+      await _splitHomeFleetOnce(tester, l10n);
+      await _closeBottomSheet(tester);
+      ensureUnderWallClock('after split fleet');
+
+      for (var turnIdx = 0; turnIdx < _kMaxNextTurnTapsForNwFleetReach; turnIdx++) {
+        ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
+        await _dismissTransientUi(tester);
+        await _tapNewWorldRegionTabIfPresent(tester);
+        await _openNavalPanel(tester);
+        if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
+          await _closeBottomSheet(tester);
+          break;
+        }
+        await _closeBottomSheet(tester);
+
+        await _tryNavalMoveSegment(tester, l10n);
+        await _closeBottomSheet(tester);
+
+        if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
+          break;
+        }
+
+        await _advanceOneHumanTurn(tester, l10n);
+        await _dismissTransientUi(tester);
+        ensureUnderWallClock('after turn advance turnIdx=$turnIdx');
+      }
+
+      await _dismissTransientUi(tester);
+      await _tapNewWorldRegionTabIfPresent(tester);
+      await _openNavalPanel(tester);
+      if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
+        fail(
+          'Explorer explore e2e requires a non-home human fleet in New World first. '
+          'Last exception: ${tester.takeException()}',
+        );
+      }
+      await _closeBottomSheet(tester);
+      ensureUnderWallClock('fleet in NW confirmed');
+
+      await _tapNewWorldRegionTabIfPresent(tester);
+      await _openCivilianPanelFleetE2e(tester);
+      await _waitUntilFound(tester, find.byKey(kCtE2ECivilianPanelRootKey));
+      await _tapAssignOnCivilianRowWithTitleFleetE2e(tester, 'Explorer');
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+
+      final exploreTile = find.widgetWithText(ListTile, 'Explore');
+      await _waitUntilFound(tester, exploreTile);
+      await tester.ensureVisible(exploreTile.first);
+      expect(
+        tester.widget<ListTile>(exploreTile.first).enabled,
+        isTrue,
+        reason:
+            'Bundled explore targets: Explore must not stay disabled for revealed '
+            'NW provinces (Refs #1869).',
+      );
+
+      await _closeBottomSheet(tester);
+      ensureUnderWallClock('test complete');
+    },
+  );
+
+  // Refs #1869 slice 6b: interim Move-then-Explore AC is documented here as an
+  // explicit skip so 6a and 6b are never combined in one ambiguous conditional.
+  // Post-bundle behavior is covered by the sibling test above.
+  testWidgets(
+    'SKIP interim #1869 6b: Move-then-Explore staging (pre-bundle builds)',
+    (WidgetTester tester) async {
+      expect(kCtE2EEnabled, isTrue);
+    },
+    skip: true,
   );
 }

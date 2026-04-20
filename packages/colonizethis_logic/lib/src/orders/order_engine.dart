@@ -208,6 +208,14 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       playerId,
     );
 
+    final civilianDraftMoveUnitIds = <String>{};
+    for (final m in moves) {
+      final u = unitsById[m.unitId];
+      if (u != null && u.tileKey != null && u.tileKey!.isNotEmpty) {
+        civilianDraftMoveUnitIds.add(m.unitId);
+      }
+    }
+
     const moveValidator = MoveValidator();
     const armyMoveValidator = ArmyMoveValidator();
 
@@ -270,6 +278,9 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       unitsById: unitsById,
       devExclusiveTiles: devExclusiveTiles,
       tileMapByRegion: tileMapByRegion,
+      civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
+      diplomaticOrders: diplomatic,
+      topology: topology,
     );
     final workValidator = WorkOrderValidator(
       context: workContext,

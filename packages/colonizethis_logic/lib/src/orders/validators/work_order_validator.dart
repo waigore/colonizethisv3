@@ -7,6 +7,7 @@ import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
 import '../../world/tile_control.dart';
 import '../build_rail_work_rules.dart';
+import '../bundled_civilian_work_order.dart';
 import '../orders_application_helpers.dart';
 import '../order_visibility.dart';
 import '../order_validation_result.dart';
@@ -26,6 +27,9 @@ class WorkOrderValidationContext {
     required this.unitsById,
     required this.devExclusiveTiles,
     this.tileMapByRegion,
+    this.civilianDraftMoveUnitIds = const <String>{},
+    this.diplomaticOrders = const <DiplomaticOrder>[],
+    this.topology,
   });
 
   final Game game;
@@ -35,6 +39,15 @@ class WorkOrderValidationContext {
   final Map<String, Unit> unitsById;
   final Set<String> devExclusiveTiles;
   final Map<String, TileMapResult>? tileMapByRegion;
+
+  /// Unit ids with a pending civilian [MoveOrder] this turn (tileKey civilians).
+  final Set<String> civilianDraftMoveUnitIds;
+
+  /// Same-turn diplomatic draft (declare war, etc.) for bundled move legs.
+  final List<DiplomaticOrder> diplomaticOrders;
+
+  /// Required when validating bundled implicit move legs.
+  final MapTopology? topology;
 }
 
 class WorkOrderValidator extends OrderValidator {
@@ -81,6 +94,11 @@ class WorkOrderValidator extends OrderValidator {
           return OrderValidationResult.rejected(
             'Unit already has a work order; cancel first',
           );
+        }
+        if (unit.tileKey != null &&
+            unit.tileKey!.isNotEmpty &&
+            _context.civilianDraftMoveUnitIds.contains(o.unitId)) {
+          return OrderValidationResult.rejected(kReasonCivilianMoveXorWorkOrder);
         }
         final type = unit.type;
         if (!isWorkOrderTargetAllowedForUnitType(type, o.target)) {
@@ -210,6 +228,23 @@ class WorkOrderValidator extends OrderValidator {
                 );
               }
             }
+          }
+        }
+
+        final topo = _context.topology;
+        if (topo != null) {
+          final bundled = validateCivilianBundledWorkMoveLeg(
+            game: _context.game,
+            topology: topo,
+            playerId: _context.playerId,
+            unit: unit,
+            order: o,
+            view: _context.view,
+            unitsById: _context.unitsById,
+            diplomaticOrders: _context.diplomaticOrders,
+          );
+          if (!bundled.isAccepted) {
+            return bundled;
           }
         }
 

@@ -274,6 +274,33 @@ void main() {
 
         expect(updated.workOrdersByPlayerId[humanPlayerId], [replacement]);
       });
+
+      test('drops pending civilian move for same unit when assigning work', () {
+        const humanPlayerId = 'gp1';
+        const pendingMove = ct_models.MoveOrder(
+          unitId: 'u1',
+          destinationProvinceId: 'oldWorld|p2',
+        );
+        final orders = ct_models.Orders(
+          moveOrdersByPlayerId: {
+            humanPlayerId: [pendingMove],
+          },
+        );
+        const work = ct_models.WorkOrder(
+          unitId: 'u1',
+          target: 'explore',
+          targetTileKey: 'oldWorld|p2|0|0',
+        );
+
+        final updated = GameMapAreaStateLogic.addHumanWorkOrder(
+          orders: orders,
+          humanPlayerId: humanPlayerId,
+          workOrder: work,
+        );
+
+        expect(updated.moveOrdersByPlayerId[humanPlayerId], isEmpty);
+        expect(updated.workOrdersByPlayerId[humanPlayerId], [work]);
+      });
     });
 
     group('projectFleetMarkersForHumanDraft in-port harbor anchoring', () {
