@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -69,6 +70,7 @@ class GameMapCanvasStack extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = appL10n(context);
     final panel = ref.watch(mapProvincePanelProvider);
     final inWorkTargetSelectionMode = validTileKeysForSelection != null;
     return Positioned.fill(
@@ -144,8 +146,8 @@ class GameMapCanvasStack extends ConsumerWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Select a tile, or click cancel',
+                        Text(
+                          l10n.map_selectionMode_prompt,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -164,8 +166,8 @@ class GameMapCanvasStack extends ConsumerWidget {
                             ),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text(
-                            'cancel',
+                          child: Text(
+                            l10n.map_selectionMode_cancel,
                             style: TextStyle(fontWeight: FontWeight.w700),
                           ),
                         ),
