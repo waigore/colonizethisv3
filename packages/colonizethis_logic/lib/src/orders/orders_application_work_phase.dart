@@ -34,6 +34,19 @@ void _runWorkPhase(
       }
     }
 
+    void completeInstantCivilianOrder(Unit unit, String targetTileKey) {
+      updateUnit(
+        unit.id,
+        unit.copyWith(
+          status: UnitStatus.idle,
+          tileKey: targetTileKey,
+          clearOriginTileKey: true,
+          clearAssignedTileKey: true,
+          clearCurrentWork: true,
+        ),
+      );
+    }
+
     String regionForUnit(String unitId) =>
         oldUnitsById.containsKey(unitId) ? kRegionOldWorld : kRegionNewWorld;
 
@@ -187,6 +200,7 @@ void _runWorkPhase(
             u.type,
             kWorkTargetPurchaseLand,
           ) &&
+          u.currentWork == null &&
           hasValidTarget) {
         // SPEC/game/diplomacy.md (GP–Minor/Tribe Rules): purchase_land requires an Embassy
         // with the Minor/Tribe and the buyer must not be at war with that faction.
@@ -224,6 +238,7 @@ void _runWorkPhase(
             if (!purchasedTilesByTileKey.containsKey(targetTileKey)) {
               treasury -= cost;
               purchasedTilesByTileKey[targetTileKey] = player.id;
+              completeInstantCivilianOrder(u, targetTileKey);
             }
           }
         }
@@ -284,6 +299,7 @@ void _runWorkPhase(
 
       if (order.target == kWorkTargetProspect &&
           hasValidTarget &&
+          u.currentWork == null &&
           isExplorerUnit(u.type) &&
           isMineralEligibleTile(
             state.game,
@@ -301,6 +317,7 @@ void _runWorkPhase(
             },
           ),
         );
+        completeInstantCivilianOrder(u, targetTileKey);
       }
       if (order.target == kWorkTargetBuildImprovement) {
         if (applyStandardWorkOrder(kWorkTargetBuildImprovement)) continue;
