@@ -320,7 +320,7 @@ void main() {
       final moveOrders = Orders(
         moveOrdersByPlayerId: {
           'p1': [
-            MoveOrder(unitId: 'spy1', destinationProvinceId: '$ow|P2'),
+            MoveOrder(unitId: 'spy1', destinationTileKey: '$ow|P2|0|0'),
           ],
         },
       );
@@ -423,7 +423,7 @@ void main() {
       final moveOrders = Orders(
         moveOrdersByPlayerId: {
           'p1': [
-            MoveOrder(unitId: 'spy1', destinationProvinceId: '$ow|P2'),
+            MoveOrder(unitId: 'spy1', destinationTileKey: '$ow|P2|0|0'),
           ],
         },
       );

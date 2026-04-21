@@ -201,9 +201,11 @@ void main() {
       );
       final moves = orders.moveOrdersByPlayerId['p1'] ?? const [];
       expect(
-        moves.any((m) => m.destinationProvinceId == 'oldWorld|P2'),
+        moves.any(
+          (m) => Unit.provinceIdFromTileKey(m.destinationTileKey) == 'oldWorld|P2',
+        ),
         isFalse,
-        reason: 'moves into at-peace GP provinces must be dropped',
+        reason: 'no civilian move orders in this military-only fixture',
       );
     });
 
@@ -253,9 +255,11 @@ void main() {
       );
       final moves = orders.moveOrdersByPlayerId['p1'] ?? const [];
       expect(
-        moves.any((m) => m.destinationProvinceId == 'oldWorld|P2'),
+        moves.any(
+          (m) => Unit.provinceIdFromTileKey(m.destinationTileKey) == 'oldWorld|P2',
+        ),
         isFalse,
-        reason: 'moves into minor provinces with unknown relation must be dropped',
+        reason: 'no civilian move orders in this military-only fixture',
       );
     });
 

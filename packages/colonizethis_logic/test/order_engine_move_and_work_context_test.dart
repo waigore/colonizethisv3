@@ -52,7 +52,7 @@ void main() {
       final engine = OrderEngine();
       engine.addMoveOrder(
         'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+        const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
       );
       final results = engine.validatePlayerOrdersWithContext(
         game,
@@ -115,6 +115,82 @@ void main() {
       expect(results.length, 1);
       expect(results[0].status, OrderValidationStatus.rejected);
       expect(results[0].reason, contains('visible'));
+    });
+
+    test('work order explore rejected on foreign GP tile for explorer', () {
+      const ow = 'oldWorld';
+      const targetTileKey = 'oldWorld|P2|0|0';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'P2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'Explorer',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+                tileKey: 'oldWorld|P1|0|0',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'p1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              targetTileKey: 'fullyVisible',
+            },
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              '$ow|P1': ['oldWorld|P1|0|0'],
+              '$ow|P2': [targetTileKey],
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+      );
+
+      final engine = OrderEngine();
+      engine.addWorkOrder(
+        'p1',
+        const WorkOrder(
+          unitId: 'u1',
+          target: 'explore',
+          targetTileKey: targetTileKey,
+        ),
+      );
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
+      expect(results.length, 1);
+      expect(results[0].status, OrderValidationStatus.rejected);
+      expect(results[0].reason, contains('cannot occupy'));
     });
 
     test('work order prospect rejected when province not fogged or better', () {
@@ -361,6 +437,80 @@ void main() {
       },
     );
 
+    test('work order prospect rejected on foreign GP tile for explorer', () {
+      const ow = 'oldWorld';
+      const targetTileKey = 'oldWorld|P2|0|0';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'P2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+            ],
+            units: [
+              Unit(
+                id: 'u1',
+                type: 'Explorer',
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+                tileKey: 'oldWorld|P1|0|0',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          resourceByTileKey: const {targetTileKey: 'iron'},
+          playerVisibilityByTile: const {
+            'p1': {'oldWorld|P1|0|0': 'fullyVisible', targetTileKey: 'fogged'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              '$ow|P1': ['oldWorld|P1|0|0'],
+              '$ow|P2': [targetTileKey],
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+          Player(id: 'p2', displayName: 'P2', isHuman: true),
+        ],
+      );
+
+      final engine = OrderEngine();
+      engine.addWorkOrder(
+        'p1',
+        const WorkOrder(
+          unitId: 'u1',
+          target: 'prospect',
+          targetTileKey: targetTileKey,
+        ),
+      );
+      final results = engine.validatePlayerOrdersWithContext(
+        game,
+        topology,
+        'p1',
+      );
+      expect(results.length, 1);
+      expect(results[0].status, OrderValidationStatus.rejected);
+      expect(results[0].reason, contains('cannot occupy'));
+    });
+
     test(
       'move order rejected when destination not adjacent and not own province',
       () {
@@ -424,7 +574,7 @@ void main() {
         final engine = OrderEngine();
         engine.addMoveOrder(
           'p1',
-          MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P3'),
+          MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P3|0|0'),
         );
         final results = engine.validatePlayerOrdersWithContext(
           game,
@@ -495,7 +645,7 @@ void main() {
         final engine = OrderEngine();
         engine.addMoveOrder(
           'p1',
-          MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P3'),
+          MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P3|0|0'),
         );
         final results = engine.validatePlayerOrdersWithContext(
           game,

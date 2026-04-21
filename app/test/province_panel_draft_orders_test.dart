@@ -315,7 +315,7 @@ void main() {
             'gp1': [
               MoveOrder(
                 unitId: 'r_move',
-                destinationProvinceId: _fullDestProvinceId,
+                destinationTileKey: '$_fullDestProvinceId|0|0',
               ),
             ],
           },
@@ -571,7 +571,7 @@ void main() {
             'gp1': [
               MoveOrder(
                 unitId: 'r_move',
-                destinationProvinceId: _fullDestProvinceId,
+                destinationTileKey: '$_fullDestProvinceId|0|0',
               ),
             ],
           },
@@ -706,7 +706,7 @@ void main() {
             'gp1': [
               MoveOrder(
                 unitId: 'r_move',
-                destinationProvinceId: _fullDestProvinceId,
+                destinationTileKey: '$_fullDestProvinceId|0|0',
               ),
             ],
           },

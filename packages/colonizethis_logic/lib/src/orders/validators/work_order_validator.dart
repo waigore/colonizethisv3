@@ -3,11 +3,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
 import '../../diplomacy/diplomacy_resolver.dart';
+import '../../world/civilian_tile_occupancy.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
 import '../../world/tile_control.dart';
 import '../build_rail_work_rules.dart';
-import '../bundled_civilian_work_order.dart';
 import '../orders_application_helpers.dart';
 import '../order_visibility.dart';
 import '../order_validation_result.dart';
@@ -27,9 +27,6 @@ class WorkOrderValidationContext {
     required this.unitsById,
     required this.devExclusiveTiles,
     this.tileMapByRegion,
-    this.civilianDraftMoveUnitIds = const <String>{},
-    this.diplomaticOrders = const <DiplomaticOrder>[],
-    this.topology,
   });
 
   final Game game;
@@ -39,15 +36,6 @@ class WorkOrderValidationContext {
   final Map<String, Unit> unitsById;
   final Set<String> devExclusiveTiles;
   final Map<String, TileMapResult>? tileMapByRegion;
-
-  /// Unit ids with a pending civilian [MoveOrder] this turn (tileKey civilians).
-  final Set<String> civilianDraftMoveUnitIds;
-
-  /// Same-turn diplomatic draft (declare war, etc.) for bundled move legs.
-  final List<DiplomaticOrder> diplomaticOrders;
-
-  /// Required when validating bundled implicit move legs.
-  final MapTopology? topology;
 }
 
 class WorkOrderValidator extends OrderValidator {
@@ -94,11 +82,6 @@ class WorkOrderValidator extends OrderValidator {
           return OrderValidationResult.rejected(
             'Unit already has a work order; cancel first',
           );
-        }
-        if (unit.tileKey != null &&
-            unit.tileKey!.isNotEmpty &&
-            _context.civilianDraftMoveUnitIds.contains(o.unitId)) {
-          return OrderValidationResult.rejected(kReasonCivilianMoveXorWorkOrder);
         }
         final type = unit.type;
         if (!isWorkOrderTargetAllowedForUnitType(type, o.target)) {
@@ -164,30 +147,11 @@ class WorkOrderValidator extends OrderValidator {
           );
         }
 
-        final materialValidation = _validateMaterialTechAndCost(
+        final materialRuleResult = _validateMaterialAndTechRules(
           o,
-          province: province,
+          province?.fortLevel ?? 0,
         );
-        if (materialValidation != null) {
-          return materialValidation;
-        }
-
-        final topo = _context.topology;
-        if (topo != null) {
-          final bundled = validateCivilianBundledWorkMoveLeg(
-            game: _context.game,
-            topology: topo,
-            playerId: _context.playerId,
-            unit: unit,
-            order: o,
-            view: _context.view,
-            unitsById: _context.unitsById,
-            diplomaticOrders: _context.diplomaticOrders,
-          );
-          if (!bundled.isAccepted) {
-            return bundled;
-          }
-        }
+        if (materialRuleResult != null) return materialRuleResult;
 
         if (!workOrderVisibilityOk(
           _context.view,
@@ -200,132 +164,204 @@ class WorkOrderValidator extends OrderValidator {
           );
         }
 
-        if (o.target == kWorkTargetProspect) {
-          if (!isMineralEligibleTile(
-            _context.game,
-            _context.tileMapByRegion,
-            o.targetTileKey,
-          )) {
-            return OrderValidationResult.rejected(
-              'Tile is not mineral-eligible for prospecting',
-            );
-          }
-          final prospected =
-              _context.game.worldState.playerProspectedTiles[_context
-                  .playerId] ??
-              const <String>{};
-          if (prospected.contains(o.targetTileKey)) {
-            return OrderValidationResult.rejected('Tile already prospected');
-          }
+        if (!civilianMayOccupyLandTileKey(
+          game: _context.game,
+          playerId: _context.playerId,
+          unitType: type,
+          destinationTileKey: o.targetTileKey,
+        )) {
+          return OrderValidationResult.rejected(
+            'Unit cannot occupy target tile',
+          );
         }
+
+        final prospectResult = _validateProspectTarget(o);
+        if (prospectResult != null) return prospectResult;
 
         if (isDevExclusiveUnitType(type) &&
             isDevExclusiveWorkTarget(o.target)) {
           _context.devExclusiveTiles.add(o.targetTileKey);
         }
 
-        _applyProjectedCost(o);
+        _applyProjectedWorkCost(o);
 
         return OrderValidationResult.accepted();
       },
     );
   }
 
-  OrderValidationResult? _validateMaterialTechAndCost(
-    WorkOrder o, {
-    required Province? province,
-  }) {
-    if (o.target == kWorkTargetStealTech ||
-        o.target == kWorkTargetCounterSpy ||
-        o.target == kWorkTargetPurchaseLand) {
-      return null;
-    }
-    final tileState = _context.game.worldState.tileState;
-    final improvementLevel = o.target == kWorkTargetBuildImprovement
-        ? tileState.improvementLevel(o.targetTileKey)
-        : 0;
-    final fortLevel = province?.fortLevel ?? 0;
-    final roadLevel = tileState.roadLevel(o.targetTileKey);
-
-    final techError = _validateTechPrerequisites(
-      target: o.target,
-      tileKey: o.targetTileKey,
-      fortLevel: fortLevel,
-      roadLevel: roadLevel,
-    );
-    if (techError != null) return OrderValidationResult.rejected(techError);
-
-    final costMap = WorkOrderCostCalculator(_context.game).calculateCost(
-      o.target,
+  OrderValidationResult? _validateMaterialAndTechRules(
+    WorkOrder o,
+    int fortLevel,
+  ) {
+    if (_skipsMaterialAndTechValidation(o.target)) return null;
+    final improvementLevel = _improvementLevelForCost(o);
+    final roadLevel = _context.game.worldState.tileState.roadLevel(
       o.targetTileKey,
+    );
+    final techResult = _validateRoadFortRailTech(o, fortLevel, roadLevel);
+    if (techResult != null) return techResult;
+    return _validateWorkMaterialCosts(
+      o,
       improvementLevel: improvementLevel,
       fortLevel: fortLevel,
       roadLevel: roadLevel,
     );
-    if (costMap != null) {
-      for (final entry in costMap.entries) {
-        if (_stockpile.quantityOf(entry.key) < entry.value) {
-          return OrderValidationResult.rejected(
-            'Insufficient materials for work order',
-          );
-        }
-      }
-    }
-    return null;
   }
 
-  String? _validateTechPrerequisites({
-    required String target,
-    required String tileKey,
-    required int fortLevel,
-    required int roadLevel,
-  }) {
-    final techUnlocked = _context.player.techUnlocked;
-    if (target == kWorkTargetBuildRoad && roadLevel >= 1) {
-      final hasRoadConstruction = techUnlocked?[kTechIdRoadConstruction] == true;
-      if (!hasRoadConstruction) {
-        return 'Road Construction tech required for transport level 2';
-      }
+  bool _skipsMaterialAndTechValidation(String target) =>
+      target == kWorkTargetStealTech ||
+      target == kWorkTargetCounterSpy ||
+      target == kWorkTargetPurchaseLand;
+
+  int _improvementLevelForCost(WorkOrder o) =>
+      o.target == kWorkTargetBuildImprovement
+      ? _context.game.worldState.tileState.improvementLevel(o.targetTileKey)
+      : 0;
+
+  OrderValidationResult? _validateRoadFortRailTech(
+    WorkOrder o,
+    int fortLevel,
+    int roadLevel,
+  ) {
+    final roadResult = _validateRoadTech(o.target, roadLevel);
+    if (roadResult != null) return roadResult;
+    final fortResult = _validateFortTech(o.target, fortLevel);
+    if (fortResult != null) return fortResult;
+    return _validateRailTech(o, roadLevel);
+  }
+
+  OrderValidationResult? _validateRoadTech(String target, int roadLevel) {
+    if (target != kWorkTargetBuildRoad || roadLevel < 1) return null;
+    final hasRoadConstruction =
+        _context.player.techUnlocked?[kTechIdRoadConstruction] == true;
+    if (hasRoadConstruction) return null;
+    return OrderValidationResult.rejected(
+      'Road Construction tech required for transport level 2',
+    );
+  }
+
+  OrderValidationResult? _validateFortTech(String target, int fortLevel) {
+    if (target != kWorkTargetBuildFort) return null;
+    if (fortLevel == 1 &&
+        _context.player.techUnlocked?[kTechIdMineEngineering] != true) {
+      return OrderValidationResult.rejected(
+        'Mine Engineering tech required for fort level 2',
+      );
     }
-    if (target == kWorkTargetBuildFort) {
-      if (fortLevel == 1 && techUnlocked?[kTechIdMineEngineering] != true) {
-        return 'Mine Engineering tech required for fort level 2';
-      }
-      if (fortLevel == 2 && techUnlocked?[kTechIdModernForts] != true) {
-        return 'Modern Forts tech required for fort level 3';
-      }
-    }
-    if (target == kWorkTargetBuildRail) {
-      final terrain = terrainTypeForTileKey(_context.tileMapByRegion, tileKey);
-      return rejectionReasonForBuildRailOrder(
-        techUnlocked: techUnlocked,
-        roadLevel: roadLevel,
-        terrain: terrain,
+    if (fortLevel == 2 &&
+        _context.player.techUnlocked?[kTechIdModernForts] != true) {
+      return OrderValidationResult.rejected(
+        'Modern Forts tech required for fort level 3',
       );
     }
     return null;
   }
 
-  void _applyProjectedCost(WorkOrder o) {
-    if (o.target == kWorkTargetPurchaseLand) {
-      final resourceId = _context.game.worldState.resourceByTileKey[o.targetTileKey];
-      if (resourceId != null && resourceId.isNotEmpty) {
-        _treasury -= purchaseLandCost(resourceId);
-      }
-      return;
-    }
-    if (o.target == kWorkTargetStealTech || o.target == kWorkTargetCounterSpy) {
-      return;
-    }
-    final improvementLevel = o.target == kWorkTargetBuildImprovement
-        ? _context.game.worldState.tileState.improvementLevel(o.targetTileKey)
-        : 0;
-    final costMap = WorkOrderCostCalculator(_context.game).calculateCost(
+  OrderValidationResult? _validateRailTech(WorkOrder o, int roadLevel) {
+    if (o.target != kWorkTargetBuildRail) return null;
+    final terrain = terrainTypeForTileKey(
+      _context.tileMapByRegion,
+      o.targetTileKey,
+    );
+    final reason = rejectionReasonForBuildRailOrder(
+      techUnlocked: _context.player.techUnlocked,
+      roadLevel: roadLevel,
+      terrain: terrain,
+    );
+    if (reason == null) return null;
+    return OrderValidationResult.rejected(reason);
+  }
+
+  OrderValidationResult? _validateWorkMaterialCosts(
+    WorkOrder o, {
+    required int improvementLevel,
+    required int fortLevel,
+    required int roadLevel,
+  }) {
+    final costMap = _workCostMap(
       o.target,
       o.targetTileKey,
       improvementLevel: improvementLevel,
+      fortLevel: fortLevel,
+      roadLevel: roadLevel,
+    );
+    if (costMap == null) return null;
+    if (_hasInsufficientStockpileForCost(costMap)) {
+      return OrderValidationResult.rejected(
+        'Insufficient materials for work order',
+      );
+    }
+    return null;
+  }
+
+  Map<String, int>? _workCostMap(
+    String target,
+    String tileKey, {
+    required int improvementLevel,
+    required int fortLevel,
+    required int roadLevel,
+  }) => WorkOrderCostCalculator(_context.game).calculateCost(
+    target,
+    tileKey,
+    improvementLevel: improvementLevel,
+    fortLevel: fortLevel,
+    roadLevel: roadLevel,
+  );
+
+  bool _hasInsufficientStockpileForCost(Map<String, int> costMap) {
+    for (final entry in costMap.entries) {
+      if (_stockpile.quantityOf(entry.key) < entry.value) return true;
+    }
+    return false;
+  }
+
+  OrderValidationResult? _validateProspectTarget(WorkOrder o) {
+    if (o.target != kWorkTargetProspect) return null;
+    if (!isMineralEligibleTile(
+      _context.game,
+      _context.tileMapByRegion,
+      o.targetTileKey,
+    )) {
+      return OrderValidationResult.rejected(
+        'Tile is not mineral-eligible for prospecting',
+      );
+    }
+    final prospected =
+        _context.game.worldState.playerProspectedTiles[_context.playerId] ??
+        const <String>{};
+    if (prospected.contains(o.targetTileKey)) {
+      return OrderValidationResult.rejected('Tile already prospected');
+    }
+    return null;
+  }
+
+  void _applyProjectedWorkCost(WorkOrder o) {
+    if (_applyProjectedPurchaseLandCost(o)) return;
+    if (_skipsProjectedCost(o.target)) return;
+    final costMap = WorkOrderCostCalculator(_context.game).calculateCost(
+      o.target,
+      o.targetTileKey,
+      improvementLevel: _improvementLevelForCost(o),
     );
     if (costMap == null) return;
+    _applyProjectedCostMap(costMap);
+  }
+
+  bool _applyProjectedPurchaseLandCost(WorkOrder o) {
+    if (o.target != kWorkTargetPurchaseLand) return false;
+    final resourceId =
+        _context.game.worldState.resourceByTileKey[o.targetTileKey];
+    if (resourceId != null && resourceId.isNotEmpty) {
+      _treasury -= purchaseLandCost(resourceId);
+    }
+    return true;
+  }
+
+  bool _skipsProjectedCost(String target) =>
+      target == kWorkTargetStealTech || target == kWorkTargetCounterSpy;
+
+  void _applyProjectedCostMap(Map<String, int> costMap) {
     for (final entry in costMap.entries) {
       if (_stockpile.quantityOf(entry.key) >= entry.value) {
         _stockpile = _stockpile.applyDelta(entry.key, -entry.value);

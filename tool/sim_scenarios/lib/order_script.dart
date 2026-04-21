@@ -63,7 +63,12 @@ Orders parseOrderCommands(List<OrderCommand> commands, Game game) {
         }
         moveOrdersByPlayerId
             .putIfAbsent(cmd.player, () => [])
-            .add(MoveOrder(unitId: unitId, destinationProvinceId: destination));
+            .add(
+              MoveOrder(
+                unitId: unitId,
+                destinationTileKey: '$destination|0|0',
+              ),
+            );
         break;
 
       case 'build':

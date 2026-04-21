@@ -12,7 +12,7 @@
 
 ## Scope
 
-**Land movement — civilians:** Civilian **units** move between **provinces** only (P<->P), via `MoveOrder`. **Explorer exception:** Explorers may enter **non-GP** foreign provinces (Minor/Tribe/unowned), including cross-region, when visibility and diplomatic-war gates pass.
+**Land movement — civilians:** Civilian **units** move between **provinces** only (P<->P), via `MoveOrder`.
 
 **Land movement — military:** **Armies** move between provinces; each `ArmyMoveOrder` moves **all** regiments in that army together ([orders.md](orders.md)). The Home Army **cannot** leave the capital province ([military-armies.md](../game/military-armies.md)).
 
@@ -34,7 +34,7 @@
 
 Before applying a move order:
 
-- **Civilian land:** Destination must be a **province** (not sea zone). If the destination province is **owned by the ordering player**, the move is valid regardless of adjacency **or region**. Otherwise the destination must be **adjacent** (P<->P edge) within the same region as the unit, **except** an **Explorer** may move into a **non-GP** destination (Minor/Tribe/unowned) across regions without adjacency when visibility and diplomatic-war gates pass.
+- **Civilian land:** Destination must be a **province** (not sea zone). If the destination province is **owned by the ordering player**, the move is valid regardless of adjacency **or region**. Otherwise the destination must be **adjacent** (P<->P edge) within the same region as the unit.
 - **Army land:** Same as civilian, but the mover is the **army**; reject if army is the **Home Army** and destination is not the capital province. If the destination province is **owned by the ordering player**, the move is valid regardless of adjacency **or region**. Otherwise the destination must be **adjacent** within the same region as the army’s current province.
 - **Naval (Phase 5+):** Destination must be a **sea zone**; must be adjacent to current sea zone (S<->S or P<->S).
 
@@ -71,17 +71,17 @@ When the player submits a `MoveOrder` for `c1` to `oldWorld|p2` and the order is
 Then during the Movement phase the system updates `c1.provinceId` to `oldWorld|p2`, sets `c1.tileKey` to one of the tile keys listed for `oldWorld|p2`, and leaves `c1` unchanged if the order is later rejected.
 
 Given a player owns province `oldWorld|p1` in the Old World region and province `newWorld|p2` in the New World region, and controls a civilian unit `c1` at `oldWorld|p1` with `tileKeysByRegionAndProvince[newWorld][newWorld|p2]` containing at least one tile key and both provinces fully visible  
-When the player submits a `MoveOrder` for `c1` with `destinationProvinceId = newWorld|p2` and the order is accepted  
+When the player submits a `MoveOrder` for `c1` with `destinationTileKey` set to a tile in `newWorld|p2` and the order is accepted  
 Then during the Movement phase the system removes `c1` from the Old World unit list, adds `c1` to the New World unit list with `provinceId = newWorld|p2`, sets `c1.tileKey` to one of the tile keys for `newWorld|p2`, and the move completes in a single turn without any intermediate positions.
 
 Given the OrderEngine validates **civilian** `MoveOrder` and **ArmyMoveOrder** instances for a player in a world with region-scoped topology and prefixed province ids  
 When it evaluates a sequence of those orders against the current `Game` and `MapTopology`  
-Then it accepts any **civilian** or **army** move whose destination province is owned by that player (including cross-region moves), accepts Explorer moves into non-GP destinations (Minor/Tribe/unowned) when visibility and diplomatic-war gates pass even if cross-region and non-adjacent, rejects non-adjacent non-owned moves for other civilian unit types, rejects **Home Army** moves whose destination is not the capital province, rejects orders for units or armies that do not exist or are not owned by the player, and uses local province ids only for topology lookups while storing and comparing province ids in prefixed form.
+Then it accepts any **civilian** or **army** move whose destination province is owned by that player (including cross-region moves), rejects non-adjacent moves into provinces the player does not own, rejects **Home Army** moves whose destination is not the capital province, rejects orders for units or armies that do not exist or are not owned by the player, and uses local province ids only for topology lookups while storing and comparing province ids in prefixed form.
 
-Given a player controls an Explorer `e1` at `oldWorld|p1`, the destination `newWorld|p2` exists, `newWorld|p2` is owned by a Tribe, and both source and destination are at least fogged in that player’s `PlayerView`  
-When the player submits `MoveOrder(unitId: e1, destinationProvinceId: newWorld|p2)`  
-Then the system accepts the move even though the destination is cross-region and not adjacent, because Explorer non-GP cross-region movement is allowed.
+---
 
-Given a player controls a Builder `b1` at `oldWorld|p1`, the destination `newWorld|p2` exists, `newWorld|p2` is owned by a Tribe, and both source and destination are at least fogged in that player’s `PlayerView`  
-When the player submits `MoveOrder(unitId: b1, destinationProvinceId: newWorld|p2)`  
-Then the system rejects the move with `Invalid move` because the non-adjacent cross-region non-owned exception does not apply to Builder units.
+## Civilian tile moves (issue #1877; program implementation)
+
+Civilian `MoveOrder` is **`destinationTileKey` only** on the wire; the enclosing province is derived from the tile key. **No map-topology adjacency** is used for civilian move validation or move suggestions. Legality uses the shared **`civilianMayOccupyLandTileKey`** helper (`packages/colonizethis_logic` — `civilian_tile_occupancy.dart`): tile-level purchaser override (`purchasedTilesByTileKey`), then province `ownerId` (Spy may enter another Great Power’s province-derived land without a war/diplomacy gate for movement). The Movement phase applies civilian moves via **`applyCivilianTileMoveOrdersToWorldRegions`**; **`applyMoveOrdersToRegion` is a no-op** for civilian move payloads. **`filterMoveOrdersByDiplomacy`** does not strip civilian moves (legality is enforced by the order engine and occupancy rules).
+
+Until the narrative sections above are fully reconciled with GDD/TDD, treat this subsection as the **authoritative program behavior** for civilian tile movement.

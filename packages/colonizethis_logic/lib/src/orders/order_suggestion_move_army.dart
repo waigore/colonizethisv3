@@ -20,8 +20,10 @@ List<MoveOrder> suggestMoveOrders(
   for (final m in existingForPlayer) {
     existingMoves
         .putIfAbsent(m.unitId, () => <String>{})
-        .add(m.destinationProvinceId);
+        .add(m.destinationTileKey);
   }
+
+  final landTiles = sortedLandTileKeys(game.worldState);
 
   for (final unit in view.ownUnits) {
     if (isMilitaryUnit(unit.type)) {
@@ -30,7 +32,6 @@ List<MoveOrder> suggestMoveOrders(
     }
     final unitRegion = regionIdForUnit(view, unit);
     final fromProvinceId = unit.locationProvinceId;
-    final fromLocalId = ProvinceId.localIdFrom(fromProvinceId);
 
     // Source province cannot be unknown; by definition the unit is in a known province.
     if (!moveSourceVisibilityOk(view, unitRegion, fromProvinceId)) {
@@ -39,63 +40,17 @@ List<MoveOrder> suggestMoveOrders(
       );
     }
 
-    // Enumerate neighboring provinces in unit's region (region-scoped adjacency).
-    for (final neighborLocalId in neighborProvinceIdsInRegion(
-      topology,
-      unitRegion,
-      fromLocalId,
-    )) {
-      final destinationProvinceId = ProvinceId.full(
-        unitRegion,
-        neighborLocalId,
-      );
-
-      // Skip duplicates for this unit.
+    for (final destinationTileKey in landTiles) {
       final already = existingMoves[unit.id];
-      if (already != null && already.contains(destinationProvinceId)) continue;
+      if (already != null && already.contains(destinationTileKey)) continue;
 
-      final destProvince = view.provinceByRegionAndId(
-        unitRegion,
-        neighborLocalId,
-      );
-      final destOwnerId = destProvince?.ownerId;
-
-      // Require that the destination province has at least one tile that is
-      // known (visibility != unknown). Restrict to unit's region when ids overlap.
-      final hasVisibleTileInDest = view.visibilityByTile.entries.any((e) {
-        final parts = e.key.split('|');
-        if (parts.length != 4) return false;
-        return parts[0] == unitRegion &&
-            parts[1] == neighborLocalId &&
-            e.value != VisibilityLevel.unknown;
-      });
-      if (!hasVisibleTileInDest) continue;
-
-      // Apply high-level civilian vs territory rules using only information
-      // available in PlayerView.
-      final isExplorer = isExplorerUnit(unit.type);
-      final isMerchant = isMerchantUnit(unit.type);
-
-      var allowedByInfo = true;
-      if (destOwnerId != null && destOwnerId != playerId) {
-        final isGpOwner = game.players.any((p) => p.id == destOwnerId);
-        final isMinorOrTribe =
-            game.minorNations.any((m) => m.id == destOwnerId) ||
-            game.tribes.any((t) => t.id == destOwnerId);
-
-        if (isGpOwner) {
-          // Civilians may not enter other Great Power territory at all.
-          allowedByInfo = false;
-        } else if (isMinorOrTribe && !(isExplorer || isMerchant)) {
-          // Only Explorers/Merchants may enter Minor/Tribe territory.
-          allowedByInfo = false;
-        }
+      if (!moveDestinationTileVisibilityOk(view, destinationTileKey)) {
+        continue;
       }
-      if (!allowedByInfo) continue;
 
       final candidate = MoveOrder(
         unitId: unit.id,
-        destinationProvinceId: destinationProvinceId,
+        destinationTileKey: destinationTileKey,
       );
 
       if (_isMoveOrderAccepted(
@@ -113,12 +68,12 @@ List<MoveOrder> suggestMoveOrders(
   suggestions.sort((a, b) {
     final unitCmp = a.unitId.compareTo(b.unitId);
     if (unitCmp != 0) return unitCmp;
-    return a.destinationProvinceId.compareTo(b.destinationProvinceId);
+    return a.destinationTileKey.compareTo(b.destinationTileKey);
   });
 
   _log.d('suggestMoveOrders player=$playerId candidates=${suggestions.length}');
   _log.d(
-    'suggestMoveOrders full list ${suggestions.map((m) => "${m.unitId}->${m.destinationProvinceId}").toList()}',
+    'suggestMoveOrders full list ${suggestions.map((m) => "${m.unitId}->${m.destinationTileKey}").toList()}',
   );
   if (suggestions.isEmpty) {
     _log.w('suggestMoveOrders no candidates player=$playerId');

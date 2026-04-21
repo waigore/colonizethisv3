@@ -11,7 +11,7 @@ void main() {
     test('toJson/fromJson round-trip with data', () {
       const o = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: 'prov1')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|prov1|0|0')],
         },
         buildUnitOrdersByPlayerId: {
           'p1': [BuildUnitOrder(unitType: 'Regiment', isMilitary: true, spawnProvinceId: 'prov1')],
@@ -23,8 +23,8 @@ void main() {
       final o2 = Orders.fromJson(o.toJson());
       expect(o2.moveOrdersByPlayerId['p1']!.single.unitId, 'u1');
       expect(
-        o2.moveOrdersByPlayerId['p1']!.single.destinationProvinceId,
-        'prov1',
+        o2.moveOrdersByPlayerId['p1']!.single.destinationTileKey,
+        'oldWorld|prov1|0|0',
       );
       expect(o2.buildUnitOrdersByPlayerId['p1']!.single.unitType, 'Regiment');
       expect(o2.workOrdersByPlayerId['p1']!.single.target, 'build_mine');
@@ -32,7 +32,7 @@ void main() {
     test('equality', () {
       const a = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: 'prov1')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|prov1|0|0')],
         },
         buildUnitOrdersByPlayerId: {
           'p1': [BuildUnitOrder(unitType: 'Regiment', isMilitary: true, spawnProvinceId: 'prov1')],
@@ -43,7 +43,7 @@ void main() {
       );
       const b = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: 'prov1')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|prov1|0|0')],
         },
         buildUnitOrdersByPlayerId: {
           'p1': [BuildUnitOrder(unitType: 'Regiment', isMilitary: true, spawnProvinceId: 'prov1')],
@@ -66,12 +66,12 @@ void main() {
     test('equality false when different', () {
       const a = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: 'prov1')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|prov1|0|0')],
         },
       );
       const b = Orders(
         moveOrdersByPlayerId: {
-          'p2': [MoveOrder(unitId: 'u1', destinationProvinceId: 'prov1')],
+          'p2': [MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|prov2|0|0')],
         },
       );
       expect(a == b, false);

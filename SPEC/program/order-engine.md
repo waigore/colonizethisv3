@@ -12,7 +12,7 @@ The order engine (colonizethis_logic) maintains the **current-turn order list pe
 
 ## Validation
 
-**Trigger:** On every add/remove, re-validates the entire list for that player against world state (costs, caps, adjacency, tech per [orders.md](orders.md)).
+**Trigger:** On every add/remove, re-validates the entire list for that player against world state (costs, caps, tile/province legality, tech per [orders.md](orders.md)).
 
 **Scope:** The engine validates **move** (civilian), **army move**, **build**, **work**, **diplomatic**, **naval move**, and **naval mission** orders. **Research** orders are validated in the research phase (TurnResolver), not in the engine. Diplomatic orders are held and validated per-player like other order types (preconditions for war/peace, alliances, overtures, grants, and subsidies) and then passed into the merge step.
 
@@ -26,9 +26,10 @@ Returns validation results (accepted / rejected with reason) for UI feedback.
 
 Move and work-order validation are delegated to dedicated components for single-responsibility and reuse:
 
-- **MoveValidator** (`validators/move_validator.dart`): Validates **civilian** `MoveOrder` per [orders.md](orders.md). Checks unit ownership, region/adjacency, civilian vs Great Power (Spy allowed), civilian vs Minor/Tribe (Explorer/Merchant/Spy allowed), war declaration for GP provinces, war declaration into Minor/Tribe provinces, and visibility. **ArmyMoveOrder** validation (army ownership, Home Army capital lock, same adjacency/ownership rules as land movement) lives in the same module or a dedicated `ArmyMoveValidator` per TDD. Used by OrderEngine when validating orders.
+- **MoveValidator** (`validators/move_validator.dart`): Validates **civilian** `MoveOrder` per [orders.md](orders.md). Checks unit ownership, destination tile existence/land-ness, visibility, and shared civilian occupancy (`civilianMayOccupyLandTileKey`: tile-level control override, then province-derived GP/Minor/Tribe/unowned rules). Civilian move validation does **not** use map-topology adjacency. **ArmyMoveOrder** validation (army ownership, Home Army capital lock, adjacency/ownership/war rules) remains separate and topology-based per [movement.md](movement.md). Used by OrderEngine when validating orders.
 
 - **WorkOrderCostCalculator** (`validators/work_order_cost_calculator.dart`): Computes work order material costs for a given target and tile (improvement/fort/road level). Returns null for steal_tech, counter_spy, purchase_land. Used by OrderEngine for work-order cost validation and for projecting work-order costs in the same validation pass.
+- **WorkOrderValidator** (`validators/work_order_validator.dart`): Validates civilian work orders with per-target checks, visibility, and the **Work ⊆ Move** invariant by requiring the same shared civilian occupancy check used by `MoveValidator` for `targetTileKey`.
 
 **Build validation (naval):** Build orders for naval units are validated for treasury, stockpile, and the **unlocking tech** for that ship type when applicable (see [tech-tree-naval.md](../game/tech-tree-naval.md)); starting ships such as Carrack have no prerequisite. OrderEngine validates before accepting.
 
@@ -124,8 +125,9 @@ The OrderEngine validates and stores **move (civilian), army move, build, work, 
 - **Merge:** Human + AI orders merged with human over AI for conflicts; ordering is stable for deterministic replay (player id, then conflict key / order type as specified).
 - **Projected effects:** Dry-run returns `ProjectedEffects` with worker count, treasury delta, unit locations, and stockpile deltas (all required for current product and implemented); no mutation of the passed-in game from the caller's perspective. See § ProjectedEffects fields for the full list and implementation status.
 - **No application:** Order engine does not apply orders to world state; TurnResolver applies after merge.
-- **Move validation (extracted):** Given a move order that violates civilian-into-GP or civilian-into-Minor/Tribe rules (per [orders.md](orders.md)), when validated with context, the result is rejected with reason "Civilian cannot enter other Great Power territory" or "Civilian cannot enter Minor/Tribe territory" as applicable. Military moves into GP or Minor/Tribe provinces without war (or same-turn declareWar) are rejected with the appropriate "Must declare war before attacking..." reason.
+- **Move validation (extracted):** Given a civilian move order whose `destinationTileKey` fails shared civilian occupancy rules (per [orders.md](orders.md)), when validated with context, then the result is rejected and the unit location remains unchanged. Military moves into GP or Minor/Tribe provinces without war (or same-turn declareWar) are rejected with the appropriate "Must declare war before attacking..." reason.
 - **Work order cost (single source):** Given work orders with material costs, when validated and when projecting effects in the same pass, the same cost calculation is used via WorkOrderCostCalculator (single source of truth).
+- **Work subset move:** Given a civilian work order whose `targetTileKey` the unit may not legally occupy under shared civilian occupancy rules, when validated with context, then the order engine rejects that work order before application.
 
 ---
 

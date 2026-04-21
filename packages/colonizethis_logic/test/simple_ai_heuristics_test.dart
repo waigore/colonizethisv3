@@ -217,8 +217,11 @@ void main() {
       );
       final moves = orders.moveOrdersByPlayerId['gp1'] ?? [];
       for (final m in moves) {
-        expect(m.destinationProvinceId, isNot('$ow|M1'),
-            reason: 'move to Minor province should be filtered when no relation');
+        expect(
+          Unit.provinceIdFromTileKey(m.destinationTileKey),
+          isNot('$ow|M1'),
+          reason: 'move to Minor province should be filtered when no relation',
+        );
       }
     });
 
@@ -279,8 +282,11 @@ void main() {
       );
       final moves = orders.moveOrdersByPlayerId['gp1'] ?? [];
       for (final m in moves) {
-        expect(m.destinationProvinceId, isNot('$ow|P2'),
-            reason: 'move to gp2 province should be filtered when at peace');
+        expect(
+          Unit.provinceIdFromTileKey(m.destinationTileKey),
+          isNot('$ow|P2'),
+          reason: 'validator/occupancy should not target gp2 for this fixture',
+        );
       }
     });
 
@@ -489,8 +495,11 @@ void main() {
       );
       final moves = orders.moveOrdersByPlayerId['gp1'] ?? [];
       for (final m in moves) {
-        expect(m.destinationProvinceId, isNot('$ow|P2'),
-            reason: 'owner lookup by full id must drop move to GP at peace');
+        expect(
+          Unit.provinceIdFromTileKey(m.destinationTileKey),
+          isNot('$ow|P2'),
+          reason: 'validator/occupancy should not target GP at peace here',
+        );
       }
     });
 
