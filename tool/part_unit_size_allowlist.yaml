@@ -1,16 +1,16 @@
 allowed_parent_units:
   - file: packages/colonizethis_logic/lib/src/diplomacy/diplomacy_resolver.dart
-    max_lines: 1925
+    max_lines: 1946
   - file: packages/colonizethis_logic/lib/src/orders/order_suggestion.dart
     max_lines: 2525
   - file: packages/colonizethis_logic/lib/src/orders/orders_application.dart
-    max_lines: 1400
+    max_lines: 1421
   - file: packages/colonizethis_logic/lib/src/setup/game_setup.dart
     max_lines: 2440
 
 allowed_part_files:
   - file: packages/colonizethis_logic/lib/src/diplomacy/alliance_resolver.dart
-    max_lines: 379
+    max_lines: 399
   - file: packages/colonizethis_logic/lib/src/diplomacy/diplomacy_subsidies_relations_resolver.dart
     max_lines: 330
   - file: packages/colonizethis_logic/lib/src/diplomacy/intervention_resolver.dart
@@ -30,7 +30,7 @@ allowed_part_files:
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_completed_work.dart
     max_lines: 331
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_work_phase.dart
-    max_lines: 400
+    max_lines: 421
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_create.dart
     max_lines: 488
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart

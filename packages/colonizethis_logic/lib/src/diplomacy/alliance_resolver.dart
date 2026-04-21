@@ -141,6 +141,12 @@ Game _absorbMinorOrTribeIntoGp(
 
   final oldWorld = RegionData(provinces: owProvinces, units: owUnits);
   final newWorld = RegionData(provinces: nwProvinces, units: nwUnits);
+  final changedProvinceIds = <String>{
+    for (final p in game.worldState.oldWorld.provinces)
+      if (p.ownerId == targetId) p.id,
+    for (final p in game.worldState.newWorld.provinces)
+      if (p.ownerId == targetId) p.id,
+  };
 
   // Clear Spy timers for (gpId, province) where gpId now owns the province,
   // so own provinces never decay via Spy timers after absorption.
@@ -182,7 +188,7 @@ Game _absorbMinorOrTribeIntoGp(
       .where((r) => r.factionId1 != targetId && r.factionId2 != targetId)
       .toList();
 
-  return game.copyWith(
+  final updatedGame = game.copyWith(
     players: players,
     worldState: game.worldState.copyWith(
       oldWorld: oldWorld,
@@ -194,6 +200,10 @@ Game _absorbMinorOrTribeIntoGp(
     tribes: tribes,
     overtureStates: overtures,
     diplomacyRelations: relations,
+  );
+  return relocateIllegalCiviliansInChangedProvinces(
+    updatedGame,
+    changedProvinceIds: changedProvinceIds,
   );
 }
 
@@ -239,6 +249,12 @@ Game _absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) {
 
   final oldWorld = RegionData(provinces: owProvinces, units: owUnits);
   final newWorld = RegionData(provinces: nwProvinces, units: nwUnits);
+  final changedProvinceIds = <String>{
+    for (final p in game.worldState.oldWorld.provinces)
+      if (p.ownerId == targetGpId) p.id,
+    for (final p in game.worldState.newWorld.provinces)
+      if (p.ownerId == targetGpId) p.id,
+  };
 
   final ownedProvinceIds = <String>{
     for (final p in owProvinces)
@@ -303,7 +319,7 @@ Game _absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) {
       .where((s) => s.payerId != targetGpId && s.targetId != targetGpId)
       .toList();
 
-  return game.copyWith(
+  final updatedGame = game.copyWith(
     players: players,
     generals: generals,
     worldState: game.worldState.copyWith(
@@ -321,6 +337,10 @@ Game _absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) {
     aiSeedByGpId: aiSeed,
     hiddenAgendaByGpId: hidden,
     politicalGlyphByPlayerId: glyphs,
+  );
+  return relocateIllegalCiviliansInChangedProvinces(
+    updatedGame,
+    changedProvinceIds: changedProvinceIds,
   );
 }
 
