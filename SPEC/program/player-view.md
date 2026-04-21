@@ -33,6 +33,7 @@ For a given `Game`, `MapTopology`, and `playerId`:
 - **Visibility and prospecting**
   - Tile visibility: `Map<TileKey, VisibilityLevel>` taken from the game's visibility state.
   - Prospected tiles: `Set<TileKey>` indicating where minerals are known.
+  - Derived explore scope cache input: `visibilityByTile` is the sole input used by order-suggestion logic to compute per-player partially-revealed provinces (`known` + `unknown` mix in the same prefixed province).
 - **Map knowledge**
   - Known provinces with at least `revealed` visibility, including:
     - Province id (prefixed form per [world-model-identity.md](../game/world-model-identity.md)) and owner id (or `null` if unknown).

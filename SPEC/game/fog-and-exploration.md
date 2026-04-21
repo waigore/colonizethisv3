@@ -51,6 +51,8 @@ While a fleet **enters** S during Movement, that player’s water tiles in S are
 
 Explorer with work order target `explore` reveals all tiles in a province. **Turns required:** `ceil(3 * tilesInProvince / maxTilesInAnyProvinceInRegion)` (up to 3 turns), where the scale is the maximum tile count in any province **in that region** (so exploration time is comparable within the same region). On completion, all tiles set to fully visible for that player.
 
+For explore target selection, a province is **partially revealed** for a player when that player has at least one tile in the province at `fogged` or `fullyVisible` and at least one tile at `unknown`.
+
 ### Prospecting (Tile-Level)
 
 Explorer with work order target `prospect` prospects the tile under the unit. One turn per tile. Per-player; minerals must be prospected before extraction.

@@ -1,15 +1,4 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
-import '../constants.dart';
-import '../diplomacy/diplomacy_resolver.dart';
-import '../world/naval.dart';
-import '../world/player_view.dart';
-import '../world/province_lookup.dart';
-import '../world/topology_helpers.dart';
-import 'order_engine.dart';
-import 'order_suggestion_context.dart';
-import 'order_suggestion_helpers.dart';
+part of 'order_suggestion.dart';
 
 /// Suggests naval move orders for fleets owned by [view.playerId]. SPEC/program/naval-movement-resolution.md.
 List<NavalMoveOrder> suggestNavalMoveOrders(
@@ -18,7 +7,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  orderSuggestionLog.d('suggestNavalMoveOrders player=${view.playerId}');
+  _log.d('suggestNavalMoveOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <NavalMoveOrder>[];
   final existingByFleet = <String, Set<String>>{};
@@ -51,7 +40,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
           fleetId: fleet.id,
           destinationSeaZoneId: destId,
         );
-        if (isNavalMoveOrderAccepted(
+        if (_isNavalMoveOrderAccepted(
           game,
           topology,
           playerId,
@@ -84,7 +73,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
             fleetId: fleet.id,
             destinationPortProvinceId: fullProvinceId,
           );
-          if (isNavalMoveOrderAccepted(
+          if (_isNavalMoveOrderAccepted(
             game,
             topology,
             playerId,
@@ -110,7 +99,7 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
           fleetId: fleet.id,
           destinationSeaZoneId: destId,
         );
-        if (isNavalMoveOrderAccepted(
+        if (_isNavalMoveOrderAccepted(
           game,
           topology,
           playerId,
@@ -134,10 +123,10 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
         : (b.destinationSeaZoneId ?? '');
     return keyA.compareTo(keyB);
   });
-  orderSuggestionLog.d(
+  _log.d(
     'suggestNavalMoveOrders player=$playerId candidates=${suggestions.length}',
   );
-  orderSuggestionLog.d(
+  _log.d(
     'suggestNavalMoveOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} destSea=${o.destinationSeaZoneId} destPort=${o.destinationPortProvinceId}").join(", ")}',
   );
   return suggestions;
@@ -150,7 +139,7 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  orderSuggestionLog.d('suggestNavalMissionOrders player=${view.playerId}');
+  _log.d('suggestNavalMissionOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <NavalMissionOrder>[];
   final existingByFleet = <String>{};
@@ -167,7 +156,7 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
         fleetId: fleet.id,
         mission: mission.name,
       );
-      if (isNavalMissionOrderAccepted(
+      if (_isNavalMissionOrderAccepted(
         game,
         topology,
         playerId,
@@ -184,10 +173,10 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
     if (c != 0) return c;
     return a.mission.compareTo(b.mission);
   });
-  orderSuggestionLog.d(
+  _log.d(
     'suggestNavalMissionOrders player=$playerId candidates=${suggestions.length}',
   );
-  orderSuggestionLog.d(
+  _log.d(
     'suggestNavalMissionOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} mission=${o.mission}").join(", ")}',
   );
   return suggestions;
@@ -381,7 +370,7 @@ DiplomaticOrder? _establishOvertureSuggestionOrder({
 
   final existing = getOverture(game, playerId, targetId);
   final current = existing?.stage ?? OvertureStage.none;
-  final next = nextOvertureStage(current);
+  final next = _nextOvertureStage(current);
   if (next == null) return null;
   if (next == OvertureStage.tradeConsulate || next == OvertureStage.embassy) {
     final cost = next == OvertureStage.tradeConsulate
@@ -425,7 +414,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  orderSuggestionLog.d('suggestDiplomaticOrders player=${view.playerId}');
+  _log.d('suggestDiplomaticOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <DiplomaticOrder>[];
   final player = view.player;
@@ -498,7 +487,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
           candidate.type == DiplomaticOrderType.setSubsidy) {
         continue;
       }
-      if (!isDiplomaticOrderAccepted(
+      if (!_isDiplomaticOrderAccepted(
         game,
         topology,
         playerId,
@@ -509,7 +498,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
         continue;
       }
       suggestions.add(candidate);
-      trialOrders = appendDiplomaticOrderForTrial(
+      trialOrders = _appendDiplomaticOrderForTrial(
         trialOrders,
         playerId,
         candidate,
@@ -522,7 +511,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
           candidate.type != DiplomaticOrderType.setSubsidy) {
         continue;
       }
-      if (!isDiplomaticOrderAccepted(
+      if (!_isDiplomaticOrderAccepted(
         game,
         topology,
         playerId,
@@ -533,7 +522,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
         continue;
       }
       suggestions.add(candidate);
-      trialOrders = appendDiplomaticOrderForTrial(
+      trialOrders = _appendDiplomaticOrderForTrial(
         trialOrders,
         playerId,
         candidate,
@@ -554,11 +543,195 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     if (stageCmp != 0) return stageCmp;
     return (a.amount ?? 0).compareTo(b.amount ?? 0);
   });
-  orderSuggestionLog.d(
+  _log.d(
     'suggestDiplomaticOrders player=$playerId candidates=${suggestions.length}',
   );
-  orderSuggestionLog.d(
+  _log.d(
     'suggestDiplomaticOrders full list ${suggestions.map((o) => "${o.type.name}:${o.targetFactionId}").join(", ")}',
   );
   return suggestions;
 }
+
+/// Context for [_workTargetPrefilters] map dispatch (work-target tile pre-filter).
+class _WorkTilePrefilterCtx {
+  _WorkTilePrefilterCtx({
+    required this.game,
+    required this.playerId,
+    required this.tileKeysByRegion,
+    required this.resourceByTile,
+    required this.purchasedTiles,
+    required this.ownedProvinceIds,
+    required this.exploreProvinceScope,
+    required this.tileMapByRegion,
+    required this.result,
+  });
+
+  final Game game;
+  final String playerId;
+  final Map<String, Map<String, List<String>>> tileKeysByRegion;
+  final Map<String, String> resourceByTile;
+  final Map<String, String> purchasedTiles;
+  final Set<String> ownedProvinceIds;
+  final Set<String>? exploreProvinceScope;
+  final Map<String, TileMapResult>? tileMapByRegion;
+  final Set<String> result;
+}
+
+typedef _WorkTilePrefilterOp = void Function(_WorkTilePrefilterCtx c);
+
+void _prefilterWtBuildImprovement(_WorkTilePrefilterCtx c) {
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      final resourceId = c.resourceByTile[tileKey];
+      if (resourceId == null || resourceId.isEmpty) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtBuildRoad(_WorkTilePrefilterCtx c) {
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtBuildRail(_WorkTilePrefilterCtx c) {
+  final player = c.game.playerById(c.playerId);
+  if (player == null) return;
+  final tech = player.techUnlocked;
+  final tileState = c.game.worldState.tileState;
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      final roadLevel = tileState.roadLevel(tileKey);
+      if (roadLevel != 1 && roadLevel != 2) return;
+      final terrain = terrainTypeForTileKey(c.tileMapByRegion, tileKey);
+      if (rejectionReasonForBuildRailOrder(
+            techUnlocked: tech,
+            roadLevel: roadLevel,
+            terrain: terrain,
+          ) !=
+          null) {
+        return;
+      }
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtTownWork(_WorkTilePrefilterCtx c) {
+  _addCandidateTilesForTownWork(
+    game: c.game,
+    ownedProvinceIds: c.ownedProvinceIds,
+    result: c.result,
+  );
+}
+
+void _prefilterWtOwnedProvinceTiles(_WorkTilePrefilterCtx c) {
+  _addAllTilesInOwnedPrefixedProvinces(
+    tileKeysByRegion: c.tileKeysByRegion,
+    ownedProvinceIds: c.ownedProvinceIds,
+    result: c.result,
+  );
+}
+
+void _prefilterWtStealTech(_WorkTilePrefilterCtx c) {
+  _addCandidateTilesForStealTech(
+    game: c.game,
+    playerId: c.playerId,
+    result: c.result,
+  );
+}
+
+void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
+  final gpIds = c.game.players.map((p) => p.id).toSet();
+  final minorIds = c.game.minorNations.map((m) => m.id).toSet();
+  final tribeIds = c.game.tribes.map((t) => t.id).toSet();
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final province = c.game.worldState.tryGetProvince(provinceId);
+      if (province == null) return;
+      final ownerId = province.ownerId;
+      if (ownerId == null) return;
+      if (gpIds.contains(ownerId)) return;
+      if (!minorIds.contains(ownerId) && !tribeIds.contains(ownerId)) {
+        return;
+      }
+      final resourceId = c.resourceByTile[tileKey];
+      if (resourceId == null || resourceId.isEmpty) return;
+      final existingBuyer = c.game.worldState.purchasedTilesByTileKey[tileKey];
+      if (existingBuyer != null) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtExplore(_WorkTilePrefilterCtx c) {
+  final scoped = c.exploreProvinceScope;
+  if (scoped != null) {
+    for (final regionEntry in c.tileKeysByRegion.entries) {
+      for (final provinceEntry in regionEntry.value.entries) {
+        if (!scoped.contains(provinceEntry.key)) continue;
+        c.result.addAll(provinceEntry.value);
+      }
+    }
+    return;
+  }
+  for (final regionEntry in c.tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      c.result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+void _prefilterWtProspect(_WorkTilePrefilterCtx c) {
+  final prospected =
+      c.game.worldState.playerProspectedTiles[c.playerId] ?? const <String>{};
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      if (prospected.contains(tileKey)) return;
+      if (!isMineralEligibleTile(c.game, c.tileMapByRegion, tileKey)) {
+        return;
+      }
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWorkTargetDefault(_WorkTilePrefilterCtx c) {
+  for (final regionEntry in c.tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      c.result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+final Map<String, _WorkTilePrefilterOp> _workTargetPrefilters =
+    <String, _WorkTilePrefilterOp>{
+      kWorkTargetBuildImprovement: _prefilterWtBuildImprovement,
+      kWorkTargetBuildRoad: _prefilterWtBuildRoad,
+      'build_rail': _prefilterWtBuildRail,
+      kWorkTargetUpgradeTown: _prefilterWtTownWork,
+      kWorkTargetBuildFort: _prefilterWtTownWork,
+      kWorkTargetBuildPort: _prefilterWtOwnedProvinceTiles,
+      kWorkTargetCounterSpy: _prefilterWtOwnedProvinceTiles,
+      kWorkTargetStealTech: _prefilterWtStealTech,
+      kWorkTargetPurchaseLand: _prefilterWtPurchaseLand,
+      kWorkTargetExplore: _prefilterWtExplore,
+      kWorkTargetProspect: _prefilterWtProspect,
+    };

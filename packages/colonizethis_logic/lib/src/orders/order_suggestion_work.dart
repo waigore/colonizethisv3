@@ -30,6 +30,42 @@ void _suggestionWorkLog({
   );
 }
 
+Set<String> _partiallyRevealedProvinceCacheForPlayer({
+  required Game game,
+  required PlayerView view,
+}) {
+  final cached = <String>{};
+  for (final regionEntry in game.worldState.tileKeysByRegionAndProvince.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+      if (!_isPartiallyRevealedProvinceForPlayer(view, provinceEntry.value)) {
+        continue;
+      }
+      cached.add(provinceId);
+    }
+  }
+  return cached;
+}
+
+bool _isPartiallyRevealedProvinceForPlayer(
+  PlayerView view,
+  List<String> tileKeys,
+) {
+  var hasKnown = false;
+  var hasUnknown = false;
+  for (final tileKey in tileKeys) {
+    final level = view.visibilityForTile(tileKey);
+    if (level == VisibilityLevel.unknown) {
+      hasUnknown = true;
+    } else {
+      hasKnown = true;
+    }
+    if (hasKnown && hasUnknown) return true;
+  }
+  return false;
+}
+
 void _addExplorerWorkSuggestionsForUnit({
   required PlayerView view,
   required Game game,
@@ -39,7 +75,7 @@ void _addExplorerWorkSuggestionsForUnit({
   required Unit unit,
   required String regionId,
   required String provinceId,
-  required String localId,
+  required Set<String> partiallyRevealedProvinceCache,
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
@@ -61,7 +97,9 @@ void _addExplorerWorkSuggestionsForUnit({
       reason: 'duplicate_pending',
     );
   } else {
-    final provinces = allProvinces(game.worldState).toList()
+    final provinces = allProvinces(game.worldState)
+        .where((p) => partiallyRevealedProvinceCache.contains(p.id))
+        .toList()
       ..sort((a, b) => a.id.compareTo(b.id));
     WorkOrder? chosen;
     var lastReason = 'no_valid_tile';
@@ -367,6 +405,10 @@ List<WorkOrder> suggestWorkOrders(
   }
 
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
+  final partiallyRevealedProvinceCache = _partiallyRevealedProvinceCacheForPlayer(
+    game: game,
+    view: view,
+  );
 
   // Pre-filter + visibility sort per workTarget; reused across worker units.
   final visibleCandidatesSortedByWorkTarget = <String, List<String>>{};
@@ -388,6 +430,7 @@ List<WorkOrder> suggestWorkOrders(
       playerId: playerId,
       unit: unit,
       existingTargetsByUnit: existingTargetsByUnit,
+      partiallyRevealedProvinceCache: partiallyRevealedProvinceCache,
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
       suggestions: suggestions,
@@ -423,6 +466,7 @@ void _addWorkSuggestionsForUnit({
   required String playerId,
   required Unit unit,
   required Map<String, Set<String>> existingTargetsByUnit,
+  required Set<String> partiallyRevealedProvinceCache,
   required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
   required Set<String> devExclusiveReservedTiles,
   required List<WorkOrder> suggestions,
@@ -439,7 +483,6 @@ void _addWorkSuggestionsForUnit({
 
   final regionId = regionIdForUnit(view, unit);
   final provinceId = unit.locationProvinceId;
-  final localId = ProvinceId.localIdFrom(provinceId);
   final province = view.provinceByRegionAndId(regionId, provinceId);
   final ownerId = province?.ownerId;
   final tilesInProvince = tileKeysByRegion[regionId]?[provinceId] ?? const [];
@@ -458,7 +501,7 @@ void _addWorkSuggestionsForUnit({
       unit: unit,
       regionId: regionId,
       provinceId: provinceId,
-      localId: localId,
+      partiallyRevealedProvinceCache: partiallyRevealedProvinceCache,
       tileKeysByRegion: tileKeysByRegion,
       existingTargetsByUnit: existingTargetsByUnit,
       suggestions: suggestions,
