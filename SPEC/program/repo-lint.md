@@ -17,6 +17,7 @@
 | `tool/function_size_allowlist.yaml` | Grandfathered symbols over measured-line threshold (shrink-only; see function-size SPEC) |
 | `tool/check_part_unit_size.dart` | `part` file and parent+parts compilation-unit thresholds (`SPEC/program/part-unit-size.md`); rule `repo.part_unit_size` |
 | `tool/part_unit_size_allowlist.yaml` | Grandfathered oversized `part` files and parent units (shrink-only; see part-unit-size SPEC) |
+| `tool/check_no_flame_in_widgets.dart` | Disallow direct `package:flame/*` imports under `app/lib/widgets/**`; rule `repo.no_flame_in_widgets` |
 
 ## Rule IDs and groups
 

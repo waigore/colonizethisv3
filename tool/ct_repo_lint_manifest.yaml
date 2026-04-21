@@ -107,6 +107,13 @@ rules:
     runner: dart
     script: tool/check_part_unit_size.dart
 
+  - rule_id: repo.no_flame_in_widgets
+    group: structure
+    title: app/lib/widgets must not import package:flame directly
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_no_flame_in_widgets.dart
+
   - rule_id: repo.canonical_province_tile_keys
     group: game_invariants
     title: Canonical province WorkOrder targetTileKey literals

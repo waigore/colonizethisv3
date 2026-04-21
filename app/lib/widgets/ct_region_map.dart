@@ -3,9 +3,6 @@ import 'dart:async';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flame/events.dart';
-import 'package:flame/game.dart';
-import 'package:flame/input.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,6 +15,7 @@ import '../features/game/flame/region_map_viewport_snapshot.dart'
         computeRegionMapFitMapZoom,
         kRegionMapZoomMultiplierMax,
         kRegionMapZoomMultiplierMin;
+import '../features/game/widgets/chrome/flame_region_map_api.dart';
 
 export '../features/game/flame/region_map_component.dart'
     show
