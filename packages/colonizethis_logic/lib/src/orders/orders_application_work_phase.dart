@@ -247,7 +247,7 @@ bool _shouldSkipBuildFortForMissingTech({
 bool _shouldSkipBuildRailForInvalidTerrainOrTech({
   required Map<String, bool>? techUnlocked,
   required int roadLevel,
-  required String? terrain,
+  required TerrainType? terrain,
 }) {
   final railReason = rejectionReasonForBuildRailOrder(
     techUnlocked: techUnlocked,
