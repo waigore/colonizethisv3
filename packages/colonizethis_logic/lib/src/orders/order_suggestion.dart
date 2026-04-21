@@ -9,6 +9,7 @@ import '../world/naval.dart';
 import '../world/province_lookup.dart';
 import '../world/topology_helpers.dart';
 import 'build_rail_work_rules.dart';
+import 'bundled_civilian_work_order.dart';
 import 'draft_orders_mutations.dart';
 import 'order_engine.dart';
 import 'order_suggestion_build_research.dart';

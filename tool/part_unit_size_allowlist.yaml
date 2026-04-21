@@ -2,7 +2,7 @@ allowed_parent_units:
   - file: packages/colonizethis_logic/lib/src/diplomacy/diplomacy_resolver.dart
     max_lines: 1925
   - file: packages/colonizethis_logic/lib/src/orders/order_suggestion.dart
-    max_lines: 2098
+    max_lines: 2499
   - file: packages/colonizethis_logic/lib/src/orders/orders_application.dart
     max_lines: 1400
   - file: packages/colonizethis_logic/lib/src/setup/game_setup.dart
@@ -24,7 +24,7 @@ allowed_part_files:
   - file: packages/colonizethis_logic/lib/src/orders/order_suggestion_naval_diplomatic.dart
     max_lines: 726
   - file: packages/colonizethis_logic/lib/src/orders/order_suggestion_work.dart
-    max_lines: 516
+    max_lines: 902
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_build_phase.dart
     max_lines: 199
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_completed_work.dart

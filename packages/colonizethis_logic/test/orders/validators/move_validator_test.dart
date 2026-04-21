@@ -312,6 +312,133 @@ void main() {
       expect(result.status, OrderValidationStatus.accepted);
     });
 
+    test(
+      'explorer can move cross-region into tribe-owned province',
+      () {
+        const nw = 'newWorld';
+        final combinedTopology = MapTopology(
+          nodes: const [
+            TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(id: 'P2', regionId: nw, type: TopologyNodeType.province),
+          ],
+          edges: const [],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              ],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: 'Explorer',
+                  ownerId: 'p1',
+                  locationProvinceId: '$ow|P1',
+                  tileKey: '$ow|P1|0|0',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(
+              provinces: [
+                Province(id: '$nw|P2', regionId: nw, ownerId: 'tribe1'),
+              ],
+            ),
+            playerVisibilityByTile: const {
+              'p1': {
+                'oldWorld|P1|0|0': 'fullyVisible',
+                'newWorld|P2|0|0': 'fogged',
+              },
+            },
+          ),
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe1')],
+        );
+        final unitsById = {
+          for (final u in [...game.worldState.oldWorld.units, ...game.worldState.newWorld.units]) u.id: u,
+        };
+        final view = buildPlayerView(game, combinedTopology, 'p1');
+        const validator = MoveValidator();
+        final result = validator.validate(
+          const MoveOrder(unitId: 'u1', destinationTileKey: 'newWorld|P2|0|0'),
+          game,
+          'p1',
+          unitsById,
+          const [],
+          view,
+          combinedTopology,
+          previousRejected: false,
+        );
+        expect(result.status, OrderValidationStatus.accepted);
+      },
+    );
+
+    test(
+      'builder cross-region into tribe-owned province is still invalid',
+      () {
+        const nw = 'newWorld';
+        final combinedTopology = MapTopology(
+          nodes: const [
+            TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+            TopologyNode(id: 'P2', regionId: nw, type: TopologyNodeType.province),
+          ],
+          edges: const [],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              ],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: 'Builder',
+                  ownerId: 'p1',
+                  locationProvinceId: '$ow|P1',
+                  tileKey: '$ow|P1|0|0',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(
+              provinces: [
+                Province(id: '$nw|P2', regionId: nw, ownerId: 'tribe1'),
+              ],
+            ),
+            playerVisibilityByTile: const {
+              'p1': {
+                'oldWorld|P1|0|0': 'fullyVisible',
+                'newWorld|P2|0|0': 'fogged',
+              },
+            },
+          ),
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe1')],
+        );
+        final unitsById = {
+          for (final u in [...game.worldState.oldWorld.units, ...game.worldState.newWorld.units]) u.id: u,
+        };
+        final view = buildPlayerView(game, combinedTopology, 'p1');
+        const validator = MoveValidator();
+        final result = validator.validate(
+          const MoveOrder(unitId: 'u1', destinationTileKey: 'newWorld|P2|0|0'),
+          game,
+          'p1',
+          unitsById,
+          const [],
+          view,
+          combinedTopology,
+          previousRejected: false,
+        );
+        expect(result.status, OrderValidationStatus.rejected);
+        expect(result.reason, 'Invalid move');
+      },
+    );
+
     test('short-circuits when previous order rejected', () {
       final game = Game(
         id: 'g1',
