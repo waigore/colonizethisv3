@@ -20,6 +20,7 @@ void main() {
       expect(ids, contains('repo.control_flow_nesting_depth'));
       expect(ids, contains('repo.repeated_magic_numbers'));
       expect(ids, contains('repo.function_size'));
+      expect(ids, contains('repo.part_unit_size'));
       expect(ids, contains('repo.app_hardcoded_ui_strings'));
       expect(
         rules

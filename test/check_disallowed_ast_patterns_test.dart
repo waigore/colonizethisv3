@@ -14,6 +14,11 @@ rules:
     message: 'use whereType'
     match:
       kind: stream_where_is_map_as
+  - id: avoid_print_suppression
+    message: 'do not suppress avoid_print'
+    match:
+      kind: comment_substring
+      contains: 'ignore: avoid_print'
 ''';
 
 void main() {
@@ -187,6 +192,39 @@ Stream<int> f(Stream<num> s) =>
 ''';
       expect(
         findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
+        isEmpty,
+      );
+    });
+
+    test('flags avoid_print suppression comment', () {
+      const src = r'''
+void f() {
+  // ignore: avoid_print
+  print('x');
+}
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(v, isNotEmpty);
+      expect(v.first.ruleId, 'avoid_print_suppression');
+    });
+
+    test('allows avoid_print suppression in excluded test path', () {
+      const src = r'''
+void f() {
+  // ignore: avoid_print
+  print('x');
+}
+''';
+      expect(
+        findDisallowedAstViolations(
+          'packages/foo/test/x_test.dart',
+          src,
+          rules,
+        ),
         isEmpty,
       );
     });
