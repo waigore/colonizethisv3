@@ -15,6 +15,8 @@
 | `tool/control_flow_nesting_depth_allowlist.yaml` | Grandfathered symbols at depth ≥4 (shrink-only; see nesting-depth SPEC) |
 | `tool/check_function_size.dart` | Function measured-line threshold (`SPEC/program/function-size.md`); rule `repo.function_size` |
 | `tool/function_size_allowlist.yaml` | Grandfathered symbols over measured-line threshold (shrink-only; see function-size SPEC) |
+| `tool/check_part_unit_size.dart` | `part` file and parent+parts compilation-unit thresholds (`SPEC/program/part-unit-size.md`); rule `repo.part_unit_size` |
+| `tool/part_unit_size_allowlist.yaml` | Grandfathered oversized `part` files and parent units (shrink-only; see part-unit-size SPEC) |
 
 ## Rule IDs and groups
 

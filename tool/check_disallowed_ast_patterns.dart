@@ -92,7 +92,37 @@ List<DisallowedAstViolation> findDisallowedAstViolations(
     rules,
   );
   parsed.unit.accept(visitor);
-  return visitor.violations;
+  final violations = <DisallowedAstViolation>[...visitor.violations];
+  final lines = const LineSplitter().convert(content);
+  for (final rule in rules) {
+    if (rule.kind != DisallowedAstMatchKind.commentSubstring) {
+      continue;
+    }
+    final needle = rule.commentSubstring;
+    if (needle == null || needle.isEmpty) {
+      continue;
+    }
+    for (var i = 0; i < lines.length; i++) {
+      if (!lines[i].contains(needle)) {
+        continue;
+      }
+      if (_fileIgnoresRule(content, rule.id)) {
+        continue;
+      }
+      if (_isSuppressedAtLine(content, i + 1, rule.id)) {
+        continue;
+      }
+      violations.add(
+        DisallowedAstViolation(
+          path: relativePath,
+          line: i + 1,
+          ruleId: rule.id,
+          message: rule.message,
+        ),
+      );
+    }
+  }
+  return violations;
 }
 
 List<DisallowedPatternRule> loadDisallowedAstRulesForTest(String yamlText) =>
@@ -146,6 +176,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           message: message,
           kind: DisallowedAstMatchKind.cascadedMethodInvocation,
           cascadedMethodNames: names,
+          commentSubstring: null,
         ),
       );
     } else if (kind == 'stream_where_is_map_as') {
@@ -155,6 +186,21 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           message: message,
           kind: DisallowedAstMatchKind.streamWhereIsMapAs,
           cascadedMethodNames: const {},
+          commentSubstring: null,
+        ),
+      );
+    } else if (kind == 'comment_substring') {
+      final needle = match['contains']?.toString();
+      if (needle == null || needle.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.commentSubstring,
+          cascadedMethodNames: const {},
+          commentSubstring: needle,
         ),
       );
     }
@@ -186,7 +232,11 @@ bool _isSuppressedAtLine(String source, int lineNumber1Based, String ruleId) {
 }
 
 /// Kinds of structural matches defined in [tool/disallowed_ast_patterns.yaml].
-enum DisallowedAstMatchKind { cascadedMethodInvocation, streamWhereIsMapAs }
+enum DisallowedAstMatchKind {
+  cascadedMethodInvocation,
+  streamWhereIsMapAs,
+  commentSubstring,
+}
 
 class DisallowedPatternRule {
   const DisallowedPatternRule({
@@ -194,12 +244,14 @@ class DisallowedPatternRule {
     required this.message,
     required this.kind,
     required this.cascadedMethodNames,
+    required this.commentSubstring,
   });
 
   final String id;
   final String message;
   final DisallowedAstMatchKind kind;
   final Set<String> cascadedMethodNames;
+  final String? commentSubstring;
 }
 
 class DisallowedAstViolation {

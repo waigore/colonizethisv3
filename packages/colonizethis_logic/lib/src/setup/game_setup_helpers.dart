@@ -205,17 +205,17 @@ Game _assignProvinceTowns({
     if (m == null) return result;
     int x = int.tryParse(parts[2]) ?? 0;
     int y = int.tryParse(parts[3]) ?? 0;
-    final queue = <List<dynamic>>[];
+    final queue = <({int x, int y, int distance})>[];
     final key = '${parts[2]}|${parts[3]}';
     if (m[key] != null) {
-      queue.add([x, y, 0]);
+      queue.add((x: x, y: y, distance: 0));
       result[m[key]!] = 0;
     }
     while (queue.isNotEmpty) {
       final item = queue.removeAt(0);
-      final cx = item[0] as int;
-      final cy = item[1] as int;
-      final d = item[2] as int;
+      final cx = item.x;
+      final cy = item.y;
+      final d = item.distance;
       for (final delta in [
         [1, 0],
         [-1, 0],
@@ -228,7 +228,7 @@ Game _assignProvinceTowns({
         final tileKey = m[nk];
         if (tileKey != null && !result.containsKey(tileKey)) {
           result[tileKey] = d + 1;
-          queue.add([nx, ny, d + 1]);
+          queue.add((x: nx, y: ny, distance: d + 1));
         }
       }
     }

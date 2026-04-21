@@ -40,11 +40,7 @@ typedef _TabuEntry = (
   String provinceId,
 );
 
-typedef _Placement = ({
-  String faction,
-  String province,
-  bool lockedSeed,
-});
+typedef _Placement = ({String faction, String province, bool lockedSeed});
 
 int _ppDegreeOnLand(
   String province,
@@ -243,9 +239,10 @@ bool _phasedGrowthFeasibilityHolds({
   required Map<String, Set<String>> neighbours,
   required Set<String> land,
 }) {
-  final trialOwners = Map<String, String>.from(ownersNow)..[trialProvince] =
-      activeFaction;
-  final trialUnassigned = Set<String>.from(unassignedNow)..remove(trialProvince);
+  final trialOwners = Map<String, String>.from(ownersNow)
+    ..[trialProvince] = activeFaction;
+  final trialUnassigned = Set<String>.from(unassignedNow)
+    ..remove(trialProvince);
 
   if (trialCounts[activeFaction]! < targetPerFaction[activeFaction]!) {
     final reach = _reachableTerritoryForFaction(
@@ -264,12 +261,7 @@ bool _phasedGrowthFeasibilityHolds({
     final fixed = mandatorySeed[f];
     if (fixed == null) continue;
     final nodes = Set<String>.from(trialUnassigned)..add(fixed);
-    final comp = _componentSizeFromSeed(
-      fixed,
-      nodes,
-      neighbours,
-      land,
-    );
+    final comp = _componentSizeFromSeed(fixed, nodes, neighbours, land);
     if (comp < targetPerFaction[f]!) return false;
   }
 
@@ -324,8 +316,6 @@ Map<String, String> assignTerritoriesLockedOnLandmass({
   void traceDfs(String msg) {
     if (!_kTraceLockedAssignerDfs) return;
     final line = 'logic: locked_assign_dfs #${traceSeq[0]++} $msg';
-    // ignore: avoid_print
-    print(line);
     _lockedAssignerLog.i(line);
   }
 
@@ -345,7 +335,10 @@ Map<String, String> assignTerritoriesLockedOnLandmass({
   /// True if [province] is the mandatory seed tile of a faction that appears
   /// **after** [currentFaction] in [growthOrder] (still unassigned for that
   /// faction). Earlier factions must not grow into those tiles.
-  bool reservedMandatoryForLaterFaction(String province, String currentFaction) {
+  bool reservedMandatoryForLaterFaction(
+    String province,
+    String currentFaction,
+  ) {
     final ci = growthOrder.indexOf(currentFaction);
     if (ci < 0) return false;
     for (final e in mandatory.entries) {
@@ -509,9 +502,11 @@ Map<String, String> assignTerritoriesLockedOnLandmass({
       final stackEnter = placementStack.length;
       owners[p] = faction;
       unassigned.remove(p);
-      placementStack.add(
-        (faction: faction, province: p, lockedSeed: lockedSeed),
-      );
+      placementStack.add((
+        faction: faction,
+        province: p,
+        lockedSeed: lockedSeed,
+      ));
       countPerFaction[faction] = countPerFaction[faction]! + 1;
       traceDfs(
         'try_push capGen=$capitalGeneration depth=$depth faction=$faction prov=$p '
