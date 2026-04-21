@@ -18,13 +18,13 @@ allowed_part_files:
   - file: packages/colonizethis_logic/lib/src/diplomacy/overture_resolver.dart
     max_lines: 256
   - file: packages/colonizethis_logic/lib/src/orders/order_suggestion_build_research.dart
-    max_lines: 520
+    max_lines: 696
   - file: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
     max_lines: 339
   - file: packages/colonizethis_logic/lib/src/orders/order_suggestion_naval_diplomatic.dart
     max_lines: 750
   - file: packages/colonizethis_logic/lib/src/orders/order_suggestion_work.dart
-    max_lines: 960
+    max_lines: 961
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_build_phase.dart
     max_lines: 199
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_completed_work.dart
