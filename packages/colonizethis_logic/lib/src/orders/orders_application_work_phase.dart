@@ -1,5 +1,22 @@
 part of 'orders_application.dart';
 
+void _completeInstantCivilianOrder(
+  void Function(String, Unit) updateUnit,
+  Unit unit,
+  String targetTileKey,
+) {
+  updateUnit(
+    unit.id,
+    unit.copyWith(
+      status: UnitStatus.idle,
+      tileKey: targetTileKey,
+      clearOriginTileKey: true,
+      clearAssignedTileKey: true,
+      clearCurrentWork: true,
+    ),
+  );
+}
+
 void _runWorkPhase(
   _BuildWorkState state,
   void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
@@ -32,19 +49,6 @@ void _runWorkPhase(
       } else {
         newUnitsById[unitId] = updated;
       }
-    }
-
-    void completeInstantCivilianOrder(Unit unit, String targetTileKey) {
-      updateUnit(
-        unit.id,
-        unit.copyWith(
-          status: UnitStatus.idle,
-          tileKey: targetTileKey,
-          clearOriginTileKey: true,
-          clearAssignedTileKey: true,
-          clearCurrentWork: true,
-        ),
-      );
     }
 
     String regionForUnit(String unitId) =>
@@ -238,7 +242,7 @@ void _runWorkPhase(
             if (!purchasedTilesByTileKey.containsKey(targetTileKey)) {
               treasury -= cost;
               purchasedTilesByTileKey[targetTileKey] = player.id;
-              completeInstantCivilianOrder(u, targetTileKey);
+              _completeInstantCivilianOrder(updateUnit, u, targetTileKey);
             }
           }
         }
@@ -317,7 +321,7 @@ void _runWorkPhase(
             },
           ),
         );
-        completeInstantCivilianOrder(u, targetTileKey);
+        _completeInstantCivilianOrder(updateUnit, u, targetTileKey);
       }
       if (order.target == kWorkTargetBuildImprovement) {
         if (applyStandardWorkOrder(kWorkTargetBuildImprovement)) continue;

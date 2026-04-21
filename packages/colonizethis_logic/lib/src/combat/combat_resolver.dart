@@ -34,6 +34,18 @@ const double kAttackerEdgeDefenderLossFraction = 0.6;
 const double kDefaultAttackerLossFraction = 0.5;
 const double kDefaultDefenderLossFraction = 0.4;
 
+Game _applyOwnershipChangeCivilianLegalityIfNeeded(
+  Game game,
+  BattleContext ctx,
+  bool provinceChangedOwner,
+) {
+  if (!provinceChangedOwner) return game;
+  return relocateIllegalCiviliansInChangedProvinces(
+    game,
+    changedProvinceIds: {ctx.provinceId},
+  );
+}
+
 /// When feeding coverage is omitted for a faction, treat as full supply.
 const double kDefaultFeedingCoverageMultiplier = 1.0;
 
@@ -357,12 +369,11 @@ Game resolveBattleContext(
         .map((g) => generalsById[g.id] ?? g)
         .toList(growable: false),
   );
-  if (post.provinceChangedOwner) {
-    result = relocateIllegalCiviliansInChangedProvinces(
-      result,
-      changedProvinceIds: {ctx.provinceId},
-    );
-  }
+  result = _applyOwnershipChangeCivilianLegalityIfNeeded(
+    result,
+    ctx,
+    post.provinceChangedOwner,
+  );
   result = result.copyWith(
     worldState: reconcileArmiesAfterUnitsChanged(result.worldState, result),
   );
