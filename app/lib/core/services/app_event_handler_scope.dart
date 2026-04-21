@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/ct_e2e.dart';
-import 'package:colonizethis_app/features/game/logic/naval_fleet_split_apply.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_order_helpers.dart';
 import 'package:colonizethis_app/features/game/combat/combat_mode_choice_dialog.dart';
@@ -205,35 +204,35 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
             initialLeaderByGpId: initialSelections,
             onCancel: () => Navigator.of(ctx).pop(),
             onConfirmed: (orderedGreatPowerIds, leaderVariantByGpId, seed) {
-                  final navCtx = appNavigatorKey.currentContext;
-                  if (navCtx == null) {
-                    _logShell.w(
-                      'appNavigatorKey has no context; skipping new game setup',
-                    );
-                    return;
-                  }
-                  final rootContainer = ProviderScope.containerOf(navCtx);
-                  final templateConfig = GameSetupConfig(
-                    selectedGreatPowerIds: orderedGreatPowerIds,
-                    leaderVariantByGpId: leaderVariantByGpId,
-                    continentCount: baseConfig.continentCount,
-                    minorNationCount: baseConfig.minorNationCount,
-                    tribeCount: baseConfig.tribeCount,
-                    numProvincesOldWorld: baseConfig.numProvincesOldWorld,
-                    numProvincesNewWorld: baseConfig.numProvincesNewWorld,
-                    minProvincesPerMinor: baseConfig.minProvincesPerMinor,
-                    seed: seed,
-                    startingResources: baseConfig.startingResources,
-                    initTownRoadWiringRegionIds:
-                        baseConfig.initTownRoadWiringRegionIds,
-                  );
-                  unawaited(
-                    runNewGameSetupAfterLeaderPick(
-                      container: rootContainer,
-                      templateConfig: templateConfig,
-                    ),
-                  );
-                },
+              final navCtx = appNavigatorKey.currentContext;
+              if (navCtx == null) {
+                _logShell.w(
+                  'appNavigatorKey has no context; skipping new game setup',
+                );
+                return;
+              }
+              final rootContainer = ProviderScope.containerOf(navCtx);
+              final templateConfig = GameSetupConfig(
+                selectedGreatPowerIds: orderedGreatPowerIds,
+                leaderVariantByGpId: leaderVariantByGpId,
+                continentCount: baseConfig.continentCount,
+                minorNationCount: baseConfig.minorNationCount,
+                tribeCount: baseConfig.tribeCount,
+                numProvincesOldWorld: baseConfig.numProvincesOldWorld,
+                numProvincesNewWorld: baseConfig.numProvincesNewWorld,
+                minProvincesPerMinor: baseConfig.minProvincesPerMinor,
+                seed: seed,
+                startingResources: baseConfig.startingResources,
+                initTownRoadWiringRegionIds:
+                    baseConfig.initTownRoadWiringRegionIds,
+              );
+              unawaited(
+                runNewGameSetupAfterLeaderPick(
+                  container: rootContainer,
+                  templateConfig: templateConfig,
+                ),
+              );
+            },
           );
         },
         trainCiviliansDialogId: (ctx, _) {

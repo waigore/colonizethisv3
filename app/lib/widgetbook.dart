@@ -11,7 +11,6 @@ import 'config/themes.dart';
 import 'features/game/widgets/civilian_units_panel.dart';
 import 'features/game/widgets/diplomacy_panel.dart';
 import 'features/game/widgets/military_units_panel.dart';
-import 'features/game/logic/naval_fleet_split_apply.dart';
 import 'features/game/widgets/naval_units_panel.dart';
 import 'features/game/widgets/production_commodity_breakdown_dialog.dart';
 import 'features/game/widgets/production_panel.dart';
