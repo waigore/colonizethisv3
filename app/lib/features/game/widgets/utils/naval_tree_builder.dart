@@ -206,6 +206,84 @@ buildNavalTree(
     return stats.cargoHold > 0;
   }
 
+  final draftMoveByFleetId = <String, NavalMoveOrder>{
+    for (final order
+        in draftOrders.navalMoveOrdersByPlayerId[humanPlayerId] ?? const [])
+      order.fleetId: order,
+  };
+
+  String resolveSeaZoneRegion({
+    required String seaZoneId,
+    required String fallbackRegionId,
+  }) {
+    final byTopology = regionIdForSeaZone(topology, seaZoneId);
+    if (byTopology != null) {
+      return byTopology;
+    }
+    final localSeaZoneId = seaZoneId.contains('|')
+        ? seaZoneId.split('|').last
+        : seaZoneId;
+    for (final node in topology.nodes) {
+      if (node.type != TopologyNodeType.seaZone) continue;
+      final nodeLocal = node.id.contains('|')
+          ? node.id.split('|').last
+          : node.id;
+      if (nodeLocal == localSeaZoneId) {
+        return node.regionId;
+      }
+    }
+    return fallbackRegionId;
+  }
+
+  String normalizedSeaScope({
+    required String seaZoneId,
+    required String fallbackRegionId,
+  }) {
+    final regionId = resolveSeaZoneRegion(
+      seaZoneId: seaZoneId,
+      fallbackRegionId: fallbackRegionId,
+    );
+    final local = seaZoneId.contains('|')
+        ? seaZoneId.split('|').last
+        : seaZoneId;
+    return 'sea:$regionId|$local';
+  }
+
+  String? projectedLocationScopeForFleet(Fleet fleet) {
+    final move = draftMoveByFleetId[fleet.id];
+    if (move != null) {
+      if (move.isDock) {
+        final pid = move.destinationPortProvinceId!;
+        final province = tryGetProvince(game.worldState, pid);
+        if (province != null) {
+          return 'port:${province.regionId}|${province.id}';
+        }
+        return 'port:$pid';
+      }
+      return normalizedSeaScope(
+        seaZoneId: move.destinationSeaZoneId!,
+        fallbackRegionId: fleet.regionId,
+      );
+    }
+    if (fleet.isAtSea && fleet.seaZoneId != null) {
+      return normalizedSeaScope(
+        seaZoneId: fleet.seaZoneId!,
+        fallbackRegionId: fleet.regionId,
+      );
+    }
+    if (fleet.inPortAtProvinceId != null) {
+      final province = tryGetProvince(
+        game.worldState,
+        fleet.inPortAtProvinceId!,
+      );
+      if (province != null) {
+        return 'port:${province.regionId}|${province.id}';
+      }
+      return 'port:${fleet.inPortAtProvinceId!}';
+    }
+    return null;
+  }
+
   for (final regionEntry in {
     'oldWorld': game.worldState.oldWorld,
     'newWorld': game.worldState.newWorld,
@@ -233,6 +311,11 @@ buildNavalTree(
     for (final fleet in fleetsInRegion) {
       final isAtSea = fleet.isAtSea && fleet.seaZoneId != null;
       final inPortId = fleet.inPortAtProvinceId;
+      final projectedScope = projectedLocationScopeForFleet(fleet);
+      if (locationScopeKeyFilter != null &&
+          projectedScope != locationScopeKeyFilter) {
+        continue;
+      }
 
       final shipCounts = <String, int>{};
       int totalShips = 0;
@@ -273,10 +356,6 @@ buildNavalTree(
             ? seaZoneId
             : '$regionId|$seaZoneId';
         locationKey = 'sea:$zoneKey';
-        if (locationScopeKeyFilter != null &&
-            locationKey != locationScopeKeyFilter) {
-          continue;
-        }
         final zoneLabel = seaZoneDisplayName(
           game: game,
           regionId: regionId,
@@ -323,10 +402,6 @@ buildNavalTree(
             provinceMap['$regionId|$inPortId'] ?? provinceMap[inPortId];
         if (province == null) continue;
         locationKey = 'port:${province.regionId}|${province.id}';
-        if (locationScopeKeyFilter != null &&
-            locationKey != locationScopeKeyFilter) {
-          continue;
-        }
         tileKey = tileKeyForProvinceLocation(game, province);
         locationLabel =
             '${unitsPanelRegionLabel(regionId)} — ${province.displayName ?? province.id}';
@@ -378,7 +453,8 @@ buildNavalTree(
           provinceMap[capitalProvinceLocalId];
       if (province != null) {
         final synLocationKey = 'port:${province.regionId}|${province.id}';
-        final omitSynthetic = locationScopeKeyFilter != null &&
+        final omitSynthetic =
+            locationScopeKeyFilter != null &&
             locationScopeKeyFilter != synLocationKey;
         if (!omitSynthetic) {
           final tileKey = tileKeyForProvinceLocation(game, province);
