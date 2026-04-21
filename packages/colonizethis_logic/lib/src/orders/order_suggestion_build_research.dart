@@ -360,6 +360,34 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   return valid;
 }
 
+Set<String> _partiallyRevealedProvinceCacheForPlayer({
+  required Game game,
+  required PlayerView view,
+}) {
+  final cached = <String>{};
+  for (final regionEntry in game.worldState.tileKeysByRegionAndProvince.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+      var hasKnown = false;
+      var hasUnknown = false;
+      for (final tileKey in provinceEntry.value) {
+        final level = view.visibilityForTile(tileKey);
+        if (level == VisibilityLevel.unknown) {
+          hasUnknown = true;
+        } else {
+          hasKnown = true;
+        }
+        if (hasKnown && hasUnknown) {
+          cached.add(provinceId);
+          break;
+        }
+      }
+    }
+  }
+  return cached;
+}
+
 /// Pre-filters tiles based on work-target-specific criteria per SPEC/program/order-suggestions.md.
 /// Returns a set of candidate tile keys that pass work-target requirements.
 Set<String> _preFilterWorkTargetTiles({
@@ -531,6 +559,7 @@ class _WorkTilePrefilterCtx {
     required this.resourceByTile,
     required this.purchasedTiles,
     required this.ownedProvinceIds,
+    required this.exploreProvinceScope,
     required this.tileMapByRegion,
     required this.result,
   });
@@ -541,6 +570,7 @@ class _WorkTilePrefilterCtx {
   final Map<String, String> resourceByTile;
   final Map<String, String> purchasedTiles;
   final Set<String> ownedProvinceIds;
+  final Set<String>? exploreProvinceScope;
   final Map<String, TileMapResult>? tileMapByRegion;
   final Set<String> result;
 }
@@ -649,6 +679,16 @@ void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
 }
 
 void _prefilterWtExplore(_WorkTilePrefilterCtx c) {
+  final scoped = c.exploreProvinceScope;
+  if (scoped != null) {
+    for (final regionEntry in c.tileKeysByRegion.entries) {
+      for (final provinceEntry in regionEntry.value.entries) {
+        if (!scoped.contains(provinceEntry.key)) continue;
+        c.result.addAll(provinceEntry.value);
+      }
+    }
+    return;
+  }
   for (final regionEntry in c.tileKeysByRegion.entries) {
     for (final provinceEntry in regionEntry.value.entries) {
       c.result.addAll(provinceEntry.value);

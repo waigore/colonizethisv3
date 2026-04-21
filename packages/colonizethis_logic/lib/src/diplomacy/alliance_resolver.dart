@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../ai/ai_control.dart';
 import '../constants.dart';
 import '../dossier/evidence_rules.dart';
+import '../world/civilian_ownership_legality.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';

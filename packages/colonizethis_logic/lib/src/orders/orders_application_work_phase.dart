@@ -1,4 +1,11 @@
-part of 'orders_application.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import '../world/province_lookup.dart';
+import 'build_rail_work_rules.dart';
+import 'orders_application_context.dart';
+import 'orders_application_helpers.dart';
 
 void _completeInstantCivilianOrder(
   void Function(String, Unit) updateUnit,
@@ -17,11 +24,11 @@ void _completeInstantCivilianOrder(
   );
 }
 
-void _runWorkPhase(
-  _BuildWorkState state,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+void runWorkPhase(
+  BuildWorkState state,
+  void Function(BuildWorkState, Unit, String) applyExploreCompletion,
   void Function(
-    _BuildWorkState,
+    BuildWorkState,
     Unit,
     CurrentWork,
     List<Province> Function(),
@@ -178,7 +185,7 @@ void _runWorkPhase(
         deductMaterialCost(cost);
         final totalTurns = config.totalTurnsFn();
 
-        _log.d(
+        ordersApplicationLog.d(
           'work order accepted and assigned unit=${order.unitId} target=$orderTarget targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
         updateUnit(
@@ -254,7 +261,7 @@ void _runWorkPhase(
           u.currentWork == null &&
           hasValidTarget) {
         final totalTurns = totalTurnsForWork(kWorkTargetStealTech);
-        _log.d(
+        ordersApplicationLog.d(
           'work order accepted and assigned unit=${order.unitId} target=steal_tech targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
         updateUnit(
@@ -280,7 +287,7 @@ void _runWorkPhase(
           u.currentWork == null &&
           hasValidTarget) {
         final totalTurns = totalTurnsForWork(kWorkTargetCounterSpy);
-        _log.d(
+        ordersApplicationLog.d(
           'work order accepted and assigned unit=${order.unitId} target=counter_spy targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
         updateUnit(
@@ -343,7 +350,7 @@ void _runWorkPhase(
           }
           if (maxTiles < 1) maxTiles = 1;
           final totalTurns = (3 * tilesInP / maxTiles).ceil().clamp(1, 999);
-          _log.d(
+          ordersApplicationLog.d(
             'work order accepted and assigned unit=${order.unitId} target=explore targetTileKey=$targetTileKey totalTurns=$totalTurns',
           );
           updateUnit(
@@ -376,14 +383,16 @@ void _runWorkPhase(
         final fortLevel = prov?.fortLevel ?? 0;
         if (fortLevel == 1 &&
             player.techUnlocked?[kTechIdMineEngineering] != true) {
-          _log.d(
+          ordersApplicationLog.d(
             'build_fort skipped - Mine Engineering required for fort level 2',
           );
           continue;
         }
         if (fortLevel == 2 &&
             player.techUnlocked?[kTechIdModernForts] != true) {
-          _log.d('build_fort skipped - Modern Forts required for fort level 3');
+          ordersApplicationLog.d(
+            'build_fort skipped - Modern Forts required for fort level 3',
+          );
           continue;
         }
         if (applyStandardWorkOrder(kWorkTargetBuildFort)) continue;
@@ -399,7 +408,7 @@ void _runWorkPhase(
           terrain: terrain,
         );
         if (railReason != null) {
-          _log.d('build_rail skipped - $railReason');
+          ordersApplicationLog.d('build_rail skipped - $railReason');
           continue;
         }
         if (applyStandardWorkOrder(kWorkTargetBuildRail)) continue;
