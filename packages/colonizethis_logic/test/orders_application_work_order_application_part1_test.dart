@@ -63,6 +63,12 @@ void main() {
           tileMapByRegion: {ow: tileMapWithTerrain(TerrainType.hills)},
         );
         expect(next.worldState.playerProspectedTiles['p1'], contains(tileKey));
+        final explorerAfter = next.worldState.oldWorld.units.single;
+        expect(explorerAfter.tileKey, tileKey);
+        expect(explorerAfter.status, UnitStatus.idle);
+        expect(explorerAfter.currentWork, isNull);
+        expect(explorerAfter.originTileKey, isNull);
+        expect(explorerAfter.assignedTileKey, isNull);
       },
     );
 

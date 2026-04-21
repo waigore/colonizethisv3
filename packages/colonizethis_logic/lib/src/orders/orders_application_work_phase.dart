@@ -1,18 +1,27 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
+part of 'orders_application.dart';
 
-import '../constants.dart';
-import '../world/province_lookup.dart';
-import '../world/tile_control.dart';
-import 'build_rail_work_rules.dart';
-import 'orders_application_context.dart';
-import 'orders_application_helpers.dart';
+void _completeInstantCivilianOrder(
+  void Function(String, Unit) updateUnit,
+  Unit unit,
+  String targetTileKey,
+) {
+  updateUnit(
+    unit.id,
+    unit.copyWith(
+      status: UnitStatus.idle,
+      tileKey: targetTileKey,
+      clearOriginTileKey: true,
+      clearAssignedTileKey: true,
+      clearCurrentWork: true,
+    ),
+  );
+}
 
-void runWorkPhase(
-  BuildWorkState state,
-  void Function(BuildWorkState, Unit, String) applyExploreCompletion,
+void _runWorkPhase(
+  _BuildWorkState state,
+  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
   void Function(
-    BuildWorkState,
+    _BuildWorkState,
     Unit,
     CurrentWork,
     List<Province> Function(),
@@ -169,7 +178,7 @@ void runWorkPhase(
         deductMaterialCost(cost);
         final totalTurns = config.totalTurnsFn();
 
-        ordersApplicationLog.d(
+        _log.d(
           'work order accepted and assigned unit=${order.unitId} target=$orderTarget targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
         updateUnit(
@@ -195,6 +204,7 @@ void runWorkPhase(
             u.type,
             kWorkTargetPurchaseLand,
           ) &&
+          u.currentWork == null &&
           hasValidTarget) {
         // SPEC/game/diplomacy.md (GP–Minor/Tribe Rules): purchase_land requires an Embassy
         // with the Minor/Tribe and the buyer must not be at war with that faction.
@@ -232,6 +242,7 @@ void runWorkPhase(
             if (!purchasedTilesByTileKey.containsKey(targetTileKey)) {
               treasury -= cost;
               purchasedTilesByTileKey[targetTileKey] = player.id;
+              _completeInstantCivilianOrder(updateUnit, u, targetTileKey);
             }
           }
         }
@@ -243,7 +254,7 @@ void runWorkPhase(
           u.currentWork == null &&
           hasValidTarget) {
         final totalTurns = totalTurnsForWork(kWorkTargetStealTech);
-        ordersApplicationLog.d(
+        _log.d(
           'work order accepted and assigned unit=${order.unitId} target=steal_tech targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
         updateUnit(
@@ -269,7 +280,7 @@ void runWorkPhase(
           u.currentWork == null &&
           hasValidTarget) {
         final totalTurns = totalTurnsForWork(kWorkTargetCounterSpy);
-        ordersApplicationLog.d(
+        _log.d(
           'work order accepted and assigned unit=${order.unitId} target=counter_spy targetTileKey=$targetTileKey totalTurns=$totalTurns',
         );
         updateUnit(
@@ -292,6 +303,7 @@ void runWorkPhase(
 
       if (order.target == kWorkTargetProspect &&
           hasValidTarget &&
+          u.currentWork == null &&
           isExplorerUnit(u.type) &&
           isMineralEligibleTile(
             state.game,
@@ -309,6 +321,7 @@ void runWorkPhase(
             },
           ),
         );
+        _completeInstantCivilianOrder(updateUnit, u, targetTileKey);
       }
       if (order.target == kWorkTargetBuildImprovement) {
         if (applyStandardWorkOrder(kWorkTargetBuildImprovement)) continue;
@@ -330,7 +343,7 @@ void runWorkPhase(
           }
           if (maxTiles < 1) maxTiles = 1;
           final totalTurns = (3 * tilesInP / maxTiles).ceil().clamp(1, 999);
-          ordersApplicationLog.d(
+          _log.d(
             'work order accepted and assigned unit=${order.unitId} target=explore targetTileKey=$targetTileKey totalTurns=$totalTurns',
           );
           updateUnit(
@@ -363,16 +376,14 @@ void runWorkPhase(
         final fortLevel = prov?.fortLevel ?? 0;
         if (fortLevel == 1 &&
             player.techUnlocked?[kTechIdMineEngineering] != true) {
-          ordersApplicationLog.d(
+          _log.d(
             'build_fort skipped - Mine Engineering required for fort level 2',
           );
           continue;
         }
         if (fortLevel == 2 &&
             player.techUnlocked?[kTechIdModernForts] != true) {
-          ordersApplicationLog.d(
-            'build_fort skipped - Modern Forts required for fort level 3',
-          );
+          _log.d('build_fort skipped - Modern Forts required for fort level 3');
           continue;
         }
         if (applyStandardWorkOrder(kWorkTargetBuildFort)) continue;
@@ -388,7 +399,7 @@ void runWorkPhase(
           terrain: terrain,
         );
         if (railReason != null) {
-          ordersApplicationLog.d('build_rail skipped - $railReason');
+          _log.d('build_rail skipped - $railReason');
           continue;
         }
         if (applyStandardWorkOrder(kWorkTargetBuildRail)) continue;
