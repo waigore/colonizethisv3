@@ -1,6 +1,8 @@
 import 'package:colonizethis_app/features/game/flame/game_map_area_state_logic.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show PlayerView, VisibilityLevel;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -300,6 +302,146 @@ void main() {
 
         expect(updated.moveOrdersByPlayerId[humanPlayerId], isEmpty);
         expect(updated.workOrdersByPlayerId[humanPlayerId], [work]);
+      });
+    });
+
+    group('provinceProspectActionState', () {
+      const humanPlayerId = 'gp1';
+      const selectedTileKey = 'oldWorld|p1|0|0';
+      const selectedProvinceId = 'oldWorld|p1';
+
+      ct_models.Game makeGame({
+        bool includeExplorer = true,
+        bool includeProspectedTile = false,
+        bool includeMineralResource = true,
+      }) {
+        return ct_models.Game(
+          id: 'g',
+          worldState: ct_models.WorldState(
+            turnState: const ct_models.TurnState(
+              phase: ct_models.TurnPhase.orders,
+              turnNumber: 1,
+            ),
+            oldWorld: ct_models.RegionData(
+              provinces: const [
+                ct_models.Province(
+                  id: selectedProvinceId,
+                  regionId: 'oldWorld',
+                ),
+              ],
+              units: includeExplorer
+                  ? [
+                      ct_models.Unit(
+                        id: 'u_explorer',
+                        type: 'Explorer',
+                        ownerId: humanPlayerId,
+                        locationProvinceId: selectedProvinceId,
+                        tileKey: selectedTileKey,
+                        status: ct_models.UnitStatus.idle,
+                      ),
+                    ]
+                  : const [],
+            ),
+            newWorld: const ct_models.RegionData(provinces: [], units: []),
+            resourceByTileKey: includeMineralResource
+                ? const {selectedTileKey: 'iron'}
+                : const {},
+            playerProspectedTiles: includeProspectedTile
+                ? const {
+                    humanPlayerId: {selectedTileKey},
+                  }
+                : const {},
+          ),
+          players: const [
+            ct_models.Player(
+              id: humanPlayerId,
+              displayName: 'Human',
+              isHuman: true,
+            ),
+          ],
+          minorNations: const [],
+          tribes: const [],
+        );
+      }
+
+      PlayerView makePlayerView({required VisibilityLevel tileVisibility}) {
+        return PlayerView(
+          playerId: humanPlayerId,
+          player: const ct_models.Player(
+            id: humanPlayerId,
+            displayName: 'Human',
+            isHuman: true,
+          ),
+          ownUnitsById: {},
+          provincesById: {},
+          visibilityByTile: {selectedTileKey: tileVisibility},
+          prospectedTiles: {},
+          diplomacyByOtherId: {},
+        );
+      }
+
+      test('shows enabled icon for visible, unprospected mineral tile', () {
+        final state = GameMapAreaStateLogic.provinceProspectActionState(
+          game: makeGame(),
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          playerView: makePlayerView(
+            tileVisibility: VisibilityLevel.fullyVisible,
+          ),
+          topology: null,
+          currentOrders: const ct_models.Orders(),
+          tileMapByRegion: null,
+        );
+        expect(state.showIcon, isTrue);
+        expect(state.enabled, isTrue);
+        expect(state.hasExplorerUnits, isTrue);
+      });
+
+      test('hides icon when selected tile already prospected', () {
+        final state = GameMapAreaStateLogic.provinceProspectActionState(
+          game: makeGame(includeProspectedTile: true),
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          playerView: makePlayerView(tileVisibility: VisibilityLevel.fogged),
+          topology: null,
+          currentOrders: const ct_models.Orders(),
+          tileMapByRegion: null,
+        );
+        expect(state.showIcon, isFalse);
+        expect(state.enabled, isFalse);
+        expect(state.hasExplorerUnits, isFalse);
+      });
+
+      test('shows disabled icon when human has zero explorer units', () {
+        final state = GameMapAreaStateLogic.provinceProspectActionState(
+          game: makeGame(includeExplorer: false),
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          playerView: makePlayerView(
+            tileVisibility: VisibilityLevel.fullyVisible,
+          ),
+          topology: null,
+          currentOrders: const ct_models.Orders(),
+          tileMapByRegion: null,
+        );
+        expect(state.showIcon, isTrue);
+        expect(state.enabled, isFalse);
+        expect(state.hasExplorerUnits, isFalse);
+      });
+
+      test('hides icon for unknown-visibility tiles', () {
+        final state = GameMapAreaStateLogic.provinceProspectActionState(
+          game: makeGame(),
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          playerView: makePlayerView(tileVisibility: VisibilityLevel.unknown),
+          topology: null,
+          currentOrders: const ct_models.Orders(),
+          tileMapByRegion: null,
+        );
+        expect(state.showIcon, isFalse);
+        expect(state.enabled, isFalse);
+        expect(state.hasExplorerUnits, isFalse);
       });
     });
 
@@ -778,7 +920,7 @@ void main() {
                     humanId: [
                       ct_models.NavalMoveOrder(
                         fleetId: 'f1',
-                  destinationSeaZoneId: 'newWorld|s2',
+                        destinationSeaZoneId: 'newWorld|s2',
                       ),
                     ],
                   },
@@ -820,7 +962,7 @@ void main() {
                   humanId: [
                     ct_models.NavalMoveOrder(
                       fleetId: 'f1',
-                  destinationSeaZoneId: 'newWorld|s2',
+                      destinationSeaZoneId: 'newWorld|s2',
                     ),
                   ],
                 },
