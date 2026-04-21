@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'naval.dart';
+import 'naval_resolution.dart' show coastalLandTileKeysFromNavalPresenceAtSea;
 import 'player_view.dart';
 import 'province_lookup.dart';
 import 'unit_lookup.dart';
@@ -69,11 +70,26 @@ applySpyRevealTimerDecay(Game game) {
 
 /// For each player, set tiles in other-faction provinces to fogged when no Explorer/Spy in that province.
 /// SPEC/program/fog-and-exploration-resolution.md.
-Map<String, Map<String, String>> applyFogDecay(Game game) {
+Map<String, Map<String, String>> applyFogDecay(
+  Game game, {
+  MapTopology? navalCoastalIntelTopology,
+}) {
   const explorerTypes = {'explorer', 'spy'};
   final ownerByProvince = <String, String?>{
     for (final p in allProvinces(game.worldState)) p.id: p.ownerId,
   };
+
+  final navalCoastalIntelByPlayer = <String, Set<String>>{};
+  if (navalCoastalIntelTopology != null) {
+    for (final player in game.players) {
+      navalCoastalIntelByPlayer[player.id] =
+          coastalLandTileKeysFromNavalPresenceAtSea(
+            game,
+            navalCoastalIntelTopology,
+            player.id,
+          );
+    }
+  }
 
   final provincesWithExplorerByPlayer = <String, Set<String>>{};
   for (final u in allUnitsFromWorld(game.worldState)) {
@@ -97,6 +113,7 @@ Map<String, Map<String, String>> applyFogDecay(Game game) {
     final visibility = Map<String, String>.from(entry.value);
     final hasExplorerIn = provincesWithExplorerByPlayer[playerId] ?? const {};
     final hasSpyTimerIn = provincesWithSpyTimerByPlayer[playerId] ?? const {};
+    final navalCoastalIntel = navalCoastalIntelByPlayer[playerId] ?? const {};
 
     for (final tileKey in visibility.keys.toList()) {
       final parts = tileKey.split('|');
@@ -106,6 +123,7 @@ Map<String, Map<String, String>> applyFogDecay(Game game) {
       if (ownerId == null || ownerId == playerId) continue;
       if (hasExplorerIn.contains(fullProvinceId)) continue;
       if (hasSpyTimerIn.contains(fullProvinceId)) continue;
+      if (navalCoastalIntel.contains(tileKey)) continue;
       final cur = visibility[tileKey];
       if (cur != VisibilityLevel.fullyVisible.name) continue;
       visibility[tileKey] = VisibilityLevel.fogged.name;

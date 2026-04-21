@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
+import '../../orders/bundled_civilian_work_order.dart';
 import '../../orders/draft_orders_mutations.dart';
 import '../../world/army_movement.dart';
 import '../../world/movement.dart';
@@ -59,6 +60,7 @@ Game runMovementPhase(Game game, MapTopology topology, Orders orders) {
       ),
     );
   }
+  state = applyImplicitBundledCivilianWorkOrderMoves(state, topology, orders);
 
   final armyMoveOrders = orders.armyMoveOrdersByPlayerId;
   if (armyMoveOrders.isNotEmpty) {
@@ -104,5 +106,71 @@ Game runMovementPhase(Game game, MapTopology topology, Orders orders) {
   );
   state = applyNavalMissionOrders(state, missionOrders);
 
+  return state;
+}
+
+Game applyImplicitBundledCivilianWorkOrderMoves(
+  Game game,
+  MapTopology topology,
+  Orders orders,
+) {
+  var state = game;
+  final workByPlayerId = orders.workOrdersByPlayerId;
+  if (workByPlayerId.isEmpty) {
+    return state;
+  }
+
+  for (final entry in workByPlayerId.entries) {
+    final playerId = entry.key;
+    for (final workOrder in entry.value) {
+      final unitById = unitsByIdFromWorld(state.worldState);
+      final unit = unitById[workOrder.unitId];
+      if (unit == null || unit.ownerId != playerId) {
+        continue;
+      }
+      if (!civilianBundledWorkNeedsProvinceMoveLeg(state, unit, workOrder)) {
+        continue;
+      }
+      final destination = executionProvinceFullIdFromWorkOrder(state, workOrder);
+      if (destination == null) {
+        continue;
+      }
+      final destinationTile = firstBundledEntryTileKeyInProvince(
+        game: state,
+        destProvinceFullId: destination,
+      );
+      if (destinationTile == null) {
+        continue;
+      }
+
+      final destinationRegion = ProvinceId.regionIdFrom(destination);
+      final inOldWorld = destinationRegion == kRegionOldWorld;
+      final oldUnits = [...state.worldState.oldWorld.units];
+      final newUnits = [...state.worldState.newWorld.units];
+      oldUnits.removeWhere((u) => u.id == unit.id);
+      newUnits.removeWhere((u) => u.id == unit.id);
+      final movedUnit = unit.copyWith(
+        locationProvinceId: destination,
+        tileKey: destinationTile,
+      );
+      if (inOldWorld) {
+        oldUnits.add(movedUnit);
+      } else {
+        newUnits.add(movedUnit);
+      }
+      state = state.copyWith(
+        worldState: state.worldState.copyWith(
+          oldWorld: RegionData(
+            provinces: state.worldState.oldWorld.provinces,
+            units: oldUnits,
+          ),
+          newWorld: RegionData(
+            provinces: state.worldState.newWorld.provinces,
+            units: newUnits,
+          ),
+        ),
+      );
+    }
+  }
   return state;
 }

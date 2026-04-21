@@ -31,8 +31,26 @@ final _log = packageLogger();
 /// (`regionId|localSeaId`). Normalize for lookups only; fleet orders still use topology ids.
 String _localSeaZoneIdForTileIndex(String seaZoneTopologyId) =>
     ProvinceId.isPrefixed(seaZoneTopologyId)
-        ? ProvinceId.localIdFrom(seaZoneTopologyId)
-        : seaZoneTopologyId;
+    ? ProvinceId.localIdFrom(seaZoneTopologyId)
+    : seaZoneTopologyId;
+
+/// [tileKeysByRegionAndProvince] normally keys land provinces by full id
+/// (`regionId|localId`); some fixtures or legacy maps key by **local** id only.
+/// Ship reveal and dock visibility must resolve tiles using whichever bucket exists.
+List<String> landTileKeysForProvinceBucket(
+  WorldState ws,
+  String regionId,
+  String fullProvinceId,
+) {
+  final byProv = ws.tileKeysByRegionAndProvince[regionId];
+  if (byProv == null) return const [];
+  final byFull = byProv[fullProvinceId];
+  if (byFull != null && byFull.isNotEmpty) {
+    return byFull;
+  }
+  final localId = ProvinceId.localIdFrom(fullProvinceId);
+  return byProv[localId] ?? const [];
+}
 
 Set<String> _coastalTileKeysAdjacentToSeaZone({
   required List<String> provinceTileKeys,
@@ -66,9 +84,11 @@ Map<String, Map<String, String>> _revealProvinceTilesForPlayer(
   String fullProvinceId,
 ) {
   final regionId = ProvinceId.regionIdFrom(fullProvinceId);
-  final tileKeys =
-      game.worldState.tileKeysByRegionAndProvince[regionId]?[fullProvinceId] ??
-      const [];
+  final tileKeys = landTileKeysForProvinceBucket(
+    game.worldState,
+    regionId,
+    fullProvinceId,
+  );
   if (tileKeys.isEmpty) return visibilityByTile;
   final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
   for (final tk in tileKeys) {
@@ -382,11 +402,11 @@ Game applyNavalMovesAndShipReveal(
             .tileKeysByRegionAndProvince[destRegionId]?[seaZoneKeyForTiles];
         for (final provinceNodeId in provinceIds) {
           final fullProvinceId = toFullProvinceId(destRegionId, provinceNodeId);
-          final provinceTileKeys =
-              game
-                  .worldState
-                  .tileKeysByRegionAndProvince[destRegionId]?[fullProvinceId] ??
-              [];
+          final provinceTileKeys = landTileKeysForProvinceBucket(
+            game.worldState,
+            destRegionId,
+            fullProvinceId,
+          );
           final coastalTileKeys = _coastalTileKeysAdjacentToSeaZone(
             provinceTileKeys: provinceTileKeys,
             seaWaterTileKeys: seaWaterKeys ?? const [],
@@ -413,6 +433,50 @@ Game applyNavalMovesAndShipReveal(
       playerVisibilityByTile: visibilityByTile,
     ),
   );
+}
+
+/// Land tile keys orthogonally adjacent to water in sea zones where [playerId] has
+/// a non–home fleet **at sea**. Same geometry as ship reveal in this file; used so
+/// [applyFogDecay] does not strip that coastal intel while the fleet remains offshore.
+Set<String> coastalLandTileKeysFromNavalPresenceAtSea(
+  Game game,
+  MapTopology topology,
+  String playerId,
+) {
+  final out = <String>{};
+  final ws = game.worldState;
+  final homeFleetId = homeFleetIdFor(playerId);
+  for (final f in ws.fleets) {
+    if (f.ownerId != playerId) continue;
+    if (f.id == homeFleetId) continue;
+    if (!f.isAtSea || f.seaZoneId == null) continue;
+    final destRegionId = f.regionId;
+    final destZoneId = f.seaZoneId!;
+    final provinceIds = provinceIdsAdjacentToSeaZone(
+      topology,
+      destZoneId,
+      regionId: destRegionId,
+    );
+    final seaZoneKeyForTiles = _localSeaZoneIdForTileIndex(destZoneId);
+    final seaWaterKeys =
+        ws.tileKeysByRegionAndProvince[destRegionId]?[seaZoneKeyForTiles] ??
+        const <String>[];
+    for (final provinceNodeId in provinceIds) {
+      final fullProvinceId = toFullProvinceId(destRegionId, provinceNodeId);
+      final provinceTileKeys = landTileKeysForProvinceBucket(
+        ws,
+        destRegionId,
+        fullProvinceId,
+      );
+      out.addAll(
+        _coastalTileKeysAdjacentToSeaZone(
+          provinceTileKeys: provinceTileKeys,
+          seaWaterTileKeys: seaWaterKeys,
+        ),
+      );
+    }
+  }
+  return out;
 }
 
 Game runNavalInterceptionCombatPhase(

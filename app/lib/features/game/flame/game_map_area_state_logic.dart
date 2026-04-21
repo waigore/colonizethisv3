@@ -40,7 +40,15 @@ class GameMapAreaStateLogic {
           const <ct_models.WorkOrder>[],
     )..removeWhere((o) => o.unitId == workOrder.unitId);
     prior.add(workOrder);
+    final movesWithoutUnit = List<ct_models.MoveOrder>.from(
+      orders.moveOrdersByPlayerId[humanPlayerId] ??
+          const <ct_models.MoveOrder>[],
+    )..removeWhere((o) => o.unitId == workOrder.unitId);
     return orders.copyWith(
+      moveOrdersByPlayerId: {
+        ...orders.moveOrdersByPlayerId,
+        humanPlayerId: movesWithoutUnit,
+      },
       workOrdersByPlayerId: {
         ...orders.workOrdersByPlayerId,
         humanPlayerId: prior,
