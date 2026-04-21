@@ -93,6 +93,13 @@ rules:
     runner: dart
     script: tool/check_repeated_magic_numbers.dart
 
+  - rule_id: repo.function_size
+    group: structure
+    title: Function size threshold (measured lines)
+    spec: SPEC/program/function-size.md
+    runner: dart
+    script: tool/check_function_size.dart
+
   - rule_id: repo.canonical_province_tile_keys
     group: game_invariants
     title: Canonical province WorkOrder targetTileKey literals
