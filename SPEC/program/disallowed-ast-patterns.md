@@ -25,6 +25,17 @@ Rationale: The filter-then-cast chain duplicates work and is harder to read than
 
 Rule id: `stream_where_is_map_as` (`match.kind`: `stream_where_is_map_as`).
 
+### `avoid_print` suppression comments
+
+In runtime domain code, comments that suppress the `avoid_print` lint
+(`// ignore: avoid_print`) are disallowed.
+
+Rationale: logging policy requires package logger usage; suppressing `avoid_print`
+masks policy violations instead of fixing them.
+
+Rule id: `avoid_print_suppression` (`match.kind`: `comment_substring`,
+`match.contains`: `ignore: avoid_print`).
+
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -53,3 +64,7 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
 - **Given** runtime Dart source that uses `.whereType<T>()` instead of that chain, **when** the checker runs, **then** it does not report a violation for `stream_where_is_map_as`.
 
 - **Given** runtime Dart source with `// ignore: disallowed_ast_stream_where_is_map_as` on the violating line or the line above, **when** the checker runs, **then** it does not report that violation for `stream_where_is_map_as`.
+
+- **Given** runtime Dart source containing a comment `// ignore: avoid_print`,
+  **when** the disallowed AST checker runs, **then** it reports at least one
+  violation for `avoid_print_suppression` with the correct file and line.

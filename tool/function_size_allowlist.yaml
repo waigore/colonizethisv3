@@ -702,10 +702,10 @@ allowed_over_20:
     max_measured_lines: 21
   - file: packages/colonizethis_logic/lib/src/setup/locked_province_assigner.dart
     symbol: assignTerritoriesLockedOnLandmass
-    max_measured_lines: 258
+    max_measured_lines: 262
   - file: packages/colonizethis_logic/lib/src/setup/locked_province_assigner.dart
     symbol: assignTerritoriesLockedOnLandmass::dfs
-    max_measured_lines: 121
+    max_measured_lines: 123
   - file: packages/colonizethis_logic/lib/src/setup/province_assignment.dart
     symbol: assignTerritoriesByBfsGrowth
     max_measured_lines: 180

@@ -18,3 +18,10 @@ rules:
       .whereType<T>() on Stream or Iterable instead.
     match:
       kind: stream_where_is_map_as
+  - id: avoid_print_suppression
+    message: >-
+      Do not suppress avoid_print via // ignore comments in runtime code.
+      Route diagnostics through package logger instead.
+    match:
+      kind: comment_substring
+      contains: "ignore: avoid_print"
