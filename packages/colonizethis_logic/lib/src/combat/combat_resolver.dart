@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/army_migration.dart';
+import '../world/civilian_ownership_legality.dart';
 import '../world/fog_resolution.dart';
 import '../world/unit_lookup.dart';
 import 'battle_general_assignment.dart';
@@ -356,6 +357,12 @@ Game resolveBattleContext(
         .map((g) => generalsById[g.id] ?? g)
         .toList(growable: false),
   );
+  if (post.provinceChangedOwner) {
+    result = relocateIllegalCiviliansInChangedProvinces(
+      result,
+      changedProvinceIds: {ctx.provinceId},
+    );
+  }
   result = result.copyWith(
     worldState: reconcileArmiesAfterUnitsChanged(result.worldState, result),
   );
@@ -400,18 +407,6 @@ Game resolveBattleContext(
       )
       .toList();
   var finalUnits = [...survivingUnits, ...recoveredUnits];
-
-  // If the province changed hands during this battle, remove civilian units
-  // in that province that do not belong to the new owner.
-  if (ownerId != defenderFactionId) {
-    final victorId = ownerId;
-    finalUnits = finalUnits.where((u) {
-      if (u.locationProvinceId != ctx.provinceId) return true;
-      // Military units remain; civilians of non-victor factions are removed.
-      if (canUnitInitiateCombat(u.type)) return true;
-      return u.ownerId == victorId;
-    }).toList();
-  }
 
   final newRegion = RegionData(provinces: updatedProvinces, units: finalUnits);
   return (region: newRegion, provinceChangedOwner: provinceChangedOwner);
