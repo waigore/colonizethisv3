@@ -1,4 +1,4 @@
-# Reference: implement-github-issue-fix
+# Reference: implement-github-issue
 
 ## CONTRIBUTING (summary)
 

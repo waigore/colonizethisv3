@@ -11,6 +11,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'capital_choice.dart';
 import 'gp_land_connectivity_repair.dart';
 import 'gp_old_world_resource_redistribution.dart';
+import 'gp_old_world_terrain_redistribution.dart';
 import 'gp_starting_grain.dart';
 import 'town_capital_occupancy.dart';
 import 'init_town_roads.dart';

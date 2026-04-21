@@ -1,5 +1,5 @@
 ---
-name: implement-github-issue-fix
+name: implement-github-issue
 description: Implements a fix from a GitHub issue number or URL after validating the issue for clear problem statement, design or technical approach, and test-targetable acceptance criteria; updates SPEC and ACs when gaps exist; adds positive and negative tests mapped to ACs; runs tests; opens a PR targeting dev that references the issue without closing it. For very large issues (about 20+ files or broad spec churn), implements one isolatable slice only. Use when the user gives an issue ID or URL and wants end-to-end implementation with tests and a non-closing PR.
 ---
 
@@ -9,7 +9,7 @@ description: Implements a fix from a GitHub issue number or URL after validating
 
 The user provides a GitHub **issue number** or **issue URL** (and repo context if ambiguous) and wants the agent to **implement** the described work—not only to plan, verify, or file an issue.
 
-**Related skills:** Use [verify-github-issue](../verify-github-issue/SKILL.md) when the goal is verification or closure only; use [plan-feature-github-issue](../plan-feature-github-issue/SKILL.md) when the goal is planning and issue creation without code changes.
+**Related skills:** Use [verify-github-issue](../verify-github-issue/SKILL.md) when the goal is verification or closure only; use [plan-feature](../plan-feature/SKILL.md) when the goal is planning and issue creation without code changes.
 
 ## Non-negotiables
 

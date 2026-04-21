@@ -378,6 +378,16 @@ GameSetupResult createGameFromGeneratedMaps({
     }
   }
 
+  // §7d.terrain GP Old World terrain redistribution (always-on when OW grids exist), then §7d.redist resources.
+  // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.
+  final gpTerrainRedist = applyGreatPowerOldWorldTerrainRedistribution(
+    game: game,
+    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
+    setupSeedBase: perturbBase,
+  );
+  game = gpTerrainRedist.game;
+  tileMapByRegion[kRegionOldWorld] = gpTerrainRedist.tileMap;
+
   // §7d.redist GP Old World terrain resource redistribution (always-on when OW grids exist).
   // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.
   final gpRedist = applyGreatPowerOldWorldResourceRedistribution(
