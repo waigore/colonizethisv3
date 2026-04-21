@@ -218,7 +218,7 @@ jobs:
         needs.app_tests_shard.result == 'success'
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 10 # Enforce e2e runtime budget for test-performance hygiene.
     env:
       PUB_CACHE: ${{ github.workspace }}/.pub-cache
     steps:
