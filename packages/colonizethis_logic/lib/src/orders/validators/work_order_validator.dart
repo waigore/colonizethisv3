@@ -8,6 +8,7 @@ import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
 import '../../world/tile_control.dart';
 import '../build_rail_work_rules.dart';
+import '../bundled_civilian_work_order.dart';
 import '../orders_application_helpers.dart';
 import '../order_visibility.dart';
 import '../order_validation_result.dart';
@@ -27,6 +28,9 @@ class WorkOrderValidationContext {
     required this.unitsById,
     required this.devExclusiveTiles,
     this.tileMapByRegion,
+    this.civilianDraftMoveUnitIds = const <String>{},
+    this.diplomaticOrders = const <DiplomaticOrder>[],
+    this.topology,
   });
 
   final Game game;
@@ -36,6 +40,9 @@ class WorkOrderValidationContext {
   final Map<String, Unit> unitsById;
   final Set<String> devExclusiveTiles;
   final Map<String, TileMapResult>? tileMapByRegion;
+  final Set<String> civilianDraftMoveUnitIds;
+  final List<DiplomaticOrder> diplomaticOrders;
+  final MapTopology? topology;
 }
 
 class WorkOrderValidator extends OrderValidator {
@@ -82,6 +89,9 @@ class WorkOrderValidator extends OrderValidator {
           return OrderValidationResult.rejected(
             'Unit already has a work order; cancel first',
           );
+        }
+        if (_context.civilianDraftMoveUnitIds.contains(o.unitId)) {
+          return OrderValidationResult.rejected(kReasonCivilianMoveXorWorkOrder);
         }
         final type = unit.type;
         if (!isWorkOrderTargetAllowedForUnitType(type, o.target)) {

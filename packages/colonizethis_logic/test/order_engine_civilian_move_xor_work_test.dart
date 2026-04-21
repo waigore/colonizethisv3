@@ -75,7 +75,7 @@ void main() {
         game,
         topology,
         'p1',
-        MoveOrder(unitId: 'u1', destinationProvinceId: p2),
+        const MoveOrder(unitId: 'u1', destinationTileKey: tileB),
       );
       expect(moveRes.isAccepted, isTrue, reason: moveRes.reason);
       final workResult = engine.addWorkOrderWithContext(
@@ -159,7 +159,7 @@ void main() {
       final engine = OrderEngine(
         initialOrders: Orders(
           moveOrdersByPlayerId: {
-            'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: p2)],
+            'p1': [const MoveOrder(unitId: 'u1', destinationTileKey: tileB)],
           },
           workOrdersByPlayerId: {
             'p1': [

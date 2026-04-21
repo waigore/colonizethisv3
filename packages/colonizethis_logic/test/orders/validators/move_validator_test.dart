@@ -362,7 +362,7 @@ void main() {
         final view = buildPlayerView(game, combinedTopology, 'p1');
         const validator = MoveValidator();
         final result = validator.validate(
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'newWorld|P2'),
+          const MoveOrder(unitId: 'u1', destinationTileKey: 'newWorld|P2|0|0'),
           game,
           'p1',
           unitsById,
@@ -425,7 +425,7 @@ void main() {
         final view = buildPlayerView(game, combinedTopology, 'p1');
         const validator = MoveValidator();
         final result = validator.validate(
-          const MoveOrder(unitId: 'u1', destinationProvinceId: 'newWorld|P2'),
+          const MoveOrder(unitId: 'u1', destinationTileKey: 'newWorld|P2|0|0'),
           game,
           'p1',
           unitsById,

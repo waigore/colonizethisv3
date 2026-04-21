@@ -121,8 +121,15 @@ OrderValidationResult validateCivilianBundledWorkMoveLeg({
     return OrderValidationResult.rejected(kReasonBundledWorkMoveLegInvalid);
   }
   const moveValidator = MoveValidator();
+  final destinationTile = firstBundledEntryTileKeyInProvince(
+    game: game,
+    destProvinceFullId: destFull,
+  );
+  if (destinationTile == null) {
+    return OrderValidationResult.rejected(kReasonNoValidEntryLandTile);
+  }
   final moveRes = moveValidator.validate(
-    MoveOrder(unitId: unit.id, destinationProvinceId: destFull),
+    MoveOrder(unitId: unit.id, destinationTileKey: destinationTile),
     game,
     playerId,
     unitsById,
