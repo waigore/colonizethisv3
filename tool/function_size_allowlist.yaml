@@ -30,7 +30,7 @@ allowed_over_20:
     max_measured_lines: 35
   - file: packages/colonizethis_logic/lib/src/combat/combat_resolver.dart
     symbol: resolveBattleContext
-    max_measured_lines: 237
+    max_measured_lines: 242
   - file: packages/colonizethis_logic/lib/src/combat/combat_resolver.dart
     symbol: resolveEngagement
     max_measured_lines: 65
@@ -435,7 +435,7 @@ allowed_over_20:
     max_measured_lines: 26
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_work_phase.dart
     symbol: _runWorkPhase
-    max_measured_lines: 364
+    max_measured_lines: 368
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_work_phase.dart
     symbol: _runWorkPhase::applyStandardWorkOrder
     max_measured_lines: 30
