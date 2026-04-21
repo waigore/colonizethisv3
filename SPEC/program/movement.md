@@ -71,7 +71,7 @@ When the player submits a `MoveOrder` for `c1` to `oldWorld|p2` and the order is
 Then during the Movement phase the system updates `c1.provinceId` to `oldWorld|p2`, sets `c1.tileKey` to one of the tile keys listed for `oldWorld|p2`, and leaves `c1` unchanged if the order is later rejected.
 
 Given a player owns province `oldWorld|p1` in the Old World region and province `newWorld|p2` in the New World region, and controls a civilian unit `c1` at `oldWorld|p1` with `tileKeysByRegionAndProvince[newWorld][newWorld|p2]` containing at least one tile key and both provinces fully visible  
-When the player submits a `MoveOrder` for `c1` with `destinationProvinceId = newWorld|p2` and the order is accepted  
+When the player submits a `MoveOrder` for `c1` with `destinationTileKey` set to a tile in `newWorld|p2` and the order is accepted  
 Then during the Movement phase the system removes `c1` from the Old World unit list, adds `c1` to the New World unit list with `provinceId = newWorld|p2`, sets `c1.tileKey` to one of the tile keys for `newWorld|p2`, and the move completes in a single turn without any intermediate positions.
 
 Given the OrderEngine validates **civilian** `MoveOrder` and **ArmyMoveOrder** instances for a player in a world with region-scoped topology and prefixed province ids  
