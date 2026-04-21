@@ -33,6 +33,7 @@ export 'order_suggestion_build_research.dart'
         suggestResearchOrders;
 export 'order_suggestion_move_army.dart'
     show
+        ArmyMovePickerDestination,
         armyMoveCandidateDestinationProvinceIds,
         armyMovePickerDestinations,
         suggestArmyMoveOrders,
