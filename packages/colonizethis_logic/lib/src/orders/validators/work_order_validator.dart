@@ -279,7 +279,7 @@ class WorkOrderValidator extends OrderValidator {
     required int fortLevel,
     required int roadLevel,
   }) {
-    final costMap = WorkOrderCostCalculator(_context.game).calculateCost(
+    final costMap = _workCostMap(
       o.target,
       o.targetTileKey,
       improvementLevel: improvementLevel,
@@ -294,6 +294,20 @@ class WorkOrderValidator extends OrderValidator {
     }
     return null;
   }
+
+  Map<String, int>? _workCostMap(
+    String target,
+    String tileKey, {
+    required int improvementLevel,
+    required int fortLevel,
+    required int roadLevel,
+  }) => WorkOrderCostCalculator(_context.game).calculateCost(
+    target,
+    tileKey,
+    improvementLevel: improvementLevel,
+    fortLevel: fortLevel,
+    roadLevel: roadLevel,
+  );
 
   bool _hasInsufficientStockpileForCost(Map<String, int> costMap) {
     for (final entry in costMap.entries) {

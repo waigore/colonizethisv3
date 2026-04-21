@@ -170,11 +170,10 @@ _applyCivilianMoveOrders(
   Game game,
   Map<String, List<MoveOrder>> moveOrdersByPlayerId,
 ) {
-  var ow = List<Unit>.from(game.worldState.oldWorld.units);
-  var nw = List<Unit>.from(game.worldState.newWorld.units);
-  var ordersSeen = 0;
-  var applied = 0;
-  var ignored = 0;
+  final initialLists = _initialUnitListsForCivilianMoves(game);
+  var ow = initialLists.ow;
+  var nw = initialLists.nw;
+  var totals = _zeroMoveTotals();
   final sortedPlayers = moveOrdersByPlayerId.keys.toList()..sort();
   for (final playerId in sortedPlayers) {
     final forPlayer = _applyCivilianMoveOrdersForPlayer(
@@ -185,18 +184,42 @@ _applyCivilianMoveOrders(
     );
     ow = forPlayer.ow;
     nw = forPlayer.nw;
-    ordersSeen += forPlayer.ordersSeen;
-    applied += forPlayer.applied;
-    ignored += forPlayer.ignored;
+    totals = _sumMoveTotals(totals, forPlayer);
   }
-  return (
-    ow: ow,
-    nw: nw,
-    ordersSeen: ordersSeen,
-    applied: applied,
-    ignored: ignored,
-  );
+  return _withListsAndTotals(ow, nw, totals);
 }
+
+({List<Unit> ow, List<Unit> nw}) _initialUnitListsForCivilianMoves(Game game) =>
+    (
+      ow: List<Unit>.from(game.worldState.oldWorld.units),
+      nw: List<Unit>.from(game.worldState.newWorld.units),
+    );
+
+({int ordersSeen, int applied, int ignored}) _zeroMoveTotals() =>
+    (ordersSeen: 0, applied: 0, ignored: 0);
+
+({int ordersSeen, int applied, int ignored}) _sumMoveTotals(
+  ({int ordersSeen, int applied, int ignored}) totals,
+  ({List<Unit> ow, List<Unit> nw, int ordersSeen, int applied, int ignored})
+  update,
+) => (
+  ordersSeen: totals.ordersSeen + update.ordersSeen,
+  applied: totals.applied + update.applied,
+  ignored: totals.ignored + update.ignored,
+);
+
+({List<Unit> ow, List<Unit> nw, int ordersSeen, int applied, int ignored})
+_withListsAndTotals(
+  List<Unit> ow,
+  List<Unit> nw,
+  ({int ordersSeen, int applied, int ignored}) totals,
+) => (
+  ow: ow,
+  nw: nw,
+  ordersSeen: totals.ordersSeen,
+  applied: totals.applied,
+  ignored: totals.ignored,
+);
 
 ({List<Unit> ow, List<Unit> nw, int ordersSeen, int applied, int ignored})
 _applyCivilianMoveOrdersForPlayer({
@@ -207,25 +230,24 @@ _applyCivilianMoveOrdersForPlayer({
 }) {
   var localOw = ow;
   var localNw = nw;
-  var seen = 0;
-  var applied = 0;
-  var ignored = 0;
+  var totals = _zeroMoveTotals();
   for (final order in orders) {
-    seen++;
     final one = _applyOneCivilianMoveOrder(localOw, localNw, playerId, order);
     localOw = one.ow;
     localNw = one.nw;
-    applied += one.applied;
-    ignored += one.ignored;
+    totals = _sumPerOrderTotals(totals, one);
   }
-  return (
-    ow: localOw,
-    nw: localNw,
-    ordersSeen: seen,
-    applied: applied,
-    ignored: ignored,
-  );
+  return _withListsAndTotals(localOw, localNw, totals);
 }
+
+({int ordersSeen, int applied, int ignored}) _sumPerOrderTotals(
+  ({int ordersSeen, int applied, int ignored}) totals,
+  ({List<Unit> ow, List<Unit> nw, int applied, int ignored}) one,
+) => (
+  ordersSeen: totals.ordersSeen + 1,
+  applied: totals.applied + one.applied,
+  ignored: totals.ignored + one.ignored,
+);
 
 ({List<Unit> ow, List<Unit> nw, int applied, int ignored})
 _applyOneCivilianMoveOrder(
@@ -236,11 +258,12 @@ _applyOneCivilianMoveOrder(
 ) {
   final precheck = _precheckCivilianMoveOrder(ow, nw, playerId, order);
   if (precheck != null) return precheck;
-  final unit = _findCivilianMoveUnit(ow, nw, order.unitId)!;
+  final unit = _findCivilianMoveUnit(ow, nw, order.unitId);
+  if (unit == null) return (ow: ow, nw: nw, applied: 0, ignored: 1);
   final prepared = _prepareMovedCivilianUnit(unit, order.destinationTileKey);
-  if (prepared == null) return (ow: ow, nw: nw, applied: 0, ignored: 1);
+  if (prepared == null) return _ignoredWithoutLog(ow, nw);
   final srcRegion = _regionHoldingUnit(ow, nw, unit.id);
-  if (srcRegion.isEmpty) return (ow: ow, nw: nw, applied: 0, ignored: 1);
+  if (srcRegion.isEmpty) return _ignoredWithoutLog(ow, nw);
   final lists = _applyCivilianMoveToWorkingUnitLists(
     ow: ow,
     nw: nw,
@@ -249,8 +272,18 @@ _applyOneCivilianMoveOrder(
     srcRegion: srcRegion,
     destRegion: prepared.destRegion,
   );
-  return (ow: lists.ow, nw: lists.nw, applied: 1, ignored: 0);
+  return _appliedMoveResult(lists.ow, lists.nw);
 }
+
+({List<Unit> ow, List<Unit> nw, int applied, int ignored}) _ignoredWithoutLog(
+  List<Unit> ow,
+  List<Unit> nw,
+) => (ow: ow, nw: nw, applied: 0, ignored: 1);
+
+({List<Unit> ow, List<Unit> nw, int applied, int ignored}) _appliedMoveResult(
+  List<Unit> ow,
+  List<Unit> nw,
+) => (ow: ow, nw: nw, applied: 1, ignored: 0);
 
 ({List<Unit> ow, List<Unit> nw, int applied, int ignored})?
 _precheckCivilianMoveOrder(
@@ -263,19 +296,29 @@ _precheckCivilianMoveOrder(
   if (unit == null) {
     return _ignoredMove(ow, nw, 'unit_not_found', order, playerId: playerId);
   }
-  if (unit.ownerId != playerId) {
-    return _ignoredMove(
-      ow,
-      nw,
-      'owner_mismatch',
-      order,
-      playerId: playerId,
-      ownerId: unit.ownerId,
-    );
-  }
-  if (isMilitaryUnit(unit.type))
-    return (ow: ow, nw: nw, applied: 0, ignored: 1);
+  final ownerMismatch = _ownerMismatchPrecheck(ow, nw, playerId, order, unit);
+  if (ownerMismatch != null) return ownerMismatch;
+  if (isMilitaryUnit(unit.type)) return _ignoredWithoutLog(ow, nw);
   return null;
+}
+
+({List<Unit> ow, List<Unit> nw, int applied, int ignored})?
+_ownerMismatchPrecheck(
+  List<Unit> ow,
+  List<Unit> nw,
+  String playerId,
+  MoveOrder order,
+  Unit unit,
+) {
+  if (unit.ownerId == playerId) return null;
+  return _ignoredMove(
+    ow,
+    nw,
+    'owner_mismatch',
+    order,
+    playerId: playerId,
+    ownerId: unit.ownerId,
+  );
 }
 
 ({List<Unit> ow, List<Unit> nw, int applied, int ignored}) _ignoredMove(
