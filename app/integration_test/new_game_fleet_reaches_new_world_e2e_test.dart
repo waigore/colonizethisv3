@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
@@ -322,10 +323,16 @@ Finder _radioListTilesInAlertDialogs() {
 }
 
 /// Prefer cross-region warp row (English copy); else first adjacent sea tile.
+///
+/// When [allowWarpDestinations] is false, only S–S (radio) destinations are
+/// used. Post–#1869 the split fleet may already be in the New World; the move
+/// dialog still lists a warp row to the Old World—tapping it every turn
+/// prevents sailing along NW seas toward a P–S coastal zone.
 Future<void> _pickMoveDestinationAndConfirm(
   WidgetTester tester,
-  AppLocalizations l10n,
-) async {
+  AppLocalizations l10n, {
+  bool allowWarpDestinations = true,
+}) async {
   final budget = Stopwatch()..start();
   void ensureBudget(String step) {
     if (budget.elapsed > _kMaxUiResponseWait) {
@@ -341,7 +348,7 @@ Future<void> _pickMoveDestinationAndConfirm(
     unitsPanelRegionLabel('newWorld'),
   );
   final warp = find.textContaining(warpSuffix);
-  if (warp.evaluate().isNotEmpty) {
+  if (allowWarpDestinations && warp.evaluate().isNotEmpty) {
     final scrollRoot = find.byKey(kCtE2EMoveFleetDialogScrollRootKey);
     final Finder scrollable;
     if (scrollRoot.evaluate().isNotEmpty) {
@@ -399,9 +406,15 @@ Future<void> _pickMoveDestinationAndConfirm(
 
 Future<void> _tryNavalMoveSegment(
   WidgetTester tester,
-  AppLocalizations l10n,
-) async {
-  await _tapOldWorldRegionTab(tester, l10n);
+  AppLocalizations l10n, {
+  bool useNewWorldMapTabFirst = false,
+  bool allowWarpDestinations = true,
+}) async {
+  if (useNewWorldMapTabFirst) {
+    await _tapNewWorldRegionTabIfPresent(tester);
+  } else {
+    await _tapOldWorldRegionTab(tester, l10n);
+  }
   await _openNavalPanel(tester);
   await _expandEachExpansionTileOnce(tester);
   await _tapMoveOnFirstNonHomeFleet(tester);
@@ -416,7 +429,11 @@ Future<void> _tryNavalMoveSegment(
     return;
   }
   if (find.byType(AlertDialog).evaluate().isNotEmpty) {
-    await _pickMoveDestinationAndConfirm(tester, l10n);
+    await _pickMoveDestinationAndConfirm(
+      tester,
+      l10n,
+      allowWarpDestinations: allowWarpDestinations,
+    );
   }
 }
 
@@ -510,6 +527,31 @@ bool _nonHomeHumanFleetInNewWorldFromCtSnapshot() {
   return false;
 }
 
+/// [provinceIdsAdjacentToSeaZone] matches edge endpoints exactly. Combined game
+/// topology uses prefixed sea node ids (`newWorld|sea5`); some fleet states
+/// still carry the regional local id (`sea5`). Try both so coastal detection
+/// matches logic/ship-reveal (`SPEC/program/fog-and-exploration-resolution.md`).
+Set<String> _nwCoastalProvincesAdjacentToFleetSea(
+  MapTopology topology,
+  String seaZoneId,
+  String regionId,
+) {
+  final direct = provinceIdsAdjacentToSeaZone(
+    topology,
+    seaZoneId,
+    regionId: regionId,
+  );
+  if (direct.isNotEmpty) return direct;
+  if (!ProvinceId.isPrefixed(seaZoneId)) {
+    return provinceIdsAdjacentToSeaZone(
+      topology,
+      ProvinceId.full(regionId, seaZoneId),
+      regionId: regionId,
+    );
+  }
+  return const {};
+}
+
 /// Ship reveal only paints coastal land for sea zones with a P–S province edge
 /// (`SPEC/program/fog-and-exploration-resolution.md`). Open-ocean NW sea
 /// placement satisfies [ _nonHomeHumanFleetInNewWorldFromCtSnapshot ] but never
@@ -524,15 +566,12 @@ bool _nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() {
     if (f.id == homeId) continue;
     if (!f.isAtSea || f.seaZoneId == null) continue;
     final sea = f.seaZoneId!;
-    final regionId = f.regionId == 'newWorld'
+    final String? regionId = f.regionId == 'newWorld'
         ? 'newWorld'
         : regionIdForSeaZone(snap.topology, sea);
-    if (regionId != 'newWorld') continue;
-    if (provinceIdsAdjacentToSeaZone(
-      snap.topology,
-      sea,
-      regionId: regionId,
-    ).isNotEmpty) {
+    if (regionId == null || regionId != 'newWorld') continue;
+    if (_nwCoastalProvincesAdjacentToFleetSea(snap.topology, sea, regionId)
+        .isNotEmpty) {
       return true;
     }
   }
@@ -632,7 +671,12 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
       return;
     }
     await _closeBottomSheet(tester);
-    await _tryNavalMoveSegment(tester, l10n);
+    await _tryNavalMoveSegment(
+      tester,
+      l10n,
+      useNewWorldMapTabFirst: true,
+      allowWarpDestinations: false,
+    );
     await _closeBottomSheet(tester);
     await _advanceOneHumanTurn(tester, l10n);
   }
