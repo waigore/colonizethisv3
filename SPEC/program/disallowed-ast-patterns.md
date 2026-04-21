@@ -47,7 +47,6 @@ type safety and hides intent in APIs and state declarations.
 
 Rule id: `strict_raw_types` (`match.kind`: `raw_named_type`,
 `match.type_names`: `List|Map|Set|Iterable|Future|Stream`).
-
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:

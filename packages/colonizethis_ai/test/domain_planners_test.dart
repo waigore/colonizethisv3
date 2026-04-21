@@ -160,7 +160,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'inf',
+                type: 'explorer',
                 ownerId: 'gp1',
                 locationProvinceId: 'oldWorld|p1',
                 tileKey: 'oldWorld|p1|0|0',
@@ -172,6 +172,12 @@ void main() {
             'gp1': {
               'oldWorld|p1|0|0': 'fullyVisible',
               'oldWorld|p2|0|0': 'fullyVisible',
+            },
+          },
+          tileKeysByRegionAndProvince: const {
+            'oldWorld': {
+              'oldWorld|p1': ['oldWorld|p1|0|0'],
+              'oldWorld|p2': ['oldWorld|p2|0|0'],
             },
           },
         ),
@@ -449,7 +455,7 @@ void main() {
           ),
         ],
         move: const [
-          MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|p2'),
+          MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|p2|0|0'),
         ],
         research: const [
           ResearchOrder(
@@ -1915,7 +1921,8 @@ void main() {
   });
 
   group('move planner diplomacy filter', () {
-    test('full-AI move planner drops moves to at-peace destinations', () {
+    test('full-AI move planner scores civilian moves; at-peace target not pre-filtered',
+        () {
       const ow = 'oldWorld';
       final game = Game(
         id: 'g1',
@@ -1969,8 +1976,8 @@ void main() {
         work: [],
         build: [],
         move: [
-          MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|p2'),
-          MoveOrder(unitId: 'u2', destinationProvinceId: 'oldWorld|p3'),
+          MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|p2|0|0'),
+          MoveOrder(unitId: 'u2', destinationTileKey: 'oldWorld|p3|0|0'),
         ],
         research: [],
         navalMove: [],
@@ -1996,12 +2003,9 @@ void main() {
       );
 
       final moves = orders.moveOrdersByPlayerId['gp1'] ?? [];
-      expect(
-        moves.length,
-        1,
-        reason: 'move to gp3 at peace should be filtered out',
-      );
-      expect(moves.single.destinationProvinceId, 'oldWorld|p2');
+      expect(moves.length, 1);
+      // At-war destination is heavily weighted over at-peace (see kMovePreferEnemyTerritoryBonus).
+      expect(moves.single.destinationTileKey, 'oldWorld|p2|0|0');
     });
   });
 }

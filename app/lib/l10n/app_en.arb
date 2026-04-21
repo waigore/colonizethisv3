@@ -12,6 +12,10 @@
   "@menu_debugLog": {
     "description": "Platform menu item label that navigates to the debug log viewer."
   },
+  "menu_openMaximizedOnStartup": "Open maximized on startup",
+  "@menu_openMaximizedOnStartup": {
+    "description": "Platform menu item label for toggling desktop startup maximization."
+  },
   "mainMenu_title": "ColonizeThis V3",
   "@mainMenu_title": {
     "description": "Main menu title text when not using the pixel-art logo."
@@ -107,6 +111,14 @@
   "common_yes": "Yes",
   "@common_yes": {
     "description": "Generic 'Yes' button label."
+  },
+  "common_on": "On",
+  "@common_on": {
+    "description": "Generic enabled state label."
+  },
+  "common_off": "Off",
+  "@common_off": {
+    "description": "Generic disabled state label."
   },
   "common_confirm": "Confirm",
   "@common_confirm": {
@@ -1734,6 +1746,10 @@
         "type": "String"
       }
     }
+  },
+  "provinceOverlay_tileProspectWithExplorerTooltip": "Prospect with explorer",
+  "@provinceOverlay_tileProspectWithExplorerTooltip": {
+    "description": "Tooltip and semantics label for province tile prospect shortcut action."
   },
   "provinceOverlay_tileImprovement": "Improvement: {value}",
   "@provinceOverlay_tileImprovement": {

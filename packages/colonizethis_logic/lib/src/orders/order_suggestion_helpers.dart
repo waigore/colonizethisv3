@@ -50,17 +50,15 @@ List<T> filterOrdersByDiplomacy<T>(
 
 /// Filters move orders to those allowed by diplomacy: no move into province of
 /// a faction at peace with [playerId], or into Minor territory without war.
+/// Civilian [MoveOrder] legality is enforced by [MoveValidator] (tile occupancy,
+/// visibility, etc.), not by diplomacy-based province filtering — e.g. Spy may
+/// enter GP-controlled tiles without war. See issue #1877.
 List<MoveOrder> filterMoveOrdersByDiplomacy(
   Game game,
   String playerId,
   List<MoveOrder> orders,
 ) =>
-    filterOrdersByDiplomacy(
-      game,
-      playerId,
-      orders,
-      (MoveOrder o) => o.destinationProvinceId,
-    );
+    List<MoveOrder>.from(orders);
 
 /// Same diplomacy filter as [filterMoveOrdersByDiplomacy] for [ArmyMoveOrder].
 List<ArmyMoveOrder> filterArmyMoveOrdersByDiplomacy(

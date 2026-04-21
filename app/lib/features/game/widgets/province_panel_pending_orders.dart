@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart' show isMilitaryUnit;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show fleetsInPortAtProvince;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -58,12 +57,13 @@ List<String> provincePanelPendingMilitaryLines({
       if (u != null) break;
     }
     if (u == null) continue;
-    if (!isMilitaryUnit(u.type)) continue;
     if (u.ownerId != humanPlayerId) continue;
     if (u.locationProvinceId != provinceId) continue;
+    final destProv = Unit.provinceIdFromTileKey(o.destinationTileKey);
+    if (destProv == null) continue;
     out.add(
       l10n.province_pending_regimentMove(
-        _destinationProvinceLabel(game, o.destinationProvinceId),
+        _destinationProvinceLabel(game, destProv),
       ),
     );
   }

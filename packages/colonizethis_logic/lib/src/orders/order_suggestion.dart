@@ -19,6 +19,7 @@ import 'order_suggestion_move_army.dart';
 import 'order_suggestion_naval_diplomatic.dart';
 import 'order_suggestion_work.dart';
 import 'unit_type_helpers.dart';
+import '../world/civilian_tile_occupancy.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 

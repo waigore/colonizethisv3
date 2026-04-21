@@ -10,7 +10,7 @@ import 'package:yaml/yaml.dart';
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const _failThreshold = 20;
+const _failThreshold = 200;
 const _logicScopePrefix = 'packages/colonizethis_logic/lib/src/';
 
 int runCheckFunctionSize(

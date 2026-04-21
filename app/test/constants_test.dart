@@ -13,6 +13,13 @@ void main() {
     expect(HiveBoxNames.offlineQueue, 'offline_queue');
   });
 
+  test('desktop window constants are stable', () {
+    expect(kDesktopWindowMinWidth, 800);
+    expect(kDesktopWindowMinHeight, 600);
+    expect(kDesktopWindowDefaultWidth, 1280);
+    expect(kDesktopWindowDefaultHeight, 720);
+  });
+
   test('RoutePaths strings are stable (no heavy routes.dart import)', () {
     expect(RoutePaths.shell, '/');
     expect(RoutePaths.game, '/game');

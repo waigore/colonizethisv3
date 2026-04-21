@@ -100,6 +100,8 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
   const OpenCivilianUnitsPanelEvent({
     this.tileScopeTileKey,
     this.initialSelectedUnitId,
+    this.explorerOnly = false,
+    this.prospectShortcutTargetTileKey,
   });
 
   /// Optional tile-scope key (`regionId|provinceId|x|y`) used to show only
@@ -108,6 +110,12 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
 
   /// Optional initial selected unit id when opening in tile scope.
   final String? initialSelectedUnitId;
+
+  /// Optional panel filter mode for explorer-only rows.
+  final bool explorerOnly;
+
+  /// Optional tile key used by the province prospect shortcut flow.
+  final String? prospectShortcutTargetTileKey;
 }
 
 /// Military units bottom sheet.
