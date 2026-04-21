@@ -262,6 +262,9 @@ class AppEventHandler {
               availableWorkTargets: availableWorkTargets,
               tileScopeTileKey: event.tileScopeTileKey,
               initialSelectedUnitId: event.initialSelectedUnitId,
+              explorerOnly: event.explorerOnly,
+              prospectShortcutTargetTileKey:
+                  event.prospectShortcutTargetTileKey,
             ),
           );
         },

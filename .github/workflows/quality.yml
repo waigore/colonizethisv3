@@ -530,6 +530,12 @@ jobs:
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_GO_API_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
+          # Opencode may commit local workspace artifacts before finishing.
+          # Provide explicit identity so git commit does not fail in CI.
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         with:
           model: ${{ vars.OPENCODE_REVIEW_MODEL || 'opencode-go/minimax-m2.7' }}
           use_github_token: true

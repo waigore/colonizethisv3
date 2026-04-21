@@ -167,6 +167,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.draftOrders = const Orders(),
     this.onHighlightTile,
     this.onClose,
+    this.showProspectActionIcon = false,
+    this.prospectActionEnabled = false,
+    this.onProspectWithExplorerTap,
   });
 
   final Game game;
@@ -182,6 +185,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final Orders draftOrders;
   final void Function(String? tileKey)? onHighlightTile;
   final VoidCallback? onClose;
+  final bool showProspectActionIcon;
+  final bool prospectActionEnabled;
+  final VoidCallback? onProspectWithExplorerTap;
 
   bool _isSeaZone(String id) {
     final parts = id.split('|');
@@ -218,6 +224,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
             draftOrders: draftOrders,
             selectedTileKey: selectedTileKey,
             onHighlightTile: onHighlightTile,
+            showProspectActionIcon: showProspectActionIcon,
+            prospectActionEnabled: prospectActionEnabled,
+            onProspectWithExplorerTap: onProspectWithExplorerTap,
           );
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -382,6 +391,9 @@ _OverlayContent _provinceContent({
   required Orders draftOrders,
   String? selectedTileKey,
   void Function(String?)? onHighlightTile,
+  required bool showProspectActionIcon,
+  required bool prospectActionEnabled,
+  VoidCallback? onProspectWithExplorerTap,
 }) {
   final parts = provinceId.split('|');
   final regionId = parts.isNotEmpty ? parts[0] : region.regionId;
@@ -561,6 +573,9 @@ _OverlayContent _provinceContent({
     playerView: playerView,
     civilianCount: visibleCivilianCount,
     selectedTileKey: selectedTileKey,
+    showProspectActionIcon: showProspectActionIcon,
+    prospectActionEnabled: prospectActionEnabled,
+    onProspectWithExplorerTap: onProspectWithExplorerTap,
   );
   final political = _buildPoliticalSection(
     l10n: l10n,
@@ -699,6 +714,9 @@ Widget _buildTileSection({
   required PlayerView playerView,
   required int civilianCount,
   String? selectedTileKey,
+  required bool showProspectActionIcon,
+  required bool prospectActionEnabled,
+  VoidCallback? onProspectWithExplorerTap,
 }) {
   if (selectedTileKey == null) {
     return _buildSection(
@@ -758,6 +776,27 @@ Widget _buildTileSection({
   final impLevel = tileState.improvementLevel(selectedTileKey);
   final roadLevel = cell.isSea ? null : tileState.roadLevel(selectedTileKey);
 
+  final prospectedRow = Row(
+    children: [
+      Expanded(
+        child: Text(l10n.provinceOverlay_tileProspected(prospectedLabel)),
+      ),
+      if (showProspectActionIcon)
+        IconButton(
+          tooltip: l10n.provinceOverlay_tileProspectWithExplorerTooltip,
+          onPressed: prospectActionEnabled ? onProspectWithExplorerTap : null,
+          icon: Icon(
+            Icons.travel_explore,
+            color: prospectActionEnabled
+                ? null
+                : Theme.of(context).disabledColor.withValues(alpha: 0.65),
+          ),
+          iconSize: 18,
+          visualDensity: VisualDensity.compact,
+        ),
+    ],
+  );
+
   return _buildSection(
     l10n.provinceOverlay_sectionTile,
     Column(
@@ -772,7 +811,7 @@ Widget _buildTileSection({
           resourceVisible: resourceVisible,
           resourceLabel: resourceLabel,
         ),
-        Text(l10n.provinceOverlay_tileProspected(prospectedLabel)),
+        prospectedRow,
         _buildTileImprovementLabel(
           l10n: l10n,
           impLevel: impLevel,
