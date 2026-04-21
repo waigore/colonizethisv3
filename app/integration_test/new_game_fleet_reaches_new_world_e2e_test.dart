@@ -507,8 +507,12 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       of: navalRoot,
       matching: find.byType(ExpansionTile),
     );
-    expect(tiles, findsWidgets);
     final n = tiles.evaluate().length;
+    if (n == 0) {
+      // Panel can mount before fleet rows render; treat as retryable state.
+      await tester.pump(const Duration(milliseconds: 120));
+      return false;
+    }
     if (n == 1) {
       final onlyTile = tiles.first;
       final onlyHome = find.descendant(
