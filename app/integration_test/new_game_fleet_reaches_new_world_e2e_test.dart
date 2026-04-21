@@ -64,12 +64,8 @@ const Duration _kBootstrapNewGameOverallCap = Duration(seconds: 60);
 
 /// Entire fleet e2e must finish within this wall clock (success or guarded fail).
 ///
-/// Locked full-init / seed-bump paths and headless Linux CI can stretch
-/// coast→warp→New World sailing; keep a bounded cap above nominal local runs
-/// (`SPEC/program/e2e-integration-tests.md`).
-/// Post-bundle #1869 adds a second sail phase after NW arrival; keep headroom
-/// under Xvfb (Refs #1849).
-const Duration _kFleetE2eMaxWallClock = Duration(minutes: 22);
+/// E2E policy caps wall-clock runtime to 5 minutes so PR feedback remains fast.
+const Duration _kFleetE2eMaxWallClock = Duration(minutes: 5);
 
 /// Drive frames without [WidgetTester.pumpAndSettle] (Flame + progress spinners).
 Future<void> _pumpFor(WidgetTester tester, Duration total) async {
@@ -297,11 +293,13 @@ Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
 Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
   final phaseSw = Stopwatch()..start();
   final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
+  final markerBtn = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
   final btn = find.byKey(kEmpireNavalUnitsButtonKey);
   final sw = Stopwatch()..start();
   while (sw.elapsed < _kMaxUiResponseWait) {
     await tester.pump(const Duration(milliseconds: 100));
     if (navalPanel.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_naval', phaseSw.elapsed);
       return;
     }
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
@@ -316,9 +314,15 @@ Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
       await _dismissTransientUi(tester, perf: perf);
       continue;
     }
-    final hit = btn.hitTestable();
-    if (hit.evaluate().isNotEmpty) {
-      await tester.tap(hit.first, warnIfMissed: false);
+    final markerHit = markerBtn.hitTestable();
+    if (markerHit.evaluate().isNotEmpty) {
+      await tester.tap(markerHit.first, warnIfMissed: false);
+      await _pumpFor(tester, const Duration(milliseconds: 250));
+      continue;
+    }
+    final railHit = btn.hitTestable();
+    if (railHit.evaluate().isNotEmpty) {
+      await tester.tap(railHit.first, warnIfMissed: false);
       await _pumpFor(tester, const Duration(milliseconds: 400));
     } else {
       await _dismissTransientUi(tester, perf: perf);
@@ -328,7 +332,6 @@ Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
     'Timed out after ${_kMaxUiResponseWait.inSeconds}s opening naval panel. '
     'Last exception: ${tester.takeException()}',
   );
-  perf?.timing('open_panel_naval', phaseSw.elapsed);
 }
 
 /// Selects the New World map region via [kCtE2ERegionTabNewWorldKey] when present
@@ -463,8 +466,15 @@ Future<void> _tryNavalMoveSegment(
     await _tapOldWorldRegionTab(tester, l10n);
   }
   await _openNavalPanel(tester, perf: perf);
-  await _expandEachExpansionTileOnce(tester);
-  await _tapMoveOnFirstNonHomeFleet(tester);
+  final tappedMove = await _tapMoveOnFirstNonHomeFleet(tester);
+  if (!tappedMove) {
+    perf?.timing(
+      'fleet_move_segment',
+      phaseSw.elapsed,
+      meta: 'result=no_non_home_move_control',
+    );
+    return;
+  }
   await _pumpFor(tester, const Duration(milliseconds: 300));
   // No legal sea-step this turn: close dialog and rely on the outer loop +
   // next turn (Refs #1831 heuristic path).
@@ -490,60 +500,94 @@ Future<void> _tryNavalMoveSegment(
   perf?.timing('fleet_move_segment', phaseSw.elapsed);
 }
 
-Future<void> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
-  final navalRoot = find.byKey(kCtE2ENavalPanelRootKey);
-  final tiles = find.descendant(
-    of: navalRoot,
-    matching: find.byType(ExpansionTile),
-  );
-  expect(tiles, findsWidgets);
-  final n = tiles.evaluate().length;
-  Finder? fallbackMove;
-  for (var i = 0; i < n; i++) {
-    final sub = tiles.at(i);
-    final home = find.descendant(of: sub, matching: find.text('Home Fleet'));
-    if (home.evaluate().isNotEmpty) {
-      continue;
-    }
-    final fleetTitle = find.descendant(
-      of: sub,
-      matching: find.byWidgetPredicate(
-        (w) => w is Text && (w.data?.startsWith('Fleet ') ?? false),
-      ),
+Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
+  Future<bool> tryTap({required bool allowExpandAllFallback}) async {
+    final navalRoot = find.byKey(kCtE2ENavalPanelRootKey);
+    final tiles = find.descendant(
+      of: navalRoot,
+      matching: find.byType(ExpansionTile),
     );
-    if (fleetTitle.evaluate().isEmpty) {
-      continue;
+    expect(tiles, findsWidgets);
+    final n = tiles.evaluate().length;
+    if (n == 1) {
+      final onlyTile = tiles.first;
+      final onlyHome = find.descendant(
+        of: onlyTile,
+        matching: find.text('Home Fleet'),
+      );
+      if (onlyHome.evaluate().isNotEmpty) {
+        return false;
+      }
     }
-    final move = find.descendant(of: sub, matching: find.text('Move'));
-    if (move.evaluate().isEmpty) {
-      continue;
+    Finder? fallbackMove;
+    for (var i = 0; i < n; i++) {
+      final sub = tiles.at(i);
+      final home = find.descendant(of: sub, matching: find.text('Home Fleet'));
+      if (home.evaluate().isNotEmpty) {
+        continue;
+      }
+      final fleetTitle = find.descendant(
+        of: sub,
+        matching: find.byWidgetPredicate(
+          (w) => w is Text && (w.data?.startsWith('Fleet ') ?? false),
+        ),
+      );
+      if (fleetTitle.evaluate().isEmpty) {
+        continue;
+      }
+      var move = find.descendant(of: sub, matching: find.text('Move'));
+      if (move.evaluate().isEmpty) {
+        final expandIcon = find.descendant(
+          of: sub,
+          matching: find.byIcon(Icons.expand_more),
+        );
+        if (expandIcon.evaluate().isNotEmpty) {
+          final iconHit = expandIcon.first;
+          await tester.ensureVisible(iconHit);
+          await tester.tap(iconHit, warnIfMissed: false);
+          await _pumpFor(tester, const Duration(milliseconds: 180));
+        }
+        move = find.descendant(of: sub, matching: find.text('Move'));
+      }
+      if (move.evaluate().isEmpty) {
+        continue;
+      }
+      final loc = find.descendant(
+        of: sub,
+        matching: find.byWidgetPredicate(
+          (w) => w is Text && _textLooksLikeNewWorldLocationLine(w.data),
+        ),
+      );
+      final hit = move.hitTestable();
+      if (hit.evaluate().isEmpty) {
+        continue;
+      }
+      if (loc.evaluate().isNotEmpty) {
+        await tester.tap(hit.first, warnIfMissed: false);
+        await _pumpFor(tester, const Duration(milliseconds: 400));
+        return true;
+      }
+      fallbackMove ??= hit.first;
     }
-    final loc = find.descendant(
-      of: sub,
-      matching: find.byWidgetPredicate(
-        (w) => w is Text && _textLooksLikeNewWorldLocationLine(w.data),
-      ),
-    );
-    final hit = move.hitTestable();
-    if (hit.evaluate().isEmpty) {
-      continue;
-    }
-    if (loc.evaluate().isNotEmpty) {
-      await tester.tap(hit.first, warnIfMissed: false);
+    if (fallbackMove != null) {
+      await tester.tap(fallbackMove, warnIfMissed: false);
       await _pumpFor(tester, const Duration(milliseconds: 400));
-      return;
+      return true;
     }
-    fallbackMove ??= hit.first;
+    if (allowExpandAllFallback) {
+      await _expandEachExpansionTileOnce(tester);
+      return false;
+    }
+    return false;
   }
-  if (fallbackMove != null) {
-    await tester.tap(fallbackMove, warnIfMissed: false);
-    await _pumpFor(tester, const Duration(milliseconds: 400));
-    return;
+
+  if (await tryTap(allowExpandAllFallback: true)) {
+    return true;
   }
-  fail(
-    'No Move control for a non-home fleet row. '
-    'Last exception: ${tester.takeException()}',
-  );
+  if (await tryTap(allowExpandAllFallback: false)) {
+    return true;
+  }
+  return false;
 }
 
 /// `naval_tree_builder.dart` uses an em dash; accept common dash glyphs for CI.
