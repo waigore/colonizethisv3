@@ -54,6 +54,7 @@ Skills live under `.cursor/skills/<name>/SKILL.md`. When a skill matches the tas
 | Skill | Use when |
 |-------|----------|
 | `create-github-issue` | Turn an informal bug/report into a structured GitHub issue (read-only repo work; may use `gh`). |
+| `refactoring-opportunity-github-issue` | Scan `app/` or one `packages/*` package against `.cursor/rules`, propose focused refactors + CI (extend existing AST/analyzer gates first), draft/file a structured issue (OpenCode copy under `.opencode/skills/`). |
 | `clean-local-branches` | Prune local branch refs, keeping `dev` and open-PR heads; never delete remote branches. |
 | `fix-pr` | Unblock a PR by fixing failing checks and quality gates. |
 | `implement-github-issue` | User gives an issue **#** or **URL**; validate problem/design/testable ACs, update **SPEC** if needed, implement, add positive/negative tests, open PR to **`dev`** with **`Refs #…`** (do **not** auto-close). Very large issues: one isolatable slice only. |
