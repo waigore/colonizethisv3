@@ -288,6 +288,14 @@ List<RepoLintRule> loadRepoLintManifest(
 /// Resolves a comma-separated list of changed `*.dart` paths for PR workflows,
 /// matching `.github/workflows/quality.yml` (three-dot diff vs `origin/$GITHUB_BASE_REF`).
 String? resolvePrChangedDartFilesCsv() {
+  final explicitBaseSha = Platform.environment['CT_REPO_LINT_BASE_SHA'];
+  if (explicitBaseSha != null && explicitBaseSha.trim().isNotEmpty) {
+    final csv = _resolveChangedDartFilesCsvForLeft(explicitBaseSha.trim());
+    if (csv != null) {
+      return csv;
+    }
+  }
+
   final baseRef = Platform.environment['GITHUB_BASE_REF'];
   if (baseRef == null || baseRef.isEmpty) {
     return null;

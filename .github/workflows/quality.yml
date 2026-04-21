@@ -312,6 +312,7 @@ jobs:
       - name: Repo convention lint (unified manifest, SPEC/program/repo-lint.md)
         env:
           CT_REPO_LINT_INCLUDE_APP: ${{ needs.changes.outputs.tests }}
+          CT_REPO_LINT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           GITHUB_BASE_REF: ${{ github.base_ref }}
         run: dart run tool/ct_repo_lint.dart
 
