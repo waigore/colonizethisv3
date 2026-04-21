@@ -336,7 +336,8 @@ void main() {
 
     test('can generate work order when only work suggestions available', () {
       const ow = 'oldWorld';
-      const tileKey = '$ow|P1|0|0';
+      const knownTileKey = '$ow|P1|0|0';
+      const unknownTileKey = '$ow|P1|1|0';
       final game = Game(
         id: 'g1',
         worldState: WorldState(
@@ -356,10 +357,15 @@ void main() {
           ),
           newWorld: const RegionData(),
           playerVisibilityByTile: const {
-            'gp1': {tileKey: 'fogged'},
+            'gp1': {
+              knownTileKey: 'fogged',
+              unknownTileKey: 'unknown',
+            },
           },
           tileKeysByRegionAndProvince: const {
-            ow: {'$ow|P1': [tileKey]},
+            ow: {
+              '$ow|P1': [knownTileKey, unknownTileKey],
+            },
           },
         ),
         players: const [
