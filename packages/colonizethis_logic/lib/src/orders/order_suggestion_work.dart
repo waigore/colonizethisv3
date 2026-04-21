@@ -25,23 +25,31 @@ Set<String> _partiallyRevealedProvinceCacheForPlayer({
     for (final provinceEntry in regionEntry.value.entries) {
       final provinceId = provinceEntry.key;
       if (!ProvinceId.isPrefixed(provinceId)) continue;
-      var hasKnown = false;
-      var hasUnknown = false;
-      for (final tileKey in provinceEntry.value) {
-        final level = view.visibilityForTile(tileKey);
-        if (level == VisibilityLevel.unknown) {
-          hasUnknown = true;
-        } else {
-          hasKnown = true;
-        }
-        if (hasKnown && hasUnknown) {
-          cached.add(provinceId);
-          break;
-        }
+      if (!_isPartiallyRevealedProvinceForPlayer(view, provinceEntry.value)) {
+        continue;
       }
+      cached.add(provinceId);
     }
   }
   return cached;
+}
+
+bool _isPartiallyRevealedProvinceForPlayer(
+  PlayerView view,
+  List<String> tileKeys,
+) {
+  var hasKnown = false;
+  var hasUnknown = false;
+  for (final tileKey in tileKeys) {
+    final level = view.visibilityForTile(tileKey);
+    if (level == VisibilityLevel.unknown) {
+      hasUnknown = true;
+    } else {
+      hasKnown = true;
+    }
+    if (hasKnown && hasUnknown) return true;
+  }
+  return false;
 }
 
 void _addExplorerWorkSuggestionsForUnit({
