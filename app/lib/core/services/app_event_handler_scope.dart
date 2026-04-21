@@ -333,6 +333,32 @@ class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
         final updated = removePendingWorkOrderAt(current, e.playerId, e.index);
         ref.read(currentOrdersProvider.notifier).replaceAll(updated);
       }),
+      bus.on<UpsertPendingCivilianWorkOrderRequestedEvent>().listen((e) {
+        final current = ref.read(currentOrdersProvider);
+        final playerId = e.playerId;
+        final workOrder = e.workOrder;
+        final nextWorkOrders = List<WorkOrder>.from(
+          current.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[],
+        )..removeWhere((o) => o.unitId == workOrder.unitId);
+        nextWorkOrders.add(workOrder);
+        final nextMoveOrders = List<MoveOrder>.from(
+          current.moveOrdersByPlayerId[playerId] ?? const <MoveOrder>[],
+        )..removeWhere((o) => o.unitId == workOrder.unitId);
+        ref
+            .read(currentOrdersProvider.notifier)
+            .replaceAll(
+              current.copyWith(
+                moveOrdersByPlayerId: {
+                  ...current.moveOrdersByPlayerId,
+                  playerId: nextMoveOrders,
+                },
+                workOrdersByPlayerId: {
+                  ...current.workOrdersByPlayerId,
+                  playerId: nextWorkOrders,
+                },
+              ),
+            );
+      }),
       bus.on<CancelInProgressCivilianWorkRequestedEvent>().listen((e) {
         final game = ref.read(currentGameProvider);
         if (game == null) return;
