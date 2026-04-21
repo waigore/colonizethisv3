@@ -28,6 +28,7 @@ import 'province_panel_pending_orders.dart';
 import '../utils/sea_zone_name_resolver.dart';
 
 part 'province_sea_zone_detail_overlay_sections.dart';
+part 'province_sea_zone_detail_overlay_economic_military_sections.dart';
 
 /// Overlay showing province or sea zone details. Toggleable; responsive; max 1/3 screen.
 /// [displayId] is the province or sea-zone id (`regionId|localId`) for tab content;
