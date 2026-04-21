@@ -158,6 +158,12 @@ void main() {
           next.players.single.treasury,
           game.players.single.treasury - cost,
         );
+        final merchantAfter = next.worldState.oldWorld.units.single;
+        expect(merchantAfter.tileKey, tileKeyMinor);
+        expect(merchantAfter.status, UnitStatus.idle);
+        expect(merchantAfter.currentWork, isNull);
+        expect(merchantAfter.originTileKey, isNull);
+        expect(merchantAfter.assignedTileKey, isNull);
       },
     );
 

@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/army_migration.dart';
+import '../world/civilian_ownership_legality.dart';
 import '../world/fog_resolution.dart';
 import '../world/unit_lookup.dart';
 import 'battle_general_assignment.dart';
@@ -32,6 +33,18 @@ const double kAttackerEdgeAttackerLossFraction = 0.3;
 const double kAttackerEdgeDefenderLossFraction = 0.6;
 const double kDefaultAttackerLossFraction = 0.5;
 const double kDefaultDefenderLossFraction = 0.4;
+
+Game _applyOwnershipChangeCivilianLegalityIfNeeded(
+  Game game,
+  BattleContext ctx,
+  bool provinceChangedOwner,
+) {
+  if (!provinceChangedOwner) return game;
+  return relocateIllegalCiviliansInChangedProvinces(
+    game,
+    changedProvinceIds: {ctx.provinceId},
+  );
+}
 
 /// When feeding coverage is omitted for a faction, treat as full supply.
 const double kDefaultFeedingCoverageMultiplier = 1.0;
@@ -356,6 +369,11 @@ Game resolveBattleContext(
         .map((g) => generalsById[g.id] ?? g)
         .toList(growable: false),
   );
+  result = _applyOwnershipChangeCivilianLegalityIfNeeded(
+    result,
+    ctx,
+    post.provinceChangedOwner,
+  );
   result = result.copyWith(
     worldState: reconcileArmiesAfterUnitsChanged(result.worldState, result),
   );
@@ -400,18 +418,6 @@ Game resolveBattleContext(
       )
       .toList();
   var finalUnits = [...survivingUnits, ...recoveredUnits];
-
-  // If the province changed hands during this battle, remove civilian units
-  // in that province that do not belong to the new owner.
-  if (ownerId != defenderFactionId) {
-    final victorId = ownerId;
-    finalUnits = finalUnits.where((u) {
-      if (u.locationProvinceId != ctx.provinceId) return true;
-      // Military units remain; civilians of non-victor factions are removed.
-      if (canUnitInitiateCombat(u.type)) return true;
-      return u.ownerId == victorId;
-    }).toList();
-  }
 
   final newRegion = RegionData(provinces: updatedProvinces, units: finalUnits);
   return (region: newRegion, provinceChangedOwner: provinceChangedOwner);
