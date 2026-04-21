@@ -929,12 +929,63 @@ void main() {
         final coastal = provinceIdsAdjacentToSeaZone(topology, 'sea2');
         expect(coastal, isEmpty);
       });
+
+      test(
+        'local sea id matches prefixed sea node on P–S edges (combined topology)',
+        () {
+          const nw = 'newWorld';
+          const fullProv = '$nw|provA';
+          const localSea = 'seaDest';
+          const prefixedSea = '$nw|$localSea';
+          final combined = MapTopology(
+            nodes: [
+              TopologyNode(
+                id: fullProv,
+                regionId: nw,
+                type: TopologyNodeType.province,
+              ),
+              TopologyNode(
+                id: prefixedSea,
+                regionId: nw,
+                type: TopologyNodeType.seaZone,
+              ),
+            ],
+            edges: [TopologyEdge(id1: fullProv, id2: prefixedSea)],
+          );
+          expect(
+            provinceIdsAdjacentToSeaZone(combined, localSea, regionId: nw),
+            equals({fullProv}),
+          );
+          expect(regionIdForSeaZone(combined, localSea), nw);
+        },
+      );
     });
 
     group('regionIdForSeaZone', () {
       test('returns regionId from topology node', () {
         expect(regionIdForSeaZone(topology, 'sea1'), 'oldWorld');
         expect(regionIdForSeaZone(topology, 'sea2'), 'oldWorld');
+      });
+
+      test('resolves local id when exactly one prefixed sea node matches', () {
+        const nw = 'newWorld';
+        final combined = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: '$nw|seaA',
+              regionId: nw,
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: '$nw|seaB',
+              regionId: nw,
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [],
+        );
+        expect(regionIdForSeaZone(combined, 'seaA'), nw);
+        expect(regionIdForSeaZone(combined, 'seaX'), isNull);
       });
 
       test('returns null when sea zone not found (no default region)', () {

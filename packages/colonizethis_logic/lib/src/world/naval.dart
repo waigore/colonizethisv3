@@ -267,6 +267,27 @@ String? seaZoneIdForProvince(
   return null;
 }
 
+/// True when [edgeEndpoint] is the same sea-zone topology node as [seaZoneId] for
+/// [effectiveRegion]. Handles combined topologies where edges use prefixed sea ids
+/// (`regionId|localSea`) while fleet state or orders may still use the local id.
+bool _topologySeaEndpointMatches(
+  String edgeEndpoint,
+  String seaZoneId,
+  String effectiveRegion,
+) {
+  if (edgeEndpoint == seaZoneId) return true;
+  if (ProvinceId.isPrefixed(seaZoneId)) {
+    if (!ProvinceId.isPrefixed(edgeEndpoint)) {
+      return ProvinceId.regionIdFrom(seaZoneId) == effectiveRegion &&
+          ProvinceId.localIdFrom(seaZoneId) == edgeEndpoint;
+    }
+  } else if (ProvinceId.isPrefixed(edgeEndpoint)) {
+    return ProvinceId.regionIdFrom(edgeEndpoint) == effectiveRegion &&
+        ProvinceId.localIdFrom(edgeEndpoint) == seaZoneId;
+  }
+  return false;
+}
+
 /// Province ids that share an edge with [seaZoneId] (coastal provinces), optionally
 /// restricted to [regionId] per SPEC/game/world-model-identity.md (region-scoped lookup).
 /// When [regionId] is null, uses the destination sea zone's region from topology when
@@ -279,17 +300,20 @@ Set<String> provinceIdsAdjacentToSeaZone(
   final nodesByRegionAndId = indexTopologyNodesByRegion(topology);
   String? effectiveRegion = regionId;
   if (effectiveRegion == null) {
-    final seaNodes = topology.nodes.where((n) => n.id == seaZoneId).toList();
-    effectiveRegion = seaNodes.isNotEmpty ? seaNodes.first.regionId : null;
+    final resolved = regionIdForSeaZone(topology, seaZoneId);
+    effectiveRegion = resolved;
   }
   if (effectiveRegion == null) return {};
   final regionNodes = nodesByRegionAndId[effectiveRegion];
   if (regionNodes == null) return {};
   final out = <String>{};
   for (final e in topology.edges) {
-    final otherId = e.id1 == seaZoneId
-        ? e.id2
-        : (e.id2 == seaZoneId ? e.id1 : null);
+    String? otherId;
+    if (_topologySeaEndpointMatches(e.id1, seaZoneId, effectiveRegion)) {
+      otherId = e.id2;
+    } else if (_topologySeaEndpointMatches(e.id2, seaZoneId, effectiveRegion)) {
+      otherId = e.id1;
+    }
     if (otherId != null) {
       final node = regionNodes[otherId];
       if (node != null && node.type == TopologyNodeType.province) {
@@ -303,8 +327,19 @@ Set<String> provinceIdsAdjacentToSeaZone(
 /// Region id for a sea zone (from topology node). Returns null when not found;
 /// callers must not infer region by defaulting (SPEC/game/world-model-identity.md).
 String? regionIdForSeaZone(MapTopology topology, String seaZoneId) {
-  final list = topology.nodes.where((n) => n.id == seaZoneId).toList();
-  return list.isNotEmpty ? list.first.regionId : null;
+  final direct = topology.nodes.where((n) => n.id == seaZoneId).toList();
+  if (direct.isNotEmpty) return direct.first.regionId;
+  if (ProvinceId.isPrefixed(seaZoneId)) return null;
+  final localMatches = topology.nodes
+      .where(
+        (n) =>
+            n.type == TopologyNodeType.seaZone &&
+            ProvinceId.isPrefixed(n.id) &&
+            ProvinceId.localIdFrom(n.id) == seaZoneId,
+      )
+      .toList();
+  if (localMatches.length == 1) return localMatches.first.regionId;
+  return null;
 }
 
 /// Sea zone ids that share an edge with [provinceId] (P↔S). [provinceId] may be
