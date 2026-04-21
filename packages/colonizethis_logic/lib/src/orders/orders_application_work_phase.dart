@@ -123,7 +123,7 @@ _StandardWorkTargetConfig _buildStandardWorkTargetConfig({
   required String target,
   required String targetTileKey,
   required Unit unit,
-  required TileState tileState,
+  required TileMapState tileState,
   required Province? Function(String) provinceById,
 }) {
   switch (target) {
@@ -181,7 +181,7 @@ bool _applyStandardWorkOrder({
   required String targetTileKey,
   required bool hasValidTarget,
   required String orderTarget,
-  required TileState tileState,
+  required TileMapState tileState,
   required Province? Function(String) provinceById,
   required bool Function(WorkOrderCost) canAffordMaterialCost,
   required void Function(WorkOrderCost) deductMaterialCost,
@@ -324,7 +324,7 @@ bool _tryApplyRemainingStandardBuildTargets({
   required Unit unit,
   required String targetTileKey,
   required bool hasValidTarget,
-  required TileState tileState,
+  required TileMapState tileState,
   required Province? Function(String) provinceById,
   required bool Function(WorkOrderCost) canAffordMaterialCost,
   required void Function(WorkOrderCost) deductMaterialCost,
