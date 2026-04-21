@@ -599,9 +599,13 @@ class _UnitRow extends StatelessWidget {
     bus.emit(const ClosePanelEvent());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       bus.emit(
-        StartCivilianWorkTargetSelectionEvent(
-          unitId: unit.id,
-          workTarget: kWorkTargetProspect,
+        UpsertPendingCivilianWorkOrderRequestedEvent(
+          playerId: humanPlayerId,
+          workOrder: WorkOrder(
+            unitId: unit.id,
+            target: kWorkTargetProspect,
+            targetTileKey: targetTileKey,
+          ),
         ),
       );
     });
