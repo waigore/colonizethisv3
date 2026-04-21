@@ -19,6 +19,8 @@ void main() {
       expect(ids, contains('repo.disallowed_ast_patterns'));
       expect(ids, contains('repo.control_flow_nesting_depth'));
       expect(ids, contains('repo.repeated_magic_numbers'));
+      expect(ids, contains('repo.function_size'));
+      expect(ids, contains('repo.part_unit_size'));
       expect(ids, contains('repo.app_hardcoded_ui_strings'));
       expect(
         rules
@@ -32,8 +34,9 @@ void main() {
             .includeOnlyWhenEnvName,
         'CT_REPO_LINT_INCLUDE_APP',
       );
-      final assetRule =
-          rules.firstWhere((r) => r.ruleId == 'repo.asset_path_constants');
+      final assetRule = rules.firstWhere(
+        (r) => r.ruleId == 'repo.asset_path_constants',
+      );
       expect(assetRule.runner, 'dart');
       expect(assetRule.script, 'tool/check_asset_path_constants.dart');
     });
