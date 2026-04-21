@@ -313,9 +313,23 @@ String? resolvePrChangedDartFilesCsv() {
 }
 
 String? _resolveChangedDartFilesCsvForLeft(String leftRef) {
+  final mergeBase = Process.runSync(
+    'git',
+    ['merge-base', leftRef, 'HEAD'],
+    workingDirectory: Directory.current.path,
+    runInShell: false,
+  );
+  if (mergeBase.exitCode != 0) {
+    return null;
+  }
+  final mergeBaseSha = mergeBase.stdout.toString().trim();
+  if (mergeBaseSha.isEmpty) {
+    return null;
+  }
+
   final diff = Process.runSync(
     'git',
-    ['diff', '--name-only', '$leftRef...HEAD', '--', '*.dart'],
+    ['diff', '--name-only', '$mergeBaseSha..HEAD', '--', '*.dart'],
     workingDirectory: Directory.current.path,
     runInShell: false,
   );
