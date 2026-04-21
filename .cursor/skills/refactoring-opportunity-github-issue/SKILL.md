@@ -1,6 +1,6 @@
 ---
 name: refactoring-opportunity-github-issue
-description: Analyzes `app/` or one `packages/*` workspace package for refactoring opportunities using ColonizeThis `.cursor/rules` (plus sound Dart/Flutter practice), proposes focused CI enforcement (AST-first; extend existing gates before adding new ones), and produces a structured GitHub issue another developer can implement. Use when the user asks for refactor scouting, package-level tech-debt triage, or a filing-ready issue from evidence-based findings scoped to app or a package.
+description: Analyzes `app/` or one `packages/*` workspace package on the latest `origin/dev` baseline for refactoring opportunities using ColonizeThis `.cursor/rules` (plus sound Dart/Flutter practice), de-duplicates against open GitHub issues, proposes focused CI enforcement (AST-first; extend existing gates before adding new ones), and produces a structured GitHub issue another developer can implement. Use when the user asks for refactor scouting, package-level tech-debt triage, or a filing-ready issue from evidence-based findings scoped to app or a package.
 ---
 
 # Refactoring opportunity → GitHub issue (ColonizeThis)
@@ -23,6 +23,29 @@ Confirm:
 | **Motivation** (optional) | e.g. readability, coupling, testability, performance smell — from user or inferred |
 
 If scope is ambiguous, ask one short question before scanning.
+
+### 1b. Sync to latest `dev` and record baseline (required)
+
+Opportunities must be judged against **current `origin/dev`**, not a stale local branch or feature head.
+
+1. From repo root: `git fetch origin dev` (retry on transient network errors per agent/git policy).
+2. Ensure the analysis revision is **`dev` fast-forwarded to `origin/dev`**:
+   - If already on `dev`: `git merge --ff-only origin/dev` (or `git pull --ff-only origin dev`).
+   - If on another branch: `git checkout dev` then `git merge --ff-only origin/dev` (or equivalent `git pull --ff-only origin dev`).
+3. If fast-forward fails (local `dev` has diverged), **stop** and resolve in chat: either reset `dev` to `origin/dev` with explicit user consent for destructive git ops, or analyze from a detached `origin/dev` checkout after `git fetch` — in both cases record the exact **`git rev-parse HEAD`** used.
+4. **Record** `HEAD` SHA (short + full) and the fact that it matches `origin/dev` at analysis time. Include this under **Investigation notes** in the drafted issue (e.g. `Analysis baseline: dev @ abc1234`).
+
+Do **not** start codebase analysis (step 3) until this step succeeds or the user explicitly accepts a documented non-`dev` baseline.
+
+### 1c. De-duplicate against open GitHub issues (required)
+
+Before finalizing findings and the issue body, **compare planned themes** to work already tracked so the filing does not duplicate open issues.
+
+1. With GitHub CLI from repo root (repo inferred from `origin`): list open issues, e.g.  
+   `gh issue list --state open --limit 200 --json number,title,labels,url`  
+   If the list is truncated or the backlog is large, run additional passes (higher `--limit` if supported) and/or `gh search issues` scoped to this repo (`repo:owner/name state:open`) with queries tied to the **target path** (e.g. package name, `app/`, “refactor”, “tech debt”, “lint”, “AppEventBus”) and merge unique hits.
+2. For each **candidate duplicate** (similar title or same subsystem/path), run `gh issue view <n>` and skim the body; if the open issue already covers the same opportunity, **drop or narrow** your finding and instead **reference** `#n` in investigation notes (“already tracked”).
+3. If **`gh` is missing, not authenticated, or the API fails**, state that plainly in the drafted issue under **Investigation notes** (duplicate check incomplete) and give 1–2 **search strings** the reader should run in GitHub issue search before implementing.
 
 ### 2. Load governance context
 
@@ -82,6 +105,8 @@ Not applicable (refactoring / maintainability improvement).
 [Clearer boundaries, smaller units, better test seams, etc.]
 
 ## Investigation notes
+- **Analysis baseline:** `dev` @ `<full-or-short-sha>` (synced to `origin/dev` at time of scan)
+- **Open issues / de-duplication:** [e.g. “Compared open issues; no overlap for themes A/B” or “Overlaps #42 (subset); this issue covers only …” or “`gh` unavailable; searched: …”]
 - **Rules:** [which `.cursor/rules/*.mdc` clauses inform each theme]
 - **SPEC:** [paths/sections if behavior/architecture is specified]
 - **Code:** [representative files, APIs, dependency directions]
