@@ -48,7 +48,7 @@ void main() {
 
       final orders = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0')],
         },
       );
 
@@ -98,39 +98,44 @@ void main() {
 
       const ow = 'oldWorld';
       const nw = 'newWorld';
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: 'p1',
-                locationProvinceId: '$ow|P1',
-              ),
-            ],
-          ),
-          newWorld: RegionData(
-            provinces: [Province(id: '$nw|P2', regionId: nw, ownerId: 'p1')],
-            units: [],
-          ),
-          playerVisibilityByTile: const {
-            'p1': {
-              'oldWorld|P1|0|0': 'fullyVisible',
-              'newWorld|P2|0|0': 'fullyVisible',
+      final game = ensureMilitaryArmiesForGame(
+        Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: 'musketeers',
+                  ownerId: 'p1',
+                  locationProvinceId: '$ow|P1',
+                ),
+              ],
+            ),
+            newWorld: RegionData(
+              provinces: [Province(id: '$nw|P2', regionId: nw, ownerId: 'p1')],
+              units: [],
+            ),
+            playerVisibilityByTile: const {
+              'p1': {
+                'oldWorld|P1|0|0': 'fullyVisible',
+                'newWorld|P2|0|0': 'fullyVisible',
+              },
             },
-          },
+          ),
+          players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
         ),
-        players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
       );
 
       final orders = Orders(
-        moveOrdersByPlayerId: {
+        armyMoveOrdersByPlayerId: {
           'p1': [
-            const MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|P2'),
+            ArmyMoveOrder(
+              armyId: fieldArmyIdFor('p1', '$ow|P1'),
+              destinationProvinceId: '$nw|P2',
+            ),
           ],
         },
       );
@@ -213,7 +218,7 @@ void main() {
         final orders = Orders(
           moveOrdersByPlayerId: {
             'p1': [
-              const MoveOrder(unitId: 'c1', destinationProvinceId: nwProv),
+              MoveOrder(unitId: 'c1', destinationTileKey: '$nwProv|0|0'),
             ],
           },
         );
@@ -292,50 +297,57 @@ void main() {
           ],
           edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|P1', regionId: ow, ownerId: 'p2'),
-                Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-              ],
-              units: [
-                Unit(
-                  id: 'u1',
-                  type: 'musketeers',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P2',
-                ),
-                Unit(
-                  id: 'u2',
-                  type: 'pikemen',
-                  ownerId: 'p2',
-                  locationProvinceId: '$ow|P1',
-                ),
-              ],
+        final game = ensureMilitaryArmiesForGame(
+          Game(
+            id: 'g1',
+            worldState: WorldState(
+              turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+              oldWorld: RegionData(
+                provinces: [
+                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p2'),
+                  Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+                ],
+                units: [
+                  Unit(
+                    id: 'u1',
+                    type: 'musketeers',
+                    ownerId: 'p1',
+                    locationProvinceId: '$ow|P2',
+                  ),
+                  Unit(
+                    id: 'u2',
+                    type: 'pikemen',
+                    ownerId: 'p2',
+                    locationProvinceId: '$ow|P1',
+                  ),
+                ],
+              ),
+              newWorld: const RegionData(),
             ),
-            newWorld: const RegionData(),
+            players: [
+              Player(
+                id: 'p1',
+                displayName: 'P1',
+                isHuman: true,
+                stockpile: Stockpile.empty,
+              ),
+              Player(
+                id: 'p2',
+                displayName: 'P2',
+                isHuman: true,
+                stockpile: Stockpile(quantities: {'grain': 10, 'meat': 10}),
+              ),
+            ],
           ),
-          players: [
-            Player(
-              id: 'p1',
-              displayName: 'P1',
-              isHuman: true,
-              stockpile: Stockpile.empty,
-            ),
-            Player(
-              id: 'p2',
-              displayName: 'P2',
-              isHuman: true,
-              stockpile: Stockpile(quantities: {'grain': 10, 'meat': 10}),
-            ),
-          ],
         );
         final orders = Orders(
-          moveOrdersByPlayerId: {
-            'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P1')],
+          armyMoveOrdersByPlayerId: {
+            'p1': [
+              ArmyMoveOrder(
+                armyId: fieldArmyIdFor('p1', '$ow|P2'),
+                destinationProvinceId: '$ow|P1',
+              ),
+            ],
           },
         );
         final next = requireTurnResolutionComplete(
@@ -584,42 +596,49 @@ void main() {
         );
 
         const ow = 'oldWorld';
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-              ],
-              units: [
-                Unit(
-                  id: 'u1',
-                  type: 'grenadiers',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1',
-                  medals: 2,
-                ),
-                Unit(
-                  id: 'u2',
-                  type: 'peasant_levies',
-                  ownerId: 'p2',
-                  locationProvinceId: '$ow|P2',
-                ),
-              ],
+        final game = ensureMilitaryArmiesForGame(
+          Game(
+            id: 'g1',
+            worldState: WorldState(
+              turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+              oldWorld: RegionData(
+                provinces: [
+                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+                  Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+                ],
+                units: [
+                  Unit(
+                    id: 'u1',
+                    type: 'grenadiers',
+                    ownerId: 'p1',
+                    locationProvinceId: '$ow|P1',
+                    medals: 2,
+                  ),
+                  Unit(
+                    id: 'u2',
+                    type: 'peasant_levies',
+                    ownerId: 'p2',
+                    locationProvinceId: '$ow|P2',
+                  ),
+                ],
+              ),
+              newWorld: const RegionData(),
             ),
-            newWorld: const RegionData(),
+            players: [
+              Player(id: 'p1', displayName: 'A', isHuman: true, militaryLevel: 3),
+              Player(id: 'p2', displayName: 'B', isHuman: true, militaryLevel: 1),
+            ],
           ),
-          players: [
-            Player(id: 'p1', displayName: 'A', isHuman: true, militaryLevel: 3),
-            Player(id: 'p2', displayName: 'B', isHuman: true, militaryLevel: 1),
-          ],
         );
 
         final orders = Orders(
-          moveOrdersByPlayerId: {
-            'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+          armyMoveOrdersByPlayerId: {
+            'p1': [
+              ArmyMoveOrder(
+                armyId: fieldArmyIdFor('p1', '$ow|P1'),
+                destinationProvinceId: '$ow|P2',
+              ),
+            ],
           },
         );
 
@@ -681,62 +700,69 @@ void main() {
             .setImprovement('$ow|P2|0|1', 1)
             .setRoadLevel('$ow|P2|0|1', 1);
         final cap = CapitalTile(regionId: ow, provinceId: '$ow|P2', x: 1, y: 0);
-        final game = Game(
-          id: 'g1',
-          globalGameSeed: 55555,
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-              ],
-              units: [
-                Unit(
-                  id: 'u1',
-                  type: 'grenadiers',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1',
-                  medals: 2,
-                ),
-                Unit(
-                  id: 'u2',
-                  type: 'peasant_levies',
-                  ownerId: 'p2',
-                  locationProvinceId: '$ow|P2',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileState: tileState,
-            tileKeysByRegionAndProvince: {
-              ow: {
-                'P1': ['$ow|P1|0|0'],
-                'P2': ['$ow|P2|0|1'],
+        final game = ensureMilitaryArmiesForGame(
+          Game(
+            id: 'g1',
+            globalGameSeed: 55555,
+            worldState: WorldState(
+              turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+              oldWorld: RegionData(
+                provinces: [
+                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+                  Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+                ],
+                units: [
+                  Unit(
+                    id: 'u1',
+                    type: 'grenadiers',
+                    ownerId: 'p1',
+                    locationProvinceId: '$ow|P1',
+                    medals: 2,
+                  ),
+                  Unit(
+                    id: 'u2',
+                    type: 'peasant_levies',
+                    ownerId: 'p2',
+                    locationProvinceId: '$ow|P2',
+                  ),
+                ],
+              ),
+              newWorld: const RegionData(),
+              tileState: tileState,
+              tileKeysByRegionAndProvince: {
+                ow: {
+                  'P1': ['$ow|P1|0|0'],
+                  'P2': ['$ow|P2|0|1'],
+                },
               },
-            },
+            ),
+            players: [
+              Player(
+                id: 'p1',
+                displayName: 'Attacker',
+                isHuman: true,
+                militaryLevel: 3,
+              ),
+              Player(
+                id: 'p2',
+                displayName: 'Defender',
+                isHuman: true,
+                militaryLevel: 1,
+                capitalProvinceId: '$ow|P2',
+                capitalTile: cap,
+              ),
+            ],
+            defaultCombatMode: CombatMode.quickBattle,
           ),
-          players: [
-            Player(
-              id: 'p1',
-              displayName: 'Attacker',
-              isHuman: true,
-              militaryLevel: 3,
-            ),
-            Player(
-              id: 'p2',
-              displayName: 'Defender',
-              isHuman: true,
-              militaryLevel: 1,
-              capitalProvinceId: '$ow|P2',
-              capitalTile: cap,
-            ),
-          ],
-          defaultCombatMode: CombatMode.quickBattle,
         );
         final orders = Orders(
-          moveOrdersByPlayerId: {
-            'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+          armyMoveOrdersByPlayerId: {
+            'p1': [
+              ArmyMoveOrder(
+                armyId: fieldArmyIdFor('p1', '$ow|P1'),
+                destinationProvinceId: '$ow|P2',
+              ),
+            ],
           },
         );
         final next = requireTurnResolutionComplete(
@@ -777,54 +803,61 @@ void main() {
         );
 
         const ow = 'oldWorld';
-        final game = Game(
-          id: 'g1',
-          globalGameSeed: 999,
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-              ],
-              units: [
-                Unit(
-                  id: 'u1',
-                  type: 'grenadiers',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1',
-                  medals: 2,
-                ),
-                Unit(
-                  id: 'u2',
-                  type: 'peasant_levies',
-                  ownerId: 'p2',
-                  locationProvinceId: '$ow|P2',
-                ),
-              ],
+        final game = ensureMilitaryArmiesForGame(
+          Game(
+            id: 'g1',
+            globalGameSeed: 999,
+            worldState: WorldState(
+              turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+              oldWorld: RegionData(
+                provinces: [
+                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+                  Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+                ],
+                units: [
+                  Unit(
+                    id: 'u1',
+                    type: 'grenadiers',
+                    ownerId: 'p1',
+                    locationProvinceId: '$ow|P1',
+                    medals: 2,
+                  ),
+                  Unit(
+                    id: 'u2',
+                    type: 'peasant_levies',
+                    ownerId: 'p2',
+                    locationProvinceId: '$ow|P2',
+                  ),
+                ],
+              ),
+              newWorld: const RegionData(),
             ),
-            newWorld: const RegionData(),
+            players: const [
+              Player(
+                id: 'p1',
+                displayName: 'AI Attacker',
+                isHuman: false,
+                militaryLevel: 3,
+              ),
+              Player(
+                id: 'p2',
+                displayName: 'AI Defender',
+                isHuman: false,
+                militaryLevel: 1,
+              ),
+            ],
+            defaultCombatMode: CombatMode.autoResolve,
           ),
-          players: const [
-            Player(
-              id: 'p1',
-              displayName: 'AI Attacker',
-              isHuman: false,
-              militaryLevel: 3,
-            ),
-            Player(
-              id: 'p2',
-              displayName: 'AI Defender',
-              isHuman: false,
-              militaryLevel: 1,
-            ),
-          ],
-          defaultCombatMode: CombatMode.autoResolve,
         );
 
         final orders = Orders(
-          moveOrdersByPlayerId: {
-            'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+          armyMoveOrdersByPlayerId: {
+            'p1': [
+              ArmyMoveOrder(
+                armyId: fieldArmyIdFor('p1', '$ow|P1'),
+                destinationProvinceId: '$ow|P2',
+              ),
+            ],
           },
         );
 

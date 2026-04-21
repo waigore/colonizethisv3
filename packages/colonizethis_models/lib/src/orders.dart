@@ -1,5 +1,6 @@
 import 'diplomacy.dart';
 import 'model_validation_exception.dart';
+import 'province_id.dart';
 
 /// Per-player orders for the current turn.
 /// SPEC/game/world-model.
@@ -297,23 +298,44 @@ class Orders {
   }
 }
 
-/// Move a unit to an adjacent province.
-/// SPEC/program/orders.md
+/// Move a civilian land unit to a destination **land tile**.
+/// Serialized form is [destinationTileKey] only; enclosing province is derived.
+/// SPEC/program/orders.md; SPEC/game (issue #1877 civilian tile moves).
 class MoveOrder {
-  const MoveOrder({required this.unitId, required this.destinationProvinceId});
+  const MoveOrder({required this.unitId, required this.destinationTileKey});
 
   final String unitId;
-  final String destinationProvinceId;
+
+  /// Land tile key `regionId|localProvinceId|x|y`. Province id is derived from the first two segments.
+  final String destinationTileKey;
 
   Map<String, dynamic> toJson() => {
     'unitId': unitId,
-    'destinationProvinceId': destinationProvinceId,
+    'destinationTileKey': destinationTileKey,
   };
 
   static MoveOrder fromJson(Map<String, dynamic> json) {
-    return MoveOrder(
-      unitId: json['unitId'] as String,
-      destinationProvinceId: json['destinationProvinceId'] as String,
+    final unitId = json['unitId'] as String;
+    final tile = json['destinationTileKey'] as String?;
+    if (tile != null && tile.isNotEmpty) {
+      return MoveOrder(unitId: unitId, destinationTileKey: tile);
+    }
+    final legacy = json['destinationProvinceId'] as String?;
+    if (legacy != null && legacy.isNotEmpty) {
+      if (!ProvinceId.isPrefixed(legacy)) {
+        throw ModelValidationException(
+          'MoveOrder legacy destinationProvinceId must be prefixed (regionId|localId): "$legacy"',
+        );
+      }
+      final region = ProvinceId.regionIdFrom(legacy);
+      final local = ProvinceId.localIdFrom(legacy);
+      return MoveOrder(
+        unitId: unitId,
+        destinationTileKey: '$region|$local|0|0',
+      );
+    }
+    throw ModelValidationException(
+      'MoveOrder requires destinationTileKey (or legacy destinationProvinceId)',
     );
   }
 
@@ -323,10 +345,10 @@ class MoveOrder {
       other is MoveOrder &&
           runtimeType == other.runtimeType &&
           unitId == other.unitId &&
-          destinationProvinceId == other.destinationProvinceId;
+          destinationTileKey == other.destinationTileKey;
 
   @override
-  int get hashCode => Object.hash(unitId, destinationProvinceId);
+  int get hashCode => Object.hash(unitId, destinationTileKey);
 }
 
 /// Move an army (all its regiments) to a province. SPEC/game/military-armies.md.

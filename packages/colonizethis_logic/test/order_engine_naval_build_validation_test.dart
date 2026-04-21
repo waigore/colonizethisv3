@@ -47,7 +47,7 @@ void main() {
       final engine = OrderEngine();
       engine.addMoveOrder(
         'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|P2'),
+        const MoveOrder(unitId: 'u1', destinationTileKey: '$nw|P2|0|0'),
       );
       final results = engine.validatePlayerOrdersWithContext(
         game,
@@ -112,7 +112,7 @@ void main() {
         final engine = OrderEngine();
         engine.addMoveOrder(
           'p1',
-          const MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|P2'),
+          const MoveOrder(unitId: 'u1', destinationTileKey: '$nw|P2|0|0'),
         );
         final results = engine.validatePlayerOrdersWithContext(
           game,
@@ -180,7 +180,7 @@ void main() {
       final initial = Orders(
         moveOrdersByPlayerId: {
           'p1': [
-            const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+            const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
           ],
         },
       );
