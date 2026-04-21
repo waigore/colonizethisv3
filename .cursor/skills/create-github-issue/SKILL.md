@@ -1,5 +1,5 @@
 ---
-name: create-github-issue-from-report
+name: create-github-issue
 description: Turns an informal issue report into a structured GitHub issue with reproduction steps, expected vs actual behavior, read-only SPEC/code investigation, and a proposed fix scope—without modifying the repository. Attempts to open the issue via GitHub CLI (gh); falls back to a paste-ready draft if gh is missing, unauthenticated, or creation fails. Use when the user describes a bug, regression, or gap and wants a filed issue, triage narrative, or fix direction before implementation.
 ---
 

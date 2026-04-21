@@ -147,6 +147,6 @@ Use a neutral, factual tone. Do not close the issue.
 
 ## Related skills
 
-- **Implement**: `.cursor/skills/implement-github-issue-fix/SKILL.md`
+- **Implement**: `.cursor/skills/implement-github-issue/SKILL.md`
 - **Verify / close** (issue vs implementation, SPEC, tests): `.cursor/skills/verify-github-issue/SKILL.md`
 - Tracing hints (when step 5 applies): `.opencode/skills/review-github-issue/references/review-reference.md`

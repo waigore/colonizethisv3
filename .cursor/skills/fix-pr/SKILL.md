@@ -1,5 +1,5 @@
 ---
-name: fix-pr-checks
+name: fix-pr
 description: Diagnoses and unblocks a pull request by checking PR status, failing checks, quality gates, and merge conflicts, then applying the minimal compliant fix and verifying results. Use when the user provides a PR URL or PR number and asks to fix or unblock the PR.
 ---
 
