@@ -270,6 +270,25 @@ String? seaZoneIdForProvince(
 /// True when [edgeEndpoint] is the same sea-zone topology node as [seaZoneId] for
 /// [effectiveRegion]. Handles combined topologies where edges use prefixed sea ids
 /// (`regionId|localSea`) while fleet state or orders may still use the local id.
+bool _topologyProvinceEndpointMatches(
+  String edgeEndpoint,
+  String provinceId,
+  String? regionId,
+) {
+  if (edgeEndpoint == provinceId) return true;
+  if (regionId == null) return false;
+  if (ProvinceId.isPrefixed(provinceId)) {
+    if (!ProvinceId.isPrefixed(edgeEndpoint)) {
+      return ProvinceId.regionIdFrom(provinceId) == regionId &&
+          ProvinceId.localIdFrom(provinceId) == edgeEndpoint;
+    }
+  } else if (ProvinceId.isPrefixed(edgeEndpoint)) {
+    return ProvinceId.regionIdFrom(edgeEndpoint) == regionId &&
+        ProvinceId.localIdFrom(edgeEndpoint) == provinceId;
+  }
+  return false;
+}
+
 bool _topologySeaEndpointMatches(
   String edgeEndpoint,
   String seaZoneId,
@@ -361,9 +380,16 @@ Set<String> seaZoneIdsAdjacentToProvince(
   final out = <String>{};
   for (final e in topology.edges) {
     final id1 = e.id1, id2 = e.id2;
-    final prov = (id1 == localProvinceId || id1 == provinceId)
-        ? id1
-        : ((id2 == localProvinceId || id2 == provinceId) ? id2 : null);
+    String? prov;
+    if (id1 == localProvinceId ||
+        id1 == provinceId ||
+        _topologyProvinceEndpointMatches(id1, provinceId, regionId)) {
+      prov = id1;
+    } else if (id2 == localProvinceId ||
+        id2 == provinceId ||
+        _topologyProvinceEndpointMatches(id2, provinceId, regionId)) {
+      prov = id2;
+    }
     if (prov == null) continue;
     final other = id1 == prov ? id2 : id1;
     final node = nodeById[other];
