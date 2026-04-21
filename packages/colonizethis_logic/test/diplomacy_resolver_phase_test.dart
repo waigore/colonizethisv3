@@ -392,6 +392,88 @@ void main() {
       );
     });
 
+    test(
+      'join empire relocates illegal civilian in changed province to owner capital',
+      () {
+        const ow = 'oldWorld';
+        const absorbedProvince = '$ow|m1';
+        const absorbedTile = '$ow|m1|0|0';
+        const foreignCapProvince = '$ow|c1';
+        const foreignCapTile = '$ow|c1|0|0';
+
+        var game = baseGame().copyWith(
+          players: const [
+            Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 15000),
+            Player(
+              id: 'gp2',
+              displayName: 'GP2',
+              isHuman: false,
+              capitalProvinceId: foreignCapProvince,
+              capitalTile: CapitalTile(regionId: ow, provinceId: 'c1', x: 0, y: 0),
+            ),
+          ],
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: absorbedProvince, regionId: ow, ownerId: 'minor1'),
+                Province(id: foreignCapProvince, regionId: ow, ownerId: 'gp2'),
+              ],
+              units: [
+                Unit(
+                  id: 'foreign_builder',
+                  type: 'Builder',
+                  ownerId: 'gp2',
+                  locationProvinceId: absorbedProvince,
+                  tileKey: absorbedTile,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          overtureStates: const [
+            OvertureState(
+              gpId: 'gp1',
+              targetId: 'minor1',
+              stage: OvertureStage.nap,
+              sinceTurn: 0,
+            ),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'minor1',
+              score: 60,
+              level: RelationLevel.friendly,
+            ),
+          ],
+        );
+
+        final orders = Orders(
+          diplomaticOrdersByPlayerId: {
+            'gp1': const [
+              DiplomaticOrder(
+                type: DiplomaticOrderType.establishOverture,
+                targetFactionId: 'minor1',
+                overtureStage: OvertureStage.joinEmpire,
+              ),
+            ],
+          },
+        );
+
+        final after = resolveDiplomacyPhase(game, orders).game;
+        final relocated = after.worldState.oldWorld.units
+            .where((u) => u.id == 'foreign_builder')
+            .single;
+        expect(relocated.tileKey, foreignCapTile);
+        expect(relocated.locationProvinceId, foreignCapProvince);
+        expect(relocated.status, UnitStatus.idle);
+        expect(relocated.currentWork, isNull);
+        expect(relocated.originTileKey, isNull);
+        expect(relocated.assignedTileKey, isNull);
+      },
+    );
+
     test('join empire not applied when treasury below cost: minor unchanged', () {
       const ow = 'oldWorld';
       var game = baseGame().copyWith(
