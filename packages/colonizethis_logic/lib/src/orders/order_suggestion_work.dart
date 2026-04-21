@@ -4,7 +4,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
+import '../world/unit_lookup.dart';
 import 'build_rail_work_rules.dart';
+import 'bundled_civilian_work_order.dart';
 import 'order_suggestion_build_research.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
@@ -22,7 +24,7 @@ void _suggestionWorkLog({
   String reason = '-',
   String tile = '-',
 }) {
-  _log.d(
+  orderSuggestionLog.d(
     'suggest_work unitId=$unitId unitType=$unitType region=$unitRegionId '
     'at=$atProvinceId target=$workTarget outcome=$outcome reason=$reason tile=$tile',
   );
@@ -119,7 +121,7 @@ void _addExplorerWorkSuggestionsForUnit({
         target: kWorkTargetExplore,
         targetTileKey: targetTileKey,
       );
-      if (_isWorkOrderAccepted(
+      if (isWorkOrderAccepted(
         game,
         topology,
         playerId,
@@ -213,7 +215,7 @@ void _addExplorerWorkSuggestionsForUnit({
         continue;
       }
     }
-    if (_isWorkOrderAccepted(
+    if (isWorkOrderAccepted(
       game,
       topology,
       playerId,
@@ -605,7 +607,7 @@ void _addWorkerSuggestionsForUnit({
       outcome: 'excluded',
       reason: reason,
     );
-    _log.d(
+    orderSuggestionLog.d(
       'suggestWorkOrders rejected target=$target unit=${unit.id} (no valid tile)',
     );
   }
@@ -793,7 +795,7 @@ void _addCounterSpySuggestionIfEligible({
     target: kWorkTargetCounterSpy,
     targetTileKey: tilesInProvince.first,
   );
-  if (_isWorkOrderAccepted(
+  if (isWorkOrderAccepted(
     game,
     topology,
     playerId,
