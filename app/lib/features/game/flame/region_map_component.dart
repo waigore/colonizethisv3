@@ -219,11 +219,9 @@ class CtRegionMapComponent extends PositionComponent {
     final cell = region.cellAt(x, y);
     final tileKey = '${region.regionId}|${cell.regionCellId}|$x|$y';
     if (validTileKeys != null) {
-      // Work target mode: use tap handler for selection/cancellation.
+      // Work target mode: only valid tile taps commit selection.
       if (validTileKeys!.isNotEmpty && validTileKeys!.contains(tileKey)) {
         onTileTapped?.call(tileKey);
-      } else {
-        onTileTapped?.call(null);
       }
       return;
     }
