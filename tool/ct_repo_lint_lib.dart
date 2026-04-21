@@ -299,14 +299,23 @@ String? resolvePrChangedDartFilesCsv() {
     workingDirectory: Directory.current.path,
     runInShell: false,
   );
-  if (fetch.exitCode != 0) {
-    return null;
+  final primaryLeft = 'origin/$baseRef';
+  if (fetch.exitCode == 0) {
+    final csv = _resolveChangedDartFilesCsvForLeft(primaryLeft);
+    if (csv != null) {
+      return csv;
+    }
   }
 
-  final left = 'origin/$baseRef';
+  // CI may check out a merge commit and/or omit remote refs in shallow clones.
+  // Fall back to the first parent when origin/<base> cannot be resolved.
+  return _resolveChangedDartFilesCsvForLeft('HEAD^');
+}
+
+String? _resolveChangedDartFilesCsvForLeft(String leftRef) {
   final diff = Process.runSync(
     'git',
-    ['diff', '--name-only', '$left...HEAD', '--', '*.dart'],
+    ['diff', '--name-only', '$leftRef...HEAD', '--', '*.dart'],
     workingDirectory: Directory.current.path,
     runInShell: false,
   );
