@@ -295,7 +295,7 @@ void main() {
     });
 
     testWidgets(
-      'prospect shortcut mode filters panel to explorers and bypasses assign menu',
+      'prospect shortcut mode filters explorers and directly commits pending prospect on selected tile',
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
@@ -336,7 +336,11 @@ void main() {
         );
         final bus = AppEventBus.create();
         final events = <Type>[];
+        UpsertPendingCivilianWorkOrderRequestedEvent? upsertEvent;
         bus.stream.listen((e) => events.add(e.runtimeType));
+        bus.on<UpsertPendingCivilianWorkOrderRequestedEvent>().listen(
+          (event) => upsertEvent = event,
+        );
         await tester.pumpWidget(
           buildPanel(
             game: miniGame,
@@ -359,9 +363,15 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.textContaining('Assign work'), findsNothing);
+        expect(upsertEvent, isNotNull);
+        expect(upsertEvent!.playerId, human);
+        expect(upsertEvent!.workOrder.unitId, 'e1');
+        expect(upsertEvent!.workOrder.target, 'prospect');
+        expect(upsertEvent!.workOrder.targetTileKey, tileKey);
+        expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
         expect(
           events.indexOf(ClosePanelEvent),
-          lessThan(events.indexOf(StartCivilianWorkTargetSelectionEvent)),
+          lessThan(events.indexOf(UpsertPendingCivilianWorkOrderRequestedEvent)),
         );
       },
     );

@@ -295,6 +295,19 @@ class CancelInProgressCivilianWorkRequestedEvent extends SessionCommandEvent {
   final String unitId;
 }
 
+/// Upsert one pending civilian [workOrder] for [playerId] in current-turn draft.
+/// Replaces any existing pending work for the same unit and clears conflicting
+/// pending move order for that unit (work-order draft xor rule).
+class UpsertPendingCivilianWorkOrderRequestedEvent extends SessionCommandEvent {
+  UpsertPendingCivilianWorkOrderRequestedEvent({
+    required this.playerId,
+    required this.workOrder,
+  });
+
+  final String playerId;
+  final WorkOrder workOrder;
+}
+
 /// Naval panel produced an updated [game] (split/combine). Handler updates session game.
 class NavalFleetsUpdatedEvent extends SessionCommandEvent {
   NavalFleetsUpdatedEvent({required this.game});
