@@ -261,7 +261,7 @@ void main() {
         playerVisibilityByTile: const {
           playerId: {
             t0: 'fullyVisible',
-            t1: 'fogged',
+            t1: 'unknown',
           },
         },
         tileKeysByRegionAndProvince: {
@@ -289,6 +289,79 @@ void main() {
       final explore = suggestions.where((o) => o.target == kWorkTargetExplore);
       expect(explore, isNotEmpty);
     });
+
+    test(
+      'suggestWorkOrders explore aligns with partially revealed province cache scope',
+      () {
+        const playerId = 'gp1';
+        const ow = 'oldWorld';
+        const partialProvince = '$ow|p_partial';
+        const fullyKnownProvince = '$ow|p_known';
+        const partialKnownTile = 'oldWorld|p_partial|0|0';
+        const partialUnknownTile = 'oldWorld|p_partial|1|0';
+        const knownTile = 'oldWorld|p_known|0|0';
+
+        final player = const Player(
+          id: playerId,
+          displayName: 'GP',
+          isHuman: false,
+        );
+        final explorer = Unit(
+          id: 'u1',
+          type: 'Explorer',
+          ownerId: playerId,
+          locationProvinceId: partialProvince,
+          tileKey: partialKnownTile,
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: partialProvince, regionId: ow, ownerId: 'tribe1'),
+              Province(id: fullyKnownProvince, regionId: ow, ownerId: 'tribe1'),
+            ],
+            units: [explorer],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            playerId: {
+              partialKnownTile: 'fogged',
+              partialUnknownTile: 'unknown',
+              knownTile: 'fullyVisible',
+            },
+          },
+          tileKeysByRegionAndProvince: {
+            ow: {
+              partialProvince: [partialKnownTile, partialUnknownTile],
+              fullyKnownProvince: [knownTile],
+            },
+          },
+        );
+        final game = Game(
+          id: 'g-cache-scope',
+          worldState: world,
+          players: [player],
+          tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
+        );
+        final topology = const MapTopology(nodes: [], edges: []);
+        final view = buildPlayerView(game, topology, playerId);
+
+        final suggestions = suggestWorkOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+
+        final explore = suggestions.where((o) => o.target == kWorkTargetExplore);
+        expect(explore, isNotEmpty);
+        final exploreOrder = explore.first;
+        expect(
+          Unit.provinceIdFromTileKey(exploreOrder.targetTileKey),
+          partialProvince,
+        );
+      },
+    );
 
     test('no prospect suggestion when province not at least fogged', () {
       const playerId = 'gp1';
