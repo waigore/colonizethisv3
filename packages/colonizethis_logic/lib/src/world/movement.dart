@@ -62,22 +62,27 @@ bool isValidLandMove(
   String toProvinceId,
 ) {
   if (fromProvinceId == toProvinceId) return false;
-  final fromNodes = topology.nodes
-      .where(
-        (n) => n.id == fromProvinceId && n.type == TopologyNodeType.province,
-      )
-      .toList();
-  if (fromNodes.isEmpty) return false;
-  if (fromNodes.length > 1) {
-    // Duplicate local id across regions; cannot decide without regionId.
-    return false;
-  }
+  final fromNodes = _provinceNodesForId(topology, fromProvinceId);
+  if (!_hasSingleResolvedFromNode(fromNodes)) return false;
   return isValidLandMoveInRegion(
     topology,
     fromNodes.single.regionId,
     fromProvinceId,
     toProvinceId,
   );
+}
+
+List<TopologyNode> _provinceNodesForId(
+  MapTopology topology,
+  String fromProvinceId,
+) => topology.nodes
+    .where((n) => n.id == fromProvinceId && n.type == TopologyNodeType.province)
+    .toList();
+
+bool _hasSingleResolvedFromNode(List<TopologyNode> fromNodes) {
+  if (fromNodes.isEmpty) return false;
+  if (fromNodes.length > 1) return false;
+  return true;
 }
 
 ({List<Unit> ow, List<Unit> nw}) _replaceCivilianUnitInSameRegion(
@@ -172,19 +177,51 @@ _applyCivilianMoveOrders(
   var ignored = 0;
   final sortedPlayers = moveOrdersByPlayerId.keys.toList()..sort();
   for (final playerId in sortedPlayers) {
-    for (final order in moveOrdersByPlayerId[playerId] ?? const []) {
-      ordersSeen++;
-      final appliedOrder = _applyOneCivilianMoveOrder(ow, nw, playerId, order);
-      ow = appliedOrder.ow;
-      nw = appliedOrder.nw;
-      applied += appliedOrder.applied;
-      ignored += appliedOrder.ignored;
-    }
+    final forPlayer = _applyCivilianMoveOrdersForPlayer(
+      ow: ow,
+      nw: nw,
+      playerId: playerId,
+      orders: moveOrdersByPlayerId[playerId] ?? const [],
+    );
+    ow = forPlayer.ow;
+    nw = forPlayer.nw;
+    ordersSeen += forPlayer.ordersSeen;
+    applied += forPlayer.applied;
+    ignored += forPlayer.ignored;
   }
   return (
     ow: ow,
     nw: nw,
     ordersSeen: ordersSeen,
+    applied: applied,
+    ignored: ignored,
+  );
+}
+
+({List<Unit> ow, List<Unit> nw, int ordersSeen, int applied, int ignored})
+_applyCivilianMoveOrdersForPlayer({
+  required List<Unit> ow,
+  required List<Unit> nw,
+  required String playerId,
+  required List<MoveOrder> orders,
+}) {
+  var localOw = ow;
+  var localNw = nw;
+  var seen = 0;
+  var applied = 0;
+  var ignored = 0;
+  for (final order in orders) {
+    seen++;
+    final one = _applyOneCivilianMoveOrder(localOw, localNw, playerId, order);
+    localOw = one.ow;
+    localNw = one.nw;
+    applied += one.applied;
+    ignored += one.ignored;
+  }
+  return (
+    ow: localOw,
+    nw: localNw,
+    ordersSeen: seen,
     applied: applied,
     ignored: ignored,
   );
@@ -197,21 +234,9 @@ _applyOneCivilianMoveOrder(
   String playerId,
   MoveOrder order,
 ) {
-  final unit = _findCivilianMoveUnit(ow, nw, order.unitId);
-  if (unit == null)
-    return _ignoredMove(ow, nw, 'unit_not_found', order, playerId: playerId);
-  if (unit.ownerId != playerId) {
-    return _ignoredMove(
-      ow,
-      nw,
-      'owner_mismatch',
-      order,
-      playerId: playerId,
-      ownerId: unit.ownerId,
-    );
-  }
-  if (isMilitaryUnit(unit.type))
-    return (ow: ow, nw: nw, applied: 0, ignored: 1);
+  final precheck = _precheckCivilianMoveOrder(ow, nw, playerId, order);
+  if (precheck != null) return precheck;
+  final unit = _findCivilianMoveUnit(ow, nw, order.unitId)!;
   final prepared = _prepareMovedCivilianUnit(unit, order.destinationTileKey);
   if (prepared == null) return (ow: ow, nw: nw, applied: 0, ignored: 1);
   final srcRegion = _regionHoldingUnit(ow, nw, unit.id);
@@ -225,6 +250,32 @@ _applyOneCivilianMoveOrder(
     destRegion: prepared.destRegion,
   );
   return (ow: lists.ow, nw: lists.nw, applied: 1, ignored: 0);
+}
+
+({List<Unit> ow, List<Unit> nw, int applied, int ignored})?
+_precheckCivilianMoveOrder(
+  List<Unit> ow,
+  List<Unit> nw,
+  String playerId,
+  MoveOrder order,
+) {
+  final unit = _findCivilianMoveUnit(ow, nw, order.unitId);
+  if (unit == null) {
+    return _ignoredMove(ow, nw, 'unit_not_found', order, playerId: playerId);
+  }
+  if (unit.ownerId != playerId) {
+    return _ignoredMove(
+      ow,
+      nw,
+      'owner_mismatch',
+      order,
+      playerId: playerId,
+      ownerId: unit.ownerId,
+    );
+  }
+  if (isMilitaryUnit(unit.type))
+    return (ow: ow, nw: nw, applied: 0, ignored: 1);
+  return null;
 }
 
 ({List<Unit> ow, List<Unit> nw, int applied, int ignored}) _ignoredMove(

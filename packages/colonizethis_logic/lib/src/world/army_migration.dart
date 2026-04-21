@@ -87,68 +87,99 @@ Unit? _findUnit(Game game, String unitId) {
 }
 
 Game _ensureHomeArmiesExist(Game game) {
-  var ws = game.worldState;
+  final ws = game.worldState;
   final armies = List<Army>.from(ws.armies);
   var changed = false;
   for (final player in game.players) {
-    final cap = player.capitalProvinceId;
-    if (cap == null) continue;
-    final hid = homeArmyIdFor(player.id);
-    final exists = armies.any((a) => a.id == hid && a.ownerId == player.id);
-    if (!exists) {
-      final regionId = _regionIdForProvinceInWorld(ws, cap);
-      armies.add(
-        Army(
-          id: hid,
-          ownerId: player.id,
-          regionId: regionId,
-          stationedProvinceId: cap,
-          regimentUnitIds: const [],
-          isHomeArmy: true,
-        ),
-      );
-      changed = true;
-    }
+    changed = _ensureHomeArmyForPlayer(ws, armies, player) || changed;
   }
   if (!changed) return game;
   return game.copyWith(worldState: ws.copyWith(armies: armies));
 }
 
+bool _ensureHomeArmyForPlayer(WorldState ws, List<Army> armies, Player player) {
+  final cap = player.capitalProvinceId;
+  if (cap == null) return false;
+  final hid = homeArmyIdFor(player.id);
+  final exists = armies.any((a) => a.id == hid && a.ownerId == player.id);
+  if (exists) return false;
+  armies.add(_homeArmyForPlayerAtCapital(ws, player, cap));
+  return true;
+}
+
+Army _homeArmyForPlayerAtCapital(WorldState ws, Player player, String cap) =>
+    Army(
+      id: homeArmyIdFor(player.id),
+      ownerId: player.id,
+      regionId: _regionIdForProvinceInWorld(ws, cap),
+      stationedProvinceId: cap,
+      regimentUnitIds: const [],
+      isHomeArmy: true,
+    );
+
 Game _rebuildArmiesFromMilitaryUnits(Game game) {
   final ws = game.worldState;
-  final militaryUnits = [
-    ...ws.oldWorld.units.where((u) => isMilitaryUnit(u.type)),
-    ...ws.newWorld.units.where((u) => isMilitaryUnit(u.type)),
-  ];
+  final militaryUnits = _militaryUnitsFromWorld(ws);
+  final capitals = _capitalByPlayer(game.players);
+  final byArmyKey = _armyMembershipByKey(militaryUnits, capitals);
+  final armies = <Army>[];
+  _appendHomeArmies(ws, game.players, byArmyKey, armies);
+  _appendFieldArmies(ws, byArmyKey, militaryUnits, armies);
+  armies.sort((a, b) => a.id.compareTo(b.id));
+  final nextSeq = _nextArmySequence(armies);
+  return game.copyWith(
+    worldState: ws.copyWith(
+      armies: armies,
+      nextArmySeq: nextSeq < 2 ? 2 : nextSeq,
+    ),
+  );
+}
 
-  final capitals = {
-    for (final p in game.players)
-      if (p.capitalProvinceId != null) p.id: p.capitalProvinceId!,
-  };
+List<Unit> _militaryUnitsFromWorld(WorldState ws) => [
+  ...ws.oldWorld.units.where((u) => isMilitaryUnit(u.type)),
+  ...ws.newWorld.units.where((u) => isMilitaryUnit(u.type)),
+];
 
+Map<String, String> _capitalByPlayer(List<Player> players) => {
+  for (final p in players)
+    if (p.capitalProvinceId != null) p.id: p.capitalProvinceId!,
+};
+
+Map<String, List<String>> _armyMembershipByKey(
+  List<Unit> militaryUnits,
+  Map<String, String> capitals,
+) {
   final byArmyKey = <String, List<String>>{};
-
   for (final u in militaryUnits) {
-    final cap = capitals[u.ownerId];
-    final isGpHome = cap != null && u.locationProvinceId == cap;
-    final key = isGpHome
-        ? homeArmyIdFor(u.ownerId)
-        : fieldArmyIdFor(u.ownerId, u.locationProvinceId);
+    final key = _armyKeyForUnit(u, capitals);
     byArmyKey.putIfAbsent(key, () => []).add(u.id);
   }
+  return byArmyKey;
+}
 
-  final armies = <Army>[];
+String _armyKeyForUnit(Unit u, Map<String, String> capitals) {
+  final cap = capitals[u.ownerId];
+  final isGpHome = cap != null && u.locationProvinceId == cap;
+  return isGpHome
+      ? homeArmyIdFor(u.ownerId)
+      : fieldArmyIdFor(u.ownerId, u.locationProvinceId);
+}
 
-  for (final player in game.players) {
+void _appendHomeArmies(
+  WorldState ws,
+  List<Player> players,
+  Map<String, List<String>> byArmyKey,
+  List<Army> armies,
+) {
+  for (final player in players) {
     final cap = player.capitalProvinceId;
     if (cap == null) continue;
     final hid = homeArmyIdFor(player.id);
-    final regionId = _regionIdForProvinceInWorld(ws, cap);
     armies.add(
       Army(
         id: hid,
         ownerId: player.id,
-        regionId: regionId,
+        regionId: _regionIdForProvinceInWorld(ws, cap),
         stationedProvinceId: cap,
         regimentUnitIds: List<String>.from(byArmyKey[hid] ?? const []),
         isHomeArmy: true,
@@ -156,38 +187,36 @@ Game _rebuildArmiesFromMilitaryUnits(Game game) {
     );
     byArmyKey.remove(hid);
   }
+}
 
+void _appendFieldArmies(
+  WorldState ws,
+  Map<String, List<String>> byArmyKey,
+  List<Unit> militaryUnits,
+  List<Army> armies,
+) {
   for (final e in byArmyKey.entries) {
     if (e.value.isEmpty) continue;
     final sample = militaryUnits.firstWhere((u) => u.id == e.value.first);
-    final regionId = _regionIdForUnitInWorld(ws, sample);
     armies.add(
       Army(
         id: e.key,
         ownerId: sample.ownerId,
-        regionId: regionId,
+        regionId: _regionIdForUnitInWorld(ws, sample),
         stationedProvinceId: sample.locationProvinceId,
         regimentUnitIds: List<String>.from(e.value)..sort(),
         isHomeArmy: false,
       ),
     );
   }
+}
 
-  armies.sort((a, b) => a.id.compareTo(b.id));
-
+int _nextArmySequence(List<Army> armies) {
   var nextSeq = 1;
   for (final a in armies) {
-    if (!a.isHomeArmy && a.id.startsWith('army_field_')) {
-      nextSeq++;
-    }
+    if (!a.isHomeArmy && a.id.startsWith('army_field_')) nextSeq++;
   }
-
-  return game.copyWith(
-    worldState: ws.copyWith(
-      armies: armies,
-      nextArmySeq: nextSeq < 2 ? 2 : nextSeq,
-    ),
-  );
+  return nextSeq < 2 ? 2 : nextSeq;
 }
 
 /// Removes dead unit ids from armies, drops empty non-home armies, assigns orphan regiments.
@@ -279,30 +308,62 @@ WorldState updateArmyStation(
   var owUnits = List<Unit>.from(worldState.oldWorld.units);
   var nwUnits = List<Unit>.from(worldState.newWorld.units);
 
-  for (final rid in army.regimentUnitIds) {
-    final updated = _moveRegimentToProvince(
-      owUnits: owUnits,
-      nwUnits: nwUnits,
-      regimentUnitId: rid,
-      destinationProvinceId: destinationProvinceId,
-      destinationRegionId: regionId,
-    );
-    owUnits = updated.owUnits;
-    nwUnits = updated.nwUnits;
-  }
-
-  return worldState.copyWith(
-    armies: armies,
-    oldWorld: RegionData(
-      provinces: worldState.oldWorld.provinces,
-      units: owUnits,
-    ),
-    newWorld: RegionData(
-      provinces: worldState.newWorld.provinces,
-      units: nwUnits,
-    ),
+  final relocated = _relocateArmyRegiments(
+    regimentUnitIds: army.regimentUnitIds,
+    owUnits: owUnits,
+    nwUnits: nwUnits,
+    destinationProvinceId: destinationProvinceId,
+    destinationRegionId: regionId,
+  );
+  owUnits = relocated.owUnits;
+  nwUnits = relocated.nwUnits;
+  return _worldStateWithUpdatedArmyAndUnits(
+    worldState,
+    armies,
+    owUnits,
+    nwUnits,
   );
 }
+
+({List<Unit> owUnits, List<Unit> nwUnits}) _relocateArmyRegiments({
+  required List<String> regimentUnitIds,
+  required List<Unit> owUnits,
+  required List<Unit> nwUnits,
+  required String destinationProvinceId,
+  required String destinationRegionId,
+}) {
+  var localOw = owUnits;
+  var localNw = nwUnits;
+  for (final rid in regimentUnitIds) {
+    final updated = _moveRegimentToProvince(
+      owUnits: localOw,
+      nwUnits: localNw,
+      regimentUnitId: rid,
+      destinationProvinceId: destinationProvinceId,
+      destinationRegionId: destinationRegionId,
+    );
+    localOw = updated.owUnits;
+    localNw = updated.nwUnits;
+  }
+  return (owUnits: localOw, nwUnits: localNw);
+}
+
+WorldState _worldStateWithUpdatedArmyAndUnits(
+  WorldState worldState,
+  List<Army> armies,
+  List<Unit> owUnits,
+  List<Unit> nwUnits,
+) => worldState.copyWith(
+  armies: armies,
+  oldWorld: RegionData(
+    provinces: worldState.oldWorld.provinces,
+    units: owUnits,
+  ),
+  newWorld: RegionData(
+    provinces: worldState.newWorld.provinces,
+    units: nwUnits,
+  ),
+);
 
 List<Army> _retargetArmyStation(
   List<Army> armies,
@@ -332,12 +393,13 @@ Army? _armyById(List<Army> armies, String armyId) {
   required String destinationProvinceId,
   required String destinationRegionId,
 }) {
-  final owIdx = owUnits.indexWhere((u) => u.id == regimentUnitId);
-  final nwIdx = nwUnits.indexWhere((u) => u.id == regimentUnitId);
+  final indices = _regimentIndices(owUnits, nwUnits, regimentUnitId);
+  final owIdx = indices.owIdx;
+  final nwIdx = indices.nwIdx;
   if (owIdx < 0 && nwIdx < 0) return (owUnits: owUnits, nwUnits: nwUnits);
 
-  final inOldWorld = owIdx >= 0;
-  final sourceRegion = inOldWorld ? kRegionOldWorld : kRegionNewWorld;
+  final inOldWorld = _isOldWorldIndex(owIdx);
+  final sourceRegion = _sourceRegionForIndex(inOldWorld);
   if (sourceRegion == destinationRegionId) {
     return _relocateRegimentInSameRegion(
       owUnits: owUnits,
@@ -358,6 +420,19 @@ Army? _armyById(List<Army> armies, String armyId) {
   );
 }
 
+({int owIdx, int nwIdx}) _regimentIndices(
+  List<Unit> owUnits,
+  List<Unit> nwUnits,
+  String regimentUnitId,
+) => (
+  owIdx: owUnits.indexWhere((u) => u.id == regimentUnitId),
+  nwIdx: nwUnits.indexWhere((u) => u.id == regimentUnitId),
+);
+
+bool _isOldWorldIndex(int owIdx) => owIdx >= 0;
+String _sourceRegionForIndex(bool inOldWorld) =>
+    inOldWorld ? kRegionOldWorld : kRegionNewWorld;
+
 ({List<Unit> owUnits, List<Unit> nwUnits}) _relocateRegimentInSameRegion({
   required List<Unit> owUnits,
   required List<Unit> nwUnits,
@@ -365,29 +440,52 @@ Army? _armyById(List<Army> armies, String armyId) {
   required String destinationProvinceId,
   required bool inOldWorld,
 }) {
-  if (inOldWorld) {
-    return (
-      owUnits: owUnits
-          .map(
-            (u) => u.id == regimentUnitId
-                ? u.copyWith(locationProvinceId: destinationProvinceId)
-                : u,
-          )
-          .toList(),
-      nwUnits: nwUnits,
+  if (inOldWorld)
+    return _relocateRegimentInOldWorld(
+      owUnits,
+      nwUnits,
+      regimentUnitId,
+      destinationProvinceId,
     );
-  }
-  return (
-    owUnits: owUnits,
-    nwUnits: nwUnits
-        .map(
-          (u) => u.id == regimentUnitId
-              ? u.copyWith(locationProvinceId: destinationProvinceId)
-              : u,
-        )
-        .toList(),
+  return _relocateRegimentInNewWorld(
+    owUnits,
+    nwUnits,
+    regimentUnitId,
+    destinationProvinceId,
   );
 }
+
+({List<Unit> owUnits, List<Unit> nwUnits}) _relocateRegimentInOldWorld(
+  List<Unit> owUnits,
+  List<Unit> nwUnits,
+  String regimentUnitId,
+  String destinationProvinceId,
+) => (
+  owUnits: owUnits
+      .map(
+        (u) => u.id == regimentUnitId
+            ? u.copyWith(locationProvinceId: destinationProvinceId)
+            : u,
+      )
+      .toList(),
+  nwUnits: nwUnits,
+);
+
+({List<Unit> owUnits, List<Unit> nwUnits}) _relocateRegimentInNewWorld(
+  List<Unit> owUnits,
+  List<Unit> nwUnits,
+  String regimentUnitId,
+  String destinationProvinceId,
+) => (
+  owUnits: owUnits,
+  nwUnits: nwUnits
+      .map(
+        (u) => u.id == regimentUnitId
+            ? u.copyWith(locationProvinceId: destinationProvinceId)
+            : u,
+      )
+      .toList(),
+);
 
 ({List<Unit> owUnits, List<Unit> nwUnits}) _relocateRegimentAcrossRegions({
   required List<Unit> owUnits,
