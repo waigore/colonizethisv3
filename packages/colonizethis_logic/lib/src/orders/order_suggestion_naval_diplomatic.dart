@@ -561,6 +561,7 @@ class _WorkTilePrefilterCtx {
     required this.resourceByTile,
     required this.purchasedTiles,
     required this.ownedProvinceIds,
+    required this.exploreProvinceScope,
     required this.tileMapByRegion,
     required this.result,
   });
@@ -571,6 +572,7 @@ class _WorkTilePrefilterCtx {
   final Map<String, String> resourceByTile;
   final Map<String, String> purchasedTiles;
   final Set<String> ownedProvinceIds;
+  final Set<String>? exploreProvinceScope;
   final Map<String, TileMapResult>? tileMapByRegion;
   final Set<String> result;
 }
@@ -679,6 +681,16 @@ void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
 }
 
 void _prefilterWtExplore(_WorkTilePrefilterCtx c) {
+  final scoped = c.exploreProvinceScope;
+  if (scoped != null) {
+    for (final regionEntry in c.tileKeysByRegion.entries) {
+      for (final provinceEntry in regionEntry.value.entries) {
+        if (!scoped.contains(provinceEntry.key)) continue;
+        c.result.addAll(provinceEntry.value);
+      }
+    }
+    return;
+  }
   for (final regionEntry in c.tileKeysByRegion.entries) {
     for (final provinceEntry in regionEntry.value.entries) {
       c.result.addAll(provinceEntry.value);
