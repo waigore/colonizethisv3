@@ -16,6 +16,7 @@ import '../constants.dart';
 import '../combat/conflict_detection.dart';
 import '../dossier/evidence_rules.dart';
 import '../turn/turn_resolution_result.dart';
+import '../world/civilian_ownership_legality.dart';
 import '../world/province_lookup.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
