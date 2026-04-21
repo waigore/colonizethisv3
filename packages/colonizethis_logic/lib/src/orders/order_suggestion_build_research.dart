@@ -369,23 +369,26 @@ Set<String> _partiallyRevealedProvinceCacheForPlayer({
     for (final provinceEntry in regionEntry.value.entries) {
       final provinceId = provinceEntry.key;
       if (!ProvinceId.isPrefixed(provinceId)) continue;
-      var hasKnown = false;
-      var hasUnknown = false;
-      for (final tileKey in provinceEntry.value) {
-        final level = view.visibilityForTile(tileKey);
-        if (level == VisibilityLevel.unknown) {
-          hasUnknown = true;
-        } else {
-          hasKnown = true;
-        }
-        if (hasKnown && hasUnknown) {
-          cached.add(provinceId);
-          break;
-        }
+      if (_hasMixedKnownAndUnknownVisibility(view, provinceEntry.value)) {
+        cached.add(provinceId);
       }
     }
   }
   return cached;
+}
+
+bool _hasMixedKnownAndUnknownVisibility(PlayerView view, List<String> tileKeys) {
+  var hasKnown = false;
+  var hasUnknown = false;
+  for (final tileKey in tileKeys) {
+    if (view.visibilityForTile(tileKey) == VisibilityLevel.unknown) {
+      hasUnknown = true;
+    } else {
+      hasKnown = true;
+    }
+    if (hasKnown && hasUnknown) return true;
+  }
+  return false;
 }
 
 /// Pre-filters tiles based on work-target-specific criteria per SPEC/program/order-suggestions.md.
