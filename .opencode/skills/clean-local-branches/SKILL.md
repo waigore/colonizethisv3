@@ -1,0 +1,1 @@
+../../../.cursor/skills/clean-local-branches/SKILL.md
