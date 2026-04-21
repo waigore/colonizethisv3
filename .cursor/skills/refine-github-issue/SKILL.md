@@ -1,5 +1,5 @@
 ---
-name: refine-github-issue-from-feedback
+name: refine-github-issue
 description: |-
   Refines an open GitHub issue using feedback in issue comments: tightens reproduction steps and root-cause analysis, resolves internal inconsistencies, and clarifies subtask priorities and dependencies. Works each feedback item explicitly—updates the issue body when the point is accurate and reasonable, otherwise returns numbered clarification questions for the user. Use when the user asks to address issue feedback, refine an issue from reviewer comments, reconcile comments with the description, or refresh an issue after triage discussion.
 
