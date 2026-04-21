@@ -722,7 +722,7 @@ String _bundledExploreRejectionDiagnostics([
     'diag: civilianSnapshotAvailable=${civilianSnap != null}',
     if (civilianSnap != null)
       'diag: availableWorkTargets=${civilianSnap.availableWorkTargets}',
-    'diag: draftMoveOrders=${orders.moveOrdersByPlayerId[playerId]?.map((o) => "${o.unitId}->${o.destinationProvinceId}").toList() ?? const []}',
+    'diag: draftMoveOrders=${orders.moveOrdersByPlayerId[playerId]?.map((o) => "${o.unitId}->${Unit.provinceIdFromTileKey(o.destinationTileKey) ?? "?"}").toList() ?? const []}',
     'diag: suggestedExplore=${suggestions.where((o) => o.target == kWorkTargetExplore).map((o) => "${o.unitId}@${Unit.provinceIdFromTileKey(o.targetTileKey) ?? "?"}").toList()}',
   ];
 
@@ -771,7 +771,10 @@ String _bundledExploreRejectionDiagnostics([
             game,
             topology,
             playerId,
-            MoveOrder(unitId: unit.id, destinationProvinceId: prov.id),
+            MoveOrder(
+              unitId: unit.id,
+              destinationTileKey: '${prov.id}|0|0',
+            ),
           );
       lines.add(
         'diag: province=${prov.id} owner=${prov.ownerId ?? "(none)"} ownerKind=$ownerKind '

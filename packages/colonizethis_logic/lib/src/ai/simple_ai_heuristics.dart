@@ -116,10 +116,15 @@ Orders generateOrdersWithSimpleHeuristics(
 
     if (categories.isEmpty) break;
 
-    final chosenCategory = _chooseSuggestionCategory(
-      List<_SuggestionCategory>.from(categories),
-      rng,
-    );
+    final chosenCategory =
+        categories.contains(_SuggestionCategory.moves) &&
+            categories.contains(_SuggestionCategory.work) &&
+            workSuggestions.any((w) => w.target == kWorkTargetBuildRail)
+        ? _SuggestionCategory.work
+        : _chooseSuggestionCategory(
+            List<_SuggestionCategory>.from(categories),
+            rng,
+          );
 
     switch (chosenCategory) {
       case _SuggestionCategory.moves:

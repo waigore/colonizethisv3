@@ -279,7 +279,7 @@ void main() {
         const humanPlayerId = 'gp1';
         const pendingMove = ct_models.MoveOrder(
           unitId: 'u1',
-          destinationProvinceId: 'oldWorld|p2',
+          destinationTileKey: 'oldWorld|p2|0|0',
         );
         final orders = ct_models.Orders(
           moveOrdersByPlayerId: {
