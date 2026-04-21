@@ -160,7 +160,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'inf',
+                type: 'explorer',
                 ownerId: 'gp1',
                 locationProvinceId: 'oldWorld|p1',
                 tileKey: 'oldWorld|p1|0|0',
@@ -172,6 +172,12 @@ void main() {
             'gp1': {
               'oldWorld|p1|0|0': 'fullyVisible',
               'oldWorld|p2|0|0': 'fullyVisible',
+            },
+          },
+          tileKeysByRegionAndProvince: const {
+            'oldWorld': {
+              'oldWorld|p1': ['oldWorld|p1|0|0'],
+              'oldWorld|p2': ['oldWorld|p2|0|0'],
             },
           },
         ),
@@ -371,7 +377,7 @@ void main() {
         armyMove: const [
           ArmyMoveOrder(
             armyId: 'field_a',
-            destinationTileKey: 'oldWorld|p2|0|0',
+            destinationProvinceId: 'oldWorld|p2',
           ),
         ],
       );
