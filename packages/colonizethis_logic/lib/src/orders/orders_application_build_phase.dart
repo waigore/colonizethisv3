@@ -1,10 +1,19 @@
-part of 'orders_application.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import '../economy/build_cost.dart';
+import '../world/naval.dart';
+import '../world/ship_instance_allocate.dart';
+import 'build_spawn_province.dart';
+import 'orders_application_context.dart';
+import 'orders_application_helpers.dart';
 
 /// Home-fleet ship spawn when capital has a seaboard port (naval build slice, #1618).
 class _NavalBuildState {
   _NavalBuildState(this._session);
 
-  final _BuildWorkState _session;
+  final BuildWorkState _session;
 
   /// Spawns into home fleet when affordable build was already deducted; no-op if blocked.
   void spawnHomeFleetShipIfEligible(Player player, BuildUnitOrder order) {
@@ -57,6 +66,14 @@ class _NavalBuildState {
   }
 }
 
+String _buildUnitId(
+  String playerId,
+  BuildUnitOrder order,
+  String spawnProvinceId,
+) {
+  return '${playerId}_${order.unitType}_$spawnProvinceId';
+}
+
 /// Civilian unit spawn tile resolution (civilian build slice, #1618).
 class _CivilianBuildState {
   _CivilianBuildState._();
@@ -79,17 +96,17 @@ class _MilitaryBuildState {
   _MilitaryBuildState._();
 
   static void appendRegimentToArmy(
-    _BuildWorkState state,
+    BuildWorkState state,
     Player player,
     String spawnProvinceId,
     String newUnitId,
   ) {
-    _appendMilitaryRegimentToArmy(state, player, spawnProvinceId, newUnitId);
+    appendMilitaryRegimentToArmy(state, player, spawnProvinceId, newUnitId);
   }
 }
 
 /// Applies build orders for all players. Mutates [state.game] and [state.work] unit maps.
-void _runBuildPhase(_BuildWorkState state) {
+void runBuildPhase(BuildWorkState state) {
   final naval = _NavalBuildState(state);
   for (final player in state.game.players) {
     var workers = player.workerPool;

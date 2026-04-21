@@ -619,7 +619,10 @@ int? _tryRunDartRuleInProcess({
     case 'repo.asset_path_constants':
       return runCheckAssetPathConstants(repoRoot);
     case 'repo.disallowed_ast_patterns':
-      return runCheckDisallowedAstPatterns(repoRoot);
+      return runCheckDisallowedAstPatterns(
+        repoRoot,
+        incrementalRelativeDartPaths: incrementalPaths,
+      );
     case 'repo.control_flow_nesting_depth':
       return runCheckControlFlowNestingDepth(repoRoot);
     case 'repo.repeated_magic_numbers':

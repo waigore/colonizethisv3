@@ -25,3 +25,17 @@ rules:
     match:
       kind: comment_substring
       contains: "ignore: avoid_print"
+  - id: strict_raw_types
+    message: >-
+      Do not use raw generic core types without explicit type arguments.
+      Use concrete types such as List<int>, Map<String, Object?>, Set<Foo>,
+      Future<Bar>, Stream<Baz>, or Iterable<Qux>.
+    match:
+      kind: raw_named_type
+      type_names:
+        - List
+        - Map
+        - Set
+        - Iterable
+        - Future
+        - Stream

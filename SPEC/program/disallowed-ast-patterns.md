@@ -36,6 +36,18 @@ masks policy violations instead of fixing them.
 Rule id: `avoid_print_suppression` (`match.kind`: `comment_substring`,
 `match.contains`: `ignore: avoid_print`).
 
+### Strict raw generic core types
+
+In runtime domain code, raw generic core types are disallowed when used without
+explicit type arguments. This includes `List`, `Map`, `Set`, `Iterable`,
+`Future`, and `Stream`.
+
+Rationale: raw generic types silently permit implicit `dynamic`, which weakens
+type safety and hides intent in APIs and state declarations.
+
+Rule id: `strict_raw_types` (`match.kind`: `raw_named_type`,
+`match.type_names`: `List|Map|Set|Iterable|Future|Stream`).
+
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -68,3 +80,13 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
 - **Given** runtime Dart source containing a comment `// ignore: avoid_print`,
   **when** the disallowed AST checker runs, **then** it reports at least one
   violation for `avoid_print_suppression` with the correct file and line.
+
+- **Given** runtime Dart source containing a raw generic declaration such as
+  `List values = [];`, **when** the disallowed AST checker runs, **then** it
+  reports at least one violation for `strict_raw_types` with the correct file
+  and line.
+
+- **Given** runtime Dart source using explicit type arguments such as
+  `List<int> values = <int>[];`, **when** the disallowed AST checker runs,
+  **then** it does not report a `strict_raw_types` violation for that
+  declaration.

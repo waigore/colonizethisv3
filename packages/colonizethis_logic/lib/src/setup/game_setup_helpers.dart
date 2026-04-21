@@ -1,57 +1,93 @@
-part of 'game_setup.dart';
+import 'dart:math';
 
-Map<String, String> _buildPoliticalGlyphByPlayerId({
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import '../world/naval.dart';
+import '../world/ship_instance_allocate.dart';
+import 'capital_choice.dart';
+import 'game_setup_context.dart';
+import 'game_setup_create.dart';
+import 'province_name_fallback.dart';
+
+Map<String, String> buildPoliticalGlyphByPlayerId({
   required Game game,
   required List<String> greatPowerIds,
   required List<String> minorNationIds,
   required List<String> tribeIds,
 }) {
   final glyphs = <String, String>{};
+  assignGreatPowerGlyphs(
+    game: game,
+    greatPowerIds: greatPowerIds,
+    glyphs: glyphs,
+  );
+  assignNonGreatPowerGlyphs(
+    minorNationIds: minorNationIds,
+    tribeIds: tribeIds,
+    glyphs: glyphs,
+  );
+  return glyphs;
+}
 
-  String pickUpperForGp(String name, Set<String> used) {
-    final upper = name.toUpperCase();
-    for (var i = 0; i < upper.length; i++) {
-      final ch = upper[i];
-      if (ch.codeUnitAt(0) >= 'A'.codeUnitAt(0) &&
-          ch.codeUnitAt(0) <= 'Z'.codeUnitAt(0) &&
-          !used.contains(ch)) {
-        return ch;
-      }
-    }
-    for (var code = 'A'.codeUnitAt(0); code <= 'Z'.codeUnitAt(0); code++) {
-      final ch = String.fromCharCode(code);
-      if (!used.contains(ch)) return ch;
-    }
-    return 'X';
-  }
-
+Set<String> assignGreatPowerGlyphs({
+  required Game game,
+  required List<String> greatPowerIds,
+  required Map<String, String> glyphs,
+}) {
   final usedUpper = <String>{};
   for (final gpId in greatPowerIds) {
     final player = game.players.firstWhere(
       (p) => p.id == gpId,
       orElse: () => game.players.first,
     );
-    final glyph = pickUpperForGp(player.displayName, usedUpper);
+    final glyph = pickUpperGlyphForGreatPower(player.displayName, usedUpper);
     glyphs[gpId] = glyph;
     usedUpper.add(glyph);
   }
+  return usedUpper;
+}
 
+void assignNonGreatPowerGlyphs({
+  required List<String> minorNationIds,
+  required List<String> tribeIds,
+  required Map<String, String> glyphs,
+}) {
   final nonGpIds = <String>[...minorNationIds, ...tribeIds]..sort();
-
-  const digitGlyphs = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
   for (var i = 0; i < nonGpIds.length; i++) {
-    String glyph;
-    if (i < digitGlyphs.length) {
-      glyph = digitGlyphs[i];
-    } else {
-      final letterIndex = i - digitGlyphs.length;
-      final baseCode = 'a'.codeUnitAt(0);
-      glyph = String.fromCharCode(baseCode + letterIndex);
-    }
-    glyphs[nonGpIds[i]] = glyph;
+    glyphs[nonGpIds[i]] = glyphForNonGreatPowerIndex(i);
   }
+}
 
-  return glyphs;
+String pickUpperGlyphForGreatPower(String name, Set<String> used) {
+  final upper = name.toUpperCase();
+  for (var i = 0; i < upper.length; i++) {
+    final ch = upper[i];
+    if (isAsciiUpper(ch) && !used.contains(ch)) {
+      return ch;
+    }
+  }
+  for (var code = 'A'.codeUnitAt(0); code <= 'Z'.codeUnitAt(0); code++) {
+    final ch = String.fromCharCode(code);
+    if (!used.contains(ch)) return ch;
+  }
+  return 'X';
+}
+
+bool isAsciiUpper(String char) {
+  final code = char.codeUnitAt(0);
+  return code >= 'A'.codeUnitAt(0) && code <= 'Z'.codeUnitAt(0);
+}
+
+String glyphForNonGreatPowerIndex(int index) {
+  const digitGlyphs = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  if (index < digitGlyphs.length) {
+    return digitGlyphs[index];
+  }
+  final letterIndex = index - digitGlyphs.length;
+  final baseCode = 'a'.codeUnitAt(0);
+  return String.fromCharCode(baseCode + letterIndex);
 }
 
 /// Builds a single topology with prefixed node ids (regionId|localId) and warp edges.
@@ -82,72 +118,77 @@ MapTopology buildCombinedTopology({
   return MapTopology(nodes: nodes, edges: edges);
 }
 
-List<String> _provinceIdsFromTopology(MapTopology topology) {
+List<String> provinceIdsFromTopology(MapTopology topology) {
   return topology.nodes
       .where((n) => n.type == TopologyNodeType.province)
       .map((n) => n.id)
       .toList();
 }
 
-({int x, int y}) _provinceTownCentroidFromTileKeys(List<String> tiles) {
+({int x, int y}) provinceTownCentroidFromTileKeys(List<String> tiles) {
   final c = roundedCentroidFromTileKeys(tiles);
   if (c != null) return c;
   final xy = parseTileKeyCellXY(tiles.first);
   return (x: xy?.$1 ?? 0, y: xy?.$2 ?? 0);
 }
 
-int _compareTownTileCandidates(
+int compareTownTileCandidates(
   String a,
   String b, {
   required int centroidX,
   required int centroidY,
   required Map<String, int> bfsFromCapital,
 }) {
-  int distSq(String tk) {
-    final xy = parseTileKeyCellXY(tk);
-    if (xy == null) return 1 << 30;
-    final dx = xy.$1 - centroidX;
-    final dy = xy.$2 - centroidY;
-    return dx * dx + dy * dy;
-  }
-
-  final da = distSq(a);
-  final db = distSq(b);
+  final da = tileDistanceSquaredToCentroid(a, centroidX: centroidX, centroidY: centroidY);
+  final db = tileDistanceSquaredToCentroid(b, centroidX: centroidX, centroidY: centroidY);
   if (da != db) return da.compareTo(db);
-  const unreachable = 999999;
-  final ba = bfsFromCapital[a] ?? unreachable;
-  final bb = bfsFromCapital[b] ?? unreachable;
+  final ba = bfsDistanceOrUnreachable(a, bfsFromCapital);
+  final bb = bfsDistanceOrUnreachable(b, bfsFromCapital);
   if (ba != bb) return ba.compareTo(bb);
   return a.compareTo(b);
 }
 
-String _pickTownTileByCentroidAndBfs({
+int tileDistanceSquaredToCentroid(
+  String tileKey, {
+  required int centroidX,
+  required int centroidY,
+}) {
+  final xy = parseTileKeyCellXY(tileKey);
+  if (xy == null) return 1 << 30;
+  final dx = xy.$1 - centroidX;
+  final dy = xy.$2 - centroidY;
+  return dx * dx + dy * dy;
+}
+
+int bfsDistanceOrUnreachable(String tileKey, Map<String, int> bfsFromCapital) {
+  const unreachable = 999999;
+  return bfsFromCapital[tileKey] ?? unreachable;
+}
+
+String pickTownTileByCentroidAndBfs({
   required List<String> candidates,
   required int centroidX,
   required int centroidY,
   required Map<String, int> bfsFromCapital,
 }) {
-  var best = candidates.first;
-  for (var i = 1; i < candidates.length; i++) {
-    final c = candidates[i];
-    if (_compareTownTileCandidates(
-          c,
+  return candidates.reduce(
+    (best, candidate) => compareTownTileCandidates(
+          candidate,
           best,
           centroidX: centroidX,
           centroidY: centroidY,
           bfsFromCapital: bfsFromCapital,
         ) <
-        0) {
-      best = c;
-    }
-  }
-  return best;
+        0
+        ? candidate
+        : best,
+  );
 }
 
 /// 7d. Province town assignment. For each province, set townTileKey: capital province = capital tile;
 /// otherwise branch eligibility (seaboard, same-region BFS, overseas port) then centroid tie-break,
 /// then shortest path to capital where applicable, then lexicographic tile key. SPEC/program/game-setup-pipeline.md.
-Game _assignProvinceTowns({
+Game assignProvinceTowns({
   required Game game,
   required Map<String, MapTopology> topologyByRegion,
   required Map<String, TileMapResult> tileMapByRegion,
@@ -299,8 +340,8 @@ Game _assignProvinceTowns({
     final tiles = tileKeysByRegion[p.regionId]?[p.id] ?? [];
     if (ownerId == null) {
       if (tiles.isEmpty) return null;
-      final c = _provinceTownCentroidFromTileKeys(tiles);
-      return _pickTownTileByCentroidAndBfs(
+      final c = provinceTownCentroidFromTileKeys(tiles);
+      return pickTownTileByCentroidAndBfs(
         candidates: tiles,
         centroidX: c.x,
         centroidY: c.y,
@@ -311,7 +352,7 @@ Game _assignProvinceTowns({
     final capTileKey = capitalTileKeyByOwner[ownerId];
     if (p.id == capProvinceId && capTileKey != null) return capTileKey;
     if (tiles.isEmpty) return null;
-    final centroid = _provinceTownCentroidFromTileKeys(tiles);
+    final centroid = provinceTownCentroidFromTileKeys(tiles);
     final sameRegion =
         capProvinceId != null &&
         ProvinceId.regionIdFrom(capProvinceId) == p.regionId;
@@ -334,21 +375,21 @@ Game _assignProvinceTowns({
         final distances = sameRegion && capTileKey != null
             ? bfsDistances(p.regionId, capTileKey)
             : const <String, int>{};
-        return _pickTownTileByCentroidAndBfs(
+        return pickTownTileByCentroidAndBfs(
           candidates: coastalCandidates,
           centroidX: centroid.x,
           centroidY: centroid.y,
           bfsFromCapital: distances,
         );
       }
-      _log.w(
+      gameSetupLog.w(
         'seaboard town fallback for province=${p.id}: '
         'topology is sea-bound but no sea-zone-adjacent tile candidate found',
       );
     }
     if (sameRegion && capTileKey != null) {
       final distances = bfsDistances(p.regionId, capTileKey);
-      return _pickTownTileByCentroidAndBfs(
+      return pickTownTileByCentroidAndBfs(
         candidates: tiles,
         centroidX: centroid.x,
         centroidY: centroid.y,
@@ -357,7 +398,7 @@ Game _assignProvinceTowns({
     }
     final portTile = portTileInProvince(p.id);
     if (portTile != null) return portTile;
-    return _pickTownTileByCentroidAndBfs(
+    return pickTownTileByCentroidAndBfs(
       candidates: tiles,
       centroidX: centroid.x,
       centroidY: centroid.y,
@@ -455,7 +496,7 @@ String _namingResolveEmptyPoolNonCapital({
   return name;
 }
 
-Game _applyNaming({
+Game applyNaming({
   required Game game,
   required List<String> selectedGreatPowerIds,
   required Map<String, String> leaderVariantByGpId,
@@ -728,13 +769,13 @@ Game _applyNaming({
     },
   );
 
-  _log.i(
+  gameSetupLog.i(
     'naming applied ow=${updatedWorld.oldWorld.provinces.length} '
     'nw=${updatedWorld.newWorld.provinces.length} players=${game.players.length} '
     'minors=${game.minorNations.length} tribes=${game.tribes.length}',
   );
   if (proceduralFallbackCount > 0) {
-    _log.d('naming procedural fallback used count=$proceduralFallbackCount');
+    gameSetupLog.d('naming procedural fallback used count=$proceduralFallbackCount');
   }
 
   return game.copyWith(
@@ -746,7 +787,7 @@ Game _applyNaming({
 }
 
 /// Adds starting civilian units for each civilian-owning faction at its capital tile.
-Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
+Game addStartingUnits({required Game game, required GameSetupConfig config}) {
   var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
   var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
 
@@ -847,7 +888,7 @@ Game _addStartingUnits({required Game game, required GameSetupConfig config}) {
 }
 
 /// Adds starting land regiments and home-fleet ships for each Great Power.
-Game _addStartingMilitaryAndNaval({
+Game addStartingMilitaryAndNaval({
   required Game game,
   required GameSetupConfig config,
   required MapTopology topologyOldWorld,
@@ -876,7 +917,7 @@ Game _addStartingMilitaryAndNaval({
 
     // Starting regiments in capital province.
     if (regimentCount > 0) {
-      final regimentTypeId = _startingRegimentTypeForPlayer(player);
+      final regimentTypeId = startingRegimentTypeForPlayer(player);
       for (var i = 0; i < regimentCount; i++) {
         final unitId = '${player.id}_${regimentTypeId}_reg${i + 1}';
         final unit = Unit(
@@ -902,7 +943,7 @@ Game _addStartingMilitaryAndNaval({
       final existingIndex = fleets.indexWhere((f) => f.id == homeFleetId);
       final existingFleet = existingIndex >= 0 ? fleets[existingIndex] : null;
 
-      final shipTypeId = _startingShipTypeForPlayer(player);
+      final shipTypeId = startingShipTypeForPlayer(player);
       final existingShips = existingFleet?.ships ?? const <ShipInstance>[];
       final (seqAfter, newInstances) = mintShipInstances(
         nextShipInstanceSeq: nextSeq,
@@ -944,7 +985,7 @@ Game _addStartingMilitaryAndNaval({
 }
 
 /// Chooses the regiment type used for starting armies.
-String _startingRegimentTypeForPlayer(Player player) {
+String startingRegimentTypeForPlayer(Player player) {
   // Bootstrap default: low-upkeep regiment (SPEC/program/game-setup-pipeline.md §7f).
   const fallbackId = 'peasant_levies';
   final stats = regimentStatsById(fallbackId);
@@ -953,7 +994,7 @@ String _startingRegimentTypeForPlayer(Player player) {
 }
 
 /// Merchant ship type for starting home fleets (baseline era).
-String _startingShipTypeForPlayer(Player _) {
+String startingShipTypeForPlayer(Player _) {
   return ShipEconomyCatalog.carrack.shipTypeId;
 }
 
@@ -996,7 +1037,7 @@ List<_LmDiag> _landmassesSortedDescDiag(Map<String, Set<String>> neighbours) {
 }
 
 /// One-line topology summary when locked OW assigner fails (#1834 investigation).
-String _lockedOwAssignFailureDiagnostics({
+String lockedOwAssignFailureDiagnostics({
   required GameSetupConfig config,
   required MapTopology topology,
   required List<String> seaBoundIds,
@@ -1042,7 +1083,7 @@ String _lockedOwAssignFailureDiagnostics({
 }
 
 /// One-line topology summary when locked NW assigner fails (#1834 investigation).
-String _lockedNwAssignFailureDiagnostics({
+String lockedNwAssignFailureDiagnostics({
   required GameSetupConfig config,
   required MapTopology topology,
 }) {
@@ -1078,7 +1119,7 @@ Game assignProvinceTownsForTesting({
   required Map<String, MapTopology> topologyByRegion,
   required Map<String, TileMapResult> tileMapByRegion,
 }) {
-  return _assignProvinceTowns(
+  return assignProvinceTowns(
     game: game,
     topologyByRegion: topologyByRegion,
     tileMapByRegion: tileMapByRegion,

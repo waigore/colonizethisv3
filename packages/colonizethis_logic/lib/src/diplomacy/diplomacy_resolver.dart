@@ -17,18 +17,20 @@ import '../combat/conflict_detection.dart';
 import '../dossier/evidence_rules.dart';
 import '../turn/turn_resolution_result.dart';
 import '../world/province_lookup.dart';
+import 'alliance_resolver.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
+import 'diplomacy_subsidies_relations_resolver.dart';
+import 'intervention_resolver.dart';
+import 'overture_resolver.dart';
+import 'war_resolver.dart';
 
 export 'diplomacy_relation_lookup.dart';
+export 'diplomacy_subsidies_relations_resolver.dart' show tradeSlotsForGp;
+export 'intervention_resolver.dart'
+    show applyInterventionChoice, needsInterventionChoice;
 
-part 'alliance_resolver.dart';
-part 'diplomacy_subsidies_relations_resolver.dart';
-part 'intervention_resolver.dart';
-part 'overture_resolver.dart';
-part 'war_resolver.dart';
-
-final _diploLog = packageLogger();
+final diploLog = packageLogger();
 
 bool isMinorOrTribe(Game game, String factionId) {
   return game.minorNations.any((m) => m.id == factionId) ||
@@ -69,14 +71,14 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   List<InterventionDecision>? interventionDecisions,
   List<CallToArmsDecision>? callToArmsDecisions,
 }) {
-  _diploLog.d('diplomacy phase start');
+  diploLog.d('diplomacy phase start');
   final turn = game.worldState.turnState.turnNumber;
   var state = game;
 
   final diploByPlayer = orders.diplomaticOrdersByPlayerId;
 
   // 1. Process overture offers (two-way: target accepts/rejects)
-  final overtureResult = _processOverturePayments(
+  final overtureResult = processOverturePayments(
     state,
     diploByPlayer,
     turn,
@@ -85,7 +87,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   state = overtureResult.game;
   if (overtureResult.pendingOvertures != null &&
       overtureResult.pendingOvertures!.isNotEmpty) {
-    _diploLog.d('diplomacy phase suspended (pending overture decisions)');
+    diploLog.d('diplomacy phase suspended (pending overture decisions)');
     return DiplomacyPhaseResult(
       state,
       pendingOvertures: overtureResult.pendingOvertures,
@@ -93,16 +95,16 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   }
 
   // 2. Advance in-progress overtures (turn delays)
-  state = _advanceOvertures(state, turn);
+  state = advanceOvertures(state, turn);
 
   // 3. Resolve Join Empire/Colony
-  state = _resolveJoinEmpireColony(state, diploByPlayer, turn);
+  state = resolveJoinEmpireColony(state, diploByPlayer, turn);
 
   // 4. Process alliance proposals and responses
-  state = _processAlliances(state, diploByPlayer, turn);
+  state = processAlliances(state, diploByPlayer, turn);
 
   // 5. Process Declare War and Peace
-  state = _processWarAndPeace(
+  state = processWarAndPeace(
     state,
     diploByPlayer,
     turn,
@@ -110,7 +112,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   );
 
   // 5b. Intervention (Diplomacy phase, after war declarations on Minor/Tribe)
-  final interventionResult = _resolveOutstandingInterventionsForMinorTribeWars(
+  final interventionResult = resolveOutstandingInterventionsForMinorTribeWars(
     state,
     diploByPlayer,
     turn,
@@ -126,7 +128,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   state = interventionResult.game;
 
   // 5c. Call to arms (allies of GP declared upon). SPEC/game/diplomacy.md.
-  final ctaResult = _processCallToArms(
+  final ctaResult = processCallToArms(
     state,
     diploByPlayer,
     turn,
@@ -135,7 +137,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   state = ctaResult.game;
   if (ctaResult.pendingCallToArms != null &&
       ctaResult.pendingCallToArms!.isNotEmpty) {
-    _diploLog.d('diplomacy phase suspended (pending call to arms)');
+    diploLog.d('diplomacy phase suspended (pending call to arms)');
     return DiplomacyPhaseResult(
       state,
       pendingCallToArms: ctaResult.pendingCallToArms,
@@ -143,18 +145,18 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   }
 
   // 6. War terminates agreements with target
-  state = _terminateAgreementsOnWar(state);
+  state = terminateAgreementsOnWar(state);
 
   // 7. Process ongoing subsidies (+2 per 500 ducats, max +8 per turn)
   // Note: Convergence happens AFTER subsidies
-  state = _processOngoingSubsidies(state, turn);
+  state = processOngoingSubsidies(state, turn);
 
   // 8. Apply relation convergence (+/1 toward 50 for all non-war relations)
-  state = _applyRelationConvergence(state, turn);
+  state = applyRelationConvergence(state, turn);
 
   // 9. Apply relation modifiers (grants, etc.)
-  state = _applyRelationModifiersAndUpdateScores(state, diploByPlayer, turn);
+  state = applyRelationModifiersAndUpdateScores(state, diploByPlayer, turn);
 
-  _diploLog.d('diplomacy phase end');
+  diploLog.d('diplomacy phase end');
   return DiplomacyPhaseResult(state);
 }

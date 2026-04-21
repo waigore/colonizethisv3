@@ -19,6 +19,17 @@ rules:
     match:
       kind: comment_substring
       contains: 'ignore: avoid_print'
+  - id: strict_raw_types
+    message: 'no raw generic core types'
+    match:
+      kind: raw_named_type
+      type_names:
+        - List
+        - Map
+        - Set
+        - Iterable
+        - Future
+        - Stream
 ''';
 
 void main() {
@@ -225,6 +236,47 @@ void f() {
           src,
           rules,
         ),
+        isEmpty,
+      );
+    });
+
+    test('flags raw generic core type declarations', () {
+      const src = r'''
+class X {
+  List values = [];
+}
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(v, isNotEmpty);
+      expect(v.first.ruleId, 'strict_raw_types');
+    });
+
+    test('allows explicit generic type arguments', () {
+      const src = r'''
+class X {
+  List<int> values = <int>[];
+}
+''';
+      expect(
+        findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
+        isEmpty,
+      );
+    });
+
+    test('strict_raw_types respects suppression comment', () {
+      const src = r'''
+// ignore_for_file: disallowed_ast_strict_raw_types
+
+class X {
+  Map value = {};
+}
+''';
+      expect(
+        findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
         isEmpty,
       );
     });
