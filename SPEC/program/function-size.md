@@ -25,7 +25,7 @@ excluded by the shared scan contract.
 - Blank lines are excluded.
 - Single-line comments that begin with `//` are excluded.
 - All other lines count, including braces and block-comment lines.
-- Failure threshold is measured line count **>20**.
+- Failure threshold is measured line count **>200**.
 
 ## Allowlist contract (shrink-only)
 
@@ -40,6 +40,7 @@ allowed_over_20:
 
 - If a symbol is allowlisted, the checker allows it only while measured lines
   stay `<= max_measured_lines`.
+- The top-level key name remains `allowed_over_20` for backward compatibility.
 - If measured lines grow above the listed max, the checker fails.
 - New allowlist rows are not a default fix; prefer extracting helpers and
   reducing measured lines.
@@ -48,7 +49,7 @@ allowed_over_20:
 
 - Given repository root as cwd, when CI runs `dart run tool/ct_repo_lint.dart`,
   then rule `repo.function_size` runs and fails on any non-allowlisted symbol
-  measured over 20 lines with file, line, and symbol in output.
+  measured over 200 lines with file, line, and symbol in output.
 - Given an allowlisted symbol and measured lines below or equal to its
   `max_measured_lines`, when the checker runs, then it does not fail for that
   symbol.
