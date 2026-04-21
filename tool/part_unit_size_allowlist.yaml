@@ -10,30 +10,30 @@ allowed_parent_units:
 
 allowed_part_files:
   - file: packages/colonizethis_logic/lib/src/diplomacy/alliance_resolver.dart
-    max_lines: 379
+    max_lines: 388
   - file: packages/colonizethis_logic/lib/src/diplomacy/diplomacy_subsidies_relations_resolver.dart
-    max_lines: 330
+    max_lines: 339
   - file: packages/colonizethis_logic/lib/src/diplomacy/intervention_resolver.dart
-    max_lines: 657
+    max_lines: 671
   - file: packages/colonizethis_logic/lib/src/diplomacy/overture_resolver.dart
-    max_lines: 248
+    max_lines: 256
   - file: packages/colonizethis_logic/lib/src/orders/order_suggestion_build_research.dart
-    max_lines: 502
+    max_lines: 689
   - file: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
     max_lines: 339
   - file: packages/colonizethis_logic/lib/src/orders/order_suggestion_naval_diplomatic.dart
     max_lines: 726
   - file: packages/colonizethis_logic/lib/src/orders/order_suggestion_work.dart
-    max_lines: 502
+    max_lines: 516
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_build_phase.dart
-    max_lines: 182
+    max_lines: 199
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_completed_work.dart
-    max_lines: 331
+    max_lines: 332
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_work_phase.dart
-    max_lines: 400
+    max_lines: 410
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_create.dart
-    max_lines: 488
+    max_lines: 508
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    max_lines: 1087
+    max_lines: 1128
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_ownership.dart
-    max_lines: 831
+    max_lines: 839

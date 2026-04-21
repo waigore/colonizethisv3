@@ -312,6 +312,7 @@ jobs:
       - name: Repo convention lint (unified manifest, SPEC/program/repo-lint.md)
         env:
           CT_REPO_LINT_INCLUDE_APP: ${{ needs.changes.outputs.tests }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
         run: dart run tool/ct_repo_lint.dart
 
       - name: Run domain exception custom_lint (SPEC/program/exception-enforcement.md)

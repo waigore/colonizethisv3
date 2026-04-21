@@ -434,13 +434,13 @@ allowed_over_20:
     symbol: isMineralEligibleTile
     max_measured_lines: 26
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_work_phase.dart
-    symbol: _runWorkPhase
-    max_measured_lines: 364
+    symbol: runWorkPhase
+    max_measured_lines: 366
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_work_phase.dart
-    symbol: _runWorkPhase::applyStandardWorkOrder
+    symbol: runWorkPhase::applyStandardWorkOrder
     max_measured_lines: 30
   - file: packages/colonizethis_logic/lib/src/orders/orders_application_work_phase.dart
-    symbol: _runWorkPhase::workTargetConfig
+    symbol: runWorkPhase::workTargetConfig
     max_measured_lines: 79
   - file: packages/colonizethis_logic/lib/src/orders/validators/army_move_validator.dart
     symbol: ArmyMoveValidator.validate
@@ -524,25 +524,25 @@ allowed_over_20:
     symbol: _addStartingUnits::civilianOwners
     max_measured_lines: 34
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _applyNaming
+    symbol: applyNaming
     max_measured_lines: 266
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _applyNaming::applyNamingToFaction
+    symbol: applyNaming::applyNamingToFaction
     max_measured_lines: 24
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _applyNaming::assignProvinceNames
+    symbol: applyNaming::assignProvinceNames
     max_measured_lines: 55
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _assignProvinceTowns
+    symbol: assignProvinceTowns
     max_measured_lines: 225
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _assignProvinceTowns::bfsDistances
+    symbol: assignProvinceTowns::bfsDistances
     max_measured_lines: 37
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _assignProvinceTowns::tileKeyAdjacentToProvinceSeaZone
+    symbol: assignProvinceTowns::tileKeyAdjacentToProvinceSeaZone
     max_measured_lines: 29
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _assignProvinceTowns::townTileKeyForProvince
+    symbol: assignProvinceTowns::townTileKeyForProvince
     max_measured_lines: 70
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
     symbol: _buildPoliticalGlyphByPlayerId

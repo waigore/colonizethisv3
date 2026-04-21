@@ -6,6 +6,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/movement.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
+import '../world/civilian_tile_occupancy.dart';
 import '../world/topology_helpers.dart';
 import 'draft_orders_mutations.dart';
 import 'order_suggestion_context.dart';
