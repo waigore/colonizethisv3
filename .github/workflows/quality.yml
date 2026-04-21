@@ -577,12 +577,11 @@ jobs:
           echo "fork PR, path-only meta changes, e2e not green, or gate scope (needs label 'help wanted' or >10 changed files per workflow)."
           exit 0
 
-      - name: Non-blocking when OpenCode review job failed or was cancelled
+      - name: Fail when OpenCode review job failed or was cancelled
         if: needs.opencode_review.result != 'skipped' && needs.opencode_review.result != 'success'
         run: |
-          echo "::warning::OpenCode review job ended with ${{ needs.opencode_review.result }}."
-          echo "::warning::This is treated as non-blocking to avoid gating merges on bot permission outages."
-          exit 0
+          echo "::error::OpenCode review job ended with ${{ needs.opencode_review.result }}"
+          exit 1
 
       - name: Enforce verdict from PR comment
         if: needs.opencode_review.result == 'success'
