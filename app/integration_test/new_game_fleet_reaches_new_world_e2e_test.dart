@@ -680,14 +680,9 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
     await _closeBottomSheet(tester);
     await _advanceOneHumanTurn(tester, l10n);
   }
-  final diag = _bundledExploreRejectionDiagnostics(lastNavalSnapshot);
   // Some generated maps can keep the non-home fleet in open-ocean NW sea lanes
   // for long bounded stretches; in that case bundled Explore has no visible NW
   // destinations yet. Leave strict assertion to the final Explore-enabled check.
-  debugPrint(
-    'E2E note: no coastal/visible NW tile after $maxTurns bounded turns; '
-    'continuing to final Explore-enabled verification.\n$diag',
-  );
 }
 
 String _bundledExploreRejectionDiagnostics([
