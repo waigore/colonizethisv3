@@ -698,7 +698,13 @@ class _RunningGameScreenState extends State<RunningGameScreen>
             final origin = unit != null
                 ? provinceLabelInRegion(regionId, unit.locationProvinceId)
                 : '?';
-            final dest = provinceLabelInRegion(regionId, o.destinationProvinceId);
+            final destTile = o.destinationTileKey;
+            final destRegion =
+                Unit.regionIdFromTileKey(destTile) ?? regionId;
+            final destProv = Unit.provinceIdFromTileKey(destTile);
+            final dest = destProv != null
+                ? provinceLabelInRegion(destRegion, destProv)
+                : destTile;
             return Padding(
               padding: const EdgeInsets.only(left: 8, top: 2),
               child: Text('$unitLabel: $origin → $dest', style: Theme.of(context).textTheme.bodySmall),

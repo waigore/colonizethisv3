@@ -48,7 +48,7 @@ void main() {
 
       final orders = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0')],
         },
       );
 

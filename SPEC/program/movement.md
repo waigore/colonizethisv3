@@ -77,3 +77,11 @@ Then during the Movement phase the system removes `c1` from the Old World unit l
 Given the OrderEngine validates **civilian** `MoveOrder` and **ArmyMoveOrder** instances for a player in a world with region-scoped topology and prefixed province ids  
 When it evaluates a sequence of those orders against the current `Game` and `MapTopology`  
 Then it accepts any **civilian** or **army** move whose destination province is owned by that player (including cross-region moves), rejects non-adjacent moves into provinces the player does not own, rejects **Home Army** moves whose destination is not the capital province, rejects orders for units or armies that do not exist or are not owned by the player, and uses local province ids only for topology lookups while storing and comparing province ids in prefixed form.
+
+---
+
+## Civilian tile moves (issue #1877; program implementation)
+
+Civilian `MoveOrder` is **`destinationTileKey` only** on the wire; the enclosing province is derived from the tile key. **No map-topology adjacency** is used for civilian move validation or move suggestions. Legality uses the shared **`civilianMayOccupyLandTileKey`** helper (`packages/colonizethis_logic` — `civilian_tile_occupancy.dart`): tile-level purchaser override (`purchasedTilesByTileKey`), then province `ownerId` (Spy may enter another Great Power’s province-derived land without a war/diplomacy gate for movement). The Movement phase applies civilian moves via **`applyCivilianTileMoveOrdersToWorldRegions`**; **`applyMoveOrdersToRegion` is a no-op** for civilian move payloads. **`filterMoveOrdersByDiplomacy`** does not strip civilian moves (legality is enforced by the order engine and occupancy rules).
+
+Until the narrative sections above are fully reconciled with GDD/TDD, treat this subsection as the **authoritative program behavior** for civilian tile movement.

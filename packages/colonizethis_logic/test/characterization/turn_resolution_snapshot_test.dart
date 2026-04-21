@@ -41,7 +41,7 @@ void main() {
             units: [
               Unit(
                 id: 'inf1',
-                type: 'grenadiers',
+                type: 'Explorer',
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 medals: 2,
@@ -55,6 +55,20 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            ow: {
+              '$ow|P1': ['$ow|P1|0|0'],
+              '$ow|P2': ['$ow|P2|0|0'],
+              '$ow|P3': ['$ow|P3|0|0'],
+            },
+          },
+          playerVisibilityByTile: {
+            'p1': {
+              '$ow|P1|0|0': 'fullyVisible',
+              '$ow|P2|0|0': 'fullyVisible',
+              '$ow|P3|0|0': 'fullyVisible',
+            },
+          },
         ),
         players: [
           Player(
@@ -82,7 +96,7 @@ void main() {
         moveOrdersByPlayerId: {
           'p1': [
             const MoveOrder(
-                unitId: 'inf1', destinationProvinceId: '$ow|P2'),
+                unitId: 'inf1', destinationTileKey: '$ow|P2|0|0'),
           ],
         },
       );
@@ -234,6 +248,28 @@ void main() {
             ],
           ),
           newWorld: const RegionData(),
+          armies: [
+            Army(
+              id: 'arm_p1',
+              ownerId: 'p1',
+              regionId: ow,
+              stationedProvinceId: '$ow|A',
+              regimentUnitIds: const ['att1', 'att2'],
+              isHomeArmy: false,
+            ),
+          ],
+          tileKeysByRegionAndProvince: {
+            ow: {
+              '$ow|A': ['$ow|A|0|0'],
+              '$ow|B': ['$ow|B|0|0'],
+            },
+          },
+          playerVisibilityByTile: {
+            'p1': {
+              '$ow|A|0|0': 'fullyVisible',
+              '$ow|B|0|0': 'fullyVisible',
+            },
+          },
         ),
         players: const [
           Player(id: 'p1', displayName: 'Strong', isHuman: true),
@@ -242,10 +278,17 @@ void main() {
       );
 
       final orders = Orders(
-        moveOrdersByPlayerId: {
+        armyMoveOrdersByPlayerId: {
           'p1': [
-            const MoveOrder(unitId: 'att1', destinationProvinceId: '$ow|B'),
-            const MoveOrder(unitId: 'att2', destinationProvinceId: '$ow|B'),
+            ArmyMoveOrder(armyId: 'arm_p1', destinationProvinceId: '$ow|B'),
+          ],
+        },
+        diplomaticOrdersByPlayerId: {
+          'p1': [
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'p2',
+            ),
           ],
         },
       );

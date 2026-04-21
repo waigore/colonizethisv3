@@ -3,30 +3,22 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
 import '../../diplomacy/diplomacy_resolver.dart';
-import '../../world/tile_control.dart';
 import '../order_validation_result.dart';
 
 /// Shared inputs for per-target work order validation steps that run before
-/// generic territory and cost checks. [civilianEmbassyWorkAllowed] mirrors
-/// [WorkOrderValidator] embassy/minor rules for Builder/Engineer/Merchant.
+/// generic territory and cost checks.
 class WorkOrderTargetPrecheckContext {
   WorkOrderTargetPrecheckContext({
     required this.game,
     required this.player,
     required this.playerId,
     required this.treasury,
-    required this.civilianEmbassyWorkAllowed,
   });
 
   final Game game;
   final Player player;
   final String playerId;
   final int treasury;
-
-  /// True when the unit may perform civilian work in a Minor/Tribe province
-  /// with embassy + tech (validator-specific).
-  final bool Function(String unitType, String? provinceOwnerId)
-  civilianEmbassyWorkAllowed;
 }
 
 /// Returns a rejection, or `null` when this precheck passes.
@@ -177,17 +169,6 @@ OrderValidationResult? precheckBuildImprovement(
   String? ownerId,
   String unitType,
 ) {
-  final controlled = isTileControlledByPlayer(
-    ctx.game,
-    ctx.playerId,
-    o.targetTileKey,
-  );
-  final embassyWork = ctx.civilianEmbassyWorkAllowed(unitType, ownerId);
-  if (!controlled && !embassyWork) {
-    return OrderValidationResult.rejected(
-      'Cannot build improvement in foreign or uncontrolled province',
-    );
-  }
   final resourceId = ctx.game.worldState.resourceByTileKey[o.targetTileKey];
   if (resourceId == null || resourceId.isEmpty) {
     return OrderValidationResult.rejected(

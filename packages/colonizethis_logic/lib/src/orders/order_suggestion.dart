@@ -14,6 +14,7 @@ import 'order_engine.dart';
 import 'order_visibility.dart';
 import 'orders_application_helpers.dart';
 import 'unit_type_helpers.dart';
+import '../world/civilian_tile_occupancy.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 

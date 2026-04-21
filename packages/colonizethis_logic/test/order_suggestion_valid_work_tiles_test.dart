@@ -753,7 +753,9 @@ void main() {
 
       // Builder should NOT get a move suggestion to p2 (other GP's province)
       expect(
-        suggestions.where((m) => m.destinationProvinceId == 'oldWorld|p2'),
+        suggestions.where(
+          (m) => Unit.provinceIdFromTileKey(m.destinationTileKey) == 'oldWorld|p2',
+        ),
         isEmpty,
       );
     });

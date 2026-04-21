@@ -2,10 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
-import '../../diplomacy/diplomacy_resolver.dart';
+import '../../world/civilian_tile_occupancy.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
-import '../../world/tile_control.dart';
 import '../build_rail_work_rules.dart';
 import '../orders_application_helpers.dart';
 import '../order_visibility.dart';
@@ -105,7 +104,6 @@ class WorkOrderValidator extends OrderValidator {
           player: _context.player,
           playerId: _context.playerId,
           treasury: _treasury,
-          civilianEmbassyWorkAllowed: _civilianWorkAllowedInMinorTribeProvince,
         );
         final preResult = runWorkOrderTargetPrecheck(
           preCtx,
@@ -118,24 +116,26 @@ class WorkOrderValidator extends OrderValidator {
           return preResult;
         }
 
-        if (!isExplorerUnit(type) &&
-            !kWorkTargetsSkippingDefaultForeignProvinceCheck.contains(
-              o.target,
-            )) {
-          final controlled = isTileControlledByPlayer(
-            _context.game,
-            _context.playerId,
-            o.targetTileKey,
+        if (!workOrderVisibilityOk(
+          _context.view,
+          unit,
+          o.target,
+          o.targetTileKey,
+        )) {
+          return OrderValidationResult.rejected(
+            'Province or tile not visible for this work',
           );
-          final embassyWork = _civilianWorkAllowedInMinorTribeProvince(
-            type,
-            ownerId,
+        }
+
+        if (!civilianMayOccupyLandTileKey(
+          game: _context.game,
+          playerId: _context.playerId,
+          unitType: type,
+          destinationTileKey: o.targetTileKey,
+        )) {
+          return OrderValidationResult.rejected(
+            'Work target tile is not a legal stand location for this unit',
           );
-          if (!controlled && !embassyWork) {
-            return OrderValidationResult.rejected(
-              'Cannot work in foreign province',
-            );
-          }
         }
 
         if (isDevExclusiveUnitType(type) &&
@@ -213,17 +213,6 @@ class WorkOrderValidator extends OrderValidator {
           }
         }
 
-        if (!workOrderVisibilityOk(
-          _context.view,
-          unit,
-          o.target,
-          o.targetTileKey,
-        )) {
-          return OrderValidationResult.rejected(
-            'Province or tile not visible for this work',
-          );
-        }
-
         if (o.target == kWorkTargetProspect) {
           if (!isMineralEligibleTile(
             _context.game,
@@ -280,30 +269,5 @@ class WorkOrderValidator extends OrderValidator {
         return OrderValidationResult.accepted();
       },
     );
-  }
-
-  /// Builder / Engineer / Merchant may work in Minor/Tribe provinces with embassy + Diplomatic Expertise. SPEC/game/tech-tree-diplomacy-civilian.md.
-  bool _civilianWorkAllowedInMinorTribeProvince(
-    String unitType,
-    String? provinceOwnerId,
-  ) {
-    if (provinceOwnerId == null || provinceOwnerId == _context.playerId) {
-      return false;
-    }
-    if (unitType != kUnitTypeBuilder &&
-        unitType != kUnitTypeEngineer &&
-        unitType != kUnitTypeMerchant) {
-      return false;
-    }
-    if (!isMinorOrTribe(_context.game, provinceOwnerId)) return false;
-    final rel = getRelation(_context.game, _context.playerId, provinceOwnerId);
-    if (rel?.atWar == true) return false;
-    final overture = getOverture(
-      _context.game,
-      _context.playerId,
-      provinceOwnerId,
-    );
-    if (overture == null || !overture.hasEmbassy) return false;
-    return _context.player.techUnlocked?[kTechIdDiplomaticExpertise] == true;
   }
 }

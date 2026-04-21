@@ -58,7 +58,7 @@ void main() {
 
       final orders = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0')],
         },
       );
 
@@ -142,7 +142,7 @@ void main() {
 
         final orders = Orders(
           moveOrdersByPlayerId: {
-            'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+            'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0')],
           },
         );
 
@@ -237,7 +237,7 @@ void main() {
 
         final orders = Orders(
           moveOrdersByPlayerId: {
-            'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+            'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0')],
           },
         );
 
@@ -440,7 +440,7 @@ void main() {
           orders: const Orders(
             moveOrdersByPlayerId: {
               'human': [
-                MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'),
+                MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0'),
               ],
             },
           ),
@@ -561,8 +561,8 @@ void main() {
             orders: const Orders(
               moveOrdersByPlayerId: {
                 'human': [
-                  MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'),
-                  MoveOrder(unitId: 'u2', destinationProvinceId: '$nw|N2'),
+                  MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0'),
+                  MoveOrder(unitId: 'u2', destinationTileKey: '$nw|N2|0|0'),
                 ],
               },
             ),
@@ -705,8 +705,8 @@ void main() {
         final orders = Orders(
           moveOrdersByPlayerId: {
             'p1': [
-              MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'),
-              MoveOrder(unitId: 'u999', destinationProvinceId: '$ow|P2'),
+              MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0'),
+              MoveOrder(unitId: 'u999', destinationTileKey: '$ow|P2|0|0'),
             ],
           },
         );

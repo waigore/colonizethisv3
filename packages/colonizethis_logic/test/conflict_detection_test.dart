@@ -41,7 +41,7 @@ void main() {
       final orders = Orders(
         moveOrdersByPlayerId: {
           'player1': [
-            MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P1'),
+            MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P1|0|0'),
           ],
         },
       );
@@ -81,7 +81,7 @@ void main() {
       );
       final orders = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|N1')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$nw|N1|0|0')],
         },
       );
       final battles = detectConflicts(game, orders);
@@ -172,10 +172,10 @@ void main() {
       final orders = Orders(
         moveOrdersByPlayerId: {
           'player1': [
-            MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P1'),
+            MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P1|0|0'),
           ],
           'player2': [
-            MoveOrder(unitId: 'u3', destinationProvinceId: '$ow|P2'),
+            MoveOrder(unitId: 'u3', destinationTileKey: '$ow|P2|0|0'),
           ],
         },
       );
@@ -227,7 +227,7 @@ void main() {
       final orders = Orders(
         moveOrdersByPlayerId: {
           'player1': [
-            MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P1'),
+            MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P1|0|0'),
           ],
         },
       );
@@ -260,7 +260,7 @@ void main() {
       );
       final orders = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P1')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P1|0|0')],
         },
       );
       final battles = detectConflicts(game, orders);
@@ -294,8 +294,8 @@ void main() {
       );
       final orders = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P1')],
-          'p2': [MoveOrder(unitId: 'u2', destinationProvinceId: '$ow|P1')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P1|0|0')],
+          'p2': [MoveOrder(unitId: 'u2', destinationTileKey: '$ow|P1|0|0')],
         },
       );
       final battles = detectConflicts(game, orders);
@@ -327,7 +327,7 @@ void main() {
       );
       final orders = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|N1')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$nw|N1|0|0')],
         },
       );
       final battles = detectConflicts(game, orders);

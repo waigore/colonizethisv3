@@ -67,6 +67,15 @@ bool moveDestVisibilityOk(
   return provinceHasAtLeastVisibility(view, regionId, provinceId, min);
 }
 
+/// Civilian move order: destination **tile** must be at least fogged.
+bool moveDestinationTileVisibilityOk(PlayerView view, String destinationTileKey) {
+  return tileHasAtLeastVisibility(
+    view,
+    destinationTileKey,
+    VisibilityLevel.fogged,
+  );
+}
+
 /// Resolves regionId for [unit]: from tileKey, compound provinceId, [view].provincesById, or visibility tile keys.
 /// Shared by order_suggestion and order_visibility (SPEC/program/order-suggestions.md, fog-and-exploration-resolution.md).
 String regionIdForUnit(PlayerView view, Unit unit) {

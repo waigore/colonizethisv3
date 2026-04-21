@@ -440,7 +440,13 @@ class SimGameController {
         final origin = unit != null
             ? provinceLabelInRegion(regionId, unit.locationProvinceId)
             : '?';
-        final dest = provinceLabelInRegion(regionId, o.destinationProvinceId);
+        final destTile = o.destinationTileKey;
+        final destRegion =
+            Unit.regionIdFromTileKey(destTile) ?? regionId;
+        final destProv = Unit.provinceIdFromTileKey(destTile);
+        final dest = destProv != null
+            ? provinceLabelInRegion(destRegion, destProv)
+            : destTile;
         final validation = nextResult();
         _orderHistory.add(
           SimOrderHistoryEntry(

@@ -48,7 +48,7 @@ void main() {
 
       final orders = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0')],
         },
       );
 
@@ -130,7 +130,7 @@ void main() {
       final orders = Orders(
         moveOrdersByPlayerId: {
           'p1': [
-            const MoveOrder(unitId: 'u1', destinationProvinceId: '$nw|P2'),
+            const MoveOrder(unitId: 'u1', destinationTileKey: '$nw|P2|0|0'),
           ],
         },
       );
@@ -213,7 +213,7 @@ void main() {
         final orders = Orders(
           moveOrdersByPlayerId: {
             'p1': [
-              const MoveOrder(unitId: 'c1', destinationProvinceId: nwProv),
+              MoveOrder(unitId: 'c1', destinationTileKey: '$nwProv|0|0'),
             ],
           },
         );
@@ -335,7 +335,7 @@ void main() {
         );
         final orders = Orders(
           moveOrdersByPlayerId: {
-            'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P1')],
+            'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P1|0|0')],
           },
         );
         final next = requireTurnResolutionComplete(
@@ -619,7 +619,7 @@ void main() {
 
         final orders = Orders(
           moveOrdersByPlayerId: {
-            'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+            'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0')],
           },
         );
 
@@ -736,7 +736,7 @@ void main() {
         );
         final orders = Orders(
           moveOrdersByPlayerId: {
-            'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+            'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0')],
           },
         );
         final next = requireTurnResolutionComplete(
@@ -824,7 +824,7 @@ void main() {
 
         final orders = Orders(
           moveOrdersByPlayerId: {
-            'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+            'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0')],
           },
         );
 

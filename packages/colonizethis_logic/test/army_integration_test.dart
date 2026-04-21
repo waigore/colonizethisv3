@@ -16,7 +16,7 @@ void main() {
         pid,
         const ArmyMoveOrder(
           armyId: armyId,
-          destinationProvinceId: 'oldWorld|p1',
+          destinationTileKey: 'oldWorld|p1|0|0',
         ),
       );
       orders = applyArmyMoveOrderForPlayer(
@@ -24,7 +24,7 @@ void main() {
         pid,
         const ArmyMoveOrder(
           armyId: armyId,
-          destinationProvinceId: 'oldWorld|p2',
+          destinationTileKey: 'oldWorld|p2|0|0',
         ),
       );
       final list = orders.armyMoveOrdersByPlayerId[pid]!;

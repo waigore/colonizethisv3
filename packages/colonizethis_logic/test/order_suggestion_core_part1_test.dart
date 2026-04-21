@@ -28,6 +28,11 @@ void main() {
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
         oldWorld: RegionData(provinces: [p1, p2], units: [unit]),
         newWorld: const RegionData(),
+        tileKeysByRegionAndProvince: {
+          ow: {
+            '$ow|p2': ['$ow|p2|0|0'],
+          },
+        },
         playerVisibilityByTile: const {
           playerId: {
             'oldWorld|p1|0|0': 'fullyVisible',
@@ -64,7 +69,7 @@ void main() {
 
       expect(suggestions.length, 1);
       expect(suggestions.first.unitId, 'u1');
-      expect(suggestions.first.destinationProvinceId, 'oldWorld|p2');
+      expect(suggestions.first.destinationTileKey, '$ow|p2|0|0');
     });
 
     test(
@@ -140,6 +145,11 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(provinces: [p1, p2, p3], units: [unit]),
           newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            ow: {
+              '$ow|p3': ['$ow|p3|0|0'],
+            },
+          },
           playerVisibilityByTile: const {
             playerId: {
               'oldWorld|p2|0|0': 'fullyVisible',
@@ -178,7 +188,7 @@ void main() {
         );
         expect(suggestions.length, 1);
         expect(suggestions.first.unitId, 'u1');
-        expect(suggestions.first.destinationProvinceId, 'oldWorld|p3');
+        expect(suggestions.first.destinationTileKey, '$ow|p3|0|0');
         // Move is from p2 (unit's location province), not p1. Unit with tileKey uses compound id.
         expect(view.ownUnitsById['u1']!.locationProvinceId, 'oldWorld|p2');
       },
