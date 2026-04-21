@@ -657,7 +657,6 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
   required WidgetTester tester,
   required AppLocalizations l10n,
   required void Function(String step) ensureUnderWallClock,
-  required CtE2eNavalPanelSnapshot? lastNavalSnapshot,
 }) async {
   const maxTurns = 35;
   for (var i = 0; i < maxTurns; i++) {
@@ -1124,7 +1123,6 @@ void main() {
         tester: tester,
         l10n: l10n,
         ensureUnderWallClock: ensureUnderWallClock,
-        lastNavalSnapshot: lastKnownNavalSnapshot,
       );
 
       await _tapNewWorldRegionTabIfPresent(tester);
