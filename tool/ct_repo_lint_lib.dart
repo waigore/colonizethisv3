@@ -11,6 +11,7 @@ import 'check_civilian_unit_type_constants.dart';
 import 'check_control_flow_nesting_depth.dart';
 import 'check_custom_exceptions.dart';
 import 'check_disallowed_ast_patterns.dart';
+import 'check_function_size.dart';
 import 'check_repeated_magic_numbers.dart';
 import 'check_tech_id_constants.dart';
 import 'check_work_target_constants.dart';
@@ -622,6 +623,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckControlFlowNestingDepth(repoRoot);
     case 'repo.repeated_magic_numbers':
       return runCheckRepeatedMagicNumbers(repoRoot);
+    case 'repo.function_size':
+      return runCheckFunctionSize(repoRoot);
     case 'repo.tech_id_constants':
       return runCheckTechIdConstants(
         repoRoot,
