@@ -87,7 +87,7 @@ Orders filterAcceptedOrdersForAllPlayers({
       results,
       idxBox,
       (pid, m) => moveByPlayer.putIfAbsent(pid, () => <MoveOrder>[]).add(m),
-      (m) => 'Move order: ${m.unitId} -> ${m.destinationProvinceId}',
+      (m) => 'Move order: ${m.unitId} -> ${m.destinationTileKey}',
       eventBus,
       onGameEvent,
     );

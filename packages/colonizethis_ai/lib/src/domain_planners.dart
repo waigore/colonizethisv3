@@ -239,7 +239,7 @@ Orders _runMovePlanner({
   _log.d(
     'move eval nationId=$nationId weight=$weight '
     'filteredCount=${filtered.length} '
-    'candidates=${filtered.map((m) => "${m.unitId}->${m.destinationProvinceId}").toList()}',
+    'candidates=${filtered.map((m) => "${m.unitId}->${m.destinationTileKey}").toList()}',
   );
   if (weight < 20) {
     _log.d('move skipped nationId=$nationId weight < 20');
@@ -247,7 +247,9 @@ Orders _runMovePlanner({
   }
   final provinceOwner = getProvinceOwnerMap(game);
   final scores = filtered.map((m) {
-    final destOwner = provinceOwner[m.destinationProvinceId];
+    final destProv = Unit.provinceIdFromTileKey(m.destinationTileKey);
+    final destOwner =
+        destProv != null ? provinceOwner[destProv] : null;
     if (destOwner == null || destOwner == nationId) return 1.0;
     final rel = getRelation(game, nationId, destOwner);
     final atWar = rel != null && rel.atWar;
@@ -266,7 +268,7 @@ Orders _runMovePlanner({
   final selected = [filtered[idx]];
   _log.i(
     'move chosen nationId=$nationId '
-    'unitId=${selected.first.unitId} destinationProvinceId=${selected.first.destinationProvinceId}',
+    'unitId=${selected.first.unitId} destinationTileKey=${selected.first.destinationTileKey}',
   );
   return _appendMoveOrders(orders, nationId, selected);
 }
