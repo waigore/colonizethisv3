@@ -290,7 +290,20 @@ List<RepoLintRule> loadRepoLintManifest(
 String? resolvePrChangedDartFilesCsv() {
   final explicitBaseSha = Platform.environment['CT_REPO_LINT_BASE_SHA'];
   if (explicitBaseSha != null && explicitBaseSha.trim().isNotEmpty) {
-    final csv = _resolveChangedDartFilesCsvForLeft(explicitBaseSha.trim());
+    final normalizedBaseSha = explicitBaseSha.trim();
+    final fetchExplicit = Process.runSync(
+      'git',
+      ['fetch', '--no-tags', '--depth=1', 'origin', normalizedBaseSha],
+      workingDirectory: Directory.current.path,
+      runInShell: false,
+    );
+    if (fetchExplicit.exitCode == 0) {
+      final csv = _resolveChangedDartFilesCsvForBaseSha(normalizedBaseSha);
+      if (csv != null) {
+        return csv;
+      }
+    }
+    final csv = _resolveChangedDartFilesCsvForLeft(normalizedBaseSha);
     if (csv != null) {
       return csv;
     }
@@ -318,6 +331,28 @@ String? resolvePrChangedDartFilesCsv() {
   // CI may check out a merge commit and/or omit remote refs in shallow clones.
   // Fall back to the first parent when origin/<base> cannot be resolved.
   return _resolveChangedDartFilesCsvForLeft('HEAD^');
+}
+
+String? _resolveChangedDartFilesCsvForBaseSha(String baseSha) {
+  final diff = Process.runSync(
+    'git',
+    ['diff', '--name-only', '$baseSha..HEAD', '--', '*.dart'],
+    workingDirectory: Directory.current.path,
+    runInShell: false,
+  );
+  if (diff.exitCode != 0) {
+    return null;
+  }
+  final lines = diff.stdout
+      .toString()
+      .split('\n')
+      .map((l) => l.trim())
+      .where((l) => l.isNotEmpty)
+      .toList();
+  if (lines.isEmpty) {
+    return null;
+  }
+  return lines.join(',');
 }
 
 String? _resolveChangedDartFilesCsvForLeft(String leftRef) {
