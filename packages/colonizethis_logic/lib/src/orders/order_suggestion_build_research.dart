@@ -305,6 +305,9 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     game: game,
     playerId: playerId,
     workTarget: workTarget,
+    exploreProvinceScope: workTarget == kWorkTargetExplore
+        ? _partiallyRevealedProvinceCacheForPlayer(game: game, view: view)
+        : null,
     tileMapByRegion: tileMapByRegion,
   );
   final sortedVisible = _sortedVisibleWorkTargetCandidates(view, raw);
@@ -352,6 +355,7 @@ Set<String> _preFilterWorkTargetTiles({
   required Map<String, String> resourceByTile,
   required Map<String, String> purchasedTiles,
   required Set<String> ownedProvinceIds,
+  Set<String>? exploreProvinceScope,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final result = <String>{};
@@ -362,6 +366,7 @@ Set<String> _preFilterWorkTargetTiles({
     resourceByTile: resourceByTile,
     purchasedTiles: purchasedTiles,
     ownedProvinceIds: ownedProvinceIds,
+    exploreProvinceScope: exploreProvinceScope,
     tileMapByRegion: tileMapByRegion,
     result: result,
   );
@@ -378,6 +383,7 @@ Set<String> _rawCandidateTilesForWorkTarget({
   required Game game,
   required String playerId,
   required String workTarget,
+  Set<String>? exploreProvinceScope,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final world = game.worldState;
@@ -395,6 +401,7 @@ Set<String> _rawCandidateTilesForWorkTarget({
     resourceByTile: world.resourceByTileKey,
     purchasedTiles: world.purchasedTilesByTileKey,
     ownedProvinceIds: ownedProvinceIds,
+    exploreProvinceScope: exploreProvinceScope,
     tileMapByRegion: tileMapByRegion,
   );
 }
