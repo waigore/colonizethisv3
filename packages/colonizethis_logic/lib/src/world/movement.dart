@@ -76,6 +76,54 @@ bool isValidLandMove(
   );
 }
 
+({List<Unit> ow, List<Unit> nw}) _replaceCivilianUnitInSameRegion(
+  List<Unit> ow,
+  List<Unit> nw,
+  String srcRegion,
+  String unitId,
+  Unit moved,
+) {
+  if (srcRegion == kRegionOldWorld) {
+    return (
+      ow: ow.map((x) => x.id == unitId ? moved : x).toList(),
+      nw: nw,
+    );
+  }
+  return (
+    ow: ow,
+    nw: nw.map((x) => x.id == unitId ? moved : x).toList(),
+  );
+}
+
+({List<Unit> ow, List<Unit> nw}) _moveCivilianUnitAcrossRegions(
+  List<Unit> ow,
+  List<Unit> nw,
+  String unitId,
+  Unit moved,
+  String destRegion,
+) {
+  ow.removeWhere((u) => u.id == unitId);
+  nw.removeWhere((u) => u.id == unitId);
+  if (destRegion == kRegionOldWorld) {
+    return (ow: [...ow, moved], nw: nw);
+  }
+  return (ow: ow, nw: [...nw, moved]);
+}
+
+({List<Unit> ow, List<Unit> nw}) _applyCivilianMoveToWorkingUnitLists({
+  required List<Unit> ow,
+  required List<Unit> nw,
+  required String unitId,
+  required Unit moved,
+  required String srcRegion,
+  required String destRegion,
+}) {
+  if (srcRegion == destRegion) {
+    return _replaceCivilianUnitInSameRegion(ow, nw, srcRegion, unitId, moved);
+  }
+  return _moveCivilianUnitAcrossRegions(ow, nw, unitId, moved, destRegion);
+}
+
 /// Applies civilian [MoveOrder]s (tile destinations) across both world regions.
 /// Ignores military units and invalid payloads. Resolution assumes orders passed validation.
 /// SPEC/program/movement.md; issue #1877.
@@ -156,21 +204,16 @@ bool isValidLandMove(
         continue;
       }
       applied++;
-      if (srcRegion == destRegion) {
-        if (srcRegion == kRegionOldWorld) {
-          ow = ow.map((x) => x.id == unit.id ? moved : x).toList();
-        } else {
-          nw = nw.map((x) => x.id == unit.id ? moved : x).toList();
-        }
-      } else {
-        ow.removeWhere((u) => u.id == unit.id);
-        nw.removeWhere((u) => u.id == unit.id);
-        if (destRegion == kRegionOldWorld) {
-          ow = [...ow, moved];
-        } else {
-          nw = [...nw, moved];
-        }
-      }
+      final lists = _applyCivilianMoveToWorkingUnitLists(
+        ow: ow,
+        nw: nw,
+        unitId: unit.id,
+        moved: moved,
+        srcRegion: srcRegion,
+        destRegion: destRegion,
+      );
+      ow = lists.ow;
+      nw = lists.nw;
     }
   }
 
