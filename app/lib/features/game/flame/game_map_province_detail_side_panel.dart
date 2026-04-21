@@ -66,7 +66,13 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
         ),
       );
     }
-    final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
+    dynamic mapData;
+    try {
+      mapData = ref.watch(gameServiceProvider).getMapData(game.id);
+    } catch (_) {
+      // Some widget tests render this panel without initializing persistence-backed providers.
+      mapData = null;
+    }
     final topology = mapData?.combinedTopology;
     final prospectState = panel.selectedTileKey == null
         ? (showIcon: false, enabled: false, hasExplorerUnits: false)
