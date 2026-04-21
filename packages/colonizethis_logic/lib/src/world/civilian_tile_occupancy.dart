@@ -50,32 +50,41 @@ bool civilianMayOccupyLandTileKey({
   required String unitType,
   required String destinationTileKey,
 }) {
-  if (destinationTileKey.isEmpty) return false;
-  if (!isLandTileKeyForGame(game, destinationTileKey)) return false;
+  if (!_isValidDestinationLandTile(game, destinationTileKey)) return false;
+  if (_isTilePurchasedByMover(game, playerId, destinationTileKey)) return true;
+  final ownerId = _provinceOwnerIdForDestination(game, destinationTileKey);
+  return _isOccupancyAllowedByProvinceOwner(game, playerId, unitType, ownerId);
+}
 
-  final purchased = game.worldState.purchasedTilesByTileKey[destinationTileKey];
-  if (purchased == playerId) return true;
+bool _isValidDestinationLandTile(Game game, String destinationTileKey) =>
+    destinationTileKey.isNotEmpty &&
+    isLandTileKeyForGame(game, destinationTileKey);
 
+bool _isTilePurchasedByMover(
+  Game game,
+  String playerId,
+  String destinationTileKey,
+) => game.worldState.purchasedTilesByTileKey[destinationTileKey] == playerId;
+
+String? _provinceOwnerIdForDestination(Game game, String destinationTileKey) {
   final provinceId = Unit.provinceIdFromTileKey(destinationTileKey);
-  if (provinceId == null) return false;
-  final province = tryGetProvince(game.worldState, provinceId);
-  if (province == null) return false;
+  if (provinceId == null) return null;
+  return tryGetProvince(game.worldState, provinceId)?.ownerId;
+}
 
-  final ownerId = province.ownerId;
-  if (ownerId == null || ownerId.isEmpty) {
-    return isExplorerUnit(unitType) ||
-        isMerchantUnit(unitType) ||
-        isSpyUnit(unitType);
-  }
+bool _isOccupancyAllowedByProvinceOwner(
+  Game game,
+  String playerId,
+  String unitType,
+  String? ownerId,
+) {
+  if (ownerId == null || ownerId.isEmpty)
+    return _isExplorerMerchantOrSpy(unitType);
   if (ownerId == playerId) return true;
-
-  if (isGreatPower(game, ownerId)) {
-    return isSpyUnit(unitType);
-  }
-  if (isMinorOrTribe(game, ownerId)) {
-    return isExplorerUnit(unitType) ||
-        isMerchantUnit(unitType) ||
-        isSpyUnit(unitType);
-  }
+  if (isGreatPower(game, ownerId)) return isSpyUnit(unitType);
+  if (isMinorOrTribe(game, ownerId)) return _isExplorerMerchantOrSpy(unitType);
   return false;
 }
+
+bool _isExplorerMerchantOrSpy(String unitType) =>
+    isExplorerUnit(unitType) || isMerchantUnit(unitType) || isSpyUnit(unitType);

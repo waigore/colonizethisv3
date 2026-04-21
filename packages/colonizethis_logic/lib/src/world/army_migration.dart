@@ -97,14 +97,16 @@ Game _ensureHomeArmiesExist(Game game) {
     final exists = armies.any((a) => a.id == hid && a.ownerId == player.id);
     if (!exists) {
       final regionId = _regionIdForProvinceInWorld(ws, cap);
-      armies.add(Army(
-        id: hid,
-        ownerId: player.id,
-        regionId: regionId,
-        stationedProvinceId: cap,
-        regimentUnitIds: const [],
-        isHomeArmy: true,
-      ));
+      armies.add(
+        Army(
+          id: hid,
+          ownerId: player.id,
+          regionId: regionId,
+          stationedProvinceId: cap,
+          regimentUnitIds: const [],
+          isHomeArmy: true,
+        ),
+      );
       changed = true;
     }
   }
@@ -129,7 +131,9 @@ Game _rebuildArmiesFromMilitaryUnits(Game game) {
   for (final u in militaryUnits) {
     final cap = capitals[u.ownerId];
     final isGpHome = cap != null && u.locationProvinceId == cap;
-    final key = isGpHome ? homeArmyIdFor(u.ownerId) : fieldArmyIdFor(u.ownerId, u.locationProvinceId);
+    final key = isGpHome
+        ? homeArmyIdFor(u.ownerId)
+        : fieldArmyIdFor(u.ownerId, u.locationProvinceId);
     byArmyKey.putIfAbsent(key, () => []).add(u.id);
   }
 
@@ -140,14 +144,16 @@ Game _rebuildArmiesFromMilitaryUnits(Game game) {
     if (cap == null) continue;
     final hid = homeArmyIdFor(player.id);
     final regionId = _regionIdForProvinceInWorld(ws, cap);
-    armies.add(Army(
-      id: hid,
-      ownerId: player.id,
-      regionId: regionId,
-      stationedProvinceId: cap,
-      regimentUnitIds: List<String>.from(byArmyKey[hid] ?? const []),
-      isHomeArmy: true,
-    ));
+    armies.add(
+      Army(
+        id: hid,
+        ownerId: player.id,
+        regionId: regionId,
+        stationedProvinceId: cap,
+        regimentUnitIds: List<String>.from(byArmyKey[hid] ?? const []),
+        isHomeArmy: true,
+      ),
+    );
     byArmyKey.remove(hid);
   }
 
@@ -155,14 +161,16 @@ Game _rebuildArmiesFromMilitaryUnits(Game game) {
     if (e.value.isEmpty) continue;
     final sample = militaryUnits.firstWhere((u) => u.id == e.value.first);
     final regionId = _regionIdForUnitInWorld(ws, sample);
-    armies.add(Army(
-      id: e.key,
-      ownerId: sample.ownerId,
-      regionId: regionId,
-      stationedProvinceId: sample.locationProvinceId,
-      regimentUnitIds: List<String>.from(e.value)..sort(),
-      isHomeArmy: false,
-    ));
+    armies.add(
+      Army(
+        id: e.key,
+        ownerId: sample.ownerId,
+        regionId: regionId,
+        stationedProvinceId: sample.locationProvinceId,
+        regimentUnitIds: List<String>.from(e.value)..sort(),
+        isHomeArmy: false,
+      ),
+    );
   }
 
   armies.sort((a, b) => a.id.compareTo(b.id));
@@ -191,16 +199,15 @@ WorldState reconcileArmiesAfterUnitsChanged(WorldState worldState, Game game) {
   var armies = worldState.armies
       .map(
         (a) => a.copyWith(
-          regimentUnitIds:
-              a.regimentUnitIds.where(unitIds.contains).toList(growable: false),
+          regimentUnitIds: a.regimentUnitIds
+              .where(unitIds.contains)
+              .toList(growable: false),
         ),
       )
       .where((a) => a.isHomeArmy || a.regimentUnitIds.isNotEmpty)
       .toList();
 
-  final claimed = <String>{
-    for (final a in armies) ...a.regimentUnitIds,
-  };
+  final claimed = <String>{for (final a in armies) ...a.regimentUnitIds};
 
   final military = [
     ...worldState.oldWorld.units.where((u) => isMilitaryUnit(u.type)),
@@ -223,8 +230,9 @@ WorldState reconcileArmiesAfterUnitsChanged(WorldState worldState, Game game) {
     if (claimed.contains(u.id)) continue;
     final cap = capitals[u.ownerId];
     final wantsHome = cap != null && u.locationProvinceId == cap;
-    final targetId =
-        wantsHome ? homeArmyIdFor(u.ownerId) : fieldArmyIdFor(u.ownerId, u.locationProvinceId);
+    final targetId = wantsHome
+        ? homeArmyIdFor(u.ownerId)
+        : fieldArmyIdFor(u.ownerId, u.locationProvinceId);
     var target = findArmy(targetId);
     if (target == null) {
       final regionId = _regionIdForUnitInWorld(worldState, u);
@@ -255,59 +263,32 @@ WorldState updateArmyStation(
   String armyId,
   String destinationProvinceId,
 ) {
-  final regionId = _regionIdForProvinceInWorld(worldState, destinationProvinceId);
-  final armies = worldState.armies.map((a) {
-    if (a.id != armyId) return a;
-    return a.copyWith(
-      stationedProvinceId: destinationProvinceId,
-      regionId: regionId,
-    );
-  }).toList();
-
-  final armyList = armies.where((a) => a.id == armyId).toList();
-  final army = armyList.isEmpty ? null : armyList.first;
+  final regionId = _regionIdForProvinceInWorld(
+    worldState,
+    destinationProvinceId,
+  );
+  final armies = _retargetArmyStation(
+    worldState.armies,
+    armyId,
+    destinationProvinceId,
+    regionId,
+  );
+  final army = _armyById(armies, armyId);
   if (army == null) return worldState;
 
   var owUnits = List<Unit>.from(worldState.oldWorld.units);
   var nwUnits = List<Unit>.from(worldState.newWorld.units);
 
   for (final rid in army.regimentUnitIds) {
-    final owIdx = owUnits.indexWhere((u) => u.id == rid);
-    final nwIdx = nwUnits.indexWhere((u) => u.id == rid);
-    if (owIdx < 0 && nwIdx < 0) continue;
-
-    final inOldWorld = owIdx >= 0;
-    final sourceRegion =
-        inOldWorld ? kRegionOldWorld : kRegionNewWorld;
-
-    if (sourceRegion == regionId) {
-      if (inOldWorld) {
-        owUnits = owUnits
-            .map(
-              (u) => u.id == rid
-                  ? u.copyWith(locationProvinceId: destinationProvinceId)
-                  : u,
-            )
-            .toList();
-      } else {
-        nwUnits = nwUnits
-            .map(
-              (u) => u.id == rid
-                  ? u.copyWith(locationProvinceId: destinationProvinceId)
-                  : u,
-            )
-            .toList();
-      }
-      continue;
-    }
-
-    final u = inOldWorld ? owUnits.removeAt(owIdx) : nwUnits.removeAt(nwIdx);
-    final moved = u.copyWith(locationProvinceId: destinationProvinceId);
-    if (regionId == kRegionOldWorld) {
-      owUnits = [...owUnits, moved];
-    } else {
-      nwUnits = [...nwUnits, moved];
-    }
+    final updated = _moveRegimentToProvince(
+      owUnits: owUnits,
+      nwUnits: nwUnits,
+      regimentUnitId: rid,
+      destinationProvinceId: destinationProvinceId,
+      destinationRegionId: regionId,
+    );
+    owUnits = updated.owUnits;
+    nwUnits = updated.nwUnits;
   }
 
   return worldState.copyWith(
@@ -321,4 +302,106 @@ WorldState updateArmyStation(
       units: nwUnits,
     ),
   );
+}
+
+List<Army> _retargetArmyStation(
+  List<Army> armies,
+  String armyId,
+  String destinationProvinceId,
+  String regionId,
+) => armies
+    .map(
+      (a) => a.id != armyId
+          ? a
+          : a.copyWith(
+              stationedProvinceId: destinationProvinceId,
+              regionId: regionId,
+            ),
+    )
+    .toList();
+
+Army? _armyById(List<Army> armies, String armyId) {
+  final armyList = armies.where((a) => a.id == armyId).toList();
+  return armyList.isEmpty ? null : armyList.first;
+}
+
+({List<Unit> owUnits, List<Unit> nwUnits}) _moveRegimentToProvince({
+  required List<Unit> owUnits,
+  required List<Unit> nwUnits,
+  required String regimentUnitId,
+  required String destinationProvinceId,
+  required String destinationRegionId,
+}) {
+  final owIdx = owUnits.indexWhere((u) => u.id == regimentUnitId);
+  final nwIdx = nwUnits.indexWhere((u) => u.id == regimentUnitId);
+  if (owIdx < 0 && nwIdx < 0) return (owUnits: owUnits, nwUnits: nwUnits);
+
+  final inOldWorld = owIdx >= 0;
+  final sourceRegion = inOldWorld ? kRegionOldWorld : kRegionNewWorld;
+  if (sourceRegion == destinationRegionId) {
+    return _relocateRegimentInSameRegion(
+      owUnits: owUnits,
+      nwUnits: nwUnits,
+      regimentUnitId: regimentUnitId,
+      destinationProvinceId: destinationProvinceId,
+      inOldWorld: inOldWorld,
+    );
+  }
+  return _relocateRegimentAcrossRegions(
+    owUnits: owUnits,
+    nwUnits: nwUnits,
+    owIdx: owIdx,
+    nwIdx: nwIdx,
+    destinationProvinceId: destinationProvinceId,
+    destinationRegionId: destinationRegionId,
+    inOldWorld: inOldWorld,
+  );
+}
+
+({List<Unit> owUnits, List<Unit> nwUnits}) _relocateRegimentInSameRegion({
+  required List<Unit> owUnits,
+  required List<Unit> nwUnits,
+  required String regimentUnitId,
+  required String destinationProvinceId,
+  required bool inOldWorld,
+}) {
+  if (inOldWorld) {
+    return (
+      owUnits: owUnits
+          .map(
+            (u) => u.id == regimentUnitId
+                ? u.copyWith(locationProvinceId: destinationProvinceId)
+                : u,
+          )
+          .toList(),
+      nwUnits: nwUnits,
+    );
+  }
+  return (
+    owUnits: owUnits,
+    nwUnits: nwUnits
+        .map(
+          (u) => u.id == regimentUnitId
+              ? u.copyWith(locationProvinceId: destinationProvinceId)
+              : u,
+        )
+        .toList(),
+  );
+}
+
+({List<Unit> owUnits, List<Unit> nwUnits}) _relocateRegimentAcrossRegions({
+  required List<Unit> owUnits,
+  required List<Unit> nwUnits,
+  required int owIdx,
+  required int nwIdx,
+  required String destinationProvinceId,
+  required String destinationRegionId,
+  required bool inOldWorld,
+}) {
+  final unit = inOldWorld ? owUnits.removeAt(owIdx) : nwUnits.removeAt(nwIdx);
+  final moved = unit.copyWith(locationProvinceId: destinationProvinceId);
+  if (destinationRegionId == kRegionOldWorld) {
+    return (owUnits: [...owUnits, moved], nwUnits: nwUnits);
+  }
+  return (owUnits: owUnits, nwUnits: [...nwUnits, moved]);
 }

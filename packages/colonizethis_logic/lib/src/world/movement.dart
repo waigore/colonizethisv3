@@ -46,8 +46,11 @@ bool isValidLandMoveInRegion(
   String toLocal,
 ) {
   if (fromLocal == toLocal) return false;
-  return neighborProvinceIdsInRegion(topology, regionId, fromLocal)
-      .contains(toLocal);
+  return neighborProvinceIdsInRegion(
+    topology,
+    regionId,
+    fromLocal,
+  ).contains(toLocal);
 }
 
 /// Validates whether a move from [fromProvinceId] to [toProvinceId] is allowed
@@ -60,8 +63,9 @@ bool isValidLandMove(
 ) {
   if (fromProvinceId == toProvinceId) return false;
   final fromNodes = topology.nodes
-      .where((n) =>
-          n.id == fromProvinceId && n.type == TopologyNodeType.province)
+      .where(
+        (n) => n.id == fromProvinceId && n.type == TopologyNodeType.province,
+      )
       .toList();
   if (fromNodes.isEmpty) return false;
   if (fromNodes.length > 1) {
@@ -84,15 +88,9 @@ bool isValidLandMove(
   Unit moved,
 ) {
   if (srcRegion == kRegionOldWorld) {
-    return (
-      ow: ow.map((x) => x.id == unitId ? moved : x).toList(),
-      nw: nw,
-    );
+    return (ow: ow.map((x) => x.id == unitId ? moved : x).toList(), nw: nw);
   }
-  return (
-    ow: ow,
-    nw: nw.map((x) => x.id == unitId ? moved : x).toList(),
-  );
+  return (ow: ow, nw: nw.map((x) => x.id == unitId ? moved : x).toList());
 }
 
 ({List<Unit> ow, List<Unit> nw}) _moveCivilianUnitAcrossRegions(
@@ -127,111 +125,152 @@ bool isValidLandMove(
 /// Applies civilian [MoveOrder]s (tile destinations) across both world regions.
 /// Ignores military units and invalid payloads. Resolution assumes orders passed validation.
 /// SPEC/program/movement.md; issue #1877.
-({RegionData oldWorld, RegionData newWorld}) applyCivilianTileMoveOrdersToWorldRegions(
+({RegionData oldWorld, RegionData newWorld})
+applyCivilianTileMoveOrdersToWorldRegions(
   Game game,
   Map<String, List<MoveOrder>> moveOrdersByPlayerId,
 ) {
-  if (moveOrdersByPlayerId.isEmpty) {
-    return (
-      oldWorld: game.worldState.oldWorld,
-      newWorld: game.worldState.newWorld,
+  if (moveOrdersByPlayerId.isEmpty) return _unchangedWorldRegions(game);
+  final result = _applyCivilianMoveOrders(game, moveOrdersByPlayerId);
+  if (result.ordersSeen > 0) {
+    _log.i(
+      'civilian tile movement apply orders=${result.ordersSeen} '
+      'applied=${result.applied} ignored=${result.ignored}',
     );
   }
+  return _toWorldRegions(game, result.ow, result.nw);
+}
 
+({RegionData oldWorld, RegionData newWorld}) _unchangedWorldRegions(
+  Game game,
+) => (oldWorld: game.worldState.oldWorld, newWorld: game.worldState.newWorld);
+
+({RegionData oldWorld, RegionData newWorld}) _toWorldRegions(
+  Game game,
+  List<Unit> ow,
+  List<Unit> nw,
+) => (
+  oldWorld: RegionData(
+    provinces: game.worldState.oldWorld.provinces,
+    units: ow,
+  ),
+  newWorld: RegionData(
+    provinces: game.worldState.newWorld.provinces,
+    units: nw,
+  ),
+);
+
+({List<Unit> ow, List<Unit> nw, int ordersSeen, int applied, int ignored})
+_applyCivilianMoveOrders(
+  Game game,
+  Map<String, List<MoveOrder>> moveOrdersByPlayerId,
+) {
   var ow = List<Unit>.from(game.worldState.oldWorld.units);
   var nw = List<Unit>.from(game.worldState.newWorld.units);
-
-  Unit? findUnit(String id) {
-    for (final u in ow) {
-      if (u.id == id) return u;
-    }
-    for (final u in nw) {
-      if (u.id == id) return u;
-    }
-    return null;
-  }
-
-  String regionHoldingUnit(String unitId) {
-    if (ow.any((u) => u.id == unitId)) return kRegionOldWorld;
-    if (nw.any((u) => u.id == unitId)) return kRegionNewWorld;
-    return '';
-  }
-
   var ordersSeen = 0;
   var applied = 0;
   var ignored = 0;
-
   final sortedPlayers = moveOrdersByPlayerId.keys.toList()..sort();
   for (final playerId in sortedPlayers) {
     for (final order in moveOrdersByPlayerId[playerId] ?? const []) {
       ordersSeen++;
-      final unit = findUnit(order.unitId);
-      if (unit == null) {
-        ignored++;
-        _log.d(
-          'civilian movement ignored reason=unit_not_found '
-          'unitId=${order.unitId} orderPlayerId=$playerId',
-        );
-        continue;
-      }
-      if (unit.ownerId != playerId) {
-        ignored++;
-        _log.d(
-          'civilian movement ignored reason=owner_mismatch '
-          'unitId=${order.unitId} orderPlayerId=$playerId unitOwnerId=${unit.ownerId}',
-        );
-        continue;
-      }
-      if (isMilitaryUnit(unit.type)) {
-        ignored++;
-        continue;
-      }
-      final destTile = order.destinationTileKey;
-      if (destTile.isEmpty) {
-        ignored++;
-        continue;
-      }
-      final destProvince = Unit.provinceIdFromTileKey(destTile);
-      if (destProvince == null) {
-        ignored++;
-        continue;
-      }
-      final destRegion = Unit.requireRegionIdFromTileKey(destTile);
-      final moved = unit.copyWith(locationProvinceId: destProvince, tileKey: destTile);
-      final srcRegion = regionHoldingUnit(unit.id);
-      if (srcRegion.isEmpty) {
-        ignored++;
-        continue;
-      }
-      applied++;
-      final lists = _applyCivilianMoveToWorkingUnitLists(
-        ow: ow,
-        nw: nw,
-        unitId: unit.id,
-        moved: moved,
-        srcRegion: srcRegion,
-        destRegion: destRegion,
-      );
-      ow = lists.ow;
-      nw = lists.nw;
+      final appliedOrder = _applyOneCivilianMoveOrder(ow, nw, playerId, order);
+      ow = appliedOrder.ow;
+      nw = appliedOrder.nw;
+      applied += appliedOrder.applied;
+      ignored += appliedOrder.ignored;
     }
   }
+  return (
+    ow: ow,
+    nw: nw,
+    ordersSeen: ordersSeen,
+    applied: applied,
+    ignored: ignored,
+  );
+}
 
-  if (ordersSeen > 0) {
-    _log.i(
-      'civilian tile movement apply orders=$ordersSeen applied=$applied ignored=$ignored',
+({List<Unit> ow, List<Unit> nw, int applied, int ignored})
+_applyOneCivilianMoveOrder(
+  List<Unit> ow,
+  List<Unit> nw,
+  String playerId,
+  MoveOrder order,
+) {
+  final unit = _findCivilianMoveUnit(ow, nw, order.unitId);
+  if (unit == null)
+    return _ignoredMove(ow, nw, 'unit_not_found', order, playerId: playerId);
+  if (unit.ownerId != playerId) {
+    return _ignoredMove(
+      ow,
+      nw,
+      'owner_mismatch',
+      order,
+      playerId: playerId,
+      ownerId: unit.ownerId,
     );
   }
+  if (isMilitaryUnit(unit.type))
+    return (ow: ow, nw: nw, applied: 0, ignored: 1);
+  final prepared = _prepareMovedCivilianUnit(unit, order.destinationTileKey);
+  if (prepared == null) return (ow: ow, nw: nw, applied: 0, ignored: 1);
+  final srcRegion = _regionHoldingUnit(ow, nw, unit.id);
+  if (srcRegion.isEmpty) return (ow: ow, nw: nw, applied: 0, ignored: 1);
+  final lists = _applyCivilianMoveToWorkingUnitLists(
+    ow: ow,
+    nw: nw,
+    unitId: unit.id,
+    moved: prepared.moved,
+    srcRegion: srcRegion,
+    destRegion: prepared.destRegion,
+  );
+  return (ow: lists.ow, nw: lists.nw, applied: 1, ignored: 0);
+}
 
+({List<Unit> ow, List<Unit> nw, int applied, int ignored}) _ignoredMove(
+  List<Unit> ow,
+  List<Unit> nw,
+  String reason,
+  MoveOrder order, {
+  required String playerId,
+  String? ownerId,
+}) {
+  _log.d(
+    'civilian movement ignored reason=$reason unitId=${order.unitId} '
+    'orderPlayerId=$playerId${ownerId == null ? '' : ' unitOwnerId=$ownerId'}',
+  );
+  return (ow: ow, nw: nw, applied: 0, ignored: 1);
+}
+
+Unit? _findCivilianMoveUnit(List<Unit> ow, List<Unit> nw, String id) {
+  for (final u in ow) {
+    if (u.id == id) return u;
+  }
+  for (final u in nw) {
+    if (u.id == id) return u;
+  }
+  return null;
+}
+
+String _regionHoldingUnit(List<Unit> ow, List<Unit> nw, String unitId) {
+  if (ow.any((u) => u.id == unitId)) return kRegionOldWorld;
+  if (nw.any((u) => u.id == unitId)) return kRegionNewWorld;
+  return '';
+}
+
+({Unit moved, String destRegion})? _prepareMovedCivilianUnit(
+  Unit unit,
+  String destinationTileKey,
+) {
+  if (destinationTileKey.isEmpty) return null;
+  final destProvince = Unit.provinceIdFromTileKey(destinationTileKey);
+  if (destProvince == null) return null;
   return (
-    oldWorld: RegionData(
-      provinces: game.worldState.oldWorld.provinces,
-      units: ow,
+    moved: unit.copyWith(
+      locationProvinceId: destProvince,
+      tileKey: destinationTileKey,
     ),
-    newWorld: RegionData(
-      provinces: game.worldState.newWorld.provinces,
-      units: nw,
-    ),
+    destRegion: Unit.requireRegionIdFromTileKey(destinationTileKey),
   );
 }
 
@@ -244,8 +283,7 @@ RegionData applyMoveOrdersToRegion(
   String? regionId,
   Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
   bool Function(String playerId, String destFullProvinceId)?
-      isDestinationOwnedByPlayer,
+  isDestinationOwnedByPlayer,
 }) {
   return regionData;
 }
-
