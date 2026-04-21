@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
 import '../../diplomacy/diplomacy_resolver.dart';
+import '../../world/civilian_tile_occupancy.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
 import '../../world/tile_control.dart';
@@ -221,6 +222,17 @@ class WorkOrderValidator extends OrderValidator {
         )) {
           return OrderValidationResult.rejected(
             'Province or tile not visible for this work',
+          );
+        }
+
+        if (!civilianMayOccupyLandTileKey(
+          game: _context.game,
+          playerId: _context.playerId,
+          unitType: type,
+          destinationTileKey: o.targetTileKey,
+        )) {
+          return OrderValidationResult.rejected(
+            'Unit cannot occupy target tile',
           );
         }
 
