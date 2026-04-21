@@ -180,6 +180,8 @@ class CivilianUnitsPanel extends StatefulWidget {
     this.availableWorkTargets = const {},
     this.tileScopeTileKey,
     this.initialSelectedUnitId,
+    this.explorerOnly = false,
+    this.prospectShortcutTargetTileKey,
   });
 
   final Game game;
@@ -197,6 +199,12 @@ class CivilianUnitsPanel extends StatefulWidget {
 
   /// Optional initial selected unit in tile-scoped mode.
   final String? initialSelectedUnitId;
+
+  /// Optional filter mode used by province prospect shortcut.
+  final bool explorerOnly;
+
+  /// Optional selected tile key for immediate explorer prospect assign flow.
+  final String? prospectShortcutTargetTileKey;
 
   @override
   State<CivilianUnitsPanel> createState() => _CivilianUnitsPanelState();
@@ -217,6 +225,13 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
     if (oldWidget.initialSelectedUnitId != widget.initialSelectedUnitId) {
       _selectedUnitId = widget.initialSelectedUnitId;
     }
+  }
+
+  bool _isExplorerUnit(Unit unit) {
+    return workOrderTargetsByUnitType[unit.type]?.contains(
+          kWorkTargetProspect,
+        ) ??
+        false;
   }
 
   @override
@@ -262,6 +277,10 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
                 scopeTileKey,
           )
           .toList();
+    }
+    if (widget.explorerOnly) {
+      scopedOw = scopedOw.where(_isExplorerUnit).toList();
+      scopedNw = scopedNw.where(_isExplorerUnit).toList();
     }
     final hasAny = scopedOw.isNotEmpty || scopedNw.isNotEmpty;
     final allScopedUnits = <Unit>[...scopedOw, ...scopedNw];
@@ -339,6 +358,8 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
                 playerId: widget.humanPlayerId,
                 orders: widget.currentOrders,
               ),
+              prospectShortcutTargetTileKey:
+                  widget.prospectShortcutTargetTileKey,
             ),
           ),
         ],
@@ -361,6 +382,8 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
                 playerId: widget.humanPlayerId,
                 orders: widget.currentOrders,
               ),
+              prospectShortcutTargetTileKey:
+                  widget.prospectShortcutTargetTileKey,
             ),
           ),
         ],
@@ -398,6 +421,7 @@ class _UnitRow extends StatelessWidget {
     required this.isSelectedInTileScope,
     required this.onSelectInTileScope,
     required this.projectedTileKey,
+    required this.prospectShortcutTargetTileKey,
   });
 
   final Game game;
@@ -411,6 +435,7 @@ class _UnitRow extends StatelessWidget {
   final bool isSelectedInTileScope;
   final VoidCallback onSelectInTileScope;
   final String? projectedTileKey;
+  final String? prospectShortcutTargetTileKey;
 
   List<WorkOrder> get _pendingForPlayer =>
       currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
@@ -566,6 +591,22 @@ class _UnitRow extends StatelessWidget {
     );
   }
 
+  void _startProspectShortcutAssign() {
+    final targetTileKey = prospectShortcutTargetTileKey;
+    if (targetTileKey == null || targetTileKey.isEmpty) {
+      return;
+    }
+    bus.emit(const ClosePanelEvent());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      bus.emit(
+        StartCivilianWorkTargetSelectionEvent(
+          unitId: unit.id,
+          workTarget: kWorkTargetProspect,
+        ),
+      );
+    });
+  }
+
   Future<void> _confirmCancel(BuildContext context) async {
     final completer = Completer<bool>();
     bus.emit(
@@ -601,6 +642,9 @@ class _UnitRow extends StatelessWidget {
       UnitStatus.working => l10n.province_unitStatus_working,
     };
     final showActions = !isTileScope || isSelectedInTileScope;
+    final inProspectShortcutMode =
+        prospectShortcutTargetTileKey != null &&
+        prospectShortcutTargetTileKey!.isNotEmpty;
     final tileKeyForLocate = projectedTileKey;
     final regionIdForLocate = Unit.regionIdFromTileKey(tileKeyForLocate);
     final rowActions = showActions
@@ -610,7 +654,9 @@ class _UnitRow extends StatelessWidget {
                 tooltip: l10n.civilian_units_assign,
                 icon: Icons.playlist_add,
                 label: l10n.civilian_units_assign,
-                onPressed: () => _showOrderMenu(context),
+                onPressed: inProspectShortcutMode
+                    ? _startProspectShortcutAssign
+                    : () => _showOrderMenu(context),
               ),
             if (_hasWork)
               UnitsEntityAction(

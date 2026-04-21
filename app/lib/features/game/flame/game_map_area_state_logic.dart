@@ -213,20 +213,16 @@ class GameMapAreaStateLogic {
     if (region.fleetTileMarkers.isEmpty) {
       return region;
     }
-    final moves =
-        orders.navalMoveOrdersByPlayerId[humanPlayerId] ?? const [];
+    final moves = orders.navalMoveOrdersByPlayerId[humanPlayerId] ?? const [];
     final missions =
         orders.navalMissionOrdersByPlayerId[humanPlayerId] ?? const [];
     final moveByFleetId = <String, ct_models.NavalMoveOrder>{
       for (final m in moves) m.fleetId: m,
     };
-    final missionFleetIds = <String>{
-      for (final m in missions) m.fleetId,
-    };
+    final missionFleetIds = <String>{for (final m in missions) m.fleetId};
 
     bool hasDraftNaval(String fleetId) =>
-        moveByFleetId.containsKey(fleetId) ||
-        missionFleetIds.contains(fleetId);
+        moveByFleetId.containsKey(fleetId) || missionFleetIds.contains(fleetId);
 
     ct_models.Fleet? findFleet(String id) {
       for (final f in game.worldState.fleets) {
@@ -300,8 +296,7 @@ class GameMapAreaStateLogic {
       if (f.isAtSea && f.seaZoneId != null) {
         final z = f.seaZoneId!;
         final zoneKey = z.contains('|') ? z : '${f.regionId}|$z';
-        final local =
-            zoneKey.contains('|') ? zoneKey.split('|').last : zoneKey;
+        final local = zoneKey.contains('|') ? zoneKey.split('|').last : zoneKey;
         return seaZoneCentroidTileKey(
           tileMap: tm,
           regionId: f.regionId,
@@ -468,6 +463,62 @@ class GameMapAreaStateLogic {
       default:
         return 999;
     }
+  }
+
+  /// Returns province-overlay prospect action visibility + enablement.
+  ///
+  /// Visibility mirrors Tile row visibility (no icon for unrevealed tile data).
+  /// Enablement uses the same visibility + order-engine validation basis as
+  /// `getValidWorkOrderTileKeysWithVisibility` for explorer `prospect`.
+  static ({bool showIcon, bool enabled, bool hasExplorerUnits})
+  provinceProspectActionState({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required PlayerView playerView,
+    required MapTopology? topology,
+    required ct_models.Orders currentOrders,
+    required Map<String, TileMapResult>? tileMapByRegion,
+  }) {
+    final tileVisibility = playerView.visibilityForTile(selectedTileKey);
+    if (tileVisibility == VisibilityLevel.unknown) {
+      return (showIcon: false, enabled: false, hasExplorerUnits: false);
+    }
+    final allUnits = <ct_models.Unit>[
+      ...game.worldState.oldWorld.units,
+      ...game.worldState.newWorld.units,
+    ];
+    final explorerUnits = allUnits
+        .where((unit) => unit.ownerId == humanPlayerId)
+        .where(
+          (unit) =>
+              workOrderTargetsByUnitType[unit.type]?.contains(
+                kWorkTargetProspect,
+              ) ??
+              false,
+        )
+        .toList();
+    if (explorerUnits.isEmpty) {
+      return (showIcon: true, enabled: false, hasExplorerUnits: false);
+    }
+    if (topology == null) {
+      return (showIcon: true, enabled: false, hasExplorerUnits: true);
+    }
+    for (final unit in explorerUnits) {
+      final validTiles = getValidWorkOrderTileKeysWithVisibility(
+        game: game,
+        topology: topology,
+        view: playerView,
+        unitId: unit.id,
+        workTarget: kWorkTargetProspect,
+        currentOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
+      if (validTiles.contains(selectedTileKey)) {
+        return (showIcon: true, enabled: true, hasExplorerUnits: true);
+      }
+    }
+    return (showIcon: true, enabled: false, hasExplorerUnits: true);
   }
 }
 

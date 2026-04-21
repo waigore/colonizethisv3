@@ -1747,6 +1747,10 @@
       }
     }
   },
+  "provinceOverlay_tileProspectWithExplorerTooltip": "Prospect with explorer",
+  "@provinceOverlay_tileProspectWithExplorerTooltip": {
+    "description": "Tooltip and semantics label for province tile prospect shortcut action."
+  },
   "provinceOverlay_tileImprovement": "Improvement: {value}",
   "@provinceOverlay_tileImprovement": {
     "description": "Tile section improvement row.",

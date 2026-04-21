@@ -96,6 +96,8 @@ void main() {
     Orders currentOrders = const Orders(),
     Map<String, List<String>> availableWorkTargets = const {},
     AppEventBus? bus,
+    bool explorerOnly = false,
+    String? prospectShortcutTargetTileKey,
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     final navigatorKey = GlobalKey<NavigatorState>();
@@ -111,6 +113,8 @@ void main() {
             currentOrders: currentOrders,
             availableWorkTargets: availableWorkTargets,
             bus: resolvedBus,
+            explorerOnly: explorerOnly,
+            prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
           ),
         ),
       ),
@@ -289,6 +293,78 @@ void main() {
       Navigator.of(scaffoldCtx, rootNavigator: true).pop();
       await tester.pumpAndSettle();
     });
+
+    testWidgets(
+      'prospect shortcut mode filters panel to explorers and bypasses assign menu',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_prospect_shortcut',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'e1',
+                  type: 'Explorer',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+                Unit(
+                  id: 'b1',
+                  type: 'Builder',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        final bus = AppEventBus.create();
+        final events = <Type>[];
+        bus.stream.listen((e) => events.add(e.runtimeType));
+        await tester.pumpWidget(
+          buildPanel(
+            game: miniGame,
+            humanPlayerId: human,
+            bus: bus,
+            explorerOnly: true,
+            prospectShortcutTargetTileKey: tileKey,
+            availableWorkTargets: const {
+              'e1': ['prospect'],
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Explorer'), findsOneWidget);
+        expect(find.text('Builder'), findsNothing);
+
+        await tester.tap(find.text('Assign'));
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Assign work'), findsNothing);
+        expect(
+          events.indexOf(ClosePanelEvent),
+          lessThan(events.indexOf(StartCivilianWorkTargetSelectionEvent)),
+        );
+      },
+    );
 
     testWidgets('Train button emits train-civilians dialog open event', (
       WidgetTester tester,
