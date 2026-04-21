@@ -268,22 +268,57 @@ WorldState updateArmyStation(
   final army = armyList.isEmpty ? null : armyList.first;
   if (army == null) return worldState;
 
-  RegionData moveUnits(RegionData region) {
-    return RegionData(
-      provinces: region.provinces,
-      units: region.units
-          .map(
-            (u) => army.regimentUnitIds.contains(u.id)
-                ? u.copyWith(locationProvinceId: destinationProvinceId)
-                : u,
-          )
-          .toList(),
-    );
+  var owUnits = List<Unit>.from(worldState.oldWorld.units);
+  var nwUnits = List<Unit>.from(worldState.newWorld.units);
+
+  for (final rid in army.regimentUnitIds) {
+    final owIdx = owUnits.indexWhere((u) => u.id == rid);
+    final nwIdx = nwUnits.indexWhere((u) => u.id == rid);
+    if (owIdx < 0 && nwIdx < 0) continue;
+
+    final inOldWorld = owIdx >= 0;
+    final sourceRegion =
+        inOldWorld ? kRegionOldWorld : kRegionNewWorld;
+
+    if (sourceRegion == regionId) {
+      if (inOldWorld) {
+        owUnits = owUnits
+            .map(
+              (u) => u.id == rid
+                  ? u.copyWith(locationProvinceId: destinationProvinceId)
+                  : u,
+            )
+            .toList();
+      } else {
+        nwUnits = nwUnits
+            .map(
+              (u) => u.id == rid
+                  ? u.copyWith(locationProvinceId: destinationProvinceId)
+                  : u,
+            )
+            .toList();
+      }
+      continue;
+    }
+
+    final u = inOldWorld ? owUnits.removeAt(owIdx) : nwUnits.removeAt(nwIdx);
+    final moved = u.copyWith(locationProvinceId: destinationProvinceId);
+    if (regionId == kRegionOldWorld) {
+      owUnits = [...owUnits, moved];
+    } else {
+      nwUnits = [...nwUnits, moved];
+    }
   }
 
   return worldState.copyWith(
     armies: armies,
-    oldWorld: moveUnits(worldState.oldWorld),
-    newWorld: moveUnits(worldState.newWorld),
+    oldWorld: RegionData(
+      provinces: worldState.oldWorld.provinces,
+      units: owUnits,
+    ),
+    newWorld: RegionData(
+      provinces: worldState.newWorld.provinces,
+      units: nwUnits,
+    ),
   );
 }

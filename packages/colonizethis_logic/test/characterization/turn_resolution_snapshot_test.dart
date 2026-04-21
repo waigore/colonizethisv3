@@ -215,72 +215,68 @@ void main() {
       );
 
       const ow = 'oldWorld';
-      final game = Game(
-        id: 'combat-char',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|A', regionId: ow, ownerId: 'p1'),
-              Province(id: '$ow|B', regionId: ow, ownerId: 'p2'),
-            ],
-            units: [
-              Unit(
-                id: 'att1',
-                type: 'grenadiers',
-                ownerId: 'p1',
-                locationProvinceId: '$ow|A',
-                medals: 3,
-              ),
-              Unit(
-                id: 'att2',
-                type: 'grenadiers',
-                ownerId: 'p1',
-                locationProvinceId: '$ow|A',
-                medals: 2,
-              ),
-              Unit(
-                id: 'def1',
-                type: 'peasant_levies',
-                ownerId: 'p2',
-                locationProvinceId: '$ow|B',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          armies: [
-            Army(
-              id: 'arm_p1',
-              ownerId: 'p1',
-              regionId: ow,
-              stationedProvinceId: '$ow|A',
-              regimentUnitIds: const ['att1', 'att2'],
-              isHomeArmy: false,
+      final game = ensureMilitaryArmiesForGame(
+        Game(
+          id: 'combat-char',
+          globalGameSeed: 424242,
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: '$ow|A', regionId: ow, ownerId: 'p1'),
+                Province(id: '$ow|B', regionId: ow, ownerId: 'p2'),
+              ],
+              units: [
+                Unit(
+                  id: 'att1',
+                  type: 'grenadiers',
+                  ownerId: 'p1',
+                  locationProvinceId: '$ow|A',
+                  medals: 3,
+                ),
+                Unit(
+                  id: 'att2',
+                  type: 'grenadiers',
+                  ownerId: 'p1',
+                  locationProvinceId: '$ow|A',
+                  medals: 2,
+                ),
+                Unit(
+                  id: 'def1',
+                  type: 'peasant_levies',
+                  ownerId: 'p2',
+                  locationProvinceId: '$ow|B',
+                ),
+              ],
             ),
+            newWorld: const RegionData(),
+            tileKeysByRegionAndProvince: {
+              ow: {
+                '$ow|A': ['$ow|A|0|0'],
+                '$ow|B': ['$ow|B|0|0'],
+              },
+            },
+            playerVisibilityByTile: {
+              'p1': {
+                '$ow|A|0|0': 'fullyVisible',
+                '$ow|B|0|0': 'fullyVisible',
+              },
+            },
+          ),
+          players: const [
+            Player(id: 'p1', displayName: 'Strong', isHuman: true),
+            Player(id: 'p2', displayName: 'Weak', isHuman: false),
           ],
-          tileKeysByRegionAndProvince: {
-            ow: {
-              '$ow|A': ['$ow|A|0|0'],
-              '$ow|B': ['$ow|B|0|0'],
-            },
-          },
-          playerVisibilityByTile: {
-            'p1': {
-              '$ow|A|0|0': 'fullyVisible',
-              '$ow|B|0|0': 'fullyVisible',
-            },
-          },
         ),
-        players: const [
-          Player(id: 'p1', displayName: 'Strong', isHuman: true),
-          Player(id: 'p2', displayName: 'Weak', isHuman: false),
-        ],
       );
 
       final orders = Orders(
         armyMoveOrdersByPlayerId: {
           'p1': [
-            ArmyMoveOrder(armyId: 'arm_p1', destinationProvinceId: '$ow|B'),
+            ArmyMoveOrder(
+              armyId: fieldArmyIdFor('p1', '$ow|A'),
+              destinationProvinceId: '$ow|B',
+            ),
           ],
         },
         diplomaticOrdersByPlayerId: {

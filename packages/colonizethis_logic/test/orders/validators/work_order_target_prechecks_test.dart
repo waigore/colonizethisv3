@@ -43,6 +43,7 @@ void main() {
         player: player,
         playerId: 'p1',
         treasury: 0,
+        civilianEmbassyWorkAllowed: (_, _) => false,
       );
       final order = WorkOrder(
         unitId: 'u1',
@@ -84,6 +85,7 @@ void main() {
         player: player,
         playerId: 'p1',
         treasury: 0,
+        civilianEmbassyWorkAllowed: (_, _) => false,
       );
       final order = WorkOrder(
         unitId: 'b1',
@@ -142,6 +144,7 @@ void main() {
         player: p1,
         playerId: 'p1',
         treasury: 0,
+        civilianEmbassyWorkAllowed: (_, _) => false,
       );
       final order = WorkOrder(
         unitId: 'spy1',
@@ -202,6 +205,7 @@ void main() {
         player: player,
         playerId: 'p1',
         treasury: 0,
+        civilianEmbassyWorkAllowed: (_, _) => false,
       );
       final order = WorkOrder(
         unitId: 'b1',

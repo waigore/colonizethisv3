@@ -220,13 +220,20 @@ void main() {
               units: [
                 Unit(
                   id: 'u1',
-                  type: 'musketeers',
+                  type: 'Merchant',
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1',
+                  tileKey: '$ow|P1|0|0',
                 ),
               ],
             ),
             newWorld: const RegionData(),
+            playerVisibilityByTile: const {
+              'p1': {
+                'oldWorld|P1|0|0': 'fullyVisible',
+                'oldWorld|P2|0|0': 'fullyVisible',
+              },
+            },
           ),
           players: [Player(id: 'p1', displayName: 'P1', isHuman: true)],
         );
