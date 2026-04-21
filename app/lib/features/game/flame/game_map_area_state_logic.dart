@@ -210,9 +210,6 @@ class GameMapAreaStateLogic {
     required Map<String, MapTopology> topologyByRegion,
     required MapTopology combinedTopology,
   }) {
-    if (region.fleetTileMarkers.isEmpty) {
-      return region;
-    }
     final moves = orders.navalMoveOrdersByPlayerId[humanPlayerId] ?? const [];
     final missions =
         orders.navalMissionOrdersByPlayerId[humanPlayerId] ?? const [];
@@ -231,6 +228,30 @@ class GameMapAreaStateLogic {
         }
       }
       return null;
+    }
+
+    String seaZoneLocalId(String seaZoneId) {
+      return seaZoneId.contains('|') ? seaZoneId.split('|').last : seaZoneId;
+    }
+
+    String destinationRegionForSeaZone({
+      required String seaZoneId,
+      required String fallbackRegionId,
+    }) {
+      final fromCombined = regionIdForSeaZone(combinedTopology, seaZoneId);
+      if (fromCombined != null) {
+        return fromCombined;
+      }
+      final localSeaZoneId = seaZoneLocalId(seaZoneId);
+      for (final entry in topologyByRegion.entries) {
+        final hasZone = entry.value.nodes.any(
+          (n) => n.type == TopologyNodeType.seaZone && n.id == localSeaZoneId,
+        );
+        if (hasZone) {
+          return entry.key;
+        }
+      }
+      return fallbackRegionId;
     }
 
     String? destinationTileForMove({
@@ -263,8 +284,10 @@ class GameMapAreaStateLogic {
         );
       }
       final seaId = move.destinationSeaZoneId!;
-      final destReg =
-          regionIdForSeaZone(combinedTopology, seaId) ?? fleetRegionId;
+      final destReg = destinationRegionForSeaZone(
+        seaZoneId: seaId,
+        fallbackRegionId: fleetRegionId,
+      );
       final tm = tileMapByRegion[destReg];
       final tp = topologyByRegion[destReg];
       if (tm == null || tp == null) {
@@ -274,13 +297,62 @@ class GameMapAreaStateLogic {
         for (final n in tp.nodes)
           if (n.type == TopologyNodeType.seaZone) n.id,
       };
-      final local = seaId.contains('|') ? seaId.split('|').last : seaId;
+      final local = seaZoneLocalId(seaId);
       return seaZoneCentroidTileKey(
         tileMap: tm,
         regionId: destReg,
         localSeaZoneId: local,
         seaZoneNodeIds: seaIds,
       );
+    }
+
+    String normalizedSeaScope({
+      required String seaZoneId,
+      required String fallbackRegionId,
+    }) {
+      final regionId = destinationRegionForSeaZone(
+        seaZoneId: seaZoneId,
+        fallbackRegionId: fallbackRegionId,
+      );
+      final local = seaZoneLocalId(seaZoneId);
+      return 'sea:$regionId|$local';
+    }
+
+    String locationScopeForMove({
+      required ct_models.NavalMoveOrder move,
+      required String fleetRegionId,
+    }) {
+      if (move.isDock) {
+        final pid = move.destinationPortProvinceId!;
+        final p = tryGetProvince(game.worldState, pid);
+        if (p != null) {
+          final localProvinceId = ct_models.ProvinceId.localIdFrom(p.id);
+          return 'port:${p.regionId}|$localProvinceId';
+        }
+        return 'port:$pid';
+      }
+      return normalizedSeaScope(
+        seaZoneId: move.destinationSeaZoneId!,
+        fallbackRegionId: fleetRegionId,
+      );
+    }
+
+    String? currentLocationScopeForFleet(ct_models.Fleet f) {
+      if (f.isAtSea && f.seaZoneId != null) {
+        return normalizedSeaScope(
+          seaZoneId: f.seaZoneId!,
+          fallbackRegionId: f.regionId,
+        );
+      }
+      if (f.inPortAtProvinceId != null) {
+        final p = tryGetProvince(game.worldState, f.inPortAtProvinceId!);
+        if (p != null) {
+          final localProvinceId = ct_models.ProvinceId.localIdFrom(p.id);
+          return 'port:${p.regionId}|$localProvinceId';
+        }
+        return 'port:${f.inPortAtProvinceId!}';
+      }
+      return null;
     }
 
     String? currentTileForFleet(ct_models.Fleet f) {
@@ -331,48 +403,53 @@ class GameMapAreaStateLogic {
       return null;
     }
 
-    final scopeByFleetId = <String, String>{};
+    final fleetIdsToProject = <String>{for (final m in moves) m.fleetId};
     for (final marker in region.fleetTileMarkers) {
       for (final fleetId in marker.fleetIds) {
-        scopeByFleetId[fleetId] = marker.locationScopeKey;
+        fleetIdsToProject.add(fleetId);
       }
+    }
+    if (fleetIdsToProject.isEmpty) {
+      return region;
     }
 
     final groups = <String, _FleetTileProj>{};
-    for (final marker in region.fleetTileMarkers) {
-      for (final fleetId in marker.fleetIds) {
-        final fleet = findFleet(fleetId);
-        final mv = moveByFleetId[fleetId];
-        String? tileKey;
-        if (fleet != null && mv != null) {
-          tileKey = destinationTileForMove(
-            move: mv,
-            fleetRegionId: fleet.regionId,
-          );
-          tileKey ??= currentTileForFleet(fleet);
-        } else if (fleet != null) {
-          tileKey = currentTileForFleet(fleet);
-        } else {
-          tileKey = marker.tileKey;
-        }
-        if (tileKey == null) {
-          continue;
-        }
-        final parts = tileKey.split('|');
-        if (parts.length < 4 || parts[0] != region.regionId) {
-          continue;
-        }
-
-        final g = groups.putIfAbsent(tileKey, _FleetTileProj.new);
-        g.fleetIds.add(fleetId);
-        if (mv != null) {
-          g.anyNavalMoveDraft = true;
-        }
+    for (final fleetId in fleetIdsToProject) {
+      final fleet = findFleet(fleetId);
+      final mv = moveByFleetId[fleetId];
+      if (fleet == null) {
+        continue;
       }
-    }
+      String? tileKey;
+      String? locationScopeKey;
+      if (mv != null) {
+        tileKey = destinationTileForMove(
+          move: mv,
+          fleetRegionId: fleet.regionId,
+        );
+        tileKey ??= currentTileForFleet(fleet);
+        locationScopeKey = locationScopeForMove(
+          move: mv,
+          fleetRegionId: fleet.regionId,
+        );
+      } else {
+        tileKey = currentTileForFleet(fleet);
+        locationScopeKey = currentLocationScopeForFleet(fleet);
+      }
+      if (tileKey == null) {
+        continue;
+      }
+      final parts = tileKey.split('|');
+      if (parts.length < 4 || parts[0] != region.regionId) {
+        continue;
+      }
 
-    if (groups.isEmpty) {
-      return region;
+      final g = groups.putIfAbsent(tileKey, _FleetTileProj.new);
+      g.fleetIds.add(fleetId);
+      g.locationScopeKeys.add(locationScopeKey ?? '');
+      if (mv != null) {
+        g.anyNavalMoveDraft = true;
+      }
     }
 
     final out = <FleetTileMarkerView>[];
@@ -386,7 +463,8 @@ class GameMapAreaStateLogic {
       if (x == null || y == null) {
         continue;
       }
-      final scope = scopeByFleetId[sortedIds.first] ?? '';
+      final scopeCandidates = g.locationScopeKeys.toList()..sort();
+      final scope = scopeCandidates.isEmpty ? '' : scopeCandidates.first;
       out.add(
         FleetTileMarkerView(
           tileKey: tk,
@@ -526,6 +604,7 @@ class _FleetTileProj {
   _FleetTileProj();
 
   final Set<String> fleetIds = {};
+  final Set<String> locationScopeKeys = {};
   bool anyNavalMoveDraft = false;
 }
 
