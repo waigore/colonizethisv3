@@ -38,7 +38,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 **Fog decay** (End-of-turn phase):
 
 1. Decrement spy reveal timers; where timer hits 0, apply **only** `fullyVisible` → `fogged` per tile for that province for that player **only when the province is owned by another faction**. Timers for a player's own provinces are ignored and cleared without changing visibility.
-2. For each other-faction province where the player had Explorer/Spy, if none remain (and no Spy timer), for each tile in that province, **only** if stored visibility is `fullyVisible`, set it to `fogged`; `unknown` and `fogged` unchanged.
+2. For each other-faction province where the player had Explorer/Spy, if none remain (and no Spy timer), for each tile in that province, **only** if stored visibility is `fullyVisible`, set it to `fogged`; `unknown` and `fogged` unchanged—**except** tiles on the **ship-reveal coastal ring** for a sea zone where that player currently has a **non–home fleet at sea** (same orthogonal-to-water geometry as Naval Movement ship reveal): those tiles are **skipped** so coastal intel is not stripped while the fleet remains offshore.
 3. Own provinces never decay.
 
 **Initial visibility** (Game Setup phase):
