@@ -44,7 +44,10 @@ Game runEndOfTurnPhase(
       spyRevealTurnsByPlayer: nextSpyTimers,
     ),
   );
-  var nextVisibility = applyFogDecay(stateForFog);
+  var nextVisibility = applyFogDecay(
+    stateForFog,
+    navalCoastalIntelTopology: topology,
+  );
   nextVisibility = applyDistantSeaZoneFogRevert(
     stateForFog,
     nextVisibility,

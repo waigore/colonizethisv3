@@ -427,6 +427,99 @@ void main() {
     );
 
     test(
+      'ship reveal finds province tiles when tile map keys province by local id only',
+      () {
+        const nw = 'newWorld';
+        const fullProv = '$nw|provA';
+        const localProvBucket = 'provA';
+        const localSeaDest = 'seaDest';
+        const localSeaOrigin = 'seaOrigin';
+        const prefixedDest = '$nw|$localSeaDest';
+        const prefixedOrigin = '$nw|$localSeaOrigin';
+        const coastalLand = '$nw|provA|1|0';
+        const inlandLand = '$nw|provA|0|0';
+        const seaDestWater = '$nw|$localSeaDest|2|0';
+        const seaDestWaterB = '$nw|$localSeaDest|2|1';
+
+        final combinedTopology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: fullProv,
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: prefixedDest,
+              regionId: nw,
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: prefixedOrigin,
+              regionId: nw,
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [
+            TopologyEdge(id1: fullProv, id2: prefixedDest),
+            TopologyEdge(id1: prefixedOrigin, id2: prefixedDest),
+          ],
+        );
+
+        final visStart = <String, String>{
+          for (final k in [
+            coastalLand,
+            inlandLand,
+            seaDestWater,
+            seaDestWaterB,
+            '$nw|$localSeaOrigin|0|2',
+          ])
+            k: VisibilityLevel.unknown.name,
+        };
+
+        final game = Game(
+          id: 'gLocalProvBucket',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.movement,
+              turnNumber: 0,
+            ),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: 'fNw',
+                ownerId: 'gp1',
+                seaZoneId: prefixedOrigin,
+                regionId: nw,
+                shipTypeIds: ['carrack'],
+              ),
+            ],
+            tileKeysByRegionAndProvince: {
+              nw: {
+                // Land bucket keyed by **local** id only (some maps/fixtures).
+                localProvBucket: [coastalLand, inlandLand, '$nw|provA|0|1'],
+                localSeaDest: [seaDestWater, seaDestWaterB],
+                localSeaOrigin: ['$nw|$localSeaOrigin|0|2'],
+              },
+            },
+            playerVisibilityByTile: {'gp1': visStart},
+          ),
+          players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+        );
+
+        final after = applyNavalMovesAndShipReveal(game, combinedTopology, {
+          'gp1': [
+            NavalMoveOrder(fleetId: 'fNw', destinationSeaZoneId: prefixedDest),
+          ],
+        });
+        final vis = after.worldState.playerVisibilityByTile['gp1']!;
+        expect(vis[coastalLand], VisibilityLevel.fullyVisible.name);
+        expect(vis[inlandLand], VisibilityLevel.unknown.name);
+        expect(vis[seaDestWater], VisibilityLevel.fullyVisible.name);
+      },
+    );
+
+    test(
       'S->S entry remains fully visible after end-of-turn and in PlayerView',
       () {
         const ow = 'oldWorld';

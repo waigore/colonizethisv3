@@ -3,7 +3,17 @@ import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show homeFleetIdFor, regionIdForSeaZone;
+    show
+        OrderEngine,
+        allProvinces,
+        buildPlayerView,
+        homeFleetIdFor,
+        kWorkTargetExplore,
+        provinceIdsAdjacentToSeaZone,
+        regionIdForSeaZone,
+        suggestWorkOrders;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show MoveOrder, ProvinceId, Unit, WorkOrder;
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
@@ -19,7 +29,7 @@ import 'package:integration_test/integration_test.dart';
 /// topology/assigner retry (`effectiveSeed + 100003`, …), producing longer
 /// coast→warp→New World paths than nominal seed-42 alone. Keep this above the
 /// worst observed CI need (Refs #1849 / PR 1849).
-const int _kMaxNextTurnTapsForNwFleetReach = 20;
+const int _kMaxNextTurnTapsForNwFleetReach = 35;
 
 /// Hard cap for any single “wait until UI shows X” poll (`_waitUntilFound`,
 /// next-turn label settle, panel-open loops). Fail immediately when exceeded.
@@ -34,7 +44,9 @@ const Duration _kBootstrapNewGameOverallCap = Duration(seconds: 60);
 /// Locked full-init / seed-bump paths and headless Linux CI can stretch
 /// coast→warp→New World sailing; keep a bounded cap above nominal local runs
 /// (`SPEC/program/e2e-integration-tests.md`).
-const Duration _kFleetE2eMaxWallClock = Duration(minutes: 10);
+/// Post-bundle #1869 adds a second sail phase after NW arrival; keep headroom
+/// under Xvfb (Refs #1849).
+const Duration _kFleetE2eMaxWallClock = Duration(minutes: 22);
 
 /// Drive frames without [WidgetTester.pumpAndSettle] (Flame + progress spinners).
 Future<void> _pumpFor(WidgetTester tester, Duration total) async {
@@ -416,6 +428,7 @@ Future<void> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
   );
   expect(tiles, findsWidgets);
   final n = tiles.evaluate().length;
+  Finder? fallbackMove;
   for (var i = 0; i < n; i++) {
     final sub = tiles.at(i);
     final home = find.descendant(of: sub, matching: find.text('Home Fleet'));
@@ -435,9 +448,25 @@ Future<void> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
     if (move.evaluate().isEmpty) {
       continue;
     }
+    final loc = find.descendant(
+      of: sub,
+      matching: find.byWidgetPredicate(
+        (w) => w is Text && _textLooksLikeNewWorldLocationLine(w.data),
+      ),
+    );
     final hit = move.hitTestable();
-    expect(hit, findsWidgets);
-    await tester.tap(hit.first, warnIfMissed: false);
+    if (hit.evaluate().isEmpty) {
+      continue;
+    }
+    if (loc.evaluate().isNotEmpty) {
+      await tester.tap(hit.first, warnIfMissed: false);
+      await _pumpFor(tester, const Duration(milliseconds: 400));
+      return;
+    }
+    fallbackMove ??= hit.first;
+  }
+  if (fallbackMove != null) {
+    await tester.tap(fallbackMove, warnIfMissed: false);
     await _pumpFor(tester, const Duration(milliseconds: 400));
     return;
   }
@@ -475,6 +504,66 @@ bool _nonHomeHumanFleetInNewWorldFromCtSnapshot() {
     if (f.regionId == 'newWorld') return true;
     final sea = f.seaZoneId;
     if (sea != null && regionIdForSeaZone(snap.topology, sea) == 'newWorld') {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Ship reveal only paints coastal land for sea zones with a P–S province edge
+/// (`SPEC/program/fog-and-exploration-resolution.md`). Open-ocean NW sea
+/// placement satisfies [ _nonHomeHumanFleetInNewWorldFromCtSnapshot ] but never
+/// yields fogged/visible NW provinces, so bundled Explore stays disabled.
+bool _nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() {
+  final snap = ctE2eNavalPanelSnapshot;
+  if (snap == null) return false;
+  final human = snap.humanPlayerId;
+  final homeId = homeFleetIdFor(human);
+  for (final f in snap.game.worldState.fleets) {
+    if (f.ownerId != human) continue;
+    if (f.id == homeId) continue;
+    if (!f.isAtSea || f.seaZoneId == null) continue;
+    final sea = f.seaZoneId!;
+    final regionId = f.regionId == 'newWorld'
+        ? 'newWorld'
+        : regionIdForSeaZone(snap.topology, sea);
+    if (regionId != 'newWorld') continue;
+    if (provinceIdsAdjacentToSeaZone(
+      snap.topology,
+      sea,
+      regionId: regionId,
+    ).isNotEmpty) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot() {
+  final snap = ctE2eNavalPanelSnapshot;
+  if (snap == null) {
+    return false;
+  }
+  final newWorldProvinceLocalIds = allProvinces(snap.game.worldState)
+      .where((p) => ProvinceId.regionIdFrom(p.id) == 'newWorld')
+      .map((p) => ProvinceId.localIdFrom(p.id))
+      .toSet();
+  if (newWorldProvinceLocalIds.isEmpty) {
+    return false;
+  }
+  final view = buildPlayerView(snap.game, snap.topology, snap.humanPlayerId);
+  for (final entry in view.visibilityByTile.entries) {
+    final parts = entry.key.split('|');
+    if (parts.length != 4) {
+      continue;
+    }
+    if (parts[0] != 'newWorld') {
+      continue;
+    }
+    if (!newWorldProvinceLocalIds.contains(parts[1])) {
+      continue;
+    }
+    if (entry.value.name != 'unknown') {
       return true;
     }
   }
@@ -519,7 +608,143 @@ bool _navalPanelShowsNonHomeFleetInNewWorld(WidgetTester tester) {
 
 bool _harnessDetectsNonHomeFleetInNewWorld(WidgetTester tester) =>
     _nonHomeHumanFleetInNewWorldFromCtSnapshot() ||
-    _navalPanelShowsNonHomeFleetInNewWorld(tester);
+    // Fallback for environments where ct snapshot plumbing is unavailable.
+    (ctE2eNavalPanelSnapshot == null &&
+        _navalPanelShowsNonHomeFleetInNewWorld(tester));
+
+/// Post–#1869 only: fleet may sit in open-ocean New World first; ship reveal needs
+/// a P–S coastal sea zone (or visibility already updated). Sail / advance until then.
+Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
+  required WidgetTester tester,
+  required AppLocalizations l10n,
+  required void Function(String step) ensureUnderWallClock,
+  required CtE2eNavalPanelSnapshot? lastNavalSnapshot,
+}) async {
+  const maxTurns = 35;
+  for (var i = 0; i < maxTurns; i++) {
+    ensureUnderWallClock('NW bundled-explore readiness i=$i');
+    await _dismissTransientUi(tester);
+    await _tapNewWorldRegionTabIfPresent(tester);
+    await _openNavalPanel(tester);
+    if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
+        _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+      await _closeBottomSheet(tester);
+      return;
+    }
+    await _closeBottomSheet(tester);
+    await _tryNavalMoveSegment(tester, l10n);
+    await _closeBottomSheet(tester);
+    await _advanceOneHumanTurn(tester, l10n);
+  }
+  final diag = _bundledExploreRejectionDiagnostics(lastNavalSnapshot);
+  fail(
+    'Post-bundle: fleet in New World but after $maxTurns turns still no coastal '
+    'New World sea (P–S province edge) and no fogged-or-better NW land-province '
+    'tile in player view (bundled Explore needs visible destinations).\n'
+    '$diag\n'
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
+String _bundledExploreRejectionDiagnostics([
+  CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot,
+]) {
+  final navalSnap = lastKnownNavalSnapshot ?? ctE2eNavalPanelSnapshot;
+  final civilianSnap = ctE2eCivilianPanelSnapshot;
+  if (navalSnap == null) {
+    return 'No ctE2eNavalPanelSnapshot available for diagnostics.';
+  }
+  final game = navalSnap.game;
+  final topology = navalSnap.topology;
+  final playerId = navalSnap.humanPlayerId;
+  final orders = navalSnap.draftOrders;
+  final view = buildPlayerView(game, topology, playerId);
+  final suggestions = suggestWorkOrders(view, game, topology, orders);
+
+  bool provinceHasFoggedOrBetter(String provinceFullId) {
+    final regionId = ProvinceId.regionIdFrom(provinceFullId);
+    final localId = ProvinceId.localIdFrom(provinceFullId);
+    for (final e in view.visibilityByTile.entries) {
+      final parts = e.key.split('|');
+      if (parts.length != 4) {
+        continue;
+      }
+      if (parts[0] != regionId || parts[1] != localId) {
+        continue;
+      }
+      if (e.value.name != 'unknown') {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  final lines = <String>[
+    'diag: player=$playerId',
+    'diag: civilianSnapshotAvailable=${civilianSnap != null}',
+    if (civilianSnap != null)
+      'diag: availableWorkTargets=${civilianSnap.availableWorkTargets}',
+    'diag: draftMoveOrders=${orders.moveOrdersByPlayerId[playerId]?.map((o) => "${o.unitId}->${o.destinationProvinceId}").toList() ?? const []}',
+    'diag: suggestedExplore=${suggestions.where((o) => o.target == kWorkTargetExplore).map((o) => "${o.unitId}@${Unit.provinceIdFromTileKey(o.targetTileKey) ?? "?"}").toList()}',
+  ];
+
+  final explorerUnits =
+      view.ownUnits.where((u) => u.type == 'Explorer').toList()
+        ..sort((a, b) => a.id.compareTo(b.id));
+  if (explorerUnits.isEmpty) {
+    lines.add('diag: no explorer units found in player view.');
+    return lines.join('\n');
+  }
+
+  final provinces = allProvinces(game.worldState).toList()
+    ..sort((a, b) => a.id.compareTo(b.id));
+  final tribeIds = game.tribes.map((t) => t.id).toSet();
+  final minorIds = game.minorNations.map((m) => m.id).toSet();
+  for (final unit in explorerUnits) {
+    lines.add(
+      'diag: explorer unit=${unit.id} atProvince=${unit.locationProvinceId} tileKey=${unit.tileKey ?? "(null)"}',
+    );
+    for (final prov in provinces) {
+      final foggedOrBetter = provinceHasFoggedOrBetter(prov.id);
+      final owner = prov.ownerId;
+      final ownerKind = owner == null
+          ? 'none'
+          : owner == playerId
+          ? 'self'
+          : tribeIds.contains(owner)
+          ? 'tribe'
+          : minorIds.contains(owner)
+          ? 'minor'
+          : 'gp';
+      final targetTileKey = '${prov.id}|0|0';
+      final workRes = OrderEngine(initialOrders: orders)
+          .addWorkOrderWithContext(
+            game,
+            topology,
+            playerId,
+            WorkOrder(
+              unitId: unit.id,
+              target: kWorkTargetExplore,
+              targetTileKey: targetTileKey,
+            ),
+          );
+      final moveRes = OrderEngine(initialOrders: orders)
+          .addMoveOrderWithContext(
+            game,
+            topology,
+            playerId,
+            MoveOrder(unitId: unit.id, destinationProvinceId: prov.id),
+          );
+      lines.add(
+        'diag: province=${prov.id} owner=${prov.ownerId ?? "(none)"} ownerKind=$ownerKind '
+        'visibleFoggedPlus=$foggedOrBetter '
+        'workAccepted=${workRes.isAccepted} workReason=${workRes.reason ?? "(none)"} '
+        'moveAccepted=${moveRes.isAccepted} moveReason=${moveRes.reason ?? "(none)"}',
+      );
+    }
+  }
+  return lines.join('\n');
+}
 
 Future<void> _splitHomeFleetOnce(
   WidgetTester tester,
@@ -809,6 +1034,7 @@ void main() {
       await _splitHomeFleetOnce(tester, l10n);
       await _closeBottomSheet(tester);
       ensureUnderWallClock('after split fleet');
+      CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot;
 
       for (
         var turnIdx = 0;
@@ -819,6 +1045,9 @@ void main() {
         await _dismissTransientUi(tester);
         await _tapNewWorldRegionTabIfPresent(tester);
         await _openNavalPanel(tester);
+        if (ctE2eNavalPanelSnapshot != null) {
+          lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
+        }
         if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
           await _closeBottomSheet(tester);
           break;
@@ -840,6 +1069,9 @@ void main() {
       await _dismissTransientUi(tester);
       await _tapNewWorldRegionTabIfPresent(tester);
       await _openNavalPanel(tester);
+      if (ctE2eNavalPanelSnapshot != null) {
+        lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
+      }
       if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
         fail(
           'Explorer explore e2e requires a non-home human fleet in New World first. '
@@ -848,6 +1080,13 @@ void main() {
       }
       await _closeBottomSheet(tester);
       ensureUnderWallClock('fleet in NW confirmed');
+
+      await _awaitNwCoastalOrVisibleLandForBundledExploreE2e(
+        tester: tester,
+        l10n: l10n,
+        ensureUnderWallClock: ensureUnderWallClock,
+        lastNavalSnapshot: lastKnownNavalSnapshot,
+      );
 
       await _tapNewWorldRegionTabIfPresent(tester);
       Future<bool> checkExploreEnabledFromCivilianPanel() async {
@@ -878,10 +1117,14 @@ void main() {
         exploreEnabled = await checkExploreEnabledFromCivilianPanel();
       }
       if (!exploreEnabled) {
+        final diag = _bundledExploreRejectionDiagnostics(
+          lastKnownNavalSnapshot,
+        );
         fail(
           'Post-bundle #1869 regression: Explorer Assign never surfaced an enabled '
           'Explore row after New World fleet confirmation and '
-          '$maxBoundedTurnRetries bounded Next turn retries. '
+          '$maxBoundedTurnRetries bounded Next turn retries.\n'
+          '$diag\n'
           'Last exception: ${tester.takeException()}',
         );
       }
