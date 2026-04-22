@@ -447,6 +447,16 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     });
   }
 
+  void _cancelWorkTargetSelection() {
+    if (_workTargetSelection == null) {
+      return;
+    }
+    setState(() {
+      _workTargetSelection = null;
+      _cachedValidTileKeys = null;
+    });
+  }
+
   void _onTileSelectedForWork(String tileKey) {
     final sel = _workTargetSelection;
     if (sel == null) return;
@@ -1003,6 +1013,12 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                 child: Focus(
                   autofocus: true,
                   onKeyEvent: (node, event) {
+                    if (_workTargetSelection != null &&
+                        event is KeyDownEvent &&
+                        event.logicalKey == LogicalKeyboardKey.escape) {
+                      _cancelWorkTargetSelection();
+                      return KeyEventResult.handled;
+                    }
                     if (_sideMenuOpen &&
                         event is KeyDownEvent &&
                         event.logicalKey == LogicalKeyboardKey.escape) {
@@ -1033,10 +1049,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                             : null,
                         onWorkTargetSelectionCancelled:
                             _workTargetSelection != null
-                            ? () => setState(() {
-                                _workTargetSelection = null;
-                                _cachedValidTileKeys = null;
-                              })
+                            ? _cancelWorkTargetSelection
                             : null,
                         onCivilianTileTapped: (tileKey) {
                           String? initialSelectedUnitId;
@@ -1103,6 +1116,10 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                         child: GameMapEmpireLeftRail(
                           game: widget.game,
                           humanPlayerId: _humanPlayerId,
+                          onIconTappedWhileSelectionMode: _workTargetSelection !=
+                                  null
+                              ? _cancelWorkTargetSelection
+                              : null,
                         ),
                       ),
                       Positioned(

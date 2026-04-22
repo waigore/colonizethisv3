@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -69,6 +70,7 @@ class GameMapCanvasStack extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = appL10n(context);
     final panel = ref.watch(mapProvincePanelProvider);
     final inWorkTargetSelectionMode = validTileKeysForSelection != null;
     return Positioned.fill(
@@ -94,10 +96,15 @@ class GameMapCanvasStack extends ConsumerWidget {
                             .reportMapTileTapped(tk),
                   onProvinceHovered: (_) {},
                   onTileHovered: (_) {},
-                  onCivilianTileTapped: onCivilianTileTapped,
-                  onFleetMarkerTapped: onFleetMarkerTapped,
-                  onCivilianTileSelectionCleared:
-                      onCivilianTileSelectionCleared,
+                  onCivilianTileTapped: inWorkTargetSelectionMode
+                      ? null
+                      : onCivilianTileTapped,
+                  onFleetMarkerTapped: inWorkTargetSelectionMode
+                      ? null
+                      : onFleetMarkerTapped,
+                  onCivilianTileSelectionCleared: inWorkTargetSelectionMode
+                      ? null
+                      : onCivilianTileSelectionCleared,
                   selectedTileKey: panel.selectedTileKey,
                   selectedCivilianTileKey: selectedCivilianTileKey,
                   secondaryHighlightTileKey: panel.secondaryHighlightTileKey,
@@ -123,16 +130,49 @@ class GameMapCanvasStack extends ConsumerWidget {
           if (inWorkTargetSelectionMode)
             Positioned(
               top: 8,
-              right: isNarrow ? 8 : 328,
-              child: Material(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(20),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: onWorkTargetSelectionCancelled,
-                  child: const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Icon(Icons.close, color: Colors.white, size: 24),
+              left: 0,
+              right: !isNarrow && panel.overlayOpen ? 320 : 0,
+              child: Center(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.72),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.map_selectionMode_prompt,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        TextButton(
+                          onPressed: onWorkTargetSelectionCancelled,
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            minimumSize: const Size(0, 34),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                            ),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            l10n.map_selectionMode_cancel,
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
