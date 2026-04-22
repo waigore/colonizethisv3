@@ -1,6 +1,15 @@
-part of 'diplomacy_resolver.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-Game _processWarAndPeace(
+import '../ai/ai_control.dart';
+import '../dossier/evidence_rules.dart';
+import 'diplomacy_relation_lookup.dart';
+import 'diplomacy_relation_updates.dart';
+import 'diplomacy_resolver.dart';
+import 'intervention_resolver.dart';
+import 'overture_resolver.dart';
+
+Game processWarAndPeace(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn, {
@@ -58,8 +67,8 @@ Game _processWarAndPeace(
               ...evidence,
             ],
           );
-          game = _cancelSubsidiesBetweenGps(game, gpId, targetId, turn);
-          game = _appendDiplomaticEvent(
+          game = cancelSubsidiesBetweenGps(game, gpId, targetId, turn);
+          game = appendDiplomaticEvent(
             game,
             turn,
             DiplomaticEventType.declareWar,
@@ -68,7 +77,7 @@ Game _processWarAndPeace(
             toFactionId: targetId,
             wasAiInitiator: isAiControlledForEvidence(game, gpId),
           );
-          _diploLog.i(
+          diploLog.i(
             'diplomacy war declared $gpId vs $targetId (scores reset to 20)',
           );
         }
@@ -123,7 +132,7 @@ Game _processWarAndPeace(
                 ...evidence,
               ],
             );
-            game = _appendDiplomaticEvent(
+            game = appendDiplomaticEvent(
               game,
               turn,
               DiplomaticEventType.peace,
@@ -132,7 +141,7 @@ Game _processWarAndPeace(
               toFactionId: targetId,
               wasAiInitiator: isAiControlledForEvidence(game, gpId),
             );
-            _diploLog.i('diplomacy peace $gpId-$targetId');
+            diploLog.i('diplomacy peace $gpId-$targetId');
           } else {
             game = game.copyWith(
               dossierEvidenceEntries: [

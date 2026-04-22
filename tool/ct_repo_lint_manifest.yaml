@@ -78,6 +78,7 @@ rules:
     spec: SPEC/program/disallowed-ast-patterns.md
     runner: dart
     script: tool/check_disallowed_ast_patterns.dart
+    pr_incremental: true
 
   - rule_id: repo.control_flow_nesting_depth
     group: structure

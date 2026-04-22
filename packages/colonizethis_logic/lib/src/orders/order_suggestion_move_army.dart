@@ -1,4 +1,17 @@
-part of 'order_suggestion.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import '../diplomacy/diplomacy_resolver.dart';
+import '../world/movement.dart';
+import '../world/player_view.dart';
+import '../world/province_lookup.dart';
+import '../world/civilian_tile_occupancy.dart';
+import '../world/topology_helpers.dart';
+import 'draft_orders_mutations.dart';
+import 'order_suggestion_context.dart';
+import 'order_visibility.dart';
+import 'unit_type_helpers.dart';
 
 /// Suggests candidate move orders that are information-legal (per [PlayerView])
 /// and rules-legal (per [OrderEngine]) for [view.playerId].
@@ -8,7 +21,7 @@ List<MoveOrder> suggestMoveOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d('suggestMoveOrders player=${view.playerId}');
+  orderSuggestionLog.d('suggestMoveOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <MoveOrder>[];
 
@@ -53,7 +66,7 @@ List<MoveOrder> suggestMoveOrders(
         destinationTileKey: destinationTileKey,
       );
 
-      if (_isMoveOrderAccepted(
+      if (isMoveOrderAccepted(
         game,
         topology,
         playerId,
@@ -71,12 +84,14 @@ List<MoveOrder> suggestMoveOrders(
     return a.destinationTileKey.compareTo(b.destinationTileKey);
   });
 
-  _log.d('suggestMoveOrders player=$playerId candidates=${suggestions.length}');
-  _log.d(
+  orderSuggestionLog.d(
+    'suggestMoveOrders player=$playerId candidates=${suggestions.length}',
+  );
+  orderSuggestionLog.d(
     'suggestMoveOrders full list ${suggestions.map((m) => "${m.unitId}->${m.destinationTileKey}").toList()}',
   );
   if (suggestions.isEmpty) {
-    _log.w('suggestMoveOrders no candidates player=$playerId');
+    orderSuggestionLog.w('suggestMoveOrders no candidates player=$playerId');
   }
   return suggestions;
 }
@@ -173,7 +188,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     final province = game.worldState.tryGetProvince(fullId);
     final ownerId = province?.ownerId ?? '';
     final move = ArmyMoveOrder(armyId: army.id, destinationProvinceId: fullId);
-    final acceptedBase = _isArmyMoveOrderAccepted(
+    final acceptedBase = isArmyMoveOrderAccepted(
       game,
       topology,
       playerId,
@@ -195,7 +210,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
           targetFactionId: ownerId,
         ),
       );
-      if (!_isArmyMoveOrderAccepted(game, topology, playerId, trial, move)) {
+      if (!isArmyMoveOrderAccepted(game, topology, playerId, trial, move)) {
         continue;
       }
       requiresDeclare = true;
@@ -272,7 +287,7 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
         destinationProvinceId: destinationProvinceId,
       );
 
-      if (_isArmyMoveOrderAccepted(
+      if (isArmyMoveOrderAccepted(
         game,
         topology,
         playerId,

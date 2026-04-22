@@ -1,6 +1,14 @@
-part of 'game_setup.dart';
+import 'dart:math';
 
-Map<String, Set<String>> _provinceNeighboursFromTopology(MapTopology topology) {
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'capital_choice.dart';
+import 'locked_province_assigner.dart';
+import 'province_assignment.dart';
+import 'setup_exceptions.dart';
+
+Map<String, Set<String>> provinceNeighboursFromTopology(MapTopology topology) {
   final provinces = {
     for (final n in topology.nodes)
       if (n.type == TopologyNodeType.province) n.id,
@@ -41,7 +49,7 @@ Map<String, int> _landmassIdsFromNeighbours(
   return landmassByProvince;
 }
 
-Game _assignCapitalsForFactions({
+Game assignCapitalsForFactions({
   required Game game,
   required List<String> factionIds,
   required List<Province> provinces,
@@ -570,7 +578,7 @@ Map<String, String> _assignOldWorldSingleLandmass({
   );
 }
 
-Map<String, String> _assignOldWorldOwnershipContiguous({
+Map<String, String> assignOldWorldOwnershipContiguous({
   required Map<String, Set<String>> neighbours,
   required List<String> provinceIds,
   required List<String> seaBoundProvinceIds,
@@ -809,7 +817,7 @@ Map<String, String> _selectGpSeedsForLandmass({
   return gpSeeds;
 }
 
-Map<String, String> _assignNewWorldOwnershipContiguous({
+Map<String, String> assignNewWorldOwnershipContiguous({
   required MapTopology topologyNewWorld,
   required List<String> provinceIds,
   required List<String> tribeIds,
@@ -818,7 +826,7 @@ Map<String, String> _assignNewWorldOwnershipContiguous({
     return {for (final p in provinceIds) p: ''};
   }
 
-  final neighbours = _provinceNeighboursFromTopology(topologyNewWorld);
+  final neighbours = provinceNeighboursFromTopology(topologyNewWorld);
   final universe = provinceIds.toSet();
   return _assignFactionsOnRemainderAuto(
     factionIds: tribeIds,

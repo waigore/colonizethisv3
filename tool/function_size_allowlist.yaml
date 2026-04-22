@@ -523,8 +523,8 @@ allowed_over_20:
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
     symbol: _addStartingUnits::civilianOwners
     max_measured_lines: 34
-  - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _applyNaming
+  - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers_naming.dart
+    symbol: applyNaming
     max_measured_lines: 266
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
     symbol: _applyNaming::applyNamingToFaction
@@ -532,8 +532,8 @@ allowed_over_20:
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
     symbol: _applyNaming::assignProvinceNames
     max_measured_lines: 55
-  - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _assignProvinceTowns
+  - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers_towns.dart
+    symbol: assignProvinceTowns
     max_measured_lines: 225
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
     symbol: _assignProvinceTowns::bfsDistances

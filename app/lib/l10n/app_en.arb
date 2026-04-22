@@ -204,6 +204,14 @@
   "@common_cancel": {
     "description": "Generic Cancel button label."
   },
+  "map_selectionMode_prompt": "Select a tile, or click cancel",
+  "@map_selectionMode_prompt": {
+    "description": "Prompt overlay text while map work-target tile selection mode is active."
+  },
+  "map_selectionMode_cancel": "cancel",
+  "@map_selectionMode_cancel": {
+    "description": "Lowercase inline cancel action label in the map work-target selection prompt overlay."
+  },
   "common_start": "Start",
   "@common_start": {
     "description": "Generic Start button label used when beginning a flow."

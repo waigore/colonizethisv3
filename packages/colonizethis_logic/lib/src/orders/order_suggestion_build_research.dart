@@ -1,4 +1,17 @@
-part of 'order_suggestion.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import '../world/player_view.dart';
+import '../world/province_lookup.dart';
+import '../world/unit_lookup.dart';
+import 'build_rail_work_rules.dart';
+import 'draft_orders_mutations.dart';
+import 'order_engine.dart';
+import 'order_suggestion_context.dart';
+import 'order_suggestion_helpers.dart';
+import 'orders_application_helpers.dart';
+import 'unit_type_helpers.dart';
 
 /// Suggests build-unit orders that are affordable and valid for [view.playerId].
 List<BuildUnitOrder> suggestBuildOrders(
@@ -7,14 +20,14 @@ List<BuildUnitOrder> suggestBuildOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d('suggestBuildOrders player=${view.playerId}');
+  orderSuggestionLog.d('suggestBuildOrders player=${view.playerId}');
   final playerId = view.playerId;
   final player = view.player;
   final suggestions = <BuildUnitOrder>[];
 
   final capitalId = player.capitalProvinceId;
   if (capitalId == null) {
-    _log.w('suggestBuildOrders no capital player=$playerId');
+    orderSuggestionLog.w('suggestBuildOrders no capital player=$playerId');
     return suggestions;
   }
 
@@ -28,7 +41,7 @@ List<BuildUnitOrder> suggestBuildOrders(
       spawnProvinceId: capitalId,
     );
 
-    if (_isBuildOrderAccepted(
+    if (isBuildOrderAccepted(
       game,
       topology,
       playerId,
@@ -48,7 +61,7 @@ List<BuildUnitOrder> suggestBuildOrders(
       spawnProvinceId: capitalId,
     );
 
-    if (_isBuildOrderAccepted(
+    if (isBuildOrderAccepted(
       game,
       topology,
       playerId,
@@ -61,14 +74,14 @@ List<BuildUnitOrder> suggestBuildOrders(
 
   suggestions.sort((a, b) => a.unitType.compareTo(b.unitType));
 
-  _log.d(
+  orderSuggestionLog.d(
     'suggestBuildOrders player=$playerId candidates=${suggestions.length}',
   );
-  _log.d(
+  orderSuggestionLog.d(
     'suggestBuildOrders full list ${suggestions.map((o) => o.unitType).join(", ")}',
   );
   if (suggestions.isEmpty) {
-    _log.w('suggestBuildOrders no candidates player=$playerId');
+    orderSuggestionLog.w('suggestBuildOrders no candidates player=$playerId');
   }
   return suggestions;
 }
@@ -82,7 +95,7 @@ List<ResearchOrder> suggestResearchOrders(
   MapTopology topology,
   Orders currentOrders,
 ) {
-  _log.d('suggestResearchOrders player=${view.playerId}');
+  orderSuggestionLog.d('suggestResearchOrders player=${view.playerId}');
   final playerId = view.playerId;
   final player = view.player;
   final suggestions = <ResearchOrder>[];
@@ -131,10 +144,10 @@ List<ResearchOrder> suggestResearchOrders(
     );
   }
 
-  _log.d(
+  orderSuggestionLog.d(
     'suggestResearchOrders player=$playerId candidates=${suggestions.length}',
   );
-  _log.d(
+  orderSuggestionLog.d(
     'suggestResearchOrders full list ${suggestions.map((o) => "slot${o.slotIndex}:${o.techId}").join(", ")}',
   );
   return suggestions;
@@ -220,7 +233,7 @@ Set<String> getValidWorkOrderTileKeys(
     ignorePendingWorkOrderUnitId: unitId,
   );
 
-  final raw = _rawCandidateTilesForWorkTarget(
+  final raw = rawCandidateTilesForWorkTarget(
     game: game,
     playerId: playerId,
     workTarget: workTarget,
@@ -248,7 +261,7 @@ Set<String> getValidWorkOrderTileKeys(
       valid.add(tileKey);
     }
   }
-  _log.d(
+  orderSuggestionLog.d(
     'getValidWorkOrderTileKeys unit=$unitId target=$workTarget count=${valid.length}',
   );
   return valid;
@@ -272,23 +285,25 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     game.worldState,
   ).where((u) => u.id == unitId).firstOrNull;
   if (unit == null || unit.ownerId != view.playerId) {
-    _log.d(
+    orderSuggestionLog.d(
       'getValidWorkOrderTileKeysWithVisibility unit not found or not owned by player',
     );
     return {};
   }
   if (unit.currentWork != null) {
-    _log.d('getValidWorkOrderTileKeysWithVisibility unit has current work');
+    orderSuggestionLog.d(
+      'getValidWorkOrderTileKeysWithVisibility unit has current work',
+    );
     return {};
   }
   if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) {
-    _log.d(
+    orderSuggestionLog.d(
       'getValidWorkOrderTileKeysWithVisibility target $workTarget not allowed for unit type ${unit.type}',
     );
     return {};
   }
 
-  _log.d(
+  orderSuggestionLog.d(
     'getValidWorkOrderTileKeysWithVisibility unit=${unit.id} type=${unit.type} workTarget=$workTarget',
   );
 
@@ -301,7 +316,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     ignorePendingWorkOrderUnitId: unitId,
   );
 
-  final raw = _rawCandidateTilesForWorkTarget(
+  final raw = rawCandidateTilesForWorkTarget(
     game: game,
     playerId: playerId,
     workTarget: workTarget,
@@ -310,9 +325,9 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
         : null,
     tileMapByRegion: tileMapByRegion,
   );
-  final sortedVisible = _sortedVisibleWorkTargetCandidates(view, raw);
+  final sortedVisible = sortedVisibleWorkTargetCandidates(view, raw);
 
-  _log.d(
+  orderSuggestionLog.d(
     'getValidWorkOrderTileKeysWithVisibility visible sorted count=${sortedVisible.length}',
   );
 
@@ -339,10 +354,41 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     }
   }
 
-  _log.d(
+  orderSuggestionLog.d(
     'getValidWorkOrderTileKeysWithVisibility unit=$unitId target=$workTarget count=${valid.length} (filtered from ${sortedVisible.length} visible candidates)',
   );
   return valid;
+}
+
+Set<String> _partiallyRevealedProvinceCacheForPlayer({
+  required Game game,
+  required PlayerView view,
+}) {
+  final cached = <String>{};
+  for (final regionEntry in game.worldState.tileKeysByRegionAndProvince.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      final provinceId = provinceEntry.key;
+      if (!ProvinceId.isPrefixed(provinceId)) continue;
+      if (_hasMixedKnownAndUnknownVisibility(view, provinceEntry.value)) {
+        cached.add(provinceId);
+      }
+    }
+  }
+  return cached;
+}
+
+bool _hasMixedKnownAndUnknownVisibility(PlayerView view, List<String> tileKeys) {
+  var hasKnown = false;
+  var hasUnknown = false;
+  for (final tileKey in tileKeys) {
+    if (view.visibilityForTile(tileKey) == VisibilityLevel.unknown) {
+      hasUnknown = true;
+    } else {
+      hasKnown = true;
+    }
+    if (hasKnown && hasUnknown) return true;
+  }
+  return false;
 }
 
 /// Pre-filters tiles based on work-target-specific criteria per SPEC/program/order-suggestions.md.
@@ -379,7 +425,7 @@ Set<String> _preFilterWorkTargetTiles({
   return result;
 }
 
-Set<String> _rawCandidateTilesForWorkTarget({
+Set<String> rawCandidateTilesForWorkTarget({
   required Game game,
   required String playerId,
   required String workTarget,
@@ -406,7 +452,7 @@ Set<String> _rawCandidateTilesForWorkTarget({
   );
 }
 
-List<String> _sortedVisibleWorkTargetCandidates(
+List<String> sortedVisibleWorkTargetCandidates(
   PlayerView view,
   Set<String> rawCandidates,
 ) {
@@ -506,3 +552,187 @@ bool _isBuildOrderAccepted(
   );
   return result.isAccepted;
 }
+
+/// Context for [_workTargetPrefilters] map dispatch (work-target tile pre-filter).
+class _WorkTilePrefilterCtx {
+  _WorkTilePrefilterCtx({
+    required this.game,
+    required this.playerId,
+    required this.tileKeysByRegion,
+    required this.resourceByTile,
+    required this.purchasedTiles,
+    required this.ownedProvinceIds,
+    required this.exploreProvinceScope,
+    required this.tileMapByRegion,
+    required this.result,
+  });
+
+  final Game game;
+  final String playerId;
+  final Map<String, Map<String, List<String>>> tileKeysByRegion;
+  final Map<String, String> resourceByTile;
+  final Map<String, String> purchasedTiles;
+  final Set<String> ownedProvinceIds;
+  final Set<String>? exploreProvinceScope;
+  final Map<String, TileMapResult>? tileMapByRegion;
+  final Set<String> result;
+}
+
+typedef _WorkTilePrefilterOp = void Function(_WorkTilePrefilterCtx c);
+
+void _prefilterWtBuildImprovement(_WorkTilePrefilterCtx c) {
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      final resourceId = c.resourceByTile[tileKey];
+      if (resourceId == null || resourceId.isEmpty) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtBuildRoad(_WorkTilePrefilterCtx c) {
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtBuildRail(_WorkTilePrefilterCtx c) {
+  final player = c.game.playerById(c.playerId);
+  if (player == null) return;
+  final tech = player.techUnlocked;
+  final tileState = c.game.worldState.tileState;
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final isOwnedProvince = c.ownedProvinceIds.contains(provinceId);
+      final isPurchased = c.purchasedTiles[tileKey] == c.playerId;
+      if (!isOwnedProvince && !isPurchased) return;
+      final roadLevel = tileState.roadLevel(tileKey);
+      if (roadLevel != 1 && roadLevel != 2) return;
+      final terrain = terrainTypeForTileKey(c.tileMapByRegion, tileKey);
+      if (rejectionReasonForBuildRailOrder(
+            techUnlocked: tech,
+            roadLevel: roadLevel,
+            terrain: terrain,
+          ) !=
+          null) {
+        return;
+      }
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtTownWork(_WorkTilePrefilterCtx c) {
+  _addCandidateTilesForTownWork(
+    game: c.game,
+    ownedProvinceIds: c.ownedProvinceIds,
+    result: c.result,
+  );
+}
+
+void _prefilterWtOwnedProvinceTiles(_WorkTilePrefilterCtx c) {
+  _addAllTilesInOwnedPrefixedProvinces(
+    tileKeysByRegion: c.tileKeysByRegion,
+    ownedProvinceIds: c.ownedProvinceIds,
+    result: c.result,
+  );
+}
+
+void _prefilterWtStealTech(_WorkTilePrefilterCtx c) {
+  _addCandidateTilesForStealTech(
+    game: c.game,
+    playerId: c.playerId,
+    result: c.result,
+  );
+}
+
+void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
+  final gpIds = c.game.players.map((p) => p.id).toSet();
+  final minorIds = c.game.minorNations.map((m) => m.id).toSet();
+  final tribeIds = c.game.tribes.map((t) => t.id).toSet();
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      final province = c.game.worldState.tryGetProvince(provinceId);
+      if (province == null) return;
+      final ownerId = province.ownerId;
+      if (ownerId == null) return;
+      if (gpIds.contains(ownerId)) return;
+      if (!minorIds.contains(ownerId) && !tribeIds.contains(ownerId)) {
+        return;
+      }
+      final resourceId = c.resourceByTile[tileKey];
+      if (resourceId == null || resourceId.isEmpty) return;
+      final existingBuyer = c.game.worldState.purchasedTilesByTileKey[tileKey];
+      if (existingBuyer != null) return;
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWtExplore(_WorkTilePrefilterCtx c) {
+  final scoped = c.exploreProvinceScope;
+  if (scoped != null) {
+    for (final regionEntry in c.tileKeysByRegion.entries) {
+      for (final provinceEntry in regionEntry.value.entries) {
+        if (!scoped.contains(provinceEntry.key)) continue;
+        c.result.addAll(provinceEntry.value);
+      }
+    }
+    return;
+  }
+  for (final regionEntry in c.tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      c.result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+void _prefilterWtProspect(_WorkTilePrefilterCtx c) {
+  final prospected =
+      c.game.worldState.playerProspectedTiles[c.playerId] ?? const <String>{};
+  _forEachPrefixedProvinceTile(
+    tileKeysByRegion: c.tileKeysByRegion,
+    onTile: (provinceId, tileKey) {
+      if (prospected.contains(tileKey)) return;
+      if (!isMineralEligibleTile(c.game, c.tileMapByRegion, tileKey)) {
+        return;
+      }
+      c.result.add(tileKey);
+    },
+  );
+}
+
+void _prefilterWorkTargetDefault(_WorkTilePrefilterCtx c) {
+  for (final regionEntry in c.tileKeysByRegion.entries) {
+    for (final provinceEntry in regionEntry.value.entries) {
+      c.result.addAll(provinceEntry.value);
+    }
+  }
+}
+
+final Map<String, _WorkTilePrefilterOp> _workTargetPrefilters =
+    <String, _WorkTilePrefilterOp>{
+      kWorkTargetBuildImprovement: _prefilterWtBuildImprovement,
+      kWorkTargetBuildRoad: _prefilterWtBuildRoad,
+      'build_rail': _prefilterWtBuildRail,
+      kWorkTargetUpgradeTown: _prefilterWtTownWork,
+      kWorkTargetBuildFort: _prefilterWtTownWork,
+      kWorkTargetBuildPort: _prefilterWtOwnedProvinceTiles,
+      kWorkTargetCounterSpy: _prefilterWtOwnedProvinceTiles,
+      kWorkTargetStealTech: _prefilterWtStealTech,
+      kWorkTargetPurchaseLand: _prefilterWtPurchaseLand,
+      kWorkTargetExplore: _prefilterWtExplore,
+      kWorkTargetProspect: _prefilterWtProspect,
+    };

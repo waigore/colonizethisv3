@@ -17,6 +17,7 @@ import 'ct_repo_lint_scan_contract.dart';
 /// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
 int runCheckDisallowedAstPatterns(
   String repoRoot, {
+  List<String>? incrementalRelativeDartPaths,
   void Function(String line)? info,
   void Function(String line)? err,
 }) {
@@ -40,9 +41,15 @@ int runCheckDisallowedAstPatterns(
 
   final dartFiles = collectRepoLintDomainDartFiles(repoRoot);
   final violations = <DisallowedAstViolation>[];
+  final incrementalSet = incrementalRelativeDartPaths == null
+      ? null
+      : incrementalRelativeDartPaths.toSet();
 
   for (final file in dartFiles) {
     final relativePath = p.relative(file.path, from: repoRoot);
+    if (incrementalSet != null && !incrementalSet.contains(relativePath)) {
+      continue;
+    }
     final content = file.readAsStringSync();
     violations.addAll(
       findDisallowedAstViolations(relativePath, content, rules),
@@ -63,8 +70,35 @@ int runCheckDisallowedAstPatterns(
   return 1;
 }
 
-void main() {
-  exit(runCheckDisallowedAstPatterns(Directory.current.path));
+void main(List<String> args) {
+  List<String>? incrementalRelativeDartPaths;
+  for (var i = 0; i < args.length; i++) {
+    final arg = args[i];
+    if (arg.startsWith('--files=')) {
+      incrementalRelativeDartPaths = repoLintSplitRelativeDartPathsArg(
+        arg.substring('--files='.length),
+      );
+      continue;
+    }
+    if (arg == '--files') {
+      if (i + 1 >= args.length) {
+        stderr.writeln(
+          'check_disallowed_ast_patterns: --files requires a comma-separated list',
+        );
+        exit(2);
+      }
+      incrementalRelativeDartPaths = repoLintSplitRelativeDartPathsArg(
+        args[++i],
+      );
+      continue;
+    }
+  }
+  exit(
+    runCheckDisallowedAstPatterns(
+      Directory.current.path,
+      incrementalRelativeDartPaths: incrementalRelativeDartPaths,
+    ),
+  );
 }
 
 /// Exposed for unit tests (same behavior as production scan).
@@ -177,6 +211,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           kind: DisallowedAstMatchKind.cascadedMethodInvocation,
           cascadedMethodNames: names,
           commentSubstring: null,
+          rawNamedTypeNames: const {},
         ),
       );
     } else if (kind == 'stream_where_is_map_as') {
@@ -187,6 +222,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           kind: DisallowedAstMatchKind.streamWhereIsMapAs,
           cascadedMethodNames: const {},
           commentSubstring: null,
+          rawNamedTypeNames: const {},
         ),
       );
     } else if (kind == 'comment_substring') {
@@ -201,6 +237,32 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           kind: DisallowedAstMatchKind.commentSubstring,
           cascadedMethodNames: const {},
           commentSubstring: needle,
+          rawNamedTypeNames: const {},
+        ),
+      );
+    } else if (kind == 'raw_named_type') {
+      final namesNode = match['type_names'];
+      if (namesNode is! YamlList) {
+        continue;
+      }
+      final names = <String>{};
+      for (final n in namesNode.nodes) {
+        final s = n.value?.toString();
+        if (s != null && s.isNotEmpty) {
+          names.add(s);
+        }
+      }
+      if (names.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.rawNamedType,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: names,
         ),
       );
     }
@@ -236,6 +298,7 @@ enum DisallowedAstMatchKind {
   cascadedMethodInvocation,
   streamWhereIsMapAs,
   commentSubstring,
+  rawNamedType,
 }
 
 class DisallowedPatternRule {
@@ -245,6 +308,7 @@ class DisallowedPatternRule {
     required this.kind,
     required this.cascadedMethodNames,
     required this.commentSubstring,
+    required this.rawNamedTypeNames,
   });
 
   final String id;
@@ -252,6 +316,7 @@ class DisallowedPatternRule {
   final DisallowedAstMatchKind kind;
   final Set<String> cascadedMethodNames;
   final String? commentSubstring;
+  final Set<String> rawNamedTypeNames;
 }
 
 class DisallowedAstViolation {
@@ -424,5 +489,23 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       }
     }
     super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitNamedType(NamedType node) {
+    for (final rule in rules) {
+      if (rule.kind != DisallowedAstMatchKind.rawNamedType) {
+        continue;
+      }
+      if (node.typeArguments != null) {
+        continue;
+      }
+      final name = node.name2.lexeme;
+      if (!rule.rawNamedTypeNames.contains(name)) {
+        continue;
+      }
+      _recordIfAllowed(node, rule);
+    }
+    super.visitNamedType(node);
   }
 }

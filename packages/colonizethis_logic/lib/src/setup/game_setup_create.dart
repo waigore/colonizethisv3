@@ -1,4 +1,24 @@
-part of 'game_setup.dart';
+import 'dart:math';
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import '../diplomacy/diplomacy_relation_lookup.dart';
+import '../world/army_migration.dart';
+import 'capital_choice.dart';
+import 'game_setup_context.dart';
+import 'game_setup_helpers.dart';
+import 'game_setup_ownership.dart';
+import 'gp_old_world_resource_redistribution.dart';
+import 'gp_old_world_terrain_redistribution.dart';
+import 'gp_starting_grain.dart';
+import 'init_town_roads.dart';
+import 'initial_visibility.dart';
+import 'locked_province_assigner.dart';
+import 'province_assignment.dart';
+import 'setup_exceptions.dart';
+import 'town_capital_occupancy.dart';
 
 /// Result of game setup: the Game and the map data needed for turn resolution.
 class GameSetupResult {
@@ -42,7 +62,7 @@ GameSetupResult createGameFromGeneratedMaps({
   int? assignmentPerturbationBase,
   List<WarpLink>? warpLinks,
 }) {
-  _log.i('game setup start gameId=$gameId');
+  gameSetupLog.i('game setup start gameId=$gameId');
   final tileMapByRegion = {
     kRegionOldWorld: tileMapOldWorld,
     kRegionNewWorld: tileMapNewWorld,
@@ -55,8 +75,8 @@ GameSetupResult createGameFromGeneratedMaps({
   final perturbBase = assignmentPerturbationBase ?? namingSeed ?? config.seed;
   final initialMapZoomMultiplier = _resolveInitialMapZoomMultiplier(config);
 
-  final owProvinceIds = _provinceIdsFromTopology(topologyOldWorld);
-  final nwProvinceIds = _provinceIdsFromTopology(topologyNewWorld);
+  final owProvinceIds = provinceIdsFromTopology(topologyOldWorld);
+  final nwProvinceIds = provinceIdsFromTopology(topologyNewWorld);
 
   if (owProvinceIds.length < config.greatPowerCount) {
     throw SetupConfigConstraintException(
@@ -89,7 +109,7 @@ GameSetupResult createGameFromGeneratedMaps({
 
   // Province assignment per SPEC/program/game-setup-pipeline.md and
   // SPEC/program/locked-province-assigner.md (locked growth + backtrack; no repair pass).
-  final owNeighbours = _provinceNeighboursFromTopology(topologyOldWorld);
+  final owNeighbours = provinceNeighboursFromTopology(topologyOldWorld);
   // Locked assigner + six-minor-per-continent layout apply only when OW topology
   // matches the delivery profile (see locked_partition_topology_gates.dart).
   final useLockedSixMinorContinentPainting = config.isLockedFullInitProfile &&
@@ -103,7 +123,7 @@ GameSetupResult createGameFromGeneratedMaps({
       : null;
   Map<String, String> owOwner;
   try {
-    owOwner = _assignOldWorldOwnershipContiguous(
+    owOwner = assignOldWorldOwnershipContiguous(
       neighbours: owNeighbours,
       provinceIds: owProvinceIds,
       seaBoundProvinceIds: seaBoundOW,
@@ -115,15 +135,15 @@ GameSetupResult createGameFromGeneratedMaps({
     );
   } on StateError catch (e, st) {
     if (useLockedSixMinorContinentPainting) {
-      _log.e(
+      gameSetupLog.e(
         'logic: OW locked assignment failed. '
-        '${_lockedOwAssignFailureDiagnostics(config: config, topology: topologyOldWorld, seaBoundIds: seaBoundOW)} '
+        '${lockedOwAssignFailureDiagnostics(config: config, topology: topologyOldWorld, seaBoundIds: seaBoundOW)} '
         'raw=$e',
         error: e,
         stackTrace: st,
       );
     } else {
-      _log.e('logic: OW assignment failed: $e', error: e, stackTrace: st);
+      gameSetupLog.e('logic: OW assignment failed: $e', error: e, stackTrace: st);
     }
     throw SetupTopologyDataException(
       code: 'assigner_exhausted',
@@ -133,22 +153,22 @@ GameSetupResult createGameFromGeneratedMaps({
 
   Map<String, String> nwOwner;
   try {
-    nwOwner = _assignNewWorldOwnershipContiguous(
+    nwOwner = assignNewWorldOwnershipContiguous(
       topologyNewWorld: topologyNewWorld,
       provinceIds: nwProvinceIds,
       tribeIds: tribeIds,
     );
   } on StateError catch (e, st) {
     if (config.isLockedFullInitProfile) {
-      _log.e(
+      gameSetupLog.e(
         'logic: NW locked assignment failed. '
-        '${_lockedNwAssignFailureDiagnostics(config: config, topology: topologyNewWorld)} '
+        '${lockedNwAssignFailureDiagnostics(config: config, topology: topologyNewWorld)} '
         'raw=$e',
         error: e,
         stackTrace: st,
       );
     } else {
-      _log.e('logic: NW assignment failed: $e', error: e, stackTrace: st);
+      gameSetupLog.e('logic: NW assignment failed: $e', error: e, stackTrace: st);
     }
     throw SetupTopologyDataException(
       code: 'assigner_exhausted',
@@ -290,7 +310,7 @@ GameSetupResult createGameFromGeneratedMaps({
   );
 
   // Capital auto-choice: GPs (OW), then minors (OW), then tribes (NW). Must run before naming.
-  game = _assignCapitalsForFactions(
+  game = assignCapitalsForFactions(
     game: game,
     factionIds: gpIds,
     provinces: oldWorldProvinces,
@@ -309,7 +329,7 @@ GameSetupResult createGameFromGeneratedMaps({
           tileMapByRegion: tmByRegion,
         ),
   );
-  game = _assignCapitalsForFactions(
+  game = assignCapitalsForFactions(
     game: game,
     factionIds: minorIds,
     provinces: oldWorldProvinces,
@@ -328,7 +348,7 @@ GameSetupResult createGameFromGeneratedMaps({
           tileMapByRegion: tmByRegion,
         ),
   );
-  game = _assignCapitalsForFactions(
+  game = assignCapitalsForFactions(
     game: game,
     factionIds: tribeIds,
     provinces: newWorldProvinces,
@@ -357,7 +377,7 @@ GameSetupResult createGameFromGeneratedMaps({
   );
 
   // 7d. Province town assignment. SPEC/program/game-setup-pipeline.md, capital-and-connectivity.md.
-  game = _assignProvinceTowns(
+  game = assignProvinceTowns(
     game: game,
     topologyByRegion: topologyByRegion,
     tileMapByRegion: tileMapByRegion,
@@ -417,7 +437,7 @@ GameSetupResult createGameFromGeneratedMaps({
   );
 
   // Apply historically inspired naming from default ruleset (after capitals are set).
-  game = _applyNaming(
+  game = applyNaming(
     game: game,
     selectedGreatPowerIds: config.selectedGreatPowerIds,
     leaderVariantByGpId: config.leaderVariantByGpId,
@@ -426,7 +446,7 @@ GameSetupResult createGameFromGeneratedMaps({
   );
 
   // Compute 1-character political glyphs per faction for political map layer.
-  final politicalGlyphByPlayerId = _buildPoliticalGlyphByPlayerId(
+  final politicalGlyphByPlayerId = buildPoliticalGlyphByPlayerId(
     game: game,
     greatPowerIds: gpIds,
     minorNationIds: minorIds,
@@ -435,10 +455,10 @@ GameSetupResult createGameFromGeneratedMaps({
   game = game.copyWith(politicalGlyphByPlayerId: politicalGlyphByPlayerId);
 
   // Spawn starting units for each Great Power in their capital provinces.
-  game = _addStartingUnits(game: game, config: config);
+  game = addStartingUnits(game: game, config: config);
 
   // Spawn starting land regiments and home fleets for each Great Power.
-  game = _addStartingMilitaryAndNaval(
+  game = addStartingMilitaryAndNaval(
     game: game,
     config: config,
     topologyOldWorld: topologyOldWorld,
@@ -469,7 +489,7 @@ GameSetupResult createGameFromGeneratedMaps({
     warpLinks: links,
   );
 
-  _log.i('game setup end gameId=${game.id}');
+  gameSetupLog.i('game setup end gameId=${game.id}');
   return GameSetupResult(
     game: game,
     tileMapByRegion: tileMapByRegion,

@@ -132,8 +132,6 @@ class _CtRegionMapGame extends FlameGame with TapDetector {
               validTileKeys!.isNotEmpty &&
               validTileKeys!.contains(tileKey)) {
             onTileSelected!.call(tileKey);
-          } else {
-            onWorkTargetSelectionCancelled?.call();
           }
         }
       },
