@@ -1252,6 +1252,132 @@ void main() {
     );
 
     testWidgets(
+      'work target selection mode ignores invalid tile taps without canceling',
+      (WidgetTester tester) async {
+        final base = ctRegionMapTestOldWorldRegion();
+        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
+        final region = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 2,
+          height: 1,
+          cellSize: 32,
+          cells: [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: landTemplate.terrainTypeId,
+              terrainType: landTemplate.terrainType,
+              ownerFactionId: landTemplate.ownerFactionId,
+            ),
+            CellViewData(
+              x: 1,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: landTemplate.terrainTypeId,
+              terrainType: landTemplate.terrainType,
+              ownerFactionId: landTemplate.ownerFactionId,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+        );
+        const validTileKey = 'oldWorld|p1|0|0';
+        var selectedCallCount = 0;
+        var cancelCallCount = 0;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 400,
+                height: 320,
+                child: CtRegionMap(
+                  region: region,
+                  validTileKeys: {validTileKey},
+                  onTileSelected: (_) => selectedCallCount++,
+                  onWorkTargetSelectionCancelled: () => cancelCallCount++,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        final mapTopLeft = tester.getTopLeft(mapFinder);
+        final invalidTap = mapTopLeft + const Offset(300, 160);
+        await tester.tapAt(invalidTap);
+        await tester.pump();
+
+        expect(selectedCallCount, 0);
+        expect(cancelCallCount, 0);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'work target selection mode commits on valid tile tap',
+      (WidgetTester tester) async {
+        final base = ctRegionMapTestOldWorldRegion();
+        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
+        final region = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 1,
+          height: 1,
+          cellSize: 32,
+          cells: [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: landTemplate.terrainTypeId,
+              terrainType: landTemplate.terrainType,
+              ownerFactionId: landTemplate.ownerFactionId,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+        );
+        const validTileKey = 'oldWorld|p1|0|0';
+        String? selectedTileKey;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 400,
+                height: 320,
+                child: CtRegionMap(
+                  region: region,
+                  validTileKeys: {validTileKey},
+                  onTileSelected: (tileKey) => selectedTileKey = tileKey,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        await tester.tap(mapFinder);
+        await tester.pump();
+
+        expect(selectedTileKey, equals(validTileKey));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
       'tap on civilian marker tile invokes civilian callback and suppresses detail tap callback',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();

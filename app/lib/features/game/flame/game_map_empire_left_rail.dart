@@ -17,11 +17,13 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
   const GameMapEmpireLeftRail({
     required this.game,
     required this.humanPlayerId,
+    this.onIconTappedWhileSelectionMode,
     super.key,
   });
 
   final ct_models.Game game;
   final String humanPlayerId;
+  final VoidCallback? onIconTappedWhileSelectionMode;
 
   Widget _iconTile({
     required Key buttonKey,
@@ -74,6 +76,7 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
             tooltip: 'Production',
             iconAsset: '${kAppIconAssetPrefix}ui_icon_production.png',
             onTap: () {
+              onIconTappedWhileSelectionMode?.call();
               bus.emit(
                 ct_models.NavigateToRouteEvent(Routes.production, {
                   'game': game,
@@ -87,6 +90,7 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
             tooltip: 'Civilian Units',
             iconAsset: '${kAppIconAssetPrefix}ui_icon_civilian_units.png',
             onTap: () {
+              onIconTappedWhileSelectionMode?.call();
               bus.emit(const ct_models.OpenCivilianUnitsPanelEvent());
             },
           ),
@@ -95,6 +99,7 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
             tooltip: 'Military Units',
             iconAsset: '${kAppIconAssetPrefix}ui_icon_military_units.png',
             onTap: () {
+              onIconTappedWhileSelectionMode?.call();
               bus.emit(const ct_models.OpenMilitaryUnitsPanelEvent());
             },
           ),
@@ -103,6 +108,7 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
             tooltip: 'Naval Units',
             iconAsset: '${kAppIconAssetPrefix}ui_icon_naval_units.png',
             onTap: () {
+              onIconTappedWhileSelectionMode?.call();
               bus.emit(const ct_models.OpenNavalUnitsPanelEvent());
             },
           ),
@@ -111,6 +117,7 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
             tooltip: 'Diplomacy',
             iconAsset: '${kAppIconAssetPrefix}ui_icon_diplomacy.png',
             onTap: () {
+              onIconTappedWhileSelectionMode?.call();
               bus.emit(
                 ct_models.NavigateToRouteEvent(Routes.diplomacy, {
                   'game': game,
@@ -126,6 +133,7 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
             tooltip: 'Technology',
             iconAsset: '${kAppIconAssetPrefix}ui_icon_technology.png',
             onTap: () {
+              onIconTappedWhileSelectionMode?.call();
               bus.emit(
                 ct_models.NavigateToRouteEvent(Routes.technology, {
                   'game': game,

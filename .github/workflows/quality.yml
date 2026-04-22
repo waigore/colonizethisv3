@@ -467,12 +467,14 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
-      contents: read
+      # OpenCode ends with `git push` when the workspace has local commits; the checkout
+      # token must allow contents writes and stay configured for HTTPS (persist-credentials).
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          persist-credentials: false
+          persist-credentials: true
 
       # OpenCode invocation disabled (flaky); gate remains defined for branch protection / re-enable.
       # Original model: ${{ vars.OPENCODE_REVIEW_MODEL || 'opencode-go/minimax-m2.7' }} (see anomalyco/opencode/github@latest `with.model`).
@@ -493,7 +495,7 @@ jobs:
             - SPEC documents under SPEC/ stay aligned with code for behavior touched by this diff.
 
             Deliverables (must all be satisfied):
-            1) Put **all** detailed review text in **one** GitHub pull request **issue comment** on this PR (the main PR conversation). Do not rely on CI or workflow logs for the long-form review; the PR comment is the source of truth for details.
+            1) Put **all** detailed review text in **one** GitHub pull request **issue comment** on **this** pull request (use the PR number from the active review context, not linked issue numbers). Do not rely on CI or workflow logs for the long-form review; the PR comment is the source of truth for details.
 
             2) **Single sticky comment only**: If a PR issue comment already exists whose body contains the literal HTML marker `<!-- ct-opencode-quality-review -->`, **edit that same comment** with your updated review (keep the marker in the updated body). If none exists, create **one** new PR issue comment that includes that marker exactly once. **Do not** post any **other** new issue comments on this PR for this review (no follow-up “review complete”, session recap, or duplicate summaries—optional links may appear only inside that sticky comment body).
 
