@@ -545,9 +545,8 @@ class GameMapAreaStateLogic {
 
   /// Returns province-overlay prospect action visibility + enablement.
   ///
-  /// Visibility mirrors Tile row visibility (no icon for unrevealed tile data).
-  /// Enablement uses the same visibility + order-engine validation basis as
-  /// `getValidWorkOrderTileKeysWithVisibility` for explorer `prospect`.
+  /// The panel must read stable world/player tile state only so map scrolling
+  /// and rebuild churn do not trigger expensive order-engine validation.
   static ({bool showIcon, bool enabled, bool hasExplorerUnits})
   provinceProspectActionState({
     required ct_models.Game game,
@@ -558,10 +557,39 @@ class GameMapAreaStateLogic {
     required ct_models.Orders currentOrders,
     required Map<String, TileMapResult>? tileMapByRegion,
   }) {
+    final tileParts = selectedTileKey.split('|');
+    if (tileParts.length < 4) {
+      return (showIcon: false, enabled: false, hasExplorerUnits: false);
+    }
     final tileVisibility = playerView.visibilityForTile(selectedTileKey);
     if (tileVisibility == VisibilityLevel.unknown) {
       return (showIcon: false, enabled: false, hasExplorerUnits: false);
     }
+    final tileRegionId = tileParts[0];
+    final tileProvinceId = tileParts[1];
+    final prefixedProvinceId = '$tileRegionId|$tileProvinceId';
+    final isProvinceTile =
+        tryGetProvince(game.worldState, prefixedProvinceId) != null;
+    if (!isProvinceTile) {
+      return (showIcon: false, enabled: false, hasExplorerUnits: false);
+    }
+
+    final isMineralEligible = isMineralEligibleTile(
+      game,
+      tileMapByRegion,
+      selectedTileKey,
+    );
+    if (!isMineralEligible) {
+      return (showIcon: false, enabled: false, hasExplorerUnits: false);
+    }
+
+    final playerProspectedTiles =
+        game.worldState.playerProspectedTiles[humanPlayerId] ??
+        const <String>{};
+    if (playerProspectedTiles.contains(selectedTileKey)) {
+      return (showIcon: false, enabled: false, hasExplorerUnits: false);
+    }
+
     final allUnits = <ct_models.Unit>[
       ...game.worldState.oldWorld.units,
       ...game.worldState.newWorld.units,
@@ -579,24 +607,7 @@ class GameMapAreaStateLogic {
     if (explorerUnits.isEmpty) {
       return (showIcon: true, enabled: false, hasExplorerUnits: false);
     }
-    if (topology == null) {
-      return (showIcon: true, enabled: false, hasExplorerUnits: true);
-    }
-    for (final unit in explorerUnits) {
-      final validTiles = getValidWorkOrderTileKeysWithVisibility(
-        game: game,
-        topology: topology,
-        view: playerView,
-        unitId: unit.id,
-        workTarget: kWorkTargetProspect,
-        currentOrders: currentOrders,
-        tileMapByRegion: tileMapByRegion,
-      );
-      if (validTiles.contains(selectedTileKey)) {
-        return (showIcon: true, enabled: true, hasExplorerUnits: true);
-      }
-    }
-    return (showIcon: true, enabled: false, hasExplorerUnits: true);
+    return (showIcon: true, enabled: true, hasExplorerUnits: true);
   }
 }
 
