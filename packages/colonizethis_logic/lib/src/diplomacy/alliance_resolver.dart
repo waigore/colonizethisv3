@@ -1,6 +1,16 @@
-part of 'diplomacy_resolver.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-Game _resolveJoinEmpireColony(
+import '../ai/ai_control.dart';
+import '../constants.dart';
+import '../dossier/evidence_rules.dart';
+import '../world/civilian_ownership_legality.dart';
+import 'diplomacy_relation_lookup.dart';
+import 'diplomacy_relation_updates.dart';
+import 'diplomacy_resolver.dart';
+import 'overture_resolver.dart';
+
+Game resolveJoinEmpireColony(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn,
@@ -29,8 +39,8 @@ Game _resolveJoinEmpireColony(
         final cost = joinEmpireCostForMinorOrTribe(game, targetId);
         if (player.treasury < cost) continue;
 
-        game = _absorbMinorOrTribeIntoGp(game, gpId, targetId, turn);
-        game = _appendDiplomaticEvent(
+        game = absorbMinorOrTribeIntoGp(game, gpId, targetId, turn);
+        game = appendDiplomaticEvent(
           game,
           turn,
           DiplomaticEventType.joinEmpireResolved,
@@ -41,7 +51,7 @@ Game _resolveJoinEmpireColony(
           amount: cost,
           wasAiInitiator: isAiControlledForEvidence(game, gpId),
         );
-        _diploLog.i('diplomacy join empire $gpId $targetId cost=$cost');
+        diploLog.i('diplomacy join empire $gpId $targetId cost=$cost');
       } else if (isGreatPower(game, targetId)) {
         if (player.techUnlocked?[kTechIdEmpireBuilding] != true) continue;
         if (!isGreatPowerNearlyDefeatedForJoinEmpire(game, targetId)) {
@@ -50,8 +60,8 @@ Game _resolveJoinEmpireColony(
         final cost = joinEmpireCostForMinorOrTribe(game, targetId);
         if (player.treasury < cost) continue;
 
-        game = _absorbGreatPowerIntoGp(game, gpId, targetId);
-        game = _appendDiplomaticEvent(
+        game = absorbGreatPowerIntoGp(game, gpId, targetId);
+        game = appendDiplomaticEvent(
           game,
           turn,
           DiplomaticEventType.joinEmpireResolved,
@@ -62,7 +72,7 @@ Game _resolveJoinEmpireColony(
           amount: cost,
           wasAiInitiator: isAiControlledForEvidence(game, gpId),
         );
-        _diploLog.i(
+        diploLog.i(
           'diplomacy join empire GP $gpId absorbs $targetId cost=$cost',
         );
       }
@@ -94,7 +104,7 @@ List<Unit> _transferUnitOwnership(
 /// Transfers all provinces, units, and fleets owned by [targetId] to [gpId],
 /// deducts Join Empire cost from GP treasury, removes the Minor/Tribe and
 /// cleans overtures/relations. SPEC/game/diplomacy.md.
-Game _absorbMinorOrTribeIntoGp(
+Game absorbMinorOrTribeIntoGp(
   Game game,
   String gpId,
   String targetId,
@@ -207,7 +217,7 @@ Game _absorbMinorOrTribeIntoGp(
   );
 }
 
-Game _absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) {
+Game absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) {
   final cost = joinEmpireCostForMinorOrTribe(game, targetGpId);
   var players = List<Player>.from(game.players);
   final gpIdx = players.indexWhere((p) => p.id == gpId);
@@ -344,7 +354,7 @@ Game _absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) {
   );
 }
 
-Game _processAlliances(
+Game processAlliances(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn,
@@ -382,7 +392,7 @@ Game _processAlliances(
               ),
       );
       game = game.copyWith(diplomacyRelations: relations);
-      game = _appendDiplomaticEvent(
+      game = appendDiplomaticEvent(
         game,
         turn,
         DiplomaticEventType.allianceFormed,
@@ -391,7 +401,7 @@ Game _processAlliances(
         toFactionId: targetId,
         wasAiInitiator: isAiControlledForEvidence(game, gpId),
       );
-      _diploLog.i('diplomacy alliance $gpId-$targetId');
+      diploLog.i('diplomacy alliance $gpId-$targetId');
     }
   }
   return game;

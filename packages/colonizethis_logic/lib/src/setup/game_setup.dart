@@ -5,10 +5,10 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'capital_choice.dart';
+import 'game_setup_context.dart';
 import 'gp_land_connectivity_repair.dart';
 import 'gp_old_world_resource_redistribution.dart';
 import 'gp_old_world_terrain_redistribution.dart';
@@ -16,6 +16,9 @@ import 'gp_starting_grain.dart';
 import 'town_capital_occupancy.dart';
 import 'init_town_roads.dart';
 import 'setup_exceptions.dart';
+import 'game_setup_create.dart';
+import 'game_setup_helpers.dart';
+import 'game_setup_ownership.dart';
 import '../constants.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'initial_visibility.dart';
@@ -26,8 +29,5 @@ import 'locked_province_assigner.dart';
 import 'province_assignment.dart';
 import 'province_name_fallback.dart';
 
-part 'game_setup_create.dart';
-part 'game_setup_helpers.dart';
-part 'game_setup_ownership.dart';
-
-final _log = packageLogger();
+export 'game_setup_create.dart';
+export 'game_setup_helpers.dart';

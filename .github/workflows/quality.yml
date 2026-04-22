@@ -262,6 +262,8 @@ jobs:
       - name: Repo convention lint (unified manifest, SPEC/program/repo-lint.md)
         env:
           CT_REPO_LINT_INCLUDE_APP: ${{ needs.changes.outputs.tests }}
+          CT_REPO_LINT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
         run: dart run tool/ct_repo_lint.dart
 
       - name: Run domain exception custom_lint (SPEC/program/exception-enforcement.md)
@@ -462,7 +464,8 @@ jobs:
       needs.app_e2e_linux.result == 'success' &&
       (contains(github.event.pull_request.labels.*.name, 'help wanted') || github.event.pull_request.changed_files > 10)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Large PRs can exceed 45m (tooling + diff reads + a long sticky-comment PATCH); cancellation fails the verdict gate.
+    timeout-minutes: 90
     permissions:
       pull-requests: write
       issues: write

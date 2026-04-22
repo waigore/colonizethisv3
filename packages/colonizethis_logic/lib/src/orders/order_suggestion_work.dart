@@ -1,4 +1,18 @@
-part of 'order_suggestion.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import '../world/player_view.dart';
+import '../world/province_lookup.dart';
+import '../world/unit_lookup.dart';
+import 'build_rail_work_rules.dart';
+import 'bundled_civilian_work_order.dart';
+import 'order_suggestion_build_research.dart';
+import 'order_suggestion_context.dart';
+import 'order_suggestion_helpers.dart';
+import 'order_visibility.dart';
+import 'orders_application_helpers.dart';
+import 'unit_type_helpers.dart';
 
 void _suggestionWorkLog({
   required String unitId,
@@ -10,7 +24,7 @@ void _suggestionWorkLog({
   String reason = '-',
   String tile = '-',
 }) {
-  _log.d(
+  orderSuggestionLog.d(
     'suggest_work unitId=$unitId unitType=$unitType region=$unitRegionId '
     'at=$atProvinceId target=$workTarget outcome=$outcome reason=$reason tile=$tile',
   );
@@ -145,7 +159,7 @@ void _addExplorerWorkSuggestionsForUnit({
         target: kWorkTargetExplore,
         targetTileKey: targetTileKey,
       );
-      if (_isWorkOrderAccepted(
+      if (isWorkOrderAccepted(
         game,
         topology,
         playerId,
@@ -239,7 +253,7 @@ void _addExplorerWorkSuggestionsForUnit({
         continue;
       }
     }
-    if (_isWorkOrderAccepted(
+    if (isWorkOrderAccepted(
       game,
       topology,
       playerId,
@@ -378,7 +392,7 @@ List<WorkOrder> suggestWorkOrders(
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  _log.d('suggestWorkOrders player=${view.playerId}');
+  orderSuggestionLog.d('suggestWorkOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <WorkOrder>[];
 
@@ -431,12 +445,14 @@ List<WorkOrder> suggestWorkOrders(
     return a.targetTileKey.compareTo(b.targetTileKey);
   });
 
-  _log.d('suggestWorkOrders player=$playerId candidates=${suggestions.length}');
-  _log.d(
+  orderSuggestionLog.d(
+    'suggestWorkOrders player=$playerId candidates=${suggestions.length}',
+  );
+  orderSuggestionLog.d(
     'suggestWorkOrders full list ${suggestions.map((o) => "${o.unitId}:${o.target}").toList()}',
   );
   if (suggestions.isEmpty) {
-    _log.w('suggestWorkOrders no candidates player=$playerId');
+    orderSuggestionLog.w('suggestWorkOrders no candidates player=$playerId');
   }
   return suggestions;
 }
@@ -471,7 +487,7 @@ void _addWorkSuggestionsForUnit({
   final ownerId = province?.ownerId;
   final tilesInProvince = tileKeysByRegion[regionId]?[provinceId] ?? const [];
 
-  _log.d(
+  orderSuggestionLog.d(
     'suggestWorkOrders unit=${unit.id} provinceId=$provinceId provinceName=${province?.displayName} ownerId=$ownerId regionId=$regionId tilesInProvince=${tilesInProvince.length}',
   );
 
@@ -588,13 +604,13 @@ void _addWorkerSuggestionsForUnit({
     final sortedVisible = visibleCandidatesSortedByWorkTarget.putIfAbsent(
       target,
       () {
-        final raw = _rawCandidateTilesForWorkTarget(
+        final raw = rawCandidateTilesForWorkTarget(
           game: game,
           playerId: playerId,
           workTarget: target,
           tileMapByRegion: tileMapByRegion,
         );
-        return _sortedVisibleWorkTargetCandidates(view, raw);
+        return sortedVisibleWorkTargetCandidates(view, raw);
       },
     );
 
@@ -610,7 +626,7 @@ void _addWorkerSuggestionsForUnit({
       devExclusiveReservedTiles: devExclusiveReservedTiles,
     );
     if (accepted != null) {
-      _log.d('suggestWorkOrders candidate=$accepted');
+      orderSuggestionLog.d('suggestWorkOrders candidate=$accepted');
       suggestions.add(accepted);
       _suggestionWorkLog(
         unitId: unit.id,
@@ -634,7 +650,7 @@ void _addWorkerSuggestionsForUnit({
       outcome: 'excluded',
       reason: reason,
     );
-    _log.d(
+    orderSuggestionLog.d(
       'suggestWorkOrders rejected target=$target unit=${unit.id} (no valid tile)',
     );
   }
@@ -661,7 +677,7 @@ WorkOrder? _firstAcceptedWorkerCandidate({
       target: target,
       targetTileKey: tk,
     );
-    if (_isWorkOrderAccepted(
+    if (isWorkOrderAccepted(
       game,
       topology,
       playerId,
@@ -738,7 +754,7 @@ void _addSpySuggestionsForUnit({
       target: kWorkTargetStealTech,
       targetTileKey: capTiles.first,
     );
-    if (_isWorkOrderAccepted(
+    if (isWorkOrderAccepted(
       game,
       topology,
       playerId,
@@ -822,7 +838,7 @@ void _addCounterSpySuggestionIfEligible({
     target: kWorkTargetCounterSpy,
     targetTileKey: tilesInProvince.first,
   );
-  if (_isWorkOrderAccepted(
+  if (isWorkOrderAccepted(
     game,
     topology,
     playerId,
@@ -907,7 +923,7 @@ void _addMerchantSuggestionsForUnit({
         target: kWorkTargetPurchaseLand,
         targetTileKey: tk,
       );
-      if (_isWorkOrderAccepted(
+      if (isWorkOrderAccepted(
         game,
         topology,
         playerId,

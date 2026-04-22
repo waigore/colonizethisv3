@@ -3,6 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -96,9 +97,10 @@ List<DiplomacyRowData> buildDiplomacyRows(
   String humanPlayerId,
   Orders currentOrders,
 ) {
+  const suggestionApi = DefaultOrderSuggestionAPI();
   final view = buildPlayerView(game, topology, humanPlayerId);
   final discoveredIds = view.diplomacyByOtherId.keys.toList();
-  final suggestions = suggestDiplomaticOrders(
+  final suggestions = suggestionApi.suggestDiplomaticOrders(
     view,
     game,
     topology,
