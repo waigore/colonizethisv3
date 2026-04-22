@@ -465,7 +465,8 @@ jobs:
       needs.app_e2e_linux.result == 'success' &&
       (contains(github.event.pull_request.labels.*.name, 'help wanted') || github.event.pull_request.changed_files > 10)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Large PRs can exceed 45m (tooling + diff reads + a long sticky-comment PATCH); cancellation fails the verdict gate.
+    timeout-minutes: 90
     permissions:
       pull-requests: write
       issues: write
