@@ -450,8 +450,7 @@ jobs:
   # OpenCode post-quality review: same workflow as Quality; runs only for same-repo PRs into dev after
   # app_e2e_linux succeeds (currently a no-op required gate), when the PR changes paths outside dot-prefixed meta dirs (see changes.opencode_scope),
   # and when either the PR has the `help wanted` label or more than 10 files changed (otherwise skipped).
-  # The model posts/updates a PR comment; the verdict job greps that comment for
-  # <!-- ct-opencode-verdict:PASS --> or <!-- ct-opencode-verdict:FAIL --> (see prompt).
+  # CI currently does not invoke OpenCode or enforce PR-comment verdicts (no-op); prompt is preserved on the job below.
   opencode_review:
     name: OpenCode review
     needs: [changes, app_e2e_linux]
@@ -477,21 +476,14 @@ jobs:
         with:
           persist-credentials: true
 
+      # OpenCode invocation disabled (flaky); gate remains defined for branch protection / re-enable.
+      # Original model: ${{ vars.OPENCODE_REVIEW_MODEL || 'opencode-go/minimax-m2.7' }} (see anomalyco/opencode/github@latest `with.model`).
       - name: Run OpenCode (PR review)
-        uses: anomalyco/opencode/github@latest
+        run: |
+          echo "OpenCode review gate is a no-op (OpenCode not invoked in CI)."
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_GO_API_KEY }}
-          GITHUB_TOKEN: ${{ github.token }}
-          # Opencode may commit local workspace artifacts before finishing.
-          # Provide explicit identity so git commit does not fail in CI.
-          GIT_AUTHOR_NAME: github-actions[bot]
-          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-          GIT_COMMITTER_NAME: github-actions[bot]
-          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-        with:
-          model: ${{ vars.OPENCODE_REVIEW_MODEL || 'opencode-go/minimax-m2.7' }}
-          use_github_token: true
-          prompt: |
+          # Preserved verbatim for restore; not passed to any runner service while disabled.
+          OPENCODE_REVIEW_PROMPT_PRESERVED: |
             You are the final OpenCode reviewer for this pull request after the app_e2e_linux quality gate passed.
 
             The repository is checked out in the workspace. Read and apply these files in full:
@@ -528,85 +520,7 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - name: Skip when OpenCode review did not run
-        if: needs.opencode_review.result == 'skipped'
+      # Verdict parsing disabled with OpenCode no-op; prior jq/sed logic preserved in git history.
+      - name: OpenCode review verdict (no-op)
         run: |
-          echo "OpenCode review did not run (skipped): not applicable for this PR run—for example wrong base branch,"
-          echo "fork PR, path-only meta changes, e2e not green, or gate scope (needs label 'help wanted' or >10 changed files per workflow)."
-          exit 0
-
-      - name: Fail when OpenCode review job failed or was cancelled
-        if: needs.opencode_review.result != 'skipped' && needs.opencode_review.result != 'success'
-        run: |
-          echo "::error::OpenCode review job ended with ${{ needs.opencode_review.result }}"
-          exit 1
-
-      - name: Enforce verdict from PR comment
-        if: needs.opencode_review.result == 'success'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          for _ in $(seq 1 36); do
-            body="$(
-              gh api "repos/${GITHUB_REPOSITORY}/issues/${{ github.event.pull_request.number }}/comments?per_page=100" \
-                --jq '
-                  [.[] | select(
-                    (.body | startswith("PASS\n"))
-                    or (.body | startswith("FAIL\n"))
-                    or (.body | startswith("<!-- ct-opencode-quality-review -->"))
-                  )]
-                  | sort_by(.id)
-                  | .[-1].body
-                  // empty
-                '
-            )"
-            if [ -n "${body}" ]; then
-              line1="$(printf '%s\n' "${body}" | sed -n '1p' | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-              line2="$(printf '%s\n' "${body}" | sed -n '2p' | tr -d '\r')"
-              line3="$(printf '%s\n' "${body}" | sed -n '3p' | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-              line4="$(printf '%s\n' "${body}" | sed -n '4p' | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-              line5="$(printf '%s\n' "${body}" | sed -n '5p' | tr -d '\r')"
-              sticky='<!-- ct-opencode-quality-review -->'
-              vpass='<!-- ct-opencode-verdict:PASS -->'
-              vfail='<!-- ct-opencode-verdict:FAIL -->'
-              line2t="$(printf '%s\n' "${line2}" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-              if [ "${line1}" = "${sticky}" ]; then
-                if [ "${line2t}" = "${vfail}" ]; then
-                  echo "::error::OpenCode verdict is FAIL — see sticky PR comment."
-                  exit 1
-                fi
-                if [ "${line2t}" = "${vpass}" ]; then
-                  echo "OpenCode verdict: PASS (legacy sticky-first layout)"
-                  exit 0
-                fi
-                echo "::error::Legacy OpenCode sticky comment: line 2 must be ${vpass} or ${vfail}."
-                exit 1
-              fi
-              if [ "${line1}" != PASS ] && [ "${line1}" != FAIL ]; then
-                echo "::error::OpenCode sticky comment line 1 must be exactly PASS or FAIL (got: '${line1}'). Re-run review after updating the prompt format."
-                exit 1
-              fi
-              if [ -n "$(printf '%s' "${line2}" | tr -d '\n' | tr -d '[:space:]')" ] || [ -n "$(printf '%s' "${line5}" | tr -d '\n' | tr -d '[:space:]')" ]; then
-                echo "::error::OpenCode sticky comment lines 2 and 5 must be blank (see workflow prompt)."
-                exit 1
-              fi
-              if [ "${line3}" != "${sticky}" ]; then
-                echo "::error::OpenCode sticky comment line 3 must be exactly ${sticky}"
-                exit 1
-              fi
-              if [ "${line1}" = FAIL ] && [ "${line4}" = "${vfail}" ]; then
-                echo "::error::OpenCode verdict is FAIL — see sticky PR comment."
-                exit 1
-              fi
-              if [ "${line1}" = PASS ] && [ "${line4}" = "${vpass}" ]; then
-                echo "OpenCode verdict: PASS"
-                exit 0
-              fi
-              echo "::error::OpenCode line 1 (${line1}) does not match line 4 verdict marker (expected ${vpass} or ${vfail})."
-              exit 1
-            fi
-            sleep 5
-          done
-          echo "::error::Timed out waiting for a sticky OpenCode comment matching the PASS/FAIL layout (see workflow prompt)."
-          exit 1
+          echo "OpenCode review verdict gate is a no-op. opencode_review result: ${{ needs.opencode_review.result }}"
