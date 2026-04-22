@@ -510,6 +510,7 @@ jobs:
     if: >-
       github.base_ref == 'dev' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'cursor[bot]' &&
       needs.changes.result == 'success' &&
       needs.changes.outputs.opencode_scope == 'true' &&
       needs.app_e2e_linux.result == 'success' &&
