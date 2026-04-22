@@ -1,11 +1,9 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../world/army_ids.dart';
 import '../dossier/event_dialogue.dart';
 import '../dossier/evidence_rules.dart';
 import '../economy/build_cost.dart';
@@ -18,64 +16,10 @@ import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/tile_control.dart';
 import '../world/unit_lookup.dart';
-
-part 'orders_application_work_phase.dart';
-part 'orders_application_completed_work.dart';
-part 'orders_application_build_phase.dart';
-
-final _log = packageLogger();
-
-void _appendMilitaryRegimentToArmy(
-  _BuildWorkState state,
-  Player player,
-  String spawnProvinceId,
-  String newUnitId,
-) {
-  final cap = player.capitalProvinceId;
-  final atHome =
-      cap != null &&
-      (spawnProvinceId == cap ||
-          (ProvinceId.regionIdFrom(spawnProvinceId) ==
-                  ProvinceId.regionIdFrom(cap) &&
-              ProvinceId.localIdFrom(spawnProvinceId) ==
-                  ProvinceId.localIdFrom(cap)));
-  final armyId = atHome
-      ? homeArmyIdFor(player.id)
-      : fieldArmyIdFor(player.id, spawnProvinceId);
-  final ws = state.game.worldState;
-  final regionId = ProvinceId.regionIdFrom(spawnProvinceId);
-  final idx = ws.armies.indexWhere(
-    (a) => a.id == armyId && a.ownerId == player.id,
-  );
-  if (idx >= 0) {
-    final a = ws.armies[idx];
-    final updated = a.copyWith(
-      regimentUnitIds: [...a.regimentUnitIds, newUnitId],
-    );
-    final next = List<Army>.from(ws.armies)..[idx] = updated;
-    state.game = state.game.copyWith(worldState: ws.copyWith(armies: next));
-    return;
-  }
-  final stationed = atHome ? cap : spawnProvinceId;
-  final newArmy = Army(
-    id: armyId,
-    ownerId: player.id,
-    regionId: regionId,
-    stationedProvinceId: stationed,
-    regimentUnitIds: [newUnitId],
-    isHomeArmy: atHome,
-  );
-  final next = [...ws.armies, newArmy]..sort((a, b) => a.id.compareTo(b.id));
-  state.game = state.game.copyWith(worldState: ws.copyWith(armies: next));
-}
-
-/// Counter-spy: per-turn kill chance = (friendlySpies * [counterSpyKillChancePercentPerSpy])%,
-/// capped at [counterSpyKillChanceCapPercent]%. SPEC: work order resolution.
-const int counterSpyKillChancePercentPerSpy = 5;
-const int counterSpyKillChanceCapPercent = 30;
-
-/// Per-turn chance (0–1) that a spy on steal_tech work successfully steals one tech from target.
-const double spyTechStealChance = 0.08;
+import 'orders_application_build_phase.dart';
+import 'orders_application_completed_work.dart';
+import 'orders_application_context.dart';
+import 'orders_application_work_phase.dart';
 
 /// Order application helpers for build and work phases.
 /// SPEC/program/orders.md
@@ -120,51 +64,6 @@ Game clearUnitCurrentWork(Game game, String unitId) {
   }
 }
 
-/// Mutable work-phase and per-turn scratch maps/lists (WorkState per #1618).
-class _WorkOrderState {
-  _WorkOrderState({
-    required this.oldUnitsById,
-    required this.newUnitsById,
-    required this.tileState,
-    required this.visibilityByTile,
-    required this.portsByProvinceSeaboard,
-    required this.purchasedTilesByTileKey,
-    required this.oldProvinces,
-    required this.newProvinces,
-  });
-
-  final Map<String, Unit> oldUnitsById;
-  final Map<String, Unit> newUnitsById;
-  TileMapState tileState;
-  Map<String, Map<String, String>> visibilityByTile;
-  final Map<String, String> portsByProvinceSeaboard;
-  final Map<String, String> purchasedTilesByTileKey;
-  List<Province> oldProvinces;
-  List<Province> newProvinces;
-  final List<Player> updatedPlayers = [];
-}
-
-/// Session context for applyBuildAndWorkOrders: game mutation, order maps, map topology.
-class _BuildWorkState {
-  _BuildWorkState({
-    required this.game,
-    required this.buildOrders,
-    required this.workOrders,
-    this.topology,
-    this.tileMapByRegion,
-    this.onDialogue,
-    required this.work,
-  });
-
-  Game game;
-  final Map<String, List<BuildUnitOrder>> buildOrders;
-  final Map<String, List<WorkOrder>> workOrders;
-  final MapTopology? topology;
-  final Map<String, TileMapResult>? tileMapByRegion;
-  final void Function(DialogueEvent)? onDialogue;
-  final _WorkOrderState work;
-}
-
 /// Applies BuildUnitOrder and WorkOrder for all players in [game].
 ///
 /// When [topology] is provided, ship builds spawn in home fleet.
@@ -187,7 +86,7 @@ Game applyBuildAndWorkOrders(
     return game;
   }
 
-  final work = _WorkOrderState(
+  final work = WorkOrderState(
     oldUnitsById: Map<String, Unit>.from(
       unitsByIdFromRegion(game.worldState.oldWorld),
     ),
@@ -209,7 +108,7 @@ Game applyBuildAndWorkOrders(
     oldProvinces: List<Province>.from(game.worldState.oldWorld.provinces),
     newProvinces: List<Province>.from(game.worldState.newWorld.provinces),
   );
-  final state = _BuildWorkState(
+  final state = BuildWorkState(
     game: game,
     buildOrders: buildOrders,
     workOrders: workOrders,
@@ -219,9 +118,9 @@ Game applyBuildAndWorkOrders(
     work: work,
   );
 
-  _runBuildPhase(state);
+  runBuildPhase(state);
 
-  void applyExploreCompletion(_BuildWorkState s, Unit u, String regionId) {
+  void applyExploreCompletion(BuildWorkState s, Unit u, String regionId) {
     final cw = u.currentWork!;
     final parts = cw.tileKey.split('|');
     final regionIdFromWork = parts.isNotEmpty ? parts[0] : regionId;
@@ -250,13 +149,13 @@ Game applyBuildAndWorkOrders(
   }
 
   void applyCompletedWorkTarget(
-    _BuildWorkState s,
+    BuildWorkState s,
     Unit u,
     CurrentWork cw,
     List<Province> Function() getProvinces,
     void Function(List<Province>) setProvinces,
   ) {
-    _dispatchCompletedWorkTarget(
+    dispatchCompletedWorkTarget(
       s,
       u,
       cw,
@@ -267,7 +166,7 @@ Game applyBuildAndWorkOrders(
   }
 
   void processWorkUnits(
-    _BuildWorkState s,
+    BuildWorkState s,
     Map<String, Unit> unitsById,
     List<Province> Function() getProvinces,
     void Function(List<Province>) setProvinces,
@@ -295,7 +194,7 @@ Game applyBuildAndWorkOrders(
           clearOriginTileKey: true,
           clearAssignedTileKey: true,
         );
-        _log.d(
+        ordersApplicationLog.d(
           'work cancelled unit=${u.id} reason=tile no longer owned tileKey=${cw.tileKey}',
         );
         continue;
@@ -313,7 +212,7 @@ Game applyBuildAndWorkOrders(
             clearOriginTileKey: true,
             clearAssignedTileKey: true,
           );
-          _log.d(
+          ordersApplicationLog.d(
             'work cancelled unit=${u.id} reason=tile no longer under control tileKey=${cw.tileKey}',
           );
           continue;
@@ -360,7 +259,7 @@ Game applyBuildAndWorkOrders(
             }
           }
           if (removed?.currentWork != null) {
-            _log.d('work cancelled unit=$toRemove reason=unit dead');
+            ordersApplicationLog.d('work cancelled unit=$toRemove reason=unit dead');
           }
           unitsById.remove(toRemove);
         }
@@ -437,7 +336,7 @@ Game applyBuildAndWorkOrders(
     }
   }
 
-  _runWorkPhase(state, applyExploreCompletion, applyCompletedWorkTarget);
+  runWorkPhase(state, applyExploreCompletion, applyCompletedWorkTarget);
 
   processWorkUnits(
     state,

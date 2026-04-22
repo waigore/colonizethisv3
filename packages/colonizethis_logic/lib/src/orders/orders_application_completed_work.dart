@@ -1,12 +1,13 @@
-part of 'orders_application.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-String _buildUnitId(
-  String playerId,
-  BuildUnitOrder order,
-  String spawnProvinceId,
-) {
-  return '${playerId}_${order.unitType}_$spawnProvinceId';
-}
+import '../constants.dart';
+import '../dossier/event_dialogue.dart';
+import '../dossier/evidence_rules.dart';
+import '../economy/build_cost.dart';
+import '../world/naval.dart';
+import 'build_rail_work_rules.dart';
+import 'orders_application_context.dart';
 
 /// Propagates road transport level to adjacent capital/port tiles.
 ///
@@ -75,7 +76,7 @@ void _propagateRoadToAdjacentCapitalOrPort({
     final isPort = portTileKeys.contains(adjacentTileKey);
 
     if (isCapital || isPort) {
-      _log.d(
+      ordersApplicationLog.d(
         'build_road propagating level $nextLevel to adjacent ${isCapital ? "capital" : "port"} tile $adjacentTileKey',
       );
       final currentLevel = tileState.roadLevel(adjacentTileKey);
@@ -89,23 +90,23 @@ void _propagateRoadToAdjacentCapitalOrPort({
 
 typedef _CompletedWorkHandler =
     void Function(
-      _BuildWorkState s,
+      BuildWorkState s,
       Unit u,
       CurrentWork cw,
       List<Province> Function() getProvinces,
       void Function(List<Province>) setProvinces,
-      void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+      void Function(BuildWorkState, Unit, String) applyExploreCompletion,
     );
 
-void _dispatchCompletedWorkTarget(
-  _BuildWorkState s,
+void dispatchCompletedWorkTarget(
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
   void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  void Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
-  _log.d(
+  ordersApplicationLog.d(
     'work completed unit=${u.id} workTarget=${cw.workTarget} tileKey=${cw.tileKey}',
   );
   final handler = _completedWorkTargetHandlers[cw.workTarget];
@@ -113,12 +114,12 @@ void _dispatchCompletedWorkTarget(
 }
 
 void _completedWorkBuildImprovement(
-  _BuildWorkState s,
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
   void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  void Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final level = s.work.tileState.improvementLevel(cw.tileKey);
   s.work.tileState = s.work.tileState.setImprovement(
@@ -157,12 +158,12 @@ void _completedWorkBuildImprovement(
 }
 
 void _completedWorkUpgradeTown(
-  _BuildWorkState s,
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
   void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  void Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final provinces = getProvinces();
   final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
@@ -178,23 +179,23 @@ void _completedWorkUpgradeTown(
 }
 
 void _completedWorkExplore(
-  _BuildWorkState s,
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
   void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  void Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   applyExploreCompletion(s, u, ProvinceId.regionIdFrom(u.locationProvinceId));
 }
 
 void _completedWorkBuildRoad(
-  _BuildWorkState s,
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
   void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  void Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final roadLevel = s.work.tileState.roadLevel(cw.tileKey);
   final player = s.game.playerById(u.ownerId);
@@ -218,12 +219,12 @@ void _completedWorkBuildRoad(
 }
 
 void _completedWorkBuildPort(
-  _BuildWorkState s,
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
   void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  void Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   if (s.topology == null) {
     return;
@@ -248,12 +249,12 @@ void _completedWorkBuildPort(
 }
 
 void _completedWorkBuildFort(
-  _BuildWorkState s,
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
   void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  void Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final provinces = getProvinces();
   final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
@@ -284,12 +285,12 @@ void _completedWorkBuildFort(
 }
 
 void _completedWorkBuildRail(
-  _BuildWorkState s,
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
   void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  void Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final player = s.game.playerById(u.ownerId);
   final roadLevel = s.work.tileState.roadLevel(cw.tileKey);
@@ -302,17 +303,17 @@ void _completedWorkBuildRail(
   if (reason == null) {
     s.work.tileState = s.work.tileState.setRoadLevel(cw.tileKey, 4);
   } else {
-    _log.d('build_rail completion skipped unit=${u.id} reason=$reason');
+    ordersApplicationLog.d('build_rail completion skipped unit=${u.id} reason=$reason');
   }
 }
 
 void _completedWorkNoop(
-  _BuildWorkState s,
+  BuildWorkState s,
   Unit u,
   CurrentWork cw,
   List<Province> Function() getProvinces,
   void Function(List<Province>) setProvinces,
-  void Function(_BuildWorkState, Unit, String) applyExploreCompletion,
+  void Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {}
 
 /// Map-based work completion (Refs #1531). Unknown targets no-op.

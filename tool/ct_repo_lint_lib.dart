@@ -289,6 +289,27 @@ List<RepoLintRule> loadRepoLintManifest(
 /// Resolves a comma-separated list of changed `*.dart` paths for PR workflows,
 /// matching `.github/workflows/quality.yml` (three-dot diff vs `origin/$GITHUB_BASE_REF`).
 String? resolvePrChangedDartFilesCsv() {
+  final explicitBaseSha = Platform.environment['CT_REPO_LINT_BASE_SHA'];
+  if (explicitBaseSha != null && explicitBaseSha.trim().isNotEmpty) {
+    final normalizedBaseSha = explicitBaseSha.trim();
+    final fetchExplicit = Process.runSync(
+      'git',
+      ['fetch', '--no-tags', '--depth=1', 'origin', normalizedBaseSha],
+      workingDirectory: Directory.current.path,
+      runInShell: false,
+    );
+    if (fetchExplicit.exitCode == 0) {
+      final csv = _resolveChangedDartFilesCsvForBaseSha(normalizedBaseSha);
+      if (csv != null) {
+        return csv;
+      }
+    }
+    final csv = _resolveChangedDartFilesCsvForLeft(normalizedBaseSha);
+    if (csv != null) {
+      return csv;
+    }
+  }
+
   final baseRef = Platform.environment['GITHUB_BASE_REF'];
   if (baseRef == null || baseRef.isEmpty) {
     return null;
@@ -300,14 +321,59 @@ String? resolvePrChangedDartFilesCsv() {
     workingDirectory: Directory.current.path,
     runInShell: false,
   );
-  if (fetch.exitCode != 0) {
+  final primaryLeft = 'origin/$baseRef';
+  if (fetch.exitCode == 0) {
+    final csv = _resolveChangedDartFilesCsvForLeft(primaryLeft);
+    if (csv != null) {
+      return csv;
+    }
+  }
+
+  // CI may check out a merge commit and/or omit remote refs in shallow clones.
+  // Fall back to the first parent when origin/<base> cannot be resolved.
+  return _resolveChangedDartFilesCsvForLeft('HEAD^');
+}
+
+String? _resolveChangedDartFilesCsvForBaseSha(String baseSha) {
+  final diff = Process.runSync(
+    'git',
+    ['diff', '--name-only', '$baseSha..HEAD', '--', '*.dart'],
+    workingDirectory: Directory.current.path,
+    runInShell: false,
+  );
+  if (diff.exitCode != 0) {
+    return null;
+  }
+  final lines = diff.stdout
+      .toString()
+      .split('\n')
+      .map((l) => l.trim())
+      .where((l) => l.isNotEmpty)
+      .toList();
+  if (lines.isEmpty) {
+    return null;
+  }
+  return lines.join(',');
+}
+
+String? _resolveChangedDartFilesCsvForLeft(String leftRef) {
+  final mergeBase = Process.runSync(
+    'git',
+    ['merge-base', leftRef, 'HEAD'],
+    workingDirectory: Directory.current.path,
+    runInShell: false,
+  );
+  if (mergeBase.exitCode != 0) {
+    return null;
+  }
+  final mergeBaseSha = mergeBase.stdout.toString().trim();
+  if (mergeBaseSha.isEmpty) {
     return null;
   }
 
-  final left = 'origin/$baseRef';
   final diff = Process.runSync(
     'git',
-    ['diff', '--name-only', '$left...HEAD', '--', '*.dart'],
+    ['diff', '--name-only', '$mergeBaseSha..HEAD', '--', '*.dart'],
     workingDirectory: Directory.current.path,
     runInShell: false,
   );
@@ -620,7 +686,10 @@ int? _tryRunDartRuleInProcess({
     case 'repo.asset_path_constants':
       return runCheckAssetPathConstants(repoRoot);
     case 'repo.disallowed_ast_patterns':
-      return runCheckDisallowedAstPatterns(repoRoot);
+      return runCheckDisallowedAstPatterns(
+        repoRoot,
+        incrementalRelativeDartPaths: incrementalPaths,
+      );
     case 'repo.control_flow_nesting_depth':
       return runCheckControlFlowNestingDepth(repoRoot);
     case 'repo.repeated_magic_numbers':

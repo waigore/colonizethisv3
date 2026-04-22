@@ -1,6 +1,14 @@
-part of 'diplomacy_resolver.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-Game _appendDiplomaticEvent(
+import '../ai/ai_control.dart';
+import '../constants.dart';
+import '../dossier/evidence_rules.dart';
+import '../turn/turn_resolution_result.dart';
+import 'diplomacy_relation_lookup.dart';
+import 'diplomacy_resolver.dart';
+
+Game appendDiplomaticEvent(
   Game game,
   int turn,
   DiplomaticEventType type,
@@ -51,8 +59,8 @@ OvertureDecision? _findDecision(
   return null;
 }
 
-class _OverturePaymentsResult {
-  _OverturePaymentsResult(this.game, [this.pendingOvertures]);
+class OverturePaymentsResult {
+  OverturePaymentsResult(this.game, [this.pendingOvertures]);
   final Game game;
   final List<OvertureOffer>? pendingOvertures;
 }
@@ -71,7 +79,7 @@ bool _aiGpAccepts(Game game, String offererGpId, String targetGpId) {
   return score >= relationScoreNeutral;
 }
 
-_OverturePaymentsResult _processOverturePayments(
+OverturePaymentsResult processOverturePayments(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn, {
@@ -108,7 +116,7 @@ _OverturePaymentsResult _processOverturePayments(
           break;
         }
       }
-      final prevStage = _previousStage(stage);
+      final prevStage = previousStage(stage);
       final atPrevStage =
           (existing == null && prevStage == OvertureStage.none) ||
           (existing != null && existing.stage == prevStage);
@@ -159,7 +167,7 @@ _OverturePaymentsResult _processOverturePayments(
             ),
           ];
           state = state.copyWith(players: players, overtureStates: overtures);
-          return _OverturePaymentsResult(state, pending);
+          return OverturePaymentsResult(state, pending);
         } else {
           accepted = _aiGpAccepts(state, gpId, targetId);
         }
@@ -167,7 +175,7 @@ _OverturePaymentsResult _processOverturePayments(
 
       if (!accepted) {
         if (targetIsGp) {
-          state = _appendDiplomaticEvent(
+          state = appendDiplomaticEvent(
             state,
             turn,
             DiplomaticEventType.overtureRejected,
@@ -207,7 +215,7 @@ _OverturePaymentsResult _processOverturePayments(
         ];
       }
       state = state.copyWith(players: players, overtureStates: overtures);
-      state = _appendDiplomaticEvent(
+      state = appendDiplomaticEvent(
         state,
         turn,
         DiplomaticEventType.overtureAccepted,
@@ -217,15 +225,15 @@ _OverturePaymentsResult _processOverturePayments(
         overtureStage: stage,
         wasAiInitiator: isAiControlledForEvidence(state, gpId),
       );
-      _diploLog.i('diplomacy overture $gpId -> $targetId $stage (accepted)');
+      diploLog.i('diplomacy overture $gpId -> $targetId $stage (accepted)');
     }
   }
 
   state = state.copyWith(players: players, overtureStates: overtures);
-  return _OverturePaymentsResult(state);
+  return OverturePaymentsResult(state);
 }
 
-OvertureStage _previousStage(OvertureStage stage) {
+OvertureStage previousStage(OvertureStage stage) {
   switch (stage) {
     case OvertureStage.tradeConsulate:
       return OvertureStage.none;
@@ -240,7 +248,7 @@ OvertureStage _previousStage(OvertureStage stage) {
   }
 }
 
-Game _advanceOvertures(Game game, int turn) {
+Game advanceOvertures(Game game, int turn) {
   // Spec: "complete the turn after payment" - paid overtures are already advanced in step 1.
   // No additional turn delays in Phase 4 minimal implementation.
   return game;
