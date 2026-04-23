@@ -863,9 +863,6 @@ allowed_over_20:
     symbol: _applyTownRuleConnectivityClosure
     max_measured_lines: 44
   - file: packages/colonizethis_logic/lib/src/world/connectivity_resolver.dart
-    symbol: _connectedTilesForPlayer
-    max_measured_lines: 219
-  - file: packages/colonizethis_logic/lib/src/world/connectivity_resolver.dart
     symbol: _seaZonesReachableBySeaPath
     max_measured_lines: 29
   - file: packages/colonizethis_logic/lib/src/world/connectivity_resolver.dart
