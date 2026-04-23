@@ -475,9 +475,6 @@ allowed_over_20:
   - file: packages/colonizethis_logic/lib/src/orders/validators/work_order_validator.dart
     symbol: WorkOrderValidator._civilianWorkAllowedInMinorTribeProvince
     max_measured_lines: 23
-  - file: packages/colonizethis_logic/lib/src/orders/validators/work_order_validator.dart
-    symbol: WorkOrderValidator.validate
-    max_measured_lines: 210
   - file: packages/colonizethis_logic/lib/src/setup/capital_choice.dart
     symbol: _isTileAdjacentToSea
     max_measured_lines: 21
