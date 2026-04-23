@@ -94,17 +94,20 @@ Map<String, Map<String, String>> _buildCoordToKeyByRegion(
     final regionId = regionEntry.key;
     final byProvince = regionEntry.value;
     final coordToTileKey = <String, String>{};
-    for (final list in byProvince.values) {
-      for (final tk in list) {
-        final parts = tk.split('|');
-        if (parts.length >= 4) {
-          coordToTileKey['${parts[2]}|${parts[3]}'] = tk;
-        }
-      }
+    for (final tileKey in byProvince.values.expand((tiles) => tiles)) {
+      final coordKey = _coordKeyFromTileKey(tileKey);
+      if (coordKey == null) continue;
+      coordToTileKey[coordKey] = tileKey;
     }
     coordToKey[regionId] = coordToTileKey;
   }
   return coordToKey;
+}
+
+String? _coordKeyFromTileKey(String tileKey) {
+  final parts = tileKey.split('|');
+  if (parts.length < 4) return null;
+  return '${parts[2]}|${parts[3]}';
 }
 
 Map<String, int> _bfsDistances({
