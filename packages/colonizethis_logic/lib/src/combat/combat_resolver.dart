@@ -249,73 +249,29 @@ Game resolveBattleContext(
         .where((id) => !outcome.defenderCasualties.contains(id))
         .toList();
 
-    switch (outcome.result) {
-      case EngagementResult.attackerVictory:
-        _incrementGeneralMedals(
-          generalsById: generalsById,
-          generalId: attacker.assignedGeneralId,
-        );
-        survivingAttackerFactionId = attacker.side.factionId;
-        defenderFactionId = attacker.side.factionId;
-        provinceOwnerId = attacker.side.factionId;
-        currentDefenderGeneralId = attacker.assignedGeneralId;
-        currentDefenderMedals =
-            attacker.side.generalMedals +
-            (attacker.assignedGeneralId != null
-                ? kGeneralMedalsGainedOnBattleWin
-                : 0);
-        if (currentDefenderMedals > kGeneralMedalsMax) {
-          currentDefenderMedals = kGeneralMedalsMax;
-        }
-        break;
-      case EngagementResult.defenderVictory:
-        _incrementGeneralMedals(
-          generalsById: generalsById,
-          generalId: currentDefenderGeneralId,
-        );
-        if (currentDefenderGeneralId != null) {
-          final updated = generalsById[currentDefenderGeneralId];
-          if (updated != null) currentDefenderMedals = updated.medals;
-        }
-        survivingAttackerFactionId = null;
-        break;
-      case EngagementResult.stalemate:
-        break;
-      case EngagementResult.mutualAnnihilation:
-        defenderFactionId = provinceOwnerId;
-        survivingAttackerFactionId = null;
-        final remainingAttackers = attackerSidesWithMedals
-            .skip(attackerIndex + 1)
-            .toList();
-        if (remainingAttackers.isNotEmpty) {
-          final recoverCount =
-              (initialDefenderCount * kGarrisonRecoveryFraction).ceil().clamp(
-                1,
-                initialDefenderCount,
-              );
-          final recoveryType = garrisonRecoveryRegimentTypeForEra(
-            defenderEffectiveLevel,
-          );
-          for (
-            var i = 0;
-            i < recoverCount && defenderUnitIds.length < recoverCount;
-            i++
-          ) {
-            final type = recoveryType;
-            final id = '${kRecoveryUnitPrefix}${ctx.provinceId}_$i';
-            defenderUnitIds.add(id);
-            final stubUnit = Unit(
-              id: id,
-              type: type,
-              ownerId: provinceOwnerId,
-              locationProvinceId: ctx.provinceId,
-              medals: 0,
-            );
-            unitsById[id] = stubUnit;
-          }
-        }
-        break;
-    }
+    final updatedState = _applyEngagementOutcomeState(
+      outcomeResult: outcome.result,
+      attacker: attacker,
+      currentDefenderGeneralId: currentDefenderGeneralId,
+      currentDefenderMedals: currentDefenderMedals,
+      provinceOwnerId: provinceOwnerId,
+      defenderFactionId: defenderFactionId,
+      survivingAttackerFactionId: survivingAttackerFactionId,
+      defenderUnitIds: defenderUnitIds,
+      attackerIndex: attackerIndex,
+      attackerSidesWithMedals: attackerSidesWithMedals,
+      initialDefenderCount: initialDefenderCount,
+      defenderEffectiveLevel: defenderEffectiveLevel,
+      generalsById: generalsById,
+      unitsById: unitsById,
+      ctx: ctx,
+    );
+    defenderFactionId = updatedState.defenderFactionId;
+    provinceOwnerId = updatedState.provinceOwnerId;
+    survivingAttackerFactionId = updatedState.survivingAttackerFactionId;
+    currentDefenderGeneralId = updatedState.currentDefenderGeneralId;
+    currentDefenderMedals = updatedState.currentDefenderMedals;
+    defenderUnitIds = updatedState.defenderUnitIds;
   }
 
   final post = _buildPostBattleRegion(
@@ -341,6 +297,160 @@ Game resolveBattleContext(
     'casualtiesApplied=${allCasualties.length} ownerAfter=$ownerAfter',
   );
 
+  return _buildResolvedBattleGame(
+    game: game,
+    ctx: ctx,
+    post: post,
+    survivingAttackerFactionId: survivingAttackerFactionId,
+    generalsById: generalsById,
+    ledger: ledger,
+  );
+}
+
+({
+  String defenderFactionId,
+  String provinceOwnerId,
+  String? survivingAttackerFactionId,
+  String? currentDefenderGeneralId,
+  int currentDefenderMedals,
+  List<String> defenderUnitIds,
+})
+_applyEngagementOutcomeState({
+  required EngagementResult outcomeResult,
+  required _AttackingSideInBattle attacker,
+  required String? currentDefenderGeneralId,
+  required int currentDefenderMedals,
+  required String provinceOwnerId,
+  required String defenderFactionId,
+  required String? survivingAttackerFactionId,
+  required List<String> defenderUnitIds,
+  required int attackerIndex,
+  required List<_AttackingSideInBattle> attackerSidesWithMedals,
+  required int initialDefenderCount,
+  required int defenderEffectiveLevel,
+  required Map<String, General> generalsById,
+  required Map<String, Unit> unitsById,
+  required BattleContext ctx,
+}) {
+  switch (outcomeResult) {
+    case EngagementResult.attackerVictory:
+      _incrementGeneralMedals(
+        generalsById: generalsById,
+        generalId: attacker.assignedGeneralId,
+      );
+      final medalsAfterWin =
+          attacker.side.generalMedals +
+          (attacker.assignedGeneralId != null
+              ? kGeneralMedalsGainedOnBattleWin
+              : 0);
+      return (
+        defenderFactionId: attacker.side.factionId,
+        provinceOwnerId: attacker.side.factionId,
+        survivingAttackerFactionId: attacker.side.factionId,
+        currentDefenderGeneralId: attacker.assignedGeneralId,
+        currentDefenderMedals: medalsAfterWin > kGeneralMedalsMax
+            ? kGeneralMedalsMax
+            : medalsAfterWin,
+        defenderUnitIds: defenderUnitIds,
+      );
+    case EngagementResult.defenderVictory:
+      _incrementGeneralMedals(
+        generalsById: generalsById,
+        generalId: currentDefenderGeneralId,
+      );
+      var updatedMedals = currentDefenderMedals;
+      if (currentDefenderGeneralId != null) {
+        final updatedGeneral = generalsById[currentDefenderGeneralId];
+        if (updatedGeneral != null) {
+          updatedMedals = updatedGeneral.medals;
+        }
+      }
+      return (
+        defenderFactionId: defenderFactionId,
+        provinceOwnerId: provinceOwnerId,
+        survivingAttackerFactionId: null,
+        currentDefenderGeneralId: currentDefenderGeneralId,
+        currentDefenderMedals: updatedMedals,
+        defenderUnitIds: defenderUnitIds,
+      );
+    case EngagementResult.stalemate:
+      return (
+        defenderFactionId: defenderFactionId,
+        provinceOwnerId: provinceOwnerId,
+        survivingAttackerFactionId: survivingAttackerFactionId,
+        currentDefenderGeneralId: currentDefenderGeneralId,
+        currentDefenderMedals: currentDefenderMedals,
+        defenderUnitIds: defenderUnitIds,
+      );
+    case EngagementResult.mutualAnnihilation:
+      final updatedDefenderIds = _recoverDefenderGarrisonIfNeeded(
+        attackerIndex: attackerIndex,
+        attackerSidesWithMedals: attackerSidesWithMedals,
+        initialDefenderCount: initialDefenderCount,
+        defenderEffectiveLevel: defenderEffectiveLevel,
+        defenderUnitIds: defenderUnitIds,
+        provinceOwnerId: provinceOwnerId,
+        unitsById: unitsById,
+        provinceId: ctx.provinceId,
+      );
+      return (
+        defenderFactionId: provinceOwnerId,
+        provinceOwnerId: provinceOwnerId,
+        survivingAttackerFactionId: null,
+        currentDefenderGeneralId: currentDefenderGeneralId,
+        currentDefenderMedals: currentDefenderMedals,
+        defenderUnitIds: updatedDefenderIds,
+      );
+  }
+}
+
+List<String> _recoverDefenderGarrisonIfNeeded({
+  required int attackerIndex,
+  required List<_AttackingSideInBattle> attackerSidesWithMedals,
+  required int initialDefenderCount,
+  required int defenderEffectiveLevel,
+  required List<String> defenderUnitIds,
+  required String provinceOwnerId,
+  required Map<String, Unit> unitsById,
+  required String provinceId,
+}) {
+  final remainingAttackers = attackerSidesWithMedals.skip(attackerIndex + 1);
+  if (remainingAttackers.isEmpty) {
+    return defenderUnitIds;
+  }
+  final recoverCount = (initialDefenderCount * kGarrisonRecoveryFraction)
+      .ceil()
+      .clamp(1, initialDefenderCount);
+  final recoveryType = garrisonRecoveryRegimentTypeForEra(
+    defenderEffectiveLevel,
+  );
+  final updatedDefenderIds = List<String>.from(defenderUnitIds);
+  for (
+    var i = 0;
+    i < recoverCount && updatedDefenderIds.length < recoverCount;
+    i++
+  ) {
+    final id = '${kRecoveryUnitPrefix}${provinceId}_$i';
+    updatedDefenderIds.add(id);
+    unitsById[id] = Unit(
+      id: id,
+      type: recoveryType,
+      ownerId: provinceOwnerId,
+      locationProvinceId: provinceId,
+      medals: 0,
+    );
+  }
+  return updatedDefenderIds;
+}
+
+Game _buildResolvedBattleGame({
+  required Game game,
+  required BattleContext ctx,
+  required ({RegionData region, bool provinceChangedOwner}) post,
+  required String? survivingAttackerFactionId,
+  required Map<String, General> generalsById,
+  required CombatPhaseGeneralLedger ledger,
+}) {
   var newWorldState = ctx.regionId == kRegionOldWorld
       ? game.worldState.copyWith(oldWorld: post.region)
       : game.worldState.copyWith(newWorld: post.region);
@@ -374,10 +484,9 @@ Game resolveBattleContext(
     ctx,
     post.provinceChangedOwner,
   );
-  result = result.copyWith(
+  return result.copyWith(
     worldState: reconcileArmiesAfterUnitsChanged(result.worldState, result),
   );
-  return result;
 }
 
 /// Builds post-battle region state: applies casualties, garrison recovery,
