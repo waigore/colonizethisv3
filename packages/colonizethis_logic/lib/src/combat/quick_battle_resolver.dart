@@ -105,7 +105,7 @@ QuickBattleResult resolveQuickBattle(
       defGroups = _removeCasualties(defGroups, defLoss);
 
       if (_totalUnitCount(defGroups) <= 0) {
-        final result = _finishResult(
+        return _finishAndLogQuickBattleResult(
           winner: QuickBattleWinner.attacker,
           attackerCasualties: attCasualties,
           defenderCasualties: defCasualties,
@@ -114,11 +114,6 @@ QuickBattleResult resolveQuickBattle(
           mutableGuns: mutableGuns,
           useVirtualEmplaced: useVirtualEmplaced,
         );
-        _qbLog.d(
-          'quick_battle end winner=${result.winner.name} '
-          'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
-        );
-        return result;
       }
 
       final attLossFraction = _attackerLossFractionFromDefenderStrike(
@@ -148,7 +143,7 @@ QuickBattleResult resolveQuickBattle(
       attGroups = _removeCasualties(attGroups, attLoss);
 
       if (_totalUnitCount(attGroups) <= 0) {
-        final result = _finishResult(
+        return _finishAndLogQuickBattleResult(
           winner: QuickBattleWinner.defender,
           attackerCasualties: attCasualties,
           defenderCasualties: defCasualties,
@@ -157,11 +152,6 @@ QuickBattleResult resolveQuickBattle(
           mutableGuns: mutableGuns,
           useVirtualEmplaced: useVirtualEmplaced,
         );
-        _qbLog.d(
-          'quick_battle end winner=${result.winner.name} '
-          'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
-        );
-        return result;
       }
 
       final defLossFraction = _defenderLossFractionFromAttackerStrike(
@@ -191,7 +181,7 @@ QuickBattleResult resolveQuickBattle(
     }
 
     if (_totalUnitCount(defGroups) <= 0) {
-      final result = _finishResult(
+      return _finishAndLogQuickBattleResult(
         winner: QuickBattleWinner.attacker,
         attackerCasualties: attCasualties,
         defenderCasualties: defCasualties,
@@ -200,14 +190,9 @@ QuickBattleResult resolveQuickBattle(
         mutableGuns: mutableGuns,
         useVirtualEmplaced: useVirtualEmplaced,
       );
-      _qbLog.d(
-        'quick_battle end winner=${result.winner.name} '
-        'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
-      );
-      return result;
     }
     if (_totalUnitCount(attGroups) <= 0) {
-      final result = _finishResult(
+      return _finishAndLogQuickBattleResult(
         winner: QuickBattleWinner.defender,
         attackerCasualties: attCasualties,
         defenderCasualties: defCasualties,
@@ -216,26 +201,19 @@ QuickBattleResult resolveQuickBattle(
         mutableGuns: mutableGuns,
         useVirtualEmplaced: useVirtualEmplaced,
       );
-      _qbLog.d(
-        'quick_battle end winner=${result.winner.name} '
-        'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
-      );
-      return result;
     }
   }
 
   final finalAttStr =
       _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain) *
       input.attackerLeaderMultiplier;
-  var finalDefStr =
+  final finalDefStr =
       _effectiveStrength(defGroups, input.defenderDeployment.laneTerrain) *
-      input.defenderLeaderMultiplier;
-  if (useVirtualEmplaced) {
-    finalDefStr += _aliveGunStrengthSum(mutableGuns);
-  }
+          input.defenderLeaderMultiplier +
+      (useVirtualEmplaced ? _aliveGunStrengthSum(mutableGuns) : 0.0);
 
   if (finalAttStr > finalDefStr * 1.2) {
-    final result = _finishResult(
+    return _finishAndLogQuickBattleResult(
       winner: QuickBattleWinner.attacker,
       attackerCasualties: attCasualties,
       defenderCasualties: defCasualties,
@@ -244,14 +222,9 @@ QuickBattleResult resolveQuickBattle(
       mutableGuns: mutableGuns,
       useVirtualEmplaced: useVirtualEmplaced,
     );
-    _qbLog.d(
-      'quick_battle end winner=${result.winner.name} '
-      'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
-    );
-    return result;
   }
   if (finalDefStr > finalAttStr * 1.2) {
-    final result = _finishResult(
+    return _finishAndLogQuickBattleResult(
       winner: QuickBattleWinner.defender,
       attackerCasualties: attCasualties,
       defenderCasualties: defCasualties,
@@ -260,17 +233,32 @@ QuickBattleResult resolveQuickBattle(
       mutableGuns: mutableGuns,
       useVirtualEmplaced: useVirtualEmplaced,
     );
-    _qbLog.d(
-      'quick_battle end winner=${result.winner.name} '
-      'flip=${result.provinceFlips} fortDowngrade=${result.fortDowngradeFromDestroyedEmplaced}',
-    );
-    return result;
   }
-  final result = _finishResult(
+  return _finishAndLogQuickBattleResult(
     winner: QuickBattleWinner.mutualExhaustion,
     attackerCasualties: attCasualties,
     defenderCasualties: defCasualties,
     provinceFlips: false,
+    input: input,
+    mutableGuns: mutableGuns,
+    useVirtualEmplaced: useVirtualEmplaced,
+  );
+}
+
+QuickBattleResult _finishAndLogQuickBattleResult({
+  required QuickBattleWinner winner,
+  required List<String> attackerCasualties,
+  required List<String> defenderCasualties,
+  required bool provinceFlips,
+  required QuickBattleInput input,
+  required List<_MutableEmplacedGun> mutableGuns,
+  required bool useVirtualEmplaced,
+}) {
+  final result = _finishResult(
+    winner: winner,
+    attackerCasualties: attackerCasualties,
+    defenderCasualties: defenderCasualties,
+    provinceFlips: provinceFlips,
     input: input,
     mutableGuns: mutableGuns,
     useVirtualEmplaced: useVirtualEmplaced,
@@ -728,8 +716,10 @@ Game applyQuickBattleResultToGame(
 
   var updatedGame = game.copyWith(worldState: newWorldState);
   updatedGame = updatedGame.copyWith(
-    worldState:
-        reconcileArmiesAfterUnitsChanged(updatedGame.worldState, updatedGame),
+    worldState: reconcileArmiesAfterUnitsChanged(
+      updatedGame.worldState,
+      updatedGame,
+    ),
   );
   return updatedGame;
 }
