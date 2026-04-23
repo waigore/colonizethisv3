@@ -7,6 +7,7 @@ import '../../orders/draft_orders_mutations.dart';
 import '../../world/army_movement.dart';
 import '../../world/movement.dart';
 import '../../world/naval_resolution.dart';
+import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
 import '../../world/unit_lookup.dart';
 
@@ -122,6 +123,9 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
 
   for (final entry in workByPlayerId.entries) {
     final playerId = entry.key;
+    final diplomatic =
+        orders.diplomaticOrdersByPlayerId[playerId] ??
+        const <DiplomaticOrder>[];
     for (final workOrder in entry.value) {
       final unitById = unitsByIdFromWorld(state.worldState);
       final unit = unitById[workOrder.unitId];
@@ -131,13 +135,23 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
       if (!civilianBundledWorkNeedsProvinceMoveLeg(state, unit, workOrder)) {
         continue;
       }
-      final destination = executionProvinceFullIdFromWorkOrder(state, workOrder);
+      final destination = executionProvinceFullIdFromWorkOrder(
+        state,
+        workOrder,
+      );
       if (destination == null) {
         continue;
       }
-      final destinationTile = firstBundledEntryTileKeyInProvince(
+      final view = buildPlayerView(state, topology, playerId);
+      final destinationTile = firstLegalBundledEntryTileKeyInProvince(
         game: state,
+        topology: topology,
+        playerId: playerId,
+        unit: unit,
         destProvinceFullId: destination,
+        view: view,
+        unitsById: unitById,
+        diplomaticOrders: diplomatic,
       );
       if (destinationTile == null) {
         continue;

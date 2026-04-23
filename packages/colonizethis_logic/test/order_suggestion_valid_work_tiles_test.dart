@@ -283,113 +283,107 @@ void main() {
       expect(valid.contains(foreignTileWithResource), isFalse);
     });
 
-    test(
-      'build_improvement excludes owned mineral tile until prospected; '
-      'includes after prospected',
-      () {
-        const playerId = 'gp1';
-        const ow = 'oldWorld';
-        const grainTile = 'oldWorld|p1|0|0';
-        const ironTile = 'oldWorld|p1|1|0';
+    test('build_improvement excludes owned mineral tile until prospected; '
+        'includes after prospected', () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      const grainTile = 'oldWorld|p1|0|0';
+      const ironTile = 'oldWorld|p1|1|0';
 
-        final unit = Unit(
-          id: 'u1',
-          type: 'Builder',
-          ownerId: playerId,
-          locationProvinceId: '$ow|p1',
-          tileKey: grainTile,
-        );
-        WorldState worldForProspected(Map<String, Set<String>> prospected) {
-          return WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|p1', regionId: ow, ownerId: playerId),
-              ],
-              units: [unit],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: {
-              ow: {
-                '$ow|p1': [grainTile, ironTile],
-              },
+      final unit = Unit(
+        id: 'u1',
+        type: 'Builder',
+        ownerId: playerId,
+        locationProvinceId: '$ow|p1',
+        tileKey: grainTile,
+      );
+      WorldState worldForProspected(Map<String, Set<String>> prospected) {
+        return WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|p1', regionId: ow, ownerId: playerId),
+            ],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            ow: {
+              '$ow|p1': [grainTile, ironTile],
             },
-            resourceByTileKey: {
-              grainTile: 'grain',
-              ironTile: 'iron',
-            },
-            playerVisibilityByTile: {
-              playerId: {grainTile: 'fullyVisible', ironTile: 'fullyVisible'},
-            },
-            tileState: TileMapState(
-              improvementByTile: {grainTile: 0, ironTile: 0},
-            ),
-            playerProspectedTiles: prospected,
-          );
-        }
+          },
+          resourceByTileKey: {grainTile: 'grain', ironTile: 'iron'},
+          playerVisibilityByTile: {
+            playerId: {grainTile: 'fullyVisible', ironTile: 'fullyVisible'},
+          },
+          tileState: TileMapState(
+            improvementByTile: {grainTile: 0, ironTile: 0},
+          ),
+          playerProspectedTiles: prospected,
+        );
+      }
 
-        final topology = const MapTopology(nodes: [], edges: []);
-        final stockpile = Stockpile(quantities: {'lumber': 10, 'castIron': 10});
+      final topology = const MapTopology(nodes: [], edges: []);
+      final stockpile = Stockpile(quantities: {'lumber': 10, 'castIron': 10});
 
-        final gameUnprospected = Game(
-          id: 'g1',
-          worldState: worldForProspected(const {}),
-          players: [
-            Player(
-              id: playerId,
-              displayName: 'GP',
-              isHuman: false,
-              stockpile: stockpile,
-            ),
-          ],
-        );
-        final viewUnprospected = buildPlayerView(
-          gameUnprospected,
-          topology,
-          playerId,
-        );
-        final validUnprospected = getValidWorkOrderTileKeysWithVisibility(
-          game: gameUnprospected,
-          topology: topology,
-          view: viewUnprospected,
-          unitId: 'u1',
-          workTarget: 'build_improvement',
-          currentOrders: const Orders(),
-        );
-        expect(validUnprospected.contains(grainTile), isTrue);
-        expect(validUnprospected.contains(ironTile), isFalse);
+      final gameUnprospected = Game(
+        id: 'g1',
+        worldState: worldForProspected(const {}),
+        players: [
+          Player(
+            id: playerId,
+            displayName: 'GP',
+            isHuman: false,
+            stockpile: stockpile,
+          ),
+        ],
+      );
+      final viewUnprospected = buildPlayerView(
+        gameUnprospected,
+        topology,
+        playerId,
+      );
+      final validUnprospected = getValidWorkOrderTileKeysWithVisibility(
+        game: gameUnprospected,
+        topology: topology,
+        view: viewUnprospected,
+        unitId: 'u1',
+        workTarget: 'build_improvement',
+        currentOrders: const Orders(),
+      );
+      expect(validUnprospected.contains(grainTile), isTrue);
+      expect(validUnprospected.contains(ironTile), isFalse);
 
-        final gameProspected = Game(
-          id: 'g2',
-          worldState: worldForProspected({
-            playerId: {ironTile},
-          }),
-          players: [
-            Player(
-              id: playerId,
-              displayName: 'GP',
-              isHuman: false,
-              stockpile: stockpile,
-            ),
-          ],
-        );
-        final viewProspected = buildPlayerView(
-          gameProspected,
-          topology,
-          playerId,
-        );
-        final validProspected = getValidWorkOrderTileKeysWithVisibility(
-          game: gameProspected,
-          topology: topology,
-          view: viewProspected,
-          unitId: 'u1',
-          workTarget: 'build_improvement',
-          currentOrders: const Orders(),
-        );
-        expect(validProspected.contains(grainTile), isTrue);
-        expect(validProspected.contains(ironTile), isTrue);
-      },
-    );
+      final gameProspected = Game(
+        id: 'g2',
+        worldState: worldForProspected({
+          playerId: {ironTile},
+        }),
+        players: [
+          Player(
+            id: playerId,
+            displayName: 'GP',
+            isHuman: false,
+            stockpile: stockpile,
+          ),
+        ],
+      );
+      final viewProspected = buildPlayerView(
+        gameProspected,
+        topology,
+        playerId,
+      );
+      final validProspected = getValidWorkOrderTileKeysWithVisibility(
+        game: gameProspected,
+        topology: topology,
+        view: viewProspected,
+        unitId: 'u1',
+        workTarget: 'build_improvement',
+        currentOrders: const Orders(),
+      );
+      expect(validProspected.contains(grainTile), isTrue);
+      expect(validProspected.contains(ironTile), isTrue);
+    });
 
     test('build_improvement includes purchased tiles with resources', () {
       const playerId = 'gp1';
@@ -571,15 +565,9 @@ void main() {
           oldWorld: RegionData(provinces: [p1], units: [unit]),
           newWorld: const RegionData(),
           playerVisibilityByTile: const {
-            playerId: {
-              grassTile: 'fogged',
-              ironTile: 'fogged',
-            },
+            playerId: {grassTile: 'fogged', ironTile: 'fogged'},
           },
-          resourceByTileKey: const {
-            grassTile: 'grain',
-            ironTile: 'iron',
-          },
+          resourceByTileKey: const {grassTile: 'grain', ironTile: 'iron'},
           playerProspectedTiles: const {
             playerId: {ironTile},
           },
@@ -731,7 +719,9 @@ void main() {
               },
             },
           ),
-          players: const [Player(id: playerId, displayName: 'GP', isHuman: false)],
+          players: const [
+            Player(id: playerId, displayName: 'GP', isHuman: false),
+          ],
           tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe')],
         );
         final topology = const MapTopology(nodes: [], edges: []);
@@ -765,7 +755,9 @@ void main() {
 
         for (var p = 0; p < provinceCount; p++) {
           final provinceId = '$ow|p$p';
-          provinces.add(Province(id: provinceId, regionId: ow, ownerId: 'tribe1'));
+          provinces.add(
+            Province(id: provinceId, regionId: ow, ownerId: 'tribe1'),
+          );
           final tiles = <String>[];
           for (var t = 0; t < tilesPerProvince; t++) {
             final tileKey = '$ow|p$p|$t|0';
@@ -798,7 +790,9 @@ void main() {
             tileKeysByRegionAndProvince: {ow: byProvince},
             playerVisibilityByTile: {playerId: visibility},
           ),
-          players: const [Player(id: playerId, displayName: 'GP', isHuman: false)],
+          players: const [
+            Player(id: playerId, displayName: 'GP', isHuman: false),
+          ],
           tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe')],
         );
         final topology = const MapTopology(nodes: [], edges: []);
@@ -891,7 +885,8 @@ void main() {
       // Builder should NOT get a move suggestion to p2 (other GP's province)
       expect(
         suggestions.where(
-          (m) => Unit.provinceIdFromTileKey(m.destinationTileKey) == 'oldWorld|p2',
+          (m) =>
+              Unit.provinceIdFromTileKey(m.destinationTileKey) == 'oldWorld|p2',
         ),
         isEmpty,
       );
@@ -1186,6 +1181,505 @@ void main() {
             .toList();
 
         expect(buildSuggestions, isEmpty);
+      },
+    );
+
+    test(
+      'suggestWorkOrders explore includes partially revealed province when first sorted entry tile is unknown but later tile is fogged',
+      () {
+        const playerId = 'gp1';
+        const nw = 'newWorld';
+        const provHome = '$nw|home';
+        const provTarget = '$nw|tribe1';
+        final tileHome = '$nw|home|0|0';
+        final t0 = '$nw|tribe1|0|0';
+        final t1 = '$nw|tribe1|1|0';
+
+        final player = const Player(
+          id: playerId,
+          displayName: 'GP',
+          isHuman: false,
+        );
+        final tribe = const Tribe(id: 'tribe1', displayName: 'T');
+        final pHome = Province(id: provHome, regionId: nw, ownerId: playerId);
+        final pTarget = Province(
+          id: provTarget,
+          regionId: nw,
+          ownerId: 'tribe1',
+        );
+        final explorer = Unit(
+          id: 'ex1',
+          type: 'Explorer',
+          ownerId: playerId,
+          locationProvinceId: provHome,
+          tileKey: tileHome,
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(provinces: [pHome, pTarget], units: [explorer]),
+          tileKeysByRegionAndProvince: {
+            nw: {
+              provHome: [tileHome],
+              provTarget: [t0, t1],
+            },
+          },
+          playerVisibilityByTile: {
+            playerId: {tileHome: 'fullyVisible', t0: 'unknown', t1: 'fogged'},
+          },
+        );
+        final game = Game(
+          id: 'g1916e1',
+          worldState: world,
+          players: [player],
+          tribes: [tribe],
+        );
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'home',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'tribe1',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'home', id2: 'tribe1')],
+        );
+        final view = buildPlayerView(game, topology, playerId);
+        final suggestions = suggestWorkOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+        final explore = suggestions
+            .where((o) => o.target == kWorkTargetExplore)
+            .toList();
+        expect(explore, isNotEmpty);
+        expect(
+          explore.any(
+            (o) => Unit.provinceIdFromTileKey(o.targetTileKey) == provTarget,
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'suggestWorkOrders explore excludes partially revealed province when no bundled entry tile passes move validation',
+      () {
+        const playerId = 'gp1';
+        const nw = 'newWorld';
+        const provHome = '$nw|home';
+        const provTarget = '$nw|gp2p';
+        final tileHome = '$nw|home|0|0';
+        final t0 = '$nw|gp2p|0|0';
+        final t1 = '$nw|gp2p|1|0';
+
+        final player = const Player(
+          id: playerId,
+          displayName: 'GP',
+          isHuman: false,
+        );
+        final gp2 = const Player(id: 'gp2', displayName: 'P2', isHuman: false);
+        final pHome = Province(id: provHome, regionId: nw, ownerId: playerId);
+        final pTarget = Province(id: provTarget, regionId: nw, ownerId: 'gp2');
+        final explorer = Unit(
+          id: 'ex1',
+          type: 'Explorer',
+          ownerId: playerId,
+          locationProvinceId: provHome,
+          tileKey: tileHome,
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(provinces: [pHome, pTarget], units: [explorer]),
+          tileKeysByRegionAndProvince: {
+            nw: {
+              provHome: [tileHome],
+              provTarget: [t0, t1],
+            },
+          },
+          playerVisibilityByTile: {
+            playerId: {tileHome: 'fullyVisible', t0: 'unknown', t1: 'fogged'},
+          },
+        );
+        final game = Game(
+          id: 'g1916e2',
+          worldState: world,
+          players: [player, gp2],
+        );
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'home',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'gp2p',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'home', id2: 'gp2p')],
+        );
+        final view = buildPlayerView(game, topology, playerId);
+        final suggestions = suggestWorkOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+        expect(
+          suggestions.where(
+            (o) =>
+                o.target == kWorkTargetExplore &&
+                Unit.provinceIdFromTileKey(o.targetTileKey) == provTarget,
+          ),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
+      'suggestWorkOrders prospect includes mineral tile in partially revealed province when first sorted entry tile is unknown',
+      () {
+        const playerId = 'gp1';
+        const nw = 'newWorld';
+        const provHome = '$nw|home';
+        const provTarget = '$nw|tribe1';
+        final tileHome = '$nw|home|0|0';
+        final t0 = '$nw|tribe1|0|0';
+        final t1 = '$nw|tribe1|1|0';
+
+        final player = const Player(
+          id: playerId,
+          displayName: 'GP',
+          isHuman: false,
+        );
+        final tribe = const Tribe(id: 'tribe1', displayName: 'T');
+        final pHome = Province(id: provHome, regionId: nw, ownerId: playerId);
+        final pTarget = Province(
+          id: provTarget,
+          regionId: nw,
+          ownerId: 'tribe1',
+        );
+        final explorer = Unit(
+          id: 'ex1',
+          type: 'Explorer',
+          ownerId: playerId,
+          locationProvinceId: provHome,
+          tileKey: tileHome,
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(provinces: [pHome, pTarget], units: [explorer]),
+          tileKeysByRegionAndProvince: {
+            nw: {
+              provHome: [tileHome],
+              provTarget: [t0, t1],
+            },
+          },
+          resourceByTileKey: {t0: 'grain', t1: 'iron'},
+          playerVisibilityByTile: {
+            playerId: {tileHome: 'fullyVisible', t0: 'unknown', t1: 'fogged'},
+          },
+        );
+        final game = Game(
+          id: 'g1916p1',
+          worldState: world,
+          players: [player],
+          tribes: [tribe],
+        );
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'home',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'tribe1',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'home', id2: 'tribe1')],
+        );
+        final view = buildPlayerView(game, topology, playerId);
+        final suggestions = suggestWorkOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+        final prospect = suggestions
+            .where((o) => o.target == kWorkTargetProspect)
+            .toList();
+        expect(prospect, isNotEmpty);
+        expect(prospect.any((o) => o.targetTileKey == t1), isTrue);
+      },
+    );
+
+    test(
+      'suggestWorkOrders prospect excludes partially revealed province when only non-eligible or already prospected mineral tiles remain',
+      () {
+        const playerId = 'gp1';
+        const nw = 'newWorld';
+        const provHome = '$nw|home';
+        const provTarget = '$nw|tribe1';
+        final tileHome = '$nw|home|0|0';
+        final t0 = '$nw|tribe1|0|0';
+        final t1 = '$nw|tribe1|1|0';
+
+        final player = const Player(
+          id: playerId,
+          displayName: 'GP',
+          isHuman: false,
+        );
+        final tribe = const Tribe(id: 'tribe1', displayName: 'T');
+        final pHome = Province(id: provHome, regionId: nw, ownerId: playerId);
+        final pTarget = Province(
+          id: provTarget,
+          regionId: nw,
+          ownerId: 'tribe1',
+        );
+        final explorer = Unit(
+          id: 'ex1',
+          type: 'Explorer',
+          ownerId: playerId,
+          locationProvinceId: provHome,
+          tileKey: tileHome,
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(provinces: [pHome, pTarget], units: [explorer]),
+          tileKeysByRegionAndProvince: {
+            nw: {
+              provHome: [tileHome],
+              provTarget: [t0, t1],
+            },
+          },
+          resourceByTileKey: {t0: 'grain', t1: 'iron'},
+          playerProspectedTiles: {
+            playerId: {t1},
+          },
+          playerVisibilityByTile: {
+            playerId: {tileHome: 'fullyVisible', t0: 'unknown', t1: 'fogged'},
+          },
+        );
+        final game = Game(
+          id: 'g1916p2',
+          worldState: world,
+          players: [player],
+          tribes: [tribe],
+        );
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'home',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'tribe1',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'home', id2: 'tribe1')],
+        );
+        final view = buildPlayerView(game, topology, playerId);
+        final suggestions = suggestWorkOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+        expect(
+          suggestions.where((o) => o.target == kWorkTargetProspect),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
+      'suggestWorkOrders purchase_land includes target in partially revealed minor or tribe province when embassy and diplomacy gates pass',
+      () {
+        const playerId = 'gp1';
+        const nw = 'newWorld';
+        const provOwn = '$nw|own';
+        const provMinor = '$nw|m1';
+        final tileOwn = '$nw|own|0|0';
+        final m0 = '$nw|m1|0|0';
+        final m1 = '$nw|m1|1|0';
+
+        final player = Player(
+          id: playerId,
+          displayName: 'GP',
+          isHuman: false,
+          treasury: 500,
+        );
+        final pOwn = Province(id: provOwn, regionId: nw, ownerId: playerId);
+        final pMinor = Province(id: provMinor, regionId: nw, ownerId: 'minor1');
+        final unit = Unit(
+          id: 'u1',
+          type: 'Merchant',
+          ownerId: playerId,
+          locationProvinceId: provOwn,
+          tileKey: tileOwn,
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(provinces: [pOwn, pMinor], units: [unit]),
+          tileKeysByRegionAndProvince: {
+            nw: {
+              provOwn: [tileOwn],
+              provMinor: [m0, m1],
+            },
+          },
+          resourceByTileKey: {m1: 'grain'},
+          playerVisibilityByTile: {
+            playerId: {tileOwn: 'fullyVisible', m0: 'unknown', m1: 'fogged'},
+          },
+        );
+        final game = Game(
+          id: 'g1916pl1',
+          worldState: world,
+          players: [player],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'Minor 1'),
+          ],
+          overtureStates: const [
+            OvertureState(
+              gpId: playerId,
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+          ],
+        );
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'own',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'm1',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'own', id2: 'm1')],
+        );
+        final view = buildPlayerView(game, topology, playerId);
+        final suggestions = suggestWorkOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+        expect(
+          suggestions.where(
+            (o) =>
+                o.target == kWorkTargetPurchaseLand &&
+                Unit.provinceIdFromTileKey(o.targetTileKey) == provMinor,
+          ),
+          isNotEmpty,
+        );
+      },
+    );
+
+    test(
+      'suggestWorkOrders purchase_land excludes partially revealed target when embassy or diplomacy preconditions fail',
+      () {
+        const playerId = 'gp1';
+        const nw = 'newWorld';
+        const provOwn = '$nw|own';
+        const provMinor = '$nw|m1';
+        final tileOwn = '$nw|own|0|0';
+        final m0 = '$nw|m1|0|0';
+        final m1 = '$nw|m1|1|0';
+
+        final player = Player(
+          id: playerId,
+          displayName: 'GP',
+          isHuman: false,
+          treasury: 500,
+        );
+        final pOwn = Province(id: provOwn, regionId: nw, ownerId: playerId);
+        final pMinor = Province(id: provMinor, regionId: nw, ownerId: 'minor1');
+        final unit = Unit(
+          id: 'u1',
+          type: 'Merchant',
+          ownerId: playerId,
+          locationProvinceId: provOwn,
+          tileKey: tileOwn,
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: RegionData(provinces: [pOwn, pMinor], units: [unit]),
+          tileKeysByRegionAndProvince: {
+            nw: {
+              provOwn: [tileOwn],
+              provMinor: [m0, m1],
+            },
+          },
+          resourceByTileKey: {m1: 'grain'},
+          playerVisibilityByTile: {
+            playerId: {tileOwn: 'fullyVisible', m0: 'unknown', m1: 'fogged'},
+          },
+        );
+        final game = Game(
+          id: 'g1916pl2',
+          worldState: world,
+          players: [player],
+          minorNations: const [
+            MinorNation(id: 'minor1', displayName: 'Minor 1'),
+          ],
+        );
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'own',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'm1',
+              regionId: nw,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'own', id2: 'm1')],
+        );
+        final view = buildPlayerView(game, topology, playerId);
+        final suggestions = suggestWorkOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+        expect(
+          suggestions.where(
+            (o) =>
+                o.target == kWorkTargetPurchaseLand &&
+                Unit.provinceIdFromTileKey(o.targetTileKey) == provMinor,
+          ),
+          isEmpty,
+        );
       },
     );
   });
