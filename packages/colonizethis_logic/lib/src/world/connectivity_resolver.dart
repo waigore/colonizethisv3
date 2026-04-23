@@ -392,19 +392,35 @@ void _propagateConnectivity({
     )) {
       final transportN = _transportLevelAtTile(worldState, neighbor);
       final candidate = bottleneckU < transportN ? bottleneckU : transportN;
-      final existing = pathCap[neighbor] ?? -1;
-      if (candidate > existing) {
-        pathCap[neighbor] = candidate;
-        if (!connected.contains(neighbor)) {
-          connected.add(neighbor);
-        }
-        queue.add(neighbor);
-      } else if (!connected.contains(neighbor)) {
-        connected.add(neighbor);
-        pathCap[neighbor] = candidate;
-        queue.add(neighbor);
-      }
+      _updateNeighborConnectivity(
+        neighbor: neighbor,
+        candidate: candidate,
+        connected: connected,
+        pathCap: pathCap,
+        queue: queue,
+      );
     }
+  }
+}
+
+void _updateNeighborConnectivity({
+  required String neighbor,
+  required int candidate,
+  required Set<String> connected,
+  required Map<String, int> pathCap,
+  required List<String> queue,
+}) {
+  final existing = pathCap[neighbor] ?? -1;
+  if (candidate > existing) {
+    pathCap[neighbor] = candidate;
+    connected.add(neighbor);
+    queue.add(neighbor);
+    return;
+  }
+  if (!connected.contains(neighbor)) {
+    connected.add(neighbor);
+    pathCap[neighbor] = candidate;
+    queue.add(neighbor);
   }
 }
 
