@@ -251,57 +251,20 @@ ConnectivityResult _connectedTilesForPlayer({
   final connected = <String>{capitalKey};
   final pathCap = <String, int>{};
   pathCap[capitalKey] = _transportLevelAtTile(worldState, capitalKey);
-  final queue = <String>[capitalKey];
-
-  while (queue.isNotEmpty) {
-    final key = queue.removeAt(0);
-    final parts = key.split('|');
-    if (parts.length != 4) continue;
-    final regionId = parts[0];
-    final localProvinceId = parts[1];
-    final fullProvinceId = '$regionId|$localProvinceId';
-    final x = int.tryParse(parts[2]) ?? -1;
-    final y = int.tryParse(parts[3]) ?? -1;
-    if (x < 0 || y < 0) continue;
-
-    if (!owned.contains(fullProvinceId)) continue;
-
-    final map = tileMapByRegion[regionId];
-    if (map == null) continue;
-
-    final hasRoadOrPort =
-        (tileState.roadLevel(key) > 0) || portInfo.containsKey(key);
-    final canExpand = (key == capitalKey) || hasRoadOrPort;
-
-    if (!canExpand) continue;
-
-    final bottleneckU = pathCap[key] ?? 0;
-    for (final n in _adjacentTileKeys(
-      regionId,
-      localProvinceId,
-      x,
-      y,
-      map,
-      provinceIdsByType,
-    )) {
-      final transportN = _transportLevelAtTile(worldState, n);
-      final candidate = bottleneckU < transportN ? bottleneckU : transportN;
-      final existing = pathCap[n] ?? -1;
-      if (candidate > existing) {
-        pathCap[n] = candidate;
-        if (!connected.contains(n)) {
-          connected.add(n);
-          queue.add(n);
-        } else {
-          queue.add(n);
-        }
-      } else if (!connected.contains(n)) {
-        connected.add(n);
-        pathCap[n] = candidate;
-        queue.add(n);
-      }
-    }
-  }
+  _propagateConnectivity(
+    queue: <String>[capitalKey],
+    connected: connected,
+    pathCap: pathCap,
+    worldState: worldState,
+    tileMapByRegion: tileMapByRegion,
+    provinceIdsByType: provinceIdsByType,
+    ownedProvinceIds: owned,
+    portInfo: portInfo,
+    canExpandFrom: (tileKey) =>
+        (tileKey == capitalKey) ||
+        (tileState.roadLevel(tileKey) > 0) ||
+        portInfo.containsKey(tileKey),
+  );
 
   // Port connection rule: (1) capital on seaboard → ports reachable via sea-path (BFS S–S); (2) else only ports reachable by road/rail from capital. SPEC/game/capital-and-connectivity § Port connection to capital, Sea paths.
   final capitalRegionPortKeys = <String>{};
@@ -313,61 +276,19 @@ ConnectivityResult _connectedTilesForPlayer({
     if (parts[0] == capitalRegionId) capitalRegionPortKeys.add(k);
   }
 
-  final seaConnectedPortKeys = <String>{};
-  final capitalProvinceBlockaded = blockadedPortProvinces.contains(
-    capital.provinceId,
+  final seaConnectedPortKeys = _seaConnectedPortKeysForCapital(
+    capital: capital,
+    worldState: worldState,
+    topology: topology,
+    tileMapByRegion: tileMapByRegion,
+    provinceIdsByType: provinceIdsByType,
+    ownedProvinceIds: owned,
+    blockadedPortProvinces: blockadedPortProvinces,
+    capitalRegionPortKeys: capitalRegionPortKeys,
   );
-  final capitalOnSeaboard = _isCapitalTileOnSeaboard(
-    capital,
-    tileMapByRegion,
-    provinceIdsByType,
-  );
-  if (capitalOnSeaboard && !capitalProvinceBlockaded) {
-    final prefixedTopology = _topologyUsesPrefixedIds(topology);
-    final provinceIdForLookup = prefixedTopology
-        ? capital.provinceId
-        : ProvinceId.localIdFrom(capital.provinceId);
-    final capitalSeaZones = _seaZonesAdjacentToProvince(
-      topology,
-      provinceIdForLookup,
-    );
-    final seaReachable = _seaZonesReachableBySeaPath(topology, capitalSeaZones);
-    for (final e in worldState.portsByProvinceSeaboard.entries) {
-      final provSea = e.key;
-      final tileKey = e.value;
-      final parts = provSea.split('|');
-      final seaZoneId = parts.length >= 3
-          ? parts[2]
-          : (parts.length >= 2 ? parts[1] : null);
-      final fullProvinceId = parts.length >= 3
-          ? '${parts[0]}|${parts[1]}'
-          : (parts.length >= 2 ? parts[0] : null);
-      if (seaZoneId == null || fullProvinceId == null) continue;
-      if (blockadedPortProvinces.contains(fullProvinceId)) continue;
-      final seaZoneIdForReachable = prefixedTopology && parts.length >= 3
-          ? '${parts[0]}|$seaZoneId'
-          : seaZoneId;
-      if (!seaReachable.contains(seaZoneIdForReachable)) continue;
-      if (!owned.contains(fullProvinceId)) continue;
-      seaConnectedPortKeys.add(tileKey);
-    }
-  } else if (!capitalOnSeaboard) {
-    for (final portKey in capitalRegionPortKeys) {
-      final parts = portKey.split('|');
-      if (parts.length >= 2) {
-        final fullProvinceId = parts.length >= 3
-            ? '${parts[0]}|${parts[1]}'
-            : parts[0];
-        if (!blockadedPortProvinces.contains(fullProvinceId)) {
-          seaConnectedPortKeys.add(portKey);
-        }
-      } else {
-        seaConnectedPortKeys.add(portKey);
-      }
-    }
-  }
   // When capital province is blockaded, seaConnectedPortKeys stays empty (no sea connectivity). SPEC § Blockade.
 
+  final expansionSeedQueue = <String>[];
   for (final portKey in seaConnectedPortKeys) {
     if (connected.contains(portKey)) continue;
     final parts = portKey.split('|');
@@ -383,55 +304,21 @@ ConnectivityResult _connectedTilesForPlayer({
 
     connected.add(portKey);
     pathCap[portKey] = 4;
-    queue.add(portKey);
+    expansionSeedQueue.add(portKey);
   }
 
-  while (queue.isNotEmpty) {
-    final key = queue.removeAt(0);
-    final parts = key.split('|');
-    if (parts.length != 4) continue;
-    final regionId = parts[0];
-    final provinceId = parts[1];
-    final x = int.tryParse(parts[2]) ?? -1;
-    final y = int.tryParse(parts[3]) ?? -1;
-    if (x < 0 || y < 0) continue;
-
-    final hasRoadOrPort =
-        (tileState.roadLevel(key) > 0) || portInfo.containsKey(key);
-    final canExpand = hasRoadOrPort;
-
-    if (!canExpand) continue;
-
-    final map = tileMapByRegion[regionId];
-    if (map == null) continue;
-
-    final bottleneckU = pathCap[key] ?? 0;
-    for (final n in _adjacentTileKeys(
-      regionId,
-      provinceId,
-      x,
-      y,
-      map,
-      provinceIdsByType,
-    )) {
-      final transportN = _transportLevelAtTile(worldState, n);
-      final candidate = bottleneckU < transportN ? bottleneckU : transportN;
-      final existing = pathCap[n] ?? -1;
-      if (candidate > existing) {
-        pathCap[n] = candidate;
-        if (!connected.contains(n)) {
-          connected.add(n);
-          queue.add(n);
-        } else {
-          queue.add(n);
-        }
-      } else if (!connected.contains(n)) {
-        connected.add(n);
-        pathCap[n] = candidate;
-        queue.add(n);
-      }
-    }
-  }
+  _propagateConnectivity(
+    queue: expansionSeedQueue,
+    connected: connected,
+    pathCap: pathCap,
+    worldState: worldState,
+    tileMapByRegion: tileMapByRegion,
+    provinceIdsByType: provinceIdsByType,
+    ownedProvinceIds: owned,
+    portInfo: portInfo,
+    canExpandFrom: (tileKey) =>
+        (tileState.roadLevel(tileKey) > 0) || portInfo.containsKey(tileKey),
+  );
 
   // SPEC § Blockade: no tiles in a blockaded port province contribute; remove any tile in such a province (except capital province: its tiles remain when it is blockaded, only sea connectivity is severed).
   if (blockadedPortProvinces.isNotEmpty) {
@@ -467,6 +354,153 @@ ConnectivityResult _connectedTilesForPlayer({
     pathTransportCap: pathCap,
     connectedByRoadRule: connectedByRoadRule,
   );
+}
+
+void _propagateConnectivity({
+  required List<String> queue,
+  required Set<String> connected,
+  required Map<String, int> pathCap,
+  required WorldState worldState,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Set<String> provinceIdsByType,
+  required Set<String> ownedProvinceIds,
+  required Map<String, (String, String)> portInfo,
+  required bool Function(String tileKey) canExpandFrom,
+}) {
+  while (queue.isNotEmpty) {
+    final key = queue.removeAt(0);
+    final parts = key.split('|');
+    if (parts.length != 4) continue;
+    final regionId = parts[0];
+    final localProvinceId = parts[1];
+    final fullProvinceId = '$regionId|$localProvinceId';
+    final x = int.tryParse(parts[2]) ?? -1;
+    final y = int.tryParse(parts[3]) ?? -1;
+    if (x < 0 || y < 0) continue;
+    if (!ownedProvinceIds.contains(fullProvinceId)) continue;
+    final map = tileMapByRegion[regionId];
+    if (map == null) continue;
+    if (!canExpandFrom(key)) continue;
+    final bottleneckU = pathCap[key] ?? 0;
+    for (final neighbor in _adjacentTileKeys(
+      regionId,
+      localProvinceId,
+      x,
+      y,
+      map,
+      provinceIdsByType,
+    )) {
+      final transportN = _transportLevelAtTile(worldState, neighbor);
+      final candidate = bottleneckU < transportN ? bottleneckU : transportN;
+      final existing = pathCap[neighbor] ?? -1;
+      if (candidate > existing) {
+        pathCap[neighbor] = candidate;
+        if (!connected.contains(neighbor)) {
+          connected.add(neighbor);
+        }
+        queue.add(neighbor);
+      } else if (!connected.contains(neighbor)) {
+        connected.add(neighbor);
+        pathCap[neighbor] = candidate;
+        queue.add(neighbor);
+      }
+    }
+  }
+}
+
+Set<String> _seaConnectedPortKeysForCapital({
+  required CapitalTile capital,
+  required WorldState worldState,
+  required MapTopology topology,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Set<String> provinceIdsByType,
+  required Set<String> ownedProvinceIds,
+  required Set<String> blockadedPortProvinces,
+  required Set<String> capitalRegionPortKeys,
+}) {
+  final out = <String>{};
+  final capitalProvinceBlockaded = blockadedPortProvinces.contains(
+    capital.provinceId,
+  );
+  final capitalOnSeaboard = _isCapitalTileOnSeaboard(
+    capital,
+    tileMapByRegion,
+    provinceIdsByType,
+  );
+  if (capitalOnSeaboard && !capitalProvinceBlockaded) {
+    final prefixedTopology = _topologyUsesPrefixedIds(topology);
+    final provinceIdForLookup = prefixedTopology
+        ? capital.provinceId
+        : ProvinceId.localIdFrom(capital.provinceId);
+    final capitalSeaZones = _seaZonesAdjacentToProvince(
+      topology,
+      provinceIdForLookup,
+    );
+    final seaReachable = _seaZonesReachableBySeaPath(topology, capitalSeaZones);
+    for (final entry in worldState.portsByProvinceSeaboard.entries) {
+      final portMeta = _decodePortEntry(entry.key);
+      if (portMeta == null) continue;
+      if (blockadedPortProvinces.contains(portMeta.fullProvinceId)) continue;
+      final seaZoneIdForReachable = prefixedTopology && portMeta.isPrefixedKey
+          ? '${portMeta.regionId}|${portMeta.seaZoneId}'
+          : portMeta.seaZoneId;
+      if (!seaReachable.contains(seaZoneIdForReachable)) continue;
+      if (!ownedProvinceIds.contains(portMeta.fullProvinceId)) continue;
+      out.add(entry.value);
+    }
+    return out;
+  }
+  if (!capitalOnSeaboard) {
+    for (final portKey in capitalRegionPortKeys) {
+      final portProvinceId = _fullProvinceIdFromTileKey(portKey);
+      if (portProvinceId == null) {
+        out.add(portKey);
+        continue;
+      }
+      if (!blockadedPortProvinces.contains(portProvinceId)) {
+        out.add(portKey);
+      }
+    }
+  }
+  return out;
+}
+
+String? _fullProvinceIdFromTileKey(String tileKey) {
+  final parts = tileKey.split('|');
+  if (parts.length >= 3) {
+    return '${parts[0]}|${parts[1]}';
+  }
+  if (parts.length >= 2) {
+    return parts[0];
+  }
+  return null;
+}
+
+({
+  String fullProvinceId,
+  String seaZoneId,
+  String regionId,
+  bool isPrefixedKey,
+})?
+_decodePortEntry(String portKey) {
+  final parts = portKey.split('|');
+  if (parts.length >= 3) {
+    return (
+      fullProvinceId: '${parts[0]}|${parts[1]}',
+      seaZoneId: parts[2],
+      regionId: parts[0],
+      isPrefixedKey: true,
+    );
+  }
+  if (parts.length >= 2) {
+    return (
+      fullProvinceId: parts[0],
+      seaZoneId: parts[1],
+      regionId: '',
+      isPrefixedKey: false,
+    );
+  }
+  return null;
 }
 
 /// § Connectivity (Game Rule) Town rule: 4-adjacent to a connected town in the **same** province.
