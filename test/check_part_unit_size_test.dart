@@ -7,25 +7,17 @@ import '../tool/check_part_unit_size.dart';
 
 void main() {
   group('runCheckPartUnitSize', () {
-    test('fails when allowlisted part file grows above max', () {
-      final temp = Directory.systemTemp.createTempSync('part-size-allow-fail-');
+    test('fails when part fragment exceeds max physical lines', () {
+      final temp = Directory.systemTemp.createTempSync('part-size-over-');
       try {
         final logicDir = Directory(
           p.join(temp.path, 'packages', 'colonizethis_logic', 'lib', 'src'),
         )..createSync(recursive: true);
+        final body = List.generate(1002, (_) => '  final _ = 0;').join('\n');
         _writeDartFile(
           p.join(logicDir.path, 'huge_part.dart'),
-          _functionWithStatements(230),
+          "part of 'parent.dart';\nvoid _x() {\n$body\n}\n",
         );
-        final toolDir = Directory(p.join(temp.path, 'tool'))
-          ..createSync(recursive: true);
-        File(
-          p.join(toolDir.path, 'part_unit_size_allowlist.yaml'),
-        ).writeAsStringSync('''
-allowed_part_files:
-  - file: packages/colonizethis_logic/lib/src/huge_part.dart
-    max_lines: 100
-''');
 
         final errors = <String>[];
         final exitCode = runCheckPartUnitSize(
@@ -35,95 +27,44 @@ allowed_part_files:
         );
         expect(exitCode, 1);
         expect(errors.join('\n'), contains('huge_part.dart'));
+        expect(errors.join('\n'), contains('max=1000'));
       } finally {
         temp.deleteSync(recursive: true);
       }
     });
 
-    test('fails when allowlisted parent + part total exceeds max', () {
-      final temp = Directory.systemTemp.createTempSync('part-parent-fail-');
+    test('passes when part fragment is within max physical lines', () {
+      final temp = Directory.systemTemp.createTempSync('part-size-ok-');
       try {
-        final setupDir = Directory(
-          p.join(
-            temp.path,
-            'packages',
-            'colonizethis_logic',
-            'lib',
-            'src',
-            'setup',
-          ),
+        final logicDir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_logic', 'lib', 'src'),
         )..createSync(recursive: true);
         _writeDartFile(
-          p.join(setupDir.path, 'game_setup.dart'),
-          '''
-part 'game_setup_helpers.dart';
-${_functionWithStatements(260)}
-''',
+          p.join(logicDir.path, 'small_part.dart'),
+          "part of 'parent.dart';\n${_functionWithStatements(20)}\n",
         );
-        _writeDartFile(
-          p.join(setupDir.path, 'game_setup_helpers.dart'),
-          _functionWithStatements(270),
-        );
-        final toolDir = Directory(p.join(temp.path, 'tool'))
-          ..createSync(recursive: true);
-        File(
-          p.join(toolDir.path, 'part_unit_size_allowlist.yaml'),
-        ).writeAsStringSync('''
-allowed_parent_units:
-  - file: packages/colonizethis_logic/lib/src/setup/game_setup.dart
-    max_lines: 200
-''');
 
-        final errors = <String>[];
         final exitCode = runCheckPartUnitSize(
           temp.path,
           info: (_) {},
-          err: errors.add,
+          err: (_) {},
         );
-        expect(exitCode, 1);
-        expect(errors.join('\n'), contains('game_setup.dart'));
+        expect(exitCode, 0);
       } finally {
         temp.deleteSync(recursive: true);
       }
     });
 
-    test('passes when allowlisted maxima are respected', () {
-      final temp = Directory.systemTemp.createTempSync('part-allow-pass-');
+    test('ignores library files that are not part fragments', () {
+      final temp = Directory.systemTemp.createTempSync('part-size-lib-');
       try {
-        final setupDir = Directory(
-          p.join(
-            temp.path,
-            'packages',
-            'colonizethis_logic',
-            'lib',
-            'src',
-            'setup',
-          ),
+        final logicDir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_logic', 'lib', 'src'),
         )..createSync(recursive: true);
         _writeDartFile(
-          p.join(setupDir.path, 'game_setup.dart'),
-          '''
-part 'game_setup_helpers.dart';
-${_functionWithStatements(260)}
-''',
+          p.join(logicDir.path, 'big_lib.dart'),
+          _functionWithStatements(1200),
         );
-        _writeDartFile(
-          p.join(setupDir.path, 'game_setup_helpers.dart'),
-          _functionWithStatements(270),
-        );
-
-        final toolDir = Directory(p.join(temp.path, 'tool'))
-          ..createSync(recursive: true);
-        File(
-          p.join(toolDir.path, 'part_unit_size_allowlist.yaml'),
-        ).writeAsStringSync('''
-allowed_parent_units:
-  - file: packages/colonizethis_logic/lib/src/setup/game_setup.dart
-    max_lines: 600
-allowed_part_files:
-  - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    max_lines: 300
-''');
 
         final exitCode = runCheckPartUnitSize(
           temp.path,
