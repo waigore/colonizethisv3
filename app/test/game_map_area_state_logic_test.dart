@@ -127,6 +127,591 @@ void main() {
       },
     );
 
+    group(
+      'projectCivilianMarkersForHumanDraft cross-region draft projection',
+      () {
+        const humanPlayerId = 'gp1';
+        const explorerId = 'u_explorer';
+
+        RegionMapViewData _emptyRegion(String regionId) {
+          return RegionMapViewData(
+            regionId: regionId,
+            width: 2,
+            height: 1,
+            cellSize: 16,
+            cells: const [
+              CellViewData(x: 0, y: 0, regionCellId: 'p1', isSea: false),
+              CellViewData(x: 1, y: 0, regionCellId: 'p1', isSea: false),
+            ],
+            capitalMarkers: const [],
+            portMarkers: const [],
+            factionColors: const {},
+            greatPowerFactionIds: const {},
+            terrainColors: const {},
+            unitMarkers: const [],
+            civilianTileMarkers: const [],
+          );
+        }
+
+        ct_models.Game _gameExplorerOldToNew({
+          required String sourceTile,
+          required String targetTile,
+        }) {
+          return ct_models.Game(
+            id: 'g',
+            worldState: ct_models.WorldState(
+              turnState: const ct_models.TurnState(
+                phase: ct_models.TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: ct_models.RegionData(
+                provinces: const [
+                  ct_models.Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
+                  ct_models.Province(id: 'oldWorld|pA', regionId: 'oldWorld'),
+                ],
+                units: [
+                  ct_models.Unit(
+                    id: explorerId,
+                    type: 'Explorer',
+                    ownerId: humanPlayerId,
+                    locationProvinceId: 'oldWorld|p1',
+                    tileKey: sourceTile,
+                    status: ct_models.UnitStatus.idle,
+                  ),
+                ],
+              ),
+              newWorld: ct_models.RegionData(
+                provinces: const [
+                  ct_models.Province(id: 'newWorld|p1', regionId: 'newWorld'),
+                  ct_models.Province(id: 'newWorld|pA', regionId: 'newWorld'),
+                  ct_models.Province(id: 'newWorld|pB', regionId: 'newWorld'),
+                ],
+                units: const [],
+              ),
+            ),
+            players: const [
+              ct_models.Player(
+                id: humanPlayerId,
+                displayName: 'Human',
+                isHuman: true,
+              ),
+            ],
+            minorNations: const [],
+            tribes: const [],
+          );
+        }
+
+        test('Old World explorer with prospect draft appears in New World '
+            'even when New World has no standing civilian markers', () {
+          const sourceTile = 'oldWorld|p1|0|0';
+          const targetTile = 'newWorld|p1|1|0';
+          final game = _gameExplorerOldToNew(
+            sourceTile: sourceTile,
+            targetTile: targetTile,
+          );
+          final oldRegion = RegionMapViewData(
+            regionId: 'oldWorld',
+            width: 2,
+            height: 1,
+            cellSize: 16,
+            cells: const [
+              CellViewData(x: 0, y: 0, regionCellId: 'p1', isSea: false),
+              CellViewData(x: 1, y: 0, regionCellId: 'p1', isSea: false),
+            ],
+            capitalMarkers: const [],
+            portMarkers: const [],
+            factionColors: const {},
+            greatPowerFactionIds: const {},
+            terrainColors: const {},
+            unitMarkers: const [],
+            civilianTileMarkers: const [
+              CivilianTileMarkerView(
+                tileKey: sourceTile,
+                x: 0,
+                y: 0,
+                localProvinceId: 'p1',
+                unitIds: [explorerId],
+                unitTypes: {explorerId: 'Explorer'},
+                representativeUnitType: 'Explorer',
+                stackCount: 1,
+                representativeIsAssigned: false,
+              ),
+            ],
+          );
+          final newRegion = _emptyRegion('newWorld');
+          final orders = ct_models.Orders(
+            workOrdersByPlayerId: {
+              humanPlayerId: [
+                ct_models.WorkOrder(
+                  unitId: explorerId,
+                  target: 'prospect',
+                  targetTileKey: targetTile,
+                ),
+              ],
+            },
+          );
+
+          final projectedNw =
+              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+                region: newRegion,
+                game: game,
+                orders: orders,
+                humanPlayerId: humanPlayerId,
+              );
+          expect(projectedNw.civilianTileMarkers, hasLength(1));
+          final nwMarker = projectedNw.civilianTileMarkers.single;
+          expect(nwMarker.tileKey, targetTile);
+          expect(nwMarker.localProvinceId, 'p1');
+          expect(nwMarker.unitIds, contains(explorerId));
+
+          final projectedOw =
+              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+                region: oldRegion,
+                game: game,
+                orders: orders,
+                humanPlayerId: humanPlayerId,
+              );
+          expect(projectedOw.civilianTileMarkers, isEmpty);
+        });
+
+        test('New World explorer with prospect draft appears in Old World '
+            'and leaves source New World projection', () {
+          const sourceTile = 'newWorld|p1|0|0';
+          const targetTile = 'oldWorld|p1|1|0';
+          final game = ct_models.Game(
+            id: 'g',
+            worldState: ct_models.WorldState(
+              turnState: const ct_models.TurnState(
+                phase: ct_models.TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: ct_models.RegionData(
+                provinces: const [
+                  ct_models.Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
+                ],
+                units: const [],
+              ),
+              newWorld: ct_models.RegionData(
+                provinces: const [
+                  ct_models.Province(id: 'newWorld|p1', regionId: 'newWorld'),
+                ],
+                units: [
+                  ct_models.Unit(
+                    id: explorerId,
+                    type: 'Explorer',
+                    ownerId: humanPlayerId,
+                    locationProvinceId: 'newWorld|p1',
+                    tileKey: sourceTile,
+                    status: ct_models.UnitStatus.idle,
+                  ),
+                ],
+              ),
+            ),
+            players: const [
+              ct_models.Player(
+                id: humanPlayerId,
+                displayName: 'Human',
+                isHuman: true,
+              ),
+            ],
+            minorNations: const [],
+            tribes: const [],
+          );
+          final newRegion = RegionMapViewData(
+            regionId: 'newWorld',
+            width: 2,
+            height: 1,
+            cellSize: 16,
+            cells: const [
+              CellViewData(x: 0, y: 0, regionCellId: 'p1', isSea: false),
+              CellViewData(x: 1, y: 0, regionCellId: 'p1', isSea: false),
+            ],
+            capitalMarkers: const [],
+            portMarkers: const [],
+            factionColors: const {},
+            greatPowerFactionIds: const {},
+            terrainColors: const {},
+            unitMarkers: const [],
+            civilianTileMarkers: const [
+              CivilianTileMarkerView(
+                tileKey: sourceTile,
+                x: 0,
+                y: 0,
+                localProvinceId: 'p1',
+                unitIds: [explorerId],
+                unitTypes: {explorerId: 'Explorer'},
+                representativeUnitType: 'Explorer',
+                stackCount: 1,
+                representativeIsAssigned: false,
+              ),
+            ],
+          );
+          final oldRegion = _emptyRegion('oldWorld');
+          final orders = ct_models.Orders(
+            workOrdersByPlayerId: {
+              humanPlayerId: [
+                ct_models.WorkOrder(
+                  unitId: explorerId,
+                  target: 'prospect',
+                  targetTileKey: targetTile,
+                ),
+              ],
+            },
+          );
+
+          final projectedOw =
+              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+                region: oldRegion,
+                game: game,
+                orders: orders,
+                humanPlayerId: humanPlayerId,
+              );
+          expect(projectedOw.civilianTileMarkers, hasLength(1));
+          expect(projectedOw.civilianTileMarkers.single.tileKey, targetTile);
+
+          final projectedNw =
+              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+                region: newRegion,
+                game: game,
+                orders: orders,
+                humanPlayerId: humanPlayerId,
+              );
+          expect(projectedNw.civilianTileMarkers, isEmpty);
+        });
+
+        test(
+          'overlapping local province id does not alias regions in projection',
+          () {
+            const sourceTile = 'oldWorld|p1|0|0';
+            const targetTile = 'newWorld|p1|1|0';
+            final game = _gameExplorerOldToNew(
+              sourceTile: sourceTile,
+              targetTile: targetTile,
+            );
+            final newRegion = _emptyRegion('newWorld');
+            final orders = ct_models.Orders(
+              workOrdersByPlayerId: {
+                humanPlayerId: [
+                  ct_models.WorkOrder(
+                    unitId: explorerId,
+                    target: 'prospect',
+                    targetTileKey: targetTile,
+                  ),
+                ],
+              },
+            );
+            final projectedNw =
+                GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+                  region: newRegion,
+                  game: game,
+                  orders: orders,
+                  humanPlayerId: humanPlayerId,
+                );
+            expect(projectedNw.civilianTileMarkers.single.tileKey, targetTile);
+            expect(
+              projectedNw.civilianTileMarkers.single.tileKey,
+              isNot(startsWith('oldWorld|')),
+            );
+          },
+        );
+
+        test('clearing cross-region draft restores source-region marker', () {
+          const sourceTile = 'oldWorld|p1|0|0';
+          const targetTile = 'newWorld|p1|1|0';
+          final game = _gameExplorerOldToNew(
+            sourceTile: sourceTile,
+            targetTile: targetTile,
+          );
+          final oldRegion = RegionMapViewData(
+            regionId: 'oldWorld',
+            width: 2,
+            height: 1,
+            cellSize: 16,
+            cells: const [
+              CellViewData(x: 0, y: 0, regionCellId: 'p1', isSea: false),
+              CellViewData(x: 1, y: 0, regionCellId: 'p1', isSea: false),
+            ],
+            capitalMarkers: const [],
+            portMarkers: const [],
+            factionColors: const {},
+            greatPowerFactionIds: const {},
+            terrainColors: const {},
+            unitMarkers: const [],
+            civilianTileMarkers: const [
+              CivilianTileMarkerView(
+                tileKey: sourceTile,
+                x: 0,
+                y: 0,
+                localProvinceId: 'p1',
+                unitIds: [explorerId],
+                unitTypes: {explorerId: 'Explorer'},
+                representativeUnitType: 'Explorer',
+                stackCount: 1,
+                representativeIsAssigned: false,
+              ),
+            ],
+          );
+          final newRegion = _emptyRegion('newWorld');
+          final ordersDraft = ct_models.Orders(
+            workOrdersByPlayerId: {
+              humanPlayerId: [
+                ct_models.WorkOrder(
+                  unitId: explorerId,
+                  target: 'prospect',
+                  targetTileKey: targetTile,
+                ),
+              ],
+            },
+          );
+          final cleared = const ct_models.Orders();
+
+          expect(
+            GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+              region: newRegion,
+              game: game,
+              orders: ordersDraft,
+              humanPlayerId: humanPlayerId,
+            ).civilianTileMarkers,
+            isNotEmpty,
+          );
+          final afterCancelNw =
+              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+                region: newRegion,
+                game: game,
+                orders: cleared,
+                humanPlayerId: humanPlayerId,
+              );
+          expect(afterCancelNw.civilianTileMarkers, isEmpty);
+
+          final afterCancelOw =
+              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+                region: oldRegion,
+                game: game,
+                orders: cleared,
+                humanPlayerId: humanPlayerId,
+              );
+          expect(afterCancelOw.civilianTileMarkers, hasLength(1));
+          expect(afterCancelOw.civilianTileMarkers.single.tileKey, sourceTile);
+        });
+
+        test(
+          'replacing cross-region prospect target updates destination tile',
+          () {
+            const sourceTile = 'oldWorld|p1|0|0';
+            const targetA = 'newWorld|pA|1|0';
+            const targetB = 'newWorld|pB|0|0';
+            final game = _gameExplorerOldToNew(
+              sourceTile: sourceTile,
+              targetTile: targetA,
+            );
+            final newRegion = RegionMapViewData(
+              regionId: 'newWorld',
+              width: 2,
+              height: 1,
+              cellSize: 16,
+              cells: const [
+                CellViewData(x: 0, y: 0, regionCellId: 'pB', isSea: false),
+                CellViewData(x: 1, y: 0, regionCellId: 'pA', isSea: false),
+              ],
+              capitalMarkers: const [],
+              portMarkers: const [],
+              factionColors: const {},
+              greatPowerFactionIds: const {},
+              terrainColors: const {},
+              unitMarkers: const [],
+              civilianTileMarkers: const [],
+            );
+            final ordersA = ct_models.Orders(
+              workOrdersByPlayerId: {
+                humanPlayerId: [
+                  ct_models.WorkOrder(
+                    unitId: explorerId,
+                    target: 'prospect',
+                    targetTileKey: targetA,
+                  ),
+                ],
+              },
+            );
+            final ordersB = ct_models.Orders(
+              workOrdersByPlayerId: {
+                humanPlayerId: [
+                  ct_models.WorkOrder(
+                    unitId: explorerId,
+                    target: 'prospect',
+                    targetTileKey: targetB,
+                  ),
+                ],
+              },
+            );
+
+            expect(
+              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+                region: newRegion,
+                game: game,
+                orders: ordersA,
+                humanPlayerId: humanPlayerId,
+              ).civilianTileMarkers.single.tileKey,
+              targetA,
+            );
+            final markerB =
+                GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+                  region: newRegion,
+                  game: game,
+                  orders: ordersB,
+                  humanPlayerId: humanPlayerId,
+                ).civilianTileMarkers.single;
+            expect(markerB.tileKey, targetB);
+            expect(markerB.localProvinceId, 'pB');
+          },
+        );
+
+        test('cross-region prospect stacks explorer onto existing destination '
+            'civilian marker', () {
+          const sourceTile = 'oldWorld|p1|0|0';
+          const targetTile = 'newWorld|p1|1|0';
+          const merchantId = 'u_merchant';
+          final game = ct_models.Game(
+            id: 'g',
+            worldState: ct_models.WorldState(
+              turnState: const ct_models.TurnState(
+                phase: ct_models.TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: ct_models.RegionData(
+                provinces: const [
+                  ct_models.Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
+                ],
+                units: [
+                  ct_models.Unit(
+                    id: explorerId,
+                    type: 'Explorer',
+                    ownerId: humanPlayerId,
+                    locationProvinceId: 'oldWorld|p1',
+                    tileKey: sourceTile,
+                    status: ct_models.UnitStatus.idle,
+                  ),
+                ],
+              ),
+              newWorld: ct_models.RegionData(
+                provinces: const [
+                  ct_models.Province(id: 'newWorld|p1', regionId: 'newWorld'),
+                ],
+                units: [
+                  ct_models.Unit(
+                    id: merchantId,
+                    type: 'Merchant',
+                    ownerId: humanPlayerId,
+                    locationProvinceId: 'newWorld|p1',
+                    tileKey: targetTile,
+                    status: ct_models.UnitStatus.idle,
+                  ),
+                ],
+              ),
+            ),
+            players: const [
+              ct_models.Player(
+                id: humanPlayerId,
+                displayName: 'Human',
+                isHuman: true,
+              ),
+            ],
+            minorNations: const [],
+            tribes: const [],
+          );
+          final newRegion = RegionMapViewData(
+            regionId: 'newWorld',
+            width: 2,
+            height: 1,
+            cellSize: 16,
+            cells: const [
+              CellViewData(x: 0, y: 0, regionCellId: 'p1', isSea: false),
+              CellViewData(x: 1, y: 0, regionCellId: 'p1', isSea: false),
+            ],
+            capitalMarkers: const [],
+            portMarkers: const [],
+            factionColors: const {},
+            greatPowerFactionIds: const {},
+            terrainColors: const {},
+            unitMarkers: const [],
+            civilianTileMarkers: const [
+              CivilianTileMarkerView(
+                tileKey: targetTile,
+                x: 1,
+                y: 0,
+                localProvinceId: 'p1',
+                unitIds: [merchantId],
+                unitTypes: {merchantId: 'Merchant'},
+                representativeUnitType: 'Merchant',
+                stackCount: 1,
+                representativeIsAssigned: false,
+              ),
+            ],
+          );
+          final orders = ct_models.Orders(
+            workOrdersByPlayerId: {
+              humanPlayerId: [
+                ct_models.WorkOrder(
+                  unitId: explorerId,
+                  target: 'prospect',
+                  targetTileKey: targetTile,
+                ),
+              ],
+            },
+          );
+          final projected =
+              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+                region: newRegion,
+                game: game,
+                orders: orders,
+                humanPlayerId: humanPlayerId,
+              );
+          expect(projected.civilianTileMarkers, hasLength(1));
+          final m = projected.civilianTileMarkers.single;
+          expect(m.tileKey, targetTile);
+          expect(m.unitIds, containsAll([explorerId, merchantId]));
+
+          final oldRegion = RegionMapViewData(
+            regionId: 'oldWorld',
+            width: 2,
+            height: 1,
+            cellSize: 16,
+            cells: const [
+              CellViewData(x: 0, y: 0, regionCellId: 'p1', isSea: false),
+              CellViewData(x: 1, y: 0, regionCellId: 'p1', isSea: false),
+            ],
+            capitalMarkers: const [],
+            portMarkers: const [],
+            factionColors: const {},
+            greatPowerFactionIds: const {},
+            terrainColors: const {},
+            unitMarkers: const [],
+            civilianTileMarkers: const [
+              CivilianTileMarkerView(
+                tileKey: sourceTile,
+                x: 0,
+                y: 0,
+                localProvinceId: 'p1',
+                unitIds: [explorerId],
+                unitTypes: {explorerId: 'Explorer'},
+                representativeUnitType: 'Explorer',
+                stackCount: 1,
+                representativeIsAssigned: false,
+              ),
+            ],
+          );
+          expect(
+            GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+              region: oldRegion,
+              game: game,
+              orders: orders,
+              humanPlayerId: humanPlayerId,
+            ).civilianTileMarkers,
+            isEmpty,
+          );
+        });
+      },
+    );
+
     test('selectionAfterWorkAssignment clears stale selected marker tile', () {
       final next = GameMapAreaStateLogic.selectionAfterWorkAssignment(
         currentSelectedCivilianTileKey: 'oldWorld|p1|0|0',
