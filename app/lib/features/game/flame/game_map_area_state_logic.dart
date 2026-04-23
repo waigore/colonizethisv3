@@ -5,8 +5,6 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 
 /// Pure-ish helpers for `GameMapArea` state translation.
 class GameMapAreaStateLogic {
-  static const String _regionOldWorld = 'oldWorld';
-
   static int regionIndexFromWorldRegionId(String regionId) {
     if (regionId == 'newWorld') return 1;
     return 0; // oldWorld (default)
@@ -77,9 +75,6 @@ class GameMapAreaStateLogic {
     required ct_models.Orders orders,
     required String humanPlayerId,
   }) {
-    if (region.civilianTileMarkers.isEmpty) {
-      return region;
-    }
     final pendingByUnitId = <String, String>{};
     final pending = orders.workOrdersByPlayerId[humanPlayerId] ?? const [];
     for (final order in pending) {
@@ -87,15 +82,20 @@ class GameMapAreaStateLogic {
       if (target.isEmpty) continue;
       pendingByUnitId[order.unitId] = target;
     }
-    if (pendingByUnitId.isEmpty) {
+
+    final civilianUnitIdsToProject = <String>{
+      ...pendingByUnitId.keys,
+      for (final marker in region.civilianTileMarkers)
+        for (final unitId in marker.unitIds) unitId,
+    };
+    if (civilianUnitIdsToProject.isEmpty) {
       return region;
     }
 
-    final regionUnits = region.regionId == _regionOldWorld
-        ? game.worldState.oldWorld.units
-        : game.worldState.newWorld.units;
     final unitsById = <String, ct_models.Unit>{
-      for (final u in regionUnits)
+      for (final u in game.worldState.oldWorld.units)
+        if (u.ownerId == humanPlayerId && _isCivilianUnitType(u.type)) u.id: u,
+      for (final u in game.worldState.newWorld.units)
         if (u.ownerId == humanPlayerId && _isCivilianUnitType(u.type)) u.id: u,
     };
     if (unitsById.isEmpty) {
@@ -103,34 +103,54 @@ class GameMapAreaStateLogic {
     }
 
     final projectedByTile = <String, List<_ProjectedCivilianUnit>>{};
-    for (final marker in region.civilianTileMarkers) {
-      for (final unitId in marker.unitIds) {
-        final unit = unitsById[unitId];
-        if (unit == null) continue;
-        final projectedTile =
-            projectedCivilianTileKey(
-              unit: unit,
-              playerId: humanPlayerId,
-              orders: orders,
-            ) ??
-            marker.tileKey;
-        final parts = projectedTile.split('|');
-        if (parts.length < 4 || parts[0] != region.regionId) continue;
-        projectedByTile
-            .putIfAbsent(projectedTile, () => <_ProjectedCivilianUnit>[])
-            .add(
-              _ProjectedCivilianUnit(
-                unitId: unitId,
-                unitType: unit.type,
-                pendingTargetTileKey: pendingByUnitId[unitId],
-                assignedTileKey: unit.assignedTileKey,
-                status: unit.status,
-              ),
-            );
-      }
+    for (final unitId in civilianUnitIdsToProject) {
+      final unit = unitsById[unitId];
+      if (unit == null) continue;
+      final projectedTile =
+          projectedCivilianTileKey(
+            unit: unit,
+            playerId: humanPlayerId,
+            orders: orders,
+          ) ??
+          unit.tileKey;
+      if (projectedTile == null || projectedTile.isEmpty) continue;
+      final parts = projectedTile.split('|');
+      if (parts.length < 4 || parts[0] != region.regionId) continue;
+      projectedByTile
+          .putIfAbsent(projectedTile, () => <_ProjectedCivilianUnit>[])
+          .add(
+            _ProjectedCivilianUnit(
+              unitId: unitId,
+              unitType: unit.type,
+              pendingTargetTileKey: pendingByUnitId[unitId],
+              assignedTileKey: unit.assignedTileKey,
+              status: unit.status,
+            ),
+          );
     }
     if (projectedByTile.isEmpty) {
-      return region;
+      return RegionMapViewData(
+        regionId: region.regionId,
+        width: region.width,
+        height: region.height,
+        cellSize: region.cellSize,
+        cells: region.cells,
+        capitalMarkers: region.capitalMarkers,
+        portMarkers: region.portMarkers,
+        factionColors: region.factionColors,
+        greatPowerFactionIds: region.greatPowerFactionIds,
+        terrainColors: region.terrainColors,
+        unitMarkers: region.unitMarkers,
+        civilianTileMarkers: const [],
+        fleetTileMarkers: region.fleetTileMarkers,
+        warpMarkers: region.warpMarkers,
+        townMarkers: region.townMarkers,
+        provinceUnitPresenceByProvinceId:
+            region.provinceUnitPresenceByProvinceId,
+        provincePoliticalOwnerByPrefixedProvinceId:
+            region.provincePoliticalOwnerByPrefixedProvinceId,
+        seaZoneDisplayNameByPrefixedId: region.seaZoneDisplayNameByPrefixedId,
+      );
     }
 
     final projectedMarkers = <CivilianTileMarkerView>[];
