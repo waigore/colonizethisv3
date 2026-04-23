@@ -95,15 +95,20 @@ Map<String, Map<String, String>> _buildCoordToTileKeyByRegion(
     final map = <String, String>{};
     for (final list in byProvince.values) {
       for (final tileKey in list) {
-        final parts = tileKey.split('|');
-        if (parts.length >= 4) {
-          map['${parts[2]}|${parts[3]}'] = tileKey;
-        }
+        _addCoordMappingIfPresent(map, tileKey);
       }
     }
     coordToKey[regionId] = map;
   }
   return coordToKey;
+}
+
+void _addCoordMappingIfPresent(Map<String, String> out, String tileKey) {
+  final parts = tileKey.split('|');
+  if (parts.length < 4) {
+    return;
+  }
+  out['${parts[2]}|${parts[3]}'] = tileKey;
 }
 
 String? _townTileKeyForProvince({
