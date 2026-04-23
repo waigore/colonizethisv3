@@ -103,7 +103,7 @@ rules:
 
   - rule_id: repo.part_unit_size
     group: structure
-    title: part-file and parent compilation unit size thresholds
+    title: Dart part fragment physical line limit (logic lib)
     spec: SPEC/program/part-unit-size.md
     runner: dart
     script: tool/check_part_unit_size.dart
