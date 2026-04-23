@@ -91,9 +91,6 @@ allowed_over_20:
   - file: packages/colonizethis_logic/lib/src/combat/quick_battle_resolver.dart
     symbol: applyQuickBattleResultToGame
     max_measured_lines: 59
-  - file: packages/colonizethis_logic/lib/src/combat/quick_battle_resolver.dart
-    symbol: resolveQuickBattle
-    max_measured_lines: 237
   - file: packages/colonizethis_logic/lib/src/diplomacy/alliance_resolver.dart
     symbol: _absorbGreatPowerIntoGp
     max_measured_lines: 111
