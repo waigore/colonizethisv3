@@ -76,34 +76,15 @@ class WorkOrderValidator extends OrderValidator {
       previousRejected: previousRejected,
       body: () {
         final unit = _context.unitsById[o.unitId];
-        if (unit == null || unit.ownerId != _context.playerId) {
+        final unitValidation = _validateOwnedUnseenUnit(o, unit);
+        if (unitValidation != null) return unitValidation;
+        final validatedUnit = unit;
+        if (validatedUnit == null) {
           return OrderValidationResult.rejected('Unit not found');
         }
-        if (_seenUnitIds.contains(o.unitId)) {
-          return OrderValidationResult.rejected(
-            'Only one work order per unit is allowed each turn',
-          );
-        }
-        _seenUnitIds.add(o.unitId);
-        if (unit.currentWork != null) {
-          return OrderValidationResult.rejected(
-            'Unit already has a work order; cancel first',
-          );
-        }
-        if (_context.civilianDraftMoveUnitIds.contains(o.unitId)) {
-          return OrderValidationResult.rejected(kReasonCivilianMoveXorWorkOrder);
-        }
-        final type = unit.type;
-        if (!isWorkOrderTargetAllowedForUnitType(type, o.target)) {
-          return OrderValidationResult.rejected(
-            'Invalid work target for unit type',
-          );
-        }
-        if (o.targetTileKey.isEmpty) {
-          return OrderValidationResult.rejected(
-            'Work order requires a target tile',
-          );
-        }
+        final type = validatedUnit.type;
+        final targetValidation = _validateWorkTargetAndTile(o, type);
+        if (targetValidation != null) return targetValidation;
 
         final targetProvinceId = Unit.provinceIdFromTileKey(o.targetTileKey);
         final province = targetProvinceId != null
@@ -111,51 +92,25 @@ class WorkOrderValidator extends OrderValidator {
             : null;
         final ownerId = province?.ownerId;
 
-        final preCtx = WorkOrderTargetPrecheckContext(
-          game: _context.game,
-          player: _context.player,
-          playerId: _context.playerId,
-          treasury: _treasury,
-          civilianEmbassyWorkAllowed: _civilianWorkAllowedInMinorTribeProvince,
-        );
-        final preResult = runWorkOrderTargetPrecheck(
-          preCtx,
-          o,
-          targetProvinceId,
-          ownerId,
-          type,
+        final preResult = _runTargetPrecheck(
+          o: o,
+          targetProvinceId: targetProvinceId,
+          ownerId: ownerId,
+          type: type,
         );
         if (preResult != null) {
           return preResult;
         }
 
-        if (!isExplorerUnit(type) &&
-            !kWorkTargetsSkippingDefaultForeignProvinceCheck.contains(
-              o.target,
-            )) {
-          final controlled = isTileControlledByPlayer(
-            _context.game,
-            _context.playerId,
-            o.targetTileKey,
-          );
-          final embassyWork = _civilianWorkAllowedInMinorTribeProvince(
-            type,
-            ownerId,
-          );
-          if (!controlled && !embassyWork) {
-            return OrderValidationResult.rejected(
-              'Cannot work in foreign province',
-            );
-          }
-        }
+        final foreignProvinceResult = _validateForeignProvinceWork(
+          o: o,
+          type: type,
+          ownerId: ownerId,
+        );
+        if (foreignProvinceResult != null) return foreignProvinceResult;
 
-        if (isDevExclusiveUnitType(type) &&
-            isDevExclusiveWorkTarget(o.target) &&
-            _context.devExclusiveTiles.contains(o.targetTileKey)) {
-          return OrderValidationResult.rejected(
-            'Tile already has development or purchase work for this player',
-          );
-        }
+        final devExclusiveResult = _validateDevExclusiveWorkTarget(o, type);
+        if (devExclusiveResult != null) return devExclusiveResult;
 
         final materialRuleResult = _validateMaterialAndTechRules(
           o,
@@ -165,7 +120,7 @@ class WorkOrderValidator extends OrderValidator {
 
         if (!workOrderVisibilityOk(
           _context.view,
-          unit,
+          validatedUnit,
           o.target,
           o.targetTileKey,
         )) {
@@ -197,6 +152,99 @@ class WorkOrderValidator extends OrderValidator {
 
         return OrderValidationResult.accepted();
       },
+    );
+  }
+
+  OrderValidationResult? _validateOwnedUnseenUnit(WorkOrder o, Unit? unit) {
+    if (unit == null || unit.ownerId != _context.playerId) {
+      return OrderValidationResult.rejected('Unit not found');
+    }
+    if (_seenUnitIds.contains(o.unitId)) {
+      return OrderValidationResult.rejected(
+        'Only one work order per unit is allowed each turn',
+      );
+    }
+    _seenUnitIds.add(o.unitId);
+    if (unit.currentWork != null) {
+      return OrderValidationResult.rejected(
+        'Unit already has a work order; cancel first',
+      );
+    }
+    if (_context.civilianDraftMoveUnitIds.contains(o.unitId)) {
+      return OrderValidationResult.rejected(kReasonCivilianMoveXorWorkOrder);
+    }
+    return null;
+  }
+
+  OrderValidationResult? _validateWorkTargetAndTile(WorkOrder o, String type) {
+    if (!isWorkOrderTargetAllowedForUnitType(type, o.target)) {
+      return OrderValidationResult.rejected(
+        'Invalid work target for unit type',
+      );
+    }
+    if (o.targetTileKey.isEmpty) {
+      return OrderValidationResult.rejected(
+        'Work order requires a target tile',
+      );
+    }
+    return null;
+  }
+
+  OrderValidationResult? _runTargetPrecheck({
+    required WorkOrder o,
+    required String? targetProvinceId,
+    required String? ownerId,
+    required String type,
+  }) {
+    final preCtx = WorkOrderTargetPrecheckContext(
+      game: _context.game,
+      player: _context.player,
+      playerId: _context.playerId,
+      treasury: _treasury,
+      civilianEmbassyWorkAllowed: _civilianWorkAllowedInMinorTribeProvince,
+    );
+    return runWorkOrderTargetPrecheck(
+      preCtx,
+      o,
+      targetProvinceId,
+      ownerId,
+      type,
+    );
+  }
+
+  OrderValidationResult? _validateForeignProvinceWork({
+    required WorkOrder o,
+    required String type,
+    required String? ownerId,
+  }) {
+    if (isExplorerUnit(type) ||
+        kWorkTargetsSkippingDefaultForeignProvinceCheck.contains(o.target)) {
+      return null;
+    }
+    final controlled = isTileControlledByPlayer(
+      _context.game,
+      _context.playerId,
+      o.targetTileKey,
+    );
+    final embassyWork = _civilianWorkAllowedInMinorTribeProvince(type, ownerId);
+    if (controlled || embassyWork) {
+      return null;
+    }
+    return OrderValidationResult.rejected('Cannot work in foreign province');
+  }
+
+  OrderValidationResult? _validateDevExclusiveWorkTarget(
+    WorkOrder o,
+    String type,
+  ) {
+    if (!isDevExclusiveUnitType(type) || !isDevExclusiveWorkTarget(o.target)) {
+      return null;
+    }
+    if (!_context.devExclusiveTiles.contains(o.targetTileKey)) {
+      return null;
+    }
+    return OrderValidationResult.rejected(
+      'Tile already has development or purchase work for this player',
     );
   }
 
