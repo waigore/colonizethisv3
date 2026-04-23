@@ -20,6 +20,20 @@ const String kReasonNoValidEntryLandTile = 'no_valid_entry_land_tile';
 /// Maximum tiles scanned for bundled entry existence / “explore still useful”.
 const int kBundledWorkTileScanCap = 256;
 
+List<String> _sortedBundledEntryTileKeysInProvince(
+  Game game,
+  String destProvinceFullId,
+) {
+  final regionId = ProvinceId.regionIdFrom(destProvinceFullId);
+  final tiles = List<String>.from(
+    game
+            .worldState
+            .tileKeysByRegionAndProvince[regionId]?[destProvinceFullId] ??
+        const <String>[],
+  )..sort();
+  return tiles;
+}
+
 String? executionProvinceFullIdFromWorkOrder(Game game, WorkOrder o) {
   final pid = Unit.provinceIdFromTileKey(o.targetTileKey);
   if (pid == null) return null;
@@ -60,21 +74,40 @@ bool civilianBundledWorkNeedsProvinceMoveLeg(
   return true;
 }
 
-/// First deterministic candidate entry tile in [destProvinceFullId] for bundled
-/// civilian relocation (authoritative province tile list, sorted).
-String? firstBundledEntryTileKeyInProvince({
+/// First land tile in [destProvinceFullId] that passes [MoveValidator] for the
+/// implicit bundled civilian move leg (deterministic sorted order, bounded
+/// scan). Returns null when the province lists no tiles or none pass.
+///
+/// Suggestions, bundled work validation, and movement-phase implicit relocation
+/// must use the same predicate so validation and execution agree (Refs #1916).
+String? firstLegalBundledEntryTileKeyInProvince({
   required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Unit unit,
   required String destProvinceFullId,
+  required PlayerView view,
+  required Map<String, Unit> unitsById,
+  required List<DiplomaticOrder> diplomaticOrders,
 }) {
-  final regionId = ProvinceId.regionIdFrom(destProvinceFullId);
-  final tiles = List<String>.from(
-    game.worldState.tileKeysByRegionAndProvince[regionId]?[destProvinceFullId] ??
-        const <String>[],
-  )..sort();
+  const moveValidator = MoveValidator();
+  final tiles = _sortedBundledEntryTileKeysInProvince(game, destProvinceFullId);
   var n = 0;
   for (final tk in tiles) {
     if (n++ >= kBundledWorkTileScanCap) break;
-    return tk;
+    final moveRes = moveValidator.validate(
+      MoveOrder(unitId: unit.id, destinationTileKey: tk),
+      game,
+      playerId,
+      unitsById,
+      diplomaticOrders,
+      view,
+      topology,
+      previousRejected: false,
+    );
+    if (moveRes.isAccepted) {
+      return tk;
+    }
   }
   return null;
 }
@@ -93,16 +126,6 @@ bool exploreProvinceStillUsefulFromAuthoritativeTiles(
   return false;
 }
 
-bool hasAtLeastOneBundledEntryTileInProvince({
-  required Game game,
-  required String destProvinceFullId,
-}) =>
-    firstBundledEntryTileKeyInProvince(
-      game: game,
-      destProvinceFullId: destProvinceFullId,
-    ) !=
-    null;
-
 OrderValidationResult validateCivilianBundledWorkMoveLeg({
   required Game game,
   required MapTopology topology,
@@ -120,34 +143,22 @@ OrderValidationResult validateCivilianBundledWorkMoveLeg({
   if (destFull == null) {
     return OrderValidationResult.rejected(kReasonBundledWorkMoveLegInvalid);
   }
-  const moveValidator = MoveValidator();
-  final destinationTile = firstBundledEntryTileKeyInProvince(
-    game: game,
-    destProvinceFullId: destFull,
-  );
-  if (destinationTile == null) {
+  final tiles = _sortedBundledEntryTileKeysInProvince(game, destFull);
+  if (tiles.isEmpty) {
     return OrderValidationResult.rejected(kReasonNoValidEntryLandTile);
   }
-  final moveRes = moveValidator.validate(
-    MoveOrder(unitId: unit.id, destinationTileKey: destinationTile),
-    game,
-    playerId,
-    unitsById,
-    diplomaticOrders,
-    view,
-    topology,
-    previousRejected: false,
+  final legal = firstLegalBundledEntryTileKeyInProvince(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    unit: unit,
+    destProvinceFullId: destFull,
+    view: view,
+    unitsById: unitsById,
+    diplomaticOrders: diplomaticOrders,
   );
-  if (!moveRes.isAccepted) {
+  if (legal == null) {
     return OrderValidationResult.rejected(kReasonBundledWorkMoveLegInvalid);
-  }
-  if (order.target == kWorkTargetExplore) {
-    if (!hasAtLeastOneBundledEntryTileInProvince(
-      game: game,
-      destProvinceFullId: destFull,
-    )) {
-      return OrderValidationResult.rejected(kReasonNoValidEntryLandTile);
-    }
   }
   return OrderValidationResult.accepted();
 }
