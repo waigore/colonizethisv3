@@ -4,6 +4,14 @@
 
 ---
 
+## Overlay construction and simulation cost (normative)
+
+When building or rebuilding game overlays (widget `build`, scroll/pan, selection changes), the UI layer **must not** invoke expensive simulation paths—tile pickers such as `getValidWorkOrderTileKeysWithVisibility`, full **order-engine** validation or application, or other heavy rule evaluation—**unless** there is an explicit, narrow justification (for example validating a user commit when assigning an order).
+
+Authoritative world and player-view updates happen primarily at **turn resolution** and other explicit commit boundaries. Overlays read **stable** models (`Game`, `PlayerView`, map view data, draft orders) and **cheap** pure predicates shared with the engine (for example `isMineralEligibleTile` with visibility and prospected-tile state), not re-run the engine solely to paint affordances. Province detail prospect shortcut behavior is specified in [province-sea-zone-detail-overlay.md](../ui/province-sea-zone-detail-overlay.md).
+
+---
+
 ## When to use the bus vs local Flutter APIs
 
 Use **`AppEventBus`** for **cross-cutting** actions: shell ↔ game, empire panels opening **shared** dialogs or **full-screen** empire routes, side menu opening unit sheets, platform menus, and anything that must not depend on a long **`BuildContext`** chain.

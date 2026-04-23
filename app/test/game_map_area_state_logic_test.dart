@@ -899,7 +899,16 @@ void main() {
         bool includeExplorer = true,
         bool includeProspectedTile = false,
         bool includeMineralResource = true,
+        String? resourceOverride,
       }) {
+        final Map<String, String> resourceByTileKey;
+        if (resourceOverride != null) {
+          resourceByTileKey = {selectedTileKey: resourceOverride};
+        } else if (includeMineralResource) {
+          resourceByTileKey = const {selectedTileKey: 'iron'};
+        } else {
+          resourceByTileKey = const {};
+        }
         return ct_models.Game(
           id: 'g',
           worldState: ct_models.WorldState(
@@ -928,9 +937,7 @@ void main() {
                   : const [],
             ),
             newWorld: const ct_models.RegionData(provinces: [], units: []),
-            resourceByTileKey: includeMineralResource
-                ? const {selectedTileKey: 'iron'}
-                : const {},
+            resourceByTileKey: resourceByTileKey,
             playerProspectedTiles: includeProspectedTile
                 ? const {
                     humanPlayerId: {selectedTileKey},
@@ -1028,6 +1035,41 @@ void main() {
         expect(state.enabled, isFalse);
         expect(state.hasExplorerUnits, isFalse);
       });
+
+      test(
+        'hides prospect shortcut for wool on hills when tile map marks hills',
+        () {
+          final tileMapByRegion = <String, TileMapResult>{
+            'oldWorld': TileMapResult(
+              width: 1,
+              height: 1,
+              grid: const [
+                ['p1'],
+              ],
+              terrainGrid: const [
+                [TerrainType.hills],
+              ],
+              resourceGrid: const [
+                [Resource.wool],
+              ],
+            ),
+          };
+          final state = GameMapAreaStateLogic.provinceProspectActionState(
+            game: makeGame(resourceOverride: 'wool'),
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: makePlayerView(
+              tileVisibility: VisibilityLevel.fullyVisible,
+            ),
+            topology: null,
+            currentOrders: const ct_models.Orders(),
+            tileMapByRegion: tileMapByRegion,
+          );
+          expect(state.showIcon, isFalse);
+          expect(state.enabled, isFalse);
+          expect(state.hasExplorerUnits, isFalse);
+        },
+      );
     });
 
     group('projectFleetMarkersForHumanDraft in-port harbor anchoring', () {
