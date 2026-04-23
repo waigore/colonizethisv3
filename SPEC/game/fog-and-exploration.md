@@ -63,6 +63,8 @@ Explorer with work order target `prospect` prospects the tile under the unit. On
 
 **Known from terrain when visible:** grain, meat, wool, horses, timber, sugarCane, tobacco, cotton, furs, spices.
 
+Tiles with a **known** non-prospect (terrain-known) resource are not mineral-eligible for `prospect`, even when the underlying terrain type is normally prospectable.
+
 Mineral-eligible terrain: swamp, hills, mountain, desert (for diamonds). See [resource-terrain-region-rules.md](resource-terrain-region-rules.md).
 
 ### Fog Decay

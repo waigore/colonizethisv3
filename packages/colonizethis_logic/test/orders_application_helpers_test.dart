@@ -67,6 +67,52 @@ void main() {
       final result = isMineralEligibleTile(game, tileMapByRegion, tileKey);
       expect(result, isFalse);
     });
+
+    test('returns false for wool on hills when tile map shows prospectable terrain', () {
+      final game = _gameWithResourceByTile(const {'oldWorld|p1|0|0': 'wool'});
+      const tileKey = 'oldWorld|p1|0|0';
+      final tileMapByRegion = <String, TileMapResult>{
+        'oldWorld': TileMapResult(
+          width: 1,
+          height: 1,
+          grid: const [
+            ['p1'],
+          ],
+          terrainGrid: const [
+            [TerrainType.hills],
+          ],
+          resourceGrid: const [
+            [Resource.wool],
+          ],
+        ),
+      };
+
+      final result = isMineralEligibleTile(game, tileMapByRegion, tileKey);
+      expect(result, isFalse);
+    });
+
+    test('returns true for iron on hills with tile map when not prospected', () {
+      final game = _gameWithResourceByTile(const {'oldWorld|p1|0|0': 'iron'});
+      const tileKey = 'oldWorld|p1|0|0';
+      final tileMapByRegion = <String, TileMapResult>{
+        'oldWorld': TileMapResult(
+          width: 1,
+          height: 1,
+          grid: const [
+            ['p1'],
+          ],
+          terrainGrid: const [
+            [TerrainType.hills],
+          ],
+          resourceGrid: const [
+            [Resource.iron],
+          ],
+        ),
+      };
+
+      final result = isMineralEligibleTile(game, tileMapByRegion, tileKey);
+      expect(result, isTrue);
+    });
   });
 
   group('isMineralEligibleTile fallback with resource presence/absence', () {

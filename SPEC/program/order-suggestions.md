@@ -91,7 +91,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
 });
 ```
 
-When `tileMapByRegion` is non-null (app shell, turn resolution), prospect pre-filtering and `prospect` work-order validation use the same terrain-aware eligibility as work application. When null, eligibility falls back to mineral resource ids on `resourceByTileKey` only.
+When `tileMapByRegion` is non-null (app shell, turn resolution), prospect pre-filtering and `prospect` work-order validation use the same `isMineralEligibleTile` rules as work application: prospectable terrain from tile maps combined with `resourceByTileKey` so a known non-mineral (e.g. wool on hills) is never mineral-eligible. When `tileMapByRegion` is null, eligibility uses `resourceByTileKey` and mineral ids only (no terrain-from-map branch).
 
 **Pre-filtering by work target type:**
 
@@ -100,7 +100,7 @@ Before iterating candidate tiles, apply work-target-specific filters to dramatic
 | Work target | Province scope | Tile requirements |
 |-------------|----------------|-------------------|
 | `explore` | Per-player partially revealed province cache | Any tile in the province (province-level work) |
-| `prospect` | Land provinces (prefixed province id) | Tile must be mineral-eligible (terrain from tile maps when provided, else mineral resource on tile per `isMineralEligibleTile`); tile must **not** already appear in `WorldState.playerProspectedTiles[playerId]` |
+| `prospect` | Land provinces (prefixed province id) | Tile must be mineral-eligible per `isMineralEligibleTile` (prospectable terrain when resolvable from tile maps; known non-mineral resources excluded); tile must **not** already appear in `WorldState.playerProspectedTiles[playerId]` |
 | `build_improvement` | Owned or purchased tiles | Tile must have a resource (`resourceByTileKey` non-empty); tile controlled by player |
 | `upgrade_town` | Owned provinces only | Province's town tile only |
 | `build_road` | Owned or purchased tiles | Any tile controlled by player |
