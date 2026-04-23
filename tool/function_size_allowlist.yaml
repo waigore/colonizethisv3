@@ -533,15 +533,6 @@ allowed_over_20:
     symbol: _applyNaming::assignProvinceNames
     max_measured_lines: 55
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _assignProvinceTowns::bfsDistances
-    max_measured_lines: 37
-  - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _assignProvinceTowns::tileKeyAdjacentToProvinceSeaZone
-    max_measured_lines: 29
-  - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _assignProvinceTowns::townTileKeyForProvince
-    max_measured_lines: 70
-  - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
     symbol: _buildPoliticalGlyphByPlayerId
     max_measured_lines: 48
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
