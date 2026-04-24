@@ -283,13 +283,33 @@ class _TileMapGenTerrainResource {
     TerrainDistribution distribution,
     Random rnd,
   ) {
-    // Allowed non-mountain terrains for this region.
     final allowed = allowedTerrainsForRegion(
       mapRegionId,
     ).where((t) => t != TerrainType.mountain).toList();
     if (allowed.isEmpty) return;
 
-    // Collect remaining land cells (not sea, not mountain).
+    final remainingLand = _collectRemainingNonMountainLand(terrainGrid, grid);
+    if (remainingLand.isEmpty) return;
+    final components = _graph.connectedComponentsOfLand(remainingLand.toSet());
+    if (components.isEmpty) return;
+
+    for (final component in components) {
+      if (component.isEmpty) continue;
+      _assignNonMountainInComponent(
+        terrainGrid,
+        grid,
+        component,
+        allowed,
+        distribution,
+        rnd,
+      );
+    }
+  }
+
+  List<(int x, int y)> _collectRemainingNonMountainLand(
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+  ) {
     final remainingLand = <(int x, int y)>[];
     for (var y = 0; y < params.height; y++) {
       for (var x = 0; x < params.width; x++) {
@@ -298,286 +318,291 @@ class _TileMapGenTerrainResource {
         remainingLand.add((x, y));
       }
     }
-    if (remainingLand.isEmpty) return;
+    return remainingLand;
+  }
 
-    // Split remaining land into connected components (continents) and run the
-    // region-growing per component so each continent gets its own mix.
-    final components = _graph.connectedComponentsOfLand(remainingLand.toSet());
-    if (components.isEmpty) return;
+  void _assignNonMountainInComponent(
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+    Set<(int x, int y)> component,
+    List<TerrainType> allowed,
+    TerrainDistribution distribution,
+    Random rnd,
+  ) {
+    final cells = component.toList();
+    final targets = _buildComponentTargets(cells.length, allowed, distribution);
+    final macro = _runMacroPhase(
+      terrainGrid,
+      grid,
+      component,
+      cells,
+      allowed,
+      targets,
+      rnd,
+    );
+    _runMicroPhase(
+      terrainGrid,
+      grid,
+      component,
+      cells,
+      allowed,
+      targets,
+      macro.$1,
+      macro.$2,
+      rnd,
+    );
+    _cleanupUnassignedInComponent(terrainGrid, component, allowed, rnd);
+    _refineTerrainPatternsInComponent(
+      terrainGrid,
+      grid,
+      component,
+      allowed,
+      distribution,
+      rnd,
+    );
+  }
 
-    const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
-
-    for (final component in components) {
-      if (component.isEmpty) continue;
-      final cells = component.toList();
-      final totalRemaining = cells.length;
-
-      // Per-component targets: same regional fractions, applied to this
-      // continent's non-mountain land. Adjust so the sum matches exactly.
-      final targets = <TerrainType, int>{};
-      int sum = 0;
+  Map<TerrainType, int> _buildComponentTargets(
+    int totalRemaining,
+    List<TerrainType> allowed,
+    TerrainDistribution distribution,
+  ) {
+    final targets = <TerrainType, int>{};
+    int sum = 0;
+    for (final t in allowed) {
+      final frac = distribution.nonMountainFractions[t] ?? 0.0;
+      final n = (frac * totalRemaining).round();
+      targets[t] = n;
+      sum += n;
+    }
+    if (sum <= 0) {
+      final int per = (totalRemaining / allowed.length).round();
+      targets.clear();
+      sum = 0;
       for (final t in allowed) {
-        final frac = distribution.nonMountainFractions[t] ?? 0.0;
-        final n = (frac * totalRemaining).round();
-        targets[t] = n;
-        sum += n;
+        targets[t] = per;
+        sum += per;
       }
-      if (sum <= 0) {
-        // Fallback: uniform among allowed for this component.
-        final int per = (totalRemaining / allowed.length).round();
-        targets.clear();
-        sum = 0;
-        for (final t in allowed) {
-          targets[t] = per;
-          sum += per;
-        }
-      }
-      final int delta = totalRemaining - sum;
-      if (delta != 0) {
-        final last = allowed.last;
-        targets[last] = (targets[last] ?? 0) + delta;
-      }
+    }
+    final int delta = totalRemaining - sum;
+    if (delta != 0) {
+      final last = allowed.last;
+      targets[last] = (targets[last] ?? 0) + delta;
+    }
+    return targets;
+  }
 
-      // --- Macro phase: coarse blobs ---------------------------------------
-
-      final macroTargets = <TerrainType, int>{};
-      final macroRemaining = <TerrainType, int>{};
-      for (final t in allowed) {
-        final target = targets[t] ?? 0;
-        if (target <= 0) continue;
-        final macro = max(
-          1,
-          (target * params.terrainMacroFraction).round().clamp(1, target),
-        );
-        macroTargets[t] = macro;
-        macroRemaining[t] = macro;
-      }
-
-      // Seed placement within this component for macro phase.
-      final macroQueues = <TerrainType, List<(int x, int y)>>{};
-      final availableMacro = List<(int x, int y)>.from(cells);
-
-      for (final t in allowed) {
-        final macroTarget = macroTargets[t] ?? 0;
-        if (macroTarget <= 0) continue;
-        final seedCount = max(
-          params.terrainSeedsMin,
-          min(
-            params.terrainSeedsMax,
-            (params.terrainSeedsFactor * sqrt(macroTarget)).round(),
-          ),
-        );
-        final q = <(int x, int y)>[];
-        macroQueues[t] = q;
-
-        var placedSeeds = 0;
-        while (placedSeeds < seedCount &&
-            macroRemaining[t]! > 0 &&
-            availableMacro.isNotEmpty) {
-          final idx = rnd.nextInt(availableMacro.length);
-          final (sx, sy) = availableMacro.removeAt(idx);
-          if (terrainGrid[sy][sx] != null) continue;
-          terrainGrid[sy][sx] = t;
-          q.add((sx, sy));
-          macroRemaining[t] = macroRemaining[t]! - 1;
-          placedSeeds++;
-        }
-      }
-
-      bool hasActiveMacroTerrain() {
-        for (final t in allowed) {
-          final rem = macroRemaining[t] ?? 0;
-          final q = macroQueues[t];
-          if (rem > 0 && q != null && q.isNotEmpty) return true;
-        }
-        return false;
-      }
-
-      // Macro region-growing loop, restricted to this component's cells.
-      final cellSet = component;
-      while (hasActiveMacroTerrain()) {
-        var totalRem = 0;
-        for (final t in allowed) {
-          totalRem += macroRemaining[t] ?? 0;
-        }
-        if (totalRem <= 0) break;
-        var roll = rnd.nextInt(totalRem) + 1;
-        TerrainType? chosen;
-        for (final t in allowed) {
-          final rem = macroRemaining[t] ?? 0;
-          if (rem <= 0) continue;
-          roll -= rem;
-          if (roll <= 0) {
-            chosen = t;
-            break;
-          }
-        }
-        if (chosen == null) break;
-        final queue = macroQueues[chosen]!;
-        if (queue.isEmpty) continue;
-
-        final (cx, cy) = queue.removeLast();
-
-        final dirs = List<(int dx, int dy)>.from(directions)..shuffle(rnd);
-        for (final (dx, dy) in dirs) {
-          final nx = cx + dx;
-          final ny = cy + dy;
-          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
-            continue;
-          }
-          if (!cellSet.contains((nx, ny))) continue;
-          if (grid[ny][nx] != _landSentinel) continue;
-          if (terrainGrid[ny][nx] != null) continue;
-          terrainGrid[ny][nx] = chosen;
-          macroRemaining[chosen] = macroRemaining[chosen]! - 1;
-          queue.add((nx, ny));
-          if (macroRemaining[chosen]! <= 0) break;
-        }
-      }
-
-      // --- Micro phase: fill residual quotas with refinement ---------------
-
-      final residualTargets = <TerrainType, int>{};
-      for (final t in allowed) {
-        final target = targets[t] ?? 0;
-        if (target <= 0) continue;
-        final macro = macroTargets[t] ?? 0;
-        final usedMacro = macro - (macroRemaining[t] ?? 0);
-        final residual = max(0, target - usedMacro);
-        if (residual > 0) {
-          residualTargets[t] = residual;
-        }
-      }
-
-      if (residualTargets.isNotEmpty) {
-        final microQueues = <TerrainType, List<(int x, int y)>>{};
-        final microRemaining = <TerrainType, int>{};
-        final availableMicro = <(int x, int y)>[];
-        for (final (x, y) in cells) {
-          if (terrainGrid[y][x] == null) {
-            availableMicro.add((x, y));
-          }
-        }
-
-        for (final t in allowed) {
-          final residual = residualTargets[t] ?? 0;
-          if (residual <= 0) continue;
-          final seedCount = max(
-            params.terrainSeedsMin,
-            min(
-              params.terrainSeedsMax,
-              (params.terrainSeedsFactor * sqrt(residual)).round(),
-            ),
-          );
-          final q = <(int x, int y)>[];
-          microQueues[t] = q;
-          microRemaining[t] = residual;
-
-          var placedSeeds = 0;
-          while (placedSeeds < seedCount &&
-              microRemaining[t]! > 0 &&
-              availableMicro.isNotEmpty) {
-            final idx = rnd.nextInt(availableMicro.length);
-            final (sx, sy) = availableMicro.removeAt(idx);
-            if (terrainGrid[sy][sx] != null) continue;
-            terrainGrid[sy][sx] = t;
-            q.add((sx, sy));
-            microRemaining[t] = microRemaining[t]! - 1;
-            placedSeeds++;
-          }
-        }
-
-        bool hasActiveMicroTerrain() {
-          for (final t in allowed) {
-            final rem = microRemaining[t] ?? 0;
-            final q = microQueues[t];
-            if (rem > 0 && q != null && q.isNotEmpty) return true;
-          }
-          return false;
-        }
-
-        while (hasActiveMicroTerrain()) {
-          var totalRem = 0;
-          for (final t in allowed) {
-            totalRem += microRemaining[t] ?? 0;
-          }
-          if (totalRem <= 0) break;
-          var roll = rnd.nextInt(totalRem) + 1;
-          TerrainType? chosen;
-          for (final t in allowed) {
-            final rem = microRemaining[t] ?? 0;
-            if (rem <= 0) continue;
-            roll -= rem;
-            if (roll <= 0) {
-              chosen = t;
-              break;
-            }
-          }
-          if (chosen == null) break;
-          final queue = microQueues[chosen]!;
-          if (queue.isEmpty) continue;
-
-          final (cx, cy) = queue.removeLast();
-
-          final dirs = List<(int dx, int dy)>.from(directions)..shuffle(rnd);
-          for (final (dx, dy) in dirs) {
-            final nx = cx + dx;
-            final ny = cy + dy;
-            if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
-              continue;
-            }
-            if (!cellSet.contains((nx, ny))) continue;
-            if (grid[ny][nx] != _landSentinel) continue;
-            if (terrainGrid[ny][nx] != null) continue;
-            terrainGrid[ny][nx] = chosen;
-            microRemaining[chosen] = microRemaining[chosen]! - 1;
-            queue.add((nx, ny));
-            if (microRemaining[chosen]! <= 0) break;
-          }
-        }
-      }
-
-      // Cleanup within this component: assign any remaining unassigned land
-      // cells to neighboring terrains (majority vote), or random fallback.
-      for (final (x, y) in cells) {
-        if (terrainGrid[y][x] != null) continue;
-        final counts = <TerrainType, int>{};
-        for (final (dx, dy) in directions) {
-          final nx = x + dx;
-          final ny = y + dy;
-          if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
-            continue;
-          }
-          if (!cellSet.contains((nx, ny))) continue;
-          final t = terrainGrid[ny][nx];
-          if (t == null || t == TerrainType.mountain) continue;
-          counts[t] = (counts[t] ?? 0) + 1;
-        }
-        if (counts.isNotEmpty) {
-          TerrainType best = counts.keys.first;
-          var bestCount = counts[best]!;
-          for (final entry in counts.entries) {
-            if (entry.value > bestCount) {
-              best = entry.key;
-              bestCount = entry.value;
-            }
-          }
-          terrainGrid[y][x] = best;
-        } else {
-          terrainGrid[y][x] = allowed[rnd.nextInt(allowed.length)];
-        }
-      }
-
-      // Optional pattern refinement phase: carve small pockets of alternate
-      // non-mountain terrains inside large blobs, per continent.
-      _refineTerrainPatternsInComponent(
-        terrainGrid,
-        grid,
-        component,
-        allowed,
-        distribution,
-        rnd,
+  (Map<TerrainType, int>, Map<TerrainType, int>) _runMacroPhase(
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+    Set<(int x, int y)> component,
+    List<(int x, int y)> cells,
+    List<TerrainType> allowed,
+    Map<TerrainType, int> targets,
+    Random rnd,
+  ) {
+    final macroTargets = <TerrainType, int>{};
+    final macroRemaining = <TerrainType, int>{};
+    for (final t in allowed) {
+      final target = targets[t] ?? 0;
+      if (target <= 0) continue;
+      final macro = max(
+        1,
+        (target * params.terrainMacroFraction).round().clamp(1, target),
       );
+      macroTargets[t] = macro;
+      macroRemaining[t] = macro;
+    }
+    final macroQueues = _seedQueuesForPhase(
+      terrainGrid,
+      allowed,
+      macroTargets,
+      macroRemaining,
+      cells,
+      rnd,
+    );
+    _growQueuesForPhase(
+      terrainGrid,
+      grid,
+      component,
+      allowed,
+      macroRemaining,
+      macroQueues,
+      rnd,
+    );
+    return (macroTargets, macroRemaining);
+  }
+
+  void _runMicroPhase(
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+    Set<(int x, int y)> component,
+    List<(int x, int y)> cells,
+    List<TerrainType> allowed,
+    Map<TerrainType, int> targets,
+    Map<TerrainType, int> macroTargets,
+    Map<TerrainType, int> macroRemaining,
+    Random rnd,
+  ) {
+    final residualTargets = <TerrainType, int>{};
+    for (final t in allowed) {
+      final target = targets[t] ?? 0;
+      if (target <= 0) continue;
+      final macro = macroTargets[t] ?? 0;
+      final usedMacro = macro - (macroRemaining[t] ?? 0);
+      final residual = max(0, target - usedMacro);
+      if (residual > 0) {
+        residualTargets[t] = residual;
+      }
+    }
+    if (residualTargets.isEmpty) return;
+    final microRemaining = <TerrainType, int>{...residualTargets};
+    final microQueues = _seedQueuesForPhase(
+      terrainGrid,
+      allowed,
+      residualTargets,
+      microRemaining,
+      cells.where((c) => terrainGrid[c.$2][c.$1] == null).toList(),
+      rnd,
+    );
+    _growQueuesForPhase(
+      terrainGrid,
+      grid,
+      component,
+      allowed,
+      microRemaining,
+      microQueues,
+      rnd,
+    );
+  }
+
+  Map<TerrainType, List<(int x, int y)>> _seedQueuesForPhase(
+    List<List<TerrainType?>> terrainGrid,
+    List<TerrainType> allowed,
+    Map<TerrainType, int> phaseTargets,
+    Map<TerrainType, int> phaseRemaining,
+    List<(int x, int y)> availableCells,
+    Random rnd,
+  ) {
+    final queues = <TerrainType, List<(int x, int y)>>{};
+    final available = List<(int x, int y)>.from(availableCells);
+    for (final t in allowed) {
+      final target = phaseTargets[t] ?? 0;
+      if (target <= 0) continue;
+      final seedCount = max(
+        params.terrainSeedsMin,
+        min(
+          params.terrainSeedsMax,
+          (params.terrainSeedsFactor * sqrt(target)).round(),
+        ),
+      );
+      final q = <(int x, int y)>[];
+      queues[t] = q;
+      var placedSeeds = 0;
+      while (placedSeeds < seedCount &&
+          (phaseRemaining[t] ?? 0) > 0 &&
+          available.isNotEmpty) {
+        final idx = rnd.nextInt(available.length);
+        final (sx, sy) = available.removeAt(idx);
+        if (terrainGrid[sy][sx] != null) continue;
+        terrainGrid[sy][sx] = t;
+        q.add((sx, sy));
+        phaseRemaining[t] = (phaseRemaining[t] ?? 0) - 1;
+        placedSeeds++;
+      }
+    }
+    return queues;
+  }
+
+  void _growQueuesForPhase(
+    List<List<TerrainType?>> terrainGrid,
+    List<List<String>> grid,
+    Set<(int x, int y)> component,
+    List<TerrainType> allowed,
+    Map<TerrainType, int> remainingByTerrain,
+    Map<TerrainType, List<(int x, int y)>> queuesByTerrain,
+    Random rnd,
+  ) {
+    const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
+    while (true) {
+      var totalRem = 0;
+      var hasActive = false;
+      for (final t in allowed) {
+        final rem = remainingByTerrain[t] ?? 0;
+        final q = queuesByTerrain[t];
+        totalRem += rem;
+        if (rem > 0 && q != null && q.isNotEmpty) {
+          hasActive = true;
+        }
+      }
+      if (!hasActive || totalRem <= 0) return;
+      var roll = rnd.nextInt(totalRem) + 1;
+      TerrainType? chosen;
+      for (final t in allowed) {
+        final rem = remainingByTerrain[t] ?? 0;
+        if (rem <= 0) continue;
+        roll -= rem;
+        if (roll <= 0) {
+          chosen = t;
+          break;
+        }
+      }
+      if (chosen == null) return;
+      final queue = queuesByTerrain[chosen];
+      if (queue == null || queue.isEmpty) continue;
+      final (cx, cy) = queue.removeLast();
+      final dirs = List<(int dx, int dy)>.from(directions)..shuffle(rnd);
+      for (final (dx, dy) in dirs) {
+        final nx = cx + dx;
+        final ny = cy + dy;
+        if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+          continue;
+        }
+        if (!component.contains((nx, ny))) continue;
+        if (grid[ny][nx] != _landSentinel) continue;
+        if (terrainGrid[ny][nx] != null) continue;
+        terrainGrid[ny][nx] = chosen;
+        remainingByTerrain[chosen] = (remainingByTerrain[chosen] ?? 0) - 1;
+        queue.add((nx, ny));
+        if ((remainingByTerrain[chosen] ?? 0) <= 0) break;
+      }
+    }
+  }
+
+  void _cleanupUnassignedInComponent(
+    List<List<TerrainType?>> terrainGrid,
+    Set<(int x, int y)> component,
+    List<TerrainType> allowed,
+    Random rnd,
+  ) {
+    const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
+    for (final (x, y) in component) {
+      if (terrainGrid[y][x] != null) continue;
+      final counts = <TerrainType, int>{};
+      for (final (dx, dy) in directions) {
+        final nx = x + dx;
+        final ny = y + dy;
+        if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+          continue;
+        }
+        if (!component.contains((nx, ny))) continue;
+        final t = terrainGrid[ny][nx];
+        if (t == null || t == TerrainType.mountain) continue;
+        counts[t] = (counts[t] ?? 0) + 1;
+      }
+      if (counts.isNotEmpty) {
+        TerrainType best = counts.keys.first;
+        var bestCount = counts[best]!;
+        for (final entry in counts.entries) {
+          if (entry.value > bestCount) {
+            best = entry.key;
+            bestCount = entry.value;
+          }
+        }
+        terrainGrid[y][x] = best;
+      } else {
+        terrainGrid[y][x] = allowed[rnd.nextInt(allowed.length)];
+      }
     }
   }
 
