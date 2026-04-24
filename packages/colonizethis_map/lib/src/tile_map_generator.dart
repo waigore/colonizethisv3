@@ -27,7 +27,7 @@ abstract class _TileMapGeneratorShell {
 
 class _LandSeedService {
   _LandSeedService(this._impl);
-  final _TileMapGenLandSeeds _impl;
+  final TileMapGenLandSeeds _impl;
 
   (List<(int x, int y)>, List<(int x, int y)>, List<int>) placeLandSeeds(
     Map<String, int> provinceToContinent,
@@ -175,7 +175,7 @@ class _JoinAndSeaService {
 class TileMapGenerator extends _TileMapGeneratorShell {
   factory TileMapGenerator({TileMapParams params = const TileMapParams()}) {
     final graph = TileMapGridGraph(params);
-    final landImpl = _TileMapGenLandSeeds(params);
+    final landImpl = TileMapGenLandSeeds(params);
     final terrainImpl = _TileMapGenTerrainResource(params, graph);
     final joinImpl = _TileMapGenJoinSea(params, packageLogger(), graph);
     final lakesImpl = _TileMapGenLakesProvinces(params, graph, joinImpl);

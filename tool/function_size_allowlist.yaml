@@ -1,6 +1,15 @@
 # Grandfathered symbols above function-size threshold (shrink-only).
-# Scope: packages/colonizethis_logic/lib/src/**
+# Scope: packages/colonizethis_logic/lib/src/** and packages/colonizethis_map/lib/src/**
 allowed_over_20:
+  - file: packages/colonizethis_map/lib/src/tile_map_generator.dart
+    symbol: TileMapGenerator.generate
+    max_measured_lines: 239
+  - file: packages/colonizethis_map/lib/src/tile_map_generator_terrain_assign.dart
+    symbol: _TileMapGenTerrainResource._assignNonMountainTerrainsRegionGrowing
+    max_measured_lines: 264
+  - file: packages/colonizethis_map/lib/src/tile_map_visualization.dart
+    symbol: renderTileMapToPng
+    max_measured_lines: 262
   - file: packages/colonizethis_logic/lib/src/ai/ai_planner.dart
     symbol: generateOrdersForGame
     max_measured_lines: 38
