@@ -242,39 +242,49 @@ class ScenarioRunner {
   }
 
   Future<ScenarioContext?> _initializeGame(Scenario scenario) async {
-    if (scenario.init.type == 'fresh') {
-      GameInitResult result;
-      if (scenario.init.config != null) {
-        result = await gameFactory.createFreshGameFromJson(
-          scenario.init.config!,
-        );
-      } else {
-        // Default fresh game
-        result = await gameFactory.createFreshGame(GameSetupConfig(seed: 42));
-      }
-      return ScenarioContext(
-        game: result.game,
-        topology: result.topology,
-        topologyByRegion: result.topologyByRegion,
-        tileMapByRegion: result.tileMapByRegion,
-      );
-    } else if (scenario.init.type == 'fromTopology') {
-      final result = await gameFactory.createFromTopology(scenario.init);
-      return ScenarioContext(
-        game: result.game,
-        topology: result.topology,
-        topologyByRegion: result.topologyByRegion,
-        tileMapByRegion: result.tileMapByRegion,
-      );
-    } else if (scenario.init.type == 'saved') {
-      if (scenario.init.gameId != null) {
-        final game = await gameFactory.loadSavedGame(scenario.init.gameId!);
-        if (game != null) {
-          return ScenarioContext(game: game);
-        }
-      }
+    switch (scenario.init.type) {
+      case 'fresh':
+        return _initializeFreshGame(scenario);
+      case 'fromTopology':
+        return _initializeFromTopology(scenario);
+      case 'saved':
+        return _initializeSavedGame(scenario);
+      default:
+        return null;
     }
-    return null;
+  }
+
+  Future<ScenarioContext> _initializeFreshGame(Scenario scenario) async {
+    final result = scenario.init.config != null
+        ? await gameFactory.createFreshGameFromJson(scenario.init.config!)
+        : await gameFactory.createFreshGame(GameSetupConfig(seed: 42));
+    return _toScenarioContext(result);
+  }
+
+  Future<ScenarioContext> _initializeFromTopology(Scenario scenario) async {
+    final result = await gameFactory.createFromTopology(scenario.init);
+    return _toScenarioContext(result);
+  }
+
+  Future<ScenarioContext?> _initializeSavedGame(Scenario scenario) async {
+    final gameId = scenario.init.gameId;
+    if (gameId == null) {
+      return null;
+    }
+    final game = await gameFactory.loadSavedGame(gameId);
+    if (game == null) {
+      return null;
+    }
+    return ScenarioContext(game: game);
+  }
+
+  ScenarioContext _toScenarioContext(GameInitResult result) {
+    return ScenarioContext(
+      game: result.game,
+      topology: result.topology,
+      topologyByRegion: result.topologyByRegion,
+      tileMapByRegion: result.tileMapByRegion,
+    );
   }
 
   /// Applies scenario setup (unit injection, etc.). Returns updated game.
