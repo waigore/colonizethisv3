@@ -439,9 +439,6 @@ allowed_over_20:
   - file: packages/colonizethis_logic/lib/src/orders/validators/build_order_validator.dart
     symbol: BuildOrderValidator.validate
     max_measured_lines: 53
-  - file: packages/colonizethis_logic/lib/src/orders/validators/diplomatic_order_validator.dart
-    symbol: DiplomaticOrderValidator._validateOne
-    max_measured_lines: 198
   - file: packages/colonizethis_logic/lib/src/orders/validators/move_validator.dart
     symbol: MoveValidator.validate
     max_measured_lines: 109
