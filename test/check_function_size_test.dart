@@ -56,8 +56,8 @@ int f() {
       }
     });
 
-    test('passes with allowlisted max_measured_lines', () {
-      final temp = Directory.systemTemp.createTempSync('fn-size-allow-');
+    test('fails even when legacy allowlist yaml is present', () {
+      final temp = Directory.systemTemp.createTempSync('fn-size-legacy-');
       try {
         final libDir = Directory(
           p.join(temp.path, 'packages', 'colonizethis_logic', 'lib', 'src'),
@@ -81,7 +81,7 @@ allowed_over_20:
           info: (_) {},
           err: (_) {},
         );
-        expect(exitCode, 0);
+        expect(exitCode, 1);
       } finally {
         temp.deleteSync(recursive: true);
       }

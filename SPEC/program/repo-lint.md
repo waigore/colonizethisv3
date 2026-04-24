@@ -29,7 +29,6 @@ Grandfather YAMLs named in the table below are **legacy** until removed; **do no
 | `tool/check_control_flow_nesting_depth.dart` | Control-flow nesting depth (`SPEC/program/control-flow-nesting-depth.md`); rule `repo.control_flow_nesting_depth` |
 | `tool/control_flow_nesting_depth_allowlist.yaml` | **Legacy:** violates [Policy: no violation allowlists](#policy-no-violation-allowlists-repo-lint); remove when nesting checker matches policy (see `SPEC/program/control-flow-nesting-depth.md`) |
 | `tool/check_function_size.dart` | Function measured-line threshold (`SPEC/program/function-size.md`); rule `repo.function_size` |
-| `tool/function_size_allowlist.yaml` | **Legacy:** violates [Policy: no violation allowlists](#policy-no-violation-allowlists-repo-lint); remove when function-size checker matches policy |
 | `tool/check_part_unit_size.dart` | Dart `part` fragment physical line limit (`SPEC/program/part-unit-size.md`); rule `repo.part_unit_size` |
 | `tool/check_no_flame_in_widgets.dart` | Disallow direct `package:flame/*` **import** and **export** lines (single- or double-quoted URI) under `app/lib/widgets/**`; rule `repo.no_flame_in_widgets` |
 
