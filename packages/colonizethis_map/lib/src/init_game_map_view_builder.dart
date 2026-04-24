@@ -418,6 +418,130 @@ RegionMapViewData _buildRegionViewData({
   }
 
   final tileState = game.worldState.tileState;
+  final cells = _buildCellViewDataList(
+    regionId: regionId,
+    tileMap: tileMap,
+    seaZoneIds: seaZoneIds,
+    tileState: tileState,
+    ownerByProvinceId: ownerByProvinceId,
+    provinceDisplayNameById: provinceDisplayNameById,
+    visibilityByTile: visibilityByTile,
+    resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
+    resourceExtractionEffectiveUnitsByTile:
+        resourceExtractionEffectiveUnitsByTile,
+    resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
+  );
+
+  // Capital markers.
+  final capitals = _buildCapitalMarkers(game: game, regionId: regionId);
+
+  // Province id → representative tile (x,y) for units overlay.
+  final provinceToTile = _buildProvinceToRepresentativeTile(
+    tileMap: tileMap,
+    regionId: regionId,
+    seaZoneIds: seaZoneIds,
+  );
+
+  // Unit markers: one per unit, placed at province representative tile.
+  final unitOverlayData = _buildUnitAndCivilianMarkerData(
+    game: game,
+    regionId: regionId,
+    isOldWorld: isOldWorld,
+    provinces: provinces,
+    cells: cells,
+    provinceToTile: provinceToTile,
+  );
+  final unitMarkers = unitOverlayData.unitMarkers;
+  final playerOwnedCivilianTileMarkers = unitOverlayData.civilianTileMarkers;
+  final provincePresenceById = unitOverlayData.provincePresenceById;
+
+  // Port markers from world state.
+  final ports = _buildPortMarkers(
+    regionId: regionId,
+    portsByProvinceSeaboard: game.worldState.portsByProvinceSeaboard,
+  );
+
+  // Determine coastal provinces from topology edges (P<->S connections).
+  // A province is coastal if it has an edge to any sea zone node in [seaZoneIds].
+  final coastalProvinceIds = _buildCoastalProvinceIds(
+    topology: topology,
+    seaZoneIds: seaZoneIds,
+  );
+
+  // Town markers: one per province with a town, at the town's tile position.
+  final towns = _buildTownMarkers(
+    game: game,
+    regionId: regionId,
+    provinces: provinces,
+    ports: ports,
+    coastalProvinceIds: coastalProvinceIds,
+    tileMap: tileMap,
+    seaZoneIds: seaZoneIds,
+  );
+
+  // Sea zone id → representative tile (x,y) for warp zone markers.
+  final seaZoneToTile = _buildSeaZoneToRepresentativeTile(
+    tileMap: tileMap,
+    seaZoneIds: seaZoneIds,
+  );
+
+  // Warp zone markers: one per warp link for this region.
+  final warpMarkers = _buildWarpMarkers(
+    regionId: regionId,
+    seaZoneToTile: seaZoneToTile,
+    warpLinks: warpLinks,
+  );
+
+  // Ship presence counts by in-port province.
+  _applyInPortFleetShipCounts(
+    fleets: game.worldState.fleets,
+    regionId: regionId,
+    provincePresenceById: provincePresenceById,
+  );
+
+  final fleetTileMarkers = _buildFleetTileMarkersForRegion(
+    game: game,
+    regionId: regionId,
+    provinces: provinces,
+    tileMap: tileMap,
+    seaZoneIds: seaZoneIds,
+  );
+
+  return RegionMapViewData(
+    regionId: regionId,
+    width: tileMap.width,
+    height: tileMap.height,
+    cellSize: cellSize,
+    cells: cells,
+    capitalMarkers: capitals,
+    portMarkers: ports,
+    factionColors: factionColors,
+    greatPowerFactionIds: greatPowerFactionIds,
+    terrainColors: terrainColors,
+    unitMarkers: unitMarkers,
+    civilianTileMarkers: playerOwnedCivilianTileMarkers,
+    fleetTileMarkers: fleetTileMarkers,
+    warpMarkers: warpMarkers,
+    townMarkers: towns,
+    provinceUnitPresenceByProvinceId: provincePresenceById,
+    provincePoliticalOwnerByPrefixedProvinceId:
+        provincePoliticalOwnerByPrefixedProvinceId,
+    seaZoneDisplayNameByPrefixedId: game.worldState.seaZoneDisplayNameById,
+  );
+}
+
+List<CellViewData> _buildCellViewDataList({
+  required String regionId,
+  required TileMapResult tileMap,
+  required Set<String> seaZoneIds,
+  required TileMapState tileState,
+  required Map<String, String> ownerByProvinceId,
+  required Map<String, String> provinceDisplayNameById,
+  required Map<String, TileVisibility>? visibilityByTile,
+  required Map<String, int>? resourceExtractionUnitsByTile,
+  required Map<String, int>? resourceExtractionEffectiveUnitsByTile,
+  required Map<String, int>? resourceExtractionBlockedUnitsByTile,
+}) {
   final cells = <CellViewData>[];
   for (var y = 0; y < tileMap.height; y++) {
     for (var x = 0; x < tileMap.width; x++) {
@@ -425,7 +549,6 @@ RegionMapViewData _buildRegionViewData({
       final isSea = seaZoneIds.contains(localId);
       final terrain = tileMap.terrainAt(x, y);
       final resource = tileMap.resourceAt(x, y);
-      // Tile key for improvement/road lookup: regionId|provinceId|x|y (provinceId = regionCellId for land).
       final tileKey = '$regionId|$localId|$x|$y';
       final improvement = isSea ? null : tileState.improvementLevel(tileKey);
       final road = isSea ? null : tileState.roadLevel(tileKey);
@@ -469,8 +592,13 @@ RegionMapViewData _buildRegionViewData({
       );
     }
   }
+  return cells;
+}
 
-  // Capital markers.
+List<CapitalMarkerView> _buildCapitalMarkers({
+  required Game game,
+  required String regionId,
+}) {
   final capitals = <CapitalMarkerView>[];
   for (final p in game.players) {
     final cap = p.capitalTile;
@@ -511,8 +639,14 @@ RegionMapViewData _buildRegionViewData({
       );
     }
   }
+  return capitals;
+}
 
-  // Province id → representative tile (x,y) for units overlay.
+Map<String, (int x, int y)> _buildProvinceToRepresentativeTile({
+  required TileMapResult tileMap,
+  required String regionId,
+  required Set<String> seaZoneIds,
+}) {
   final provinceToTile = <String, (int x, int y)>{};
   for (var y = 0; y < tileMap.height; y++) {
     for (var x = 0; x < tileMap.width; x++) {
@@ -521,13 +655,25 @@ RegionMapViewData _buildRegionViewData({
         continue;
       }
       final fullProvinceId = ProvinceId.full(regionId, localId);
-      if (!provinceToTile.containsKey(fullProvinceId)) {
-        provinceToTile[fullProvinceId] = (x, y);
-      }
+      provinceToTile.putIfAbsent(fullProvinceId, () => (x, y));
     }
   }
+  return provinceToTile;
+}
 
-  // Unit markers: one per unit, placed at province representative tile.
+({
+  List<UnitMarkerView> unitMarkers,
+  List<CivilianTileMarkerView> civilianTileMarkers,
+  Map<String, ProvinceUnitPresenceView> provincePresenceById,
+})
+_buildUnitAndCivilianMarkerData({
+  required Game game,
+  required String regionId,
+  required bool isOldWorld,
+  required List<Province> provinces,
+  required List<CellViewData> cells,
+  required Map<String, (int x, int y)> provinceToTile,
+}) {
   final unitMarkers = <UnitMarkerView>[];
   final civilianUnitsByTileKey = <String, List<Unit>>{};
   final playerOwnedCivilianTileMarkers = <CivilianTileMarkerView>[];
@@ -545,7 +691,6 @@ RegionMapViewData _buildRegionViewData({
     );
   }
 
-  // Province intel visibility: true when any tile in that province is currently visible.
   for (final cell in cells) {
     if (cell.isSea || cell.visibility != TileVisibility.visible) {
       continue;
@@ -650,16 +795,21 @@ RegionMapViewData _buildRegionViewData({
     return a.tileKey.compareTo(b.tileKey);
   });
 
-  // Port markers from world state.
+  return (
+    unitMarkers: unitMarkers,
+    civilianTileMarkers: playerOwnedCivilianTileMarkers,
+    provincePresenceById: provincePresenceById,
+  );
+}
+
+List<PortMarkerView> _buildPortMarkers({
+  required String regionId,
+  required Map<String, String> portsByProvinceSeaboard,
+}) {
   final ports = <PortMarkerView>[];
-  final portsByProvinceSeaboard = game.worldState.portsByProvinceSeaboard;
   portsByProvinceSeaboard.forEach((key, tileKey) {
     final parts = tileKey.split('|');
-    if (parts.length < 4) {
-      return;
-    }
-    final regId = parts[0];
-    if (regId != regionId) {
+    if (parts.length < 4 || parts[0] != regionId) {
       return;
     }
     final fromKey = localProvinceIdFromPortsSeaboardKey(key, regionId);
@@ -679,9 +829,13 @@ RegionMapViewData _buildRegionViewData({
       ),
     );
   });
+  return ports;
+}
 
-  // Determine coastal provinces from topology edges (P<->S connections).
-  // A province is coastal if it has an edge to any sea zone node in [seaZoneIds].
+Set<String> _buildCoastalProvinceIds({
+  required MapTopology topology,
+  required Set<String> seaZoneIds,
+}) {
   final coastalProvinceIds = <String>{};
   for (final edge in topology.edges) {
     final id1Sea = seaZoneIds.contains(edge.id1);
@@ -690,8 +844,18 @@ RegionMapViewData _buildRegionViewData({
       coastalProvinceIds.add(id1Sea ? edge.id2 : edge.id1);
     }
   }
+  return coastalProvinceIds;
+}
 
-  // Town markers: one per province with a town, at the town's tile position.
+List<TownMarkerView> _buildTownMarkers({
+  required Game game,
+  required String regionId,
+  required List<Province> provinces,
+  required List<PortMarkerView> ports,
+  required Set<String> coastalProvinceIds,
+  required TileMapResult tileMap,
+  required Set<String> seaZoneIds,
+}) {
   final towns = <TownMarkerView>[];
   final portProvinceIds = ports.map((p) => p.provinceId).toSet();
   for (final p in provinces) {
@@ -700,11 +864,7 @@ RegionMapViewData _buildRegionViewData({
       continue;
     }
     final parts = townTileKey.split('|');
-    if (parts.length < 4) {
-      continue;
-    }
-    final regId = parts[0];
-    if (regId != regionId) {
+    if (parts.length < 4 || parts[0] != regionId) {
       continue;
     }
     final x = int.tryParse(parts[2]);
@@ -744,8 +904,13 @@ RegionMapViewData _buildRegionViewData({
       ),
     );
   }
+  return towns;
+}
 
-  // Sea zone id → representative tile (x,y) for warp zone markers.
+Map<String, (int x, int y)> _buildSeaZoneToRepresentativeTile({
+  required TileMapResult tileMap,
+  required Set<String> seaZoneIds,
+}) {
   final seaZoneToTile = <String, (int x, int y)>{};
   for (var y = 0; y < tileMap.height; y++) {
     for (var x = 0; x < tileMap.width; x++) {
@@ -753,51 +918,64 @@ RegionMapViewData _buildRegionViewData({
       if (!seaZoneIds.contains(localId)) {
         continue;
       }
-      if (!seaZoneToTile.containsKey(localId)) {
-        seaZoneToTile[localId] = (x, y);
-      }
+      seaZoneToTile.putIfAbsent(localId, () => (x, y));
     }
   }
+  return seaZoneToTile;
+}
 
-  // Warp zone markers: one per warp link for this region.
+List<WarpMarkerView> _buildWarpMarkers({
+  required String regionId,
+  required Map<String, (int x, int y)> seaZoneToTile,
+  required List<WarpLink>? warpLinks,
+}) {
   final warpMarkers = <WarpMarkerView>[];
-  if (warpLinks != null) {
-    for (final link in warpLinks) {
-      // Check if this link involves the current region (either as source or destination).
-      if (link.regionId == regionId) {
-        // This region is the source of the warp link.
-        final tile = seaZoneToTile[link.seaZoneId];
-        if (tile != null) {
-          warpMarkers.add(
-            WarpMarkerView(
-              x: tile.$1,
-              y: tile.$2,
-              seaZoneId: link.seaZoneId,
-              otherRegionId: link.otherRegionId,
-              otherSeaZoneId: link.otherSeaZoneId,
-            ),
-          );
-        }
-      } else if (link.otherRegionId == regionId) {
-        // This region is the destination of the warp link (reverse direction).
-        final tile = seaZoneToTile[link.otherSeaZoneId];
-        if (tile != null) {
-          warpMarkers.add(
-            WarpMarkerView(
-              x: tile.$1,
-              y: tile.$2,
-              seaZoneId: link.otherSeaZoneId,
-              otherRegionId: link.regionId,
-              otherSeaZoneId: link.seaZoneId,
-            ),
-          );
-        }
-      }
-    }
+  if (warpLinks == null) {
+    return warpMarkers;
   }
+  for (final link in warpLinks) {
+    if (link.regionId == regionId) {
+      final tile = seaZoneToTile[link.seaZoneId];
+      if (tile == null) {
+        continue;
+      }
+      warpMarkers.add(
+        WarpMarkerView(
+          x: tile.$1,
+          y: tile.$2,
+          seaZoneId: link.seaZoneId,
+          otherRegionId: link.otherRegionId,
+          otherSeaZoneId: link.otherSeaZoneId,
+        ),
+      );
+      continue;
+    }
+    if (link.otherRegionId != regionId) {
+      continue;
+    }
+    final tile = seaZoneToTile[link.otherSeaZoneId];
+    if (tile == null) {
+      continue;
+    }
+    warpMarkers.add(
+      WarpMarkerView(
+        x: tile.$1,
+        y: tile.$2,
+        seaZoneId: link.otherSeaZoneId,
+        otherRegionId: link.regionId,
+        otherSeaZoneId: link.seaZoneId,
+      ),
+    );
+  }
+  return warpMarkers;
+}
 
-  // Ship presence counts by in-port province.
-  for (final fleet in game.worldState.fleets) {
+void _applyInPortFleetShipCounts({
+  required List<Fleet> fleets,
+  required String regionId,
+  required Map<String, ProvinceUnitPresenceView> provincePresenceById,
+}) {
+  for (final fleet in fleets) {
     if (fleet.regionId != regionId || !fleet.isInPort) {
       continue;
     }
@@ -816,34 +994,4 @@ RegionMapViewData _buildRegionViewData({
       intelVisible: current.intelVisible,
     );
   }
-
-  final fleetTileMarkers = _buildFleetTileMarkersForRegion(
-    game: game,
-    regionId: regionId,
-    provinces: provinces,
-    tileMap: tileMap,
-    seaZoneIds: seaZoneIds,
-  );
-
-  return RegionMapViewData(
-    regionId: regionId,
-    width: tileMap.width,
-    height: tileMap.height,
-    cellSize: cellSize,
-    cells: cells,
-    capitalMarkers: capitals,
-    portMarkers: ports,
-    factionColors: factionColors,
-    greatPowerFactionIds: greatPowerFactionIds,
-    terrainColors: terrainColors,
-    unitMarkers: unitMarkers,
-    civilianTileMarkers: playerOwnedCivilianTileMarkers,
-    fleetTileMarkers: fleetTileMarkers,
-    warpMarkers: warpMarkers,
-    townMarkers: towns,
-    provinceUnitPresenceByProvinceId: provincePresenceById,
-    provincePoliticalOwnerByPrefixedProvinceId:
-        provincePoliticalOwnerByPrefixedProvinceId,
-    seaZoneDisplayNameByPrefixedId: game.worldState.seaZoneDisplayNameById,
-  );
 }
