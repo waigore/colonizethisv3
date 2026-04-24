@@ -1,4 +1,9 @@
-part of 'game_setup_helpers.dart';
+// SPEC/program/game-setup-pipeline.md §7d — province town assignment (importable library).
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'game_setup_context.dart';
+import 'game_setup_town_tile_ranking.dart';
 
 /// 7d. Province town assignment. For each province, set townTileKey: capital province = capital tile;
 /// otherwise branch eligibility (seaboard, same-region BFS, overseas port) then centroid tie-break,
