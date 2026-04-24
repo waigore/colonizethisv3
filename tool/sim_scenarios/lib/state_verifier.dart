@@ -736,35 +736,19 @@ class StateVerifier {
 
   List<Unit> _getUnitsInProvince(
       Game game, String? regionId, String provinceId) {
-    final units = <Unit>[];
-
-    // If region is specified, only check that region's units
     if (regionId != null) {
       final regionData = _getRegionData(game, regionId);
-      if (regionData != null) {
-        for (final unit in regionData.units) {
-          if (unit.locationProvinceId == provinceId) {
-            units.add(unit);
-          }
-        }
+      if (regionData == null) {
+        return const [];
       }
-      return units;
+      return regionData.units
+          .where((unit) => unit.locationProvinceId == provinceId)
+          .toList();
     }
-
-    // If no region, check both oldWorld and newWorld units
-    for (final unit in game.worldState.oldWorld.units) {
-      if (unit.locationProvinceId == provinceId) {
-        units.add(unit);
-      }
-    }
-
-    for (final unit in game.worldState.newWorld.units) {
-      if (unit.locationProvinceId == provinceId) {
-        units.add(unit);
-      }
-    }
-
-    return units;
+    return [
+      ...game.worldState.oldWorld.units,
+      ...game.worldState.newWorld.units,
+    ].where((unit) => unit.locationProvinceId == provinceId).toList();
   }
 
   _CountMatchResult _matchCount(

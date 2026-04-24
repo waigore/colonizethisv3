@@ -153,11 +153,5 @@ allowed_depth_ge4:
     symbol: RegionMapPainter.paint
   - file: tool/sim_scenarios/lib/state_verifier.dart
     symbol: StateVerifier._verifyAssertion
-  - file: tool/sim_scenarios/lib/state_verifier.dart
-    symbol: StateVerifier._getUnitsInProvince
-  - file: tool/sim_scenarios/lib/scenario_runner.dart
-    symbol: ScenarioRunner._initializeGame
   - file: tool/sim_scenarios/lib/scenario_runner.dart
     symbol: ScenarioRunner._applySetup
-  - file: tool/sim_scenarios/lib/order_script.dart
-    symbol: parseOrderCommands
