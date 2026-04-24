@@ -56,6 +56,7 @@ Entry point: `runInitGame(config, options)` in colonizethis_logic. CLI tool: [in
 - **Phase:** Pre-game (before turn 0).
 - **Upstream:** colonizethis_data (config, ruleset merge), colonizethis_map (map generation).
 - **Downstream:** App (`GameService.createNewGame`, `GameService.createNewGameAsync` with coarse progress per SPEC/ui/game-initializing.md), init_game CLI tool, ctdev debug views.
+- **Town helpers (importable):** `assignProvinceTowns` lives in `packages/colonizethis_logic/lib/src/setup/game_setup_helpers_towns.dart`; centroid/BFS ranking helpers live in `game_setup_town_tile_ranking.dart`. `game_setup_helpers.dart` re-exports town APIs for existing `import 'game_setup_helpers.dart'` barrels while retaining `part` fragments for naming/bootstrap until those are split the same way.
 
 ## Constraints
 

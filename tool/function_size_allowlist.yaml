@@ -524,9 +524,6 @@ allowed_over_20:
     symbol: _buildPoliticalGlyphByPlayerId
     max_measured_lines: 48
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _compareTownTileCandidates
-    max_measured_lines: 23
-  - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
     symbol: _landmassesSortedDescDiag
     max_measured_lines: 23
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
@@ -540,9 +537,6 @@ allowed_over_20:
     max_measured_lines: 22
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
     symbol: _namingResolveEmptyPoolNonCapital
-    max_measured_lines: 22
-  - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
-    symbol: _pickTownTileByCentroidAndBfs
     max_measured_lines: 22
   - file: packages/colonizethis_logic/lib/src/setup/game_setup_helpers.dart
     symbol: buildCombinedTopology
