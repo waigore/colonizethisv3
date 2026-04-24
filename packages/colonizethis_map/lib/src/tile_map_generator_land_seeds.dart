@@ -1,8 +1,8 @@
 part of 'tile_map_generator.dart';
 
 /// Pass 2–3: land seed placement and assignment (organic and seed-before-assignment).
-class _TileMapGenLandSeeds {
-  _TileMapGenLandSeeds(this.params);
+class TileMapGenLandSeeds {
+  TileMapGenLandSeeds(this.params);
 
   final TileMapParams params;
 

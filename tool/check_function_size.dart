@@ -11,7 +11,10 @@ import 'package:yaml/yaml.dart';
 import 'ct_repo_lint_scan_contract.dart';
 
 const _failThreshold = 200;
-const _logicScopePrefix = 'packages/colonizethis_logic/lib/src/';
+const _scopePrefixes = <String>[
+  'packages/colonizethis_logic/lib/src/',
+  'packages/colonizethis_map/lib/src/',
+];
 
 int runCheckFunctionSize(
   String repoRoot, {
@@ -23,7 +26,7 @@ int runCheckFunctionSize(
   final allowlist = _loadAllowlist(repoRoot);
   final files = collectRepoLintDomainDartFiles(repoRoot).where((file) {
     final rel = p.relative(file.path, from: repoRoot);
-    return rel.startsWith(_logicScopePrefix);
+    return _scopePrefixes.any(rel.startsWith);
   });
   final violations = <String>[];
 

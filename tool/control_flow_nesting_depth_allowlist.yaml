@@ -116,15 +116,15 @@ allowed_depth_ge4:
   - file: packages/colonizethis_map/lib/src/tile_map_generator_terrain_assign.dart
     symbol: _TileMapGenTerrainResource._refineTerrainPatternsInComponent
   - file: packages/colonizethis_map/lib/src/tile_map_generator_land_seeds.dart
-    symbol: _TileMapGenLandSeeds._placeOneOrganicSeed
+    symbol: TileMapGenLandSeeds._placeOneOrganicSeed
   - file: packages/colonizethis_map/lib/src/tile_map_generator_land_seeds.dart
-    symbol: _TileMapGenLandSeeds._assignLandByLandSeedsWithNoJoin
+    symbol: TileMapGenLandSeeds._assignLandByLandSeedsWithNoJoin
   - file: packages/colonizethis_map/lib/src/tile_map_generator_land_seeds.dart
     symbol: scoreCoastalCell
   - file: packages/colonizethis_map/lib/src/tile_map_generator_land_seeds.dart
-    symbol: _TileMapGenLandSeeds._growCoastlines
+    symbol: TileMapGenLandSeeds._growCoastlines
   - file: packages/colonizethis_map/lib/src/tile_map_generator_land_seeds.dart
-    symbol: _TileMapGenLandSeeds.assignLandByLandSeeds
+    symbol: TileMapGenLandSeeds.assignLandByLandSeeds
   - file: app/lib/core/services/game_service.dart
     symbol: GameService._emitTurnResolutionEvents
   - file: app/lib/core/services/app_event_handler.dart
