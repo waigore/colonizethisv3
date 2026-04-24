@@ -13,6 +13,30 @@ int? _outgoingSubsidyPerTurn(Game game, String payerId, String targetId) {
   return null;
 }
 
+void _appendDiscoveredFactionId(
+  Game game,
+  String humanPlayerId,
+  String id,
+  List<String> gpIds,
+  List<String> minorIds,
+  List<String> tribeIds,
+) {
+  if (id == humanPlayerId) {
+    return;
+  }
+  if (game.players.any((p) => p.id == id)) {
+    gpIds.add(id);
+    return;
+  }
+  if (game.minorNations.any((m) => m.id == id)) {
+    minorIds.add(id);
+    return;
+  }
+  if (game.tribes.any((t) => t.id == id)) {
+    tribeIds.add(id);
+  }
+}
+
 ({int? grant, int? subsidy}) _pendingEconomicAmounts(
   List<DiplomaticOrder> list,
   String targetId,
@@ -103,14 +127,14 @@ List<DiplomacyRowData> buildDiplomacyRows(
   final minorIds = <String>[];
   final tribeIds = <String>[];
   for (final id in discoveredIds) {
-    if (id == humanPlayerId) continue;
-    if (game.players.any((p) => p.id == id)) {
-      gpIds.add(id);
-    } else if (game.minorNations.any((m) => m.id == id)) {
-      minorIds.add(id);
-    } else if (game.tribes.any((t) => t.id == id)) {
-      tribeIds.add(id);
-    }
+    _appendDiscoveredFactionId(
+      game,
+      humanPlayerId,
+      id,
+      gpIds,
+      minorIds,
+      tribeIds,
+    );
   }
 
   // GPs: sort by military power desc, then province count desc. SPEC/ui/diplomacy-panel.md.
