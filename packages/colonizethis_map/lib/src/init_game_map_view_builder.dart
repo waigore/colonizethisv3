@@ -715,13 +715,11 @@ _buildUnitAndCivilianMarkerData({
     final isPlayerOwnedCivilian =
         humanPlayerIds.contains(u.ownerId) && _isCivilianUnitType(u.type);
     if (isPlayerOwnedCivilian) {
-      final tileKey = u.tileKey;
-      if (tileKey != null && tileKey.isNotEmpty) {
-        final parts = tileKey.split('|');
-        if (parts.length >= 4 && parts[0] == regionId) {
-          civilianUnitsByTileKey.putIfAbsent(tileKey, () => []).add(u);
-        }
-      }
+      _addCivilianUnitToTileKeyBucket(
+        unit: u,
+        regionId: regionId,
+        civilianUnitsByTileKey: civilianUnitsByTileKey,
+      );
     }
 
     final tile = provinceToTile[u.locationProvinceId];
@@ -800,6 +798,22 @@ _buildUnitAndCivilianMarkerData({
     civilianTileMarkers: playerOwnedCivilianTileMarkers,
     provincePresenceById: provincePresenceById,
   );
+}
+
+void _addCivilianUnitToTileKeyBucket({
+  required Unit unit,
+  required String regionId,
+  required Map<String, List<Unit>> civilianUnitsByTileKey,
+}) {
+  final tileKey = unit.tileKey;
+  if (tileKey == null || tileKey.isEmpty) {
+    return;
+  }
+  final parts = tileKey.split('|');
+  if (parts.length < 4 || parts[0] != regionId) {
+    return;
+  }
+  civilianUnitsByTileKey.putIfAbsent(tileKey, () => []).add(unit);
 }
 
 List<PortMarkerView> _buildPortMarkers({
