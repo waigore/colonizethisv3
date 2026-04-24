@@ -35,7 +35,7 @@ class RegionMapViewportSnapshot {
   /// Fit-relative multiplier `m = zoom / fitMapZoom` (100% = fit entire map).
   double get zoomMultiplier => fitMapZoom > 0 ? zoom / fitMapZoom : 1.0;
 
-  /// Visible world width at current zoom (matches `_CtRegionMapGame` / map-widget math).
+  /// Visible world width at current zoom (matches [CtRegionMapGame] / map-widget math).
   double get viewWidthWorld => viewportWidthLogical / zoom;
 
   /// Visible world height at current zoom.

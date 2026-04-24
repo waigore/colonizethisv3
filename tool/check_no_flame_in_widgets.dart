@@ -20,6 +20,9 @@ int runCheckNoFlameInWidgets(
   }
 
   final violations = <String>[];
+  final flameImportLine = RegExp(
+    r'''^\s*(import|export)\s+(['"])package:flame/''',
+  );
   for (final entity in widgetsDir.listSync(
     recursive: true,
     followLinks: false,
@@ -30,10 +33,15 @@ int runCheckNoFlameInWidgets(
     final relativePath = p.relative(entity.path, from: repoRoot);
     final lines = const LineSplitter().convert(entity.readAsStringSync());
     for (var i = 0; i < lines.length; i++) {
-      if (!lines[i].contains("import 'package:flame/")) {
+      final line = lines[i];
+      final trimmedLeft = line.trimLeft();
+      if (trimmedLeft.startsWith('//')) {
         continue;
       }
-      violations.add('$relativePath:${i + 1}: ${lines[i].trim()}');
+      if (!flameImportLine.hasMatch(line)) {
+        continue;
+      }
+      violations.add('$relativePath:${i + 1}: ${line.trim()}');
     }
   }
 
