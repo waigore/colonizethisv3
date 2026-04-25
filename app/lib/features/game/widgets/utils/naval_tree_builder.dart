@@ -249,6 +249,11 @@ buildNavalTree(
     return 'sea:$regionId|$local';
   }
 
+  String normalizedPortScope(Province province) {
+    final localProvinceId = ProvinceId.localIdFrom(province.id);
+    return 'port:${province.regionId}|$localProvinceId';
+  }
+
   String? projectedLocationScopeForFleet(Fleet fleet) {
     final move = draftMoveByFleetId[fleet.id];
     if (move != null) {
@@ -256,7 +261,7 @@ buildNavalTree(
         final pid = move.destinationPortProvinceId!;
         final province = tryGetProvince(game.worldState, pid);
         if (province != null) {
-          return 'port:${province.regionId}|${province.id}';
+          return normalizedPortScope(province);
         }
         return 'port:$pid';
       }
@@ -277,7 +282,7 @@ buildNavalTree(
         fleet.inPortAtProvinceId!,
       );
       if (province != null) {
-        return 'port:${province.regionId}|${province.id}';
+        return normalizedPortScope(province);
       }
       return 'port:${fleet.inPortAtProvinceId!}';
     }
@@ -401,7 +406,7 @@ buildNavalTree(
         final province =
             provinceMap['$regionId|$inPortId'] ?? provinceMap[inPortId];
         if (province == null) continue;
-        locationKey = 'port:${province.regionId}|${province.id}';
+        locationKey = normalizedPortScope(province);
         tileKey = tileKeyForProvinceLocation(game, province);
         locationLabel =
             '${unitsPanelRegionLabel(regionId)} — ${province.displayName ?? province.id}';
@@ -452,7 +457,7 @@ buildNavalTree(
           provinceMap['$capitalRegionId|$capitalProvinceLocalId'] ??
           provinceMap[capitalProvinceLocalId];
       if (province != null) {
-        final synLocationKey = 'port:${province.regionId}|${province.id}';
+        final synLocationKey = normalizedPortScope(province);
         final omitSynthetic =
             locationScopeKeyFilter != null &&
             locationScopeKeyFilter != synLocationKey;
