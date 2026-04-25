@@ -127,6 +127,10 @@ allowed_depth_ge4:
     symbol: TileMapGenLandSeeds.assignLandByLandSeeds
   - file: app/lib/core/services/game_service.dart
     symbol: GameService._emitTurnResolutionEvents
+  - file: app/lib/core/services/app_event_handler.dart
+    symbol: AppEventHandler._handleUIAction
+  - file: app/lib/core/services/app_event_handler.dart
+    symbol: AppEventHandler._handleUISystem
   - file: app/lib/features/game/flame/game_map_area_state_logic.dart
     symbol: GameMapAreaStateLogic.projectFleetMarkersForHumanDraft
   - file: app/lib/features/game/flame/region_map_province_overlay_geometry.dart
