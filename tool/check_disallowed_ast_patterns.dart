@@ -215,6 +215,8 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           functionName: null,
           maxBodyLineSpan: null,
           requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
         ),
       );
     } else if (kind == 'stream_where_is_map_as') {
@@ -229,6 +231,8 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           functionName: null,
           maxBodyLineSpan: null,
           requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
         ),
       );
     } else if (kind == 'comment_substring') {
@@ -247,6 +251,8 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           functionName: null,
           maxBodyLineSpan: null,
           requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
         ),
       );
     } else if (kind == 'raw_named_type') {
@@ -275,6 +281,8 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           functionName: null,
           maxBodyLineSpan: null,
           requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
         ),
       );
     } else if (kind == 'method_body_line_span') {
@@ -301,6 +309,44 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           functionName: functionName,
           maxBodyLineSpan: maxBodyLineSpan,
           requireWidgetClassExtends: requireWidgetClassExtends,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+        ),
+      );
+    } else if (kind == 'unprefixed_province_id_string_literal_argument') {
+      final namesNode = match['method_names'];
+      final argumentIndex = int.tryParse(
+        match['argument_index']?.toString() ?? '',
+      );
+      if (namesNode is! YamlList ||
+          argumentIndex == null ||
+          argumentIndex < 0) {
+        continue;
+      }
+      final names = <String>{};
+      for (final n in namesNode.nodes) {
+        final s = n.value?.toString();
+        if (s != null && s.isNotEmpty) {
+          names.add(s);
+        }
+      }
+      if (names.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind:
+              DisallowedAstMatchKind.unprefixedProvinceIdStringLiteralArgument,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: argumentIndex,
+          invocationMethodNames: names,
         ),
       );
     } else if (kind == 'sea_zone_local_id_extraction') {
@@ -315,6 +361,8 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           functionName: null,
           maxBodyLineSpan: null,
           requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
         ),
       );
     } else if (kind == 'sea_zone_bucket_lookup_without_canonical_key') {
@@ -329,6 +377,8 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           functionName: null,
           maxBodyLineSpan: null,
           requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
         ),
       );
     }
@@ -368,6 +418,7 @@ enum DisallowedAstMatchKind {
   methodBodyLineSpan,
   seaZoneLocalIdExtraction,
   seaZoneBucketLookupWithoutCanonicalKey,
+  unprefixedProvinceIdStringLiteralArgument,
 }
 
 class DisallowedPatternRule {
@@ -381,6 +432,8 @@ class DisallowedPatternRule {
     required this.functionName,
     required this.maxBodyLineSpan,
     required this.requireWidgetClassExtends,
+    required this.argumentIndex,
+    required this.invocationMethodNames,
   });
 
   final String id;
@@ -392,6 +445,8 @@ class DisallowedPatternRule {
   final String? functionName;
   final int? maxBodyLineSpan;
   final bool requireWidgetClassExtends;
+  final int? argumentIndex;
+  final Set<String> invocationMethodNames;
 }
 
 class DisallowedAstViolation {
@@ -558,6 +613,32 @@ bool _looksLikeTileKeysByRegionAndProvinceLookup(IndexExpression node) {
   return src.contains('tileKeysByRegionAndProvince[');
 }
 
+bool _isUnprefixedProvinceIdStringLiteralInvocation(
+  MethodInvocation node,
+  DisallowedPatternRule rule,
+) {
+  if (!rule.invocationMethodNames.contains(node.methodName.name)) {
+    return false;
+  }
+  final argumentIndex = rule.argumentIndex;
+  if (argumentIndex == null) {
+    return false;
+  }
+  final args = node.argumentList.arguments;
+  if (argumentIndex >= args.length) {
+    return false;
+  }
+  final arg = args[argumentIndex];
+  if (arg is! StringLiteral) {
+    return false;
+  }
+  final value = arg.stringValue;
+  if (value == null) {
+    return false;
+  }
+  return !value.contains('|');
+}
+
 class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
   _DisallowedAstVisitor(this.path, this.source, this.lineInfo, this.rules);
 
@@ -594,6 +675,12 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       } else if (rule.kind == DisallowedAstMatchKind.seaZoneLocalIdExtraction &&
           _isProvinceLocalIdFromInvocation(node) &&
           _expressionLooksSeaZoneRelated(node.argumentList.arguments.single)) {
+        _recordIfAllowed(node, rule);
+      }
+      if (rule.kind ==
+              DisallowedAstMatchKind
+                  .unprefixedProvinceIdStringLiteralArgument &&
+          _isUnprefixedProvinceIdStringLiteralInvocation(node, rule)) {
         _recordIfAllowed(node, rule);
       }
     }

@@ -60,3 +60,24 @@ rules:
       canonicalizeSeaZoneId/canonicalSeaZoneTileBucketKey; local sea-zone keys are disallowed.
     match:
       kind: sea_zone_bucket_lookup_without_canonical_key
+  - id: province_lookup_unprefixed_literal
+    message: >-
+      Do not pass unprefixed province id string literals to province lookup
+      APIs. Use full province ids in the form regionId|localId.
+    match:
+      kind: unprefixed_province_id_string_literal_argument
+      method_names:
+        - getProvince
+        - tryGetProvince
+        - resolveToFullProvinceId
+      argument_index: 1
+  - id: province_local_id_from_unprefixed_literal
+    message: >-
+      Do not pass unprefixed province id string literals to
+      ProvinceId.localIdFrom. Use full province ids in the form
+      regionId|localId.
+    match:
+      kind: unprefixed_province_id_string_literal_argument
+      method_names:
+        - localIdFrom
+      argument_index: 0

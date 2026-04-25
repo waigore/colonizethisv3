@@ -7,19 +7,15 @@ class ProvinceId {
   ProvinceId._();
 
   /// Returns the region id (part before the first "|").
-  /// Throws [StateError] if [fullProvinceId] does not contain "|".
+  /// For legacy unprefixed ids, returns the input unchanged.
   static String regionIdFrom(String fullProvinceId) {
     final i = fullProvinceId.indexOf('|');
-    if (i < 0) {
-      throw StateError(
-        'Province id must be prefixed with regionId (regionId|localId): "$fullProvinceId"',
-      );
-    }
+    if (i < 0) return fullProvinceId;
     return fullProvinceId.substring(0, i);
   }
 
   /// Returns the local id (part after the first "|").
-  /// If [fullProvinceId] contains no "|", returns [fullProvinceId] (legacy/unprefixed).
+  /// For legacy unprefixed ids, returns the input unchanged.
   static String localIdFrom(String fullProvinceId) {
     final i = fullProvinceId.indexOf('|');
     if (i < 0) return fullProvinceId;
