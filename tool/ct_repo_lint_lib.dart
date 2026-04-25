@@ -13,6 +13,7 @@ import 'check_custom_exceptions.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_function_size.dart';
 import 'check_no_flame_in_widgets.dart';
+import 'check_no_screen_in_game_widgets.dart';
 import 'check_part_unit_size.dart';
 import 'check_repeated_magic_numbers.dart';
 import 'check_tech_id_constants.dart';
@@ -700,6 +701,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckPartUnitSize(repoRoot);
     case 'repo.no_flame_in_widgets':
       return runCheckNoFlameInWidgets(repoRoot);
+    case 'repo.no_screen_in_game_widgets':
+      return runCheckNoScreenInGameWidgets(repoRoot);
     case 'repo.tech_id_constants':
       return runCheckTechIdConstants(
         repoRoot,
