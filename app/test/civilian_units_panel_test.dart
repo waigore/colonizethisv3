@@ -1263,6 +1263,111 @@ void main() {
       },
     );
 
+    testWidgets(
+      'AC: pending rows show faithful remaining-turn number for each work target',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        const targetTileKey = 'oldWorld|p1|1|0';
+        final cases = <({String unitType, String target, int turns})>[
+          (unitType: 'Explorer', target: 'explore', turns: 3),
+          (unitType: 'Explorer', target: 'prospect', turns: 1),
+          (unitType: 'Builder', target: 'build_improvement', turns: 1),
+          (unitType: 'Builder', target: 'upgrade_town', turns: 1),
+          (unitType: 'Engineer', target: 'build_road', turns: 1),
+          (unitType: 'Engineer', target: 'build_port', turns: 1),
+          (unitType: 'Engineer', target: 'build_fort', turns: 3),
+          (unitType: 'Rail Builder', target: 'build_rail', turns: 1),
+          (unitType: 'Spy', target: 'steal_tech', turns: 5),
+          (unitType: 'Spy', target: 'counter_spy', turns: 1),
+          (unitType: 'Merchant', target: 'purchase_land', turns: 1),
+        ];
+
+        for (var i = 0; i < cases.length; i++) {
+          final c = cases[i];
+          final unitId = 'u_$i';
+          final miniGame = Game(
+            id: 'g_civ_pending_turns_${c.target}_$i',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: RegionData(
+                provinces: const [
+                  Province(
+                    id: 'oldWorld|p1',
+                    regionId: 'oldWorld',
+                    displayName: 'Alpha',
+                    fortLevel: 2,
+                  ),
+                ],
+                units: [
+                  Unit(
+                    id: unitId,
+                    type: c.unitType,
+                    ownerId: human,
+                    locationProvinceId: 'oldWorld|p1',
+                    tileKey: tileKey,
+                  ),
+                ],
+              ),
+              newWorld: const RegionData(),
+              resourceByTileKey: const {targetTileKey: 'grain'},
+              tileKeysByRegionAndProvince: const {
+                'oldWorld': {
+                  'oldWorld|p1': [tileKey, targetTileKey],
+                },
+              },
+            ),
+            players: const [
+              Player(id: human, displayName: 'Human', isHuman: true),
+            ],
+          );
+          final orders = Orders(
+            workOrdersByPlayerId: {
+              human: [
+                WorkOrder(
+                  unitId: unitId,
+                  target: c.target,
+                  targetTileKey: targetTileKey,
+                ),
+              ],
+            },
+          );
+          await tester.pumpWidget(
+            buildPanel(
+              game: miniGame,
+              humanPlayerId: human,
+              currentOrders: orders,
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          final lineFinder = find.textContaining('Assigned to:');
+          expect(
+            lineFinder,
+            findsOneWidget,
+            reason: 'Expected one Assigned to line for target ${c.target}',
+          );
+          final line = tester.widget<Text>(lineFinder).data ?? '';
+          final singular = '${c.turns} turn';
+          final plural = '${c.turns} turns';
+          expect(
+            line.contains(singular) || line.contains(plural),
+            isTrue,
+            reason:
+                'Expected target ${c.target} to show $singular/$plural, got: $line',
+          );
+          expect(
+            line.contains('# turn'),
+            isFalse,
+            reason: 'Target ${c.target} should not render placeholder text',
+          );
+        }
+      },
+    );
+
     testWidgets('AC: pending build_rail shows steel and lumber icons', (
       WidgetTester tester,
     ) async {
