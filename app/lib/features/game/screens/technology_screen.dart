@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
-import 'technology_panel.dart';
-import 'tech_tree_widget.dart';
+import '../widgets/tech_tree_widget.dart';
+import '../widgets/technology_panel.dart';
 
 /// Full-screen Technology screen with two tabs: Research Slots and Tech Tree.
 /// SPEC/ui/tech-tree-widget.md.
