@@ -60,6 +60,39 @@ Rule id: `widget_build_method_too_long` (`match.kind`:
 `method_body_line_span`, `match.function_name`: `build`,
 `match.max_body_line_span`: `60`,
 `match.require_widget_class_extends`: `true`).
+
+### Unprefixed province-id string literals in lookup helpers
+
+In runtime domain code, passing unprefixed province-id string literals to
+province lookup/helper APIs is disallowed.
+
+Disallowed examples:
+
+- `getProvince(world, 'p1')`
+- `tryGetProvince(world, 'p1')`
+- `resolveToFullProvinceId(world, 'p1')`
+- `ProvinceId.localIdFrom('p1')`
+
+Allowed examples:
+
+- `getProvince(world, 'oldWorld|p1')`
+- `tryGetProvince(world, 'newWorld|n1')`
+- `ProvinceId.localIdFrom('oldWorld|p1')`
+
+Rationale: full province ids are the canonical runtime identity. Unprefixed
+string literals in lookup paths bypass that invariant and can reintroduce
+cross-region ambiguity.
+
+Rule ids:
+
+- `province_lookup_unprefixed_literal` (`match.kind`:
+  `unprefixed_province_id_string_literal_argument`,
+  `match.method_names`: `getProvince|tryGetProvince|resolveToFullProvinceId`,
+  `match.argument_index`: `1`)
+- `province_local_id_from_unprefixed_literal` (`match.kind`:
+  `unprefixed_province_id_string_literal_argument`,
+  `match.method_names`: `localIdFrom`,
+  `match.argument_index`: `0`)
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -113,3 +146,24 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   `StatefulWidget` where the `build()` method body spans 60 physical lines or
   fewer, **when** the disallowed AST checker runs, **then** it does not report
   a `widget_build_method_too_long` violation for that method.
+
+- **Given** runtime Dart source that passes an unprefixed province-id string
+  literal to `getProvince`, `tryGetProvince`, or `resolveToFullProvinceId`,
+  **when** the disallowed AST checker runs, **then** it reports at least one
+  violation for `province_lookup_unprefixed_literal` with the correct file and
+  line.
+
+- **Given** runtime Dart source that passes a prefixed province-id string
+  literal (for example `oldWorld|p1`) to those same lookup APIs, **when** the
+  disallowed AST checker runs, **then** it does not report a
+  `province_lookup_unprefixed_literal` violation.
+
+- **Given** runtime Dart source that passes an unprefixed province-id string
+  literal to `ProvinceId.localIdFrom`, **when** the disallowed AST checker
+  runs, **then** it reports at least one violation for
+  `province_local_id_from_unprefixed_literal` with the correct file and line.
+
+- **Given** runtime Dart source that passes a prefixed province-id string
+  literal to `ProvinceId.localIdFrom`, **when** the disallowed AST checker
+  runs, **then** it does not report a
+  `province_local_id_from_unprefixed_literal` violation.

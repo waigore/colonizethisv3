@@ -12,6 +12,7 @@ import 'check_control_flow_nesting_depth.dart';
 import 'check_custom_exceptions.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_function_size.dart';
+import 'check_land_province_bucket_keys.dart';
 import 'check_no_flame_in_widgets.dart';
 import 'check_part_unit_size.dart';
 import 'check_repeated_magic_numbers.dart';
@@ -717,6 +718,8 @@ int? _tryRunDartRuleInProcess({
       );
     case 'repo.canonical_province_tile_keys':
       return runCheckCanonicalProvinceTileKeys(repoRoot);
+    case 'repo.land_province_bucket_keys':
+      return runCheckLandProvinceBucketKeys(repoRoot);
     case 'repo.app_hardcoded_ui_strings':
       return runCheckAppHardcodedUiStrings(repoRoot);
     default:

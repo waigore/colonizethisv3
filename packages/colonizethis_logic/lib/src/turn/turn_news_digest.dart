@@ -3,6 +3,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/player_view.dart';
+import '../world/province_lookup.dart';
 
 /// Builds digest lines and world-state tracking updates for the completed turn.
 /// [start] is game at resolution entry (after military ensure); [end] is final
@@ -191,10 +192,12 @@ List<TurnNewsOvertureAdvancedLine> _overtureLines(Game start, Game end) {
 
 bool _provinceKnownToAnyGp(Game g, Province p) {
   final regionId = p.regionId;
-  final local = ProvinceId.localIdFrom(_fullProvinceId(p));
-  final keys =
-      g.worldState.tileKeysByRegionAndProvince[regionId]?[local] ??
-      const <String>[];
+  final fullProvinceId = _fullProvinceId(p);
+  final keys = landTileKeysForProvinceBucket(
+    g.worldState,
+    regionId,
+    fullProvinceId,
+  );
   if (keys.isEmpty) {
     return false;
   }
