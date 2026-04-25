@@ -81,101 +81,130 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
-    final l10n = appL10n(context);
-    final content = _isSeaZone(displayId)
-        ? _seaZoneContent(
-            l10n: l10n,
-            game: game,
-            region: region,
-            seaZoneId: displayId,
-            humanPlayerId: humanPlayerId,
-            draftOrders: draftOrders,
-          )
-        : _provinceContent(
-            context: context,
-            l10n: l10n,
-            game: game,
-            region: region,
-            provinceId: displayId,
-            humanPlayerId: humanPlayerId,
-            playerView: playerView,
-            draftOrders: draftOrders,
-            selectedTileKey: selectedTileKey,
-            onHighlightTile: onHighlightTile,
-            showProspectActionIcon: showProspectActionIcon,
-            prospectActionEnabled: prospectActionEnabled,
-            onProspectWithExplorerTap: onProspectWithExplorerTap,
-          );
+    final content = _resolveOverlayContent(context);
     return LayoutBuilder(
-      builder: (context, constraints) {
-        // Narrow full-width (mobile): cap at one-third screen (SPEC). Narrow
-        // side rail (width < screen): use parent height. Parent already capped
-        // to ≤ one-third (bottom slot): honor that height.
-        final mqSize = MediaQuery.sizeOf(context);
-        final thirdScreen = mqSize.height * 0.33;
-        final isFullWidthNarrow =
-            isNarrow && (constraints.maxWidth >= mqSize.width - 8);
-        final double maxHeight;
-        if (!isNarrow) {
-          maxHeight = constraints.maxHeight;
-        } else if (!constraints.maxHeight.isFinite) {
-          maxHeight = thirdScreen;
-        } else if (constraints.maxHeight <= thirdScreen + 1) {
-          maxHeight = constraints.maxHeight;
-        } else if (isFullWidthNarrow) {
-          maxHeight = thirdScreen;
-        } else {
-          maxHeight = constraints.maxHeight;
-        }
-        return Padding(
-          padding: const EdgeInsets.all(8),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxHeight),
-            child: CtPanel(
-              padding: EdgeInsets.zero,
-              child: Column(
-                mainAxisSize: isNarrow ? MainAxisSize.min : MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12, right: 8, top: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _isSeaZone(displayId) ? 'Sea zone' : 'Province',
-                            style: _kOverlayTitleStyle,
-                          ),
-                        ),
-                        _OverlayCloseButton(onClose: onClose),
-                      ],
-                    ),
-                  ),
-                  Flexible(
-                    child: isNarrow
-                        ? CtTabStrip(
-                            tabLabels: content.tabLabels,
-                            tabViews: content.tabViews
-                                .map(
-                                  (w) => SingleChildScrollView(
-                                    physics: const ClampingScrollPhysics(),
-                                    child: w,
-                                  ),
-                                )
-                                .toList(),
-                            contentPadding: const EdgeInsets.all(12),
-                          )
-                        : SingleChildScrollView(
-                            padding: const EdgeInsets.all(12),
-                            child: content.sections,
-                          ),
-                  ),
-                ],
-              ),
+      builder: (context, constraints) =>
+          _buildResponsivePanel(context, constraints, isNarrow, content),
+    );
+  }
+
+  _OverlayContent _resolveOverlayContent(BuildContext context) {
+    final l10n = appL10n(context);
+    if (_isSeaZone(displayId)) {
+      return _seaZoneContent(
+        l10n: l10n,
+        game: game,
+        region: region,
+        seaZoneId: displayId,
+        humanPlayerId: humanPlayerId,
+        draftOrders: draftOrders,
+      );
+    }
+    return _provinceContent(
+      context: context,
+      l10n: l10n,
+      game: game,
+      region: region,
+      provinceId: displayId,
+      humanPlayerId: humanPlayerId,
+      playerView: playerView,
+      draftOrders: draftOrders,
+      selectedTileKey: selectedTileKey,
+      onHighlightTile: onHighlightTile,
+      showProspectActionIcon: showProspectActionIcon,
+      prospectActionEnabled: prospectActionEnabled,
+      onProspectWithExplorerTap: onProspectWithExplorerTap,
+    );
+  }
+
+  Widget _buildResponsivePanel(
+    BuildContext context,
+    BoxConstraints constraints,
+    bool isNarrow,
+    _OverlayContent content,
+  ) {
+    final maxHeight = _resolveMaxHeight(context, constraints, isNarrow);
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: CtPanel(
+          padding: EdgeInsets.zero,
+          child: Column(
+            mainAxisSize: isNarrow ? MainAxisSize.min : MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildOverlayHeader(),
+              Flexible(child: _buildOverlayBody(isNarrow, content)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  double _resolveMaxHeight(
+    BuildContext context,
+    BoxConstraints constraints,
+    bool isNarrow,
+  ) {
+    // Narrow full-width (mobile): cap at one-third screen (SPEC). Narrow
+    // side rail (width < screen): use parent height. Parent already capped
+    // to ≤ one-third (bottom slot): honor that height.
+    final mqSize = MediaQuery.sizeOf(context);
+    final thirdScreen = mqSize.height * 0.33;
+    final isFullWidthNarrow =
+        isNarrow && (constraints.maxWidth >= mqSize.width - 8);
+    if (!isNarrow) {
+      return constraints.maxHeight;
+    }
+    if (!constraints.maxHeight.isFinite) {
+      return thirdScreen;
+    }
+    if (constraints.maxHeight <= thirdScreen + 1) {
+      return constraints.maxHeight;
+    }
+    if (isFullWidthNarrow) {
+      return thirdScreen;
+    }
+    return constraints.maxHeight;
+  }
+
+  Widget _buildOverlayHeader() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, right: 8, top: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _isSeaZone(displayId) ? 'Sea zone' : 'Province',
+              style: _kOverlayTitleStyle,
             ),
           ),
-        );
-      },
+          _OverlayCloseButton(onClose: onClose),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOverlayBody(bool isNarrow, _OverlayContent content) {
+    if (isNarrow) {
+      return CtTabStrip(
+        tabLabels: content.tabLabels,
+        tabViews: content.tabViews
+            .map(
+              (w) => SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: w,
+              ),
+            )
+            .toList(),
+        contentPadding: const EdgeInsets.all(12),
+      );
+    }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(12),
+      child: content.sections,
     );
   }
 }
