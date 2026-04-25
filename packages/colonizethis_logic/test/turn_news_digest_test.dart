@@ -431,7 +431,7 @@ Game _gameWithProvinceVis({
       newWorld: const RegionData(),
       tileKeysByRegionAndProvince: {
         regionId: {
-          localProvinceId: [tileKey],
+          fullProvinceId: [tileKey],
         },
       },
       playerVisibilityByTile: {

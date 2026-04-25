@@ -18,7 +18,6 @@ String _localSeaZoneId(String seaZoneId) => ProvinceId.isPrefixed(seaZoneId)
 (Map<String, Map<String, String>>, Map<String, Map<String, int>>)
 applySpyRevealTimerDecay(Game game) {
   final world = game.worldState;
-  final tileKeysByRegion = world.tileKeysByRegionAndProvince;
   var visibilityByTile = Map<String, Map<String, String>>.from(
     world.playerVisibilityByTile.map(
       (k, v) => MapEntry(k, Map<String, String>.from(v)),
@@ -49,9 +48,11 @@ applySpyRevealTimerDecay(Game game) {
       final nextTurns = turns - 1;
       if (nextTurns <= 0) {
         final regionId = ProvinceId.regionIdFrom(provinceId);
-        final localProvinceId = ProvinceId.localIdFrom(provinceId);
-        final tileKeys =
-            tileKeysByRegion[regionId]?[localProvinceId] ?? const [];
+        final tileKeys = landTileKeysForProvinceBucket(
+          world,
+          regionId,
+          provinceId,
+        );
         for (final tk in tileKeys) {
           final cur = vis[tk];
           if (cur == VisibilityLevel.fullyVisible.name) {

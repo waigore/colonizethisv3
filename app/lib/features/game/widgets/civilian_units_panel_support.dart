@@ -177,6 +177,7 @@ class _UnitRow extends StatelessWidget {
     required this.onSelectInTileScope,
     required this.projectedTileKey,
     required this.prospectShortcutTargetTileKey,
+    required this.exploreShortcutTargetTileKey,
   });
 
   final Game game;
@@ -191,6 +192,7 @@ class _UnitRow extends StatelessWidget {
   final VoidCallback onSelectInTileScope;
   final String? projectedTileKey;
   final String? prospectShortcutTargetTileKey;
+  final String? exploreShortcutTargetTileKey;
 
   List<WorkOrder> get _pendingForPlayer =>
       currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
@@ -359,11 +361,17 @@ class _UnitRow extends StatelessWidget {
     );
   }
 
-  void _startProspectShortcutAssign() {
-    final targetTileKey = prospectShortcutTargetTileKey;
-    if (targetTileKey == null || targetTileKey.isEmpty) {
-      return;
-    }
+  void _startExplorerShortcutAssign() {
+    final hasExploreShortcut =
+        exploreShortcutTargetTileKey != null &&
+        exploreShortcutTargetTileKey!.isNotEmpty;
+    final targetTileKey = hasExploreShortcut
+        ? exploreShortcutTargetTileKey
+        : prospectShortcutTargetTileKey;
+    if (targetTileKey == null || targetTileKey.isEmpty) return;
+    final workTarget = hasExploreShortcut
+        ? kWorkTargetExplore
+        : kWorkTargetProspect;
     bus.emit(const ClosePanelEvent());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       bus.emit(
@@ -371,7 +379,7 @@ class _UnitRow extends StatelessWidget {
           playerId: humanPlayerId,
           workOrder: WorkOrder(
             unitId: unit.id,
-            target: kWorkTargetProspect,
+            target: workTarget,
             targetTileKey: targetTileKey,
           ),
         ),
@@ -410,7 +418,7 @@ class _UnitRow extends StatelessWidget {
     AppLocalizations l10n,
     BuildContext context, {
     required bool showActions,
-    required bool inProspectShortcutMode,
+    required bool inExplorerShortcutMode,
   }) {
     if (!showActions) {
       return const <UnitsEntityAction>[];
@@ -421,8 +429,8 @@ class _UnitRow extends StatelessWidget {
           tooltip: l10n.civilian_units_assign,
           icon: Icons.playlist_add,
           label: l10n.civilian_units_assign,
-          onPressed: inProspectShortcutMode
-              ? _startProspectShortcutAssign
+          onPressed: inExplorerShortcutMode
+              ? _startExplorerShortcutAssign
               : () => _showOrderMenu(context),
         ),
       if (_hasWork)
@@ -446,7 +454,8 @@ class _UnitRow extends StatelessWidget {
         const SizedBox(width: 4),
         IconButton(
           tooltip: l10n.common_locate,
-          onPressed: tileKeyForLocate != null &&
+          onPressed:
+              tileKeyForLocate != null &&
                   tileKeyForLocate.isNotEmpty &&
                   regionIdForLocate != null
               ? () {
@@ -489,16 +498,18 @@ class _UnitRow extends StatelessWidget {
       UnitStatus.working => l10n.province_unitStatus_working,
     };
     final showActions = !isTileScope || isSelectedInTileScope;
-    final inProspectShortcutMode =
-        prospectShortcutTargetTileKey != null &&
-        prospectShortcutTargetTileKey!.isNotEmpty;
+    final inExplorerShortcutMode =
+        (prospectShortcutTargetTileKey != null &&
+            prospectShortcutTargetTileKey!.isNotEmpty) ||
+        (exploreShortcutTargetTileKey != null &&
+            exploreShortcutTargetTileKey!.isNotEmpty);
     final tileKeyForLocate = projectedTileKey;
     final regionIdForLocate = Unit.regionIdFromTileKey(tileKeyForLocate);
     final rowActions = _buildRowActions(
       l10n,
       context,
       showActions: showActions,
-      inProspectShortcutMode: inProspectShortcutMode,
+      inExplorerShortcutMode: inExplorerShortcutMode,
     );
     return ListTile(
       selected: isTileScope && isSelectedInTileScope,
