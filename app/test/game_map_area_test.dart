@@ -733,7 +733,7 @@ void main() {
   );
 
   testWidgets(
-    'work target selection caches global valid tile keys across region switches',
+    'work target selection auto-switches to region with valid tiles when current tab has none',
     (WidgetTester tester) async {
       final init = getDebugInitGameResult();
       final game = init.game;
@@ -778,8 +778,8 @@ void main() {
             tileMapByRegion: init.tileMapByRegion,
           );
           final hasOldWorld = valid.any((k) => k.startsWith('oldWorld|'));
-          final hasOnlyOldWorld = hasOldWorld &&
-              !valid.any((k) => k.startsWith('newWorld|'));
+          final hasOnlyOldWorld =
+              hasOldWorld && !valid.any((k) => k.startsWith('newWorld|'));
           if (hasOnlyOldWorld) {
             offTabSelection = (unitId: unit.id, workTarget: workTarget);
             break;
@@ -834,18 +834,16 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
 
-      final beforeSwitchRegionMap = tester
+      final autoSwitchedRegionMap = tester
           .widgetList<CtRegionMap>(find.byType(CtRegionMap))
           .first;
-      final beforeSwitchValidKeys = beforeSwitchRegionMap.validTileKeys;
-      expect(beforeSwitchValidKeys, isNotNull);
+      final autoSwitchedValidKeys = autoSwitchedRegionMap.validTileKeys;
+      expect(autoSwitchedRegionMap.region.regionId, kRegionOldWorld);
+      expect(autoSwitchedValidKeys, isNotNull);
       expect(
-        beforeSwitchValidKeys!.every((k) => k.startsWith('oldWorld|')),
+        autoSwitchedValidKeys!.every((k) => k.startsWith('oldWorld|')),
         isTrue,
       );
-      await tester.tap(find.text('Old World'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
 
       final afterSwitchRegionMap = tester
           .widgetList<CtRegionMap>(find.byType(CtRegionMap))
@@ -1052,62 +1050,61 @@ void main() {
     expect(regionMap.validTileKeys, isNull);
   });
 
-  testWidgets(
-    'selection mode blocks non-selection map interaction callbacks',
-    (WidgetTester tester) async {
-      final init = getDebugInitGameResult();
-      final game = init.game;
-      final mapViewData = init.mapViewData;
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
+  testWidgets('selection mode blocks non-selection map interaction callbacks', (
+    WidgetTester tester,
+  ) async {
+    final init = getDebugInitGameResult();
+    final game = init.game;
+    final mapViewData = init.mapViewData;
+    final bus = AppEventBus.create();
+    addTearDown(bus.dispose);
 
-      final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
-          ? game.worldState.oldWorld.units.first.id
-          : game.worldState.newWorld.units.first.id;
+    final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
+        ? game.worldState.oldWorld.units.first.id
+        : game.worldState.newWorld.units.first.id;
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameServiceProvider.overrideWith(
-              (ref) => GameService(gamesBox, GameSaveAdapter()),
-            ),
-            currentOrdersProvider.overrideWith(
-              () => CurrentOrdersNotifier(const Orders()),
-            ),
-            mapViewDataProvider.overrideWith((ref) => mapViewData),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: mapViewData),
-            ),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appEventBusProvider.overrideWith((ref) => bus),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          mapViewDataProvider.overrideWith((ref) => mapViewData),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: GameMapArea(game: game, mapViewData: mapViewData),
           ),
         ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
 
-      var regionMap = tester.widget<CtRegionMap>(find.byType(CtRegionMap).first);
-      expect(regionMap.onMapTileTappedForDetail, isNotNull);
-      expect(regionMap.onCivilianTileTapped, isNotNull);
-      expect(regionMap.onFleetMarkerTapped, isNotNull);
+    var regionMap = tester.widget<CtRegionMap>(find.byType(CtRegionMap).first);
+    expect(regionMap.onMapTileTappedForDetail, isNotNull);
+    expect(regionMap.onCivilianTileTapped, isNotNull);
+    expect(regionMap.onFleetMarkerTapped, isNotNull);
 
-      bus.emit(
-        StartCivilianWorkTargetSelectionEvent(
-          unitId: sampleUnitId,
-          workTarget: 'explore',
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
+    bus.emit(
+      StartCivilianWorkTargetSelectionEvent(
+        unitId: sampleUnitId,
+        workTarget: 'explore',
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
 
-      expect(find.text('Select a tile, or click cancel'), findsOneWidget);
-      regionMap = tester.widget<CtRegionMap>(find.byType(CtRegionMap).first);
-      expect(regionMap.onMapTileTappedForDetail, isNull);
-      expect(regionMap.onCivilianTileTapped, isNull);
-      expect(regionMap.onFleetMarkerTapped, isNull);
-    },
-  );
+    expect(find.text('Select a tile, or click cancel'), findsOneWidget);
+    regionMap = tester.widget<CtRegionMap>(find.byType(CtRegionMap).first);
+    expect(regionMap.onMapTileTappedForDetail, isNull);
+    expect(regionMap.onCivilianTileTapped, isNull);
+    expect(regionMap.onFleetMarkerTapped, isNull);
+  });
 }
