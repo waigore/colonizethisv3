@@ -77,6 +77,32 @@ void main() {
       expect(relocated.assignedTileKey, isNull);
     });
 
+    test(
+      'relocates idle civilian with stale assignment tracking but no currentWork',
+      () {
+      final unit = Unit(
+        id: 'u1',
+        type: 'Builder',
+        ownerId: 'gp2',
+        locationProvinceId: changedProvinceId,
+        tileKey: changedTile,
+        status: UnitStatus.idle,
+        originTileKey: changedTile,
+        assignedTileKey: changedTile,
+      );
+      final result = relocateIllegalCiviliansInChangedProvinces(
+        baseGame(units: [unit]),
+        changedProvinceIds: {changedProvinceId},
+      );
+      final relocated = result.worldState.oldWorld.units.single;
+      expect(relocated.tileKey, capitalTile);
+      expect(relocated.locationProvinceId, capitalProvinceId);
+      expect(relocated.status, UnitStatus.idle);
+      expect(relocated.currentWork, isNull);
+      expect(relocated.originTileKey, isNull);
+      expect(relocated.assignedTileKey, isNull);
+    });
+
     test('does not evaluate civilians outside changed provinces', () {
       final unit = Unit(
         id: 'u1',
