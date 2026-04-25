@@ -226,12 +226,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     log.i(
       'TileMapGenerator.generate start regionId=$regionId numProvinces=$numProvinces seed=${params.seed}',
     );
-    if (numProvinces < 1) {
-      throw MapValidationException('numProvinces must be at least 1');
-    }
-    if (numContinents < 1) {
-      throw MapValidationException('numContinents must be at least 1');
-    }
+    _validateGenerateArgs(numProvinces, numContinents);
     log.i(
       'generation_params '
       'regionId=$regionId '
@@ -245,32 +240,13 @@ class TileMapGenerator extends _TileMapGeneratorShell {
       'skipFillLakes=${params.skipFillLakes} '
       'seedBeforeAssignment=${params.seedBeforeAssignment}',
     );
-    final Map<String, int> provinceToContinent;
-    if (continentProvinceSizes != null) {
-      if (continentProvinceSizes.length != numContinents) {
-        throw MapValidationException(
-          'continentProvinceSizes.length (${continentProvinceSizes.length}) '
-          'must equal numContinents ($numContinents)',
-        );
-      }
-      final sum = continentProvinceSizes.fold<int>(0, (a, b) => a + b);
-      if (sum != numProvinces) {
-        throw MapValidationException(
-          'continentProvinceSizes sum ($sum) must equal numProvinces ($numProvinces)',
-        );
-      }
-      provinceToContinent = buildProvinceToContinentMapFromCounts(
-        continentProvinceSizes,
-      );
-    } else {
-      provinceToContinent = buildProvinceToContinentMap(
-        numProvinces,
-        numContinents,
-      );
-    }
+    final provinceToContinent = _resolveProvinceToContinent(
+      numProvinces,
+      numContinents,
+      continentProvinceSizes,
+    );
     final rnd = Random(params.seed);
 
-    // Pass 1: Initialize grid (all sea)
     var grid = List.generate(
       params.height,
       (_) => List.filled(params.width, seaZoneId),
@@ -278,43 +254,17 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     onLog?.call(
       'Pass 1: Grid initialized (${params.width}x${params.height}), all sea',
     );
-
-    List<(int x, int y)> continentSeeds;
-    List<(int x, int y)> landSeeds;
-    List<int> continentBySeedIndex;
-
-    if (params.seedBeforeAssignment) {
-      // Pass 2–3 (fallback): Place all seeds, then one global Voronoi
-      final placed = _landSeedService.placeLandSeeds(provinceToContinent, rnd);
-      continentSeeds = placed.$1;
-      landSeeds = placed.$2;
-      continentBySeedIndex = placed.$3;
-      onLog?.call(
-        'Pass 2: Continent seeds ${continentSeeds.length}, land seeds ${landSeeds.length}',
-      );
-      grid = _landSeedService.assignLandByLandSeeds(
-        grid,
-        landSeeds,
-        continentBySeedIndex,
-        provinceToContinent,
-        seaZoneId,
-      );
-    } else {
-      // Organic: interleaved seed placement + small Voronoi + coastline growth
-      final organic = _landSeedService.placeLandSeedsOrganic(
-        grid,
-        provinceToContinent,
-        seaZoneId,
-        rnd,
-      );
-      continentSeeds = organic.$1;
-      landSeeds = organic.$2;
-      continentBySeedIndex = organic.$3;
-      grid = organic.$4;
-      onLog?.call(
-        'Pass 2–3 (organic): Continent seeds ${continentSeeds.length}, land seeds ${landSeeds.length}',
-      );
-    }
+    final seeded = _seedAndAssignLand(
+      grid,
+      provinceToContinent,
+      seaZoneId,
+      rnd,
+      onLog,
+    );
+    grid = seeded.$1;
+    final continentSeeds = seeded.$2;
+    final landSeeds = seeded.$3;
+    final continentBySeedIndex = seeded.$4;
 
     if (landSeeds.isNotEmpty) {
       onLandSeedsPlaced?.call(
@@ -325,74 +275,28 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     if (continentSeeds.isNotEmpty) {
       onContinentSeedsPlaced?.call(List<(int x, int y)>.from(continentSeeds));
     }
-
-    var landCount = 0;
-    for (var y = 0; y < params.height; y++) {
-      for (var x = 0; x < params.width; x++) {
-        if (grid[y][x] == _landSentinel) landCount++;
-      }
-    }
+    final landCount = _countLandCells(grid);
     onLog?.call(
       'Pass 3: Land assignment complete ($landCount land, ${params.width * params.height - landCount} sea)',
     );
+    grid = _applyLakesAndBorderNoise(
+      grid,
+      seaZoneId,
+      landSeeds,
+      continentBySeedIndex,
+      rnd,
+      onLog,
+    );
+    final terrainAndResources = _assignTerrainAndResourcesPass(
+      grid,
+      regionId,
+      resourceRules,
+      rnd,
+      onLog,
+    );
+    var terrainGrid = terrainAndResources.$1;
+    var resourceGrid = terrainAndResources.$2;
 
-    // Pass 4: Fill lakes (ocean / lake per SPEC § Pass 4; lake → land; optional coastal swap)
-    if (params.skipFillLakes) {
-      onLog?.call('Pass 4: Fill lakes and moats skipped');
-    } else {
-      grid = _lakeAndProvinceService.fillLakes(
-        grid,
-        seaZoneId,
-        landSeeds,
-        continentBySeedIndex,
-      );
-      grid = _lakeAndProvinceService.fillMoats(
-        grid,
-        seaZoneId,
-        landSeeds,
-        continentBySeedIndex,
-        rnd,
-      );
-      onLog?.call('Pass 4: Fill lakes and moats done');
-    }
-
-    // Pass 5: Border randomization (optional; sentinel = land)
-    if (params.borderNoise > 0) {
-      grid = _lakeAndProvinceService.borderNoise(grid, seaZoneId, rnd);
-      onLog?.call('Pass 5: Border noise applied');
-    } else {
-      onLog?.call('Pass 5: Border noise skipped (0)');
-    }
-
-    // Pass 6–7: Terrain and resource assignment (by map regionId; no province id)
-    List<List<TerrainType?>>? terrainGrid;
-    List<List<Resource?>>? resourceGrid;
-    if (resourceRules != null) {
-      final t = _terrainResourceService.assignTerrainAndResources(
-        grid,
-        regionId,
-        resourceRules,
-        rnd,
-      );
-      terrainGrid = t.$1;
-      resourceGrid = t.$2;
-      var terrainCount = 0;
-      var resourceCount = 0;
-      for (var y = 0; y < params.height; y++) {
-        for (var x = 0; x < params.width; x++) {
-          if (terrainGrid[y][x] != null) terrainCount++;
-          if (resourceGrid[y][x] != null) resourceCount++;
-        }
-      }
-      onLog?.call('Pass 6: Terrain assigned ($terrainCount land cells)');
-      onLog?.call('Pass 7: Resources placed ($resourceCount cells)');
-    } else {
-      onLog?.call(
-        'Pass 6–7: Terrain/resources skipped (no rules or no provinces)',
-      );
-    }
-
-    // Pass 8: Province seeds on land (one per province, per continent)
     final provinceSeeds = _lakeAndProvinceService.placeProvinceSeedsOnLand(
       grid,
       provinceToContinent,
@@ -404,58 +308,36 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     onLog?.call(
       'Pass 8: Province seeds on land (${provinceSeeds.length} provinces)',
     );
-
-    // Pass 9: Province assignment (Voronoi on land; replace sentinel with province id)
     grid = _lakeAndProvinceService.assignProvincesFromSeeds(
       grid,
       provinceSeeds,
       seaZoneId,
     );
     onLog?.call('Pass 9: Province assignment complete');
-
-    // Join step (optional): connect split land components per continent
-    if (params.joinContinents) {
-      final joinResult = _joinAndSeaService.joinContinents(
-        grid,
-        terrainGrid,
-        resourceGrid,
-        provinceToContinent,
-        seaZoneId,
-        regionId,
-        landSeeds,
-        continentBySeedIndex,
-        resourceRules,
-        rnd,
-      );
-      grid = joinResult.$1;
-      terrainGrid = joinResult.$2;
-      resourceGrid = joinResult.$3;
-      if (joinResult.$4) {
-        onLog?.call('Pass 10: Join continents (land bridges added)');
-      }
-    }
-
-    // Optional Pass 10b: province-aware terrain jitter (tiles without resources only).
-    if (terrainGrid != null && resourceGrid != null) {
-      _joinAndSeaService.jitterTerrainByProvince(
-        grid,
-        terrainGrid,
-        resourceGrid,
-        regionId,
-        rnd,
-      );
-    }
-
-    // Pass 11: Sea zone subdivision with size cap (max fraction of total sea per zone).
-    final totalSea = _joinAndSeaService.countSeaCells(grid, seaZoneId);
-    if (totalSea > 0) {
-      final (newGrid, numSeaZones) = _joinAndSeaService
-          .subdivideSeaZonesWithCap(grid, seaZoneId, totalSea);
-      grid = newGrid;
-      onLog?.call(
-        'Pass 11: Sea zone subdivision ($numSeaZones sea zones, cap ${(params.maxSeaZoneFraction * 100).toInt()}% of sea)',
-      );
-    }
+    final joined = _maybeJoinContinents(
+      grid,
+      terrainGrid,
+      resourceGrid,
+      provinceToContinent,
+      seaZoneId,
+      regionId,
+      landSeeds,
+      continentBySeedIndex,
+      resourceRules,
+      rnd,
+      onLog,
+    );
+    grid = joined.$1;
+    terrainGrid = joined.$2;
+    resourceGrid = joined.$3;
+    _maybeJitterTerrainByProvince(
+      grid,
+      terrainGrid,
+      resourceGrid,
+      regionId,
+      rnd,
+    );
+    grid = _subdivideSeaZones(grid, seaZoneId, onLog);
 
     final result = TileMapResult(
       width: params.width,
@@ -475,6 +357,224 @@ class TileMapGenerator extends _TileMapGeneratorShell {
       'TileMapGenerator.generate end regionId=$regionId provinces=$provincesCount continents=$continentsCount success=true',
     );
     return (result, topology);
+  }
+
+  void _validateGenerateArgs(int numProvinces, int numContinents) {
+    if (numProvinces < 1) {
+      throw MapValidationException('numProvinces must be at least 1');
+    }
+    if (numContinents < 1) {
+      throw MapValidationException('numContinents must be at least 1');
+    }
+  }
+
+  Map<String, int> _resolveProvinceToContinent(
+    int numProvinces,
+    int numContinents,
+    List<int>? continentProvinceSizes,
+  ) {
+    if (continentProvinceSizes == null) {
+      return buildProvinceToContinentMap(numProvinces, numContinents);
+    }
+    if (continentProvinceSizes.length != numContinents) {
+      throw MapValidationException(
+        'continentProvinceSizes.length (${continentProvinceSizes.length}) '
+        'must equal numContinents ($numContinents)',
+      );
+    }
+    final sum = continentProvinceSizes.fold<int>(0, (a, b) => a + b);
+    if (sum != numProvinces) {
+      throw MapValidationException(
+        'continentProvinceSizes sum ($sum) must equal numProvinces ($numProvinces)',
+      );
+    }
+    return buildProvinceToContinentMapFromCounts(continentProvinceSizes);
+  }
+
+  (List<List<String>>, List<(int x, int y)>, List<(int x, int y)>, List<int>)
+  _seedAndAssignLand(
+    List<List<String>> grid,
+    Map<String, int> provinceToContinent,
+    String seaZoneId,
+    Random rnd,
+    void Function(String)? onLog,
+  ) {
+    if (params.seedBeforeAssignment) {
+      final placed = _landSeedService.placeLandSeeds(provinceToContinent, rnd);
+      final continentSeeds = placed.$1;
+      final landSeeds = placed.$2;
+      final continentBySeedIndex = placed.$3;
+      onLog?.call(
+        'Pass 2: Continent seeds ${continentSeeds.length}, land seeds ${landSeeds.length}',
+      );
+      final assignedGrid = _landSeedService.assignLandByLandSeeds(
+        grid,
+        landSeeds,
+        continentBySeedIndex,
+        provinceToContinent,
+        seaZoneId,
+      );
+      return (assignedGrid, continentSeeds, landSeeds, continentBySeedIndex);
+    }
+    final organic = _landSeedService.placeLandSeedsOrganic(
+      grid,
+      provinceToContinent,
+      seaZoneId,
+      rnd,
+    );
+    onLog?.call(
+      'Pass 2–3 (organic): Continent seeds ${organic.$1.length}, land seeds ${organic.$2.length}',
+    );
+    return (organic.$4, organic.$1, organic.$2, organic.$3);
+  }
+
+  int _countLandCells(List<List<String>> grid) {
+    var landCount = 0;
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (grid[y][x] == _landSentinel) landCount++;
+      }
+    }
+    return landCount;
+  }
+
+  List<List<String>> _applyLakesAndBorderNoise(
+    List<List<String>> grid,
+    String seaZoneId,
+    List<(int x, int y)> landSeeds,
+    List<int> continentBySeedIndex,
+    Random rnd,
+    void Function(String)? onLog,
+  ) {
+    var nextGrid = grid;
+    if (params.skipFillLakes) {
+      onLog?.call('Pass 4: Fill lakes and moats skipped');
+    } else {
+      nextGrid = _lakeAndProvinceService.fillLakes(
+        nextGrid,
+        seaZoneId,
+        landSeeds,
+        continentBySeedIndex,
+      );
+      nextGrid = _lakeAndProvinceService.fillMoats(
+        nextGrid,
+        seaZoneId,
+        landSeeds,
+        continentBySeedIndex,
+        rnd,
+      );
+      onLog?.call('Pass 4: Fill lakes and moats done');
+    }
+    if (params.borderNoise > 0) {
+      nextGrid = _lakeAndProvinceService.borderNoise(nextGrid, seaZoneId, rnd);
+      onLog?.call('Pass 5: Border noise applied');
+    } else {
+      onLog?.call('Pass 5: Border noise skipped (0)');
+    }
+    return nextGrid;
+  }
+
+  (List<List<TerrainType?>>?, List<List<Resource?>>?)
+  _assignTerrainAndResourcesPass(
+    List<List<String>> grid,
+    String regionId,
+    ResourceRules? resourceRules,
+    Random rnd,
+    void Function(String)? onLog,
+  ) {
+    if (resourceRules == null) {
+      onLog?.call(
+        'Pass 6–7: Terrain/resources skipped (no rules or no provinces)',
+      );
+      return (null, null);
+    }
+    final t = _terrainResourceService.assignTerrainAndResources(
+      grid,
+      regionId,
+      resourceRules,
+      rnd,
+    );
+    var terrainCount = 0;
+    var resourceCount = 0;
+    for (var y = 0; y < params.height; y++) {
+      for (var x = 0; x < params.width; x++) {
+        if (t.$1[y][x] != null) terrainCount++;
+        if (t.$2[y][x] != null) resourceCount++;
+      }
+    }
+    onLog?.call('Pass 6: Terrain assigned ($terrainCount land cells)');
+    onLog?.call('Pass 7: Resources placed ($resourceCount cells)');
+    return t;
+  }
+
+  (List<List<String>>, List<List<TerrainType?>>?, List<List<Resource?>>?)
+  _maybeJoinContinents(
+    List<List<String>> grid,
+    List<List<TerrainType?>>? terrainGrid,
+    List<List<Resource?>>? resourceGrid,
+    Map<String, int> provinceToContinent,
+    String seaZoneId,
+    String regionId,
+    List<(int x, int y)> landSeeds,
+    List<int> continentBySeedIndex,
+    ResourceRules? resourceRules,
+    Random rnd,
+    void Function(String)? onLog,
+  ) {
+    if (!params.joinContinents) {
+      return (grid, terrainGrid, resourceGrid);
+    }
+    final joinResult = _joinAndSeaService.joinContinents(
+      grid,
+      terrainGrid,
+      resourceGrid,
+      provinceToContinent,
+      seaZoneId,
+      regionId,
+      landSeeds,
+      continentBySeedIndex,
+      resourceRules,
+      rnd,
+    );
+    if (joinResult.$4) {
+      onLog?.call('Pass 10: Join continents (land bridges added)');
+    }
+    return (joinResult.$1, joinResult.$2, joinResult.$3);
+  }
+
+  void _maybeJitterTerrainByProvince(
+    List<List<String>> grid,
+    List<List<TerrainType?>>? terrainGrid,
+    List<List<Resource?>>? resourceGrid,
+    String regionId,
+    Random rnd,
+  ) {
+    if (terrainGrid == null || resourceGrid == null) return;
+    _joinAndSeaService.jitterTerrainByProvince(
+      grid,
+      terrainGrid,
+      resourceGrid,
+      regionId,
+      rnd,
+    );
+  }
+
+  List<List<String>> _subdivideSeaZones(
+    List<List<String>> grid,
+    String seaZoneId,
+    void Function(String)? onLog,
+  ) {
+    final totalSea = _joinAndSeaService.countSeaCells(grid, seaZoneId);
+    if (totalSea <= 0) return grid;
+    final (newGrid, numSeaZones) = _joinAndSeaService.subdivideSeaZonesWithCap(
+      grid,
+      seaZoneId,
+      totalSea,
+    );
+    onLog?.call(
+      'Pass 11: Sea zone subdivision ($numSeaZones sea zones, cap ${(params.maxSeaZoneFraction * 100).toInt()}% of sea)',
+    );
+    return newGrid;
   }
 
   /// Runs Pass 4 **lake fill only** on a grid at post-Pass-3 semantics (sea =

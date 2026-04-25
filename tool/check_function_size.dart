@@ -6,7 +6,6 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/source/line_info.dart';
 import 'package:path/path.dart' as p;
-import 'package:yaml/yaml.dart';
 
 import 'ct_repo_lint_scan_contract.dart';
 
@@ -23,7 +22,6 @@ int runCheckFunctionSize(
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
-  final allowlist = _loadAllowlist(repoRoot);
   final files = collectRepoLintDomainDartFiles(repoRoot).where((file) {
     final rel = p.relative(file.path, from: repoRoot);
     return _scopePrefixes.any(rel.startsWith);
@@ -42,7 +40,6 @@ int runCheckFunctionSize(
       relativePath: relativePath,
       sourceLines: sourceLines,
       lineInfo: lineInfo,
-      allowlist: allowlist,
       violations: violations,
     );
   }
@@ -63,7 +60,6 @@ void _scanCompilationUnit({
   required String relativePath,
   required List<String> sourceLines,
   required LineInfo lineInfo,
-  required Map<String, int> allowlist,
   required List<String> violations,
 }) {
   for (final decl in unit.declarations) {
@@ -74,7 +70,6 @@ void _scanCompilationUnit({
         relativePath: relativePath,
         sourceLines: sourceLines,
         lineInfo: lineInfo,
-        allowlist: allowlist,
         violations: violations,
       );
       _scanNestedLocalFunctions(
@@ -83,7 +78,6 @@ void _scanCompilationUnit({
         relativePath: relativePath,
         sourceLines: sourceLines,
         lineInfo: lineInfo,
-        allowlist: allowlist,
         violations: violations,
       );
       continue;
@@ -100,7 +94,6 @@ void _scanCompilationUnit({
           relativePath: relativePath,
           sourceLines: sourceLines,
           lineInfo: lineInfo,
-          allowlist: allowlist,
           violations: violations,
         );
         _scanNestedLocalFunctions(
@@ -109,7 +102,6 @@ void _scanCompilationUnit({
           relativePath: relativePath,
           sourceLines: sourceLines,
           lineInfo: lineInfo,
-          allowlist: allowlist,
           violations: violations,
         );
       } else if (member is ConstructorDeclaration) {
@@ -121,7 +113,6 @@ void _scanCompilationUnit({
           relativePath: relativePath,
           sourceLines: sourceLines,
           lineInfo: lineInfo,
-          allowlist: allowlist,
           violations: violations,
         );
         _scanNestedLocalFunctions(
@@ -130,7 +121,6 @@ void _scanCompilationUnit({
           relativePath: relativePath,
           sourceLines: sourceLines,
           lineInfo: lineInfo,
-          allowlist: allowlist,
           violations: violations,
         );
       }
@@ -144,7 +134,6 @@ void _scanNestedLocalFunctions({
   required String relativePath,
   required List<String> sourceLines,
   required LineInfo lineInfo,
-  required Map<String, int> allowlist,
   required List<String> violations,
 }) {
   body.accept(
@@ -157,7 +146,6 @@ void _scanNestedLocalFunctions({
           relativePath: relativePath,
           sourceLines: sourceLines,
           lineInfo: lineInfo,
-          allowlist: allowlist,
           violations: violations,
         );
       },
@@ -171,7 +159,6 @@ void _scanFunction({
   required String relativePath,
   required List<String> sourceLines,
   required LineInfo lineInfo,
-  required Map<String, int> allowlist,
   required List<String> violations,
 }) {
   final start = lineInfo.getLocation(node.offset).lineNumber;
@@ -180,14 +167,9 @@ void _scanFunction({
   if (measured <= _failThreshold) {
     return;
   }
-  final key = '$relativePath|$qualifiedName';
-  final allowedMax = allowlist[key];
-  if (allowedMax != null && measured <= allowedMax) {
-    return;
-  }
   violations.add(
     '$relativePath:$start: `$qualifiedName` measured line count is $measured '
-    '(fail >$_failThreshold${allowedMax != null ? ', allowlisted max=$allowedMax' : ''})',
+    '(fail >$_failThreshold)',
   );
 }
 
@@ -210,35 +192,6 @@ int _countMeasuredLines(
     count++;
   }
   return count;
-}
-
-Map<String, int> _loadAllowlist(String repoRoot) {
-  final file = File(p.join(repoRoot, 'tool', 'function_size_allowlist.yaml'));
-  if (!file.existsSync()) {
-    return const {};
-  }
-  final dynamic doc = loadYaml(file.readAsStringSync());
-  if (doc is! YamlMap) {
-    return const {};
-  }
-  final node = doc['allowed_over_20'];
-  if (node is! YamlList) {
-    return const {};
-  }
-  final out = <String, int>{};
-  for (final dynamic item in node) {
-    if (item is! YamlMap) {
-      continue;
-    }
-    final filePath = item['file']?.toString();
-    final symbol = item['symbol']?.toString();
-    final maxMeasuredLines = item['max_measured_lines'];
-    if (filePath == null || symbol == null || maxMeasuredLines is! int) {
-      continue;
-    }
-    out['$filePath|$symbol'] = maxMeasuredLines;
-  }
-  return out;
 }
 
 List<({String symbol, int measuredLines, int startLine})>
