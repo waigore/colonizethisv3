@@ -111,6 +111,20 @@ Province? tryGetProvince(WorldState world, String fullProvinceId) {
   );
 }
 
+/// Returns land tile keys for a province bucket using canonical full province id.
+///
+/// This helper intentionally does not fall back to local-only ids. Callers must
+/// pass `regionId|localId` to keep multi-region lookups deterministic.
+List<String> landTileKeysForProvinceBucket(
+  WorldState world,
+  String regionId,
+  String fullProvinceId,
+) {
+  return List<String>.from(
+    world.tileKeysByRegionAndProvince[regionId]?[fullProvinceId] ?? const [],
+  );
+}
+
 /// Province lookup helpers on [WorldState] to avoid repeatedly passing the world state.
 extension WorldStateProvinceLookup on WorldState {
   RegionData? regionDataForId(String regionId) => _regionForId(this, regionId);
