@@ -300,7 +300,7 @@ Details of what “province details” shows are **not** defined in this spec; t
 ## Work target selection mode
 
 - **When** the parent supplies **validTileKeys** (set or list of tile keys in format `regionId|provinceId|x|y`) and **onTileSelected**, the map is in **work target selection mode**.
-- **Caching:** The parent computes valid tile keys **once** when entering selection mode (e.g., using `getValidWorkOrderTileKeysWithVisibility` or similar validation). The set is cached and passed to the map widget; the map widget does NOT recompute valid tiles on each frame or hover.
+- **Caching:** The parent computes valid tile keys **once** when entering selection mode (e.g., using `getValidWorkOrderTileKeysWithVisibility` or similar validation). The cached set is **global for the active selection session** (may include keys from multiple regions), is passed to the map widget unchanged, and is not overwritten by region-scoped subsets when tabs change. The map widget does NOT recompute valid tiles on each frame or hover.
 - **Orange cursor:** When in work target selection mode, the hover selector (the square outline that follows the pointer/tap) changes from white to **orange** (`Color(0xFFFFAA00)`) to visually indicate selection mode is active.
 - **Flashing yellow selectors:** Every tile whose key is in **validTileKeys** (and belongs to the currently displayed region) is rendered with a **flashing yellow border/outline** (stroke **5 logical px** world space, 2× legacy 2.5 px) that pulses (opacity oscillates, e.g. 0.4 to 0.8) to clearly indicate valid targets. The border should be visible and distinct from terrain but not overpower game visuals.
 - **Empty valid tiles:** When **validTileKeys** is provided but empty (no valid targets for this unit/order), no tiles are highlighted. Tapping any tile invokes **onWorkTargetSelectionCancelled** to allow the user to back out of selection mode.
@@ -310,7 +310,7 @@ Details of what “province details” shows are **not** defined in this spec; t
 - **Selection prompt overlay:** When in work target selection mode, a **top-centered Flutter overlay banner** appears with exact copy **"Select a tile, or click cancel"** and a prominent clickable **`cancel`** control. Activating `cancel` invokes **onWorkTargetSelectionCancelled** and exits selection mode without committing.
 - **Unified cancel routes:** The selection cancellation path is shared across: prompt **`cancel`**, desktop/macOS **Esc** while selection mode is active, and any left-rail icon tap (left-rail actions still execute after cancellation).
 - **Interaction lock while active:** While selection mode is active, map interactions other than valid tile selection and region switching are suppressed (e.g., province/tile detail taps, civilian/fleet marker panel interactions).
-- **Region:** Valid tile keys may reference the other region; only tiles in the **currently displayed region** are highlighted. When the user switches region tab, the overlay shows valid tiles for that region. See [civilian-units-panel.md](civilian-units-panel.md).
+- **Region:** Valid tile keys may reference the other region; only tiles in the **currently displayed region** are highlighted. Region tab switch behavior is render-time filtering only: the same global cached set drives highlights before and after a tab change. See [civilian-units-panel.md](civilian-units-panel.md).
 
 ---
 

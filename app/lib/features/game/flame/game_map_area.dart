@@ -242,8 +242,6 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       ? widget.mapViewData.oldWorld
       : widget.mapViewData.newWorld;
 
-  String get _currentRegionId => _regionIndex == 0 ? 'oldWorld' : 'newWorld';
-
   Set<String>? get _validTileKeysForSelection => _cachedValidTileKeys;
 
   void _computeValidTileKeysForSelection() {
@@ -269,9 +267,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       currentOrders: orders,
       tileMapByRegion: mapData?.tileMapByRegion,
     );
-    _cachedValidTileKeys = valid
-        .where((k) => k.startsWith('$_currentRegionId|'))
-        .toSet();
+    _cachedValidTileKeys = valid;
   }
 
   void _cycleBaseLayerDisplayMode() {
@@ -1116,8 +1112,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                         child: GameMapEmpireLeftRail(
                           game: widget.game,
                           humanPlayerId: _humanPlayerId,
-                          onIconTappedWhileSelectionMode: _workTargetSelection !=
-                                  null
+                          onIconTappedWhileSelectionMode:
+                              _workTargetSelection != null
                               ? _cancelWorkTargetSelection
                               : null,
                         ),
