@@ -53,7 +53,11 @@ void main() {
             turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
             oldWorld: RegionData(
               provinces: [
-                Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: 'pl1',
+                ),
               ],
             ),
             newWorld: const RegionData(),
@@ -63,18 +67,23 @@ void main() {
         final next = setCapital(
           game: game,
           playerId: 'pl1',
-          provinceId: 'p1',
-          tile: CapitalTile(regionId: 'oldWorld', provinceId: 'p1', x: 0, y: 0),
+          provinceId: 'oldWorld|p1',
+          tile: CapitalTile(
+            regionId: 'oldWorld',
+            provinceId: 'oldWorld|p1',
+            x: 0,
+            y: 0,
+          ),
           topology: topology,
           tileMapByRegion: {
             'oldWorld': TileMapResult(width: 2, height: 2, grid: grid),
           },
         );
-        expect(next.players.single.capitalProvinceId, 'p1');
+        expect(next.players.single.capitalProvinceId, 'oldWorld|p1');
         expect(next.players.single.capitalTile?.x, 0);
         expect(next.players.single.capitalTile?.y, 0);
         expect(
-          next.worldState.portsByProvinceSeaboard['p1|sea1'],
+          next.worldState.portsByProvinceSeaboard['oldWorld|p1|sea1'],
           'oldWorld|p1|0|0',
         );
         expect(next.worldState.tileState.roadLevel('oldWorld|p1|0|0'), 4);
@@ -112,14 +121,14 @@ void main() {
       final tileMap = TileMapResult(width: 2, height: 2, grid: grid);
       // p1 is sea-bound, p2 is not. Owned = [p2, p1]; after sort sea-bound = [p1].
       final (provinceId, tile) = pickCapitalForFaction(
-        ['p2', 'p1'],
+        ['oldWorld|p2', 'oldWorld|p1'],
         'oldWorld',
         topology,
         tileMap,
       );
-      expect(provinceId, 'p1');
+      expect(provinceId, 'oldWorld|p1');
       expect(tile.regionId, 'oldWorld');
-      expect(tile.provinceId, 'p1');
+      expect(tile.provinceId, 'oldWorld|p1');
       expect(tile.x, 0);
       expect(tile.y, 0);
     });
@@ -149,7 +158,7 @@ void main() {
         final tileMap = TileMapResult(width: 2, height: 2, grid: grid);
         expect(
           () => pickCapitalForFaction(
-            ['p1', 'p2'],
+            ['oldWorld|p1', 'oldWorld|p2'],
             'oldWorld',
             topology,
             tileMap,
@@ -189,15 +198,15 @@ void main() {
         );
         final tileMap = TileMapResult(width: 2, height: 2, grid: grid);
         final (provinceId, tile) = pickCapitalForFaction(
-          ['p2', 'p1'],
+          ['oldWorld|p2', 'oldWorld|p1'],
           'oldWorld',
           topology,
           tileMap,
           requireSeaBound: false,
         );
-        expect(provinceId, 'p1');
+        expect(provinceId, 'oldWorld|p1');
         expect(tile.regionId, 'oldWorld');
-        expect(tile.provinceId, 'p1');
+        expect(tile.provinceId, 'oldWorld|p1');
       },
     );
 
@@ -234,13 +243,13 @@ void main() {
         );
         final tileMap = TileMapResult(width: 3, height: 2, grid: grid);
         final (provinceId, tile) = pickCapitalForFaction(
-          ['p1'],
+          ['oldWorld|p1'],
           'oldWorld',
           topology,
           tileMap,
         );
-        expect(provinceId, 'p1');
-        expect(tile.provinceId, 'p1');
+        expect(provinceId, 'oldWorld|p1');
+        expect(tile.provinceId, 'oldWorld|p1');
         expect(tile.x, 1);
         expect(tile.y, 1);
       },
@@ -277,7 +286,12 @@ void main() {
       );
       final tileMap = TileMapResult(width: 3, height: 2, grid: grid);
       expect(
-        () => pickCapitalForFaction(['p1'], 'oldWorld', topology, tileMap),
+        () => pickCapitalForFaction(
+          ['oldWorld|p1'],
+          'oldWorld',
+          topology,
+          tileMap,
+        ),
         throwsA(
           isA<NoCoastalCapitalTileForGpException>()
               .having((e) => e.code, 'code', 'no_coastal_capital_tile_for_gp')
@@ -316,7 +330,11 @@ void main() {
           turnState: TurnState(turnNumber: 0, phase: TurnPhase.orders),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'min1'),
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'min1',
+              ),
             ],
           ),
           newWorld: const RegionData(),
@@ -327,10 +345,10 @@ void main() {
       final next = setCapitalForMinorNation(
         game: game,
         minorId: 'min1',
-        provinceId: 'p1',
+        provinceId: 'oldWorld|p1',
         tile: const CapitalTile(
           regionId: 'oldWorld',
-          provinceId: 'p1',
+          provinceId: 'oldWorld|p1',
           x: 0,
           y: 0,
         ),
@@ -339,10 +357,10 @@ void main() {
           'oldWorld': TileMapResult(width: 2, height: 2, grid: grid),
         },
       );
-      expect(next.minorNations.single.capitalProvinceId, 'p1');
+      expect(next.minorNations.single.capitalProvinceId, 'oldWorld|p1');
       expect(next.minorNations.single.capitalTile?.x, 0);
       expect(
-        next.worldState.portsByProvinceSeaboard['p1|sea1'],
+        next.worldState.portsByProvinceSeaboard['oldWorld|p1|sea1'],
         'oldWorld|p1|0|0',
       );
       expect(next.worldState.tileState.roadLevel('oldWorld|p1|0|0'), 4);
@@ -375,7 +393,11 @@ void main() {
           oldWorld: const RegionData(),
           newWorld: RegionData(
             provinces: [
-              Province(id: 'nw1', regionId: 'newWorld', ownerId: 'tribe1'),
+              Province(
+                id: 'newWorld|nw1',
+                regionId: 'newWorld',
+                ownerId: 'tribe1',
+              ),
             ],
           ),
         ),
@@ -385,10 +407,10 @@ void main() {
       final next = setCapitalForTribe(
         game: game,
         tribeId: 'tribe1',
-        provinceId: 'nw1',
+        provinceId: 'newWorld|nw1',
         tile: const CapitalTile(
           regionId: 'newWorld',
-          provinceId: 'nw1',
+          provinceId: 'newWorld|nw1',
           x: 0,
           y: 0,
         ),
@@ -397,10 +419,10 @@ void main() {
           'newWorld': TileMapResult(width: 2, height: 2, grid: grid),
         },
       );
-      expect(next.tribes.single.capitalProvinceId, 'nw1');
+      expect(next.tribes.single.capitalProvinceId, 'newWorld|nw1');
       expect(next.tribes.single.capitalTile?.regionId, 'newWorld');
       expect(
-        next.worldState.portsByProvinceSeaboard['nw1|sea1'],
+        next.worldState.portsByProvinceSeaboard['newWorld|nw1|sea1'],
         'newWorld|nw1|0|0',
       );
     });
@@ -433,7 +455,11 @@ void main() {
             turnState: TurnState(turnNumber: 0, phase: TurnPhase.orders),
             oldWorld: RegionData(
               provinces: [
-                Province(id: 'p1', regionId: 'oldWorld', ownerId: 'min1'),
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: 'min1',
+                ),
               ],
             ),
             newWorld: const RegionData(),
@@ -444,10 +470,10 @@ void main() {
         final next = setCapitalForMinorNation(
           game: game,
           minorId: 'min1',
-          provinceId: 'p1',
+          provinceId: 'oldWorld|p1',
           tile: const CapitalTile(
             regionId: 'oldWorld',
-            provinceId: 'p1',
+            provinceId: 'oldWorld|p1',
             x: 0,
             y: 0,
           ),
@@ -456,7 +482,7 @@ void main() {
             'oldWorld': TileMapResult(width: 2, height: 2, grid: grid),
           },
         );
-        expect(next.minorNations.single.capitalProvinceId, 'p1');
+        expect(next.minorNations.single.capitalProvinceId, 'oldWorld|p1');
         expect(next.minorNations.single.capitalTile?.x, 0);
         expect(next.worldState.portsByProvinceSeaboard.isEmpty, true);
       },
@@ -491,7 +517,11 @@ void main() {
             oldWorld: const RegionData(),
             newWorld: RegionData(
               provinces: [
-                Province(id: 'nw1', regionId: 'newWorld', ownerId: 'tribe1'),
+                Province(
+                  id: 'newWorld|nw1',
+                  regionId: 'newWorld',
+                  ownerId: 'tribe1',
+                ),
               ],
             ),
           ),
@@ -501,10 +531,10 @@ void main() {
         final next = setCapitalForTribe(
           game: game,
           tribeId: 'tribe1',
-          provinceId: 'nw1',
+          provinceId: 'newWorld|nw1',
           tile: const CapitalTile(
             regionId: 'newWorld',
-            provinceId: 'nw1',
+            provinceId: 'newWorld|nw1',
             x: 0,
             y: 0,
           ),
@@ -513,7 +543,7 @@ void main() {
             'newWorld': TileMapResult(width: 2, height: 2, grid: grid),
           },
         );
-        expect(next.tribes.single.capitalProvinceId, 'nw1');
+        expect(next.tribes.single.capitalProvinceId, 'newWorld|nw1');
         expect(next.tribes.single.capitalTile?.regionId, 'newWorld');
         expect(next.worldState.portsByProvinceSeaboard.isEmpty, true);
       },
