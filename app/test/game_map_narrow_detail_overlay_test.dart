@@ -15,53 +15,53 @@ void main() {
   suppressLogsForTests();
 
   testWidgets(
-      'GameMapNarrowDetailOverlaySlot builds and close button closes via provider',
-      (WidgetTester tester) async {
-    final game = demoGameForOverlay;
-    final region = demoRegionForOverlay;
+    'GameMapNarrowDetailOverlaySlot builds and close button closes via provider',
+    (WidgetTester tester) async {
+      final game = demoGameForOverlay;
+      final region = demoRegionForOverlay;
 
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    await tester.binding.setSurfaceSize(const Size(400, 600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.binding.setSurfaceSize(const Size(400, 600));
 
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MediaQuery(
-          data: const MediaQueryData(size: Size(400, 600)),
-          child: MaterialApp(
-            home: Scaffold(
-              body: GameMapNarrowDetailOverlaySlot(
-                game: game,
-                region: region,
-                humanPlayerId: game.players.first.id,
-                playerView: demoHumanPlayerViewForOverlay,
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MediaQuery(
+            data: const MediaQueryData(size: Size(400, 600)),
+            child: MaterialApp(
+              home: Scaffold(
+                body: GameMapNarrowDetailOverlaySlot(
+                  game: game,
+                  region: region,
+                  humanPlayerId: game.players.first.id,
+                  playerView: demoHumanPlayerViewForOverlay,
+                  exploreEligibleTileKeyCache: const <String>{},
+                ),
               ),
             ),
           ),
         ),
-      ),
-    );
-    final ctx = tester.element(find.byType(GameMapNarrowDetailOverlaySlot));
-    final container = ProviderScope.containerOf(ctx);
-    container
-        .read(mapProvincePanelProvider.notifier)
-        .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
-    await tester.pumpAndSettle();
+      );
+      final ctx = tester.element(find.byType(GameMapNarrowDetailOverlaySlot));
+      final container = ProviderScope.containerOf(ctx);
+      container
+          .read(mapProvincePanelProvider.notifier)
+          .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
+      await tester.pumpAndSettle();
 
-    expect(find.byType(GameMapNarrowDetailOverlaySlot), findsOneWidget);
-    expect(find.text('Province'), findsOneWidget);
-    expect(find.byKey(const Key('overlay_close')), findsOneWidget);
+      expect(find.byType(GameMapNarrowDetailOverlaySlot), findsOneWidget);
+      expect(find.text('Province'), findsOneWidget);
+      expect(find.byKey(const Key('overlay_close')), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('overlay_close')));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('overlay_close')));
+      await tester.pumpAndSettle();
 
-    expect(
-      container.read(mapProvincePanelProvider).overlayOpen,
-      isFalse,
-    );
-  });
+      expect(container.read(mapProvincePanelProvider).overlayOpen, isFalse);
+    },
+  );
 
-  testWidgets('GameMapNarrowDetailOverlaySlot is height constrained (narrow)',
-      (WidgetTester tester) async {
+  testWidgets('GameMapNarrowDetailOverlaySlot is height constrained (narrow)', (
+    WidgetTester tester,
+  ) async {
     final game = demoGameForOverlay;
     final region = demoRegionForOverlay;
 
@@ -82,6 +82,7 @@ void main() {
                 region: region,
                 humanPlayerId: game.players.first.id,
                 playerView: demoHumanPlayerViewForOverlay,
+                exploreEligibleTileKeyCache: const <String>{},
               ),
             ),
           ),
@@ -96,9 +97,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final constrained = find.byWidgetPredicate(
-      (w) =>
-          w is SizedBox &&
-          (w.height! - expectedMaxHeight).abs() < 0.01,
+      (w) => w is SizedBox && (w.height! - expectedMaxHeight).abs() < 0.01,
     );
     expect(constrained, findsOneWidget);
   });

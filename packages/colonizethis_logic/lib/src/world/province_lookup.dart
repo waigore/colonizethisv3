@@ -15,12 +15,7 @@ Province? _findProvinceInRegion(
   String localId,
 ) {
   final fullId = ProvinceId.full(regionId, localId);
-  final idx = region.provinces.indexWhere(
-    (p) =>
-        p.id == fullId ||
-        (p.regionId == regionId &&
-            (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)),
-  );
+  final idx = region.provinces.indexWhere((p) => p.id == fullId);
   if (idx < 0) return null;
   return region.provinces[idx];
 }
@@ -113,6 +108,20 @@ Province? tryGetProvince(WorldState world, String fullProvinceId) {
     world,
     ProvinceId.regionIdFrom(fullProvinceId),
     ProvinceId.localIdFrom(fullProvinceId),
+  );
+}
+
+/// Returns land tile keys for a province bucket using canonical full province id.
+///
+/// This helper intentionally does not fall back to local-only ids. Callers must
+/// pass `regionId|localId` to keep multi-region lookups deterministic.
+List<String> landTileKeysForProvinceBucket(
+  WorldState world,
+  String regionId,
+  String fullProvinceId,
+) {
+  return List<String>.from(
+    world.tileKeysByRegionAndProvince[regionId]?[fullProvinceId] ?? const [],
   );
 }
 

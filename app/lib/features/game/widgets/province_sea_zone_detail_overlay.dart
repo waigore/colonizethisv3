@@ -48,6 +48,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.showProspectActionIcon = false,
     this.prospectActionEnabled = false,
     this.onProspectWithExplorerTap,
+    this.showExploreActionIcon = false,
+    this.exploreActionEnabled = false,
+    this.onExploreWithExplorerTap,
   });
 
   final Game game;
@@ -66,6 +69,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool showProspectActionIcon;
   final bool prospectActionEnabled;
   final VoidCallback? onProspectWithExplorerTap;
+  final bool showExploreActionIcon;
+  final bool exploreActionEnabled;
+  final VoidCallback? onExploreWithExplorerTap;
 
   bool _isSeaZone(String id) {
     final parts = id.split('|');
@@ -114,6 +120,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       showProspectActionIcon: showProspectActionIcon,
       prospectActionEnabled: prospectActionEnabled,
       onProspectWithExplorerTap: onProspectWithExplorerTap,
+      showExploreActionIcon: showExploreActionIcon,
+      exploreActionEnabled: exploreActionEnabled,
+      onExploreWithExplorerTap: onExploreWithExplorerTap,
     );
   }
 
@@ -253,6 +262,9 @@ _OverlayContent _provinceContent({
   required bool showProspectActionIcon,
   required bool prospectActionEnabled,
   VoidCallback? onProspectWithExplorerTap,
+  required bool showExploreActionIcon,
+  required bool exploreActionEnabled,
+  VoidCallback? onExploreWithExplorerTap,
 }) {
   final parts = provinceId.split('|');
   final regionId = parts.isNotEmpty ? parts[0] : region.regionId;
@@ -435,6 +447,9 @@ _OverlayContent _provinceContent({
     showProspectActionIcon: showProspectActionIcon,
     prospectActionEnabled: prospectActionEnabled,
     onProspectWithExplorerTap: onProspectWithExplorerTap,
+    showExploreActionIcon: showExploreActionIcon,
+    exploreActionEnabled: exploreActionEnabled,
+    onExploreWithExplorerTap: onExploreWithExplorerTap,
   );
   final political = _buildPoliticalSection(
     l10n: l10n,
