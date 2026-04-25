@@ -995,8 +995,6 @@ class _CivilianPanelWithMapStoryState
   String get _humanPlayerId =>
       _game.players.isNotEmpty ? _game.players.first.id : 'gp1';
 
-  String get _currentRegionId => _regionIndex == 0 ? 'oldWorld' : 'newWorld';
-
   String? get _validTileKeysCacheKey {
     if (_workTargetSelection == null) return null;
     return '${_workTargetSelection!.unit.id}|${_workTargetSelection!.workTarget}|$_visibilityMode';
@@ -1039,12 +1037,9 @@ class _CivilianPanelWithMapStoryState
       );
     }
 
-    final filtered = valid
-        .where((k) => k.startsWith('$_currentRegionId|'))
-        .toSet();
-    _cachedValidTileKeys = filtered;
+    _cachedValidTileKeys = valid;
     _cachedWorkTargetSelection = cacheKey;
-    return filtered;
+    return valid;
   }
 
   void _onTileSelectedForWork(String tileKey) {

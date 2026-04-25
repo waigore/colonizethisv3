@@ -7,7 +7,9 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
+import 'package:colonizethis_app/widgets/ct_region_map.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -730,6 +732,133 @@ void main() {
   );
 
   testWidgets(
+    'work target selection caches global valid tile keys across region switches',
+    (WidgetTester tester) async {
+      final init = getDebugInitGameResult();
+      final game = init.game;
+      final mapViewData = init.mapViewData;
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+
+      final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
+      final workTargets = <String>[
+        'explore',
+        'prospect',
+        'build_improvement',
+        'upgrade_town',
+        'build_road',
+        'build_port',
+        'build_fort',
+        'build_rail',
+        'steal_tech',
+        'counter_spy',
+        'purchase_land',
+      ];
+      final topology = init.combinedTopology;
+      final playerView = buildPlayerView(game, topology, humanPlayerId);
+      final unitById = <String, Unit>{
+        for (final unit in [
+          ...game.worldState.oldWorld.units,
+          ...game.worldState.newWorld.units,
+        ])
+          unit.id: unit,
+      };
+
+      ({String unitId, String workTarget})? offTabSelection;
+      for (final unit in unitById.values) {
+        for (final workTarget in workTargets) {
+          final valid = getValidWorkOrderTileKeysWithVisibility(
+            game: game,
+            topology: topology,
+            view: playerView,
+            unitId: unit.id,
+            workTarget: workTarget,
+            currentOrders: const Orders(),
+            tileMapByRegion: init.tileMapByRegion,
+          );
+          final hasOldWorld = valid.any((k) => k.startsWith('oldWorld|'));
+          final hasOnlyOldWorld = hasOldWorld &&
+              !valid.any((k) => k.startsWith('newWorld|'));
+          if (hasOnlyOldWorld) {
+            offTabSelection = (unitId: unit.id, workTarget: workTarget);
+            break;
+          }
+        }
+        if (offTabSelection != null) {
+          break;
+        }
+      }
+
+      expect(
+        offTabSelection,
+        isNotNull,
+        reason:
+            'debug init fixture must include one selection with valid tiles only in Old World',
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appEventBusProvider.overrideWith((ref) => bus),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentOrdersProvider.overrideWith(
+              () => CurrentOrdersNotifier(const Orders()),
+            ),
+            mapViewDataProvider.overrideWith((ref) => mapViewData),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: GameMapArea(game: game, mapViewData: mapViewData),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      await tester.tap(find.text('New World'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      bus.emit(
+        StartCivilianWorkTargetSelectionEvent(
+          unitId: offTabSelection!.unitId,
+          workTarget: offTabSelection.workTarget,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      final beforeSwitchRegionMap = tester
+          .widgetList<CtRegionMap>(find.byType(CtRegionMap))
+          .first;
+      final beforeSwitchValidKeys = beforeSwitchRegionMap.validTileKeys;
+      expect(beforeSwitchValidKeys, isNotNull);
+      expect(
+        beforeSwitchValidKeys!.every((k) => k.startsWith('oldWorld|')),
+        isTrue,
+      );
+      await tester.tap(find.text('Old World'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      final afterSwitchRegionMap = tester
+          .widgetList<CtRegionMap>(find.byType(CtRegionMap))
+          .first;
+      final afterSwitchValidKeys = afterSwitchRegionMap.validTileKeys;
+      expect(afterSwitchValidKeys, isNotNull);
+      expect(
+        afterSwitchValidKeys!.every((k) => k.startsWith('oldWorld|')),
+        isTrue,
+      );
+    },
+  );
+
+  testWidgets(
     'work target selection shows prompt overlay and cancel button exits mode',
     (WidgetTester tester) async {
       final init = getDebugInitGameResult();
@@ -785,64 +914,63 @@ void main() {
     },
   );
 
-  testWidgets(
-    'left rail icon cancels selection mode before opening panel',
-    (WidgetTester tester) async {
-      final init = getDebugInitGameResult();
-      final game = init.game;
-      final mapViewData = init.mapViewData;
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
+  testWidgets('left rail icon cancels selection mode before opening panel', (
+    WidgetTester tester,
+  ) async {
+    final init = getDebugInitGameResult();
+    final game = init.game;
+    final mapViewData = init.mapViewData;
+    final bus = AppEventBus.create();
+    addTearDown(bus.dispose);
 
-      final openedPanels = <OpenCivilianUnitsPanelEvent>[];
-      final panelSub = bus.on<OpenCivilianUnitsPanelEvent>().listen(
-        openedPanels.add,
-      );
-      addTearDown(panelSub.cancel);
+    final openedPanels = <OpenCivilianUnitsPanelEvent>[];
+    final panelSub = bus.on<OpenCivilianUnitsPanelEvent>().listen(
+      openedPanels.add,
+    );
+    addTearDown(panelSub.cancel);
 
-      final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
-          ? game.worldState.oldWorld.units.first.id
-          : game.worldState.newWorld.units.first.id;
+    final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
+        ? game.worldState.oldWorld.units.first.id
+        : game.worldState.newWorld.units.first.id;
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameServiceProvider.overrideWith(
-              (ref) => GameService(gamesBox, GameSaveAdapter()),
-            ),
-            currentOrdersProvider.overrideWith(
-              () => CurrentOrdersNotifier(const Orders()),
-            ),
-            mapViewDataProvider.overrideWith((ref) => mapViewData),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: mapViewData),
-            ),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appEventBusProvider.overrideWith((ref) => bus),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          mapViewDataProvider.overrideWith((ref) => mapViewData),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: GameMapArea(game: game, mapViewData: mapViewData),
           ),
         ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
 
-      bus.emit(
-        StartCivilianWorkTargetSelectionEvent(
-          unitId: sampleUnitId,
-          workTarget: 'explore',
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-      expect(find.text('Select a tile, or click cancel'), findsOneWidget);
+    bus.emit(
+      StartCivilianWorkTargetSelectionEvent(
+        unitId: sampleUnitId,
+        workTarget: 'explore',
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(find.text('Select a tile, or click cancel'), findsOneWidget);
 
-      await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
-      await tester.pump();
+    await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
+    await tester.pump();
 
-      expect(find.text('Select a tile, or click cancel'), findsNothing);
-      expect(openedPanels, hasLength(1));
-    },
-  );
+    expect(find.text('Select a tile, or click cancel'), findsNothing);
+    expect(openedPanels, hasLength(1));
+  });
 }
