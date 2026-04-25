@@ -353,7 +353,9 @@ String? _resolveChangedDartFilesCsvForBaseSha(String baseSha) {
       .where((l) => l.isNotEmpty)
       .toList();
   if (lines.isEmpty) {
-    return null;
+    // Distinguish "no Dart files changed" from "could not resolve baseline".
+    // PR-incremental rules should scan zero files, not fall back to full scan.
+    return '';
   }
   return lines.join(',');
 }
@@ -391,7 +393,8 @@ String? _resolveChangedDartFilesCsvForLeft(String leftRef) {
       .toList();
 
   if (lines.isEmpty) {
-    return null;
+    // Keep PR-incremental behavior explicit when there are no changed Dart files.
+    return '';
   }
   return lines.join(',');
 }
@@ -646,9 +649,7 @@ int _runOneRule({
 
   final script = rule.script!;
   final args = <String>['run', script];
-  if (rule.prIncremental &&
-      incrementalCsv != null &&
-      incrementalCsv.isNotEmpty) {
+  if (rule.prIncremental && incrementalCsv != null) {
     args.addAll(['--files', incrementalCsv]);
   }
 
@@ -676,9 +677,7 @@ int? _tryRunDartRuleInProcess({
   required String? incrementalCsv,
 }) {
   List<String>? incrementalPaths;
-  if (rule.prIncremental &&
-      incrementalCsv != null &&
-      incrementalCsv.isNotEmpty) {
+  if (rule.prIncremental && incrementalCsv != null) {
     incrementalPaths = repoLintSplitRelativeDartPathsArg(incrementalCsv);
   }
 
