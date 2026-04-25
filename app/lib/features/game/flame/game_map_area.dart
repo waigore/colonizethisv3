@@ -244,6 +244,32 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
 
   Set<String>? get _validTileKeysForSelection => _cachedValidTileKeys;
 
+  int? _preferredRegionIndexForValidSelection(Set<String> validTileKeys) {
+    if (validTileKeys.isEmpty) {
+      return null;
+    }
+    final currentRegionId = _currentRegion.regionId;
+    final hasCurrent = validTileKeys.any(
+      (tileKey) => tileKey.startsWith('$currentRegionId|'),
+    );
+    if (hasCurrent) {
+      return null;
+    }
+    final hasOldWorld = validTileKeys.any(
+      (tileKey) => tileKey.startsWith('$kRegionOldWorld|'),
+    );
+    final hasNewWorld = validTileKeys.any(
+      (tileKey) => tileKey.startsWith('$kRegionNewWorld|'),
+    );
+    if (hasOldWorld && !hasNewWorld) {
+      return 0;
+    }
+    if (hasNewWorld && !hasOldWorld) {
+      return 1;
+    }
+    return null;
+  }
+
   void _computeValidTileKeysForSelection() {
     if (_workTargetSelection == null) {
       _cachedValidTileKeys = null;
@@ -440,6 +466,15 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     setState(() {
       _workTargetSelection = (unit: unit, workTarget: workTarget);
       _computeValidTileKeysForSelection();
+      final validTileKeys = _cachedValidTileKeys;
+      if (validTileKeys != null) {
+        final preferredRegionIndex = _preferredRegionIndexForValidSelection(
+          validTileKeys,
+        );
+        if (preferredRegionIndex != null) {
+          _regionIndex = preferredRegionIndex;
+        }
+      }
     });
   }
 
