@@ -11,8 +11,10 @@ runtime domain Dart code.
 
 ## Scan scope
 
-The checker walks `collectRepoLintDomainDartFiles` and then scopes to
-`packages/colonizethis_logic/lib/src/**` for this phase.
+The checker walks `collectRepoLintDomainDartFiles` and scopes to:
+
+- `packages/colonizethis_logic/lib/src/**`
+- `packages/colonizethis_map/lib/src/**`
 
 Tests and generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) remain
 excluded by the shared scan contract.
@@ -31,3 +33,6 @@ excluded by the shared scan contract.
 - Given repository root as cwd, when CI runs `dart run tool/ct_repo_lint.dart`,
   then rule `repo.function_size` runs and fails on any symbol measured over 200
   lines with no per-file or per-symbol exemptions.
+- Given a repo that contains a legacy waiver YAML file for function-size
+  violations, when rule `repo.function_size` runs, then the checker behavior is
+  unchanged because thresholds are enforced without keyed waiver data.

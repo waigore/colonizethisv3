@@ -1051,6 +1051,145 @@ void main() {
       );
     });
 
+    group('provinceExploreActionState', () {
+      const humanPlayerId = 'gp1';
+      const selectedTileKey = 'oldWorld|p1|0|0';
+      final game = ct_models.Game(
+        id: 'g',
+        worldState: ct_models.WorldState(
+          turnState: const ct_models.TurnState(
+            phase: ct_models.TurnPhase.orders,
+            turnNumber: 1,
+          ),
+          oldWorld: ct_models.RegionData(
+            provinces: const [
+              ct_models.Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
+            ],
+            units: [
+              ct_models.Unit(
+                id: 'u_explorer',
+                type: 'Explorer',
+                ownerId: humanPlayerId,
+                locationProvinceId: 'oldWorld|p1',
+                tileKey: selectedTileKey,
+              ),
+            ],
+          ),
+          newWorld: const ct_models.RegionData(),
+        ),
+        players: const [
+          ct_models.Player(
+            id: humanPlayerId,
+            displayName: 'Human',
+            isHuman: true,
+          ),
+        ],
+      );
+
+      final partiallyRevealedRegion = RegionMapViewData(
+        regionId: 'oldWorld',
+        width: 2,
+        height: 1,
+        cellSize: 16,
+        cells: const [
+          CellViewData(
+            x: 0,
+            y: 0,
+            regionCellId: 'p1',
+            isSea: false,
+            visibility: TileVisibility.fogged,
+          ),
+          CellViewData(
+            x: 1,
+            y: 0,
+            regionCellId: 'p1',
+            isSea: false,
+            visibility: TileVisibility.unrevealed,
+          ),
+        ],
+        capitalMarkers: const [],
+        portMarkers: const [],
+        factionColors: const {},
+        greatPowerFactionIds: const {},
+        terrainColors: const {},
+        unitMarkers: const [],
+      );
+
+      test(
+        'shows enabled icon in partially revealed province with cached target',
+        () {
+          final state = GameMapAreaStateLogic.provinceExploreActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            selectedRegion: partiallyRevealedRegion,
+            cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
+          );
+          expect(state.showIcon, isTrue);
+          expect(state.enabled, isTrue);
+        },
+      );
+
+      test('hides icon when province is fully revealed', () {
+        final fullyRevealedRegion = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 2,
+          height: 1,
+          cellSize: 16,
+          cells: const [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              visibility: TileVisibility.fogged,
+            ),
+            CellViewData(
+              x: 1,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              visibility: TileVisibility.fogged,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          factionColors: const {},
+          greatPowerFactionIds: const {},
+          terrainColors: const {},
+          unitMarkers: const [],
+        );
+        final state = GameMapAreaStateLogic.provinceExploreActionState(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          selectedRegion: fullyRevealedRegion,
+          cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
+        );
+        expect(state.showIcon, isFalse);
+      });
+
+      test('shows disabled icon when no explorers exist', () {
+        final noExplorerGame = game.copyWith(
+          worldState: game.worldState.copyWith(
+            oldWorld: ct_models.RegionData(
+              provinces: game.worldState.oldWorld.provinces,
+              units: const [],
+            ),
+          ),
+        );
+        final state = GameMapAreaStateLogic.provinceExploreActionState(
+          game: noExplorerGame,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          selectedRegion: partiallyRevealedRegion,
+          cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
+        );
+        expect(state.showIcon, isTrue);
+        expect(state.enabled, isFalse);
+      });
+    });
+
     group('projectFleetMarkersForHumanDraft in-port harbor anchoring', () {
       const humanId = 'gp1';
 

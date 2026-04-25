@@ -37,6 +37,22 @@ rules:
       function_name: build
       max_body_line_span: 3
       require_widget_class_extends: true
+  - id: province_lookup_unprefixed_literal
+    message: 'prefixed province id literals required for lookup'
+    match:
+      kind: unprefixed_province_id_string_literal_argument
+      method_names:
+        - getProvince
+        - tryGetProvince
+        - resolveToFullProvinceId
+      argument_index: 1
+  - id: province_local_id_from_unprefixed_literal
+    message: 'prefixed province id literals required for localIdFrom'
+    match:
+      kind: unprefixed_province_id_string_literal_argument
+      method_names:
+        - localIdFrom
+      argument_index: 0
 ''';
 
 void main() {
@@ -368,6 +384,60 @@ class _XState extends State<X> {
         findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
         isEmpty,
       );
+    });
+
+    test('flags unprefixed province id literal in lookup call', () {
+      const src = r'''
+void f(world) {
+  getProvince(world, 'p1');
+}
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(v, isNotEmpty);
+      expect(v.first.ruleId, 'province_lookup_unprefixed_literal');
+    });
+
+    test('allows prefixed province id literal in lookup call', () {
+      const src = r'''
+void f(world) {
+  getProvince(world, 'oldWorld|p1');
+}
+''';
+      expect(
+        findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
+        isEmpty,
+      );
+    });
+
+    test('allows non-literal lookup argument', () {
+      const src = r'''
+void f(world, String id) {
+  getProvince(world, id);
+}
+''';
+      expect(
+        findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
+        isEmpty,
+      );
+    });
+
+    test('flags unprefixed province id literal for localIdFrom helper', () {
+      const src = r'''
+void f() {
+  ProvinceId.localIdFrom('p1');
+}
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(v, isNotEmpty);
+      expect(v.first.ruleId, 'province_local_id_from_unprefixed_literal');
     });
   });
 }
