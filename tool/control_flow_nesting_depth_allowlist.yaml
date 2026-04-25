@@ -143,10 +143,6 @@ allowed_depth_ge4:
     symbol: buildMilitaryGroups
   - file: app/lib/features/game/widgets/diplomacy_panel.dart
     symbol: buildDiplomacyRows
-  - file: app/lib/features/game/widgets/province_panel_pending_orders.dart
-    symbol: provincePanelPendingMilitaryLines
-  - file: app/lib/widgets/game_setup.dart
-    symbol: _padOrTrimToSlots
   - file: ctdev/lib/player_view_map_painter.dart
     symbol: PlayerViewMapPainter._paintRegion
   - file: ctdev/lib/debug_map_painter.dart
