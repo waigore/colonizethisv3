@@ -1369,6 +1369,27 @@
       }
     }
   },
+  "civilian_units_turns": "{count, plural, one {{count} turn} other {{count} turns}}",
+  "@civilian_units_turns": {
+    "description": "Localized turn-count label for civilian assigned-work rows.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "civilian_units_turnProgress": "{remaining}/{total} turns",
+  "@civilian_units_turnProgress": {
+    "description": "In-progress turn counter for civilian assigned-work rows.",
+    "placeholders": {
+      "remaining": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
   "civilian_units_assign": "Assign",
   "@civilian_units_assign": {
     "description": "Assign action button in civilian units panel."

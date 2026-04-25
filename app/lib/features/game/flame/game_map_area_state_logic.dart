@@ -10,22 +10,16 @@ class GameMapAreaStateLogic {
     return 0; // oldWorld (default)
   }
 
-  static bool isWorkTargetTileProvinceBased(String workTarget) {
-    return workTarget == kWorkTargetExplore ||
-        workTarget == kWorkTargetStealTech ||
-        workTarget == kWorkTargetCounterSpy;
-  }
-
-  /// For province-based work targets, translate the tile key to a canonical tile
-  /// key within that province (x=0,y=0).
+  /// Work-target tile translation hook for assignment flows.
+  ///
+  /// Civilian draft projection and locate use exact assigned tile keys for every
+  /// work target, so no target-specific tile normalization is applied here.
   static String translateWorkTargetTileKey({
     required String tileKey,
     required String workTarget,
   }) {
-    if (!isWorkTargetTileProvinceBased(workTarget)) return tileKey;
-    final parts = tileKey.split('|');
-    if (parts.length < 2) return tileKey;
-    return '${parts[0]}|${parts[1]}|0|0';
+    if (workTarget.isEmpty) return tileKey;
+    return tileKey;
   }
 
   static ct_models.Orders addHumanWorkOrder({
@@ -101,6 +95,9 @@ class GameMapAreaStateLogic {
     if (unitsById.isEmpty) {
       return region;
     }
+    final visibilityByTile =
+        game.worldState.playerVisibilityByTile[humanPlayerId] ??
+        const <String, String>{};
 
     final projectedByTile = <String, List<_ProjectedCivilianUnit>>{};
     for (final unitId in civilianUnitIdsToProject) {
@@ -173,6 +170,14 @@ class GameMapAreaStateLogic {
           representative.pendingTargetTileKey == tileKey ||
           (representative.assignedTileKey == tileKey &&
               representative.status == ct_models.UnitStatus.working);
+      final applyCivilianRevealHalo = units.any((u) {
+        final isAssignedToTile =
+            u.pendingTargetTileKey == tileKey ||
+            (u.assignedTileKey == tileKey &&
+                u.status == ct_models.UnitStatus.working);
+        if (!isAssignedToTile) return false;
+        return visibilityByTile[tileKey] == VisibilityLevel.fogged.name;
+      });
       projectedMarkers.add(
         CivilianTileMarkerView(
           tileKey: tileKey,
@@ -184,6 +189,7 @@ class GameMapAreaStateLogic {
           representativeUnitType: representative.unitType,
           stackCount: units.length,
           representativeIsAssigned: representativeIsAssigned,
+          applyCivilianRevealHalo: applyCivilianRevealHalo,
         ),
       );
     }

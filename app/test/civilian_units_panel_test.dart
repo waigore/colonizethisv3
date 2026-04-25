@@ -371,7 +371,9 @@ void main() {
         expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
         expect(
           events.indexOf(ClosePanelEvent),
-          lessThan(events.indexOf(UpsertPendingCivilianWorkOrderRequestedEvent)),
+          lessThan(
+            events.indexOf(UpsertPendingCivilianWorkOrderRequestedEvent),
+          ),
         );
       },
     );
@@ -753,7 +755,7 @@ void main() {
         // Scope to the row with our pending order — avoid `.first` on "Cancel"
         // (debug game may show multiple Cancel buttons; first may be off-stage / obscured).
         final pendingRow = find.ancestor(
-          of: find.textContaining('(pending)'),
+          of: find.text(idleCivilian.type),
           matching: find.byType(ListTile),
         );
         expect(pendingRow, findsOneWidget);
@@ -826,7 +828,7 @@ void main() {
         await tester.pumpAndSettle();
 
         final pendingRow = find.ancestor(
-          of: find.textContaining('(pending)'),
+          of: find.text(idleCivilian.type),
           matching: find.byType(ListTile),
         );
         expect(pendingRow, findsOneWidget);
@@ -919,7 +921,7 @@ void main() {
         expect(find.text('observed-removals:0'), findsOneWidget);
 
         final pendingRow = find.ancestor(
-          of: find.textContaining('(pending)'),
+          of: find.text(idleCivilian.type),
           matching: find.byType(ListTile),
         );
         expect(pendingRow, findsOneWidget);
@@ -1079,7 +1081,7 @@ void main() {
     );
 
     testWidgets(
-      'AC: pending explore keeps (pending) and no ResourceIcon strip',
+      'AC: pending explore shows inline turns and no ResourceIcon strip',
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
@@ -1131,7 +1133,9 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.textContaining('(pending)'), findsOneWidget);
+        expect(find.textContaining('(pending)'), findsNothing);
+        expect(find.textContaining('Assigned to: Explore'), findsOneWidget);
+        expect(find.textContaining('turn'), findsAtLeastNWidgets(1));
         expect(find.byType(ResourceIcon), findsNothing);
       },
     );
@@ -1197,7 +1201,7 @@ void main() {
     );
 
     testWidgets(
-      'AC: pending purchase_land without tile resource falls back to (pending)',
+      'AC: pending purchase_land without tile resource still shows inline turns',
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
@@ -1249,8 +1253,118 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.textContaining('(pending)'), findsOneWidget);
+        expect(find.textContaining('(pending)'), findsNothing);
+        expect(
+          find.textContaining('Assigned to: Purchase land'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('turn'), findsAtLeastNWidgets(1));
         expect(find.textContaining('Treasury:'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'AC: pending rows show faithful remaining-turn number for each work target',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        const targetTileKey = 'oldWorld|p1|1|0';
+        final cases = <({String unitType, String target, int turns})>[
+          (unitType: 'Explorer', target: 'explore', turns: 3),
+          (unitType: 'Explorer', target: 'prospect', turns: 1),
+          (unitType: 'Builder', target: 'build_improvement', turns: 1),
+          (unitType: 'Builder', target: 'upgrade_town', turns: 1),
+          (unitType: 'Engineer', target: 'build_road', turns: 1),
+          (unitType: 'Engineer', target: 'build_port', turns: 1),
+          (unitType: 'Engineer', target: 'build_fort', turns: 3),
+          (unitType: 'Rail Builder', target: 'build_rail', turns: 1),
+          (unitType: 'Spy', target: 'steal_tech', turns: 5),
+          (unitType: 'Spy', target: 'counter_spy', turns: 1),
+          (unitType: 'Merchant', target: 'purchase_land', turns: 1),
+        ];
+
+        for (var i = 0; i < cases.length; i++) {
+          final c = cases[i];
+          final unitId = 'u_$i';
+          final miniGame = Game(
+            id: 'g_civ_pending_turns_${c.target}_$i',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: RegionData(
+                provinces: const [
+                  Province(
+                    id: 'oldWorld|p1',
+                    regionId: 'oldWorld',
+                    displayName: 'Alpha',
+                    fortLevel: 2,
+                  ),
+                ],
+                units: [
+                  Unit(
+                    id: unitId,
+                    type: c.unitType,
+                    ownerId: human,
+                    locationProvinceId: 'oldWorld|p1',
+                    tileKey: tileKey,
+                  ),
+                ],
+              ),
+              newWorld: const RegionData(),
+              resourceByTileKey: const {targetTileKey: 'grain'},
+              tileKeysByRegionAndProvince: const {
+                'oldWorld': {
+                  'oldWorld|p1': [tileKey, targetTileKey],
+                },
+              },
+            ),
+            players: const [
+              Player(id: human, displayName: 'Human', isHuman: true),
+            ],
+          );
+          final orders = Orders(
+            workOrdersByPlayerId: {
+              human: [
+                WorkOrder(
+                  unitId: unitId,
+                  target: c.target,
+                  targetTileKey: targetTileKey,
+                ),
+              ],
+            },
+          );
+          await tester.pumpWidget(
+            buildPanel(
+              game: miniGame,
+              humanPlayerId: human,
+              currentOrders: orders,
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          final lineFinder = find.textContaining('Assigned to:');
+          expect(
+            lineFinder,
+            findsOneWidget,
+            reason: 'Expected one Assigned to line for target ${c.target}',
+          );
+          final line = tester.widget<Text>(lineFinder).data ?? '';
+          final singular = '${c.turns} turn';
+          final plural = '${c.turns} turns';
+          expect(
+            line.contains(singular) || line.contains(plural),
+            isTrue,
+            reason:
+                'Expected target ${c.target} to show $singular/$plural, got: $line',
+          );
+          expect(
+            line.contains('# turn'),
+            isFalse,
+            reason: 'Target ${c.target} should not render placeholder text',
+          );
+        }
       },
     );
 

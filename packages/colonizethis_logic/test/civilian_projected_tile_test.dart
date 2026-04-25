@@ -35,7 +35,7 @@ void main() {
       expect(projected, 'oldWorld|p2|2|3');
     });
 
-    test('normalizes province-level pending tile keys to canonical 0|0', () {
+    test('keeps exact pending tile key for explore projection', () {
       final unit = Unit(
         id: 'u1',
         type: 'Explorer',
@@ -60,7 +60,7 @@ void main() {
         playerId: playerId,
         orders: orders,
       );
-      expect(projected, 'oldWorld|p9|0|0');
+      expect(projected, 'oldWorld|p9|7|8');
     });
   });
 }

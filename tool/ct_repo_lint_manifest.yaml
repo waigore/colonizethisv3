@@ -117,7 +117,7 @@ rules:
 
   - rule_id: repo.canonical_province_tile_keys
     group: game_invariants
-    title: Canonical province WorkOrder targetTileKey literals
+    title: Province WorkOrder targetTileKey literals use full tile shape
     spec: SPEC/game/world-model-identity.md
     runner: dart
     script: tool/check_canonical_province_tile_keys.dart
