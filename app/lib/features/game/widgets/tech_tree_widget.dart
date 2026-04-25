@@ -77,9 +77,8 @@ class TechTreeWidget extends StatelessWidget {
     if (positions.isEmpty) {
       return Center(child: Text(l10n.techTree_noTechsInCatalog));
     }
-    final width = positions.map((p) => p.x).reduce(math.max) + _nodeWidth + 48;
-    final height =
-        positions.map((p) => p.y).reduce(math.max) + _nodeHeight + 48;
+    final width = _canvasWidth(positions);
+    final height = _canvasHeight(positions);
     final unlocked = player.techUnlocked ?? {};
     final inProgress = player.researchProgressByTechId?.keys.toSet() ?? {};
     final researchable = researchableTechIds(
@@ -101,43 +100,87 @@ class TechTreeWidget extends StatelessWidget {
             scrollDirection: Axis.vertical,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: SizedBox(
+              child: _buildCanvas(
+                context: context,
+                positions: positions,
+                unlocked: unlocked,
+                inProgress: inProgress,
+                researchable: researchable,
                 width: width,
                 height: height,
-                child: Stack(
-                  children: [
-                    CustomPaint(
-                      size: Size(width, height),
-                      painter: _TechTreeEdgePainter(positions: positions),
-                    ),
-                    ...positions.map((pos) {
-                      final tech = techById(pos.techId);
-                      if (tech == null) return const SizedBox.shrink();
-                      final state = _TechNodeState(
-                        researched: unlocked[pos.techId] == true,
-                        inProgress: inProgress.contains(pos.techId),
-                        available: researchable.contains(pos.techId),
-                      );
-                      return Positioned(
-                        left: pos.x,
-                        top: pos.y,
-                        width: _nodeWidth,
-                        height: _nodeHeight,
-                        child: _TechNode(
-                          tech: tech,
-                          state: state,
-                          onTap: () => _showTechDialog(context, tech),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
               ),
             ),
           ),
         ),
       ],
     );
+  }
+
+  double _canvasWidth(List<TechNodePosition> positions) {
+    return positions.map((p) => p.x).reduce(math.max) + _nodeWidth + 48;
+  }
+
+  double _canvasHeight(List<TechNodePosition> positions) {
+    return positions.map((p) => p.y).reduce(math.max) + _nodeHeight + 48;
+  }
+
+  Widget _buildCanvas({
+    required BuildContext context,
+    required List<TechNodePosition> positions,
+    required Map<String, bool> unlocked,
+    required Set<String> inProgress,
+    required Set<String> researchable,
+    required double width,
+    required double height,
+  }) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Stack(
+        children: [
+          CustomPaint(
+            size: Size(width, height),
+            painter: _TechTreeEdgePainter(positions: positions),
+          ),
+          ..._buildPositionedNodes(
+            context: context,
+            positions: positions,
+            unlocked: unlocked,
+            inProgress: inProgress,
+            researchable: researchable,
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildPositionedNodes({
+    required BuildContext context,
+    required List<TechNodePosition> positions,
+    required Map<String, bool> unlocked,
+    required Set<String> inProgress,
+    required Set<String> researchable,
+  }) {
+    return positions.map((pos) {
+      final tech = techById(pos.techId);
+      if (tech == null) return const SizedBox.shrink();
+      final state = _TechNodeState(
+        researched: unlocked[pos.techId] == true,
+        inProgress: inProgress.contains(pos.techId),
+        available: researchable.contains(pos.techId),
+      );
+      return Positioned(
+        left: pos.x,
+        top: pos.y,
+        width: _nodeWidth,
+        height: _nodeHeight,
+        child: _TechNode(
+          tech: tech,
+          state: state,
+          onTap: () => _showTechDialog(context, tech),
+        ),
+      );
+    }).toList();
   }
 
   /// Computes topological layout: each tech in a column strictly right of all its prerequisites.
@@ -448,31 +491,7 @@ class _TechNode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _categoryColors[tech.category] ?? Colors.grey;
-    final bool locked =
-        !state.researched && !state.inProgress && !state.available;
-
-    Color fillColor;
-    Color borderColor;
-    double borderWidth;
-    if (state.researched) {
-      fillColor = color;
-      borderColor = color.withValues(alpha: 0.8);
-      borderWidth = 2;
-    } else if (state.inProgress) {
-      fillColor = color.withValues(alpha: 0.4);
-      borderColor = color;
-      borderWidth = 3;
-    } else if (state.available) {
-      fillColor = color.withValues(alpha: 0.15);
-      borderColor = color;
-      borderWidth = 2;
-    } else {
-      fillColor = Colors.grey.shade200;
-      borderColor = Colors.grey.shade400;
-      borderWidth = 1;
-    }
-
+    final style = _nodeStyle();
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -481,46 +500,99 @@ class _TechNode extends StatelessWidget {
           width: _nodeWidth,
           height: _nodeHeight,
           decoration: BoxDecoration(
-            color: fillColor,
-            border: Border.all(color: borderColor, width: borderWidth),
+            color: style.fillColor,
+            border: Border.all(color: style.borderColor, width: style.borderWidth),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_categoryIcons.containsKey(tech.category))
-                    Padding(
-                      padding: const EdgeInsets.only(right: 3),
-                      child: StrictAssetIcon(
-                        assetPath: _categoryIcons[tech.category]!,
-                        width: 16,
-                        height: 16,
-                      ),
-                    ),
-                  Flexible(
-                    child: Text(
-                      techDisplayName(tech.id),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: locked ? Colors.grey : null,
-                        fontWeight: state.researched ? FontWeight.w600 : null,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              child: _buildNodeLabel(style.locked),
             ),
           ),
         ),
       ),
     );
   }
+
+  _TechNodeStyle _nodeStyle() {
+    final color = _categoryColors[tech.category] ?? Colors.grey;
+    final locked = !state.researched && !state.inProgress && !state.available;
+    if (state.researched) {
+      return _TechNodeStyle(
+        fillColor: color,
+        borderColor: color.withValues(alpha: 0.8),
+        borderWidth: 2,
+        locked: locked,
+      );
+    }
+    if (state.inProgress) {
+      return _TechNodeStyle(
+        fillColor: color.withValues(alpha: 0.4),
+        borderColor: color,
+        borderWidth: 3,
+        locked: locked,
+      );
+    }
+    if (state.available) {
+      return _TechNodeStyle(
+        fillColor: color.withValues(alpha: 0.15),
+        borderColor: color,
+        borderWidth: 2,
+        locked: locked,
+      );
+    }
+    return _TechNodeStyle(
+      fillColor: Colors.grey.shade200,
+      borderColor: Colors.grey.shade400,
+      borderWidth: 1,
+      locked: locked,
+    );
+  }
+
+  Widget _buildNodeLabel(bool locked) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_categoryIcons.containsKey(tech.category))
+          Padding(
+            padding: const EdgeInsets.only(right: 3),
+            child: StrictAssetIcon(
+              assetPath: _categoryIcons[tech.category]!,
+              width: 16,
+              height: 16,
+            ),
+          ),
+        Flexible(
+          child: Text(
+            techDisplayName(tech.id),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10,
+              color: locked ? Colors.grey : null,
+              fontWeight: state.researched ? FontWeight.w600 : null,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TechNodeStyle {
+  const _TechNodeStyle({
+    required this.fillColor,
+    required this.borderColor,
+    required this.borderWidth,
+    required this.locked,
+  });
+
+  final Color fillColor;
+  final Color borderColor;
+  final double borderWidth;
+  final bool locked;
 }
 
 /// Row label for tech tree legend samples (maps to [AppLocalizations] state strings).
@@ -539,59 +611,67 @@ class _TechTreeLegend extends StatelessWidget {
       children: [
         Text(l10n.techTree_legendTitle, style: theme.textTheme.labelLarge),
         const SizedBox(height: 4),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: _categoryColors.entries
-              .map(
-                (e) => _LegendChip(
-                  color: e.value,
-                  label: TechTreeWidget._categoryLabelL10n(l10n, e.key),
-                ),
-              )
-              .toList(),
-        ),
+        _buildCategoryLegendWrap(),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            _StateLegendSample(
-              kind: _TechLegendStateKind.researched,
-              state: _TechNodeState(
-                researched: true,
-                inProgress: false,
-                available: false,
-              ),
-            ),
-            _StateLegendSample(
-              kind: _TechLegendStateKind.inProgress,
-              state: _TechNodeState(
-                researched: false,
-                inProgress: true,
-                available: false,
-              ),
-            ),
-            _StateLegendSample(
-              kind: _TechLegendStateKind.available,
-              state: _TechNodeState(
-                researched: false,
-                inProgress: false,
-                available: true,
-              ),
-            ),
-            _StateLegendSample(
-              kind: _TechLegendStateKind.locked,
-              state: _TechNodeState(
-                researched: false,
-                inProgress: false,
-                available: false,
-              ),
-            ),
-          ],
-        ),
+        _buildStateLegendWrap(),
       ],
     );
+  }
+
+  Widget _buildCategoryLegendWrap() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: _categoryColors.entries
+          .map(
+            (e) => _LegendChip(
+              color: e.value,
+              label: TechTreeWidget._categoryLabelL10n(l10n, e.key),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _buildStateLegendWrap() {
+    return Wrap(spacing: 8, runSpacing: 4, children: _stateLegendSamples());
+  }
+
+  List<Widget> _stateLegendSamples() {
+    return const [
+      _StateLegendSample(
+        kind: _TechLegendStateKind.researched,
+        state: _TechNodeState(
+          researched: true,
+          inProgress: false,
+          available: false,
+        ),
+      ),
+      _StateLegendSample(
+        kind: _TechLegendStateKind.inProgress,
+        state: _TechNodeState(
+          researched: false,
+          inProgress: true,
+          available: false,
+        ),
+      ),
+      _StateLegendSample(
+        kind: _TechLegendStateKind.available,
+        state: _TechNodeState(
+          researched: false,
+          inProgress: false,
+          available: true,
+        ),
+      ),
+      _StateLegendSample(
+        kind: _TechLegendStateKind.locked,
+        state: _TechNodeState(
+          researched: false,
+          inProgress: false,
+          available: false,
+        ),
+      ),
+    ];
   }
 }
 
