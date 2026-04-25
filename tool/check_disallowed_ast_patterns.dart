@@ -303,6 +303,34 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           requireWidgetClassExtends: requireWidgetClassExtends,
         ),
       );
+    } else if (kind == 'sea_zone_local_id_extraction') {
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.seaZoneLocalIdExtraction,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+        ),
+      );
+    } else if (kind == 'sea_zone_bucket_lookup_without_canonical_key') {
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.seaZoneBucketLookupWithoutCanonicalKey,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+        ),
+      );
     }
   }
   return out;
@@ -338,6 +366,8 @@ enum DisallowedAstMatchKind {
   commentSubstring,
   rawNamedType,
   methodBodyLineSpan,
+  seaZoneLocalIdExtraction,
+  seaZoneBucketLookupWithoutCanonicalKey,
 }
 
 class DisallowedPatternRule {
@@ -486,6 +516,48 @@ bool _isRedundantWhereIsMapAsChain(MethodInvocation node) {
       _mapCallbackIsParamAsCast(mapArg);
 }
 
+bool _isProvinceLocalIdFromInvocation(MethodInvocation node) {
+  final target = node.target;
+  return target is SimpleIdentifier &&
+      target.name == 'ProvinceId' &&
+      node.methodName.name == 'localIdFrom' &&
+      node.argumentList.arguments.length == 1;
+}
+
+bool _expressionLooksSeaZoneRelated(Expression expression) {
+  final text = expression.toSource().toLowerCase();
+  return text.contains('seazone') ||
+      text.contains('sea_zone') ||
+      text.contains('seadest') ||
+      text.contains('seadestination') ||
+      text.contains('zoneid');
+}
+
+bool _isCanonicalSeaZoneBucketKeyExpression(Expression expression) {
+  final e = _unwrapParenthesized(expression);
+  if (e is MethodInvocation) {
+    final method = e.methodName.name;
+    return method == 'canonicalSeaZoneTileBucketKey' ||
+        method == 'canonicalizeSeaZoneId';
+  }
+  if (e is SimpleIdentifier) {
+    final name = e.name.toLowerCase();
+    if ((name.contains('seazone') || name.contains('sea_zone')) &&
+        (name.contains('bucket') || name.contains('key'))) {
+      return true;
+    }
+  }
+  if (e is StringLiteral) {
+    return e.stringValue?.contains('|') == true;
+  }
+  return false;
+}
+
+bool _looksLikeTileKeysByRegionAndProvinceLookup(IndexExpression node) {
+  final src = node.toSource();
+  return src.contains('tileKeysByRegionAndProvince[');
+}
+
 class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
   _DisallowedAstVisitor(this.path, this.source, this.lineInfo, this.rules);
 
@@ -519,6 +591,10 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       if (rule.kind == DisallowedAstMatchKind.streamWhereIsMapAs &&
           _isRedundantWhereIsMapAsChain(node)) {
         _recordIfAllowed(node, rule);
+      } else if (rule.kind == DisallowedAstMatchKind.seaZoneLocalIdExtraction &&
+          _isProvinceLocalIdFromInvocation(node) &&
+          _expressionLooksSeaZoneRelated(node.argumentList.arguments.single)) {
+        _recordIfAllowed(node, rule);
       }
     }
     if (node.isCascaded) {
@@ -534,6 +610,28 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       }
     }
     super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitIndexExpression(IndexExpression node) {
+    for (final rule in rules) {
+      if (rule.kind !=
+          DisallowedAstMatchKind.seaZoneBucketLookupWithoutCanonicalKey) {
+        continue;
+      }
+      if (!_looksLikeTileKeysByRegionAndProvinceLookup(node)) {
+        continue;
+      }
+      final index = node.index;
+      if (!_expressionLooksSeaZoneRelated(index)) {
+        continue;
+      }
+      if (_isCanonicalSeaZoneBucketKeyExpression(index)) {
+        continue;
+      }
+      _recordIfAllowed(node, rule);
+    }
+    super.visitIndexExpression(node);
   }
 
   @override

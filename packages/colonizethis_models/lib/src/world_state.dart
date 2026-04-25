@@ -1,5 +1,6 @@
 import 'army.dart';
 import 'fleet.dart';
+import 'province_id.dart';
 import 'region_data.dart';
 import 'tile_map_state.dart';
 import 'turn_state.dart';
@@ -178,7 +179,8 @@ class WorldState {
     final storedArmySeq = json['nextArmySeq'];
     final nextArmySeq = storedArmySeq is int ? storedArmySeq : 1;
 
-    final newsProvRaw = json['newsDigestProvinceRevealDoneIds'] as List<dynamic>?;
+    final newsProvRaw =
+        json['newsDigestProvinceRevealDoneIds'] as List<dynamic>?;
     final newsDigestProvinceRevealDoneIds = newsProvRaw == null
         ? const <String>[]
         : newsProvRaw.map((e) => e.toString()).toList();
@@ -188,21 +190,43 @@ class WorldState {
         ? const <String>[]
         : newsSeaRaw.map((e) => e.toString()).toList();
 
+    final oldWorld = RegionData.fromJson(
+      Map<String, dynamic>.from(json['oldWorld'] as Map),
+    );
+    final newWorld = RegionData.fromJson(
+      Map<String, dynamic>.from(json['newWorld'] as Map),
+    );
+    final localProvinceIdsByRegion = <String, Set<String>>{
+      'oldWorld': {
+        for (final province in oldWorld.provinces)
+          ProvinceId.localIdFrom(province.id),
+      },
+      'newWorld': {
+        for (final province in newWorld.provinces)
+          ProvinceId.localIdFrom(province.id),
+      },
+    };
     final tileKeysRaw = json['tileKeysByRegionAndProvince'];
     final tileKeysByRegionAndProvince = <String, Map<String, List<String>>>{};
     if (tileKeysRaw is Map) {
-      tileKeysRaw.forEach((regionId, byProvince) {
-        if (byProvince is Map) {
-          final inner = <String, List<String>>{};
-          byProvince.forEach((provinceId, keys) {
-            if (keys is List) {
-              inner[provinceId.toString()] = keys
-                  .map((e) => e.toString())
-                  .toList();
-            }
-          });
-          tileKeysByRegionAndProvince[regionId.toString()] = inner;
-        }
+      tileKeysRaw.forEach((regionIdRaw, byProvince) {
+        if (byProvince is! Map) return;
+        final regionId = regionIdRaw.toString();
+        final localProvinceIds = localProvinceIdsByRegion[regionId] ?? const {};
+        final inner = <String, List<String>>{};
+        byProvince.forEach((bucketId, keys) {
+          if (keys is! List) return;
+          final key = bucketId.toString();
+          final tileKeys = keys.map((e) => e.toString()).toList();
+          final canonicalKey = _canonicalTileBucketKeyForLoad(
+            regionId: regionId,
+            bucketKey: key,
+            tileKeys: tileKeys,
+            localProvinceIds: localProvinceIds,
+          );
+          inner[canonicalKey] = tileKeys;
+        });
+        tileKeysByRegionAndProvince[regionId] = inner;
       });
     }
 
@@ -244,12 +268,8 @@ class WorldState {
       turnState: TurnState.fromJson(
         Map<String, dynamic>.from(json['turnState'] as Map),
       ),
-      oldWorld: RegionData.fromJson(
-        Map<String, dynamic>.from(json['oldWorld'] as Map),
-      ),
-      newWorld: RegionData.fromJson(
-        Map<String, dynamic>.from(json['newWorld'] as Map),
-      ),
+      oldWorld: oldWorld,
+      newWorld: newWorld,
       tileState: tileState,
       portsByProvinceSeaboard: ports,
       playerVisibilityByTile: visibility,
@@ -505,5 +525,26 @@ class WorldState {
       }
     }
     return true;
+  }
+
+  static String _canonicalTileBucketKeyForLoad({
+    required String regionId,
+    required String bucketKey,
+    required List<String> tileKeys,
+    required Set<String> localProvinceIds,
+  }) {
+    if (ProvinceId.isPrefixed(bucketKey)) return bucketKey;
+    if (localProvinceIds.contains(bucketKey)) return bucketKey;
+    if (tileKeys.isEmpty) return bucketKey;
+    final isSeaZoneBucket = tileKeys.every((tileKey) {
+      final parts = tileKey.split('|');
+      if (parts.length != 4) return false;
+      return parts[0] == regionId && parts[1] == bucketKey;
+    });
+    if (!isSeaZoneBucket) return bucketKey;
+    throw FormatException(
+      'world_state: legacy local sea-zone bucket key "$bucketKey" is not '
+      'supported; expected canonical prefixed key "${ProvinceId.full(regionId, bucketKey)}".',
+    );
   }
 }
