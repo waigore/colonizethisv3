@@ -462,16 +462,7 @@ _buildRegionSetup({
     greatPowerColorOverride: greatPowerColorOverride,
   );
 
-  final terrainColors = <TerrainType, Rgb>{};
-  if (tileMap.terrainGrid != null) {
-    for (final row in tileMap.terrainGrid!) {
-      for (final terrain in row) {
-        if (terrain != null && !terrainColors.containsKey(terrain)) {
-          terrainColors[terrain] = terrainColorRgb[terrain]!;
-        }
-      }
-    }
-  }
+  final terrainColors = _buildTerrainColors(tileMap);
 
   return (
     seaZoneIds: seaZoneIds,
@@ -484,6 +475,24 @@ _buildRegionSetup({
     greatPowerFactionIds: greatPowerIds.toSet(),
     terrainColors: terrainColors,
   );
+}
+
+Map<TerrainType, Rgb> _buildTerrainColors(TileMapResult tileMap) {
+  final terrainGrid = tileMap.terrainGrid;
+  if (terrainGrid == null) {
+    return <TerrainType, Rgb>{};
+  }
+
+  final terrainColors = <TerrainType, Rgb>{};
+  for (final row in terrainGrid) {
+    for (final terrain in row) {
+      if (terrain == null) {
+        continue;
+      }
+      terrainColors.putIfAbsent(terrain, () => terrainColorRgb[terrain]!);
+    }
+  }
+  return terrainColors;
 }
 
 ({
