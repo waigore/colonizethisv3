@@ -417,6 +417,70 @@ void main() {
       );
     });
 
+    test(
+      'explore completion reveals every tile in canonical full-id bucket',
+      () {
+        const tileKey2 = 'oldWorld|P1|1|0';
+        final unit = Unit(
+          id: 'u1',
+          type: 'Explorer',
+          ownerId: 'p1',
+          locationProvinceId: provinceId,
+          tileKey: tileKey,
+          status: UnitStatus.working,
+          currentWork: const CurrentWork(
+            workTarget: 'explore',
+            tileKey: tileKey,
+            totalTurns: 1,
+            remainingTurns: 1,
+          ),
+        );
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+              ],
+              units: [unit],
+            ),
+            newWorld: const RegionData(),
+            tileKeysByRegionAndProvince: const {
+              ow: {
+                provinceId: [tileKey, tileKey2],
+                'P1': ['oldWorld|P1|9|9'],
+              },
+            },
+            playerVisibilityByTile: const {
+              'p1': {
+                tileKey: 'fogged',
+                tileKey2: 'unknown',
+                'oldWorld|P1|9|9': 'unknown',
+              },
+            },
+          ),
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        );
+        final next = applyBuildAndWorkOrders(
+          game,
+          ordersToTriggerProcessWork(),
+        );
+        expect(
+          next.worldState.playerVisibilityByTile['p1']?[tileKey],
+          VisibilityLevel.fullyVisible.name,
+        );
+        expect(
+          next.worldState.playerVisibilityByTile['p1']?[tileKey2],
+          VisibilityLevel.fullyVisible.name,
+        );
+        expect(
+          next.worldState.playerVisibilityByTile['p1']?['oldWorld|P1|9|9'],
+          VisibilityLevel.unknown.name,
+        );
+      },
+    );
+
     test('build_road completion increases road level', () {
       final tileState = TileMapState().setRoadLevel(tileKey, 0);
       final unit = Unit(
