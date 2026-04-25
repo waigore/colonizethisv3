@@ -26,6 +26,7 @@
   - For **build_improvement** specifically: reject if the tile has no resource (per [extraction-and-improvements.md](../game/extraction-and-improvements.md)); for **prospect-required minerals** (iron, copper, tin, coal, silver, gold, gems, diamonds — same set as [extraction-and-improvements.md](../game/extraction-and-improvements.md) Mineral Prospecting Gate), reject if that tile is not in the player's `playerProspectedTiles` entry (same message pattern as `purchase_land`: mineral must be prospected first); reject if the tile's improvement level is already at max (4) or if the next level would exceed the player's tech-allowed extraction cap (see [tech-and-extraction-cap.md](../game/tech-and-extraction-cap.md)).
   - Look up:
     - `totalTurns` for this action using `totalTurnsForWork` in `packages/colonizethis_data` `work_order_costs.dart`, applied from `applyBuildAndWorkOrders` for standard material-backed targets (`build_improvement`, `build_road`, `build_port`, `build_fort`, `build_rail`, `upgrade_town`). **`explore`** uses the province-scaled turn count computed in that application path (see [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md)). **`steal_tech`** uses 5 turns. **`counter_spy`** is ongoing (see loop below). **`purchase_land`** and **`prospect`** do not use this `currentWork` duration path in the build-phase application (see application code and fog spec).
+    - For UI pending-row display, logic exposes assign-time duration preview from shared order helpers. This preview must be deterministic and uses a minimum display value of `1` turn for all pending civilian work targets, including targets applied immediately in build/work (`prospect`, `purchase_land`).
     - Material **costs** per action from `work_order_materialCost` / related helpers in the same module (and treasury rules for `purchase_land`).
   - If validation passes and the player has sufficient materials (or no material cost for that target):
     - **Deduct materials when work is assigned** (during Build/Work phase application of WorkOrder; atomic per action; no refund if later cancelled).
@@ -113,6 +114,10 @@ Exploration and prospecting (`explore`, `prospect`) follow [fog-and-exploration-
 - **Build/Work phase loop:** Given a civilian with `status = working` and `currentWork != null`  
   When the Build/Work phase runs  
   Then if the unit is dead or the tile is no longer owned by the player, the system clears `currentWork` and sets `status = idle` with no material refund; otherwise it decrements `remainingTurns` by 1, and when `remainingTurns` reaches 0 it applies the action effect, then sets `status = idle` and clears `currentWork`.
+
+- **Pending duration preview contract:** Given a pending civilian `WorkOrder` shown in UI before turn resolution  
+  When the UI queries the shared logic duration-preview helper  
+  Then the helper returns assign-time deterministic `totalTurns` for that target using the same assignment semantics as build/work, and never returns less than `1`.
 
 - **Player-initiated cancel:** Given a unit with in-progress work  
   When the player confirms cancel  
