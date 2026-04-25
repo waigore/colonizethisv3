@@ -1132,6 +1132,90 @@ void main() {
     );
 
     test(
+      'combat conquest relocates idle foreign civilian with stale assignment '
+      'tracking but no currentWork to owner capital',
+      () {
+        const ow = 'oldWorld';
+        const provinceId = '$ow|P1';
+        const tileKey = '$ow|P1|0|0';
+        const cCapProvince = '$ow|C1';
+        const cCapTile = '$ow|C1|0|0';
+
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: provinceId, regionId: ow, ownerId: 'def'),
+                Province(id: cCapProvince, regionId: ow, ownerId: 'civ'),
+              ],
+              units: [
+                Unit(
+                  id: 'att1',
+                  type: 'grenadiers',
+                  ownerId: 'att',
+                  locationProvinceId: provinceId,
+                ),
+                Unit(
+                  id: 'def1',
+                  type: 'peasant_levies',
+                  ownerId: 'def',
+                  locationProvinceId: provinceId,
+                ),
+                Unit(
+                  id: 'civ1',
+                  type: 'Builder',
+                  ownerId: 'civ',
+                  locationProvinceId: provinceId,
+                  tileKey: tileKey,
+                  status: UnitStatus.idle,
+                  originTileKey: tileKey,
+                  assignedTileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'att', displayName: 'Attacker', isHuman: true),
+            Player(id: 'def', displayName: 'Defender', isHuman: true),
+            Player(
+              id: 'civ',
+              displayName: 'CivOwner',
+              isHuman: false,
+              capitalProvinceId: cCapProvince,
+              capitalTile: CapitalTile(regionId: ow, provinceId: 'C1', x: 0, y: 0),
+            ),
+          ],
+        );
+
+        const ctx = BattleContext(
+          provinceId: provinceId,
+          regionId: ow,
+          defenderFactionId: 'def',
+          defenderUnitIds: ['def1'],
+          attackers: [
+            AttackingSide(factionId: 'att', unitIds: ['att1'], generalMedals: 0),
+          ],
+          fortLevel: 0,
+          terrain: 'plains',
+        );
+
+        final after = resolveBattleContext(game, ctx);
+        final relocated = after.worldState.oldWorld.units
+            .where((u) => u.id == 'civ1')
+            .single;
+        expect(relocated.tileKey, cCapTile);
+        expect(relocated.locationProvinceId, cCapProvince);
+        expect(relocated.status, UnitStatus.idle);
+        expect(relocated.currentWork, isNull);
+        expect(relocated.originTileKey, isNull);
+        expect(relocated.assignedTileKey, isNull);
+      },
+    );
+
+    test(
       'general medals provide morale aura bonus (5% per medal, max 20%)',
       () {
         expect(moraleMultiplierForGeneralMedals(0), 1.0);
