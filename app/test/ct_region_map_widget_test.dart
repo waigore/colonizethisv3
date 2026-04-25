@@ -2408,6 +2408,7 @@ void main() {
             visibilityMode: CtMapVisibilityMode.full,
             cell: cell,
             fleetTileMarkers: const [],
+            civilianTileMarkers: const [],
           ),
           TileVisibility.unrevealed,
         );
@@ -2429,6 +2430,7 @@ void main() {
             visibilityMode: CtMapVisibilityMode.playerConstrained,
             cell: cell,
             fleetTileMarkers: const [],
+            civilianTileMarkers: const [],
           ),
           TileVisibility.unrevealed,
         );
@@ -2461,6 +2463,42 @@ void main() {
             visibilityMode: CtMapVisibilityMode.playerConstrained,
             cell: cell,
             fleetTileMarkers: markers,
+            civilianTileMarkers: const [],
+          ),
+          TileVisibility.visible,
+        );
+      },
+    );
+
+    test(
+      'visibilityForTerrainForMapCell reveals unrevealed tile under civilian assignment halo',
+      () {
+        const cell = CellViewData(
+          x: 4,
+          y: 2,
+          regionCellId: 'p1',
+          isSea: false,
+          visibility: TileVisibility.fogged,
+        );
+        final markers = [
+          CivilianTileMarkerView(
+            tileKey: 'oldWorld|p1|4|2',
+            x: 4,
+            y: 2,
+            localProvinceId: 'p1',
+            unitIds: const ['u1'],
+            unitTypes: const {'u1': 'Explorer'},
+            representativeUnitType: 'Explorer',
+            stackCount: 1,
+            applyCivilianRevealHalo: true,
+          ),
+        ];
+        expect(
+          visibilityForTerrainForMapCell(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            cell: cell,
+            fleetTileMarkers: const [],
+            civilianTileMarkers: markers,
           ),
           TileVisibility.visible,
         );
