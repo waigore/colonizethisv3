@@ -9,8 +9,8 @@ import '../../../providers/app_event_bus_provider.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
-import 'diplomacy_panel.dart';
-import 'grant_or_subsidy_listener.dart';
+import '../widgets/diplomacy_panel.dart';
+import '../widgets/grant_or_subsidy_listener.dart';
 
 class DiplomacyScreen extends ConsumerWidget {
   const DiplomacyScreen({
