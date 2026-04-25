@@ -95,6 +95,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 ## Constraints
 
 - Visibility and prospected state are authoritative on WorldState; PlayerView is derived (read-only).
+- Land-province tile buckets accessed by explore completion, fog decay, and turn-news province discovery use canonical **full province id** keys (`regionId|localId`) only; local-only fallback lookups are disallowed in these guarded paths.
 - Ship coastal reveal and fog decay logic resolve provinces by `(regionId, provinceId)` or prefixed id only; see [world-model-identity.md](../game/world-model-identity.md).
 - Extraction gating (mineral prospecting + connectivity) is enforced by the extraction pipeline, not this module.
 - Order visibility rules are defined in game/fog-and-exploration.md; this module enforces them at validation time via PlayerView.
