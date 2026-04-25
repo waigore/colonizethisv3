@@ -440,9 +440,7 @@ class GameService {
     required int effectiveSeed,
   }) {
     final log = packageLogger();
-    for (var attempt = 0;
-        attempt < _kFreeformPipelineMaxAttempts;
-        attempt++) {
+    for (var attempt = 0; attempt < _kFreeformPipelineMaxAttempts; attempt++) {
       final mapSeed = effectiveSeed + attempt * 100003;
       try {
         final ow = _generateTileMapOldWorld(cfg, mapSeed);
@@ -476,11 +474,7 @@ class GameService {
           );
           continue;
         }
-        log.e(
-          'app: freeform init setup failed: $e',
-          error: e,
-          stackTrace: st,
-        );
+        log.e('app: freeform init setup failed: $e', error: e, stackTrace: st);
         rethrow;
       }
     }
@@ -498,9 +492,11 @@ class GameService {
     required int effectiveSeed,
   }) {
     final log = packageLogger();
-    for (var attempt = 0;
-        attempt < _kLockedFullInitPipelineMaxAttempts;
-        attempt++) {
+    for (
+      var attempt = 0;
+      attempt < _kLockedFullInitPipelineMaxAttempts;
+      attempt++
+    ) {
       final mapSeed = effectiveSeed + attempt * 100003;
       try {
         final r = generateLockedFullInitTileMapPair(
@@ -677,13 +673,19 @@ class GameService {
           turnNewsDigest: complete.turnNewsDigest,
         ),
       );
-    } else if (result is TurnResolutionPendingOvertures) {
+      return;
+    }
+    if (result is TurnResolutionPendingOvertures) {
       eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
-    } else if (result is TurnResolutionPendingIntervention) {
+      return;
+    }
+    if (result is TurnResolutionPendingIntervention) {
       eventBus?.emit(
         InterventionRequiredEvent(prompts: result.pendingInterventions),
       );
-    } else if (result is TurnResolutionPendingCallToArms) {
+      return;
+    }
+    if (result is TurnResolutionPendingCallToArms) {
       eventBus?.emit(
         CallToArmsRequiredEvent(pending: result.pendingCallToArms),
       );
