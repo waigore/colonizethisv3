@@ -265,6 +265,7 @@ class AppEventHandler {
               explorerOnly: event.explorerOnly,
               prospectShortcutTargetTileKey:
                   event.prospectShortcutTargetTileKey,
+              exploreShortcutTargetTileKey: event.exploreShortcutTargetTileKey,
             ),
           );
         },

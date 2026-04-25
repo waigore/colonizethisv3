@@ -5,6 +5,13 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 
 /// Pure-ish helpers for `GameMapArea` state translation.
 class GameMapAreaStateLogic {
+  static const ({bool showIcon, bool enabled, bool hasExplorerUnits})
+  kHiddenExplorerInlineActionState = (
+    showIcon: false,
+    enabled: false,
+    hasExplorerUnits: false,
+  );
+
   static int regionIndexFromWorldRegionId(String regionId) {
     if (regionId == 'newWorld') return 1;
     return 0; // oldWorld (default)
@@ -634,6 +641,127 @@ class GameMapAreaStateLogic {
       return (showIcon: true, enabled: false, hasExplorerUnits: false);
     }
     return (showIcon: true, enabled: true, hasExplorerUnits: true);
+  }
+
+  static Set<String> buildExploreEligibleTileKeyCache({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required PlayerView playerView,
+    required MapTopology topology,
+    required Map<String, TileMapResult>? tileMapByRegion,
+  }) {
+    final allUnits = <ct_models.Unit>[
+      ...game.worldState.oldWorld.units,
+      ...game.worldState.newWorld.units,
+    ];
+    final explorerUnits = allUnits
+        .where((unit) => unit.ownerId == humanPlayerId)
+        .where(
+          (unit) =>
+              workOrderTargetsByUnitType[unit.type]?.contains(
+                kWorkTargetExplore,
+              ) ??
+              false,
+        )
+        .toList();
+    if (explorerUnits.isEmpty) return const <String>{};
+
+    final merged = <String>{};
+    for (final explorer in explorerUnits) {
+      final valid = getValidWorkOrderTileKeysWithVisibility(
+        game: game,
+        topology: topology,
+        view: playerView,
+        unitId: explorer.id,
+        workTarget: kWorkTargetExplore,
+        currentOrders: const ct_models.Orders(),
+        tileMapByRegion: tileMapByRegion,
+      );
+      merged.addAll(valid);
+    }
+    return merged;
+  }
+
+  static ({bool showIcon, bool enabled, bool hasExplorerUnits})
+  provinceExploreActionState({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required RegionMapViewData selectedRegion,
+    required Set<String> cachedExploreEligibleTileKeys,
+  }) {
+    final tileParts = selectedTileKey.split('|');
+    if (tileParts.length < 4 || tileParts[0] != selectedRegion.regionId) {
+      return kHiddenExplorerInlineActionState;
+    }
+    final tileProvinceId = tileParts[1];
+    final prefixedProvinceId = '${selectedRegion.regionId}|$tileProvinceId';
+    final province = tryGetProvince(game.worldState, prefixedProvinceId);
+    if (province == null) {
+      return kHiddenExplorerInlineActionState;
+    }
+
+    final x = int.tryParse(tileParts[2]);
+    final y = int.tryParse(tileParts[3]);
+    if (x == null ||
+        y == null ||
+        x < 0 ||
+        y < 0 ||
+        x >= selectedRegion.width ||
+        y >= selectedRegion.height) {
+      return kHiddenExplorerInlineActionState;
+    }
+    final selectedCell = selectedRegion.cellAt(x, y);
+    if (selectedCell.visibility == TileVisibility.unrevealed) {
+      return kHiddenExplorerInlineActionState;
+    }
+
+    final provinceCells = selectedRegion.cells
+        .where((cell) => !cell.isSea && cell.regionCellId == tileProvinceId)
+        .toList();
+    if (provinceCells.isEmpty) {
+      return kHiddenExplorerInlineActionState;
+    }
+    final hasUnrevealed = provinceCells.any(
+      (cell) => cell.visibility == TileVisibility.unrevealed,
+    );
+    final hasRevealed = provinceCells.any(
+      (cell) => cell.visibility != TileVisibility.unrevealed,
+    );
+    if (!hasUnrevealed || !hasRevealed) {
+      return kHiddenExplorerInlineActionState;
+    }
+
+    final hasEligibleExploreTarget = cachedExploreEligibleTileKeys.any((
+      tileKey,
+    ) {
+      final parts = tileKey.split('|');
+      return parts.length >= 4 &&
+          parts[0] == selectedRegion.regionId &&
+          parts[1] == tileProvinceId;
+    });
+    if (!hasEligibleExploreTarget) {
+      return kHiddenExplorerInlineActionState;
+    }
+
+    final allUnits = <ct_models.Unit>[
+      ...game.worldState.oldWorld.units,
+      ...game.worldState.newWorld.units,
+    ];
+    final hasExplorerUnits = allUnits
+        .where((unit) => unit.ownerId == humanPlayerId)
+        .any(
+          (unit) =>
+              workOrderTargetsByUnitType[unit.type]?.contains(
+                kWorkTargetExplore,
+              ) ??
+              false,
+        );
+    return (
+      showIcon: true,
+      enabled: hasExplorerUnits,
+      hasExplorerUnits: hasExplorerUnits,
+    );
   }
 }
 
