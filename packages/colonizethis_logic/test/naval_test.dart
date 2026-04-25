@@ -598,7 +598,7 @@ void main() {
             tileKeysByRegionAndProvince: const {
               ow: {
                 destProv: [destCoast],
-                '$ow|seaDest': [destSeaTileA, destSeaTileB],
+                destSea: [destSeaTileA, destSeaTileB],
               },
             },
             playerVisibilityByTile: {
@@ -711,7 +711,7 @@ void main() {
             tileKeysByRegionAndProvince: const {
               ow: {
                 portProv: [coastTile],
-                '$ow|seaDest': [destSeaTileA, destSeaTileB],
+                destSeaPrefixed: [destSeaTileA, destSeaTileB],
               },
             },
             playerVisibilityByTile: {

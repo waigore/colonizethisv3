@@ -274,9 +274,7 @@ class WorldState {
 
     return WorldState(
       turnState: TurnState.fromJson(
-        Map<String, dynamic>.from(
-          json['turnState'] as Map<Object?, Object?>,
-        ),
+        Map<String, dynamic>.from(json['turnState'] as Map<Object?, Object?>),
       ),
       oldWorld: oldWorld,
       newWorld: newWorld,
@@ -552,9 +550,6 @@ class WorldState {
       return parts[0] == regionId && parts[1] == bucketKey;
     });
     if (!isSeaZoneBucket) return bucketKey;
-    throw FormatException(
-      'world_state: legacy local sea-zone bucket key "$bucketKey" is not '
-      'supported; expected canonical prefixed key "${ProvinceId.full(regionId, bucketKey)}".',
-    );
+    return ProvinceId.full(regionId, bucketKey);
   }
 }

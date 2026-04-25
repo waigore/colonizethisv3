@@ -385,8 +385,8 @@ void main() {
             newWorld: const RegionData(),
             tileKeysByRegionAndProvince: const {
               ow: {
-                'oldWorld|s1': ['oldWorld|s1|0|0'],
-                'oldWorld|s2': [tileSea2],
+                '$ow|s1': ['oldWorld|s1|0|0'],
+                '$ow|s2': [tileSea2],
               },
             },
             fleets: const [],
@@ -429,7 +429,7 @@ void main() {
           newWorld: const RegionData(),
           tileKeysByRegionAndProvince: const {
             ow: {
-              'oldWorld|s2': [tileSea2],
+              '$ow|s2': [tileSea2],
             },
           },
           fleets: [
@@ -479,7 +479,7 @@ void main() {
           newWorld: const RegionData(),
           tileKeysByRegionAndProvince: const {
             ow: {
-              'oldWorld|s2': [tileSea2],
+              '$ow|s2': [tileSea2],
             },
           },
           fleets: [
@@ -520,7 +520,7 @@ void main() {
           newWorld: const RegionData(),
           tileKeysByRegionAndProvince: const {
             ow: {
-              'oldWorld|s2': [tileSea2],
+              '$ow|s2': [tileSea2],
             },
           },
         ),
@@ -570,7 +570,7 @@ void main() {
             newWorld: const RegionData(),
             tileKeysByRegionAndProvince: const {
               ow: {
-                'oldWorld|s1': [tileS1],
+                '$ow|s1': [tileS1],
               },
             },
           ),
@@ -639,8 +639,8 @@ void main() {
             },
             tileKeysByRegionAndProvince: const {
               ow: {
-                'oldWorld|s1': [tileS1],
-                'oldWorld|s2': [tileS2],
+                '$ow|s1': [tileS1],
+                '$ow|s2': [tileS2],
               },
             },
             fleets: const [],
@@ -769,7 +769,7 @@ void main() {
             tileKeysByRegionAndProvince: const {
               ow: {
                 'p1': ['oldWorld|p1|0|0'],
-                'oldWorld|s1': [tileKeySea],
+                '$ow|s1': [tileKeySea],
               },
             },
           ),
@@ -823,7 +823,7 @@ void main() {
             },
             tileKeysByRegionAndProvince: const {
               ow: {
-                'oldWorld|s1': [tileKeySea],
+                '$ow|s1': [tileKeySea],
               },
             },
           ),
@@ -895,8 +895,8 @@ void main() {
               ow: {
                 'p1': ['oldWorld|p1|0|0'],
                 'p2': ['oldWorld|p2|2|0'],
-                'oldWorld|s1': [tileKeyS1],
-                'oldWorld|s2': [tileKeyS2],
+                '$ow|s1': [tileKeyS1],
+                '$ow|s2': [tileKeyS2],
               },
             },
           ),
@@ -963,7 +963,7 @@ void main() {
             tileKeysByRegionAndProvince: const {
               ow: {
                 'p1': [tileKeyLand],
-                'oldWorld|s1': [tileKeySea],
+                '$ow|s1': [tileKeySea],
               },
             },
           ),
@@ -1034,8 +1034,8 @@ void main() {
             ow: {
               'p1': [tileKeyP1],
               'p2': [tileKeyP2],
-              'oldWorld|s1': [tileKeyS1],
-              'oldWorld|s2': [tileKeyS2],
+              '$ow|s1': [tileKeyS1],
+              '$ow|s2': [tileKeyS2],
             },
           },
         ),

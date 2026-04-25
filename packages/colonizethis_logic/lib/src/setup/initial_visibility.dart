@@ -30,12 +30,6 @@ Game applyInitialVisibility({
           .map((n) => n.id)
           .toSet() ??
       {};
-  final nwSeaZoneIds =
-      topologyByRegion[kRegionNewWorld]?.nodes
-          .where((n) => n.type == TopologyNodeType.seaZone)
-          .map((n) => n.id)
-          .toSet() ??
-      {};
 
   final ownerById = <String, String?>{
     for (final p in allProvinces(game.worldState))
@@ -54,12 +48,9 @@ Game applyInitialVisibility({
     for (var x = 0; x < owMap.width; x++) {
       final localId = owMap.cell(x, y);
       final fullId = ProvinceId.full(kRegionOldWorld, localId);
-      final isSea = owSeaZoneIds.contains(localId);
       // Include all tiles (land and sea) in tileKeysByRegionAndProvince.
-      // Both land and sea buckets use canonical prefixed ids.
-      final provinceKey = isSea
-          ? ProvinceId.full(kRegionOldWorld, localId)
-          : fullId;
+      // Land and sea buckets use canonical prefixed ids (`fullId`).
+      final provinceKey = fullId;
       final tileKey = '$kRegionOldWorld|$localId|$x|$y';
       tileKeysByRegionAndProvince[kRegionOldWorld]!
           .putIfAbsent(provinceKey, () => <String>[])
@@ -72,10 +63,7 @@ Game applyInitialVisibility({
     for (var x = 0; x < nwMap.width; x++) {
       final localId = nwMap.cell(x, y);
       final fullId = ProvinceId.full(kRegionNewWorld, localId);
-      final isSea = nwSeaZoneIds.contains(localId);
-      final provinceKey = isSea
-          ? ProvinceId.full(kRegionNewWorld, localId)
-          : fullId;
+      final provinceKey = fullId;
       final tileKey = '$kRegionNewWorld|$localId|$x|$y';
       tileKeysByRegionAndProvince[kRegionNewWorld]!
           .putIfAbsent(provinceKey, () => <String>[])

@@ -40,30 +40,38 @@ void main() {
       expect(state, state2);
       expect(state.hashCode, state2.hashCode);
     });
-    test('fromJson rejects legacy local sea-zone tile buckets (hard-fail)', () {
-      const regionId = 'oldWorld';
-      const localSeaId = 's1';
-      const seaTile = '$regionId|$localSeaId|0|0';
-      const landTile = '$regionId|p1|1|1';
-      final json = <String, dynamic>{
-        'turnState': const TurnState(
-          phase: TurnPhase.orders,
-          turnNumber: 1,
-        ).toJson(),
-        'oldWorld': const RegionData(
-          provinces: [Province(id: '$regionId|p1', regionId: regionId)],
-        ).toJson(),
-        'newWorld': const RegionData().toJson(),
-        'tileKeysByRegionAndProvince': {
-          regionId: {
-            localSeaId: [seaTile],
-            'p1': [landTile],
+    test(
+      'fromJson migrates legacy local sea-zone tile buckets to prefixed keys',
+      () {
+        const regionId = 'oldWorld';
+        const localSeaId = 's1';
+        const prefixedSeaId = '$regionId|$localSeaId';
+        const seaTile = '$regionId|$localSeaId|0|0';
+        const landTile = '$regionId|p1|1|1';
+        final json = <String, dynamic>{
+          'turnState': const TurnState(
+            phase: TurnPhase.orders,
+            turnNumber: 1,
+          ).toJson(),
+          'oldWorld': const RegionData(
+            provinces: [Province(id: '$regionId|p1', regionId: regionId)],
+          ).toJson(),
+          'newWorld': const RegionData().toJson(),
+          'tileKeysByRegionAndProvince': {
+            regionId: {
+              localSeaId: [seaTile],
+              'p1': [landTile],
+            },
           },
-        },
-      };
+        };
 
-      expect(() => WorldState.fromJson(json), throwsA(isA<FormatException>()));
-    });
+        final state = WorldState.fromJson(json);
+        final regionBuckets = state.tileKeysByRegionAndProvince[regionId]!;
+        expect(regionBuckets[prefixedSeaId], [seaTile]);
+        expect(regionBuckets.containsKey(localSeaId), isFalse);
+        expect(regionBuckets['p1'], [landTile]);
+      },
+    );
 
     test('fromJson accepts canonical prefixed sea-zone tile buckets', () {
       const regionId = 'oldWorld';
