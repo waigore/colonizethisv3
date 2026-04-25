@@ -37,6 +37,14 @@ rules:
       function_name: build
       max_body_line_span: 3
       require_widget_class_extends: true
+  - id: sea_zone_local_id_extraction
+    message: 'do not strip sea-zone ids to local'
+    match:
+      kind: sea_zone_local_id_extraction
+  - id: sea_zone_bucket_lookup_without_canonical_key
+    message: 'sea-zone bucket lookup requires canonical key'
+    match:
+      kind: sea_zone_bucket_lookup_without_canonical_key
   - id: province_lookup_unprefixed_literal
     message: 'prefixed province id literals required for lookup'
     match:
@@ -438,6 +446,79 @@ void f() {
       );
       expect(v, isNotEmpty);
       expect(v.first.ruleId, 'province_local_id_from_unprefixed_literal');
+    });
+
+    test('flags ProvinceId.localIdFrom on sea-zone ids', () {
+      const src = r'''
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+bool bad(String seaZoneId) => ProvinceId.localIdFrom(seaZoneId) == 's1';
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(v, isNotEmpty);
+      expect(v.first.ruleId, 'sea_zone_local_id_extraction');
+    });
+
+    test('allows ProvinceId.localIdFrom for non-sea-zone identifiers', () {
+      const src = r'''
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+bool ok(String provinceId) => ProvinceId.localIdFrom(provinceId) == 'p1';
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(
+        v.where((e) => e.ruleId == 'sea_zone_local_id_extraction'),
+        isEmpty,
+      );
+    });
+
+    test('flags sea-zone bucket lookup without canonical key helper', () {
+      const src = r'''
+class X {
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {};
+  List<String> read(String regionId, String seaZoneId) {
+    return tileKeysByRegionAndProvince[regionId]?[seaZoneId] ?? const [];
+  }
+}
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(v, isNotEmpty);
+      expect(v.first.ruleId, 'sea_zone_bucket_lookup_without_canonical_key');
+    });
+
+    test('allows sea-zone bucket lookup with canonical helper', () {
+      const src = r'''
+String canonicalSeaZoneTileBucketKey(String regionId, String seaZoneId) =>
+    '$regionId|$seaZoneId';
+
+class X {
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {};
+  List<String> read(String regionId, String seaZoneId) {
+    final bucket = canonicalSeaZoneTileBucketKey(regionId, seaZoneId);
+    return tileKeysByRegionAndProvince[regionId]?[bucket] ?? const [];
+  }
+}
+''';
+      expect(
+        findDisallowedAstViolations(
+          'packages/foo/lib/x.dart',
+          src,
+          rules,
+        ).where((e) => e.ruleId == 'sea_zone_bucket_lookup_without_canonical_key'),
+        isEmpty,
+      );
     });
   });
 }

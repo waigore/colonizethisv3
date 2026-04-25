@@ -6,11 +6,11 @@ import 'naval.dart';
 import 'naval_resolution.dart' show coastalLandTileKeysFromNavalPresenceAtSea;
 import 'player_view.dart';
 import 'province_lookup.dart';
+import 'sea_zone_identity.dart';
 import 'unit_lookup.dart';
 
-String _localSeaZoneId(String seaZoneId) => ProvinceId.isPrefixed(seaZoneId)
-    ? ProvinceId.localIdFrom(seaZoneId)
-    : seaZoneId;
+String _canonicalSeaZoneId(String regionId, String seaZoneId) =>
+    canonicalizeSeaZoneId(regionId: regionId, seaZoneId: seaZoneId);
 
 /// Spy 5-turn fog decay: decrement timers; when they expire, set other-faction
 /// provinces back to fogged for that player. Timers MUST NOT affect a player's
@@ -225,7 +225,9 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
           regionId: regionId,
         );
         for (final seaZoneLocalId in adjacentSeaZones) {
-          final tileKeys = regionTileKeys[seaZoneLocalId];
+          final tileKeys = regionTileKeys[
+            _canonicalSeaZoneId(regionId, seaZoneLocalId)
+          ];
           if (tileKeys == null) continue;
           for (final tileKey in tileKeys) {
             vis[tileKey] = VisibilityLevel.fullyVisible.name;
@@ -264,12 +266,12 @@ bool _playerHasFleetAtSeaInZone(
   String regionId,
   String seaZoneLocalId,
 ) {
-  final expectedLocalSeaZoneId = _localSeaZoneId(seaZoneLocalId);
+  final expectedSeaZoneId = _canonicalSeaZoneId(regionId, seaZoneLocalId);
   for (final f in game.worldState.fleets) {
     if (f.ownerId != playerId) continue;
     if (!f.isAtSea || f.seaZoneId == null) continue;
-    final fleetSeaZoneLocalId = _localSeaZoneId(f.seaZoneId!);
-    if (fleetSeaZoneLocalId != expectedLocalSeaZoneId) continue;
+    final fleetSeaZoneId = _canonicalSeaZoneId(f.regionId, f.seaZoneId!);
+    if (fleetSeaZoneId != expectedSeaZoneId) continue;
     if (f.regionId != regionId) continue;
     return true;
   }
@@ -327,7 +329,7 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
         if (_playerHasFleetAtSeaInZone(game, playerId, regionId, seaZoneId)) {
           continue;
         }
-        final keys = regionTileKeys[_localSeaZoneId(seaZoneId)];
+        final keys = regionTileKeys[_canonicalSeaZoneId(regionId, seaZoneId)];
         if (keys == null) continue;
         for (final tk in keys) {
           final cur = vis[tk];

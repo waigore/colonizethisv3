@@ -203,7 +203,7 @@ void main() {
               nw: {
                 provinceP1: [p1CoastalTile, p1InlandTile],
                 provinceP2: [p2CoastalTile],
-                'sea2': [sea2WaterA, sea2WaterB],
+                '$nw|sea2': [sea2WaterA, sea2WaterB],
               },
             },
             playerVisibilityByTile: const {'gp1': {}},
@@ -284,7 +284,7 @@ void main() {
             },
             nw: {
               nwProvince: [nwCoastalTile],
-              'sea2': [nwSea2Tile],
+              '$nw|sea2': [nwSea2Tile],
             },
           },
           playerVisibilityByTile: const {'gp1': {}},
@@ -306,7 +306,7 @@ void main() {
     });
 
     test(
-      'combined-topology ship reveal uses local sea bucket and coastal ring only',
+      'combined-topology ship reveal uses canonical sea bucket and coastal ring only',
       () {
         const nw = 'newWorld';
         const fullProv = '$nw|provA';
@@ -385,8 +385,8 @@ void main() {
                   '$nw|provA|0|1',
                   '$nw|provA|1|1',
                 ],
-                localSeaDest: [seaDestWater, seaDestWaterB],
-                localSeaOrigin: ['$nw|$localSeaOrigin|0|2'],
+                prefixedDest: [seaDestWater, seaDestWaterB],
+                prefixedOrigin: ['$nw|$localSeaOrigin|0|2'],
               },
             },
             playerVisibilityByTile: {'gp1': visStart},
@@ -498,8 +498,8 @@ void main() {
               nw: {
                 // Land bucket keyed by **local** id only (some maps/fixtures).
                 localProvBucket: [coastalLand, inlandLand, '$nw|provA|0|1'],
-                localSeaDest: [seaDestWater, seaDestWaterB],
-                localSeaOrigin: ['$nw|$localSeaOrigin|0|2'],
+                prefixedDest: [seaDestWater, seaDestWaterB],
+                prefixedOrigin: ['$nw|$localSeaOrigin|0|2'],
               },
             },
             playerVisibilityByTile: {'gp1': visStart},
@@ -598,7 +598,7 @@ void main() {
             tileKeysByRegionAndProvince: const {
               ow: {
                 destProv: [destCoast],
-                'seaDest': [destSeaTileA, destSeaTileB],
+                '$ow|seaDest': [destSeaTileA, destSeaTileB],
               },
             },
             playerVisibilityByTile: {
@@ -711,7 +711,7 @@ void main() {
             tileKeysByRegionAndProvince: const {
               ow: {
                 portProv: [coastTile],
-                'seaDest': [destSeaTileA, destSeaTileB],
+                '$ow|seaDest': [destSeaTileA, destSeaTileB],
               },
             },
             playerVisibilityByTile: {
@@ -962,32 +962,29 @@ void main() {
     });
 
     group('seaZoneIdsAdjacentToProvince', () {
-      test(
-        'full province id matches prefixed province node on P–S edge '
-        '(combined topology)',
-        () {
-          const ow = 'oldWorld';
-          final combined = MapTopology(
-            nodes: [
-              TopologyNode(
-                id: '$ow|p1',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: '$ow|s1',
-                regionId: ow,
-                type: TopologyNodeType.seaZone,
-              ),
-            ],
-            edges: [TopologyEdge(id1: '$ow|p1', id2: '$ow|s1')],
-          );
-          expect(
-            seaZoneIdsAdjacentToProvince(combined, '$ow|p1', regionId: ow),
-            equals(<String>{'$ow|s1'}),
-          );
-        },
-      );
+      test('full province id matches prefixed province node on P–S edge '
+          '(combined topology)', () {
+        const ow = 'oldWorld';
+        final combined = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: '$ow|p1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: '$ow|s1',
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [TopologyEdge(id1: '$ow|p1', id2: '$ow|s1')],
+        );
+        expect(
+          seaZoneIdsAdjacentToProvince(combined, '$ow|p1', regionId: ow),
+          equals(<String>{'$ow|s1'}),
+        );
+      });
     });
 
     group('regionIdForSeaZone', () {

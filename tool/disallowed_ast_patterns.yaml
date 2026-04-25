@@ -48,6 +48,18 @@ rules:
       function_name: build
       max_body_line_span: 60
       require_widget_class_extends: true
+  - id: sea_zone_local_id_extraction
+    message: >-
+      Do not strip sea-zone ids to local form via ProvinceId.localIdFrom(...).
+      Use canonical prefixed sea-zone ids (regionId|localSeaZoneId) for comparisons.
+    match:
+      kind: sea_zone_local_id_extraction
+  - id: sea_zone_bucket_lookup_without_canonical_key
+    message: >-
+      Sea-zone tile bucket lookups must use canonical prefixed ids via
+      canonicalizeSeaZoneId/canonicalSeaZoneTileBucketKey; local sea-zone keys are disallowed.
+    match:
+      kind: sea_zone_bucket_lookup_without_canonical_key
   - id: province_lookup_unprefixed_literal
     message: >-
       Do not pass unprefixed province id string literals to province lookup

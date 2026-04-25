@@ -66,7 +66,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 
 **Ship reveal** (Naval Movement phase):
 
-1. When fleet **successfully** enters sea zone S, set **coastal ring** land tiles (orthogonal neighbor to a water tile of S) of adjacent provinces in S’s region to `fullyVisible` for that player; **inland** land in those provinces stays unchanged (typically `unknown` in the New World until exploration). Set all **water** tile keys for S to `fullyVisible` for that player. Province land tiles are resolved from `tileKeysByRegionAndProvince[regionId]` using the **full** province id (`regionId|localId`) when present, else the **local** province id bucket (same dual-key rule as other map lookups).
+1. When fleet **successfully** enters sea zone S, set **coastal ring** land tiles (orthogonal neighbor to a water tile of S) of adjacent provinces in S’s region to `fullyVisible` for that player; **inland** land in those provinces stays unchanged (typically `unknown` in the New World until exploration). Set all **water** tile keys for S to `fullyVisible` for that player. Province land tiles are resolved from `tileKeysByRegionAndProvince[regionId]` using the **full** province id (`regionId|localId`) when present, else the **local** province id bucket (same dual-key rule as other map lookups). Sea-zone water tiles are resolved only from canonical sea-zone bucket keys (`tileKeysByRegionAndProvince[regionId][regionId|seaZoneLocalId]`); local-id sea-zone bucket keys are invalid save inputs and must hard-fail at runtime load.
 2. Delegated to [naval-movement-resolution.md](naval-movement-resolution.md).
 
 **PlayerView construction:**
