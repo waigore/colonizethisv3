@@ -60,6 +60,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   String? _selectedCivilianTileKey;
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
   Set<String>? _cachedValidTileKeys;
+  Set<String> _cachedExploreEligibleTileKeys = const <String>{};
   bool _sideMenuOpen = false;
   final List<StreamSubscription<dynamic>> _busSubscriptions = [];
   ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
@@ -74,6 +75,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   void initState() {
     super.initState();
     _mapViewState = widget.game.mapViewState;
+    _refreshExploreEligibleTileKeyCache(widget.game);
     final bus = ref.read(appEventBusProvider);
     _busSubscriptions.addAll([
       bus.on<ct_models.OpenProvinceDetailPanelEvent>().listen((_) {
@@ -135,11 +137,28 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       return;
     }
     setState(() {
+      _refreshExploreEligibleTileKeyCache(widget.game);
       _resolvedPlayerTurnEvents = List<ct_models.GameToUIEvent>.from(
         _pendingPlayerTurnEvents,
       );
       _pendingPlayerTurnEvents.clear();
     });
+  }
+
+  void _refreshExploreEligibleTileKeyCache(ct_models.Game game) {
+    final view = buildPlayerView(
+      game,
+      widget.mapViewData.combinedTopology,
+      _humanPlayerId,
+    );
+    _cachedExploreEligibleTileKeys =
+        GameMapAreaStateLogic.buildExploreEligibleTileKeyCache(
+          game: game,
+          humanPlayerId: _humanPlayerId,
+          playerView: view,
+          topology: widget.mapViewData.combinedTopology,
+          tileMapByRegion: null,
+        );
   }
 
   void _onAppCombatResultEvent(ct_models.AppCombatResultEvent event) {
@@ -940,6 +959,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       ref.read(mapProvincePanelProvider.notifier).reset();
       ref.read(regionMinimapVisibleProvider.notifier).resetToDefault();
       setState(() {
+        _refreshExploreEligibleTileKeyCache(widget.game);
         _mapViewState = widget.game.mapViewState;
         _regionViewportSnapshot = null;
         _pendingRegionViewport = null;
@@ -947,6 +967,12 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       });
     } else if (oldWidget.game.mapViewState != widget.game.mapViewState) {
       _mapViewState = widget.game.mapViewState;
+    }
+    if (oldWidget.game.worldState.turnState.turnNumber !=
+        widget.game.worldState.turnState.turnNumber) {
+      setState(() {
+        _refreshExploreEligibleTileKeyCache(widget.game);
+      });
     }
   }
 
@@ -1072,6 +1098,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                             _mapViewState.showProvinceNamesLayer,
                         humanPlayerId: _humanPlayerId,
                         playerView: humanPlayerView,
+                        exploreEligibleTileKeyCache:
+                            _cachedExploreEligibleTileKeys,
                         centerOnTileKey: _centerOnTileKey,
                         validTileKeysForSelection: _validTileKeysForSelection,
                         selectedCivilianTileKey: _selectedCivilianTileKey,
@@ -1388,6 +1416,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                         region: projectedRegion,
                         humanPlayerId: _humanPlayerId,
                         playerView: humanPlayerView,
+                        exploreEligibleTileKeyCache:
+                            _cachedExploreEligibleTileKeys,
                       ),
                     ],
                   ),

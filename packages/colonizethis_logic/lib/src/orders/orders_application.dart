@@ -177,10 +177,11 @@ void _applyExploreCompletion(BuildWorkState s, Unit u, String regionId) {
   final fullProvinceId = parts.length > 1
       ? ProvinceId.full(regionIdFromWork, provinceId)
       : u.locationProvinceId;
-  final tileKeys =
-      s.game.worldState.tileKeysByRegionAndProvince[regionIdFromWork]
-          ?[fullProvinceId] ??
-      [];
+  final tileKeys = landTileKeysForProvinceBucket(
+    s.game.worldState,
+    regionIdFromWork,
+    fullProvinceId,
+  );
   final playerId = u.ownerId;
   final vis = Map<String, String>.from(s.work.visibilityByTile[playerId] ?? {});
   for (final tk in tileKeys) {
@@ -215,7 +216,10 @@ void _processWorkUnits(
   void Function(List<Province>) setProvinces,
 ) {
   final rand = s.game.globalGameSeed != null
-      ? Random(s.game.globalGameSeed! + (s.game.worldState.turnState.turnNumber * 1000))
+      ? Random(
+          s.game.globalGameSeed! +
+              (s.game.worldState.turnState.turnNumber * 1000),
+        )
       : Random();
   for (final entry in unitsById.entries.toList()) {
     final u = entry.value;
@@ -257,7 +261,16 @@ void _processWorkUnits(
       _resolveCounterSpyTick(s, unitsById, u, rand);
       continue;
     }
-    _advanceWorkUnitTick(s, unitsById, entry.key, u, cw, rand, getProvinces, setProvinces);
+    _advanceWorkUnitTick(
+      s,
+      unitsById,
+      entry.key,
+      u,
+      cw,
+      rand,
+      getProvinces,
+      setProvinces,
+    );
   }
 }
 
@@ -351,7 +364,9 @@ void _resolveStealTechCompletion(
 ) {
   final targetProvinceId = Unit.provinceIdFromTileKey(cw.tileKey);
   final otherPlayer = s.game.players
-      .where((p) => p.id != u.ownerId && p.capitalProvinceId == targetProvinceId)
+      .where(
+        (p) => p.id != u.ownerId && p.capitalProvinceId == targetProvinceId,
+      )
       .firstOrNull;
   var stealSuccess = false;
   if (otherPlayer != null) {
@@ -370,7 +385,10 @@ void _resolveStealTechCompletion(
           ..[granted] = true;
         s.game = s.game.copyWith(
           players: s.game.players
-              .map((p) => p.id == u.ownerId ? p.copyWith(techUnlocked: updated) : p)
+              .map(
+                (p) =>
+                    p.id == u.ownerId ? p.copyWith(techUnlocked: updated) : p,
+              )
               .toList(),
         );
       }
@@ -385,7 +403,10 @@ void _resolveStealTechCompletion(
   );
   if (spyEvidence.isNotEmpty) {
     s.game = s.game.copyWith(
-      dossierEvidenceEntries: [...s.game.dossierEvidenceEntries, ...spyEvidence],
+      dossierEvidenceEntries: [
+        ...s.game.dossierEvidenceEntries,
+        ...spyEvidence,
+      ],
     );
   }
 }

@@ -268,7 +268,7 @@ void main() {
               ],
               provinces: [
                 Province(
-                  id: provinceLocal,
+                  id: fullProvince,
                   regionId: 'oldWorld',
                   ownerId: playerId,
                   displayName: 'Lisbon Harbor',

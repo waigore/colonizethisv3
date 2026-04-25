@@ -86,17 +86,17 @@ String? firstLegalBundledEntryTileKeyInProvince({
   required String playerId,
   required Unit unit,
   required String destProvinceFullId,
+  String? preferredTargetTileKey,
   required PlayerView view,
   required Map<String, Unit> unitsById,
   required List<DiplomaticOrder> diplomaticOrders,
 }) {
   const moveValidator = MoveValidator();
-  final tiles = _sortedBundledEntryTileKeysInProvince(game, destProvinceFullId);
-  var n = 0;
-  for (final tk in tiles) {
-    if (n++ >= kBundledWorkTileScanCap) break;
+  final regionId = ProvinceId.regionIdFrom(destProvinceFullId);
+
+  bool isMoveAccepted(String tileKey) {
     final moveRes = moveValidator.validate(
-      MoveOrder(unitId: unit.id, destinationTileKey: tk),
+      MoveOrder(unitId: unit.id, destinationTileKey: tileKey),
       game,
       playerId,
       unitsById,
@@ -105,7 +105,25 @@ String? firstLegalBundledEntryTileKeyInProvince({
       topology,
       previousRejected: false,
     );
-    if (moveRes.isAccepted) {
+    return moveRes.isAccepted;
+  }
+
+  final preferredTile = preferredTargetTileKey;
+  if (preferredTile != null && preferredTile.isNotEmpty) {
+    final preferredProvinceId = Unit.provinceIdFromTileKey(preferredTile);
+    final preferredRegionId = Unit.regionIdFromTileKey(preferredTile);
+    if (preferredProvinceId == destProvinceFullId &&
+        preferredRegionId == regionId &&
+        isMoveAccepted(preferredTile)) {
+      return preferredTile;
+    }
+  }
+
+  final tiles = _sortedBundledEntryTileKeysInProvince(game, destProvinceFullId);
+  var n = 0;
+  for (final tk in tiles) {
+    if (n++ >= kBundledWorkTileScanCap) break;
+    if (isMoveAccepted(tk)) {
       return tk;
     }
   }
@@ -153,6 +171,7 @@ OrderValidationResult validateCivilianBundledWorkMoveLeg({
     playerId: playerId,
     unit: unit,
     destProvinceFullId: destFull,
+    preferredTargetTileKey: order.targetTileKey,
     view: view,
     unitsById: unitsById,
     diplomaticOrders: diplomaticOrders,

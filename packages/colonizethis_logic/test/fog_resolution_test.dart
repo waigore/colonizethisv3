@@ -7,44 +7,50 @@ import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('applySpyRevealTimerDecay', () {
-    test('decrements timers for other-faction provinces when timer expires', () {
-      const ow = 'oldWorld';
-      const tileKeyP2 = 'oldWorld|P2|0|0';
+    test(
+      'decrements timers for other-faction provinces when timer expires',
+      () {
+        const ow = 'oldWorld';
+        const tileKeyP2 = 'oldWorld|P2|0|0';
 
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'p1': {tileKeyP2: 'fullyVisible'},
-          },
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              'P2': [tileKeyP2],
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.endOfTurn,
+              turnNumber: 1,
+            ),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+              ],
+            ),
+            newWorld: const RegionData(),
+            playerVisibilityByTile: const {
+              'p1': {tileKeyP2: 'fullyVisible'},
             },
-          },
-          spyRevealTurnsByPlayer: const {
-            'p1': {'$ow|P2': 1},
-          },
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-          Player(id: 'p2', displayName: 'P2', isHuman: false),
-        ],
-      );
+            tileKeysByRegionAndProvince: const {
+              ow: {
+                '$ow|P2': [tileKeyP2],
+              },
+            },
+            spyRevealTurnsByPlayer: const {
+              'p1': {'$ow|P2': 1},
+            },
+          ),
+          players: const [
+            Player(id: 'p1', displayName: 'P1', isHuman: true),
+            Player(id: 'p2', displayName: 'P2', isHuman: false),
+          ],
+        );
 
-      final (visibility, timers) = applySpyRevealTimerDecay(game);
+        final (visibility, timers) = applySpyRevealTimerDecay(game);
 
-      // Timer should be removed after reaching zero.
-      expect(timers['p1'], isNull);
-      expect(visibility['p1']?[tileKeyP2], VisibilityLevel.fogged.name);
-    });
+        // Timer should be removed after reaching zero.
+        expect(timers['p1'], isNull);
+        expect(visibility['p1']?[tileKeyP2], VisibilityLevel.fogged.name);
+      },
+    );
 
     test('never applies timers to own provinces', () {
       const ow = 'oldWorld';
@@ -65,7 +71,7 @@ void main() {
           },
           tileKeysByRegionAndProvince: const {
             ow: {
-              'P1': [tileKeyP1],
+              '$ow|P1': [tileKeyP1],
             },
           },
           // Spy timer mistakenly applied to own province; helper must ignore it.
@@ -102,7 +108,7 @@ void main() {
           },
           tileKeysByRegionAndProvince: const {
             ow: {
-              'P2': [tileKeyP2],
+              '$ow|P2': [tileKeyP2],
             },
           },
           spyRevealTurnsByPlayer: const {
@@ -252,10 +258,7 @@ void main() {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
-          turnState: const TurnState(
-            phase: TurnPhase.endOfTurn,
-            turnNumber: 1,
-          ),
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
           oldWorld: const RegionData(),
           newWorld: RegionData(
             provinces: const [
@@ -284,10 +287,7 @@ void main() {
       final game = Game(
         id: 'g1',
         worldState: WorldState(
-          turnState: const TurnState(
-            phase: TurnPhase.endOfTurn,
-            turnNumber: 1,
-          ),
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 1),
           oldWorld: RegionData(
             provinces: const [
               Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
@@ -342,48 +342,66 @@ void main() {
   });
 
   group('applyDistantSeaZoneFogRevert', () {
-    test('fogs open-ocean sea tiles when no owned coast and no fleet at sea', () {
-      const ow = 'oldWorld';
-      const tileSea2 = 'oldWorld|s2|0|0';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
-          TopologyNode(id: 's2', regionId: ow, type: TopologyNodeType.seaZone),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'p1', id2: 's1'),
-          TopologyEdge(id1: 's1', id2: 's2'),
-        ],
-      );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              's1': ['oldWorld|s1|0|0'],
-              's2': [tileSea2],
+    test(
+      'fogs open-ocean sea tiles when no owned coast and no fleet at sea',
+      () {
+        const ow = 'oldWorld';
+        const tileSea2 = 'oldWorld|s2|0|0';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 's1',
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 's2',
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [
+            TopologyEdge(id1: 'p1', id2: 's1'),
+            TopologyEdge(id1: 's1', id2: 's2'),
+          ],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.endOfTurn,
+              turnNumber: 0,
+            ),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+              ],
+            ),
+            newWorld: const RegionData(),
+            tileKeysByRegionAndProvince: const {
+              ow: {
+                's1': ['oldWorld|s1|0|0'],
+                's2': [tileSea2],
+              },
             },
-          },
-          fleets: const [],
-        ),
-        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
-      );
-      final inputVis = <String, Map<String, String>>{
-        'gp1': {tileSea2: VisibilityLevel.fullyVisible.name},
-      };
+            fleets: const [],
+          ),
+          players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+        );
+        final inputVis = <String, Map<String, String>>{
+          'gp1': {tileSea2: VisibilityLevel.fullyVisible.name},
+        };
 
-      final out = applyDistantSeaZoneFogRevert(game, inputVis, topology);
+        final out = applyDistantSeaZoneFogRevert(game, inputVis, topology);
 
-      expect(out['gp1']![tileSea2], VisibilityLevel.fogged.name);
-    });
+        expect(out['gp1']![tileSea2], VisibilityLevel.fogged.name);
+      },
+    );
 
     test('does not fog sea zone while player fleet is at sea there', () {
       const ow = 'oldWorld';
@@ -517,102 +535,133 @@ void main() {
       expect(out['gp1']![tileSea2], VisibilityLevel.unknown.name);
     });
 
-    test('coastal pass after distant restores shore-adjacent sea from fogged', () {
-      const ow = 'oldWorld';
-      const tileS1 = 'oldWorld|s1|0|0';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
-        ],
-        edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-      );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            ow: {'s1': [tileS1]},
-          },
-        ),
-        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
-      );
-      final afterDistant = applyDistantSeaZoneFogRevert(
-        game,
-        {'gp1': {tileS1: VisibilityLevel.fogged.name}},
-        topology,
-      );
-      expect(afterDistant['gp1']![tileS1], VisibilityLevel.fogged.name);
-      final afterCoastal = applyCoastalSeaZoneFullVisibility(
-        game,
-        afterDistant,
-        topology,
-      );
-      expect(afterCoastal['gp1']![tileS1], VisibilityLevel.fullyVisible.name);
-    });
-
-    test('runEndOfTurnPhase fogs distant sea then coastal restores owned shore',
-        () {
-      const ow = 'oldWorld';
-      const tileS1 = 'oldWorld|s1|0|0';
-      const tileS2 = 'oldWorld|s2|0|0';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-          TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
-          TopologyNode(id: 's2', regionId: ow, type: TopologyNodeType.seaZone),
-        ],
-        edges: const [
-          TopologyEdge(id1: 'p1', id2: 's1'),
-          TopologyEdge(id1: 's1', id2: 's2'),
-        ],
-      );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 5),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: {
-            'gp1': {
-              tileS1: VisibilityLevel.fullyVisible.name,
-              tileS2: VisibilityLevel.fullyVisible.name,
+    test(
+      'coastal pass after distant restores shore-adjacent sea from fogged',
+      () {
+        const ow = 'oldWorld';
+        const tileS1 = 'oldWorld|s1|0|0';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 's1',
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.endOfTurn,
+              turnNumber: 0,
+            ),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+              ],
+            ),
+            newWorld: const RegionData(),
+            tileKeysByRegionAndProvince: const {
+              ow: {
+                's1': [tileS1],
+              },
             },
-          },
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              's1': [tileS1],
-              's2': [tileS2],
+          ),
+          players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+        );
+        final afterDistant = applyDistantSeaZoneFogRevert(game, {
+          'gp1': {tileS1: VisibilityLevel.fogged.name},
+        }, topology);
+        expect(afterDistant['gp1']![tileS1], VisibilityLevel.fogged.name);
+        final afterCoastal = applyCoastalSeaZoneFullVisibility(
+          game,
+          afterDistant,
+          topology,
+        );
+        expect(afterCoastal['gp1']![tileS1], VisibilityLevel.fullyVisible.name);
+      },
+    );
+
+    test(
+      'runEndOfTurnPhase fogs distant sea then coastal restores owned shore',
+      () {
+        const ow = 'oldWorld';
+        const tileS1 = 'oldWorld|s1|0|0';
+        const tileS2 = 'oldWorld|s2|0|0';
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 's1',
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 's2',
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [
+            TopologyEdge(id1: 'p1', id2: 's1'),
+            TopologyEdge(id1: 's1', id2: 's2'),
+          ],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.endOfTurn,
+              turnNumber: 5,
+            ),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+              ],
+            ),
+            newWorld: const RegionData(),
+            playerVisibilityByTile: {
+              'gp1': {
+                tileS1: VisibilityLevel.fullyVisible.name,
+                tileS2: VisibilityLevel.fullyVisible.name,
+              },
             },
-          },
-          fleets: const [],
-        ),
-        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
-      );
+            tileKeysByRegionAndProvince: const {
+              ow: {
+                's1': [tileS1],
+                's2': [tileS2],
+              },
+            },
+            fleets: const [],
+          ),
+          players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+        );
 
-      final next = runEndOfTurnPhase(game, topology: topology);
+        final next = runEndOfTurnPhase(game, topology: topology);
 
-      expect(next.worldState.turnState.turnNumber, 6);
-      expect(next.worldState.turnState.phase, TurnPhase.orders);
-      expect(
-        next.worldState.playerVisibilityByTile['gp1']![tileS2],
-        VisibilityLevel.fogged.name,
-      );
-      expect(
-        next.worldState.playerVisibilityByTile['gp1']![tileS1],
-        VisibilityLevel.fullyVisible.name,
-      );
-    });
+        expect(next.worldState.turnState.turnNumber, 6);
+        expect(next.worldState.turnState.phase, TurnPhase.orders);
+        expect(
+          next.worldState.playerVisibilityByTile['gp1']![tileS2],
+          VisibilityLevel.fogged.name,
+        );
+        expect(
+          next.worldState.playerVisibilityByTile['gp1']![tileS1],
+          VisibilityLevel.fullyVisible.name,
+        );
+      },
+    );
 
     test(
       'runEndOfTurnPhase leaves unknown New World land unknown (turn 0→1)',
