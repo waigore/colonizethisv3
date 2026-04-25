@@ -63,6 +63,7 @@ colonizethis_data    (no package deps)
 
 - **Given** package metadata for `colonizethis_logic`, **when** dependency analysis reads `dependencies` and `dev_dependencies`, **then** no `colonizethis_ai` entry exists.
 - **Given** `colonizethis_ai` imports logic interfaces, **when** static analysis inspects imports under `packages/colonizethis_ai/lib`, **then** imports use narrow logic contract libraries (`order_suggestion_api.dart`, `ai_api.dart`) and do not import `package:colonizethis_logic/colonizethis_logic.dart`.
+- **Given** the main logic public barrel `packages/colonizethis_logic/lib/colonizethis_logic.dart`, **when** static analysis inspects exported libraries, **then** no `src/ai/*` export is present; AI internals stay outside the broad logic export surface.
 - **Given** Dart source under `app/lib` except `app/lib/config/app_assets.dart` and `app/lib/config/app_constants.dart`, **when** static analysis inspects string literals, **then** direct asset path literals matching `assets/...` or `packages/<pkg>/assets/...` are rejected and diagnostics include file, line, and reason.
 - **Given** an app runtime asset reference in `app/lib`, **when** the code compiles, **then** the reference uses root-relative path constants in `app/lib/config/app_constants.dart` (re-exported from `app/lib/config/app_assets.dart`) and/or path builders such as `terrainTileAssetPath` in `app/lib/config/app_assets.dart`.
 - **Given** Dart source under `app/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical tech IDs are rejected outside allowlisted declaration/config and fixture paths.
@@ -86,6 +87,7 @@ Guard behavior:
 - Fails if `packages/colonizethis_ai/lib/**` imports `package:colonizethis_logic/colonizethis_logic.dart`.
 - Fails if `packages/colonizethis_ai/lib/**` imports logic from any path other than `ai_api.dart` or `order_suggestion_api.dart`.
 - Fails if `packages/colonizethis_logic/test/**` imports `package:colonizethis_ai/...`.
+- Fails if `packages/colonizethis_logic/lib/colonizethis_logic.dart` exports any `src/ai/*` library.
 - Fails if `app/lib/**` contains direct `assets/...` or `packages/<pkg>/assets/...` string literals outside `app/lib/config/app_assets.dart` and `app/lib/config/app_constants.dart`.
 - Fails if executable `StringLiteral` AST nodes equal to canonical tech IDs appear outside allowlisted tech declaration/config files and approved fixture/test-data paths.
 - Fails if executable `StringLiteral` AST nodes equal to canonical work target IDs appear outside `packages/colonizethis_logic/lib/src/constants.dart`, approved fixture/test-data paths, and an explicit temporary allowlist for generated/legacy surfaces pending migration.
