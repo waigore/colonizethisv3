@@ -362,17 +362,87 @@ RegionMapViewData _buildRegionViewData({
   Map<String, int>? resourceExtractionEffectiveUnitsByTile,
   Map<String, int>? resourceExtractionBlockedUnitsByTile,
 }) {
+  final setup = _buildRegionSetup(
+    game: game,
+    tileMap: tileMap,
+    topology: topology,
+    isOldWorld: isOldWorld,
+    greatPowerColorOverride: greatPowerColorOverride,
+  );
+  final cells = _buildCellViewDataList(
+    regionId: regionId,
+    tileMap: tileMap,
+    seaZoneIds: setup.seaZoneIds,
+    tileState: game.worldState.tileState,
+    ownerByProvinceId: setup.ownerByProvinceId,
+    provinceDisplayNameById: setup.provinceDisplayNameById,
+    visibilityByTile: visibilityByTile,
+    resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
+    resourceExtractionEffectiveUnitsByTile:
+        resourceExtractionEffectiveUnitsByTile,
+    resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
+  );
+  final overlays = _buildRegionOverlays(
+    game: game,
+    regionId: regionId,
+    isOldWorld: isOldWorld,
+    provinces: setup.provinces,
+    topology: topology,
+    tileMap: tileMap,
+    seaZoneIds: setup.seaZoneIds,
+    cells: cells,
+    warpLinks: warpLinks,
+  );
+
+  return RegionMapViewData(
+    regionId: regionId,
+    width: tileMap.width,
+    height: tileMap.height,
+    cellSize: cellSize,
+    cells: cells,
+    capitalMarkers: overlays.capitals,
+    portMarkers: overlays.ports,
+    factionColors: setup.factionColors,
+    greatPowerFactionIds: setup.greatPowerFactionIds,
+    terrainColors: setup.terrainColors,
+    unitMarkers: overlays.unitOverlayData.unitMarkers,
+    civilianTileMarkers: overlays.unitOverlayData.civilianTileMarkers,
+    fleetTileMarkers: overlays.fleetTileMarkers,
+    warpMarkers: overlays.warpMarkers,
+    townMarkers: overlays.towns,
+    provinceUnitPresenceByProvinceId: overlays.unitOverlayData.provincePresenceById,
+    provincePoliticalOwnerByPrefixedProvinceId:
+        setup.provincePoliticalOwnerByPrefixedProvinceId,
+    seaZoneDisplayNameByPrefixedId: game.worldState.seaZoneDisplayNameById,
+  );
+}
+
+({
+  Set<String> seaZoneIds,
+  List<Province> provinces,
+  Map<String, String> ownerByProvinceId,
+  Map<String, String> provinceDisplayNameById,
+  Map<String, String?> provincePoliticalOwnerByPrefixedProvinceId,
+  Map<String, Rgb> factionColors,
+  Set<String> greatPowerFactionIds,
+  Map<TerrainType, Rgb> terrainColors,
+})
+_buildRegionSetup({
+  required Game game,
+  required TileMapResult tileMap,
+  required MapTopology topology,
+  required bool isOldWorld,
+  Map<String, (int r, int g, int b)>? greatPowerColorOverride,
+}) {
   final seaZoneIds = {
     for (final n in topology.nodes)
       if (n.type == TopologyNodeType.seaZone) n.id,
   };
-
-  // Owner and province display name by province id.
-  final ownerByProvinceId = <String, String>{};
-  final provinceDisplayNameById = <String, String>{};
   final provinces = isOldWorld
       ? game.worldState.oldWorld.provinces
       : game.worldState.newWorld.provinces;
+  final ownerByProvinceId = <String, String>{};
+  final provinceDisplayNameById = <String, String>{};
   final provincePoliticalOwnerByPrefixedProvinceId = <String, String?>{};
   for (final p in provinces) {
     provincePoliticalOwnerByPrefixedProvinceId[p.id] = p.ownerId;
@@ -384,65 +454,67 @@ RegionMapViewData _buildRegionViewData({
     }
   }
 
-  // Collect faction ids by type for ownership colours.
-  final greatPowerIds = <String>[];
-  final minorNationIds = <String>[];
-  final tribeIds = <String>[];
-  for (final p in game.players) {
-    greatPowerIds.add(p.id);
-  }
-  final greatPowerFactionIds = greatPowerIds.toSet();
-  for (final m in game.minorNations) {
-    minorNationIds.add(m.id);
-  }
-  for (final t in game.tribes) {
-    tribeIds.add(t.id);
-  }
+  final greatPowerIds = game.players.map((p) => p.id).toList();
   final factionColors = factionOwnershipColorMap(
     greatPowerIds: greatPowerIds,
-    minorNationIds: minorNationIds,
-    tribeIds: tribeIds,
+    minorNationIds: game.minorNations.map((m) => m.id).toList(),
+    tribeIds: game.tribes.map((t) => t.id).toList(),
     greatPowerColorOverride: greatPowerColorOverride,
   );
 
-  // Terrain palette: same as base tile map PNG (shared terrainColorRgb).
   final terrainColors = <TerrainType, Rgb>{};
   if (tileMap.terrainGrid != null) {
     for (final row in tileMap.terrainGrid!) {
-      for (final t in row) {
-        if (t != null && !terrainColors.containsKey(t)) {
-          terrainColors[t] = terrainColorRgb[t]!;
+      for (final terrain in row) {
+        if (terrain != null && !terrainColors.containsKey(terrain)) {
+          terrainColors[terrain] = terrainColorRgb[terrain]!;
         }
       }
     }
   }
 
-  final tileState = game.worldState.tileState;
-  final cells = _buildCellViewDataList(
-    regionId: regionId,
-    tileMap: tileMap,
+  return (
     seaZoneIds: seaZoneIds,
-    tileState: tileState,
+    provinces: provinces,
     ownerByProvinceId: ownerByProvinceId,
     provinceDisplayNameById: provinceDisplayNameById,
-    visibilityByTile: visibilityByTile,
-    resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
-    resourceExtractionEffectiveUnitsByTile:
-        resourceExtractionEffectiveUnitsByTile,
-    resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
+    provincePoliticalOwnerByPrefixedProvinceId:
+        provincePoliticalOwnerByPrefixedProvinceId,
+    factionColors: factionColors,
+    greatPowerFactionIds: greatPowerIds.toSet(),
+    terrainColors: terrainColors,
   );
+}
 
-  // Capital markers.
+({
+  List<CapitalMarkerView> capitals,
+  List<PortMarkerView> ports,
+  List<TownMarkerView> towns,
+  List<WarpMarkerView> warpMarkers,
+  List<FleetTileMarkerView> fleetTileMarkers,
+  ({
+    List<UnitMarkerView> unitMarkers,
+    List<CivilianTileMarkerView> civilianTileMarkers,
+    Map<String, ProvinceUnitPresenceView> provincePresenceById
+  }) unitOverlayData,
+})
+_buildRegionOverlays({
+  required Game game,
+  required String regionId,
+  required bool isOldWorld,
+  required List<Province> provinces,
+  required MapTopology topology,
+  required TileMapResult tileMap,
+  required Set<String> seaZoneIds,
+  required List<CellViewData> cells,
+  List<WarpLink>? warpLinks,
+}) {
   final capitals = _buildCapitalMarkers(game: game, regionId: regionId);
-
-  // Province id → representative tile (x,y) for units overlay.
   final provinceToTile = _buildProvinceToRepresentativeTile(
     tileMap: tileMap,
     regionId: regionId,
     seaZoneIds: seaZoneIds,
   );
-
-  // Unit markers: one per unit, placed at province representative tile.
   final unitOverlayData = _buildUnitAndCivilianMarkerData(
     game: game,
     regionId: regionId,
@@ -451,24 +523,14 @@ RegionMapViewData _buildRegionViewData({
     cells: cells,
     provinceToTile: provinceToTile,
   );
-  final unitMarkers = unitOverlayData.unitMarkers;
-  final playerOwnedCivilianTileMarkers = unitOverlayData.civilianTileMarkers;
-  final provincePresenceById = unitOverlayData.provincePresenceById;
-
-  // Port markers from world state.
   final ports = _buildPortMarkers(
     regionId: regionId,
     portsByProvinceSeaboard: game.worldState.portsByProvinceSeaboard,
   );
-
-  // Determine coastal provinces from topology edges (P<->S connections).
-  // A province is coastal if it has an edge to any sea zone node in [seaZoneIds].
   final coastalProvinceIds = _buildCoastalProvinceIds(
     topology: topology,
     seaZoneIds: seaZoneIds,
   );
-
-  // Town markers: one per province with a town, at the town's tile position.
   final towns = _buildTownMarkers(
     game: game,
     regionId: regionId,
@@ -478,27 +540,20 @@ RegionMapViewData _buildRegionViewData({
     tileMap: tileMap,
     seaZoneIds: seaZoneIds,
   );
-
-  // Sea zone id → representative tile (x,y) for warp zone markers.
   final seaZoneToTile = _buildSeaZoneToRepresentativeTile(
     tileMap: tileMap,
     seaZoneIds: seaZoneIds,
   );
-
-  // Warp zone markers: one per warp link for this region.
   final warpMarkers = _buildWarpMarkers(
     regionId: regionId,
     seaZoneToTile: seaZoneToTile,
     warpLinks: warpLinks,
   );
-
-  // Ship presence counts by in-port province.
   _applyInPortFleetShipCounts(
     fleets: game.worldState.fleets,
     regionId: regionId,
-    provincePresenceById: provincePresenceById,
+    provincePresenceById: unitOverlayData.provincePresenceById,
   );
-
   final fleetTileMarkers = _buildFleetTileMarkersForRegion(
     game: game,
     regionId: regionId,
@@ -506,27 +561,13 @@ RegionMapViewData _buildRegionViewData({
     tileMap: tileMap,
     seaZoneIds: seaZoneIds,
   );
-
-  return RegionMapViewData(
-    regionId: regionId,
-    width: tileMap.width,
-    height: tileMap.height,
-    cellSize: cellSize,
-    cells: cells,
-    capitalMarkers: capitals,
-    portMarkers: ports,
-    factionColors: factionColors,
-    greatPowerFactionIds: greatPowerFactionIds,
-    terrainColors: terrainColors,
-    unitMarkers: unitMarkers,
-    civilianTileMarkers: playerOwnedCivilianTileMarkers,
-    fleetTileMarkers: fleetTileMarkers,
+  return (
+    capitals: capitals,
+    ports: ports,
+    towns: towns,
     warpMarkers: warpMarkers,
-    townMarkers: towns,
-    provinceUnitPresenceByProvinceId: provincePresenceById,
-    provincePoliticalOwnerByPrefixedProvinceId:
-        provincePoliticalOwnerByPrefixedProvinceId,
-    seaZoneDisplayNameByPrefixedId: game.worldState.seaZoneDisplayNameById,
+    fleetTileMarkers: fleetTileMarkers,
+    unitOverlayData: unitOverlayData,
   );
 }
 
