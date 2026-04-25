@@ -6,6 +6,7 @@ extension _CtRegionMapRenderOrchestrator on CtRegionMapComponent {
       visibilityMode: visibilityMode,
       cell: cell,
       fleetTileMarkers: region.fleetTileMarkers,
+      civilianTileMarkers: region.civilianTileMarkers,
     );
   }
 
