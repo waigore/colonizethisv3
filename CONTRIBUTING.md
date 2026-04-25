@@ -59,11 +59,11 @@ use the following recovery sequence from the repo root:
 flutter clean
 rm -rf app/build/macos
 rm -rf ~/Library/Developer/Xcode/DerivedData/*Runner*
+flutter pub get
 cd app/macos
 pod deintegrate
 pod install
 cd ..
-flutter pub get
 flutter run -d macos
 ```
 
@@ -71,6 +71,7 @@ Notes:
 
 - This issue is tied to stale/corrupted local incremental Swift metadata, not gameplay logic.
 - If your checkout has a non-default app target name, adjust the `DerivedData` cleanup glob accordingly.
+- Keep `flutter pub get` before `pod install`; `flutter clean` removes `Flutter-Generated.xcconfig`, and CocoaPods requires it.
 - Use this as the single recommended recovery path for intermittent `SwiftDriver.ModuleDependencyGraph.ReadError` in local macOS builds.
 
 ## Additional Resources
