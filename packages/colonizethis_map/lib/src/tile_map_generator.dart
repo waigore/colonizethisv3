@@ -425,7 +425,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     onLog?.call(
       'Pass 2–3 (organic): Continent seeds ${organic.$1.length}, land seeds ${organic.$2.length}',
     );
-    return organic;
+    return (organic.$4, organic.$1, organic.$2, organic.$3);
   }
 
   int _countLandCells(List<List<String>> grid) {

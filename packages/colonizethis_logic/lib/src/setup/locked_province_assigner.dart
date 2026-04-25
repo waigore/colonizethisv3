@@ -375,9 +375,8 @@ final class _LockedAssignerEngine {
       _traceDfs('capital_restart capGen=$capitalGeneration->${capitalGeneration + 1}');
       capitalGeneration++;
       owners.clear();
-      unassigned
-        ..clear()
-        ..addAll(land);
+      unassigned.clear();
+      unassigned.addAll(land);
       placementStack.clear();
       for (final f in growthOrder) {
         countPerFaction[f] = 0;
