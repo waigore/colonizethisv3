@@ -47,7 +47,11 @@ class CtGameSetup extends StatefulWidget {
   final ResolvedNamingConfig naming;
   final List<String> initialOrderedGpIds;
   final Map<String, String> initialLeaderVariantByGpId;
-  final void Function(List<String> orderedGpIdsForSlots, Map<String, String> leaderVariantByGpId) onStartGame;
+  final void Function(
+    List<String> orderedGpIdsForSlots,
+    Map<String, String> leaderVariantByGpId,
+  )
+  onStartGame;
   final VoidCallback onBack;
 
   @override
@@ -58,7 +62,8 @@ class _CtGameSetupState extends State<CtGameSetup> {
   late List<String> _orderedGpIdsBySlot;
   late Map<String, String> _leaderVariantByGpId;
 
-  List<String> get _allGpIds => widget.naming.greatPowers.map((g) => g.id).toList();
+  List<String> get _allGpIds =>
+      widget.naming.greatPowers.map((g) => g.id).toList();
 
   @override
   void initState() {
@@ -70,14 +75,17 @@ class _CtGameSetupState extends State<CtGameSetup> {
     } else if (_orderedGpIdsBySlot.every((id) => id.isEmpty)) {
       _orderedGpIdsBySlot = List.filled(_kNumSlots, '');
     }
-    _leaderVariantByGpId = Map<String, String>.from(widget.initialLeaderVariantByGpId);
+    _leaderVariantByGpId = Map<String, String>.from(
+      widget.initialLeaderVariantByGpId,
+    );
   }
 
   @override
   void didUpdateWidget(covariant CtGameSetup oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialOrderedGpIds != widget.initialOrderedGpIds ||
-        oldWidget.initialLeaderVariantByGpId != widget.initialLeaderVariantByGpId) {
+        oldWidget.initialLeaderVariantByGpId !=
+            widget.initialLeaderVariantByGpId) {
       final all = widget.naming.greatPowers.map((g) => g.id).toList();
       _orderedGpIdsBySlot = List<String>.from(widget.initialOrderedGpIds);
       if (_orderedGpIdsBySlot.length != _kNumSlots) {
@@ -85,7 +93,9 @@ class _CtGameSetupState extends State<CtGameSetup> {
       } else if (_orderedGpIdsBySlot.every((id) => id.isEmpty)) {
         _orderedGpIdsBySlot = List.filled(_kNumSlots, '');
       }
-      _leaderVariantByGpId = Map<String, String>.from(widget.initialLeaderVariantByGpId);
+      _leaderVariantByGpId = Map<String, String>.from(
+        widget.initialLeaderVariantByGpId,
+      );
     }
   }
 
@@ -203,8 +213,8 @@ class _CtGameSetupState extends State<CtGameSetup> {
       slotLabel,
       overflow: TextOverflow.ellipsis,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontWeight: slotIndex == 0 ? FontWeight.w600 : null,
-          ),
+        fontWeight: slotIndex == 0 ? FontWeight.w600 : null,
+      ),
     );
 
     final l10n = appL10n(context);
@@ -231,8 +241,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
                 if (newGp != null) {
                   setState(() {
                     _orderedGpIdsBySlot[slotIndex] = value;
-                    _leaderVariantByGpId[value] =
-                        newGp.defaultLeaderVariantId;
+                    _leaderVariantByGpId[value] = newGp.defaultLeaderVariantId;
                   });
                 }
               }
@@ -253,8 +262,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
                 : (variants.isNotEmpty ? variants.first.id : null),
             items: variants.map((v) => v.id).toList(),
             hint: l10n.gameSetup_selectLeader,
-            itemLabel: (id) =>
-                variants.firstWhere((v) => v.id == id).name,
+            itemLabel: (id) => variants.firstWhere((v) => v.id == id).name,
             onChanged: _isLoading
                 ? (_) {}
                 : (value) {
@@ -286,10 +294,7 @@ class _CtGameSetupState extends State<CtGameSetup> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 100,
-            child: labelWidget,
-          ),
+          SizedBox(width: 100, child: labelWidget),
           const SizedBox(width: 8),
           Expanded(flex: 1, child: nationDropdown),
           const SizedBox(width: 8),
@@ -322,20 +327,31 @@ List<String> _padOrTrimToSlots(List<String> list, List<String> allGpIds) {
   final result = <String>[];
   final used = <String>{};
   for (var i = 0; i < kNumSlots; i++) {
-    if (i < list.length && list[i].isNotEmpty && !used.contains(list[i])) {
-      result.add(list[i]);
-      used.add(list[i]);
-    } else {
-      for (final id in allGpIds) {
-        if (!used.contains(id)) {
-          result.add(id);
-          used.add(id);
-          break;
-        }
-      }
+    final candidate = i < list.length ? list[i] : '';
+    if (candidate.isNotEmpty && !used.contains(candidate)) {
+      result.add(candidate);
+      used.add(candidate);
+      continue;
+    }
+    final nextUnused = _firstUnusedGpId(allGpIds, used);
+    if (nextUnused == null) {
+      continue;
+    }
+    result.add(nextUnused);
+    used.add(nextUnused);
+  }
+  return result.length == kNumSlots
+      ? result
+      : allGpIds.take(kNumSlots).toList();
+}
+
+String? _firstUnusedGpId(List<String> allGpIds, Set<String> used) {
+  for (final id in allGpIds) {
+    if (!used.contains(id)) {
+      return id;
     }
   }
-  return result.length == kNumSlots ? result : allGpIds.take(kNumSlots).toList();
+  return null;
 }
 
 class _GameSetupMenuButton extends StatelessWidget {
