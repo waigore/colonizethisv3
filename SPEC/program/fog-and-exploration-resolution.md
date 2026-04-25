@@ -52,7 +52,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 
 1. For each **Great Power** player (including human): collect all provinces that player **fully owns** (`Province.ownerId == playerId`).
 2. For each such province P, from topology get all sea zones S with a P–S edge (same region).
-3. For each such sea zone S, get all tile keys whose cell belongs to S (from tile map / `tileKeysByRegionAndProvince` or equivalent; sea zone id is the second segment of the tile key for water cells).
+3. For each such sea zone S, get all tile keys whose cell belongs to S from `tileKeysByRegionAndProvince[regionId][regionId|seaZoneLocalId]` (canonical prefixed sea-zone bucket key).
 4. Set each of those tile keys to `fullyVisible` for that player in `WorldState.playerVisibilityByTile` (overrides unknown or fogged).
 5. **Runs twice:** (a) during Game Setup, immediately after initial visibility assignment, so players can see adjacent sea zones from turn 0; and (b) during End-of-turn after fog decay, so visibility remains consistent after ownership changes. Tribes and Minor Nations do not get this rule.
 
@@ -61,12 +61,12 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 1. For each Great Power player and each sea zone S in each region (from topology sea-zone nodes in that region):
    - **Skip** S if there exists a province P with a **P–S** edge to S (same regional topology slice) such that `P` is **fully owned** by that player.
    - **Skip** S if that player has **any fleet at sea** in S (`Fleet.seaZoneId == S`, `Fleet.regionId` matches S’s region, `fleet.ownerId == playerId`). Fleets **in port** do not count for this check.
-   - Otherwise, for each water tile key in S from `tileKeysByRegionAndProvince[regionId][seaZoneLocalId]`, set visibility to **fogged** unless the tile is **unknown** (leave unknown unchanged).
+   - Otherwise, for each water tile key in S from `tileKeysByRegionAndProvince[regionId][regionId|seaZoneLocalId]`, set visibility to **fogged** unless the tile is **unknown** (leave unknown unchanged).
 2. **Ordering:** This step runs after `applyFogDecay` and **before** `applyCoastalSeaZoneFullVisibility` so coastal waters return to full visibility when the player owns adjacent land.
 
 **Ship reveal** (Naval Movement phase):
 
-1. When fleet **successfully** enters sea zone S, set **coastal ring** land tiles (orthogonal neighbor to a water tile of S) of adjacent provinces in S’s region to `fullyVisible` for that player; **inland** land in those provinces stays unchanged (typically `unknown` in the New World until exploration). Set all **water** tile keys for S to `fullyVisible` for that player. Province land tiles are resolved from `tileKeysByRegionAndProvince[regionId]` using the **full** province id (`regionId|localId`) when present, else the **local** province id bucket (same dual-key rule as other map lookups).
+1. When fleet **successfully** enters sea zone S, set **coastal ring** land tiles (orthogonal neighbor to a water tile of S) of adjacent provinces in S’s region to `fullyVisible` for that player; **inland** land in those provinces stays unchanged (typically `unknown` in the New World until exploration). Set all **water** tile keys for S to `fullyVisible` for that player. Sea-zone water tiles are resolved only from canonical sea-zone bucket keys (`tileKeysByRegionAndProvince[regionId][regionId|seaZoneLocalId]`); local-id sea-zone bucket keys are legacy-save input only and must be migrated on load.
 2. Delegated to [naval-movement-resolution.md](naval-movement-resolution.md).
 
 **PlayerView construction:**
@@ -159,4 +159,4 @@ The following scenarios must be covered by tests (unit tests in colonizethis_log
 | **Human player** | Human is a Great Power and owns a coastal province P; S adjacent to P. | End-of-turn has run. | Human player's visibility for all tiles in S is `fullyVisible` (same rule as other GPs). |
 | **Tribes / minors** | Tribe or Minor Nation owns a coastal province (if scenario supports it). | End-of-turn has run. | Coastal sea zone full visibility is not applied for tribes/minors; their sea zone visibility is from other sources only (e.g. ship reveal) per GP-only rule. |
 
-Sea zone tile keys use the same format `regionId|provinceId|x|y` where the second segment is the **sea zone local id** for water cells (see [map-data.md](map-data.md), [world-model-identity.md](../game/world-model-identity.md)). Sim_scenarios fog assertions use `player`, `tileKey`, and `tileVisibility` per [sim-scenarios.md](sim-scenarios.md) § Fog/exploration assertions.
+Sea zone tile keys use the same format `regionId|provinceId|x|y` where the second segment is the **sea zone local id** for water cells; sea-zone tile buckets are keyed by canonical prefixed sea-zone id (`regionId|localSeaZoneId`) in `tileKeysByRegionAndProvince` (see [map-data.md](map-data.md), [world-model-identity.md](../game/world-model-identity.md)). Sim_scenarios fog assertions use `player`, `tileKey`, and `tileVisibility` per [sim-scenarios.md](sim-scenarios.md) § Fog/exploration assertions.

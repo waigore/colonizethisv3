@@ -26,13 +26,26 @@ final _log = packageLogger();
   return (x: x, y: y);
 }
 
-/// [tileKeysByRegionAndProvince] indexes sea zones by **local** sea id (raster cell id),
-/// while turn resolution may use a **combined** topology whose sea node ids are prefixed
-/// (`regionId|localSeaId`). Normalize for lookups only; fleet orders still use topology ids.
-String _localSeaZoneIdForTileIndex(String seaZoneTopologyId) =>
-    ProvinceId.isPrefixed(seaZoneTopologyId)
-    ? ProvinceId.localIdFrom(seaZoneTopologyId)
-    : seaZoneTopologyId;
+/// Canonical key used for sea-zone buckets in
+/// `tileKeysByRegionAndProvince[regionId][bucketKey]`.
+///
+/// Buckets must be keyed by prefixed sea-zone id (`regionId|localSeaId`) so
+/// topology ids from both per-region and combined topologies resolve through one
+/// contract.
+String canonicalSeaZoneTileBucketKey(
+  String regionId,
+  String seaZoneTopologyId,
+) {
+  if (ProvinceId.isPrefixed(seaZoneTopologyId)) {
+    final zoneRegion = ProvinceId.regionIdFrom(seaZoneTopologyId);
+    assert(
+      zoneRegion == regionId,
+      'Sea-zone bucket lookup region mismatch: expected $regionId, got $zoneRegion.',
+    );
+    return seaZoneTopologyId;
+  }
+  return ProvinceId.full(regionId, seaZoneTopologyId);
+}
 
 /// [tileKeysByRegionAndProvince] normally keys land provinces by full id
 /// (`regionId|localId`); some fixtures or legacy maps key by **local** id only.
@@ -396,7 +409,10 @@ Game applyNavalMovesAndShipReveal(
           regionId: destRegionId,
         );
         final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
-        final seaZoneKeyForTiles = _localSeaZoneIdForTileIndex(destZoneId);
+        final seaZoneKeyForTiles = canonicalSeaZoneTileBucketKey(
+          destRegionId,
+          destZoneId,
+        );
         final seaWaterKeys = game
             .worldState
             .tileKeysByRegionAndProvince[destRegionId]?[seaZoneKeyForTiles];
@@ -457,7 +473,10 @@ Set<String> coastalLandTileKeysFromNavalPresenceAtSea(
       destZoneId,
       regionId: destRegionId,
     );
-    final seaZoneKeyForTiles = _localSeaZoneIdForTileIndex(destZoneId);
+    final seaZoneKeyForTiles = canonicalSeaZoneTileBucketKey(
+      destRegionId,
+      destZoneId,
+    );
     final seaWaterKeys =
         ws.tileKeysByRegionAndProvince[destRegionId]?[seaZoneKeyForTiles] ??
         const <String>[];
