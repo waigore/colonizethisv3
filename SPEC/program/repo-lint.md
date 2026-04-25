@@ -31,6 +31,7 @@ Grandfather YAMLs named in the table below are **legacy** until removed; **do no
 | `tool/check_function_size.dart` | Function measured-line threshold (`SPEC/program/function-size.md`); rule `repo.function_size` |
 | `tool/check_part_unit_size.dart` | Dart `part` fragment physical line limit (`SPEC/program/part-unit-size.md`); rule `repo.part_unit_size` |
 | `tool/check_no_flame_in_widgets.dart` | Disallow direct `package:flame/*` **import** and **export** lines (single- or double-quoted URI) under `app/lib/widgets/**`; rule `repo.no_flame_in_widgets` |
+| `tool/check_no_screen_in_game_widgets.dart` | Disallow `*_screen.dart` files under `app/lib/features/game/widgets/**`; rule `repo.no_screen_in_game_widgets` |
 | `tool/check_land_province_bucket_keys.dart` | For guarded explore/fog/news paths, disallow local-only land-province tile-bucket lookups (`tileKeysByRegionAndProvince[region]?[localId]`); require canonical full-id buckets only; rule `repo.land_province_bucket_keys` |
 
 ## Rule IDs and groups
@@ -76,3 +77,4 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 - Given the repository root as cwd, when CI runs `dart run tool/ct_repo_lint.dart` with the workflow env, then all manifest rules applicable to that job execute and failures surface with `rule_id` in the orchestrator banner.
 - Given a contributor adds a convention, when they follow CONTRIBUTING and this doc, then they register the rule in the manifest rather than adding a new standalone Quality workflow step for the same concern.
 - Given the [Policy: no violation allowlists](#policy-no-violation-allowlists-repo-lint) section, when implementation work completes for a legacy checker still loading grandfather YAML, then that checker, its tests, and the per-rule SPEC no longer document or depend on violation allowlists.
+- Given app game feature code, when `dart run tool/ct_repo_lint.dart` runs rule `repo.no_screen_in_game_widgets`, then no file matching `*_screen.dart` exists under `app/lib/features/game/widgets/**`.
