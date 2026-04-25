@@ -108,6 +108,7 @@ void main() {
     AppEventBus? bus,
     MapTopology topology = const MapTopology(),
     Orders draftOrders = const Orders(),
+    String? locationScopeKey,
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     return MaterialApp(
@@ -118,6 +119,7 @@ void main() {
           bus: resolvedBus,
           topology: topology,
           draftOrders: draftOrders,
+          locationScopeKey: locationScopeKey,
         ),
       ),
     );
@@ -2594,6 +2596,79 @@ void main() {
 
       expect(find.text('No naval units'), findsOneWidget);
     });
+
+    testWidgets(
+      'AC: Marker-scoped capital port view shows Home Fleet and not empty state',
+      (WidgetTester tester) async {
+        const humanId = 'gp_marker_scope';
+        const capitalPrefixedId = 'oldWorld|p1';
+        final homeId = homeFleetIdFor(humanId);
+        final markerScope = 'port:oldWorld|p1';
+
+        final markerScopeGame = Game(
+          id: 'g_marker_scope',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: capitalPrefixedId,
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Capital Port',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: homeId,
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: capitalPrefixedId,
+                ships: const [
+                  ShipInstance(id: 'home_ship_1', typeId: 'carrack'),
+                ],
+              ),
+            ],
+            tileKeysByRegionAndProvince: const {
+              'oldWorld': {
+                capitalPrefixedId: ['oldWorld|p1|0|0'],
+              },
+            },
+          ),
+          players: const [
+            Player(
+              id: humanId,
+              displayName: 'Scope Test',
+              isHuman: true,
+              capitalProvinceId: capitalPrefixedId,
+              capitalTile: CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: capitalPrefixedId,
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          buildPanel(
+            game: markerScopeGame,
+            humanPlayerId: humanId,
+            locationScopeKey: markerScope,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.widgetWithText(ExpansionTile, 'Home Fleet'),
+          findsOneWidget,
+        );
+        expect(find.text('No naval units'), findsNothing);
+      },
+    );
 
     testWidgets('AC: Home Fleet collapsed row does not show Move action', (
       WidgetTester tester,
