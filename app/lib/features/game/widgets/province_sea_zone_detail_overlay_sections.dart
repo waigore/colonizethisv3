@@ -1,6 +1,7 @@
 part of 'province_sea_zone_detail_overlay.dart';
 
 const String _kProspectWithExplorerTooltip = 'Prospect with explorer';
+const String _kExploreWithExplorerTooltip = 'Explore with explorer';
 
 /// Supplementary GDD label for [roadLevel] on land tiles (issue #1537 / extraction-and-improvements § Transport Level).
 @visibleForTesting
@@ -285,6 +286,9 @@ Widget _buildTileSection({
   required PlayerView playerView,
   required int civilianCount,
   String? selectedTileKey,
+  required bool showExploreActionIcon,
+  required bool exploreActionEnabled,
+  VoidCallback? onExploreWithExplorerTap,
   required bool showProspectActionIcon,
   required bool prospectActionEnabled,
   VoidCallback? onProspectWithExplorerTap,
@@ -352,6 +356,19 @@ Widget _buildTileSection({
       Expanded(
         child: Text(l10n.provinceOverlay_tileProspected(prospectedLabel)),
       ),
+      if (showExploreActionIcon)
+        IconButton(
+          tooltip: _kExploreWithExplorerTooltip,
+          onPressed: exploreActionEnabled ? onExploreWithExplorerTap : null,
+          icon: Icon(
+            Icons.explore,
+            color: exploreActionEnabled
+                ? null
+                : Theme.of(context).disabledColor.withValues(alpha: 0.65),
+          ),
+          iconSize: 18,
+          visualDensity: VisualDensity.compact,
+        ),
       if (showProspectActionIcon)
         IconButton(
           tooltip: _kProspectWithExplorerTooltip,

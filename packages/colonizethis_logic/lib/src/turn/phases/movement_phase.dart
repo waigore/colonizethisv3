@@ -149,6 +149,7 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
         playerId: playerId,
         unit: unit,
         destProvinceFullId: destination,
+        preferredTargetTileKey: workOrder.targetTileKey,
         view: view,
         unitsById: unitById,
         diplomaticOrders: diplomatic,
