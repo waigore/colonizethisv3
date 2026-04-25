@@ -26,6 +26,7 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.showProvinceNamesLayer,
     required this.humanPlayerId,
     required this.playerView,
+    required this.exploreEligibleTileKeyCache,
     required this.centerOnTileKey,
     required this.validTileKeysForSelection,
     required this.onTileSelectedForWork,
@@ -49,6 +50,7 @@ class GameMapCanvasStack extends ConsumerWidget {
   final bool showProvinceNamesLayer;
   final String humanPlayerId;
   final PlayerView playerView;
+  final Set<String> exploreEligibleTileKeyCache;
   final String? centerOnTileKey;
   final Set<String>? validTileKeysForSelection;
 
@@ -124,6 +126,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   region: region,
                   humanPlayerId: humanPlayerId,
                   playerView: playerView,
+                  exploreEligibleTileKeyCache: exploreEligibleTileKeyCache,
                 ),
             ],
           ),
@@ -161,9 +164,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                             backgroundColor: Colors.white,
                             foregroundColor: Colors.black,
                             minimumSize: const Size(0, 34),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           child: Text(
