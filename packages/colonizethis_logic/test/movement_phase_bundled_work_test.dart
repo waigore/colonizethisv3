@@ -260,5 +260,80 @@ void main() {
         expect(unit.tileKey, destTileVisible);
       },
     );
+
+    test('implicit bundled move prefers targetTileKey when it is legal', () {
+      const ow = 'oldWorld';
+      const p1 = '$ow|p1';
+      const p2 = '$ow|p2';
+      const fromTile = '$p1|0|0';
+      const firstSortedLegal = '$p2|0|0';
+      const preferredTargetTile = '$p2|1|0';
+
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.movement, turnNumber: 2),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: p1, regionId: ow, ownerId: 'gp1'),
+              Province(id: p2, regionId: ow, ownerId: 'gp1'),
+            ],
+            units: [
+              Unit(
+                id: 'builder1',
+                type: 'Builder',
+                ownerId: 'gp1',
+                locationProvinceId: p1,
+                tileKey: fromTile,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              p1: [fromTile],
+              p2: [firstSortedLegal, preferredTargetTile],
+            },
+          },
+          playerVisibilityByTile: const {
+            'gp1': {
+              fromTile: 'fullyVisible',
+              firstSortedLegal: 'fullyVisible',
+              preferredTargetTile: 'fullyVisible',
+            },
+          },
+          resourceByTileKey: const {preferredTargetTile: 'grain'},
+        ),
+        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+      );
+      final orders = const Orders(
+        workOrdersByPlayerId: {
+          'gp1': [
+            WorkOrder(
+              unitId: 'builder1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: preferredTargetTile,
+            ),
+          ],
+        },
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: [],
+      );
+
+      final moved = applyImplicitBundledCivilianWorkOrderMoves(
+        game,
+        topology,
+        orders,
+      );
+
+      final unit = moved.worldState.oldWorld.units.single;
+      expect(unit.locationProvinceId, p2);
+      expect(unit.tileKey, preferredTargetTile);
+    });
   });
 }

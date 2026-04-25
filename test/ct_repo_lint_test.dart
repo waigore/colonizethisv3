@@ -22,6 +22,7 @@ void main() {
       expect(ids, contains('repo.function_size'));
       expect(ids, contains('repo.part_unit_size'));
       expect(ids, contains('repo.no_flame_in_widgets'));
+      expect(ids, contains('repo.land_province_bucket_keys'));
       expect(ids, contains('repo.app_hardcoded_ui_strings'));
       expect(
         rules

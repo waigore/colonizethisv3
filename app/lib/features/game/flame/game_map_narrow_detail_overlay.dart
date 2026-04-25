@@ -19,6 +19,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
     required this.region,
     required this.humanPlayerId,
     required this.playerView,
+    required this.exploreEligibleTileKeyCache,
     super.key,
   });
 
@@ -26,6 +27,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
   final RegionMapViewData region;
   final String humanPlayerId;
   final PlayerView playerView;
+  final Set<String> exploreEligibleTileKeyCache;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -54,8 +56,18 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
       mapData = null;
     }
     final topology = mapData?.combinedTopology;
+    final hiddenState = GameMapAreaStateLogic.kHiddenExplorerInlineActionState;
+    final exploreState = panel.selectedTileKey == null
+        ? hiddenState
+        : GameMapAreaStateLogic.provinceExploreActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: panel.selectedTileKey!,
+            selectedRegion: region,
+            cachedExploreEligibleTileKeys: exploreEligibleTileKeyCache,
+          );
     final prospectState = panel.selectedTileKey == null
-        ? (showIcon: false, enabled: false, hasExplorerUnits: false)
+        ? hiddenState
         : GameMapAreaStateLogic.provinceProspectActionState(
             game: game,
             humanPlayerId: humanPlayerId,
@@ -82,6 +94,34 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
             ref.read(mapProvincePanelProvider.notifier).closeOverlay(),
         showProspectActionIcon: prospectState.showIcon,
         prospectActionEnabled: prospectState.enabled,
+        showExploreActionIcon: exploreState.showIcon,
+        exploreActionEnabled: exploreState.enabled,
+        onExploreWithExplorerTap:
+            exploreState.enabled && panel.selectedTileKey != null
+            ? () {
+                final selectedTileKey = panel.selectedTileKey!;
+                final revalidatedState =
+                    GameMapAreaStateLogic.provinceExploreActionState(
+                      game: game,
+                      humanPlayerId: humanPlayerId,
+                      selectedTileKey: selectedTileKey,
+                      selectedRegion: region,
+                      cachedExploreEligibleTileKeys:
+                          exploreEligibleTileKeyCache,
+                    );
+                if (!revalidatedState.enabled) {
+                  return;
+                }
+                ref
+                    .read(appEventBusProvider)
+                    .emit(
+                      ct_models.OpenCivilianUnitsPanelEvent(
+                        explorerOnly: true,
+                        exploreShortcutTargetTileKey: selectedTileKey,
+                      ),
+                    );
+              }
+            : null,
         onProspectWithExplorerTap:
             prospectState.enabled && panel.selectedTileKey != null
             ? () {
