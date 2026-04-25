@@ -1,7 +1,7 @@
 # Part-Unit Size (repo lint)
 
 **SPEC/program** — repository lint gate for oversized Dart **`part` fragment**
-files in logic runtime code.
+files in repo-lint domain runtime code.
 
 **Umbrella policy:** `SPEC/program/repo-lint.md` forbids violation allowlists for
 any `repo.*` rule. This checker uses a single universal physical-line threshold
@@ -15,8 +15,7 @@ only (no keyed exemptions).
 
 ## Scan scope
 
-The checker scans `collectRepoLintDomainDartFiles` and then scopes to
-`packages/colonizethis_logic/lib/src/**`.
+The checker scans all files returned by `collectRepoLintDomainDartFiles`.
 
 Generated and test files stay excluded by the shared repo-lint scan contract.
 
@@ -38,9 +37,10 @@ leading `part of` directive are out of scope for this rule.
 
 ## Acceptance criteria
 
-- Given a Dart file under `packages/colonizethis_logic/lib/src/` that is not a
-  part fragment file per the definition above, when the checker runs, then the
-  checker does not evaluate that file for this rule.
+- Given the System scans a Dart file returned by
+  `collectRepoLintDomainDartFiles` and that file is not a part fragment file per
+  the definition above, when the checker runs, then the checker does not
+  evaluate that file for this rule.
 - Given a part fragment file whose physical line count is less than or equal to
   1000, when the checker runs, then the checker does not fail for that file.
 - Given a part fragment file whose physical line count is greater than 1000,
