@@ -12,8 +12,8 @@ import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../providers/production_allocation_provider.dart';
 import '../../../widgets/ct_game_feature_screen_shell.dart';
-import 'production_commodity_breakdown_dialog.dart';
-import 'production_panel.dart';
+import '../widgets/production_commodity_breakdown_dialog.dart';
+import '../widgets/production_panel.dart';
 
 class ProductionScreen extends ConsumerWidget {
   const ProductionScreen({

@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/tech_tree_widget.dart';
-import 'package:colonizethis_app/features/game/widgets/technology_screen.dart';
+import 'package:colonizethis_app/features/game/screens/technology_screen.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
@@ -230,10 +230,7 @@ void main() {
       expect(find.textContaining('Gathering'), findsWidgets);
       expect(find.textContaining('RP'), findsOneWidget);
       expect(find.text('Effects'), findsOneWidget);
-      expect(
-        find.textContaining('Timber extraction cap'),
-        findsWidgets,
-      );
+      expect(find.textContaining('Timber extraction cap'), findsWidgets);
     },
   );
 

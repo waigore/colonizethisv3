@@ -1,5 +1,5 @@
 // formatDiplomaticEvent — all [DiplomaticEventType] branches. SPEC/ui/diplomacy-panel.md.
-import 'package:colonizethis_app/features/game/widgets/diplomacy_detail_screen.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy_detail_screen.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -20,18 +20,8 @@ void main() {
       ),
       turnTimeMapping: TurnTimeMapping.gdd01,
       players: const [
-        Player(
-          id: humanId,
-          displayName: 'England',
-          isHuman: true,
-          treasury: 0,
-        ),
-        Player(
-          id: otherId,
-          displayName: 'France',
-          isHuman: false,
-          treasury: 0,
-        ),
+        Player(id: humanId, displayName: 'England', isHuman: true, treasury: 0),
+        Player(id: otherId, displayName: 'France', isHuman: false, treasury: 0),
       ],
       diplomacyRelations: [
         DiplomacyRelation(
@@ -103,10 +93,7 @@ void main() {
   test('overtureAccepted with stage', () {
     final g = minimalGame();
     final s = formatDiplomaticEvent(
-      ev(
-        DiplomaticEventType.overtureAccepted,
-        stage: OvertureStage.embassy,
-      ),
+      ev(DiplomaticEventType.overtureAccepted, stage: OvertureStage.embassy),
       g,
       humanId,
     );
@@ -177,10 +164,7 @@ void main() {
     final g = minimalGame();
     expect(
       formatDiplomaticEvent(
-        ev(
-          DiplomaticEventType.subsidyCancelled,
-          reason: 'treasury',
-        ),
+        ev(DiplomaticEventType.subsidyCancelled, reason: 'treasury'),
         g,
         humanId,
       ),
