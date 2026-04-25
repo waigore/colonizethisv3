@@ -33,7 +33,7 @@ int f() {
       return 'int giant() {\n$body\n  return $sum;\n}\n';
     }
 
-    test('fails when non-allowlisted function exceeds threshold', () {
+    test('fails when function exceeds threshold', () {
       final temp = Directory.systemTemp.createTempSync('fn-size-');
       try {
         final libDir = Directory(
@@ -56,7 +56,7 @@ int f() {
       }
     });
 
-    test('fails even when legacy allowlist yaml is present', () {
+    test('fails even when legacy waiver yaml is present', () {
       final temp = Directory.systemTemp.createTempSync('fn-size-legacy-');
       try {
         final libDir = Directory(
@@ -76,12 +76,15 @@ allowed_over_20:
     max_measured_lines: 220
 ''');
 
+        final errors = <String>[];
         final exitCode = runCheckFunctionSize(
           temp.path,
           info: (_) {},
-          err: (_) {},
+          err: errors.add,
         );
         expect(exitCode, 1);
+        expect(errors.join('\n'), contains('big.dart'));
+        expect(errors.join('\n'), contains('giant'));
       } finally {
         temp.deleteSync(recursive: true);
       }
