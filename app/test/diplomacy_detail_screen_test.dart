@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/features/game/widgets/diplomacy_detail_screen.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
