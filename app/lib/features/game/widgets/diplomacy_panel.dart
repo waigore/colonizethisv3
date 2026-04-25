@@ -313,6 +313,71 @@ class _DiplomacyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: onTap,
+        child: CtPanel(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _buildInfoColumn(context)),
+              _buildActionButtons(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoColumn(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildHeaderRow(context),
+        const SizedBox(height: 4),
+        Text(
+          _relationSummary(context),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        ..._buildOptionalStatusLines(context),
+      ],
+    );
+  }
+
+  Widget _buildHeaderRow(BuildContext context) {
+    final l10n = appL10n(context);
+    return Row(
+      children: [
+        Text(
+          data.displayName,
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(width: 8),
+        _kindChip(context, data.kind),
+        if (data.powerScore != null) ...[
+          const SizedBox(width: 8),
+          Text(
+            l10n.diplomacy_panel_powerScore(data.powerScore!),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color:
+                  data.playerPowerScore != null &&
+                      data.powerScore! > data.playerPowerScore!
+                  ? Colors.red
+                  : Colors.green,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _relationSummary(BuildContext context) {
     final l10n = appL10n(context);
     final rel = data.relation;
     final stateLabel = rel == null
@@ -327,118 +392,77 @@ class _DiplomacyRow extends StatelessWidget {
     final overtureLabel = data.overture == null
         ? ''
         : ' · ${_overtureStageLabel(data.overture!.stage)}';
+    if (relationStateLabel.isEmpty) {
+      return '$stateLabel$overtureLabel';
+    }
+    return '$stateLabel · $relationStateLabel$overtureLabel';
+  }
 
-    final content = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    data.displayName,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _kindChip(context, data.kind),
-                  if (data.powerScore != null) ...[
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.diplomacy_panel_powerScore(data.powerScore!),
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color:
-                            data.playerPowerScore != null &&
-                                data.powerScore! > data.playerPowerScore!
-                            ? Colors.red
-                            : Colors.green,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                relationStateLabel.isEmpty
-                    ? '$stateLabel$overtureLabel'
-                    : '$stateLabel · $relationStateLabel$overtureLabel',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              if (data.activeSubsidyPerTurn != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  l10n.diplomacy_panel_outgoingSubsidy(
-                    data.activeSubsidyPerTurn!,
-                    data.displayName,
-                  ),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
-                ),
-              ],
-              if (data.pendingGrantAmount != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  l10n.diplomacy_panel_pendingGrant(data.pendingGrantAmount!),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: Theme.of(context).colorScheme.tertiary,
-                  ),
-                ),
-              ],
-              if (data.pendingSubsidyAmount != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  l10n.diplomacy_panel_pendingSubsidy(
-                    data.pendingSubsidyAmount!,
-                  ),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: Theme.of(context).colorScheme.tertiary,
-                  ),
-                ),
-              ],
-            ],
+  List<Widget> _buildOptionalStatusLines(BuildContext context) {
+    final l10n = appL10n(context);
+    final lines = <Widget>[];
+    if (data.activeSubsidyPerTurn != null) {
+      lines.addAll([
+        const SizedBox(height: 4),
+        Text(
+          l10n.diplomacy_panel_outgoingSubsidy(
+            data.activeSubsidyPerTurn!,
+            data.displayName,
+          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+        ),
+      ]);
+    }
+    if (data.pendingGrantAmount != null) {
+      lines.addAll([
+        const SizedBox(height: 4),
+        Text(
+          l10n.diplomacy_panel_pendingGrant(data.pendingGrantAmount!),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontStyle: FontStyle.italic,
+            color: Theme.of(context).colorScheme.tertiary,
           ),
         ),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            for (final order in data.actions)
-              if (!data.pendingOrderTypes.contains(order.type))
-                _ActionButton(order: order, onPressed: () => onAction(order)),
-            for (final orderType in data.pendingOrderTypes)
-              _ActionButton(
-                order: DiplomaticOrder(
-                  type: orderType,
-                  targetFactionId: data.factionId,
-                ),
-                onPressed: () {},
-                isPending: true,
-                onCancel: () => onAction(
-                  DiplomaticOrder(
-                    type: orderType,
-                    targetFactionId: data.factionId,
-                  ),
-                ),
-              ),
-          ],
+      ]);
+    }
+    if (data.pendingSubsidyAmount != null) {
+      lines.addAll([
+        const SizedBox(height: 4),
+        Text(
+          l10n.diplomacy_panel_pendingSubsidy(data.pendingSubsidyAmount!),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontStyle: FontStyle.italic,
+            color: Theme.of(context).colorScheme.tertiary,
+          ),
         ),
-      ],
-    );
+      ]);
+    }
+    return lines;
+  }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: onTap,
-        child: CtPanel(padding: const EdgeInsets.all(12), child: content),
-      ),
+  Widget _buildActionButtons() {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final order in data.actions)
+          if (!data.pendingOrderTypes.contains(order.type))
+            _ActionButton(order: order, onPressed: () => onAction(order)),
+        for (final orderType in data.pendingOrderTypes)
+          _ActionButton(
+            order: DiplomaticOrder(
+              type: orderType,
+              targetFactionId: data.factionId,
+            ),
+            onPressed: () {},
+            isPending: true,
+            onCancel: () => onAction(
+              DiplomaticOrder(type: orderType, targetFactionId: data.factionId),
+            ),
+          ),
+      ],
     );
   }
 
