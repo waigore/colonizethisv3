@@ -45,6 +45,34 @@ If your GitHub role **cannot add labels**, state in the PR description that you 
 
 Repository-wide checks (beyond `dart analyze` / `custom_lint`) run through **`dart run tool/ct_repo_lint.dart`**, driven by **`tool/ct_repo_lint_manifest.yaml`**. When adding a new convention for CI, register a **stable `rule_id`** there and document it in **[SPEC/program/repo-lint.md](./SPEC/program/repo-lint.md)**—avoid new standalone `tool/check_*.dart` workflow steps without updating that manifest.
 
+## macOS Flutter build troubleshooting: Swift priors ReadError
+
+If `flutter run -d macos` or `flutter build macos` intermittently fails while compiling CocoaPods plugins with output that includes:
+
+- `SwiftDriver.ModuleDependencyGraph.ReadError error 14`
+- `Could not read priors, will not do cross-module incremental builds`
+- references to `*-primary.priors` under `app/build/macos/Build/Intermediates.noindex/...`
+
+use the following recovery sequence from the repo root:
+
+```bash
+flutter clean
+rm -rf app/build/macos
+rm -rf ~/Library/Developer/Xcode/DerivedData/*Runner*
+cd app/macos
+pod deintegrate
+pod install
+cd ..
+flutter pub get
+flutter run -d macos
+```
+
+Notes:
+
+- This issue is tied to stale/corrupted local incremental Swift metadata, not gameplay logic.
+- If your checkout has a non-default app target name, adjust the `DerivedData` cleanup glob accordingly.
+- Use this as the single recommended recovery path for intermittent `SwiftDriver.ModuleDependencyGraph.ReadError` in local macOS builds.
+
 ## Additional Resources
 
 - [AGENTS.md](./AGENTS.md) — Agent instructions and cursor rules for this project
