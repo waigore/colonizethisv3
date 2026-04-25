@@ -204,7 +204,6 @@ class WorldState {
     final newWorld = RegionData.fromJson(
       Map<String, dynamic>.from(json['newWorld'] as Map<Object?, Object?>),
     );
-
     final localProvinceIdsByRegion = <String, Set<String>>{
       'oldWorld': {
         for (final province in oldWorld.provinces)
@@ -215,7 +214,6 @@ class WorldState {
           ProvinceId.localIdFrom(province.id),
       },
     };
-
     final tileKeysRaw = json['tileKeysByRegionAndProvince'];
     final tileKeysByRegionAndProvince = <String, Map<String, List<String>>>{};
     if (tileKeysRaw is Map<Object?, Object?>) {

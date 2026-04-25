@@ -267,7 +267,10 @@ bool _playerHasFleetAtSeaInZone(
   String regionId,
   String seaZoneId,
 ) {
-  final expectedSeaZoneId = canonicalSeaZoneTileBucketKey(regionId, seaZoneId);
+  final expectedSeaZoneId = canonicalSeaZoneTileBucketKey(
+    regionId,
+    seaZoneId,
+  );
   for (final f in game.worldState.fleets) {
     if (f.ownerId != playerId) continue;
     if (!f.isAtSea || f.seaZoneId == null) continue;

@@ -13,6 +13,7 @@ import '../turn/turn_seed_constants.dart';
 import 'naval.dart';
 import 'player_view.dart';
 import 'province_lookup.dart';
+import 'sea_zone_identity.dart';
 import 'topology_helpers.dart';
 
 final _log = packageLogger();
@@ -35,17 +36,7 @@ final _log = packageLogger();
 String canonicalSeaZoneTileBucketKey(
   String regionId,
   String seaZoneTopologyId,
-) {
-  if (ProvinceId.isPrefixed(seaZoneTopologyId)) {
-    final zoneRegion = ProvinceId.regionIdFrom(seaZoneTopologyId);
-    assert(
-      zoneRegion == regionId,
-      'Sea-zone bucket lookup region mismatch: expected $regionId, got $zoneRegion.',
-    );
-    return seaZoneTopologyId;
-  }
-  return ProvinceId.full(regionId, seaZoneTopologyId);
-}
+) => canonicalizeSeaZoneId(regionId: regionId, seaZoneId: seaZoneTopologyId);
 
 /// [tileKeysByRegionAndProvince] normally keys land provinces by full id
 /// (`regionId|localId`); some fixtures or legacy maps key by **local** id only.

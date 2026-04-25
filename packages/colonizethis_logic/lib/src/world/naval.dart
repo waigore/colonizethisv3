@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'sea_zone_identity.dart';
 import 'topology_helpers.dart';
 
 /// Naval movement helpers. SPEC/program/naval-movement-resolution.md.
@@ -294,17 +295,15 @@ bool _topologySeaEndpointMatches(
   String seaZoneId,
   String effectiveRegion,
 ) {
-  if (edgeEndpoint == seaZoneId) return true;
-  if (ProvinceId.isPrefixed(seaZoneId)) {
-    if (!ProvinceId.isPrefixed(edgeEndpoint)) {
-      return ProvinceId.regionIdFrom(seaZoneId) == effectiveRegion &&
-          ProvinceId.localIdFrom(seaZoneId) == edgeEndpoint;
-    }
-  } else if (ProvinceId.isPrefixed(edgeEndpoint)) {
-    return ProvinceId.regionIdFrom(edgeEndpoint) == effectiveRegion &&
-        ProvinceId.localIdFrom(edgeEndpoint) == seaZoneId;
-  }
-  return false;
+  final canonicalSeaZoneId = canonicalizeSeaZoneId(
+    regionId: effectiveRegion,
+    seaZoneId: seaZoneId,
+  );
+  final canonicalEdgeEndpoint = canonicalizeSeaZoneId(
+    regionId: effectiveRegion,
+    seaZoneId: edgeEndpoint,
+  );
+  return canonicalSeaZoneId == canonicalEdgeEndpoint;
 }
 
 /// Province ids that share an edge with [seaZoneId] (coastal provinces), optionally
@@ -348,13 +347,14 @@ Set<String> provinceIdsAdjacentToSeaZone(
 String? regionIdForSeaZone(MapTopology topology, String seaZoneId) {
   final direct = topology.nodes.where((n) => n.id == seaZoneId).toList();
   if (direct.isNotEmpty) return direct.first.regionId;
-  if (ProvinceId.isPrefixed(seaZoneId)) return null;
+  if (isCanonicalSeaZoneId(seaZoneId)) return null;
   final localMatches = topology.nodes
       .where(
         (n) =>
             n.type == TopologyNodeType.seaZone &&
-            ProvinceId.isPrefixed(n.id) &&
-            ProvinceId.localIdFrom(n.id) == seaZoneId,
+            isCanonicalSeaZoneId(n.id) &&
+            canonicalizeSeaZoneId(regionId: n.regionId, seaZoneId: seaZoneId) ==
+                n.id,
       )
       .toList();
   if (localMatches.length == 1) return localMatches.first.regionId;
