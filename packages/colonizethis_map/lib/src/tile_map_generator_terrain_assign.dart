@@ -575,35 +575,46 @@ class _TileMapGenTerrainResource {
     List<TerrainType> allowed,
     Random rnd,
   ) {
-    const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
     for (final (x, y) in component) {
       if (terrainGrid[y][x] != null) continue;
-      final counts = <TerrainType, int>{};
-      for (final (dx, dy) in directions) {
-        final nx = x + dx;
-        final ny = y + dy;
-        if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
-          continue;
-        }
-        if (!component.contains((nx, ny))) continue;
-        final t = terrainGrid[ny][nx];
-        if (t == null || t == TerrainType.mountain) continue;
-        counts[t] = (counts[t] ?? 0) + 1;
-      }
-      if (counts.isNotEmpty) {
-        TerrainType best = counts.keys.first;
-        var bestCount = counts[best]!;
-        for (final entry in counts.entries) {
-          if (entry.value > bestCount) {
-            best = entry.key;
-            bestCount = entry.value;
-          }
-        }
-        terrainGrid[y][x] = best;
-      } else {
-        terrainGrid[y][x] = allowed[rnd.nextInt(allowed.length)];
-      }
+      final counts = _neighborNonMountainCounts(terrainGrid, component, x, y);
+      terrainGrid[y][x] = counts.isEmpty
+          ? allowed[rnd.nextInt(allowed.length)]
+          : _mostFrequentTerrain(counts);
     }
+  }
+
+  Map<TerrainType, int> _neighborNonMountainCounts(
+    List<List<TerrainType?>> terrainGrid,
+    Set<(int x, int y)> component,
+    int x,
+    int y,
+  ) {
+    const directions = <(int dx, int dy)>[(0, -1), (1, 0), (0, 1), (-1, 0)];
+    final counts = <TerrainType, int>{};
+    for (final (dx, dy) in directions) {
+      final nx = x + dx;
+      final ny = y + dy;
+      if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
+        continue;
+      }
+      if (!component.contains((nx, ny))) continue;
+      final terrain = terrainGrid[ny][nx];
+      if (terrain == null || terrain == TerrainType.mountain) continue;
+      counts[terrain] = (counts[terrain] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  TerrainType _mostFrequentTerrain(Map<TerrainType, int> counts) {
+    TerrainType best = counts.keys.first;
+    var bestCount = counts[best]!;
+    for (final entry in counts.entries) {
+      if (entry.value <= bestCount) continue;
+      best = entry.key;
+      bestCount = entry.value;
+    }
+    return best;
   }
 
   /// Optional Pass 6b pattern refinement: for a given connected land component
