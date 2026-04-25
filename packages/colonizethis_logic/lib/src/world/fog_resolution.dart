@@ -225,7 +225,9 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
           regionId: regionId,
         );
         for (final seaZoneLocalId in adjacentSeaZones) {
-          final tileKeys = regionTileKeys[seaZoneLocalId];
+          final tileKeys = regionTileKeys[
+            _canonicalSeaZoneId(regionId, seaZoneLocalId)
+          ];
           if (tileKeys == null) continue;
           for (final tileKey in tileKeys) {
             vis[tileKey] = VisibilityLevel.fullyVisible.name;
