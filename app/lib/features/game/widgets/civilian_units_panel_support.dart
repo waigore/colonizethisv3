@@ -81,17 +81,20 @@ List<Unit> _civilianUnitsInRegion(
 class _PendingAssignedResolution {
   const _PendingAssignedResolution({
     required this.mainLine,
+    required this.totalTurns,
     this.materialCosts,
     this.treasuryAmount,
   });
 
   final String mainLine;
+  final int totalTurns;
   final Map<String, int>? materialCosts;
   final int? treasuryAmount;
 }
 
 _PendingAssignedResolution _resolvePendingAssignedResolution(
   Game game,
+  Unit unit,
   WorkOrder order,
   Map<String, String> provinceNames,
 ) {
@@ -105,20 +108,26 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
     location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
   }
   final base = '$workLabel$location';
+  final totalTurns = previewTotalTurnsForPendingWorkOrder(
+    game: game,
+    unit: unit,
+    order: order,
+  );
 
   if (order.target == kWorkTargetPurchaseLand) {
     final resourceId = game.worldState.resourceByTileKey[order.targetTileKey];
     if (resourceId != null && resourceId.isNotEmpty) {
       return _PendingAssignedResolution(
         mainLine: base,
+        totalTurns: totalTurns,
         treasuryAmount: purchaseLandCost(resourceId),
       );
     }
-    return _PendingAssignedResolution(mainLine: '$base (pending)');
+    return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
   }
   if (order.target == kWorkTargetStealTech ||
       order.target == kWorkTargetCounterSpy) {
-    return _PendingAssignedResolution(mainLine: '$base (pending)');
+    return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
   }
 
   final targetProvinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
@@ -140,9 +149,13 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
     roadLevel: roadLevel,
   );
   if (costMap != null && costMap.isNotEmpty) {
-    return _PendingAssignedResolution(mainLine: base, materialCosts: costMap);
+    return _PendingAssignedResolution(
+      mainLine: base,
+      totalTurns: totalTurns,
+      materialCosts: costMap,
+    );
   }
-  return _PendingAssignedResolution(mainLine: '$base (pending)');
+  return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
 }
 
 List<MapEntry<String, int>> _sortedMaterialCostEntries(Map<String, int> m) {
@@ -216,7 +229,7 @@ class _UnitRow extends StatelessWidget {
     return '$regionLabel — $name';
   }
 
-  String _assignedToLabelNonPending() {
+  String _assignedToLabelNonPending(AppLocalizations l10n) {
     if (unit.status != UnitStatus.working || unit.currentWork == null) {
       return '—';
     }
@@ -231,20 +244,31 @@ class _UnitRow extends StatelessWidget {
       location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
     }
     final progress = cw.totalTurns > 0
-        ? ' ${cw.remainingTurns}/${cw.totalTurns} turns'
-        : '';
-    return '$workLabel$location$progress';
+        ? l10n.civilian_units_turnProgress(
+            cw.remainingTurns.toString(),
+            cw.totalTurns.toString(),
+          )
+        : l10n.civilian_units_turns(
+            cw.remainingTurns <= 0 ? 1 : cw.remainingTurns,
+          );
+    return '$workLabel$location — $progress';
   }
 
   Widget _buildAssignedToSubtitle(AppLocalizations l10n) {
     final pending = _pendingWorkOrder;
     if (pending != null) {
-      final r = _resolvePendingAssignedResolution(game, pending, provinceNames);
+      final r = _resolvePendingAssignedResolution(
+        game,
+        unit,
+        pending,
+        provinceNames,
+      );
+      final turns = l10n.civilian_units_turns(r.totalTurns);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(l10n.civilian_units_assignedTo(r.mainLine)),
+          Text(l10n.civilian_units_assignedTo('${r.mainLine} — $turns')),
           if (r.materialCosts != null && r.materialCosts!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -278,7 +302,9 @@ class _UnitRow extends StatelessWidget {
         ],
       );
     }
-    return Text(l10n.civilian_units_assignedTo(_assignedToLabelNonPending()));
+    return Text(
+      l10n.civilian_units_assignedTo(_assignedToLabelNonPending(l10n)),
+    );
   }
 
   void _showOrderMenu(BuildContext context) {
@@ -380,6 +406,81 @@ class _UnitRow extends StatelessWidget {
     }
   }
 
+  List<UnitsEntityAction> _buildRowActions(
+    AppLocalizations l10n,
+    BuildContext context, {
+    required bool showActions,
+    required bool inProspectShortcutMode,
+  }) {
+    if (!showActions) {
+      return const <UnitsEntityAction>[];
+    }
+    return [
+      if (_isIdleNoPending)
+        UnitsEntityAction(
+          tooltip: l10n.civilian_units_assign,
+          icon: Icons.playlist_add,
+          label: l10n.civilian_units_assign,
+          onPressed: inProspectShortcutMode
+              ? _startProspectShortcutAssign
+              : () => _showOrderMenu(context),
+        ),
+      if (_hasWork)
+        UnitsEntityAction(
+          tooltip: l10n.common_cancel,
+          icon: Icons.cancel_outlined,
+          label: l10n.common_cancel,
+          onPressed: () => _confirmCancel(context),
+        ),
+    ];
+  }
+
+  Widget _buildTitleDetails(
+    AppLocalizations l10n, {
+    required String? tileKeyForLocate,
+    required String? regionIdForLocate,
+  }) {
+    return Row(
+      children: [
+        Expanded(child: Text(unit.type, overflow: TextOverflow.ellipsis)),
+        const SizedBox(width: 4),
+        IconButton(
+          tooltip: l10n.common_locate,
+          onPressed: tileKeyForLocate != null &&
+                  tileKeyForLocate.isNotEmpty &&
+                  regionIdForLocate != null
+              ? () {
+                  bus.emit(
+                    LocateMapTileEvent(
+                      tileKey: tileKeyForLocate,
+                      regionId: regionIdForLocate,
+                    ),
+                  );
+                }
+              : null,
+          icon: const Icon(Icons.my_location),
+          iconSize: 18,
+          visualDensity: VisualDensity.compact,
+        ),
+      ],
+    );
+  }
+
+  void _handleRowTap() {
+    if (isTileScope) {
+      onSelectInTileScope();
+      return;
+    }
+    final tileKey = projectedTileKey;
+    if (tileKey == null) return;
+    final regionId = Unit.regionIdFromTileKey(tileKey);
+    if (regionId == null) return;
+    bus.emit(const ClosePanelEvent());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      bus.emit(LocateMapTileEvent(tileKey: tileKey, regionId: regionId));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
@@ -393,53 +494,19 @@ class _UnitRow extends StatelessWidget {
         prospectShortcutTargetTileKey!.isNotEmpty;
     final tileKeyForLocate = projectedTileKey;
     final regionIdForLocate = Unit.regionIdFromTileKey(tileKeyForLocate);
-    final rowActions = showActions
-        ? [
-            if (_isIdleNoPending)
-              UnitsEntityAction(
-                tooltip: l10n.civilian_units_assign,
-                icon: Icons.playlist_add,
-                label: l10n.civilian_units_assign,
-                onPressed: inProspectShortcutMode
-                    ? _startProspectShortcutAssign
-                    : () => _showOrderMenu(context),
-              ),
-            if (_hasWork)
-              UnitsEntityAction(
-                tooltip: l10n.common_cancel,
-                icon: Icons.cancel_outlined,
-                label: l10n.common_cancel,
-                onPressed: () => _confirmCancel(context),
-              ),
-          ]
-        : const <UnitsEntityAction>[];
+    final rowActions = _buildRowActions(
+      l10n,
+      context,
+      showActions: showActions,
+      inProspectShortcutMode: inProspectShortcutMode,
+    );
     return ListTile(
       selected: isTileScope && isSelectedInTileScope,
       title: UnitsEntityActionRow(
-        details: Row(
-          children: [
-            Expanded(child: Text(unit.type, overflow: TextOverflow.ellipsis)),
-            const SizedBox(width: 4),
-            IconButton(
-              tooltip: l10n.common_locate,
-              onPressed:
-                  tileKeyForLocate != null &&
-                      tileKeyForLocate.isNotEmpty &&
-                      regionIdForLocate != null
-                  ? () {
-                      bus.emit(
-                        LocateMapTileEvent(
-                          tileKey: tileKeyForLocate,
-                          regionId: regionIdForLocate,
-                        ),
-                      );
-                    }
-                  : null,
-              icon: const Icon(Icons.my_location),
-              iconSize: 18,
-              visualDensity: VisualDensity.compact,
-            ),
-          ],
+        details: _buildTitleDetails(
+          l10n,
+          tileKeyForLocate: tileKeyForLocate,
+          regionIdForLocate: regionIdForLocate,
         ),
         actions: rowActions,
       ),
@@ -453,20 +520,7 @@ class _UnitRow extends StatelessWidget {
         ],
       ),
       dense: true,
-      onTap: () {
-        if (isTileScope) {
-          onSelectInTileScope();
-          return;
-        }
-        final tileKey = projectedTileKey;
-        if (tileKey == null) return;
-        final regionId = Unit.regionIdFromTileKey(tileKey);
-        if (regionId == null) return;
-        bus.emit(const ClosePanelEvent());
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          bus.emit(LocateMapTileEvent(tileKey: tileKey, regionId: regionId));
-        });
-      },
+      onTap: _handleRowTap,
     );
   }
 }

@@ -371,7 +371,9 @@ void main() {
         expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
         expect(
           events.indexOf(ClosePanelEvent),
-          lessThan(events.indexOf(UpsertPendingCivilianWorkOrderRequestedEvent)),
+          lessThan(
+            events.indexOf(UpsertPendingCivilianWorkOrderRequestedEvent),
+          ),
         );
       },
     );
@@ -753,7 +755,7 @@ void main() {
         // Scope to the row with our pending order — avoid `.first` on "Cancel"
         // (debug game may show multiple Cancel buttons; first may be off-stage / obscured).
         final pendingRow = find.ancestor(
-          of: find.textContaining('(pending)'),
+          of: find.text(idleCivilian.type),
           matching: find.byType(ListTile),
         );
         expect(pendingRow, findsOneWidget);
@@ -826,7 +828,7 @@ void main() {
         await tester.pumpAndSettle();
 
         final pendingRow = find.ancestor(
-          of: find.textContaining('(pending)'),
+          of: find.text(idleCivilian.type),
           matching: find.byType(ListTile),
         );
         expect(pendingRow, findsOneWidget);
@@ -919,7 +921,7 @@ void main() {
         expect(find.text('observed-removals:0'), findsOneWidget);
 
         final pendingRow = find.ancestor(
-          of: find.textContaining('(pending)'),
+          of: find.text(idleCivilian.type),
           matching: find.byType(ListTile),
         );
         expect(pendingRow, findsOneWidget);
@@ -1079,7 +1081,7 @@ void main() {
     );
 
     testWidgets(
-      'AC: pending explore keeps (pending) and no ResourceIcon strip',
+      'AC: pending explore shows inline turns and no ResourceIcon strip',
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
@@ -1131,7 +1133,9 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.textContaining('(pending)'), findsOneWidget);
+        expect(find.textContaining('(pending)'), findsNothing);
+        expect(find.textContaining('Assigned to: Explore'), findsOneWidget);
+        expect(find.textContaining('turn'), findsAtLeastNWidgets(1));
         expect(find.byType(ResourceIcon), findsNothing);
       },
     );
@@ -1197,7 +1201,7 @@ void main() {
     );
 
     testWidgets(
-      'AC: pending purchase_land without tile resource falls back to (pending)',
+      'AC: pending purchase_land without tile resource still shows inline turns',
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
@@ -1249,7 +1253,12 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.textContaining('(pending)'), findsOneWidget);
+        expect(find.textContaining('(pending)'), findsNothing);
+        expect(
+          find.textContaining('Assigned to: Purchase land'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('turn'), findsAtLeastNWidgets(1));
         expect(find.textContaining('Treasury:'), findsNothing);
       },
     );
