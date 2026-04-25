@@ -15,12 +15,7 @@ Province? _findProvinceInRegion(
   String localId,
 ) {
   final fullId = ProvinceId.full(regionId, localId);
-  final idx = region.provinces.indexWhere(
-    (p) =>
-        p.id == fullId ||
-        (p.regionId == regionId &&
-            (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)),
-  );
+  final idx = region.provinces.indexWhere((p) => p.id == fullId);
   if (idx < 0) return null;
   return region.provinces[idx];
 }
