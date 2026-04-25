@@ -19,7 +19,11 @@ void main() {
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
         oldWorld: const RegionData(
           provinces: [
-            Province(id: 'P1', regionId: 'oldWorld', ownerId: playerId),
+            Province(
+              id: 'oldWorld|P1',
+              regionId: 'oldWorld',
+              ownerId: playerId,
+            ),
           ],
           units: [],
         ),
@@ -99,7 +103,9 @@ void main() {
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
         oldWorld: const RegionData(
-          provinces: [Province(id: 'P1', regionId: 'oldWorld', ownerId: 'p1')],
+          provinces: [
+            Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
+          ],
           units: [],
         ),
         newWorld: const RegionData(),

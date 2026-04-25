@@ -11,8 +11,8 @@ void main() {
       expect(ProvinceId.localIdFrom('oldWorld|p1'), 'p1');
     });
 
-    test('localIdFrom throws for unprefixed id', () {
-      expect(() => ProvinceId.localIdFrom('p1'), throwsStateError);
+    test('localIdFrom keeps unprefixed id unchanged', () {
+      expect(ProvinceId.localIdFrom('p1'), 'p1');
     });
 
     test('full builds prefixed id', () {
