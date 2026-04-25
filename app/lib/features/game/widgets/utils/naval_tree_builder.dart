@@ -254,6 +254,15 @@ buildNavalTree(
     return 'port:${province.regionId}|$localProvinceId';
   }
 
+  String? regionIdFromScopeKey(String? scopeKey) {
+    if (scopeKey == null || scopeKey.isEmpty) return null;
+    final colon = scopeKey.indexOf(':');
+    if (colon == -1 || colon >= scopeKey.length - 1) return null;
+    final payload = scopeKey.substring(colon + 1);
+    if (!payload.contains('|')) return null;
+    return payload.split('|').first;
+  }
+
   String? projectedLocationScopeForFleet(Fleet fleet) {
     final move = draftMoveByFleetId[fleet.id];
     if (move != null) {
@@ -294,16 +303,20 @@ buildNavalTree(
     'newWorld': game.worldState.newWorld,
   }.entries) {
     final regionId = regionEntry.key;
-    final regionTileMap = tileMapByRegion?[regionId];
-    final regionTopo = topologyByRegion?[regionId];
 
     final fleetsInRegion = game.worldState.fleets
-        .where(
-          (f) =>
-              f.ownerId == humanPlayerId &&
-              f.regionId == regionId &&
-              f.shipTypeIds.isNotEmpty,
-        )
+        .where((f) => f.ownerId == humanPlayerId && f.shipTypeIds.isNotEmpty)
+        .where((fleet) {
+          if (locationScopeKeyFilter == null) {
+            return fleet.regionId == regionId;
+          }
+          final projectedScope = projectedLocationScopeForFleet(fleet);
+          if (projectedScope != locationScopeKeyFilter) {
+            return false;
+          }
+          final scopeRegionId = regionIdFromScopeKey(projectedScope);
+          return scopeRegionId == regionId;
+        })
         .toList();
     if (fleetsInRegion.isEmpty && capitalRegionId != regionId) {
       continue;
@@ -321,6 +334,12 @@ buildNavalTree(
           projectedScope != locationScopeKeyFilter) {
         continue;
       }
+      final projectedScopeRegionId = regionIdFromScopeKey(projectedScope);
+      final rowRegionId = locationScopeKeyFilter != null
+          ? (projectedScopeRegionId ?? regionId)
+          : regionId;
+      final rowTileMap = tileMapByRegion?[rowRegionId];
+      final rowTopology = topologyByRegion?[rowRegionId];
 
       final shipCounts = <String, int>{};
       int totalShips = 0;
@@ -345,7 +364,7 @@ buildNavalTree(
           capitalRegionId != null &&
           capitalProvinceLocalId != null &&
           !isAtSea &&
-          regionId == capitalRegionId &&
+          rowRegionId == capitalRegionId &&
           inPortId != null &&
           (inPortId == capitalProvinceLocalId ||
               inPortId == '$capitalRegionId|$capitalProvinceLocalId');
@@ -356,29 +375,34 @@ buildNavalTree(
       String? tileKey;
       String locationKey;
       if (isAtSea) {
-        final seaZoneId = fleet.seaZoneId!;
+        final seaZoneId =
+            locationScopeKeyFilter != null &&
+                projectedScope != null &&
+                projectedScope.startsWith('sea:')
+            ? projectedScope.substring(4)
+            : fleet.seaZoneId!;
         final zoneKey = seaZoneId.contains('|')
             ? seaZoneId
-            : '$regionId|$seaZoneId';
+            : '$rowRegionId|$seaZoneId';
         locationKey = 'sea:$zoneKey';
         final zoneLabel = seaZoneDisplayName(
           game: game,
-          regionId: regionId,
+          regionId: rowRegionId,
           seaZoneId: zoneKey,
         );
-        locationLabel = '${unitsPanelRegionLabel(regionId)} — $zoneLabel';
+        locationLabel = '${unitsPanelRegionLabel(rowRegionId)} — $zoneLabel';
         tileKey = tileKeyForNavalFleetAtSea(
           game: game,
-          regionId: regionId,
+          regionId: rowRegionId,
           seaZoneId: zoneKey,
-          tileMap: regionTileMap,
-          regionTopology: regionTopo,
+          tileMap: rowTileMap,
+          regionTopology: rowTopology,
         );
         final row = FleetRow(
           fleetId: fleet.id,
           label: l10n.naval_fleetLabel(fleet.id),
           locationLabel: locationLabel,
-          regionId: regionId,
+          regionId: rowRegionId,
           missionLabel: fleetMissionDisplayLabel(fleet.mission),
           totalShips: totalShips,
           warshipCount: warships,
@@ -395,28 +419,36 @@ buildNavalTree(
             game: game,
             topology: topology,
             humanPlayerId: humanPlayerId,
-            fleetRegionId: regionId,
+            fleetRegionId: rowRegionId,
             fleetId: fleet.id,
             draftOrders: draftOrders,
           ),
         );
         seas.putIfAbsent(zoneKey, () => []).add(row);
       } else if (inPortId != null) {
-        final provinceMap = provinceByRegionAndId[regionId] ?? const {};
+        final provinceMap = provinceByRegionAndId[rowRegionId] ?? const {};
+        final scopePortId =
+            locationScopeKeyFilter != null &&
+                projectedScope != null &&
+                projectedScope.startsWith('port:')
+            ? projectedScope.substring(5)
+            : null;
+        final effectivePortId = scopePortId ?? inPortId;
         final province =
-            provinceMap['$regionId|$inPortId'] ?? provinceMap[inPortId];
+            provinceMap['$rowRegionId|$effectivePortId'] ??
+            provinceMap[effectivePortId];
         if (province == null) continue;
         locationKey = normalizedPortScope(province);
         tileKey = tileKeyForProvinceLocation(game, province);
         locationLabel =
-            '${unitsPanelRegionLabel(regionId)} — ${province.displayName ?? province.id}';
+            '${unitsPanelRegionLabel(rowRegionId)} — ${province.displayName ?? province.id}';
         final row = FleetRow(
           fleetId: fleet.id,
           label: isHomeFleet
               ? l10n.naval_homeFleetLabel
               : l10n.naval_fleetLabel(fleet.id),
           locationLabel: locationLabel,
-          regionId: regionId,
+          regionId: rowRegionId,
           missionLabel: fleetMissionDisplayLabel(fleet.mission),
           totalShips: totalShips,
           warshipCount: warships,
@@ -428,14 +460,14 @@ buildNavalTree(
           cargoCapacity: cargoCapacity,
           isAtSea: false,
           locationKey: locationKey,
-          inPortAtProvinceId: inPortId,
+          inPortAtProvinceId: effectivePortId,
           draftNavalMoveLine: isHomeFleet
               ? null
               : navalDraftMoveLineForFleet(
                   game: game,
                   topology: topology,
                   humanPlayerId: humanPlayerId,
-                  fleetRegionId: regionId,
+                  fleetRegionId: rowRegionId,
                   fleetId: fleet.id,
                   draftOrders: draftOrders,
                 ),

@@ -2670,6 +2670,73 @@ void main() {
       },
     );
 
+    testWidgets(
+      'AC: Cross-region projected marker scope shows destination region rows',
+      (WidgetTester tester) async {
+        const humanId = 'gp_cross_region_scope';
+        final scopedGame = Game(
+          id: 'g_cross_region_scope',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: 'f1',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                seaZoneId: 's1',
+                ships: const [ShipInstance(id: 'ship_1', typeId: 'frigate')],
+              ),
+            ],
+          ),
+          players: const [
+            Player(id: humanId, displayName: 'Cross Scope', isHuman: true),
+          ],
+        );
+        const draftOrders = Orders(
+          navalMoveOrdersByPlayerId: {
+            humanId: [
+              NavalMoveOrder(
+                fleetId: 'f1',
+                destinationSeaZoneId: 'newWorld|s2',
+              ),
+            ],
+          },
+        );
+        const topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'oldWorld|s1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 'newWorld|s2',
+              regionId: 'newWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [TopologyEdge(id1: 'oldWorld|s1', id2: 'newWorld|s2')],
+        );
+
+        await tester.pumpWidget(
+          buildPanel(
+            game: scopedGame,
+            humanPlayerId: humanId,
+            topology: topology,
+            draftOrders: draftOrders,
+            locationScopeKey: 'sea:newWorld|s2',
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('New World'), findsOneWidget);
+        expect(find.text('Old World'), findsNothing);
+        expect(find.textContaining('Fleet f1'), findsOneWidget);
+      },
+    );
+
     testWidgets('AC: Home Fleet collapsed row does not show Move action', (
       WidgetTester tester,
     ) async {
