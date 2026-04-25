@@ -79,13 +79,6 @@ export 'src/diplomacy/diplomacy_resolver.dart';
 export 'src/dossier/evidence_rules.dart';
 export 'src/dossier/event_dialogue.dart';
 
-// AI
-export 'src/ai/hidden_agenda_assignment.dart';
-export 'src/ai/ai_planner.dart';
-export 'src/ai/ai_control.dart';
-export 'src/ai/sim_game_ai.dart';
-export 'src/ai/simple_ai_heuristics.dart';
-
 // World
 export 'src/world/army_commands.dart';
 export 'src/world/army_ids.dart';
