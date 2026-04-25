@@ -125,8 +125,6 @@ allowed_depth_ge4:
     symbol: TileMapGenLandSeeds._growCoastlines
   - file: packages/colonizethis_map/lib/src/tile_map_generator_land_seeds.dart
     symbol: TileMapGenLandSeeds.assignLandByLandSeeds
-  - file: app/lib/core/services/game_service.dart
-    symbol: GameService._emitTurnResolutionEvents
   - file: app/lib/core/services/app_event_handler.dart
     symbol: AppEventHandler._handleUIAction
   - file: app/lib/core/services/app_event_handler.dart
