@@ -16,3 +16,4 @@ export 'order_visibility.dart';
 export 'orders_application.dart';
 export 'orders_application_helpers.dart';
 export 'projected_effects.dart';
+export 'work_order_duration_preview.dart';
