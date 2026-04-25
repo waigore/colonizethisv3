@@ -1369,7 +1369,7 @@
       }
     }
   },
-  "civilian_units_turns": "{count, plural, one {# turn} other {# turns}}",
+  "civilian_units_turns": "{count, plural, one {{count} turn} other {{count} turns}}",
   "@civilian_units_turns": {
     "description": "Localized turn-count label for civilian assigned-work rows.",
     "placeholders": {
