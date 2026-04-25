@@ -81,17 +81,20 @@ List<Unit> _civilianUnitsInRegion(
 class _PendingAssignedResolution {
   const _PendingAssignedResolution({
     required this.mainLine,
+    required this.totalTurns,
     this.materialCosts,
     this.treasuryAmount,
   });
 
   final String mainLine;
+  final int totalTurns;
   final Map<String, int>? materialCosts;
   final int? treasuryAmount;
 }
 
 _PendingAssignedResolution _resolvePendingAssignedResolution(
   Game game,
+  Unit unit,
   WorkOrder order,
   Map<String, String> provinceNames,
 ) {
@@ -105,20 +108,26 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
     location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
   }
   final base = '$workLabel$location';
+  final totalTurns = previewTotalTurnsForPendingWorkOrder(
+    game: game,
+    unit: unit,
+    order: order,
+  );
 
   if (order.target == kWorkTargetPurchaseLand) {
     final resourceId = game.worldState.resourceByTileKey[order.targetTileKey];
     if (resourceId != null && resourceId.isNotEmpty) {
       return _PendingAssignedResolution(
         mainLine: base,
+        totalTurns: totalTurns,
         treasuryAmount: purchaseLandCost(resourceId),
       );
     }
-    return _PendingAssignedResolution(mainLine: '$base (pending)');
+    return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
   }
   if (order.target == kWorkTargetStealTech ||
       order.target == kWorkTargetCounterSpy) {
-    return _PendingAssignedResolution(mainLine: '$base (pending)');
+    return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
   }
 
   final targetProvinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
@@ -140,9 +149,13 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
     roadLevel: roadLevel,
   );
   if (costMap != null && costMap.isNotEmpty) {
-    return _PendingAssignedResolution(mainLine: base, materialCosts: costMap);
+    return _PendingAssignedResolution(
+      mainLine: base,
+      totalTurns: totalTurns,
+      materialCosts: costMap,
+    );
   }
-  return _PendingAssignedResolution(mainLine: '$base (pending)');
+  return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
 }
 
 List<MapEntry<String, int>> _sortedMaterialCostEntries(Map<String, int> m) {
@@ -216,7 +229,7 @@ class _UnitRow extends StatelessWidget {
     return '$regionLabel — $name';
   }
 
-  String _assignedToLabelNonPending() {
+  String _assignedToLabelNonPending(AppLocalizations l10n) {
     if (unit.status != UnitStatus.working || unit.currentWork == null) {
       return '—';
     }
@@ -231,20 +244,31 @@ class _UnitRow extends StatelessWidget {
       location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
     }
     final progress = cw.totalTurns > 0
-        ? ' ${cw.remainingTurns}/${cw.totalTurns} turns'
-        : '';
-    return '$workLabel$location$progress';
+        ? l10n.civilian_units_turnProgress(
+            cw.remainingTurns.toString(),
+            cw.totalTurns.toString(),
+          )
+        : l10n.civilian_units_turns(
+            cw.remainingTurns <= 0 ? 1 : cw.remainingTurns,
+          );
+    return '$workLabel$location — $progress';
   }
 
   Widget _buildAssignedToSubtitle(AppLocalizations l10n) {
     final pending = _pendingWorkOrder;
     if (pending != null) {
-      final r = _resolvePendingAssignedResolution(game, pending, provinceNames);
+      final r = _resolvePendingAssignedResolution(
+        game,
+        unit,
+        pending,
+        provinceNames,
+      );
+      final turns = l10n.civilian_units_turns(r.totalTurns);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(l10n.civilian_units_assignedTo(r.mainLine)),
+          Text(l10n.civilian_units_assignedTo('${r.mainLine} — $turns')),
           if (r.materialCosts != null && r.materialCosts!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -278,7 +302,9 @@ class _UnitRow extends StatelessWidget {
         ],
       );
     }
-    return Text(l10n.civilian_units_assignedTo(_assignedToLabelNonPending()));
+    return Text(
+      l10n.civilian_units_assignedTo(_assignedToLabelNonPending(l10n)),
+    );
   }
 
   void _showOrderMenu(BuildContext context) {
