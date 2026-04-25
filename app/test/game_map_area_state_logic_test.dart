@@ -87,6 +87,9 @@ void main() {
               ],
             ),
             newWorld: ct_models.RegionData(provinces: [], units: []),
+            playerVisibilityByTile: const {
+              humanPlayerId: {targetTile: 'fogged'},
+            },
           ),
           players: const [
             ct_models.Player(
@@ -124,6 +127,7 @@ void main() {
         expect(marker.x, 1);
         expect(marker.y, 0);
         expect(marker.representativeIsAssigned, isTrue);
+        expect(marker.applyCivilianRevealHalo, isTrue);
       },
     );
 
@@ -761,40 +765,16 @@ void main() {
       });
     });
 
-    group('isWorkTargetTileProvinceBased', () {
-      test('explore/steal_tech/counter_spy are province-based', () {
-        expect(
-          GameMapAreaStateLogic.isWorkTargetTileProvinceBased('explore'),
-          isTrue,
-        );
-        expect(
-          GameMapAreaStateLogic.isWorkTargetTileProvinceBased('steal_tech'),
-          isTrue,
-        );
-        expect(
-          GameMapAreaStateLogic.isWorkTargetTileProvinceBased('counter_spy'),
-          isTrue,
-        );
-      });
-
-      test('move is not province-based', () {
-        expect(
-          GameMapAreaStateLogic.isWorkTargetTileProvinceBased('move'),
-          isFalse,
-        );
-      });
-    });
-
     group('translateWorkTargetTileKey', () {
-      test('province-based work targets rewrite tile coords to x=0,y=0', () {
+      test('explore preserves exact assigned tile key', () {
         final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1|10|20',
           workTarget: 'explore',
         );
-        expect(translated, 'oldWorld|p1|0|0');
+        expect(translated, 'oldWorld|p1|10|20');
       });
 
-      test('non-province-based work targets return tileKey unchanged', () {
+      test('non-province-based work targets preserve tileKey', () {
         final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1|10|20',
           workTarget: 'move',
@@ -802,13 +782,12 @@ void main() {
         expect(translated, 'oldWorld|p1|10|20');
       });
 
-      test('short tile keys return tileKey unchanged', () {
+      test('short tile keys are returned unchanged', () {
         final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1',
           workTarget: 'explore',
         );
-        // With parts length >= 2, province-based work targets normalize to x=0,y=0.
-        expect(translated, 'oldWorld|p1|0|0');
+        expect(translated, 'oldWorld|p1');
       });
     });
 

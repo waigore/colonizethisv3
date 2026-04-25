@@ -35,7 +35,8 @@ Set<String> _partiallyRevealedProvinceCacheForPlayer({
   required PlayerView view,
 }) {
   final cached = <String>{};
-  for (final regionEntry in game.worldState.tileKeysByRegionAndProvince.entries) {
+  for (final regionEntry
+      in game.worldState.tileKeysByRegionAndProvince.entries) {
     for (final provinceEntry in regionEntry.value.entries) {
       final provinceId = provinceEntry.key;
       if (!ProvinceId.isPrefixed(provinceId)) continue;
@@ -97,19 +98,27 @@ void _addExplorerWorkSuggestionsForUnit({
       reason: 'duplicate_pending',
     );
   } else {
-    final provinces = allProvinces(game.worldState)
-        .where((p) => partiallyRevealedProvinceCache.contains(p.id))
-        .toList()
-      ..sort((a, b) => a.id.compareTo(b.id));
+    final provinces =
+        allProvinces(
+            game.worldState,
+          ).where((p) => partiallyRevealedProvinceCache.contains(p.id)).toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
     WorkOrder? chosen;
     var lastReason = 'no_valid_tile';
     for (final prov in provinces) {
       final regionIdP = prov.regionId;
       final provinceIdFull = prov.id;
-      final localIdP = ProvinceId.localIdFrom(provinceIdFull);
-      final targetTileKey = '$regionIdP|$localIdP|0|0';
       final tilesInP =
           tileKeysByRegion[regionIdP]?[provinceIdFull] ?? const <String>[];
+      if (tilesInP.isEmpty) {
+        lastReason = 'no_valid_tile';
+        continue;
+      }
+      final sortedTilesInP = List<String>.from(tilesInP)..sort();
+      final targetTileKey = sortedTilesInP.firstWhere(
+        (tk) => view.visibilityForTile(tk) != VisibilityLevel.unknown,
+        orElse: () => sortedTilesInP.first,
+      );
 
       if (!workOrderVisibilityOk(
         view,
@@ -405,10 +414,8 @@ List<WorkOrder> suggestWorkOrders(
   }
 
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
-  final partiallyRevealedProvinceCache = _partiallyRevealedProvinceCacheForPlayer(
-    game: game,
-    view: view,
-  );
+  final partiallyRevealedProvinceCache =
+      _partiallyRevealedProvinceCacheForPlayer(game: game, view: view);
 
   // Pre-filter + visibility sort per workTarget; reused across worker units.
   final visibleCandidatesSortedByWorkTarget = <String, List<String>>{};
