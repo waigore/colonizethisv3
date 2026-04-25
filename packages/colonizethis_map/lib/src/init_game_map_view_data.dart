@@ -125,6 +125,7 @@ class CivilianTileMarkerView {
     required this.representativeUnitType,
     required this.stackCount,
     this.representativeIsAssigned = false,
+    this.applyCivilianRevealHalo = false,
   });
 
   /// Canonical tile key `regionId|provinceId|x|y`.
@@ -151,6 +152,11 @@ class CivilianTileMarkerView {
   /// True when the representative unit is rendered on an assigned work tile.
   /// Used for grayscale map marker rendering in glyph-marker slices.
   final bool representativeIsAssigned;
+
+  /// When true, renderer treats Chebyshev distance <= 2 around [tileKey] as
+  /// fully visible while this marker represents a pending civilian assignment
+  /// to a fogged tile (display-only).
+  final bool applyCivilianRevealHalo;
 }
 
 /// Human-player fleet stack at one port or sea zone for interactive map markers.
