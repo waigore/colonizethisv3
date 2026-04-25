@@ -55,6 +55,34 @@ void main() {
       }
     });
 
+    test('fails for oversized part fragments outside logic package', () {
+      final temp = Directory.systemTemp.createTempSync('part-size-map-over-');
+      try {
+        final mapDir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_map', 'lib', 'src'),
+        )..createSync(recursive: true);
+        final body = List.generate(1002, (_) => '  final _ = 0;').join('\n');
+        _writeDartFile(
+          p.join(mapDir.path, 'huge_part.dart'),
+          "part of 'parent.dart';\nvoid _x() {\n$body\n}\n",
+        );
+
+        final errors = <String>[];
+        final exitCode = runCheckPartUnitSize(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(
+          errors.join('\n'),
+          contains('colonizethis_map/lib/src/huge_part.dart'),
+        );
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
     test('ignores library files that are not part fragments', () {
       final temp = Directory.systemTemp.createTempSync('part-size-lib-');
       try {
