@@ -9,7 +9,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../widgets/ct_panel.dart';
-import 'diplomacy_panel.dart';
+import '../widgets/diplomacy_panel.dart';
 
 /// Human-readable sentence for a diplomatic event. Unknown factions shown as "Unknown faction".
 String formatDiplomaticEvent(
@@ -155,10 +155,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          l10n.diplomacy_detail_yearTurn(
-                            year(e.turn),
-                            e.turn,
-                          ),
+                          l10n.diplomacy_detail_yearTurn(year(e.turn), e.turn),
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
