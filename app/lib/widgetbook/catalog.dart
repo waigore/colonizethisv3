@@ -18,7 +18,7 @@ import '../features/game/widgets/production_panel_demo_data.dart';
 import '../features/game/widgets/province_sea_zone_detail_overlay.dart';
 import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
-import '../features/game/widgets/technology_screen.dart';
+import '../features/game/screens/technology_screen.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
