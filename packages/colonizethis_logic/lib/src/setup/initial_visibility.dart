@@ -54,10 +54,9 @@ Game applyInitialVisibility({
     for (var x = 0; x < owMap.width; x++) {
       final localId = owMap.cell(x, y);
       final fullId = ProvinceId.full(kRegionOldWorld, localId);
-      final isSea = owSeaZoneIds.contains(localId);
       // Include all tiles (land and sea) in tileKeysByRegionAndProvince.
-      // Land tiles: use province fullId. Sea tiles: use sea zone id.
-      final provinceKey = isSea ? localId : fullId;
+      // Land tiles: use province fullId. Sea tiles: use canonical prefixed id.
+      final provinceKey = fullId;
       final tileKey = '$kRegionOldWorld|$localId|$x|$y';
       tileKeysByRegionAndProvince[kRegionOldWorld]!
           .putIfAbsent(provinceKey, () => <String>[])
@@ -70,8 +69,7 @@ Game applyInitialVisibility({
     for (var x = 0; x < nwMap.width; x++) {
       final localId = nwMap.cell(x, y);
       final fullId = ProvinceId.full(kRegionNewWorld, localId);
-      final isSea = nwSeaZoneIds.contains(localId);
-      final provinceKey = isSea ? localId : fullId;
+      final provinceKey = fullId;
       final tileKey = '$kRegionNewWorld|$localId|$x|$y';
       tileKeysByRegionAndProvince[kRegionNewWorld]!
           .putIfAbsent(provinceKey, () => <String>[])
