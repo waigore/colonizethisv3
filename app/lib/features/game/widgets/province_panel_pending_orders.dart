@@ -18,6 +18,35 @@ Province? _provinceById(Game game, String provinceId) {
 String _destinationProvinceLabel(Game game, String provinceId) =>
     _provinceById(game, provinceId)?.displayName ?? provinceId;
 
+Army? _findOwnedArmyInProvinceForOrder({
+  required WorldState worldState,
+  required ArmyMoveOrder order,
+  required String ownerId,
+  required String provinceId,
+}) {
+  for (final army in worldState.armies) {
+    if (army.id != order.armyId) {
+      continue;
+    }
+    if (army.ownerId != ownerId) {
+      return null;
+    }
+    return army.stationedProvinceId == provinceId ? army : null;
+  }
+  return null;
+}
+
+Unit? _findUnitForMoveOrder(WorldState worldState, MoveOrder order) {
+  for (final region in [worldState.oldWorld, worldState.newWorld]) {
+    for (final unit in region.units) {
+      if (unit.id == order.unitId) {
+        return unit;
+      }
+    }
+  }
+  return null;
+}
+
 /// Pending land military orders for [humanPlayerId] affecting units/armies in [provinceId].
 List<String> provincePanelPendingMilitaryLines({
   required Game game,
@@ -31,31 +60,25 @@ List<String> provincePanelPendingMilitaryLines({
 
   final armyMoves = orders.armyMoveOrdersByPlayerId[humanPlayerId] ?? [];
   for (final o in armyMoves) {
-    for (final a in ws.armies) {
-      if (a.id != o.armyId) continue;
-      if (a.ownerId != humanPlayerId) continue;
-      if (a.stationedProvinceId != provinceId) continue;
-      out.add(
-        l10n.province_pending_armyMove(
-          _destinationProvinceLabel(game, o.destinationProvinceId),
-        ),
-      );
-      break;
+    final army = _findOwnedArmyInProvinceForOrder(
+      worldState: ws,
+      order: o,
+      ownerId: humanPlayerId,
+      provinceId: provinceId,
+    );
+    if (army == null) {
+      continue;
     }
+    out.add(
+      l10n.province_pending_armyMove(
+        _destinationProvinceLabel(game, o.destinationProvinceId),
+      ),
+    );
   }
 
   final regMoves = orders.moveOrdersByPlayerId[humanPlayerId] ?? [];
   for (final o in regMoves) {
-    Unit? u;
-    for (final region in [ws.oldWorld, ws.newWorld]) {
-      for (final c in region.units) {
-        if (c.id == o.unitId) {
-          u = c;
-          break;
-        }
-      }
-      if (u != null) break;
-    }
+    final u = _findUnitForMoveOrder(ws, o);
     if (u == null) continue;
     if (u.ownerId != humanPlayerId) continue;
     if (u.locationProvinceId != provinceId) continue;
@@ -81,10 +104,10 @@ List<String> provincePanelPendingNavalLines({
 }) {
   final out = <String>[];
   final ws = game.worldState;
-  final fleetsHere = fleetsInPortAtProvince(ws, provinceId)
-      .where((f) => f.ownerId == humanPlayerId)
-      .map((f) => f.id)
-      .toSet();
+  final fleetsHere = fleetsInPortAtProvince(
+    ws,
+    provinceId,
+  ).where((f) => f.ownerId == humanPlayerId).map((f) => f.id).toSet();
 
   final navalMoves = orders.navalMoveOrdersByPlayerId[humanPlayerId] ?? [];
   for (final o in navalMoves) {
