@@ -4,7 +4,6 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const _logicScopePrefix = 'packages/colonizethis_logic/lib/src/';
 const _maxPartFragmentPhysicalLines = 1000;
 
 int runCheckPartUnitSize(
@@ -18,9 +17,6 @@ int runCheckPartUnitSize(
   final violations = <String>[];
   for (final file in collectRepoLintDomainDartFiles(repoRoot)) {
     final rel = p.relative(file.path, from: repoRoot);
-    if (!rel.startsWith(_logicScopePrefix)) {
-      continue;
-    }
     final content = file.readAsStringSync();
     if (!_isDartPartFragmentFile(content)) {
       continue;
