@@ -30,6 +30,13 @@ rules:
         - Iterable
         - Future
         - Stream
+  - id: widget_build_method_too_long
+    message: 'widget build body too long'
+    match:
+      kind: method_body_line_span
+      function_name: build
+      max_body_line_span: 3
+      require_widget_class_extends: true
 ''';
 
 void main() {
@@ -273,6 +280,88 @@ class X {
 
 class X {
   Map value = {};
+}
+''';
+      expect(
+        findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
+        isEmpty,
+      );
+    });
+
+    test('flags overlong widget build() body', () {
+      const src = r'''
+import 'package:flutter/widgets.dart';
+
+class X extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final a = 1;
+    final b = 2;
+    return Text('$a$b');
+  }
+}
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(v, isNotEmpty);
+      expect(v.first.ruleId, 'widget_build_method_too_long');
+    });
+
+    test('allows short widget build() body', () {
+      const src = r'''
+import 'package:flutter/widgets.dart';
+
+class X extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox();
+  }
+}
+''';
+      expect(
+        findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
+        isEmpty,
+      );
+    });
+
+    test('ignores build() in non-widget classes', () {
+      const src = r'''
+class NotAWidget {
+  Object build() {
+    final a = 1;
+    final b = 2;
+    final c = 3;
+    return a + b + c;
+  }
+}
+''';
+      expect(
+        findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
+        isEmpty,
+      );
+    });
+
+    test('widget_build_method_too_long respects suppression comment', () {
+      const src = r'''
+import 'package:flutter/widgets.dart';
+
+class X extends StatefulWidget {
+  const X({super.key});
+  @override
+  State<X> createState() => _XState();
+}
+
+class _XState extends State<X> {
+  @override
+  // ignore: disallowed_ast_widget_build_method_too_long
+  Widget build(BuildContext context) {
+    final a = 1;
+    final b = 2;
+    return Text('$a$b');
+  }
 }
 ''';
       expect(

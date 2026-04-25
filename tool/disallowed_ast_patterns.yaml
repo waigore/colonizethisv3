@@ -39,3 +39,12 @@ rules:
         - Iterable
         - Future
         - Stream
+  - id: widget_build_method_too_long
+    message: >-
+      Do not allow widget build() method bodies above 60 physical lines.
+      Extract sub-widgets or helper builders to keep build logic readable.
+    match:
+      kind: method_body_line_span
+      function_name: build
+      max_body_line_span: 60
+      require_widget_class_extends: true

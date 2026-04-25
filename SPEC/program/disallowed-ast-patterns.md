@@ -47,6 +47,19 @@ type safety and hides intent in APIs and state declarations.
 
 Rule id: `strict_raw_types` (`match.kind`: `raw_named_type`,
 `match.type_names`: `List|Map|Set|Iterable|Future|Stream`).
+
+### Widget `build()` body line span
+
+In runtime domain code, a widget class `build()` method body is disallowed when
+its physical line span exceeds **60** lines.
+
+Rationale: oversized build methods hide UI intent, make reviews harder, and
+encourage cross-concern coupling instead of extracting sub-widgets.
+
+Rule id: `widget_build_method_too_long` (`match.kind`:
+`method_body_line_span`, `match.function_name`: `build`,
+`match.max_body_line_span`: `60`,
+`match.require_widget_class_extends`: `true`).
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -89,3 +102,14 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   `List<int> values = <int>[];`, **when** the disallowed AST checker runs,
   **then** it does not report a `strict_raw_types` violation for that
   declaration.
+
+- **Given** runtime Dart source with a class extending `StatelessWidget` or
+  `StatefulWidget` where the `build()` method body spans more than 60 physical
+  lines, **when** the disallowed AST checker runs, **then** it reports at least
+  one violation for `widget_build_method_too_long` with the correct file and
+  line.
+
+- **Given** runtime Dart source with a class extending `StatelessWidget` or
+  `StatefulWidget` where the `build()` method body spans 60 physical lines or
+  fewer, **when** the disallowed AST checker runs, **then** it does not report
+  a `widget_build_method_too_long` violation for that method.

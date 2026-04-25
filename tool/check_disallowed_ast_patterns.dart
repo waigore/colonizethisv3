@@ -212,6 +212,9 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           cascadedMethodNames: names,
           commentSubstring: null,
           rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
         ),
       );
     } else if (kind == 'stream_where_is_map_as') {
@@ -223,6 +226,9 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           cascadedMethodNames: const {},
           commentSubstring: null,
           rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
         ),
       );
     } else if (kind == 'comment_substring') {
@@ -238,6 +244,9 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           cascadedMethodNames: const {},
           commentSubstring: needle,
           rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
         ),
       );
     } else if (kind == 'raw_named_type') {
@@ -263,6 +272,35 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           cascadedMethodNames: const {},
           commentSubstring: null,
           rawNamedTypeNames: names,
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+        ),
+      );
+    } else if (kind == 'method_body_line_span') {
+      final functionName = match['function_name']?.toString();
+      final maxBodyLineSpan = int.tryParse(
+        match['max_body_line_span']?.toString() ?? '',
+      );
+      final requireWidgetClassExtends =
+          match['require_widget_class_extends'] == true;
+      if (functionName == null ||
+          functionName.isEmpty ||
+          maxBodyLineSpan == null ||
+          maxBodyLineSpan < 1) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.methodBodyLineSpan,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: functionName,
+          maxBodyLineSpan: maxBodyLineSpan,
+          requireWidgetClassExtends: requireWidgetClassExtends,
         ),
       );
     }
@@ -299,6 +337,7 @@ enum DisallowedAstMatchKind {
   streamWhereIsMapAs,
   commentSubstring,
   rawNamedType,
+  methodBodyLineSpan,
 }
 
 class DisallowedPatternRule {
@@ -309,6 +348,9 @@ class DisallowedPatternRule {
     required this.cascadedMethodNames,
     required this.commentSubstring,
     required this.rawNamedTypeNames,
+    required this.functionName,
+    required this.maxBodyLineSpan,
+    required this.requireWidgetClassExtends,
   });
 
   final String id;
@@ -317,6 +359,9 @@ class DisallowedPatternRule {
   final Set<String> cascadedMethodNames;
   final String? commentSubstring;
   final Set<String> rawNamedTypeNames;
+  final String? functionName;
+  final int? maxBodyLineSpan;
+  final bool requireWidgetClassExtends;
 }
 
 class DisallowedAstViolation {
@@ -507,5 +552,46 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       _recordIfAllowed(node, rule);
     }
     super.visitNamedType(node);
+  }
+
+  @override
+  void visitMethodDeclaration(MethodDeclaration node) {
+    for (final rule in rules) {
+      if (rule.kind != DisallowedAstMatchKind.methodBodyLineSpan) {
+        continue;
+      }
+      if (node.name.lexeme != rule.functionName) {
+        continue;
+      }
+      if (rule.requireWidgetClassExtends &&
+          !_methodBelongsToWidgetClass(node)) {
+        continue;
+      }
+      final bodyLineSpan = _lineSpan(node.body);
+      final maxBodyLineSpan = rule.maxBodyLineSpan!;
+      if (bodyLineSpan > maxBodyLineSpan) {
+        _recordIfAllowed(node, rule);
+      }
+    }
+    super.visitMethodDeclaration(node);
+  }
+
+  bool _methodBelongsToWidgetClass(MethodDeclaration node) {
+    final parent = node.parent;
+    if (parent is! ClassDeclaration) {
+      return false;
+    }
+    final extendsClause = parent.extendsClause;
+    if (extendsClause == null) {
+      return false;
+    }
+    final superName = extendsClause.superclass.name2.lexeme;
+    return superName == 'StatelessWidget' || superName == 'StatefulWidget';
+  }
+
+  int _lineSpan(AstNode node) {
+    final start = lineInfo.getLocation(node.offset).lineNumber;
+    final end = lineInfo.getLocation(node.end).lineNumber;
+    return end - start + 1;
   }
 }
