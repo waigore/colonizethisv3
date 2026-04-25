@@ -34,6 +34,7 @@ class CivilianUnitsPanel extends StatefulWidget {
     this.initialSelectedUnitId,
     this.explorerOnly = false,
     this.prospectShortcutTargetTileKey,
+    this.exploreShortcutTargetTileKey,
   });
 
   final Game game;
@@ -57,6 +58,9 @@ class CivilianUnitsPanel extends StatefulWidget {
 
   /// Optional selected tile key for immediate explorer prospect assign flow.
   final String? prospectShortcutTargetTileKey;
+
+  /// Optional selected tile key for immediate explorer explore assign flow.
+  final String? exploreShortcutTargetTileKey;
 
   @override
   State<CivilianUnitsPanel> createState() => _CivilianUnitsPanelState();
@@ -212,6 +216,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
               ),
               prospectShortcutTargetTileKey:
                   widget.prospectShortcutTargetTileKey,
+              exploreShortcutTargetTileKey: widget.exploreShortcutTargetTileKey,
             ),
           ),
         ],
@@ -236,6 +241,7 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
               ),
               prospectShortcutTargetTileKey:
                   widget.prospectShortcutTargetTileKey,
+              exploreShortcutTargetTileKey: widget.exploreShortcutTargetTileKey,
             ),
           ),
         ],

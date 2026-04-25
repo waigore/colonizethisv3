@@ -98,6 +98,7 @@ void main() {
     AppEventBus? bus,
     bool explorerOnly = false,
     String? prospectShortcutTargetTileKey,
+    String? exploreShortcutTargetTileKey,
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     final navigatorKey = GlobalKey<NavigatorState>();
@@ -115,6 +116,7 @@ void main() {
             bus: resolvedBus,
             explorerOnly: explorerOnly,
             prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
+            exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
           ),
         ),
       ),
@@ -367,6 +369,90 @@ void main() {
         expect(upsertEvent!.playerId, human);
         expect(upsertEvent!.workOrder.unitId, 'e1');
         expect(upsertEvent!.workOrder.target, 'prospect');
+        expect(upsertEvent!.workOrder.targetTileKey, tileKey);
+        expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
+        expect(
+          events.indexOf(ClosePanelEvent),
+          lessThan(
+            events.indexOf(UpsertPendingCivilianWorkOrderRequestedEvent),
+          ),
+        );
+      },
+    );
+
+    testWidgets(
+      'explore shortcut mode filters explorers and directly commits pending explore on selected tile',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_explore_shortcut',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'e1',
+                  type: 'Explorer',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+                Unit(
+                  id: 'b1',
+                  type: 'Builder',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        final bus = AppEventBus.create();
+        final events = <Type>[];
+        UpsertPendingCivilianWorkOrderRequestedEvent? upsertEvent;
+        bus.stream.listen((e) => events.add(e.runtimeType));
+        bus.on<UpsertPendingCivilianWorkOrderRequestedEvent>().listen(
+          (event) => upsertEvent = event,
+        );
+        await tester.pumpWidget(
+          buildPanel(
+            game: miniGame,
+            humanPlayerId: human,
+            bus: bus,
+            explorerOnly: true,
+            exploreShortcutTargetTileKey: tileKey,
+            availableWorkTargets: const {
+              'e1': ['explore'],
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Explorer'), findsOneWidget);
+        expect(find.text('Builder'), findsNothing);
+
+        await tester.tap(find.text('Assign'));
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Assign work'), findsNothing);
+        expect(upsertEvent, isNotNull);
+        expect(upsertEvent!.playerId, human);
+        expect(upsertEvent!.workOrder.unitId, 'e1');
+        expect(upsertEvent!.workOrder.target, 'explore');
         expect(upsertEvent!.workOrder.targetTileKey, tileKey);
         expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
         expect(

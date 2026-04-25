@@ -32,6 +32,7 @@ Grandfather YAMLs named in the table below are **legacy** until removed; **do no
 | `tool/check_part_unit_size.dart` | Dart `part` fragment physical line limit (`SPEC/program/part-unit-size.md`); rule `repo.part_unit_size` |
 | `tool/check_no_flame_in_widgets.dart` | Disallow direct `package:flame/*` **import** and **export** lines (single- or double-quoted URI) under `app/lib/widgets/**`; rule `repo.no_flame_in_widgets` |
 | `tool/check_no_screen_in_game_widgets.dart` | Disallow `*_screen.dart` files under `app/lib/features/game/widgets/**`; rule `repo.no_screen_in_game_widgets` |
+| `tool/check_land_province_bucket_keys.dart` | For guarded explore/fog/news paths, disallow local-only land-province tile-bucket lookups (`tileKeysByRegionAndProvince[region]?[localId]`); require canonical full-id buckets only; rule `repo.land_province_bucket_keys` |
 
 ## Rule IDs and groups
 

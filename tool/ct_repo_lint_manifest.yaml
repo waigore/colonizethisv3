@@ -129,6 +129,13 @@ rules:
     runner: dart
     script: tool/check_canonical_province_tile_keys.dart
 
+  - rule_id: repo.land_province_bucket_keys
+    group: game_invariants
+    title: Canonical full-id land province bucket lookups in guarded paths
+    spec: SPEC/program/fog-and-exploration-resolution.md
+    runner: dart
+    script: tool/check_land_province_bucket_keys.dart
+
   - rule_id: repo.app_hardcoded_ui_strings
     group: ui_i18n
     title: No hardcoded user-visible UI strings in app/lib (AST gate)
