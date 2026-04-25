@@ -406,6 +406,81 @@ class _UnitRow extends StatelessWidget {
     }
   }
 
+  List<UnitsEntityAction> _buildRowActions(
+    AppLocalizations l10n,
+    BuildContext context, {
+    required bool showActions,
+    required bool inProspectShortcutMode,
+  }) {
+    if (!showActions) {
+      return const <UnitsEntityAction>[];
+    }
+    return [
+      if (_isIdleNoPending)
+        UnitsEntityAction(
+          tooltip: l10n.civilian_units_assign,
+          icon: Icons.playlist_add,
+          label: l10n.civilian_units_assign,
+          onPressed: inProspectShortcutMode
+              ? _startProspectShortcutAssign
+              : () => _showOrderMenu(context),
+        ),
+      if (_hasWork)
+        UnitsEntityAction(
+          tooltip: l10n.common_cancel,
+          icon: Icons.cancel_outlined,
+          label: l10n.common_cancel,
+          onPressed: () => _confirmCancel(context),
+        ),
+    ];
+  }
+
+  Widget _buildTitleDetails(
+    AppLocalizations l10n, {
+    required String? tileKeyForLocate,
+    required String? regionIdForLocate,
+  }) {
+    return Row(
+      children: [
+        Expanded(child: Text(unit.type, overflow: TextOverflow.ellipsis)),
+        const SizedBox(width: 4),
+        IconButton(
+          tooltip: l10n.common_locate,
+          onPressed: tileKeyForLocate != null &&
+                  tileKeyForLocate.isNotEmpty &&
+                  regionIdForLocate != null
+              ? () {
+                  bus.emit(
+                    LocateMapTileEvent(
+                      tileKey: tileKeyForLocate,
+                      regionId: regionIdForLocate,
+                    ),
+                  );
+                }
+              : null,
+          icon: const Icon(Icons.my_location),
+          iconSize: 18,
+          visualDensity: VisualDensity.compact,
+        ),
+      ],
+    );
+  }
+
+  void _handleRowTap() {
+    if (isTileScope) {
+      onSelectInTileScope();
+      return;
+    }
+    final tileKey = projectedTileKey;
+    if (tileKey == null) return;
+    final regionId = Unit.regionIdFromTileKey(tileKey);
+    if (regionId == null) return;
+    bus.emit(const ClosePanelEvent());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      bus.emit(LocateMapTileEvent(tileKey: tileKey, regionId: regionId));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
@@ -419,53 +494,19 @@ class _UnitRow extends StatelessWidget {
         prospectShortcutTargetTileKey!.isNotEmpty;
     final tileKeyForLocate = projectedTileKey;
     final regionIdForLocate = Unit.regionIdFromTileKey(tileKeyForLocate);
-    final rowActions = showActions
-        ? [
-            if (_isIdleNoPending)
-              UnitsEntityAction(
-                tooltip: l10n.civilian_units_assign,
-                icon: Icons.playlist_add,
-                label: l10n.civilian_units_assign,
-                onPressed: inProspectShortcutMode
-                    ? _startProspectShortcutAssign
-                    : () => _showOrderMenu(context),
-              ),
-            if (_hasWork)
-              UnitsEntityAction(
-                tooltip: l10n.common_cancel,
-                icon: Icons.cancel_outlined,
-                label: l10n.common_cancel,
-                onPressed: () => _confirmCancel(context),
-              ),
-          ]
-        : const <UnitsEntityAction>[];
+    final rowActions = _buildRowActions(
+      l10n,
+      context,
+      showActions: showActions,
+      inProspectShortcutMode: inProspectShortcutMode,
+    );
     return ListTile(
       selected: isTileScope && isSelectedInTileScope,
       title: UnitsEntityActionRow(
-        details: Row(
-          children: [
-            Expanded(child: Text(unit.type, overflow: TextOverflow.ellipsis)),
-            const SizedBox(width: 4),
-            IconButton(
-              tooltip: l10n.common_locate,
-              onPressed:
-                  tileKeyForLocate != null &&
-                      tileKeyForLocate.isNotEmpty &&
-                      regionIdForLocate != null
-                  ? () {
-                      bus.emit(
-                        LocateMapTileEvent(
-                          tileKey: tileKeyForLocate,
-                          regionId: regionIdForLocate,
-                        ),
-                      );
-                    }
-                  : null,
-              icon: const Icon(Icons.my_location),
-              iconSize: 18,
-              visualDensity: VisualDensity.compact,
-            ),
-          ],
+        details: _buildTitleDetails(
+          l10n,
+          tileKeyForLocate: tileKeyForLocate,
+          regionIdForLocate: regionIdForLocate,
         ),
         actions: rowActions,
       ),
@@ -479,20 +520,7 @@ class _UnitRow extends StatelessWidget {
         ],
       ),
       dense: true,
-      onTap: () {
-        if (isTileScope) {
-          onSelectInTileScope();
-          return;
-        }
-        final tileKey = projectedTileKey;
-        if (tileKey == null) return;
-        final regionId = Unit.regionIdFromTileKey(tileKey);
-        if (regionId == null) return;
-        bus.emit(const ClosePanelEvent());
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          bus.emit(LocateMapTileEvent(tileKey: tileKey, regionId: regionId));
-        });
-      },
+      onTap: _handleRowTap,
     );
   }
 }
