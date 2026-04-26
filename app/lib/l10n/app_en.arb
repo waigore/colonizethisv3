@@ -1780,6 +1780,14 @@
   "@provinceOverlay_tileProspectWithExplorerTooltip": {
     "description": "Tooltip and semantics label for province tile prospect shortcut action."
   },
+  "provinceOverlay_tileExploreWithExplorerTooltip": "Explore with explorer",
+  "@provinceOverlay_tileExploreWithExplorerTooltip": {
+    "description": "Tooltip and semantics label for province tile explore shortcut action."
+  },
+  "provinceOverlay_tileBuildImprovementTooltip": "Build improvement",
+  "@provinceOverlay_tileBuildImprovementTooltip": {
+    "description": "Tooltip and semantics label for province tile build-improvement shortcut action."
+  },
   "provinceOverlay_tileImprovement": "Improvement: {value}",
   "@provinceOverlay_tileImprovement": {
     "description": "Tile section improvement row.",

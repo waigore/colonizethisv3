@@ -178,6 +178,7 @@ class _UnitRow extends StatelessWidget {
     required this.projectedTileKey,
     required this.prospectShortcutTargetTileKey,
     required this.exploreShortcutTargetTileKey,
+    required this.buildImprovementShortcutTargetTileKey,
   });
 
   final Game game;
@@ -193,6 +194,7 @@ class _UnitRow extends StatelessWidget {
   final String? projectedTileKey;
   final String? prospectShortcutTargetTileKey;
   final String? exploreShortcutTargetTileKey;
+  final String? buildImprovementShortcutTargetTileKey;
 
   List<WorkOrder> get _pendingForPlayer =>
       currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
@@ -361,17 +363,35 @@ class _UnitRow extends StatelessWidget {
     );
   }
 
-  void _startExplorerShortcutAssign() {
+  void _startShortcutAssign() {
     final hasExploreShortcut =
         exploreShortcutTargetTileKey != null &&
         exploreShortcutTargetTileKey!.isNotEmpty;
-    final targetTileKey = hasExploreShortcut
+    final hasProspectShortcut =
+        prospectShortcutTargetTileKey != null &&
+        prospectShortcutTargetTileKey!.isNotEmpty;
+    final hasBuildImprovementShortcut =
+        buildImprovementShortcutTargetTileKey != null &&
+        buildImprovementShortcutTargetTileKey!.isNotEmpty;
+    final targetTileKey = hasBuildImprovementShortcut
+        ? buildImprovementShortcutTargetTileKey
+        : hasExploreShortcut
         ? exploreShortcutTargetTileKey
-        : prospectShortcutTargetTileKey;
+        : hasProspectShortcut
+        ? prospectShortcutTargetTileKey
+        : null;
     if (targetTileKey == null || targetTileKey.isEmpty) return;
-    final workTarget = hasExploreShortcut
+    final workTarget = hasBuildImprovementShortcut
+        ? kWorkTargetBuildImprovement
+        : hasExploreShortcut
         ? kWorkTargetExplore
         : kWorkTargetProspect;
+    final currentAvailableWorkTargets =
+        availableWorkTargets[unit.id] ?? const [];
+    if (!_isIdleNoPending ||
+        !currentAvailableWorkTargets.contains(workTarget)) {
+      return;
+    }
     bus.emit(const ClosePanelEvent());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       bus.emit(
@@ -430,7 +450,7 @@ class _UnitRow extends StatelessWidget {
           icon: Icons.playlist_add,
           label: l10n.civilian_units_assign,
           onPressed: inExplorerShortcutMode
-              ? _startExplorerShortcutAssign
+              ? _startShortcutAssign
               : () => _showOrderMenu(context),
         ),
       if (_hasWork)
@@ -502,7 +522,9 @@ class _UnitRow extends StatelessWidget {
         (prospectShortcutTargetTileKey != null &&
             prospectShortcutTargetTileKey!.isNotEmpty) ||
         (exploreShortcutTargetTileKey != null &&
-            exploreShortcutTargetTileKey!.isNotEmpty);
+            exploreShortcutTargetTileKey!.isNotEmpty) ||
+        (buildImprovementShortcutTargetTileKey != null &&
+            buildImprovementShortcutTargetTileKey!.isNotEmpty);
     final tileKeyForLocate = projectedTileKey;
     final regionIdForLocate = Unit.regionIdFromTileKey(tileKeyForLocate);
     final rowActions = _buildRowActions(

@@ -1051,6 +1051,153 @@ void main() {
       );
     });
 
+    group('provinceBuildImprovementActionState', () {
+      const humanPlayerId = 'gp1';
+      const selectedTileKey = 'oldWorld|p1|0|0';
+      const selectedProvinceId = 'oldWorld|p1';
+
+      ct_models.Game makeGame({
+        bool includeBuilder = true,
+        bool includeResource = true,
+        Map<String, bool>? techUnlocked,
+      }) {
+        return ct_models.Game(
+          id: 'g',
+          worldState: ct_models.WorldState(
+            turnState: const ct_models.TurnState(
+              phase: ct_models.TurnPhase.orders,
+              turnNumber: 1,
+            ),
+            oldWorld: ct_models.RegionData(
+              provinces: const [
+                ct_models.Province(
+                  id: selectedProvinceId,
+                  regionId: 'oldWorld',
+                ),
+              ],
+              units: includeBuilder
+                  ? [
+                      ct_models.Unit(
+                        id: 'u_builder',
+                        type: 'Builder',
+                        ownerId: humanPlayerId,
+                        locationProvinceId: selectedProvinceId,
+                        tileKey: selectedTileKey,
+                        status: ct_models.UnitStatus.idle,
+                      ),
+                    ]
+                  : const [],
+            ),
+            newWorld: const ct_models.RegionData(provinces: [], units: []),
+            resourceByTileKey: includeResource
+                ? const {selectedTileKey: 'grain'}
+                : const {},
+          ),
+          players: [
+            ct_models.Player(
+              id: humanPlayerId,
+              displayName: 'Human',
+              isHuman: true,
+              stockpile: const ct_models.Stockpile(
+                quantities: {'lumber': 999, 'castIron': 999},
+              ),
+              techUnlocked: techUnlocked,
+            ),
+          ],
+          minorNations: const [],
+          tribes: const [],
+        );
+      }
+
+      PlayerView makePlayerView() {
+        return PlayerView(
+          playerId: humanPlayerId,
+          player: const ct_models.Player(
+            id: humanPlayerId,
+            displayName: 'Human',
+            isHuman: true,
+          ),
+          ownUnitsById: {},
+          provincesById: {},
+          visibilityByTile: const {
+            selectedTileKey: VisibilityLevel.fullyVisible,
+          },
+          prospectedTiles: {},
+          diplomacyByOtherId: {},
+        );
+      }
+
+      final topology = const MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: [],
+      );
+      final tileMapByRegion = <String, TileMapResult>{
+        'oldWorld': TileMapResult(
+          width: 1,
+          height: 1,
+          grid: const [
+            ['p1'],
+          ],
+          terrainGrid: const [
+            [TerrainType.plains],
+          ],
+          resourceGrid: const [
+            [Resource.grain],
+          ],
+        ),
+      };
+
+      test('shows icon for improvable tile with builder units', () {
+        final state = GameMapAreaStateLogic.provinceBuildImprovementActionState(
+          game: makeGame(),
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          playerView: makePlayerView(),
+          topology: null,
+          currentOrders: const ct_models.Orders(),
+          tileMapByRegion: tileMapByRegion,
+        );
+        expect(state.showIcon, isTrue);
+        expect(state.enabled, isFalse);
+        expect(state.hasBuilderUnits, isTrue);
+      });
+
+      test('hides icon when tile has no resource', () {
+        final state = GameMapAreaStateLogic.provinceBuildImprovementActionState(
+          game: makeGame(includeResource: false, techUnlocked: const {}),
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          playerView: makePlayerView(),
+          topology: topology,
+          currentOrders: const ct_models.Orders(),
+          tileMapByRegion: tileMapByRegion,
+        );
+        expect(state.showIcon, isFalse);
+        expect(state.enabled, isFalse);
+      });
+
+      test('shows disabled icon when no builder units exist', () {
+        final state = GameMapAreaStateLogic.provinceBuildImprovementActionState(
+          game: makeGame(includeBuilder: false),
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          playerView: makePlayerView(),
+          topology: topology,
+          currentOrders: const ct_models.Orders(),
+          tileMapByRegion: tileMapByRegion,
+        );
+        expect(state.showIcon, isTrue);
+        expect(state.enabled, isFalse);
+        expect(state.hasBuilderUnits, isFalse);
+      });
+    });
+
     group('provinceExploreActionState', () {
       const humanPlayerId = 'gp1';
       const selectedTileKey = 'oldWorld|p1|0|0';

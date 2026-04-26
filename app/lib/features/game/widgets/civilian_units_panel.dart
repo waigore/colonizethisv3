@@ -33,8 +33,10 @@ class CivilianUnitsPanel extends StatefulWidget {
     this.tileScopeTileKey,
     this.initialSelectedUnitId,
     this.explorerOnly = false,
+    this.builderOnly = false,
     this.prospectShortcutTargetTileKey,
     this.exploreShortcutTargetTileKey,
+    this.buildImprovementShortcutTargetTileKey,
   });
 
   final Game game;
@@ -56,11 +58,17 @@ class CivilianUnitsPanel extends StatefulWidget {
   /// Optional filter mode used by province prospect shortcut.
   final bool explorerOnly;
 
+  /// Optional filter mode used by province build-improvement shortcut.
+  final bool builderOnly;
+
   /// Optional selected tile key for immediate explorer prospect assign flow.
   final String? prospectShortcutTargetTileKey;
 
   /// Optional selected tile key for immediate explorer explore assign flow.
   final String? exploreShortcutTargetTileKey;
+
+  /// Optional selected tile key for immediate builder build-improvement assign flow.
+  final String? buildImprovementShortcutTargetTileKey;
 
   @override
   State<CivilianUnitsPanel> createState() => _CivilianUnitsPanelState();
@@ -86,6 +94,13 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
   bool _isExplorerUnit(Unit unit) {
     return workOrderTargetsByUnitType[unit.type]?.contains(
           kWorkTargetProspect,
+        ) ??
+        false;
+  }
+
+  bool _isBuilderUnit(Unit unit) {
+    return workOrderTargetsByUnitType[unit.type]?.contains(
+          kWorkTargetBuildImprovement,
         ) ??
         false;
   }
@@ -137,6 +152,10 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
     if (widget.explorerOnly) {
       scopedOw = scopedOw.where(_isExplorerUnit).toList();
       scopedNw = scopedNw.where(_isExplorerUnit).toList();
+    }
+    if (widget.builderOnly) {
+      scopedOw = scopedOw.where(_isBuilderUnit).toList();
+      scopedNw = scopedNw.where(_isBuilderUnit).toList();
     }
     final hasAny = scopedOw.isNotEmpty || scopedNw.isNotEmpty;
     final allScopedUnits = <Unit>[...scopedOw, ...scopedNw];
@@ -217,6 +236,8 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
               prospectShortcutTargetTileKey:
                   widget.prospectShortcutTargetTileKey,
               exploreShortcutTargetTileKey: widget.exploreShortcutTargetTileKey,
+              buildImprovementShortcutTargetTileKey:
+                  widget.buildImprovementShortcutTargetTileKey,
             ),
           ),
         ],
@@ -242,6 +263,8 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
               prospectShortcutTargetTileKey:
                   widget.prospectShortcutTargetTileKey,
               exploreShortcutTargetTileKey: widget.exploreShortcutTargetTileKey,
+              buildImprovementShortcutTargetTileKey:
+                  widget.buildImprovementShortcutTargetTileKey,
             ),
           ),
         ],
