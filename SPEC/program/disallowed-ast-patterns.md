@@ -130,6 +130,26 @@ of a grandfathered compatibility helper.
 
 Rule id: `province_local_segment_boundary_only` (`match.kind`:
 `province_local_segment_boundary_only`).
+
+### Debug-console imports must use logic contract entrypoints only
+
+In debug-console runtime code, imports from `colonizethis_logic` are disallowed
+unless they match an explicit allowlist of contract entrypoints.
+
+Configured policy:
+
+- Scope: `packages/colonizethis_debug_console/lib/**`
+- Package target: `package:colonizethis_logic/...`
+- Allowed import: `package:colonizethis_logic/debug_console_api.dart`
+- Disallowed: `package:colonizethis_logic/src/**`
+- Disallowed: non-allowlisted entrypoints (including
+  `package:colonizethis_logic/colonizethis_logic.dart`)
+
+Rationale: preserve one-way architecture boundaries and keep debug console
+decoupled from logic internals behind narrow contracts.
+
+Rule id: `debug_console_logic_contract_boundary` (`match.kind`:
+`package_import_allowlist`).
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -227,3 +247,23 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   `ProvinceId.localSegmentFromStoredGameState(...)`, **when** the disallowed
   AST checker runs, **then** it reports at least one violation for
   `province_local_segment_boundary_only` with the correct file and line.
+
+- **Given** runtime Dart source in
+  `packages/colonizethis_debug_console/lib/**` that imports only
+  `package:colonizethis_logic/debug_console_api.dart`, **when** the disallowed
+  AST checker runs, **then** it does not report a
+  `debug_console_logic_contract_boundary` violation.
+
+- **Given** runtime Dart source in
+  `packages/colonizethis_debug_console/lib/**` that imports
+  `package:colonizethis_logic/src/...`, **when** the disallowed AST checker
+  runs, **then** it reports at least one
+  `debug_console_logic_contract_boundary` violation with the correct file and
+  line.
+
+- **Given** runtime Dart source in
+  `packages/colonizethis_debug_console/lib/**` that imports a non-allowlisted
+  logic entrypoint such as `package:colonizethis_logic/colonizethis_logic.dart`,
+  **when** the disallowed AST checker runs, **then** it reports at least one
+  `debug_console_logic_contract_boundary` violation with the correct file and
+  line.

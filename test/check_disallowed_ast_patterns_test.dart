@@ -65,6 +65,15 @@ rules:
     message: 'localSegmentFromStoredGameState is boundary-only'
     match:
       kind: province_local_segment_boundary_only
+  - id: debug_console_logic_contract_boundary
+    message: 'debug console must use logic contract imports only'
+    match:
+      kind: package_import_allowlist
+      scoped_relative_path_prefixes:
+        - packages/colonizethis_debug_console/lib/
+      package_name: colonizethis_logic
+      allowed_imports:
+        - package:colonizethis_logic/debug_console_api.dart
 ''';
 
 void main() {
@@ -541,6 +550,52 @@ class X {
         ),
         isEmpty,
       );
+    });
+
+    test('allows allowlisted logic contract import in debug console scope', () {
+      const src = r'''
+import 'package:colonizethis_logic/debug_console_api.dart';
+''';
+      expect(
+        findDisallowedAstViolations(
+          'packages/colonizethis_debug_console/lib/panel.dart',
+          src,
+          rules,
+        ).where((e) => e.ruleId == 'debug_console_logic_contract_boundary'),
+        isEmpty,
+      );
+    });
+
+    test(
+      'flags debug console import from colonizethis_logic src internals',
+      () {
+        const src = r'''
+import 'package:colonizethis_logic/src/world_state.dart';
+''';
+        final violations = findDisallowedAstViolations(
+          'packages/colonizethis_debug_console/lib/panel.dart',
+          src,
+          rules,
+        );
+        expect(violations, isNotEmpty);
+        expect(
+          violations.first.ruleId,
+          'debug_console_logic_contract_boundary',
+        );
+      },
+    );
+
+    test('flags debug console import from non-contract logic entrypoint', () {
+      const src = r'''
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+''';
+      final violations = findDisallowedAstViolations(
+        'packages/colonizethis_debug_console/lib/panel.dart',
+        src,
+        rules,
+      );
+      expect(violations, isNotEmpty);
+      expect(violations.first.ruleId, 'debug_console_logic_contract_boundary');
     });
   });
 }

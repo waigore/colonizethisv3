@@ -80,6 +80,14 @@ rules:
     script: tool/check_disallowed_ast_patterns.dart
     pr_incremental: true
 
+  - rule_id: repo.debug_console_logic_contract_boundary
+    group: architecture
+    title: debug console imports colonizethis_logic only via contracts
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_debug_console_logic_contract_boundary.dart
+    pr_incremental: true
+
   - rule_id: repo.control_flow_nesting_depth
     group: structure
     title: Control-flow nesting depth (if/for/while/switch)
