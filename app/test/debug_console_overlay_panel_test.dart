@@ -76,6 +76,77 @@ void main() {
       expect(events, isEmpty);
     });
 
+    testWidgets(
+      'submitting rail_builder command emits rail builder spawn event',
+      (tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        final events = <SpawnDebugCivilianAtCapitalEvent>[];
+        final sub = bus.on<SpawnDebugCivilianAtCapitalEvent>().listen(events.add);
+        addTearDown(sub.cancel);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: DebugConsoleOverlayPanel(
+                bus: bus,
+                humanPlayerId: 'human_1',
+                onClose: () {},
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('debug-console-input')),
+          '/spawn_civilian rail_builder 3',
+        );
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pump();
+
+        expect(events, hasLength(1));
+        expect(events.single.unitType, kUnitTypeRailBuilder);
+        expect(events.single.count, 3);
+      },
+    );
+
+    testWidgets('invalid command emits deterministic snackbar message', (
+      tester,
+    ) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      final snackbars = <ShowSnackBarEvent>[];
+      final sub = bus.on<ShowSnackBarEvent>().listen(snackbars.add);
+      addTearDown(sub.cancel);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DebugConsoleOverlayPanel(
+              bus: bus,
+              humanPlayerId: 'human_1',
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('debug-console-input')),
+        '/spawn_civilian unknown_type',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(snackbars, isNotEmpty);
+      expect(
+        snackbars.last.message,
+        'Unknown civilian type. Use explorer, builder, engineer, spy, merchant, or rail_builder.',
+      );
+    });
+
     testWidgets('escape key triggers panel close callback', (tester) async {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
