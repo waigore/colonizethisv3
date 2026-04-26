@@ -7,18 +7,26 @@ class ProvinceId {
   ProvinceId._();
 
   /// Returns the region id (part before the first "|").
-  /// For legacy unprefixed ids, returns the input unchanged.
+  /// Throws [StateError] if [fullProvinceId] does not contain "|".
   static String regionIdFrom(String fullProvinceId) {
     final i = fullProvinceId.indexOf('|');
-    if (i < 0) return fullProvinceId;
+    if (i < 0) {
+      throw StateError(
+        'Province id must be prefixed with regionId (regionId|localId): "$fullProvinceId"',
+      );
+    }
     return fullProvinceId.substring(0, i);
   }
 
   /// Returns the local id (part after the first "|").
-  /// For legacy unprefixed ids, returns the input unchanged.
+  /// Throws [StateError] if [fullProvinceId] does not contain "|".
   static String localIdFrom(String fullProvinceId) {
     final i = fullProvinceId.indexOf('|');
-    if (i < 0) return fullProvinceId;
+    if (i < 0) {
+      throw StateError(
+        'Province id must be prefixed with regionId (regionId|localId): "$fullProvinceId"',
+      );
+    }
     return fullProvinceId.substring(i + 1);
   }
 
@@ -27,4 +35,15 @@ class ProvinceId {
 
   /// True if [id] looks prefixed (contains "|").
   static bool isPrefixed(String id) => id.contains('|');
+
+  /// Local province id segment when normalizing persisted or capital data that
+  /// may still use bare local ids. Prefixed values use [localIdFrom]; bare
+  /// values are returned unchanged. **Save/load and legacy topology alignment
+  /// only** — runtime game-state paths must hold canonical prefixed ids.
+  static String localSegmentFromStoredGameState(String storedProvinceId) {
+    if (isPrefixed(storedProvinceId)) {
+      return localIdFrom(storedProvinceId);
+    }
+    return storedProvinceId;
+  }
 }

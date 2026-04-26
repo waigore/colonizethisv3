@@ -207,11 +207,11 @@ class WorldState {
     final localProvinceIdsByRegion = <String, Set<String>>{
       'oldWorld': {
         for (final province in oldWorld.provinces)
-          ProvinceId.localIdFrom(province.id),
+          ProvinceId.localSegmentFromStoredGameState(province.id),
       },
       'newWorld': {
         for (final province in newWorld.provinces)
-          ProvinceId.localIdFrom(province.id),
+          ProvinceId.localSegmentFromStoredGameState(province.id),
       },
     };
     final tileKeysRaw = json['tileKeysByRegionAndProvince'];

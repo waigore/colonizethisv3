@@ -27,7 +27,9 @@ List<String> selectGreatPowerBootstrapGrainTileKeysLandOnly({
   Set<String> forbiddenTileKeys = const {},
 }) {
   final regionId = capital.regionId;
-  final localId = ProvinceId.localIdFrom(capital.provinceId);
+  final localId = ProvinceId.localSegmentFromStoredGameState(
+    capital.provinceId,
+  );
   final ranked = <(int dist, int y, int x, String key)>[];
   for (var y = 0; y < map.height; y++) {
     for (var x = 0; x < map.width; x++) {
