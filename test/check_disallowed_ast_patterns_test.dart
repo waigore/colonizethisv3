@@ -65,8 +65,6 @@ rules:
     message: 'localSegmentFromStoredGameState is boundary-only'
     match:
       kind: province_local_segment_boundary_only
-      allowed_relative_paths:
-        - packages/foo/lib/allowed.dart
   - id: debug_console_logic_contract_boundary
     message: 'debug console must use logic contract imports only'
     match:
@@ -495,40 +493,20 @@ bool ok(String provinceId) => ProvinceId.localIdFrom(provinceId) == 'p1';
       );
     });
 
-    test(
-      'flags ProvinceId.localSegmentFromStoredGameState outside allowlist',
-      () {
-        const src = r'''
+    test('flags ProvinceId.localSegmentFromStoredGameState usage', () {
+      const src = r'''
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 String bad(String provinceId) =>
     ProvinceId.localSegmentFromStoredGameState(provinceId);
 ''';
-        final v = findDisallowedAstViolations(
-          'packages/foo/lib/not_allowed.dart',
-          src,
-          rules,
-        );
-        expect(v, isNotEmpty);
-        expect(v.first.ruleId, 'province_local_segment_boundary_only');
-      },
-    );
-
-    test('allows ProvinceId.localSegmentFromStoredGameState in allowlist', () {
-      const src = r'''
-import 'package:colonizethis_models/colonizethis_models.dart';
-
-String ok(String provinceId) =>
-    ProvinceId.localSegmentFromStoredGameState(provinceId);
-''';
-      expect(
-        findDisallowedAstViolations(
-          'packages/foo/lib/allowed.dart',
-          src,
-          rules,
-        ).where((e) => e.ruleId == 'province_local_segment_boundary_only'),
-        isEmpty,
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/not_allowed.dart',
+        src,
+        rules,
       );
+      expect(v, isNotEmpty);
+      expect(v.first.ruleId, 'province_local_segment_boundary_only');
     });
 
     test('flags sea-zone bucket lookup without canonical key helper', () {

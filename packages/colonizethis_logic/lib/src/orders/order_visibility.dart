@@ -21,7 +21,9 @@ bool provinceHasAtLeastVisibility(
   String provinceId,
   VisibilityLevel min,
 ) {
-  final localId = ProvinceId.localSegmentFromStoredGameState(provinceId);
+  final localId = ProvinceId.isPrefixed(provinceId)
+      ? ProvinceId.localIdFrom(provinceId)
+      : provinceId;
   return view.visibilityByTile.entries.any((e) {
     final parts = e.key.split('|');
     if (parts.length != 4) return false;
