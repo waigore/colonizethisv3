@@ -18,6 +18,7 @@ import 'ct_repo_lint_scan_contract.dart';
 int runCheckDisallowedAstPatterns(
   String repoRoot, {
   List<String>? incrementalRelativeDartPaths,
+  Set<String>? enabledRuleIds,
   void Function(String line)? info,
   void Function(String line)? err,
 }) {
@@ -31,7 +32,10 @@ int runCheckDisallowedAstPatterns(
     return 1;
   }
 
-  final rules = _loadRules(configFile.readAsStringSync());
+  final allRules = _loadRules(configFile.readAsStringSync());
+  final rules = enabledRuleIds == null
+      ? allRules
+      : allRules.where((rule) => enabledRuleIds.contains(rule.id)).toList();
   if (rules.isEmpty) {
     logE(
       'check_disallowed_ast_patterns: no rules in disallowed_ast_patterns.yaml',
@@ -218,6 +222,9 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           argumentIndex: null,
           invocationMethodNames: const {},
           allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
         ),
       );
     } else if (kind == 'stream_where_is_map_as') {
@@ -235,6 +242,9 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           argumentIndex: null,
           invocationMethodNames: const {},
           allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
         ),
       );
     } else if (kind == 'comment_substring') {
@@ -256,6 +266,9 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           argumentIndex: null,
           invocationMethodNames: const {},
           allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
         ),
       );
     } else if (kind == 'raw_named_type') {
@@ -287,6 +300,9 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           argumentIndex: null,
           invocationMethodNames: const {},
           allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
         ),
       );
     } else if (kind == 'method_body_line_span') {
@@ -316,6 +332,9 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           argumentIndex: null,
           invocationMethodNames: const {},
           allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
         ),
       );
     } else if (kind == 'unprefixed_province_id_string_literal_argument') {
@@ -353,6 +372,9 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           argumentIndex: argumentIndex,
           invocationMethodNames: names,
           allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
         ),
       );
     } else if (kind == 'sea_zone_local_id_extraction') {
@@ -370,6 +392,9 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           argumentIndex: null,
           invocationMethodNames: const {},
           allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
         ),
       );
     } else if (kind == 'sea_zone_bucket_lookup_without_canonical_key') {
@@ -387,6 +412,9 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           argumentIndex: null,
           invocationMethodNames: const {},
           allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
         ),
       );
     } else if (kind == 'province_local_segment_boundary_only') {
@@ -418,6 +446,55 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           argumentIndex: null,
           invocationMethodNames: const {},
           allowedRelativePaths: allowedRelativePaths,
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
+        ),
+      );
+    } else if (kind == 'package_import_allowlist') {
+      final scopeNode = match['scoped_relative_path_prefixes'];
+      final packageName = match['package_name']?.toString();
+      final allowlistNode = match['allowed_imports'];
+      if (scopeNode is! YamlList ||
+          packageName == null ||
+          packageName.isEmpty ||
+          allowlistNode is! YamlList) {
+        continue;
+      }
+      final scopedRelativePathPrefixes = <String>{};
+      for (final scopeEntry in scopeNode.nodes) {
+        final scope = scopeEntry.value?.toString();
+        if (scope != null && scope.isNotEmpty) {
+          scopedRelativePathPrefixes.add(scope);
+        }
+      }
+      final allowedPackageImports = <String>{};
+      for (final allowlistEntry in allowlistNode.nodes) {
+        final importPath = allowlistEntry.value?.toString();
+        if (importPath != null && importPath.isNotEmpty) {
+          allowedPackageImports.add(importPath);
+        }
+      }
+      if (scopedRelativePathPrefixes.isEmpty || allowedPackageImports.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.packageImportAllowlist,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: scopedRelativePathPrefixes,
+          packageName: packageName,
+          allowedPackageImports: allowedPackageImports,
         ),
       );
     }
@@ -459,6 +536,7 @@ enum DisallowedAstMatchKind {
   seaZoneBucketLookupWithoutCanonicalKey,
   unprefixedProvinceIdStringLiteralArgument,
   provinceLocalSegmentBoundaryOnly,
+  packageImportAllowlist,
 }
 
 class DisallowedPatternRule {
@@ -475,6 +553,9 @@ class DisallowedPatternRule {
     required this.argumentIndex,
     required this.invocationMethodNames,
     required this.allowedRelativePaths,
+    required this.scopedRelativePathPrefixes,
+    required this.packageName,
+    required this.allowedPackageImports,
   });
 
   final String id;
@@ -489,6 +570,9 @@ class DisallowedPatternRule {
   final int? argumentIndex;
   final Set<String> invocationMethodNames;
   final Set<String> allowedRelativePaths;
+  final Set<String> scopedRelativePathPrefixes;
+  final String? packageName;
+  final Set<String> allowedPackageImports;
 }
 
 class DisallowedAstViolation {
@@ -833,5 +917,40 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
     final start = lineInfo.getLocation(node.offset).lineNumber;
     final end = lineInfo.getLocation(node.end).lineNumber;
     return end - start + 1;
+  }
+
+  bool _pathIsInScopedPrefix(DisallowedPatternRule rule) {
+    for (final prefix in rule.scopedRelativePathPrefixes) {
+      if (path.startsWith(prefix)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @override
+  void visitImportDirective(ImportDirective node) {
+    for (final rule in rules) {
+      if (rule.kind != DisallowedAstMatchKind.packageImportAllowlist) {
+        continue;
+      }
+      if (!_pathIsInScopedPrefix(rule)) {
+        continue;
+      }
+      final uri = node.uri.stringValue;
+      final packageName = rule.packageName;
+      if (uri == null || packageName == null || packageName.isEmpty) {
+        continue;
+      }
+      final packagePrefix = 'package:$packageName/';
+      if (!uri.startsWith(packagePrefix)) {
+        continue;
+      }
+      if (rule.allowedPackageImports.contains(uri)) {
+        continue;
+      }
+      _recordIfAllowed(node, rule);
+    }
+    super.visitImportDirective(node);
   }
 }
