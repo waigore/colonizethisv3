@@ -10,17 +10,19 @@ class CapitalTile {
   });
 
   final String regionId;
-  /// Full province id (regionId|localId). Use [ProvinceId.localIdFrom] for tile key second segment.
+
+  /// Full province id (regionId|localId). Tile keys use [ProvinceId.localSegmentFromStoredGameState]
+  /// so legacy bare ids remain compatible for the second segment.
   final String provinceId;
   final int x;
   final int y;
 
   /// Tile key for use in connectivity and extraction: "regionId|localId|x|y".
   String toTileKey() =>
-      '$regionId|${ProvinceId.localIdFrom(provinceId)}|$x|$y';
+      '$regionId|${ProvinceId.localSegmentFromStoredGameState(provinceId)}|$x|$y';
 
   static String tileKey(String regionId, String provinceId, int x, int y) =>
-      '$regionId|${ProvinceId.localIdFrom(provinceId)}|$x|$y';
+      '$regionId|${ProvinceId.localSegmentFromStoredGameState(provinceId)}|$x|$y';
 
   /// Parses a stored town/capital tile key `regionId|localId|x|y`.
   /// [expectedProvinceId] must be the full id `regionId|localId` and match the key.
@@ -57,20 +59,15 @@ class CapitalTile {
         'townTileKey implies province "$fullProv" but expected "$expectedProvinceId"',
       );
     }
-    return CapitalTile(
-      regionId: regionId,
-      provinceId: fullProv,
-      x: x,
-      y: y,
-    );
+    return CapitalTile(regionId: regionId, provinceId: fullProv, x: x, y: y);
   }
 
   Map<String, dynamic> toJson() => {
-        'regionId': regionId,
-        'provinceId': provinceId,
-        'x': x,
-        'y': y,
-      };
+    'regionId': regionId,
+    'provinceId': provinceId,
+    'x': x,
+    'y': y,
+  };
 
   static CapitalTile? fromJson(Map<String, dynamic>? json) {
     if (json == null) return null;

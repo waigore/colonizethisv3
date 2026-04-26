@@ -12,7 +12,9 @@ Map<String, String> getProvinceOwnerMap(Game game) {
   final out = <String, String>{};
   for (final p in allProvinces(game.worldState)) {
     if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      final key = ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id));
+      final key = ProvinceId.isPrefixed(p.id)
+          ? p.id
+          : ProvinceId.full(p.regionId, p.id);
       out[key] = p.ownerId!;
     }
   }
@@ -57,18 +59,16 @@ List<MoveOrder> filterMoveOrdersByDiplomacy(
   Game game,
   String playerId,
   List<MoveOrder> orders,
-) =>
-    List<MoveOrder>.from(orders);
+) => List<MoveOrder>.from(orders);
 
 /// Same diplomacy filter as [filterMoveOrdersByDiplomacy] for [ArmyMoveOrder].
 List<ArmyMoveOrder> filterArmyMoveOrdersByDiplomacy(
   Game game,
   String playerId,
   List<ArmyMoveOrder> orders,
-) =>
-    filterOrdersByDiplomacy(
-      game,
-      playerId,
-      orders,
-      (ArmyMoveOrder o) => o.destinationProvinceId,
-    );
+) => filterOrdersByDiplomacy(
+  game,
+  playerId,
+  orders,
+  (ArmyMoveOrder o) => o.destinationProvinceId,
+);

@@ -21,7 +21,7 @@ bool provinceHasAtLeastVisibility(
   String provinceId,
   VisibilityLevel min,
 ) {
-  final localId = ProvinceId.localIdFrom(provinceId);
+  final localId = ProvinceId.localSegmentFromStoredGameState(provinceId);
   return view.visibilityByTile.entries.any((e) {
     final parts = e.key.split('|');
     if (parts.length != 4) return false;
@@ -68,7 +68,10 @@ bool moveDestVisibilityOk(
 }
 
 /// Civilian move order: destination **tile** must be at least fogged.
-bool moveDestinationTileVisibilityOk(PlayerView view, String destinationTileKey) {
+bool moveDestinationTileVisibilityOk(
+  PlayerView view,
+  String destinationTileKey,
+) {
   return tileHasAtLeastVisibility(
     view,
     destinationTileKey,
@@ -96,6 +99,12 @@ String regionIdForUnit(PlayerView view, Unit unit) {
     if (parts.length == 4 && parts[1] == unit.locationProvinceId) {
       return parts[0];
     }
+  }
+  if (!ProvinceId.isPrefixed(unit.locationProvinceId)) {
+    throw StateError(
+      'regionIdForUnit: cannot resolve region for non-prefixed '
+      'locationProvinceId "${unit.locationProvinceId}" (unit ${unit.id})',
+    );
   }
   return ProvinceId.regionIdFrom(unit.locationProvinceId);
 }
