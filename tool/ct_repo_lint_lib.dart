@@ -12,6 +12,7 @@ import 'check_control_flow_nesting_depth.dart';
 import 'check_custom_exceptions.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_function_size.dart';
+import 'check_game_widgets_file_size.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_no_flame_in_widgets.dart';
 import 'check_no_screen_in_game_widgets.dart';
@@ -697,6 +698,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckRepeatedMagicNumbers(repoRoot);
     case 'repo.function_size':
       return runCheckFunctionSize(repoRoot);
+    case 'repo.game_widgets_file_size':
+      return runCheckGameWidgetsFileSize(repoRoot);
     case 'repo.part_unit_size':
       return runCheckPartUnitSize(repoRoot);
     case 'repo.no_flame_in_widgets':
