@@ -217,6 +217,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           requireWidgetClassExtends: false,
           argumentIndex: null,
           invocationMethodNames: const {},
+          allowedRelativePaths: const {},
         ),
       );
     } else if (kind == 'stream_where_is_map_as') {
@@ -233,6 +234,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           requireWidgetClassExtends: false,
           argumentIndex: null,
           invocationMethodNames: const {},
+          allowedRelativePaths: const {},
         ),
       );
     } else if (kind == 'comment_substring') {
@@ -253,6 +255,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           requireWidgetClassExtends: false,
           argumentIndex: null,
           invocationMethodNames: const {},
+          allowedRelativePaths: const {},
         ),
       );
     } else if (kind == 'raw_named_type') {
@@ -283,6 +286,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           requireWidgetClassExtends: false,
           argumentIndex: null,
           invocationMethodNames: const {},
+          allowedRelativePaths: const {},
         ),
       );
     } else if (kind == 'method_body_line_span') {
@@ -311,6 +315,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           requireWidgetClassExtends: requireWidgetClassExtends,
           argumentIndex: null,
           invocationMethodNames: const {},
+          allowedRelativePaths: const {},
         ),
       );
     } else if (kind == 'unprefixed_province_id_string_literal_argument') {
@@ -347,6 +352,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           requireWidgetClassExtends: false,
           argumentIndex: argumentIndex,
           invocationMethodNames: names,
+          allowedRelativePaths: const {},
         ),
       );
     } else if (kind == 'sea_zone_local_id_extraction') {
@@ -363,6 +369,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           requireWidgetClassExtends: false,
           argumentIndex: null,
           invocationMethodNames: const {},
+          allowedRelativePaths: const {},
         ),
       );
     } else if (kind == 'sea_zone_bucket_lookup_without_canonical_key') {
@@ -379,6 +386,38 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           requireWidgetClassExtends: false,
           argumentIndex: null,
           invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+        ),
+      );
+    } else if (kind == 'province_local_segment_boundary_only') {
+      final allowedPathsNode = match['allowed_relative_paths'];
+      if (allowedPathsNode is! YamlList) {
+        continue;
+      }
+      final allowedRelativePaths = <String>{};
+      for (final p in allowedPathsNode.nodes) {
+        final s = p.value?.toString();
+        if (s != null && s.isNotEmpty) {
+          allowedRelativePaths.add(s);
+        }
+      }
+      if (allowedRelativePaths.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.provinceLocalSegmentBoundaryOnly,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: allowedRelativePaths,
         ),
       );
     }
@@ -419,6 +458,7 @@ enum DisallowedAstMatchKind {
   seaZoneLocalIdExtraction,
   seaZoneBucketLookupWithoutCanonicalKey,
   unprefixedProvinceIdStringLiteralArgument,
+  provinceLocalSegmentBoundaryOnly,
 }
 
 class DisallowedPatternRule {
@@ -434,6 +474,7 @@ class DisallowedPatternRule {
     required this.requireWidgetClassExtends,
     required this.argumentIndex,
     required this.invocationMethodNames,
+    required this.allowedRelativePaths,
   });
 
   final String id;
@@ -447,6 +488,7 @@ class DisallowedPatternRule {
   final bool requireWidgetClassExtends;
   final int? argumentIndex;
   final Set<String> invocationMethodNames;
+  final Set<String> allowedRelativePaths;
 }
 
 class DisallowedAstViolation {
@@ -579,6 +621,14 @@ bool _isProvinceLocalIdFromInvocation(MethodInvocation node) {
       node.argumentList.arguments.length == 1;
 }
 
+bool _isProvinceLocalSegmentInvocation(MethodInvocation node) {
+  final target = node.target;
+  return target is SimpleIdentifier &&
+      target.name == 'ProvinceId' &&
+      node.methodName.name == 'localSegmentFromStoredGameState' &&
+      node.argumentList.arguments.length == 1;
+}
+
 bool _expressionLooksSeaZoneRelated(Expression expression) {
   final text = expression.toSource().toLowerCase();
   return text.contains('seazone') ||
@@ -675,6 +725,11 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       } else if (rule.kind == DisallowedAstMatchKind.seaZoneLocalIdExtraction &&
           _isProvinceLocalIdFromInvocation(node) &&
           _expressionLooksSeaZoneRelated(node.argumentList.arguments.single)) {
+        _recordIfAllowed(node, rule);
+      } else if (rule.kind ==
+              DisallowedAstMatchKind.provinceLocalSegmentBoundaryOnly &&
+          _isProvinceLocalSegmentInvocation(node) &&
+          !rule.allowedRelativePaths.contains(path)) {
         _recordIfAllowed(node, rule);
       }
       if (rule.kind ==

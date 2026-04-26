@@ -81,3 +81,17 @@ rules:
       method_names:
         - localIdFrom
       argument_index: 0
+  - id: province_local_segment_boundary_only
+    message: >-
+      ProvinceId.localSegmentFromStoredGameState(...) is boundary-only.
+      Use it only in approved save/load, topology, and tile-key adapter files.
+    match:
+      kind: province_local_segment_boundary_only
+      allowed_relative_paths:
+        - app/lib/features/game/widgets/utils/naval_tree_builder.dart
+        - packages/colonizethis_logic/lib/src/orders/order_visibility.dart
+        - packages/colonizethis_logic/lib/src/setup/gp_starting_grain.dart
+        - packages/colonizethis_logic/lib/src/world/connectivity_resolver.dart
+        - packages/colonizethis_logic/lib/src/world/movement.dart
+        - packages/colonizethis_models/lib/src/capital_tile.dart
+        - packages/colonizethis_models/lib/src/world_state.dart
