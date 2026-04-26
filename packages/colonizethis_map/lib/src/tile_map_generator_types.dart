@@ -3,9 +3,6 @@ part of 'tile_map_generator.dart';
 /// Sentinel value for "land not yet assigned to a province". Replaced in Pass 9.
 const String _landSentinel = '_land';
 
-/// How land-shape seeds are placed around each continent seed. SPEC/program/tile-map-gen-algorithm.md § Pass 2.
-enum LandSeedClusterShape { gaussian, uniformDisk, uniformAnnulus }
-
 /// Centralized map generation parameters. SPEC/program/tile-map-gen-config.md § Grid size derivation.
 class MapGenerationParams {
   const MapGenerationParams({
@@ -158,7 +155,7 @@ Map<String, int> computeContinentMembership(MapTopology topology) {
 
 /// Runtime parameters for tile-based map generation (grid dimensions and generator options).
 /// Pass 6 and Pass 10b terrain/jitter parameters are tunable here; see SPEC/program/tile-map-gen-config.md.
-class TileMapParams {
+class TileMapParams implements TileMapLandSeedParams {
   const TileMapParams({
     this.width = 100,
     this.height = 100,
