@@ -122,6 +122,13 @@ rules:
     runner: dart
     script: tool/check_no_screen_in_game_widgets.dart
 
+  - rule_id: repo.game_widgets_file_size
+    group: structure
+    title: app/lib/features/game/widgets files must stay at or below 700 lines
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_game_widgets_file_size.dart
+
   - rule_id: repo.canonical_province_tile_keys
     group: game_invariants
     title: Province WorkOrder targetTileKey literals use full tile shape
