@@ -32,6 +32,7 @@ Grandfather YAMLs named in the table below are **legacy** until removed; **do no
 | `tool/check_part_unit_size.dart` | Dart `part` fragment physical line limit (`SPEC/program/part-unit-size.md`); rule `repo.part_unit_size` |
 | `tool/check_no_flame_in_widgets.dart` | Disallow direct `package:flame/*` **import** and **export** lines (single- or double-quoted URI) under `app/lib/widgets/**`; rule `repo.no_flame_in_widgets` |
 | `tool/check_no_screen_in_game_widgets.dart` | Disallow `*_screen.dart` files under `app/lib/features/game/widgets/**`; rule `repo.no_screen_in_game_widgets` |
+| `tool/check_game_widgets_file_size.dart` | Enforce `app/lib/features/game/widgets/**` Dart files at **700 physical lines or fewer**; rule `repo.game_widgets_file_size` |
 | `tool/check_land_province_bucket_keys.dart` | For guarded explore/fog/news paths, disallow local-only land-province tile-bucket lookups (`tileKeysByRegionAndProvince[region]?[localId]`); require canonical full-id buckets only; rule `repo.land_province_bucket_keys` |
 
 ## Rule IDs and groups
@@ -78,3 +79,4 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 - Given a contributor adds a convention, when they follow CONTRIBUTING and this doc, then they register the rule in the manifest rather than adding a new standalone Quality workflow step for the same concern.
 - Given the [Policy: no violation allowlists](#policy-no-violation-allowlists-repo-lint) section, when implementation work completes for a legacy checker still loading grandfather YAML, then that checker, its tests, and the per-rule SPEC no longer document or depend on violation allowlists.
 - Given app game feature code, when `dart run tool/ct_repo_lint.dart` runs rule `repo.no_screen_in_game_widgets`, then no file matching `*_screen.dart` exists under `app/lib/features/game/widgets/**`.
+- Given app game widget files, when `dart run tool/ct_repo_lint.dart` runs rule `repo.game_widgets_file_size`, then each Dart file under `app/lib/features/game/widgets/**` has 700 physical lines or fewer.
