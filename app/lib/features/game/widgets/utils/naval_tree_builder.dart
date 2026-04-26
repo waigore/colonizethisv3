@@ -250,9 +250,9 @@ buildNavalTree(
   }
 
   String normalizedPortScope(Province province) {
-    final localProvinceId = ProvinceId.localSegmentFromStoredGameState(
-      province.id,
-    );
+    final localProvinceId = ProvinceId.isPrefixed(province.id)
+        ? ProvinceId.localIdFrom(province.id)
+        : province.id;
     return 'port:${province.regionId}|$localProvinceId';
   }
 
