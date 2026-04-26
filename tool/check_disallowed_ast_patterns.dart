@@ -144,10 +144,10 @@ List<DisallowedAstViolation> findDisallowedAstViolations(
       if (!lines[i].contains(needle)) {
         continue;
       }
-      if (_fileIgnoresRule(content, rule.id)) {
+      if (_fileIgnoresRule(content, relativePath, rule)) {
         continue;
       }
-      if (_isSuppressedAtLine(content, i + 1, rule.id)) {
+      if (_isSuppressedAtLine(content, relativePath, i + 1, rule)) {
         continue;
       }
       violations.add(
@@ -378,6 +378,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
         ),
       );
     } else if (kind == 'sea_zone_local_id_extraction') {
+      final allowlist = _parseStringSet(match['allowed_relative_paths']);
       out.add(
         DisallowedPatternRule(
           id: id,
@@ -391,13 +392,14 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           requireWidgetClassExtends: false,
           argumentIndex: null,
           invocationMethodNames: const {},
-          allowedRelativePaths: const {},
+          allowedRelativePaths: allowlist,
           scopedRelativePathPrefixes: const {},
           packageName: null,
           allowedPackageImports: const {},
         ),
       );
     } else if (kind == 'sea_zone_bucket_lookup_without_canonical_key') {
+      final allowlist = _parseStringSet(match['allowed_relative_paths']);
       out.add(
         DisallowedPatternRule(
           id: id,
@@ -411,7 +413,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           requireWidgetClassExtends: false,
           argumentIndex: null,
           invocationMethodNames: const {},
-          allowedRelativePaths: const {},
+          allowedRelativePaths: allowlist,
           scopedRelativePathPrefixes: const {},
           packageName: null,
           allowedPackageImports: const {},
@@ -488,24 +490,60 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
   return out;
 }
 
-bool _fileIgnoresRule(String source, String ruleId) {
-  return source.contains('ignore_for_file: disallowed_ast_$ruleId');
+bool _ruleSuppressionIsAllowedForPath(
+  String relativePath,
+  DisallowedPatternRule rule,
+) {
+  final isSeaZoneRule =
+      rule.kind == DisallowedAstMatchKind.seaZoneLocalIdExtraction ||
+      rule.kind ==
+          DisallowedAstMatchKind.seaZoneBucketLookupWithoutCanonicalKey;
+  if (!isSeaZoneRule) {
+    return true;
+  }
+  if (rule.allowedRelativePaths.isEmpty) {
+    return false;
+  }
+  return rule.allowedRelativePaths.contains(relativePath);
 }
 
-bool _lineSuppressesRule(String line, String ruleId) {
-  return line.contains('ignore: disallowed_ast_$ruleId');
+bool _fileIgnoresRule(
+  String source,
+  String relativePath,
+  DisallowedPatternRule rule,
+) {
+  if (!_ruleSuppressionIsAllowedForPath(relativePath, rule)) {
+    return false;
+  }
+  return source.contains('ignore_for_file: disallowed_ast_${rule.id}');
 }
 
-bool _isSuppressedAtLine(String source, int lineNumber1Based, String ruleId) {
+bool _lineSuppressesRule(
+  String line,
+  String relativePath,
+  DisallowedPatternRule rule,
+) {
+  if (!_ruleSuppressionIsAllowedForPath(relativePath, rule)) {
+    return false;
+  }
+  return line.contains('ignore: disallowed_ast_${rule.id}');
+}
+
+bool _isSuppressedAtLine(
+  String source,
+  String relativePath,
+  int lineNumber1Based,
+  DisallowedPatternRule rule,
+) {
   final lines = const LineSplitter().convert(source);
   final idx = lineNumber1Based - 1;
   if (idx < 0 || idx >= lines.length) {
     return false;
   }
-  if (_lineSuppressesRule(lines[idx], ruleId)) {
+  if (_lineSuppressesRule(lines[idx], relativePath, rule)) {
     return true;
   }
-  if (idx > 0 && _lineSuppressesRule(lines[idx - 1], ruleId)) {
+  if (idx > 0 && _lineSuppressesRule(lines[idx - 1], relativePath, rule)) {
     return true;
   }
   return false;
@@ -573,6 +611,20 @@ class DisallowedAstViolation {
   final int line;
   final String ruleId;
   final String message;
+}
+
+Set<String> _parseStringSet(Object? node) {
+  if (node is! YamlList) {
+    return const {};
+  }
+  final values = <String>{};
+  for (final entry in node.nodes) {
+    final value = entry.value?.toString();
+    if (value != null && value.isNotEmpty) {
+      values.add(value);
+    }
+  }
+  return values;
 }
 
 Expression _unwrapParenthesized(Expression expr) {
@@ -770,10 +822,10 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
 
   void _recordIfAllowed(AstNode anchor, DisallowedPatternRule rule) {
     final line = lineInfo.getLocation(anchor.offset).lineNumber;
-    if (_fileIgnoresRule(source, rule.id)) {
+    if (_fileIgnoresRule(source, path, rule)) {
       return;
     }
-    if (_isSuppressedAtLine(source, line, rule.id)) {
+    if (_isSuppressedAtLine(source, path, line, rule)) {
       return;
     }
     violations.add(
