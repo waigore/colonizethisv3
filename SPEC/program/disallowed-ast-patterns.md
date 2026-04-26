@@ -247,7 +247,6 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   `ProvinceId.localSegmentFromStoredGameState(...)`, **when** the disallowed
   AST checker runs, **then** it reports at least one violation for
   `province_local_segment_boundary_only` with the correct file and line.
-
 - **Given** runtime Dart source in
   `packages/colonizethis_debug_console/lib/**` that imports only
   `package:colonizethis_logic/debug_console_api.dart`, **when** the disallowed
