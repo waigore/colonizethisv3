@@ -61,6 +61,7 @@ Skills live under `.cursor/skills/<name>/SKILL.md`. When a skill matches the tas
 | `merge-dev-into-android-build` | Merge `dev` into `build/app/android` for APK build workflows. |
 | `plan-feature` | Scope a feature from SPEC/code (read-only), then open a capturing issue—no implementation. |
 | `refine-github-issue` | Refine an open issue from comment feedback (repro, root cause, priorities); update the body or return numbered clarifications when feedback conflicts with SPEC. |
+| `review-pr` | Review an open pull request against issue alignment, acceptance-criteria coverage, architecture conventions, and linting compliance; post all findings as a PR comment with strict YES/CONDITIONAL YES/NO outcomes. |
 | `review-github-issue` | Review an issue for **purpose ↔ proposed method** coherence and internal consistency; repo/SPEC/test evidence only when needed to show the method cannot satisfy the purpose. Consolidated comment with priorities and remedies; use **`verify-github-issue`** for AC↔implementation closure. |
 | `verify-github-issue` | Verify one open issue against ACs/specs/tests; gap analysis or closure steps. |
 
