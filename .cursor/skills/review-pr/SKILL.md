@@ -64,6 +64,11 @@ Evaluate these four criteria in order:
    - Any `NO` means not merge-ready.
    - `CONDITIONAL YES` means intentionally partial and documented, but not full compliance.
 
+6. **Post findings to the PR**
+   - Post the full review output as a PR comment (do not keep findings only in local/chat output).
+   - Use GitHub CLI, e.g. `gh pr comment <number-or-url> --body "$(cat <<'EOF' ... EOF )"`.
+   - The PR comment must include every criterion result, all evidence bullets, all violations/gaps, and the final merge-readiness conclusion.
+
 ## Output format
 
 Use this exact structure:
@@ -90,6 +95,8 @@ Conclusion:
 - Merge readiness: READY | NOT READY
 - Rationale: <1-3 lines>
 ```
+
+After generating this output, publish it as a PR comment verbatim (or with only minimal formatting adjustments that preserve all findings).
 
 ## Quality bar
 

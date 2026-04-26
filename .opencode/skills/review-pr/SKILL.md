@@ -19,6 +19,8 @@ When running in OpenCode:
   - `Linting compliance` cannot be `CONDITIONAL YES`.
   - Any lint allowlist creation/expansion is an automatic `NO`.
 - Produce the same output structure defined in the Cursor skill.
+- Post a PR comment containing the complete review findings (all criterion outcomes, evidence, violations/gaps, and conclusion), not just local/chat output.
+- Use GitHub CLI to publish the comment, e.g. `gh pr comment <number-or-url> --body "$(cat <<'EOF' ... EOF )"`.
 
 ## Required reference
 
