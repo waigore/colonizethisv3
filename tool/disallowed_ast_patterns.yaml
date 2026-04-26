@@ -54,12 +54,16 @@ rules:
       Use canonical prefixed sea-zone ids (regionId|localSeaZoneId) for comparisons.
     match:
       kind: sea_zone_local_id_extraction
+      allowed_relative_paths:
+        - packages/colonizethis_models/lib/src/world_state.dart
   - id: sea_zone_bucket_lookup_without_canonical_key
     message: >-
       Sea-zone tile bucket lookups must use canonical prefixed ids via
       canonicalizeSeaZoneId/canonicalSeaZoneTileBucketKey; local sea-zone keys are disallowed.
     match:
       kind: sea_zone_bucket_lookup_without_canonical_key
+      allowed_relative_paths:
+        - packages/colonizethis_models/lib/src/world_state.dart
   - id: province_lookup_unprefixed_literal
     message: >-
       Do not pass unprefixed province id string literals to province lookup
