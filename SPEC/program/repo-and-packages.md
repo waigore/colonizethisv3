@@ -28,6 +28,7 @@ Five shared Dart packages under `packages/`. TDD 15 allows merging _models and _
 | **colonizethis_save** | Save format, schema, migrations | colonizethis_models |
 | **colonizethis_logic** | Turn resolution, combat, economy, diplomacy, victory checks, order validation (uses map topology for movement). Extraction, production, stockpile, worker models; tile map or terrain data for costs/combat. | colonizethis_models, colonizethis_data |
 | **colonizethis_ai** | AI behavior, planning, personalities | colonizethis_logic (narrow AI-facing contracts only: `order_suggestion_api.dart`, `ai_api.dart`) |
+| **colonizethis_debug_console** | Debug-console command parsing/execution contracts and history state for in-game debug tooling. | colonizethis_logic (narrow debug-console contract only: `debug_console_api.dart`), colonizethis_models |
 
 **Config consumers:** colonizethis_logic and colonizethis_ai consume resolved config; app receives config at game load. See [ruleset-config.md](ruleset-config.md). Flutter does not perform merge or file parsing.
 
@@ -41,9 +42,12 @@ Five shared Dart packages under `packages/`. TDD 15 allows merging _models and _
 
 ```
 app
- └── colonizethis_logic, colonizethis_models, colonizethis_ai, colonizethis_data, colonizethis_save
+ └── colonizethis_logic, colonizethis_models, colonizethis_ai, colonizethis_data, colonizethis_save, colonizethis_debug_console
 
 colonizethis_ai
+ └── colonizethis_logic
+
+colonizethis_debug_console
  └── colonizethis_logic
 
 colonizethis_logic

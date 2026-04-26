@@ -246,6 +246,15 @@ void main() {
     expect(find.byType(CivilianUnitsPanel), findsOneWidget);
   });
 
+  testWidgets('GameMapEmpireLeftRail hides debug console icon by default', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(railScaffold());
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(kEmpireDebugConsoleButtonKey), findsNothing);
+  });
+
   testWidgets(
     'Train presents dialog after opening Civilian Units from rail (regression)',
     (WidgetTester tester) async {

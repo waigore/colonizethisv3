@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/debug_console_api.dart'
+    show resolveCivilianSpawnTileKey;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/package_logger.dart';
@@ -158,6 +160,78 @@ Orders _mergeTrainMilitaryOrdersForPlayer({
       humanPlayerId: [...kept, ...newFromDialog],
     },
   );
+}
+
+@visibleForTesting
+({Game? game, String message}) applyDebugCivilianSpawnAtCapital({
+  required Game? currentGame,
+  required SpawnDebugCivilianAtCapitalEvent event,
+}) {
+  if (currentGame == null) {
+    return (game: null, message: 'Debug spawn ignored: no active game.');
+  }
+  Player? player;
+  for (final candidate in currentGame.players) {
+    if (candidate.id == event.humanPlayerId) {
+      player = candidate;
+      break;
+    }
+  }
+  if (player == null) {
+    return (
+      game: null,
+      message: 'Debug spawn ignored: unknown player ${event.humanPlayerId}.',
+    );
+  }
+  final spawnTileKey = resolveCivilianSpawnTileKey(
+    player: player,
+    worldState: currentGame.worldState,
+  );
+  final spawnProvinceId = Unit.provinceIdFromTileKey(spawnTileKey);
+  final spawnRegionId = Unit.regionIdFromTileKey(spawnTileKey);
+  if (spawnTileKey == null ||
+      spawnProvinceId == null ||
+      spawnRegionId == null) {
+    return (
+      game: null,
+      message: 'Debug spawn ignored: player has no valid capital tile.',
+    );
+  }
+  final nowMicros = DateTime.now().microsecondsSinceEpoch;
+  final spawned = <Unit>[];
+  for (var i = 0; i < event.count; i++) {
+    spawned.add(
+      Unit(
+        id: 'debug_${event.humanPlayerId}_${_unitTypeIdSegment(event.unitType)}_${nowMicros + i}',
+        type: event.unitType,
+        ownerId: event.humanPlayerId,
+        locationProvinceId: spawnProvinceId,
+        tileKey: spawnTileKey,
+      ),
+    );
+  }
+  final world = currentGame.worldState;
+  final oldUnits = List<Unit>.from(world.oldWorld.units);
+  final newUnits = List<Unit>.from(world.newWorld.units);
+  if (spawnRegionId == kRegionNewWorld) {
+    newUnits.addAll(spawned);
+  } else {
+    oldUnits.addAll(spawned);
+  }
+  final updatedWorld = world.copyWith(
+    oldWorld: RegionData(provinces: world.oldWorld.provinces, units: oldUnits),
+    newWorld: RegionData(provinces: world.newWorld.provinces, units: newUnits),
+  );
+  return (
+    game: currentGame.copyWith(worldState: updatedWorld),
+    message:
+        'Spawned ${event.count} ${event.unitType} at ${player.displayName} capital.',
+  );
+}
+
+String _unitTypeIdSegment(String unitType) {
+  final lower = unitType.toLowerCase();
+  return lower.replaceAll(RegExp(r'[^a-z0-9]+'), '_');
 }
 
 /// Binds [AppEventHandler] to [appNavigatorKey] for the app lifetime.

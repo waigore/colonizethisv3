@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/app_assets.dart';
+import '../../../config/ct_debug_console.dart';
 import '../../../config/routes.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../providers/game_service_provider.dart';
@@ -143,6 +144,16 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
               );
             },
           ),
+          if (kCtDebugConsoleEnabled)
+            _iconTile(
+              buttonKey: kEmpireDebugConsoleButtonKey,
+              tooltip: 'Debug Console',
+              iconAsset: '${kAppIconAssetPrefix}ui_icon_layer_toggle.png',
+              onTap: () {
+                onIconTappedWhileSelectionMode?.call();
+                bus.emit(const ct_models.ToggleDebugConsolePanelEvent());
+              },
+            ),
         ],
       ),
     );

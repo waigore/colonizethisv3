@@ -171,6 +171,22 @@ extension _SessionCommands on _AppEventHandlerScopeState {
               ),
             );
       }),
+      bus.on<SpawnDebugCivilianAtCapitalEvent>().listen((e) {
+        final current = ref.read(currentGameProvider);
+        final result = applyDebugCivilianSpawnAtCapital(
+          currentGame: current,
+          event: e,
+        );
+        final nextGame = result.game;
+        if (nextGame == null) {
+          _logEvent.w(result.message);
+          _showSnackBar(ShowSnackBarEvent(message: result.message));
+          return;
+        }
+        ref.read(currentGameProvider.notifier).setGame(nextGame);
+        ref.read(gameServiceProvider).saveGame(nextGame);
+        _showSnackBar(ShowSnackBarEvent(message: result.message));
+      }),
       bus.on<AppendDiplomaticOrderRequestedEvent>().listen((e) {
         final current = ref.read(currentOrdersProvider);
         ref

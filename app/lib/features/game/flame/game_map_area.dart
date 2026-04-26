@@ -12,6 +12,7 @@ import 'package:colonizethis_map/colonizethis_map.dart'
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 import '../../../config/ct_e2e.dart';
+import '../../../config/ct_debug_console.dart';
 import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
 
 import '../../../../providers/app_event_bus_provider.dart';
@@ -32,6 +33,7 @@ import 'game_map_empire_left_rail.dart';
 import 'game_map_canvas_stack.dart';
 import 'game_region_minimap.dart';
 import 'game_map_narrow_detail_overlay.dart';
+import 'debug_console_overlay_panel.dart';
 import 'game_map_area_state_logic.dart';
 import 'next_turn_confirmation_dialog.dart';
 import '../utils/map_location_resolver.dart';
@@ -62,6 +64,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   Set<String>? _cachedValidTileKeys;
   Set<String> _cachedExploreEligibleTileKeys = const <String>{};
   bool _sideMenuOpen = false;
+  bool _debugConsoleOpen = false;
   final List<StreamSubscription<dynamic>> _busSubscriptions = [];
   ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
   final List<ct_models.GameToUIEvent> _pendingPlayerTurnEvents = [];
@@ -127,6 +130,18 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       bus.on<ct_models.TurnResolutionCompleteEvent>().listen(
         _onTurnResolutionCompleteEvent,
       ),
+      bus.on<ct_models.OpenDebugConsolePanelEvent>().listen((_) {
+        if (!mounted || !kCtDebugConsoleEnabled) return;
+        setState(() => _debugConsoleOpen = true);
+      }),
+      bus.on<ct_models.CloseDebugConsolePanelEvent>().listen((_) {
+        if (!mounted) return;
+        setState(() => _debugConsoleOpen = false);
+      }),
+      bus.on<ct_models.ToggleDebugConsolePanelEvent>().listen((_) {
+        if (!mounted || !kCtDebugConsoleEnabled) return;
+        setState(() => _debugConsoleOpen = !_debugConsoleOpen);
+      }),
     ]);
   }
 
@@ -1405,6 +1420,16 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   ),
                 ),
               ),
+              if (kCtDebugConsoleEnabled && _debugConsoleOpen)
+                Positioned(
+                  left: kEdgeSwipeStripWidth + 60,
+                  top: 56,
+                  child: DebugConsoleOverlayPanel(
+                    bus: ref.read(appEventBusProvider),
+                    humanPlayerId: _humanPlayerId,
+                    onClose: () => setState(() => _debugConsoleOpen = false),
+                  ),
+                ),
               if (isNarrow)
                 Align(
                   alignment: Alignment.bottomCenter,

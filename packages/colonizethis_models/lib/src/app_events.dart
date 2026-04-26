@@ -153,6 +153,21 @@ class OpenNavalUnitsPanelEvent extends UIActionEvent {
   final String? tileScopeTileKey;
 }
 
+/// Toggle in-map debug console overlay panel.
+class ToggleDebugConsolePanelEvent extends UIActionEvent {
+  const ToggleDebugConsolePanelEvent();
+}
+
+/// Explicit open request for in-map debug console overlay panel.
+class OpenDebugConsolePanelEvent extends UIActionEvent {
+  const OpenDebugConsolePanelEvent();
+}
+
+/// Explicit close request for in-map debug console overlay panel.
+class CloseDebugConsolePanelEvent extends UIActionEvent {
+  const CloseDebugConsolePanelEvent();
+}
+
 /// Request to center/highlight a map tile. To close a units sheet first, emit [ClosePanelEvent]
 /// before this event (same synchronous turn or after [SchedulerBinding] frame); do not dismiss sheets from the map widget.
 class LocateMapTileEvent extends UIActionEvent {
@@ -416,6 +431,19 @@ class TrainMilitaryBuildOrdersCommittedEvent extends SessionCommandEvent {
   TrainMilitaryBuildOrdersCommittedEvent({required this.orders});
 
   final List<BuildUnitOrder> orders;
+}
+
+/// Immediate debug spawn at the human player's capital tile.
+class SpawnDebugCivilianAtCapitalEvent extends SessionCommandEvent {
+  const SpawnDebugCivilianAtCapitalEvent({
+    required this.humanPlayerId,
+    required this.unitType,
+    this.count = 1,
+  });
+
+  final String humanPlayerId;
+  final String unitType;
+  final int count;
 }
 
 /// Request to append one diplomatic order for [playerId] in current-turn draft.

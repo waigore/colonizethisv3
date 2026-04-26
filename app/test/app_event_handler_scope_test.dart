@@ -42,4 +42,65 @@ void main() {
       expect(updated.id, game.id);
     });
   });
+
+  group('applyDebugCivilianSpawnAtCapital', () {
+    test('returns message when there is no active game', () {
+      const event = SpawnDebugCivilianAtCapitalEvent(
+        humanPlayerId: 'p1',
+        unitType: kUnitTypeExplorer,
+      );
+      final result = applyDebugCivilianSpawnAtCapital(
+        currentGame: null,
+        event: event,
+      );
+      expect(result.game, isNull);
+      expect(result.message, contains('no active game'));
+    });
+
+    test('spawns requested civilian count at human capital tile', () {
+      final game = Game(
+        id: 'g2',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+          ),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: 'oldWorld|1',
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: 'oldWorld|1',
+              x: 2,
+              y: 3,
+            ),
+          ),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+      const event = SpawnDebugCivilianAtCapitalEvent(
+        humanPlayerId: 'p1',
+        unitType: kUnitTypeBuilder,
+        count: 2,
+      );
+      final result = applyDebugCivilianSpawnAtCapital(
+        currentGame: game,
+        event: event,
+      );
+
+      expect(result.game, isNotNull);
+      expect(result.message, contains('Spawned 2 Builder'));
+      final units = result.game!.worldState.oldWorld.units;
+      expect(units, hasLength(2));
+      expect(units.every((u) => u.type == kUnitTypeBuilder), isTrue);
+      expect(units.every((u) => u.tileKey == 'oldWorld|1|2|3'), isTrue);
+    });
+  });
 }
