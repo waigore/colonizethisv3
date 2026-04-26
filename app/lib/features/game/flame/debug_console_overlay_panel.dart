@@ -1,4 +1,5 @@
 import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -88,6 +89,7 @@ class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return Material(
       color: Colors.black.withValues(alpha: 0.85),
       borderRadius: BorderRadius.circular(8),
@@ -101,9 +103,9 @@ class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Debug Console',
+                      l10n.debugConsole_title,
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -148,7 +150,7 @@ class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     isDense: true,
-                    hintText: '/spawn_civilian explorer 1',
+                    hintText: l10n.debugConsole_hintSpawnCivilian,
                     hintStyle: TextStyle(
                       color: Colors.white.withValues(alpha: 0.6),
                     ),

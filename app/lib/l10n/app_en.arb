@@ -3216,5 +3216,13 @@
   "playerTurnFeed_eventsTitle": "Events",
   "@playerTurnFeed_eventsTitle": {
     "description": "Title for the narrow-layout player turn events dialog."
+  },
+  "debugConsole_title": "Debug Console",
+  "@debugConsole_title": {
+    "description": "Title label for the in-map debug console overlay panel."
+  },
+  "debugConsole_hintSpawnCivilian": "/spawn_civilian explorer 1",
+  "@debugConsole_hintSpawnCivilian": {
+    "description": "Input hint showing an example slash command in debug console overlay."
   }
 }
