@@ -2,11 +2,61 @@ import 'package:colonizethis_app/features/game/flame/game_map_area_state_logic.d
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, VisibilityLevel;
+    show
+        PlayerView,
+        VisibilityLevel,
+        buildPlayerView,
+        getValidWorkOrderTileKeysWithVisibility,
+        kWorkTargetBuildImprovement;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
+
+/// Expected `provinceBuildImprovementActionState(...).enabled` per **pipeline contract A**
+/// ([SPEC/program/order-suggestions.md](../../SPEC/program/order-suggestions.md) § Province Tile
+/// `Build improvement` shortcut enablement): same predicate as
+/// [GameMapAreaStateLogic.provinceBuildImprovementActionState] — any human Builder whose allowed
+/// targets include `build_improvement` has `selectedTileKey` in
+/// `getValidWorkOrderTileKeysWithVisibility` for the same `(game, topology, view, orders, tileMap)`.
+bool _expectedBuildImprovementEnabledFromPipeline({
+  required ct_models.Game game,
+  required String humanPlayerId,
+  required String selectedTileKey,
+  required PlayerView playerView,
+  required MapTopology? topology,
+  required ct_models.Orders currentOrders,
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  if (topology == null) return false;
+  final allUnits = <ct_models.Unit>[
+    ...game.worldState.oldWorld.units,
+    ...game.worldState.newWorld.units,
+  ];
+  final builderUnits = allUnits
+      .where((unit) => unit.ownerId == humanPlayerId)
+      .where(
+        (unit) =>
+            workOrderTargetsByUnitType[unit.type]?.contains(
+              kWorkTargetBuildImprovement,
+            ) ??
+            false,
+      )
+      .toList();
+  if (builderUnits.isEmpty) return false;
+  return builderUnits.any((builder) {
+    final valid = getValidWorkOrderTileKeysWithVisibility(
+      game: game,
+      topology: topology,
+      view: playerView,
+      unitId: builder.id,
+      workTarget: kWorkTargetBuildImprovement,
+      currentOrders: currentOrders,
+      tileMapByRegion: tileMapByRegion,
+    );
+    return valid.contains(selectedTileKey);
+  });
+}
 
 void _expectPortFleetMarkersMatchTownPortDrawables(RegionMapViewData region) {
   for (final m in region.fleetTileMarkers) {
@@ -1196,6 +1246,204 @@ void main() {
         expect(state.enabled, isFalse);
         expect(state.hasBuilderUnits, isFalse);
       });
+
+      // Pipeline contract (A), Refs #1990 — SPEC/program/order-suggestions.md §
+      // Province Tile `Build improvement` shortcut enablement.
+      test(
+        'enabled matches getValidWorkOrderTileKeysWithVisibility pipeline when topology null',
+        () {
+          final game = makeGame();
+          final state =
+              GameMapAreaStateLogic.provinceBuildImprovementActionState(
+                game: game,
+                humanPlayerId: humanPlayerId,
+                selectedTileKey: selectedTileKey,
+                playerView: makePlayerView(),
+                topology: null,
+                currentOrders: const ct_models.Orders(),
+                tileMapByRegion: tileMapByRegion,
+              );
+          final expected = _expectedBuildImprovementEnabledFromPipeline(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: makePlayerView(),
+            topology: null,
+            currentOrders: const ct_models.Orders(),
+            tileMapByRegion: tileMapByRegion,
+          );
+          expect(state.enabled, expected);
+          expect(state.enabled, isFalse);
+        },
+      );
+
+      test(
+        'enabled matches pipeline for assignable grain tile with topology and materials',
+        () {
+          const provinceId = selectedProvinceId;
+          final richGame = ct_models.Game(
+            id: 'g',
+            worldState: ct_models.WorldState(
+              turnState: const ct_models.TurnState(
+                phase: ct_models.TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: ct_models.RegionData(
+                provinces: [
+                  ct_models.Province(
+                    id: provinceId,
+                    regionId: 'oldWorld',
+                    ownerId: humanPlayerId,
+                  ),
+                ],
+                units: [
+                  ct_models.Unit(
+                    id: 'u_builder',
+                    type: 'Builder',
+                    ownerId: humanPlayerId,
+                    locationProvinceId: provinceId,
+                    tileKey: selectedTileKey,
+                    status: ct_models.UnitStatus.idle,
+                  ),
+                ],
+              ),
+              newWorld: const ct_models.RegionData(provinces: [], units: []),
+              resourceByTileKey: const {selectedTileKey: 'grain'},
+              tileKeysByRegionAndProvince: {
+                'oldWorld': {
+                  provinceId: [selectedTileKey],
+                },
+              },
+              tileState: ct_models.TileMapState(
+                improvementByTile: {selectedTileKey: 0},
+              ),
+              playerVisibilityByTile: {
+                humanPlayerId: {selectedTileKey: 'fullyVisible'},
+              },
+            ),
+            players: [
+              ct_models.Player(
+                id: humanPlayerId,
+                displayName: 'Human',
+                isHuman: true,
+                capitalProvinceId: provinceId,
+                stockpile: const ct_models.Stockpile(
+                  quantities: {'lumber': 10, 'castIron': 10},
+                ),
+                techUnlocked: const {'circular_saw': true},
+              ),
+            ],
+            minorNations: const [],
+            tribes: const [],
+          );
+          final richView = buildPlayerView(richGame, topology, humanPlayerId);
+          const orders = ct_models.Orders();
+          final expected = _expectedBuildImprovementEnabledFromPipeline(
+            game: richGame,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: richView,
+            topology: topology,
+            currentOrders: orders,
+            tileMapByRegion: tileMapByRegion,
+          );
+          final state =
+              GameMapAreaStateLogic.provinceBuildImprovementActionState(
+                game: richGame,
+                humanPlayerId: humanPlayerId,
+                selectedTileKey: selectedTileKey,
+                playerView: richView,
+                topology: topology,
+                currentOrders: orders,
+                tileMapByRegion: tileMapByRegion,
+              );
+          expect(state.enabled, expected);
+          expect(expected, isTrue);
+        },
+      );
+
+      test(
+        'enabled matches pipeline when materials are insufficient for build_improvement',
+        () {
+          const provinceId = selectedProvinceId;
+          final brokeGame = ct_models.Game(
+            id: 'g',
+            worldState: ct_models.WorldState(
+              turnState: const ct_models.TurnState(
+                phase: ct_models.TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: ct_models.RegionData(
+                provinces: [
+                  ct_models.Province(
+                    id: provinceId,
+                    regionId: 'oldWorld',
+                    ownerId: humanPlayerId,
+                  ),
+                ],
+                units: [
+                  ct_models.Unit(
+                    id: 'u_builder',
+                    type: 'Builder',
+                    ownerId: humanPlayerId,
+                    locationProvinceId: provinceId,
+                    tileKey: selectedTileKey,
+                    status: ct_models.UnitStatus.idle,
+                  ),
+                ],
+              ),
+              newWorld: const ct_models.RegionData(provinces: [], units: []),
+              resourceByTileKey: const {selectedTileKey: 'grain'},
+              tileKeysByRegionAndProvince: {
+                'oldWorld': {
+                  provinceId: [selectedTileKey],
+                },
+              },
+              tileState: ct_models.TileMapState(
+                improvementByTile: {selectedTileKey: 0},
+              ),
+              playerVisibilityByTile: {
+                humanPlayerId: {selectedTileKey: 'fullyVisible'},
+              },
+            ),
+            players: [
+              ct_models.Player(
+                id: humanPlayerId,
+                displayName: 'Human',
+                isHuman: true,
+                capitalProvinceId: provinceId,
+                stockpile: const ct_models.Stockpile(quantities: {}),
+                techUnlocked: const {'circular_saw': true},
+              ),
+            ],
+            minorNations: const [],
+            tribes: const [],
+          );
+          final brokeView = buildPlayerView(brokeGame, topology, humanPlayerId);
+          const orders = ct_models.Orders();
+          final expected = _expectedBuildImprovementEnabledFromPipeline(
+            game: brokeGame,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: brokeView,
+            topology: topology,
+            currentOrders: orders,
+            tileMapByRegion: tileMapByRegion,
+          );
+          final state =
+              GameMapAreaStateLogic.provinceBuildImprovementActionState(
+                game: brokeGame,
+                humanPlayerId: humanPlayerId,
+                selectedTileKey: selectedTileKey,
+                playerView: brokeView,
+                topology: topology,
+                currentOrders: orders,
+                tileMapByRegion: tileMapByRegion,
+              );
+          expect(state.enabled, expected);
+          expect(expected, isFalse);
+        },
+      );
     });
 
     group('provinceExploreActionState', () {
