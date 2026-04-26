@@ -61,6 +61,31 @@ Rule id: `widget_build_method_too_long` (`match.kind`:
 `match.max_body_line_span`: `60`,
 `match.require_widget_class_extends`: `true`).
 
+### Sea-zone local-id extraction via `ProvinceId.localIdFrom`
+
+In runtime domain code, extracting a local id from a sea-zone id using
+`ProvinceId.localIdFrom(...)` is disallowed for sea-zone identity logic.
+Sea-zone comparisons and lookups must use canonical prefixed ids
+(`regionId|localSeaZoneId`).
+
+Rationale: stripping to local ids reintroduces ambiguous cross-region matches.
+
+Rule id: `sea_zone_local_id_extraction` (`match.kind`:
+`sea_zone_local_id_extraction`).
+
+### Sea-zone tile bucket lookup without canonical key helper
+
+In runtime domain code, indexing `tileKeysByRegionAndProvince[regionId][...]`
+with sea-zone identity is disallowed unless the key is produced by canonical
+sea-zone key helpers (`canonicalSeaZoneTileBucketKey` or
+`canonicalizeSeaZoneId`).
+
+Rationale: local sea-zone key lookups silently bypass canonical identity
+invariants and can mask save/load compatibility bugs.
+
+Rule id: `sea_zone_bucket_lookup_without_canonical_key` (`match.kind`:
+`sea_zone_bucket_lookup_without_canonical_key`).
+
 ### Unprefixed province-id string literals in lookup helpers
 
 In runtime domain code, passing unprefixed province-id string literals to
@@ -146,6 +171,24 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   `StatefulWidget` where the `build()` method body spans 60 physical lines or
   fewer, **when** the disallowed AST checker runs, **then** it does not report
   a `widget_build_method_too_long` violation for that method.
+
+- **Given** runtime Dart source containing
+  `ProvinceId.localIdFrom(seaZoneId)` or equivalent sea-zone local-id
+  extraction, **when** the disallowed AST checker runs, **then** it reports at
+  least one violation for `sea_zone_local_id_extraction` with the correct file
+  and line.
+
+- **Given** runtime Dart source indexing
+  `tileKeysByRegionAndProvince[regionId][seaZoneId]` (or equivalent local
+  sea-zone key expression), **when** the disallowed AST checker runs, **then**
+  it reports at least one violation for
+  `sea_zone_bucket_lookup_without_canonical_key` with the correct file and
+  line.
+
+- **Given** runtime Dart source indexing sea-zone tile buckets via
+  `canonicalSeaZoneTileBucketKey(...)` or `canonicalizeSeaZoneId(...)`,
+  **when** the disallowed AST checker runs, **then** it does not report a
+  `sea_zone_bucket_lookup_without_canonical_key` violation for that lookup.
 
 - **Given** runtime Dart source that passes an unprefixed province-id string
   literal to `getProvince`, `tryGetProvince`, or `resolveToFullProvinceId`,
