@@ -17,6 +17,9 @@ void main() {
       final events = <SpawnDebugCivilianAtCapitalEvent>[];
       final sub = bus.on<SpawnDebugCivilianAtCapitalEvent>().listen(events.add);
       addTearDown(sub.cancel);
+      final snackbars = <ShowSnackBarEvent>[];
+      final snackbarSub = bus.on<ShowSnackBarEvent>().listen(snackbars.add);
+      addTearDown(snackbarSub.cancel);
       var closed = false;
 
       await tester.pumpWidget(
@@ -43,6 +46,11 @@ void main() {
       expect(events.single.humanPlayerId, 'human_1');
       expect(events.single.unitType, kUnitTypeExplorer);
       expect(events.single.count, 2);
+      expect(snackbars, isNotEmpty);
+      expect(
+        snackbars.last.message,
+        'Queued debug spawn: 2x Explorer at capital.',
+      );
       expect(closed, isFalse);
     });
 
