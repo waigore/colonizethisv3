@@ -141,7 +141,7 @@ When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnFo
 | Event | Opened by | Handler builds |
 |-------|-----------|----------------|
 | `OpenPauseMenuPanelEvent` | `GameScreen` (pause) | `PauseMenuPanel` |
-| `OpenCivilianUnitsPanelEvent` | `GameSideMenu` | `CivilianUnitsPanel` (+ Riverpod game/orders, `AppEventBus`) |
+| `OpenCivilianUnitsPanelEvent` | `GameSideMenu`, province Tile inline shortcuts | `CivilianUnitsPanel` (+ Riverpod game/orders, `AppEventBus`). Optional shortcut fields (at most one non-null): `exploreShortcutTargetTileKey`, `prospectShortcutTargetTileKey`, `buildImprovementShortcutTargetTileKey` — each opens the panel in the matching filtered shortcut mode for direct assign on that tile key. |
 | `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
 | `OpenNavalUnitsPanelEvent` | `GameSideMenu`, map fleet marker tap | `NavalUnitsPanel` (+ `AppEventBus`); optional `locationScopeKey`, `initialSelectedFleetId`, `tileScopeTileKey` for tile-scoped list and header |
 
