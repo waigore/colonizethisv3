@@ -97,8 +97,10 @@ void main() {
     Map<String, List<String>> availableWorkTargets = const {},
     AppEventBus? bus,
     bool explorerOnly = false,
+    bool builderOnly = false,
     String? prospectShortcutTargetTileKey,
     String? exploreShortcutTargetTileKey,
+    String? buildImprovementShortcutTargetTileKey,
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     final navigatorKey = GlobalKey<NavigatorState>();
@@ -115,8 +117,11 @@ void main() {
             availableWorkTargets: availableWorkTargets,
             bus: resolvedBus,
             explorerOnly: explorerOnly,
+            builderOnly: builderOnly,
             prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
             exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
+            buildImprovementShortcutTargetTileKey:
+                buildImprovementShortcutTargetTileKey,
           ),
         ),
       ),
@@ -461,6 +466,84 @@ void main() {
             events.indexOf(UpsertPendingCivilianWorkOrderRequestedEvent),
           ),
         );
+      },
+    );
+
+    testWidgets(
+      'build-improvement shortcut mode filters builders and directly commits pending build_improvement on selected tile',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_build_improvement_shortcut',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'b1',
+                  type: 'Builder',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+                Unit(
+                  id: 'e1',
+                  type: 'Explorer',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        final bus = AppEventBus.create();
+        final events = <Type>[];
+        UpsertPendingCivilianWorkOrderRequestedEvent? upsertEvent;
+        bus.stream.listen((e) => events.add(e.runtimeType));
+        bus.on<UpsertPendingCivilianWorkOrderRequestedEvent>().listen(
+          (event) => upsertEvent = event,
+        );
+        await tester.pumpWidget(
+          buildPanel(
+            game: miniGame,
+            humanPlayerId: human,
+            bus: bus,
+            builderOnly: true,
+            buildImprovementShortcutTargetTileKey: tileKey,
+            availableWorkTargets: const {
+              'b1': ['build_improvement'],
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Builder'), findsOneWidget);
+        expect(find.text('Explorer'), findsNothing);
+
+        await tester.tap(find.text('Assign'));
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Assign work'), findsNothing);
+        expect(upsertEvent, isNotNull);
+        expect(upsertEvent!.playerId, human);
+        expect(upsertEvent!.workOrder.unitId, 'b1');
+        expect(upsertEvent!.workOrder.target, 'build_improvement');
+        expect(upsertEvent!.workOrder.targetTileKey, tileKey);
+        expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
       },
     );
 

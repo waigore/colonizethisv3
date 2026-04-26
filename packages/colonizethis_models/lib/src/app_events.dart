@@ -101,8 +101,10 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
     this.tileScopeTileKey,
     this.initialSelectedUnitId,
     this.explorerOnly = false,
+    this.builderOnly = false,
     this.prospectShortcutTargetTileKey,
     this.exploreShortcutTargetTileKey,
+    this.buildImprovementShortcutTargetTileKey,
   });
 
   /// Optional tile-scope key (`regionId|provinceId|x|y`) used to show only
@@ -115,11 +117,17 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
   /// Optional panel filter mode for explorer-only rows.
   final bool explorerOnly;
 
+  /// Optional panel filter mode for builder-only rows.
+  final bool builderOnly;
+
   /// Optional tile key used by the province prospect shortcut flow.
   final String? prospectShortcutTargetTileKey;
 
   /// Optional tile key used by the province explore shortcut flow.
   final String? exploreShortcutTargetTileKey;
+
+  /// Optional tile key used by the province build-improvement shortcut flow.
+  final String? buildImprovementShortcutTargetTileKey;
 }
 
 /// Military units bottom sheet.

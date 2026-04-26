@@ -51,6 +51,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.showExploreActionIcon = false,
     this.exploreActionEnabled = false,
     this.onExploreWithExplorerTap,
+    this.showBuildImprovementActionIcon = false,
+    this.buildImprovementActionEnabled = false,
+    this.onBuildImprovementTap,
   });
 
   final Game game;
@@ -72,6 +75,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool showExploreActionIcon;
   final bool exploreActionEnabled;
   final VoidCallback? onExploreWithExplorerTap;
+  final bool showBuildImprovementActionIcon;
+  final bool buildImprovementActionEnabled;
+  final VoidCallback? onBuildImprovementTap;
 
   bool _isSeaZone(String id) {
     final parts = id.split('|');
@@ -123,6 +129,9 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       showExploreActionIcon: showExploreActionIcon,
       exploreActionEnabled: exploreActionEnabled,
       onExploreWithExplorerTap: onExploreWithExplorerTap,
+      showBuildImprovementActionIcon: showBuildImprovementActionIcon,
+      buildImprovementActionEnabled: buildImprovementActionEnabled,
+      onBuildImprovementTap: onBuildImprovementTap,
     );
   }
 
@@ -265,6 +274,9 @@ _OverlayContent _provinceContent({
   required bool showExploreActionIcon,
   required bool exploreActionEnabled,
   VoidCallback? onExploreWithExplorerTap,
+  required bool showBuildImprovementActionIcon,
+  required bool buildImprovementActionEnabled,
+  VoidCallback? onBuildImprovementTap,
 }) {
   final parts = provinceId.split('|');
   final regionId = parts.isNotEmpty ? parts[0] : region.regionId;
@@ -450,6 +462,9 @@ _OverlayContent _provinceContent({
     showExploreActionIcon: showExploreActionIcon,
     exploreActionEnabled: exploreActionEnabled,
     onExploreWithExplorerTap: onExploreWithExplorerTap,
+    showBuildImprovementActionIcon: showBuildImprovementActionIcon,
+    buildImprovementActionEnabled: buildImprovementActionEnabled,
+    onBuildImprovementTap: onBuildImprovementTap,
   );
   final political = _buildPoliticalSection(
     l10n: l10n,

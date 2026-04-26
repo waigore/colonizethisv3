@@ -81,6 +81,8 @@ Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles 
 - **Prospect icon gate:** Show only when tile is mineral-eligible and not already prospected by the human player, with the same visibility/obfuscation and province-only gating. Mineral eligibility matches **`isMineralEligibleTile`** in colonizethis_logic (known terrain resources such as wool on hills are not mineral-eligible).
 - **Prospect icon behavior:** If the human player has no Explorer units, keep icon visible but disabled; disabled state uses grayscale styling and no tap action.
 - Explorers with pending work still count as Explorer units for icon availability and panel filtering.
+- **Build-improvement icon gate:** The `Improvement` row can show inline **`Build improvement`** only in province context when Tile details are visible (not `???`) and the selected tile is improvable (`resource exists` and `current improvement level < extractionCapForResourceForUnlocked(player tech, resource)`).
+- **Build-improvement icon behavior:** Visibility is trait-only (improvable) and independent from assignability. Enabled/disabled must use full assign-time validity from order suggestions/validators for `build_improvement` (including affordability and reservations for the current draft). If no eligible Builder is assignable, keep icon visible but disabled (grayscale, no tap). On enabled tap, open Civilian Units panel in Builder-only shortcut mode targeting the exact selected tile key for direct `build_improvement` assignment.
 
 **Road / railroad (Tile):** On **land** tiles, the UI shows the **numeric transport level** first (stored road/rail level: **0**, **1**, **2**, or **4** per [extraction-and-improvements.md](../game/extraction-and-improvements.md) § Transport Level), e.g. `Road / railroad: transport level N`. A **second line** (caption style) gives the GDD label: **`none`**, **`primitive road`**, **`improved road`**, **`port or railroad`**, or **`non-standard transport level`** if the value is unexpected. For transport level **1**, a **third** short gloss clarifies that railroads are level **4**. **Sea** tiles (no land transport): a single line `Road / railroad: —`.
 
@@ -118,6 +120,12 @@ Non-Material, pixel-art friendly: `CtPanel`, `CtTabStrip`, explicit text styles 
 - Given click-time state drift invalidates `Explore with explorer` assignment, when the user taps the icon, then the UI layer performs a silent no-op and commits no pending work order.
 - Given map scrolling/panning/rebuild churn with unchanged selected tile and unchanged turn snapshot, when the overlay re-renders, then explore icon state is derived from cached state and does not recompute explore eligibility.
 - Given turn resolution advances to the next turn snapshot, when the UI refreshes overlay-related caches, then the dedicated explore eligibility cache is refreshed for subsequent icon decisions.
+- Given province Tile details are visible and selected tile has a resource with current improvement level below the player extraction tech cap for that resource, when the overlay renders, then the UI layer shows inline `Build improvement` on the `Improvement` row.
+- Given selected tile has no resource or its current improvement level is at/above the player extraction tech cap, when the overlay renders, then the UI layer does not show `Build improvement`.
+- Given the selected context is sea-zone or tile details are obfuscated (`???`), when the overlay renders, then the UI layer does not show `Build improvement`.
+- Given `Build improvement` is visible and no Builder can validly assign `build_improvement` this turn (including affordability/reservation constraints), when the overlay renders, then the UI layer keeps the icon visible but disabled, grayscale, and non-clickable.
+- Given user taps enabled `Build improvement` and click-time state remains valid, when the Civilian Units panel opens, then it opens in Builder-only shortcut mode targeting the exact selected tile key for direct `WorkOrder(target: build_improvement, targetTileKey: <exact selected tile key>)`.
+- Given click-time state drift invalidates `Build improvement`, when user taps the icon, then the UI layer performs a silent no-op and commits no pending work order.
 
 ### Widgetbook
 

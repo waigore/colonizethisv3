@@ -432,6 +432,32 @@ void main() {
     );
 
     testWidgets(
+      'Tile improvement row shows build improvement shortcut icon tooltip when enabled',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: demoGameForOverlay,
+                region: demoRegionForOverlay,
+                displayId: sampleProvinceIdForOverlay,
+                selectedTileKey: sampleTileKeyForProvinceOverlay,
+                humanPlayerId: demoGameForOverlay.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
+                showBuildImprovementActionIcon: true,
+                buildImprovementActionEnabled: true,
+                onBuildImprovementTap: () {},
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byTooltip('Build improvement'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'AC: Overlay constrained to one-third height on narrow viewport',
       (WidgetTester tester) async {
         const viewportHeight = 600.0;

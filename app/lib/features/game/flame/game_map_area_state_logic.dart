@@ -11,6 +11,12 @@ class GameMapAreaStateLogic {
     enabled: false,
     hasExplorerUnits: false,
   );
+  static const ({bool showIcon, bool enabled, bool hasBuilderUnits})
+  kHiddenBuilderInlineActionState = (
+    showIcon: false,
+    enabled: false,
+    hasBuilderUnits: false,
+  );
 
   static int regionIndexFromWorldRegionId(String regionId) {
     if (regionId == 'newWorld') return 1;
@@ -762,6 +768,94 @@ class GameMapAreaStateLogic {
       enabled: hasExplorerUnits,
       hasExplorerUnits: hasExplorerUnits,
     );
+  }
+
+  static ({bool showIcon, bool enabled, bool hasBuilderUnits})
+  provinceBuildImprovementActionState({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required PlayerView playerView,
+    required MapTopology? topology,
+    required ct_models.Orders currentOrders,
+    required Map<String, TileMapResult>? tileMapByRegion,
+  }) {
+    final tileParts = selectedTileKey.split('|');
+    if (tileParts.length < 4) {
+      return kHiddenBuilderInlineActionState;
+    }
+    final tileVisibility = playerView.visibilityForTile(selectedTileKey);
+    if (tileVisibility == VisibilityLevel.unknown) {
+      return kHiddenBuilderInlineActionState;
+    }
+    final tileRegionId = tileParts[0];
+    final tileProvinceId = tileParts[1];
+    final prefixedProvinceId = '$tileRegionId|$tileProvinceId';
+    final isProvinceTile =
+        tryGetProvince(game.worldState, prefixedProvinceId) != null;
+    if (!isProvinceTile) {
+      return kHiddenBuilderInlineActionState;
+    }
+    ct_models.Player? player;
+    for (final p in game.players) {
+      if (p.id == humanPlayerId) {
+        player = p;
+        break;
+      }
+    }
+    if (player == null) {
+      return kHiddenBuilderInlineActionState;
+    }
+
+    final resourceId = game.worldState.resourceByTileKey[selectedTileKey];
+    if (resourceId == null || resourceId.isEmpty) {
+      return kHiddenBuilderInlineActionState;
+    }
+    final currentLevel = game.worldState.tileState.improvementLevel(
+      selectedTileKey,
+    );
+    final techCap = extractionCapForResourceForUnlocked(
+      player.techUnlocked,
+      resourceId,
+    );
+    if (currentLevel >= techCap) {
+      return kHiddenBuilderInlineActionState;
+    }
+
+    final allUnits = <ct_models.Unit>[
+      ...game.worldState.oldWorld.units,
+      ...game.worldState.newWorld.units,
+    ];
+    final builderUnits = allUnits
+        .where((unit) => unit.ownerId == humanPlayerId)
+        .where(
+          (unit) =>
+              workOrderTargetsByUnitType[unit.type]?.contains(
+                kWorkTargetBuildImprovement,
+              ) ??
+              false,
+        )
+        .toList();
+    if (builderUnits.isEmpty) {
+      return (showIcon: true, enabled: false, hasBuilderUnits: false);
+    }
+    if (topology == null) {
+      return (showIcon: true, enabled: false, hasBuilderUnits: true);
+    }
+
+    final anyAssignable = builderUnits.any((builder) {
+      final valid = getValidWorkOrderTileKeysWithVisibility(
+        game: game,
+        topology: topology,
+        view: playerView,
+        unitId: builder.id,
+        workTarget: kWorkTargetBuildImprovement,
+        currentOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
+      return valid.contains(selectedTileKey);
+    });
+    return (showIcon: true, enabled: anyAssignable, hasBuilderUnits: true);
   }
 }
 

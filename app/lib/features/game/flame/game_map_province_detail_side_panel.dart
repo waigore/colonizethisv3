@@ -97,6 +97,19 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
             currentOrders: draftOrders,
             tileMapByRegion: mapData?.tileMapByRegion,
           );
+    final hiddenBuilderState =
+        GameMapAreaStateLogic.kHiddenBuilderInlineActionState;
+    final buildImprovementState = panel.selectedTileKey == null
+        ? hiddenBuilderState
+        : GameMapAreaStateLogic.provinceBuildImprovementActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: panel.selectedTileKey!,
+            playerView: playerView,
+            topology: topology,
+            currentOrders: draftOrders,
+            tileMapByRegion: mapData?.tileMapByRegion,
+          );
     Widget overlay = ProvinceSeaZoneDetailOverlay(
       game: game,
       region: region,
@@ -112,6 +125,8 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
       prospectActionEnabled: prospectState.enabled,
       showExploreActionIcon: exploreState.showIcon,
       exploreActionEnabled: exploreState.enabled,
+      showBuildImprovementActionIcon: buildImprovementState.showIcon,
+      buildImprovementActionEnabled: buildImprovementState.enabled,
       onExploreWithExplorerTap:
           exploreState.enabled && panel.selectedTileKey != null
           ? () {
@@ -160,6 +175,33 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
                     ct_models.OpenCivilianUnitsPanelEvent(
                       explorerOnly: true,
                       prospectShortcutTargetTileKey: selectedTileKey,
+                    ),
+                  );
+            }
+          : null,
+      onBuildImprovementTap:
+          buildImprovementState.enabled && panel.selectedTileKey != null
+          ? () {
+              final selectedTileKey = panel.selectedTileKey!;
+              final revalidatedState =
+                  GameMapAreaStateLogic.provinceBuildImprovementActionState(
+                    game: game,
+                    humanPlayerId: humanPlayerId,
+                    selectedTileKey: selectedTileKey,
+                    playerView: playerView,
+                    topology: topology,
+                    currentOrders: draftOrders,
+                    tileMapByRegion: mapData?.tileMapByRegion,
+                  );
+              if (!revalidatedState.enabled) {
+                return;
+              }
+              ref
+                  .read(appEventBusProvider)
+                  .emit(
+                    ct_models.OpenCivilianUnitsPanelEvent(
+                      builderOnly: true,
+                      buildImprovementShortcutTargetTileKey: selectedTileKey,
                     ),
                   );
             }

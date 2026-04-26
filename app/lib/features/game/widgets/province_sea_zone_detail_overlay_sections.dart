@@ -1,8 +1,5 @@
 part of 'province_sea_zone_detail_overlay.dart';
 
-const String _kProspectWithExplorerTooltip = 'Prospect with explorer';
-const String _kExploreWithExplorerTooltip = 'Explore with explorer';
-
 /// Supplementary GDD label for [roadLevel] on land tiles (issue #1537 / extraction-and-improvements § Transport Level).
 @visibleForTesting
 String roadRailSupplementaryLabel(int roadLevel) {
@@ -292,6 +289,9 @@ Widget _buildTileSection({
   required bool showProspectActionIcon,
   required bool prospectActionEnabled,
   VoidCallback? onProspectWithExplorerTap,
+  required bool showBuildImprovementActionIcon,
+  required bool buildImprovementActionEnabled,
+  VoidCallback? onBuildImprovementTap,
 }) {
   if (selectedTileKey == null) {
     return _buildSection(
@@ -358,7 +358,7 @@ Widget _buildTileSection({
       ),
       if (showExploreActionIcon)
         IconButton(
-          tooltip: _kExploreWithExplorerTooltip,
+          tooltip: l10n.provinceOverlay_tileExploreWithExplorerTooltip,
           onPressed: exploreActionEnabled ? onExploreWithExplorerTap : null,
           icon: Icon(
             Icons.explore,
@@ -371,11 +371,39 @@ Widget _buildTileSection({
         ),
       if (showProspectActionIcon)
         IconButton(
-          tooltip: _kProspectWithExplorerTooltip,
+          tooltip: l10n.provinceOverlay_tileProspectWithExplorerTooltip,
           onPressed: prospectActionEnabled ? onProspectWithExplorerTap : null,
           icon: Icon(
             Icons.travel_explore,
             color: prospectActionEnabled
+                ? null
+                : Theme.of(context).disabledColor.withValues(alpha: 0.65),
+          ),
+          iconSize: 18,
+          visualDensity: VisualDensity.compact,
+        ),
+    ],
+  );
+  final improvementRow = Row(
+    children: [
+      Expanded(
+        child: _buildTileImprovementLabel(
+          l10n: l10n,
+          impLevel: impLevel,
+          visLevel: visLevel,
+          rawResourceId: resourceRaw,
+          visibleResourceId: resourceVisible,
+        ),
+      ),
+      if (showBuildImprovementActionIcon)
+        IconButton(
+          tooltip: l10n.provinceOverlay_tileBuildImprovementTooltip,
+          onPressed: buildImprovementActionEnabled
+              ? onBuildImprovementTap
+              : null,
+          icon: Icon(
+            Icons.handyman,
+            color: buildImprovementActionEnabled
                 ? null
                 : Theme.of(context).disabledColor.withValues(alpha: 0.65),
           ),
@@ -400,13 +428,7 @@ Widget _buildTileSection({
           resourceLabel: resourceLabel,
         ),
         prospectedRow,
-        _buildTileImprovementLabel(
-          l10n: l10n,
-          impLevel: impLevel,
-          visLevel: visLevel,
-          rawResourceId: resourceRaw,
-          visibleResourceId: resourceVisible,
-        ),
+        improvementRow,
         ..._buildTileRoadLabelWidgets(
           context: context,
           l10n: l10n,
