@@ -554,6 +554,9 @@ class WorldState {
       return parts[0] == regionId && parts[1] == bucketKey;
     });
     if (!isSeaZoneBucket) return bucketKey;
-    return ProvinceId.full(regionId, bucketKey);
+    throw StateError(
+      'models: legacy local sea-zone bucket key "$bucketKey" is not supported; '
+      'expected canonical prefixed id "${ProvinceId.full(regionId, bucketKey)}".',
+    );
   }
 }
