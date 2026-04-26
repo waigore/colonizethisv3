@@ -141,7 +141,5 @@ allowed_depth_ge4:
     symbol: buildDiplomacyRows
   - file: ctdev/lib/player_view_map_painter.dart
     symbol: PlayerViewMapPainter._paintRegion
-  - file: ctdev/lib/debug_map_painter.dart
-    symbol: RegionMapPainter.paint
   - file: tool/sim_scenarios/lib/state_verifier.dart
     symbol: StateVerifier._verifyAssertion
