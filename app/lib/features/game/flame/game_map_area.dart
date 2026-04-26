@@ -16,6 +16,7 @@ import '../../../config/ct_debug_console.dart';
 import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
 
 import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/debug_console_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
@@ -131,7 +132,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         _onTurnResolutionCompleteEvent,
       ),
       bus.on<ct_models.OpenDebugConsolePanelEvent>().listen((_) {
-        if (!mounted || !kCtDebugConsoleEnabled) return;
+        if (!mounted || !ref.read(debugConsoleEnabledProvider)) return;
         setState(() => _debugConsoleOpen = true);
       }),
       bus.on<ct_models.CloseDebugConsolePanelEvent>().listen((_) {
@@ -139,7 +140,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
         setState(() => _debugConsoleOpen = false);
       }),
       bus.on<ct_models.ToggleDebugConsolePanelEvent>().listen((_) {
-        if (!mounted || !kCtDebugConsoleEnabled) return;
+        if (!mounted || !ref.read(debugConsoleEnabledProvider)) return;
         setState(() => _debugConsoleOpen = !_debugConsoleOpen);
       }),
     ]);
@@ -1056,6 +1057,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
     final treasurySummary = ref.watch(treasurySummaryProvider);
     final feedEntries = _feedEntries();
+    final debugConsoleEnabled = ref.watch(debugConsoleEnabledProvider);
     final feedButtonTopInset = kMapOverlayEdgeInset;
     final feedButtonRightInset = kCtE2EEnabled
         ? kMapOverlayEdgeInset + 48
@@ -1420,7 +1422,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   ),
                 ),
               ),
-              if (kCtDebugConsoleEnabled && _debugConsoleOpen)
+              if (debugConsoleEnabled && _debugConsoleOpen)
                 Positioned(
                   left: kEdgeSwipeStripWidth + 60,
                   top: 56,

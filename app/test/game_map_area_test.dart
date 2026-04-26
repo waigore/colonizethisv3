@@ -1,8 +1,10 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
+import 'package:colonizethis_app/features/game/flame/debug_console_overlay_panel.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/debug_console_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -122,6 +124,51 @@ void main() {
 
     expect(tester.takeException(), isNull);
     bus.dispose();
+  });
+
+  testWidgets('debug console overlay toggles when feature is enabled', (
+    WidgetTester tester,
+  ) async {
+    final init = getDebugInitGameResult();
+    final game = init.game;
+    final mapViewData = init.mapViewData;
+    final bus = AppEventBus.create();
+    addTearDown(bus.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appEventBusProvider.overrideWith((ref) => bus),
+          debugConsoleEnabledProvider.overrideWithValue(true),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          mapViewDataProvider.overrideWith((ref) => mapViewData),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: GameMapArea(game: game, mapViewData: mapViewData),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(find.byType(DebugConsoleOverlayPanel), findsNothing);
+
+    bus.emit(const ToggleDebugConsolePanelEvent());
+    await tester.pump();
+    expect(find.byType(DebugConsoleOverlayPanel), findsOneWidget);
+
+    bus.emit(const CloseDebugConsolePanelEvent());
+    await tester.pump();
+    expect(find.byType(DebugConsoleOverlayPanel), findsNothing);
   });
 
   testWidgets('Player turn event feed commits batch on turn complete', (
@@ -732,66 +779,65 @@ void main() {
     },
   );
 
-  testWidgets(
-    'explore selection mode prompt appears under one second',
-    (WidgetTester tester) async {
-      final init = getDebugInitGameResult();
-      final game = init.game;
-      final mapViewData = init.mapViewData;
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
+  testWidgets('explore selection mode prompt appears under one second', (
+    WidgetTester tester,
+  ) async {
+    final init = getDebugInitGameResult();
+    final game = init.game;
+    final mapViewData = init.mapViewData;
+    final bus = AppEventBus.create();
+    addTearDown(bus.dispose);
 
-      final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
-          ? game.worldState.oldWorld.units.first.id
-          : game.worldState.newWorld.units.first.id;
+    final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
+        ? game.worldState.oldWorld.units.first.id
+        : game.worldState.newWorld.units.first.id;
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameServiceProvider.overrideWith(
-              (ref) => GameService(gamesBox, GameSaveAdapter()),
-            ),
-            currentOrdersProvider.overrideWith(
-              () => CurrentOrdersNotifier(const Orders()),
-            ),
-            mapViewDataProvider.overrideWith((ref) => mapViewData),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: mapViewData),
-            ),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appEventBusProvider.overrideWith((ref) => bus),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          mapViewDataProvider.overrideWith((ref) => mapViewData),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: GameMapArea(game: game, mapViewData: mapViewData),
           ),
         ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
 
-      final sw = Stopwatch()..start();
-      bus.emit(
-        StartCivilianWorkTargetSelectionEvent(
-          unitId: sampleUnitId,
-          workTarget: kWorkTargetExplore,
-        ),
-      );
-      await tester.pump();
+    final sw = Stopwatch()..start();
+    bus.emit(
+      StartCivilianWorkTargetSelectionEvent(
+        unitId: sampleUnitId,
+        workTarget: kWorkTargetExplore,
+      ),
+    );
+    await tester.pump();
 
-      var selectionReady = false;
-      for (var i = 0; i < 200; i++) {
-        await tester.pump(const Duration(milliseconds: 5));
-        if (find.text('Select a tile, or click cancel').evaluate().isNotEmpty) {
-          selectionReady = true;
-          break;
-        }
+    var selectionReady = false;
+    for (var i = 0; i < 200; i++) {
+      await tester.pump(const Duration(milliseconds: 5));
+      if (find.text('Select a tile, or click cancel').evaluate().isNotEmpty) {
+        selectionReady = true;
+        break;
       }
-      sw.stop();
+    }
+    sw.stop();
 
-      expect(selectionReady, isTrue);
-      expect(sw.elapsedMilliseconds, lessThan(1000));
-    },
-  );
+    expect(selectionReady, isTrue);
+    expect(sw.elapsedMilliseconds, lessThan(1000));
+  });
 
   testWidgets(
     'work target selection auto-switches to region with valid tiles when current tab has none',

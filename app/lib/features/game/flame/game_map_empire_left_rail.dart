@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/app_assets.dart';
-import '../../../config/ct_debug_console.dart';
 import '../../../config/routes.dart';
 import '../../../providers/app_event_bus_provider.dart';
+import '../../../providers/debug_console_provider.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../widgets/strict_asset_icon.dart';
@@ -65,6 +65,7 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     final topology = mapData?.combinedTopology ?? MapTopology();
     final bus = ref.read(appEventBusProvider);
+    final debugConsoleEnabled = ref.watch(debugConsoleEnabledProvider);
 
     return Padding(
       padding: const EdgeInsets.only(top: 4),
@@ -144,7 +145,7 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
               );
             },
           ),
-          if (kCtDebugConsoleEnabled)
+          if (debugConsoleEnabled)
             _iconTile(
               buttonKey: kEmpireDebugConsoleButtonKey,
               tooltip: 'Debug Console',
