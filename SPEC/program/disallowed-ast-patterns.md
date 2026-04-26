@@ -119,19 +119,17 @@ Rule ids:
   `match.method_names`: `localIdFrom`,
   `match.argument_index`: `0`)
 
-### `localSegmentFromStoredGameState` outside approved boundary adapters
+### `localSegmentFromStoredGameState` disallowed in runtime domain code
 
 In runtime domain code, `ProvinceId.localSegmentFromStoredGameState(...)` is
-disallowed outside explicit boundary adapters for save/load compatibility,
-topology node alignment, and tile-key bridge logic.
+disallowed in all scanned files.
 
-Rationale: this helper intentionally tolerates legacy bare local ids; allowing
-it in general runtime identity paths can reintroduce ambiguous province-id
-handling.
+Rationale: this helper intentionally tolerates legacy bare local ids. Runtime
+identity paths must use explicit prefixed-id handling at the call site instead
+of a grandfathered compatibility helper.
 
 Rule id: `province_local_segment_boundary_only` (`match.kind`:
-`province_local_segment_boundary_only`, `match.allowed_relative_paths`:
-manifested allowlist of boundary files).
+`province_local_segment_boundary_only`).
 
 ### Debug-console imports must use logic contract entrypoints only
 
@@ -246,17 +244,9 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   `province_local_id_from_unprefixed_literal` violation.
 
 - **Given** runtime Dart source that calls
-  `ProvinceId.localSegmentFromStoredGameState(...)` from a file that is not in
-  the configured allowlist, **when** the disallowed AST checker runs, **then**
-  it reports at least one violation for
+  `ProvinceId.localSegmentFromStoredGameState(...)`, **when** the disallowed
+  AST checker runs, **then** it reports at least one violation for
   `province_local_segment_boundary_only` with the correct file and line.
-
-- **Given** runtime Dart source that calls
-  `ProvinceId.localSegmentFromStoredGameState(...)` from a configured
-  allowlisted boundary file, **when** the disallowed AST checker runs, **then**
-  it does not report a `province_local_segment_boundary_only` violation for
-  that call.
-
 - **Given** runtime Dart source in
   `packages/colonizethis_debug_console/lib/**` that imports only
   `package:colonizethis_logic/debug_console_api.dart`, **when** the disallowed

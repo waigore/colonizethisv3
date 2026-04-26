@@ -418,20 +418,6 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
         ),
       );
     } else if (kind == 'province_local_segment_boundary_only') {
-      final allowedPathsNode = match['allowed_relative_paths'];
-      if (allowedPathsNode is! YamlList) {
-        continue;
-      }
-      final allowedRelativePaths = <String>{};
-      for (final p in allowedPathsNode.nodes) {
-        final s = p.value?.toString();
-        if (s != null && s.isNotEmpty) {
-          allowedRelativePaths.add(s);
-        }
-      }
-      if (allowedRelativePaths.isEmpty) {
-        continue;
-      }
       out.add(
         DisallowedPatternRule(
           id: id,
@@ -445,7 +431,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           requireWidgetClassExtends: false,
           argumentIndex: null,
           invocationMethodNames: const {},
-          allowedRelativePaths: allowedRelativePaths,
+          allowedRelativePaths: const {},
           scopedRelativePathPrefixes: const {},
           packageName: null,
           allowedPackageImports: const {},
@@ -812,8 +798,7 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
         _recordIfAllowed(node, rule);
       } else if (rule.kind ==
               DisallowedAstMatchKind.provinceLocalSegmentBoundaryOnly &&
-          _isProvinceLocalSegmentInvocation(node) &&
-          !rule.allowedRelativePaths.contains(path)) {
+          _isProvinceLocalSegmentInvocation(node)) {
         _recordIfAllowed(node, rule);
       }
       if (rule.kind ==
