@@ -25,63 +25,57 @@ class GameMapCornerControls extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Material(
+        _MapCornerIconButton(
           key: kBaseLayerCycleButtonKey,
-          color: Colors.white.withValues(alpha: 0.9),
-          child: Tooltip(
-            message: l10n.mapCorner_tooltipBaseLayer,
-            child: InkWell(
-              onTap: onCycleBaseLayerDisplayMode,
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: StrictAssetIcon(
-                  assetPath: '${kAppIconAssetPrefix}ui_icon_layer_toggle.png',
-                  width: 20,
-                  height: 20,
-                ),
-              ),
-            ),
-          ),
+          tooltip: l10n.mapCorner_tooltipBaseLayer,
+          onTap: onCycleBaseLayerDisplayMode,
+          assetPath: '${kAppIconAssetPrefix}ui_icon_layer_toggle.png',
         ),
         const SizedBox(width: 4),
-        Material(
+        _MapCornerIconButton(
           key: kHomeToCapitalButtonKey,
-          color: Colors.white.withValues(alpha: 0.9),
-          child: Tooltip(
-            message: l10n.mapCorner_tooltipCenterCapital,
-            child: InkWell(
-              onTap: onCenterOnHomeCapital,
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: StrictAssetIcon(
-                  assetPath: '${kAppIconAssetPrefix}ui_icon_home_capital.png',
-                  width: 20,
-                  height: 20,
-                ),
-              ),
-            ),
-          ),
+          tooltip: l10n.mapCorner_tooltipCenterCapital,
+          onTap: onCenterOnHomeCapital,
+          assetPath: '${kAppIconAssetPrefix}ui_icon_home_capital.png',
         ),
         const SizedBox(width: 4),
-        Material(
+        _MapCornerIconButton(
           key: kMapDisplayOptionsButtonKey,
-          color: Colors.white.withValues(alpha: 0.9),
-          child: Tooltip(
-            message: l10n.mapCorner_tooltipMapDisplayOptions,
-            child: InkWell(
-              onTap: onOpenMapDisplayOptions,
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: StrictAssetIcon(
-                  assetPath: '${kAppIconAssetPrefix}ui_icon_map_options.png',
-                  width: 20,
-                  height: 20,
-                ),
-              ),
-            ),
-          ),
+          tooltip: l10n.mapCorner_tooltipMapDisplayOptions,
+          onTap: onOpenMapDisplayOptions,
+          assetPath: '${kAppIconAssetPrefix}ui_icon_map_options.png',
         ),
       ],
+    );
+  }
+}
+
+class _MapCornerIconButton extends StatelessWidget {
+  const _MapCornerIconButton({
+    super.key,
+    required this.tooltip,
+    required this.onTap,
+    required this.assetPath,
+  });
+
+  final String tooltip;
+  final VoidCallback onTap;
+  final String assetPath;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.9),
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: StrictAssetIcon(assetPath: assetPath, width: 20, height: 20),
+          ),
+        ),
+      ),
     );
   }
 }
