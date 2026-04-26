@@ -41,10 +41,14 @@ rules:
     message: 'do not strip sea-zone ids to local'
     match:
       kind: sea_zone_local_id_extraction
+      allowed_relative_paths:
+        - packages/foo/lib/boundary.dart
   - id: sea_zone_bucket_lookup_without_canonical_key
     message: 'sea-zone bucket lookup requires canonical key'
     match:
       kind: sea_zone_bucket_lookup_without_canonical_key
+      allowed_relative_paths:
+        - packages/foo/lib/boundary.dart
   - id: province_lookup_unprefixed_literal
     message: 'prefixed province id literals required for lookup'
     match:
@@ -548,6 +552,46 @@ class X {
         ).where(
           (e) => e.ruleId == 'sea_zone_bucket_lookup_without_canonical_key',
         ),
+        isEmpty,
+      );
+    });
+
+    test('sea-zone rule ignores are rejected outside allowlisted boundary', () {
+      const src = r'''
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+bool bad(String seaZoneId) {
+  // ignore: disallowed_ast_sea_zone_local_id_extraction
+  return ProvinceId.localIdFrom(seaZoneId) == 's1';
+}
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/not_boundary.dart',
+        src,
+        rules,
+      );
+      expect(
+        v.where((e) => e.ruleId == 'sea_zone_local_id_extraction'),
+        isNotEmpty,
+      );
+    });
+
+    test('sea-zone rule ignores are allowed in allowlisted boundary file', () {
+      const src = r'''
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+bool ok(String seaZoneId) {
+  // ignore: disallowed_ast_sea_zone_local_id_extraction
+  return ProvinceId.localIdFrom(seaZoneId) == 's1';
+}
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/boundary.dart',
+        src,
+        rules,
+      );
+      expect(
+        v.where((e) => e.ruleId == 'sea_zone_local_id_extraction'),
         isEmpty,
       );
     });
