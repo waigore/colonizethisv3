@@ -95,3 +95,15 @@ rules:
         - packages/colonizethis_logic/lib/src/world/movement.dart
         - packages/colonizethis_models/lib/src/capital_tile.dart
         - packages/colonizethis_models/lib/src/world_state.dart
+  - id: debug_console_logic_contract_boundary
+    message: >-
+      Debug console code must import colonizethis_logic only through approved
+      contract entrypoints. Imports from src/ internals and broad logic barrels
+      are disallowed.
+    match:
+      kind: package_import_allowlist
+      scoped_relative_path_prefixes:
+        - packages/colonizethis_debug_console/lib/
+      package_name: colonizethis_logic
+      allowed_imports:
+        - package:colonizethis_logic/debug_console_api.dart
