@@ -447,7 +447,9 @@ Set<String> _seaConnectedPortKeysForCapital({
     final prefixedTopology = _topologyUsesPrefixedIds(topology);
     final provinceIdForLookup = prefixedTopology
         ? capital.provinceId
-        : ProvinceId.localSegmentFromStoredGameState(capital.provinceId);
+        : (ProvinceId.isPrefixed(capital.provinceId)
+              ? ProvinceId.localIdFrom(capital.provinceId)
+              : capital.provinceId);
     final capitalSeaZones = _seaZonesAdjacentToProvince(
       topology,
       provinceIdForLookup,

@@ -23,7 +23,7 @@ Iterable<String> neighborProvinceIdsInRegion(
 ) sync* {
   final nodeIdsInRegion = provinceNodeIdsForRegion(topology, regionId);
   final localIdsInRegion = nodeIdsInRegion
-      .map((id) => ProvinceId.localSegmentFromStoredGameState(id))
+      .map((id) => ProvinceId.isPrefixed(id) ? ProvinceId.localIdFrom(id) : id)
       .toSet();
   if (!localIdsInRegion.contains(localProvinceId)) return;
   final idToMatch = nodeIdsInRegion.contains(localProvinceId)
@@ -34,7 +34,9 @@ Iterable<String> neighborProvinceIdsInRegion(
     if (edge.id1 != idToMatch && edge.id2 != idToMatch) continue;
     final other = edge.id1 == idToMatch ? edge.id2 : edge.id1;
     if (nodeIdsInRegion.contains(other)) {
-      yield ProvinceId.localSegmentFromStoredGameState(other);
+      yield ProvinceId.isPrefixed(other)
+          ? ProvinceId.localIdFrom(other)
+          : other;
     }
   }
 }

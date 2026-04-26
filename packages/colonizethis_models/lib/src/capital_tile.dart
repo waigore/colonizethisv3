@@ -11,18 +11,18 @@ class CapitalTile {
 
   final String regionId;
 
-  /// Full province id (regionId|localId). Tile keys use [ProvinceId.localSegmentFromStoredGameState]
-  /// so legacy bare ids remain compatible for the second segment.
+  /// Full province id (regionId|localId). Tile keys normalize the second segment
+  /// by stripping region prefix when present and otherwise preserving legacy bare ids.
   final String provinceId;
   final int x;
   final int y;
 
   /// Tile key for use in connectivity and extraction: "regionId|localId|x|y".
   String toTileKey() =>
-      '$regionId|${ProvinceId.localSegmentFromStoredGameState(provinceId)}|$x|$y';
+      '$regionId|${ProvinceId.isPrefixed(provinceId) ? ProvinceId.localIdFrom(provinceId) : provinceId}|$x|$y';
 
   static String tileKey(String regionId, String provinceId, int x, int y) =>
-      '$regionId|${ProvinceId.localSegmentFromStoredGameState(provinceId)}|$x|$y';
+      '$regionId|${ProvinceId.isPrefixed(provinceId) ? ProvinceId.localIdFrom(provinceId) : provinceId}|$x|$y';
 
   /// Parses a stored town/capital tile key `regionId|localId|x|y`.
   /// [expectedProvinceId] must be the full id `regionId|localId` and match the key.
