@@ -28,5 +28,17 @@ void main() {
       expect(result.isError, isTrue);
       expect(result.message, contains('Unknown command'));
     });
+
+    test('rejects non-integer spawn count', () {
+      final result = parser.parse('/spawn_civilian explorer nope');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Count must be an integer'));
+    });
+
+    test('rejects spawn count above max limit', () {
+      final result = parser.parse('/spawn_civilian explorer 26');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('between 1 and 25'));
+    });
   });
 }

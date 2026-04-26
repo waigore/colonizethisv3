@@ -196,5 +196,88 @@ void main() {
       expect(ids, contains('debug_p1_builder_8'));
       expect(ids, contains('debug_p1_builder_9'));
     });
+
+    test('caps oversized debug spawn count to 25', () {
+      final game = Game(
+        id: 'g5',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: 'oldWorld|1',
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: 'oldWorld|1',
+              x: 2,
+              y: 3,
+            ),
+          ),
+        ],
+      );
+      const event = SpawnDebugCivilianAtCapitalEvent(
+        humanPlayerId: 'p1',
+        unitType: kUnitTypeExplorer,
+        count: 99,
+      );
+      final result = applyDebugCivilianSpawnAtCapital(
+        currentGame: game,
+        event: event,
+      );
+
+      expect(result.game, isNotNull);
+      expect(result.game!.worldState.oldWorld.units, hasLength(25));
+      expect(result.message, contains('Spawned 25 Explorer'));
+    });
+
+    test('rejects zero or negative count', () {
+      final game = Game(
+        id: 'g6',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: 'oldWorld|1',
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: 'oldWorld|1',
+              x: 2,
+              y: 3,
+            ),
+          ),
+        ],
+      );
+      const event = SpawnDebugCivilianAtCapitalEvent(
+        humanPlayerId: 'p1',
+        unitType: kUnitTypeExplorer,
+        count: 0,
+      );
+      final result = applyDebugCivilianSpawnAtCapital(
+        currentGame: game,
+        event: event,
+      );
+
+      expect(result.game, isNull);
+      expect(result.message, contains('count must be >= 1'));
+    });
   });
 }
