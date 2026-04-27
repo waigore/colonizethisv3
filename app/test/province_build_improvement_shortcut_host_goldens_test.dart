@@ -16,7 +16,7 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show buildPlayerView;
+    show PlayerView, buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -219,6 +219,25 @@ RegionMapViewData goldenBuildImprovementRegion() {
   );
 }
 
+PerPlayerWorkTargetSelectionCache _buildSelectionCache({
+  required Game game,
+  required String playerId,
+  required PlayerView playerView,
+}) {
+  final cache = PerPlayerWorkTargetSelectionCache();
+  cache.refresh(
+    WorkTargetSelectionSnapshot(
+      game: game,
+      playerId: playerId,
+      playerView: playerView,
+      topology: _goldenCombinedTopology,
+      currentOrders: const Orders(),
+      tileMapByRegion: _GameServiceBuildImprovementGolden._tileMapByRegion,
+    ),
+  );
+  return cache;
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -232,6 +251,8 @@ void main() {
   Future<void> pumpWideHost(WidgetTester tester) async {
     final game = goldenBuildImprovementGame();
     final region = goldenBuildImprovementRegion();
+    final playerId = game.players.first.id;
+    final playerView = buildPlayerView(game, _goldenCombinedTopology, playerId);
     const tileKey = 'oldWorld|p1|0|0';
 
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -262,14 +283,9 @@ void main() {
                   child: GameMapProvinceDetailSidePanel(
                     game: game,
                     region: region,
-                    humanPlayerId: game.players.first.id,
-                    playerView: buildPlayerView(
-                      game,
-                      _goldenCombinedTopology,
-                      game.players.first.id,
-                    ),
-                    workTargetSelectionCache:
-                        PerPlayerWorkTargetSelectionCache(),
+                    humanPlayerId: playerId,
+                    playerView: playerView,
+                    workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
                   ),
                 ),
               ),
@@ -289,6 +305,13 @@ void main() {
   Future<void> pumpNarrowHost(WidgetTester tester) async {
     final game = goldenBuildImprovementGame();
     final region = goldenBuildImprovementRegion();
+    final playerId = game.players.first.id;
+    final playerView = buildPlayerView(game, _goldenCombinedTopology, playerId);
+    final workTargetSelectionCache = _buildSelectionCache(
+      game: game,
+      playerId: playerId,
+      playerView: playerView,
+    );
     const tileKey = 'oldWorld|p1|0|0';
 
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -318,13 +341,9 @@ void main() {
                 child: GameMapNarrowDetailOverlaySlot(
                   game: game,
                   region: region,
-                  humanPlayerId: game.players.first.id,
-                  playerView: buildPlayerView(
-                    game,
-                    _goldenCombinedTopology,
-                    game.players.first.id,
-                  ),
-                  workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
+                  humanPlayerId: playerId,
+                  playerView: playerView,
+                  workTargetSelectionCache: workTargetSelectionCache,
                 ),
               ),
             ),
