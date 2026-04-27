@@ -187,7 +187,7 @@ void main() {
         const humanPlayerId = 'gp1';
         const explorerId = 'u_explorer';
 
-        RegionMapViewData _emptyRegion(String regionId) {
+        RegionMapViewData emptyRegion(String regionId) {
           return RegionMapViewData(
             regionId: regionId,
             width: 2,
@@ -207,7 +207,7 @@ void main() {
           );
         }
 
-        ct_models.Game _gameExplorerOldToNew({
+        ct_models.Game gameExplorerOldToNew({
           required String sourceTile,
           required String targetTile,
         }) {
@@ -259,7 +259,7 @@ void main() {
             'even when New World has no standing civilian markers', () {
           const sourceTile = 'oldWorld|p1|0|0';
           const targetTile = 'newWorld|p1|1|0';
-          final game = _gameExplorerOldToNew(
+          final game = gameExplorerOldToNew(
             sourceTile: sourceTile,
             targetTile: targetTile,
           );
@@ -292,7 +292,7 @@ void main() {
               ),
             ],
           );
-          final newRegion = _emptyRegion('newWorld');
+          final newRegion = emptyRegion('newWorld');
           final orders = ct_models.Orders(
             workOrdersByPlayerId: {
               humanPlayerId: [
@@ -400,7 +400,7 @@ void main() {
               ),
             ],
           );
-          final oldRegion = _emptyRegion('oldWorld');
+          final oldRegion = emptyRegion('oldWorld');
           final orders = ct_models.Orders(
             workOrdersByPlayerId: {
               humanPlayerId: [
@@ -438,11 +438,11 @@ void main() {
           () {
             const sourceTile = 'oldWorld|p1|0|0';
             const targetTile = 'newWorld|p1|1|0';
-            final game = _gameExplorerOldToNew(
+            final game = gameExplorerOldToNew(
               sourceTile: sourceTile,
               targetTile: targetTile,
             );
-            final newRegion = _emptyRegion('newWorld');
+            final newRegion = emptyRegion('newWorld');
             final orders = ct_models.Orders(
               workOrdersByPlayerId: {
                 humanPlayerId: [
@@ -472,7 +472,7 @@ void main() {
         test('clearing cross-region draft restores source-region marker', () {
           const sourceTile = 'oldWorld|p1|0|0';
           const targetTile = 'newWorld|p1|1|0';
-          final game = _gameExplorerOldToNew(
+          final game = gameExplorerOldToNew(
             sourceTile: sourceTile,
             targetTile: targetTile,
           );
@@ -505,7 +505,7 @@ void main() {
               ),
             ],
           );
-          final newRegion = _emptyRegion('newWorld');
+          final newRegion = emptyRegion('newWorld');
           final ordersDraft = ct_models.Orders(
             workOrdersByPlayerId: {
               humanPlayerId: [
@@ -554,7 +554,7 @@ void main() {
             const sourceTile = 'oldWorld|p1|0|0';
             const targetA = 'newWorld|pA|1|0';
             const targetB = 'newWorld|pB|0|0';
-            final game = _gameExplorerOldToNew(
+            final game = gameExplorerOldToNew(
               sourceTile: sourceTile,
               targetTile: targetA,
             );
@@ -1928,7 +1928,7 @@ void main() {
     group('projectFleetMarkersForHumanDraft cross-region draft projection', () {
       const humanId = 'gp1';
 
-      ct_models.Game _gameForCrossRegionDraft() {
+      ct_models.Game gameForCrossRegionDraft() {
         return ct_models.Game(
           id: 'g',
           worldState: ct_models.WorldState(
@@ -2039,7 +2039,7 @@ void main() {
       test(
         'projects marker in destination region with halo + destination scope',
         () {
-          final game = _gameForCrossRegionDraft();
+          final game = gameForCrossRegionDraft();
           final tileByReg = {'oldWorld': oldWorldMap, 'newWorld': newWorldMap};
           final topoByReg = {
             'oldWorld': oldWorldTopology,
@@ -2081,7 +2081,7 @@ void main() {
       );
 
       test('does not render cross-region drafted fleet in source region', () {
-        final game = _gameForCrossRegionDraft();
+        final game = gameForCrossRegionDraft();
         final tileByReg = {'oldWorld': oldWorldMap, 'newWorld': newWorldMap};
         final topoByReg = {
           'oldWorld': oldWorldTopology,
@@ -2116,7 +2116,7 @@ void main() {
       });
 
       test('canceling draft restores source-region marker', () {
-        final game = _gameForCrossRegionDraft();
+        final game = gameForCrossRegionDraft();
         final tileByReg = {'oldWorld': oldWorldMap, 'newWorld': newWorldMap};
         final topoByReg = {
           'oldWorld': oldWorldTopology,
