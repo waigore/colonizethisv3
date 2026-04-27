@@ -13,8 +13,7 @@ runtime domain Dart code.
 
 The checker walks `collectRepoLintDomainDartFiles` and scopes to:
 
-- `packages/colonizethis_logic/lib/src/**`
-- `packages/colonizethis_map/lib/src/**`
+- `packages/*/lib/**`
 
 Tests and generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) remain
 excluded by the shared scan contract.
