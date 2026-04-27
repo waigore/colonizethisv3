@@ -31,6 +31,7 @@ Grandfather YAMLs named in the table below are **legacy** until removed; **do no
 | `tool/check_function_size.dart` | Function measured-line threshold (`SPEC/program/function-size.md`); rule `repo.function_size` |
 | `tool/check_part_unit_size.dart` | Dart `part` fragment physical line limit (`SPEC/program/part-unit-size.md`); rule `repo.part_unit_size` |
 | `tool/check_debug_console_logic_contract_boundary.dart` | AST-enforced import allowlist for debug-console -> logic boundary; rule `repo.debug_console_logic_contract_boundary` |
+| `tool/check_app_event_handler_scope_logic_boundary.dart` | Enforce that `app/lib/core/services/app_event_handler_scope.dart` has no direct import from `app/lib/features/game/logic/**`; rule `repo.app_event_handler_scope_logic_boundary` |
 | `tool/check_no_flame_in_widgets.dart` | Disallow direct `package:flame/*` **import** and **export** lines (single- or double-quoted URI) under `app/lib/widgets/**`; rule `repo.no_flame_in_widgets` |
 | `tool/check_no_screen_in_game_widgets.dart` | Disallow `*_screen.dart` files under `app/lib/features/game/widgets/**`; rule `repo.no_screen_in_game_widgets` |
 | `tool/check_game_widgets_file_size.dart` | Enforce `app/lib/features/game/widgets/**` Dart files at **700 physical lines or fewer**; rule `repo.game_widgets_file_size` |
@@ -83,3 +84,5 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 - Given app game widget files, when `dart run tool/ct_repo_lint.dart` runs rule `repo.game_widgets_file_size`, then each Dart file under `app/lib/features/game/widgets/**` has 700 physical lines or fewer.
 - Given `packages/colonizethis_debug_console/lib/**` imports only allowlisted `colonizethis_logic` contract entrypoints, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_logic_contract_boundary`, then the rule passes without violations.
 - Given any debug-console file imports `package:colonizethis_logic/src/**` or another non-allowlisted `package:colonizethis_logic/...` entrypoint, when repo lint runs rule `repo.debug_console_logic_contract_boundary`, then the run fails and reports file path, line, and disallowed import context in checker output.
+- Given `app/lib/core/services/app_event_handler_scope.dart` has no direct imports from `package:colonizethis_app/features/game/logic/**`, when repo lint runs rule `repo.app_event_handler_scope_logic_boundary`, then the rule passes without violations.
+- Given `app/lib/core/services/app_event_handler_scope.dart` directly imports any `package:colonizethis_app/features/game/logic/**` path, when repo lint runs rule `repo.app_event_handler_scope_logic_boundary`, then the run fails and reports file path and line number.

@@ -88,6 +88,13 @@ rules:
     script: tool/check_debug_console_logic_contract_boundary.dart
     pr_incremental: true
 
+  - rule_id: repo.app_event_handler_scope_logic_boundary
+    group: architecture
+    title: app_event_handler_scope must not import features/game/logic directly
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_event_handler_scope_logic_boundary.dart
+
   - rule_id: repo.control_flow_nesting_depth
     group: structure
     title: Control-flow nesting depth (if/for/while/switch)
