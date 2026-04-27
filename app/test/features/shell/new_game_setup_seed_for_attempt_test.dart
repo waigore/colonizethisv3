@@ -1,8 +1,10 @@
-import 'package:colonizethis_app/features/shell/new_game_setup_seed_for_attempt.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+
+import 'package:colonizethis_app/features/shell/new_game_setup_seed_for_attempt.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
   group('newGameSetupConfigSeedForAttempt', () {
     test('dialog seed 0 keeps config seed 0 on every attempt index', () {
       for (final n in [0, 1, 2, 10]) {

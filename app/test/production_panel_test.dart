@@ -5,7 +5,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/production_recipe_affordance.dart';
@@ -27,7 +26,6 @@ class _ProductionPanelTestWrapper extends StatefulWidget {
     required this.netDeltasByCommodity,
     required this.onDesiredOutputChanged,
     this.onOpenCommodityBreakdown,
-    super.key,
   });
 
   final Game displayGame;
@@ -365,6 +363,11 @@ void main() {
     testWidgets(
       'allocation cross-row: lumber maxed disables cast iron increment',
       (WidgetTester tester) async {
+        const castIronId = 'castIron_from_timber_iron_coal';
+        final castIronIndex = ProductionRecipesCatalog.all.indexWhere(
+          (r) => r.id == castIronId,
+        );
+        expect(castIronIndex, greaterThanOrEqualTo(0));
         final l10n = lookupAppLocalizations(const Locale('en'));
         await tester.pumpWidget(
           buildPanel(
@@ -373,11 +376,19 @@ void main() {
           ),
         );
         await pumpSettleCapped(tester);
-        final incSemantics = tester.getSemantics(
-          find.bySemanticsLabel(l10n.production_allocationIncrementRecipe).first,
+        final before = tester
+            .widget<CtSlider>(find.byType(CtSlider).at(castIronIndex))
+            .value;
+        await tester.tap(
+          find
+              .bySemanticsLabel(l10n.production_allocationIncrementRecipe)
+              .at(castIronIndex),
         );
-        expect(incSemantics.hasFlag(SemanticsFlag.hasEnabledState), isTrue);
-        expect(incSemantics.hasFlag(SemanticsFlag.isEnabled), isFalse);
+        await pumpSyncFrames(tester);
+        final after = tester
+            .widget<CtSlider>(find.byType(CtSlider).at(castIronIndex))
+            .value;
+        expect(after, before);
       },
     );
 

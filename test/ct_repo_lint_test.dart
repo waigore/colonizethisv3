@@ -18,6 +18,7 @@ void main() {
       expect(ids, contains('repo.custom_exceptions'));
       expect(ids, contains('repo.disallowed_ast_patterns'));
       expect(ids, contains('repo.debug_console_logic_contract_boundary'));
+      expect(ids, contains('repo.app_event_handler_scope_logic_boundary'));
       expect(ids, contains('repo.control_flow_nesting_depth'));
       expect(ids, contains('repo.repeated_magic_numbers'));
       expect(ids, contains('repo.function_size'));
