@@ -959,6 +959,59 @@ void main() {
           expect(regionIdForSeaZone(combined, localSea), nw);
         },
       );
+
+      test(
+        'ignores unrelated foreign-region edges in combined topology',
+        () {
+          const ow = 'oldWorld';
+          const nw = 'newWorld';
+          const owSeaDest = '$ow|seaDest';
+          const owProvince = '$ow|p1';
+          const nwProvince = '$nw|p1';
+          const nwSeaOther = '$nw|seaOther';
+          final combined = MapTopology(
+            nodes: const [
+              TopologyNode(
+                id: owProvince,
+                regionId: ow,
+                type: TopologyNodeType.province,
+              ),
+              TopologyNode(
+                id: owSeaDest,
+                regionId: ow,
+                type: TopologyNodeType.seaZone,
+              ),
+              TopologyNode(
+                id: nwProvince,
+                regionId: nw,
+                type: TopologyNodeType.province,
+              ),
+              TopologyNode(
+                id: nwSeaOther,
+                regionId: nw,
+                type: TopologyNodeType.seaZone,
+              ),
+            ],
+            edges: const [
+              TopologyEdge(id1: owProvince, id2: owSeaDest),
+              TopologyEdge(id1: nwProvince, id2: nwSeaOther),
+            ],
+          );
+
+          expect(
+            () => provinceIdsAdjacentToSeaZone(
+              combined,
+              owSeaDest,
+              regionId: ow,
+            ),
+            returnsNormally,
+          );
+          expect(
+            provinceIdsAdjacentToSeaZone(combined, owSeaDest, regionId: ow),
+            equals({owProvince}),
+          );
+        },
+      );
     });
 
     group('seaZoneIdsAdjacentToProvince', () {
