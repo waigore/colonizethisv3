@@ -10,6 +10,7 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import 'game_map_area_state_logic.dart';
+import 'per_player_work_target_selection_cache.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 
 /// Narrow-layout bottom sheet host; reads [mapProvincePanelProvider] only.
@@ -19,7 +20,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
     required this.region,
     required this.humanPlayerId,
     required this.playerView,
-    required this.exploreEligibleTileKeyCache,
+    required this.workTargetSelectionCache,
     super.key,
   });
 
@@ -27,7 +28,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
   final RegionMapViewData region;
   final String humanPlayerId;
   final PlayerView playerView;
-  final Set<String> exploreEligibleTileKeyCache;
+  final PerPlayerWorkTargetSelectionCache workTargetSelectionCache;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -64,7 +65,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
             humanPlayerId: humanPlayerId,
             selectedTileKey: panel.selectedTileKey!,
             selectedRegion: region,
-            cachedExploreEligibleTileKeys: exploreEligibleTileKeyCache,
+            workTargetSelectionCache: workTargetSelectionCache,
           );
     final prospectState = panel.selectedTileKey == null
         ? hiddenState
@@ -86,9 +87,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
             humanPlayerId: humanPlayerId,
             selectedTileKey: panel.selectedTileKey!,
             playerView: playerView,
-            topology: topology,
-            currentOrders: draftOrders,
-            tileMapByRegion: mapData?.tileMapByRegion,
+            workTargetSelectionCache: workTargetSelectionCache,
           );
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.33,
@@ -121,8 +120,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
                       humanPlayerId: humanPlayerId,
                       selectedTileKey: selectedTileKey,
                       selectedRegion: region,
-                      cachedExploreEligibleTileKeys:
-                          exploreEligibleTileKeyCache,
+                      workTargetSelectionCache: workTargetSelectionCache,
                     );
                 if (!revalidatedState.enabled) {
                   return;
@@ -174,9 +172,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
                       humanPlayerId: humanPlayerId,
                       selectedTileKey: selectedTileKey,
                       playerView: playerView,
-                      topology: topology,
-                      currentOrders: draftOrders,
-                      tileMapByRegion: mapData?.tileMapByRegion,
+                      workTargetSelectionCache: workTargetSelectionCache,
                     );
                 if (!revalidatedState.enabled) {
                   return;

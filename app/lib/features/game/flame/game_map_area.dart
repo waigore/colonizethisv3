@@ -33,6 +33,7 @@ import 'game_map_canvas_stack.dart';
 import 'game_region_minimap.dart';
 import 'game_map_narrow_detail_overlay.dart';
 import 'game_map_area_state_logic.dart';
+import 'per_player_work_target_selection_cache.dart';
 import 'next_turn_confirmation_dialog.dart';
 import '../utils/map_location_resolver.dart';
 import '../widgets/player_turn_event_feed.dart';
@@ -60,7 +61,8 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   String? _selectedCivilianTileKey;
   ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
   Set<String>? _cachedValidTileKeys;
-  Set<String> _cachedExploreEligibleTileKeys = const <String>{};
+  final PerPlayerWorkTargetSelectionCache _workTargetSelectionCache =
+      PerPlayerWorkTargetSelectionCache();
   bool _sideMenuOpen = false;
   final List<StreamSubscription<dynamic>> _busSubscriptions = [];
   ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
@@ -75,7 +77,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   void initState() {
     super.initState();
     _mapViewState = widget.game.mapViewState;
-    _refreshExploreEligibleTileKeyCache(widget.game);
+    _refreshWorkTargetSelectionCache(widget.game);
     final bus = ref.read(appEventBusProvider);
     _busSubscriptions.addAll([
       bus.on<ct_models.OpenProvinceDetailPanelEvent>().listen((_) {
@@ -137,7 +139,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       return;
     }
     setState(() {
-      _refreshExploreEligibleTileKeyCache(widget.game);
+      _refreshWorkTargetSelectionCache(widget.game);
       _resolvedPlayerTurnEvents = List<ct_models.GameToUIEvent>.from(
         _pendingPlayerTurnEvents,
       );
@@ -145,20 +147,23 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     });
   }
 
-  void _refreshExploreEligibleTileKeyCache(ct_models.Game game) {
+  void _refreshWorkTargetSelectionCache(ct_models.Game game) {
     final view = buildPlayerView(
       game,
       widget.mapViewData.combinedTopology,
       _humanPlayerId,
     );
-    _cachedExploreEligibleTileKeys =
-        GameMapAreaStateLogic.buildExploreEligibleTileKeyCache(
-          game: game,
-          humanPlayerId: _humanPlayerId,
-          playerView: view,
-          topology: widget.mapViewData.combinedTopology,
-          tileMapByRegion: null,
-        );
+    final mapData = ref.read(gameServiceProvider).getMapData(game.id);
+    _workTargetSelectionCache.refresh(
+      WorkTargetSelectionSnapshot(
+        game: game,
+        playerId: _humanPlayerId,
+        playerView: view,
+        topology: widget.mapViewData.combinedTopology,
+        currentOrders: const ct_models.Orders(),
+        tileMapByRegion: mapData?.tileMapByRegion,
+      ),
+    );
   }
 
   void _onAppCombatResultEvent(ct_models.AppCombatResultEvent event) {
@@ -303,15 +308,20 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     final topology = mapData?.combinedTopology ?? const MapTopology();
     final view = buildPlayerView(game, topology, _humanPlayerId);
-    final valid = getValidWorkOrderTileKeysWithVisibility(
-      game: game,
-      topology: topology,
-      view: view,
-      unitId: _workTargetSelection!.unit.id,
-      workTarget: _workTargetSelection!.workTarget,
-      currentOrders: orders,
-      tileMapByRegion: mapData?.tileMapByRegion,
-    );
+    final workTarget = _workTargetSelection!.workTarget;
+    final valid =
+        workTarget == kWorkTargetExplore ||
+            workTarget == kWorkTargetBuildImprovement
+        ? _workTargetSelectionCache.get(_humanPlayerId, workTarget)
+        : getValidWorkOrderTileKeysWithVisibility(
+            game: game,
+            topology: topology,
+            view: view,
+            unitId: _workTargetSelection!.unit.id,
+            workTarget: workTarget,
+            currentOrders: orders,
+            tileMapByRegion: mapData?.tileMapByRegion,
+          );
     _cachedValidTileKeys = valid;
   }
 
@@ -959,7 +969,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       ref.read(mapProvincePanelProvider.notifier).reset();
       ref.read(regionMinimapVisibleProvider.notifier).resetToDefault();
       setState(() {
-        _refreshExploreEligibleTileKeyCache(widget.game);
+        _refreshWorkTargetSelectionCache(widget.game);
         _mapViewState = widget.game.mapViewState;
         _regionViewportSnapshot = null;
         _pendingRegionViewport = null;
@@ -971,7 +981,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     if (oldWidget.game.worldState.turnState.turnNumber !=
         widget.game.worldState.turnState.turnNumber) {
       setState(() {
-        _refreshExploreEligibleTileKeyCache(widget.game);
+        _refreshWorkTargetSelectionCache(widget.game);
       });
     }
   }
@@ -1098,8 +1108,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                             _mapViewState.showProvinceNamesLayer,
                         humanPlayerId: _humanPlayerId,
                         playerView: humanPlayerView,
-                        exploreEligibleTileKeyCache:
-                            _cachedExploreEligibleTileKeys,
+                        workTargetSelectionCache: _workTargetSelectionCache,
                         centerOnTileKey: _centerOnTileKey,
                         validTileKeysForSelection: _validTileKeysForSelection,
                         selectedCivilianTileKey: _selectedCivilianTileKey,
@@ -1416,8 +1425,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                         region: projectedRegion,
                         humanPlayerId: _humanPlayerId,
                         playerView: humanPlayerView,
-                        exploreEligibleTileKeyCache:
-                            _cachedExploreEligibleTileKeys,
+                        workTargetSelectionCache: _workTargetSelectionCache,
                       ),
                     ],
                   ),

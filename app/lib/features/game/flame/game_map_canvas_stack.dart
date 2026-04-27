@@ -11,6 +11,7 @@ import '../../../../widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode, CtRegionMap;
 
 import 'game_map_province_detail_side_panel.dart';
+import 'per_player_work_target_selection_cache.dart';
 import 'region_map_viewport_snapshot.dart';
 
 /// Renders the Flame-backed map and the wide right-side detail panel.
@@ -26,7 +27,7 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.showProvinceNamesLayer,
     required this.humanPlayerId,
     required this.playerView,
-    required this.exploreEligibleTileKeyCache,
+    required this.workTargetSelectionCache,
     required this.centerOnTileKey,
     required this.validTileKeysForSelection,
     required this.onTileSelectedForWork,
@@ -50,7 +51,7 @@ class GameMapCanvasStack extends ConsumerWidget {
   final bool showProvinceNamesLayer;
   final String humanPlayerId;
   final PlayerView playerView;
-  final Set<String> exploreEligibleTileKeyCache;
+  final PerPlayerWorkTargetSelectionCache workTargetSelectionCache;
   final String? centerOnTileKey;
   final Set<String>? validTileKeysForSelection;
 
@@ -126,7 +127,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   region: region,
                   humanPlayerId: humanPlayerId,
                   playerView: playerView,
-                  exploreEligibleTileKeyCache: exploreEligibleTileKeyCache,
+                  workTargetSelectionCache: workTargetSelectionCache,
                 ),
             ],
           ),
