@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:colonizethis_app/features/game/flame/debug_console_overlay_panel.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
