@@ -1,4 +1,5 @@
 import 'current_work.dart';
+import 'province_id.dart';
 
 /// Normalizes persisted province id: tile-derived wins when [tileKey] is set.
 String _storedProvinceIdForTileAndLocation(
@@ -114,7 +115,10 @@ class Unit {
   static Unit fromJson(Map<String, dynamic> json) {
     final cw = json['currentWork'];
     final tileKey = json['tileKey'] as String?;
-    final rawProvince = json['provinceId'] as String;
+    final rawProvince = ProvinceId.requirePrefixed(
+      json['provinceId'] as String,
+      fieldName: 'Unit.provinceId',
+    );
     final normalizedStored = _storedProvinceIdForTileAndLocation(
       tileKey,
       rawProvince,

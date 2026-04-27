@@ -8,7 +8,11 @@ void main() {
         turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 3),
         oldWorld: const RegionData(
           provinces: [
-            Province(id: 'p1', regionId: 'oldWorld', ownerId: 'player1'),
+            Province(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              ownerId: 'player1',
+            ),
           ],
           units: [],
         ),
@@ -17,7 +21,7 @@ void main() {
       final state2 = WorldState.fromJson(state.toJson());
       expect(state2.turnState.turnNumber, 3);
       expect(state2.oldWorld.provinces.length, 1);
-      expect(state2.oldWorld.provinces.first.id, 'p1');
+      expect(state2.oldWorld.provinces.first.id, 'oldWorld|p1');
     });
     test('copyWith', () {
       final state = WorldState(
@@ -97,6 +101,25 @@ void main() {
       expect(state.tileKeysByRegionAndProvince[regionId]?[prefixedSeaId], [
         seaTile,
       ]);
+    });
+
+    test('fromJson rejects unprefixed province ids in region provinces', () {
+      final json = <String, dynamic>{
+        'turnState': const TurnState(
+          phase: TurnPhase.orders,
+          turnNumber: 1,
+        ).toJson(),
+        'oldWorld': const RegionData(
+          provinces: [Province(id: 'oldWorld|p1', regionId: 'oldWorld')],
+        ).toJson(),
+        'newWorld': const RegionData(
+          provinces: [Province(id: 'newWorld|n1', regionId: 'newWorld')],
+        ).toJson(),
+      };
+      (json['oldWorld'] as Map<String, dynamic>)['provinces'] = [
+        {'id': 'p1', 'regionId': 'oldWorld'},
+      ];
+      expect(() => WorldState.fromJson(json), throwsA(isA<ArgumentError>()));
     });
   });
 }

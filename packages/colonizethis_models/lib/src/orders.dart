@@ -367,9 +367,13 @@ class ArmyMoveOrder {
   };
 
   static ArmyMoveOrder fromJson(Map<String, dynamic> json) {
+    final destinationProvinceId = ProvinceId.requirePrefixed(
+      json['destinationProvinceId'] as String,
+      fieldName: 'ArmyMoveOrder.destinationProvinceId',
+    );
     return ArmyMoveOrder(
       armyId: json['armyId'] as String,
-      destinationProvinceId: json['destinationProvinceId'] as String,
+      destinationProvinceId: destinationProvinceId,
     );
   }
 
@@ -522,10 +526,14 @@ class BuildUnitOrder {
   };
 
   static BuildUnitOrder fromJson(Map<String, dynamic> json) {
+    final spawnProvinceId = ProvinceId.requirePrefixed(
+      json['spawnProvinceId'] as String,
+      fieldName: 'BuildUnitOrder.spawnProvinceId',
+    );
     return BuildUnitOrder(
       unitType: json['unitType'] as String,
       isMilitary: json['isMilitary'] as bool? ?? false,
-      spawnProvinceId: json['spawnProvinceId'] as String,
+      spawnProvinceId: spawnProvinceId,
     );
   }
 

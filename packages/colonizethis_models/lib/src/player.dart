@@ -1,4 +1,5 @@
 import 'capital_tile.dart';
+import 'province_id.dart';
 import 'stockpile.dart';
 import 'worker_pool.dart';
 
@@ -138,7 +139,10 @@ class Player {
       stockpile: _readStockpile(),
       workerPool: _readWorkerPool(),
       treasury: _readTreasury(),
-      capitalProvinceId: json['capitalProvinceId'] as String?,
+      capitalProvinceId: ProvinceId.requirePrefixedOrNull(
+        json['capitalProvinceId'] as String?,
+        fieldName: 'Player.capitalProvinceId',
+      ),
       capitalTile: _readCapitalTile(),
       techUnlocked: _readTechUnlocked(),
       militaryLevel: (json['militaryLevel'] as int?),
