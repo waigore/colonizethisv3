@@ -1,3 +1,5 @@
+import 'model_validation_exception.dart';
+
 /// Helpers for prefixed province ids: "regionId|localId".
 /// All game-state province ids must be prefixed so a province cannot be
 /// located in the wrong region. SPEC/game/world-model.
@@ -35,6 +37,26 @@ class ProvinceId {
 
   /// True if [id] looks prefixed (contains "|").
   static bool isPrefixed(String id) => id.contains('|');
+
+  /// Returns [provinceId] when it is prefixed; otherwise throws [ModelValidationException].
+  static String requirePrefixed(
+    String provinceId, {
+    String fieldName = 'provinceId',
+  }) {
+    if (isPrefixed(provinceId)) return provinceId;
+    throw ModelValidationException(
+      '$fieldName must be prefixed (regionId|localId): "$provinceId"',
+    );
+  }
+
+  /// Returns null when [provinceId] is null; otherwise enforces prefixed format.
+  static String? requirePrefixedOrNull(
+    String? provinceId, {
+    String fieldName = 'provinceId',
+  }) {
+    if (provinceId == null) return null;
+    return requirePrefixed(provinceId, fieldName: fieldName);
+  }
 
   /// Local province id segment when normalizing persisted or capital data that
   /// may still use bare local ids. Prefixed values use [localIdFrom]; bare

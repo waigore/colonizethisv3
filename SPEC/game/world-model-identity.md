@@ -14,7 +14,9 @@ In a multi-region world, **province lookup must always use regionId + provinceId
 
 All province ids stored in game state (e.g. Province id, Unit province location, Player capital, order fields) use a **prefixed** form: `regionId|localId` (e.g. `oldWorld|p1`, `newWorld|nw1`). This makes every province id globally unique and prevents a province from being resolved in the wrong region.
 
-**Unit placement in code:** The [Unit](world-model.md) model’s public canonical field is `locationProvinceId` (tile-derived when `tileKey` is set). Saves use the JSON property `provinceId` as the serialized canonical value, not a second competing concept; `fromJson` may repair legacy drift between `tileKey` and an old `provinceId` on load.
+**Unit placement in code:** The [Unit](world-model.md) model’s public canonical field is `locationProvinceId` (tile-derived when `tileKey` is set). Saves use the JSON property `provinceId` as the serialized canonical value, not a second competing concept; `fromJson` may repair drift between `tileKey` and `provinceId` only when both values are canonical prefixed province ids.
+
+**Load strictness for province-referencing fields:** Save/load must hard-fail when any province-referencing field carries an unprefixed local id. This includes persisted province ids in `Province.id`, `Unit.provinceId`, `Army.stationedProvinceId`, and capital or order province-id fields such as `Player.capitalProvinceId`, `MinorNation.capitalProvinceId`, `Tribe.capitalProvinceId`, `ArmyMoveOrder.destinationProvinceId`, and `BuildCivilianOrder.spawnProvinceId`.
 
 ---
 
@@ -63,6 +65,10 @@ Province lookup **MUST** be by **full disambiguated id** (`regionId|localId`). R
 - Given any game logic that is asked to resolve a province identifier and provided with a string that does not contain a `|` prefix separator or a pair of `(regionId, provinceId)` values that match a known province  
   When the System attempts to perform the lookup  
   Then the System treats the request as a logic error and does not fall back to a default region, does not guess a region by name pattern, and does not silently resolve the identifier to a different region’s province.
+
+- Given a save payload where any province-referencing field stores an unprefixed local id (for example `p1` instead of `oldWorld|p1`)  
+  When the System deserializes game-state models  
+  Then the System fails load with an explicit validation error and does not auto-repair or infer a region prefix.
 
 
 ---
