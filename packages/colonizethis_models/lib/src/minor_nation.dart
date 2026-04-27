@@ -41,7 +41,7 @@ class MinorNation {
       ),
       capitalTile: capitalTileRaw is Map<String, dynamic>
           ? CapitalTile.fromJson(capitalTileRaw)
-          : (capitalTileRaw is Map
+          : (capitalTileRaw is Map<Object?, Object?>
                 ? CapitalTile.fromJson(
                     Map<String, dynamic>.from(capitalTileRaw),
                   )

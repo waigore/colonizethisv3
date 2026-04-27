@@ -135,7 +135,7 @@ class Unit {
       assignedTileKey: json['assignedTileKey'] as String?,
       currentWork: cw is Map<String, dynamic>
           ? CurrentWork.fromJson(cw)
-          : cw is Map
+          : cw is Map<Object?, Object?>
           ? CurrentWork.fromJson(Map<String, dynamic>.from(cw))
           : null,
     );
