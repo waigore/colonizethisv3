@@ -8,7 +8,7 @@ import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../ai/hidden_agenda_assignment.dart';
+import 'hidden_agenda_assignment.dart';
 import '../constants.dart';
 import '../world/unit_lookup.dart';
 import 'effective_setup_seed.dart';

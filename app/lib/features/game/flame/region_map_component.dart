@@ -143,7 +143,7 @@ class CtRegionMapComponent extends PositionComponent {
     // Fleet icon uses ui.decodeImageFromList; awaiting it here can deadlock with
     // Flutter's test/game bootstrap (decode needs frames while onLoad blocks).
     unawaited(
-      fleetIconCache.load().catchError((Object _, StackTrace __) {
+      fleetIconCache.load().catchError((Object _, StackTrace stackTrace) {
         // Errors are already logged inside FleetIconCache.load.
       }),
     );

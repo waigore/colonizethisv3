@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
 import 'check_app_hardcoded_ui_strings.dart';
+import 'check_app_event_handler_scope_logic_boundary.dart';
 import 'check_asset_path_constants.dart';
 import 'check_canonical_province_tile_keys.dart';
 import 'check_civilian_unit_type_constants.dart';
@@ -698,6 +699,8 @@ int? _tryRunDartRuleInProcess({
         repoRoot,
         incrementalRelativeDartPaths: incrementalPaths,
       );
+    case 'repo.app_event_handler_scope_logic_boundary':
+      return runCheckAppEventHandlerScopeLogicBoundary(repoRoot);
     case 'repo.control_flow_nesting_depth':
       return runCheckControlFlowNestingDepth(repoRoot);
     case 'repo.repeated_magic_numbers':
