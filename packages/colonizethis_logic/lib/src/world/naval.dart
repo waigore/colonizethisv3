@@ -290,22 +290,6 @@ bool _topologyProvinceEndpointMatches(
   return false;
 }
 
-bool _topologySeaEndpointMatches(
-  String edgeEndpoint,
-  String seaZoneId,
-  String effectiveRegion,
-) {
-  final canonicalSeaZoneId = canonicalizeSeaZoneId(
-    regionId: effectiveRegion,
-    seaZoneId: seaZoneId,
-  );
-  final canonicalEdgeEndpoint = canonicalizeSeaZoneId(
-    regionId: effectiveRegion,
-    seaZoneId: edgeEndpoint,
-  );
-  return canonicalSeaZoneId == canonicalEdgeEndpoint;
-}
-
 /// Province ids that share an edge with [seaZoneId] (coastal provinces), optionally
 /// restricted to [regionId] per SPEC/game/world-model-identity.md (region-scoped lookup).
 /// When [regionId] is null, uses the destination sea zone's region from topology when
@@ -324,19 +308,38 @@ Set<String> provinceIdsAdjacentToSeaZone(
   if (effectiveRegion == null) return {};
   final regionNodes = nodesByRegionAndId[effectiveRegion];
   if (regionNodes == null) return {};
+  final canonicalSeaZoneId = canonicalizeSeaZoneId(
+    regionId: effectiveRegion,
+    seaZoneId: seaZoneId,
+  );
   final out = <String>{};
   for (final e in topology.edges) {
-    String? otherId;
-    if (_topologySeaEndpointMatches(e.id1, seaZoneId, effectiveRegion)) {
-      otherId = e.id2;
-    } else if (_topologySeaEndpointMatches(e.id2, seaZoneId, effectiveRegion)) {
-      otherId = e.id1;
+    final node1 = regionNodes[e.id1];
+    final node2 = regionNodes[e.id2];
+    // Reveal adjacency is region-bounded for the destination sea-zone region.
+    if (node1 == null || node2 == null) continue;
+
+    String? adjacentProvinceNodeId;
+    if (node1.type == TopologyNodeType.seaZone &&
+        node2.type == TopologyNodeType.province &&
+        canonicalizeSeaZoneId(
+              regionId: effectiveRegion,
+              seaZoneId: node1.id,
+            ) ==
+            canonicalSeaZoneId) {
+      adjacentProvinceNodeId = node2.id;
+    } else if (node2.type == TopologyNodeType.seaZone &&
+        node1.type == TopologyNodeType.province &&
+        canonicalizeSeaZoneId(
+              regionId: effectiveRegion,
+              seaZoneId: node2.id,
+            ) ==
+            canonicalSeaZoneId) {
+      adjacentProvinceNodeId = node1.id;
     }
-    if (otherId != null) {
-      final node = regionNodes[otherId];
-      if (node != null && node.type == TopologyNodeType.province) {
-        out.add(otherId);
-      }
+
+    if (adjacentProvinceNodeId != null) {
+      out.add(adjacentProvinceNodeId);
     }
   }
   return out;
