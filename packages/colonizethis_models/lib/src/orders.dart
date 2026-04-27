@@ -88,7 +88,11 @@ class Orders {
     moveRaw.forEach((key, value) {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
-          .map((e) => MoveOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => MoveOrder.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
+          )
           .toList();
       moveByPlayerId[playerId] = list;
     });
@@ -100,7 +104,9 @@ class Orders {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
           .map(
-            (e) => ArmyMoveOrder.fromJson(Map<String, dynamic>.from(e as Map)),
+            (e) => ArmyMoveOrder.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
           )
           .toList();
       armyMoveByPlayerId[playerId] = list;
@@ -113,7 +119,9 @@ class Orders {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
           .map(
-            (e) => BuildUnitOrder.fromJson(Map<String, dynamic>.from(e as Map)),
+            (e) => BuildUnitOrder.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
           )
           .toList();
       buildByPlayerId[playerId] = list;
@@ -125,7 +133,11 @@ class Orders {
     workRaw.forEach((key, value) {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
-          .map((e) => WorkOrder.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => WorkOrder.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
+          )
           .toList();
       workByPlayerId[playerId] = list;
     });
@@ -137,8 +149,9 @@ class Orders {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
           .map(
-            (e) =>
-                DiplomaticOrder.fromJson(Map<String, dynamic>.from(e as Map)),
+            (e) => DiplomaticOrder.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
           )
           .toList();
       diploByPlayerId[playerId] = list;
@@ -151,7 +164,9 @@ class Orders {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
           .map(
-            (e) => ResearchOrder.fromJson(Map<String, dynamic>.from(e as Map)),
+            (e) => ResearchOrder.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
           )
           .toList();
       researchByPlayerId[playerId] = list;
@@ -164,7 +179,9 @@ class Orders {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
           .map(
-            (e) => NavalMoveOrder.fromJson(Map<String, dynamic>.from(e as Map)),
+            (e) => NavalMoveOrder.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
           )
           .toList();
       navalByPlayerId[playerId] = list;
@@ -177,8 +194,9 @@ class Orders {
       final playerId = key.toString();
       final list = (value as List<dynamic>? ?? [])
           .map(
-            (e) =>
-                NavalMissionOrder.fromJson(Map<String, dynamic>.from(e as Map)),
+            (e) => NavalMissionOrder.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
           )
           .toList();
       missionByPlayerId[playerId] = list;
@@ -367,9 +385,13 @@ class ArmyMoveOrder {
   };
 
   static ArmyMoveOrder fromJson(Map<String, dynamic> json) {
+    final destinationProvinceId = ProvinceId.requirePrefixed(
+      json['destinationProvinceId'] as String,
+      fieldName: 'ArmyMoveOrder.destinationProvinceId',
+    );
     return ArmyMoveOrder(
       armyId: json['armyId'] as String,
-      destinationProvinceId: json['destinationProvinceId'] as String,
+      destinationProvinceId: destinationProvinceId,
     );
   }
 
@@ -522,10 +544,14 @@ class BuildUnitOrder {
   };
 
   static BuildUnitOrder fromJson(Map<String, dynamic> json) {
+    final spawnProvinceId = ProvinceId.requirePrefixed(
+      json['spawnProvinceId'] as String,
+      fieldName: 'BuildUnitOrder.spawnProvinceId',
+    );
     return BuildUnitOrder(
       unitType: json['unitType'] as String,
       isMilitary: json['isMilitary'] as bool? ?? false,
-      spawnProvinceId: json['spawnProvinceId'] as String,
+      spawnProvinceId: spawnProvinceId,
     );
   }
 

@@ -6,14 +6,14 @@ void main() {
     test('toJson/fromJson round-trip', () {
       final r = RegionData(
         provinces: const [
-          Province(id: 'p1', regionId: 'oldWorld', ownerId: null),
+          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: null),
         ],
         units: [
           Unit(
             id: 'u1',
             type: 'infantry',
             ownerId: 'p1',
-            locationProvinceId: 'p1',
+            locationProvinceId: 'oldWorld|p1',
           ),
         ],
       );
