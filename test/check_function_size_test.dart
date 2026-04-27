@@ -56,6 +56,33 @@ int f() {
       }
     });
 
+    test('fails for oversized functions in non-logic packages', () {
+      final temp = Directory.systemTemp.createTempSync('fn-size-data-');
+      try {
+        final libDir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_data', 'lib', 'src'),
+        )..createSync(recursive: true);
+        File(
+          p.join(libDir.path, 'big.dart'),
+        ).writeAsStringSync(giantFunctionSource(statements: 210));
+
+        final errors = <String>[];
+        final exitCode = runCheckFunctionSize(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(
+          errors.join('\n'),
+          contains('packages/colonizethis_data/lib/src/big.dart'),
+        );
+        expect(errors.join('\n'), contains('giant'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
     test('fails even when legacy waiver yaml is present', () {
       final temp = Directory.systemTemp.createTempSync('fn-size-legacy-');
       try {
