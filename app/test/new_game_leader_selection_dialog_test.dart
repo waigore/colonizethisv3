@@ -28,7 +28,7 @@ void main() {
   });
 
   group('NewGameLeaderSelectionDialog', () {
-    Future<void> _ensureTapStart(WidgetTester tester) async {
+    Future<void> ensureTapStart(WidgetTester tester) async {
       final startButton = find.ancestor(
         of: find.text('Start'),
         matching: find.byType(CtNinePatchButton),
@@ -39,7 +39,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    Future<void> _ensureTapCancel(WidgetTester tester) async {
+    Future<void> ensureTapCancel(WidgetTester tester) async {
       final cancelButton = find.ancestor(
         of: find.text('Cancel'),
         matching: find.byType(CtNinePatchButton),
@@ -191,7 +191,7 @@ void main() {
         },
       );
 
-      await _ensureTapStart(tester);
+      await ensureTapStart(tester);
 
       expect(gotIds, GameSetupConfig.defaultConfig.selectedGreatPowerIds);
       expect(gotLeaders, isNotNull);
@@ -211,7 +211,7 @@ void main() {
         },
       );
 
-      await _ensureTapCancel(tester);
+      await ensureTapCancel(tester);
 
       expect(confirmed, isFalse);
       expect(find.text('New game — Setup'), findsNothing);
@@ -236,7 +236,7 @@ void main() {
       await tester.tap(find.text('Sweden'));
       await tester.pumpAndSettle();
 
-      await _ensureTapStart(tester);
+      await ensureTapStart(tester);
 
       expect(gotIds, isNotNull);
       expect(gotIds!.first, 'sweden');
@@ -254,7 +254,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(field, '0');
       await tester.pump();
-      await _ensureTapStart(tester);
+      await ensureTapStart(tester);
       expect(gotSeed, 0);
     });
 
@@ -268,7 +268,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(field, '');
       await tester.pump();
-      await _ensureTapStart(tester);
+      await ensureTapStart(tester);
       expect(gotSeed, 42);
     });
   });

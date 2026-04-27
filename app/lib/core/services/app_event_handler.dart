@@ -114,6 +114,9 @@ class AppEventHandler {
         _openPanel(event, nav);
       case ClosePanelEvent():
         nav?.maybePop();
+      case LocateMapTileEvent():
+        // Handled by map/game listeners directly on the shared app event bus.
+        return;
       case _:
         return;
     }
@@ -129,8 +132,6 @@ class AppEventHandler {
         _onDismissOverlay?.call(event);
       case NotifyEvent():
         _onNotify?.call(event);
-      case _:
-        return;
     }
   }
 

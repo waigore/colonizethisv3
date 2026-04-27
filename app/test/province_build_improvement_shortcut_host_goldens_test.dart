@@ -3,8 +3,6 @@
 // Pipeline contract: SPEC/program/order-suggestions.md § Province Tile `Build improvement`
 // shortcut enablement.
 
-import 'dart:typed_data';
-
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_narrow_detail_overlay.dart';
@@ -382,8 +380,12 @@ void main() {
       final previousComparator = goldenFileComparator;
       addTearDown(() => goldenFileComparator = previousComparator);
       if (previousComparator is LocalFileComparator) {
+        final prev = previousComparator;
+        final testFileUri = prev.basedir.resolve(
+          'province_build_improvement_shortcut_host_goldens_test.dart',
+        );
         goldenFileComparator = _ToleranceLocalFileComparator(
-          previousComparator.basedir.resolve('comparator_anchor.dart'),
+          testFileUri,
           precisionTolerance: 0.04,
         );
       }
