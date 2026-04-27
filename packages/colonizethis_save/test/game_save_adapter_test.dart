@@ -30,7 +30,11 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 5),
           oldWorld: const RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'player1'),
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'player1',
+              ),
             ],
             units: [],
           ),
@@ -269,7 +273,7 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'pl1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -281,10 +285,10 @@ void main() {
             id: 'pl1',
             displayName: 'Spain',
             isHuman: true,
-            capitalProvinceId: 'p1',
+            capitalProvinceId: 'oldWorld|p1',
             capitalTile: CapitalTile(
               regionId: 'oldWorld',
-              provinceId: 'p1',
+              provinceId: 'oldWorld|p1',
               x: 0,
               y: 0,
             ),
@@ -303,7 +307,7 @@ void main() {
         loaded.worldState.portsByProvinceSeaboard['p1|sea1'],
         'oldWorld|p1|0|0',
       );
-      expect(loaded.players.single.capitalProvinceId, 'p1');
+      expect(loaded.players.single.capitalProvinceId, 'oldWorld|p1');
       expect(loaded.players.single.capitalTile?.regionId, 'oldWorld');
       expect(loaded.players.single.capitalTile?.x, 0);
       expect(loaded.players.single.capitalTile?.y, 0);
@@ -334,7 +338,11 @@ void main() {
             turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: RegionData(
               provinces: [
-                Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: 'pl1',
+                ),
               ],
               units: [unit],
             ),
@@ -362,7 +370,7 @@ void main() {
           oldWorld: RegionData(
             provinces: [
               Province(
-                id: 'p1',
+                id: 'oldWorld|p1',
                 regionId: 'oldWorld',
                 ownerId: 'pl1',
                 fortLevel: 2,
