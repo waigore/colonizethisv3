@@ -10,10 +10,6 @@ import 'package:path/path.dart' as p;
 import 'ct_repo_lint_scan_contract.dart';
 
 const _failThreshold = 200;
-const _scopePrefixes = <String>[
-  'packages/colonizethis_logic/lib/src/',
-  'packages/colonizethis_map/lib/src/',
-];
 
 int runCheckFunctionSize(
   String repoRoot, {
@@ -22,9 +18,10 @@ int runCheckFunctionSize(
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
+  final packageLibPrefixes = _collectPackageLibPrefixes(repoRoot);
   final files = collectRepoLintDomainDartFiles(repoRoot).where((file) {
     final rel = p.relative(file.path, from: repoRoot);
-    return _scopePrefixes.any(rel.startsWith);
+    return packageLibPrefixes.any(rel.startsWith);
   });
   final violations = <String>[];
 
@@ -53,6 +50,23 @@ int runCheckFunctionSize(
     logE(' - $violation');
   }
   return 1;
+}
+
+List<String> _collectPackageLibPrefixes(String repoRoot) {
+  final packagesDir = Directory(p.join(repoRoot, 'packages'));
+  if (!packagesDir.existsSync()) {
+    return const [];
+  }
+  final prefixes = <String>[];
+  for (final entity in packagesDir.listSync(followLinks: false)) {
+    if (entity is! Directory) {
+      continue;
+    }
+    final packageName = p.basename(entity.path);
+    prefixes.add('packages/$packageName/lib/');
+  }
+  prefixes.sort();
+  return prefixes;
 }
 
 void _scanCompilationUnit({
