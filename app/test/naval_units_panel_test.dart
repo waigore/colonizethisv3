@@ -492,7 +492,7 @@ void main() {
     );
 
     testWidgets(
-      'AC: Home Fleet expansion shows empty ships and locate button targets capital tile',
+      'AC: Missing Home Fleet entity does not render synthetic Home Fleet row',
       (WidgetTester tester) async {
         final gameInstance = game;
         final player = game.players.firstWhere(
@@ -512,36 +512,6 @@ void main() {
         final capitalRegionId = capitalParts[0];
         final capitalProvinceLocalId = capitalParts[1];
 
-        Province? capitalProvince;
-        final oldProvinces = gameInstance.worldState.oldWorld.provinces;
-        final newProvinces = gameInstance.worldState.newWorld.provinces;
-        for (final p in [...oldProvinces, ...newProvinces]) {
-          if (p.regionId == capitalRegionId && p.id == capitalProvinceLocalId) {
-            capitalProvince = p;
-            break;
-          }
-        }
-
-        // Mirror tileKeyForProvinceLocation() selection logic.
-        String? expectedTileKey;
-        if (capitalProvince != null) {
-          final townTileKey = capitalProvince.townTileKey;
-          if (townTileKey != null && townTileKey.isNotEmpty) {
-            expectedTileKey = townTileKey;
-          } else {
-            final byProvince = gameInstance
-                .worldState
-                .tileKeysByRegionAndProvince[capitalProvince.regionId];
-            final prefixedId =
-                '${capitalProvince.regionId}|${capitalProvince.id}';
-            final tiles =
-                byProvince?[prefixedId] ?? byProvince?[capitalProvince.id];
-            if (tiles != null && tiles.isNotEmpty) {
-              expectedTileKey = tiles.first;
-            }
-          }
-        }
-
         String? locatedTileKey;
         String? locatedRegionId;
         final bus = AppEventBus.create();
@@ -550,9 +520,7 @@ void main() {
           locatedRegionId = e.regionId;
         });
 
-        // Force the widget into the "synthetic" Home Fleet path by removing any
-        // actual fleet that would be considered home (located at the capital
-        // province). This ensures row.shipCountsByType is empty.
+        // Remove any actual fleet that would be considered home at the capital.
         final filteredFleets = gameInstance.worldState.fleets.where((f) {
           if (f.ownerId != humanPlayerIdWithFleets) return true;
           if (f.isAtSea) return true;
@@ -577,29 +545,9 @@ void main() {
         await tester.pumpAndSettle();
 
         final homeTileFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
-        expect(homeTileFinder, findsOneWidget);
-
-        await tester.ensureVisible(homeTileFinder);
-        await tester.tap(homeTileFinder);
-        await tester.pumpAndSettle();
-
-        expect(find.text('No ships in this fleet'), findsOneWidget);
-
-        final locateFinder = find.descendant(
-          of: homeTileFinder,
-          matching: find.byTooltip('Locate fleet'),
-        );
-        if (locateFinder.evaluate().isEmpty) return;
-        await tester.tap(locateFinder.first);
-        await tester.pumpAndSettle();
-
-        // When the panel has a resolvable tile key for the home fleet,
-        // it calls onLocateFleet with that key.
-        expect(
-          expectedTileKey == null || locatedTileKey == expectedTileKey,
-          isTrue,
-        );
-        expect(locatedRegionId, capitalRegionId);
+        expect(homeTileFinder, findsNothing);
+        expect(locatedTileKey, isNull);
+        expect(locatedRegionId, isNull);
       },
     );
 
