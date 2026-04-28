@@ -55,6 +55,18 @@ extension _SessionCommands on _AppEventHandlerScopeState {
         );
         bus.emit(NavalFleetsUpdatedEvent(game: newGame));
       }),
+      bus.on<NavalTransferShipsRequestedEvent>().listen((e) {
+        final g = ref.read(currentGameProvider);
+        if (g == null) return;
+        final newGame = applyNavalTransferShipsBetweenFleets(
+          game: g,
+          humanPlayerId: e.humanPlayerId,
+          sourceFleetId: e.sourceFleetId,
+          targetFleetId: e.targetFleetId,
+          shipInstanceIdsToTransfer: e.shipInstanceIdsToTransfer,
+        );
+        bus.emit(NavalFleetsUpdatedEvent(game: newGame));
+      }),
       bus.on<NavalMoveFleetRequestedEvent>().listen((e) {
         final o = ref.read(currentOrdersProvider);
         ref

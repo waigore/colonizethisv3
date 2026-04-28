@@ -2324,6 +2324,23 @@
       }
     }
   },
+  "naval_transferToHome_dialogTitle": "Transfer Ships to Home Fleet",
+  "@naval_transferToHome_dialogTitle": {
+    "description": "Title for selected-ship transfer into Home Fleet dialog."
+  },
+  "naval_transferToHome_sourceTitle": "Fleet {id}",
+  "@naval_transferToHome_sourceTitle": {
+    "description": "Source fleet title in transfer-to-home dialog.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_transferToHome_confirm": "Confirm Transfer",
+  "@naval_transferToHome_confirm": {
+    "description": "Confirm button label for transfer-to-home dialog."
+  },
   "diplomacy_section_greatPowers": "Great Powers",
   "@diplomacy_section_greatPowers": {
     "description": "Diplomacy list section heading."

@@ -356,6 +356,23 @@ class NavalSplitFleetRequestedEvent extends SessionCommandEvent {
   final List<String> shipInstanceIdsToNewFleet;
 }
 
+/// Transfer selected ship instances from one existing fleet into another.
+/// Shell listener applies canonical fleet mutation and emits
+/// [NavalFleetsUpdatedEvent]. SPEC/program/app-ui-wiring.md.
+class NavalTransferShipsRequestedEvent extends SessionCommandEvent {
+  NavalTransferShipsRequestedEvent({
+    required this.humanPlayerId,
+    required this.sourceFleetId,
+    required this.targetFleetId,
+    required this.shipInstanceIdsToTransfer,
+  });
+
+  final String humanPlayerId;
+  final String sourceFleetId;
+  final String targetFleetId;
+  final List<String> shipInstanceIdsToTransfer;
+}
+
 /// Move fleet dialog confirm: shell merges [moveOrder] into current-turn draft orders.
 /// SPEC/program/app-ui-wiring.md.
 class NavalMoveFleetRequestedEvent extends SessionCommandEvent {

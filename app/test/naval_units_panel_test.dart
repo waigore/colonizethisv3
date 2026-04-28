@@ -7,7 +7,10 @@ import 'dart:ui' as ui;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show applyNavalSplitFleet, homeFleetIdFor;
+    show
+        applyNavalSplitFleet,
+        applyNavalTransferShipsBetweenFleets,
+        homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flame/flame.dart';
@@ -35,6 +38,24 @@ StreamSubscription<NavalSplitFleetRequestedEvent> wireNavalSplitForWidgetTest({
       humanPlayerId: e.humanPlayerId,
       originalFleetId: e.originalFleetId,
       shipInstanceIdsToNewFleet: e.shipInstanceIdsToNewFleet,
+    );
+    bus.emit(NavalFleetsUpdatedEvent(game: next));
+  });
+}
+
+/// Mirrors shell handling of [NavalTransferShipsRequestedEvent] for widget tests.
+StreamSubscription<NavalTransferShipsRequestedEvent>
+wireNavalTransferForWidgetTest({
+  required AppEventBus bus,
+  required Game Function() gameSnapshot,
+}) {
+  return bus.on<NavalTransferShipsRequestedEvent>().listen((e) {
+    final next = applyNavalTransferShipsBetweenFleets(
+      game: gameSnapshot(),
+      humanPlayerId: e.humanPlayerId,
+      sourceFleetId: e.sourceFleetId,
+      targetFleetId: e.targetFleetId,
+      shipInstanceIdsToTransfer: e.shipInstanceIdsToTransfer,
     );
     bus.emit(NavalFleetsUpdatedEvent(game: next));
   });
@@ -1444,7 +1465,12 @@ void main() {
         final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
           updated = e;
         });
+        final subTransfer = wireNavalTransferForWidgetTest(
+          bus: bus,
+          gameSnapshot: () => homeCombineGame,
+        );
         addTearDown(sub.cancel);
+        addTearDown(subTransfer.cancel);
 
         await tester.pumpWidget(
           buildPanel(game: homeCombineGame, humanPlayerId: humanId, bus: bus),
@@ -1469,6 +1495,24 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.pumpAndSettle();
+        expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
+        await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('fluyte')));
+        await tester.pumpAndSettle();
+        final confirmTransfer = find.widgetWithText(
+          CtNinePatchButton,
+          'Confirm Transfer',
+        );
+        expect(confirmTransfer, findsOneWidget);
+        expect(
+          tester.widget<CtNinePatchButton>(confirmTransfer).enabled,
+          isTrue,
+        );
+        final confirmTransferButton = tester.widget<CtNinePatchButton>(
+          confirmTransfer,
+        );
+        expect(confirmTransferButton.onPressed, isNotNull);
+        confirmTransferButton.onPressed!.call();
         await tester.pumpAndSettle();
 
         expect(updated, isNotNull);
@@ -1792,6 +1836,358 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(
           find.descendant(of: portFinder, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+
+        final combineBtn = tester.widget<CtNinePatchButton>(
+          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        );
+        expect(combineBtn.enabled, isFalse);
+      },
+    );
+
+    testWidgets(
+      'AC: Home Fleet and adjacent sea source enable selected-ship transfer',
+      (WidgetTester tester) async {
+        const humanId = 'gp_home_adjacent';
+        const capProvince = 'oldWorld|cap1';
+        final homeId = homeFleetIdFor(humanId);
+
+        final gameAdj = Game(
+          id: 'g_home_adjacent_transfer',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'cap1',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Capital',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: homeId,
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: capProvince,
+                ships: const [ShipInstance(id: 'home_1', typeId: 'carrack')],
+              ),
+              Fleet(
+                id: 'sea_source',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                seaZoneId: 'zone_alpha',
+                ships: const [
+                  ShipInstance(id: 'src_1', typeId: 'fluyte'),
+                  ShipInstance(id: 'src_2', typeId: 'carrack'),
+                ],
+              ),
+            ],
+          ),
+          players: const [
+            Player(
+              id: humanId,
+              displayName: 'Home adjacent tester',
+              isHuman: true,
+              capitalProvinceId: capProvince,
+              capitalTile: CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: capProvince,
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+        );
+        const topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'oldWorld|cap1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'zone_alpha',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [TopologyEdge(id1: 'oldWorld|cap1', id2: 'zone_alpha')],
+        );
+
+        await tester.pumpWidget(
+          buildPanel(game: gameAdj, humanPlayerId: humanId, topology: topology),
+        );
+        await tester.pumpAndSettle();
+
+        final homeFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
+        final sourceFinder = find.widgetWithText(
+          ExpansionTile,
+          'Fleet sea_source',
+        );
+        expect(homeFinder, findsOneWidget);
+        expect(sourceFinder, findsOneWidget);
+
+        await tester.tap(
+          find.descendant(of: homeFinder, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(of: sourceFinder, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+
+        final combineBtn = tester.widget<CtNinePatchButton>(
+          find.widgetWithText(CtNinePatchButton, 'Combine'),
+        );
+        expect(combineBtn.enabled, isTrue);
+
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.pumpAndSettle();
+        expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC: Home Fleet transfer moves selected ships and keeps source when ships remain',
+      (WidgetTester tester) async {
+        const humanId = 'gp_home_transfer_apply';
+        const capProvince = 'oldWorld|cap1';
+        final homeId = homeFleetIdFor(humanId);
+
+        var gameState = Game(
+          id: 'g_home_transfer_apply',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'cap1',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Capital',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: homeId,
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: capProvince,
+                ships: const [ShipInstance(id: 'home_1', typeId: 'carrack')],
+              ),
+              Fleet(
+                id: 'sea_source',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                seaZoneId: 'zone_alpha',
+                ships: const [
+                  ShipInstance(id: 'src_1', typeId: 'fluyte'),
+                  ShipInstance(id: 'src_2', typeId: 'carrack'),
+                ],
+              ),
+            ],
+          ),
+          players: const [
+            Player(
+              id: humanId,
+              displayName: 'Home transfer tester',
+              isHuman: true,
+              capitalProvinceId: capProvince,
+              capitalTile: CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: capProvince,
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+        );
+        const topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'oldWorld|cap1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'zone_alpha',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [TopologyEdge(id1: 'oldWorld|cap1', id2: 'zone_alpha')],
+        );
+        final bus = AppEventBus.create();
+        final subTransfer = wireNavalTransferForWidgetTest(
+          bus: bus,
+          gameSnapshot: () => gameState,
+        );
+        final subUpdated = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+          gameState = e.game;
+        });
+        addTearDown(subTransfer.cancel);
+        addTearDown(subUpdated.cancel);
+
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameState,
+            humanPlayerId: humanId,
+            topology: topology,
+            bus: bus,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final homeFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
+        final sourceFinder = find.widgetWithText(
+          ExpansionTile,
+          'Fleet sea_source',
+        );
+        await tester.tap(
+          find.descendant(of: homeFinder, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(of: sourceFinder, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.pumpAndSettle();
+
+        final moveOneFluyte = find.byKey(
+          CtTransferListKeys.leftMoveOne('fluyte'),
+        );
+        expect(moveOneFluyte, findsOneWidget);
+        await tester.tap(moveOneFluyte);
+        await tester.pumpAndSettle();
+
+        final confirmTransfer = find.widgetWithText(
+          CtNinePatchButton,
+          'Confirm Transfer',
+        );
+        expect(confirmTransfer, findsOneWidget);
+        expect(
+          tester.widget<CtNinePatchButton>(confirmTransfer).enabled,
+          isTrue,
+        );
+        final confirmTransferButton = tester.widget<CtNinePatchButton>(
+          confirmTransfer,
+        );
+        expect(confirmTransferButton.onPressed, isNotNull);
+        confirmTransferButton.onPressed!.call();
+        await tester.pumpAndSettle();
+
+        final homeFleet = gameState.worldState.fleets.firstWhere(
+          (f) => f.id == homeId,
+        );
+        final sourceFleet = gameState.worldState.fleets.firstWhere(
+          (f) => f.id == 'sea_source',
+        );
+        final homeShipIds = homeFleet.ships.map((s) => s.id).toSet();
+        final sourceShipIds = sourceFleet.ships.map((s) => s.id).toSet();
+        expect(homeShipIds.contains('src_1'), isTrue);
+        expect(sourceShipIds.contains('src_1'), isFalse);
+        expect(sourceShipIds.contains('src_2'), isTrue);
+      },
+    );
+
+    testWidgets(
+      'AC: Home Fleet and non-adjacent sea source keep Combine disabled',
+      (WidgetTester tester) async {
+        const humanId = 'gp_home_non_adjacent';
+        const capProvince = 'oldWorld|cap1';
+        final homeId = homeFleetIdFor(humanId);
+
+        final gameNonAdjacent = Game(
+          id: 'g_home_non_adjacent_transfer',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'cap1',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  displayName: 'Capital',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: homeId,
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                inPortAtProvinceId: capProvince,
+                ships: const [ShipInstance(id: 'home_1', typeId: 'carrack')],
+              ),
+              Fleet(
+                id: 'sea_far',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                seaZoneId: 'zone_far',
+                ships: const [ShipInstance(id: 'src_1', typeId: 'fluyte')],
+              ),
+            ],
+          ),
+          players: const [
+            Player(
+              id: humanId,
+              displayName: 'Home non-adjacent tester',
+              isHuman: true,
+              capitalProvinceId: capProvince,
+              capitalTile: CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: capProvince,
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+        );
+        const topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'oldWorld|cap1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'zone_far',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [],
+        );
+
+        await tester.pumpWidget(
+          buildPanel(
+            game: gameNonAdjacent,
+            humanPlayerId: humanId,
+            topology: topology,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final homeFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
+        final sourceFinder = find.widgetWithText(
+          ExpansionTile,
+          'Fleet sea_far',
+        );
+        await tester.tap(
+          find.descendant(of: homeFinder, matching: find.byType(Checkbox)),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(of: sourceFinder, matching: find.byType(Checkbox)),
         );
         await tester.pumpAndSettle();
 
@@ -2898,7 +3294,12 @@ void main() {
         final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
           updated = e;
         });
+        final subTransferNeverDelete = wireNavalTransferForWidgetTest(
+          bus: bus,
+          gameSnapshot: () => homeNeverDeleteGame,
+        );
         addTearDown(sub.cancel);
+        addTearDown(subTransferNeverDelete.cancel);
 
         await tester.pumpWidget(
           buildPanel(
@@ -2924,6 +3325,24 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.tap(find.widgetWithText(CtNinePatchButton, 'Combine'));
+        await tester.pumpAndSettle();
+        expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
+        await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('fluyte')));
+        await tester.pumpAndSettle();
+        final confirmTransfer = find.widgetWithText(
+          CtNinePatchButton,
+          'Confirm Transfer',
+        );
+        expect(confirmTransfer, findsOneWidget);
+        expect(
+          tester.widget<CtNinePatchButton>(confirmTransfer).enabled,
+          isTrue,
+        );
+        final confirmTransferButton = tester.widget<CtNinePatchButton>(
+          confirmTransfer,
+        );
+        expect(confirmTransferButton.onPressed, isNotNull);
+        confirmTransferButton.onPressed!.call();
         await tester.pumpAndSettle();
 
         expect(updated, isNotNull);
