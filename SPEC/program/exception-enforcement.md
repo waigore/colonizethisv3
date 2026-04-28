@@ -42,6 +42,10 @@ The repository enforces the same policy in two places (shared implementation in 
 1. **CI / CLI:** Quality runs `dart run tool/ct_repo_lint.dart` (rule `repo.custom_exceptions`; see [repo-lint.md](repo-lint.md)), which invokes `tool/check_custom_exceptions.dart`. Direct run: `dart run tool/check_custom_exceptions.dart` (also `melos run check_custom_exceptions`). File discovery uses `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), same as the disallowed-AST checker.
 2. **IDE / analyzer:** `custom_lint` with package `colonizethis_exception_lint`, wired in every workspace package that contains scoped runtime `lib/` code (see each package `pubspec.yaml` + `analysis_options.yaml`). Run locally per package via `dart run custom_lint`, or `bash tool/run_custom_lint_domain_exceptions.sh` for all wired packages. CI runs the same script after the root checker.
 
+### `test/` and `integration_test/` (GitHub #2014)
+
+**Target parity:** For every package wired by `tool/run_custom_lint_domain_exceptions.sh`, **`test/`** and **`integration_test/`** should reach the **same analyzer diagnostic bar as `lib/`** (zero `error`-severity issues from `custom_lint` / analyzer for those rules), with the same generated-file exclusions as runtime code. **Land enforcement in phased PRs** so `dev` stays green: fix violations before or with any CI tightening; see [repo-lint.md](repo-lint.md) section *Test and `integration_test/` static analysis scope* for mergeability and analyzer vs binary-tool semantics.
+
 The checker:
 
 1. Parses Dart files with analyzer.

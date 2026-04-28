@@ -45,6 +45,18 @@ If your GitHub role **cannot add labels**, state in the PR description that you 
 
 Repository-wide checks (beyond `dart analyze` / `custom_lint`) run through **`dart run tool/ct_repo_lint.dart`**, driven by **`tool/ct_repo_lint_manifest.yaml`**. When adding a new convention for CI, register a **stable `rule_id`** there and document it in **[SPEC/program/repo-lint.md](./SPEC/program/repo-lint.md)**—avoid new standalone `tool/check_*.dart` workflow steps without updating that manifest.
 
+### Tests and `integration_test/` in lint scope (phased)
+
+**Authoritative detail:** **[SPEC/program/repo-lint.md](./SPEC/program/repo-lint.md)** — section *Test and `integration_test/` static analysis scope* (GitHub #2014).
+
+Summary for contributors and CI authors:
+
+- **`test/`** and **`integration_test/`** are **targets for parity** with `lib/` for static gates where the tool applies; **generated, golden, and fixture trees** stay excluded per SPEC.
+- **Mergeable slices:** Work lands in **≤ 5** PRs; each must keep **`dev` required checks green**. Do not widen **fatal** test enforcement without **co-fixes** in the same PR or a **SPEC-documented** audit/baseline transition.
+- **`dart analyze` / `flutter analyze` (error-only CI steps):** Fail only on **analyzer errors**, not warnings, unless policy changes.
+- **`ct_repo_lint` and binary AST scripts:** **Pass/fail** on violations (not the same as “analyzer errors only”).
+- **Workflows:** Today **`.github/workflows/quality.yml`** runs `ct_repo_lint`, domain `custom_lint`, and (in **`app_tests_cache`**) `flutter analyze` under `app/` plus `check_long_string_switches`. When adding workspace-wide analyze steps, document **which job** runs them and use **`dart analyze`** vs **`flutter analyze`** per package type; update this file and SPEC in the same PR.
+
 ## macOS Flutter build troubleshooting: Swift priors ReadError
 
 If `flutter run -d macos` or `flutter build macos` intermittently fails while compiling CocoaPods plugins with output that includes:
