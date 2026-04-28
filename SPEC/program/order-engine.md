@@ -128,6 +128,7 @@ The OrderEngine validates and stores **move (civilian), army move, build, work, 
 - **Move validation (extracted):** Given a civilian move order whose `destinationTileKey` fails shared civilian occupancy rules (per [orders.md](orders.md)), when validated with context, then the result is rejected and the unit location remains unchanged. Military moves into GP or Minor/Tribe provinces without war (or same-turn declareWar) are rejected with the appropriate "Must declare war before attacking..." reason.
 - **Work order cost (single source):** Given work orders with material costs, when validated and when projecting effects in the same pass, the same cost calculation is used via WorkOrderCostCalculator (single source of truth).
 - **Work subset move:** Given a civilian work order whose `targetTileKey` the unit may not legally occupy under shared civilian occupancy rules, when validated with context, then the order engine rejects that work order before application.
+- **Validator injection seam:** Given a caller constructs `OrderEngine` with a custom validator factory, when `validatePlayerOrdersWithContext` runs, then the engine uses validators from that factory for move/army/build/work/diplomatic/naval validation without changing public order-storage APIs.
 
 ---
 
