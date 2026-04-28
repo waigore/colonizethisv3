@@ -587,9 +587,8 @@ List<Set<String>> _landComponentsFromPpNeighbours(
       if (!visited.add(u)) continue;
       comp.add(u);
       for (final v in neighbours[u] ?? const <String>{}) {
-        if (!visited.contains(v)) {
-          stack.add(v);
-        }
+        if (visited.contains(v)) continue;
+        stack.add(v);
       }
     }
     out.add(comp);

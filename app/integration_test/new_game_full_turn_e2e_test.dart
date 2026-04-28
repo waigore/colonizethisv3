@@ -254,6 +254,20 @@ Future<void> _ensureAllRelocated64pxPngsLoad() async {
   expect(failures, isEmpty);
 }
 
+Future<void> _tapGameStartIntroOverlayContinueIfPresent(
+  WidgetTester tester,
+) async {
+  if (find.text('Continue').evaluate().isNotEmpty) {
+    await tester.tap(find.text('Continue').first);
+    await tester.pump(const Duration(milliseconds: 200));
+    return;
+  }
+  if (find.text('I shall.').evaluate().isNotEmpty) {
+    await tester.tap(find.text('I shall.').first);
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+}
+
 Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
   await tester.tap(find.text('New Game'));
   await _waitUntilFound(
@@ -294,13 +308,7 @@ Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
     }
     final introOpen = find.byType(GameStartIntroOverlay).evaluate().isNotEmpty;
     if (introOpen) {
-      if (find.text('Continue').evaluate().isNotEmpty) {
-        await tester.tap(find.text('Continue').first);
-        await tester.pump(const Duration(milliseconds: 200));
-      } else if (find.text('I shall.').evaluate().isNotEmpty) {
-        await tester.tap(find.text('I shall.').first);
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await _tapGameStartIntroOverlayContinueIfPresent(tester);
       continue;
     }
     final creating = find.text('Creating game').evaluate().isNotEmpty;

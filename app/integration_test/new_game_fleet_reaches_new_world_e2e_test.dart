@@ -191,6 +191,20 @@ Future<void> _closeBottomSheet(WidgetTester tester, {_E2ePerfLog? perf}) async {
   );
 }
 
+Future<void> _tapGameStartIntroOverlayContinueIfPresent(
+  WidgetTester tester,
+) async {
+  if (find.text('Continue').evaluate().isNotEmpty) {
+    await tester.tap(find.text('Continue').first);
+    await tester.pump(const Duration(milliseconds: 200));
+    return;
+  }
+  if (find.text('I shall.').evaluate().isNotEmpty) {
+    await tester.tap(find.text('I shall.').first);
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+}
+
 Future<void> _bootstrapNewGameToMap(
   WidgetTester tester, {
   _E2ePerfLog? perf,
@@ -236,13 +250,7 @@ Future<void> _bootstrapNewGameToMap(
     }
     final introOpen = find.byType(GameStartIntroOverlay).evaluate().isNotEmpty;
     if (introOpen) {
-      if (find.text('Continue').evaluate().isNotEmpty) {
-        await tester.tap(find.text('Continue').first);
-        await tester.pump(const Duration(milliseconds: 200));
-      } else if (find.text('I shall.').evaluate().isNotEmpty) {
-        await tester.tap(find.text('I shall.').first);
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await _tapGameStartIntroOverlayContinueIfPresent(tester);
       continue;
     }
     final creating = find.text('Creating game').evaluate().isNotEmpty;
