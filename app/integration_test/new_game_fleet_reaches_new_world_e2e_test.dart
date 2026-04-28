@@ -14,7 +14,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         regionIdForSeaZone,
         suggestWorkOrders;
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show MoveOrder, ProvinceId, Unit, WorkOrder;
+    show MoveOrder, ProvinceId, Unit, WorkOrder, kUnitTypeExplorer;
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
@@ -191,6 +191,20 @@ Future<void> _closeBottomSheet(WidgetTester tester, {_E2ePerfLog? perf}) async {
   );
 }
 
+Future<void> _tapGameStartIntroOverlayContinueIfPresent(
+  WidgetTester tester,
+) async {
+  if (find.text('Continue').evaluate().isNotEmpty) {
+    await tester.tap(find.text('Continue').first);
+    await tester.pump(const Duration(milliseconds: 200));
+    return;
+  }
+  if (find.text('I shall.').evaluate().isNotEmpty) {
+    await tester.tap(find.text('I shall.').first);
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+}
+
 Future<void> _bootstrapNewGameToMap(
   WidgetTester tester, {
   _E2ePerfLog? perf,
@@ -236,13 +250,7 @@ Future<void> _bootstrapNewGameToMap(
     }
     final introOpen = find.byType(GameStartIntroOverlay).evaluate().isNotEmpty;
     if (introOpen) {
-      if (find.text('Continue').evaluate().isNotEmpty) {
-        await tester.tap(find.text('Continue').first);
-        await tester.pump(const Duration(milliseconds: 200));
-      } else if (find.text('I shall.').evaluate().isNotEmpty) {
-        await tester.tap(find.text('I shall.').first);
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await _tapGameStartIntroOverlayContinueIfPresent(tester);
       continue;
     }
     final creating = find.text('Creating game').evaluate().isNotEmpty;
@@ -831,7 +839,7 @@ String _bundledExploreRejectionDiagnostics([
   ];
 
   final explorerUnits =
-      view.ownUnits.where((u) => u.type == 'Explorer').toList()
+      view.ownUnits.where((u) => u.type == kUnitTypeExplorer).toList()
         ..sort((a, b) => a.id.compareTo(b.id));
   if (explorerUnits.isEmpty) {
     lines.add('diag: no explorer units found in player view.');

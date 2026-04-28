@@ -18,10 +18,10 @@ int runCheckFunctionSize(
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
-  final packageLibPrefixes = _collectPackageLibPrefixes(repoRoot);
+  final packageScanPrefixes = _collectPackageScanPathPrefixes(repoRoot);
   final files = collectRepoLintDomainDartFiles(repoRoot).where((file) {
     final rel = p.relative(file.path, from: repoRoot);
-    return packageLibPrefixes.any(rel.startsWith);
+    return packageScanPrefixes.any(rel.startsWith);
   });
   final violations = <String>[];
 
@@ -52,7 +52,8 @@ int runCheckFunctionSize(
   return 1;
 }
 
-List<String> _collectPackageLibPrefixes(String repoRoot) {
+/// `packages/<name>/lib/` roots per package.
+List<String> _collectPackageScanPathPrefixes(String repoRoot) {
   final packagesDir = Directory(p.join(repoRoot, 'packages'));
   if (!packagesDir.existsSync()) {
     return const [];

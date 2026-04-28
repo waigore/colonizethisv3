@@ -156,20 +156,19 @@ void f(List<int> a) {
       );
     });
 
-    test('skips test paths', () {
+    test('analyzes package test paths', () {
       const src = r'''
 void f(List<int> a) {
   a..clear();
 }
 ''';
-      expect(
-        findDisallowedAstViolations(
-          'packages/foo/test/x_test.dart',
-          src,
-          rules,
-        ),
-        isEmpty,
+      final violations = findDisallowedAstViolations(
+        'packages/foo/test/x_test.dart',
+        src,
+        rules,
       );
+      expect(violations, isNotEmpty);
+      expect(violations.first.ruleId, 'cascade_void_clear');
     });
 
     test('flags .where is .map as chain', () {
@@ -271,21 +270,20 @@ void f() {
       expect(v.first.ruleId, 'avoid_print_suppression');
     });
 
-    test('allows avoid_print suppression in excluded test path', () {
+    test('flags avoid_print suppression in package test path', () {
       const src = r'''
 void f() {
   // ignore: avoid_print
   print('x');
 }
 ''';
-      expect(
-        findDisallowedAstViolations(
-          'packages/foo/test/x_test.dart',
-          src,
-          rules,
-        ),
-        isEmpty,
+      final violations = findDisallowedAstViolations(
+        'packages/foo/test/x_test.dart',
+        src,
+        rules,
       );
+      expect(violations, isNotEmpty);
+      expect(violations.first.ruleId, 'avoid_print_suppression');
     });
 
     test('flags raw generic core type declarations', () {
