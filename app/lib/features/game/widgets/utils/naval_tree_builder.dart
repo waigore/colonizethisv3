@@ -307,7 +307,12 @@ buildNavalTree(
     final regionId = regionEntry.key;
 
     final fleetsInRegion = game.worldState.fleets
-        .where((f) => f.ownerId == humanPlayerId && f.shipTypeIds.isNotEmpty)
+        .where(
+          (f) =>
+              f.ownerId == humanPlayerId &&
+              (f.shipTypeIds.isNotEmpty ||
+                  f.id == homeFleetIdFor(humanPlayerId)),
+        )
         .where((fleet) {
           if (locationScopeKeyFilter == null) {
             return fleet.regionId == regionId;
@@ -479,45 +484,6 @@ buildNavalTree(
         } else {
           final fullProvinceId = '${province.regionId}|${province.id}';
           ports.putIfAbsent(fullProvinceId, () => []).add(row);
-        }
-      }
-    }
-
-    if (capitalRegionId == regionId &&
-        capitalProvinceLocalId != null &&
-        homeFleetRow == null) {
-      final provinceMap = provinceByRegionAndId[regionId] ?? const {};
-      final province =
-          provinceMap['$capitalRegionId|$capitalProvinceLocalId'] ??
-          provinceMap[capitalProvinceLocalId];
-      if (province != null) {
-        final synLocationKey = normalizedPortScope(province);
-        final omitSynthetic =
-            locationScopeKeyFilter != null &&
-            locationScopeKeyFilter != synLocationKey;
-        if (!omitSynthetic) {
-          final tileKey = tileKeyForProvinceLocation(game, province);
-          final locationLabel =
-              '${unitsPanelRegionLabel(regionId)} — ${province.displayName ?? province.id}';
-          homeFleetRow = FleetRow(
-            fleetId: homeFleetIdFor(humanPlayerId),
-            label: l10n.naval_homeFleetLabel,
-            locationLabel: locationLabel,
-            regionId: regionId,
-            missionLabel: fleetMissionDisplayLabel(FleetMission.none),
-            totalShips: 0,
-            warshipCount: 0,
-            merchantCount: 0,
-            strength: 0,
-            tileKey: tileKey,
-            isHomeFleet: true,
-            shipCountsByType: const {},
-            cargoCapacity: 0,
-            isAtSea: false,
-            locationKey: synLocationKey,
-            inPortAtProvinceId: '$capitalRegionId|$capitalProvinceLocalId',
-            draftNavalMoveLine: null,
-          );
         }
       }
     }

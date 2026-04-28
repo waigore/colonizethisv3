@@ -86,5 +86,45 @@ void main() {
         expect(splitFleet.mission, FleetMission.none);
       },
     );
+
+    test(
+      'Given Home Fleet split-all When applied Then Home Fleet remains with zero ships',
+      () {
+        final homeFleetId = homeFleetIdFor('gp_human');
+        final original = _gameWithFleets([
+          Fleet(
+            id: homeFleetId,
+            ownerId: 'gp_human',
+            regionId: 'oldWorld',
+            inPortAtProvinceId: 'oldWorld|capital',
+            ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
+          ),
+          Fleet(
+            id: '2',
+            ownerId: 'gp_human',
+            regionId: 'oldWorld',
+            seaZoneId: 'sea_b',
+            ships: const [ShipInstance(id: 'ship_3', typeId: 'carrack')],
+          ),
+        ]);
+
+        final next = applyNavalSplitFleet(
+          game: original,
+          humanPlayerId: 'gp_human',
+          originalFleetId: homeFleetId,
+          shipInstanceIdsToNewFleet: const ['ship_1'],
+        );
+
+        final homeFleet = next.worldState.fleets.firstWhere(
+          (f) => f.id == homeFleetId,
+        );
+        expect(homeFleet.ships, isEmpty);
+
+        final splitFleet = next.worldState.fleets.firstWhere(
+          (f) => f.id == '3',
+        );
+        expect(splitFleet.ships.map((s) => s.id), ['ship_1']);
+      },
+    );
   });
 }

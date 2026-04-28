@@ -35,7 +35,11 @@ MapTopology _singleProvinceAndSeaTopology(String regionId) {
         regionId: regionId,
         type: TopologyNodeType.province,
       ),
-      TopologyNode(id: 's1', regionId: regionId, type: TopologyNodeType.seaZone),
+      TopologyNode(
+        id: 's1',
+        regionId: regionId,
+        type: TopologyNodeType.seaZone,
+      ),
     ],
     edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
   );
@@ -43,55 +47,68 @@ MapTopology _singleProvinceAndSeaTopology(String regionId) {
 
 void main() {
   group('buildInitGameMapViewData extracted slice coverage', () {
-    test('region setup maps owner/display and terrain palette from minimal data', () {
-      final tileMap = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: [
-          ['p1'],
-        ],
-        terrainGrid: [
-          [TerrainType.forest],
-        ],
-      );
-      final seaOnly = TileMapResult(
-        width: 1,
-        height: 1,
-        grid: [
-          ['s1'],
-        ],
-      );
-      final topology = _singleProvinceAndSeaTopology('oldWorld');
-      final newWorldTopology = _singleProvinceAndSeaTopology('newWorld');
-      final game = _minimalGame(
-        oldWorldProvinces: const [
-          Province(
-            id: 'oldWorld|p1',
-            regionId: 'oldWorld',
-            ownerId: 'gp1',
-            displayName: 'Alpha',
-          ),
-        ],
-        newWorldProvinces: const [],
-        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
-      );
+    test(
+      'region setup maps owner/display and terrain palette from minimal data',
+      () {
+        final tileMap = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: [
+            ['p1'],
+          ],
+          terrainGrid: [
+            [TerrainType.forest],
+          ],
+        );
+        final seaOnly = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: [
+            ['s1'],
+          ],
+        );
+        final topology = _singleProvinceAndSeaTopology('oldWorld');
+        final newWorldTopology = _singleProvinceAndSeaTopology('newWorld');
+        final game = _minimalGame(
+          oldWorldProvinces: const [
+            Province(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              ownerId: 'gp1',
+              displayName: 'Alpha',
+            ),
+          ],
+          newWorldProvinces: const [],
+          players: const [
+            Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+          ],
+        );
 
-      final view = buildInitGameMapViewData(
-        game: game,
-        tileMapByRegion: {'oldWorld': tileMap, 'newWorld': seaOnly},
-        topologyByRegion: {'oldWorld': topology, 'newWorld': newWorldTopology},
-        cellSize: 8,
-      );
+        final view = buildInitGameMapViewData(
+          game: game,
+          tileMapByRegion: {'oldWorld': tileMap, 'newWorld': seaOnly},
+          topologyByRegion: {
+            'oldWorld': topology,
+            'newWorld': newWorldTopology,
+          },
+          cellSize: 8,
+        );
 
-      final cell = view.oldWorld.cells.single;
-      expect(cell.ownerFactionId, 'gp1');
-      expect(cell.provinceDisplayName, 'Alpha');
-      expect(view.oldWorld.terrainColors.containsKey(TerrainType.forest), isTrue);
-      expect(
-        view.oldWorld.provincePoliticalOwnerByPrefixedProvinceId['oldWorld|p1'],
-        'gp1',
-      );
-    });
+        final cell = view.oldWorld.cells.single;
+        expect(cell.ownerFactionId, 'gp1');
+        expect(cell.provinceDisplayName, 'Alpha');
+        expect(
+          view.oldWorld.terrainColors.containsKey(TerrainType.forest),
+          isTrue,
+        );
+        expect(
+          view
+              .oldWorld
+              .provincePoliticalOwnerByPrefixedProvinceId['oldWorld|p1'],
+          'gp1',
+        );
+      },
+    );
 
     test('overlay setup counts regiments, civilians, and in-port ships', () {
       final tileMap = TileMapResult(
@@ -111,7 +128,9 @@ void main() {
       final topology = _singleProvinceAndSeaTopology('oldWorld');
       final newWorldTopology = _singleProvinceAndSeaTopology('newWorld');
       final game = _minimalGame(
-        oldWorldProvinces: const [Province(id: 'oldWorld|p1', regionId: 'oldWorld')],
+        oldWorldProvinces: const [
+          Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
+        ],
         newWorldProvinces: const [],
         oldWorldUnits: [
           Unit(
@@ -145,9 +164,8 @@ void main() {
         cellSize: 8,
       );
 
-      final presence = view
-          .oldWorld
-          .provinceUnitPresenceByProvinceId['oldWorld|p1']!;
+      final presence =
+          view.oldWorld.provinceUnitPresenceByProvinceId['oldWorld|p1']!;
       expect(presence.civilianCount, 1);
       expect(presence.regimentCount, 1);
       expect(presence.shipCount, 1);
@@ -202,9 +220,7 @@ void main() {
             ),
           ),
         ],
-        portsByProvinceSeaboard: const {
-          'oldWorld|p1|s1': 'oldWorld|p1|0|0',
-        },
+        portsByProvinceSeaboard: const {'oldWorld|p1|s1': 'oldWorld|p1|0|0'},
       );
 
       final view = buildInitGameMapViewData(
@@ -252,7 +268,9 @@ void main() {
       final topology = _singleProvinceAndSeaTopology('oldWorld');
       final newWorldTopology = _singleProvinceAndSeaTopology('newWorld');
       final game = _minimalGame(
-        oldWorldProvinces: const [Province(id: 'oldWorld|p1', regionId: 'oldWorld')],
+        oldWorldProvinces: const [
+          Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
+        ],
         newWorldProvinces: const [],
       );
 
@@ -272,6 +290,138 @@ void main() {
       expect(cell.resourceExtractionUnits, 9);
       expect(cell.resourceExtractionEffectiveUnits, 7);
       expect(cell.resourceExtractionBlockedUnits, 2);
+    });
+
+    test(
+      'does not synthesize a Home Fleet marker when fleet entity is missing',
+      () {
+        final tileMap = TileMapResult(
+          width: 2,
+          height: 1,
+          grid: [
+            ['p1', 's1'],
+          ],
+        );
+        final newWorldSea = TileMapResult(
+          width: 1,
+          height: 1,
+          grid: [
+            ['s9'],
+          ],
+        );
+        final topology = _singleProvinceAndSeaTopology('oldWorld');
+        final newWorldTopology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 's9',
+              regionId: 'newWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [],
+        );
+        final game = _minimalGame(
+          oldWorldProvinces: const [
+            Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+          ],
+          newWorldProvinces: const [],
+          players: const [
+            Player(
+              id: 'gp1',
+              displayName: 'GP1',
+              isHuman: true,
+              capitalTile: CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: 'oldWorld|p1',
+                x: 0,
+                y: 0,
+              ),
+            ),
+          ],
+          portsByProvinceSeaboard: const {'oldWorld|p1|s1': 'oldWorld|p1|0|0'},
+        );
+
+        final view = buildInitGameMapViewData(
+          game: game,
+          tileMapByRegion: {'oldWorld': tileMap, 'newWorld': newWorldSea},
+          topologyByRegion: {
+            'oldWorld': topology,
+            'newWorld': newWorldTopology,
+          },
+          cellSize: 8,
+        );
+
+        expect(view.oldWorld.fleetTileMarkers, isEmpty);
+      },
+    );
+
+    test('keeps an empty Home Fleet marker when real fleet entity exists', () {
+      final tileMap = TileMapResult(
+        width: 2,
+        height: 1,
+        grid: [
+          ['p1', 's1'],
+        ],
+      );
+      final newWorldSea = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: [
+          ['s9'],
+        ],
+      );
+      final topology = _singleProvinceAndSeaTopology('oldWorld');
+      final newWorldTopology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 's9',
+            regionId: 'newWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: const [],
+      );
+      final game = _minimalGame(
+        oldWorldProvinces: const [
+          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+        ],
+        newWorldProvinces: const [],
+        fleets: [
+          Fleet(
+            id: 'fleet_gp1',
+            ownerId: 'gp1',
+            regionId: 'oldWorld',
+            inPortAtProvinceId: 'oldWorld|p1',
+            ships: [],
+            mission: FleetMission.none,
+          ),
+        ],
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'GP1',
+            isHuman: true,
+            capitalTile: CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: 'oldWorld|p1',
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+        portsByProvinceSeaboard: const {'oldWorld|p1|s1': 'oldWorld|p1|0|0'},
+      );
+
+      final view = buildInitGameMapViewData(
+        game: game,
+        tileMapByRegion: {'oldWorld': tileMap, 'newWorld': newWorldSea},
+        topologyByRegion: {'oldWorld': topology, 'newWorld': newWorldTopology},
+        cellSize: 8,
+      );
+
+      expect(view.oldWorld.fleetTileMarkers, hasLength(1));
+      expect(view.oldWorld.fleetTileMarkers.single.fleetIds, ['fleet_gp1']);
+      expect(view.oldWorld.fleetTileMarkers.single.stackCount, 1);
     });
   });
 }
