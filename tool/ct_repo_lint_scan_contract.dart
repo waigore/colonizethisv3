@@ -35,7 +35,8 @@ bool repoLintPathIsExcludedGeneratedDart(String relativePathFromRepo) {
   }
   if (relativePathFromRepo.endsWith('.g.dart') ||
       relativePathFromRepo.endsWith('.freezed.dart') ||
-      relativePathFromRepo.endsWith('.mocks.dart')) {
+      relativePathFromRepo.endsWith('.mocks.dart') ||
+      relativePathFromRepo.endsWith('.gen.dart')) {
     return true;
   }
   return false;
@@ -108,7 +109,8 @@ bool repoLintPathIsDomainTestOrIntegrationTestSourceForScan(
   if (repoLintPathIsUnderRepoRootToolingTestTree(slash)) {
     return false;
   }
-  final inDomain = slash.startsWith('packages/') ||
+  final inDomain =
+      slash.startsWith('packages/') ||
       slash.startsWith('app/') ||
       slash.startsWith('ctdev/') ||
       slash.startsWith('tool/');
@@ -394,7 +396,8 @@ bool repoLintAppLibHardcodedUiVisitorShouldSkip(String relativePathFromRepo) {
   }
   if (relativePathFromRepo.endsWith('.g.dart') ||
       relativePathFromRepo.endsWith('.freezed.dart') ||
-      relativePathFromRepo.endsWith('.mocks.dart')) {
+      relativePathFromRepo.endsWith('.mocks.dart') ||
+      relativePathFromRepo.endsWith('.gen.dart')) {
     return true;
   }
   return false;
