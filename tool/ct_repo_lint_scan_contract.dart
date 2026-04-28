@@ -2,24 +2,35 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Shared “domain runtime Dart” scan roots for repo-wide AST checks.
-///
-/// SPEC: SPEC/program/repo-lint.md
-const List<String> repoLintDomainScanRoots = <String>[
-  'packages',
-  'app/lib',
-  'ctdev/lib',
-  'tool',
+/// Path fragments that mark fixture / golden trees excluded from scans.
+const List<String> repoLintFixtureDirPathMarkers = <String>[
+  '/test_data/',
+  '/testdata/',
+  '/fixtures/',
+  '/fixture/',
+  '/golden/',
+  '/goldens/',
 ];
 
-/// True when [relativePathFromRepo] should not be scanned (test/fixture context
-/// or generated Dart), matching the historical `check_*` predicates.
-bool repoLintPathIsExcludedTestOrGeneratedDart(String relativePathFromRepo) {
-  if (!relativePathFromRepo.endsWith('.dart')) {
-    return true;
+bool _repoLintSlashPathContainsFixtureMarker(String slashPath) {
+  final withLeading = slashPath.startsWith('/') ? slashPath : '/$slashPath';
+  for (final marker in repoLintFixtureDirPathMarkers) {
+    if (withLeading.contains(marker)) {
+      return true;
+    }
   }
-  if (relativePathFromRepo.contains('/test/') ||
-      relativePathFromRepo.endsWith('_test.dart')) {
+  return false;
+}
+
+/// True for repo-root `test/**` (tooling / checker tests), not package `test/`.
+bool repoLintPathIsUnderRepoRootToolingTestTree(String relativePathFromRepo) {
+  final slash = relativePathFromRepo.replaceAll('\\', '/');
+  return slash == 'test' || slash.startsWith('test/');
+}
+
+/// Non-`.dart` or known generated Dart suffixes (always excluded from domain scans).
+bool repoLintPathIsExcludedGeneratedDart(String relativePathFromRepo) {
+  if (!relativePathFromRepo.endsWith('.dart')) {
     return true;
   }
   if (relativePathFromRepo.endsWith('.g.dart') ||
@@ -30,38 +41,166 @@ bool repoLintPathIsExcludedTestOrGeneratedDart(String relativePathFromRepo) {
   return false;
 }
 
-/// True for `.dart` files under a `lib/` directory segment, excluding tests and
-/// generated files — the set walked by [collectRepoLintDomainDartFiles].
+/// True when [relativePathFromRepo] should not be scanned (historical helper:
+/// package `test/`, loose `*_test.dart`, generated, non-`.dart`).
+///
+/// Domain collectors use [repoLintPathIsDomainLibSourceForScan] and
+/// [repoLintPathIsDomainTestOrIntegrationTestSourceForScan] instead. AST
+/// checkers that analyze package tests use [repoLintPathShouldSkipAstRuleFile].
+bool repoLintPathIsExcludedTestOrGeneratedDart(String relativePathFromRepo) {
+  if (repoLintPathIsExcludedGeneratedDart(relativePathFromRepo)) {
+    return true;
+  }
+  final slash = relativePathFromRepo.replaceAll('\\', '/');
+  if (slash.contains('/test/') || slash.contains('/integration_test/')) {
+    return true;
+  }
+  if (slash.endsWith('_test.dart')) {
+    return true;
+  }
+  return false;
+}
+
+/// Skip only generated, repo-root checker `test/`, and fixture trees — not
+/// package `test/` / `integration_test/` (GitHub #2014).
+bool repoLintPathShouldSkipAstRuleFile(String relativePathFromRepo) {
+  if (repoLintPathIsExcludedGeneratedDart(relativePathFromRepo)) {
+    return true;
+  }
+  final slash = relativePathFromRepo.replaceAll('\\', '/');
+  if (repoLintPathIsUnderRepoRootToolingTestTree(slash)) {
+    return true;
+  }
+  if (_repoLintSlashPathContainsFixtureMarker(slash)) {
+    return true;
+  }
+  return false;
+}
+
+/// True when [relativePathFromRepo] is `lib/**/*.dart` under a domain package
+/// (not generated; not repo-root `test/`).
 bool repoLintPathIsDomainLibSourceForScan(String relativePathFromRepo) {
-  if (repoLintPathIsExcludedTestOrGeneratedDart(relativePathFromRepo)) {
+  if (repoLintPathIsExcludedGeneratedDart(relativePathFromRepo)) {
     return false;
   }
-  if (!relativePathFromRepo.contains('/lib/')) {
+  final slash = relativePathFromRepo.replaceAll('\\', '/');
+  if (repoLintPathIsUnderRepoRootToolingTestTree(slash)) {
+    return false;
+  }
+  if (!slash.contains('/lib/')) {
+    return false;
+  }
+  if (_repoLintSlashPathContainsFixtureMarker(slash)) {
     return false;
   }
   return true;
 }
 
-/// All domain `lib/**/*.dart` files under [repoLintDomainScanRoots], excluding
-/// tests and generated files (same behavior as the pre–Phase 2 checkers).
-List<File> collectRepoLintDomainDartFiles(String repoRoot) {
-  final files = <File>[];
-  for (final domainRoot in repoLintDomainScanRoots) {
-    final base = Directory(p.join(repoRoot, domainRoot));
-    if (!base.existsSync()) {
+/// Package/app/ctdev/tool `test/**` or `integration_test/**` Dart (GitHub #2014),
+/// excluding generated, repo-root checker tests, and fixture trees.
+bool repoLintPathIsDomainTestOrIntegrationTestSourceForScan(
+  String relativePathFromRepo,
+) {
+  if (repoLintPathIsExcludedGeneratedDart(relativePathFromRepo)) {
+    return false;
+  }
+  final slash = relativePathFromRepo.replaceAll('\\', '/');
+  if (repoLintPathIsUnderRepoRootToolingTestTree(slash)) {
+    return false;
+  }
+  final inDomain = slash.startsWith('packages/') ||
+      slash.startsWith('app/') ||
+      slash.startsWith('ctdev/') ||
+      slash.startsWith('tool/');
+  if (!inDomain) {
+    return false;
+  }
+  if (!slash.contains('/test/') && !slash.contains('/integration_test/')) {
+    return false;
+  }
+  if (_repoLintSlashPathContainsFixtureMarker(slash)) {
+    return false;
+  }
+  return true;
+}
+
+void _collectDomainDartFilesUnder(
+  String repoRoot,
+  Directory base,
+  List<File> out,
+) {
+  if (!base.existsSync()) {
+    return;
+  }
+  for (final entity in base.listSync(recursive: true, followLinks: false)) {
+    if (entity is! File) {
       continue;
     }
-    for (final entity in base.listSync(recursive: true, followLinks: false)) {
-      if (entity is! File) {
-        continue;
-      }
-      final rel = p.relative(entity.path, from: repoRoot);
-      if (!repoLintPathIsDomainLibSourceForScan(rel)) {
-        continue;
-      }
-      files.add(entity);
+    final rel = p.relative(entity.path, from: repoRoot);
+    if (repoLintPathIsDomainLibSourceForScan(rel) ||
+        repoLintPathIsDomainTestOrIntegrationTestSourceForScan(rel)) {
+      out.add(entity);
     }
   }
+}
+
+void _collectPackagesDomainDartFiles(String repoRoot, List<File> out) {
+  final packagesDir = Directory(p.join(repoRoot, 'packages'));
+  if (!packagesDir.existsSync()) {
+    return;
+  }
+  for (final entity in packagesDir.listSync(followLinks: false)) {
+    if (entity is! Directory) {
+      continue;
+    }
+    for (final sub in const ['lib', 'test', 'integration_test']) {
+      _collectDomainDartFilesUnder(
+        repoRoot,
+        Directory(p.join(entity.path, sub)),
+        out,
+      );
+    }
+  }
+}
+
+void _collectToolDomainDartFiles(String repoRoot, List<File> out) {
+  final toolRoot = Directory(p.join(repoRoot, 'tool'));
+  if (!toolRoot.existsSync()) {
+    return;
+  }
+  for (final entity in toolRoot.listSync(recursive: true, followLinks: false)) {
+    if (entity is! File || !entity.path.endsWith('.dart')) {
+      continue;
+    }
+    final rel = p.relative(entity.path, from: repoRoot);
+    if (repoLintPathIsDomainLibSourceForScan(rel) ||
+        repoLintPathIsDomainTestOrIntegrationTestSourceForScan(rel)) {
+      out.add(entity);
+    }
+  }
+}
+
+/// Domain `lib/`, `test/`, and `integration_test/` Dart under workspace packages,
+/// `app/`, `ctdev/`, and `tool/` (see predicates), excluding generated and
+/// fixture trees per SPEC/program/repo-lint.md (#2014).
+List<File> collectRepoLintDomainDartFiles(String repoRoot) {
+  final files = <File>[];
+  _collectPackagesDomainDartFiles(repoRoot, files);
+  for (final sub in const ['lib', 'test', 'integration_test']) {
+    _collectDomainDartFilesUnder(
+      repoRoot,
+      Directory(p.join(repoRoot, 'app', sub)),
+      files,
+    );
+  }
+  for (final sub in const ['lib', 'test']) {
+    _collectDomainDartFilesUnder(
+      repoRoot,
+      Directory(p.join(repoRoot, 'ctdev', sub)),
+      files,
+    );
+  }
+  _collectToolDomainDartFiles(repoRoot, files);
   return files;
 }
 
@@ -81,21 +220,12 @@ List<String> repoLintSplitRelativeDartPathsArg(String value) {
 // --- Identifier-literal checkers (tech / work-target / civilian unit type) ---
 
 /// Scan roots for tech / work-target / civilian literal checkers (top-level
-/// `app`, `packages`, `tool` — not `ctdev/lib`, which is covered elsewhere).
+/// `app`, `packages`, `tool`, and `ctdev` — aligned with #2014 domain coverage).
 const List<String> repoLintIdentifierLiteralScanRoots = <String>[
   'app',
   'packages',
+  'ctdev',
   'tool',
-];
-
-/// Path fragments that mark fixture / golden trees excluded from scans.
-const List<String> repoLintFixtureDirPathMarkers = <String>[
-  '/test_data/',
-  '/testdata/',
-  '/fixtures/',
-  '/fixture/',
-  '/golden/',
-  '/goldens/',
 ];
 
 /// True when [relativePathFromRepo] lies under one of [roots] (POSIX-style
@@ -135,17 +265,27 @@ List<File> collectRepoLintDartFilesUnderRelativeRoots(
   return files;
 }
 
-/// Shared skip logic for identifier literal checkers: must live under `lib/`,
-/// not be generated, not match [excludedPaths], and not sit under fixture dirs.
+bool _repoLintPathHasLibTestOrIntegrationSegment(String slashPath) {
+  return slashPath.contains('/lib/') ||
+      slashPath.contains('/test/') ||
+      slashPath.contains('/integration_test/');
+}
+
+/// Shared skip logic for identifier literal checkers: domain `lib/`, `test/`,
+/// or `integration_test/` under scan roots; not generated; not repo-root
+/// tooling tests; not [excludedPaths]; not fixture dirs.
 bool repoLintIdentifierLiteralShouldSkipFile(
   String relativePathFromRepo,
   Set<String> excludedPaths,
 ) {
-  final slashPath = '/${relativePathFromRepo.replaceAll('\\', '/')}';
-  if (!slashPath.contains('/lib/')) {
+  if (excludedPaths.contains(relativePathFromRepo)) {
     return true;
   }
-  if (excludedPaths.contains(relativePathFromRepo)) {
+  final slash = relativePathFromRepo.replaceAll('\\', '/');
+  if (repoLintPathIsUnderRepoRootToolingTestTree(slash)) {
+    return true;
+  }
+  if (!_repoLintPathHasLibTestOrIntegrationSegment(slash)) {
     return true;
   }
   if (relativePathFromRepo.endsWith('.g.dart') ||
@@ -154,10 +294,8 @@ bool repoLintIdentifierLiteralShouldSkipFile(
       relativePathFromRepo.endsWith('.gen.dart')) {
     return true;
   }
-  for (final marker in repoLintFixtureDirPathMarkers) {
-    if (slashPath.contains(marker)) {
-      return true;
-    }
+  if (_repoLintSlashPathContainsFixtureMarker(slash)) {
+    return true;
   }
   return false;
 }
@@ -190,18 +328,25 @@ bool repoLintCanonicalProvinceTileKeyShouldSkipFile(
   if (excludedPaths.contains(relativePathFromRepo)) {
     return true;
   }
-  if (repoLintPathIsUnderPackageOrRootTestTree(relativePathFromRepo)) {
+  final slash = relativePathFromRepo.replaceAll('\\', '/');
+  if (repoLintPathIsUnderRepoRootToolingTestTree(slash)) {
     return true;
   }
   if (repoLintPathEndsWithKnownGeneratedDartSuffix(relativePathFromRepo)) {
     return true;
   }
+  if (!_repoLintPathHasLibTestOrIntegrationSegment(slash)) {
+    return true;
+  }
+  if (_repoLintSlashPathContainsFixtureMarker(slash)) {
+    return true;
+  }
   return false;
 }
 
-/// Candidate `.dart` files for the canonical province `targetTileKey` gate (same
-/// roots as identifier-literal checkers; skips tests/generated and checker-local
-/// [excludedPaths] only — no fixture-dir heuristics).
+/// Candidate `.dart` files for the canonical province `targetTileKey` gate
+/// (same roots as identifier-literal checkers; skips repo-root tooling tests,
+/// generated Dart, checker-local [excludedPaths], and fixture dirs).
 List<File> collectRepoLintCanonicalProvinceTileKeyDartFiles(
   String repoRoot,
   Set<String> excludedPaths,

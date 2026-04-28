@@ -97,7 +97,7 @@ List<MagicLiteralOccurrence> collectMagicLiteralsFromSource(
   String relativePath,
   String content,
 ) {
-  if (repoLintPathIsExcludedTestOrGeneratedDart(relativePath)) {
+  if (repoLintPathShouldSkipAstRuleFile(relativePath)) {
     return const [];
   }
 

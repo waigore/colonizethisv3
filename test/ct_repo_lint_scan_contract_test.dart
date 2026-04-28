@@ -6,8 +6,20 @@ import 'package:test/test.dart';
 import '../tool/ct_repo_lint_scan_contract.dart';
 
 void main() {
+  group('repoLintPathIsUnderRepoRootToolingTestTree', () {
+    test('matches only repo-root test/', () {
+      expect(repoLintPathIsUnderRepoRootToolingTestTree('test/foo.dart'), isTrue);
+      expect(
+        repoLintPathIsUnderRepoRootToolingTestTree(
+          p.join('packages', 'p', 'test', 'a.dart'),
+        ),
+        isFalse,
+      );
+    });
+  });
+
   group('repoLintPathIsExcludedTestOrGeneratedDart', () {
-    test('excludes tests and generated suffixes', () {
+    test('excludes package tests, loose _test.dart, and generated suffixes', () {
       expect(repoLintPathIsExcludedTestOrGeneratedDart('a.dart'), isFalse);
       expect(repoLintPathIsExcludedTestOrGeneratedDart('x_test.dart'), isTrue);
       expect(
@@ -31,6 +43,22 @@ void main() {
     });
   });
 
+  group('repoLintPathShouldSkipAstRuleFile', () {
+    test('skips generated, repo-root test/, fixtures; keeps package test/', () {
+      expect(repoLintPathShouldSkipAstRuleFile('packages/p/test/a.dart'), isFalse);
+      expect(
+        repoLintPathShouldSkipAstRuleFile('app/integration_test/e2e.dart'),
+        isFalse,
+      );
+      expect(repoLintPathShouldSkipAstRuleFile('test/check_foo_test.dart'), isTrue);
+      expect(repoLintPathShouldSkipAstRuleFile('packages/p/lib/x.g.dart'), isTrue);
+      expect(
+        repoLintPathShouldSkipAstRuleFile('packages/p/lib/goldens/foo.dart'),
+        isTrue,
+      );
+    });
+  });
+
   group('repoLintPathIsDomainLibSourceForScan', () {
     test('requires lib segment and allows normal sources', () {
       expect(
@@ -39,6 +67,33 @@ void main() {
       );
       expect(
         repoLintPathIsDomainLibSourceForScan('tool/x/bin/run.dart'),
+        isFalse,
+      );
+      expect(
+        repoLintPathIsDomainLibSourceForScan('packages/foo/test/t.dart'),
+        isFalse,
+      );
+    });
+  });
+
+  group('repoLintPathIsDomainTestOrIntegrationTestSourceForScan', () {
+    test('matches package test and integration_test trees', () {
+      expect(
+        repoLintPathIsDomainTestOrIntegrationTestSourceForScan(
+          'packages/foo/test/t.dart',
+        ),
+        isTrue,
+      );
+      expect(
+        repoLintPathIsDomainTestOrIntegrationTestSourceForScan(
+          'app/integration_test/e2e.dart',
+        ),
+        isTrue,
+      );
+      expect(
+        repoLintPathIsDomainTestOrIntegrationTestSourceForScan(
+          'test/check_foo_test.dart',
+        ),
         isFalse,
       );
     });
@@ -71,18 +126,18 @@ void main() {
         containsAll(<String>[
           p.join('packages', 'z', 'lib', 'keep.dart'),
           p.join('packages', 'z', 'lib', 'nested', 'x.dart'),
+          p.join('packages', 'z', 'test', 't.dart'),
         ]),
       );
       expect(
         rels,
         isNot(contains(p.join('packages', 'z', 'lib', 'keep.g.dart'))),
       );
-      expect(rels, isNot(contains(p.join('packages', 'z', 'test', 't.dart'))));
     });
   });
 
   group('repoLintPathIsUnderLiteralScanRoots', () {
-    test('matches top-level scan roots only', () {
+    test('matches top-level scan roots including ctdev', () {
       expect(
         repoLintPathIsUnderLiteralScanRoots(
           'packages/foo/lib/a.dart',
@@ -93,6 +148,13 @@ void main() {
       expect(
         repoLintPathIsUnderLiteralScanRoots(
           'ctdev/lib/x.dart',
+          repoLintIdentifierLiteralScanRoots,
+        ),
+        isTrue,
+      );
+      expect(
+        repoLintPathIsUnderLiteralScanRoots(
+          'other/x.dart',
           repoLintIdentifierLiteralScanRoots,
         ),
         isFalse,
@@ -131,6 +193,20 @@ void main() {
           excluded,
         ),
         isTrue,
+      );
+      expect(
+        repoLintIdentifierLiteralShouldSkipFile(
+          'packages/p/test/widget_test.dart',
+          excluded,
+        ),
+        isFalse,
+      );
+      expect(
+        repoLintIdentifierLiteralShouldSkipFile(
+          'app/integration_test/e2e.dart',
+          excluded,
+        ),
+        isFalse,
       );
     });
   });
@@ -183,7 +259,7 @@ void main() {
   });
 
   group('repoLintCanonicalProvinceTileKeyShouldSkipFile', () {
-    test('skips excluded, test tree, and generated suffixes', () {
+    test('skips excluded, repo-root test, and generated; not package test', () {
       const excluded = <String>{'tool/x.dart'};
       expect(
         repoLintCanonicalProvinceTileKeyShouldSkipFile('tool/x.dart', excluded),
@@ -191,10 +267,17 @@ void main() {
       );
       expect(
         repoLintCanonicalProvinceTileKeyShouldSkipFile(
-          p.join('packages', 'p', 'test', 'a.dart'),
+          'test/check_foo_test.dart',
           excluded,
         ),
         isTrue,
+      );
+      expect(
+        repoLintCanonicalProvinceTileKeyShouldSkipFile(
+          p.join('packages', 'p', 'test', 'a.dart'),
+          excluded,
+        ),
+        isFalse,
       );
       expect(
         repoLintCanonicalProvinceTileKeyShouldSkipFile(
@@ -221,7 +304,7 @@ void main() {
   });
 
   group('collectRepoLintCanonicalProvinceTileKeyDartFiles', () {
-    test('keeps lib sources and drops tests/generated', () {
+    test('keeps lib sources and package tests; drops generated', () {
       final tmp = Directory.systemTemp.createTempSync('ct_canon_tile_');
       addTearDown(() {
         if (tmp.existsSync()) {
@@ -243,7 +326,7 @@ void main() {
       final rels = got.map((f) => p.relative(f.path, from: repo)).toSet();
       expect(rels, contains(p.join('packages', 'p', 'lib', 'keep.dart')));
       expect(rels, isNot(contains(p.join('packages', 'p', 'lib', 'x.g.dart'))));
-      expect(rels, isNot(contains(p.join('packages', 'p', 'test', 't.dart'))));
+      expect(rels, contains(p.join('packages', 'p', 'test', 't.dart')));
     });
   });
 

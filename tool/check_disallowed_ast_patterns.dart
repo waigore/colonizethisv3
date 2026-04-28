@@ -114,7 +114,7 @@ List<DisallowedAstViolation> findDisallowedAstViolations(
   if (rules.isEmpty) {
     return const [];
   }
-  if (repoLintPathIsExcludedTestOrGeneratedDart(relativePath)) {
+  if (repoLintPathShouldSkipAstRuleFile(relativePath)) {
     return const [];
   }
 

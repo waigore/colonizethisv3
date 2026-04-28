@@ -73,17 +73,17 @@ Across tools that intentionally share skip logic, exclude at minimum:
 
 `tool/check_long_string_switches.dart` does **not** use `collectRepoLintDomainDartFiles`; it walks repo `.dart` files with its **own** exclusions (e.g. `.dart_tool`, `.pub-cache`, `build`, `*.g.dart`, and the tech embed path). Treat it as **already covering tests** unless SPEC is intentionally updated to narrow exclusions.
 
-### Scan contract vs lib-only checkers (today → target)
+### Scan contract vs lib-only checkers (GitHub #2014)
 
-**Domain lib collector** `collectRepoLintDomainDartFiles` in `tool/ct_repo_lint_scan_contract.dart` walks `lib/` under scan roots and **skips** paths matching `repoLintPathIsExcludedTestOrGeneratedDart` (`*/test/*`, `*_test.dart`, generated). Checkers that depend on it today include (non-exhaustive): `check_disallowed_ast_patterns`, `check_repeated_magic_numbers`, `check_custom_exceptions`, `check_function_size`, `check_part_unit_size`, `check_control_flow_nesting_depth`; `check_debug_console_logic_contract_boundary` delegates to the disallowed-AST checker.
+**Domain collector** `collectRepoLintDomainDartFiles` in `tool/ct_repo_lint_scan_contract.dart` includes workspace **`packages/*/lib|test|integration_test`**, **`app/lib|test|integration_test`**, **`ctdev/lib|test`**, and **`tool/**`** Dart that passes `repoLintPathIsDomainLibSourceForScan` or `repoLintPathIsDomainTestOrIntegrationTestSourceForScan`: generated suffixes and `repoLintFixtureDirPathMarkers` paths are excluded; **repo-root `test/**`** (checker/tool tests) stays excluded so those files do not run production AST rules. Checkers using it include (non-exhaustive): `check_disallowed_ast_patterns`, `check_repeated_magic_numbers`, `check_custom_exceptions`, `check_function_size`, `check_part_unit_size`, `check_control_flow_nesting_depth`; `check_debug_console_logic_contract_boundary` delegates to the disallowed-AST checker. Per-file guards in `check_disallowed_ast_patterns` / `check_repeated_magic_numbers` use **`repoLintPathShouldSkipAstRuleFile`** (same exclusions except package `test/` is analyzed).
 
-**Identifier-literal helpers** `repoLintIdentifierLiteralShouldSkipFile`, **canonical tile-key** `collectRepoLintCanonicalProvinceTileKeyDartFiles` / `repoLintCanonicalProvinceTileKeyShouldSkipFile`, **app UI** `repoLintAppLibHardcodedUiVisitorShouldSkip` in the same contract file apply additional lib- or app-centric filters. **Including `test/` / `integration_test/`** for a rule is **implementation work** in later slices: update helpers and **fix or baseline** violations so `dev` stays green.
+**Identifier-literal helpers** `repoLintIdentifierLiteralShouldSkipFile` and **canonical tile-key** `collectRepoLintCanonicalProvinceTileKeyDartFiles` / `repoLintCanonicalProvinceTileKeyShouldSkipFile` use roots **`app`**, **`packages`**, **`ctdev`**, **`tool`** and include **`lib/`**, **`test/`**, and **`integration_test/`** under those trees (still skipping generated, repo-root `test/`, and fixture markers). **App hardcoded UI strings** remain **`app/lib/**` only** via `collectRepoLintAppLibDartFilesSorted` / `repoLintAppLibHardcodedUiVisitorShouldSkip` (production UI surface).
 
 ### CI workflow parity
 
 **Today:** `.github/workflows/quality.yml` is the **only** workflow (as of the #2014 documentation slice) that runs `ct_repo_lint`, domain `custom_lint`, and (in `app_tests_cache`) `flutter analyze` plus `check_long_string_switches`. Any **additional** workflow that runs the same class of checks **must** match the **scope and exclusions** documented here.
 
-**Analyzer matrix (future slice):** When workspace-wide `dart analyze` / `flutter analyze` is added, the implementing PR **must state which job** (`quality`, `app_tests_cache`, or a new job) hosts each step; use **`dart analyze`** for pure Dart packages and **`flutter analyze`** for Flutter packages; mirror any local gate scripts (e.g. `tool/run_quality_gate_tests.sh`) and **CONTRIBUTING.md**.
+**Workspace analyzer:** Implemented — see [CI contract](#ci-contract) (`quality` job, `tool/run_workspace_analyze_errors_only.dart`).
 
 ### Acceptance criteria (#2014 documentation)
 
@@ -100,8 +100,8 @@ Each slice must leave **`dev` required checks green**. Order matters: do **not**
 | **1** | SPEC, CONTRIBUTING, testing-rule cross-links: scope, exclusions, mergeability, analyzer vs binary semantics, workflow job names | **Documented** — this table + CI contract above; other workflows audited (see below). |
 | **2** | **`custom_lint`:** zero analyzer **error**-severity issues in `test/` and `integration_test/` for every package wired by `tool/run_custom_lint_domain_exceptions.sh` (same bar as `lib/`) | **CI enforced** — Quality runs the script after `ct_repo_lint`; fix violations in the same PR as any tightening. |
 | **3** | **`dart analyze` / `flutter analyze`:** every Pub workspace package analyzed with test trees; **errors-only** gate | **CI enforced** — `quality` runs `dart run tool/run_workspace_analyze_errors_only.dart` after `dart pub get`; `app_tests_cache` keeps an early **`flutter analyze`** under `app/` only (redundant for app but preserves cache-job signal). Local: `tool/run_quality_gate_tests.sh` includes the same workspace step. |
-| **4** | **`ct_repo_lint` + manifest:** manifest rules that should apply to tests include `test/**/*.dart` where intended; **`collectRepoLintDomainDartFiles`** and related helpers stop skipping tests **only** when co-fixed or baselined per [Phasing](#test-and-integration_test-static-analysis-scope-github-2014) | **Pending** — `tool/ct_repo_lint_scan_contract.dart` still excludes `*/test/*` and `*_test.dart` for domain collectors (see [Scan contract vs lib-only checkers](#scan-contract-vs-lib-only-checkers-today--target)). |
-| **5** | **AST checkers** using the scan contract (same helpers as slice 4): include `test/` / `integration_test/` where the rule applies, with shared exclusions; extend `test/ct_repo_lint_scan_contract_test.dart` (or rule tests) for inclusion/exclusion | **Pending** — typically lands with or immediately after slice 4 to avoid duplicate churn. |
+| **4** | **`ct_repo_lint` + manifest:** `collectRepoLintDomainDartFiles` includes package **`test/`** and **`integration_test/`** (and identifier-literal / canonical tile-key collectors include **`ctdev`** roots); violations fixed in the same change set | **Implemented** — see [Scan contract vs lib-only checkers](#scan-contract-vs-lib-only-checkers-github-2014). |
+| **5** | **AST checkers** using the scan contract: per-file skip uses **`repoLintPathShouldSkipAstRuleFile`**; contract tests cover inclusion/exclusion | **Implemented** — `test/ct_repo_lint_scan_contract_test.dart`. |
 
 Slices **4** and **5** may be **one PR** if scan-contract changes and checker fixes ship together, staying within the five-slice budget.
 
@@ -119,7 +119,7 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 
 1. Add a row under `rules:` in `tool/ct_repo_lint_manifest.yaml` with a new stable `rule_id`.
 2. Implement or extend logic in a **library** or existing checker module; expose `int runCheck…(String repoRoot, …)` for `ct_repo_lint_lib.dart` to call in-process, keep a thin `main()` that `exit(runCheck…(…))` for `dart run`, and register the manifest row. Add a `switch` arm in `_tryRunDartRuleInProcess` when introducing a new stable `rule_id`.
-3. Reuse `collectRepoLintDomainDartFiles` and related helpers from `ct_repo_lint_scan_contract.dart` when scanning the same domain `lib/` trees; reuse identifier-literal roots/skip helpers, canonical province tile-key collectors, and app UI lib helpers where they match the checker’s domain (see contract tests).
+3. Reuse `collectRepoLintDomainDartFiles` and related helpers from `ct_repo_lint_scan_contract.dart` when scanning the same domain trees (`lib/`, `test/`, `integration_test/` per contract); reuse identifier-literal roots/skip helpers, canonical province tile-key collectors, and app UI lib helpers where they match the checker’s domain (see contract tests).
 4. Align wording with `colonizethis_exception_lint` (and similar) when the same policy exists in the analyzer.
 
 ## CLI options
