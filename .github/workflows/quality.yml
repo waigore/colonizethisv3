@@ -256,6 +256,9 @@ jobs:
       - name: Resolve dependencies
         run: dart pub get
 
+      - name: Workspace analyzer gate (errors only; includes test/ and integration_test/)
+        run: dart run tool/run_workspace_analyze_errors_only.dart
+
       - name: Verify OrderEngine codegen (SPEC/program/order-engine.md)
         run: bash tool/verify_order_engine_codegen.sh
 

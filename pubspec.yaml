@@ -88,3 +88,6 @@ melos:
     ct_repo_lint:
       description: Unified manifest-driven repo convention checks. SPEC/program/repo-lint.md.
       run: dart run tool/ct_repo_lint.dart
+    workspace_analyze_errors_only:
+      description: Run dart/flutter analyze for every pub workspace member; fail on analyzer errors only (GitHub #2014).
+      run: dart run tool/run_workspace_analyze_errors_only.dart
