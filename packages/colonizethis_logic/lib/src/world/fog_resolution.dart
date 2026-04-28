@@ -274,12 +274,15 @@ bool _playerHasFleetAtSeaInZone(
   for (final f in game.worldState.fleets) {
     if (f.ownerId != playerId) continue;
     if (!f.isAtSea || f.seaZoneId == null) continue;
+    // Same-region fleets only: canonicalizing [f.seaZoneId] requires [regionId]
+    // to match the fleet's region; other-region fleets must be skipped first
+    // (GitHub #2023).
+    if (f.regionId != regionId) continue;
     final fleetSeaZoneId = canonicalSeaZoneTileBucketKey(
       regionId,
       f.seaZoneId!,
     );
     if (fleetSeaZoneId != expectedSeaZoneId) continue;
-    if (f.regionId != regionId) continue;
     return true;
   }
   return false;
