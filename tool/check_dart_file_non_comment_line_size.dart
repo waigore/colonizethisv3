@@ -3,7 +3,10 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import 'ct_repo_lint_scan_contract.dart';
+
 const _maxNonCommentLines = 1000;
+const _argFiles = '--files';
 const _generatedSuffixes = <String>[
   '.g.dart',
   '.freezed.dart',
@@ -22,6 +25,7 @@ const _excludedDirectoryNames = <String>{
 
 int runCheckDartFileNonCommentLineSize(
   String repoRoot, {
+  List<String>? incrementalRelativeDartPaths,
   void Function(String line)? info,
   void Function(String line)? err,
 }) {
@@ -35,7 +39,10 @@ int runCheckDartFileNonCommentLineSize(
     return 1;
   }
 
-  final violations = collectNonCommentLineSizeViolations(repoRoot);
+  final violations = collectNonCommentLineSizeViolations(
+    repoRoot,
+    incrementalRelativeDartPaths: incrementalRelativeDartPaths,
+  );
   if (violations.isEmpty) {
     logI('check_dart_file_non_comment_line_size: no violations found.');
     return 0;
@@ -55,9 +62,13 @@ int runCheckDartFileNonCommentLineSize(
 }
 
 List<({String relativePath, int nonCommentLines})>
-collectNonCommentLineSizeViolations(String repoRoot) {
+collectNonCommentLineSizeViolations(
+  String repoRoot, {
+  List<String>? incrementalRelativeDartPaths,
+}) {
   final violations = <({String relativePath, int nonCommentLines})>[];
-  for (final file in _collectRepoDartFiles(repoRoot)) {
+  final requested = incrementalRelativeDartPaths ?? const <String>[];
+  for (final file in _collectRepoDartFiles(repoRoot, requested)) {
     final relativePath = p.relative(file.path, from: repoRoot);
     final source = file.readAsStringSync();
     final nonCommentLines = countNonCommentLinesFromSource(source);
@@ -72,7 +83,10 @@ collectNonCommentLineSizeViolations(String repoRoot) {
   return violations;
 }
 
-List<File> _collectRepoDartFiles(String repoRoot) {
+List<File> _collectRepoDartFiles(String repoRoot, List<String> requestedPaths) {
+  if (requestedPaths.isNotEmpty) {
+    return _collectRequestedRepoDartFiles(repoRoot, requestedPaths);
+  }
   final files = <File>[];
   final pending = <Directory>[Directory(repoRoot)];
 
@@ -98,6 +112,29 @@ List<File> _collectRepoDartFiles(String repoRoot) {
     }
   }
 
+  files.sort((a, b) => a.path.compareTo(b.path));
+  return files;
+}
+
+List<File> _collectRequestedRepoDartFiles(
+  String repoRoot,
+  List<String> requestedPaths,
+) {
+  final files = <File>[];
+  for (final relPath in requestedPaths) {
+    if (!relPath.endsWith('.dart')) {
+      continue;
+    }
+    final normalizedRelPath = p.normalize(relPath).replaceAll('\\', '/');
+    final file = File(p.join(repoRoot, normalizedRelPath));
+    if (!file.existsSync()) {
+      continue;
+    }
+    if (_isGeneratedDartPath(normalizedRelPath)) {
+      continue;
+    }
+    files.add(file);
+  }
   files.sort((a, b) => a.path.compareTo(b.path));
   return files;
 }
@@ -244,6 +281,48 @@ final class _SourceScanState {
   bool inTripleDoubleString = false;
 }
 
-void main() {
-  exit(runCheckDartFileNonCommentLineSize(Directory.current.path));
+_ParsedArgs _parseArgs(List<String> args) {
+  String? filesArgValue;
+  for (var i = 0; i < args.length; i++) {
+    final arg = args[i];
+    if (arg == _argFiles) {
+      if (i + 1 >= args.length) {
+        stderr.writeln('ERROR: Missing value for $_argFiles.');
+        exit(2);
+      }
+      filesArgValue = args[i + 1];
+      i++;
+      continue;
+    }
+    if (arg.startsWith('$_argFiles=')) {
+      filesArgValue = arg.substring('$_argFiles='.length);
+      continue;
+    }
+    stderr.writeln(
+      'ERROR: Unsupported argument "$arg". Supported: $_argFiles '
+      '(comma-separated or newline-separated relative paths).',
+    );
+    exit(2);
+  }
+  return _ParsedArgs(
+    files: filesArgValue == null
+        ? const []
+        : repoLintSplitRelativeDartPathsArg(filesArgValue),
+  );
+}
+
+final class _ParsedArgs {
+  const _ParsedArgs({required this.files});
+
+  final List<String> files;
+}
+
+void main(List<String> args) {
+  final parsed = _parseArgs(args);
+  exit(
+    runCheckDartFileNonCommentLineSize(
+      Directory.current.path,
+      incrementalRelativeDartPaths: parsed.files.isEmpty ? null : parsed.files,
+    ),
+  );
 }

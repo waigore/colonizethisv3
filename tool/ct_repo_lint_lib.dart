@@ -711,7 +711,10 @@ int? _tryRunDartRuleInProcess({
     case 'repo.game_widgets_file_size':
       return runCheckGameWidgetsFileSize(repoRoot);
     case 'repo.dart_file_non_comment_line_size':
-      return runCheckDartFileNonCommentLineSize(repoRoot);
+      return runCheckDartFileNonCommentLineSize(
+        repoRoot,
+        incrementalRelativeDartPaths: incrementalPaths,
+      );
     case 'repo.part_unit_size':
       return runCheckPartUnitSize(repoRoot);
     case 'repo.no_flame_in_widgets':

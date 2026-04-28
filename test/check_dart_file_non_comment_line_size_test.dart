@@ -89,5 +89,29 @@ final a = 1; // ignore: avoid_print
       final code = runCheckDartFileNonCommentLineSize(temp.path);
       expect(code, 0);
     });
+
+    test('supports incremental path filtering for PR scans', () {
+      final temp = Directory.systemTemp.createTempSync('dart-ncl-size-inc-');
+      addTearDown(() => temp.deleteSync(recursive: true));
+
+      final violating = File(
+        p.join(temp.path, 'packages', 'x', 'lib', 'big.dart'),
+      )..createSync(recursive: true);
+      violating.writeAsStringSync(List.filled(1001, 'final x = 1;').join('\n'));
+
+      final small = File(
+        p.join(temp.path, 'packages', 'x', 'lib', 'small.dart'),
+      )..createSync(recursive: true);
+      small.writeAsStringSync('final x = 1;\n');
+
+      final fullScanCode = runCheckDartFileNonCommentLineSize(temp.path);
+      expect(fullScanCode, 1);
+
+      final incrementalCode = runCheckDartFileNonCommentLineSize(
+        temp.path,
+        incrementalRelativeDartPaths: const ['packages/x/lib/small.dart'],
+      );
+      expect(incrementalCode, 0);
+    });
   });
 }

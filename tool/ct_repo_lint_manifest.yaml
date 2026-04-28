@@ -150,6 +150,7 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_dart_file_non_comment_line_size.dart
+    pr_incremental: true
 
   - rule_id: repo.canonical_province_tile_keys
     group: game_invariants
