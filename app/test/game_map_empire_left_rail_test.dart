@@ -13,6 +13,7 @@ import 'package:colonizethis_app/features/game/screens/production_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/debug_console_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -43,7 +44,7 @@ void main() {
       ? game.players.where((p) => p.isHuman).first.id
       : game.players.first.id;
 
-  overrides() => [
+  overrides({bool debugConsoleEnabled = false}) => [
     gamesBoxProvider.overrideWith((ref) => gamesBox),
     gameServiceProvider.overrideWith(
       (ref) => GameService(gamesBox, GameSaveAdapter()),
@@ -60,11 +61,12 @@ void main() {
       ref.onDispose(bus.dispose);
       return bus;
     }),
+    debugConsoleEnabledProvider.overrideWithValue(debugConsoleEnabled),
   ];
 
-  Widget railScaffold() {
+  Widget railScaffold({bool debugConsoleEnabled = false}) {
     return ProviderScope(
-      overrides: overrides(),
+      overrides: overrides(debugConsoleEnabled: debugConsoleEnabled),
       child: AppEventHandlerScope(
         child: MaterialApp(
           navigatorKey: appNavigatorKey,
@@ -244,6 +246,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(CivilianUnitsPanel), findsOneWidget);
+  });
+
+  testWidgets('GameMapEmpireLeftRail hides debug console icon by default', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(railScaffold());
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(kEmpireDebugConsoleButtonKey), findsNothing);
+  });
+
+  testWidgets('GameMapEmpireLeftRail shows debug console icon when enabled', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(railScaffold(debugConsoleEnabled: true));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(kEmpireDebugConsoleButtonKey), findsOneWidget);
   });
 
   testWidgets(

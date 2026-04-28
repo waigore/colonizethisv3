@@ -1,8 +1,10 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
+import 'package:colonizethis_app/features/game/flame/debug_console_overlay_panel.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/debug_console_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -115,7 +117,7 @@ void main() {
     bus.emit(
       StartCivilianWorkTargetSelectionEvent(
         unitId: sampleUnitId,
-        workTarget: 'explore',
+        workTarget: kWorkTargetExplore,
       ),
     );
     bus.emit(const UnitsPanelClosedEvent('civilian'));
@@ -123,6 +125,51 @@ void main() {
 
     expect(tester.takeException(), isNull);
     bus.dispose();
+  });
+
+  testWidgets('debug console overlay toggles when feature is enabled', (
+    WidgetTester tester,
+  ) async {
+    final init = getDebugInitGameResult();
+    final game = init.game;
+    final mapViewData = init.mapViewData;
+    final bus = AppEventBus.create();
+    addTearDown(bus.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appEventBusProvider.overrideWith((ref) => bus),
+          debugConsoleEnabledProvider.overrideWithValue(true),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
+          currentOrdersProvider.overrideWith(
+            () => CurrentOrdersNotifier(const Orders()),
+          ),
+          mapViewDataProvider.overrideWith((ref) => mapViewData),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: GameMapArea(game: game, mapViewData: mapViewData),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+
+    expect(find.byType(DebugConsoleOverlayPanel), findsNothing);
+
+    bus.emit(const ToggleDebugConsolePanelEvent());
+    await tester.pump();
+    expect(find.byType(DebugConsoleOverlayPanel), findsOneWidget);
+
+    bus.emit(const CloseDebugConsolePanelEvent());
+    await tester.pump();
+    expect(find.byType(DebugConsoleOverlayPanel), findsNothing);
   });
 
   testWidgets('Player turn event feed commits batch on turn complete', (
@@ -419,7 +466,7 @@ void main() {
         AppWorkOrderCompletedEvent(
           playerId: humanId,
           unitId: 'u1',
-          workTarget: 'build_road',
+          workTarget: kWorkTargetBuildRoad,
           targetTileKey: 'oldWorld|1|0|0',
           provinceId: 'oldWorld|1',
           turnNumber: 1,
@@ -899,17 +946,17 @@ void main() {
 
       final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
       final workTargets = <String>[
-        'explore',
-        'prospect',
-        'build_improvement',
-        'upgrade_town',
-        'build_road',
-        'build_port',
-        'build_fort',
-        'build_rail',
-        'steal_tech',
-        'counter_spy',
-        'purchase_land',
+        kWorkTargetExplore,
+        kWorkTargetProspect,
+        kWorkTargetBuildImprovement,
+        kWorkTargetUpgradeTown,
+        kWorkTargetBuildRoad,
+        kWorkTargetBuildPort,
+        kWorkTargetBuildFort,
+        kWorkTargetBuildRail,
+        kWorkTargetStealTech,
+        kWorkTargetCounterSpy,
+        kWorkTargetPurchaseLand,
       ];
       final topology = init.combinedTopology;
       final playerView = buildPlayerView(game, topology, humanPlayerId);
@@ -1053,7 +1100,7 @@ void main() {
       bus.emit(
         StartCivilianWorkTargetSelectionEvent(
           unitId: sampleUnitId,
-          workTarget: 'explore',
+          workTarget: kWorkTargetExplore,
         ),
       );
       await tester.pump();
@@ -1115,7 +1162,7 @@ void main() {
     bus.emit(
       StartCivilianWorkTargetSelectionEvent(
         unitId: sampleUnitId,
-        workTarget: 'explore',
+        workTarget: kWorkTargetExplore,
       ),
     );
     await tester.pump();
@@ -1169,7 +1216,7 @@ void main() {
     bus.emit(
       StartCivilianWorkTargetSelectionEvent(
         unitId: sampleUnitId,
-        workTarget: 'explore',
+        workTarget: kWorkTargetExplore,
       ),
     );
     await tester.pump();
@@ -1251,7 +1298,7 @@ void main() {
     bus.emit(
       StartCivilianWorkTargetSelectionEvent(
         unitId: sampleUnitId,
-        workTarget: 'explore',
+        workTarget: kWorkTargetExplore,
       ),
     );
     await tester.pump();

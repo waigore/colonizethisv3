@@ -26,6 +26,7 @@ dependencies:
   colonizethis_save:
   colonizethis_logic:
   colonizethis_ai:
+  colonizethis_debug_console:
   widgetbook: ^3.22.0
   google_fonts: ^6.3.3
   intl: ^0.20.2

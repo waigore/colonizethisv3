@@ -12,9 +12,11 @@ import 'package:colonizethis_map/colonizethis_map.dart'
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 import '../../../config/ct_e2e.dart';
+import '../../../config/ct_debug_console.dart';
 import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
 
 import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/debug_console_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
@@ -32,6 +34,7 @@ import 'game_map_empire_left_rail.dart';
 import 'game_map_canvas_stack.dart';
 import 'game_region_minimap.dart';
 import 'game_map_narrow_detail_overlay.dart';
+import 'debug_console_overlay_panel.dart';
 import 'game_map_area_state_logic.dart';
 import 'per_player_work_target_selection_cache.dart';
 import 'next_turn_confirmation_dialog.dart';
@@ -64,6 +67,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
   final PerPlayerWorkTargetSelectionCache _workTargetSelectionCache =
       PerPlayerWorkTargetSelectionCache();
   bool _sideMenuOpen = false;
+  bool _debugConsoleOpen = false;
   final List<StreamSubscription<dynamic>> _busSubscriptions = [];
   ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
   final List<ct_models.GameToUIEvent> _pendingPlayerTurnEvents = [];
@@ -129,6 +133,18 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
       bus.on<ct_models.TurnResolutionCompleteEvent>().listen(
         _onTurnResolutionCompleteEvent,
       ),
+      bus.on<ct_models.OpenDebugConsolePanelEvent>().listen((_) {
+        if (!mounted || !ref.read(debugConsoleEnabledProvider)) return;
+        setState(() => _debugConsoleOpen = true);
+      }),
+      bus.on<ct_models.CloseDebugConsolePanelEvent>().listen((_) {
+        if (!mounted) return;
+        setState(() => _debugConsoleOpen = false);
+      }),
+      bus.on<ct_models.ToggleDebugConsolePanelEvent>().listen((_) {
+        if (!mounted || !ref.read(debugConsoleEnabledProvider)) return;
+        setState(() => _debugConsoleOpen = !_debugConsoleOpen);
+      }),
     ]);
   }
 
@@ -1051,6 +1067,7 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
     final treasurySummary = ref.watch(treasurySummaryProvider);
     final feedEntries = _feedEntries();
+    final debugConsoleEnabled = ref.watch(debugConsoleEnabledProvider);
     final feedButtonTopInset = kMapOverlayEdgeInset;
     final feedButtonRightInset = kCtE2EEnabled
         ? kMapOverlayEdgeInset + 48
@@ -1414,6 +1431,16 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
                   ),
                 ),
               ),
+              if (debugConsoleEnabled && _debugConsoleOpen)
+                Positioned(
+                  left: kEdgeSwipeStripWidth + 60,
+                  top: 56,
+                  child: DebugConsoleOverlayPanel(
+                    bus: ref.read(appEventBusProvider),
+                    humanPlayerId: _humanPlayerId,
+                    onClose: () => setState(() => _debugConsoleOpen = false),
+                  ),
+                ),
               if (isNarrow)
                 Align(
                   alignment: Alignment.bottomCenter,
