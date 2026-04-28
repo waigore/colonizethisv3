@@ -68,7 +68,7 @@ void main() {
     test('fromJson normalizes stale provinceId when tileKey present', () {
       final u = Unit.fromJson({
         'id': 'u1',
-        'type': 'Explorer',
+        'type': kUnitTypeExplorer,
         'ownerId': 'p1',
         'provinceId': 'oldWorld|wrong',
         'tileKey': 'oldWorld|right|0|0',
