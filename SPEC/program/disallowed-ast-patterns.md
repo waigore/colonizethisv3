@@ -104,12 +104,15 @@ Disallowed examples:
 - `getProvince(world, 'p1')`
 - `tryGetProvince(world, 'p1')`
 - `resolveToFullProvinceId(world, 'p1')`
+- `worldState.tryGetProvince('p1')` (receiver form: province id is argument index `0`)
+- `worldState..tryGetProvince('p1')` (cascade segments are checked the same way)
 - `ProvinceId.localIdFrom('p1')`
 
 Allowed examples:
 
 - `getProvince(world, 'oldWorld|p1')`
 - `tryGetProvince(world, 'newWorld|n1')`
+- `worldState.tryGetProvince('oldWorld|p1')`
 - `ProvinceId.localIdFrom('oldWorld|p1')`
 
 Rationale: full province ids are the canonical runtime identity. Unprefixed
@@ -122,6 +125,11 @@ Rule ids:
   `unprefixed_province_id_string_literal_argument`,
   `match.method_names`: `getProvince|tryGetProvince|resolveToFullProvinceId`,
   `match.argument_index`: `1`)
+- `province_world_state_lookup_unprefixed_literal` (`match.kind`:
+  `unprefixed_province_id_string_literal_argument`,
+  `match.method_names`: `getProvince|tryGetProvince|resolveToFullProvinceId`,
+  `match.argument_index`: `0`) — covers extension/receiver calls and cascaded
+  segments (see matcher in `tool/check_disallowed_ast_patterns.dart`).
 - `province_local_id_from_unprefixed_literal` (`match.kind`:
   `unprefixed_province_id_string_literal_argument`,
   `match.method_names`: `localIdFrom`,
