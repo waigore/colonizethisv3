@@ -117,7 +117,7 @@ void main() {
     bus.emit(
       StartCivilianWorkTargetSelectionEvent(
         unitId: sampleUnitId,
-        workTarget: 'explore',
+        workTarget: kWorkTargetExplore,
       ),
     );
     bus.emit(const UnitsPanelClosedEvent('civilian'));
@@ -466,7 +466,7 @@ void main() {
         AppWorkOrderCompletedEvent(
           playerId: humanId,
           unitId: 'u1',
-          workTarget: 'build_road',
+          workTarget: kWorkTargetBuildRoad,
           targetTileKey: 'oldWorld|1|0|0',
           provinceId: 'oldWorld|1',
           turnNumber: 1,
@@ -946,17 +946,17 @@ void main() {
 
       final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
       final workTargets = <String>[
-        'explore',
-        'prospect',
-        'build_improvement',
-        'upgrade_town',
-        'build_road',
-        'build_port',
-        'build_fort',
-        'build_rail',
-        'steal_tech',
-        'counter_spy',
-        'purchase_land',
+        kWorkTargetExplore,
+        kWorkTargetProspect,
+        kWorkTargetBuildImprovement,
+        kWorkTargetUpgradeTown,
+        kWorkTargetBuildRoad,
+        kWorkTargetBuildPort,
+        kWorkTargetBuildFort,
+        kWorkTargetBuildRail,
+        kWorkTargetStealTech,
+        kWorkTargetCounterSpy,
+        kWorkTargetPurchaseLand,
       ];
       final topology = init.combinedTopology;
       final playerView = buildPlayerView(game, topology, humanPlayerId);
@@ -1100,7 +1100,7 @@ void main() {
       bus.emit(
         StartCivilianWorkTargetSelectionEvent(
           unitId: sampleUnitId,
-          workTarget: 'explore',
+          workTarget: kWorkTargetExplore,
         ),
       );
       await tester.pump();
@@ -1162,7 +1162,7 @@ void main() {
     bus.emit(
       StartCivilianWorkTargetSelectionEvent(
         unitId: sampleUnitId,
-        workTarget: 'explore',
+        workTarget: kWorkTargetExplore,
       ),
     );
     await tester.pump();
@@ -1216,7 +1216,7 @@ void main() {
     bus.emit(
       StartCivilianWorkTargetSelectionEvent(
         unitId: sampleUnitId,
-        workTarget: 'explore',
+        workTarget: kWorkTargetExplore,
       ),
     );
     await tester.pump();
@@ -1298,7 +1298,7 @@ void main() {
     bus.emit(
       StartCivilianWorkTargetSelectionEvent(
         unitId: sampleUnitId,
-        workTarget: 'explore',
+        workTarget: kWorkTargetExplore,
       ),
     );
     await tester.pump();
