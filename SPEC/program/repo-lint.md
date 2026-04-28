@@ -91,6 +91,24 @@ Across tools that intentionally share skip logic, exclude at minimum:
 - Given `.github/workflows/quality.yml`, when a contributor adds a new job that runs `ct_repo_lint`, domain `custom_lint`, or package analyze steps, then that job follows the **failure semantics** table above and the **exclusion** rules in this section unless a narrower rule SPEC explicitly overrides.
 - Given `tool/check_long_string_switches.dart`, when triaging #2014, then implementers treat long-string switch coverage as **already including tests** unless a deliberate SPEC change narrows scope.
 
+### Phased roadmap (GitHub #2014, ≤5 mergeable slices)
+
+Each slice must leave **`dev` required checks green**. Order matters: do **not** widen fatal repo-lint or scan-contract scope to `test/` / `integration_test/` until violations are fixed in the same PR or a SPEC-approved non-fatal transition exists.
+
+| Slice | Scope | Status on `dev` (authoritative: workflow + tools) |
+|-------|--------|-----------------------------------------------------|
+| **1** | SPEC, CONTRIBUTING, testing-rule cross-links: scope, exclusions, mergeability, analyzer vs binary semantics, workflow job names | **Documented** — this table + CI contract above; other workflows audited (see below). |
+| **2** | **`custom_lint`:** zero analyzer **error**-severity issues in `test/` and `integration_test/` for every package wired by `tool/run_custom_lint_domain_exceptions.sh` (same bar as `lib/`) | **CI enforced** — Quality runs the script after `ct_repo_lint`; fix violations in the same PR as any tightening. |
+| **3** | **`dart analyze` / `flutter analyze`:** every Pub workspace package analyzed with test trees; **errors-only** gate | **CI enforced** — `quality` runs `dart run tool/run_workspace_analyze_errors_only.dart` after `dart pub get`; `app_tests_cache` keeps an early **`flutter analyze`** under `app/` only (redundant for app but preserves cache-job signal). Local: `tool/run_quality_gate_tests.sh` includes the same workspace step. |
+| **4** | **`ct_repo_lint` + manifest:** manifest rules that should apply to tests include `test/**/*.dart` where intended; **`collectRepoLintDomainDartFiles`** and related helpers stop skipping tests **only** when co-fixed or baselined per [Phasing](#test-and-integration_test-static-analysis-scope-github-2014) | **Pending** — `tool/ct_repo_lint_scan_contract.dart` still excludes `*/test/*` and `*_test.dart` for domain collectors (see [Scan contract vs lib-only checkers](#scan-contract-vs-lib-only-checkers-today--target)). |
+| **5** | **AST checkers** using the scan contract (same helpers as slice 4): include `test/` / `integration_test/` where the rule applies, with shared exclusions; extend `test/ct_repo_lint_scan_contract_test.dart` (or rule tests) for inclusion/exclusion | **Pending** — typically lands with or immediately after slice 4 to avoid duplicate churn. |
+
+Slices **4** and **5** may be **one PR** if scan-contract changes and checker fixes ship together, staying within the five-slice budget.
+
+### Workflow audit (parity with #2014)
+
+Only **`.github/workflows/quality.yml`** runs **`dart run tool/run_workspace_analyze_errors_only.dart`**, **`dart run tool/ct_repo_lint.dart`**, or **`bash tool/run_custom_lint_domain_exceptions.sh`**. A repository search of `.github/workflows/*.yml` for those strings finds no other matches as of the slice-1 documentation update. Any **new** workflow that runs the same class of checks must match **scope**, **exclusions**, and the **failure semantics** table in this section.
+
 ## PR incremental scans
 
 Rules marked `pr_incremental: true` in the manifest receive `--files <csv>` when `GITHUB_BASE_REF` is set and `git fetch` / `git diff origin/<base>...HEAD -- '*.dart'` succeeds and yields paths—matching the previous inline `quality.yml` behavior. Use `--force-full-scan` to disable incremental arguments locally or in scripts.
