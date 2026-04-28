@@ -45,8 +45,9 @@ Each rule has a stable `rule_id` (prefix `repo.`). **Groups** (non-exhaustive): 
 
 ## CI contract
 
-- **Quality workflow:** One step runs `dart run tool/ct_repo_lint.dart` after OrderEngine codegen verification. Gates that are **not** bundled repo-lint rules stay separate (e.g. `tool/verify_order_engine_codegen.sh`, coverage thresholds, `custom_lint`, package tests).
+- **Quality workflow (order):** After root `dart pub get`, **`dart run tool/run_workspace_analyze_errors_only.dart`** runs **`dart analyze`** or **`flutter analyze`** for **every** `dart pub workspace list` member (including `test/` and `integration_test/`). The step **fails only on analyzer `error` diagnostics** (warnings and infos do not fail), matching `tool/run_quality_gate_tests.sh`. Entrypoint: `tool/run_workspace_analyze_errors_only.dart`; Melos: `melos run workspace_analyze_errors_only`. Then **`tool/verify_order_engine_codegen.sh`**, then **`dart run tool/ct_repo_lint.dart`**. Gates that are **not** bundled repo-lint rules stay separate (e.g. coverage thresholds, `custom_lint`, package tests).
 - **App UI string gate:** Rule `repo.app_hardcoded_ui_strings` runs only when `CT_REPO_LINT_INCLUDE_APP` is exactly `true` (workflow sets this from path filters when app/package paths changed).
+- **`app_tests_cache` job:** Still runs **`flutter analyze`** under `app/` only (errors-only grep) before packing the test cache; redundant with the app slice of the workspace gate but keeps an early signal for app-only paths.
 
 ## PR incremental scans
 

@@ -45,6 +45,8 @@ If your GitHub role **cannot add labels**, state in the PR description that you 
 
 Repository-wide checks (beyond `dart analyze` / `custom_lint`) run through **`dart run tool/ct_repo_lint.dart`**, driven by **`tool/ct_repo_lint_manifest.yaml`**. When adding a new convention for CI, register a **stable `rule_id`** there and document it in **[SPEC/program/repo-lint.md](./SPEC/program/repo-lint.md)**—avoid new standalone `tool/check_*.dart` workflow steps without updating that manifest.
 
+**Workspace analyzer (GitHub #2014):** **`dart run tool/run_workspace_analyze_errors_only.dart`** (or **`melos run workspace_analyze_errors_only`**) analyzes every Pub workspace package with **`dart analyze`** or **`flutter analyze`**, failing only on **analyzer errors** (not warnings). CI runs this in the **Quality** workflow after `dart pub get`; **`tool/run_quality_gate_tests.sh`** runs the same command locally.
+
 ## macOS Flutter build troubleshooting: Swift priors ReadError
 
 If `flutter run -d macos` or `flutter build macos` intermittently fails while compiling CocoaPods plugins with output that includes:
