@@ -88,5 +88,12 @@ void main() {
         throwsA(isA<ArgumentError>()),
       );
     });
+
+    test('provinceIdFromTileKey returns full id for 4-part key only', () {
+      expect(Unit.provinceIdFromTileKey('oldWorld|p1|0|0'), 'oldWorld|p1');
+      expect(Unit.provinceIdFromTileKey('oldWorld|p1|0'), isNull);
+      expect(Unit.provinceIdFromTileKey('p1|0|0'), isNull);
+      expect(Unit.provinceIdFromTileKey(null), isNull);
+    });
   });
 }
