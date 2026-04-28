@@ -48,6 +48,48 @@ Each rule has a stable `rule_id` (prefix `repo.`). **Groups** (non-exhaustive): 
 - **Quality workflow:** One step runs `dart run tool/ct_repo_lint.dart` after OrderEngine codegen verification. Gates that are **not** bundled repo-lint rules stay separate (e.g. `tool/verify_order_engine_codegen.sh`, coverage thresholds, `custom_lint`, package tests).
 - **App UI string gate:** Rule `repo.app_hardcoded_ui_strings` runs only when `CT_REPO_LINT_INCLUDE_APP` is exactly `true` (workflow sets this from path filters when app/package paths changed).
 
+## Test and `integration_test/` static analysis scope (GitHub #2014)
+
+**Goal:** `test/` and `integration_test/` Dart are **first-class** for the same categories of static gates as `lib/` where the toolchain and rule design apply. **Generated code, goldens, fixtures, and similar trees stay excluded** (see [Shared exclusions](#shared-exclusions-testintegration_test-generation-and-fixtures)).
+
+**Phasing:** Land in **at most five mergeable slices** on `dev`. Each merged slice **must keep required CI green**. Do **not** widen **fatal** enforcement under `test/` / `integration_test/` (manifest rules, `ct_repo_lint_scan_contract` collectors, binary AST checkers) unless violations are **fixed in the same PR** **or** an intermediate slice uses a **SPEC-documented** non-fatal / audit / baseline mechanism for that transition (recorded in this doc or the rule’s SPEC with an issue link).
+
+### Failure semantics (do not conflate)
+
+| Mechanism | CI interpretation |
+|-----------|---------------------|
+| **`dart analyze` / `flutter analyze`** (**when CI uses error-only parsing**) | Fail the job only on **analyzer `error` severity** lines; **warnings and infos do not fail** the gate unless project policy explicitly changes. |
+| **`dart run tool/ct_repo_lint.dart`** and manifest-driven `runner` rules | **Binary pass/fail** per rule design (`exit` non-zero on violation); not governed by “analyzer errors only.” |
+| **`custom_lint` / `dart run custom_lint`** | Treat as **analyzer diagnostics** (same severity model as `dart analyze` for the plugin); CI should match the wired script’s contract (see [exception-enforcement.md](exception-enforcement.md)). |
+| **Standalone AST scripts** (e.g. `dart tool/check_long_string_switches.dart`) | **Binary** on their own thresholds unless a SPEC says otherwise. |
+
+### Shared exclusions (test/integration_test, generation, fixtures)
+
+Across tools that intentionally share skip logic, exclude at minimum:
+
+- Suffixes: `*.g.dart`, `*.freezed.dart`, `*.mocks.dart`, `*.gen.dart` (and any other generated suffixes called out per package).
+- Path fragments (fixture / golden trees): see `repoLintFixtureDirPathMarkers` in `tool/ct_repo_lint_scan_contract.dart` (`/test_data/`, `/fixtures/`, `/golden/`, etc.) wherever that helper applies.
+
+`tool/check_long_string_switches.dart` does **not** use `collectRepoLintDomainDartFiles`; it walks repo `.dart` files with its **own** exclusions (e.g. `.dart_tool`, `.pub-cache`, `build`, `*.g.dart`, and the tech embed path). Treat it as **already covering tests** unless SPEC is intentionally updated to narrow exclusions.
+
+### Scan contract vs lib-only checkers (today → target)
+
+**Domain lib collector** `collectRepoLintDomainDartFiles` in `tool/ct_repo_lint_scan_contract.dart` walks `lib/` under scan roots and **skips** paths matching `repoLintPathIsExcludedTestOrGeneratedDart` (`*/test/*`, `*_test.dart`, generated). Checkers that depend on it today include (non-exhaustive): `check_disallowed_ast_patterns`, `check_repeated_magic_numbers`, `check_custom_exceptions`, `check_function_size`, `check_part_unit_size`, `check_control_flow_nesting_depth`; `check_debug_console_logic_contract_boundary` delegates to the disallowed-AST checker.
+
+**Identifier-literal helpers** `repoLintIdentifierLiteralShouldSkipFile`, **canonical tile-key** `collectRepoLintCanonicalProvinceTileKeyDartFiles` / `repoLintCanonicalProvinceTileKeyShouldSkipFile`, **app UI** `repoLintAppLibHardcodedUiVisitorShouldSkip` in the same contract file apply additional lib- or app-centric filters. **Including `test/` / `integration_test/`** for a rule is **implementation work** in later slices: update helpers and **fix or baseline** violations so `dev` stays green.
+
+### CI workflow parity
+
+**Today:** `.github/workflows/quality.yml` is the **only** workflow (as of the #2014 documentation slice) that runs `ct_repo_lint`, domain `custom_lint`, and (in `app_tests_cache`) `flutter analyze` plus `check_long_string_switches`. Any **additional** workflow that runs the same class of checks **must** match the **scope and exclusions** documented here.
+
+**Analyzer matrix (future slice):** When workspace-wide `dart analyze` / `flutter analyze` is added, the implementing PR **must state which job** (`quality`, `app_tests_cache`, or a new job) hosts each step; use **`dart analyze`** for pure Dart packages and **`flutter analyze`** for Flutter packages; mirror any local gate scripts (e.g. `tool/run_quality_gate_tests.sh`) and **CONTRIBUTING.md**.
+
+### Acceptance criteria (#2014 documentation)
+
+- Given this section and CONTRIBUTING, when a maintainer widens a fatal repo rule to `test/`, then the change either **co-fixes violations** in the same PR or documents an allowed **audit/baseline** transition in SPEC with tracking reference.
+- Given `.github/workflows/quality.yml`, when a contributor adds a new job that runs `ct_repo_lint`, domain `custom_lint`, or package analyze steps, then that job follows the **failure semantics** table above and the **exclusion** rules in this section unless a narrower rule SPEC explicitly overrides.
+- Given `tool/check_long_string_switches.dart`, when triaging #2014, then implementers treat long-string switch coverage as **already including tests** unless a deliberate SPEC change narrows scope.
+
 ## PR incremental scans
 
 Rules marked `pr_incremental: true` in the manifest receive `--files <csv>` when `GITHUB_BASE_REF` is set and `git fetch` / `git diff origin/<base>...HEAD -- '*.dart'` succeeds and yields paths—matching the previous inline `quality.yml` behavior. Use `--force-full-scan` to disable incremental arguments locally or in scripts.
