@@ -185,7 +185,7 @@ void main() {
               units: [
                 Unit(
                   id: 'explorer1',
-                  type: 'Explorer',
+                  type: kUnitTypeExplorer,
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P2',
                 ),
