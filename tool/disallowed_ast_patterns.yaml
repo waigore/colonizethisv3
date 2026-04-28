@@ -85,6 +85,17 @@ rules:
       method_names:
         - localIdFrom
       argument_index: 0
+  - id: province_world_state_lookup_unprefixed_literal
+    message: >-
+      Do not pass unprefixed province id string literals to WorldState lookup
+      methods. Use full province ids in the form regionId|localId.
+    match:
+      kind: unprefixed_province_id_string_literal_argument
+      method_names:
+        - tryGetProvince
+        - getProvince
+        - resolveToFullProvinceId
+      argument_index: 0
   - id: province_local_segment_boundary_only
     message: >-
       ProvinceId.localSegmentFromStoredGameState(...) is disallowed.

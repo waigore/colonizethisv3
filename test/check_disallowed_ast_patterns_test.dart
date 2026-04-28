@@ -58,6 +58,15 @@ rules:
         - tryGetProvince
         - resolveToFullProvinceId
       argument_index: 1
+  - id: province_world_state_lookup_unprefixed_literal
+    message: 'prefixed province id literals required for WorldState lookup'
+    match:
+      kind: unprefixed_province_id_string_literal_argument
+      method_names:
+        - tryGetProvince
+        - getProvince
+        - resolveToFullProvinceId
+      argument_index: 0
   - id: province_local_id_from_unprefixed_literal
     message: 'prefixed province id literals required for localIdFrom'
     match:
@@ -445,6 +454,43 @@ void f(world, String id) {
       expect(
         findDisallowedAstViolations('packages/foo/lib/x.dart', src, rules),
         isEmpty,
+      );
+    });
+
+    test('flags unprefixed literal on WorldState.tryGetProvince receiver form',
+        () {
+      const src = r'''
+void f(ws) {
+  ws.tryGetProvince('p1');
+}
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(v, isNotEmpty);
+      expect(
+        v.map((e) => e.ruleId),
+        contains('province_world_state_lookup_unprefixed_literal'),
+      );
+    });
+
+    test('flags unprefixed literal on cascaded ..tryGetProvince', () {
+      const src = r'''
+void f(ws) {
+  ws..tryGetProvince('p1');
+}
+''';
+      final v = findDisallowedAstViolations(
+        'packages/foo/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(v, isNotEmpty);
+      expect(
+        v.map((e) => e.ruleId),
+        contains('province_world_state_lookup_unprefixed_literal'),
       );
     });
 
