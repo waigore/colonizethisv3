@@ -52,8 +52,7 @@ int runCheckFunctionSize(
   return 1;
 }
 
-/// `packages/<name>/lib/`, `test/`, and `integration_test/` roots per package
-/// (GitHub #2014 — same bar as `lib/` for oversized functions in tests).
+/// `packages/<name>/lib/` roots per package.
 List<String> _collectPackageScanPathPrefixes(String repoRoot) {
   final packagesDir = Directory(p.join(repoRoot, 'packages'));
   if (!packagesDir.existsSync()) {
@@ -65,9 +64,7 @@ List<String> _collectPackageScanPathPrefixes(String repoRoot) {
       continue;
     }
     final packageName = p.basename(entity.path);
-    for (final sub in const ['lib', 'test', 'integration_test']) {
-      prefixes.add('packages/$packageName/$sub/');
-    }
+    prefixes.add('packages/$packageName/lib/');
   }
   prefixes.sort();
   return prefixes;

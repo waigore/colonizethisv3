@@ -14,8 +14,6 @@ runtime domain Dart code.
 The checker walks `collectRepoLintDomainDartFiles` and scopes to:
 
 - `packages/*/lib/**`
-- `packages/*/test/**`
-- `packages/*/integration_test/**`
 
 Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and fixture/golden path markers from `repoLintFixtureDirPathMarkers` remain excluded by the shared scan contract (`tool/ct_repo_lint_scan_contract.dart`).
 
