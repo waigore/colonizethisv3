@@ -68,7 +68,7 @@ void main() {
     test('fromJson normalizes stale provinceId when tileKey present', () {
       final u = Unit.fromJson({
         'id': 'u1',
-        'type': 'Explorer',
+        'type': kUnitTypeExplorer,
         'ownerId': 'p1',
         'provinceId': 'oldWorld|wrong',
         'tileKey': 'oldWorld|right|0|0',
@@ -87,6 +87,13 @@ void main() {
         }),
         throwsA(isA<ArgumentError>()),
       );
+    });
+
+    test('provinceIdFromTileKey returns full id for 4-part key only', () {
+      expect(Unit.provinceIdFromTileKey('oldWorld|p1|0|0'), 'oldWorld|p1');
+      expect(Unit.provinceIdFromTileKey('oldWorld|p1|0'), isNull);
+      expect(Unit.provinceIdFromTileKey('p1|0|0'), isNull);
+      expect(Unit.provinceIdFromTileKey(null), isNull);
     });
   });
 }
