@@ -426,6 +426,59 @@ Game _applyCallToArmsRefuse(
   return g;
 }
 
+Game _processCallToArmsForWarPair(
+  Game state,
+  ({String aggressor, String defender}) pair,
+  int turn,
+  List<CallToArmsDecision>? callToArmsDecisions,
+  List<CallToArmsPending> pending,
+) {
+  final aggressorGpId = pair.aggressor;
+  final defenderGpId = pair.defender;
+  for (final p in state.players) {
+    final allyGpId = p.id;
+    if (allyGpId == defenderGpId || allyGpId == aggressorGpId) continue;
+    if (factionsAtWar(state, allyGpId, aggressorGpId)) continue;
+    final rel = getRelation(state, allyGpId, defenderGpId);
+    if (rel == null || !rel.atPeace || rel.level != RelationLevel.allied) {
+      continue;
+    }
+
+    if (isAiControlled(state, allyGpId)) {
+      final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
+      if (accept) {
+        state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
+      } else {
+        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+      }
+      continue;
+    }
+
+    final decision = _findCallToArmsDecision(
+      callToArmsDecisions,
+      allyGpId,
+      defenderGpId,
+      aggressorGpId,
+    );
+    if (decision == null) {
+      pending.add(
+        CallToArmsPending(
+          allyGpId: allyGpId,
+          defenderGpId: defenderGpId,
+          aggressorGpId: aggressorGpId,
+        ),
+      );
+      continue;
+    }
+    if (decision.accepted) {
+      state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
+    } else {
+      state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+    }
+  }
+  return state;
+}
+
 CallToArmsResult processCallToArms(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
@@ -437,47 +490,13 @@ CallToArmsResult processCallToArms(
   final pending = <CallToArmsPending>[];
 
   for (final pair in warPairs) {
-    final aggressorGpId = pair.aggressor;
-    final defenderGpId = pair.defender;
-    for (final p in state.players) {
-      final allyGpId = p.id;
-      if (allyGpId == defenderGpId || allyGpId == aggressorGpId) continue;
-      if (factionsAtWar(state, allyGpId, aggressorGpId)) continue;
-      final rel = getRelation(state, allyGpId, defenderGpId);
-      if (rel == null || !rel.atPeace || rel.level != RelationLevel.allied) {
-        continue;
-      }
-
-      if (isAiControlled(state, allyGpId)) {
-        final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
-        if (accept) {
-          state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
-        } else {
-          state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
-        }
-        continue;
-      }
-
-      final decision = _findCallToArmsDecision(
-        callToArmsDecisions,
-        allyGpId,
-        defenderGpId,
-        aggressorGpId,
-      );
-      if (decision == null) {
-        pending.add(
-          CallToArmsPending(
-            allyGpId: allyGpId,
-            defenderGpId: defenderGpId,
-            aggressorGpId: aggressorGpId,
-          ),
-        );
-      } else if (decision.accepted) {
-        state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
-      } else {
-        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
-      }
-    }
+    state = _processCallToArmsForWarPair(
+      state,
+      pair,
+      turn,
+      callToArmsDecisions,
+      pending,
+    );
   }
 
   pending.sort((a, b) {

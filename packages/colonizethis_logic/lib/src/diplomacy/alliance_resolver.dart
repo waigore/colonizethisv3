@@ -1,11 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../ai/ai_control.dart';
 import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import '../world/civilian_ownership_legality.dart';
-import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
 import 'overture_resolver.dart';
@@ -17,68 +15,95 @@ Game resolveJoinEmpireColony(
 ) {
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
-
     for (final order in entry.value) {
-      if (order.type != DiplomaticOrderType.establishOverture) continue;
-      final stage = order.overtureStage;
-      if (stage != OvertureStage.joinEmpire) continue;
-
-      final targetId = order.targetFactionId;
-
-      final player = game.playerById(gpId);
-      if (player == null) continue;
-
-      final existing = getOverture(game, gpId, targetId);
-      if (existing == null || existing.stage != OvertureStage.nap) continue;
-
-      final rel = getRelation(game, gpId, targetId);
-      final score = rel?.score ?? relationScoreNeutral;
-      if (score < relationScoreMinFriendly) continue;
-
-      if (isMinorOrTribe(game, targetId)) {
-        final cost = joinEmpireCostForMinorOrTribe(game, targetId);
-        if (player.treasury < cost) continue;
-
-        game = absorbMinorOrTribeIntoGp(game, gpId, targetId, turn);
-        game = appendDiplomaticEvent(
-          game,
-          turn,
-          DiplomaticEventType.joinEmpireResolved,
-          {gpId, targetId},
-          fromFactionId: gpId,
-          toFactionId: targetId,
-          overtureStage: OvertureStage.joinEmpire,
-          amount: cost,
-          wasAiInitiator: isAiControlledForEvidence(game, gpId),
-        );
-        diploLog.i('diplomacy join empire $gpId $targetId cost=$cost');
-      } else if (isGreatPower(game, targetId)) {
-        if (player.techUnlocked?[kTechIdEmpireBuilding] != true) continue;
-        if (!isGreatPowerNearlyDefeatedForJoinEmpire(game, targetId)) {
-          continue;
-        }
-        final cost = joinEmpireCostForMinorOrTribe(game, targetId);
-        if (player.treasury < cost) continue;
-
-        game = absorbGreatPowerIntoGp(game, gpId, targetId);
-        game = appendDiplomaticEvent(
-          game,
-          turn,
-          DiplomaticEventType.joinEmpireResolved,
-          {gpId, targetId},
-          fromFactionId: gpId,
-          toFactionId: targetId,
-          overtureStage: OvertureStage.joinEmpire,
-          amount: cost,
-          wasAiInitiator: isAiControlledForEvidence(game, gpId),
-        );
-        diploLog.i(
-          'diplomacy join empire GP $gpId absorbs $targetId cost=$cost',
-        );
-      }
+      game = _resolveJoinEmpireOrderIfApplicable(game, gpId, order, turn);
     }
   }
   return game;
+}
+
+Game _resolveJoinEmpireOrderIfApplicable(
+  Game game,
+  String gpId,
+  DiplomaticOrder order,
+  int turn,
+) {
+  if (order.type != DiplomaticOrderType.establishOverture) return game;
+  if (order.overtureStage != OvertureStage.joinEmpire) return game;
+
+  final targetId = order.targetFactionId;
+  final player = game.playerById(gpId);
+  if (player == null) return game;
+
+  final existing = getOverture(game, gpId, targetId);
+  if (existing == null || existing.stage != OvertureStage.nap) return game;
+
+  final rel = getRelation(game, gpId, targetId);
+  final score = rel?.score ?? relationScoreNeutral;
+  if (score < relationScoreMinFriendly) return game;
+
+  if (isMinorOrTribe(game, targetId)) {
+    return _resolveJoinEmpireMinorOrTribe(game, gpId, targetId, player, turn);
+  }
+  if (isGreatPower(game, targetId)) {
+    return _resolveJoinEmpireGreatPower(game, gpId, targetId, player, turn);
+  }
+  return game;
+}
+
+Game _resolveJoinEmpireMinorOrTribe(
+  Game game,
+  String gpId,
+  String targetId,
+  Player player,
+  int turn,
+) {
+  final cost = joinEmpireCostForMinorOrTribe(game, targetId);
+  if (player.treasury < cost) return game;
+
+  var next = absorbMinorOrTribeIntoGp(game, gpId, targetId, turn);
+  next = appendDiplomaticEvent(
+    next,
+    turn,
+    DiplomaticEventType.joinEmpireResolved,
+    {gpId, targetId},
+    fromFactionId: gpId,
+    toFactionId: targetId,
+    overtureStage: OvertureStage.joinEmpire,
+    amount: cost,
+    wasAiInitiator: isAiControlledForEvidence(next, gpId),
+  );
+  diploLog.i('diplomacy join empire $gpId $targetId cost=$cost');
+  return next;
+}
+
+Game _resolveJoinEmpireGreatPower(
+  Game game,
+  String gpId,
+  String targetId,
+  Player player,
+  int turn,
+) {
+  if (player.techUnlocked?[kTechIdEmpireBuilding] != true) return game;
+  if (!isGreatPowerNearlyDefeatedForJoinEmpire(game, targetId)) return game;
+
+  final cost = joinEmpireCostForMinorOrTribe(game, targetId);
+  if (player.treasury < cost) return game;
+
+  var next = absorbGreatPowerIntoGp(game, gpId, targetId);
+  next = appendDiplomaticEvent(
+    next,
+    turn,
+    DiplomaticEventType.joinEmpireResolved,
+    {gpId, targetId},
+    fromFactionId: gpId,
+    toFactionId: targetId,
+    overtureStage: OvertureStage.joinEmpire,
+    amount: cost,
+    wasAiInitiator: isAiControlledForEvidence(next, gpId),
+  );
+  diploLog.i('diplomacy join empire GP $gpId absorbs $targetId cost=$cost');
+  return next;
 }
 
 List<Province> _transferProvinceOwnership(

@@ -131,6 +131,59 @@ String? _inPortFleetMarkerTileKey({
   return (x, y);
 }
 
+String? _fleetMarkerTileKeyForLocationScope({
+  required String scopeKey,
+  required String regionId,
+  required Game game,
+  required TileMapResult tileMap,
+  required Set<String> seaZoneIds,
+  required Map<String, Province> provinceMap,
+}) {
+  if (scopeKey.startsWith('sea:')) {
+    final zoneKey = scopeKey.substring(4);
+    final local = zoneKey.contains('|') ? zoneKey.split('|').last : zoneKey;
+    return seaZoneCentroidTileKey(
+      tileMap: tileMap,
+      regionId: regionId,
+      localSeaZoneId: local,
+      seaZoneNodeIds: seaZoneIds,
+    );
+  }
+  if (!scopeKey.startsWith('port:')) return null;
+  final fullProv = scopeKey.substring(5);
+  final province = provinceMap[fullProv];
+  if (province == null) return null;
+  return _inPortFleetMarkerTileKey(
+    game: game,
+    regionId: regionId,
+    province: province,
+    tileMap: tileMap,
+    seaZoneIds: seaZoneIds,
+  );
+}
+
+void _addFleetToLocationBuckets({
+  required Fleet f,
+  required String regionId,
+  required Map<String, Province> provinceMap,
+  required Map<String, List<Fleet>> byLocation,
+}) {
+  if (f.isAtSea && f.seaZoneId != null) {
+    final z = f.seaZoneId!;
+    final zoneKey = z.contains('|') ? z : '$regionId|$z';
+    byLocation.putIfAbsent('sea:$zoneKey', () => []).add(f);
+    return;
+  }
+  if (f.inPortAtProvinceId == null) return;
+  final province =
+      provinceMap['$regionId|${f.inPortAtProvinceId}'] ??
+      provinceMap[f.inPortAtProvinceId!];
+  if (province == null) return;
+  byLocation
+      .putIfAbsent('port:${province.regionId}|${province.id}', () => [])
+      .add(f);
+}
+
 List<FleetTileMarkerView> _buildFleetTileMarkersForRegion({
   required Game game,
   required String regionId,
@@ -156,21 +209,12 @@ List<FleetTileMarkerView> _buildFleetTileMarkersForRegion({
     if (!_includeFleetForTileMarker(game, f, regionId, humanIds)) {
       continue;
     }
-    if (f.isAtSea && f.seaZoneId != null) {
-      final z = f.seaZoneId!;
-      final zoneKey = z.contains('|') ? z : '$regionId|$z';
-      byLocation.putIfAbsent('sea:$zoneKey', () => []).add(f);
-    } else if (f.inPortAtProvinceId != null) {
-      final province =
-          provinceMap['$regionId|${f.inPortAtProvinceId}'] ??
-          provinceMap[f.inPortAtProvinceId!];
-      if (province == null) {
-        continue;
-      }
-      byLocation
-          .putIfAbsent('port:${province.regionId}|${province.id}', () => [])
-          .add(f);
-    }
+    _addFleetToLocationBuckets(
+      f: f,
+      regionId: regionId,
+      provinceMap: provinceMap,
+      byLocation: byLocation,
+    );
   }
 
   final markers = <FleetTileMarkerView>[];
@@ -179,29 +223,14 @@ List<FleetTileMarkerView> _buildFleetTileMarkersForRegion({
     final fleets = entry.value.toList()..sort((a, b) => a.id.compareTo(b.id));
     final fleetIds = fleets.map((fl) => fl.id).toList();
 
-    String? tileKey;
-    if (scopeKey.startsWith('sea:')) {
-      final zoneKey = scopeKey.substring(4);
-      final local = zoneKey.contains('|') ? zoneKey.split('|').last : zoneKey;
-      tileKey = seaZoneCentroidTileKey(
-        tileMap: tileMap,
-        regionId: regionId,
-        localSeaZoneId: local,
-        seaZoneNodeIds: seaZoneIds,
-      );
-    } else if (scopeKey.startsWith('port:')) {
-      final fullProv = scopeKey.substring(5);
-      final province = provinceMap[fullProv];
-      if (province != null) {
-        tileKey = _inPortFleetMarkerTileKey(
-          game: game,
-          regionId: regionId,
-          province: province,
-          tileMap: tileMap,
-          seaZoneIds: seaZoneIds,
-        );
-      }
-    }
+    final tileKey = _fleetMarkerTileKeyForLocationScope(
+      scopeKey: scopeKey,
+      regionId: regionId,
+      game: game,
+      tileMap: tileMap,
+      seaZoneIds: seaZoneIds,
+      provinceMap: provinceMap,
+    );
     if (tileKey == null) {
       continue;
     }

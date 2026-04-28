@@ -262,6 +262,85 @@ Map<String, (int r, int g, int b)> colorMapFromIds(Iterable<String> ids) {
   return map;
 }
 
+img.Color _borderColorForAdjacentCells(
+  String id,
+  String other,
+  Set<String> seaZoneIds,
+  img.Color seaZoneBorderColor,
+  img.Color black,
+) {
+  if (seaZoneIds.contains(id) && seaZoneIds.contains(other)) {
+    return seaZoneBorderColor;
+  }
+  return black;
+}
+
+void _drawVerticalCellBorderIfDifferent(
+  img.Image image,
+  TileMapResult result,
+  int x,
+  int y,
+  Set<String> seaZoneIds,
+  int cellSize,
+  img.Color seaZoneBorderColor,
+  img.Color black,
+  int borderThickness,
+) {
+  final id = result.cell(x, y);
+  final other = result.cell(x + 1, y);
+  if (id == other) return;
+  final borderColor = _borderColorForAdjacentCells(
+    id,
+    other,
+    seaZoneIds,
+    seaZoneBorderColor,
+    black,
+  );
+  final xEdge = (x + 1) * cellSize;
+  img.drawLine(
+    image,
+    x1: xEdge,
+    y1: y * cellSize,
+    x2: xEdge,
+    y2: (y + 1) * cellSize - 1,
+    color: borderColor,
+    thickness: borderThickness,
+  );
+}
+
+void _drawHorizontalCellBorderIfDifferent(
+  img.Image image,
+  TileMapResult result,
+  int x,
+  int y,
+  Set<String> seaZoneIds,
+  int cellSize,
+  img.Color seaZoneBorderColor,
+  img.Color black,
+  int borderThickness,
+) {
+  final id = result.cell(x, y);
+  final other = result.cell(x, y + 1);
+  if (id == other) return;
+  final borderColor = _borderColorForAdjacentCells(
+    id,
+    other,
+    seaZoneIds,
+    seaZoneBorderColor,
+    black,
+  );
+  final yEdge = (y + 1) * cellSize;
+  img.drawLine(
+    image,
+    x1: x * cellSize,
+    y1: yEdge,
+    x2: (x + 1) * cellSize - 1,
+    y2: yEdge,
+    color: borderColor,
+    thickness: borderThickness,
+  );
+}
+
 /// Draws borders between regions: land borders in black, sea zone borders in [seaZoneBorderColor].
 void drawBorders(
   img.Image image,
@@ -274,44 +353,31 @@ void drawBorders(
   final borderThickness = cellSize >= 12 ? 2 : 1;
   for (var y = 0; y < result.height; y++) {
     for (var x = 0; x < result.width; x++) {
-      final id = result.cell(x, y);
       if (x + 1 < result.width) {
-        final other = result.cell(x + 1, y);
-        if (id != other) {
-          final borderColor =
-              (seaZoneIds.contains(id) && seaZoneIds.contains(other))
-              ? seaZoneBorderColor
-              : black;
-          final xEdge = (x + 1) * cellSize;
-          img.drawLine(
-            image,
-            x1: xEdge,
-            y1: y * cellSize,
-            x2: xEdge,
-            y2: (y + 1) * cellSize - 1,
-            color: borderColor,
-            thickness: borderThickness,
-          );
-        }
+        _drawVerticalCellBorderIfDifferent(
+          image,
+          result,
+          x,
+          y,
+          seaZoneIds,
+          cellSize,
+          seaZoneBorderColor,
+          black,
+          borderThickness,
+        );
       }
       if (y + 1 < result.height) {
-        final other = result.cell(x, y + 1);
-        if (id != other) {
-          final borderColor =
-              (seaZoneIds.contains(id) && seaZoneIds.contains(other))
-              ? seaZoneBorderColor
-              : black;
-          final yEdge = (y + 1) * cellSize;
-          img.drawLine(
-            image,
-            x1: x * cellSize,
-            y1: yEdge,
-            x2: (x + 1) * cellSize - 1,
-            y2: yEdge,
-            color: borderColor,
-            thickness: borderThickness,
-          );
-        }
+        _drawHorizontalCellBorderIfDifferent(
+          image,
+          result,
+          x,
+          y,
+          seaZoneIds,
+          cellSize,
+          seaZoneBorderColor,
+          black,
+          borderThickness,
+        );
       }
     }
   }

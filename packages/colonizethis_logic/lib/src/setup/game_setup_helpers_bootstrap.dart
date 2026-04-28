@@ -1,5 +1,32 @@
 part of 'game_setup_helpers.dart';
 
+void _spawnCivilianUnitsOfType({
+  required List<Unit> oldWorldUnits,
+  required List<Unit> newWorldUnits,
+  required String ownerId,
+  required String capitalProvinceId,
+  required String capitalTileKey,
+  required String capitalRegionId,
+  required String unitType,
+  required int count,
+}) {
+  for (var k = 1; k <= count; k++) {
+    final unit = Unit(
+      id: '${ownerId}_${unitType.toLowerCase()}_$k',
+      type: unitType,
+      ownerId: ownerId,
+      locationProvinceId: capitalProvinceId,
+      status: UnitStatus.idle,
+      tileKey: capitalTileKey,
+    );
+    if (capitalRegionId == kRegionOldWorld) {
+      oldWorldUnits.add(unit);
+    } else {
+      newWorldUnits.add(unit);
+    }
+  }
+}
+
 /// Adds starting civilian units for each civilian-owning faction at its capital tile.
 Game addStartingUnits({required Game game, required GameSetupConfig config}) {
   var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
@@ -63,23 +90,16 @@ Game addStartingUnits({required Game game, required GameSetupConfig config}) {
 
     final unitConfig = config.startingResources.startingCivilianUnits;
     for (final entry in unitConfig.entries) {
-      final unitType = entry.key;
-      final count = entry.value;
-      for (var k = 1; k <= count; k++) {
-        final unit = Unit(
-          id: '${ownerId}_${unitType.toLowerCase()}_$k',
-          type: unitType,
-          ownerId: ownerId,
-          locationProvinceId: capitalProvinceId,
-          status: UnitStatus.idle,
-          tileKey: capitalTileKey,
-        );
-        if (capitalRegionId == kRegionOldWorld) {
-          oldWorldUnits.add(unit);
-        } else {
-          newWorldUnits.add(unit);
-        }
-      }
+      _spawnCivilianUnitsOfType(
+        oldWorldUnits: oldWorldUnits,
+        newWorldUnits: newWorldUnits,
+        ownerId: ownerId,
+        capitalProvinceId: capitalProvinceId,
+        capitalTileKey: capitalTileKey,
+        capitalRegionId: capitalRegionId,
+        unitType: entry.key,
+        count: entry.value,
+      );
     }
   }
 
@@ -95,6 +115,68 @@ Game addStartingUnits({required Game game, required GameSetupConfig config}) {
       ),
     ),
   );
+}
+
+void _addStartingRegimentsForPlayer({
+  required Player player,
+  required String capitalProvinceId,
+  required String regionId,
+  required int regimentCount,
+  required List<Unit> oldWorldUnits,
+  required List<Unit> newWorldUnits,
+}) {
+  if (regimentCount <= 0) return;
+  final regimentTypeId = startingRegimentTypeForPlayer(player);
+  for (var i = 0; i < regimentCount; i++) {
+    final unit = Unit(
+      id: '${player.id}_${regimentTypeId}_reg${i + 1}',
+      type: regimentTypeId,
+      ownerId: player.id,
+      locationProvinceId: capitalProvinceId,
+      status: UnitStatus.idle,
+    );
+    if (regionId == kRegionOldWorld) {
+      oldWorldUnits.add(unit);
+    } else {
+      newWorldUnits.add(unit);
+    }
+  }
+}
+
+int _mergeHomeFleetShipsForPlayer({
+  required Player player,
+  required String regionId,
+  required String localProvinceId,
+  required int shipCount,
+  required List<Fleet> fleets,
+  required int nextSeq,
+}) {
+  if (shipCount <= 0 || regionId != kRegionOldWorld) return nextSeq;
+  final fullProvinceId = '$regionId|$localProvinceId';
+  final homeFleetId = homeFleetIdFor(player.id);
+  final existingIndex = fleets.indexWhere((f) => f.id == homeFleetId);
+  final existingFleet = existingIndex >= 0 ? fleets[existingIndex] : null;
+  final existingShips = existingFleet?.ships ?? const <ShipInstance>[];
+  final shipTypeId = startingShipTypeForPlayer(player);
+  final (seqAfter, newInstances) = mintShipInstances(
+    nextShipInstanceSeq: nextSeq,
+    typeIds: [for (var i = 0; i < shipCount; i++) shipTypeId],
+  );
+
+  final homeFleet = Fleet(
+    id: homeFleetId,
+    ownerId: player.id,
+    seaZoneId: null,
+    inPortAtProvinceId: fullProvinceId,
+    regionId: regionId,
+    ships: [...existingShips, ...newInstances],
+  );
+  if (existingFleet == null) {
+    fleets.add(homeFleet);
+  } else {
+    fleets[existingIndex] = homeFleet;
+  }
+  return seqAfter;
 }
 
 /// Adds starting land regiments and home-fleet ships for each Great Power.
@@ -123,51 +205,23 @@ Game addStartingMilitaryAndNaval({
     final regionId = ProvinceId.regionIdFrom(capitalProvinceId);
     final localProvinceId = ProvinceId.localIdFrom(capitalProvinceId);
 
-    if (regimentCount > 0) {
-      final regimentTypeId = startingRegimentTypeForPlayer(player);
-      for (var i = 0; i < regimentCount; i++) {
-        final unit = Unit(
-          id: '${player.id}_${regimentTypeId}_reg${i + 1}',
-          type: regimentTypeId,
-          ownerId: player.id,
-          locationProvinceId: capitalProvinceId,
-          status: UnitStatus.idle,
-        );
-        if (regionId == kRegionOldWorld) {
-          oldWorldUnits.add(unit);
-        } else {
-          newWorldUnits.add(unit);
-        }
-      }
-    }
+    _addStartingRegimentsForPlayer(
+      player: player,
+      capitalProvinceId: capitalProvinceId,
+      regionId: regionId,
+      regimentCount: regimentCount,
+      oldWorldUnits: oldWorldUnits,
+      newWorldUnits: newWorldUnits,
+    );
 
-    if (shipCount > 0 && regionId == kRegionOldWorld) {
-      final fullProvinceId = '$regionId|$localProvinceId';
-      final homeFleetId = homeFleetIdFor(player.id);
-      final existingIndex = fleets.indexWhere((f) => f.id == homeFleetId);
-      final existingFleet = existingIndex >= 0 ? fleets[existingIndex] : null;
-      final existingShips = existingFleet?.ships ?? const <ShipInstance>[];
-      final shipTypeId = startingShipTypeForPlayer(player);
-      final (seqAfter, newInstances) = mintShipInstances(
-        nextShipInstanceSeq: nextSeq,
-        typeIds: [for (var i = 0; i < shipCount; i++) shipTypeId],
-      );
-      nextSeq = seqAfter;
-
-      final homeFleet = Fleet(
-        id: homeFleetId,
-        ownerId: player.id,
-        seaZoneId: null,
-        inPortAtProvinceId: fullProvinceId,
-        regionId: regionId,
-        ships: [...existingShips, ...newInstances],
-      );
-      if (existingFleet == null) {
-        fleets.add(homeFleet);
-      } else {
-        fleets[existingIndex] = homeFleet;
-      }
-    }
+    nextSeq = _mergeHomeFleetShipsForPlayer(
+      player: player,
+      regionId: regionId,
+      localProvinceId: localProvinceId,
+      shipCount: shipCount,
+      fleets: fleets,
+      nextSeq: nextSeq,
+    );
   }
 
   return game.copyWith(

@@ -714,6 +714,54 @@ EngagementOutcome resolveEngagement({
   );
 }
 
+({
+  double attLossFrac,
+  double defLossFrac,
+  bool bluntAttackerVictory,
+  EngagementResult bothDeadResult,
+}) _lossFractionsForRatio(double ratio, bool attackerLowMorale) {
+  if (ratio >= kStrongAttackerRatioThreshold &&
+      attackerLowMorale &&
+      ratio < kBluntAttackerVictoryUpperRatio) {
+    return (
+      attLossFrac: kBluntAttackerLossFraction,
+      defLossFrac: kBluntDefenderLossFraction,
+      bluntAttackerVictory: true,
+      bothDeadResult: EngagementResult.mutualAnnihilation,
+    );
+  }
+  if (ratio >= kStrongAttackerRatioThreshold) {
+    return (
+      attLossFrac: kStrongAttackerLossFraction,
+      defLossFrac: kStrongDefenderLossFraction,
+      bluntAttackerVictory: false,
+      bothDeadResult: EngagementResult.attackerVictory,
+    );
+  }
+  if (ratio <= kStrongDefenderRatioThreshold) {
+    return (
+      attLossFrac: kStrongDefenderAttackerLossFraction,
+      defLossFrac: kStrongDefenderDefenderLossFraction,
+      bluntAttackerVictory: false,
+      bothDeadResult: EngagementResult.defenderVictory,
+    );
+  }
+  if (ratio >= kAttackerEdgeRatioThreshold) {
+    return (
+      attLossFrac: kAttackerEdgeAttackerLossFraction,
+      defLossFrac: kAttackerEdgeDefenderLossFraction,
+      bluntAttackerVictory: false,
+      bothDeadResult: EngagementResult.attackerVictory,
+    );
+  }
+  return (
+    attLossFrac: kDefaultAttackerLossFraction,
+    defLossFrac: kDefaultDefenderLossFraction,
+    bluntAttackerVictory: false,
+    bothDeadResult: EngagementResult.mutualAnnihilation,
+  );
+}
+
 EngagementOutcome _resolveByRatio({
   required double ratio,
   required bool attackerLowMorale,
@@ -722,44 +770,16 @@ EngagementOutcome _resolveByRatio({
   required double attStr,
   required double defStr,
 }) {
-  double attLossFrac;
-  double defLossFrac;
-  bool bluntAttackerVictory = false;
-
-  EngagementResult bothDeadResult = EngagementResult.mutualAnnihilation;
-
-  if (ratio >= kStrongAttackerRatioThreshold &&
-      attackerLowMorale &&
-      ratio < kBluntAttackerVictoryUpperRatio) {
-    attLossFrac = kBluntAttackerLossFraction;
-    defLossFrac = kBluntDefenderLossFraction;
-    bluntAttackerVictory = true;
-  } else if (ratio >= kStrongAttackerRatioThreshold) {
-    attLossFrac = kStrongAttackerLossFraction;
-    defLossFrac = kStrongDefenderLossFraction;
-    bothDeadResult = EngagementResult.attackerVictory;
-  } else if (ratio <= kStrongDefenderRatioThreshold) {
-    attLossFrac = kStrongDefenderAttackerLossFraction;
-    defLossFrac = kStrongDefenderDefenderLossFraction;
-    bothDeadResult = EngagementResult.defenderVictory;
-  } else if (ratio >= kAttackerEdgeRatioThreshold) {
-    attLossFrac = kAttackerEdgeAttackerLossFraction;
-    defLossFrac = kAttackerEdgeDefenderLossFraction;
-    bothDeadResult = EngagementResult.attackerVictory;
-  } else {
-    attLossFrac = kDefaultAttackerLossFraction;
-    defLossFrac = kDefaultDefenderLossFraction;
-  }
-
+  final frac = _lossFractionsForRatio(ratio, attackerLowMorale);
   return _buildOutcome(
     attackerUnits: attackerUnits,
     defenderUnits: defenderUnits,
-    attLossFrac: attLossFrac,
-    defLossFrac: defLossFrac,
+    attLossFrac: frac.attLossFrac,
+    defLossFrac: frac.defLossFrac,
     attStr: attStr,
     defStr: defStr,
-    bluntAttackerVictory: bluntAttackerVictory,
-    bothDeadResult: bothDeadResult,
+    bluntAttackerVictory: frac.bluntAttackerVictory,
+    bothDeadResult: frac.bothDeadResult,
   );
 }
 

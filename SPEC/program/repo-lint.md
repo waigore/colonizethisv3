@@ -27,7 +27,6 @@ Grandfather YAMLs named in the table below are **legacy** until removed; **do no
 | `tool/ct_repo_lint_scan_contract.dart` | Shared roots, skip helpers, canonical tile-key collectors, app UI path gate, PR path split — see `test/ct_repo_lint_scan_contract_test.dart` |
 | `tool/check_repeated_magic_numbers.dart` | Repeated **hash/LCG-style** integer literals (`SPEC/program/repeated-magic-numbers.md`); rule `repo.repeated_magic_numbers` |
 | `tool/check_control_flow_nesting_depth.dart` | Control-flow nesting depth (`SPEC/program/control-flow-nesting-depth.md`); rule `repo.control_flow_nesting_depth` |
-| `tool/control_flow_nesting_depth_allowlist.yaml` | **Legacy:** violates [Policy: no violation allowlists](#policy-no-violation-allowlists-repo-lint); remove when nesting checker matches policy (see `SPEC/program/control-flow-nesting-depth.md`) |
 | `tool/check_function_size.dart` | Function measured-line threshold (`SPEC/program/function-size.md`); rule `repo.function_size` |
 | `tool/check_part_unit_size.dart` | Dart `part` fragment physical line limit (`SPEC/program/part-unit-size.md`); rule `repo.part_unit_size` |
 | `tool/check_debug_console_logic_contract_boundary.dart` | AST-enforced import allowlist for debug-console -> logic boundary; rule `repo.debug_console_logic_contract_boundary` |
