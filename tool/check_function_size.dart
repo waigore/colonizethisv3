@@ -18,10 +18,10 @@ int runCheckFunctionSize(
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
-  final packageLibPrefixes = _collectPackageLibPrefixes(repoRoot);
+  final packageScanPrefixes = _collectPackageScanPathPrefixes(repoRoot);
   final files = collectRepoLintDomainDartFiles(repoRoot).where((file) {
     final rel = p.relative(file.path, from: repoRoot);
-    return packageLibPrefixes.any(rel.startsWith);
+    return packageScanPrefixes.any(rel.startsWith);
   });
   final violations = <String>[];
 
@@ -52,7 +52,9 @@ int runCheckFunctionSize(
   return 1;
 }
 
-List<String> _collectPackageLibPrefixes(String repoRoot) {
+/// `packages/<name>/lib/`, `test/`, and `integration_test/` roots per package
+/// (GitHub #2014 — same bar as `lib/` for oversized functions in tests).
+List<String> _collectPackageScanPathPrefixes(String repoRoot) {
   final packagesDir = Directory(p.join(repoRoot, 'packages'));
   if (!packagesDir.existsSync()) {
     return const [];
@@ -63,7 +65,9 @@ List<String> _collectPackageLibPrefixes(String repoRoot) {
       continue;
     }
     final packageName = p.basename(entity.path);
-    prefixes.add('packages/$packageName/lib/');
+    for (final sub in const ['lib', 'test', 'integration_test']) {
+      prefixes.add('packages/$packageName/$sub/');
+    }
   }
   prefixes.sort();
   return prefixes;
