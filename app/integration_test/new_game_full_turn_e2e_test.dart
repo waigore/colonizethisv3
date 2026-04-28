@@ -16,6 +16,8 @@ import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/test_support/civilian_units_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_app/test_support/naval_units_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_app/test_support/production_panel_e2e_expected_lines.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show kUnitTypeExplorer;
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
@@ -621,7 +623,7 @@ void main() {
 
       // --- Explorer: prospect + first legal tile ---
       await _openCivilianPanel(tester, perf: perf);
-      await _tapAssignOnCivilianRowWithTitle(tester, 'Explorer');
+      await _tapAssignOnCivilianRowWithTitle(tester, kUnitTypeExplorer);
       await tester.tap(find.text('Prospect'));
       await _pumpFor(tester, const Duration(milliseconds: 400));
       await tester.tap(find.byKey(kCtE2ESelectFirstValidWorkTileKey));
