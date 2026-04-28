@@ -16,6 +16,8 @@ import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/test_support/civilian_units_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_app/test_support/naval_units_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_app/test_support/production_panel_e2e_expected_lines.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show kUnitTypeExplorer;
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
@@ -254,6 +256,20 @@ Future<void> _ensureAllRelocated64pxPngsLoad() async {
   expect(failures, isEmpty);
 }
 
+Future<void> _tapGameStartIntroOverlayContinueIfPresent(
+  WidgetTester tester,
+) async {
+  if (find.text('Continue').evaluate().isNotEmpty) {
+    await tester.tap(find.text('Continue').first);
+    await tester.pump(const Duration(milliseconds: 200));
+    return;
+  }
+  if (find.text('I shall.').evaluate().isNotEmpty) {
+    await tester.tap(find.text('I shall.').first);
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+}
+
 Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
   await tester.tap(find.text('New Game'));
   await _waitUntilFound(
@@ -294,13 +310,7 @@ Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
     }
     final introOpen = find.byType(GameStartIntroOverlay).evaluate().isNotEmpty;
     if (introOpen) {
-      if (find.text('Continue').evaluate().isNotEmpty) {
-        await tester.tap(find.text('Continue').first);
-        await tester.pump(const Duration(milliseconds: 200));
-      } else if (find.text('I shall.').evaluate().isNotEmpty) {
-        await tester.tap(find.text('I shall.').first);
-        await tester.pump(const Duration(milliseconds: 200));
-      }
+      await _tapGameStartIntroOverlayContinueIfPresent(tester);
       continue;
     }
     final creating = find.text('Creating game').evaluate().isNotEmpty;
@@ -613,7 +623,7 @@ void main() {
 
       // --- Explorer: prospect + first legal tile ---
       await _openCivilianPanel(tester, perf: perf);
-      await _tapAssignOnCivilianRowWithTitle(tester, 'Explorer');
+      await _tapAssignOnCivilianRowWithTitle(tester, kUnitTypeExplorer);
       await tester.tap(find.text('Prospect'));
       await _pumpFor(tester, const Duration(milliseconds: 400));
       await tester.tap(find.byKey(kCtE2ESelectFirstValidWorkTileKey));

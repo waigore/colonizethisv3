@@ -15,8 +15,7 @@ The checker walks `collectRepoLintDomainDartFiles` and scopes to:
 
 - `packages/*/lib/**`
 
-Tests and generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) remain
-excluded by the shared scan contract.
+Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and fixture/golden path markers from `repoLintFixtureDirPathMarkers` remain excluded by the shared scan contract (`tool/ct_repo_lint_scan_contract.dart`).
 
 ## Measurement contract
 
