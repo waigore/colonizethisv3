@@ -57,7 +57,7 @@ Summary for contributors and CI authors:
 - **`ct_repo_lint` and binary AST scripts:** **Pass/fail** on violations (not the same as “analyzer errors only”).
 - **Workflows:** Today **`.github/workflows/quality.yml`** runs `ct_repo_lint`, domain `custom_lint`, and (in **`app_tests_cache`**) `flutter analyze` under `app/` plus `check_long_string_switches`. When adding workspace-wide analyze steps, document **which job** runs them and use **`dart analyze`** vs **`flutter analyze`** per package type; update this file and SPEC in the same PR.
 
-**Workspace analyzer (GitHub #2014):** **`dart run tool/run_workspace_analyze_errors_only.dart`** (or **`melos run workspace_analyze_errors_only`**) analyzes every Pub workspace package with **`dart analyze`** or **`flutter analyze`**, failing only on **analyzer errors** (not warnings). CI runs this in the **Quality** workflow after `dart pub get`; **`tool/run_quality_gate_tests.sh`** runs the same command locally.
+**Workspace analyzer (GitHub #2014):** **`dart run tool/run_workspace_analyze_errors_only.dart`** or **`melos run workspace_analyze_errors_only`** (see root `pubspec.yaml` → `melos.scripts`) analyzes every Pub workspace package with **`dart analyze`** or **`flutter analyze`**, failing only on **analyzer errors** (not warnings). CI runs this in the **`quality` job** of `.github/workflows/quality.yml` after `dart pub get`; **`tool/run_quality_gate_tests.sh`** runs the same command locally. See **[SPEC/program/repo-lint.md](./SPEC/program/repo-lint.md)** (*Phased roadmap* and *Workflow audit*) for the five-slice status and workflow parity.
 
 ## macOS Flutter build troubleshooting: Swift priors ReadError
 
