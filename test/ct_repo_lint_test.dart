@@ -25,6 +25,7 @@ void main() {
       expect(ids, contains('repo.part_unit_size'));
       expect(ids, contains('repo.no_flame_in_widgets'));
       expect(ids, contains('repo.game_widgets_file_size'));
+      expect(ids, contains('repo.dart_file_non_comment_line_size'));
       expect(ids, contains('repo.land_province_bucket_keys'));
       expect(ids, contains('repo.app_hardcoded_ui_strings'));
       expect(

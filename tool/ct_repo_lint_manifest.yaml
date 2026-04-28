@@ -144,6 +144,13 @@ rules:
     runner: dart
     script: tool/check_game_widgets_file_size.dart
 
+  - rule_id: repo.dart_file_non_comment_line_size
+    group: structure
+    title: Dart files must stay at or below 1000 non-comment lines
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_dart_file_non_comment_line_size.dart
+
   - rule_id: repo.canonical_province_tile_keys
     group: game_invariants
     title: Province WorkOrder targetTileKey literals use full tile shape

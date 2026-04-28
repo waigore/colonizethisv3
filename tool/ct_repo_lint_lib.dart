@@ -11,6 +11,7 @@ import 'check_canonical_province_tile_keys.dart';
 import 'check_civilian_unit_type_constants.dart';
 import 'check_control_flow_nesting_depth.dart';
 import 'check_custom_exceptions.dart';
+import 'check_dart_file_non_comment_line_size.dart';
 import 'check_debug_console_logic_contract_boundary.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_function_size.dart';
@@ -709,6 +710,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckFunctionSize(repoRoot);
     case 'repo.game_widgets_file_size':
       return runCheckGameWidgetsFileSize(repoRoot);
+    case 'repo.dart_file_non_comment_line_size':
+      return runCheckDartFileNonCommentLineSize(repoRoot);
     case 'repo.part_unit_size':
       return runCheckPartUnitSize(repoRoot);
     case 'repo.no_flame_in_widgets':
