@@ -74,6 +74,8 @@ For current product, trade/transport interception also uses hardcoded constants 
 
 A `join_home_fleet` order is valid only when the fleet is **in port at the player's capital province**. On apply: merge that fleet's ships into the home fleet and remove the sea-going fleet.
 
+This movement-order contract is distinct from the immediate UI fleet-management transfer flow in `SPEC/ui/naval-units-fleet-management.md` (selected-ship transfer into Home Fleet). Scope B transfer behavior does not broaden `join_home_fleet` order validation unless this section is explicitly revised.
+
 **Build Ship:**
 
 BuildUnitOrder for naval type; spawns in home fleet (in port at capital). Costs from colonizethis_data ship economy catalog.

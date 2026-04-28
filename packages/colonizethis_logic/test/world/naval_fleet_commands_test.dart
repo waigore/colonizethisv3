@@ -127,4 +127,84 @@ void main() {
       },
     );
   });
+
+  group('applyNavalTransferShipsBetweenFleets', () {
+    test(
+      'Given subset selected When transferred Then target gains selected and source remains',
+      () {
+        final game = _gameWithFleets([
+          Fleet(
+            id: 'source',
+            ownerId: 'gp_human',
+            regionId: 'oldWorld',
+            seaZoneId: 'sea_a',
+            ships: const [
+              ShipInstance(id: 'ship_1', typeId: 'carrack'),
+              ShipInstance(id: 'ship_2', typeId: 'fluyte'),
+            ],
+          ),
+          Fleet(
+            id: homeFleetIdFor('gp_human'),
+            ownerId: 'gp_human',
+            regionId: 'oldWorld',
+            inPortAtProvinceId: 'oldWorld|cap',
+            ships: const [ShipInstance(id: 'ship_home', typeId: 'carrack')],
+          ),
+        ]);
+
+        final next = applyNavalTransferShipsBetweenFleets(
+          game: game,
+          humanPlayerId: 'gp_human',
+          sourceFleetId: 'source',
+          targetFleetId: homeFleetIdFor('gp_human'),
+          shipInstanceIdsToTransfer: const ['ship_2'],
+        );
+
+        final source = next.worldState.fleets.firstWhere(
+          (f) => f.id == 'source',
+        );
+        final target = next.worldState.fleets.firstWhere(
+          (f) => f.id == homeFleetIdFor('gp_human'),
+        );
+        expect(source.ships.map((s) => s.id).toList(), ['ship_1']);
+        expect(target.ships.map((s) => s.id).toList(), ['ship_home', 'ship_2']);
+      },
+    );
+
+    test(
+      'Given all source ships selected When transferred Then source is removed',
+      () {
+        final game = _gameWithFleets([
+          Fleet(
+            id: 'source',
+            ownerId: 'gp_human',
+            regionId: 'oldWorld',
+            seaZoneId: 'sea_a',
+            ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
+          ),
+          Fleet(
+            id: homeFleetIdFor('gp_human'),
+            ownerId: 'gp_human',
+            regionId: 'oldWorld',
+            inPortAtProvinceId: 'oldWorld|cap',
+            ships: const [],
+          ),
+        ]);
+
+        final next = applyNavalTransferShipsBetweenFleets(
+          game: game,
+          humanPlayerId: 'gp_human',
+          sourceFleetId: 'source',
+          targetFleetId: homeFleetIdFor('gp_human'),
+          shipInstanceIdsToTransfer: const ['ship_1'],
+        );
+
+        expect(next.worldState.fleets.any((f) => f.id == 'source'), isFalse);
+        final home = next.worldState.fleets.firstWhere(
+          (f) => f.id == homeFleetIdFor('gp_human'),
+        );
+        expect(home.ships.map((s) => s.id).toList(), ['ship_1']);
+      },
+    );
+  });
 }

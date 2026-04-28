@@ -49,6 +49,20 @@ Players need to reorganize their fleets:
 | Home Fleet | **May** be selected and combined. When checked with other fleets, Home Fleet is **always** the merge target. |
 | Empty fleets | After combining, any non-Home fleet with no ships is removed. Home Fleet is **never** deleted when empty. |
 
+### Join Selected Ships To Home Fleet (Scope B extension)
+
+When Home Fleet is selected with exactly one non-home source fleet, combine opens a transfer dialog so the user can move a selected ship subset into Home Fleet instead of forcing an all-ships merge.
+
+- **Target:** Home Fleet is always the destination.
+- **Source:** Exactly one selected non-home fleet (same owner).
+- **Ship transfer semantics:** Player moves ship counts by type using `CtTransferList`; moved hulls preserve their instance ids and are appended to Home Fleet in source-fleet order.
+- **Source location rules (authoritative):**
+  - Source fleet is valid when it is **in port at the player's capital province**, or
+  - Source fleet is valid when it is **at sea in a sea zone adjacent to the player's capital province** under the same `MapTopology` adjacency rules used by naval transfer validation.
+- **Cross-region exclusion:** If no adjacency edge exists between source sea zone and the capital province in the current topology, transfer is not offered.
+- **Source cleanup:** If the transfer leaves source with zero ships, source fleet is removed; otherwise source remains with the unmoved ships.
+- **Home Fleet persistence:** Home Fleet always remains and stays at the capital port.
+
 ### Data changes
 
 ```dart
@@ -197,6 +211,14 @@ After any fleet operation (split or combine):
 - **Given** two fleets **at sea** in **different** sea zones, **when** both are checked, **then** **Combine** stays **disabled**.
 
 - **Given** one fleet **at sea** and one **in port**, **when** both are checked, **then** **Combine** stays **disabled** (mixed locality).
+
+- **Given** the Home Fleet and one source fleet in port at the player's capital are selected, **when** the user taps **Combine** and transfers only a subset of source ships, **then** only the selected ship instances move to Home Fleet, source fleet remains with the remainder, and Home Fleet remains at the capital port.
+
+- **Given** the Home Fleet and one source fleet at sea in a sea zone adjacent to the player's capital are selected, **when** the user confirms selected-ship transfer, **then** only the selected source ship instances move to Home Fleet and source fleet remains only if ships are left.
+
+- **Given** the Home Fleet and one source fleet are selected and every source ship is transferred, **when** the transfer is confirmed, **then** source fleet is removed and Home Fleet remains with increased ship count.
+
+- **Given** the Home Fleet and one source fleet at sea with no topology adjacency edge to the capital province are selected, **when** the user views combine availability, **then** Combine is disabled and no transfer dialog opens.
 
 ### Split
 
