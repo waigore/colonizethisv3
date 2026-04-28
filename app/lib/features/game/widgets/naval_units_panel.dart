@@ -13,6 +13,7 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import 'utils/naval_tree_builder.dart';
 import 'move_fleet_dialog.dart';
 import 'split_fleet_dialog.dart';
+import 'transfer_to_home_fleet_dialog.dart';
 import 'units/shared/location_section_header.dart';
 import 'units/shared/region_section_header.dart';
 import 'units/shared/units_entity_action_row.dart';
@@ -77,6 +78,10 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     };
     final activeIds = _selectedFleetIds.where(rowsById.containsKey).toList();
     if (activeIds.length < 2) return false;
+    final homeTransferRows = _homeTransferRows(flat, activeIds.toSet());
+    if (homeTransferRows != null) {
+      return _isEligibleHomeTransferSource(homeTransferRows.source);
+    }
     String? locationKey;
     for (final id in activeIds) {
       final row = rowsById[id]!;
@@ -162,6 +167,15 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     if (!_canCombineSelection(flat)) return;
 
     final selected = Set<String>.from(_selectedFleetIds);
+    final homeTransferRows = _homeTransferRows(flat, selected);
+    if (homeTransferRows != null &&
+        _isEligibleHomeTransferSource(homeTransferRows.source)) {
+      _openTransferToHomeDialog(
+        homeRow: homeTransferRows.home,
+        sourceRow: homeTransferRows.source,
+      );
+      return;
+    }
     final targetId = _combineTargetFleetId(flat, selected);
 
     FleetRow? targetRow;
@@ -209,6 +223,115 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
 
     setState(_selectedFleetIds.clear);
     widget.bus.emit(NavalFleetsUpdatedEvent(game: newGame));
+  }
+
+  ({FleetRow home, FleetRow source})? _homeTransferRows(
+    List<FleetRow> flat,
+    Set<String> selectedIds,
+  ) {
+    if (selectedIds.length != 2) return null;
+    FleetRow? home;
+    FleetRow? source;
+    for (final row in flat) {
+      final id = _selectionFleetId(row);
+      if (!selectedIds.contains(id)) continue;
+      if (row.isHomeFleet) {
+        home = row;
+      } else {
+        source = row;
+      }
+    }
+    if (home == null || source == null) return null;
+    return (home: home, source: source);
+  }
+
+  String? _humanCapitalProvinceId() {
+    for (final p in widget.game.players) {
+      if (p.id == widget.humanPlayerId) return p.capitalProvinceId;
+    }
+    return null;
+  }
+
+  bool _provinceMatchesCapital(String provinceId, String capitalProvinceId) {
+    if (provinceId == capitalProvinceId) return true;
+    final capRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
+    final capLocalId = ProvinceId.localIdFrom(capitalProvinceId);
+    return provinceId == capLocalId || provinceId == '$capRegionId|$capLocalId';
+  }
+
+  bool _seaZoneAdjacentToCapital({
+    required String sourceSeaZoneId,
+    required String sourceRegionId,
+    required String capitalProvinceId,
+  }) {
+    final capRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
+    final capLocalId = ProvinceId.localIdFrom(capitalProvinceId);
+    final sourceSeaLocal = sourceSeaZoneId.contains('|')
+        ? sourceSeaZoneId.split('|').last
+        : sourceSeaZoneId;
+    final sourceSeaPrefixed = sourceSeaZoneId.contains('|')
+        ? sourceSeaZoneId
+        : '$sourceRegionId|$sourceSeaZoneId';
+    final sourceSeaCandidates = <String>{
+      sourceSeaZoneId,
+      sourceSeaLocal,
+      sourceSeaPrefixed,
+    };
+    final capitalCandidates = <String>{
+      capitalProvinceId,
+      capLocalId,
+      '$capRegionId|$capLocalId',
+    };
+    for (final edge in widget.topology.edges) {
+      final a = edge.id1;
+      final b = edge.id2;
+      final aIsSea = sourceSeaCandidates.contains(a);
+      final bIsSea = sourceSeaCandidates.contains(b);
+      final aIsCap = capitalCandidates.contains(a);
+      final bIsCap = capitalCandidates.contains(b);
+      if ((aIsSea && bIsCap) || (bIsSea && aIsCap)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _isEligibleHomeTransferSource(FleetRow sourceRow) {
+    final sourceFleet = _fleetForRow(sourceRow);
+    final capitalProvinceId = _humanCapitalProvinceId();
+    if (sourceFleet == null || capitalProvinceId == null) return false;
+    if (sourceFleet.ownerId != widget.humanPlayerId) return false;
+    if (!sourceFleet.isAtSea) {
+      final inPortId = sourceFleet.inPortAtProvinceId;
+      if (inPortId == null) return false;
+      return _provinceMatchesCapital(inPortId, capitalProvinceId);
+    }
+    final seaZoneId = sourceFleet.seaZoneId;
+    if (seaZoneId == null || seaZoneId.isEmpty) return false;
+    return _seaZoneAdjacentToCapital(
+      sourceSeaZoneId: seaZoneId,
+      sourceRegionId: sourceFleet.regionId,
+      capitalProvinceId: capitalProvinceId,
+    );
+  }
+
+  void _openTransferToHomeDialog({
+    required FleetRow homeRow,
+    required FleetRow sourceRow,
+  }) {
+    final homeFleet = _fleetForRow(homeRow);
+    final sourceFleet = _fleetForRow(sourceRow);
+    if (homeFleet == null || sourceFleet == null) return;
+    showDialog<void>(
+      context: context,
+      builder: (_) => TransferToHomeFleetDialog(
+        sourceFleet: sourceFleet,
+        homeFleet: homeFleet,
+        game: widget.game,
+        humanPlayerId: widget.humanPlayerId,
+        bus: widget.bus,
+      ),
+    );
   }
 
   @override
@@ -574,7 +697,9 @@ class _FleetExpansionTile extends StatelessWidget {
 
   List<Widget> _buildShipCountTiles() {
     if (row.shipCountsByType.isEmpty) {
-      return [ListTile(title: Text(l10n.naval_units_noShipsInFleet), dense: true)];
+      return [
+        ListTile(title: Text(l10n.naval_units_noShipsInFleet), dense: true),
+      ];
     }
     return [
       for (final entry in row.shipCountsByType.entries)
