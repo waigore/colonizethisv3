@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/features/game/flame/game_map_narrow_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/flame/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
@@ -34,7 +35,7 @@ void main() {
                   region: region,
                   humanPlayerId: game.players.first.id,
                   playerView: demoHumanPlayerViewForOverlay,
-                  exploreEligibleTileKeyCache: const <String>{},
+                  workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
                 ),
               ),
             ),
@@ -82,7 +83,7 @@ void main() {
                 region: region,
                 humanPlayerId: game.players.first.id,
                 playerView: demoHumanPlayerViewForOverlay,
-                exploreEligibleTileKeyCache: const <String>{},
+                workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
               ),
             ),
           ),

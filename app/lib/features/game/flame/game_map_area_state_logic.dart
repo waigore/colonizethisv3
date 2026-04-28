@@ -3,6 +3,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart';
 
+import 'per_player_work_target_selection_cache.dart';
+
 /// Pure-ish helpers for `GameMapArea` state translation.
 class GameMapAreaStateLogic {
   static const ({bool showIcon, bool enabled, bool hasExplorerUnits})
@@ -655,37 +657,20 @@ class GameMapAreaStateLogic {
     required PlayerView playerView,
     required MapTopology topology,
     required Map<String, TileMapResult>? tileMapByRegion,
+    required ct_models.Orders currentOrders,
   }) {
-    final allUnits = <ct_models.Unit>[
-      ...game.worldState.oldWorld.units,
-      ...game.worldState.newWorld.units,
-    ];
-    final explorerUnits = allUnits
-        .where((unit) => unit.ownerId == humanPlayerId)
-        .where(
-          (unit) =>
-              workOrderTargetsByUnitType[unit.type]?.contains(
-                kWorkTargetExplore,
-              ) ??
-              false,
-        )
-        .toList();
-    if (explorerUnits.isEmpty) return const <String>{};
-
-    final merged = <String>{};
-    for (final explorer in explorerUnits) {
-      final valid = getValidWorkOrderTileKeysWithVisibility(
+    final cache = PerPlayerWorkTargetSelectionCache();
+    cache.refresh(
+      WorkTargetSelectionSnapshot(
         game: game,
+        playerId: humanPlayerId,
+        playerView: playerView,
         topology: topology,
-        view: playerView,
-        unitId: explorer.id,
-        workTarget: kWorkTargetExplore,
-        currentOrders: const ct_models.Orders(),
+        currentOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
-      );
-      merged.addAll(valid);
-    }
-    return merged;
+      ),
+    );
+    return cache.get(humanPlayerId, kWorkTargetExplore);
   }
 
   static ({bool showIcon, bool enabled, bool hasExplorerUnits})
@@ -694,7 +679,8 @@ class GameMapAreaStateLogic {
     required String humanPlayerId,
     required String selectedTileKey,
     required RegionMapViewData selectedRegion,
-    required Set<String> cachedExploreEligibleTileKeys,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    Set<String>? cachedExploreEligibleTileKeys,
   }) {
     final tileParts = selectedTileKey.split('|');
     if (tileParts.length < 4 || tileParts[0] != selectedRegion.regionId) {
@@ -738,9 +724,11 @@ class GameMapAreaStateLogic {
       return kHiddenExplorerInlineActionState;
     }
 
-    final hasEligibleExploreTarget = cachedExploreEligibleTileKeys.any((
-      tileKey,
-    ) {
+    final eligibleTileKeys =
+        cachedExploreEligibleTileKeys ??
+        workTargetSelectionCache?.get(humanPlayerId, kWorkTargetExplore) ??
+        const <String>{};
+    final hasEligibleExploreTarget = eligibleTileKeys.any((tileKey) {
       final parts = tileKey.split('|');
       return parts.length >= 4 &&
           parts[0] == selectedRegion.regionId &&
@@ -776,9 +764,10 @@ class GameMapAreaStateLogic {
     required String humanPlayerId,
     required String selectedTileKey,
     required PlayerView playerView,
-    required MapTopology? topology,
-    required ct_models.Orders currentOrders,
-    required Map<String, TileMapResult>? tileMapByRegion,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
   }) {
     final tileParts = selectedTileKey.split('|');
     if (tileParts.length < 4) {
@@ -839,22 +828,26 @@ class GameMapAreaStateLogic {
     if (builderUnits.isEmpty) {
       return (showIcon: true, enabled: false, hasBuilderUnits: false);
     }
-    if (topology == null) {
-      return (showIcon: true, enabled: false, hasBuilderUnits: true);
-    }
-
-    final anyAssignable = builderUnits.any((builder) {
-      final valid = getValidWorkOrderTileKeysWithVisibility(
-        game: game,
-        topology: topology,
-        view: playerView,
-        unitId: builder.id,
-        workTarget: kWorkTargetBuildImprovement,
-        currentOrders: currentOrders,
-        tileMapByRegion: tileMapByRegion,
-      );
-      return valid.contains(selectedTileKey);
-    });
+    final anyAssignable =
+        workTargetSelectionCache?.contains(
+          humanPlayerId,
+          kWorkTargetBuildImprovement,
+          selectedTileKey,
+        ) ??
+        (topology == null
+            ? false
+            : builderUnits.any((builder) {
+                final valid = getValidWorkOrderTileKeysWithVisibility(
+                  game: game,
+                  topology: topology,
+                  view: playerView,
+                  unitId: builder.id,
+                  workTarget: kWorkTargetBuildImprovement,
+                  currentOrders: currentOrders,
+                  tileMapByRegion: tileMapByRegion,
+                );
+                return valid.contains(selectedTileKey);
+              }));
     return (showIcon: true, enabled: anyAssignable, hasBuilderUnits: true);
   }
 }

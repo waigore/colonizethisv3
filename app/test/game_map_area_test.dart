@@ -11,6 +11,7 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -838,6 +839,101 @@ void main() {
     expect(selectionReady, isTrue);
     expect(sw.elapsedMilliseconds, lessThan(1000));
   });
+
+  testWidgets(
+    'build_improvement selection mode prompt appears under one second',
+    (WidgetTester tester) async {
+      final init = getDebugInitGameResult();
+      final game = init.game;
+      final mapViewData = init.mapViewData;
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+
+      final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
+      final topology = init.combinedTopology;
+      final playerView = buildPlayerView(game, topology, humanPlayerId);
+
+      String? builderUnitId;
+      for (final unit in [
+        ...game.worldState.oldWorld.units,
+        ...game.worldState.newWorld.units,
+      ]) {
+        if (!(workOrderTargetsByUnitType[unit.type]?.contains(
+              kWorkTargetBuildImprovement,
+            ) ??
+            false)) {
+          continue;
+        }
+        final valid = getValidWorkOrderTileKeysWithVisibility(
+          game: game,
+          topology: topology,
+          view: playerView,
+          unitId: unit.id,
+          workTarget: kWorkTargetBuildImprovement,
+          currentOrders: const Orders(),
+          tileMapByRegion: init.tileMapByRegion,
+        );
+        if (valid.isNotEmpty) {
+          builderUnitId = unit.id;
+          break;
+        }
+      }
+
+      expect(
+        builderUnitId,
+        isNotNull,
+        reason:
+            'debug init fixture must include a builder with at least one valid '
+            'build_improvement target tile',
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appEventBusProvider.overrideWith((ref) => bus),
+            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+            gamesBoxProvider.overrideWith((ref) => gamesBox),
+            gameServiceProvider.overrideWith(
+              (ref) => GameService(gamesBox, GameSaveAdapter()),
+            ),
+            currentOrdersProvider.overrideWith(
+              () => CurrentOrdersNotifier(const Orders()),
+            ),
+            mapViewDataProvider.overrideWith((ref) => mapViewData),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: GameMapArea(game: game, mapViewData: mapViewData),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      final sw = Stopwatch()..start();
+      bus.emit(
+        StartCivilianWorkTargetSelectionEvent(
+          unitId: builderUnitId!,
+          workTarget: kWorkTargetBuildImprovement,
+        ),
+      );
+      await tester.pump();
+
+      var selectionReady = false;
+      for (var i = 0; i < 200; i++) {
+        await tester.pump(const Duration(milliseconds: 5));
+        if (find.text('Select a tile, or click cancel').evaluate().isNotEmpty) {
+          selectionReady = true;
+          break;
+        }
+      }
+      sw.stop();
+
+      expect(selectionReady, isTrue);
+      expect(sw.elapsedMilliseconds, lessThan(1000));
+    },
+  );
 
   testWidgets(
     'work target selection auto-switches to region with valid tiles when current tab has none',
