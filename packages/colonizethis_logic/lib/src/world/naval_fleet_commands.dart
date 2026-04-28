@@ -1,5 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'naval.dart';
+
 /// Returns [game] unchanged if the fleet is missing or [shipInstanceIdsToNewFleet] is empty.
 /// SPEC/ui/naval-units-fleet-management.md.
 Game applyNavalSplitFleet({
@@ -47,7 +49,7 @@ Game applyNavalSplitFleet({
   );
 
   final updatedOriginal = orig.copyWith(ships: remainingShips);
-  final isHomeFleet = orig.id == 'fleet_$humanPlayerId';
+  final isHomeFleet = orig.id == homeFleetIdFor(humanPlayerId);
 
   final updatedFleets = <Fleet>[
     ...game.worldState.fleets.where((f) => f.id != orig.id),
