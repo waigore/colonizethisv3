@@ -173,40 +173,6 @@ List<FleetTileMarkerView> _buildFleetTileMarkersForRegion({
     }
   }
 
-  for (final player in game.players.where((p) => p.isHuman)) {
-    final hid = player.id;
-    final homeId = _homeFleetIdForMapMarker(hid);
-    if (game.worldState.fleets.any((fl) => fl.id == homeId)) {
-      continue;
-    }
-    final cap = player.capitalTile;
-    if (cap == null || cap.regionId != regionId) {
-      continue;
-    }
-    final capParts = cap.toTileKey().split('|');
-    if (capParts.length < 2) {
-      continue;
-    }
-    final capLocal = capParts[1];
-    final province =
-        provinceMap['$regionId|$capLocal'] ?? provinceMap[capLocal];
-    if (province == null) {
-      continue;
-    }
-    byLocation
-        .putIfAbsent('port:${province.regionId}|${province.id}', () => [])
-        .add(
-          Fleet(
-            id: homeId,
-            ownerId: hid,
-            regionId: regionId,
-            inPortAtProvinceId: '$regionId|$capLocal',
-            ships: const [],
-            mission: FleetMission.none,
-          ),
-        );
-  }
-
   final markers = <FleetTileMarkerView>[];
   for (final entry in byLocation.entries) {
     final scopeKey = entry.key;
