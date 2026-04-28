@@ -106,7 +106,9 @@ class Fleet {
       final shipsRaw = json['ships'] as List<dynamic>? ?? [];
       ships = shipsRaw
           .map(
-            (e) => ShipInstance.fromJson(Map<String, dynamic>.from(e as Map)),
+            (e) => ShipInstance.fromJson(
+              Map<String, dynamic>.from(e as Map<Object?, Object?>),
+            ),
           )
           .toList();
     } else {
