@@ -8,7 +8,10 @@ import '../tool/ct_repo_lint_scan_contract.dart';
 void main() {
   group('repoLintPathIsUnderRepoRootToolingTestTree', () {
     test('matches only repo-root test/', () {
-      expect(repoLintPathIsUnderRepoRootToolingTestTree('test/foo.dart'), isTrue);
+      expect(
+        repoLintPathIsUnderRepoRootToolingTestTree('test/foo.dart'),
+        isTrue,
+      );
       expect(
         repoLintPathIsUnderRepoRootToolingTestTree(
           p.join('packages', 'p', 'test', 'a.dart'),
@@ -19,39 +22,61 @@ void main() {
   });
 
   group('repoLintPathIsExcludedTestOrGeneratedDart', () {
-    test('excludes package tests, loose _test.dart, and generated suffixes', () {
-      expect(repoLintPathIsExcludedTestOrGeneratedDart('a.dart'), isFalse);
-      expect(repoLintPathIsExcludedTestOrGeneratedDart('x_test.dart'), isTrue);
-      expect(
-        repoLintPathIsExcludedTestOrGeneratedDart('lib/foo_test.dart'),
-        isTrue,
-      );
-      expect(
-        repoLintPathIsExcludedTestOrGeneratedDart('packages/p/test/a.dart'),
-        isTrue,
-      );
-      expect(repoLintPathIsExcludedTestOrGeneratedDart('lib/x.g.dart'), isTrue);
-      expect(
-        repoLintPathIsExcludedTestOrGeneratedDart('lib/x.freezed.dart'),
-        isTrue,
-      );
-      expect(
-        repoLintPathIsExcludedTestOrGeneratedDart('lib/x.mocks.dart'),
-        isTrue,
-      );
-      expect(repoLintPathIsExcludedTestOrGeneratedDart('lib/x.txt'), isTrue);
-    });
+    test(
+      'excludes package tests, loose _test.dart, and generated suffixes',
+      () {
+        expect(repoLintPathIsExcludedTestOrGeneratedDart('a.dart'), isFalse);
+        expect(
+          repoLintPathIsExcludedTestOrGeneratedDart('x_test.dart'),
+          isTrue,
+        );
+        expect(
+          repoLintPathIsExcludedTestOrGeneratedDart('lib/foo_test.dart'),
+          isTrue,
+        );
+        expect(
+          repoLintPathIsExcludedTestOrGeneratedDart('packages/p/test/a.dart'),
+          isTrue,
+        );
+        expect(
+          repoLintPathIsExcludedTestOrGeneratedDart('lib/x.g.dart'),
+          isTrue,
+        );
+        expect(
+          repoLintPathIsExcludedTestOrGeneratedDart('lib/x.freezed.dart'),
+          isTrue,
+        );
+        expect(
+          repoLintPathIsExcludedTestOrGeneratedDart('lib/x.mocks.dart'),
+          isTrue,
+        );
+        expect(
+          repoLintPathIsExcludedTestOrGeneratedDart('lib/x.gen.dart'),
+          isTrue,
+        );
+        expect(repoLintPathIsExcludedTestOrGeneratedDart('lib/x.txt'), isTrue);
+      },
+    );
   });
 
   group('repoLintPathShouldSkipAstRuleFile', () {
     test('skips generated, repo-root test/, fixtures; keeps package test/', () {
-      expect(repoLintPathShouldSkipAstRuleFile('packages/p/test/a.dart'), isFalse);
+      expect(
+        repoLintPathShouldSkipAstRuleFile('packages/p/test/a.dart'),
+        isFalse,
+      );
       expect(
         repoLintPathShouldSkipAstRuleFile('app/integration_test/e2e.dart'),
         isFalse,
       );
-      expect(repoLintPathShouldSkipAstRuleFile('test/check_foo_test.dart'), isTrue);
-      expect(repoLintPathShouldSkipAstRuleFile('packages/p/lib/x.g.dart'), isTrue);
+      expect(
+        repoLintPathShouldSkipAstRuleFile('test/check_foo_test.dart'),
+        isTrue,
+      );
+      expect(
+        repoLintPathShouldSkipAstRuleFile('packages/p/lib/x.g.dart'),
+        isTrue,
+      );
       expect(
         repoLintPathShouldSkipAstRuleFile('packages/p/lib/goldens/foo.dart'),
         isTrue,
@@ -346,7 +371,7 @@ void main() {
       );
       expect(
         repoLintAppLibHardcodedUiVisitorShouldSkip('app/lib/x.gen.dart'),
-        isFalse,
+        isTrue,
       );
     });
   });
