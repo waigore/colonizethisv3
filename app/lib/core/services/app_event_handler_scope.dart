@@ -2,14 +2,7 @@ import 'dart:async';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/debug_console_api.dart'
-    show
-        kUnitTypeBuilder,
-        kUnitTypeEngineer,
-        kUnitTypeExplorer,
-        kUnitTypeMerchant,
-        kUnitTypeRailBuilder,
-        kUnitTypeSpy,
-        resolveCivilianSpawnTileKey;
+    show resolveCivilianSpawnTileKey;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/package_logger.dart';
@@ -169,16 +162,6 @@ Orders _mergeTrainMilitaryOrdersForPlayer({
   );
 }
 
-/// Allowed civilian unit types for debug spawn-at-capital (matches dialog/train lists).
-const Set<String> _kAllowedDebugCivilianUnitTypes = {
-  kUnitTypeExplorer,
-  kUnitTypeBuilder,
-  kUnitTypeEngineer,
-  kUnitTypeSpy,
-  kUnitTypeMerchant,
-  kUnitTypeRailBuilder,
-};
-
 @visibleForTesting
 ({Game? game, String message}) applyDebugCivilianSpawnAtCapital({
   required Game? currentGame,
@@ -200,7 +183,7 @@ const Set<String> _kAllowedDebugCivilianUnitTypes = {
       message: 'Debug spawn ignored: unknown player ${event.humanPlayerId}.',
     );
   }
-  if (!_kAllowedDebugCivilianUnitTypes.contains(event.unitType)) {
+  if (CivilianEconomyCatalog.byId[event.unitType] == null) {
     return (
       game: null,
       message:
