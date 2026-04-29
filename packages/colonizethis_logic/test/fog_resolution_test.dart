@@ -341,6 +341,79 @@ void main() {
     });
   });
 
+  group('clearSpyRevealTimersForProvinceOwnershipTransfer', () {
+    test('removes timers for old and new owner only', () {
+      const ow = 'oldWorld';
+      final existing = <String, Map<String, int>>{
+        'a': {'$ow|P1': 3},
+        'b': {'$ow|P1': 2},
+        'c': {'$ow|P2': 1},
+      };
+
+      final next = clearSpyRevealTimersForProvinceOwnershipTransfer(
+        existing,
+        '$ow|P1',
+        'a',
+        'b',
+      );
+
+      expect(next['a']?['$ow|P1'], isNull);
+      expect(next['b']?['$ow|P1'], isNull);
+      expect(next['c']!['$ow|P2'], 1);
+    });
+  });
+
+  group('applyProvinceOwnershipChangeVisibility', () {
+    test('fully visible for new owner and downgrades former owner', () {
+      const ow = 'oldWorld';
+      const pid = '$ow|P1';
+      const tileKey = '$ow|P1|0|0';
+
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(
+            provinces: [
+              Province(id: pid, regionId: ow, ownerId: 'a'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            'a': {tileKey: 'fullyVisible'},
+            'b': {},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              pid: [tileKey],
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'a', displayName: 'A', isHuman: true),
+          Player(id: 'b', displayName: 'B', isHuman: true),
+        ],
+      );
+
+      final out = applyProvinceOwnershipChangeVisibility(
+        game,
+        pid,
+        'a',
+        'b',
+      );
+
+      expect(out.visibilitySummary.tilesSetFullyVisibleForNewOwner, 1);
+      expect(out.visibilitySummary.tilesDowngradedForFormerOwner, 1);
+      expect(
+        out.game.worldState.playerVisibilityByTile['b']?[tileKey],
+        VisibilityLevel.fullyVisible.name,
+      );
+      expect(
+        out.game.worldState.playerVisibilityByTile['a']?[tileKey],
+        VisibilityLevel.fogged.name,
+      );
+    });
+  });
 
   group('applyCoastalSeaZoneFullVisibility', () {
     test(
