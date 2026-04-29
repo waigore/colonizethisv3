@@ -9,11 +9,11 @@
 TurnResolver runs phases in **fixed order**:
 
 1. **Orders** — Gather/validate; Great Powers only submit. Merge human + AI; resolve cross-player effects before application.
-2. **Diplomacy** — Before Movement so war/peace apply same turn. Overtures, Join Empire/Colony, alliances, Declare War, Peace, **intervention** (when a GP declares war on a Minor/Tribe and another GP has Embassy or purchased land there), relation updates. [diplomacy-resolution.md](diplomacy-resolution.md)
-3. **Extraction** — Tile yields to stockpile.
-4. **Riches to treasury** — Riches convert to treasury at base price; removed from stockpile.
-5. **Consumption** — Military food upkeep first, then workers/navy (food + luxury); strike rules per [workers-and-population.md](../game/workers-and-population.md).
-6. **Production** — Recipes and idle labour; outputs to stockpile (uses post-Consumption stockpile and labour).
+2. **Extraction** — Tile yields to stockpile.
+3. **Riches to treasury** — Riches convert to treasury at base price; removed from stockpile.
+4. **Consumption** — Military food upkeep first, then workers/navy (food + luxury); strike rules per [workers-and-population.md](../game/workers-and-population.md).
+5. **Production** — Recipes and idle labour; outputs to stockpile (uses post-Consumption stockpile and labour).
+6. **Diplomacy** — Before Research and Movement so same-turn ownership and relation changes are visible to downstream phases. Overtures, Join Empire/Colony, alliances, Declare War, Peace, **intervention** (when a GP declares war on a Minor/Tribe and another GP has Embassy or purchased land there), relation updates. [diplomacy-resolution.md](diplomacy-resolution.md)
 7. **Research** — Read orders; validate treasury; deduct spending; add progress; complete techs. [research-resolution.md](research-resolution.md)
 8. **Movement** — Apply land/naval MoveOrders and mission assignments; update unit/fleet locations.
 9. **Minor Regiment Upgrade** — Compute `maxGreatPowerMilitaryLevel` from post-Research Great Power buildable regiment tiers; set Old World Minor Nations `effectiveMilitaryLevel`; upgrade eligible minor land regiments in place; set Tribe `effectiveMilitaryLevel` to 1 (no parity).
@@ -26,7 +26,7 @@ TurnResolver runs phases in **fixed order**:
 
 ## Dependency Rules
 
-Extraction → riches to treasury → **consumption → production** **must** run before movement and build, in that order. Research runs after production (and consumption) so treasury is current. **Movement (phase 8) completes before Build / work (phase 12) begins** for the same turn: any **implicit civilian move leg** bundled into a `WorkOrder` is applied during Movement; the **work leg** (including `tileKey` / `currentWork` updates per [orders.md](orders.md)) runs only in Build / work. There is no interleaving of Movement and Build / work for that bundle.
+Extraction → riches to treasury → **consumption → production** **must** run before diplomacy, research, movement, and build, in that order. Diplomacy runs before Research so same-turn ownership transfers from diplomacy are visible to Research and all following phases. **Movement (phase 8) completes before Build / work (phase 12) begins** for the same turn: any **implicit civilian move leg** bundled into a `WorkOrder` is applied during Movement; the **work leg** (including `tileKey` / `currentWork` updates per [orders.md](orders.md)) runs only in Build / work. There is no interleaving of Movement and Build / work for that bundle.
 
 ---
 
@@ -44,8 +44,8 @@ Same TurnResolver and phase order used in main game and ctdev sim_game; identica
 
 ## Acceptance criteria
 
-- **Phase sequence:** Given any run of TurnResolver, the system executes exactly the phases 1–13 above in that order (Orders → Diplomacy → Extraction → Riches to treasury → Consumption → Production → Research → Movement → Minor Regiment Upgrade → Naval Interception & Naval Combat → Combat → Build / work → End-of-turn). No phase is skipped or reordered; no additional phases mutate game state between these steps.
-- **Dependency order:** Extraction runs before Riches to treasury; Riches to treasury before Consumption; Consumption before Production. Extraction through Production complete before Movement and before Build / work. Research runs after Production so treasury is current. **Movement always runs before Build / work** in the same turn (phases 8 then 12); bundled civilian `WorkOrder` implicit move legs are not applied during Build / work. Given a resolver run, the system does not apply extraction/riches/consumption/production effects after movement or build has started.
+- **Phase sequence:** Given any run of TurnResolver, the system executes exactly the phases 1–13 above in that order (Orders → Extraction → Riches to treasury → Consumption → Production → Diplomacy → Research → Movement → Minor Regiment Upgrade → Naval Interception & Naval Combat → Combat → Build / work → End-of-turn). No phase is skipped or reordered; no additional phases mutate game state between these steps.
+- **Dependency order:** Extraction runs before Riches to treasury; Riches to treasury before Consumption; Consumption before Production. Extraction through Production complete before Diplomacy, Research, Movement, and Build / work. Research runs after Diplomacy and after Production so treasury is current and diplomacy state changes are visible. **Movement always runs before Build / work** in the same turn (phases 8 then 12); bundled civilian `WorkOrder` implicit move legs are not applied during Build / work. Given a resolver run, the system does not apply extraction/riches/consumption/production effects after diplomacy, movement, or build has started.
 - **Determinism:** Given the same starting WorldState, merged orders, ruleset, and random seeds, TurnResolver produces the same resulting WorldState (and victory state) in main game and in ctdev sim_game; phase order is identical in both.
 - **Implementation contract:** Per-phase behaviour is specified in [turn-resolution-phase-details.md](turn-resolution-phase-details.md); this document is the single source of truth for phase sequence and ordering. Tests may assert phase order and dependency rules by inspecting resolver behaviour or by comparing outcomes across runs.
 - **Phase dispatch architecture:** Given `runTurnResolutionPipeline`, when the resolver applies a phase, then it dispatches through a `Map<TurnPhase, TurnPhaseHandler>` registry and fails fast with `StateError` if any phase in `turnResolutionSequence` has no registered handler.
