@@ -281,17 +281,12 @@ int _nextDebugSpawnSequence({
 }
 
 bool _isAllowedDebugCivilianType(String unitType) {
-  switch (unitType) {
-    case kUnitTypeExplorer:
-    case kUnitTypeBuilder:
-    case kUnitTypeEngineer:
-    case kUnitTypeSpy:
-    case kUnitTypeMerchant:
-    case kUnitTypeRailBuilder:
-      return true;
-    default:
-      return false;
-  }
+  return unitType == kUnitTypeExplorer ||
+      unitType == kUnitTypeBuilder ||
+      unitType == kUnitTypeEngineer ||
+      unitType == kUnitTypeSpy ||
+      unitType == kUnitTypeMerchant ||
+      unitType == kUnitTypeRailBuilder;
 }
 
 /// Binds [AppEventHandler] to [appNavigatorKey] for the app lifetime.
