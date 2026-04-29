@@ -12,9 +12,9 @@ import 'port_icon_placement.dart';
 import 'sea_zone_centroid_tile.dart';
 import 'tile_map_visualization_shared.dart';
 
+part 'init_game_map_view_builder_fleet_markers.dart';
 part 'init_game_map_view_builder_impl.dart';
 part 'init_game_map_view_builder_impl2.dart';
-
 
 final _log = packageLogger();
 
@@ -53,85 +53,3 @@ bool _isCivilianUnitType(String unitType) {
   }
   return role != UnitRole.military && role != UnitRole.naval;
 }
-
-String _homeFleetIdForMapMarker(String playerId) => 'fleet_$playerId';
-
-bool _fleetAtHumanCapital(Game game, String playerId, Fleet fleet) {
-  if (!fleet.isInPort || fleet.inPortAtProvinceId == null) {
-    return false;
-  }
-  final player = game.players.firstWhere(
-    (p) => p.id == playerId,
-    orElse: () => game.players.first,
-  );
-  if (!player.isHuman) {
-    return false;
-  }
-  final cap = player.capitalTile;
-  if (cap == null) {
-    return false;
-  }
-  final capParts = cap.toTileKey().split('|');
-  if (capParts.length < 2) {
-    return false;
-  }
-  final capReg = capParts[0];
-  final capProvLocal = capParts[1];
-  if (fleet.regionId != capReg) {
-    return false;
-  }
-  final port = fleet.inPortAtProvinceId!;
-  return port == capProvLocal || port == '$capReg|$capProvLocal';
-}
-
-bool _includeFleetForTileMarker(
-  Game game,
-  Fleet f,
-  String regionId,
-  Set<String> humanIds,
-) {
-  if (!humanIds.contains(f.ownerId) || f.regionId != regionId) {
-    return false;
-  }
-  if (f.shipTypeIds.isNotEmpty) {
-    return true;
-  }
-  return f.id == _homeFleetIdForMapMarker(f.ownerId) &&
-      _fleetAtHumanCapital(game, f.ownerId, f);
-}
-
-String? _inPortFleetMarkerTileKey({
-  required Game game,
-  required String regionId,
-  required Province province,
-  required TileMapResult tileMap,
-  required Set<String> seaZoneIds,
-}) {
-  final localProvinceId = ProvinceId.localIdFrom(province.id);
-  final tileKey = harborDrawableSeaTileKeyForPortProvince(
-    game: game,
-    regionId: regionId,
-    localProvinceId: localProvinceId,
-    tileMap: tileMap,
-    seaZoneIds: seaZoneIds,
-    contextLabel: 'fleet marker region=$regionId province=$localProvinceId',
-  );
-  if (tileKey == null) {
-    _log.w(
-      'map: in-port fleet marker skipped: no portsByProvinceSeaboard entry '
-      'for region=$regionId province=$localProvinceId',
-    );
-  }
-  return tileKey;
-}
-
-(int?, int?) _xyFromMapTileKey(String tileKey) {
-  final parts = tileKey.split('|');
-  if (parts.length < 4) {
-    return (null, null);
-  }
-  final x = int.tryParse(parts[parts.length - 2]);
-  final y = int.tryParse(parts[parts.length - 1]);
-  return (x, y);
-}
-

@@ -15,6 +15,37 @@ import 'init_game_map_view_data.dart';
 const String _regionOldWorld = 'oldWorld';
 const String _regionNewWorld = 'newWorld';
 
+Map<String, String> _provinceIdToOwnerIdFromProvinces(List<Province> provinces) {
+  final out = <String, String>{};
+  for (final p in provinces) {
+    final oid = p.ownerId;
+    if (oid != null && oid.isNotEmpty) {
+      out[p.id] = oid;
+    }
+  }
+  return out;
+}
+
+void _appendPortTileToRegionLists(
+  String tileKey,
+  List<({int x, int y})> owPortTiles,
+  List<({int x, int y})> nwPortTiles,
+) {
+  final parts = tileKey.split('|');
+  if (parts.length < 4) return;
+  final regionId = parts[0];
+  final x = int.tryParse(parts[2]);
+  final y = int.tryParse(parts[3]);
+  if (x == null || y == null) return;
+  if (regionId == _regionOldWorld) {
+    owPortTiles.add((x: x, y: y));
+    return;
+  }
+  if (regionId == _regionNewWorld) {
+    nwPortTiles.add((x: x, y: y));
+  }
+}
+
 /// Resolves terrain RGB for a cell (geographic fill). Uses terrainType or parses terrainTypeId.
 (int r, int g, int b) _terrainRgbForCell(
   CellViewData cell,
@@ -185,18 +216,12 @@ Uint8List renderInitGameMapToPng({
   required Map<String, MapTopology> topologyByRegion,
   int cellSize = 24,
 }) {
-  final owOwnerByProvinceId = <String, String>{};
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      owOwnerByProvinceId[p.id] = p.ownerId!;
-    }
-  }
-  final nwOwnerByProvinceId = <String, String>{};
-  for (final p in game.worldState.newWorld.provinces) {
-    if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      nwOwnerByProvinceId[p.id] = p.ownerId!;
-    }
-  }
+  final owOwnerByProvinceId = _provinceIdToOwnerIdFromProvinces(
+    game.worldState.oldWorld.provinces,
+  );
+  final nwOwnerByProvinceId = _provinceIdToOwnerIdFromProvinces(
+    game.worldState.newWorld.provinces,
+  );
 
   final owCapitals = <({String factionId, String displayName, int x, int y})>[];
   for (final p in game.players) {
@@ -248,19 +273,7 @@ Uint8List renderInitGameMapToPng({
   final owPortTiles = <({int x, int y})>[];
   final nwPortTiles = <({int x, int y})>[];
   for (final tileKey in game.worldState.portsByProvinceSeaboard.values) {
-    final parts = tileKey.split('|');
-    if (parts.length >= 4) {
-      final regionId = parts[0];
-      final x = int.tryParse(parts[2]);
-      final y = int.tryParse(parts[3]);
-      if (x != null && y != null) {
-        if (regionId == _regionOldWorld) {
-          owPortTiles.add((x: x, y: y));
-        } else if (regionId == _regionNewWorld) {
-          nwPortTiles.add((x: x, y: y));
-        }
-      }
-    }
+    _appendPortTileToRegionLists(tileKey, owPortTiles, nwPortTiles);
   }
 
   final owResult = tileMapByRegion[_regionOldWorld]!;

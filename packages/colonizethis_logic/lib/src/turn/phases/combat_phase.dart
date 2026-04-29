@@ -13,6 +13,44 @@ import '../../world/capital_and_gp_fall.dart';
 
 final _log = packageLogger();
 
+void _emitPreBattleDialogueForConflicts(
+  Game state,
+  List<BattleContext> battles,
+  int turn,
+  int preBattleDialogueSeed,
+  void Function(DialogueEvent) onDialogue,
+) {
+  if (battles.isEmpty) return;
+  for (final ctx in battles) {
+    final attackerIds = ctx.attackers.map((a) => a.factionId).toList()
+      ..sort();
+    final capitalThreatened = dialogueEventsForCapitalThreatened(
+      state,
+      capitalOwnerId: ctx.defenderFactionId,
+      provinceId: ctx.provinceId,
+      attackerFactionIds: attackerIds,
+      turnNumber: turn,
+      seed: preBattleDialogueSeed,
+    );
+    for (final e in capitalThreatened) {
+      onDialogue(e);
+    }
+    for (final attackerId in attackerIds) {
+      final reactive = dialogueEventsForReactiveHumanAttack(
+        state,
+        attackerFactionId: attackerId,
+        defenderFactionId: ctx.defenderFactionId,
+        provinceId: ctx.provinceId,
+        turnNumber: turn,
+        seed: preBattleDialogueSeed,
+      );
+      for (final e in reactive) {
+        onDialogue(e);
+      }
+    }
+  }
+}
+
 Game runCombatPhase(
   Game game,
   Orders orders,
@@ -33,34 +71,13 @@ Game runCombatPhase(
   _log.i('combat conflict_detection start turn=$turn');
   final battles = detectConflicts(state, orders);
   if (onDialogue != null && battles.isNotEmpty) {
-    for (final ctx in battles) {
-      final attackerIds = ctx.attackers.map((a) => a.factionId).toList()
-        ..sort();
-      final capitalThreatened = dialogueEventsForCapitalThreatened(
-        state,
-        capitalOwnerId: ctx.defenderFactionId,
-        provinceId: ctx.provinceId,
-        attackerFactionIds: attackerIds,
-        turnNumber: turn,
-        seed: preBattleDialogueSeed,
-      );
-      for (final e in capitalThreatened) {
-        onDialogue(e);
-      }
-      for (final attackerId in attackerIds) {
-        final reactive = dialogueEventsForReactiveHumanAttack(
-          state,
-          attackerFactionId: attackerId,
-          defenderFactionId: ctx.defenderFactionId,
-          provinceId: ctx.provinceId,
-          turnNumber: turn,
-          seed: preBattleDialogueSeed,
-        );
-        for (final e in reactive) {
-          onDialogue(e);
-        }
-      }
-    }
+    _emitPreBattleDialogueForConflicts(
+      state,
+      battles,
+      turn,
+      preBattleDialogueSeed,
+      onDialogue,
+    );
   }
   _log.i(
     'combat conflict_detection end turn=$turn battleContexts=${battles.length}',

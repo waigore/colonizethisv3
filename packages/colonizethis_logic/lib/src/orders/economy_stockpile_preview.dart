@@ -30,6 +30,71 @@ List<AssignedRecipe> assignedRecipesFromDesiredOutput(
   return assignments;
 }
 
+Game _applyTileMapExtractionPreview({
+  required Game state,
+  required MapTopology topology,
+  required Map<String, TileMapResult> tileMapByRegion,
+}) {
+  final connectivity = resolveConnectivity(
+    game: state,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
+  );
+  final extraction = computeExtraction(
+    game: state,
+    tileMapByRegion: tileMapByRegion,
+    connectivityResult: connectivity,
+    techCapForPlayerAndResource: (playerId, resourceId) {
+      final player = state.playerById(playerId);
+      return extractionCapForResourceForUnlocked(
+        player?.techUnlocked,
+        resourceId,
+      );
+    },
+    techCapForPlayer: (playerId) {
+      final player = state.playerById(playerId);
+      return extractionCapForUnlocked(player?.techUnlocked);
+    },
+  );
+  var stateWithFleets = state;
+  final extractedPlayers = <Player>[];
+  var extractionSeed =
+      (state.globalGameSeed ?? 0) ^
+      (state.worldState.turnState.turnNumber * kDeterministicHashMixPrime32);
+  for (final player in state.players) {
+    var stockpile = player.stockpile;
+    final totals = extraction[player.id];
+    if (totals != null) {
+      stockpile = applyExtractionToStockpile(stockpile, totals.land);
+      var overseasDelivered = allocateOverseasToStockpile(
+        totals.overseas,
+        cargoHolds: cargoHoldsForHomeFleet(state, player.id),
+      );
+      if (overseasDelivered.isNotEmpty) {
+        extractionSeed =
+            (extractionSeed * kDeterministicLcgMultiplierGlibc +
+                kDeterministicLcgIncrementGlibc) &
+            kDeterministicLcg31Mask;
+        final interception = applyTradeInterception(
+          stateWithFleets,
+          player.id,
+          overseasDelivered,
+          seed: extractionSeed ^ player.id.hashCode,
+        );
+        overseasDelivered = interception.reducedDelivered;
+        stateWithFleets = stateWithFleets.copyWith(
+          worldState: stateWithFleets.worldState.copyWith(
+            fleets: interception.updatedFleets,
+          ),
+        );
+      }
+      stockpile = applyExtractionToStockpile(stockpile, overseasDelivered);
+    }
+    extractedPlayers.add(player.copyWith(stockpile: stockpile));
+  }
+  return stateWithFleets.copyWith(players: extractedPlayers);
+}
+
 /// Applies economy phases for preview without mutating [game]:
 /// Extraction -> Riches-to-treasury -> Consumption -> Production.
 Game applyEconomyPhasesForPreview({
@@ -44,64 +109,11 @@ Game applyEconomyPhasesForPreview({
   if (extractedByPlayerId.isNotEmpty) {
     state = applyExtractionForPlayers(state, extractedByPlayerId);
   } else if (tileMapByRegion.isNotEmpty) {
-    final connectivity = resolveConnectivity(
-      game: state,
-      tileMapByRegion: tileMapByRegion,
+    state = _applyTileMapExtractionPreview(
+      state: state,
       topology: topology,
-    );
-    final extraction = computeExtraction(
-      game: state,
       tileMapByRegion: tileMapByRegion,
-      connectivityResult: connectivity,
-      techCapForPlayerAndResource: (playerId, resourceId) {
-        final player = state.playerById(playerId);
-        return extractionCapForResourceForUnlocked(
-          player?.techUnlocked,
-          resourceId,
-        );
-      },
-      techCapForPlayer: (playerId) {
-        final player = state.playerById(playerId);
-        return extractionCapForUnlocked(player?.techUnlocked);
-      },
     );
-    var stateWithFleets = state;
-    final extractedPlayers = <Player>[];
-    var extractionSeed =
-        (state.globalGameSeed ?? 0) ^
-        (state.worldState.turnState.turnNumber * kDeterministicHashMixPrime32);
-    for (final player in state.players) {
-      var stockpile = player.stockpile;
-      final totals = extraction[player.id];
-      if (totals != null) {
-        stockpile = applyExtractionToStockpile(stockpile, totals.land);
-        var overseasDelivered = allocateOverseasToStockpile(
-          totals.overseas,
-          cargoHolds: cargoHoldsForHomeFleet(state, player.id),
-        );
-        if (overseasDelivered.isNotEmpty) {
-          extractionSeed =
-              (extractionSeed * kDeterministicLcgMultiplierGlibc +
-                  kDeterministicLcgIncrementGlibc) &
-              kDeterministicLcg31Mask;
-          final interception = applyTradeInterception(
-            stateWithFleets,
-            player.id,
-            overseasDelivered,
-            seed: extractionSeed ^ player.id.hashCode,
-          );
-          overseasDelivered = interception.reducedDelivered;
-          stateWithFleets = stateWithFleets.copyWith(
-            worldState: stateWithFleets.worldState.copyWith(
-              fleets: interception.updatedFleets,
-            ),
-          );
-        }
-        stockpile = applyExtractionToStockpile(stockpile, overseasDelivered);
-      }
-      extractedPlayers.add(player.copyWith(stockpile: stockpile));
-    }
-    state = stateWithFleets.copyWith(players: extractedPlayers);
   }
 
   final richesPlayers = <Player>[];
