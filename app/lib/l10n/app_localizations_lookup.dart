@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'app_localizations.dart';
+import 'app_localizations_contract.dart';
 import 'app_localizations_en.dart';
 
 /// Locale lookup for [AppLocalizations]. Kept in a separate library to avoid a

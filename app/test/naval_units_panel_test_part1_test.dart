@@ -1,66 +1,3 @@
-// Tests for NavalUnitsPanel. SPEC/ui/naval-units-panel.md.
-
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-import 'dart:ui' as ui;
-
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        applyNavalSplitFleet,
-        applyNavalTransferShipsBetweenFleets,
-        homeFleetIdFor;
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flame/flame.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_test/flutter_test.dart';
-
-import 'package:colonizethis_app/features/game/widgets/move_fleet_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/ct_panel.dart';
-import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
-import 'package:colonizethis_app/widgets/debug_init_game.dart';
-
-/// Mirrors shell handling of [NavalSplitFleetRequestedEvent] for widget tests.
-StreamSubscription<NavalSplitFleetRequestedEvent> wireNavalSplitForWidgetTest({
-  required AppEventBus bus,
-  required Game Function() gameSnapshot,
-}) {
-  return bus.on<NavalSplitFleetRequestedEvent>().listen((e) {
-    final next = applyNavalSplitFleet(
-      game: gameSnapshot(),
-      humanPlayerId: e.humanPlayerId,
-      originalFleetId: e.originalFleetId,
-      shipInstanceIdsToNewFleet: e.shipInstanceIdsToNewFleet,
-    );
-    bus.emit(NavalFleetsUpdatedEvent(game: next));
-  });
-}
-
-/// Mirrors shell handling of [NavalTransferShipsRequestedEvent] for widget tests.
-StreamSubscription<NavalTransferShipsRequestedEvent>
-wireNavalTransferForWidgetTest({
-  required AppEventBus bus,
-  required Game Function() gameSnapshot,
-}) {
-  return bus.on<NavalTransferShipsRequestedEvent>().listen((e) {
-    final next = applyNavalTransferShipsBetweenFleets(
-      game: gameSnapshot(),
-      humanPlayerId: e.humanPlayerId,
-      sourceFleetId: e.sourceFleetId,
-      targetFleetId: e.targetFleetId,
-      shipInstanceIdsToTransfer: e.shipInstanceIdsToTransfer,
-    );
-    bus.emit(NavalFleetsUpdatedEvent(game: next));
-  });
-}
-
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -145,7 +82,6 @@ void main() {
       ),
     );
   }
-
   group('NavalUnitsPanel', () {
     testWidgets('AC: Panel shows title Naval Units', (
       WidgetTester tester,
@@ -827,5 +763,255 @@ void main() {
                 f.ownerId == humanId &&
                 f.shipTypeIds.isNotEmpty &&
                 f.id != 'home_fleet',
+          )
+          .toList();
+      if (playerFleets.isEmpty) return;
+
+      final baseFleet = playerFleets.first;
+
+      await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
+      await tester.pumpAndSettle();
+
+      final fleetFinder = find.widgetWithText(
+        ExpansionTile,
+        'Fleet ${baseFleet.id}',
+      );
+      if (fleetFinder.evaluate().isEmpty) return;
+
+      await tester.ensureVisible(fleetFinder);
+      await tester.tap(fleetFinder);
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Split'), findsOneWidget);
+    });
+
+    testWidgets(
+      'AC: Expanding home/non-home fleet and tapping Split opens Split Fleet dialog',
+      (WidgetTester tester) async {
+        final humanId = humanPlayerIdWithFleets;
+        await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
+        await tester.pumpAndSettle();
+
+        final homeFleetFinder = find.widgetWithText(
+          ExpansionTile,
+          'Home Fleet',
+        );
+        if (homeFleetFinder.evaluate().isNotEmpty) {
+          await tester.ensureVisible(homeFleetFinder);
+          await tester.tap(homeFleetFinder);
+          await tester.pumpAndSettle();
+          final splitButton = find.byTooltip('Split');
+          if (splitButton.evaluate().isNotEmpty) {
+            await tester.tap(splitButton.first);
+            await tester.pumpAndSettle();
+            expect(find.text('Split Fleet'), findsOneWidget);
+            await tester.tap(find.text('Cancel'));
+            await tester.pumpAndSettle();
+          }
+        }
+
+        final nonHomeFleets = game.worldState.fleets
+            .where(
+              (f) =>
+                  f.ownerId == humanId &&
+                  f.shipTypeIds.isNotEmpty &&
+                  f.id != 'home_fleet',
+            )
+            .toList();
+        if (nonHomeFleets.isEmpty) return;
+        final nonHomeFinder = find.widgetWithText(
+          ExpansionTile,
+          'Fleet ${nonHomeFleets.first.id}',
+        );
+        if (nonHomeFinder.evaluate().isEmpty) return;
+        await tester.ensureVisible(nonHomeFinder);
+        await tester.tap(nonHomeFinder);
+        await tester.pumpAndSettle();
+        final splitButton = find.byTooltip('Split');
+        if (splitButton.evaluate().isEmpty) return;
+        await tester.tap(splitButton.first);
+        await tester.pumpAndSettle();
+        expect(find.text('Split Fleet'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC: Combine control is in the panel header when fleets exist',
+      (WidgetTester tester) async {
+        final humanId = humanPlayerIdWithFleets;
+
+        final playerFleets = game.worldState.fleets
+            .where(
+              (f) =>
+                  f.ownerId == humanId &&
+                  f.shipTypeIds.isNotEmpty &&
+                  f.id != 'home_fleet',
+            )
+            .toList();
+        if (playerFleets.isEmpty) return;
+
+        await tester.pumpWidget(buildPanel(game: game, humanPlayerId: humanId));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.widgetWithText(CtNinePatchButton, 'Combine'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: NavalFleetsUpdatedEvent is emitted when fleet split completes',
+      (WidgetTester tester) async {
+        final humanId = humanPlayerIdWithFleets;
+
+        final bus = AppEventBus.create();
+        NavalFleetsUpdatedEvent? fleetEvent;
+        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+          fleetEvent = e;
+        });
+        addTearDown(sub.cancel);
+        final subSplit = wireNavalSplitForWidgetTest(
+          bus: bus,
+          gameSnapshot: () => game,
+        );
+        addTearDown(subSplit.cancel);
+
+        final splittable = game.worldState.fleets
+            .where((f) => f.ownerId == humanId && f.shipTypeIds.length >= 2)
+            .toList();
+        if (splittable.isEmpty) return;
+
+        final targetFleet = splittable.first;
+        final tileLabel = targetFleet.id == 'home_fleet'
+            ? 'Home Fleet'
+            : 'Fleet ${targetFleet.id}';
+
+        await tester.pumpWidget(
+          buildPanel(bus: bus, game: game, humanPlayerId: humanId),
+        );
+        await tester.pumpAndSettle();
+
+        final fleetFinder = find.widgetWithText(ExpansionTile, tileLabel);
+        if (fleetFinder.evaluate().isEmpty) return;
+
+        await tester.ensureVisible(fleetFinder);
+        await tester.tap(fleetFinder);
+        await tester.pumpAndSettle();
+
+        final splitButton = find.byTooltip('Split');
+        if (splitButton.evaluate().isEmpty) return;
+
+        await tester.tap(splitButton);
+        await tester.pumpAndSettle();
+
+        final moveToNew = find.byIcon(Icons.arrow_back);
+        if (moveToNew.evaluate().isEmpty) return;
+
+        await tester.tap(moveToNew);
+        await tester.pumpAndSettle();
+
+        final confirmSplit = find.text('Confirm Split');
+        if (confirmSplit.evaluate().isEmpty) return;
+
+        await tester.tap(confirmSplit);
+        await tester.pumpAndSettle();
+
+        expect(fleetEvent, isNotNull);
+        expect(fleetEvent!.game.worldState.fleets, isNotEmpty);
+      },
+    );
+
+    testWidgets(
+      'split event can drive external watcher updates (cross-panel style)',
+      (WidgetTester tester) async {
+        final humanId = humanPlayerIdWithFleets;
+        final bus = AppEventBus.create();
+        final observedFleetCount = ValueNotifier<int>(
+          game.worldState.fleets.length,
+        );
+        final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+          observedFleetCount.value = e.game.worldState.fleets.length;
+        });
+        final subSplit = wireNavalSplitForWidgetTest(
+          bus: bus,
+          gameSnapshot: () => game,
+        );
+        addTearDown(() async {
+          await sub.cancel();
+          await subSplit.cancel();
+          observedFleetCount.dispose();
+        });
+
+        final splittable = game.worldState.fleets
+            .where((f) => f.ownerId == humanId && f.shipTypeIds.length >= 2)
+            .toList();
+        if (splittable.isEmpty) return;
+
+        final targetFleet = splittable.first;
+        final tileLabel = targetFleet.id == 'home_fleet'
+            ? 'Home Fleet'
+            : 'Fleet ${targetFleet.id}';
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Column(
+                children: [
+                  ValueListenableBuilder<int>(
+                    valueListenable: observedFleetCount,
+                    builder: (context, count, _) =>
+                        Text('observed-fleet-count:$count'),
+                  ),
+                  Expanded(
+                    child: NavalUnitsPanel(
+                      game: game,
+                      humanPlayerId: humanId,
+                      bus: bus,
+                      topology: getDebugInitGameResult().combinedTopology,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final beforeText = find.text(
+          'observed-fleet-count:${game.worldState.fleets.length}',
+        );
+        expect(beforeText, findsOneWidget);
+
+        final fleetFinder = find.widgetWithText(ExpansionTile, tileLabel);
+        if (fleetFinder.evaluate().isEmpty) return;
+        await tester.ensureVisible(fleetFinder);
+        await tester.tap(fleetFinder);
+        await tester.pumpAndSettle();
+
+        final splitButton = find.byTooltip('Split');
+        if (splitButton.evaluate().isEmpty) return;
+        await tester.tap(splitButton);
+        await tester.pumpAndSettle();
+
+        final moveToNew = find.byIcon(Icons.arrow_back);
+        if (moveToNew.evaluate().isEmpty) return;
+        await tester.tap(moveToNew.first);
+        await tester.pumpAndSettle();
+
+        final confirmSplit = find.text('Confirm Split');
+        if (confirmSplit.evaluate().isEmpty) return;
+        await tester.tap(confirmSplit);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text(
+            'observed-fleet-count:${game.worldState.fleets.length + 1}',
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
   });
 }

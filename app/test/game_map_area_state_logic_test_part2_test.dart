@@ -76,34 +76,7 @@ void _expectPortFleetMarkersMatchTownPortDrawables(RegionMapViewData region) {
 
 void main() {
   suppressLogsForTests();
-  group('GameMapAreaStateLogic', () {    test('drops pending civilian move for same unit when assigning work', () {
-        const humanPlayerId = 'gp1';
-        const pendingMove = ct_models.MoveOrder(
-          unitId: 'u1',
-          destinationTileKey: 'oldWorld|p2|0|0',
-        );
-        final orders = ct_models.Orders(
-          moveOrdersByPlayerId: {
-            humanPlayerId: [pendingMove],
-          },
-        );
-        const work = ct_models.WorkOrder(
-          unitId: 'u1',
-          target: 'explore',
-          targetTileKey: 'oldWorld|p2|0|0',
-        );
-
-        final updated = GameMapAreaStateLogic.addHumanWorkOrder(
-          orders: orders,
-          humanPlayerId: humanPlayerId,
-          workOrder: work,
-        );
-
-        expect(updated.moveOrdersByPlayerId[humanPlayerId], isEmpty);
-        expect(updated.workOrdersByPlayerId[humanPlayerId], [work]);
-      });
-    });
-
+  group('GameMapAreaStateLogic', () {
     group('provinceProspectActionState', () {
       const humanPlayerId = 'gp1';
       const selectedTileKey = 'oldWorld|p1|0|0';
@@ -186,7 +159,7 @@ void main() {
         );
       }
 
-    test('shows enabled icon for visible, unprospected mineral tile', () {
+      test('shows enabled icon for visible, unprospected mineral tile', () {
         final state = GameMapAreaStateLogic.provinceProspectActionState(
           game: makeGame(),
           humanPlayerId: humanPlayerId,
@@ -203,7 +176,7 @@ void main() {
         expect(state.hasExplorerUnits, isTrue);
       });
 
-    test('hides icon when selected tile already prospected', () {
+      test('hides icon when selected tile already prospected', () {
         final state = GameMapAreaStateLogic.provinceProspectActionState(
           game: makeGame(includeProspectedTile: true),
           humanPlayerId: humanPlayerId,
@@ -218,7 +191,7 @@ void main() {
         expect(state.hasExplorerUnits, isFalse);
       });
 
-    test('shows disabled icon when human has zero explorer units', () {
+      test('shows disabled icon when human has zero explorer units', () {
         final state = GameMapAreaStateLogic.provinceProspectActionState(
           game: makeGame(includeExplorer: false),
           humanPlayerId: humanPlayerId,
@@ -235,7 +208,7 @@ void main() {
         expect(state.hasExplorerUnits, isFalse);
       });
 
-    test('hides icon for unknown-visibility tiles', () {
+      test('hides icon for unknown-visibility tiles', () {
         final state = GameMapAreaStateLogic.provinceProspectActionState(
           game: makeGame(),
           humanPlayerId: humanPlayerId,
@@ -250,7 +223,7 @@ void main() {
         expect(state.hasExplorerUnits, isFalse);
       });
 
-    test(
+      test(
         'hides prospect shortcut for wool on hills when tile map marks hills',
         () {
           final tileMapByRegion = <String, TileMapResult>{
@@ -388,7 +361,7 @@ void main() {
         ),
       };
 
-    test('shows icon for improvable tile with builder units', () {
+      test('shows icon for improvable tile with builder units', () {
         final state = GameMapAreaStateLogic.provinceBuildImprovementActionState(
           game: makeGame(),
           humanPlayerId: humanPlayerId,
@@ -403,7 +376,7 @@ void main() {
         expect(state.hasBuilderUnits, isTrue);
       });
 
-    test('hides icon when tile has no resource', () {
+      test('hides icon when tile has no resource', () {
         final state = GameMapAreaStateLogic.provinceBuildImprovementActionState(
           game: makeGame(includeResource: false, techUnlocked: const {}),
           humanPlayerId: humanPlayerId,
@@ -417,7 +390,7 @@ void main() {
         expect(state.enabled, isFalse);
       });
 
-    test('shows disabled icon when no builder units exist', () {
+      test('shows disabled icon when no builder units exist', () {
         final state = GameMapAreaStateLogic.provinceBuildImprovementActionState(
           game: makeGame(includeBuilder: false),
           humanPlayerId: humanPlayerId,
@@ -434,7 +407,7 @@ void main() {
 
       // Pipeline contract (A), Refs #1990 — SPEC/program/order-suggestions.md §
       // Province Tile `Build improvement` shortcut enablement.
-    test(
+      test(
         'enabled matches getValidWorkOrderTileKeysWithVisibility pipeline when topology null',
         () {
           final game = makeGame();
@@ -462,7 +435,7 @@ void main() {
         },
       );
 
-    test(
+      test(
         'enabled matches pipeline for assignable grain tile with topology and materials',
         () {
           const provinceId = selectedProvinceId;
@@ -547,7 +520,7 @@ void main() {
         },
       );
 
-    test(
+      test(
         'enabled matches pipeline when materials are insufficient for build_improvement',
         () {
           const provinceId = selectedProvinceId;
@@ -695,7 +668,7 @@ void main() {
         unitMarkers: const [],
       );
 
-    test(
+      test(
         'shows enabled icon in partially revealed province with cached target',
         () {
           final state = GameMapAreaStateLogic.provinceExploreActionState(
@@ -710,7 +683,7 @@ void main() {
         },
       );
 
-    test('hides icon when province is fully revealed', () {
+      test('hides icon when province is fully revealed', () {
         final fullyRevealedRegion = RegionMapViewData(
           regionId: 'oldWorld',
           width: 2,
@@ -749,7 +722,7 @@ void main() {
         expect(state.showIcon, isFalse);
       });
 
-    test('shows disabled icon when no explorers exist', () {
+      test('shows disabled icon when no explorers exist', () {
         final noExplorerGame = game.copyWith(
           worldState: game.worldState.copyWith(
             oldWorld: ct_models.RegionData(
@@ -769,135 +742,5 @@ void main() {
         expect(state.enabled, isFalse);
       });
     });
-
-    group('projectFleetMarkersForHumanDraft in-port harbor anchoring', () {
-      const humanId = 'gp1';
-
-      RegionMapViewData projectFleetDraft({
-        required RegionMapViewData region,
-        required ct_models.Game game,
-        required ct_models.Orders orders,
-        required Map<String, TileMapResult> tm,
-        required Map<String, MapTopology> tr,
-      }) {
-        return GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-          region: region,
-          game: game,
-          orders: orders,
-          humanPlayerId: humanId,
-          tileMapByRegion: tm,
-          topologyByRegion: tr,
-          combinedTopology: const MapTopology(nodes: [], edges: []),
-        );
-      }
-
-    test(
-        'in-port fleet marker matches port icon after projection (capital port)',
-        () {
-          final owMap = TileMapResult(
-            width: 2,
-            height: 2,
-            grid: [
-              ['p1', 's1'],
-              ['p1', 'p1'],
-            ],
-          );
-          final nwMap = TileMapResult(
-            width: 1,
-            height: 1,
-            grid: [
-              ['p1'],
-            ],
-          );
-          final owTopology = MapTopology(
-            nodes: const [
-              TopologyNode(
-                id: 'p1',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 's1',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.seaZone,
-              ),
-            ],
-            edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-          );
-          final nwTopology = MapTopology(
-            nodes: const [
-              TopologyNode(
-                id: 'p1',
-                regionId: 'newWorld',
-                type: TopologyNodeType.province,
-              ),
-            ],
-            edges: const [],
-          );
-          final game = ct_models.Game(
-            id: 'g',
-            worldState: ct_models.WorldState(
-              turnState: const ct_models.TurnState(
-                phase: ct_models.TurnPhase.orders,
-                turnNumber: 0,
-              ),
-              oldWorld: ct_models.RegionData(
-                provinces: [
-                  ct_models.Province(
-                    id: 'oldWorld|p1',
-                    regionId: 'oldWorld',
-                    ownerId: humanId,
-                    townTileKey: 'oldWorld|p1|1|1',
-                  ),
-                ],
-                units: const [],
-              ),
-              newWorld: const ct_models.RegionData(provinces: [], units: []),
-              portsByProvinceSeaboard: {'oldWorld|p1|sb': 'oldWorld|p1|0|0'},
-              fleets: [
-                ct_models.Fleet(
-                  id: 'f1',
-                  ownerId: humanId,
-                  regionId: 'oldWorld',
-                  inPortAtProvinceId: 'oldWorld|p1',
-                  ships: [
-                    ct_models.ShipInstance(id: 'ship_1', typeId: 'frigate'),
-                  ],
-                ),
-              ],
-            ),
-            players: const [
-              ct_models.Player(
-                id: humanId,
-                displayName: 'Human',
-                isHuman: true,
-              ),
-            ],
-            minorNations: const [],
-            tribes: const [],
-          );
-
-          final tileByReg = {'oldWorld': owMap, 'newWorld': nwMap};
-          final topoByReg = {'oldWorld': owTopology, 'newWorld': nwTopology};
-          final view = buildInitGameMapViewData(
-            game: game,
-            tileMapByRegion: tileByReg,
-            topologyByRegion: topoByReg,
-            cellSize: 8,
-          );
-          final region = view.oldWorld;
-          _expectPortFleetMarkersMatchTownPortDrawables(region);
-
-          final projected = projectFleetDraft(
-            region: region,
-            game: game,
-            orders: const ct_models.Orders(),
-            tm: tileByReg,
-            tr: topoByReg,
-          );
-          _expectPortFleetMarkersMatchTownPortDrawables(projected);
-        },
-      );
-
   });
 }

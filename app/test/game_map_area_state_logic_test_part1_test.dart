@@ -255,7 +255,7 @@ void main() {
           );
         }
 
-    test('Old World explorer with prospect draft appears in New World '
+        test('Old World explorer with prospect draft appears in New World '
             'even when New World has no standing civilian markers', () {
           const sourceTile = 'oldWorld|p1|0|0';
           const targetTile = 'newWorld|p1|1|0';
@@ -328,7 +328,7 @@ void main() {
           expect(projectedOw.civilianTileMarkers, isEmpty);
         });
 
-    test('New World explorer with prospect draft appears in Old World '
+        test('New World explorer with prospect draft appears in Old World '
             'and leaves source New World projection', () {
           const sourceTile = 'newWorld|p1|0|0';
           const targetTile = 'oldWorld|p1|1|0';
@@ -433,7 +433,7 @@ void main() {
           expect(projectedNw.civilianTileMarkers, isEmpty);
         });
 
-    test(
+        test(
           'overlapping local province id does not alias regions in projection',
           () {
             const sourceTile = 'oldWorld|p1|0|0';
@@ -469,7 +469,7 @@ void main() {
           },
         );
 
-    test('clearing cross-region draft restores source-region marker', () {
+        test('clearing cross-region draft restores source-region marker', () {
           const sourceTile = 'oldWorld|p1|0|0';
           const targetTile = 'newWorld|p1|1|0';
           final game = gameExplorerOldToNew(
@@ -548,7 +548,7 @@ void main() {
           expect(afterCancelOw.civilianTileMarkers.single.tileKey, sourceTile);
         });
 
-    test(
+        test(
           'replacing cross-region prospect target updates destination tile',
           () {
             const sourceTile = 'oldWorld|p1|0|0';
@@ -619,7 +619,7 @@ void main() {
           },
         );
 
-    test('cross-region prospect stacks explorer onto existing destination '
+        test('cross-region prospect stacks explorer onto existing destination '
             'civilian marker', () {
           const sourceTile = 'oldWorld|p1|0|0';
           const targetTile = 'newWorld|p1|1|0';
@@ -786,28 +786,28 @@ void main() {
     );
 
     group('displayProvinceOrSeaIdFromTileKey', () {
-    test('extracts region and province from full tile key', () {
+      test('extracts region and province from full tile key', () {
         expect(
           displayProvinceOrSeaIdFromTileKey('oldWorld|p1|10|20'),
           'oldWorld|p1',
         );
       });
 
-    test('returns null for short keys', () {
+      test('returns null for short keys', () {
         expect(displayProvinceOrSeaIdFromTileKey('badKey'), isNull);
         expect(displayProvinceOrSeaIdFromTileKey(null), isNull);
       });
     });
 
     group('regionIndexFromWorldRegionId', () {
-    test('newWorld maps to index 1', () {
+      test('newWorld maps to index 1', () {
         expect(
           GameMapAreaStateLogic.regionIndexFromWorldRegionId('newWorld'),
           1,
         );
       });
 
-    test('any other region maps to index 0', () {
+      test('any other region maps to index 0', () {
         expect(
           GameMapAreaStateLogic.regionIndexFromWorldRegionId('oldWorld'),
           0,
@@ -816,7 +816,7 @@ void main() {
     });
 
     group('translateWorkTargetTileKey', () {
-    test('explore preserves exact assigned tile key', () {
+      test('explore preserves exact assigned tile key', () {
         final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1|10|20',
           workTarget: 'explore',
@@ -824,7 +824,7 @@ void main() {
         expect(translated, 'oldWorld|p1|10|20');
       });
 
-    test('non-province-based work targets preserve tileKey', () {
+      test('non-province-based work targets preserve tileKey', () {
         final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1|10|20',
           workTarget: 'move',
@@ -832,7 +832,7 @@ void main() {
         expect(translated, 'oldWorld|p1|10|20');
       });
 
-    test('short tile keys are returned unchanged', () {
+      test('short tile keys are returned unchanged', () {
         final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1',
           workTarget: 'explore',
@@ -842,7 +842,7 @@ void main() {
     });
 
     group('addHumanWorkOrder', () {
-    test('appends work order under given humanPlayerId', () {
+      test('appends work order under given humanPlayerId', () {
         const humanPlayerId = 'gp1';
         final orders = ct_models.Orders(
           workOrdersByPlayerId: const {humanPlayerId: []},
@@ -862,7 +862,7 @@ void main() {
         expect(updated.workOrdersByPlayerId[humanPlayerId], [workOrder]);
       });
 
-    test('replaces existing pending work order for same unit', () {
+      test('replaces existing pending work order for same unit', () {
         const humanPlayerId = 'gp1';
         const unitId = 'u1';
         final orders = ct_models.Orders(
@@ -891,5 +891,32 @@ void main() {
         expect(updated.workOrdersByPlayerId[humanPlayerId], [replacement]);
       });
 
+      test('drops pending civilian move for same unit when assigning work', () {
+        const humanPlayerId = 'gp1';
+        const pendingMove = ct_models.MoveOrder(
+          unitId: 'u1',
+          destinationTileKey: 'oldWorld|p2|0|0',
+        );
+        final orders = ct_models.Orders(
+          moveOrdersByPlayerId: {
+            humanPlayerId: [pendingMove],
+          },
+        );
+        const work = ct_models.WorkOrder(
+          unitId: 'u1',
+          target: 'explore',
+          targetTileKey: 'oldWorld|p2|0|0',
+        );
+
+        final updated = GameMapAreaStateLogic.addHumanWorkOrder(
+          orders: orders,
+          humanPlayerId: humanPlayerId,
+          workOrder: work,
+        );
+
+        expect(updated.moveOrdersByPlayerId[humanPlayerId], isEmpty);
+        expect(updated.workOrdersByPlayerId[humanPlayerId], [work]);
+      });
+    });
   });
 }
