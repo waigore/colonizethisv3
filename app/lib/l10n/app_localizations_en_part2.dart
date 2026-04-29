@@ -546,6 +546,4 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get provinceOverlay_tileProspectedUnknown => 'Prospected: ???';
-
-  @override
 }

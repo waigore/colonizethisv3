@@ -76,142 +76,7 @@ void _expectPortFleetMarkersMatchTownPortDrawables(RegionMapViewData region) {
 
 void main() {
   suppressLogsForTests();
-  group('GameMapAreaStateLogic', () {
-              orders: orders,
-              humanPlayerId: humanPlayerId,
-            ).civilianTileMarkers,
-            isEmpty,
-          );
-        });
-      },
-    );
-
-    test('selectionAfterWorkAssignment clears stale selected marker tile', () {
-      final next = GameMapAreaStateLogic.selectionAfterWorkAssignment(
-        currentSelectedCivilianTileKey: 'oldWorld|p1|0|0',
-        assignedTileKey: 'oldWorld|p1|1|0',
-      );
-      expect(next, isNull);
-    });
-
-    test(
-      'selectionAfterWorkAssignment preserves selection on assigned tile',
-      () {
-        final next = GameMapAreaStateLogic.selectionAfterWorkAssignment(
-          currentSelectedCivilianTileKey: 'oldWorld|p1|1|0',
-          assignedTileKey: 'oldWorld|p1|1|0',
-        );
-        expect(next, 'oldWorld|p1|1|0');
-      },
-    );
-
-    group('displayProvinceOrSeaIdFromTileKey', () {
-      test('extracts region and province from full tile key', () {
-        expect(
-          displayProvinceOrSeaIdFromTileKey('oldWorld|p1|10|20'),
-          'oldWorld|p1',
-        );
-      });
-
-      test('returns null for short keys', () {
-        expect(displayProvinceOrSeaIdFromTileKey('badKey'), isNull);
-        expect(displayProvinceOrSeaIdFromTileKey(null), isNull);
-      });
-    });
-
-    group('regionIndexFromWorldRegionId', () {
-      test('newWorld maps to index 1', () {
-        expect(
-          GameMapAreaStateLogic.regionIndexFromWorldRegionId('newWorld'),
-          1,
-        );
-      });
-
-      test('any other region maps to index 0', () {
-        expect(
-          GameMapAreaStateLogic.regionIndexFromWorldRegionId('oldWorld'),
-          0,
-        );
-      });
-    });
-
-    group('translateWorkTargetTileKey', () {
-      test('explore preserves exact assigned tile key', () {
-        final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
-          tileKey: 'oldWorld|p1|10|20',
-          workTarget: 'explore',
-        );
-        expect(translated, 'oldWorld|p1|10|20');
-      });
-
-      test('non-province-based work targets preserve tileKey', () {
-        final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
-          tileKey: 'oldWorld|p1|10|20',
-          workTarget: 'move',
-        );
-        expect(translated, 'oldWorld|p1|10|20');
-      });
-
-      test('short tile keys are returned unchanged', () {
-        final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
-          tileKey: 'oldWorld|p1',
-          workTarget: 'explore',
-        );
-        expect(translated, 'oldWorld|p1');
-      });
-    });
-
-    group('addHumanWorkOrder', () {
-      test('appends work order under given humanPlayerId', () {
-        const humanPlayerId = 'gp1';
-        final orders = ct_models.Orders(
-          workOrdersByPlayerId: const {humanPlayerId: []},
-        );
-        final workOrder = ct_models.WorkOrder(
-          unitId: 'u1',
-          target: 'explore',
-          targetTileKey: 'oldWorld|p1|0|0',
-        );
-
-        final updated = GameMapAreaStateLogic.addHumanWorkOrder(
-          orders: orders,
-          humanPlayerId: humanPlayerId,
-          workOrder: workOrder,
-        );
-
-        expect(updated.workOrdersByPlayerId[humanPlayerId], [workOrder]);
-      });
-
-      test('replaces existing pending work order for same unit', () {
-        const humanPlayerId = 'gp1';
-        const unitId = 'u1';
-        final orders = ct_models.Orders(
-          workOrdersByPlayerId: const {
-            humanPlayerId: [
-              ct_models.WorkOrder(
-                unitId: unitId,
-                target: 'build_improvement',
-                targetTileKey: 'oldWorld|p1|0|0',
-              ),
-            ],
-          },
-        );
-        const replacement = ct_models.WorkOrder(
-          unitId: unitId,
-          target: 'build_road',
-          targetTileKey: 'oldWorld|p1|1|0',
-        );
-
-        final updated = GameMapAreaStateLogic.addHumanWorkOrder(
-          orders: orders,
-          humanPlayerId: humanPlayerId,
-          workOrder: replacement,
-        );
-
-        expect(updated.workOrdersByPlayerId[humanPlayerId], [replacement]);
-      });
-
-      test('drops pending civilian move for same unit when assigning work', () {
+  group('GameMapAreaStateLogic', () {    test('drops pending civilian move for same unit when assigning work', () {
         const humanPlayerId = 'gp1';
         const pendingMove = ct_models.MoveOrder(
           unitId: 'u1',
@@ -321,7 +186,7 @@ void main() {
         );
       }
 
-      test('shows enabled icon for visible, unprospected mineral tile', () {
+    test('shows enabled icon for visible, unprospected mineral tile', () {
         final state = GameMapAreaStateLogic.provinceProspectActionState(
           game: makeGame(),
           humanPlayerId: humanPlayerId,
@@ -338,7 +203,7 @@ void main() {
         expect(state.hasExplorerUnits, isTrue);
       });
 
-      test('hides icon when selected tile already prospected', () {
+    test('hides icon when selected tile already prospected', () {
         final state = GameMapAreaStateLogic.provinceProspectActionState(
           game: makeGame(includeProspectedTile: true),
           humanPlayerId: humanPlayerId,
@@ -353,7 +218,7 @@ void main() {
         expect(state.hasExplorerUnits, isFalse);
       });
 
-      test('shows disabled icon when human has zero explorer units', () {
+    test('shows disabled icon when human has zero explorer units', () {
         final state = GameMapAreaStateLogic.provinceProspectActionState(
           game: makeGame(includeExplorer: false),
           humanPlayerId: humanPlayerId,
@@ -370,7 +235,7 @@ void main() {
         expect(state.hasExplorerUnits, isFalse);
       });
 
-      test('hides icon for unknown-visibility tiles', () {
+    test('hides icon for unknown-visibility tiles', () {
         final state = GameMapAreaStateLogic.provinceProspectActionState(
           game: makeGame(),
           humanPlayerId: humanPlayerId,
@@ -385,7 +250,7 @@ void main() {
         expect(state.hasExplorerUnits, isFalse);
       });
 
-      test(
+    test(
         'hides prospect shortcut for wool on hills when tile map marks hills',
         () {
           final tileMapByRegion = <String, TileMapResult>{
@@ -523,7 +388,7 @@ void main() {
         ),
       };
 
-      test('shows icon for improvable tile with builder units', () {
+    test('shows icon for improvable tile with builder units', () {
         final state = GameMapAreaStateLogic.provinceBuildImprovementActionState(
           game: makeGame(),
           humanPlayerId: humanPlayerId,
@@ -538,7 +403,7 @@ void main() {
         expect(state.hasBuilderUnits, isTrue);
       });
 
-      test('hides icon when tile has no resource', () {
+    test('hides icon when tile has no resource', () {
         final state = GameMapAreaStateLogic.provinceBuildImprovementActionState(
           game: makeGame(includeResource: false, techUnlocked: const {}),
           humanPlayerId: humanPlayerId,
@@ -552,7 +417,7 @@ void main() {
         expect(state.enabled, isFalse);
       });
 
-      test('shows disabled icon when no builder units exist', () {
+    test('shows disabled icon when no builder units exist', () {
         final state = GameMapAreaStateLogic.provinceBuildImprovementActionState(
           game: makeGame(includeBuilder: false),
           humanPlayerId: humanPlayerId,
@@ -569,7 +434,7 @@ void main() {
 
       // Pipeline contract (A), Refs #1990 — SPEC/program/order-suggestions.md §
       // Province Tile `Build improvement` shortcut enablement.
-      test(
+    test(
         'enabled matches getValidWorkOrderTileKeysWithVisibility pipeline when topology null',
         () {
           final game = makeGame();
@@ -597,7 +462,7 @@ void main() {
         },
       );
 
-      test(
+    test(
         'enabled matches pipeline for assignable grain tile with topology and materials',
         () {
           const provinceId = selectedProvinceId;
@@ -650,7 +515,7 @@ void main() {
                 stockpile: const ct_models.Stockpile(
                   quantities: {'lumber': 10, 'castIron': 10},
                 ),
-                techUnlocked: const {kTechIdCircularSaw: true},
+                techUnlocked: const {'circular_saw': true},
               ),
             ],
             minorNations: const [],
@@ -682,7 +547,7 @@ void main() {
         },
       );
 
-      test(
+    test(
         'enabled matches pipeline when materials are insufficient for build_improvement',
         () {
           const provinceId = selectedProvinceId;
@@ -733,7 +598,7 @@ void main() {
                 isHuman: true,
                 capitalProvinceId: provinceId,
                 stockpile: const ct_models.Stockpile(quantities: {}),
-                techUnlocked: const {kTechIdCircularSaw: true},
+                techUnlocked: const {'circular_saw': true},
               ),
             ],
             minorNations: const [],
@@ -757,5 +622,282 @@ void main() {
                 selectedTileKey: selectedTileKey,
                 playerView: brokeView,
                 topology: topology,
+                currentOrders: orders,
+                tileMapByRegion: tileMapByRegion,
+              );
+          expect(state.enabled, expected);
+          expect(expected, isFalse);
+        },
+      );
+    });
+
+    group('provinceExploreActionState', () {
+      const humanPlayerId = 'gp1';
+      const selectedTileKey = 'oldWorld|p1|0|0';
+      final game = ct_models.Game(
+        id: 'g',
+        worldState: ct_models.WorldState(
+          turnState: const ct_models.TurnState(
+            phase: ct_models.TurnPhase.orders,
+            turnNumber: 1,
+          ),
+          oldWorld: ct_models.RegionData(
+            provinces: const [
+              ct_models.Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
+            ],
+            units: [
+              ct_models.Unit(
+                id: 'u_explorer',
+                type: 'Explorer',
+                ownerId: humanPlayerId,
+                locationProvinceId: 'oldWorld|p1',
+                tileKey: selectedTileKey,
+              ),
+            ],
+          ),
+          newWorld: const ct_models.RegionData(),
+        ),
+        players: const [
+          ct_models.Player(
+            id: humanPlayerId,
+            displayName: 'Human',
+            isHuman: true,
+          ),
+        ],
+      );
+
+      final partiallyRevealedRegion = RegionMapViewData(
+        regionId: 'oldWorld',
+        width: 2,
+        height: 1,
+        cellSize: 16,
+        cells: const [
+          CellViewData(
+            x: 0,
+            y: 0,
+            regionCellId: 'p1',
+            isSea: false,
+            visibility: TileVisibility.fogged,
+          ),
+          CellViewData(
+            x: 1,
+            y: 0,
+            regionCellId: 'p1',
+            isSea: false,
+            visibility: TileVisibility.unrevealed,
+          ),
+        ],
+        capitalMarkers: const [],
+        portMarkers: const [],
+        factionColors: const {},
+        greatPowerFactionIds: const {},
+        terrainColors: const {},
+        unitMarkers: const [],
+      );
+
+    test(
+        'shows enabled icon in partially revealed province with cached target',
+        () {
+          final state = GameMapAreaStateLogic.provinceExploreActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            selectedRegion: partiallyRevealedRegion,
+            cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
+          );
+          expect(state.showIcon, isTrue);
+          expect(state.enabled, isTrue);
+        },
+      );
+
+    test('hides icon when province is fully revealed', () {
+        final fullyRevealedRegion = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 2,
+          height: 1,
+          cellSize: 16,
+          cells: const [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              visibility: TileVisibility.fogged,
+            ),
+            CellViewData(
+              x: 1,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              visibility: TileVisibility.fogged,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          factionColors: const {},
+          greatPowerFactionIds: const {},
+          terrainColors: const {},
+          unitMarkers: const [],
+        );
+        final state = GameMapAreaStateLogic.provinceExploreActionState(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          selectedRegion: fullyRevealedRegion,
+          cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
+        );
+        expect(state.showIcon, isFalse);
+      });
+
+    test('shows disabled icon when no explorers exist', () {
+        final noExplorerGame = game.copyWith(
+          worldState: game.worldState.copyWith(
+            oldWorld: ct_models.RegionData(
+              provinces: game.worldState.oldWorld.provinces,
+              units: const [],
+            ),
+          ),
+        );
+        final state = GameMapAreaStateLogic.provinceExploreActionState(
+          game: noExplorerGame,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          selectedRegion: partiallyRevealedRegion,
+          cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
+        );
+        expect(state.showIcon, isTrue);
+        expect(state.enabled, isFalse);
+      });
+    });
+
+    group('projectFleetMarkersForHumanDraft in-port harbor anchoring', () {
+      const humanId = 'gp1';
+
+      RegionMapViewData projectFleetDraft({
+        required RegionMapViewData region,
+        required ct_models.Game game,
+        required ct_models.Orders orders,
+        required Map<String, TileMapResult> tm,
+        required Map<String, MapTopology> tr,
+      }) {
+        return GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
+          region: region,
+          game: game,
+          orders: orders,
+          humanPlayerId: humanId,
+          tileMapByRegion: tm,
+          topologyByRegion: tr,
+          combinedTopology: const MapTopology(nodes: [], edges: []),
+        );
+      }
+
+    test(
+        'in-port fleet marker matches port icon after projection (capital port)',
+        () {
+          final owMap = TileMapResult(
+            width: 2,
+            height: 2,
+            grid: [
+              ['p1', 's1'],
+              ['p1', 'p1'],
+            ],
+          );
+          final nwMap = TileMapResult(
+            width: 1,
+            height: 1,
+            grid: [
+              ['p1'],
+            ],
+          );
+          final owTopology = MapTopology(
+            nodes: const [
+              TopologyNode(
+                id: 'p1',
+                regionId: 'oldWorld',
+                type: TopologyNodeType.province,
+              ),
+              TopologyNode(
+                id: 's1',
+                regionId: 'oldWorld',
+                type: TopologyNodeType.seaZone,
+              ),
+            ],
+            edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
+          );
+          final nwTopology = MapTopology(
+            nodes: const [
+              TopologyNode(
+                id: 'p1',
+                regionId: 'newWorld',
+                type: TopologyNodeType.province,
+              ),
+            ],
+            edges: const [],
+          );
+          final game = ct_models.Game(
+            id: 'g',
+            worldState: ct_models.WorldState(
+              turnState: const ct_models.TurnState(
+                phase: ct_models.TurnPhase.orders,
+                turnNumber: 0,
+              ),
+              oldWorld: ct_models.RegionData(
+                provinces: [
+                  ct_models.Province(
+                    id: 'oldWorld|p1',
+                    regionId: 'oldWorld',
+                    ownerId: humanId,
+                    townTileKey: 'oldWorld|p1|1|1',
+                  ),
+                ],
+                units: const [],
+              ),
+              newWorld: const ct_models.RegionData(provinces: [], units: []),
+              portsByProvinceSeaboard: {'oldWorld|p1|sb': 'oldWorld|p1|0|0'},
+              fleets: [
+                ct_models.Fleet(
+                  id: 'f1',
+                  ownerId: humanId,
+                  regionId: 'oldWorld',
+                  inPortAtProvinceId: 'oldWorld|p1',
+                  ships: [
+                    ct_models.ShipInstance(id: 'ship_1', typeId: 'frigate'),
+                  ],
+                ),
+              ],
+            ),
+            players: const [
+              ct_models.Player(
+                id: humanId,
+                displayName: 'Human',
+                isHuman: true,
+              ),
+            ],
+            minorNations: const [],
+            tribes: const [],
+          );
+
+          final tileByReg = {'oldWorld': owMap, 'newWorld': nwMap};
+          final topoByReg = {'oldWorld': owTopology, 'newWorld': nwTopology};
+          final view = buildInitGameMapViewData(
+            game: game,
+            tileMapByRegion: tileByReg,
+            topologyByRegion: topoByReg,
+            cellSize: 8,
+          );
+          final region = view.oldWorld;
+          _expectPortFleetMarkersMatchTownPortDrawables(region);
+
+          final projected = projectFleetDraft(
+            region: region,
+            game: game,
+            orders: const ct_models.Orders(),
+            tm: tileByReg,
+            tr: topoByReg,
+          );
+          _expectPortFleetMarkersMatchTownPortDrawables(projected);
+        },
+      );
+
   });
 }

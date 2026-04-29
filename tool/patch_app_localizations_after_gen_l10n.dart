@@ -35,9 +35,20 @@ void main() {
     );
   }
 
+  // gen-l10n adds `import 'app_localizations_en.dart';` which creates a cycle:
+  // app_localizations.dart -> en.dart -> parts -> needs AppLocalizations.
+  text = _removeImportLine(text, "import 'app_localizations_en.dart';");
+
   text = _removeTopLevelLookupFunction(text);
 
   file.writeAsStringSync(text);
+}
+
+String _removeImportLine(String text, String importLine) {
+  if (!text.contains(importLine)) {
+    return text;
+  }
+  return text.split('\n').where((l) => l.trim() != importLine.trim()).join('\n');
 }
 
 String _removeTopLevelLookupFunction(String text) {

@@ -76,285 +76,7 @@ void _expectPortFleetMarkersMatchTownPortDrawables(RegionMapViewData region) {
 
 void main() {
   suppressLogsForTests();
-  group('GameMapAreaStateLogic', () {
-                currentOrders: orders,
-                tileMapByRegion: tileMapByRegion,
-              );
-          expect(state.enabled, expected);
-          expect(expected, isFalse);
-        },
-      );
-    });
-
-    group('provinceExploreActionState', () {
-      const humanPlayerId = 'gp1';
-      const selectedTileKey = 'oldWorld|p1|0|0';
-      final game = ct_models.Game(
-        id: 'g',
-        worldState: ct_models.WorldState(
-          turnState: const ct_models.TurnState(
-            phase: ct_models.TurnPhase.orders,
-            turnNumber: 1,
-          ),
-          oldWorld: ct_models.RegionData(
-            provinces: const [
-              ct_models.Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
-            ],
-            units: [
-              ct_models.Unit(
-                id: 'u_explorer',
-                type: 'Explorer',
-                ownerId: humanPlayerId,
-                locationProvinceId: 'oldWorld|p1',
-                tileKey: selectedTileKey,
-              ),
-            ],
-          ),
-          newWorld: const ct_models.RegionData(),
-        ),
-        players: const [
-          ct_models.Player(
-            id: humanPlayerId,
-            displayName: 'Human',
-            isHuman: true,
-          ),
-        ],
-      );
-
-      final partiallyRevealedRegion = RegionMapViewData(
-        regionId: 'oldWorld',
-        width: 2,
-        height: 1,
-        cellSize: 16,
-        cells: const [
-          CellViewData(
-            x: 0,
-            y: 0,
-            regionCellId: 'p1',
-            isSea: false,
-            visibility: TileVisibility.fogged,
-          ),
-          CellViewData(
-            x: 1,
-            y: 0,
-            regionCellId: 'p1',
-            isSea: false,
-            visibility: TileVisibility.unrevealed,
-          ),
-        ],
-        capitalMarkers: const [],
-        portMarkers: const [],
-        factionColors: const {},
-        greatPowerFactionIds: const {},
-        terrainColors: const {},
-        unitMarkers: const [],
-      );
-
-      test(
-        'shows enabled icon in partially revealed province with cached target',
-        () {
-          final state = GameMapAreaStateLogic.provinceExploreActionState(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: selectedTileKey,
-            selectedRegion: partiallyRevealedRegion,
-            cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
-          );
-          expect(state.showIcon, isTrue);
-          expect(state.enabled, isTrue);
-        },
-      );
-
-      test('hides icon when province is fully revealed', () {
-        final fullyRevealedRegion = RegionMapViewData(
-          regionId: 'oldWorld',
-          width: 2,
-          height: 1,
-          cellSize: 16,
-          cells: const [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: 'p1',
-              isSea: false,
-              visibility: TileVisibility.fogged,
-            ),
-            CellViewData(
-              x: 1,
-              y: 0,
-              regionCellId: 'p1',
-              isSea: false,
-              visibility: TileVisibility.fogged,
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
-          factionColors: const {},
-          greatPowerFactionIds: const {},
-          terrainColors: const {},
-          unitMarkers: const [],
-        );
-        final state = GameMapAreaStateLogic.provinceExploreActionState(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: selectedTileKey,
-          selectedRegion: fullyRevealedRegion,
-          cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
-        );
-        expect(state.showIcon, isFalse);
-      });
-
-      test('shows disabled icon when no explorers exist', () {
-        final noExplorerGame = game.copyWith(
-          worldState: game.worldState.copyWith(
-            oldWorld: ct_models.RegionData(
-              provinces: game.worldState.oldWorld.provinces,
-              units: const [],
-            ),
-          ),
-        );
-        final state = GameMapAreaStateLogic.provinceExploreActionState(
-          game: noExplorerGame,
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: selectedTileKey,
-          selectedRegion: partiallyRevealedRegion,
-          cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
-        );
-        expect(state.showIcon, isTrue);
-        expect(state.enabled, isFalse);
-      });
-    });
-
-    group('projectFleetMarkersForHumanDraft in-port harbor anchoring', () {
-      const humanId = 'gp1';
-
-      RegionMapViewData projectFleetDraft({
-        required RegionMapViewData region,
-        required ct_models.Game game,
-        required ct_models.Orders orders,
-        required Map<String, TileMapResult> tm,
-        required Map<String, MapTopology> tr,
-      }) {
-        return GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-          region: region,
-          game: game,
-          orders: orders,
-          humanPlayerId: humanId,
-          tileMapByRegion: tm,
-          topologyByRegion: tr,
-          combinedTopology: const MapTopology(nodes: [], edges: []),
-        );
-      }
-
-      test(
-        'in-port fleet marker matches port icon after projection (capital port)',
-        () {
-          final owMap = TileMapResult(
-            width: 2,
-            height: 2,
-            grid: [
-              ['p1', 's1'],
-              ['p1', 'p1'],
-            ],
-          );
-          final nwMap = TileMapResult(
-            width: 1,
-            height: 1,
-            grid: [
-              ['p1'],
-            ],
-          );
-          final owTopology = MapTopology(
-            nodes: const [
-              TopologyNode(
-                id: 'p1',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 's1',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.seaZone,
-              ),
-            ],
-            edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-          );
-          final nwTopology = MapTopology(
-            nodes: const [
-              TopologyNode(
-                id: 'p1',
-                regionId: 'newWorld',
-                type: TopologyNodeType.province,
-              ),
-            ],
-            edges: const [],
-          );
-          final game = ct_models.Game(
-            id: 'g',
-            worldState: ct_models.WorldState(
-              turnState: const ct_models.TurnState(
-                phase: ct_models.TurnPhase.orders,
-                turnNumber: 0,
-              ),
-              oldWorld: ct_models.RegionData(
-                provinces: [
-                  ct_models.Province(
-                    id: 'oldWorld|p1',
-                    regionId: 'oldWorld',
-                    ownerId: humanId,
-                    townTileKey: 'oldWorld|p1|1|1',
-                  ),
-                ],
-                units: const [],
-              ),
-              newWorld: const ct_models.RegionData(provinces: [], units: []),
-              portsByProvinceSeaboard: {'oldWorld|p1|sb': 'oldWorld|p1|0|0'},
-              fleets: [
-                ct_models.Fleet(
-                  id: 'f1',
-                  ownerId: humanId,
-                  regionId: 'oldWorld',
-                  inPortAtProvinceId: 'oldWorld|p1',
-                  ships: [
-                    ct_models.ShipInstance(id: 'ship_1', typeId: 'frigate'),
-                  ],
-                ),
-              ],
-            ),
-            players: const [
-              ct_models.Player(
-                id: humanId,
-                displayName: 'Human',
-                isHuman: true,
-              ),
-            ],
-            minorNations: const [],
-            tribes: const [],
-          );
-
-          final tileByReg = {'oldWorld': owMap, 'newWorld': nwMap};
-          final topoByReg = {'oldWorld': owTopology, 'newWorld': nwTopology};
-          final view = buildInitGameMapViewData(
-            game: game,
-            tileMapByRegion: tileByReg,
-            topologyByRegion: topoByReg,
-            cellSize: 8,
-          );
-          final region = view.oldWorld;
-          _expectPortFleetMarkersMatchTownPortDrawables(region);
-
-          final projected = projectFleetDraft(
-            region: region,
-            game: game,
-            orders: const ct_models.Orders(),
-            tm: tileByReg,
-            tr: topoByReg,
-          );
-          _expectPortFleetMarkersMatchTownPortDrawables(projected);
-        },
-      );
-
-      test('dock draft destination uses same harbor sea cell as port icon', () {
+  group('GameMapAreaStateLogic', () {    test('dock draft destination uses same harbor sea cell as port icon', () {
         final owMap = TileMapResult(
           width: 2,
           height: 2,
@@ -465,7 +187,7 @@ void main() {
         expect(fleetMarker.y, town.portIconY);
       });
 
-      test('non-capital port fleet matches port drawable after projection', () {
+    test('non-capital port fleet matches port drawable after projection', () {
         final owMap = TileMapResult(
           width: 3,
           height: 2,
@@ -676,7 +398,7 @@ void main() {
         edges: [TopologyEdge(id1: 'oldWorld|s1', id2: 'newWorld|s2')],
       );
 
-      test(
+    test(
         'projects marker in destination region with halo + destination scope',
         () {
           final game = gameForCrossRegionDraft();
@@ -720,7 +442,7 @@ void main() {
         },
       );
 
-      test('does not render cross-region drafted fleet in source region', () {
+    test('does not render cross-region drafted fleet in source region', () {
         final game = gameForCrossRegionDraft();
         final tileByReg = {'oldWorld': oldWorldMap, 'newWorld': newWorldMap};
         final topoByReg = {
@@ -755,7 +477,36 @@ void main() {
         expect(projected.fleetTileMarkers, isEmpty);
       });
 
-      test('canceling draft restores source-region marker', () {
+    test('canceling draft restores source-region marker', () {
         final game = gameForCrossRegionDraft();
+        final tileByReg = {'oldWorld': oldWorldMap, 'newWorld': newWorldMap};
+        final topoByReg = {
+          'oldWorld': oldWorldTopology,
+          'newWorld': newWorldTopology,
+        };
+        final mapView = buildInitGameMapViewData(
+          game: game,
+          tileMapByRegion: tileByReg,
+          topologyByRegion: topoByReg,
+          cellSize: 8,
+        );
+        final projected =
+            GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
+              region: mapView.oldWorld,
+              game: game,
+              orders: const ct_models.Orders(),
+              humanPlayerId: humanId,
+              tileMapByRegion: tileByReg,
+              topologyByRegion: topoByReg,
+              combinedTopology: combinedTopology,
+            );
+
+        expect(projected.fleetTileMarkers, hasLength(1));
+        final marker = projected.fleetTileMarkers.single;
+        expect(marker.tileKey, 'oldWorld|s1|0|0');
+        expect(marker.locationScopeKey, 'sea:oldWorld|s1');
+        expect(marker.applyFleetRevealHalo, isFalse);
+      });
+    });
   });
 }
