@@ -41,7 +41,7 @@ void main() {
             units: [
               Unit(
                 id: 'inf1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 medals: 2,
@@ -188,8 +188,8 @@ void main() {
         TurnPhase.richesToTreasury,
         TurnPhase.consumption,
         TurnPhase.production,
-        TurnPhase.research,
         TurnPhase.diplomacy,
+        TurnPhase.research,
         TurnPhase.movement,
         TurnPhase.minorRegimentUpgrade,
         TurnPhase.navalInterceptionCombat,
