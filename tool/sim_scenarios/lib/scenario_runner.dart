@@ -538,11 +538,11 @@ class ScenarioRunner {
   static int _generalCapFromTech(Map<String, bool>? techUnlocked) {
     final t = techUnlocked ?? {};
     var cap = 1;
-    if (t['organised_regiments'] == true) cap = 2;
-    if (t['national_bureaucracy'] == true ||
-        t['improved_infantry_tactics'] == true)
+    if (t[kTechIdOrganisedRegiments] == true) cap = 2;
+    if (t[kTechIdNationalBureaucracy] == true ||
+        t[kTechIdImprovedInfantryTactics] == true)
       cap = 3;
-    if (t['nationalism'] == true) cap = 4;
+    if (t[kTechIdNationalism] == true) cap = 4;
     return cap;
   }
 

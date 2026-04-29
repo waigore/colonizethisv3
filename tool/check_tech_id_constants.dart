@@ -9,14 +9,7 @@ import 'ct_repo_lint_scan_contract.dart';
 
 const _argFiles = '--files';
 
-const _excludedPaths = <String>{
-  'packages/colonizethis_data/lib/src/tech_catalog.dart',
-  'packages/colonizethis_data/lib/src/tech_extraction.dart',
-  'packages/colonizethis_data/lib/src/combat_config.dart',
-  'app/lib/features/game/widgets/tech_tree_widget.dart',
-  'app/lib/features/game/widgets/province_panel_labels.dart',
-  'tool/sim_scenarios/lib/scenario_runner.dart',
-};
+const _excludedPaths = <String>{};
 
 /// [incrementalRelativeDartPaths]: when non-null and non-empty, only those
 /// paths (repo-relative) are scanned; otherwise full scan.
