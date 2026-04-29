@@ -811,9 +811,9 @@ class _RunningGameScreenState extends State<RunningGameScreen>
   }
 
   static const _civilianUnitCapabilities = {
-    'Explorer': 'Prospect, explore',
-    'Builder': 'Develop tile',
-    'Engineer': 'Build road, port, fort',
+    kUnitTypeExplorer: 'Prospect, explore',
+    kUnitTypeBuilder: 'Develop tile',
+    kUnitTypeEngineer: 'Build road, port, fort',
   };
 }
 

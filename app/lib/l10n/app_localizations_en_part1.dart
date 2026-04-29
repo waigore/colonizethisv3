@@ -324,10 +324,10 @@ mixin _AppLocalizationsEnStrings1 {
   String get province_unitStatus_working => 'working';
 
   @override
-  String get province_workOrder_explore => 'explore';
+  String get province_workOrder_explore => kWorkTargetExplore;
 
   @override
-  String get province_workOrder_prospect => 'prospect';
+  String get province_workOrder_prospect => kWorkTargetProspect;
 
   @override
   String get province_workOrder_build_improvement => 'build improvement';

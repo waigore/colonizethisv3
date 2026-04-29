@@ -27,6 +27,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
 part 'new_game_fleet_reaches_new_world_e2e_helpers.dart';
+part 'new_game_fleet_reaches_new_world_e2e_helpers_part2.dart';
 
 void main() {
   suppressLogsForTests();

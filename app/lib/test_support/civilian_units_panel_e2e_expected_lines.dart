@@ -3,7 +3,19 @@
 // If drift fails tests, align this file with the panel widget.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show
+        kWorkTargetBuildFort,
+        kWorkTargetBuildImprovement,
+        kWorkTargetBuildPort,
+        kWorkTargetBuildRail,
+        kWorkTargetBuildRoad,
+        kWorkTargetCounterSpy,
+        kWorkTargetExplore,
+        kWorkTargetProspect,
+        kWorkTargetPurchaseLand,
+        kWorkTargetStealTech,
+        kWorkTargetUpgradeTown;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
@@ -11,17 +23,17 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_
 import 'package:colonizethis_app/l10n/app_localizations.dart';
 
 const Map<String, String> _workTargetLabels = {
-  'explore': 'Explore',
-  'prospect': 'Prospect',
-  'build_improvement': 'Build improvement',
-  'upgrade_town': 'Upgrade town',
-  'build_road': 'Build road',
-  'build_port': 'Build port',
-  'build_fort': 'Build fort',
-  'build_rail': 'Build rail',
-  'steal_tech': 'Steal tech',
-  'counter_spy': 'Counter spy',
-  'purchase_land': 'Purchase land',
+  kWorkTargetExplore: 'Explore',
+  kWorkTargetProspect: 'Prospect',
+  kWorkTargetBuildImprovement: 'Build improvement',
+  kWorkTargetUpgradeTown: 'Upgrade town',
+  kWorkTargetBuildRoad: 'Build road',
+  kWorkTargetBuildPort: 'Build port',
+  kWorkTargetBuildFort: 'Build fort',
+  kWorkTargetBuildRail: 'Build rail',
+  kWorkTargetStealTech: 'Steal tech',
+  kWorkTargetCounterSpy: 'Counter spy',
+  kWorkTargetPurchaseLand: 'Purchase land',
 };
 
 Map<String, String> _provinceNamesByPrefixedId(Game game) {

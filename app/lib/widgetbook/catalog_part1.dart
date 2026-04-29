@@ -232,9 +232,9 @@ class _CivilianPanelWithMapStoryState
     }
     final target = sel.workTarget;
     String targetTileKey = tileKey;
-    if (target == 'explore' ||
-        target == 'steal_tech' ||
-        target == 'counter_spy') {
+    if (target == kWorkTargetExplore ||
+        target == kWorkTargetStealTech ||
+        target == kWorkTargetCounterSpy) {
       final parts = tileKey.split('|');
       if (parts.length >= 2) {
         targetTileKey = '${parts[0]}|${parts[1]}|0|0';

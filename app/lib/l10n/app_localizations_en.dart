@@ -1,5 +1,7 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetExplore, kWorkTargetProspect;
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -331,10 +333,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get province_unitStatus_working => 'working';
 
   @override
-  String get province_workOrder_explore => 'explore';
+  String get province_workOrder_explore => kWorkTargetExplore;
 
   @override
-  String get province_workOrder_prospect => 'prospect';
+  String get province_workOrder_prospect => kWorkTargetProspect;
 
   @override
   String get province_workOrder_build_improvement => 'build improvement';
