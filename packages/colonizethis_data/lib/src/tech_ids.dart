@@ -15,3 +15,9 @@ const String kTechIdIndustrialMachinery = 'industrial_machinery';
 const String kTechIdModernMilitaryFunding = 'modern_military_funding';
 const String kTechIdIndustrialFundingOfResearch =
     'industrial_funding_of_research';
+const String kTechIdOrganisedRegiments = 'organised_regiments';
+const String kTechIdImprovedInfantryTactics = 'improved_infantry_tactics';
+const String kTechIdHorseArtillery = 'horse_artillery';
+const String kTechIdHussars = 'hussars';
+const String kTechIdHeavyArtillery = 'heavy_artillery';
+const String kTechIdShipOfTheLine = 'ship_of_the_line';
