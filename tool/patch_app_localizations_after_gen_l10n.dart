@@ -1,8 +1,9 @@
 // Patches `app/lib/l10n/app_localizations.dart` after `flutter gen-l10n`:
-// - Moves `lookupAppLocalizations` to tracked `app_localizations_lookup.dart`.
-// - Breaks the circular import `app_localizations.dart` <-> `app_localizations_en.dart`
-//   by using a **deferred** import for English so `AppLocalizations` is defined before
-//   `en` parts resolve `on AppLocalizations` (Refs #2021).
+// - Re-exports `lookupAppLocalizations` from tracked `app_localizations_lookup.dart`
+//   without importing that library into `app_localizations.dart` (avoids a
+//   synchronous cycle: lookup → en → app_localizations → lookup).
+// - Replaces synchronous `import 'app_localizations_en.dart'` with **deferred**
+//   import so `AppLocalizations` is defined before English part mixins resolve.
 // - Idempotent: safe to run multiple times.
 //
 // Run from repo root: dart run tool/patch_app_localizations_after_gen_l10n.dart
@@ -24,7 +25,6 @@ void main() {
 
   var text = file.readAsStringSync();
   const importLine = "import 'package:intl/intl.dart' as intl;";
-  const lookupImport = "import 'app_localizations_lookup.dart';";
   const lookupExport =
       "export 'app_localizations_lookup.dart' show lookupAppLocalizations;";
 
@@ -33,12 +33,14 @@ void main() {
     exit(1);
   }
 
-  if (!text.contains(lookupImport)) {
+  // Export lookup only (no import into this library — breaks lookup↔main cycle).
+  if (!text.contains(lookupExport)) {
     text = text.replaceFirst(
       importLine,
-      '$importLine\n\n$lookupImport\n$lookupExport',
+      '$importLine\n\n$lookupExport',
     );
   }
+  text = _removeImportLine(text, "import 'app_localizations_lookup.dart';");
 
   text = _ensureDeferredEnglishImport(text);
   text = _patchDelegateLoad(text);
@@ -84,11 +86,19 @@ return _ctLoadLocalizedApp(locale);''';
 
 Future<AppLocalizations> _ctLoadLocalizedApp(Locale locale) async {
   await _ct_l10n_en.loadLibrary();
-  return lookupAppLocalizations(locale);
+  switch (locale.languageCode) {
+    case 'en':
+      return _ct_l10n_en.AppLocalizationsEn();
+  }
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "\$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
 }
 ''';
 
-  // Insert helper before `class _AppLocalizationsDelegate` if not present.
   const anchor = 'class _AppLocalizationsDelegate';
   final anchorIdx = text.indexOf(anchor);
   if (anchorIdx < 0) {
@@ -99,7 +109,6 @@ Future<AppLocalizations> _ctLoadLocalizedApp(Locale locale) async {
 
   text = text.replaceFirst(syncBody, asyncBody);
 
-  // Make load() async (insert async after `load(Locale locale)`).
   text = text.replaceFirst(
     'Future<AppLocalizations> load(Locale locale) {',
     'Future<AppLocalizations> load(Locale locale) async {',
@@ -147,4 +156,11 @@ String _removeTopLevelLookupFunction(String text) {
     }
   }
   return text;
+}
+
+String _removeImportLine(String text, String importLine) {
+  if (!text.contains(importLine)) {
+    return text;
+  }
+  return text.split('\n').where((l) => l.trim() != importLine.trim()).join('\n');
 }

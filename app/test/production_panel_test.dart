@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/production_recipe_affordance.dart';
 import 'package:colonizethis_app/features/game/widgets/production_panel.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
