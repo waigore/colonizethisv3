@@ -43,7 +43,7 @@ void expectPhaseDeltasSumToNet({
   }
 }
 
-Game _singlePlayerGame(Player player) {
+Game singlePlayerGame(Player player) {
   return Game(
     id: 't',
     worldState: WorldState(
@@ -55,7 +55,7 @@ Game _singlePlayerGame(Player player) {
   );
 }
 
-Game _singlePlayerWorkPreviewGame({
+Game singlePlayerWorkPreviewGame({
   required Stockpile playerStockpile,
   required List<Unit> units,
   TileMapState tileState = const TileMapState(),

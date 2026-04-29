@@ -1,6 +1,6 @@
-part of 'app_localizations_en.dart';
+// Intentionally standalone split artifact for analyzer compatibility.
 
-mixin _AppLocalizationsEnStrings2 on AppLocalizations {
+mixin _AppLocalizationsEnStrings2 {
   @override
   String quickBattle_battleResult(String winnerText) {
     return 'Battle Result: $winnerText';

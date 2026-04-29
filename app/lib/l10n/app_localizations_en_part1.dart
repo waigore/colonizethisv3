@@ -1,6 +1,6 @@
-part of 'app_localizations_en.dart';
+// Intentionally standalone split artifact for analyzer compatibility.
 
-mixin _AppLocalizationsEnStrings1 on AppLocalizations {
+mixin _AppLocalizationsEnStrings1 {
   @override
   String get app_title => 'Colonize This';
 

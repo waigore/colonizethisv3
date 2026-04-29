@@ -18,7 +18,7 @@ void main() {
         isHuman: true,
         stockpile: const Stockpile(),
       );
-      final game = _singlePlayerGame(player);
+      final game = singlePlayerGame(player);
       final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -372,7 +372,7 @@ void main() {
             ];
 
         for (final t in targets) {
-          final game = _singlePlayerWorkPreviewGame(
+          final game = singlePlayerWorkPreviewGame(
             playerStockpile: const Stockpile()
                 .applyDelta(CommodityCatalog.lumber.id, 50)
                 .applyDelta(CommodityCatalog.castIron.id, 50)
@@ -427,7 +427,7 @@ void main() {
         'mixed target list aggregates and keeps sequential affordability',
         () {
           const tileKey = 'oldWorld|ow|p1|0|0';
-          final game = _singlePlayerWorkPreviewGame(
+          final game = singlePlayerWorkPreviewGame(
             playerStockpile: const Stockpile()
                 .applyDelta(CommodityCatalog.lumber.id, 30)
                 .applyDelta(CommodityCatalog.castIron.id, 20)
@@ -539,7 +539,7 @@ void main() {
         'later order does not deduct when earlier orders consume affordability',
         () {
           const tileKey = 'oldWorld|ow|p1|0|0';
-          final game = _singlePlayerWorkPreviewGame(
+          final game = singlePlayerWorkPreviewGame(
             playerStockpile: const Stockpile()
                 .applyDelta(CommodityCatalog.lumber.id, 2)
                 .applyDelta(CommodityCatalog.castIron.id, 2),
@@ -670,7 +670,7 @@ void main() {
                 .applyDelta(CommodityCatalog.bronze.id, 20)
                 .applyDelta(CommodityCatalog.steel.id, 20);
 
-            final missingUnitGame = _singlePlayerWorkPreviewGame(
+            final missingUnitGame = singlePlayerWorkPreviewGame(
               playerStockpile: validBaseStockpile,
               units: [],
               tileState: const TileMapState().setImprovement(tileKey, 0),
@@ -697,7 +697,7 @@ void main() {
               reason: 'missing unit target=${t.target}',
             );
 
-            final busyUnitGame = _singlePlayerWorkPreviewGame(
+            final busyUnitGame = singlePlayerWorkPreviewGame(
               playerStockpile: validBaseStockpile,
               units: [
                 Unit(
@@ -739,7 +739,7 @@ void main() {
               reason: 'busy unit target=${t.target}',
             );
 
-            final disallowedUnitGame = _singlePlayerWorkPreviewGame(
+            final disallowedUnitGame = singlePlayerWorkPreviewGame(
               playerStockpile: validBaseStockpile,
               units: [
                 Unit(
@@ -774,7 +774,7 @@ void main() {
               reason: 'disallowed unit target=${t.target}',
             );
 
-            final invalidTileGame = _singlePlayerWorkPreviewGame(
+            final invalidTileGame = singlePlayerWorkPreviewGame(
               playerStockpile: validBaseStockpile,
               units: [
                 Unit(
@@ -814,7 +814,7 @@ void main() {
                 return acc.applyDelta(e.key, amount);
               },
             );
-            final insufficientGame = _singlePlayerWorkPreviewGame(
+            final insufficientGame = singlePlayerWorkPreviewGame(
               playerStockpile: insufficientStockpile,
               units: [
                 Unit(

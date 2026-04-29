@@ -1,6 +1,6 @@
-part of 'app_localizations_en.dart';
+// Intentionally standalone split artifact for analyzer compatibility.
 
-mixin _AppLocalizationsEnStrings4 on AppLocalizations {
+mixin _AppLocalizationsEnStrings4 {
   @override
   String get techEffectSummary_discovery_of_gold_or_silver_1 =>
       'Unlocks: Precious Metals Mining';

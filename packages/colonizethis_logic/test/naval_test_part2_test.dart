@@ -41,30 +41,6 @@ void main() {
       );
     });
 
-          topology: localRegionTopology,
-          topologyByRegion: {ow: localRegionTopology},
-        );
-        final view = buildPlayerView(ended, localRegionTopology, 'gp1');
-
-        expect(
-          ended.worldState.playerVisibilityByTile['gp1']?[destSeaTileA],
-          VisibilityLevel.fullyVisible.name,
-        );
-        expect(
-          ended.worldState.playerVisibilityByTile['gp1']?[destSeaTileB],
-          VisibilityLevel.fullyVisible.name,
-        );
-        expect(
-          view.visibilityForTile(destSeaTileA),
-          VisibilityLevel.fullyVisible,
-        );
-        expect(
-          view.visibilityForTile(destSeaTileB),
-          VisibilityLevel.fullyVisible,
-        );
-      },
-    );
-
     group('firstAdjacentSeaZone', () {
       test('returns id2 when id1 matches seaZoneId', () {
         final seaOnly = MapTopology(

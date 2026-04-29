@@ -1,6 +1,8 @@
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/ai/ai_planner.dart';
+import 'package:colonizethis_logic/src/ai/sim_game_ai.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:ctdev/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

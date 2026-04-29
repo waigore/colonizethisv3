@@ -1,6 +1,6 @@
-part of 'app_localizations_en.dart';
+// Intentionally standalone split artifact for analyzer compatibility.
 
-mixin _AppLocalizationsEnStrings5 on AppLocalizations {
+mixin _AppLocalizationsEnStrings5 {
   @override
   String get techEffectSummary_scientific_sheep_breeding_1 =>
       'Terminal tech: nothing else in the catalog requires this';

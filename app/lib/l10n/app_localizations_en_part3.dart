@@ -1,6 +1,6 @@
-part of 'app_localizations_en.dart';
+// Intentionally standalone split artifact for analyzer compatibility.
 
-mixin _AppLocalizationsEnStrings3 on AppLocalizations {
+mixin _AppLocalizationsEnStrings3 {
   @override
   String get provinceOverlay_tileImprovementUnknown => 'Improvement: ???';
 
