@@ -141,16 +141,25 @@ Map<String, int> computeContinentMembership(MapTopology topology) {
     continent[start] = idx;
     while (queue.isNotEmpty) {
       final cur = queue.removeLast();
-      for (final n in p2p[cur]!) {
-        if (!continent.containsKey(n)) {
-          continent[n] = idx;
-          queue.add(n);
-        }
-      }
+      _continentBfsEnqueueNeighbors(cur, p2p, continent, idx, queue);
     }
     idx++;
   }
   return continent;
+}
+
+void _continentBfsEnqueueNeighbors(
+  String cur,
+  Map<String, Set<String>> p2p,
+  Map<String, int> continent,
+  int idx,
+  List<String> queue,
+) {
+  for (final n in p2p[cur]!) {
+    if (continent.containsKey(n)) continue;
+    continent[n] = idx;
+    queue.add(n);
+  }
 }
 
 /// Runtime parameters for tile-based map generation (grid dimensions and generator options).

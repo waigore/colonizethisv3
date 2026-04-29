@@ -5,7 +5,6 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/source/line_info.dart';
 import 'package:path/path.dart' as p;
-import 'package:yaml/yaml.dart';
 
 import 'ct_repo_lint_scan_contract.dart';
 
@@ -24,7 +23,6 @@ int runCheckControlFlowNestingDepth(
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
-  final allowlisted = _loadNestingAllowlist(repoRoot);
   final verbose = Platform.environment['CT_NESTING_DEPTH_VERBOSE'] == '1';
   final files = collectRepoLintDomainDartFiles(repoRoot);
   final warnings = <String>[];
@@ -42,7 +40,6 @@ int runCheckControlFlowNestingDepth(
       lineInfo,
       warnings,
       errors,
-      allowlisted,
     );
   }
 
@@ -70,41 +67,12 @@ int runCheckControlFlowNestingDepth(
   return 1;
 }
 
-Set<String> _loadNestingAllowlist(String repoRoot) {
-  final f = File(
-    p.join(repoRoot, 'tool', 'control_flow_nesting_depth_allowlist.yaml'),
-  );
-  if (!f.existsSync()) {
-    return {};
-  }
-  final dynamic doc = loadYaml(f.readAsStringSync());
-  if (doc is! YamlMap) {
-    return {};
-  }
-  final list = doc['allowed_depth_ge4'];
-  if (list is! YamlList) {
-    return {};
-  }
-  final out = <String>{};
-  for (final dynamic e in list) {
-    if (e is YamlMap) {
-      final file = e['file']?.toString();
-      final sym = e['symbol']?.toString();
-      if (file != null && sym != null) {
-        out.add('$file|$sym');
-      }
-    }
-  }
-  return out;
-}
-
 void _collectAndScanExecutableBodies(
   CompilationUnit unit,
   String relativePath,
   LineInfo lineInfo,
   List<String> warnings,
   List<String> errors,
-  Set<String> allowlisted,
 ) {
   for (final decl in unit.declarations) {
     if (decl is FunctionDeclaration) {
@@ -114,7 +82,6 @@ void _collectAndScanExecutableBodies(
         lineInfo,
         warnings,
         errors,
-        allowlisted,
       );
     } else if (decl is ClassDeclaration) {
       for (final member in decl.members) {
@@ -128,7 +95,6 @@ void _collectAndScanExecutableBodies(
               lineInfo,
               warnings,
               errors,
-              allowlisted,
             );
           }
         } else if (member is ConstructorDeclaration) {
@@ -141,7 +107,6 @@ void _collectAndScanExecutableBodies(
               lineInfo,
               warnings,
               errors,
-              allowlisted,
             );
           }
         }
@@ -156,7 +121,6 @@ void _scanDeclarationSubtree(
   LineInfo lineInfo,
   List<String> warnings,
   List<String> errors,
-  Set<String> allowlisted,
 ) {
   _scanBody(
     decl.name.lexeme,
@@ -165,7 +129,6 @@ void _scanDeclarationSubtree(
     lineInfo,
     warnings,
     errors,
-    allowlisted,
   );
 }
 
@@ -176,7 +139,6 @@ void _scanBody(
   LineInfo lineInfo,
   List<String> warnings,
   List<String> errors,
-  Set<String> allowlisted,
 ) {
   final visitor = _ControlFlowNestingVisitor();
   body.accept(visitor);
@@ -191,15 +153,11 @@ void _scanBody(
           lineInfo,
           warnings,
           errors,
-          allowlisted,
         );
       },
     ),
   );
   if (maxDepth >= 4) {
-    if (allowlisted.contains('$relativePath|$qualifiedName')) {
-      return;
-    }
     final line = lineInfo.getLocation(body.offset).lineNumber;
     errors.add(
       '$relativePath:$line: `$qualifiedName` max control-flow nesting depth is $maxDepth (fail at >=4)',

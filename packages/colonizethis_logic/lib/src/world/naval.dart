@@ -216,6 +216,45 @@ String? firstAdjacentSeaZone(MapTopology topology, String seaZoneId) {
   return null;
 }
 
+String? _otherTopologyEdgeEndpoint(TopologyEdge e, String endpoint) {
+  if (e.id1 == endpoint) return e.id2;
+  if (e.id2 == endpoint) return e.id1;
+  return null;
+}
+
+String? _seaZoneIdForProvinceInRegionTopology(
+  MapTopology topology,
+  String regionId,
+  String provinceId,
+  Map<String, TopologyNode> regionNodes,
+) {
+  final primaryProvinceKey = ProvinceId.isPrefixed(provinceId)
+      ? provinceId
+      : ProvinceId.full(regionId, provinceId);
+  var provinceNode = regionNodes[primaryProvinceKey];
+  if (provinceNode == null && !ProvinceId.isPrefixed(provinceId)) {
+    provinceNode = regionNodes[provinceId];
+  }
+  if (provinceNode == null ||
+      provinceNode.type != TopologyNodeType.province) {
+    return null;
+  }
+  for (final e in topology.edges) {
+    final String? other;
+    if (e.id1 == primaryProvinceKey || e.id2 == primaryProvinceKey) {
+      other = _otherTopologyEdgeEndpoint(e, primaryProvinceKey);
+    } else if (!ProvinceId.isPrefixed(provinceId) &&
+        (e.id1 == provinceId || e.id2 == provinceId)) {
+      other = _otherTopologyEdgeEndpoint(e, provinceId);
+    } else {
+      continue;
+    }
+    final otherNode = regionNodes[other];
+    if (otherNode?.type == TopologyNodeType.seaZone) return other;
+  }
+  return null;
+}
+
 /// First sea zone id adjacent to [provinceId], or null if none. Used for home fleet and build_port.
 ///
 /// [provinceId] is usually the **local** province id (e.g. `p1`). When [provinceId] is already
@@ -233,31 +272,12 @@ String? seaZoneIdForProvince(
   if (regionId != null) {
     final regionNodes = indexTopologyNodesByRegion(topology)[regionId];
     if (regionNodes == null) return null;
-    final primaryProvinceKey = ProvinceId.isPrefixed(provinceId)
-        ? provinceId
-        : ProvinceId.full(regionId, provinceId);
-    var provinceNode = regionNodes[primaryProvinceKey];
-    if (provinceNode == null && !ProvinceId.isPrefixed(provinceId)) {
-      provinceNode = regionNodes[provinceId];
-    }
-    if (provinceNode == null ||
-        provinceNode.type != TopologyNodeType.province) {
-      return null;
-    }
-    for (final e in topology.edges) {
-      String? other;
-      if (e.id1 == primaryProvinceKey || e.id2 == primaryProvinceKey) {
-        other = e.id1 == primaryProvinceKey ? e.id2 : e.id1;
-      } else if (!ProvinceId.isPrefixed(provinceId) &&
-          (e.id1 == provinceId || e.id2 == provinceId)) {
-        other = e.id1 == provinceId ? e.id2 : e.id1;
-      } else {
-        continue;
-      }
-      final otherNode = regionNodes[other];
-      if (otherNode?.type == TopologyNodeType.seaZone) return other;
-    }
-    return null;
+    return _seaZoneIdForProvinceInRegionTopology(
+      topology,
+      regionId,
+      provinceId,
+      regionNodes,
+    );
   }
   final nodesById = {for (final n in topology.nodes) n.id: n};
   for (final e in topology.edges) {

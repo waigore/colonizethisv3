@@ -8,6 +8,83 @@ class _TileMapGenJoinSea {
   final CtLogger _log;
   final TileMapGridGraph _graph;
 
+  bool _jitterTileIsTerrainOrProvinceEdge(
+    int x,
+    int y,
+    String provinceId,
+    TerrainType dominant,
+    List<List<String>> grid,
+    List<List<TerrainType?>> terrainGrid,
+    int width,
+    int height,
+    List<(int dx, int dy)> directions4,
+  ) {
+    for (final (dx, dy) in directions4) {
+      final nx = x + dx;
+      final ny = y + dy;
+      if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+      final neighborProvince = grid[ny][nx];
+      final neighborTerrain = terrainGrid[ny][nx];
+      if (neighborProvince != provinceId) return true;
+      if (neighborTerrain != null && neighborTerrain != dominant) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void _applyBridgePathCells(
+    List<List<String>> g,
+    List<(int x, int y)> path,
+    String provinceId,
+    List<List<TerrainType?>>? tg,
+    List<List<Resource?>>? rg,
+    String? mapRegionId,
+    ResourceRules? resourceRules,
+    Random rnd,
+    _MultiRegionCapState? capState,
+  ) {
+    for (final (x, y) in path) {
+      g[y][x] = provinceId;
+      if (tg != null &&
+          rg != null &&
+          mapRegionId != null &&
+          resourceRules != null) {
+        _assignTerrainAndResourceForCell(
+          tg,
+          rg,
+          x,
+          y,
+          mapRegionId,
+          resourceRules,
+          rnd,
+          capState: capState,
+        );
+      }
+    }
+  }
+
+  (int x, int y) _bestFarthestPointCellFromList(
+    List<(int x, int y)> list,
+    List<(int x, int y)> chosen,
+  ) {
+    var bestCell = list.first;
+    var bestMinD2 = 0;
+    for (final (x, y) in list) {
+      if (chosen.contains((x, y))) continue;
+      var minD2 = kUnsetSquaredDistanceInt31;
+      for (final (sx, sy) in chosen) {
+        final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
+        if (d2 < minD2) minD2 = d2;
+      }
+      if (minD2 > bestMinD2) {
+        bestMinD2 = minD2;
+        bestCell = (x, y);
+      }
+    }
+    return bestCell;
+  }
+
   void jitterTerrainByProvince(
     List<List<String>> grid,
     List<List<TerrainType?>> terrainGrid,
@@ -82,24 +159,19 @@ class _TileMapGenJoinSea {
         if (terrainGrid[y][x] != dominant) continue;
         if (resourceGrid[y][x] != null) continue;
 
-        var isEdge = false;
-        // Terrain-edge or province-edge in 4-neighborhood.
-        for (final (dx, dy) in directions4) {
-          final nx = x + dx;
-          final ny = y + dy;
-          if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
-          final neighborProvince = grid[ny][nx];
-          final neighborTerrain = terrainGrid[ny][nx];
-          if (neighborProvince != entry.key) {
-            isEdge = true; // province-edge
-            break;
-          }
-          if (neighborTerrain != null && neighborTerrain != dominant) {
-            isEdge = true; // terrain-edge within same province
-            break;
-          }
+        if (!_jitterTileIsTerrainOrProvinceEdge(
+          x,
+          y,
+          entry.key,
+          dominant,
+          grid,
+          terrainGrid,
+          width,
+          height,
+          directions4,
+        )) {
+          continue;
         }
-        if (!isEdge) continue;
 
         candidates.add((x, y));
       }
@@ -209,24 +281,17 @@ class _TileMapGenJoinSea {
         if (path.isEmpty) break;
         final provinceId = _provinceIdAdjacentToSeaPath(g, compA, path);
         final bridgeCells = path.toSet();
-        for (final (x, y) in path) {
-          g[y][x] = provinceId;
-          if (tg != null &&
-              rg != null &&
-              mapRegionId != null &&
-              resourceRules != null) {
-            _assignTerrainAndResourceForCell(
-              tg,
-              rg,
-              x,
-              y,
-              mapRegionId,
-              resourceRules,
-              rnd,
-              capState: capState,
-            );
-          }
-        }
+        _applyBridgePathCells(
+          g,
+          path,
+          provinceId,
+          tg,
+          rg,
+          mapRegionId,
+          resourceRules,
+          rnd,
+          capState,
+        );
         // Do not convert bridge tiles back to sea: _preserveSeaFraction picks the
         // most "coastal" land first, which matches the new corridor and would undo
         // the join, leaving >1 component and an infinite loop.
@@ -336,21 +401,7 @@ class _TileMapGenJoinSea {
     });
     final chosen = <(int x, int y)>[list.first];
     for (var i = 1; i < K; i++) {
-      var bestCell = list.first;
-      var bestMinD2 = 0;
-      for (final (x, y) in list) {
-        if (chosen.contains((x, y))) continue;
-        var minD2 = kUnsetSquaredDistanceInt31;
-        for (final (sx, sy) in chosen) {
-          final d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
-          if (d2 < minD2) minD2 = d2;
-        }
-        if (minD2 > bestMinD2) {
-          bestMinD2 = minD2;
-          bestCell = (x, y);
-        }
-      }
-      chosen.add(bestCell);
+      chosen.add(_bestFarthestPointCellFromList(list, chosen));
     }
     return chosen;
   }
