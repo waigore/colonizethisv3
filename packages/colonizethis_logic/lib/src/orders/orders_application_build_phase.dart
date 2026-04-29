@@ -107,6 +107,69 @@ class _MilitaryBuildState {
   }
 }
 
+/// One land/civilian/military build order after affordability check; keeps [runBuildPhase]
+/// nesting shallow for CI (`repo.control_flow_nesting_depth`).
+BuildWorkState _applyAffordableBuildUnitOrder({
+  required BuildWorkState current,
+  required Player player,
+  required BuildUnitOrder order,
+}) {
+  final category = buildUnitCategoryForUnitType(order.unitType);
+  if (category == BuildUnitCategory.unknown) return current;
+
+  final spawnProvinceId = resolveBuildSpawnProvinceId(
+    player: player,
+    worldState: current.game.worldState,
+    order: order,
+  );
+  if (spawnProvinceId == null) return current;
+
+  final regionId = ProvinceId.regionIdFrom(spawnProvinceId);
+  final civilianTileKey = _CivilianBuildState.spawnTileKeyForCategory(
+    category: category,
+    player: player,
+    game: current.game,
+  );
+  if (category == BuildUnitCategory.civilian && civilianTileKey == null) {
+    throw StateError(
+      '$kCivilianCapitalTileMissingReason: player=${player.id}',
+    );
+  }
+
+  final newUnit = Unit(
+    id: _buildUnitId(player.id, order, spawnProvinceId),
+    type: order.unitType,
+    ownerId: player.id,
+    locationProvinceId: spawnProvinceId,
+    tileKey: category == BuildUnitCategory.civilian ? civilianTileKey : null,
+  );
+
+  var work = current.work;
+  if (regionId == kRegionNewWorld) {
+    work = work.copyWith(
+      newUnitsById: Map<String, Unit>.from(work.newUnitsById)
+        ..[newUnit.id] = newUnit,
+    );
+  } else {
+    work = work.copyWith(
+      oldUnitsById: Map<String, Unit>.from(work.oldUnitsById)
+        ..[newUnit.id] = newUnit,
+    );
+  }
+
+  var nextGame = current.game;
+  if (category == BuildUnitCategory.military) {
+    nextGame = _MilitaryBuildState.appendRegimentToArmy(
+      nextGame,
+      player,
+      spawnProvinceId,
+      newUnit.id,
+    );
+  }
+
+  return current.copyWith(game: nextGame, work: work);
+}
+
 /// Applies build orders for all players. Returns state with updated [game] and unit maps.
 BuildWorkState runBuildPhase(BuildWorkState state) {
   final naval = state.topology != null
@@ -139,64 +202,17 @@ BuildWorkState runBuildPhase(BuildWorkState state) {
 
       if (category == BuildUnitCategory.naval) {
         naval?.spawnHomeFleetShipIfEligible(player, order);
-        if (naval != null) {
-          current = current.copyWith(game: naval.game);
-        }
+        current = naval != null
+            ? current.copyWith(game: naval.game)
+            : current;
         continue;
       }
 
-      final spawnProvinceId = resolveBuildSpawnProvinceId(
+      current = _applyAffordableBuildUnitOrder(
+        current: current,
         player: player,
-        worldState: current.game.worldState,
         order: order,
       );
-      if (spawnProvinceId == null) continue;
-      final regionId = ProvinceId.regionIdFrom(spawnProvinceId);
-      final civilianTileKey = _CivilianBuildState.spawnTileKeyForCategory(
-        category: category,
-        player: player,
-        game: current.game,
-      );
-      if (category == BuildUnitCategory.civilian && civilianTileKey == null) {
-        throw StateError(
-          '$kCivilianCapitalTileMissingReason: player=${player.id}',
-        );
-      }
-
-      final newUnit = Unit(
-        id: _buildUnitId(player.id, order, spawnProvinceId),
-        type: order.unitType,
-        ownerId: player.id,
-        locationProvinceId: spawnProvinceId,
-        tileKey: category == BuildUnitCategory.civilian
-            ? civilianTileKey
-            : null,
-      );
-
-      var work = current.work;
-      if (regionId == kRegionNewWorld) {
-        work = work.copyWith(
-          newUnitsById: Map<String, Unit>.from(work.newUnitsById)
-            ..[newUnit.id] = newUnit,
-        );
-      } else {
-        work = work.copyWith(
-          oldUnitsById: Map<String, Unit>.from(work.oldUnitsById)
-            ..[newUnit.id] = newUnit,
-        );
-      }
-
-      var nextGame = current.game;
-      if (category == BuildUnitCategory.military) {
-        nextGame = _MilitaryBuildState.appendRegimentToArmy(
-          nextGame,
-          player,
-          spawnProvinceId,
-          newUnit.id,
-        );
-      }
-
-      current = current.copyWith(game: nextGame, work: work);
     }
 
     current = current.copyWith(
