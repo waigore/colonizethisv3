@@ -13,7 +13,6 @@ const _excludedPaths = <String>{
   'packages/colonizethis_data/lib/src/tech_catalog.dart',
   'packages/colonizethis_data/lib/src/tech_extraction.dart',
   'packages/colonizethis_data/lib/src/combat_config.dart',
-  'app/lib/features/game/widgets/province_panel_labels.dart',
 };
 
 /// [incrementalRelativeDartPaths]: when non-null and non-empty, only those
