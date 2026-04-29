@@ -76,18 +76,12 @@ abstract class AppLocalizations {
   String get game_exitConfirm_exit;
 
   /// Label for the Next Turn button showing current turn and year.
-  ///
-  /// In en, this message translates to:
-  /// **'Next turn ({turn} / {year})'**
   String game_nextTurnButton(int turn, int year);
 
   /// Title of the dialog asking the user to confirm ending the current turn.
   String get game_nextTurnConfirm_title;
 
   /// Body text of the end-turn confirmation dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn {turn} will end. Continue?'**
   String game_nextTurnConfirm_body(int turn);
 
   /// Generic 'No' button label.
@@ -181,15 +175,9 @@ abstract class AppLocalizations {
   String get shell_newGame_selectNation;
 
   /// Slot label for the human player in the new-game setup dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Player {slotNumber} (You)'**
   String shell_newGame_playerYou(int slotNumber);
 
   /// Slot label for an AI player in the new-game setup dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Player {slotNumber} (AI)'**
   String shell_newGame_playerAi(int slotNumber);
 
   /// Label for the numeric seed field in the new-game leader dialog.
@@ -229,9 +217,6 @@ abstract class AppLocalizations {
   String get game_callToArms_intro;
 
   /// One line per pending call to arms.
-  ///
-  /// In en, this message translates to:
-  /// **'{defender} is attacked by {aggressor}.'**
   String game_callToArms_prompt(String defender, String aggressor);
 
   /// Button: accept call to arms and enter war with the aggressor.
@@ -244,9 +229,6 @@ abstract class AppLocalizations {
   String get game_callToArms_submit;
 
   /// Error banner when intervention Yarn fails to load.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load intervention dialogue: {error}'**
   String game_intervention_loadError(String error);
 
   /// Explains degraded intervention flow when dialogue asset is missing.
@@ -256,15 +238,9 @@ abstract class AppLocalizations {
   String get game_intervention_continue;
 
   /// Header showing which intervention prompt is active.
-  ///
-  /// In en, this message translates to:
-  /// **'Thy resolution ({current} of {total})'**
   String game_intervention_resolutionProgress(int current, int total);
 
   /// One-line summary of the war and which GP the player decides for.
-  ///
-  /// In en, this message translates to:
-  /// **'{aggressor} against {defender}. Thou speakest for {intervening}.'**
   String game_intervention_situation(String aggressor, String defender, String intervening);
 
   /// Button: military intervention on behalf of the defender.
@@ -277,9 +253,6 @@ abstract class AppLocalizations {
   String get game_intervention_protest;
 
   /// Turn-start news dialog title; turn is the current turn after resolution.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn {turn}'**
   String turnNews_title(int turn);
 
   /// Shown when the prior-turn digest has no lines.
@@ -288,34 +261,16 @@ abstract class AppLocalizations {
   /// Button to dismiss the turn news dialog.
   String get turnNews_close;
 
-  ///
-  /// In en, this message translates to:
-  /// **'{province}: ownership changed from {prevOwner} to {newOwner}.'**
   String turnNews_capture(String province, String prevOwner, String newOwner);
 
-  ///
-  /// In en, this message translates to:
-  /// **'{a} and {b} are now at war.'**
   String turnNews_war(String a, String b);
 
-  ///
-  /// In en, this message translates to:
-  /// **'{a} and {b} are now at peace.'**
   String turnNews_peace(String a, String b);
 
-  ///
-  /// In en, this message translates to:
-  /// **'{offerer} advanced relations with {target} ({stage}).'**
   String turnNews_overture(String offerer, String target, String stage);
 
-  ///
-  /// In en, this message translates to:
-  /// **'New reports chart {province}.'**
   String turnNews_provinceDiscovered(String province);
 
-  ///
-  /// In en, this message translates to:
-  /// **'A fleet has entered {zone}.'**
   String turnNews_seaDiscovered(String zone);
 
   /// Overture stage label.
@@ -369,29 +324,14 @@ abstract class AppLocalizations {
   /// Work order target label in province panel.
   String get province_workOrder_purchase_land;
 
-  ///
-  /// In en, this message translates to:
-  /// **'Ordered: move army to {destination}'**
   String province_pending_armyMove(String destination);
 
-  ///
-  /// In en, this message translates to:
-  /// **'Ordered: move regiment to {destination}'**
   String province_pending_regimentMove(String destination);
 
-  ///
-  /// In en, this message translates to:
-  /// **'Ordered: move fleet to sea {zone}'**
   String province_pending_fleetMoveSea(String zone);
 
-  ///
-  /// In en, this message translates to:
-  /// **'Ordered: dock fleet at {province}'**
   String province_pending_fleetMovePort(String province);
 
-  ///
-  /// In en, this message translates to:
-  /// **'Ordered: fleet mission — {mission}'**
   String province_pending_fleetMission(String mission);
 
   /// Naval mission label.
@@ -412,9 +352,6 @@ abstract class AppLocalizations {
   /// Economic row suffix when tile can be improved.
   String get province_economic_improvableSuffix;
 
-  ///
-  /// In en, this message translates to:
-  /// **'with {improvement}'**
   String province_economic_withImprovement(String improvement);
 
   /// Regiment type display name.
@@ -541,9 +478,6 @@ abstract class AppLocalizations {
   String get province_ship_ironclad;
 
   /// Quick battle action selector command points header.
-  ///
-  /// In en, this message translates to:
-  /// **'Command Points: {cp}'**
   String quickBattle_commandPoints(int cp);
 
   /// Quick battle action label.
@@ -562,15 +496,9 @@ abstract class AppLocalizations {
   String get quickBattle_action_assault;
 
   /// Quick battle action button label with command point cost.
-  ///
-  /// In en, this message translates to:
-  /// **'{label} ({cost} CP)'**
   String quickBattle_actionWithCost(String label, int cost);
 
   /// Combat mode dialog title for a province.
-  ///
-  /// In en, this message translates to:
-  /// **'Combat at {provinceName}'**
   String quickBattle_combatAt(String provinceName);
 
   /// Combat mode guidance for capital sieges.
@@ -586,42 +514,27 @@ abstract class AppLocalizations {
   String get quickBattle_quickBattle;
 
   /// Quick battle winner line when attacker wins.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} wins'**
   String quickBattle_attackerWins(String name);
 
   /// Quick battle winner line when defender holds.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} holds'**
   String quickBattle_defenderHolds(String name);
 
   /// Quick battle winner line for tie exhaustion state.
   String get quickBattle_mutualExhaustion;
 
   /// Quick battle result heading.
-  ///
-  /// In en, this message translates to:
-  /// **'Battle Result: {winnerText}'**
   String quickBattle_battleResult(String winnerText);
 
   /// Quick battle note when province ownership flips.
   String get quickBattle_provinceCaptured;
 
   /// Quick battle casualties summary line.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} casualties: {count}'**
   String quickBattle_casualties(String name, int count);
 
   /// Quick battle result dialog close button label.
   String get quickBattle_ok;
 
   /// Quick battle screen heading with current and max rounds.
-  ///
-  /// In en, this message translates to:
-  /// **'Quick Battle — Round {round} / {maxRounds}'**
   String quickBattle_round(int round, int maxRounds);
 
   /// Quick battle auto resolve button label.
@@ -634,15 +547,9 @@ abstract class AppLocalizations {
   String get quickBattle_defenderDefaultName;
 
   /// Error shown when intro dialogue fails to load.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load intro dialogue: {error}'**
   String game_intro_loadError(String error);
 
   /// Error shown when overture dialogue fails to load.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load overture dialogue: {error}'**
   String game_overture_loadError(String error);
 
   /// Title for overture decisions panel.
@@ -652,9 +559,6 @@ abstract class AppLocalizations {
   String get game_overture_intro;
 
   /// One-line overture offer summary.
-  ///
-  /// In en, this message translates to:
-  /// **'{offerer}: {stage}'**
   String game_overture_offerLine(String offerer, String stage);
 
   /// Accept overture button label.
@@ -667,9 +571,6 @@ abstract class AppLocalizations {
   String get victory_military;
 
   /// Victory sentence with winner and turn number.
-  ///
-  /// In en, this message translates to:
-  /// **'{winner} wins on turn {turn}.'**
   String victory_winnerOnTurn(String winner, int turn);
 
   /// Victory overlay button label.
@@ -688,18 +589,12 @@ abstract class AppLocalizations {
   String get moveArmy_invadeProvinceTitle;
 
   /// Confirm dialog text for hostile army movement.
-  ///
-  /// In en, this message translates to:
-  /// **'Moving into {ownerLabel} territory will declare war this turn and then move the army. Continue?'**
   String moveArmy_invadeProvinceBody(String ownerLabel);
 
   /// Confirm action label for hostile army movement.
   String get moveArmy_declareWarAndMove;
 
   /// Move army dialog title with army id.
-  ///
-  /// In en, this message translates to:
-  /// **'Move army {armyId}'**
   String moveArmy_title(String armyId);
 
   /// Empty-state text for move army dialog.
@@ -709,15 +604,9 @@ abstract class AppLocalizations {
   String get moveArmy_destinationProvince;
 
   /// Move fleet dialog title.
-  ///
-  /// In en, this message translates to:
-  /// **'Move fleet — {fleetLabel}'**
   String moveFleet_title(String fleetLabel);
 
   /// Move fleet dialog title with destination count.
-  ///
-  /// In en, this message translates to:
-  /// **'Move fleet — {fleetLabel} ({count} destinations)'**
   String moveFleet_titleWithDestinations(String fleetLabel, int count);
 
   /// Empty-state message in move fleet dialog.
@@ -736,9 +625,6 @@ abstract class AppLocalizations {
   String get moveFleet_warpLink;
 
   /// Suffix appended to cross-region sea-zone destinations in move fleet dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'links to {region}'**
   String moveFleet_warpLinkToRegion(String region);
 
   /// Military units panel title.
@@ -757,42 +643,24 @@ abstract class AppLocalizations {
   String get military_units_homeArmy;
 
   /// Label for numbered army.
-  ///
-  /// In en, this message translates to:
-  /// **'Army {armyId}'**
   String military_units_army(String armyId);
 
   /// Army subtitle showing regiment count and location.
-  ///
-  /// In en, this message translates to:
-  /// **'{regiments} regiments · {location}'**
   String military_units_armySubtitle(int regiments, String location);
 
   /// Army subtitle showing regiment count, location, and a draft move line.
-  ///
-  /// In en, this message translates to:
-  /// **'{regiments} regiments · {location}\\n{draftLine}'**
   String military_units_armySubtitleWithDraft(int regiments, String location, String draftLine);
 
   /// Empty-state line for army with no regiments.
   String get military_units_noRegimentsAssigned;
 
   /// Type/count line used in military/naval row labels.
-  ///
-  /// In en, this message translates to:
-  /// **'{typeName}: {count}'**
   String military_units_typeCount(String typeName, int count);
 
   /// Regiment subtitle row.
-  ///
-  /// In en, this message translates to:
-  /// **'Medals: {medals} · Status: {status}'**
   String military_units_regimentSubtitle(String medals, String status);
 
   /// Status line label.
-  ///
-  /// In en, this message translates to:
-  /// **'Status: {status}'**
   String military_units_status(String status);
 
   /// Naval units panel title.
@@ -811,51 +679,30 @@ abstract class AppLocalizations {
   String get naval_units_empty;
 
   /// Fleet summary total ships.
-  ///
-  /// In en, this message translates to:
-  /// **'Total ships: {count}'**
   String naval_units_totalShips(int count);
 
   /// Fleet strength summary line.
-  ///
-  /// In en, this message translates to:
-  /// **'Strength: {value}'**
   String naval_units_strength(String value);
 
   /// Fleet summary warship count.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} warships'**
   String naval_units_warships(int count);
 
   /// Fleet summary merchant count.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} merchants'**
   String naval_units_merchants(int count);
 
   /// Tooltip for fleet locate action.
   String get naval_units_locateFleet;
 
   /// Fleet mission label.
-  ///
-  /// In en, this message translates to:
-  /// **'Mission: {mission}'**
   String naval_units_mission(String mission);
 
   /// Empty-state line for fleet with no ships.
   String get naval_units_noShipsInFleet;
 
   /// Cargo capacity line for home fleet.
-  ///
-  /// In en, this message translates to:
-  /// **'Cargo capacity: {capacity}'**
   String naval_units_cargoCapacity(int capacity);
 
   /// Cargo capacity line for non-home fleet.
-  ///
-  /// In en, this message translates to:
-  /// **'Cargo capacity (if assigned): {capacity}'**
   String naval_units_cargoCapacityIfAssigned(int capacity);
 
   /// Diplomacy dialog title for setting subsidy amount.
@@ -865,21 +712,12 @@ abstract class AppLocalizations {
   String get diplomacy_grantAid;
 
   /// Treasury and step line in diplomacy amount dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Treasury: £{treasury}. Step: £{step}.'**
   String diplomacy_treasuryStep(int treasury, int step);
 
   /// Currency amount display in diplomacy amount dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'£{amount}'**
   String diplomacy_currencyAmount(int amount);
 
   /// Validation text when treasury is below minimum adjustable amount.
-  ///
-  /// In en, this message translates to:
-  /// **'Treasury is below the minimum valid amount (£{step}).'**
   String diplomacy_treasuryBelowMinimum(int step);
 
   /// Train civilians dialog title.
@@ -892,21 +730,12 @@ abstract class AppLocalizations {
   String get trainUnits_noCapital;
 
   /// Treasury summary line in train dialogs.
-  ///
-  /// In en, this message translates to:
-  /// **'Treasury: {value}'**
   String trainUnits_treasury(String value);
 
   /// Paper summary line in civilian train dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Paper: {value}'**
   String trainUnits_paper(int value);
 
   /// Peasants summary line in military train dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Peasants: {value}'**
   String trainUnits_peasants(int value);
 
   /// Civilian units panel title.
@@ -922,33 +751,18 @@ abstract class AppLocalizations {
   String get civilian_units_empty;
 
   /// Unit status line in civilian unit row.
-  ///
-  /// In en, this message translates to:
-  /// **'Status: {status}'**
   String civilian_units_status(String status);
 
   /// Unit location line in civilian unit row.
-  ///
-  /// In en, this message translates to:
-  /// **'Location: {location}'**
   String civilian_units_location(String location);
 
   /// Assigned-work line in civilian unit row.
-  ///
-  /// In en, this message translates to:
-  /// **'Assigned to: {target}'**
   String civilian_units_assignedTo(String target);
 
   /// Localized turn-count label for civilian assigned-work rows.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, one {{count} turn} other {{count} turns}}'**
   String civilian_units_turns(int count);
 
   /// In-progress turn counter for civilian assigned-work rows.
-  ///
-  /// In en, this message translates to:
-  /// **'{remaining}/{total} turns'**
   String civilian_units_turnProgress(String remaining, String total);
 
   /// Assign action button in civilian units panel.
@@ -1027,15 +841,9 @@ abstract class AppLocalizations {
   String get splitArmy_title;
 
   /// Technology panel title with player display name.
-  ///
-  /// In en, this message translates to:
-  /// **'Technology - {playerName}'**
   String technologyPanel_title(String playerName);
 
   /// Research slot count line in technology panel.
-  ///
-  /// In en, this message translates to:
-  /// **'Research slots: {slots}'**
   String technologyPanel_researchSlotsCount(int slots);
 
   /// Technology panel section label for slot list.
@@ -1045,15 +853,9 @@ abstract class AppLocalizations {
   String get technologyPanel_empty;
 
   /// Research slot title label.
-  ///
-  /// In en, this message translates to:
-  /// **'Slot {slot}'**
   String technologyPanel_slot(int slot);
 
   /// Research slot subtitle with tech name, progress, and cost label.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} - {progress}/{costLabel} RP'**
   String technologyPanel_slotSubtitle(String name, int progress, String costLabel);
 
   /// Empty-state subtitle when no tech is assigned to a slot.
@@ -1063,9 +865,6 @@ abstract class AppLocalizations {
   String get technologyPanel_chooseTech;
 
   /// Technology panel heading for researched techs.
-  ///
-  /// In en, this message translates to:
-  /// **'Researched ({count}):'**
   String technologyPanel_researched(int count);
 
   /// Technology panel empty-state text when no techs are researched.
@@ -1075,18 +874,12 @@ abstract class AppLocalizations {
   String get technologyPanel_inProgress;
 
   /// Technology panel progress line for one tech.
-  ///
-  /// In en, this message translates to:
-  /// **'{name}: {points} RP'**
   String technologyPanel_progressLine(String name, int points);
 
   /// Bottom-sheet empty-state when no selectable technologies exist.
   String get technologyPanel_noTechsAvailable;
 
   /// Bottom-sheet row subtitle for selectable technology.
-  ///
-  /// In en, this message translates to:
-  /// **'Era {era} - {category} - {cost} RP'**
   String technologyPanel_pickSubtitle(String era, String category, int cost);
 
   /// Snackbar shown when a research slot assignment is removed.
@@ -1096,15 +889,9 @@ abstract class AppLocalizations {
   String get techTree_noTechsInCatalog;
 
   /// Tech dialog subtitle showing era and category.
-  ///
-  /// In en, this message translates to:
-  /// **'Era {era} - {category}'**
   String techTree_eraCategory(String era, String category);
 
   /// Tech cost display in research points.
-  ///
-  /// In en, this message translates to:
-  /// **'{points} RP'**
   String techTree_researchPoints(int points);
 
   /// Tech dialog section heading for prerequisites.
@@ -1162,9 +949,6 @@ abstract class AppLocalizations {
   String get widgetbook_gameShell;
 
   /// Bullet line item in tech-tree detail dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'- {text}'**
   String techTree_bulletItem(String text);
 
   /// Obfuscated placeholder text shown when section intel is unavailable.
@@ -1195,24 +979,15 @@ abstract class AppLocalizations {
   String get provinceOverlay_tileCivilianUnitsUnknown;
 
   /// Tile section coordinates row.
-  ///
-  /// In en, this message translates to:
-  /// **'Coordinates: ({x}, {y})'**
   String provinceOverlay_tileCoordinates(int x, int y);
 
   /// Tile section terrain row.
-  ///
-  /// In en, this message translates to:
-  /// **'Terrain: {terrain}'**
   String provinceOverlay_tileTerrain(String terrain);
 
   /// Tile section resource label prefix before inline icon/name.
   String get provinceOverlay_tileResourcePrefix;
 
   /// Tile section prospecting state row.
-  ///
-  /// In en, this message translates to:
-  /// **'Prospected: {value}'**
   String provinceOverlay_tileProspected(String value);
 
   /// Tooltip and semantics label for province tile prospect shortcut action.
@@ -1225,60 +1000,33 @@ abstract class AppLocalizations {
   String get provinceOverlay_tileBuildImprovementTooltip;
 
   /// Tile section improvement row.
-  ///
-  /// In en, this message translates to:
-  /// **'Improvement: {value}'**
   String provinceOverlay_tileImprovement(String value);
 
   /// Tile section road/rail row when not applicable.
   String get provinceOverlay_tileRoadNone;
 
   /// Tile section civilian unit count row.
-  ///
-  /// In en, this message translates to:
-  /// **'Civilian units (province): {count}'**
   String provinceOverlay_tileCivilianUnits(int count);
 
   /// Political section row for a sea-zone overlay.
-  ///
-  /// In en, this message translates to:
-  /// **'Sea zone: {name}'**
   String provinceOverlay_seaZone(String name);
 
   /// Political section province name row.
-  ///
-  /// In en, this message translates to:
-  /// **'Name: {name}'**
   String provinceOverlay_name(String name);
 
   /// Political section owner row.
-  ///
-  /// In en, this message translates to:
-  /// **'Owner: {owner}'**
   String provinceOverlay_owner(String owner);
 
   /// Indented count line used in military summary lists.
-  ///
-  /// In en, this message translates to:
-  /// **'  {label}: {count}'**
   String provinceOverlay_indentedCount(String label, int count);
 
   /// Civilian section line for unit target or status.
-  ///
-  /// In en, this message translates to:
-  /// **'{type} ({id}): {target}'**
   String provinceOverlay_unitTarget(String type, String id, String target);
 
   /// Civilian section line for foreign-unit status.
-  ///
-  /// In en, this message translates to:
-  /// **'{owner} — {type} ({id}): {status}'**
   String provinceOverlay_foreignUnitStatus(String owner, String type, String id, String status);
 
   /// Naval section fleet summary line.
-  ///
-  /// In en, this message translates to:
-  /// **'{owner} — {fleetLabel}: {shipParts}'**
   String provinceOverlay_fleetSummary(String owner, String fleetLabel, String shipParts);
 
   /// Province overlay section heading for political details.
@@ -1315,9 +1063,6 @@ abstract class AppLocalizations {
   String get gameSetup_player1You;
 
   /// Label for an AI-controlled player slot (n is 2-based index for display).
-  ///
-  /// In en, this message translates to:
-  /// **'Player {n} (AI)'**
   String gameSetup_playerAiSlot(int n);
 
   /// Dropdown hint when choosing a great power nation.
@@ -1336,30 +1081,18 @@ abstract class AppLocalizations {
   String get mapCorner_tooltipMapDisplayOptions;
 
   /// Cargo hold usage label on map controls (used and capacity are pre-formatted numbers or em dash).
-  ///
-  /// In en, this message translates to:
-  /// **'{used}/{capacity}'**
   String mapControls_cargoHold(String used, String capacity);
 
   /// Percentage label with no space before percent sign.
-  ///
-  /// In en, this message translates to:
-  /// **'{value}%'**
   String common_percent(int value);
 
   /// Accessibility label and tooltip for region minimap zoom slider.
   String get regionMinimap_mapZoom;
 
   /// Semantics value for zoom slider (spoken).
-  ///
-  /// In en, this message translates to:
-  /// **'{pct} percent'**
   String regionMinimap_zoomSemanticsValue(int pct);
 
   /// Economic row in province overlay: terrain, resource id, and localized detail suffix.
-  ///
-  /// In en, this message translates to:
-  /// **'{terrain}/{resourceId} {detail}'**
   String province_economic_resourceRow(String terrain, String resourceId, String detail);
 
   /// Heading for diplomatic event history on detail screen.
@@ -1369,9 +1102,6 @@ abstract class AppLocalizations {
   String get diplomacy_detail_noEvents;
 
   /// History card subtitle with calendar year and turn number.
-  ///
-  /// In en, this message translates to:
-  /// **'{year} (Turn {turn})'**
   String diplomacy_detail_yearTurn(int year, int turn);
 
   /// Heading for dossier section on diplomacy detail.
@@ -1384,117 +1114,63 @@ abstract class AppLocalizations {
   String get diplomacy_detail_noDossier;
 
   /// Prefix for a dossier evidence line.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn {turn}:'**
   String diplomacy_detail_turnEvidence(int turn);
 
   /// Empty diplomacy list before any factions are discovered.
   String get diplomacy_panel_noFactions;
 
   /// Great power military/economic score label in diplomacy row.
-  ///
-  /// In en, this message translates to:
-  /// **'Power: {score}'**
   String diplomacy_panel_powerScore(int score);
 
   /// Line showing active subsidy to another faction.
-  ///
-  /// In en, this message translates to:
-  /// **'Outgoing subsidy: £{amount}/turn to {target}'**
   String diplomacy_panel_outgoingSubsidy(int amount, String target);
 
   /// Pending grant aid line in diplomacy row.
-  ///
-  /// In en, this message translates to:
-  /// **'Pending grant aid: £{amount} (resolves end of turn)'**
   String diplomacy_panel_pendingGrant(int amount);
 
   /// Pending subsidy line in diplomacy row.
-  ///
-  /// In en, this message translates to:
-  /// **'Pending subsidy: £{amount}/turn (resolves end of turn)'**
   String diplomacy_panel_pendingSubsidy(int amount);
 
   /// Stock line for a commodity; change is empty or parenthesized delta.
-  ///
-  /// In en, this message translates to:
-  /// **'{name}: {qty}{change}'**
   String production_commodityStock(String name, int qty, String change);
 
   /// Shows effective labour total in production panel.
-  ///
-  /// In en, this message translates to:
-  /// **'Effective labour: {n}'**
   String production_effectiveLabour(int n);
 
   /// Recipe affordance line (max output and limiting factor label).
-  ///
-  /// In en, this message translates to:
-  /// **'{max} · {limiting}'**
   String production_recipeAffordance(int max, String limiting);
 
   /// Total labour required vs effective in allocation panel.
-  ///
-  /// In en, this message translates to:
-  /// **'Total labour: {required} / {effective}'**
   String production_totalLabour(int required, int effective);
 
   /// Warning when allocated labour exceeds effective labour.
   String get production_labourInsufficient;
 
   /// Worker type and count in production panel.
-  ///
-  /// In en, this message translates to:
-  /// **'{name}: {count}'**
   String production_workerCount(String name, int count);
 
   /// Ship type and hull count in fleet expansion tile.
-  ///
-  /// In en, this message translates to:
-  /// **'{typeName}: {count}'**
   String naval_units_shipTypeCount(String typeName, int count);
 
   /// Bottom sheet title for assigning civilian work.
-  ///
-  /// In en, this message translates to:
-  /// **'Assign work: {unitType}'**
   String civilian_assignWorkTitle(String unitType);
 
   /// Commodity name and stock quantity in train military dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'{name}: {qty}'**
   String trainMilitary_commodityAmount(String name, int qty);
 
   /// Treasury cost plus paper requirement for training civilians.
-  ///
-  /// In en, this message translates to:
-  /// **'{treasury} + {paper} Paper'**
   String trainCivilians_costLine(String treasury, String paper);
 
   /// Bullet line for a tech prerequisite name.
-  ///
-  /// In en, this message translates to:
-  /// **'• {name}'**
   String techTree_prerequisiteBullet(String name);
 
   /// Tech tree effect line for a regiment unlock from catalog data.
-  ///
-  /// In en, this message translates to:
-  /// **'Unlocks regiment: {name}'**
   String techEffect_unlocksRegiment(String name);
 
   /// Tech tree effect line for a ship unlock from catalog data.
-  ///
-  /// In en, this message translates to:
-  /// **'Unlocks ship: {name}'**
   String techEffect_unlocksShip(String name);
 
   /// Generic tech effect when no specific summary lines exist.
-  ///
-  /// In en, this message translates to:
-  /// **'Improves {category} capabilities'**
   String techEffect_fallbackCategoryImprovement(String category);
 
   /// Tech tree category label (gathering).
@@ -1522,27 +1198,18 @@ abstract class AppLocalizations {
   String get techTree_categoryNewWorld;
 
   /// Transfer list row showing item name and quantity.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} ({count})'**
   String transferList_rowCount(String name, int count);
 
   /// Placeholder hint in Widgetbook civilian panel story.
   String get widgetbook_openPanelHint;
 
   /// Fleet row label with fleet id.
-  ///
-  /// In en, this message translates to:
-  /// **'Fleet {id}'**
   String naval_fleetLabel(String id);
 
   /// Label for the player's home fleet.
   String get naval_homeFleetLabel;
 
   /// Location sub-header combining local and region labels.
-  ///
-  /// In en, this message translates to:
-  /// **'{label} — {region}'**
   String locationSection_headerLine(String label, String region);
 
   /// Title for split fleet dialog.
@@ -1558,18 +1225,12 @@ abstract class AppLocalizations {
   String get splitFleet_confirm;
 
   /// Footer total ship count in split fleet transfer list.
-  ///
-  /// In en, this message translates to:
-  /// **'Total: {total} ships'**
   String splitFleet_totalShips(int total);
 
   /// Title for selected-ship transfer into Home Fleet dialog.
   String get naval_transferToHome_dialogTitle;
 
   /// Source fleet title in transfer-to-home dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Fleet {id}'**
   String naval_transferToHome_sourceTitle(String id);
 
   /// Confirm button label for transfer-to-home dialog.
@@ -2236,9 +1897,6 @@ abstract class AppLocalizations {
   String get techEffectSummary_wind_saw_mill_1;
 
   /// Label for narrow-layout player turn event feed chip.
-  ///
-  /// In en, this message translates to:
-  /// **'Events ({count})'**
   String playerTurnFeed_eventsChip(int count);
 
   /// Title for the narrow-layout player turn events dialog.
