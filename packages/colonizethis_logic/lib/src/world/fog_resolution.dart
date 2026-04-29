@@ -9,7 +9,7 @@ import 'naval_resolution.dart'
         coastalLandTileKeysFromNavalPresenceAtSea,
         landTileKeysForProvinceBucket;
 import 'player_view.dart';
-import 'province_lookup.dart';
+import 'province_lookup.dart' hide landTileKeysForProvinceBucket;
 import 'unit_lookup.dart';
 
 void _fogFullyVisibleTilesForSpyExpiry(

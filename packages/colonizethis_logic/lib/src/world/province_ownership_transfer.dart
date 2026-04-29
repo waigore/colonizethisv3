@@ -48,7 +48,7 @@ class BulkProvinceOwnershipTransferResult {
 Map<String, String> _clearPurchasedTilesForProvince(
   WorldState worldState,
   String conqueredProvinceId,
-  int Function(int removed) onRemoved,
+  void Function(int removed) onRemoved,
 ) {
   final existing = worldState.purchasedTilesByTileKey;
   if (existing.isEmpty) return existing;
@@ -264,7 +264,7 @@ _applyCanonicalSingleProvinceOwnershipTransferCore(
 
 /// Same transfer as [applyCanonicalSingleProvinceOwnershipTransfer] with a
 /// structured result payload for reporting.
-(Game game, CanonicalProvinceOwnershipTransferResult result)
+({Game game, CanonicalProvinceOwnershipTransferResult result})
 applyCanonicalSingleProvinceOwnershipTransferWithResult(
   Game game, {
   required String targetProvinceId,
