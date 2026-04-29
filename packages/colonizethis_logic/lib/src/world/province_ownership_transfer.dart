@@ -147,18 +147,21 @@ void _validateCanonicalTransfer(
 /// legality, and immediate visibility updates.
 ///
 /// [targetProvinceId] is normally a prefixed province id (`regionId|localId`);
-/// legacy short ids matching a province row are accepted for tests/fixtures.
-Game applyCanonicalSingleProvinceOwnershipTransfer(
+/// When [relocateIllegalCivilians] is false, skips per-transfer civilian
+/// legality normalization (used by diplomacy bulk absorption, which remaps
+/// unit ownership first then runs one relocation pass).
   Game game, {
   required String targetProvinceId,
   required String oldOwnerId,
   required String newOwnerId,
+  bool relocateIllegalCivilians = true,
 }) {
   return _applyCanonicalSingleProvinceOwnershipTransferCore(
     game,
     targetProvinceId: targetProvinceId,
     oldOwnerId: oldOwnerId,
     newOwnerId: newOwnerId,
+    relocateIllegalCivilians: relocateIllegalCivilians,
   ).game;
 }
 
@@ -168,6 +171,7 @@ _applyCanonicalSingleProvinceOwnershipTransferCore(
   required String targetProvinceId,
   required String oldOwnerId,
   required String newOwnerId,
+  bool relocateIllegalCivilians = true,
 }) {
   if (oldOwnerId == newOwnerId) {
     return (
@@ -260,10 +264,12 @@ _applyCanonicalSingleProvinceOwnershipTransferCore(
   );
   nextGame = visOutcome.game;
 
-  nextGame = relocateIllegalCiviliansInChangedProvinces(
-    nextGame,
-    changedProvinceIds: {canonicalId},
-  );
+  if (relocateIllegalCivilians) {
+    nextGame = relocateIllegalCiviliansInChangedProvinces(
+      nextGame,
+      changedProvinceIds: {canonicalId},
+    );
+  }
 
   nextGame = nextGame.copyWith(
     worldState: reconcileArmiesAfterUnitsChanged(
@@ -283,6 +289,7 @@ applyCanonicalSingleProvinceOwnershipTransferWithResult(
   required String targetProvinceId,
   required String oldOwnerId,
   required String newOwnerId,
+  bool relocateIllegalCivilians = true,
 }) {
   if (oldOwnerId == newOwnerId) {
     return (
@@ -359,6 +366,7 @@ applyCanonicalSingleProvinceOwnershipTransferWithResult(
     targetProvinceId: targetProvinceId,
     oldOwnerId: oldOwnerId,
     newOwnerId: newOwnerId,
+    relocateIllegalCivilians: relocateIllegalCivilians,
   );
 
   return (
@@ -379,11 +387,16 @@ applyCanonicalSingleProvinceOwnershipTransferWithResult(
 
 /// Invokes canonical single-province transfer once per id in order; aborts on
 /// first failure without processing remaining ids.
+///
+/// Set [relocateIllegalCivilians] to false when callers will remap unit
+/// ownership globally after the bulk step (e.g. Join Empire), then run
+/// [relocateIllegalCiviliansInChangedProvinces] once for all provinces.
 BulkProvinceOwnershipTransferResult applyBulkCanonicalProvinceOwnershipTransfers(
   Game game, {
   required List<String> provinceIdsInOrder,
   required String oldOwnerId,
   required String newOwnerId,
+  bool relocateIllegalCivilians = true,
 }) {
   final results = <CanonicalProvinceOwnershipTransferResult>[];
   var current = game;
@@ -393,6 +406,7 @@ BulkProvinceOwnershipTransferResult applyBulkCanonicalProvinceOwnershipTransfers
       targetProvinceId: pid,
       oldOwnerId: oldOwnerId,
       newOwnerId: newOwnerId,
+      relocateIllegalCivilians: relocateIllegalCivilians,
     );
     current = out.game;
     results.add(out.result);

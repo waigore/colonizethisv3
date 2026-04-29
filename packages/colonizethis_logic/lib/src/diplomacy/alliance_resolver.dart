@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import '../world/army_migration.dart';
+import '../world/civilian_ownership_legality.dart';
 import '../world/province_ownership_transfer.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
@@ -180,6 +181,7 @@ Game absorbMinorOrTribeIntoGp(
     provinceIdsInOrder: provinceIds,
     oldOwnerId: targetId,
     newOwnerId: gpId,
+    relocateIllegalCivilians: false,
   );
   next = bulk.game;
 
@@ -211,6 +213,11 @@ Game absorbMinorOrTribeIntoGp(
         targetId,
       ),
     ),
+  );
+
+  next = relocateIllegalCiviliansInChangedProvinces(
+    next,
+    changedProvinceIds: Set<String>.from(provinceIds),
   );
 
   next = next.copyWith(
@@ -264,6 +271,7 @@ Game absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) {
     provinceIdsInOrder: provinceIds,
     oldOwnerId: targetGpId,
     newOwnerId: gpId,
+    relocateIllegalCivilians: false,
   );
   next = bulk.game;
 
@@ -317,6 +325,11 @@ Game absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) {
         targetGpId,
       ),
     ),
+  );
+
+  next = relocateIllegalCiviliansInChangedProvinces(
+    next,
+    changedProvinceIds: Set<String>.from(provinceIds),
   );
 
   next = next.copyWith(
