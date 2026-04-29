@@ -10,10 +10,16 @@ import 'orders_application_context.dart';
 import 'orders_application_helpers.dart';
 
 /// Home-fleet ship spawn when capital has a seaboard port (naval build slice, #1618).
-class _NavalBuildState {
-  _NavalBuildState(this._session);
+class _NavalBuildSession {
+  _NavalBuildSession(this._game, this._topology);
 
-  final BuildWorkState _session;
+  Game _game;
+  final MapTopology _topology;
+
+  /// Rebases session state onto the latest build-phase game snapshot.
+  void rebase(Game game) {
+    _game = game;
+  }
 
   /// Spawns into home fleet when affordable build was already deducted; no-op if blocked.
   void spawnHomeFleetShipIfEligible(Player player, BuildUnitOrder order) {
@@ -21,15 +27,14 @@ class _NavalBuildState {
     if (capProvinceId == null) return;
     final regionId = ProvinceId.regionIdFrom(capProvinceId);
     // Only add ship when capital is sea-bound (has a port). SPEC/game/ships-and-naval.md.
-    if (_session.topology == null) return;
     final seaZoneAtCap = seaZoneIdForProvince(
-      _session.topology!,
+      _topology,
       ProvinceId.localIdFrom(capProvinceId),
       regionId: regionId,
     );
     if (seaZoneAtCap == null) return;
 
-    var ws = _session.game.worldState;
+    var ws = _game.worldState;
     var fleets = List<Fleet>.from(ws.fleets);
     final homeFleetId = homeFleetIdFor(player.id);
     final existing = fleets.indexWhere(
@@ -60,10 +65,12 @@ class _NavalBuildState {
         ),
       ];
     }
-    _session.game = _session.game.copyWith(
+    _game = _game.copyWith(
       worldState: ws.copyWith(fleets: fleets, nextShipInstanceSeq: nextSeq),
     );
   }
+
+  Game get game => _game;
 }
 
 String _buildUnitId(
@@ -95,25 +102,92 @@ class _CivilianBuildState {
 class _MilitaryBuildState {
   _MilitaryBuildState._();
 
-  static void appendRegimentToArmy(
-    BuildWorkState state,
+  static Game appendRegimentToArmy(
+    Game game,
     Player player,
     String spawnProvinceId,
     String newUnitId,
   ) {
-    appendMilitaryRegimentToArmy(state, player, spawnProvinceId, newUnitId);
+    return appendMilitaryRegimentToArmy(game, player, spawnProvinceId, newUnitId);
   }
 }
 
-/// Applies build orders for all players. Mutates [state.game] and [state.work] unit maps.
-void runBuildPhase(BuildWorkState state) {
-  final naval = _NavalBuildState(state);
-  for (final player in state.game.players) {
+/// One land/civilian/military build order after affordability check; keeps [runBuildPhase]
+/// nesting shallow for CI (`repo.control_flow_nesting_depth`).
+BuildWorkState _applyAffordableBuildUnitOrder({
+  required BuildWorkState current,
+  required Player player,
+  required BuildUnitOrder order,
+}) {
+  final category = buildUnitCategoryForUnitType(order.unitType);
+  if (category == BuildUnitCategory.unknown) return current;
+
+  final spawnProvinceId = resolveBuildSpawnProvinceId(
+    player: player,
+    worldState: current.game.worldState,
+    order: order,
+  );
+  if (spawnProvinceId == null) return current;
+
+  final regionId = ProvinceId.regionIdFrom(spawnProvinceId);
+  final civilianTileKey = _CivilianBuildState.spawnTileKeyForCategory(
+    category: category,
+    player: player,
+    game: current.game,
+  );
+  if (category == BuildUnitCategory.civilian && civilianTileKey == null) {
+    throw StateError(
+      '$kCivilianCapitalTileMissingReason: player=${player.id}',
+    );
+  }
+
+  final newUnit = Unit(
+    id: _buildUnitId(player.id, order, spawnProvinceId),
+    type: order.unitType,
+    ownerId: player.id,
+    locationProvinceId: spawnProvinceId,
+    tileKey: category == BuildUnitCategory.civilian ? civilianTileKey : null,
+  );
+
+  var work = current.work;
+  if (regionId == kRegionNewWorld) {
+    work = work.copyWith(
+      newUnitsById: Map<String, Unit>.from(work.newUnitsById)
+        ..[newUnit.id] = newUnit,
+    );
+  } else {
+    work = work.copyWith(
+      oldUnitsById: Map<String, Unit>.from(work.oldUnitsById)
+        ..[newUnit.id] = newUnit,
+    );
+  }
+
+  var nextGame = current.game;
+  if (category == BuildUnitCategory.military) {
+    nextGame = _MilitaryBuildState.appendRegimentToArmy(
+      nextGame,
+      player,
+      spawnProvinceId,
+      newUnit.id,
+    );
+  }
+
+  return current.copyWith(game: nextGame, work: work);
+}
+
+/// Applies build orders for all players. Returns state with updated [game] and unit maps.
+BuildWorkState runBuildPhase(BuildWorkState state) {
+  final naval = state.topology != null
+      ? _NavalBuildSession(state.game, state.topology!)
+      : null;
+  var current = naval != null ? state.copyWith(game: naval.game) : state;
+
+  for (final player in current.game.players) {
     var workers = player.workerPool;
     var stockpile = player.stockpile;
     var treasury = player.treasury;
 
-    for (final order in state.buildOrders[player.id] ?? const []) {
+    for (final order in current.buildOrders[player.id] ?? const []) {
       final category = buildUnitCategoryForUnitType(order.unitType);
       if (category == BuildUnitCategory.unknown) continue;
 
@@ -132,67 +206,37 @@ void runBuildPhase(BuildWorkState state) {
       treasury = after.treasury;
 
       if (category == BuildUnitCategory.naval) {
-        naval.spawnHomeFleetShipIfEligible(player, order);
+        naval?.rebase(current.game);
+        naval?.spawnHomeFleetShipIfEligible(player, order);
+        current = naval != null
+            ? current.copyWith(game: naval.game)
+            : current;
         continue;
       }
 
-      final spawnProvinceId = resolveBuildSpawnProvinceId(
+      current = _applyAffordableBuildUnitOrder(
+        current: current,
         player: player,
-        worldState: state.game.worldState,
         order: order,
       );
-      if (spawnProvinceId == null) continue;
-      final regionId = ProvinceId.regionIdFrom(spawnProvinceId);
-      final civilianTileKey = _CivilianBuildState.spawnTileKeyForCategory(
-        category: category,
-        player: player,
-        game: state.game,
-      );
-      if (category == BuildUnitCategory.civilian && civilianTileKey == null) {
-        throw StateError(
-          '$kCivilianCapitalTileMissingReason: player=${player.id}',
-        );
-      }
-
-      final newUnit = Unit(
-        id: _buildUnitId(player.id, order, spawnProvinceId),
-        type: order.unitType,
-        ownerId: player.id,
-        locationProvinceId: spawnProvinceId,
-        tileKey: category == BuildUnitCategory.civilian
-            ? civilianTileKey
-            : null,
-      );
-
-      if (regionId == kRegionNewWorld) {
-        state.work.newUnitsById[newUnit.id] = newUnit;
-      } else {
-        state.work.oldUnitsById[newUnit.id] = newUnit;
-      }
-
-      if (category == BuildUnitCategory.military) {
-        _MilitaryBuildState.appendRegimentToArmy(
-          state,
-          player,
-          spawnProvinceId,
-          newUnit.id,
-        );
-      }
     }
 
-    // Apply build-phase deductions to this player so _runWorkPhase sees updated state.
-    state.game = state.game.copyWith(
-      players: state.game.players
-          .map(
-            (p) => p.id == player.id
-                ? p.copyWith(
-                    stockpile: stockpile,
-                    workerPool: workers,
-                    treasury: treasury,
-                  )
-                : p,
-          )
-          .toList(),
+    current = current.copyWith(
+      game: current.game.copyWith(
+        players: current.game.players
+            .map(
+              (p) => p.id == player.id
+                  ? p.copyWith(
+                      stockpile: stockpile,
+                      workerPool: workers,
+                      treasury: treasury,
+                    )
+                  : p,
+            )
+            .toList(),
+      ),
     );
   }
+
+  return current;
 }
