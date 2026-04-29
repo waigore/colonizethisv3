@@ -24,8 +24,6 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'app_event_handler.dart';
 import 'app_event_handler_debug_spawn.dart' show applyDebugCivilianSpawnAtCapital;
 
-export 'app_event_handler_debug_spawn.dart' show applyDebugCivilianSpawnAtCapital;
-
 part 'app_event_handler_scope_dialog_builders.dart';
 part 'app_event_handler_scope_session_subscriptions.dart';
 
