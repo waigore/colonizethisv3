@@ -12,6 +12,7 @@ const String kTechIdUniversity = 'university';
 const String kTechIdBanking = 'banking';
 const String kTechIdTradeFairs = 'trade_fairs';
 const String kTechIdIndustrialMachinery = 'industrial_machinery';
+const String kTechIdCircularSaw = 'circular_saw';
 const String kTechIdModernMilitaryFunding = 'modern_military_funding';
 const String kTechIdIndustrialFundingOfResearch =
     'industrial_funding_of_research';
