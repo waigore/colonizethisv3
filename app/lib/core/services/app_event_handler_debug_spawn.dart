@@ -3,10 +3,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart' show kRegionNewWorld
 import 'package:colonizethis_logic/debug_console_api.dart'
     show resolveCivilianSpawnTileKey;
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/foundation.dart';
 
 /// Debug spawn civilians at the human player's capital (console / dev tooling).
-@visibleForTesting
 ({Game? game, String message}) applyDebugCivilianSpawnAtCapital({
   required Game? currentGame,
   required SpawnDebugCivilianAtCapitalEvent event,
