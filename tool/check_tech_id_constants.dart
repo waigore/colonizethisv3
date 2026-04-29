@@ -12,7 +12,6 @@ const _argFiles = '--files';
 const _excludedPaths = <String>{
   'packages/colonizethis_data/lib/src/tech_catalog.dart',
   'packages/colonizethis_data/lib/src/tech_extraction.dart',
-  'packages/colonizethis_data/lib/src/combat_config.dart',
 };
 
 /// [incrementalRelativeDartPaths]: when non-null and non-empty, only those
