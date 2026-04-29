@@ -6,6 +6,8 @@ import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('NavalOrderValidator', () {
+    const ow = 'oldWorld';
+
     test(
       'validateNavalMove dock reject when sea zone not adjacent to province',
       () {
