@@ -82,6 +82,12 @@ if search_has_match "^export 'src/ai/" "$LOGIC_BARREL"; then
   FAIL=1
 fi
 
+# 5b) Reject package: URI re-exports of logic AI src (Refs #1958).
+if search_has_match "^export 'package:colonizethis_logic/src/ai/" "$LOGIC_BARREL"; then
+  echo "ERROR: $LOGIC_BARREL must not export package:colonizethis_logic/src/ai/..."
+  FAIL=1
+fi
+
 if [[ $FAIL -eq 1 ]]; then
   exit 1
 fi
