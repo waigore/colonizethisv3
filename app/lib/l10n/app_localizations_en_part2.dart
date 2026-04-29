@@ -1,6 +1,155 @@
-// Intentionally standalone split artifact for analyzer compatibility.
+part of 'app_localizations_en.dart';
 
-mixin _AppLocalizationsEnStrings2 {
+mixin _AppLocalizationsEnStrings2 on AppLocalizations {
+  @override
+  String get province_regiment_cossacks => 'Cossacks';
+
+  @override
+  String get province_regiment_lancers => 'Lancers';
+
+  @override
+  String get province_regiment_harquebusiers => 'Harquebusiers';
+
+  @override
+  String get province_regiment_horse_artillery => 'Horse artillery';
+
+  @override
+  String get province_regiment_royal_artillery => 'Royal artillery';
+
+  @override
+  String get province_regiment_skirmishers => 'Skirmishers';
+
+  @override
+  String get province_regiment_regulars => 'Regulars';
+
+  @override
+  String get province_regiment_grenadiers => 'Grenadiers';
+
+  @override
+  String get province_regiment_hussars => 'Hussars';
+
+  @override
+  String get province_regiment_cuirassiers => 'Cuirassiers';
+
+  @override
+  String get province_regiment_light_artillery => 'Light artillery';
+
+  @override
+  String get province_regiment_heavy_artillery => 'Heavy artillery';
+
+  @override
+  String get province_regiment_sharpshooters => 'Sharpshooters';
+
+  @override
+  String get province_regiment_rifle_infantry => 'Rifle infantry';
+
+  @override
+  String get province_regiment_guards => 'Guards';
+
+  @override
+  String get province_regiment_scouts => 'Scouts';
+
+  @override
+  String get province_regiment_carbine_cavalry => 'Carbine cavalry';
+
+  @override
+  String get province_regiment_field_artillery => 'Field artillery';
+
+  @override
+  String get province_regiment_siege_guns => 'Siege guns';
+
+  @override
+  String get province_ship_carrack => 'Carrack';
+
+  @override
+  String get province_ship_fluyte => 'Fluyte';
+
+  @override
+  String get province_ship_sloop => 'Sloop';
+
+  @override
+  String get province_ship_trader => 'Trader';
+
+  @override
+  String get province_ship_galleon => 'Galleon';
+
+  @override
+  String get province_ship_indiaman => 'Indiaman';
+
+  @override
+  String get province_ship_frigate => 'Frigate';
+
+  @override
+  String get province_ship_raider => 'Raider';
+
+  @override
+  String get province_ship_ship_of_the_line => 'Ship of the Line';
+
+  @override
+  String get province_ship_clipper => 'Clipper';
+
+  @override
+  String get province_ship_merchant_steamship => 'Merchant Steamship';
+
+  @override
+  String get province_ship_ironclad => 'Ironclad';
+
+  @override
+  String quickBattle_commandPoints(int cp) {
+    return 'Command Points: $cp';
+  }
+
+  @override
+  String get quickBattle_action_volleyFire => 'Volley Fire';
+
+  @override
+  String get quickBattle_action_defend => 'Defend';
+
+  @override
+  String get quickBattle_action_maneuver => 'Maneuver';
+
+  @override
+  String get quickBattle_action_fallBack => 'Fall Back';
+
+  @override
+  String get quickBattle_action_assault => 'Assault';
+
+  @override
+  String quickBattle_actionWithCost(String label, int cost) {
+    return '$label ($cost CP)';
+  }
+
+  @override
+  String quickBattle_combatAt(String provinceName) {
+    return 'Combat at $provinceName';
+  }
+
+  @override
+  String get quickBattle_capitalSiegeQuickBattleOnly =>
+      'Capital siege — Quick Battle only (no auto-resolve).';
+
+  @override
+  String get quickBattle_chooseCombatMode => 'Choose combat mode:';
+
+  @override
+  String get quickBattle_autoResolve => 'Auto-Resolve';
+
+  @override
+  String get quickBattle_quickBattle => 'Quick Battle';
+
+  @override
+  String quickBattle_attackerWins(String name) {
+    return '$name wins';
+  }
+
+  @override
+  String quickBattle_defenderHolds(String name) {
+    return '$name holds';
+  }
+
+  @override
+  String get quickBattle_mutualExhaustion => 'Mutual exhaustion';
+
   @override
   String quickBattle_battleResult(String winnerText) {
     return 'Battle Result: $winnerText';
@@ -312,14 +461,14 @@ mixin _AppLocalizationsEnStrings2 {
   }
 
   @override
-  String get civilian_units_assign => 'Assign';
-
-  @override
   String civilian_units_turns(int count) {
-    if (count == 1) {
-      return '$count turn';
-    }
-    return '$count turns';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count turns',
+      one: '$count turn',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -328,246 +477,6 @@ mixin _AppLocalizationsEnStrings2 {
   }
 
   @override
-  String get naval_transferToHome_dialogTitle => 'Transfer Ships to Home Fleet';
+  String get civilian_units_assign => 'Assign';
 
-  @override
-  String naval_transferToHome_sourceTitle(String id) {
-    return 'Fleet $id';
-  }
-
-  @override
-  String get naval_transferToHome_confirm => 'Confirm Transfer';
-
-  @override
-  String get production_breakdown_title => 'Commodity breakdown';
-
-  @override
-  String get production_breakdown_commodity => 'Commodity';
-
-  @override
-  String get production_breakdown_total => 'Total';
-
-  @override
-  String get production_breakdown_phase_pendingBuildCosts =>
-      'Pending build costs';
-
-  @override
-  String get production_breakdown_phase_extraction => 'Extraction';
-
-  @override
-  String get production_breakdown_phase_richesToTreasury =>
-      'Riches to treasury';
-
-  @override
-  String get production_breakdown_phase_consumption => 'Consumption';
-
-  @override
-  String get production_breakdown_phase_production => 'Production';
-
-  @override
-  String get production_breakdown => 'Breakdown';
-
-  @override
-  String get production_available => 'Available';
-
-  @override
-  String get production_food => 'Food';
-
-  @override
-  String get production_rawMaterials => 'Raw Materials';
-
-  @override
-  String get production_manufactured => 'Manufactured';
-
-  @override
-  String get production_workers => 'Workers';
-
-  @override
-  String get production_workers_peasants => 'Peasants';
-
-  @override
-  String get production_workers_apprentices => 'Apprentices';
-
-  @override
-  String get production_workers_journeymen => 'Journeymen';
-
-  @override
-  String get production_workers_masters => 'Masters';
-
-  @override
-  String get production_allocation => 'Allocation';
-
-  @override
-  String get production_allocationDecrementRecipe =>
-      'Decrease desired output for this recipe';
-
-  @override
-  String get production_allocationIncrementRecipe =>
-      'Increase desired output for this recipe';
-
-  @override
-  String get production_allocationMaximizeRecipe =>
-      'Set this recipe to maximum desired output';
-
-  @override
-  String get production_allocationClearRecipe =>
-      'Clear desired output for this recipe';
-
-  @override
-  String get splitArmy_title => 'Split Army';
-
-  @override
-  String technologyPanel_title(String playerName) {
-    return 'Technology - $playerName';
-  }
-
-  @override
-  String technologyPanel_researchSlotsCount(int slots) {
-    return 'Research slots: $slots';
-  }
-
-  @override
-  String get technologyPanel_researchSlots => 'Research slots';
-
-  @override
-  String get technologyPanel_empty => 'Empty';
-
-  @override
-  String technologyPanel_slot(int slot) {
-    return 'Slot $slot';
-  }
-
-  @override
-  String technologyPanel_slotSubtitle(
-    String name,
-    int progress,
-    String costLabel,
-  ) {
-    return '$name - $progress/$costLabel RP';
-  }
-
-  @override
-  String get technologyPanel_noTechAssigned => 'No tech assigned';
-
-  @override
-  String get technologyPanel_chooseTech => 'Choose tech';
-
-  @override
-  String technologyPanel_researched(int count) {
-    return 'Researched ($count):';
-  }
-
-  @override
-  String get technologyPanel_noneYet => 'None yet';
-
-  @override
-  String get technologyPanel_inProgress => 'In progress:';
-
-  @override
-  String technologyPanel_progressLine(String name, int points) {
-    return '$name: $points RP';
-  }
-
-  @override
-  String get technologyPanel_noTechsAvailable =>
-      'No techs available to research';
-
-  @override
-  String technologyPanel_pickSubtitle(String era, String category, int cost) {
-    return 'Era $era - $category - $cost RP';
-  }
-
-  @override
-  String get technologyPanel_slotCancelled => 'Research slot cancelled';
-
-  @override
-  String get techTree_noTechsInCatalog => 'No techs in catalog';
-
-  @override
-  String techTree_eraCategory(String era, String category) {
-    return 'Era $era - $category';
-  }
-
-  @override
-  String techTree_researchPoints(int points) {
-    return '$points RP';
-  }
-
-  @override
-  String get techTree_prerequisites => 'Prerequisites';
-
-  @override
-  String get techTree_effects => 'Effects';
-
-  @override
-  String get techTree_legendTitle => 'Technology tree legend';
-
-  @override
-  String get techTree_stateResearched => 'Researched';
-
-  @override
-  String get techTree_stateInProgress => 'In progress';
-
-  @override
-  String get techTree_stateAvailable => 'Available';
-
-  @override
-  String get techTree_stateLocked => 'Locked';
-
-  @override
-  String get mapDebug_fullVisibility => 'Full visibility';
-
-  @override
-  String get mapDebug_playerConstrained => 'Player-constrained';
-
-  @override
-  String get mapDebug_hideProvinceNames => 'No province names';
-
-  @override
-  String get mapDebug_noNames => 'No names';
-
-  @override
-  String get widgetbook_primaryAction => 'Primary action';
-
-  @override
-  String get widgetbook_disabled => 'Disabled';
-
-  @override
-  String get widgetbook_fixedWidth => 'Fixed width';
-
-  @override
-  String get widgetbook_noPlayers => 'No players';
-
-  @override
-  String get widgetbook_techTreeTitle => 'Tech Tree';
-
-  @override
-  String get widgetbook_openBreakdownDialog => 'Open breakdown dialog';
-
-  @override
-  String get widgetbook_gameShell => 'Game shell';
-
-  @override
-  String techTree_bulletItem(String text) {
-    return '- $text';
-  }
-
-  @override
-  String get provinceOverlay_unknown => '???';
-
-  @override
-  String get provinceOverlay_clickTileForDetails =>
-      'Click a tile to see details.';
-
-  @override
-  String get provinceOverlay_tileCoordinatesUnknown => 'Coordinates: ???';
-
-  @override
-  String get provinceOverlay_tileTerrainUnknown => 'Terrain: ???';
-
-  @override
-  String get provinceOverlay_tileResourceUnknown => 'Resource: ???';
-
-  @override
-  String get provinceOverlay_tileProspectedUnknown => 'Prospected: ???';
 }

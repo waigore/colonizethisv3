@@ -1,6 +1,239 @@
-// Intentionally standalone split artifact for analyzer compatibility.
+part of 'app_localizations_en.dart';
 
-mixin _AppLocalizationsEnStrings3 {
+mixin _AppLocalizationsEnStrings3 on AppLocalizations {
+  @override
+  String get production_breakdown_title => 'Commodity breakdown';
+
+  @override
+  String get production_breakdown_commodity => 'Commodity';
+
+  @override
+  String get production_breakdown_total => 'Total';
+
+  @override
+  String get production_breakdown_phase_pendingBuildCosts =>
+      'Pending build costs';
+
+  @override
+  String get production_breakdown_phase_extraction => 'Extraction';
+
+  @override
+  String get production_breakdown_phase_richesToTreasury =>
+      'Riches to treasury';
+
+  @override
+  String get production_breakdown_phase_consumption => 'Consumption';
+
+  @override
+  String get production_breakdown_phase_production => 'Production';
+
+  @override
+  String get production_breakdown => 'Breakdown';
+
+  @override
+  String get production_available => 'Available';
+
+  @override
+  String get production_food => 'Food';
+
+  @override
+  String get production_rawMaterials => 'Raw Materials';
+
+  @override
+  String get production_manufactured => 'Manufactured';
+
+  @override
+  String get production_workers => 'Workers';
+
+  @override
+  String get production_workers_peasants => 'Peasants';
+
+  @override
+  String get production_workers_apprentices => 'Apprentices';
+
+  @override
+  String get production_workers_journeymen => 'Journeymen';
+
+  @override
+  String get production_workers_masters => 'Masters';
+
+  @override
+  String get production_allocation => 'Allocation';
+
+  @override
+  String get production_allocationDecrementRecipe =>
+      'Decrease desired output for this recipe';
+
+  @override
+  String get production_allocationIncrementRecipe =>
+      'Increase desired output for this recipe';
+
+  @override
+  String get production_allocationMaximizeRecipe =>
+      'Set this recipe to maximum desired output';
+
+  @override
+  String get production_allocationClearRecipe =>
+      'Clear desired output for this recipe';
+
+  @override
+  String get splitArmy_title => 'Split Army';
+
+  @override
+  String technologyPanel_title(String playerName) {
+    return 'Technology - $playerName';
+  }
+
+  @override
+  String technologyPanel_researchSlotsCount(int slots) {
+    return 'Research slots: $slots';
+  }
+
+  @override
+  String get technologyPanel_researchSlots => 'Research slots';
+
+  @override
+  String get technologyPanel_empty => 'Empty';
+
+  @override
+  String technologyPanel_slot(int slot) {
+    return 'Slot $slot';
+  }
+
+  @override
+  String technologyPanel_slotSubtitle(
+    String name,
+    int progress,
+    String costLabel,
+  ) {
+    return '$name - $progress/$costLabel RP';
+  }
+
+  @override
+  String get technologyPanel_noTechAssigned => 'No tech assigned';
+
+  @override
+  String get technologyPanel_chooseTech => 'Choose tech';
+
+  @override
+  String technologyPanel_researched(int count) {
+    return 'Researched ($count):';
+  }
+
+  @override
+  String get technologyPanel_noneYet => 'None yet';
+
+  @override
+  String get technologyPanel_inProgress => 'In progress:';
+
+  @override
+  String technologyPanel_progressLine(String name, int points) {
+    return '$name: $points RP';
+  }
+
+  @override
+  String get technologyPanel_noTechsAvailable =>
+      'No techs available to research';
+
+  @override
+  String technologyPanel_pickSubtitle(String era, String category, int cost) {
+    return 'Era $era - $category - $cost RP';
+  }
+
+  @override
+  String get technologyPanel_slotCancelled => 'Research slot cancelled';
+
+  @override
+  String get techTree_noTechsInCatalog => 'No techs in catalog';
+
+  @override
+  String techTree_eraCategory(String era, String category) {
+    return 'Era $era - $category';
+  }
+
+  @override
+  String techTree_researchPoints(int points) {
+    return '$points RP';
+  }
+
+  @override
+  String get techTree_prerequisites => 'Prerequisites';
+
+  @override
+  String get techTree_effects => 'Effects';
+
+  @override
+  String get techTree_legendTitle => 'Technology tree legend';
+
+  @override
+  String get techTree_stateResearched => 'Researched';
+
+  @override
+  String get techTree_stateInProgress => 'In progress';
+
+  @override
+  String get techTree_stateAvailable => 'Available';
+
+  @override
+  String get techTree_stateLocked => 'Locked';
+
+  @override
+  String get mapDebug_fullVisibility => 'Full visibility';
+
+  @override
+  String get mapDebug_playerConstrained => 'Player-constrained';
+
+  @override
+  String get mapDebug_hideProvinceNames => 'No province names';
+
+  @override
+  String get mapDebug_noNames => 'No names';
+
+  @override
+  String get widgetbook_primaryAction => 'Primary action';
+
+  @override
+  String get widgetbook_disabled => 'Disabled';
+
+  @override
+  String get widgetbook_fixedWidth => 'Fixed width';
+
+  @override
+  String get widgetbook_noPlayers => 'No players';
+
+  @override
+  String get widgetbook_techTreeTitle => 'Tech Tree';
+
+  @override
+  String get widgetbook_openBreakdownDialog => 'Open breakdown dialog';
+
+  @override
+  String get widgetbook_gameShell => 'Game shell';
+
+  @override
+  String techTree_bulletItem(String text) {
+    return '- $text';
+  }
+
+  @override
+  String get provinceOverlay_unknown => '???';
+
+  @override
+  String get provinceOverlay_clickTileForDetails =>
+      'Click a tile to see details.';
+
+  @override
+  String get provinceOverlay_tileCoordinatesUnknown => 'Coordinates: ???';
+
+  @override
+  String get provinceOverlay_tileTerrainUnknown => 'Terrain: ???';
+
+  @override
+  String get provinceOverlay_tileResourceUnknown => 'Resource: ???';
+
+  @override
+  String get provinceOverlay_tileProspectedUnknown => 'Prospected: ???';
+
   @override
   String get provinceOverlay_tileImprovementUnknown => 'Improvement: ???';
 
@@ -25,6 +258,11 @@ mixin _AppLocalizationsEnStrings3 {
   String get provinceOverlay_tileResourcePrefix => 'Resource: ';
 
   @override
+  String provinceOverlay_tileProspected(String value) {
+    return 'Prospected: $value';
+  }
+
+  @override
   String get provinceOverlay_tileProspectWithExplorerTooltip =>
       'Prospect with explorer';
 
@@ -33,13 +271,7 @@ mixin _AppLocalizationsEnStrings3 {
       'Explore with explorer';
 
   @override
-  String get provinceOverlay_tileBuildImprovementTooltip =>
-      'Build improvement';
-
-  @override
-  String provinceOverlay_tileProspected(String value) {
-    return 'Prospected: $value';
-  }
+  String get provinceOverlay_tileBuildImprovementTooltip => 'Build improvement';
 
   @override
   String provinceOverlay_tileImprovement(String value) {
@@ -261,288 +493,5 @@ mixin _AppLocalizationsEnStrings3 {
   String naval_units_shipTypeCount(String typeName, int count) {
     return '$typeName: $count';
   }
-
-  @override
-  String civilian_assignWorkTitle(String unitType) {
-    return 'Assign work: $unitType';
-  }
-
-  @override
-  String trainMilitary_commodityAmount(String name, int qty) {
-    return '$name: $qty';
-  }
-
-  @override
-  String trainCivilians_costLine(String treasury, String paper) {
-    return '$treasury + $paper Paper';
-  }
-
-  @override
-  String techTree_prerequisiteBullet(String name) {
-    return '• $name';
-  }
-
-  @override
-  String techEffect_unlocksRegiment(String name) {
-    return 'Unlocks regiment: $name';
-  }
-
-  @override
-  String techEffect_unlocksShip(String name) {
-    return 'Unlocks ship: $name';
-  }
-
-  @override
-  String techEffect_fallbackCategoryImprovement(String category) {
-    return 'Improves $category capabilities';
-  }
-
-  @override
-  String get techTree_categoryGathering => 'Gathering';
-
-  @override
-  String get techTree_categoryTransport => 'Transport';
-
-  @override
-  String get techTree_categoryLabour => 'Labour';
-
-  @override
-  String get techTree_categoryCivilian => 'Civilian';
-
-  @override
-  String get techTree_categoryDiplomacy => 'Diplomacy';
-
-  @override
-  String get techTree_categoryNaval => 'Naval';
-
-  @override
-  String get techTree_categoryMilitary => 'Military';
-
-  @override
-  String get techTree_categoryNewWorld => 'New World';
-
-  @override
-  String transferList_rowCount(String name, int count) {
-    return '$name ($count)';
-  }
-
-  @override
-  String get widgetbook_openPanelHint => 'Tap button to open panel from bottom';
-
-  @override
-  String naval_fleetLabel(String id) {
-    return 'Fleet $id';
-  }
-
-  @override
-  String get naval_homeFleetLabel => 'Home Fleet';
-
-  @override
-  String locationSection_headerLine(String label, String region) {
-    return '$label — $region';
-  }
-
-  @override
-  String get splitFleet_dialogTitle => 'Split Fleet';
-
-  @override
-  String get splitFleet_newFleetTitle => 'New Fleet';
-
-  @override
-  String get splitFleet_noShips => 'No ships';
-
-  @override
-  String get splitFleet_confirm => 'Confirm Split';
-
-  @override
-  String splitFleet_totalShips(int total) {
-    return 'Total: $total ships';
-  }
-
-  @override
-  String get diplomacy_section_greatPowers => 'Great Powers';
-
-  @override
-  String get diplomacy_section_minorNations => 'Minor Nations';
-
-  @override
-  String get diplomacy_section_tribes => 'Tribes';
-
-  @override
-  String get diplomacy_relationState_war => 'War';
-
-  @override
-  String get diplomacy_relationState_peace => 'Peace';
-
-  @override
-  String get techEffectSummary_advanced_hull_design_0 =>
-      'Improves: Frigate — high intercept, moderate flee (patrol/blockade)';
-
-  @override
-  String get techEffectSummary_advanced_hull_design_1 =>
-      'Unlocks: Clipper Ships and Paddlewheels hull paths';
-
-  @override
-  String get techEffectSummary_advanced_iron_working_0 =>
-      'Improves: Ironclad armored steam combat hull';
-
-  @override
-  String get techEffectSummary_amalgamation_process_0 =>
-      'Improves: Gold/silver extraction cap to 4';
-
-  @override
-  String get techEffectSummary_amalgamation_process_1 =>
-      'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit';
-
-  @override
-  String get techEffectSummary_animal_husbandry_0 =>
-      'Improves: Meat extraction cap to 3';
-
-  @override
-  String get techEffectSummary_animal_husbandry_1 =>
-      'Unlocks: Scientific Cattle Breeding (with University)';
-
-  @override
-  String get techEffectSummary_animal_husbandry_2 =>
-      'Enables: Military branches that require this tech';
-
-  @override
-  String get techEffectSummary_apprentice_workers_0 =>
-      'Enables: Apprentice tier (4x labour; consumes refined sugar)';
-
-  @override
-  String get techEffectSummary_apprentice_workers_1 =>
-      'Unlocks: University and Master Artisans';
-
-  @override
-  String get techEffectSummary_banking_0 =>
-      'Unlocks: Dynamite, Empire Building, Modern Military Funding';
-
-  @override
-  String get techEffectSummary_banking_1 =>
-      'With Money Lending: extends research-phase treasury floor to −£1000';
-
-  @override
-  String get techEffectSummary_bayonet_0 =>
-      'Unlocks: Needle Guns (with Industrial Funding + Early Rifles)';
-
-  @override
-  String get techEffectSummary_cigar_production_0 =>
-      'Enables: Cigar luxury production for Journeyman-tier worker consumption';
-
-  @override
-  String get techEffectSummary_cigar_production_1 =>
-      'Unlocks: Trained Journeymen';
-
-  @override
-  String get techEffectSummary_circular_saw_0 =>
-      'Improves: Timber extraction cap to 4';
-
-  @override
-  String get techEffectSummary_circular_saw_1 =>
-      'Unlocks: Clipper Ships (with Advanced Hull Design)';
-
-  @override
-  String get techEffectSummary_clipper_ships_0 =>
-      'Improves: Late-era fast merchant Clipper cargo line';
-
-  @override
-  String get techEffectSummary_coal_mining_0 =>
-      'Enables: Coal extraction (cap 1)';
-
-  @override
-  String get techEffectSummary_coal_mining_1 => 'Unlocks: Square-set Timbering';
-
-  @override
-  String get techEffectSummary_convoying_0 =>
-      'Unlocks: Large Hulls (with Wind Saw Mill + Navigation)';
-
-  @override
-  String get techEffectSummary_copper_and_tin_mining_0 =>
-      'Improves: Copper/Tin extraction cap to 2';
-
-  @override
-  String get techEffectSummary_copper_and_tin_mining_1 =>
-      'Unlocks: Large Copper and Tin Mines';
-
-  @override
-  String get techEffectSummary_copper_and_tin_mining_2 =>
-      'Enables: Military branches that require this tech';
-
-  @override
-  String get techEffectSummary_cotton_gin_0 =>
-      'Improves: Cotton extraction cap to 4';
-
-  @override
-  String get techEffectSummary_cotton_gin_1 =>
-      'Prerequisite-only: catalog leaf; extraction-cap increase is the active benefit';
-
-  @override
-  String get techEffectSummary_cotton_planting_0 =>
-      'Improves: Cotton extraction cap to 2';
-
-  @override
-  String get techEffectSummary_cotton_planting_1 =>
-      'Unlocks: Large Cotton Plantations';
-
-  @override
-  String get techEffectSummary_cotton_weaving_0 =>
-      'Enables: Cloth production from cotton';
-
-  @override
-  String get techEffectSummary_cotton_weaving_1 =>
-      'Prerequisite-only: catalog leaf; recipe unlock is the active benefit';
-
-  @override
-  String get techEffectSummary_crop_rotation_0 =>
-      'Unlocks: Sheep Ranching, Animal Husbandry, and Steppe Horsemen research paths';
-
-  @override
-  String get techEffectSummary_crucible_process_0 =>
-      'Prerequisite-only: Steel chain for Bayonet, rifles, steam, and cannons';
-
-  @override
-  String get techEffectSummary_crucible_process_1 =>
-      'Unlocks: No regiment from this tech alone';
-
-  @override
-  String get techEffectSummary_diplomatic_expertise_0 =>
-      'Enables: Embassy overtures with Minor Nations';
-
-  @override
-  String get techEffectSummary_diplomatic_expertise_1 =>
-      'Enables: civilian work in embassy-linked Minor Nations';
-
-  @override
-  String get techEffectSummary_diplomatic_expertise_2 =>
-      'Unlocks: National Bureaucracy';
-
-  @override
-  String get techEffectSummary_discovery_of_cotton_0 =>
-      'Enables: Research when player has revealed cotton (discovery rule)';
-
-  @override
-  String get techEffectSummary_discovery_of_cotton_1 =>
-      'Unlocks: Cotton Planting and Cotton Weaving';
-
-  @override
-  String get techEffectSummary_discovery_of_furs_0 =>
-      'Enables: Research when player has revealed furs (discovery rule)';
-
-  @override
-  String get techEffectSummary_discovery_of_furs_1 =>
-      'Unlocks: Improved Trapping Techniques and Hat Production';
-
-  @override
-  String get techEffectSummary_discovery_of_gems_or_diamonds_0 =>
-      'Enables: Research when player has revealed and prospected gems/diamonds';
-
-  @override
-  String get techEffectSummary_discovery_of_gems_or_diamonds_1 =>
-      'Unlocks: Precious Stone Mining';
-
-  @override
-  String get techEffectSummary_discovery_of_gold_or_silver_0 =>
-      'Enables: Research when player has revealed and prospected gold/silver';
 
 }

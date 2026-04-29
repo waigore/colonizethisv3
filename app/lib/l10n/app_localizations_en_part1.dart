@@ -1,6 +1,8 @@
-// Intentionally standalone split artifact for analyzer compatibility.
+part of 'app_localizations_en.dart';
 
-mixin _AppLocalizationsEnStrings1 {
+mixin _AppLocalizationsEnStrings1 on AppLocalizations {
+
+
   @override
   String get app_title => 'Colonize This';
 
@@ -12,18 +14,6 @@ mixin _AppLocalizationsEnStrings1 {
 
   @override
   String get menu_openMaximizedOnStartup => 'Open maximized on startup';
-
-  @override
-  String get common_on => 'On';
-
-  @override
-  String get common_off => 'Off';
-
-  @override
-  String get map_selectionMode_prompt => 'Select a tile, or click cancel';
-
-  @override
-  String get map_selectionMode_cancel => 'cancel';
 
   @override
   String get mainMenu_title => 'ColonizeThis V3';
@@ -93,6 +83,12 @@ mixin _AppLocalizationsEnStrings1 {
   String get common_yes => 'Yes';
 
   @override
+  String get common_on => 'On';
+
+  @override
+  String get common_off => 'Off';
+
+  @override
   String get common_confirm => 'Confirm';
 
   @override
@@ -156,6 +152,12 @@ mixin _AppLocalizationsEnStrings1 {
 
   @override
   String get common_cancel => 'Cancel';
+
+  @override
+  String get map_selectionMode_prompt => 'Select a tile, or click cancel';
+
+  @override
+  String get map_selectionMode_cancel => 'cancel';
 
   @override
   String get common_start => 'Start';
@@ -433,154 +435,5 @@ mixin _AppLocalizationsEnStrings1 {
 
   @override
   String get province_regiment_musketeers => 'Musketeers';
-
-  @override
-  String get province_regiment_cossacks => 'Cossacks';
-
-  @override
-  String get province_regiment_lancers => 'Lancers';
-
-  @override
-  String get province_regiment_harquebusiers => 'Harquebusiers';
-
-  @override
-  String get province_regiment_horse_artillery => 'Horse artillery';
-
-  @override
-  String get province_regiment_royal_artillery => 'Royal artillery';
-
-  @override
-  String get province_regiment_skirmishers => 'Skirmishers';
-
-  @override
-  String get province_regiment_regulars => 'Regulars';
-
-  @override
-  String get province_regiment_grenadiers => 'Grenadiers';
-
-  @override
-  String get province_regiment_hussars => 'Hussars';
-
-  @override
-  String get province_regiment_cuirassiers => 'Cuirassiers';
-
-  @override
-  String get province_regiment_light_artillery => 'Light artillery';
-
-  @override
-  String get province_regiment_heavy_artillery => 'Heavy artillery';
-
-  @override
-  String get province_regiment_sharpshooters => 'Sharpshooters';
-
-  @override
-  String get province_regiment_rifle_infantry => 'Rifle infantry';
-
-  @override
-  String get province_regiment_guards => 'Guards';
-
-  @override
-  String get province_regiment_scouts => 'Scouts';
-
-  @override
-  String get province_regiment_carbine_cavalry => 'Carbine cavalry';
-
-  @override
-  String get province_regiment_field_artillery => 'Field artillery';
-
-  @override
-  String get province_regiment_siege_guns => 'Siege guns';
-
-  @override
-  String get province_ship_carrack => 'Carrack';
-
-  @override
-  String get province_ship_fluyte => 'Fluyte';
-
-  @override
-  String get province_ship_sloop => 'Sloop';
-
-  @override
-  String get province_ship_trader => 'Trader';
-
-  @override
-  String get province_ship_galleon => 'Galleon';
-
-  @override
-  String get province_ship_indiaman => 'Indiaman';
-
-  @override
-  String get province_ship_frigate => 'Frigate';
-
-  @override
-  String get province_ship_raider => 'Raider';
-
-  @override
-  String get province_ship_ship_of_the_line => 'Ship of the Line';
-
-  @override
-  String get province_ship_clipper => 'Clipper';
-
-  @override
-  String get province_ship_merchant_steamship => 'Merchant Steamship';
-
-  @override
-  String get province_ship_ironclad => 'Ironclad';
-
-  @override
-  String quickBattle_commandPoints(int cp) {
-    return 'Command Points: $cp';
-  }
-
-  @override
-  String get quickBattle_action_volleyFire => 'Volley Fire';
-
-  @override
-  String get quickBattle_action_defend => 'Defend';
-
-  @override
-  String get quickBattle_action_maneuver => 'Maneuver';
-
-  @override
-  String get quickBattle_action_fallBack => 'Fall Back';
-
-  @override
-  String get quickBattle_action_assault => 'Assault';
-
-  @override
-  String quickBattle_actionWithCost(String label, int cost) {
-    return '$label ($cost CP)';
-  }
-
-  @override
-  String quickBattle_combatAt(String provinceName) {
-    return 'Combat at $provinceName';
-  }
-
-  @override
-  String get quickBattle_capitalSiegeQuickBattleOnly =>
-      'Capital siege — Quick Battle only (no auto-resolve).';
-
-  @override
-  String get quickBattle_chooseCombatMode => 'Choose combat mode:';
-
-  @override
-  String get quickBattle_autoResolve => 'Auto-Resolve';
-
-  @override
-  String get quickBattle_quickBattle => 'Quick Battle';
-
-  @override
-  String quickBattle_attackerWins(String name) {
-    return '$name wins';
-  }
-
-  @override
-  String quickBattle_defenderHolds(String name) {
-    return '$name holds';
-  }
-
-  @override
-  String get quickBattle_mutualExhaustion => 'Mutual exhaustion';
 
 }
