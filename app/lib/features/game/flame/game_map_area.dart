@@ -325,15 +325,25 @@ class _GameMapAreaState extends ConsumerState<GameMapArea> {
     final topology = mapData?.combinedTopology ?? const MapTopology();
     final view = buildPlayerView(game, topology, _humanPlayerId);
     final workTarget = _workTargetSelection!.workTarget;
+    final unitId = _workTargetSelection!.unit.id;
     final valid =
-        workTarget == kWorkTargetExplore ||
-            workTarget == kWorkTargetBuildImprovement
-        ? _workTargetSelectionCache.get(_humanPlayerId, workTarget)
+        GameMapAreaStateLogic.kCacheFirstWorkTargets.contains(workTarget)
+        ? GameMapAreaStateLogic.filterCacheSelectionForRuntimeStaleTileConflicts(
+            cachedTileKeys: _workTargetSelectionCache.get(
+              _humanPlayerId,
+              workTarget,
+            ),
+            game: game,
+            currentOrders: orders,
+            playerId: _humanPlayerId,
+            selectedUnitId: unitId,
+            workTarget: workTarget,
+          )
         : getValidWorkOrderTileKeysWithVisibility(
             game: game,
             topology: topology,
             view: view,
-            unitId: _workTargetSelection!.unit.id,
+            unitId: unitId,
             workTarget: workTarget,
             currentOrders: orders,
             tileMapByRegion: mapData?.tileMapByRegion,
