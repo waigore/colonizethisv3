@@ -41,6 +41,13 @@ bool packageHasL10nConfig(String packageRoot) {
   return File(p.join(packageRoot, 'l10n.yaml')).existsSync();
 }
 
+/// True when [packagePath] is the Pub workspace host root (repo root), which
+/// must not be passed to `dart analyze` — it would traverse nested `app/`
+/// without `app`'s package context.
+bool workspacePackageIsHostRoot(String repoRoot, String packagePath) {
+  return p.equals(p.normalize(packagePath), p.normalize(repoRoot));
+}
+
 Future<ProcessResult> _run(
   String executable,
   List<String> arguments, {
@@ -82,6 +89,13 @@ Future<int> main(List<String> args) async {
   for (final entry in packages) {
     final pkgPath = entry['path'] as String;
     final name = entry['name'] as String;
+    if (workspacePackageIsHostRoot(repoRoot, pkgPath)) {
+      stdout.writeln(
+        '--- dart analyze: $name ($pkgPath) ---\n'
+        'skipped (workspace host root; member packages are analyzed separately)',
+      );
+      continue;
+    }
     final pubspecFile = File(p.join(pkgPath, 'pubspec.yaml'));
     if (!pubspecFile.existsSync()) {
       continue;

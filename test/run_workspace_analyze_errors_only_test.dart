@@ -83,4 +83,20 @@ dependencies:
       expect(packageHasL10nConfig(dir.path), isFalse);
     });
   });
+
+  group('workspacePackageIsHostRoot', () {
+    test('true when paths normalize to same directory', () {
+      expect(
+        workspacePackageIsHostRoot('/repo', '/repo/'),
+        isTrue,
+      );
+    });
+
+    test('false for nested package', () {
+      expect(
+        workspacePackageIsHostRoot('/repo', '/repo/app'),
+        isFalse,
+      );
+    });
+  });
 }
