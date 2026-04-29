@@ -1,11 +1,16 @@
 // Patches `app/lib/l10n/app_localizations.dart` after `flutter gen-l10n`:
-// - Breaks the circular import with `app_localizations_en.dart` by moving
-//   `lookupAppLocalizations` to tracked `app_localizations_lookup.dart`.
+// - Moves `lookupAppLocalizations` to tracked `app_localizations_lookup.dart`.
+// - Breaks the circular import `app_localizations.dart` <-> `app_localizations_en.dart`
+//   by using a **deferred** import for English so `AppLocalizations` is defined before
+//   `en` parts resolve `on AppLocalizations` (Refs #2021).
 // - Idempotent: safe to run multiple times.
 //
 // Run from repo root: dart run tool/patch_app_localizations_after_gen_l10n.dart
 
 import 'dart:io';
+
+const _deferredEnPrefix = "import 'app_localizations_en.dart' deferred as ";
+const _syncEnImport = "import 'app_localizations_en.dart';";
 
 void main() {
   final toolDir = File(Platform.script.toFilePath()).parent;
@@ -35,20 +40,72 @@ void main() {
     );
   }
 
-  // gen-l10n adds `import 'app_localizations_en.dart';` which creates a cycle:
-  // app_localizations.dart -> en.dart -> parts -> needs AppLocalizations.
-  text = _removeImportLine(text, "import 'app_localizations_en.dart';");
-
+  text = _ensureDeferredEnglishImport(text);
+  text = _patchDelegateLoad(text);
   text = _removeTopLevelLookupFunction(text);
 
   file.writeAsStringSync(text);
 }
 
-String _removeImportLine(String text, String importLine) {
-  if (!text.contains(importLine)) {
+String _ensureDeferredEnglishImport(String text) {
+  if (text.contains(_deferredEnPrefix)) {
     return text;
   }
-  return text.split('\n').where((l) => l.trim() != importLine.trim()).join('\n');
+  if (!text.contains(_syncEnImport)) {
+    stderr.writeln(
+      'patch_app_localizations: unexpected file (no app_localizations_en import)',
+    );
+    exit(1);
+  }
+  return text.replaceFirst(
+    _syncEnImport,
+    "${_deferredEnPrefix}_ct_l10n_en;\n",
+  );
+}
+
+String _patchDelegateLoad(String text) {
+  const syncBody =
+      'return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));';
+  const asyncBody = '''
+return _ctLoadLocalizedApp(locale);''';
+
+  if (text.contains('_ctLoadLocalizedApp')) {
+    return text;
+  }
+  if (!text.contains(syncBody)) {
+    stderr.writeln(
+      'patch_app_localizations: unexpected delegate load() body; '
+      'expected SynchronousFuture + lookupAppLocalizations',
+    );
+    exit(1);
+  }
+
+  const helper = '''
+
+Future<AppLocalizations> _ctLoadLocalizedApp(Locale locale) async {
+  await _ct_l10n_en.loadLibrary();
+  return lookupAppLocalizations(locale);
+}
+''';
+
+  // Insert helper before `class _AppLocalizationsDelegate` if not present.
+  const anchor = 'class _AppLocalizationsDelegate';
+  final anchorIdx = text.indexOf(anchor);
+  if (anchorIdx < 0) {
+    stderr.writeln('patch_app_localizations: missing _AppLocalizationsDelegate');
+    exit(1);
+  }
+  text = text.replaceRange(anchorIdx, anchorIdx, helper);
+
+  text = text.replaceFirst(syncBody, asyncBody);
+
+  // Make load() async (insert async after `load(Locale locale)`).
+  text = text.replaceFirst(
+    'Future<AppLocalizations> load(Locale locale) {',
+    'Future<AppLocalizations> load(Locale locale) async {',
+  );
+
+  return text;
 }
 
 String _removeTopLevelLookupFunction(String text) {
@@ -57,7 +114,6 @@ String _removeTopLevelLookupFunction(String text) {
   if (start < 0) {
     return text;
   }
-  // Top-level function starts at beginning of line (gen-l10n has no indent).
   var i = start;
   while (i > 0 && text[i - 1] != '\n') {
     i--;
@@ -77,7 +133,6 @@ String _removeTopLevelLookupFunction(String text) {
       depth--;
       if (depth == 0) {
         final end = j + 1;
-        // Drop trailing newline(s) after function.
         var k = end;
         while (k < text.length &&
             (text[k] == '\n' || text[k] == '\r' || text[k] == ' ')) {
