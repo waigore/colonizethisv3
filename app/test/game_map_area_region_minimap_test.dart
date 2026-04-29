@@ -102,7 +102,7 @@ void main() {
           mapViewData: init.mapViewData,
         ),
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: Scaffold(
@@ -175,7 +175,7 @@ void main() {
           mapViewData: init.mapViewData,
         ),
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: Scaffold(
@@ -227,7 +227,7 @@ void main() {
           mapViewData: init.mapViewData,
         ),
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: Scaffold(
@@ -287,7 +287,7 @@ void main() {
           mapViewData: init.mapViewData,
         ),
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: Scaffold(
@@ -349,7 +349,7 @@ void main() {
             mapViewData: init.mapViewData,
           ),
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en'),
             home: Scaffold(

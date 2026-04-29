@@ -12,7 +12,6 @@ import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
-import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/test_support/civilian_units_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_app/test_support/naval_units_panel_e2e_expected_lines.dart';

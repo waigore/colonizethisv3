@@ -214,7 +214,7 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
           );
           return MaterialApp(
             theme: AppThemes.colonial,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: Center(
@@ -249,7 +249,7 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
           );
           return MaterialApp(
             theme: AppThemes.colonial,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: Center(
@@ -289,7 +289,7 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
             context,
             MaterialApp(
               theme: AppThemes.colonial,
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: Scaffold(
                 body: Center(

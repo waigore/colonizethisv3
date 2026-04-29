@@ -43,6 +43,9 @@ app/lib/l10n/app_localizations*.dart
 !app/lib/l10n/app_localizations_en.dart
 !app/lib/l10n/app_localizations_en_part*.dart
 !app/lib/l10n/app_localizations_lookup.dart
+!app/lib/l10n/app_localizations_contract.dart
+!app/lib/l10n/app_localizations_delegate.dart
+!app/lib/l10n/app_localizations.dart
 app/lib/l10n/untranslated.json
 
 # IDE

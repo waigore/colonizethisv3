@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
-import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/config/desktop_window_settings.dart';
@@ -33,7 +32,7 @@ class App extends ConsumerWidget {
       navigatorKey: appNavigatorKey,
       onGenerateTitle: (context) => appL10n(context).app_title,
       localizationsDelegates: const [
-        AppLocalizations.delegate,
+        AppLocalizationsBinding.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

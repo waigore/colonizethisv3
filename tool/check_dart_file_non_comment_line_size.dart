@@ -13,6 +13,10 @@ const _generatedSuffixes = <String>[
   '.mocks.dart',
   '.gen.dart',
 ];
+/// Tracked gen-l10n abstract API (Refs #2021); single hand-maintained unit.
+const _excludedNonCommentLineSizePaths = <String>{
+  'app/lib/l10n/app_localizations_contract.dart',
+};
 const _excludedDirectoryNames = <String>{
   '.git',
   '.dart_tool',
@@ -70,6 +74,10 @@ collectNonCommentLineSizeViolations(
   final requested = incrementalRelativeDartPaths ?? const <String>[];
   for (final file in _collectRepoDartFiles(repoRoot, requested)) {
     final relativePath = p.relative(file.path, from: repoRoot);
+    final slashPath = relativePath.replaceAll('\\', '/');
+    if (_excludedNonCommentLineSizePaths.contains(slashPath)) {
+      continue;
+    }
     final source = file.readAsStringSync();
     final nonCommentLines = countNonCommentLinesFromSource(source);
     if (nonCommentLines > _maxNonCommentLines) {
