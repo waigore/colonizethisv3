@@ -16,6 +16,11 @@ class _NavalBuildSession {
   Game _game;
   final MapTopology _topology;
 
+  /// Rebases session state onto the latest build-phase game snapshot.
+  void rebase(Game game) {
+    _game = game;
+  }
+
   /// Spawns into home fleet when affordable build was already deducted; no-op if blocked.
   void spawnHomeFleetShipIfEligible(Player player, BuildUnitOrder order) {
     final capProvinceId = player.capitalProvinceId;
@@ -201,6 +206,7 @@ BuildWorkState runBuildPhase(BuildWorkState state) {
       treasury = after.treasury;
 
       if (category == BuildUnitCategory.naval) {
+        naval?.rebase(current.game);
         naval?.spawnHomeFleetShipIfEligible(player, order);
         current = naval != null
             ? current.copyWith(game: naval.game)
@@ -232,8 +238,5 @@ BuildWorkState runBuildPhase(BuildWorkState state) {
     );
   }
 
-  if (naval != null) {
-    current = current.copyWith(game: naval.game);
-  }
   return current;
 }
