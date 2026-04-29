@@ -168,29 +168,21 @@ class AIWorldSnapshot {
     Set<String> ownedFullIds,
     PlayerView view,
   ) {
+    final nodesByRegion = _topologyNodesByRegionId(topology);
     final out = <String>{};
     for (final fullId in ownedFullIds) {
       final regionId = ProvinceId.regionIdFrom(fullId);
       final localId = ProvinceId.localIdFrom(fullId);
+      final nodesInRegion = nodesByRegion[regionId];
+      if (nodesInRegion == null) continue;
       for (final edge in topology.edges) {
-        String? neighborLocalId;
-        if (edge.id1 == localId) {
-          neighborLocalId = edge.id2;
-        } else if (edge.id2 == localId) {
-          neighborLocalId = edge.id1;
-        }
+        final neighborLocalId = _otherEndOfEdge(edge, localId);
         if (neighborLocalId == null) continue;
-        TopologyNode? neighborNode;
-        for (final n in topology.nodes) {
-          if (n.id == neighborLocalId) {
-            neighborNode = n;
-            break;
-          }
-        }
+        final neighborNode = nodesInRegion[neighborLocalId];
         if (neighborNode == null ||
-            neighborNode.type != TopologyNodeType.province)
+            neighborNode.type != TopologyNodeType.province) {
           continue;
-        if (neighborNode.regionId != regionId) continue;
+        }
         final neighborFullId = ProvinceId.full(
           neighborNode.regionId,
           neighborNode.id,
@@ -199,6 +191,23 @@ class AIWorldSnapshot {
       }
     }
     return out;
+  }
+
+  static Map<String, Map<String, TopologyNode>> _topologyNodesByRegionId(
+    MapTopology topology,
+  ) {
+    final byRegion = <String, Map<String, TopologyNode>>{};
+    for (final n in topology.nodes) {
+      byRegion.putIfAbsent(n.regionId, () => <String, TopologyNode>{})[n.id] =
+          n;
+    }
+    return byRegion;
+  }
+
+  static String? _otherEndOfEdge(TopologyEdge edge, String localId) {
+    if (edge.id1 == localId) return edge.id2;
+    if (edge.id2 == localId) return edge.id1;
+    return null;
   }
 
   static OpportunitySummary _buildOpportunitySummary(
@@ -215,31 +224,40 @@ class AIWorldSnapshot {
         richUnexploited++;
       }
     }
-    final weakNeighbors = <String>[];
-    if (topology != null) {
-      final ownedIds = <String>{};
-      for (final p in view.provincesById.entries) {
-        if (p.value.ownerId == view.playerId) ownedIds.add(p.key);
-      }
-      final neighborIds = _neighborProvinceIdsFromTopology(
-        topology,
-        ownedIds,
-        view,
-      );
-      for (final fid in neighborIds) {
-        final prov = view.provincesById[fid];
-        if (prov == null) continue;
-        final ownerId = prov.ownerId;
-        if (ownerId != null && ownerId.isNotEmpty && ownerId != view.playerId) {
-          if (!weakNeighbors.contains(ownerId)) weakNeighbors.add(ownerId);
-        }
-      }
-    }
+    final weakNeighbors = topology == null
+        ? <String>[]
+        : _weakNeighborOwnerIds(view, topology);
     return OpportunitySummary(
       weakNeighbors: weakNeighbors,
       richUnexploitedProvinces: richUnexploited,
       unclaimedProvinces: unclaimed,
     );
+  }
+
+  static List<String> _weakNeighborOwnerIds(
+    PlayerView view,
+    MapTopology topology,
+  ) {
+    final ownedIds = <String>{};
+    for (final p in view.provincesById.entries) {
+      if (p.value.ownerId == view.playerId) ownedIds.add(p.key);
+    }
+    final neighborIds = _neighborProvinceIdsFromTopology(
+      topology,
+      ownedIds,
+      view,
+    );
+    final weakNeighbors = <String>[];
+    for (final fid in neighborIds) {
+      final prov = view.provincesById[fid];
+      if (prov == null) continue;
+      final ownerId = prov.ownerId;
+      if (ownerId == null || ownerId.isEmpty || ownerId == view.playerId) {
+        continue;
+      }
+      if (!weakNeighbors.contains(ownerId)) weakNeighbors.add(ownerId);
+    }
+    return weakNeighbors;
   }
 
   static EconomySummary _buildEconomySummary(PlayerView view) {

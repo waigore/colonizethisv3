@@ -20,13 +20,13 @@ class TileMapGridGraph {
       final queue = <(int x, int y)>[start];
       while (queue.isNotEmpty) {
         final (x, y) = queue.removeLast();
-        for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
-          final n = (x + dx, y + dy);
-          if (remaining.remove(n)) {
-            component.add(n);
-            queue.add(n);
-          }
-        }
+        _expandLandComponentNeighbors(
+          x,
+          y,
+          remaining,
+          component,
+          queue,
+        );
       }
       result.add(component);
     }
@@ -274,5 +274,20 @@ class TileMapGridGraph {
       }
     }
     return n;
+  }
+
+  void _expandLandComponentNeighbors(
+    int x,
+    int y,
+    Set<(int x, int y)> remaining,
+    Set<(int x, int y)> component,
+    List<(int x, int y)> queue,
+  ) {
+    for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+      final n = (x + dx, y + dy);
+      if (!remaining.remove(n)) continue;
+      component.add(n);
+      queue.add(n);
+    }
   }
 }

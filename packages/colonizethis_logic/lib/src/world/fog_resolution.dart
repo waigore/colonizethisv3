@@ -11,6 +11,51 @@ import 'player_view.dart';
 import 'province_lookup.dart';
 import 'unit_lookup.dart';
 
+void _fogFullyVisibleTilesForSpyExpiry(
+  Map<String, String> vis,
+  List<String> tileKeys,
+) {
+  for (final tk in tileKeys) {
+    final cur = vis[tk];
+    if (cur == VisibilityLevel.fullyVisible.name) {
+      vis[tk] = VisibilityLevel.fogged.name;
+    }
+  }
+}
+
+Map<String, int> _nextSpyTimersForPlayerAfterDecay({
+  required WorldState world,
+  required String playerId,
+  required Map<String, int> byProvince,
+  required Map<String, String?> ownerByProvinceId,
+  required Map<String, String> vis,
+}) {
+  final newByProvince = <String, int>{};
+  for (final provEntry in byProvince.entries) {
+    final provinceId = provEntry.key;
+    final turns = provEntry.value;
+
+    final ownerId = ownerByProvinceId[provinceId];
+    if (ownerId == playerId) {
+      continue;
+    }
+
+    final nextTurns = turns - 1;
+    if (nextTurns <= 0) {
+      final regionId = ProvinceId.regionIdFrom(provinceId);
+      final tileKeys = landTileKeysForProvinceBucket(
+        world,
+        regionId,
+        provinceId,
+      );
+      _fogFullyVisibleTilesForSpyExpiry(vis, tileKeys);
+    } else {
+      newByProvince[provinceId] = nextTurns;
+    }
+  }
+  return newByProvince;
+}
+
 /// Spy 5-turn fog decay: decrement timers; when they expire, set other-faction
 /// provinces back to fogged for that player. Timers MUST NOT affect a player's
 /// own provinces; own provinces remain fully visible. SPEC/program/fog-and-exploration-resolution.md.
@@ -32,36 +77,14 @@ applySpyRevealTimerDecay(Game game) {
   for (final entry in world.spyRevealTurnsByPlayer.entries) {
     final playerId = entry.key;
     final byProvince = entry.value;
-    final newByProvince = <String, int>{};
     final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
-    for (final provEntry in byProvince.entries) {
-      final provinceId = provEntry.key;
-      final turns = provEntry.value;
-
-      // Never apply Spy timers to a player's own provinces; clear any such timers without changing visibility.
-      final ownerId = ownerByProvinceId[provinceId];
-      if (ownerId == playerId) {
-        continue;
-      }
-
-      final nextTurns = turns - 1;
-      if (nextTurns <= 0) {
-        final regionId = ProvinceId.regionIdFrom(provinceId);
-        final tileKeys = landTileKeysForProvinceBucket(
-          world,
-          regionId,
-          provinceId,
-        );
-        for (final tk in tileKeys) {
-          final cur = vis[tk];
-          if (cur == VisibilityLevel.fullyVisible.name) {
-            vis[tk] = VisibilityLevel.fogged.name;
-          }
-        }
-      } else {
-        newByProvince[provinceId] = nextTurns;
-      }
-    }
+    final newByProvince = _nextSpyTimersForPlayerAfterDecay(
+      world: world,
+      playerId: playerId,
+      byProvince: byProvince,
+      ownerByProvinceId: ownerByProvinceId,
+      vis: vis,
+    );
     if (newByProvince.isNotEmpty) nextSpyTimers[playerId] = newByProvince;
     visibilityByTile[playerId] = vis;
   }
@@ -181,6 +204,49 @@ MapTopology _topologyForRegion(
   return MapTopology(nodes: regionNodes, edges: regionEdges);
 }
 
+void _fullyVisibleAllTilesInSeaZoneBuckets(
+  Map<String, String> vis,
+  Map<String, List<String>> regionTileKeys,
+  String regionId,
+  Iterable<String> adjacentSeaZoneIds,
+) {
+  for (final seaZoneId in adjacentSeaZoneIds) {
+    final seaZoneBucketKey = canonicalSeaZoneTileBucketKey(
+      regionId,
+      seaZoneId,
+    );
+    final tileKeys = regionTileKeys[seaZoneBucketKey];
+    if (tileKeys == null) continue;
+    for (final tileKey in tileKeys) {
+      vis[tileKey] = VisibilityLevel.fullyVisible.name;
+    }
+  }
+}
+
+void _applyCoastalFullVisibilityForGpPlayerInRegion({
+  required String playerId,
+  required String regionId,
+  required RegionData regionData,
+  required MapTopology regionTopology,
+  required Map<String, List<String>> regionTileKeys,
+  required Map<String, String> vis,
+}) {
+  for (final province in regionData.provinces) {
+    if (province.ownerId != playerId) continue;
+    final adjacentSeaZones = seaZoneIdsAdjacentToProvince(
+      regionTopology,
+      province.id,
+      regionId: regionId,
+    );
+    _fullyVisibleAllTilesInSeaZoneBuckets(
+      vis,
+      regionTileKeys,
+      regionId,
+      adjacentSeaZones,
+    );
+  }
+}
+
 /// For each Great Power, sets all tiles in sea zones adjacent to provinces they
 /// fully own to fullyVisible. Runs after fog decay in End-of-turn.
 /// SPEC/program/fog-and-exploration-resolution.md § Coastal sea zone full visibility.
@@ -215,26 +281,14 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
       final vis = result[playerId];
       if (vis == null) continue;
 
-      for (final province in regionData.provinces) {
-        if (province.ownerId != playerId) continue;
-        final fullProvinceId = province.id;
-        final adjacentSeaZones = seaZoneIdsAdjacentToProvince(
-          regionTopology,
-          fullProvinceId,
-          regionId: regionId,
-        );
-        for (final seaZoneId in adjacentSeaZones) {
-          final seaZoneBucketKey = canonicalSeaZoneTileBucketKey(
-            regionId,
-            seaZoneId,
-          );
-          final tileKeys = regionTileKeys[seaZoneBucketKey];
-          if (tileKeys == null) continue;
-          for (final tileKey in tileKeys) {
-            vis[tileKey] = VisibilityLevel.fullyVisible.name;
-          }
-        }
-      }
+      _applyCoastalFullVisibilityForGpPlayerInRegion(
+        playerId: playerId,
+        regionId: regionId,
+        regionData: regionData,
+        regionTopology: regionTopology,
+        regionTileKeys: regionTileKeys,
+        vis: vis,
+      );
     }
   }
 
@@ -288,6 +342,49 @@ bool _playerHasFleetAtSeaInZone(
   return false;
 }
 
+void _fogSeaZoneWaterTilesExceptUnknown(
+  Map<String, String> vis,
+  List<String> keys,
+) {
+  for (final tk in keys) {
+    final cur = vis[tk];
+    if (cur == null || cur == VisibilityLevel.unknown.name) continue;
+    vis[tk] = VisibilityLevel.fogged.name;
+  }
+}
+
+void _applyDistantSeaFogForGpPlayerInRegion({
+  required Game game,
+  required String playerId,
+  required String regionId,
+  required MapTopology regionTopology,
+  required Iterable<String> seaZoneIds,
+  required Map<String, List<String>> regionTileKeys,
+  required Map<String, String> vis,
+}) {
+  for (final seaZoneId in seaZoneIds) {
+    if (_seaZoneHasOwnedCoastalProvinceForPlayer(
+      game,
+      playerId,
+      regionId,
+      seaZoneId,
+      regionTopology,
+    )) {
+      continue;
+    }
+    if (_playerHasFleetAtSeaInZone(game, playerId, regionId, seaZoneId)) {
+      continue;
+    }
+    final seaZoneBucketKey = canonicalSeaZoneTileBucketKey(
+      regionId,
+      seaZoneId,
+    );
+    final keys = regionTileKeys[seaZoneBucketKey];
+    if (keys == null) continue;
+    _fogSeaZoneWaterTilesExceptUnknown(vis, keys);
+  }
+}
+
 /// For each Great Power, every sea zone that is **not** adjacent (P–S) to a
 /// province that player **fully owns**, and where that player has **no** fleet
 /// **at sea** in that zone: set all **water** tiles in that zone to **fogged**
@@ -326,31 +423,15 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
       final vis = result[playerId];
       if (vis == null) continue;
 
-      for (final seaZoneId in seaZoneIds) {
-        if (_seaZoneHasOwnedCoastalProvinceForPlayer(
-          game,
-          playerId,
-          regionId,
-          seaZoneId,
-          regionTopology,
-        )) {
-          continue;
-        }
-        if (_playerHasFleetAtSeaInZone(game, playerId, regionId, seaZoneId)) {
-          continue;
-        }
-        final seaZoneBucketKey = canonicalSeaZoneTileBucketKey(
-          regionId,
-          seaZoneId,
-        );
-        final keys = regionTileKeys[seaZoneBucketKey];
-        if (keys == null) continue;
-        for (final tk in keys) {
-          final cur = vis[tk];
-          if (cur == null || cur == VisibilityLevel.unknown.name) continue;
-          vis[tk] = VisibilityLevel.fogged.name;
-        }
-      }
+      _applyDistantSeaFogForGpPlayerInRegion(
+        game: game,
+        playerId: playerId,
+        regionId: regionId,
+        regionTopology: regionTopology,
+        seaZoneIds: seaZoneIds,
+        regionTileKeys: regionTileKeys,
+        vis: vis,
+      );
     }
   }
 

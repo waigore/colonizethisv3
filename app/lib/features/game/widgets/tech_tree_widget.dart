@@ -65,6 +65,29 @@ const double _edgeStrokeWidth = 2;
 /// Offset from source right edge for the vertical segment so it stays in the inter-column gap (never through nodes).
 const double _edgeBendOffset = (_layerGap - _nodeWidth) / 2;
 
+Set<int> _reservedRowIndicesForTechLayer({
+  required Map<String, TechDefinition> catalog,
+  required int layer,
+  required int maxLayer,
+  required Map<String, int> layerByTech,
+  required Map<int, List<TechNodePosition>> positionsByLayer,
+}) {
+  final reserved = <int>{};
+  for (var rightLayer = layer + 1; rightLayer <= maxLayer; rightLayer++) {
+    for (final pos in positionsByLayer[rightLayer]!) {
+      final tech = catalog[pos.techId];
+      if (tech == null) continue;
+      final hasPrereqLeft = tech.prerequisiteIds.any(
+        (pr) => (layerByTech[pr] ?? -1) < layer,
+      );
+      if (!hasPrereqLeft) continue;
+      final rowIndex = ((pos.y - 24) / _rowGap).round();
+      reserved.add(rowIndex);
+    }
+  }
+  return reserved;
+}
+
 /// Full-screen tech tree graph. Left-to-right layout, explicit edges, scrollable.
 /// SPEC/ui/tech-tree-widget.md.
 class TechTreeWidget extends StatelessWidget {
@@ -250,20 +273,13 @@ class TechTreeWidget extends StatelessWidget {
         }
       } else {
         // Reserved row indices: rows that must be left free for connectors from left layers to right layers.
-        final reserved = <int>{};
-        for (var rightLayer = layer + 1; rightLayer <= maxLayer; rightLayer++) {
-          for (final pos in positionsByLayer[rightLayer]!) {
-            final tech = catalog[pos.techId];
-            if (tech == null) continue;
-            final hasPrereqLeft = tech.prerequisiteIds.any(
-              (pr) => (layerByTech[pr] ?? -1) < layer,
-            );
-            if (hasPrereqLeft) {
-              final rowIndex = ((pos.y - 24) / _rowGap).round();
-              reserved.add(rowIndex);
-            }
-          }
-        }
+        final reserved = _reservedRowIndicesForTechLayer(
+          catalog: catalog,
+          layer: layer,
+          maxLayer: maxLayer,
+          layerByTech: layerByTech,
+          positionsByLayer: positionsByLayer,
+        );
         final totalRows = reserved.isEmpty
             ? ids.length
             : math.max(

@@ -5,387 +5,11 @@ import '../constants.dart';
 import '../world/province_lookup.dart';
 import 'build_rail_work_rules.dart';
 import 'orders_application_context.dart';
-import 'orders_application_helpers.dart';
-
-void _completeInstantCivilianOrder(
-  void Function(String, Unit) updateUnit,
-  Unit unit,
-  String targetTileKey,
-) {
-  updateUnit(
-    unit.id,
-    unit.copyWith(
-      status: UnitStatus.idle,
-      tileKey: targetTileKey,
-      clearOriginTileKey: true,
-      clearAssignedTileKey: true,
-      clearCurrentWork: true,
-    ),
-  );
-}
-
-int _applyPurchaseLandOrder({
-  required BuildWorkState state,
-  required Player player,
-  required Unit unit,
-  required String targetTileKey,
-  required int treasury,
-  required Map<String, String> purchasedTilesByTileKey,
-  required Province? Function(String) provinceById,
-  required void Function(String, Unit) updateUnit,
-}) {
-  final resourceId = state.game.worldState.resourceByTileKey[targetTileKey];
-  if (resourceId == null) return treasury;
-
-  final provinceId =
-      Unit.provinceIdFromTileKey(targetTileKey) ?? unit.locationProvinceId;
-  final province = provinceById(provinceId);
-  final ownerId = province?.ownerId;
-  if (ownerId == null) return treasury;
-
-  final hasEmbassy = state.game.overtureStates.any(
-    (o) => o.gpId == player.id && o.targetId == ownerId && o.hasEmbassy,
-  );
-  if (!hasEmbassy) return treasury;
-
-  final atWar = state.game.diplomacyRelations.any((rel) {
-    final ids = {rel.factionId1, rel.factionId2};
-    return ids.contains(player.id) && ids.contains(ownerId) && rel.atWar;
-  });
-  if (atWar) return treasury;
-
-  final cost = purchaseLandCost(resourceId);
-  if (treasury < cost) return treasury;
-  if (purchasedTilesByTileKey.containsKey(targetTileKey)) return treasury;
-
-  treasury -= cost;
-  purchasedTilesByTileKey[targetTileKey] = player.id;
-  _completeInstantCivilianOrder(updateUnit, unit, targetTileKey);
-  return treasury;
-}
-
-bool _tryApplyExploreWorkOrder({
-  required BuildWorkState state,
-  required WorkOrder order,
-  required Unit unit,
-  required String targetTileKey,
-  required String Function(String) regionForUnit,
-  required void Function(String, Unit) updateUnit,
-}) {
-  final regionId = regionForUnit(order.unitId);
-  final provinceId =
-      Unit.provinceIdFromTileKey(targetTileKey) ?? unit.locationProvinceId;
-  final byProvince = state.game.worldState.tileKeysByRegionAndProvince[regionId];
-  if (byProvince == null || byProvince.isEmpty) return false;
-
-  final tilesInP = byProvince[provinceId]?.length ?? 0;
-  if (tilesInP <= 0) return false;
-
-  var maxTiles = 1;
-  for (final list in byProvince.values) {
-    if (list.length > maxTiles) maxTiles = list.length;
-  }
-  final totalTurns = (3 * tilesInP / maxTiles).ceil().clamp(1, 999);
-  ordersApplicationLog.d(
-    'work order accepted and assigned unit=${order.unitId} target=explore targetTileKey=$targetTileKey totalTurns=$totalTurns',
-  );
-  updateUnit(
-    order.unitId,
-    unit.copyWith(
-      status: UnitStatus.working,
-      tileKey: targetTileKey,
-      originTileKey: unit.originTileKey ?? unit.tileKey,
-      assignedTileKey: targetTileKey,
-      currentWork: CurrentWork(
-        workTarget: kWorkTargetExplore,
-        tileKey: targetTileKey,
-        totalTurns: totalTurns,
-        remainingTurns: totalTurns,
-      ),
-    ),
-  );
-  return true;
-}
-
-class _StandardWorkTargetConfig {
-  const _StandardWorkTargetConfig({
-    required this.allowedForUnitType,
-    required this.costFn,
-    required this.totalTurnsFn,
-  });
-
-  final bool Function(String) allowedForUnitType;
-  final WorkOrderCost? Function() costFn;
-  final int Function() totalTurnsFn;
-}
-
-_StandardWorkTargetConfig _buildStandardWorkTargetConfig({
-  required String target,
-  required String targetTileKey,
-  required Unit unit,
-  required TileMapState tileState,
-  required Province? Function(String) provinceById,
-}) {
-  switch (target) {
-    case kWorkTargetBuildImprovement:
-      return _StandardWorkTargetConfig(
-        allowedForUnitType: (t) => isWorkOrderTargetAllowedForUnitType(t, target),
-        costFn: () => workOrderMaterialCost(
-          target,
-          improvementLevel: tileState.improvementLevel(targetTileKey),
-        ),
-        totalTurnsFn: () => totalTurnsForWork(
-          target,
-          improvementLevel: tileState.improvementLevel(targetTileKey),
-        ),
-      );
-    case kWorkTargetBuildFort:
-      return _StandardWorkTargetConfig(
-        allowedForUnitType: (t) => isWorkOrderTargetAllowedForUnitType(t, target),
-        costFn: () {
-          final prov = provinceById(unit.locationProvinceId);
-          final fortLevel = prov?.fortLevel ?? 0;
-          return workOrderMaterialCost(target, fortLevel: fortLevel);
-        },
-        totalTurnsFn: () {
-          final prov = provinceById(unit.locationProvinceId);
-          final fortLevel = prov?.fortLevel ?? 0;
-          return totalTurnsForWork(target, fortLevel: fortLevel);
-        },
-      );
-    case kWorkTargetBuildRoad:
-    case kWorkTargetBuildPort:
-    case kWorkTargetBuildRail:
-    case kWorkTargetUpgradeTown:
-      return _StandardWorkTargetConfig(
-        allowedForUnitType: (t) => isWorkOrderTargetAllowedForUnitType(t, target),
-        costFn: () => workOrderMaterialCost(target),
-        totalTurnsFn: () => totalTurnsForWork(target),
-      );
-    default:
-      return const _StandardWorkTargetConfig(
-        allowedForUnitType: _alwaysFalseForWorkTarget,
-        costFn: _nullWorkOrderCost,
-        totalTurnsFn: _singleTurnWorkDuration,
-      );
-  }
-}
-
-bool _alwaysFalseForWorkTarget(String _) => false;
-WorkOrderCost? _nullWorkOrderCost() => null;
-int _singleTurnWorkDuration() => 1;
-
-bool _applyStandardWorkOrder({
-  required WorkOrder order,
-  required Unit unit,
-  required String targetTileKey,
-  required bool hasValidTarget,
-  required String orderTarget,
-  required TileMapState tileState,
-  required Province? Function(String) provinceById,
-  required bool Function(WorkOrderCost) canAffordMaterialCost,
-  required void Function(WorkOrderCost) deductMaterialCost,
-  required void Function(String, Unit) updateUnit,
-}) {
-  if (unit.currentWork != null || !hasValidTarget) return false;
-
-  final config = _buildStandardWorkTargetConfig(
-    target: orderTarget,
-    targetTileKey: targetTileKey,
-    unit: unit,
-    tileState: tileState,
-    provinceById: provinceById,
-  );
-  if (!config.allowedForUnitType(unit.type)) return false;
-
-  final cost = config.costFn();
-  if (cost == null || !canAffordMaterialCost(cost)) return false;
-
-  deductMaterialCost(cost);
-  final totalTurns = config.totalTurnsFn();
-  ordersApplicationLog.d(
-    'work order accepted and assigned unit=${order.unitId} target=$orderTarget targetTileKey=$targetTileKey totalTurns=$totalTurns',
-  );
-  updateUnit(
-    order.unitId,
-    unit.copyWith(
-      status: UnitStatus.working,
-      tileKey: targetTileKey,
-      originTileKey: unit.originTileKey ?? unit.tileKey,
-      assignedTileKey: targetTileKey,
-      currentWork: CurrentWork(
-        workTarget: orderTarget,
-        tileKey: targetTileKey,
-        totalTurns: totalTurns,
-        remainingTurns: totalTurns,
-      ),
-    ),
-  );
-  return true;
-}
-
-bool _shouldSkipBuildFortForMissingTech({
-  required Province? province,
-  required Map<String, bool>? techUnlocked,
-}) {
-  final fortLevel = province?.fortLevel ?? 0;
-  if (fortLevel == 1 && techUnlocked?[kTechIdMineEngineering] != true) {
-    ordersApplicationLog.d(
-      'build_fort skipped - Mine Engineering required for fort level 2',
-    );
-    return true;
-  }
-  if (fortLevel == 2 && techUnlocked?[kTechIdModernForts] != true) {
-    ordersApplicationLog.d(
-      'build_fort skipped - Modern Forts required for fort level 3',
-    );
-    return true;
-  }
-  return false;
-}
-
-bool _shouldSkipBuildRailForInvalidTerrainOrTech({
-  required Map<String, bool>? techUnlocked,
-  required int roadLevel,
-  required TerrainType? terrain,
-}) {
-  final railReason = rejectionReasonForBuildRailOrder(
-    techUnlocked: techUnlocked,
-    roadLevel: roadLevel,
-    terrain: terrain,
-  );
-  if (railReason == null) return false;
-  ordersApplicationLog.d('build_rail skipped - $railReason');
-  return true;
-}
-
-bool _tryAssignFixedDurationWorkOrder({
-  required WorkOrder order,
-  required Unit unit,
-  required String targetTileKey,
-  required String target,
-  required int totalTurns,
-  required int remainingTurns,
-  required void Function(String, Unit) updateUnit,
-}) {
-  if (!isWorkOrderTargetAllowedForUnitType(unit.type, target)) return false;
-  if (unit.currentWork != null || targetTileKey.isEmpty) return false;
-  ordersApplicationLog.d(
-    'work order accepted and assigned unit=${order.unitId} target=$target targetTileKey=$targetTileKey totalTurns=$totalTurns',
-  );
-  updateUnit(
-    order.unitId,
-    unit.copyWith(
-      status: UnitStatus.working,
-      tileKey: targetTileKey,
-      originTileKey: unit.originTileKey ?? unit.tileKey,
-      assignedTileKey: targetTileKey,
-      currentWork: CurrentWork(
-        workTarget: target,
-        tileKey: targetTileKey,
-        totalTurns: totalTurns,
-        remainingTurns: remainingTurns,
-      ),
-    ),
-  );
-  return true;
-}
-
-void _tryApplyProspectWorkOrder({
-  required BuildWorkState state,
-  required Player player,
-  required Unit unit,
-  required String targetTileKey,
-  required void Function(String, Unit) updateUnit,
-}) {
-  if (targetTileKey.isEmpty || unit.currentWork != null || !isExplorerUnit(unit.type)) {
-    return;
-  }
-  if (!isMineralEligibleTile(state.game, state.tileMapByRegion, targetTileKey)) return;
-
-  final existing = state.game.worldState.playerProspectedTiles[player.id] ?? const {};
-  final newProspected = Set<String>.from(existing)..add(targetTileKey);
-  state.game = state.game.copyWith(
-    worldState: state.game.worldState.copyWith(
-      playerProspectedTiles: {
-        ...state.game.worldState.playerProspectedTiles,
-        player.id: newProspected,
-      },
-    ),
-  );
-  _completeInstantCivilianOrder(updateUnit, unit, targetTileKey);
-}
-
-bool _tryApplyRemainingStandardBuildTargets({
-  required String workTarget,
-  required BuildWorkState state,
-  required WorkOrder order,
-  required Player player,
-  required Unit unit,
-  required String targetTileKey,
-  required bool hasValidTarget,
-  required TileMapState tileState,
-  required Province? Function(String) provinceById,
-  required bool Function(WorkOrderCost) canAffordMaterialCost,
-  required void Function(WorkOrderCost) deductMaterialCost,
-  required void Function(String, Unit) updateUnit,
-}) {
-  if (workTarget == kWorkTargetBuildRoad || workTarget == kWorkTargetBuildPort || workTarget == kWorkTargetUpgradeTown) {
-    return _applyStandardWorkOrder(
-      order: order,
-      unit: unit,
-      targetTileKey: targetTileKey,
-      hasValidTarget: hasValidTarget,
-      orderTarget: workTarget,
-      tileState: tileState,
-      provinceById: provinceById,
-      canAffordMaterialCost: canAffordMaterialCost,
-      deductMaterialCost: deductMaterialCost,
-      updateUnit: updateUnit,
-    );
-  }
-  if (workTarget == kWorkTargetBuildFort) {
-    final prov = provinceById(unit.locationProvinceId);
-    if (_shouldSkipBuildFortForMissingTech(
-      province: prov,
-      techUnlocked: player.techUnlocked,
-    )) {
-      return true;
-    }
-    return _applyStandardWorkOrder(
-      order: order,
-      unit: unit,
-      targetTileKey: targetTileKey,
-      hasValidTarget: hasValidTarget,
-      orderTarget: kWorkTargetBuildFort,
-      tileState: tileState,
-      provinceById: provinceById,
-      canAffordMaterialCost: canAffordMaterialCost,
-      deductMaterialCost: deductMaterialCost,
-      updateUnit: updateUnit,
-    );
-  }
-  if (workTarget != kWorkTargetBuildRail) return false;
-  if (_shouldSkipBuildRailForInvalidTerrainOrTech(
-    techUnlocked: player.techUnlocked,
-    roadLevel: tileState.roadLevel(targetTileKey),
-    terrain: terrainTypeForTileKey(state.tileMapByRegion, targetTileKey),
-  )) {
-    return true;
-  }
-  return _applyStandardWorkOrder(
-    order: order,
-    unit: unit,
-    targetTileKey: targetTileKey,
-    hasValidTarget: hasValidTarget,
-    orderTarget: kWorkTargetBuildRail,
-    tileState: tileState,
-    provinceById: provinceById,
-    canAffordMaterialCost: canAffordMaterialCost,
-    deductMaterialCost: deductMaterialCost,
-    updateUnit: updateUnit,
-  );
-}
+import 'work_handlers/explore_work_handler.dart';
+import 'work_handlers/prospect_work_handler.dart';
+import 'work_handlers/purchase_land_handler.dart';
+import 'work_handlers/shared_work_assignment.dart';
+import 'work_handlers/standard_work_handler.dart';
 
 void runWorkPhase(
   BuildWorkState state,
@@ -455,7 +79,7 @@ void runWorkPhase(
           hasValidTarget) {
         // SPEC/game/diplomacy.md (GP–Minor/Tribe Rules): purchase_land requires an Embassy
         // with the Minor/Tribe and the buyer must not be at war with that faction.
-        treasury = _applyPurchaseLandOrder(
+        treasury = applyPurchaseLandWorkOrder(
           state: state,
           player: player,
           unit: u,
@@ -469,34 +93,29 @@ void runWorkPhase(
       }
 
       if (order.target == kWorkTargetStealTech &&
-          _tryAssignFixedDurationWorkOrder(
+          tryAssignStealTechWorkOrder(
             order: order,
             unit: u,
             targetTileKey: targetTileKey,
-            target: kWorkTargetStealTech,
-            totalTurns: totalTurnsForWork(kWorkTargetStealTech),
-            remainingTurns: totalTurnsForWork(kWorkTargetStealTech),
             updateUnit: updateUnit,
           )) {
         continue;
       }
 
       if (order.target == kWorkTargetCounterSpy &&
-          _tryAssignFixedDurationWorkOrder(
+          tryAssignCounterSpyWorkOrder(
             order: order,
             unit: u,
             targetTileKey: targetTileKey,
-            target: kWorkTargetCounterSpy,
-            totalTurns: totalTurnsForWork(kWorkTargetCounterSpy),
-            remainingTurns: 1,
             updateUnit: updateUnit,
           )) {
         continue;
       }
 
       if (order.target == kWorkTargetProspect) {
-        _tryApplyProspectWorkOrder(
-          state: state,
+        state.game = tryApplyProspectWorkOrder(
+          game: state.game,
+          tileMapByRegion: state.tileMapByRegion,
           player: player,
           unit: u,
           targetTileKey: targetTileKey,
@@ -504,7 +123,7 @@ void runWorkPhase(
         );
       }
       if (order.target == kWorkTargetBuildImprovement) {
-        if (_applyStandardWorkOrder(
+        if (applyStandardWorkOrder(
           order: order,
           unit: u,
           targetTileKey: targetTileKey,
@@ -523,7 +142,7 @@ void runWorkPhase(
           isExplorerUnit(u.type) &&
           u.currentWork == null &&
           hasValidTarget) {
-        if (_tryApplyExploreWorkOrder(
+        if (tryApplyExploreWorkOrder(
           state: state,
           order: order,
           unit: u,
@@ -534,9 +153,8 @@ void runWorkPhase(
           continue;
         }
       }
-      if (_tryApplyRemainingStandardBuildTargets(
+      if (tryApplyRemainingStandardBuildTargets(
         workTarget: order.target,
-        state: state,
         order: order,
         player: player,
         unit: u,
@@ -547,6 +165,7 @@ void runWorkPhase(
         canAffordMaterialCost: canAffordMaterialCost,
         deductMaterialCost: deductMaterialCost,
         updateUnit: updateUnit,
+        terrain: terrainTypeForTileKey(state.tileMapByRegion, targetTileKey),
       )) {
         continue;
       }

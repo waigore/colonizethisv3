@@ -17,6 +17,238 @@ bool provinceTouchesFaction(
   return false;
 }
 
+bool _neighborAssignableInBfs(
+  String nb,
+  String from,
+  String factionId,
+  Set<String> available,
+  Map<String, int>? landmassIds,
+  Map<String, int>? factionLandmassIds,
+) {
+  if (!available.contains(nb)) return false;
+  if (landmassIds != null && landmassIds[nb] != landmassIds[from]) {
+    return false;
+  }
+  final allowedLandmass = factionLandmassIds?[factionId];
+  if (factionLandmassIds != null &&
+      allowedLandmass != null &&
+      landmassIds?[nb] != allowedLandmass) {
+    return false;
+  }
+  return true;
+}
+
+String? _fallbackSeedForFaction({
+  required String factionId,
+  required List<String> sorted,
+  required Map<String, int>? landmassIds,
+  required Map<String, int>? factionLandmassIds,
+  required Map<String, String> owners,
+  required Map<String, Set<String>> neighbours,
+}) {
+  if (factionLandmassIds == null) {
+    return sorted.isNotEmpty ? sorted.first : null;
+  }
+  final allowedLandmass = factionLandmassIds[factionId];
+  if (allowedLandmass == null) {
+    return sorted.isNotEmpty ? sorted.first : null;
+  }
+  for (final p in sorted) {
+    if (landmassIds?[p] != allowedLandmass) continue;
+    if (provinceTouchesFaction(p, factionId, owners, neighbours)) {
+      return p;
+    }
+  }
+  for (final p in sorted) {
+    if (landmassIds?[p] == allowedLandmass) return p;
+  }
+  throw StateError(
+    'assignTerritoriesByBfsGrowth: faction $factionId has no '
+    'province on landmass $allowedLandmass',
+  );
+}
+
+/// One round of fair BFS expansion plus optional seed recovery when stalled.
+bool _runBfsGrowthRound({
+  required List<String> factionIds,
+  required Map<String, Set<String>> neighbours,
+  required Map<String, int>? landmassIds,
+  required Map<String, int>? factionLandmassIds,
+  required Map<String, int> targetPerFaction,
+  required Map<String, List<String>> queues,
+  required Map<String, String> owners,
+  required Set<String> available,
+  required Map<String, int> assignedCount,
+  required int total,
+  required Random? neighborShuffleRandom,
+}) {
+  var anyProgress = false;
+  var nextTotal = assignedCount.values.fold<int>(0, (a, b) => a + b);
+
+  final order = factionIds.toList()
+    ..sort((a, b) => assignedCount[a]!.compareTo(assignedCount[b]!));
+
+  for (final factionId in order) {
+    if (assignedCount[factionId]! >= targetPerFaction[factionId]!) continue;
+    if (nextTotal >= total) break;
+    final queue = queues[factionId]!;
+    var expanded = false;
+
+    while (queue.isNotEmpty && !expanded && nextTotal < total) {
+      final from = queue.removeAt(0);
+      final nbrOrder = (neighbours[from] ?? const <String>{}).toList()
+        ..sort();
+      if (neighborShuffleRandom != null) {
+        nbrOrder.shuffle(neighborShuffleRandom);
+      }
+      for (final nb in nbrOrder) {
+        if (!_neighborAssignableInBfs(
+          nb,
+          from,
+          factionId,
+          available,
+          landmassIds,
+          factionLandmassIds,
+        )) {
+          continue;
+        }
+        owners[nb] = factionId;
+        available.remove(nb);
+        queue.add(nb);
+        assignedCount[factionId] = assignedCount[factionId]! + 1;
+        nextTotal++;
+        anyProgress = true;
+        expanded = true;
+        break;
+      }
+    }
+  }
+
+  if (anyProgress || available.isEmpty || nextTotal >= total) {
+    return anyProgress;
+  }
+
+  final underTarget = factionIds
+      .where((id) => assignedCount[id]! < targetPerFaction[id]!)
+      .toList();
+  if (underTarget.isEmpty) return false;
+
+  final sorted = available.toList()..sort();
+  if (neighborShuffleRandom != null) sorted.shuffle(neighborShuffleRandom);
+  for (final factionId in underTarget) {
+    if (assignedCount[factionId]! >= targetPerFaction[factionId]!) {
+      continue;
+    }
+    final seed = _fallbackSeedForFaction(
+      factionId: factionId,
+      sorted: sorted,
+      landmassIds: landmassIds,
+      factionLandmassIds: factionLandmassIds,
+      owners: owners,
+      neighbours: neighbours,
+    );
+    if (sorted.isEmpty || nextTotal >= total) break;
+    if (seed == null) continue;
+    if (!available.remove(seed)) continue;
+    owners[seed] = factionId;
+    queues[factionId]!.add(seed);
+    assignedCount[factionId] = assignedCount[factionId]! + 1;
+    nextTotal++;
+    anyProgress = true;
+  }
+  return anyProgress;
+}
+
+int _greedyAssignRemainingTerritories({
+  required Set<String> available,
+  required Map<String, String> owners,
+  required Map<String, List<String>> queues,
+  required Map<String, int> assignedCount,
+  required List<String> factionIds,
+  required Map<String, Set<String>> neighbours,
+  required Map<String, int>? landmassIds,
+  required Map<String, int>? factionLandmassIds,
+  required int total,
+  required Random? neighborShuffleRandom,
+  required int totalAssigned,
+}) {
+  var nextTotal = totalAssigned;
+  if (available.isEmpty || nextTotal >= total) return nextTotal;
+
+  final remaining = available.toList()..sort();
+  if (neighborShuffleRandom != null) remaining.shuffle(neighborShuffleRandom);
+  while (remaining.isNotEmpty && nextTotal < total) {
+    final provinceId = remaining.removeAt(0);
+    if (!available.remove(provinceId)) continue;
+
+    final chosenFactionId = _greedyPickFactionForProvince(
+      provinceId: provinceId,
+      factionIds: factionIds,
+      factionLandmassIds: factionLandmassIds,
+      landmassIds: landmassIds,
+      owners: owners,
+      neighbours: neighbours,
+      assignedCount: assignedCount,
+    );
+
+    owners[provinceId] = chosenFactionId;
+    queues[chosenFactionId]!.add(provinceId);
+    assignedCount[chosenFactionId] = assignedCount[chosenFactionId]! + 1;
+    nextTotal++;
+  }
+  return nextTotal;
+}
+
+String _greedyPickFactionForProvince({
+  required String provinceId,
+  required List<String> factionIds,
+  required Map<String, int>? factionLandmassIds,
+  required Map<String, int>? landmassIds,
+  required Map<String, String> owners,
+  required Map<String, Set<String>> neighbours,
+  required Map<String, int> assignedCount,
+}) {
+  if (factionLandmassIds == null) {
+    final sortedFactionIds = factionIds.toList()
+      ..sort((a, b) => assignedCount[a]!.compareTo(assignedCount[b]!));
+    return sortedFactionIds.first;
+  }
+  final provinceLandmass = landmassIds?[provinceId];
+  var minCount = 999999;
+  String? bestFaction;
+  for (final fid in factionIds) {
+    final allowedLandmass = factionLandmassIds[fid];
+    if (allowedLandmass != null && allowedLandmass != provinceLandmass) {
+      continue;
+    }
+    if (!provinceTouchesFaction(provinceId, fid, owners, neighbours)) {
+      continue;
+    }
+    if (assignedCount[fid]! < minCount) {
+      minCount = assignedCount[fid]!;
+      bestFaction = fid;
+    }
+  }
+  if (bestFaction != null) return bestFaction;
+  for (final fid in factionIds) {
+    final allowedLandmass = factionLandmassIds[fid];
+    if (allowedLandmass != null && allowedLandmass != provinceLandmass) {
+      continue;
+    }
+    if (assignedCount[fid]! < minCount) {
+      minCount = assignedCount[fid]!;
+      bestFaction = fid;
+    }
+  }
+  if (bestFaction == null) {
+    throw StateError(
+      'assignTerritoriesByBfsGrowth: no faction can claim province $provinceId '
+      'under factionLandmassIds constraints',
+    );
+  }
+  return bestFaction;
+}
+
 /// Assigns provinces to factions using fair multi-source BFS growth.
 ///
 /// [neighbours] is the province adjacency graph.
@@ -63,167 +295,35 @@ Map<String, String> assignTerritoriesByBfsGrowth({
 
   bool anyProgress;
   do {
-    anyProgress = false;
-
-    final order = factionIds.toList()
-      ..sort((a, b) => assignedCount[a]!.compareTo(assignedCount[b]!));
-
-    for (final factionId in order) {
-      if (assignedCount[factionId]! >= targetPerFaction[factionId]!) continue;
-      if (totalAssigned >= total) break;
-      final queue = queues[factionId]!;
-      var expanded = false;
-
-      while (queue.isNotEmpty && !expanded && totalAssigned < total) {
-        final from = queue.removeAt(0);
-        final nbrOrder = (neighbours[from] ?? const <String>{}).toList()
-          ..sort();
-        if (neighborShuffleRandom != null) {
-          nbrOrder.shuffle(neighborShuffleRandom);
-        }
-        for (final nb in nbrOrder) {
-          if (!available.contains(nb)) continue;
-          // Check landmass constraint (same landmass as neighbor)
-          if (landmassIds != null && landmassIds[nb] != landmassIds[from]) {
-            continue;
-          }
-          // Check faction-specific landmass constraint (strict per-faction assignment)
-          if (factionLandmassIds != null) {
-            final allowedLandmass = factionLandmassIds[factionId];
-            if (allowedLandmass != null &&
-                landmassIds?[nb] != allowedLandmass) {
-              continue;
-            }
-          }
-          owners[nb] = factionId;
-          available.remove(nb);
-          queue.add(nb);
-          assignedCount[factionId] = assignedCount[factionId]! + 1;
-          totalAssigned++;
-          anyProgress = true;
-          expanded = true;
-          break;
-        }
-      }
-    }
-
-    if (!anyProgress && available.isNotEmpty && totalAssigned < total) {
-      final underTarget = factionIds
-          .where((id) => assignedCount[id]! < targetPerFaction[id]!)
-          .toList();
-      if (underTarget.isNotEmpty) {
-        // When factionLandmassIds is provided, only consider provinces on the faction's assigned landmass
-        final sorted = available.toList()..sort();
-        if (neighborShuffleRandom != null)
-          sorted.shuffle(neighborShuffleRandom);
-        for (final factionId in underTarget) {
-          if (assignedCount[factionId]! >= targetPerFaction[factionId]!) {
-            continue;
-          }
-          // Find a province on the faction's allowed landmass
-          String? seed;
-          if (factionLandmassIds != null) {
-            final allowedLandmass = factionLandmassIds[factionId];
-            if (allowedLandmass != null) {
-              for (final p in sorted) {
-                if (landmassIds?[p] != allowedLandmass) continue;
-                if (provinceTouchesFaction(p, factionId, owners, neighbours)) {
-                  seed = p;
-                  break;
-                }
-              }
-              if (seed == null) {
-                for (final p in sorted) {
-                  if (landmassIds?[p] == allowedLandmass) {
-                    seed = p;
-                    break;
-                  }
-                }
-              }
-              if (seed == null) {
-                throw StateError(
-                  'assignTerritoriesByBfsGrowth: faction $factionId has no '
-                  'province on landmass $allowedLandmass',
-                );
-              }
-            } else {
-              seed = sorted.isNotEmpty ? sorted.first : null;
-            }
-          } else {
-            seed = sorted.isNotEmpty ? sorted.first : null;
-          }
-          if (sorted.isEmpty || totalAssigned >= total) break;
-          if (seed == null) continue;
-          if (!available.remove(seed)) continue;
-          owners[seed] = factionId;
-          queues[factionId]!.add(seed);
-          assignedCount[factionId] = assignedCount[factionId]! + 1;
-          totalAssigned++;
-          anyProgress = true;
-        }
-      }
-    }
+    anyProgress = _runBfsGrowthRound(
+      factionIds: factionIds,
+      neighbours: neighbours,
+      landmassIds: landmassIds,
+      factionLandmassIds: factionLandmassIds,
+      targetPerFaction: targetPerFaction,
+      queues: queues,
+      owners: owners,
+      available: available,
+      assignedCount: assignedCount,
+      total: total,
+      neighborShuffleRandom: neighborShuffleRandom,
+    );
+    totalAssigned = assignedCount.values.fold<int>(0, (a, b) => a + b);
   } while (anyProgress && available.isNotEmpty && totalAssigned < total);
 
-  // Greedy leftover: assign remaining to faction with fewest provinces,
-  // still respecting the total cap and faction landmass constraints.
-  if (available.isNotEmpty && totalAssigned < total) {
-    final remaining = available.toList()..sort();
-    if (neighborShuffleRandom != null) remaining.shuffle(neighborShuffleRandom);
-    while (remaining.isNotEmpty && totalAssigned < total) {
-      final provinceId = remaining.removeAt(0);
-      if (!available.remove(provinceId)) continue;
-      // Find a faction that can legally claim this province (has landmass available)
-      String chosenFactionId;
-      if (factionLandmassIds != null) {
-        final provinceLandmass = landmassIds?[provinceId];
-        var minCount = 999999;
-        String? bestFaction;
-        for (final fid in factionIds) {
-          final allowedLandmass = factionLandmassIds[fid];
-          if (allowedLandmass != null && allowedLandmass != provinceLandmass) {
-            continue;
-          }
-          if (!provinceTouchesFaction(provinceId, fid, owners, neighbours)) {
-            continue;
-          }
-          if (assignedCount[fid]! < minCount) {
-            minCount = assignedCount[fid]!;
-            bestFaction = fid;
-          }
-        }
-        if (bestFaction == null) {
-          for (final fid in factionIds) {
-            final allowedLandmass = factionLandmassIds[fid];
-            if (allowedLandmass != null &&
-                allowedLandmass != provinceLandmass) {
-              continue;
-            }
-            if (assignedCount[fid]! < minCount) {
-              minCount = assignedCount[fid]!;
-              bestFaction = fid;
-            }
-          }
-        }
-        if (bestFaction == null) {
-          throw StateError(
-            'assignTerritoriesByBfsGrowth: no faction can claim province $provinceId '
-            'under factionLandmassIds constraints',
-          );
-        }
-        chosenFactionId = bestFaction;
-      } else {
-        final sortedFactionIds = factionIds.toList()
-          ..sort((a, b) => assignedCount[a]!.compareTo(assignedCount[b]!));
-        chosenFactionId = sortedFactionIds.first;
-      }
-      final factionId = chosenFactionId;
-      owners[provinceId] = factionId;
-      queues[factionId]!.add(provinceId);
-      assignedCount[factionId] = assignedCount[factionId]! + 1;
-      totalAssigned++;
-    }
-  }
+  totalAssigned = _greedyAssignRemainingTerritories(
+    available: available,
+    owners: owners,
+    queues: queues,
+    assignedCount: assignedCount,
+    factionIds: factionIds,
+    neighbours: neighbours,
+    landmassIds: landmassIds,
+    factionLandmassIds: factionLandmassIds,
+    total: total,
+    neighborShuffleRandom: neighborShuffleRandom,
+    totalAssigned: totalAssigned,
+  );
 
   return owners;
 }

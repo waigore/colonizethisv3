@@ -226,6 +226,49 @@ int _transportLevelAtTile(WorldState worldState, String tileKey) {
   return r > 0 ? r : 0;
 }
 
+void _tryEnqueueSeaConnectedPortExpansion({
+  required String portKey,
+  required Set<String> connected,
+  required Set<String> owned,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Map<String, int> pathCap,
+  required List<String> expansionSeedQueue,
+}) {
+  if (connected.contains(portKey)) return;
+  final parts = portKey.split('|');
+  if (parts.length != 4) return;
+  final regionId = parts[0];
+  final fullProvinceId = '$regionId|${parts[1]}';
+  if (!owned.contains(fullProvinceId)) return;
+  if (tileMapByRegion[regionId] == null) return;
+  final x = int.tryParse(parts[2]) ?? -1;
+  final y = int.tryParse(parts[3]) ?? -1;
+  if (x < 0 || y < 0) return;
+
+  connected.add(portKey);
+  pathCap[portKey] = 4;
+  expansionSeedQueue.add(portKey);
+}
+
+void _removeBlockadedPortTilesExceptCapital({
+  required Set<String> connected,
+  required Map<String, int> pathCap,
+  required Set<String> blockadedPortProvinces,
+  required String capitalProvinceId,
+}) {
+  for (final key in connected.toList()) {
+    final parts = key.split('|');
+    if (parts.length < 2) continue;
+    final fullProvinceId = parts.length >= 3
+        ? '${parts[0]}|${parts[1]}'
+        : parts[0];
+    if (!blockadedPortProvinces.contains(fullProvinceId)) continue;
+    if (fullProvinceId == capitalProvinceId) continue;
+    connected.remove(key);
+    pathCap.remove(key);
+  }
+}
+
 ConnectivityResult _connectedTilesForPlayer({
   required Game game,
   required String playerId,
@@ -290,21 +333,14 @@ ConnectivityResult _connectedTilesForPlayer({
 
   final expansionSeedQueue = <String>[];
   for (final portKey in seaConnectedPortKeys) {
-    if (connected.contains(portKey)) continue;
-    final parts = portKey.split('|');
-    if (parts.length != 4) continue;
-    final regionId = parts[0];
-    final fullProvinceId = '$regionId|${parts[1]}';
-    if (!owned.contains(fullProvinceId)) continue;
-    final map = tileMapByRegion[regionId];
-    if (map == null) continue;
-    final x = int.tryParse(parts[2]) ?? -1;
-    final y = int.tryParse(parts[3]) ?? -1;
-    if (x < 0 || y < 0) continue;
-
-    connected.add(portKey);
-    pathCap[portKey] = 4;
-    expansionSeedQueue.add(portKey);
+    _tryEnqueueSeaConnectedPortExpansion(
+      portKey: portKey,
+      connected: connected,
+      owned: owned,
+      tileMapByRegion: tileMapByRegion,
+      pathCap: pathCap,
+      expansionSeedQueue: expansionSeedQueue,
+    );
   }
 
   _propagateConnectivity(
@@ -322,19 +358,12 @@ ConnectivityResult _connectedTilesForPlayer({
 
   // SPEC § Blockade: no tiles in a blockaded port province contribute; remove any tile in such a province (except capital province: its tiles remain when it is blockaded, only sea connectivity is severed).
   if (blockadedPortProvinces.isNotEmpty) {
-    for (final key in connected.toList()) {
-      final parts = key.split('|');
-      if (parts.length >= 2) {
-        final fullProvinceId = parts.length >= 3
-            ? '${parts[0]}|${parts[1]}'
-            : parts[0];
-        if (blockadedPortProvinces.contains(fullProvinceId) &&
-            fullProvinceId != capital.provinceId) {
-          connected.remove(key);
-          pathCap.remove(key);
-        }
-      }
-    }
+    _removeBlockadedPortTilesExceptCapital(
+      connected: connected,
+      pathCap: pathCap,
+      blockadedPortProvinces: blockadedPortProvinces,
+      capitalProvinceId: capital.provinceId,
+    );
   }
 
   final connectedByRoadRule = Set<String>.from(connected);
