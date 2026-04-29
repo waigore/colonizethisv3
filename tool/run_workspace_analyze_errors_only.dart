@@ -89,18 +89,6 @@ Future<int> main(List<String> args) async {
     final pubspecText = pubspecFile.readAsStringSync();
     final isFlutter = packageDeclaresFlutterSdk(pubspecText);
 
-    if (isFlutter && packageHasL10nConfig(pkgPath)) {
-      final gen = await _run('flutter', ['gen-l10n'], workingDirectory: pkgPath);
-      if (gen.exitCode != 0) {
-        stderr.writeln(
-          'flutter gen-l10n failed in $name at $pkgPath (exit ${gen.exitCode}):',
-        );
-        stderr.writeln(gen.stderr);
-        stderr.writeln(gen.stdout);
-        return 1;
-      }
-    }
-
     if (isFlutter) {
       final get = await _run('flutter', ['pub', 'get'], workingDirectory: pkgPath);
       if (get.exitCode != 0) {
@@ -108,6 +96,17 @@ Future<int> main(List<String> args) async {
         stderr.writeln(get.stderr);
         stderr.writeln(get.stdout);
         return 1;
+      }
+      if (packageHasL10nConfig(pkgPath)) {
+        final gen = await _run('flutter', ['gen-l10n'], workingDirectory: pkgPath);
+        if (gen.exitCode != 0) {
+          stderr.writeln(
+            'flutter gen-l10n failed in $name at $pkgPath (exit ${gen.exitCode}):',
+          );
+          stderr.writeln(gen.stderr);
+          stderr.writeln(gen.stdout);
+          return 1;
+        }
       }
       final analyze = await _run('flutter', ['analyze'], workingDirectory: pkgPath);
       final out = '${analyze.stdout}${analyze.stderr}';
