@@ -1,6 +1,7 @@
 part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings3 on AppLocalizations {
+  @override
   String get provinceOverlay_tileImprovementUnknown => 'Improvement: ???';
 
   @override

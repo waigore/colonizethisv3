@@ -128,6 +128,316 @@ void main() {
     );
   }
 
+  group('CivilianUnitsPanel', () {
+    testWidgets(
+      'AC: pending build_improvement shows ResourceIcons and omits (pending)',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_pending_build',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'b1',
+                  type: 'Builder',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        final orders = Orders(
+          workOrdersByPlayerId: {
+            human: [
+              WorkOrder(
+                unitId: 'b1',
+                target: 'build_improvement',
+                targetTileKey: tileKey,
+              ),
+            ],
+          },
+        );
+        await tester.pumpWidget(
+          buildPanel(
+            game: miniGame,
+            humanPlayerId: human,
+            currentOrders: orders,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Assigned to:'), findsOneWidget);
+        expect(find.textContaining('(pending)'), findsNothing);
+        expect(
+          find.byWidgetPredicate(
+            (w) => w is ResourceIcon && w.commodityId == 'lumber',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.byWidgetPredicate(
+            (w) => w is ResourceIcon && w.commodityId == 'castIron',
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'AC: pending explore shows inline turns and no ResourceIcon strip',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_pending_explore',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'e1',
+                  type: 'Explorer',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        final orders = Orders(
+          workOrdersByPlayerId: {
+            human: [
+              WorkOrder(
+                unitId: 'e1',
+                target: 'explore',
+                targetTileKey: 'oldWorld|p1|0|0',
+              ),
+            ],
+          },
+        );
+        await tester.pumpWidget(
+          buildPanel(
+            game: miniGame,
+            humanPlayerId: human,
+            currentOrders: orders,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('(pending)'), findsNothing);
+        expect(find.textContaining('Assigned to: Explore'), findsOneWidget);
+        expect(find.textContaining('turn'), findsAtLeastNWidgets(1));
+        expect(find.byType(ResourceIcon), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'AC: pending purchase_land shows treasury chip not ResourceIcon',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_pending_land',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'm1',
+                  type: 'Merchant',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            resourceByTileKey: {tileKey: 'grain'},
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        final orders = Orders(
+          workOrdersByPlayerId: {
+            human: [
+              WorkOrder(
+                unitId: 'm1',
+                target: 'purchase_land',
+                targetTileKey: tileKey,
+              ),
+            ],
+          },
+        );
+        await tester.pumpWidget(
+          buildPanel(
+            game: miniGame,
+            humanPlayerId: human,
+            currentOrders: orders,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Treasury:'), findsOneWidget);
+        expect(find.textContaining('(pending)'), findsNothing);
+        expect(find.byType(ResourceIcon), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'AC: pending purchase_land without tile resource still shows inline turns',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        final miniGame = Game(
+          id: 'g_civ_pending_land_nores',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  displayName: 'Alpha',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'm1',
+                  type: 'Merchant',
+                  ownerId: human,
+                  locationProvinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: human, displayName: 'Human', isHuman: true),
+          ],
+        );
+        final orders = Orders(
+          workOrdersByPlayerId: {
+            human: [
+              WorkOrder(
+                unitId: 'm1',
+                target: 'purchase_land',
+                targetTileKey: tileKey,
+              ),
+            ],
+          },
+        );
+        await tester.pumpWidget(
+          buildPanel(
+            game: miniGame,
+            humanPlayerId: human,
+            currentOrders: orders,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('(pending)'), findsNothing);
+        expect(
+          find.textContaining('Assigned to: Purchase land'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('turn'), findsAtLeastNWidgets(1));
+        expect(find.textContaining('Treasury:'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'AC: pending rows show faithful remaining-turn number for each work target',
+      (WidgetTester tester) async {
+        const human = 'h1';
+        const tileKey = 'oldWorld|p1|0|0';
+        const targetTileKey = 'oldWorld|p1|1|0';
+        final cases = <({String unitType, String target, int turns})>[
+          (unitType: 'Explorer', target: 'explore', turns: 3),
+          (unitType: 'Explorer', target: 'prospect', turns: 1),
+          (unitType: 'Builder', target: 'build_improvement', turns: 1),
+          (unitType: 'Builder', target: 'upgrade_town', turns: 1),
+          (unitType: 'Engineer', target: 'build_road', turns: 1),
+          (unitType: 'Engineer', target: 'build_port', turns: 1),
+          (unitType: 'Engineer', target: 'build_fort', turns: 3),
+          (unitType: 'Rail Builder', target: 'build_rail', turns: 1),
+          (unitType: 'Spy', target: 'steal_tech', turns: 5),
+          (unitType: 'Spy', target: 'counter_spy', turns: 1),
+          (unitType: 'Merchant', target: 'purchase_land', turns: 1),
+        ];
+
+        for (var i = 0; i < cases.length; i++) {
+          final c = cases[i];
+          final unitId = 'u_$i';
+          final miniGame = Game(
+            id: 'g_civ_pending_turns_${c.target}_$i',
+            worldState: WorldState(
+              turnState: const TurnState(
+                phase: TurnPhase.orders,
+                turnNumber: 1,
+              ),
+              oldWorld: RegionData(
+                provinces: const [
+                  Province(
+                    id: 'oldWorld|p1',
+                    regionId: 'oldWorld',
+                    displayName: 'Alpha',
+                    fortLevel: 2,
+                  ),
+                ],
+                units: [
+                  Unit(
+                    id: unitId,
+                    type: c.unitType,
+                    ownerId: human,
+                    locationProvinceId: 'oldWorld|p1',
+                    tileKey: tileKey,
+                  ),
+                ],
+              ),
+              newWorld: const RegionData(),
+              resourceByTileKey: const {targetTileKey: 'grain'},
+              tileKeysByRegionAndProvince: const {
+                'oldWorld': {
+                  'oldWorld|p1': [tileKey, targetTileKey],
+                },
+              },
             ),
             players: const [
               Player(id: human, displayName: 'Human', isHuman: true),
