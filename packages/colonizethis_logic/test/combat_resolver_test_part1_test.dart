@@ -432,7 +432,7 @@ void main() {
               id: 'att',
               displayName: 'Att',
               isHuman: true,
-              techUnlocked: {'nationalism': true},
+              techUnlocked: {kTechIdNationalism: true},
             ),
             Player(id: 'def', displayName: 'Def', isHuman: false),
           ],

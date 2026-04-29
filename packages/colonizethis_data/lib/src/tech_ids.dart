@@ -2,6 +2,9 @@
 /// Canonical tech definitions remain in `tech_catalog.dart`.
 
 const String kTechIdRoadConstruction = 'road_construction';
+const String kTechIdSawMill = 'saw_mill';
+const String kTechIdSeedDrill = 'seed_drill';
+const String kTechIdCircularSaw = 'circular_saw';
 const String kTechIdMineEngineering = 'mine_engineering';
 const String kTechIdModernForts = 'modern_forts';
 const String kTechIdEarlySteamEngine = 'early_steam_engine';

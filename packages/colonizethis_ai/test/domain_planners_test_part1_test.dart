@@ -372,7 +372,7 @@ void main() {
         research: const [
           ResearchOrder(
             slotIndex: 0,
-            techId: 'road_construction',
+            techId: kTechIdRoadConstruction,
             funding: ResearchFundingLevel.low,
           ),
         ],

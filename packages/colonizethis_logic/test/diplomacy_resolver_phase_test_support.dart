@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -12,7 +13,7 @@ Game diplomacyResolverPhaseTestBaseGame() {
     ),
     players: [
       const Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 2000)
-          .copyWith(techUnlocked: const {'diplomatic_expertise': true}),
+          .copyWith(techUnlocked: const {kTechIdDiplomaticExpertise: true}),
     ],
     minorNations: const [
       MinorNation(id: 'minor1', displayName: 'Minor 1'),
