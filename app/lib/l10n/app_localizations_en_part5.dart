@@ -149,4 +149,10 @@ mixin _AppLocalizationsEnStrings5 on AppLocalizations {
 
   @override
   String get playerTurnFeed_eventsTitle => 'Events';
+
+  @override
+  String get debugConsole_title => 'Debug Console';
+
+  @override
+  String get debugConsole_hintSpawnCivilian => '/spawn_civilian explorer 1';
 }

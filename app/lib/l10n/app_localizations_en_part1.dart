@@ -11,6 +11,21 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get menu_debugLog => 'Debug log';
 
   @override
+  String get menu_openMaximizedOnStartup => 'Open maximized on startup';
+
+  @override
+  String get common_on => 'On';
+
+  @override
+  String get common_off => 'Off';
+
+  @override
+  String get map_selectionMode_prompt => 'Select a tile, or click cancel';
+
+  @override
+  String get map_selectionMode_cancel => 'cancel';
+
+  @override
   String get mainMenu_title => 'ColonizeThis V3';
 
   @override

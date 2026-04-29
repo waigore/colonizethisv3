@@ -25,6 +25,18 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_tileResourcePrefix => 'Resource: ';
 
   @override
+  String get provinceOverlay_tileProspectWithExplorerTooltip =>
+      'Prospect with explorer';
+
+  @override
+  String get provinceOverlay_tileExploreWithExplorerTooltip =>
+      'Explore with explorer';
+
+  @override
+  String get provinceOverlay_tileBuildImprovementTooltip =>
+      'Build improvement';
+
+  @override
   String provinceOverlay_tileProspected(String value) {
     return 'Prospected: $value';
   }

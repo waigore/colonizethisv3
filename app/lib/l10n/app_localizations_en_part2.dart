@@ -315,6 +315,30 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get civilian_units_assign => 'Assign';
 
   @override
+  String civilian_units_turns(int count) {
+    if (count == 1) {
+      return '$count turn';
+    }
+    return '$count turns';
+  }
+
+  @override
+  String civilian_units_turnProgress(String remaining, String total) {
+    return '$remaining/$total turns';
+  }
+
+  @override
+  String get naval_transferToHome_dialogTitle => 'Transfer Ships to Home Fleet';
+
+  @override
+  String naval_transferToHome_sourceTitle(String id) {
+    return 'Fleet $id';
+  }
+
+  @override
+  String get naval_transferToHome_confirm => 'Confirm Transfer';
+
+  @override
   String get production_breakdown_title => 'Commodity breakdown';
 
   @override
