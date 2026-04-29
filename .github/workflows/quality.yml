@@ -230,7 +230,8 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     # Dart coverage + package matrix; Flutter app tests run in parallel shards (app_tests_shard).
-    timeout-minutes: 45
+    # Workspace analyzer runs flutter/dart analyze per member (many packages); 45m can cancel mid-run.
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v6
