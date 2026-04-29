@@ -34,6 +34,20 @@ bool packageDeclaresFlutterSdk(String pubspecYaml) {
   return flutter['sdk'] == 'flutter';
 }
 
+/// True when [packageRoot] has Flutter l10n config (`l10n.yaml`), so generated
+/// `lib/l10n/*.dart` must exist before `flutter analyze` (CI parity with
+/// `app_tests_cache` / local clones without committed codegen).
+bool packageHasL10nConfig(String packageRoot) {
+  return File(p.join(packageRoot, 'l10n.yaml')).existsSync();
+}
+
+/// True when [packagePath] is the Pub workspace host root (repo root), which
+/// must not be passed to `dart analyze` — it would traverse nested `app/`
+/// without `app`'s package context.
+bool workspacePackageIsHostRoot(String repoRoot, String packagePath) {
+  return p.equals(p.normalize(packagePath), p.normalize(repoRoot));
+}
+
 Future<ProcessResult> _run(
   String executable,
   List<String> arguments, {
@@ -75,22 +89,19 @@ Future<int> main(List<String> args) async {
   for (final entry in packages) {
     final pkgPath = entry['path'] as String;
     final name = entry['name'] as String;
+    if (workspacePackageIsHostRoot(repoRoot, pkgPath)) {
+      stdout.writeln(
+        '--- dart analyze: $name ($pkgPath) ---\n'
+        'skipped (workspace host root; member packages are analyzed separately)',
+      );
+      continue;
+    }
     final pubspecFile = File(p.join(pkgPath, 'pubspec.yaml'));
     if (!pubspecFile.existsSync()) {
       continue;
     }
     final pubspecText = pubspecFile.readAsStringSync();
     final isFlutter = packageDeclaresFlutterSdk(pubspecText);
-
-    if (p.basename(pkgPath) == 'app') {
-      final gen = await _run('flutter', ['gen-l10n'], workingDirectory: pkgPath);
-      if (gen.exitCode != 0) {
-        stderr.writeln('flutter gen-l10n failed in app (exit ${gen.exitCode}):');
-        stderr.writeln(gen.stderr);
-        stderr.writeln(gen.stdout);
-        return 1;
-      }
-    }
 
     if (isFlutter) {
       final get = await _run('flutter', ['pub', 'get'], workingDirectory: pkgPath);
@@ -99,6 +110,17 @@ Future<int> main(List<String> args) async {
         stderr.writeln(get.stderr);
         stderr.writeln(get.stdout);
         return 1;
+      }
+      if (packageHasL10nConfig(pkgPath)) {
+        final gen = await _run('flutter', ['gen-l10n'], workingDirectory: pkgPath);
+        if (gen.exitCode != 0) {
+          stderr.writeln(
+            'flutter gen-l10n failed in $name at $pkgPath (exit ${gen.exitCode}):',
+          );
+          stderr.writeln(gen.stderr);
+          stderr.writeln(gen.stdout);
+          return 1;
+        }
       }
       final analyze = await _run('flutter', ['analyze'], workingDirectory: pkgPath);
       final out = '${analyze.stdout}${analyze.stderr}';
