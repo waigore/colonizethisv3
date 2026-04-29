@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 import '../tool/run_workspace_analyze_errors_only.dart';
@@ -63,6 +66,21 @@ dependencies:
 '''),
         isFalse,
       );
+    });
+  });
+
+  group('packageHasL10nConfig', () {
+    test('true when l10n.yaml exists at package root', () {
+      final dir = Directory.systemTemp.createTempSync('ct_l10n_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      File(p.join(dir.path, 'l10n.yaml')).writeAsStringSync('arb-dir: l10n\n');
+      expect(packageHasL10nConfig(dir.path), isTrue);
+    });
+
+    test('false when l10n.yaml is absent', () {
+      final dir = Directory.systemTemp.createTempSync('ct_no_l10n_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      expect(packageHasL10nConfig(dir.path), isFalse);
     });
   });
 }

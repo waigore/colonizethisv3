@@ -34,6 +34,13 @@ bool packageDeclaresFlutterSdk(String pubspecYaml) {
   return flutter['sdk'] == 'flutter';
 }
 
+/// True when [packageRoot] has Flutter l10n config (`l10n.yaml`), so generated
+/// `lib/l10n/*.dart` must exist before `flutter analyze` (CI parity with
+/// `app_tests_cache` / local clones without committed codegen).
+bool packageHasL10nConfig(String packageRoot) {
+  return File(p.join(packageRoot, 'l10n.yaml')).existsSync();
+}
+
 Future<ProcessResult> _run(
   String executable,
   List<String> arguments, {
@@ -82,10 +89,12 @@ Future<int> main(List<String> args) async {
     final pubspecText = pubspecFile.readAsStringSync();
     final isFlutter = packageDeclaresFlutterSdk(pubspecText);
 
-    if (p.basename(pkgPath) == 'app') {
+    if (isFlutter && packageHasL10nConfig(pkgPath)) {
       final gen = await _run('flutter', ['gen-l10n'], workingDirectory: pkgPath);
       if (gen.exitCode != 0) {
-        stderr.writeln('flutter gen-l10n failed in app (exit ${gen.exitCode}):');
+        stderr.writeln(
+          'flutter gen-l10n failed in $name at $pkgPath (exit ${gen.exitCode}):',
+        );
         stderr.writeln(gen.stderr);
         stderr.writeln(gen.stdout);
         return 1;
