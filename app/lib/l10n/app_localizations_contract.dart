@@ -771,8 +771,7 @@ abstract class AppLocalizations {
   /// Army subtitle showing regiment count, location, and a draft move line.
   ///
   /// In en, this message translates to:
-  /// **'{regiments} regiments · {location}
-{draftLine}'**
+  /// **'{regiments} regiments · {location}\\n{draftLine}'**
   String military_units_armySubtitleWithDraft(int regiments, String location, String draftLine);
 
   /// Empty-state line for army with no regiments.
