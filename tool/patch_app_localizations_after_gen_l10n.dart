@@ -1,7 +1,9 @@
 // Patches `app/lib/l10n/app_localizations.dart` after `flutter gen-l10n`:
-// - Re-exports `lookupAppLocalizations` from tracked `app_localizations_lookup.dart`
-//   without importing that library into `app_localizations.dart` (avoids a
-//   synchronous cycle: lookup → en → app_localizations → lookup).
+// - Does **not** import or export `app_localizations_lookup.dart` from the
+//   generated main library (exporting lookup merges lookup + main into one
+//   compilation unit and recreates the cycle: lookup → en → app_localizations).
+//   Call sites import `package:colonizethis_app/l10n/app_localizations_lookup.dart`
+//   for `lookupAppLocalizations`.
 // - Replaces synchronous `import 'app_localizations_en.dart'` with **deferred**
 //   import so `AppLocalizations` is defined before English part mixins resolve.
 // - Idempotent: safe to run multiple times.
@@ -33,14 +35,8 @@ void main() {
     exit(1);
   }
 
-  // Export lookup only (no import into this library — breaks lookup↔main cycle).
-  if (!text.contains(lookupExport)) {
-    text = text.replaceFirst(
-      importLine,
-      '$importLine\n\n$lookupExport',
-    );
-  }
   text = _removeImportLine(text, "import 'app_localizations_lookup.dart';");
+  text = _removeImportLine(text, lookupExport);
 
   text = _ensureDeferredEnglishImport(text);
   text = _patchDelegateLoad(text);
