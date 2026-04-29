@@ -2,12 +2,11 @@ import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
-import '../orders_application_context.dart';
 
 final _log = packageLogger();
 
 bool tryApplyExploreWorkOrder({
-  required BuildWorkState state,
+  required Game game,
   required WorkOrder order,
   required Unit unit,
   required String targetTileKey,
@@ -17,7 +16,7 @@ bool tryApplyExploreWorkOrder({
   final regionId = regionForUnit(order.unitId);
   final provinceId =
       Unit.provinceIdFromTileKey(targetTileKey) ?? unit.locationProvinceId;
-  final byProvince = state.game.worldState.tileKeysByRegionAndProvince[regionId];
+  final byProvince = game.worldState.tileKeysByRegionAndProvince[regionId];
   if (byProvince == null || byProvince.isEmpty) return false;
 
   final tilesInP = byProvince[provinceId]?.length ?? 0;
