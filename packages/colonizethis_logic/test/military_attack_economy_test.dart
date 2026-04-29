@@ -1,4 +1,5 @@
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_logic/src/combat/military_attack_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -10,21 +11,24 @@ void main() {
       expect(landBattleAttackTreasuryCostForPlayer(p), 100);
     });
 
-    test('applies multiplicative discounts for machinery and modern funding', () {
-      final p = Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        techUnlocked: const {
-          'industrial_machinery': true,
-          'modern_military_funding': true,
-        },
-      );
-      expect(
-        landBattleAttackTreasuryCostForPlayer(p),
-        (100 * 0.75 * 0.85).ceil(),
-      );
-    });
+    test(
+      'applies multiplicative discounts for machinery and modern funding',
+      () {
+        final p = Player(
+          id: 'p1',
+          displayName: 'P1',
+          isHuman: true,
+          techUnlocked: const {
+            kTechIdIndustrialMachinery: true,
+            kTechIdModernMilitaryFunding: true,
+          },
+        );
+        expect(
+          landBattleAttackTreasuryCostForPlayer(p),
+          (100 * 0.75 * 0.85).ceil(),
+        );
+      },
+    );
   });
 
   group('applyLandBattleAttackTreasuryCosts', () {
@@ -49,7 +53,11 @@ void main() {
         fortLevel: 0,
         terrain: 'field',
         attackers: [
-          AttackingSide(factionId: 'a1', unitIds: const ['u1'], generalId: null),
+          AttackingSide(
+            factionId: 'a1',
+            unitIds: const ['u1'],
+            generalId: null,
+          ),
         ],
         defenderGeneralId: null,
         defenderGeneralMedals: 0,
