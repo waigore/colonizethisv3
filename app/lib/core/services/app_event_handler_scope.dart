@@ -169,6 +169,16 @@ Orders _mergeTrainMilitaryOrdersForPlayer({
   );
 }
 
+/// Allowed civilian unit types for debug spawn-at-capital (matches dialog/train lists).
+const Set<String> _kAllowedDebugCivilianUnitTypes = {
+  kUnitTypeExplorer,
+  kUnitTypeBuilder,
+  kUnitTypeEngineer,
+  kUnitTypeSpy,
+  kUnitTypeMerchant,
+  kUnitTypeRailBuilder,
+};
+
 @visibleForTesting
 ({Game? game, String message}) applyDebugCivilianSpawnAtCapital({
   required Game? currentGame,
@@ -190,7 +200,7 @@ Orders _mergeTrainMilitaryOrdersForPlayer({
       message: 'Debug spawn ignored: unknown player ${event.humanPlayerId}.',
     );
   }
-  if (!_isAllowedDebugCivilianType(event.unitType)) {
+  if (!_kAllowedDebugCivilianUnitTypes.contains(event.unitType)) {
     return (
       game: null,
       message:
@@ -278,15 +288,6 @@ int _nextDebugSpawnSequence({
     }
   }
   return maxSeen + 1;
-}
-
-bool _isAllowedDebugCivilianType(String unitType) {
-  return unitType == kUnitTypeExplorer ||
-      unitType == kUnitTypeBuilder ||
-      unitType == kUnitTypeEngineer ||
-      unitType == kUnitTypeSpy ||
-      unitType == kUnitTypeMerchant ||
-      unitType == kUnitTypeRailBuilder;
 }
 
 /// Binds [AppEventHandler] to [appNavigatorKey] for the app lifetime.
