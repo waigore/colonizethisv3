@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/army_migration.dart';
+import '../world/province_lookup.dart';
 import '../world/province_ownership_transfer.dart';
 import '../world/unit_lookup.dart';
 import 'battle_general_assignment.dart';
@@ -271,11 +272,30 @@ Game resolveBattleContext(
     survivingAttackerFactionId: survivingAttackerFactionId,
     defenderUnitIds: defenderUnitIds,
   );
+
+  final resolved = _buildResolvedBattleGame(
+    game: game,
+    ctx: ctx,
+    post: post,
+    survivingAttackerFactionId: survivingAttackerFactionId,
+    generalsById: generalsById,
+    ledger: ledger,
+  );
+
   var ownerAfter = '';
-  for (final p in post.region.provinces) {
-    if (p.id == ctx.provinceId) {
-      ownerAfter = p.ownerId ?? '';
-      break;
+  final row = resolveProvinceRowForOwnershipTransfer(
+    resolved.worldState,
+    ctx.provinceId,
+  );
+  if (row != null) {
+    final regionState = ctx.regionId == kRegionOldWorld
+        ? resolved.worldState.oldWorld
+        : resolved.worldState.newWorld;
+    for (final p in regionState.provinces) {
+      if (p.id == row.canonicalProvinceId) {
+        ownerAfter = p.ownerId ?? '';
+        break;
+      }
     }
   }
   _combatLog.i(
@@ -284,14 +304,7 @@ Game resolveBattleContext(
     'casualtiesApplied=${allCasualties.length} ownerAfter=$ownerAfter',
   );
 
-  return _buildResolvedBattleGame(
-    game: game,
-    ctx: ctx,
-    post: post,
-    survivingAttackerFactionId: survivingAttackerFactionId,
-    generalsById: generalsById,
-    ledger: ledger,
-  );
+  return resolved;
 }
 
 ({

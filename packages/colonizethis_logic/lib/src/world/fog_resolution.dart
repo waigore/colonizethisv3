@@ -203,7 +203,8 @@ Map<String, Map<String, int>> clearSpyRevealTimersForProvinceOwnershipTransfer(
   return timers;
 }
 
-/// Immediate visibility adjustment when province [provinceId] transfers from
+/// Immediate visibility adjustment when province [provinceId] (prefixed id or
+/// legacy short id from [resolveProvinceRowForOwnershipTransfer]) transfers from
 /// [oldOwnerId] to [newOwnerId]: new owner gets land tiles in the province set
 /// to fully visible; former owner's stored visibility for those tiles is
 /// downgraded from fully visible to fogged where applicable (unknown unchanged).
@@ -216,11 +217,22 @@ applyProvinceOwnershipChangeVisibility(
   String oldOwnerId,
   String newOwnerId,
 ) {
-  final regionId = ProvinceId.regionIdFrom(provinceId);
+  final row = resolveProvinceRowForOwnershipTransfer(game.worldState, provinceId);
+  if (row == null) {
+    return (
+      game: game,
+      visibilitySummary: const ProvinceOwnershipVisibilitySummary(
+        tilesSetFullyVisibleForNewOwner: 0,
+        tilesDowngradedForFormerOwner: 0,
+      ),
+    );
+  }
+  final canonicalId = row.canonicalProvinceId;
+  final regionId = row.province.regionId;
   final tileKeys = landTileKeysForProvinceBucket(
     game.worldState,
     regionId,
-    provinceId,
+    canonicalId,
   );
   if (tileKeys.isEmpty) {
     return (
