@@ -150,6 +150,7 @@ void _validateCanonicalTransfer(
 /// When [relocateIllegalCivilians] is false, skips per-transfer civilian
 /// legality normalization (used by diplomacy bulk absorption, which remaps
 /// unit ownership first then runs one relocation pass).
+Game applyCanonicalSingleProvinceOwnershipTransfer(
   Game game, {
   required String targetProvinceId,
   required String oldOwnerId,
