@@ -62,6 +62,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
    - **Skip** S if there exists a province P with a **P–S** edge to S (same regional topology slice) such that `P` is **fully owned** by that player.
    - **Skip** S if that player has **any fleet at sea** in S (`Fleet.seaZoneId == S`, `Fleet.regionId` matches S’s region, `fleet.ownerId == playerId`). Fleets **in port** do not count for this check.
    - Otherwise, for each water tile key in S from `tileKeysByRegionAndProvince[regionId][regionId|seaZoneLocalId]`, set visibility to **fogged** unless the tile is **unknown** (leave unknown unchanged).
+   - **Implementation note (region identity):** When iterating `WorldState.fleets` to test the “fleet at sea in S” condition for a given regional sea zone S, the implementation **must** filter by `Fleet.regionId == regionId` for that pass **before** canonicalizing `Fleet.seaZoneId` with that region’s id. Prefixed sea-zone ids from another region must never be canonicalized against the wrong region (see [world-model-identity.md](../game/world-model-identity.md)); cross-region fleet entries are ignored for the S-in-this-region check.
 2. **Ordering:** This step runs after `applyFogDecay` and **before** `applyCoastalSeaZoneFullVisibility` so coastal waters return to full visibility when the player owns adjacent land.
 
 **Ship reveal** (Naval Movement phase):
