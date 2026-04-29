@@ -7,6 +7,8 @@ import '../constants.dart';
 import '../dossier/event_dialogue.dart';
 import '../dossier/evidence_rules.dart';
 import 'orders_application_helpers.dart';
+import '../world/player_view.dart';
+import '../world/province_lookup.dart';
 import '../world/tile_control.dart';
 import '../world/unit_lookup.dart';
 import 'orders_application_build_phase.dart';
