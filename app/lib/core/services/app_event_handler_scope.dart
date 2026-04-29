@@ -175,7 +175,7 @@ class AppEventHandlerScope extends ConsumerStatefulWidget {
 
 class _AppEventHandlerScopeState extends ConsumerState<AppEventHandlerScope> {
   AppEventHandler? _handler;
-  bool _bound = false;
+  var _bound = false;
   final List<StreamSubscription<dynamic>> _sessionCommandSubs = [];
 
   @override
