@@ -6,8 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/army_migration.dart';
-import '../world/civilian_ownership_legality.dart';
-import '../world/fog_resolution.dart';
+import '../world/province_ownership_transfer.dart';
 import '../world/unit_lookup.dart';
 import 'battle_general_assignment.dart';
 import 'conflict_detection.dart';
@@ -33,18 +32,6 @@ const double kAttackerEdgeAttackerLossFraction = 0.3;
 const double kAttackerEdgeDefenderLossFraction = 0.6;
 const double kDefaultAttackerLossFraction = 0.5;
 const double kDefaultDefenderLossFraction = 0.4;
-
-Game _applyOwnershipChangeCivilianLegalityIfNeeded(
-  Game game,
-  BattleContext ctx,
-  bool provinceChangedOwner,
-) {
-  if (!provinceChangedOwner) return game;
-  return relocateIllegalCiviliansInChangedProvinces(
-    game,
-    changedProvinceIds: {ctx.provinceId},
-  );
-}
 
 /// When feeding coverage is omitted for a faction, treat as full supply.
 const double kDefaultFeedingCoverageMultiplier = 1.0;
@@ -455,22 +442,6 @@ Game _buildResolvedBattleGame({
       ? game.worldState.copyWith(oldWorld: post.region)
       : game.worldState.copyWith(newWorld: post.region);
 
-  if (post.provinceChangedOwner && survivingAttackerFactionId != null) {
-    final timers = clearSpyRevealTimersForProvince(
-      game.worldState.spyRevealTurnsByPlayer,
-      survivingAttackerFactionId,
-      ctx.provinceId,
-    );
-    final updatedPurchased = _clearPurchasedTilesForProvince(
-      newWorldState,
-      ctx.provinceId,
-    );
-    newWorldState = newWorldState.copyWith(
-      spyRevealTurnsByPlayer: timers,
-      purchasedTilesByTileKey: updatedPurchased,
-    );
-  }
-
   recordAttackCommandersForResolvedBattle(ctx, null, ledger);
 
   var result = game.copyWith(
@@ -479,14 +450,22 @@ Game _buildResolvedBattleGame({
         .map((g) => generalsById[g.id] ?? g)
         .toList(growable: false),
   );
-  result = _applyOwnershipChangeCivilianLegalityIfNeeded(
-    result,
-    ctx,
-    post.provinceChangedOwner,
-  );
-  return result.copyWith(
-    worldState: reconcileArmiesAfterUnitsChanged(result.worldState, result),
-  );
+  if (post.provinceChangedOwner && survivingAttackerFactionId != null) {
+    result = applyCanonicalSingleProvinceOwnershipTransfer(
+      result,
+      targetProvinceId: ctx.provinceId,
+      oldOwnerId: ctx.defenderFactionId,
+      newOwnerId: survivingAttackerFactionId,
+    );
+  } else {
+    result = result.copyWith(
+      worldState: reconcileArmiesAfterUnitsChanged(
+        result.worldState,
+        result,
+      ),
+    );
+  }
+  return result;
 }
 
 /// Builds post-battle region state: applies casualties, garrison recovery,
@@ -511,11 +490,8 @@ Game _buildResolvedBattleGame({
   if (defenderUnitIds.isEmpty && survivingAttackerFactionId != null) {
     final idx = updatedProvinces.indexWhere((p) => p.id == ctx.provinceId);
     if (idx >= 0) {
-      final p = updatedProvinces[idx];
-      updatedProvinces = List<Province>.from(updatedProvinces)
-        ..[idx] = p.copyWith(ownerId: survivingAttackerFactionId);
-      ownerId = survivingAttackerFactionId;
       provinceChangedOwner = true;
+      ownerId = survivingAttackerFactionId;
     }
   }
 
@@ -530,29 +506,6 @@ Game _buildResolvedBattleGame({
 
   final newRegion = RegionData(provinces: updatedProvinces, units: finalUnits);
   return (region: newRegion, provinceChangedOwner: provinceChangedOwner);
-}
-
-/// Clears purchased-land records for a conquered province.
-///
-/// Per SPEC/program/combat-resolution.md: when a province changes hands,
-/// any entries in `purchasedTilesByTileKey` whose tile belongs to that
-/// province are removed so that special purchased-land rights do not
-/// survive conquest.
-Map<String, String> _clearPurchasedTilesForProvince(
-  WorldState worldState,
-  String conqueredProvinceId,
-) {
-  final existing = worldState.purchasedTilesByTileKey;
-  if (existing.isEmpty) return existing;
-
-  final filtered = <String, String>{};
-  existing.forEach((tileKey, buyerId) {
-    final provinceId = Unit.provinceIdFromTileKey(tileKey);
-    if (provinceId != conqueredProvinceId) {
-      filtered[tileKey] = buyerId;
-    }
-  });
-  return filtered;
 }
 
 void _sortAttackersByInitiative(

@@ -93,6 +93,7 @@ export 'src/world/movement.dart';
 export 'src/world/naval.dart';
 export 'src/world/naval_fleet_commands.dart';
 export 'src/world/player_view.dart';
+export 'src/world/province_ownership_transfer.dart';
 export 'src/world/province_lookup.dart';
 export 'src/world/sea_zone_identity.dart';
 export 'src/world/tile_control.dart';
