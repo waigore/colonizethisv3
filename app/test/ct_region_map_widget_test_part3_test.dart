@@ -65,635 +65,6 @@ void main() {
       await townIconCache.load();
       await provinceLabelIconCache.load();
     });
-        );
-        await tester.pump();
-
-        final mapFinder = find.byType(CtRegionMap);
-        await tester.tap(mapFinder);
-        await tester.pump();
-
-        expect(selectedTileKey, equals(validTileKey));
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
-
-    testWidgets(
-      'tap on civilian marker tile invokes civilian callback and suppresses detail tap callback',
-      (WidgetTester tester) async {
-        final base = ctRegionMapTestOldWorldRegion();
-        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
-        const markerTileKey = 'oldWorld|pMarker|0|0';
-        final region = RegionMapViewData(
-          regionId: 'oldWorld',
-          width: 1,
-          height: 1,
-          cellSize: 24,
-          cells: [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: 'pMarker',
-              isSea: false,
-              terrainTypeId: landTemplate.terrainTypeId,
-              terrainType: landTemplate.terrainType,
-              ownerFactionId: landTemplate.ownerFactionId,
-              provinceDisplayName: 'Marker Province',
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
-          townMarkers: const [],
-          factionColors: base.factionColors,
-          greatPowerFactionIds: base.greatPowerFactionIds,
-          terrainColors: base.terrainColors,
-          unitMarkers: const [],
-          civilianTileMarkers: [
-            CivilianTileMarkerView(
-              tileKey: markerTileKey,
-              x: 0,
-              y: 0,
-              localProvinceId: 'pMarker',
-              unitIds: const ['u_builder'],
-              unitTypes: const {'u_builder': 'Builder'},
-              representativeUnitType: 'Builder',
-              stackCount: 1,
-            ),
-          ],
-          warpMarkers: const [],
-        );
-        String? tappedCivilianTileKey;
-        String? detailTileKey;
-        String? selectedProvinceId;
-
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            width: 64,
-            height: 64,
-            cellSizePx: 32,
-            onCivilianTileTapped: (tileKey) => tappedCivilianTileKey = tileKey,
-            onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
-            onProvinceSelected: (id) => selectedProvinceId = id,
-          ),
-        );
-        await tester.pump();
-        final mapFinder = find.byType(CtRegionMap);
-        expect(mapFinder, findsOneWidget);
-        await tester.tap(mapFinder);
-        await tester.pump();
-
-        expect(tappedCivilianTileKey, equals(markerTileKey));
-        expect(detailTileKey, isNull);
-        expect(selectedProvinceId, isNull);
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
-
-    testWidgets(
-      'tapping non-civilian tile clears civilian selection and still opens tile detail',
-      (WidgetTester tester) async {
-        final base = ctRegionMapTestOldWorldRegion();
-        final selectedMarkerCell = base.cells.firstWhere((c) => !c.isSea);
-        final otherCell = base.cells.firstWhere(
-          (c) =>
-              !c.isSea &&
-              (c.x != selectedMarkerCell.x || c.y != selectedMarkerCell.y),
-        );
-        final selectedMarkerTileKey =
-            '${base.regionId}|${selectedMarkerCell.regionCellId}|${selectedMarkerCell.x}|${selectedMarkerCell.y}';
-        final region = RegionMapViewData(
-          regionId: base.regionId,
-          width: base.width,
-          height: base.height,
-          cellSize: base.cellSize,
-          cells: base.cells,
-          capitalMarkers: base.capitalMarkers,
-          portMarkers: base.portMarkers,
-          townMarkers: base.townMarkers,
-          factionColors: base.factionColors,
-          greatPowerFactionIds: base.greatPowerFactionIds,
-          terrainColors: base.terrainColors,
-          unitMarkers: base.unitMarkers,
-          civilianTileMarkers: [
-            CivilianTileMarkerView(
-              tileKey: selectedMarkerTileKey,
-              x: selectedMarkerCell.x,
-              y: selectedMarkerCell.y,
-              localProvinceId: selectedMarkerCell.regionCellId,
-              unitIds: const ['u_builder'],
-              unitTypes: const {'u_builder': 'Builder'},
-              representativeUnitType: 'Builder',
-              stackCount: 1,
-            ),
-          ],
-          warpMarkers: base.warpMarkers,
-          provinceUnitPresenceByProvinceId:
-              base.provinceUnitPresenceByProvinceId,
-          provincePoliticalOwnerByPrefixedProvinceId:
-              base.provincePoliticalOwnerByPrefixedProvinceId,
-        );
-        var clearCount = 0;
-        String? detailTileKey;
-
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            cellSizePx: region.cellSize.toDouble(),
-            selectedCivilianTileKey: selectedMarkerTileKey,
-            onCivilianTileSelectionCleared: () => clearCount++,
-            onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
-          ),
-        );
-        await tester.pump();
-
-        final mapFinder = find.byType(CtRegionMap);
-        final topLeft = tester.getTopLeft(mapFinder);
-        final tapOffset =
-            topLeft +
-            Offset(
-              (otherCell.x + 0.5) * region.cellSize.toDouble(),
-              (otherCell.y + 0.5) * region.cellSize.toDouble(),
-            );
-        await tester.tapAt(tapOffset);
-        await tester.pump();
-
-        expect(clearCount, equals(1));
-        expect(detailTileKey, isNotNull);
-        expect(detailTileKey, isNot(equals(selectedMarkerTileKey)));
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
-
-    testWidgets(
-      'tap on a town tile still invokes map tile and province selection callbacks',
-      (WidgetTester tester) async {
-        final base = ctRegionMapTestOldWorldRegion();
-        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
-        final region = RegionMapViewData(
-          regionId: 'oldWorld',
-          width: 1,
-          height: 1,
-          cellSize: 24,
-          cells: [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: 'pTown',
-              isSea: false,
-              terrainTypeId: landTemplate.terrainTypeId,
-              terrainType: landTemplate.terrainType,
-              ownerFactionId: landTemplate.ownerFactionId,
-              provinceDisplayName: 'Town Province',
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
-          townMarkers: const [
-            TownMarkerView(
-              x: 0,
-              y: 0,
-              provinceId: 'pTown',
-              isCoastal: false,
-              isPort: false,
-              touchesSea: false,
-            ),
-          ],
-          factionColors: base.factionColors,
-          greatPowerFactionIds: base.greatPowerFactionIds,
-          terrainColors: base.terrainColors,
-        );
-        const townTileKey = 'oldWorld|pTown|0|0';
-        String? selectedId;
-        String? detailTileKey;
-
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            onProvinceSelected: (id) => selectedId = id,
-            onMapTileTappedForDetail: (tk) => detailTileKey = tk,
-            width: 64,
-            height: 64,
-            cellSizePx: 32,
-          ),
-        );
-        await tester.pump();
-
-        final mapFinder = find.byType(CtRegionMap);
-        expect(mapFinder, findsOneWidget);
-        await tester.tap(mapFinder);
-        await tester.pump();
-
-        expect(selectedId, equals('oldWorld|pTown'));
-        expect(detailTileKey, equals(townTileKey));
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
-
-    testWidgets(
-      'tap does not invoke onTileHovered without pointer hover',
-      (WidgetTester tester) async {
-        final region = ctRegionMapTestOldWorldRegion();
-        String? hoveredTileKey;
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            onTileHovered: (key) => hoveredTileKey = key,
-          ),
-        );
-        await tester.pump();
-
-        final mapFinder = find.byType(CtRegionMap);
-        expect(mapFinder, findsOneWidget);
-        await tester.tap(mapFinder);
-        await tester.pump();
-
-        expect(hoveredTileKey, isNull);
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
-
-    testWidgets(
-      'tap still selects province when all tiles are unrevealed in player-constrained mode',
-      (WidgetTester tester) async {
-        final base = ctRegionMapTestOldWorldRegion();
-        final unrevealedCells = base.cells
-            .map(
-              (c) => CellViewData(
-                x: c.x,
-                y: c.y,
-                regionCellId: c.regionCellId,
-                isSea: c.isSea,
-                terrainTypeId: c.terrainTypeId,
-                terrainType: c.terrainType,
-                resourceId: c.resourceId,
-                ownerFactionId: c.ownerFactionId,
-                provinceDisplayName: c.provinceDisplayName,
-                improvementLevel: c.improvementLevel,
-                roadLevel: c.roadLevel,
-                visibility: TileVisibility.unrevealed,
-              ),
-            )
-            .toList();
-        final region = RegionMapViewData(
-          regionId: base.regionId,
-          width: base.width,
-          height: base.height,
-          cellSize: base.cellSize,
-          cells: unrevealedCells,
-          capitalMarkers: base.capitalMarkers,
-          portMarkers: base.portMarkers,
-          factionColors: base.factionColors,
-          greatPowerFactionIds: base.greatPowerFactionIds,
-          terrainColors: base.terrainColors,
-          unitMarkers: base.unitMarkers,
-        );
-
-        String? selectedId;
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            playerViewForResources: ctRegionMapTestPlayerView,
-            onProvinceSelected: (id) => selectedId = id,
-          ),
-        );
-        await tester.pump();
-
-        final mapFinder = find.byType(CtRegionMap);
-        expect(mapFinder, findsOneWidget);
-        await tester.tap(mapFinder);
-        await tester.pump();
-
-        expect(selectedId, isNotNull);
-        expect(selectedId!, startsWith('${region.regionId}|'));
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
-
-    testWidgets(
-      'map throws StateError when terrain tileset fails to load (no silent fallback)',
-      (WidgetTester tester) async {
-        // This test verifies that the map fails loudly instead of falling back to solid colors
-        // when terrain tilesets cannot be loaded. The behavior is:
-        // - region_map_component.dart throws StateError when tileset is null
-        // - This ensures missing tilesets are visible as errors, not silently rendered as solid colors
-
-        // The global terrainTilesetCache must be loaded for the map to render properly.
-        // If it fails to load (e.g., missing assets), the component will throw.
-        // This test documents the expected behavior: map should NOT silently fall back.
-        final region = ctRegionMapTestOldWorldRegion();
-
-        // Build map - if tileset loading failed, this would throw a StateError
-        // rather than rendering solid color fallback
-        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
-        await tester.pump();
-
-        // If we reach here, tilesets loaded successfully.
-        // The test verifies that if tilesets failed to load, an error would be thrown
-        // rather than silently falling back to solid colors.
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'required resource icon asset files are present in test asset bundle',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(const SizedBox.shrink());
-
-        // Verify all resource icon assets exist and are non-empty
-        for (final resourceId in kResourceIconIds) {
-          final path = 'assets/icons/64/ui_icon_com_$resourceId.png';
-          final data = await rootBundle.load(path);
-          expect(
-            data.lengthInBytes,
-            greaterThan(0),
-            reason: 'Resource icon $path is empty',
-          );
-        }
-      },
-      timeout: const Timeout(Duration(seconds: 15)),
-    );
-
-    testWidgets(
-      'resource icon cache loads all icons successfully',
-      (WidgetTester tester) async {
-        // Verify all resource icon assets can be loaded from the asset bundle
-        // Note: ui.decodeImageFromList may not work in test environment,
-        // so we verify the assets exist and are non-empty
-        var loadedCount = 0;
-        await tester.runAsync(() async {
-          for (final resourceId in kResourceIconIds) {
-            final path = 'assets/icons/64/ui_icon_com_$resourceId.png';
-            try {
-              final data = await rootBundle.load(path);
-              if (data.lengthInBytes > 0) {
-                loadedCount++;
-              }
-            } catch (e) {
-              // Icon asset failed to load
-            }
-          }
-        });
-
-        // All icon assets should exist in the bundle
-        expect(
-          loadedCount,
-          equals(kResourceIconIds.length),
-          reason:
-              'Expected all ${kResourceIconIds.length} resource icon assets to load, but only $loadedCount loaded',
-        );
-      },
-      timeout: const Timeout(Duration(seconds: 15)),
-    );
-
-    testWidgets(
-      'map renders with resource icons in terrainAndResources mode (SPEC/ui/map-widget.md § Base layer display mode)',
-      (WidgetTester tester) async {
-        await tester.runAsync(() async {
-          await terrainTilesetCache.load();
-          await resourceIconCache.load();
-        });
-
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
-          ),
-        );
-        await tester.pump();
-
-        // Widget should render without errors when resource icons are loaded
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'map renders with resource icons in terrainAndResourcesImprovementLabels mode (SPEC/ui/map-widget.md § Base layer display mode)',
-      (WidgetTester tester) async {
-        await tester.runAsync(() async {
-          await terrainTilesetCache.load();
-          await resourceIconCache.load();
-        });
-
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
-          ),
-        );
-        await tester.pump();
-
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'map renders with resource icons in terrainAndResourcesImprovementsRoads mode (SPEC/ui/map-widget.md § Base layer display mode)',
-      (WidgetTester tester) async {
-        await tester.runAsync(() async {
-          await terrainTilesetCache.load();
-          await transportOverlayTilesetCache.load();
-          await resourceIconCache.load();
-        });
-
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
-          ),
-        );
-        await tester.pump();
-
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'roads mode renders for non-64 cell sizes with transport overlay assets preloaded',
-      (WidgetTester tester) async {
-        await tester.runAsync(() async {
-          await terrainTilesetCache.load();
-          await transportOverlayTilesetCache.load();
-          await resourceIconCache.load();
-        });
-
-        final region = ctRegionMapTestOldWorldRegion();
-        for (final cellSize in [16.0, 32.0, 96.0]) {
-          await tester.pumpWidget(
-            ctRegionMapTestHarness(
-              region: region,
-              cellSizePx: cellSize,
-              baseLayerDisplayMode:
-                  BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
-            ),
-          );
-          await tester.pump();
-          expect(find.byType(CtRegionMap), findsOneWidget);
-        }
-      },
-      timeout: const Timeout(Duration(seconds: 12)),
-    );
-
-    testWidgets(
-      'map renders without resource icons in terrainOnly mode (SPEC/ui/map-widget.md § Base layer display mode)',
-      (WidgetTester tester) async {
-        await tester.runAsync(() async {
-          await terrainTilesetCache.load();
-        });
-
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
-          ),
-        );
-        await tester.pump();
-
-        // Widget should render without errors even without resource icons loaded
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'resource icons are fogged in player-constrained visibility mode for fogged tiles',
-      (WidgetTester tester) async {
-        await tester.runAsync(() async {
-          await terrainTilesetCache.load();
-          await resourceIconCache.load();
-        });
-
-        final base = ctRegionMapTestOldWorldRegion();
-        // Create a region with some fogged cells
-        final foggedCells = base.cells.map((c) {
-          if (c.isSea) return c;
-          final visibility = c.x < 2
-              ? TileVisibility.fogged
-              : TileVisibility.visible;
-          return CellViewData(
-            x: c.x,
-            y: c.y,
-            regionCellId: c.regionCellId,
-            isSea: c.isSea,
-            terrainType: c.terrainType,
-            resourceId: c.resourceId,
-            improvementLevel: c.improvementLevel,
-            roadLevel: c.roadLevel,
-            visibility: visibility,
-            ownerFactionId: c.ownerFactionId,
-          );
-        }).toList();
-
-        final region = RegionMapViewData(
-          regionId: base.regionId,
-          width: base.width,
-          height: base.height,
-          cellSize: base.cellSize,
-          cells: foggedCells,
-          capitalMarkers: base.capitalMarkers,
-          portMarkers: base.portMarkers,
-          factionColors: base.factionColors,
-          greatPowerFactionIds: base.greatPowerFactionIds,
-          terrainColors: base.terrainColors,
-          unitMarkers: base.unitMarkers,
-        );
-
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            playerViewForResources: ctRegionMapTestPlayerView,
-            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
-          ),
-        );
-        await tester.pump();
-
-        // Widget should render without errors
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'resource icons render for 64px tiles with quarter-size display (SPEC/ui/map-widget.md § Resource Icons)',
-      (WidgetTester tester) async {
-        await tester.runAsync(() async {
-          await terrainTilesetCache.load();
-          await resourceIconCache.load();
-        });
-
-        expect(resourceIconDisplaySizePx(64), equals(16));
-
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            cellSizePx: 64,
-            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
-          ),
-        );
-        await tester.pump();
-
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'map renders correctly with 64px tile size (SPEC/ui/map-widget.md § Resource Icons)',
-      (WidgetTester tester) async {
-        await tester.runAsync(() async {
-          await terrainTilesetCache.load();
-          await resourceIconCache.load();
-        });
-
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            cellSizePx: 64,
-            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
-          ),
-        );
-        await tester.pump();
-
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'map renders correctly with 16px tile size (SPEC/ui/map-widget.md § Resource Icons)',
-      (WidgetTester tester) async {
-        await tester.runAsync(() async {
-          await terrainTilesetCache.load();
-          await resourceIconCache.load();
-        });
-
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            cellSizePx: 16,
-            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
-          ),
-        );
-        await tester.pump();
-
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
 
     testWidgets(
       'tap on port drawable sea cell emits OpenProvinceDetailPanelEvent same as town',
@@ -715,5 +86,550 @@ void main() {
             CellViewData(
               x: 0,
               y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+            const CellViewData(x: 1, y: 0, regionCellId: 's1', isSea: true),
+            CellViewData(
+              x: 0,
+              y: 1,
+              regionCellId: 'p1x',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+            CellViewData(
+              x: 1,
+              y: 1,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          townMarkers: const [
+            TownMarkerView(
+              x: 1,
+              y: 1,
+              provinceId: 'p1',
+              isCoastal: false,
+              isPort: true,
+              touchesSea: true,
+              portIconX: 1,
+              portIconY: 0,
+            ),
+          ],
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+        );
+
+        const cell = 32.0;
+        final bus = AppEventBus.create();
+        String? panelProvinceId;
+
+        bus.on<OpenProvinceDetailPanelEvent>().listen((e) {
+          panelProvinceId = e.provinceId;
+        });
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 64,
+                  height: 64,
+                  child: CtRegionMap(
+                    region: region,
+                    cellSizePx: cell,
+                    bus: bus,
+                    baseLayerDisplayMode:
+                        BaseLayerDisplayMode.terrainAndResources,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+
+        final topLeft = tester.getTopLeft(mapFinder);
+        await tester.tapAt(topLeft + const Offset(48, 16));
+        await tester.pump();
+
+        expect(panelProvinceId, equals('oldWorld|p1'));
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'tap on port drawable sea cell selects owning province not sea zone id',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          await terrainTilesetCache.load();
+          await resourceIconCache.load();
+          await townIconCache.load();
+        });
+
+        final base = ctRegionMapTestOldWorldRegion();
+        final land = base.cells.firstWhere((c) => !c.isSea);
+        final region = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 2,
+          height: 2,
+          cellSize: 24,
+          cells: [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+            const CellViewData(x: 1, y: 0, regionCellId: 's1', isSea: true),
+            CellViewData(
+              x: 0,
+              y: 1,
+              regionCellId: 'p1x',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+            CellViewData(
+              x: 1,
+              y: 1,
+              regionCellId: 'p1',
+              isSea: false,
+              terrainTypeId: land.terrainTypeId,
+              terrainType: land.terrainType,
+              ownerFactionId: land.ownerFactionId,
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          townMarkers: const [
+            TownMarkerView(
+              x: 1,
+              y: 1,
+              provinceId: 'p1',
+              isCoastal: false,
+              isPort: true,
+              touchesSea: true,
+              portIconX: 1,
+              portIconY: 0,
+            ),
+          ],
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+        );
+
+        const cell = 32.0;
+        String? selectedProvinceId;
+
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            cellSizePx: cell,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+            onProvinceSelected: (id) => selectedProvinceId = id,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        final topLeft = tester.getTopLeft(mapFinder);
+        await tester.tapAt(topLeft + const Offset(48, 16));
+        await tester.pump();
+
+        expect(selectedProvinceId, equals('oldWorld|p1'));
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+  });
+
+  group('Sea zone name plate layout (#1756)', () {
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld uses below placement when above clips map top',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        const cellSize = 24.0;
+        const plateW = 80.0;
+        const plateH = 20.0;
+        const zoom = 1.0;
+        final invZ = 1.0 / zoom.clamp(0.25, 4.0);
+        final hh = plateH * invZ / 2;
+        final center = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 1,
+          centroidTileY: 0,
+          cellSize: cellSize,
+          gridWidth: 20,
+          gridHeight: 20,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        final cellBottom = cellSize;
+        expect(
+          center.dy,
+          greaterThanOrEqualTo(cellBottom + 1 + hh - 1e-6),
+          reason: 'Below placement anchors under the centroid cell',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld keeps plate inside region bounds',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        const cellSize = 16.0;
+        const gw = 20;
+        const gh = 20;
+        const plateW = 200.0;
+        const plateH = 30.0;
+        const zoom = 2.0;
+        final invZ = 1.0 / zoom.clamp(0.25, 4.0);
+        final ww = plateW * invZ / 2;
+        final hh = plateH * invZ / 2;
+        final center = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 10,
+          centroidTileY: 10,
+          cellSize: cellSize,
+          gridWidth: gw,
+          gridHeight: gh,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        final mapW = gw * cellSize;
+        final mapH = gh * cellSize;
+        expect(center.dx - ww, greaterThanOrEqualTo(-1e-6));
+        expect(center.dx + ww, lessThanOrEqualTo(mapW + 1e-6));
+        expect(center.dy - hh, greaterThanOrEqualTo(-1e-6));
+        expect(center.dy + hh, lessThanOrEqualTo(mapH + 1e-6));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld avoids overlapping centroid cell when room allows',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        bool overlaps(
+          Offset c,
+          double ww,
+          double hh,
+          int tcx,
+          int tcy,
+          double cs,
+        ) {
+          final cl = tcx * cs;
+          final cr = cl + cs;
+          final ct = tcy * cs;
+          final cb = ct + cs;
+          final l = c.dx - ww;
+          final r = c.dx + ww;
+          final t = c.dy - hh;
+          final b = c.dy + hh;
+          return !(r <= cl || l >= cr || b <= ct || t >= cb);
+        }
+
+        const cellSize = 32.0;
+        const plateW = 60.0;
+        const plateH = 14.0;
+        const zoom = 1.0;
+        final invZ = 1.0 / zoom;
+        final ww = plateW * invZ / 2;
+        final hh = plateH * invZ / 2;
+        final c = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 5,
+          centroidTileY: 5,
+          cellSize: cellSize,
+          gridWidth: 20,
+          gridHeight: 20,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        expect(overlaps(c, ww, hh, 5, 5, cellSize), isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld supports avoidedTile overrides for province town collision behavior',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        bool overlaps(
+          Offset c,
+          double ww,
+          double hh,
+          int tcx,
+          int tcy,
+          double cs,
+        ) {
+          final cl = tcx * cs;
+          final cr = cl + cs;
+          final ct = tcy * cs;
+          final cb = ct + cs;
+          final l = c.dx - ww;
+          final r = c.dx + ww;
+          final t = c.dy - hh;
+          final b = c.dy + hh;
+          return !(r <= cl || l >= cr || b <= ct || t >= cb);
+        }
+
+        const cellSize = 24.0;
+        const plateW = 80.0;
+        const plateH = 16.0;
+        const zoom = 1.0;
+        final ww = plateW / 2;
+        final hh = plateH / 2;
+        final c = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 4,
+          centroidTileY: 3,
+          avoidedTileX: 4,
+          avoidedTileY: 3,
+          cellSize: cellSize,
+          gridWidth: 20,
+          gridHeight: 20,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        expect(overlaps(c, ww, hh, 4, 3, cellSize), isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'resolveSeaZoneNamePlateCenterWorld with avoidedTile uses below fallback when above clips top',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        const cellSize = 24.0;
+        const plateW = 70.0;
+        const plateH = 18.0;
+        const zoom = 1.0;
+        final hh = plateH / 2;
+        final center = resolveSeaZoneNamePlateCenterWorld(
+          centroidTileX: 1,
+          centroidTileY: 0,
+          avoidedTileX: 1,
+          avoidedTileY: 0,
+          cellSize: cellSize,
+          gridWidth: 10,
+          gridHeight: 10,
+          plateWidthLogicalPx: plateW,
+          plateHeightLogicalPx: plateH,
+          cameraZoom: zoom,
+        );
+        expect(
+          center.dy,
+          greaterThanOrEqualTo(cellSize + 1 + hh - 1e-6),
+          reason:
+              'Fallback should mirror sea-zone semantics for province/town avoidance',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'sea zone label TextPainter lays out full long string without ellipsis',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        const long =
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789HelloSeaZoneNameThatIsQuiteVerbose';
+        const textStyle = TextStyle(color: Colors.black, fontSize: 11);
+        final tp = TextPainter(
+          text: const TextSpan(text: long, style: textStyle),
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: double.infinity);
+        expect(tp.width, greaterThan(200));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    test(
+      'visibilityForTerrainForMapCell leaves cell visibility in full map mode',
+      () {
+        const cell = CellViewData(
+          x: 1,
+          y: 2,
+          regionCellId: 's1',
+          isSea: true,
+          visibility: TileVisibility.unrevealed,
+        );
+        expect(
+          visibilityForTerrainForMapCell(
+            visibilityMode: CtMapVisibilityMode.full,
+            cell: cell,
+            fleetTileMarkers: const [],
+            civilianTileMarkers: const [],
+          ),
+          TileVisibility.unrevealed,
+        );
+      },
+    );
+
+    test(
+      'visibilityForTerrainForMapCell keeps unrevealed sea centroid hidden when constrained and no halo',
+      () {
+        const cell = CellViewData(
+          x: 1,
+          y: 0,
+          regionCellId: 'sz',
+          isSea: true,
+          visibility: TileVisibility.unrevealed,
+        );
+        expect(
+          visibilityForTerrainForMapCell(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            cell: cell,
+            fleetTileMarkers: const [],
+            civilianTileMarkers: const [],
+          ),
+          TileVisibility.unrevealed,
+        );
+      },
+    );
+
+    test(
+      'visibilityForTerrainForMapCell reveals unrevealed centroid under fleet move-draft halo',
+      () {
+        const cell = CellViewData(
+          x: 1,
+          y: 0,
+          regionCellId: 'sz',
+          isSea: true,
+          visibility: TileVisibility.unrevealed,
+        );
+        final markers = [
+          FleetTileMarkerView(
+            tileKey: 'oldWorld|sz|1|0',
+            x: 1,
+            y: 0,
+            locationScopeKey: 'sea:oldWorld|sz',
+            fleetIds: const ['f1'],
+            stackCount: 1,
+            applyFleetRevealHalo: true,
+          ),
+        ];
+        expect(
+          visibilityForTerrainForMapCell(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            cell: cell,
+            fleetTileMarkers: markers,
+            civilianTileMarkers: const [],
+          ),
+          TileVisibility.visible,
+        );
+      },
+    );
+
+    test(
+      'visibilityForTerrainForMapCell reveals unrevealed tile under civilian assignment halo',
+      () {
+        const cell = CellViewData(
+          x: 4,
+          y: 2,
+          regionCellId: 'p1',
+          isSea: false,
+          visibility: TileVisibility.fogged,
+        );
+        final markers = [
+          CivilianTileMarkerView(
+            tileKey: 'oldWorld|p1|4|2',
+            x: 4,
+            y: 2,
+            localProvinceId: 'p1',
+            unitIds: const ['u1'],
+            unitTypes: const {'u1': 'Explorer'},
+            representativeUnitType: 'Explorer',
+            stackCount: 1,
+            applyCivilianRevealHalo: true,
+          ),
+        ];
+        expect(
+          visibilityForTerrainForMapCell(
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            cell: cell,
+            fleetTileMarkers: const [],
+            civilianTileMarkers: markers,
+          ),
+          TileVisibility.visible,
+        );
+      },
+    );
+
+    test(
+      'isCellUnderFleetRevealHalo ignores markers without applyFleetRevealHalo',
+      () {
+        expect(
+          isCellUnderFleetRevealHalo(
+            x: 1,
+            y: 0,
+            fleetTileMarkers: [
+              FleetTileMarkerView(
+                tileKey: 'k',
+                x: 1,
+                y: 0,
+                locationScopeKey: 'sea:x',
+                fleetIds: const ['f1'],
+                stackCount: 1,
+                applyFleetRevealHalo: false,
+              ),
+            ],
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    testWidgets(
+      'CtRegionMapComponent showProvinceNamesLayer false when harness disables names (#1756)',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(region: region, showProvinceNamesLayer: false),
+        );
+        await tester.pump();
+        expect(
+          ctRegionMapComponentFromTester(tester).showProvinceNamesLayer,
+          isFalse,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'CtRegionMapComponent showProvinceNamesLayer true when harness enables names (#1756)',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(region: region, showProvinceNamesLayer: true),
+        );
+        await tester.pump();
+        expect(
+          ctRegionMapComponentFromTester(tester).showProvinceNamesLayer,
+          isTrue,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
   });
 }

@@ -90,6 +90,19 @@ Future<int> main(List<String> args) async {
         stderr.writeln(gen.stdout);
         return 1;
       }
+      final patch = await _run(
+        'dart',
+        ['run', 'tool/patch_app_localizations_after_gen_l10n.dart'],
+        workingDirectory: repoRoot,
+      );
+      if (patch.exitCode != 0) {
+        stderr.writeln(
+          'patch_app_localizations_after_gen_l10n failed (exit ${patch.exitCode}):',
+        );
+        stderr.writeln(patch.stderr);
+        stderr.writeln(patch.stdout);
+        return 1;
+      }
     }
 
     if (isFlutter) {

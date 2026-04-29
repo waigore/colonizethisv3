@@ -1,6 +1,7 @@
 part of 'game_map_area.dart';
 
-mixin _GameMapAreaStatePart2 on ConsumerState<GameMapArea> {
+mixin _GameMapAreaStatePart2
+    on _GameMapAreaStatePart1, ConsumerState<GameMapArea> {
   @override
   Widget build(BuildContext context) {
     final currentOrders = ref.watch(currentOrdersProvider);

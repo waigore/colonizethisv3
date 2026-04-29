@@ -42,6 +42,7 @@ app/lib/l10n/app_localizations*.dart
 # Manual `AppLocalizationsEn` library + part shards (Refs #2021); not flutter_gen output.
 !app/lib/l10n/app_localizations_en.dart
 !app/lib/l10n/app_localizations_en_part*.dart
+!app/lib/l10n/app_localizations_lookup.dart
 app/lib/l10n/untranslated.json
 
 # IDE

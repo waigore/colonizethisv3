@@ -65,6 +65,7 @@ void main() {
       await townIconCache.load();
       await provinceLabelIconCache.load();
     });
+
     testWidgets(
       'land-base fog application skips feature terrains to prevent double darkening',
       (WidgetTester tester) async {
@@ -715,5 +716,336 @@ void main() {
           )!,
           terrainVariantTileKey(
             terrain: TerrainType.plains,
+            resourceId: 'horses',
+          )!,
+          // Forest: non-timber should keep canonical default.
+          featureOverlayTileKey(
+            terrain: TerrainType.forest,
+            resourceId: 'furs',
+          ),
+          featureOverlayTileKey(terrain: TerrainType.forest, resourceId: null),
+          // Hills: non-mine and non-wool should keep canonical default.
+          featureOverlayTileKey(
+            terrain: TerrainType.hills,
+            resourceId: 'iron',
+            improvementLevel: 0,
+          ),
+          featureOverlayTileKey(
+            terrain: TerrainType.hills,
+            resourceId: null,
+            improvementLevel: 0,
+          ),
+          // Mountain/swamp always canonical defaults.
+          featureOverlayTileKey(
+            terrain: TerrainType.mountain,
+            resourceId: 'gold',
+          ),
+          featureOverlayTileKey(terrain: TerrainType.swamp, resourceId: 'tin'),
+        ];
+
+        for (final key in keys) {
+          expect(
+            terrainTilesetCache.getStandaloneTileByKey(key),
+            isNotNull,
+            reason: 'Overlay key $key should be available in cache',
+          );
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+    testWidgets(
+      'builds without throwing for old world region',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
+        // Do a single pump; CtRegionMap embeds a Flame GameWidget which
+        // does not naturally settle for pumpAndSettle.
+        await tester.pump();
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      // GameWidget + Flame may keep the frame "dirty"; avoid long timeouts.
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'applies non-default visibility and political overlay flags',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            showPoliticalOverlay: false,
+            showProvinceOverlay: false,
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            playerViewForResources: ctRegionMapTestPlayerView,
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'honors province overlay visibility flag without throwing',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+
+        // Province overlay on.
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(region: region, showProvinceOverlay: true),
+        );
+        await tester.pump();
+        expect(find.byType(CtRegionMap), findsOneWidget);
+
+        // Province overlay off.
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(region: region, showProvinceOverlay: false),
+        );
+        await tester.pump();
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'honors province ownership tint flag without throwing',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            showProvinceOwnershipTint: true,
+          ),
+        );
+        await tester.pump();
+        expect(find.byType(CtRegionMap), findsOneWidget);
+
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            showProvinceOwnershipTint: false,
+          ),
+        );
+        await tester.pump();
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'builds with each base layer display mode (SPEC/ui/map-widget.md § Base layer display mode)',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        for (final mode in BaseLayerDisplayMode.values) {
+          await tester.pumpWidget(
+            ctRegionMapTestHarness(region: region, baseLayerDisplayMode: mode),
+          );
+          await tester.pump();
+          expect(find.byType(CtRegionMap), findsOneWidget);
+        }
+        // Omitted baseLayerDisplayMode defaults to full letters
+        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
+        await tester.pump();
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'extraction indicator visibility follows base-layer resource visibility mode',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(
+          shouldShowExtractionUnitIndicators(
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
+          ),
+          isFalse,
+        );
+        expect(
+          shouldShowExtractionUnitIndicators(
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+          ),
+          isTrue,
+        );
+        expect(
+          shouldShowExtractionUnitIndicators(
+            baseLayerDisplayMode:
+                BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
+          ),
+          isTrue,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'extraction indicator stack layout advances right with overlap',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        final rects = extractionIndicatorRectsForIconRect(
+          iconRect: const Rect.fromLTWH(10, 20, 64, 64),
+          units: 3,
+        );
+        expect(rects, hasLength(3));
+        expect(rects[1].left, greaterThan(rects[0].left));
+        expect(rects[2].left, greaterThan(rects[1].left));
+        expect(rects[0].top, equals(rects[1].top));
+        expect(rects[1].top, equals(rects[2].top));
+        expect(rects[1].left, lessThan(rects[0].right));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'extraction indicator size is at least resource icon display size',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+
+        expect(extractionIndicatorDisplaySizePx(16), greaterThanOrEqualTo(16));
+        expect(extractionIndicatorDisplaySizePx(24), greaterThanOrEqualTo(24));
+        expect(extractionIndicatorDisplaySizePx(64), equals(64));
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'responds to +/- keyboard shortcuts for zoom',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+
+        // Give the Focus widget a chance to attach.
+        await tester.tap(mapFinder);
+        await tester.pump();
+
+        // Zoom in.
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.equal);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.equal);
+        await tester.pump();
+
+        // Zoom out.
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.minus);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.minus);
+        await tester.pump();
+
+        expect(mapFinder, findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'supports drag-to-pan gesture without throwing',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+
+        await tester.drag(mapFinder, const Offset(40, 20));
+        await tester.pump();
+
+        // Widget remains mounted after pan.
+        expect(mapFinder, findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'hover and tap callbacks fire for visible tiles',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        String? lastProvinceId;
+        String? lastTileKey;
+
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            onProvinceHovered: (id) => lastProvinceId = id,
+            onTileHovered: (key) => lastTileKey = key,
+          ),
+        );
+        await tester.pump();
+
+        final mapFinder = find.byType(CtRegionMap);
+        expect(mapFinder, findsOneWidget);
+
+        // Move mouse over the center of the map.
+        final center = tester.getCenter(mapFinder);
+        final gesture = await tester.createGesture(
+          kind: PointerDeviceKind.mouse,
+        );
+        await gesture.addPointer();
+        await gesture.moveTo(center);
+        await tester.pump();
+
+        expect(lastProvinceId, isNotNull);
+        expect(lastTileKey, isNotNull);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    testWidgets(
+      'centerOnTileKey triggers centering logic without throwing',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+        final landCell = region.cells.firstWhere((c) => !c.isSea);
+        final tileKey =
+            '${region.regionId}|${landCell.regionCellId}|${landCell.x}|${landCell.y}';
+
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(region: region, centerOnTileKey: tileKey),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'didUpdateWidget propagates updated props into game',
+      (WidgetTester tester) async {
+        final region = ctRegionMapTestOldWorldRegion();
+
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            visibilityMode: CtMapVisibilityMode.full,
+            baseLayerDisplayMode:
+                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+          ),
+        );
+        await tester.pump();
+
+        // Rebuild with changed visibility, political overlay, and base layer display mode.
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            showPoliticalOverlay: false,
+            visibilityMode: CtMapVisibilityMode.playerConstrained,
+            playerViewForResources: ctRegionMapTestPlayerView,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(CtRegionMap), findsOneWidget);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+
   });
 }

@@ -97,6 +97,7 @@ jobs:
           set -e
           cd app
           flutter gen-l10n
+          dart run ../tool/patch_app_localizations_after_gen_l10n.dart
 
       - name: Check long string switches (AST)
         if: needs.changes.outputs.tests == 'true'
@@ -384,6 +385,7 @@ jobs:
           if [ -d app ]; then
             cd app
             flutter gen-l10n
+            dart run ../tool/patch_app_localizations_after_gen_l10n.dart
             if [ -f lib/l10n/untranslated.json ]; then
               content=$(cat lib/l10n/untranslated.json | tr -d '[:space:]')
               if [ "$content" != "{}" ] && [ "$content" != "" ]; then
