@@ -29,6 +29,8 @@ void main() {
     test('phase sequence is defined', () {
       expect(turnResolutionSequence, isNotEmpty);
       final movementIndex = turnResolutionSequence.indexOf(TurnPhase.movement);
+      final diplomacyIndex = turnResolutionSequence.indexOf(TurnPhase.diplomacy);
+      final researchIndex = turnResolutionSequence.indexOf(TurnPhase.research);
       final upgradeIndex = turnResolutionSequence.indexOf(
         TurnPhase.minorRegimentUpgrade,
       );
@@ -37,6 +39,10 @@ void main() {
       );
       final landCombatIndex = turnResolutionSequence.indexOf(TurnPhase.combat);
       expect(movementIndex, greaterThanOrEqualTo(0));
+      expect(diplomacyIndex, greaterThanOrEqualTo(0));
+      expect(researchIndex, greaterThanOrEqualTo(0));
+      expect(diplomacyIndex, lessThan(researchIndex));
+      expect(researchIndex, lessThan(movementIndex));
       expect(upgradeIndex, greaterThan(movementIndex));
       expect(upgradeIndex, lessThan(navalCombatIndex));
       expect(upgradeIndex, lessThan(landCombatIndex));

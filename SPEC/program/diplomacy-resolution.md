@@ -26,7 +26,7 @@ Rendering of human-readable strings (including year labels derived from turn) is
 
 ## Algorithm / Flow
 
-Diplomacy phase runs before Movement. Resolution steps in order:
+Diplomacy phase runs after Production and before Research/Movement. Resolution steps in order:
 
 1. **Process overture offers (two-way)** — For each Establish Overture order (Consulate, Embassy, NAP; Join Empire in step 3): the **target** faction must accept or reject. **Target = Minor/Tribe:** accept/reject is decided by rule at resolution (e.g. Consulate/Embassy/NAP accepted by rule); if accepted, validate treasury, deduct cost, advance stage. **Target = Great Power:** if the target GP is **AI-controlled**, decide accept/reject at resolution (e.g. relation-based) and apply. If the target GP is **human-controlled**, do **not** apply; add this offer to a **pending overture decisions** list and **return** from the phase so that turn resolution suspends. The app prompts the human; when the app resumes with the human’s decision(s), apply each (deduct cost and advance stage if accept, else leave state unchanged) and continue with the rest of the phase.
 2. **Advance in-progress overtures** — Apply turn delays; mark completed.
@@ -60,7 +60,7 @@ At the same hook points where relation state, overtures, or economic diplomacy a
 
 | Aspect | Detail |
 |---|---|
-| Phase | Diplomacy (before Movement) |
+| Phase | Diplomacy (after Production; before Research and Movement) |
 | Upstream | Player orders, world state (relations, overtures, treasury) |
 | Downstream | Relation state → combat/movement validation; AI evidence/dossier pipeline |
 
@@ -85,7 +85,7 @@ Rejections and validation failures are logged by the order engine; diplomacy res
 
 ## Acceptance criteria
 
-- **Phase order:** Diplomacy phase runs before Movement; resolution steps 1–8 run in the specified order (overture payments → advance overtures → Join Empire/Colony → alliances → war/peace → **intervention (5b)** → **call to arms (5c)** → terminate agreements on war → relation modifiers and score update).
+- **Phase order:** Diplomacy phase runs after Production and before Research/Movement; resolution steps 1–8 run in the specified order (overture payments → advance overtures → Join Empire/Colony → alliances → war/peace → **intervention (5b)** → **call to arms (5c)** → terminate agreements on war → relation modifiers and score update).
 - **Upstream orders:** The diplomacy phase receives merged orders that include `diplomaticOrdersByPlayerId`; the turn resolver supplies the output of the order engine (see [order-engine.md](order-engine.md), [turn-resolution-phases.md](turn-resolution-phases.md)). The order engine must preserve diplomatic orders and pass them into the diplomacy phase input.
 - **Overture two-way:** Each Establish Overture is considered by the **target** at resolution. For Minor/Tribe targets, accept/reject is applied by rule (e.g. accept Consulate/Embassy/NAP); only when accepted are cost deducted and stage advanced. For GP targets: if AI, decision at resolution and apply; if human, phase returns pending and turn resolution blocks until app supplies decisions and resumes.
 - **Overture payments:** When the target **accepts** (by rule or decision): Consulate/Embassy orders deduct cost and advance stage; NAP is free. Join Empire has a separate cost (base + per-province); see step 3.
