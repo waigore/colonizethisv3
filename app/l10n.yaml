@@ -3,4 +3,6 @@ template-arb-file: app_en.arb
 output-localization-file: app_localizations.dart
 untranslated-messages-file: lib/l10n/untranslated.json
 required-resource-attributes: true
-
+# Write generated Dart into lib/l10n (not .dart_tool synthetic package) so
+# `package:colonizethis_app/l10n/app_localizations.dart` resolves for analyze/tests.
+synthetic-package: false

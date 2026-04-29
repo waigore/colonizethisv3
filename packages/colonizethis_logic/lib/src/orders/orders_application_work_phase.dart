@@ -5,51 +5,64 @@ import '../constants.dart';
 import '../world/province_lookup.dart';
 import 'build_rail_work_rules.dart';
 import 'orders_application_context.dart';
+import 'work_handlers/counter_spy_work_handler.dart';
 import 'work_handlers/explore_work_handler.dart';
 import 'work_handlers/prospect_work_handler.dart';
 import 'work_handlers/purchase_land_handler.dart';
-import 'work_handlers/shared_work_assignment.dart';
+import 'work_handlers/steal_tech_work_handler.dart';
 import 'work_handlers/standard_work_handler.dart';
 
-void runWorkPhase(
+BuildWorkState runWorkPhase(
   BuildWorkState state,
-  void Function(BuildWorkState, Unit, String) applyExploreCompletion,
-  void Function(
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
+  BuildWorkState Function(
     BuildWorkState,
     Unit,
     CurrentWork,
     List<Province> Function(),
-    void Function(List<Province>),
+    WorkOrderState Function(WorkOrderState, List<Province>),
   )
   applyCompletedWorkTarget,
 ) {
   final workOrders = state.workOrders;
-  final tileState = state.work.tileState;
-  final oldUnitsById = state.work.oldUnitsById;
-  final newUnitsById = state.work.newUnitsById;
-  final purchasedTilesByTileKey = state.work.purchasedTilesByTileKey;
+  var current = state;
 
-  for (final player in state.game.players) {
+  for (final player in current.game.players) {
     var stockpile = player.stockpile;
     var workers = player.workerPool;
     var treasury = player.treasury;
+    var purchasedTiles = Map<String, String>.from(
+      current.work.purchasedTilesByTileKey,
+    );
 
     Unit? lookupUnit(String unitId) =>
-        oldUnitsById[unitId] ?? newUnitsById[unitId];
+        current.work.oldUnitsById[unitId] ?? current.work.newUnitsById[unitId];
 
     void updateUnit(String unitId, Unit updated) {
-      if (oldUnitsById.containsKey(unitId)) {
-        oldUnitsById[unitId] = updated;
+      if (current.work.oldUnitsById.containsKey(unitId)) {
+        current = current.copyWith(
+          work: current.work.copyWith(
+            oldUnitsById: Map<String, Unit>.from(current.work.oldUnitsById)
+              ..[unitId] = updated,
+          ),
+        );
       } else {
-        newUnitsById[unitId] = updated;
+        current = current.copyWith(
+          work: current.work.copyWith(
+            newUnitsById: Map<String, Unit>.from(current.work.newUnitsById)
+              ..[unitId] = updated,
+          ),
+        );
       }
     }
 
     String regionForUnit(String unitId) =>
-        oldUnitsById.containsKey(unitId) ? kRegionOldWorld : kRegionNewWorld;
+        current.work.oldUnitsById.containsKey(unitId)
+            ? kRegionOldWorld
+            : kRegionNewWorld;
 
     Province? provinceById(String id) =>
-        state.game.worldState.tryGetProvince(id);
+        current.game.worldState.tryGetProvince(id);
 
     bool canAffordMaterialCost(WorkOrderCost cost) {
       for (final e in cost.entries) {
@@ -77,17 +90,20 @@ void runWorkPhase(
           ) &&
           u.currentWork == null &&
           hasValidTarget) {
-        // SPEC/game/diplomacy.md (GP–Minor/Tribe Rules): purchase_land requires an Embassy
-        // with the Minor/Tribe and the buyer must not be at war with that faction.
-        treasury = applyPurchaseLandWorkOrder(
-          state: state,
+        final land = applyPurchaseLandWorkOrder(
+          state: current,
           player: player,
           unit: u,
           targetTileKey: targetTileKey,
           treasury: treasury,
-          purchasedTilesByTileKey: purchasedTilesByTileKey,
+          purchasedTilesByTileKey: purchasedTiles,
           provinceById: provinceById,
           updateUnit: updateUnit,
+        );
+        treasury = land.treasury;
+        purchasedTiles = land.purchasedTilesByTileKey;
+        current = current.copyWith(
+          work: current.work.copyWith(purchasedTilesByTileKey: purchasedTiles),
         );
         continue;
       }
@@ -113,13 +129,15 @@ void runWorkPhase(
       }
 
       if (order.target == kWorkTargetProspect) {
-        state.game = tryApplyProspectWorkOrder(
-          game: state.game,
-          tileMapByRegion: state.tileMapByRegion,
-          player: player,
-          unit: u,
-          targetTileKey: targetTileKey,
-          updateUnit: updateUnit,
+        current = current.copyWith(
+          game: tryApplyProspectWorkOrder(
+            game: current.game,
+            tileMapByRegion: current.tileMapByRegion,
+            player: player,
+            unit: u,
+            targetTileKey: targetTileKey,
+            updateUnit: updateUnit,
+          ),
         );
       }
       if (order.target == kWorkTargetBuildImprovement) {
@@ -129,7 +147,7 @@ void runWorkPhase(
           targetTileKey: targetTileKey,
           hasValidTarget: hasValidTarget,
           orderTarget: kWorkTargetBuildImprovement,
-          tileState: tileState,
+          tileState: current.work.tileState,
           provinceById: provinceById,
           canAffordMaterialCost: canAffordMaterialCost,
           deductMaterialCost: deductMaterialCost,
@@ -143,7 +161,7 @@ void runWorkPhase(
           u.currentWork == null &&
           hasValidTarget) {
         if (tryApplyExploreWorkOrder(
-          state: state,
+          game: current.game,
           order: order,
           unit: u,
           targetTileKey: targetTileKey,
@@ -160,23 +178,31 @@ void runWorkPhase(
         unit: u,
         targetTileKey: targetTileKey,
         hasValidTarget: hasValidTarget,
-        tileState: tileState,
+        tileState: current.work.tileState,
         provinceById: provinceById,
         canAffordMaterialCost: canAffordMaterialCost,
         deductMaterialCost: deductMaterialCost,
         updateUnit: updateUnit,
-        terrain: terrainTypeForTileKey(state.tileMapByRegion, targetTileKey),
+        terrain: terrainTypeForTileKey(current.tileMapByRegion, targetTileKey),
       )) {
         continue;
       }
     }
 
-    state.work.updatedPlayers.add(
-      player.copyWith(
-        stockpile: stockpile,
-        workerPool: workers,
-        treasury: treasury,
+    current = current.copyWith(
+      work: current.work.copyWith(
+        purchasedTilesByTileKey: purchasedTiles,
+        updatedPlayers: [
+          ...current.work.updatedPlayers,
+          player.copyWith(
+            stockpile: stockpile,
+            workerPool: workers,
+            treasury: treasury,
+          ),
+        ],
       ),
     );
   }
+
+  return current;
 }
