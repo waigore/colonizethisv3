@@ -88,5 +88,78 @@ void main() {
 
       expect(next.work.tileState.roadLevel(tileKey), 4);
     });
+
+    test('build_rail completion no-ops when rejectionReasonForBuildRailOrder applies', () {
+      final tileState = TileMapState().setRoadLevel(tileKey, 0);
+      final unit = Unit(
+        id: 'u1',
+        type: kUnitTypeRailBuilder,
+        ownerId: 'p1',
+        locationProvinceId: provinceId,
+        tileKey: tileKey,
+        status: UnitStatus.working,
+      );
+      final railMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: const [
+          ['P1'],
+        ],
+        terrainGrid: [
+          [TerrainType.plains],
+        ],
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+            ],
+            units: [unit],
+          ),
+          newWorld: const RegionData(),
+          tileState: tileState,
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+        ],
+      );
+      final work = WorkOrderState(
+        oldUnitsById: {unit.id: unit},
+        newUnitsById: const {},
+        tileState: tileState,
+        visibilityByTile: const {},
+        portsByProvinceSeaboard: const {},
+        purchasedTilesByTileKey: const {},
+        oldProvinces: game.worldState.oldWorld.provinces,
+        newProvinces: const [],
+      );
+      final state = BuildWorkState(
+        game: game,
+        buildOrders: const {},
+        workOrders: const {},
+        tileMapByRegion: {ow: railMap},
+        work: work,
+      );
+      const cw = CurrentWork(
+        workTarget: kWorkTargetBuildRail,
+        tileKey: tileKey,
+        totalTurns: 1,
+        remainingTurns: 0,
+      );
+
+      final next = dispatchCompletedWorkTarget(
+        state,
+        unit,
+        cw,
+        () => game.worldState.oldWorld.provinces,
+        (w, p) => w.copyWith(oldProvinces: p),
+        (s, u, regionId) => s,
+      );
+
+      expect(next.work.tileState.roadLevel(tileKey), 0);
+    });
   });
 }
