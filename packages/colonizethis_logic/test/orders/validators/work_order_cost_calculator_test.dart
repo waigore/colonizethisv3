@@ -16,9 +16,9 @@ void main() {
         players: const [],
       );
       final calc = WorkOrderCostCalculator(game);
-      expect(calc.calculateCost('steal_tech', 'oldWorld|P1|0|0'), isNull);
-      expect(calc.calculateCost('counter_spy', 'oldWorld|P1|0|0'), isNull);
-      expect(calc.calculateCost('purchase_land', 'oldWorld|P1|0|0'), isNull);
+      expect(calc.calculateCost(kWorkTargetStealTech, 'oldWorld|P1|0|0'), isNull);
+      expect(calc.calculateCost(kWorkTargetCounterSpy, 'oldWorld|P1|0|0'), isNull);
+      expect(calc.calculateCost(kWorkTargetPurchaseLand, 'oldWorld|P1|0|0'), isNull);
     });
 
     test('calculateCost returns cost map for build_improvement', () {
@@ -38,7 +38,7 @@ void main() {
       );
       final calc = WorkOrderCostCalculator(game);
       final cost = calc.calculateCost(
-        'build_improvement',
+        kWorkTargetBuildImprovement,
         'oldWorld|P1|0|0',
         improvementLevel: 0,
       );
@@ -69,7 +69,7 @@ void main() {
       );
       final calc = WorkOrderCostCalculator(game);
       // Fort level 1 -> next build is level 2, cost 4 lumber + 4 bronze
-      final cost = calc.calculateCost('build_fort', 'oldWorld|P1|0|0');
+      final cost = calc.calculateCost(kWorkTargetBuildFort, 'oldWorld|P1|0|0');
       expect(cost, isNotNull);
       expect(cost![CommodityCatalog.lumber.id], 4);
       expect(cost[CommodityCatalog.bronze.id], 4);

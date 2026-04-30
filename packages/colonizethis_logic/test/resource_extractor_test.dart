@@ -235,7 +235,7 @@ void main() {
             x: 0,
             y: 0,
           ),
-          techUnlocked: {'saw_mill': true, 'seed_drill': true},
+          techUnlocked: {kTechIdSawMill: true, kTechIdSeedDrill: true},
         );
         final game = Game(
           id: 'g1',

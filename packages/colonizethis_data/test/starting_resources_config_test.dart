@@ -13,9 +13,9 @@ void main() {
 
     test('default startingCivilianUnits has Explorer, Builder, Engineer', () {
       final units = StartingResourcesConfig.defaultConfig.startingCivilianUnits;
-      expect(units['Explorer'], 2);
-      expect(units['Builder'], 2);
-      expect(units['Engineer'], 1);
+      expect(units[kUnitTypeExplorer], 2);
+      expect(units[kUnitTypeBuilder], 2);
+      expect(units[kUnitTypeEngineer], 1);
     });
 
     test('default military and navy bootstrap counts', () {

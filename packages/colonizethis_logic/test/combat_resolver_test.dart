@@ -432,7 +432,7 @@ void main() {
               id: 'att',
               displayName: 'Att',
               isHuman: true,
-              techUnlocked: {'nationalism': true},
+              techUnlocked: {kTechIdNationalism: true},
             ),
             Player(id: 'def', displayName: 'Def', isHuman: false),
           ],
@@ -1075,13 +1075,13 @@ void main() {
                 ),
                 Unit(
                   id: 'civ1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'civ',
                   locationProvinceId: provinceId,
                   tileKey: tileKey,
                   status: UnitStatus.working,
                   currentWork: CurrentWork(
-                    workTarget: 'build_road',
+                    workTarget: kWorkTargetBuildRoad,
                     tileKey: tileKey,
                     totalTurns: 2,
                     remainingTurns: 1,
@@ -1165,7 +1165,7 @@ void main() {
                 ),
                 Unit(
                   id: 'civ1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'civ',
                   locationProvinceId: provinceId,
                   tileKey: tileKey,

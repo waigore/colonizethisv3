@@ -212,7 +212,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: 'oldWorld|P1',
               ),
@@ -274,7 +274,7 @@ void main() {
           'p1': [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'printing_press',
+              techId: kTechIdPrintingPress,
               funding: ResearchFundingLevel.low,
             ),
           ],

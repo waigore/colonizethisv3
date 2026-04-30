@@ -204,13 +204,13 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'player1',
                 locationProvinceId: '$ow|P1',
               ),
               Unit(
                 id: 'u2',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'player2',
                 locationProvinceId: '$ow|P1',
               ),

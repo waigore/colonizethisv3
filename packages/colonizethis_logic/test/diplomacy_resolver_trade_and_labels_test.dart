@@ -50,7 +50,7 @@ void main() {
             id: 'gp1',
             displayName: 'GP1',
             isHuman: true,
-            techUnlocked: {'trade_fairs': true},
+            techUnlocked: {kTechIdTradeFairs: true},
           ),
         ],
         overtureStates: const [

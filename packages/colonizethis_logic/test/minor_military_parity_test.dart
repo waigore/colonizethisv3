@@ -64,7 +64,7 @@ void main() {
             units: [
               Unit(
                 id: 'u_minor_nw',
-                type: 'horse_artillery',
+                type: kTechIdHorseArtillery,
                 ownerId: 'min1',
                 locationProvinceId: 'newWorld|n1',
                 medals: 1,

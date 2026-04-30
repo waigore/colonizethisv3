@@ -81,7 +81,7 @@ void main() {
           'p1': const [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'crop_rotation',
+              techId: kTechIdCropRotation,
               funding: ResearchFundingLevel.maximum,
             ),
           ],

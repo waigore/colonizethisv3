@@ -14,7 +14,7 @@ void main() {
         ),
         players: [
           const Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 2000)
-              .copyWith(techUnlocked: const {'diplomatic_expertise': true}),
+              .copyWith(techUnlocked: const {kTechIdDiplomaticExpertise: true}),
         ],
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'Minor 1'),
@@ -422,7 +422,7 @@ void main() {
               units: [
                 Unit(
                   id: 'foreign_builder',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'gp2',
                   locationProvinceId: absorbedProvince,
                   tileKey: absorbedTile,
@@ -505,7 +505,7 @@ void main() {
               units: [
                 Unit(
                   id: 'foreign_builder',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'gp2',
                   locationProvinceId: absorbedProvince,
                   tileKey: absorbedTile,
@@ -1085,7 +1085,7 @@ void main() {
             displayName: 'A',
             isHuman: true,
             treasury: 20000,
-            techUnlocked: const {'empire_building': true},
+            techUnlocked: const {kTechIdEmpireBuilding: true},
           ),
           const Player(
             id: 'gp_b',

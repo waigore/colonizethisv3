@@ -720,7 +720,7 @@ void main() {
               units: [
                 Unit(
                   id: 'u1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1',
                 ),

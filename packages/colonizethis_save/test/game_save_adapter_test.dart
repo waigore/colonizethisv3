@@ -318,7 +318,7 @@ void main() {
       () {
         final unit = Unit(
           id: 'civ1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: 'pl1',
           locationProvinceId: 'oldWorld|p1',
           tileKey: 'oldWorld|p1|1|0',
@@ -326,7 +326,7 @@ void main() {
           assignedTileKey: 'oldWorld|p1|1|0',
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'build_improvement',
+            workTarget: kWorkTargetBuildImprovement,
             tileKey: 'oldWorld|p1|1|0',
             totalTurns: 2,
             remainingTurns: 1,

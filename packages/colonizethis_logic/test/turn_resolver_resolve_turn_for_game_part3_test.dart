@@ -264,7 +264,7 @@ void main() {
       const tileKey = 'oldWorld|P1|0|0';
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
@@ -296,7 +296,7 @@ void main() {
       final orders = Orders(
         workOrdersByPlayerId: {
           'p1': [
-            WorkOrder(unitId: 'u1', target: 'prospect', targetTileKey: tileKey),
+            WorkOrder(unitId: 'u1', target: kWorkTargetProspect, targetTileKey: tileKey),
           ],
         },
       );

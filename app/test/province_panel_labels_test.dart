@@ -23,7 +23,7 @@ void main() {
   test('workOrderTargetDisplayLabel maps build_improvement', () {
     final l10n = lookupAppLocalizations(const Locale('en'));
     expect(
-      workOrderTargetDisplayLabel(l10n, 'build_improvement'),
+      workOrderTargetDisplayLabel(l10n, kWorkTargetBuildImprovement),
       'build improvement',
     );
   });

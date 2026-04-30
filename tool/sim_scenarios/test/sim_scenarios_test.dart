@@ -98,7 +98,7 @@ void main() {
               'orders': [
                 {'player': 'england', 'type': 'move', 'unit': 'u1', 'to': 'p1'},
                 {'player': 'france', 'type': 'build', 'unitType': 'infantry', 'in': 'p2'},
-                {'player': 'spain', 'type': 'work', 'unit': 'u2', 'workType': 'explore'},
+                {'player': 'spain', 'type': 'work', 'unit': 'u2', 'workType': kWorkTargetExplore},
                 {'player': 'portugal', 'type': 'diplomatic', 'targetFactionId': 'england', 'action': 'declare_war'},
                 {'player': 'netherlands', 'type': 'research', 'techId': 'tech1'},
                 {'player': 'prussia', 'type': 'naval_move', 'fleetId': 'f1', 'destinationSeaZoneId': 'sz1'},
@@ -356,7 +356,7 @@ void main() {
           'name': 'tech_setup',
           'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
           'setup': {
-            'initialTech': {'gp1': ['organised_regiments', 'weapon_craftsmanship']},
+            'initialTech': {'gp1': [kTechIdOrganisedRegiments, kTechIdWeaponCraftsmanship]},
           },
           'turns': [],
           'assertions': [],
@@ -365,7 +365,7 @@ void main() {
         final scenario = parseScenarioFromJson(json);
 
         expect(scenario.setup!.initialTech, isNotNull);
-        expect(scenario.setup!.initialTech!['gp1'], ['organised_regiments', 'weapon_craftsmanship']);
+        expect(scenario.setup!.initialTech!['gp1'], [kTechIdOrganisedRegiments, kTechIdWeaponCraftsmanship]);
       });
 
       test('parses assertion techUnlocked', () {
@@ -374,7 +374,7 @@ void main() {
           'init': {'type': 'fromTopology', 'config': {'greatPowers': ['england']}},
           'turns': [],
           'assertions': [
-            {'turn': 1, 'player': 'gp1', 'techUnlocked': ['gathering_1', 'road_construction']},
+            {'turn': 1, 'player': 'gp1', 'techUnlocked': ['gathering_1', kTechIdRoadConstruction]},
           ],
         };
 
@@ -382,7 +382,7 @@ void main() {
 
         expect(scenario.assertions.length, 1);
         expect(scenario.assertions[0].player, 'gp1');
-        expect(scenario.assertions[0].techUnlocked, ['gathering_1', 'road_construction']);
+        expect(scenario.assertions[0].techUnlocked, ['gathering_1', kTechIdRoadConstruction]);
       });
 
       test('parses assertion provinceDisplayName', () {

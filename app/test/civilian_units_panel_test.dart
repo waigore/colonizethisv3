@@ -321,14 +321,14 @@ void main() {
               units: [
                 Unit(
                   id: 'e1',
-                  type: 'Explorer',
+                  type: kUnitTypeExplorer,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
                 ),
                 Unit(
                   id: 'b1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -356,14 +356,14 @@ void main() {
             explorerOnly: true,
             prospectShortcutTargetTileKey: tileKey,
             availableWorkTargets: const {
-              'e1': ['prospect'],
+              'e1': [kWorkTargetProspect],
             },
           ),
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Explorer'), findsOneWidget);
-        expect(find.text('Builder'), findsNothing);
+        expect(find.text(kUnitTypeExplorer), findsOneWidget);
+        expect(find.text(kUnitTypeBuilder), findsNothing);
 
         await tester.tap(find.text('Assign'));
         await tester.pump();
@@ -373,7 +373,7 @@ void main() {
         expect(upsertEvent, isNotNull);
         expect(upsertEvent!.playerId, human);
         expect(upsertEvent!.workOrder.unitId, 'e1');
-        expect(upsertEvent!.workOrder.target, 'prospect');
+        expect(upsertEvent!.workOrder.target, kWorkTargetProspect);
         expect(upsertEvent!.workOrder.targetTileKey, tileKey);
         expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
         expect(
@@ -405,14 +405,14 @@ void main() {
               units: [
                 Unit(
                   id: 'e1',
-                  type: 'Explorer',
+                  type: kUnitTypeExplorer,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
                 ),
                 Unit(
                   id: 'b1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -440,14 +440,14 @@ void main() {
             explorerOnly: true,
             exploreShortcutTargetTileKey: tileKey,
             availableWorkTargets: const {
-              'e1': ['explore'],
+              'e1': [kWorkTargetExplore],
             },
           ),
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Explorer'), findsOneWidget);
-        expect(find.text('Builder'), findsNothing);
+        expect(find.text(kUnitTypeExplorer), findsOneWidget);
+        expect(find.text(kUnitTypeBuilder), findsNothing);
 
         await tester.tap(find.text('Assign'));
         await tester.pump();
@@ -457,7 +457,7 @@ void main() {
         expect(upsertEvent, isNotNull);
         expect(upsertEvent!.playerId, human);
         expect(upsertEvent!.workOrder.unitId, 'e1');
-        expect(upsertEvent!.workOrder.target, 'explore');
+        expect(upsertEvent!.workOrder.target, kWorkTargetExplore);
         expect(upsertEvent!.workOrder.targetTileKey, tileKey);
         expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
         expect(
@@ -489,14 +489,14 @@ void main() {
               units: [
                 Unit(
                   id: 'b1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
                 ),
                 Unit(
                   id: 'e1',
-                  type: 'Explorer',
+                  type: kUnitTypeExplorer,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -524,14 +524,14 @@ void main() {
             builderOnly: true,
             buildImprovementShortcutTargetTileKey: tileKey,
             availableWorkTargets: const {
-              'b1': ['build_improvement'],
+              'b1': [kWorkTargetBuildImprovement],
             },
           ),
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Builder'), findsOneWidget);
-        expect(find.text('Explorer'), findsNothing);
+        expect(find.text(kUnitTypeBuilder), findsOneWidget);
+        expect(find.text(kUnitTypeExplorer), findsNothing);
 
         await tester.tap(find.text('Assign'));
         await tester.pump();
@@ -541,7 +541,7 @@ void main() {
         expect(upsertEvent, isNotNull);
         expect(upsertEvent!.playerId, human);
         expect(upsertEvent!.workOrder.unitId, 'b1');
-        expect(upsertEvent!.workOrder.target, 'build_improvement');
+        expect(upsertEvent!.workOrder.target, kWorkTargetBuildImprovement);
         expect(upsertEvent!.workOrder.targetTileKey, tileKey);
         expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
       },
@@ -618,7 +618,7 @@ void main() {
               units: [
                 Unit(
                   id: 'civ1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -680,14 +680,14 @@ void main() {
               units: [
                 Unit(
                   id: 'civ_a',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
                 ),
                 Unit(
                   id: 'civ_b',
-                  type: 'Engineer',
+                  type: kUnitTypeEngineer,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -762,7 +762,7 @@ void main() {
               units: [
                 Unit(
                   id: 'u1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: standingTile,
@@ -780,7 +780,7 @@ void main() {
             human: [
               WorkOrder(
                 unitId: 'u1',
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: pendingTile,
               ),
             ],
@@ -902,7 +902,7 @@ void main() {
         });
         final pendingOrder = WorkOrder(
           unitId: idleCivilian.id,
-          target: 'explore',
+          target: kWorkTargetExplore,
           targetTileKey:
               '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
         );
@@ -977,7 +977,7 @@ void main() {
 
         final pendingOrder = WorkOrder(
           unitId: idleCivilian.id,
-          target: 'explore',
+          target: kWorkTargetExplore,
           targetTileKey:
               '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
         );
@@ -1048,7 +1048,7 @@ void main() {
 
         final pendingOrder = WorkOrder(
           unitId: idleCivilian.id,
-          target: 'explore',
+          target: kWorkTargetExplore,
           targetTileKey:
               '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
         );
@@ -1199,7 +1199,7 @@ void main() {
               units: [
                 Unit(
                   id: 'b1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -1217,7 +1217,7 @@ void main() {
             human: [
               WorkOrder(
                 unitId: 'b1',
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: tileKey,
               ),
             ],
@@ -1269,7 +1269,7 @@ void main() {
               units: [
                 Unit(
                   id: 'e1',
-                  type: 'Explorer',
+                  type: kUnitTypeExplorer,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -1287,7 +1287,7 @@ void main() {
             human: [
               WorkOrder(
                 unitId: 'e1',
-                target: 'explore',
+                target: kWorkTargetExplore,
                 targetTileKey: 'oldWorld|p1|0|0',
               ),
             ],
@@ -1329,7 +1329,7 @@ void main() {
               units: [
                 Unit(
                   id: 'm1',
-                  type: 'Merchant',
+                  type: kUnitTypeMerchant,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -1348,7 +1348,7 @@ void main() {
             human: [
               WorkOrder(
                 unitId: 'm1',
-                target: 'purchase_land',
+                target: kWorkTargetPurchaseLand,
                 targetTileKey: tileKey,
               ),
             ],
@@ -1389,7 +1389,7 @@ void main() {
               units: [
                 Unit(
                   id: 'm1',
-                  type: 'Merchant',
+                  type: kUnitTypeMerchant,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -1407,7 +1407,7 @@ void main() {
             human: [
               WorkOrder(
                 unitId: 'm1',
-                target: 'purchase_land',
+                target: kWorkTargetPurchaseLand,
                 targetTileKey: tileKey,
               ),
             ],
@@ -1439,17 +1439,17 @@ void main() {
         const tileKey = 'oldWorld|p1|0|0';
         const targetTileKey = 'oldWorld|p1|1|0';
         final cases = <({String unitType, String target, int turns})>[
-          (unitType: 'Explorer', target: 'explore', turns: 3),
-          (unitType: 'Explorer', target: 'prospect', turns: 1),
-          (unitType: 'Builder', target: 'build_improvement', turns: 1),
-          (unitType: 'Builder', target: 'upgrade_town', turns: 1),
-          (unitType: 'Engineer', target: 'build_road', turns: 1),
-          (unitType: 'Engineer', target: 'build_port', turns: 1),
-          (unitType: 'Engineer', target: 'build_fort', turns: 3),
-          (unitType: 'Rail Builder', target: 'build_rail', turns: 1),
-          (unitType: 'Spy', target: 'steal_tech', turns: 5),
-          (unitType: 'Spy', target: 'counter_spy', turns: 1),
-          (unitType: 'Merchant', target: 'purchase_land', turns: 1),
+          (unitType: kUnitTypeExplorer, target: kWorkTargetExplore, turns: 3),
+          (unitType: kUnitTypeExplorer, target: kWorkTargetProspect, turns: 1),
+          (unitType: kUnitTypeBuilder, target: kWorkTargetBuildImprovement, turns: 1),
+          (unitType: kUnitTypeBuilder, target: kWorkTargetUpgradeTown, turns: 1),
+          (unitType: kUnitTypeEngineer, target: kWorkTargetBuildRoad, turns: 1),
+          (unitType: kUnitTypeEngineer, target: kWorkTargetBuildPort, turns: 1),
+          (unitType: kUnitTypeEngineer, target: kWorkTargetBuildFort, turns: 3),
+          (unitType: kUnitTypeRailBuilder, target: kWorkTargetBuildRail, turns: 1),
+          (unitType: kUnitTypeSpy, target: kWorkTargetStealTech, turns: 5),
+          (unitType: kUnitTypeSpy, target: kWorkTargetCounterSpy, turns: 1),
+          (unitType: kUnitTypeMerchant, target: kWorkTargetPurchaseLand, turns: 1),
         ];
 
         for (var i = 0; i < cases.length; i++) {
@@ -1557,7 +1557,7 @@ void main() {
             units: [
               Unit(
                 id: 'r1',
-                type: 'Rail Builder',
+                type: kUnitTypeRailBuilder,
                 ownerId: human,
                 locationProvinceId: 'oldWorld|p1',
                 tileKey: tileKey,
@@ -1573,7 +1573,7 @@ void main() {
           human: [
             WorkOrder(
               unitId: 'r1',
-              target: 'build_rail',
+              target: kWorkTargetBuildRail,
               targetTileKey: tileKey,
             ),
           ],
@@ -1619,13 +1619,13 @@ void main() {
             units: [
               Unit(
                 id: 'b1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: human,
                 locationProvinceId: 'oldWorld|p1',
                 tileKey: tileKey,
                 status: UnitStatus.working,
                 currentWork: const CurrentWork(
-                  workTarget: 'build_improvement',
+                  workTarget: kWorkTargetBuildImprovement,
                   tileKey: tileKey,
                   totalTurns: 5,
                   remainingTurns: 2,

@@ -69,7 +69,7 @@ void main() {
             id: 'h1',
             displayName: 'Human',
             isHuman: true,
-            techUnlocked: {'banking': true},
+            techUnlocked: {kTechIdBanking: true},
           ),
           Player(id: 'a1', displayName: 'AI', isHuman: false, techUnlocked: {}),
         ],

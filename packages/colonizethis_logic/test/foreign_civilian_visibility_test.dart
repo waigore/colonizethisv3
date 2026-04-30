@@ -34,7 +34,7 @@ void main() {
     test('owner always visible without tile', () {
       final u = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: human,
         locationProvinceId: 'oldWorld|p1',
       );
@@ -52,7 +52,7 @@ void main() {
     test('foreign visible when tile not unknown', () {
       final u = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: other,
         locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -71,7 +71,7 @@ void main() {
     test('foreign hidden when tile unknown', () {
       final u = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: other,
         locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -90,7 +90,7 @@ void main() {
     test('enemy Spy never visible', () {
       final u = Unit(
         id: 's1',
-        type: 'Spy',
+        type: kUnitTypeSpy,
         ownerId: other,
         locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',

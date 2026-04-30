@@ -159,7 +159,7 @@ void main() {
           players: [
             const Player(id: 'gp1', displayName: 'Human', isHuman: true),
             const Player(id: 'gp2', displayName: 'Attacker', isHuman: false)
-                .copyWith(techUnlocked: const {'propaganda': true}),
+                .copyWith(techUnlocked: const {kTechIdPropaganda: true}),
           ],
           diplomacyRelations: const [
             DiplomacyRelation(

@@ -30,7 +30,7 @@ void main() {
         player: game.players.first,
       );
       final order = BuildUnitOrder(
-        unitType: 'Builder',
+        unitType: kUnitTypeBuilder,
         isMilitary: false,
         spawnProvinceId: 'oldWorld|p1',
       );
@@ -66,7 +66,7 @@ void main() {
         player: game.players.first,
       );
       final order = BuildUnitOrder(
-        unitType: 'Builder',
+        unitType: kUnitTypeBuilder,
         isMilitary: false,
         spawnProvinceId: 'oldWorld|p1',
       );

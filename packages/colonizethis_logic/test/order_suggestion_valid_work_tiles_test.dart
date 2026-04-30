@@ -28,7 +28,7 @@ void main() {
         topology,
         playerId,
         'no-such-unit',
-        'explore',
+        kWorkTargetExplore,
         const Orders(),
       );
       expect(valid, isEmpty);
@@ -39,7 +39,7 @@ void main() {
       const ow = 'oldWorld';
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -69,7 +69,7 @@ void main() {
         topology,
         playerId,
         'u1',
-        'build_improvement',
+        kWorkTargetBuildImprovement,
         const Orders(),
       );
       expect(valid, isEmpty);
@@ -99,7 +99,7 @@ void main() {
         topology: topology,
         view: view,
         unitId: 'no-such-unit',
-        workTarget: 'explore',
+        workTarget: kWorkTargetExplore,
         currentOrders: const Orders(),
       );
       expect(valid, isEmpty);
@@ -112,7 +112,7 @@ void main() {
         const ow = 'oldWorld';
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p1|0|0',
@@ -143,7 +143,7 @@ void main() {
           topology: topology,
           view: view,
           unitId: 'u1',
-          workTarget: 'build_improvement',
+          workTarget: kWorkTargetBuildImprovement,
           currentOrders: const Orders(),
         );
         expect(valid, isEmpty);
@@ -189,7 +189,7 @@ void main() {
         topology: topology,
         view: viewWithFullVisibility,
         unitId: 'u1',
-        workTarget: 'build_improvement',
+        workTarget: kWorkTargetBuildImprovement,
         currentOrders: const Orders(),
       );
 
@@ -198,7 +198,7 @@ void main() {
         topology,
         playerId,
         'u1',
-        'build_improvement',
+        kWorkTargetBuildImprovement,
         const Orders(),
       );
 
@@ -214,7 +214,7 @@ void main() {
 
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: tileWithResource,
@@ -271,7 +271,7 @@ void main() {
         topology: topology,
         view: view,
         unitId: 'u1',
-        workTarget: 'build_improvement',
+        workTarget: kWorkTargetBuildImprovement,
         currentOrders: const Orders(),
       );
 
@@ -292,7 +292,7 @@ void main() {
 
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: grainTile,
@@ -348,7 +348,7 @@ void main() {
         topology: topology,
         view: viewUnprospected,
         unitId: 'u1',
-        workTarget: 'build_improvement',
+        workTarget: kWorkTargetBuildImprovement,
         currentOrders: const Orders(),
       );
       expect(validUnprospected.contains(grainTile), isTrue);
@@ -378,7 +378,7 @@ void main() {
         topology: topology,
         view: viewProspected,
         unitId: 'u1',
-        workTarget: 'build_improvement',
+        workTarget: kWorkTargetBuildImprovement,
         currentOrders: const Orders(),
       );
       expect(validProspected.contains(grainTile), isTrue);
@@ -393,7 +393,7 @@ void main() {
 
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -456,7 +456,7 @@ void main() {
         topology: topology,
         view: view,
         unitId: 'u1',
-        workTarget: 'build_improvement',
+        workTarget: kWorkTargetBuildImprovement,
         currentOrders: const Orders(),
       );
 
@@ -475,7 +475,7 @@ void main() {
 
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: landTile,
@@ -527,7 +527,7 @@ void main() {
         topology: topology,
         view: view,
         unitId: 'u1',
-        workTarget: 'build_improvement',
+        workTarget: kWorkTargetBuildImprovement,
         currentOrders: const Orders(),
       );
 
@@ -555,7 +555,7 @@ void main() {
         final p1 = Province(id: provinceId, regionId: ow, ownerId: 'tribe1');
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provinceId,
           tileKey: grassTile,
@@ -599,7 +599,7 @@ void main() {
           topology: topology,
           view: view,
           unitId: 'u1',
-          workTarget: 'prospect',
+          workTarget: kWorkTargetProspect,
           currentOrders: const Orders(),
         );
         expect(valid.contains(grassTile), isFalse);
@@ -623,7 +623,7 @@ void main() {
         final p1 = Province(id: provinceId, regionId: ow, ownerId: 'tribe1');
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provinceId,
           tileKey: ironTile,
@@ -664,7 +664,7 @@ void main() {
           topology: topology,
           view: view,
           unitId: 'u1',
-          workTarget: 'prospect',
+          workTarget: kWorkTargetProspect,
           currentOrders: const Orders(),
         );
         expect(valid, contains(ironTile));
@@ -688,7 +688,7 @@ void main() {
         final p1 = Province(id: provinceId, regionId: ow, ownerId: 'tribe1');
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provinceId,
           tileKey: woolTile,
@@ -744,7 +744,7 @@ void main() {
           topology: topology,
           view: view,
           unitId: 'u1',
-          workTarget: 'prospect',
+          workTarget: kWorkTargetProspect,
           currentOrders: const Orders(),
           tileMapByRegion: tileMapByRegion,
         );
@@ -767,7 +767,7 @@ void main() {
 
         final explorer = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: partialProvince,
           tileKey: partialKnownTile,
@@ -857,7 +857,7 @@ void main() {
         final startTile = '$ow|p0|0|0';
         final explorer = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: '$ow|p0',
           tileKey: startTile,
@@ -916,7 +916,7 @@ void main() {
       // Civilian unit (Builder) - cannot enter other GP territory
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
       );
@@ -1005,7 +1005,7 @@ void main() {
 
       final spy = Unit(
         id: 'spy1',
-        type: 'Spy',
+        type: kUnitTypeSpy,
         ownerId: playerId,
         locationProvinceId: '$ow|spy_loc',
         tileKey: 'oldWorld|spy_loc|0|0',
@@ -1063,7 +1063,7 @@ void main() {
       );
 
       // Spy should have steal_tech work order suggested targeting other GP's capital
-      expect(suggestions.where((o) => o.target == 'steal_tech'), isNotEmpty);
+      expect(suggestions.where((o) => o.target == kWorkTargetStealTech), isNotEmpty);
     });
 
     test(
@@ -1088,7 +1088,7 @@ void main() {
 
         final builder = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p1|0|0',
@@ -1151,7 +1151,7 @@ void main() {
 
         // Should have multiple build_improvement suggestions for different tiles
         final buildSuggestions = suggestions
-            .where((o) => o.target == 'build_improvement')
+            .where((o) => o.target == kWorkTargetBuildImprovement)
             .toList();
 
         // If multiple tiles are suggested, they should be sorted by targetTileKey
@@ -1189,7 +1189,7 @@ void main() {
 
         final builder = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p1|0|0',
@@ -1198,7 +1198,7 @@ void main() {
         // Existing work order for build_improvement
         final existingOrder = WorkOrder(
           unitId: 'u1',
-          target: 'build_improvement',
+          target: kWorkTargetBuildImprovement,
           targetTileKey: 'oldWorld|p1|0|0',
         );
 
@@ -1256,7 +1256,7 @@ void main() {
         final buildSuggestions = suggestions
             .where(
               (o) =>
-                  o.target == 'build_improvement' &&
+                  o.target == kWorkTargetBuildImprovement &&
                   o.targetTileKey == 'oldWorld|p1|0|0',
             )
             .toList();
@@ -1290,7 +1290,7 @@ void main() {
         );
         final explorer = Unit(
           id: 'ex1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provHome,
           tileKey: tileHome,
@@ -1371,7 +1371,7 @@ void main() {
         final pTarget = Province(id: provTarget, regionId: nw, ownerId: 'gp2');
         final explorer = Unit(
           id: 'ex1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provHome,
           tileKey: tileHome,
@@ -1453,7 +1453,7 @@ void main() {
         );
         final explorer = Unit(
           id: 'ex1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provHome,
           tileKey: tileHome,
@@ -1534,7 +1534,7 @@ void main() {
         );
         final explorer = Unit(
           id: 'ex1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provHome,
           tileKey: tileHome,
@@ -1613,7 +1613,7 @@ void main() {
         final pMinor = Province(id: provMinor, regionId: nw, ownerId: 'minor1');
         final unit = Unit(
           id: 'u1',
-          type: 'Merchant',
+          type: kUnitTypeMerchant,
           ownerId: playerId,
           locationProvinceId: provOwn,
           tileKey: tileOwn,
@@ -1703,7 +1703,7 @@ void main() {
         final pMinor = Province(id: provMinor, regionId: nw, ownerId: 'minor1');
         final unit = Unit(
           id: 'u1',
-          type: 'Merchant',
+          type: kUnitTypeMerchant,
           ownerId: playerId,
           locationProvinceId: provOwn,
           tileKey: tileOwn,
