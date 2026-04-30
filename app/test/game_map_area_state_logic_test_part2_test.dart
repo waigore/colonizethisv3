@@ -488,7 +488,7 @@ void main() {
                 stockpile: const ct_models.Stockpile(
                   quantities: {'lumber': 10, 'castIron': 10},
                 ),
-                techUnlocked: const {'circular_saw': true},
+                techUnlocked: const {kTechIdCircularSaw: true},
               ),
             ],
             minorNations: const [],
@@ -571,7 +571,7 @@ void main() {
                 isHuman: true,
                 capitalProvinceId: provinceId,
                 stockpile: const ct_models.Stockpile(quantities: {}),
-                techUnlocked: const {'circular_saw': true},
+                techUnlocked: const {kTechIdCircularSaw: true},
               ),
             ],
             minorNations: const [],

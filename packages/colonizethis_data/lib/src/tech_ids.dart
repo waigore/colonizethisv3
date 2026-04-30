@@ -4,6 +4,7 @@
 const String kTechIdRoadConstruction = 'road_construction';
 const String kTechIdSawMill = 'saw_mill';
 const String kTechIdSeedDrill = 'seed_drill';
+const String kTechIdPrintingPress = 'printing_press';
 const String kTechIdCircularSaw = 'circular_saw';
 const String kTechIdMineEngineering = 'mine_engineering';
 const String kTechIdModernForts = 'modern_forts';

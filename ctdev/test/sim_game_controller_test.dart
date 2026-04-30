@@ -274,7 +274,7 @@ void main() {
           'p1': [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'printing_press',
+              techId: kTechIdPrintingPress,
               funding: ResearchFundingLevel.low,
             ),
           ],
