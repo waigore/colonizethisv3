@@ -1,6 +1,6 @@
 // Province overlay: draft work orders and localized military labels.
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, VisibilityLevel;
+    show PlayerView, VisibilityLevel, kWorkTargetBuildImprovement;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

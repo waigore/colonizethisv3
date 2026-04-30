@@ -1,5 +1,7 @@
 import 'package:colonizethis_app/features/game/widgets/province_panel_labels.dart';
 import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetBuildImprovement;
 import 'package:colonizethis_models/colonizethis_models.dart' show UnitStatus;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';

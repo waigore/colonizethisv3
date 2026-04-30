@@ -7,8 +7,22 @@ import 'tech_ids.dart';
 int _cost(int era) => 80 + era * 40; // 120, 160, 200, 240 for era 1-4
 
 /// Full catalog: 113 techs with displayName, prerequisiteIds, discoveryResourceIds (7 discovery techs), regimentUnlockIds, shipUnlockIds.
+
 Map<String, TechDefinition> buildTechCatalog() {
   final m = <String, TechDefinition>{};
+
+  _addTechCatalogChunk1(m);
+  _addTechCatalogChunk2(m);
+  _addTechCatalogChunk3(m);
+  _addTechCatalogChunk4(m);
+  _addTechCatalogChunk5(m);
+  _addTechCatalogChunk6(m);
+  _addTechCatalogChunk7(m);
+
+  return m;
+}
+
+void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
 
   // --- Gathering (26) ---
   m[kTechIdCropRotation] = TechDefinition(
@@ -175,6 +189,9 @@ Map<String, TechDefinition> buildTechCatalog() {
     displayName: 'Large Precious Stone Mines',
     prerequisiteIds: [kTechIdPreciousStoneMining, kTechIdUniversity],
   );
+}
+
+void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
   m[kTechIdExtractionOfPreciousMetals] = TechDefinition(
     id: kTechIdExtractionOfPreciousMetals,
     era: 3,
@@ -337,6 +354,9 @@ Map<String, TechDefinition> buildTechCatalog() {
     displayName: 'Cotton Gin',
     prerequisiteIds: [kTechIdLargeCottonPlantations, kTechIdTrainedJourneymen],
   );
+}
+
+void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
   m[kTechIdDiscoveryOfFurs] = TechDefinition(
     id: kTechIdDiscoveryOfFurs,
     era: 1,
@@ -504,6 +524,9 @@ Map<String, TechDefinition> buildTechCatalog() {
     displayName: 'Apprentice Workers',
     prerequisiteIds: [kTechIdLandEnclosure, kTechIdSugarRefining],
   );
+}
+
+void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
   m[kTechIdTrainedJourneymen] = TechDefinition(
     id: kTechIdTrainedJourneymen,
     era: 2,
@@ -671,6 +694,9 @@ Map<String, TechDefinition> buildTechCatalog() {
     prerequisiteIds: [kTechIdCircularSaw, kTechIdAdvancedHullDesign],
     shipUnlockIds: ['clipper'],
   );
+}
+
+void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
   m[kTechIdPaddlewheels] = TechDefinition(
     id: kTechIdPaddlewheels,
     era: 3,
@@ -841,6 +867,9 @@ Map<String, TechDefinition> buildTechCatalog() {
     ],
     regimentUnlockIds: ['rifle_infantry'],
   );
+}
+
+void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
   m[kTechIdEliteMilitaryTraining] = TechDefinition(
     id: kTechIdEliteMilitaryTraining,
     era: 4,
@@ -1003,6 +1032,9 @@ Map<String, TechDefinition> buildTechCatalog() {
     ],
     regimentUnlockIds: ['siege_guns'],
   );
+}
+
+void _addTechCatalogChunk7(Map<String, TechDefinition> m) {
   m[kTechIdEmplacedSiegeGuns] = TechDefinition(
     id: kTechIdEmplacedSiegeGuns,
     era: 4,
@@ -1032,5 +1064,4 @@ Map<String, TechDefinition> buildTechCatalog() {
     prerequisiteIds: [kTechIdIndustrialMachinery, kTechIdCrucibleProcess],
   );
 
-  return m;
 }
