@@ -13,13 +13,16 @@ import 'tile_map_land_seed_contract.dart';
 import 'tile_map_distance_sentinels.dart';
 import 'topology_inference.dart';
 
+
+/// Shared params for [TileMapGenerator] (generation orchestration only).
+
+
 part 'tile_map_generator_types.dart';
 part 'tile_map_grid_graph.dart';
 part 'tile_map_generator_join_sea.dart';
 part 'tile_map_generator_terrain_assign.dart';
 part 'tile_map_generator_lakes_provinces.dart';
 
-/// Shared params for [TileMapGenerator] (generation orchestration only).
 abstract class _TileMapGeneratorShell {
   _TileMapGeneratorShell({this.params = const TileMapParams()});
 

@@ -25,10 +25,13 @@ import 'app_event_handler.dart';
 import 'app_event_handler_debug_spawn.dart' show applyDebugCivilianSpawnAtCapital;
 import 'app_event_handler_debug_treasury.dart' show applyDebugTreasuryCredit;
 
+
+/// [OpenDialogEvent] id for [TrainCiviliansDialog]. SPEC/program/app-ui-wiring.md.
+
+
 part 'app_event_handler_scope_dialog_builders.dart';
 part 'app_event_handler_scope_session_subscriptions.dart';
 
-/// [OpenDialogEvent] id for [TrainCiviliansDialog]. SPEC/program/app-ui-wiring.md.
 const String trainCiviliansDialogId = 'train_civilians';
 
 /// [OpenDialogEvent] id for [TrainMilitaryDialog]. SPEC/program/app-ui-wiring.md.

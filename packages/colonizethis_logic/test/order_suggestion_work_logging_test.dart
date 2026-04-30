@@ -43,7 +43,7 @@ void main() {
 
       final explorer = Unit(
         id: 'u_explorer',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: playerId,
         locationProvinceId: p1.id,
         tileKey: '$ow|p1|0|0',
@@ -51,7 +51,7 @@ void main() {
       );
       final builder = Unit(
         id: 'u_builder',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: p1.id,
         tileKey: '$ow|p1|0|0',
@@ -59,7 +59,7 @@ void main() {
       );
       final spy = Unit(
         id: 'u_spy',
-        type: 'Spy',
+        type: kUnitTypeSpy,
         ownerId: playerId,
         locationProvinceId: p1.id,
         tileKey: '$ow|p1|0|0',
@@ -67,7 +67,7 @@ void main() {
       );
       final merchant = Unit(
         id: 'u_merchant',
-        type: 'Merchant',
+        type: kUnitTypeMerchant,
         ownerId: playerId,
         locationProvinceId: p1.id,
         tileKey: '$ow|p1|0|0',

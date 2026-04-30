@@ -1,5 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show kUnitTypeBuilder, kUnitTypeEngineer, kUnitTypeExplorer;
 
 void main() {
   group('StartingResourcesConfig', () {
@@ -13,9 +15,9 @@ void main() {
 
     test('default startingCivilianUnits has Explorer, Builder, Engineer', () {
       final units = StartingResourcesConfig.defaultConfig.startingCivilianUnits;
-      expect(units['Explorer'], 2);
-      expect(units['Builder'], 2);
-      expect(units['Engineer'], 1);
+      expect(units[kUnitTypeExplorer], 2);
+      expect(units[kUnitTypeBuilder], 2);
+      expect(units[kUnitTypeEngineer], 1);
     });
 
     test('default military and navy bootstrap counts', () {

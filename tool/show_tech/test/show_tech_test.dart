@@ -7,20 +7,20 @@ import 'package:path/path.dart' as p;
 void main() {
   group('tech catalog', () {
     test('contains basic gathering and transport techs', () {
-      expect(techById('crop_rotation'), isNotNull);
-      expect(techById('saw_mill'), isNotNull);
-      expect(techById('land_enclosure'), isNotNull);
-      expect(techById('road_construction'), isNotNull);
-      expect(techById('early_steam_engine'), isNotNull);
+      expect(techById(kTechIdCropRotation), isNotNull);
+      expect(techById(kTechIdSawMill), isNotNull);
+      expect(techById(kTechIdLandEnclosure), isNotNull);
+      expect(techById(kTechIdRoadConstruction), isNotNull);
+      expect(techById(kTechIdEarlySteamEngine), isNotNull);
     });
 
     test('prerequisites are consistent', () {
-      final windSaw = techById('wind_saw_mill')!;
-      expect(windSaw.prerequisiteIds, contains('saw_mill'));
-      final seedDrill = techById('seed_drill')!;
-      expect(seedDrill.prerequisiteIds, contains('land_enclosure'));
-      final rail = techById('early_steam_engine')!;
-      expect(rail.prerequisiteIds, contains('road_construction'));
+      final windSaw = techById(kTechIdWindSawMill)!;
+      expect(windSaw.prerequisiteIds, contains(kTechIdSawMill));
+      final seedDrill = techById(kTechIdSeedDrill)!;
+      expect(seedDrill.prerequisiteIds, contains(kTechIdLandEnclosure));
+      final rail = techById(kTechIdEarlySteamEngine)!;
+      expect(rail.prerequisiteIds, contains(kTechIdRoadConstruction));
     });
   });
 
@@ -37,7 +37,7 @@ void main() {
       final result = await Process.run('dart', [
         showTechDart,
         '--query',
-        'university',
+        kTechIdUniversity,
       ]);
       expect(result.exitCode, 0);
       final out = result.stdout as String;

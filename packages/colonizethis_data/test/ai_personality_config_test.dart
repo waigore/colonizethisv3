@@ -1,5 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
   group('getThresholdsForLeader', () {
@@ -38,7 +39,7 @@ void main() {
     test('returns display name for known leader', () {
       expect(getArchetypeDisplayNameForLeader('napoleon'), 'Fortifier');
       expect(getArchetypeDisplayNameForLeader('victoria'), 'Industrial Trader');
-      expect(getArchetypeDisplayNameForLeader('isabella'), 'Explorer');
+      expect(getArchetypeDisplayNameForLeader('isabella'), kUnitTypeExplorer);
     });
     test('returns null for unknown leader', () {
       expect(getArchetypeDisplayNameForLeader('unknown'), isNull);

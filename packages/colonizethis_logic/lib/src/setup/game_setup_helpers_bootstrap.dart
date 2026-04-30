@@ -1,3 +1,4 @@
+
 part of 'game_setup_helpers.dart';
 
 void _spawnCivilianUnitsOfType({

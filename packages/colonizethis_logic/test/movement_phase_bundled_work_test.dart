@@ -16,7 +16,7 @@ void main() {
 
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: 'gp1',
         locationProvinceId: p1,
         tileKey: fromTile,
@@ -59,7 +59,7 @@ void main() {
       const p2 = '$ow|p2';
       final unit = Unit(
         id: 'spy1',
-        type: 'Spy',
+        type: kUnitTypeSpy,
         ownerId: 'gp1',
         locationProvinceId: p1,
         tileKey: '$p1|0|0',
@@ -121,7 +121,7 @@ void main() {
             units: [
               Unit(
                 id: 'builder1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'gp1',
                 locationProvinceId: p1,
                 tileKey: fromTile,
@@ -197,7 +197,7 @@ void main() {
               units: [
                 Unit(
                   id: 'builder1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'gp1',
                   locationProvinceId: p1,
                   tileKey: fromTile,
@@ -281,7 +281,7 @@ void main() {
             units: [
               Unit(
                 id: 'builder1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'gp1',
                 locationProvinceId: p1,
                 tileKey: fromTile,

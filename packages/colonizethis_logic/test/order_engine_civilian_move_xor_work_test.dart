@@ -26,7 +26,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: p1,
                 tileKey: tileA,
@@ -112,7 +112,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: p1,
                 tileKey: tileA,

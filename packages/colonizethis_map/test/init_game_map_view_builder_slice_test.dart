@@ -135,7 +135,7 @@ void main() {
         oldWorldUnits: [
           Unit(
             id: 'u-builder',
-            type: 'Builder',
+            type: kUnitTypeBuilder,
             ownerId: 'gp1',
             locationProvinceId: 'oldWorld|p1',
           ),

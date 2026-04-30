@@ -1,6 +1,8 @@
-part of 'region_map_component.dart';
 
 /// Fog overlay opacity when drawing a dark rect over tiles (0 = no overlay, 1 = full black).
+
+part of 'region_map_component.dart';
+
 const double _fogOverlayOpacity = 0.4;
 
 /// Work-target valid tiles: opacity baseline in **linear 0–1** before sin pulse.

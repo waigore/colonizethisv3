@@ -1,6 +1,8 @@
-part of 'civilian_units_panel.dart';
 
 /// Human-readable label for work target ids. SPEC/ui/civilian-units-panel.md.
+
+part of 'civilian_units_panel.dart';
+
 const Map<String, String> _workTargetLabels = {
   kWorkTargetExplore: 'Explore',
   kWorkTargetProspect: 'Prospect',

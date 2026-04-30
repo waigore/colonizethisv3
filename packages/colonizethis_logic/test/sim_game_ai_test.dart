@@ -412,7 +412,7 @@ void main() {
             units: [
               Unit(
                 id: 'rail1',
-                type: 'Rail Builder',
+                type: kUnitTypeRailBuilder,
                 ownerId: 'p1',
                 locationProvinceId: provinceId,
                 tileKey: tileKey,
@@ -439,7 +439,7 @@ void main() {
             stockpile: Stockpile()
                 .applyDelta(CommodityCatalog.lumber.id, 10)
                 .applyDelta(CommodityCatalog.steel.id, 10),
-            techUnlocked: const {'early_steam_engine': true},
+            techUnlocked: const {kTechIdEarlySteamEngine: true},
           ),
         ],
         globalGameSeed: 11,
@@ -454,7 +454,7 @@ void main() {
         tileMapByRegion: {ow: railTileMap()},
       );
       final work = orders.workOrdersByPlayerId['p1'] ?? const [];
-      expect(work.any((w) => w.target == 'build_rail'), isTrue);
+      expect(work.any((w) => w.target == kWorkTargetBuildRail), isTrue);
     });
   });
 }

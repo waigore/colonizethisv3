@@ -37,7 +37,7 @@ void main() {
               units: [
                 Unit(
                   id: 'merchant1',
-                  type: 'Merchant',
+                  type: kUnitTypeMerchant,
                   ownerId: 'p1',
                   locationProvinceId: minorProvinceId,
                   tileKey: tileKey,
@@ -66,7 +66,7 @@ void main() {
               capitalProvinceId: '$ow|P1',
               stockpile: const Stockpile(),
               treasury: treasury,
-              techUnlocked: {'merchant_companies': true},
+              techUnlocked: {kTechIdMerchantCompanies: true},
             ),
           ],
           minorNations: const [
@@ -84,7 +84,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );
@@ -121,7 +121,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );
@@ -152,7 +152,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );
@@ -183,7 +183,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );
@@ -215,7 +215,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );
@@ -247,7 +247,7 @@ void main() {
             'p1',
             const WorkOrder(
               unitId: 'merchant1',
-              target: 'purchase_land',
+              target: kWorkTargetPurchaseLand,
               targetTileKey: tileKey,
             ),
           );
@@ -291,14 +291,14 @@ void main() {
                 units: [
                   Unit(
                     id: 'builder1',
-                    type: 'Builder',
+                    type: kUnitTypeBuilder,
                     ownerId: 'p1',
                     locationProvinceId: provinceId,
                     tileKey: tileKey,
                   ),
                   Unit(
                     id: 'engineer1',
-                    type: 'Engineer',
+                    type: kUnitTypeEngineer,
                     ownerId: 'p1',
                     locationProvinceId: provinceId,
                     tileKey: tileKey,
@@ -338,7 +338,7 @@ void main() {
               'p1',
               const WorkOrder(
                 unitId: 'builder1',
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: tileKey,
               ),
             )
@@ -346,7 +346,7 @@ void main() {
               'p1',
               const WorkOrder(
                 unitId: 'engineer1',
-                target: 'build_road',
+                target: kWorkTargetBuildRoad,
                 targetTileKey: tileKey,
               ),
             );
@@ -388,7 +388,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );
@@ -420,7 +420,7 @@ void main() {
             'p1',
             const WorkOrder(
               unitId: 'merchant1',
-              target: 'purchase_land',
+              target: kWorkTargetPurchaseLand,
               targetTileKey: tileKey,
             ),
           );
@@ -455,7 +455,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );

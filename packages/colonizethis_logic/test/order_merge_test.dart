@@ -152,14 +152,14 @@ void main() {
       final human = Orders(
         workOrdersByPlayerId: {
           'p1': [
-            WorkOrder(unitId: 'uA', target: 'build_road', targetTileKey: 'tile1'),
+            WorkOrder(unitId: 'uA', target: kWorkTargetBuildRoad, targetTileKey: 'tile1'),
           ],
         },
       );
       final ai = Orders(
         workOrdersByPlayerId: {
           'p1': [
-            WorkOrder(unitId: 'uB', target: 'build_road', targetTileKey: 'tile2'),
+            WorkOrder(unitId: 'uB', target: kWorkTargetBuildRoad, targetTileKey: 'tile2'),
           ],
         },
       );

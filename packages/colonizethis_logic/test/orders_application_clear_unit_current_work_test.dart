@@ -9,7 +9,7 @@ void main() {
       const ow = 'oldWorld';
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -37,7 +37,7 @@ void main() {
       const ow = 'oldWorld';
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -45,7 +45,7 @@ void main() {
         assignedTileKey: 'oldWorld|p1|1|0',
         status: UnitStatus.working,
         currentWork: CurrentWork(
-          workTarget: 'build_improvement',
+          workTarget: kWorkTargetBuildImprovement,
           tileKey: 'oldWorld|p1|1|0',
           totalTurns: 2,
           remainingTurns: 1,

@@ -83,38 +83,41 @@ int f() {
       }
     });
 
-    test('fails even when legacy waiver yaml is present', () {
-      final temp = Directory.systemTemp.createTempSync('fn-size-legacy-');
-      try {
-        final libDir = Directory(
-          p.join(temp.path, 'packages', 'colonizethis_logic', 'lib', 'src'),
-        )..createSync(recursive: true);
-        File(
-          p.join(libDir.path, 'big.dart'),
-        ).writeAsStringSync(giantFunctionSource(statements: 210));
-        final toolDir = Directory(p.join(temp.path, 'tool'))
-          ..createSync(recursive: true);
-        File(
-          p.join(toolDir.path, 'function_size_allowlist.yaml'),
-        ).writeAsStringSync('''
+    test(
+      'fails when oversized; ignores stray tool/function_size_allowlist.yaml',
+      () {
+        final temp = Directory.systemTemp.createTempSync('fn-size-legacy-');
+        try {
+          final libDir = Directory(
+            p.join(temp.path, 'packages', 'colonizethis_logic', 'lib', 'src'),
+          )..createSync(recursive: true);
+          File(
+            p.join(libDir.path, 'big.dart'),
+          ).writeAsStringSync(giantFunctionSource(statements: 210));
+          final toolDir = Directory(p.join(temp.path, 'tool'))
+            ..createSync(recursive: true);
+          File(
+            p.join(toolDir.path, 'function_size_allowlist.yaml'),
+          ).writeAsStringSync('''
 allowed_over_20:
   - file: packages/colonizethis_logic/lib/src/big.dart
     symbol: giant
     max_measured_lines: 220
 ''');
 
-        final errors = <String>[];
-        final exitCode = runCheckFunctionSize(
-          temp.path,
-          info: (_) {},
-          err: errors.add,
-        );
-        expect(exitCode, 1);
-        expect(errors.join('\n'), contains('big.dart'));
-        expect(errors.join('\n'), contains('giant'));
-      } finally {
-        temp.deleteSync(recursive: true);
-      }
-    });
+          final errors = <String>[];
+          final exitCode = runCheckFunctionSize(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('big.dart'));
+          expect(errors.join('\n'), contains('giant'));
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
   });
 }

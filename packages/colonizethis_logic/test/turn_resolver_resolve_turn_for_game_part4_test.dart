@@ -22,7 +22,7 @@ void main() {
             units: [
               Unit(
                 id: 'explorer1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P2',
               ),
@@ -81,7 +81,7 @@ void main() {
             units: [
               Unit(
                 id: 'explorer1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -290,7 +290,7 @@ void main() {
             units: [
               Unit(
                 id: 'spy1',
-                type: 'Spy',
+                type: kUnitTypeSpy,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: tileKeyP1,
@@ -394,7 +394,7 @@ void main() {
             units: [
               Unit(
                 id: 'spy1',
-                type: 'Spy',
+                type: kUnitTypeSpy,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: tileKeyP1,
@@ -527,7 +527,7 @@ void main() {
         ),
         players: [
           const Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: 2000)
-              .copyWith(techUnlocked: const {'diplomatic_expertise': true}),
+              .copyWith(techUnlocked: const {kTechIdDiplomaticExpertise: true}),
         ],
         minorNations: const [
           MinorNation(id: 'minor1', displayName: 'Minor 1'),

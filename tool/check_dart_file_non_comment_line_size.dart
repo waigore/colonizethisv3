@@ -13,6 +13,9 @@ const _generatedSuffixes = <String>[
   '.mocks.dart',
   '.gen.dart',
 ];
+const _generatedPathPatterns = <Pattern>[
+  'app/lib/l10n/app_localizations_',
+];
 const _excludedDirectoryNames = <String>{
   '.git',
   '.dart_tool',
@@ -140,6 +143,11 @@ List<File> _collectRequestedRepoDartFiles(
 }
 
 bool _isGeneratedDartPath(String relativePath) {
+  for (final pattern in _generatedPathPatterns) {
+    if (relativePath.contains(pattern)) {
+      return true;
+    }
+  }
   for (final suffix in _generatedSuffixes) {
     if (relativePath.endsWith(suffix)) {
       return true;
