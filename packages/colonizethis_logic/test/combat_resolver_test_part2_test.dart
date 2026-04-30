@@ -442,7 +442,7 @@ void main() {
                 ),
                 Unit(
                   id: 'civ1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'civ',
                   locationProvinceId: provinceId,
                   tileKey: tileKey,
@@ -532,7 +532,7 @@ void main() {
                 ),
                 Unit(
                   id: 'civ1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'civ',
                   locationProvinceId: provinceId,
                   tileKey: tileKey,

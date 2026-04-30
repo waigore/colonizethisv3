@@ -151,7 +151,7 @@ void main() {
               units: [
                 Unit(
                   id: 'b1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -221,7 +221,7 @@ void main() {
               units: [
                 Unit(
                   id: 'e1',
-                  type: 'Explorer',
+                  type: kUnitTypeExplorer,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -281,7 +281,7 @@ void main() {
               units: [
                 Unit(
                   id: 'm1',
-                  type: 'Merchant',
+                  type: kUnitTypeMerchant,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -341,7 +341,7 @@ void main() {
               units: [
                 Unit(
                   id: 'm1',
-                  type: 'Merchant',
+                  type: kUnitTypeMerchant,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -391,17 +391,17 @@ void main() {
         const tileKey = 'oldWorld|p1|0|0';
         const targetTileKey = 'oldWorld|p1|1|0';
         final cases = <({String unitType, String target, int turns})>[
-          (unitType: 'Explorer', target: kWorkTargetExplore, turns: 3),
-          (unitType: 'Explorer', target: kWorkTargetProspect, turns: 1),
-          (unitType: 'Builder', target: kWorkTargetBuildImprovement, turns: 1),
-          (unitType: 'Builder', target: kWorkTargetUpgradeTown, turns: 1),
-          (unitType: 'Engineer', target: kWorkTargetBuildRoad, turns: 1),
-          (unitType: 'Engineer', target: kWorkTargetBuildPort, turns: 1),
-          (unitType: 'Engineer', target: kWorkTargetBuildFort, turns: 3),
-          (unitType: 'Rail Builder', target: kWorkTargetBuildRail, turns: 1),
-          (unitType: 'Spy', target: kWorkTargetStealTech, turns: 5),
-          (unitType: 'Spy', target: kWorkTargetCounterSpy, turns: 1),
-          (unitType: 'Merchant', target: kWorkTargetPurchaseLand, turns: 1),
+          (unitType: kUnitTypeExplorer, target: kWorkTargetExplore, turns: 3),
+          (unitType: kUnitTypeExplorer, target: kWorkTargetProspect, turns: 1),
+          (unitType: kUnitTypeBuilder, target: kWorkTargetBuildImprovement, turns: 1),
+          (unitType: kUnitTypeBuilder, target: kWorkTargetUpgradeTown, turns: 1),
+          (unitType: kUnitTypeEngineer, target: kWorkTargetBuildRoad, turns: 1),
+          (unitType: kUnitTypeEngineer, target: kWorkTargetBuildPort, turns: 1),
+          (unitType: kUnitTypeEngineer, target: kWorkTargetBuildFort, turns: 3),
+          (unitType: kUnitTypeRailBuilder, target: kWorkTargetBuildRail, turns: 1),
+          (unitType: kUnitTypeSpy, target: kWorkTargetStealTech, turns: 5),
+          (unitType: kUnitTypeSpy, target: kWorkTargetCounterSpy, turns: 1),
+          (unitType: kUnitTypeMerchant, target: kWorkTargetPurchaseLand, turns: 1),
         ];
 
         for (var i = 0; i < cases.length; i++) {
@@ -509,7 +509,7 @@ void main() {
             units: [
               Unit(
                 id: 'r1',
-                type: 'Rail Builder',
+                type: kUnitTypeRailBuilder,
                 ownerId: human,
                 locationProvinceId: 'oldWorld|p1',
                 tileKey: tileKey,
@@ -571,7 +571,7 @@ void main() {
             units: [
               Unit(
                 id: 'b1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: human,
                 locationProvinceId: 'oldWorld|p1',
                 tileKey: tileKey,

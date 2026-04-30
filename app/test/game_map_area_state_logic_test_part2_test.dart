@@ -114,7 +114,7 @@ void main() {
                   ? [
                       ct_models.Unit(
                         id: 'u_explorer',
-                        type: 'Explorer',
+                        type: ct_models.kUnitTypeExplorer,
                         ownerId: humanPlayerId,
                         locationProvinceId: selectedProvinceId,
                         tileKey: selectedTileKey,
@@ -287,7 +287,7 @@ void main() {
                   ? [
                       ct_models.Unit(
                         id: 'u_builder',
-                        type: 'Builder',
+                        type: ct_models.kUnitTypeBuilder,
                         ownerId: humanPlayerId,
                         locationProvinceId: selectedProvinceId,
                         tileKey: selectedTileKey,
@@ -457,7 +457,7 @@ void main() {
                 units: [
                   ct_models.Unit(
                     id: 'u_builder',
-                    type: 'Builder',
+                    type: ct_models.kUnitTypeBuilder,
                     ownerId: humanPlayerId,
                     locationProvinceId: provinceId,
                     tileKey: selectedTileKey,
@@ -542,7 +542,7 @@ void main() {
                 units: [
                   ct_models.Unit(
                     id: 'u_builder',
-                    type: 'Builder',
+                    type: ct_models.kUnitTypeBuilder,
                     ownerId: humanPlayerId,
                     locationProvinceId: provinceId,
                     tileKey: selectedTileKey,
@@ -621,7 +621,7 @@ void main() {
             units: [
               ct_models.Unit(
                 id: 'u_explorer',
-                type: 'Explorer',
+                type: ct_models.kUnitTypeExplorer,
                 ownerId: humanPlayerId,
                 locationProvinceId: 'oldWorld|p1',
                 tileKey: selectedTileKey,

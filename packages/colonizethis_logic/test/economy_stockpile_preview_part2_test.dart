@@ -52,7 +52,7 @@ void main() {
               units: [
                 Unit(
                   id: 'b1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'p1',
                   locationProvinceId: 'ow|p1',
                   tileKey: tileKey,
@@ -128,7 +128,7 @@ void main() {
               units: [
                 Unit(
                   id: 'b1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'p1',
                   locationProvinceId: 'ow|p1',
                   tileKey: tileKey,
@@ -167,7 +167,7 @@ void main() {
       final tileState = const TileMapState();
       final busyUnit = Unit(
         id: 'b1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: 'p1',
         locationProvinceId: 'ow|p1',
         tileKey: tileKey,
@@ -232,7 +232,7 @@ void main() {
             units: [
               Unit(
                 id: 'b2',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: 'ow|p1',
                 tileKey: tileKey,

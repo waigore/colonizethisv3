@@ -319,7 +319,7 @@ void main() {
               units: [
                 Unit(
                   id: 'u_builder',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'gp1',
                   locationProvinceId: 'oldWorld|pOwn',
                   status: UnitStatus.idle,
@@ -437,7 +437,7 @@ void main() {
               units: [
                 Unit(
                   id: 'u_builder_other',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'gp2',
                   locationProvinceId: 'oldWorld|pOther',
                   status: UnitStatus.idle,
@@ -554,7 +554,7 @@ void main() {
                 // Same tile; representative should be Builder by priority.
                 Unit(
                   id: 'u_builder',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'gp_human',
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: 'oldWorld|p1|0|0',
@@ -563,7 +563,7 @@ void main() {
                 ),
                 Unit(
                   id: 'u_spy',
-                  type: 'Spy',
+                  type: kUnitTypeSpy,
                   ownerId: 'gp_human',
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: 'oldWorld|p1|0|0',
@@ -571,7 +571,7 @@ void main() {
                 ),
                 Unit(
                   id: 'u_engineer',
-                  type: 'Engineer',
+                  type: kUnitTypeEngineer,
                   ownerId: 'gp_human',
                   locationProvinceId: 'oldWorld|p2',
                   tileKey: 'oldWorld|p2|1|0',
@@ -580,7 +580,7 @@ void main() {
                 // Non-human civilian is excluded.
                 Unit(
                   id: 'u_ai_builder',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'gp_ai',
                   locationProvinceId: 'oldWorld|p3',
                   tileKey: 'oldWorld|p3|2|0',
@@ -597,7 +597,7 @@ void main() {
                 // Human civilian in other region is excluded from OW marker set.
                 Unit(
                   id: 'u_other_region',
-                  type: 'Merchant',
+                  type: kUnitTypeMerchant,
                   ownerId: 'gp_human',
                   locationProvinceId: 'newWorld|p1',
                   tileKey: 'newWorld|p1|0|0',
@@ -632,17 +632,17 @@ void main() {
           (m) => m.tileKey == 'oldWorld|p1|0|0',
         );
         expect(tile00.stackCount, 2);
-        expect(tile00.representativeUnitType, 'Builder');
+        expect(tile00.representativeUnitType, kUnitTypeBuilder);
         expect(tile00.representativeIsAssigned, isTrue);
         expect(tile00.unitIds, equals(['u_builder', 'u_spy']));
-        expect(tile00.unitTypes['u_builder'], 'Builder');
-        expect(tile00.unitTypes['u_spy'], 'Spy');
+        expect(tile00.unitTypes['u_builder'], kUnitTypeBuilder);
+        expect(tile00.unitTypes['u_spy'], kUnitTypeSpy);
 
         final tile10 = markers.singleWhere(
           (m) => m.tileKey == 'oldWorld|p2|1|0',
         );
         expect(tile10.stackCount, 1);
-        expect(tile10.representativeUnitType, 'Engineer');
+        expect(tile10.representativeUnitType, kUnitTypeEngineer);
         expect(tile10.representativeIsAssigned, isFalse);
         expect(tile10.unitIds, equals(['u_engineer']));
       },
@@ -700,14 +700,14 @@ void main() {
               units: [
                 Unit(
                   id: 'u_builder',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'gp1',
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: 'oldWorld|p1|0|0',
                 ),
                 Unit(
                   id: 'u_explorer',
-                  type: 'Explorer',
+                  type: kUnitTypeExplorer,
                   ownerId: 'gp1',
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: 'oldWorld|p1|0|0',

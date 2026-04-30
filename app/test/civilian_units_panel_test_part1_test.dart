@@ -323,14 +323,14 @@ void main() {
               units: [
                 Unit(
                   id: 'e1',
-                  type: 'Explorer',
+                  type: kUnitTypeExplorer,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
                 ),
                 Unit(
                   id: 'b1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -364,8 +364,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Explorer'), findsOneWidget);
-        expect(find.text('Builder'), findsNothing);
+        expect(find.text(kUnitTypeExplorer), findsOneWidget);
+        expect(find.text(kUnitTypeBuilder), findsNothing);
 
         await tester.tap(find.text('Assign'));
         await tester.pump();
@@ -407,14 +407,14 @@ void main() {
               units: [
                 Unit(
                   id: 'e1',
-                  type: 'Explorer',
+                  type: kUnitTypeExplorer,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
                 ),
                 Unit(
                   id: 'b1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -448,8 +448,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Explorer'), findsOneWidget);
-        expect(find.text('Builder'), findsNothing);
+        expect(find.text(kUnitTypeExplorer), findsOneWidget);
+        expect(find.text(kUnitTypeBuilder), findsNothing);
 
         await tester.tap(find.text('Assign'));
         await tester.pump();
@@ -491,14 +491,14 @@ void main() {
               units: [
                 Unit(
                   id: 'b1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
                 ),
                 Unit(
                   id: 'e1',
-                  type: 'Explorer',
+                  type: kUnitTypeExplorer,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -532,8 +532,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Builder'), findsOneWidget);
-        expect(find.text('Explorer'), findsNothing);
+        expect(find.text(kUnitTypeBuilder), findsOneWidget);
+        expect(find.text(kUnitTypeExplorer), findsNothing);
 
         await tester.tap(find.text('Assign'));
         await tester.pump();

@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show TerrainType;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show AppEventBus, OpenProvinceDetailPanelEvent;
+    show AppEventBus, OpenProvinceDetailPanelEvent, kUnitTypeBuilder;
 
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
@@ -435,8 +435,8 @@ void main() {
               y: 0,
               localProvinceId: 'pMarker',
               unitIds: const ['u_builder'],
-              unitTypes: const {'u_builder': 'Builder'},
-              representativeUnitType: 'Builder',
+              unitTypes: const {'u_builder': kUnitTypeBuilder},
+              representativeUnitType: kUnitTypeBuilder,
               stackCount: 1,
             ),
           ],
@@ -502,8 +502,8 @@ void main() {
               y: selectedMarkerCell.y,
               localProvinceId: selectedMarkerCell.regionCellId,
               unitIds: const ['u_builder'],
-              unitTypes: const {'u_builder': 'Builder'},
-              representativeUnitType: 'Builder',
+              unitTypes: const {'u_builder': kUnitTypeBuilder},
+              representativeUnitType: kUnitTypeBuilder,
               stackCount: 1,
             ),
           ],

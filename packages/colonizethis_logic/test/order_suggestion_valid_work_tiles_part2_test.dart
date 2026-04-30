@@ -20,7 +20,7 @@ void main() {
 
         final explorer = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: partialProvince,
           tileKey: partialKnownTile,
@@ -110,7 +110,7 @@ void main() {
         final startTile = '$ow|p0|0|0';
         final explorer = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: '$ow|p0',
           tileKey: startTile,
@@ -169,7 +169,7 @@ void main() {
       // Civilian unit (Builder) - cannot enter other GP territory
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
       );
@@ -258,7 +258,7 @@ void main() {
 
       final spy = Unit(
         id: 'spy1',
-        type: 'Spy',
+        type: kUnitTypeSpy,
         ownerId: playerId,
         locationProvinceId: '$ow|spy_loc',
         tileKey: 'oldWorld|spy_loc|0|0',
@@ -341,7 +341,7 @@ void main() {
 
         final builder = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p1|0|0',
@@ -442,7 +442,7 @@ void main() {
 
         final builder = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p1|0|0',
@@ -543,7 +543,7 @@ void main() {
         );
         final explorer = Unit(
           id: 'ex1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provHome,
           tileKey: tileHome,
@@ -624,7 +624,7 @@ void main() {
         final pTarget = Province(id: provTarget, regionId: nw, ownerId: 'gp2');
         final explorer = Unit(
           id: 'ex1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provHome,
           tileKey: tileHome,
@@ -706,7 +706,7 @@ void main() {
         );
         final explorer = Unit(
           id: 'ex1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provHome,
           tileKey: tileHome,
@@ -787,7 +787,7 @@ void main() {
         );
         final explorer = Unit(
           id: 'ex1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provHome,
           tileKey: tileHome,
@@ -866,7 +866,7 @@ void main() {
         final pMinor = Province(id: provMinor, regionId: nw, ownerId: 'minor1');
         final unit = Unit(
           id: 'u1',
-          type: 'Merchant',
+          type: kUnitTypeMerchant,
           ownerId: playerId,
           locationProvinceId: provOwn,
           tileKey: tileOwn,
@@ -956,7 +956,7 @@ void main() {
         final pMinor = Province(id: provMinor, regionId: nw, ownerId: 'minor1');
         final unit = Unit(
           id: 'u1',
-          type: 'Merchant',
+          type: kUnitTypeMerchant,
           ownerId: playerId,
           locationProvinceId: provOwn,
           tileKey: tileOwn,

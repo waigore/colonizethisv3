@@ -177,12 +177,12 @@ void main() {
         buildUnitOrdersByPlayerId: {
           'p1': [
             BuildUnitOrder(
-              unitType: 'Builder',
+              unitType: kUnitTypeBuilder,
               isMilitary: false,
               spawnProvinceId: 'ow|p1',
             ),
             BuildUnitOrder(
-              unitType: 'Builder',
+              unitType: kUnitTypeBuilder,
               isMilitary: false,
               spawnProvinceId: 'ow|p1',
             ),

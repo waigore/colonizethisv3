@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show TerrainType;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show AppEventBus, OpenProvinceDetailPanelEvent;
+    show AppEventBus, OpenProvinceDetailPanelEvent, kUnitTypeExplorer;
 
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
@@ -557,8 +557,8 @@ void main() {
             y: 2,
             localProvinceId: 'p1',
             unitIds: const ['u1'],
-            unitTypes: const {'u1': 'Explorer'},
-            representativeUnitType: 'Explorer',
+            unitTypes: const {'u1': kUnitTypeExplorer},
+            representativeUnitType: kUnitTypeExplorer,
             stackCount: 1,
             applyCivilianRevealHalo: true,
           ),

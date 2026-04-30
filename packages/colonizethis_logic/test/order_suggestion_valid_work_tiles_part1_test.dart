@@ -39,7 +39,7 @@ void main() {
       const ow = 'oldWorld';
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -112,7 +112,7 @@ void main() {
         const ow = 'oldWorld';
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p1|0|0',
@@ -214,7 +214,7 @@ void main() {
 
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: tileWithResource,
@@ -292,7 +292,7 @@ void main() {
 
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: grainTile,
@@ -393,7 +393,7 @@ void main() {
 
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -475,7 +475,7 @@ void main() {
 
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
         tileKey: landTile,
@@ -555,7 +555,7 @@ void main() {
         final p1 = Province(id: provinceId, regionId: ow, ownerId: 'tribe1');
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provinceId,
           tileKey: grassTile,
@@ -623,7 +623,7 @@ void main() {
         final p1 = Province(id: provinceId, regionId: ow, ownerId: 'tribe1');
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provinceId,
           tileKey: ironTile,
@@ -688,7 +688,7 @@ void main() {
         final p1 = Province(id: provinceId, regionId: ow, ownerId: 'tribe1');
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: provinceId,
           tileKey: woolTile,

@@ -46,7 +46,7 @@ void main() {
             units: [
               Unit(
                 id: 'u_builder',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'gp1',
                 locationProvinceId: _fullProvinceId,
                 tileKey: tk,

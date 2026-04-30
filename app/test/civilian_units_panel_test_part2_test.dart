@@ -151,7 +151,7 @@ void main() {
               units: [
                 Unit(
                   id: 'civ1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -213,14 +213,14 @@ void main() {
               units: [
                 Unit(
                   id: 'civ_a',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
                 ),
                 Unit(
                   id: 'civ_b',
-                  type: 'Engineer',
+                  type: kUnitTypeEngineer,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: tileKey,
@@ -295,7 +295,7 @@ void main() {
               units: [
                 Unit(
                   id: 'u1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: human,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: standingTile,
