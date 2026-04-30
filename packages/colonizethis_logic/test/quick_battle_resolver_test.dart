@@ -701,6 +701,7 @@ void main() {
           },
           spyRevealTurnsByPlayer: const {
             'att': {provinceId: 3, 'oldWorld|OTHER': 2},
+            'def': {provinceId: 3},
             'ally': {provinceId: 4},
           },
           tileKeysByRegionAndProvince: const {
@@ -740,11 +741,14 @@ void main() {
           .first;
       expect(province.ownerId, 'att');
 
-      // Spy timer for (att, provinceId) cleared but other timers remain.
+      // Spy timer for (att, provinceId) and (def, provinceId) cleared; other timers remain.
       final attackerTimers =
           after.worldState.spyRevealTurnsByPlayer['att'] ?? const {};
       expect(attackerTimers.containsKey(provinceId), isFalse);
       expect(attackerTimers['oldWorld|OTHER'], 2);
+      final defenderTimers =
+          after.worldState.spyRevealTurnsByPlayer['def'] ?? const {};
+      expect(defenderTimers.containsKey(provinceId), isFalse);
       // Other player's timers unchanged.
       expect(after.worldState.spyRevealTurnsByPlayer['ally']?[provinceId], 4);
       // Visibility for attacker remains fullyVisible.

@@ -111,6 +111,33 @@ Province? tryGetProvince(WorldState world, String fullProvinceId) {
   );
 }
 
+/// Resolves a province row for transfer paths that accept either a prefixed id
+/// or a legacy short [Province.id] (tests and some fixtures).
+///
+/// Returns the authoritative [Province.id] as [canonicalProvinceId] for bucket
+/// keys and timer maps.
+({Province province, String canonicalProvinceId})?
+resolveProvinceRowForOwnershipTransfer(
+  WorldState world,
+  String provinceKey,
+) {
+  final prefixed = tryGetProvince(world, provinceKey);
+  if (prefixed != null) {
+    return (province: prefixed, canonicalProvinceId: prefixed.id);
+  }
+  for (final p in world.oldWorld.provinces) {
+    if (p.id == provinceKey) {
+      return (province: p, canonicalProvinceId: p.id);
+    }
+  }
+  for (final p in world.newWorld.provinces) {
+    if (p.id == provinceKey) {
+      return (province: p, canonicalProvinceId: p.id);
+    }
+  }
+  return null;
+}
+
 /// Returns land tile keys for a province bucket using canonical full province id.
 ///
 /// This helper intentionally does not fall back to local-only ids. Callers must

@@ -150,12 +150,12 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
           .toList();
     }
     if (widget.explorerOnly) {
-      scopedOw = scopedOw.where(_isExplorerUnit).toList();
-      scopedNw = scopedNw.where(_isExplorerUnit).toList();
+      scopedOw = scopedOw.where((Unit u) => _isExplorerUnit(u)).toList();
+      scopedNw = scopedNw.where((Unit u) => _isExplorerUnit(u)).toList();
     }
     if (widget.builderOnly) {
-      scopedOw = scopedOw.where(_isBuilderUnit).toList();
-      scopedNw = scopedNw.where(_isBuilderUnit).toList();
+      scopedOw = scopedOw.where((Unit u) => _isBuilderUnit(u)).toList();
+      scopedNw = scopedNw.where((Unit u) => _isBuilderUnit(u)).toList();
     }
     final hasAny = scopedOw.isNotEmpty || scopedNw.isNotEmpty;
     final allScopedUnits = <Unit>[...scopedOw, ...scopedNw];
