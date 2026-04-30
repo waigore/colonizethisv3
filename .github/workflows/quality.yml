@@ -97,6 +97,7 @@ jobs:
           set -e
           cd app
           flutter gen-l10n
+          dart run ../tool/patch_app_localizations_after_gen_l10n.dart
 
       - name: Check long string switches (AST)
         if: needs.changes.outputs.tests == 'true'
@@ -230,8 +231,9 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     # Dart coverage + package matrix; Flutter app tests run in parallel shards (app_tests_shard).
-    # Workspace analyzer runs flutter/dart analyze per member (many packages); 45m can cancel mid-run.
-    timeout-minutes: 90
+    # Workspace analyzer runs flutter/dart analyze per member (many packages); allow enough time
+    # so the job is not cancelled mid-analyze when the workspace grows (Refs #2036).
+    timeout-minutes: 150
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -262,6 +264,15 @@ jobs:
 
       - name: Verify OrderEngine codegen (SPEC/program/order-engine.md)
         run: bash tool/verify_order_engine_codegen.sh
+
+      # `flutter gen-l10n` overwrites tracked split layout; `ct_repo_lint` reads the
+      # workspace tree (Refs #2021). Patch before repo lint so NCL matches committed shell.
+      - name: Restore app l10n split after gen-l10n (NCL / analyze parity)
+        run: |
+          set -e
+          cd app
+          flutter gen-l10n
+          dart run ../tool/patch_app_localizations_after_gen_l10n.dart
 
       - name: Repo convention lint (unified manifest, SPEC/program/repo-lint.md)
         env:
@@ -385,6 +396,7 @@ jobs:
           if [ -d app ]; then
             cd app
             flutter gen-l10n
+            dart run ../tool/patch_app_localizations_after_gen_l10n.dart
             if [ -f lib/l10n/untranslated.json ]; then
               content=$(cat lib/l10n/untranslated.json | tr -d '[:space:]')
               if [ "$content" != "{}" ] && [ "$content" != "" ]; then

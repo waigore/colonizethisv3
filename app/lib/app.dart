@@ -32,7 +32,7 @@ class App extends ConsumerWidget {
       navigatorKey: appNavigatorKey,
       onGenerateTitle: (context) => appL10n(context).app_title,
       localizationsDelegates: const [
-        AppLocalizations.delegate,
+        AppLocalizationsBinding.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

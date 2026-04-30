@@ -14,7 +14,7 @@ void main() {
   Widget wrapWithL10n(Widget child) {
     return MaterialApp(
       localizationsDelegates: const [
-        AppLocalizations.delegate,
+        AppLocalizationsBinding.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

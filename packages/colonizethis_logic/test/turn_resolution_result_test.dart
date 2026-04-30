@@ -81,6 +81,102 @@ void main() {
     });
   });
 
+  group('InterventionPrompt', () {
+    test('equality and hashCode', () {
+      const a = InterventionPrompt(
+        aggressorGpId: 'gp2',
+        defenderMinorOrTribeId: 'minor1',
+        interveningGpId: 'gp1',
+      );
+      const b = InterventionPrompt(
+        aggressorGpId: 'gp2',
+        defenderMinorOrTribeId: 'minor1',
+        interveningGpId: 'gp1',
+      );
+      const c = InterventionPrompt(
+        aggressorGpId: 'gp3',
+        defenderMinorOrTribeId: 'minor1',
+        interveningGpId: 'gp1',
+      );
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(c));
+    });
+  });
+
+  group('InterventionDecision', () {
+    test('equality and hashCode', () {
+      const a = InterventionDecision(
+        aggressorGpId: 'gp2',
+        defenderMinorOrTribeId: 'minor1',
+        interveningGpId: 'gp1',
+        choice: InterventionChoice.intervene,
+      );
+      const b = InterventionDecision(
+        aggressorGpId: 'gp2',
+        defenderMinorOrTribeId: 'minor1',
+        interveningGpId: 'gp1',
+        choice: InterventionChoice.intervene,
+      );
+      const c = InterventionDecision(
+        aggressorGpId: 'gp2',
+        defenderMinorOrTribeId: 'minor1',
+        interveningGpId: 'gp1',
+        choice: InterventionChoice.protest,
+      );
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(c));
+    });
+  });
+
+  group('CallToArms types', () {
+    test('CallToArmsPending equality and hashCode', () {
+      const a = CallToArmsPending(
+        allyGpId: 'gp1',
+        defenderGpId: 'gp2',
+        aggressorGpId: 'gp3',
+      );
+      const b = CallToArmsPending(
+        allyGpId: 'gp1',
+        defenderGpId: 'gp2',
+        aggressorGpId: 'gp3',
+      );
+      const c = CallToArmsPending(
+        allyGpId: 'gp9',
+        defenderGpId: 'gp2',
+        aggressorGpId: 'gp3',
+      );
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(c));
+    });
+
+    test('CallToArmsDecision equality and hashCode', () {
+      const a = CallToArmsDecision(
+        allyGpId: 'gp1',
+        defenderGpId: 'gp2',
+        aggressorGpId: 'gp3',
+        accepted: true,
+      );
+      const b = CallToArmsDecision(
+        allyGpId: 'gp1',
+        defenderGpId: 'gp2',
+        aggressorGpId: 'gp3',
+        accepted: true,
+      );
+      const c = CallToArmsDecision(
+        allyGpId: 'gp1',
+        defenderGpId: 'gp2',
+        aggressorGpId: 'gp3',
+        accepted: false,
+      );
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(c));
+    });
+  });
+
   group('DiplomacyPhaseResult', () {
     test('isPending true when pendingOvertures non-empty', () {
       final result = DiplomacyPhaseResult(
@@ -136,9 +232,16 @@ void main() {
   });
 
   group('TurnResolutionResult', () {
-    test('TurnResolutionComplete holds game', () {
-      final result = TurnResolutionComplete(minimalGame);
+    test('TurnResolutionComplete holds game and optional digest', () {
+      final result = TurnResolutionComplete(
+        minimalGame,
+        turnNewsDigest: const TurnNewsDigest(
+          resolvedTurnNumber: 1,
+          lines: [],
+        ),
+      );
       expect(result.game, minimalGame);
+      expect(result.turnNewsDigest, isNotNull);
     });
 
     test('TurnResolutionPendingOvertures holds game and list', () {

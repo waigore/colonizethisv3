@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/ai/simple_ai_heuristics.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:ctdev/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -810,9 +811,9 @@ class _RunningGameScreenState extends State<RunningGameScreen>
   }
 
   static const _civilianUnitCapabilities = {
-    'Explorer': 'Prospect, explore',
-    'Builder': 'Develop tile',
-    'Engineer': 'Build road, port, fort',
+    kUnitTypeExplorer: 'Prospect, explore',
+    kUnitTypeBuilder: 'Develop tile',
+    kUnitTypeEngineer: 'Build road, port, fort',
   };
 }
 

@@ -344,7 +344,7 @@ final Map<String, _CompletedWorkHandler> _completedWorkTargetHandlers =
       kWorkTargetBuildRoad: _completedWorkBuildRoad,
       kWorkTargetBuildPort: _completedWorkBuildPort,
       kWorkTargetBuildFort: _completedWorkBuildFort,
-      'build_rail': _completedWorkBuildRail,
+      kWorkTargetBuildRail: _completedWorkBuildRail,
       kWorkTargetStealTech: _completedWorkNoop,
       kWorkTargetCounterSpy: _completedWorkNoop,
     };

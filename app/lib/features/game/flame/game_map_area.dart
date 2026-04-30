@@ -41,6 +41,20 @@ import 'next_turn_confirmation_dialog.dart';
 import '../utils/map_location_resolver.dart';
 import '../widgets/player_turn_event_feed.dart';
 
-/// Map area with region tabs and province/sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
+part 'game_map_area_part1.dart';
+part 'game_map_area_part2.dart';
 
-part 'game_map_area_body_part.g.dart';
+/// Map area with region tabs and province/sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
+class GameMapArea extends ConsumerStatefulWidget {
+  const GameMapArea({required this.game, required this.mapViewData, super.key});
+
+  final ct_models.Game game;
+  final InitGameMapViewData mapViewData;
+
+  @override
+  ConsumerState<GameMapArea> createState() => _GameMapAreaState();
+}
+
+class _GameMapAreaState extends ConsumerState<GameMapArea>
+    with _GameMapAreaStatePart1, _GameMapAreaStatePart2 {
+}
