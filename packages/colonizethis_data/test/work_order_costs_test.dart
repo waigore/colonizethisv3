@@ -1,5 +1,25 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show
+        kUnitTypeBuilder,
+        kUnitTypeEngineer,
+        kUnitTypeExplorer,
+        kUnitTypeMerchant,
+        kUnitTypeRailBuilder,
+        kUnitTypeSpy;
+
+const kWorkTargetExplore = 'explore';
+const kWorkTargetProspect = 'prospect';
+const kWorkTargetBuildImprovement = 'build_improvement';
+const kWorkTargetUpgradeTown = 'upgrade_town';
+const kWorkTargetBuildRoad = 'build_road';
+const kWorkTargetBuildPort = 'build_port';
+const kWorkTargetBuildFort = 'build_fort';
+const kWorkTargetBuildRail = 'build_rail';
+const kWorkTargetStealTech = 'steal_tech';
+const kWorkTargetCounterSpy = 'counter_spy';
+const kWorkTargetPurchaseLand = 'purchase_land';
 
 void main() {
   group('totalTurnsForWork', () {
