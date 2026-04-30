@@ -106,7 +106,7 @@ void main() {
     });
 
     test('propagates road level to adjacent port tile when higher', () {
-      const portKey = '$ow|P|0|1';
+      const portKey = '$ow|P|0|0';
       const buildKey = '$ow|P|1|0';
       final tileMap = TileMapResult(
         width: 3,
