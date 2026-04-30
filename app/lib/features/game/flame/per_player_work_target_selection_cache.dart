@@ -74,6 +74,11 @@ class PerPlayerWorkTargetSelectionCache {
   _defaultStrategies = {
     kWorkTargetExplore: _populateExploreTargets,
     kWorkTargetBuildImprovement: _populateBuildImprovementTargets,
+    kWorkTargetUpgradeTown: _populateUpgradeTownTargets,
+    kWorkTargetBuildRoad: _populateBuildRoadTargets,
+    kWorkTargetBuildPort: _populateBuildPortTargets,
+    kWorkTargetBuildFort: _populateBuildFortTargets,
+    kWorkTargetBuildRail: _populateBuildRailTargets,
   };
 
   static Set<String> _populateExploreTargets(WorkTargetSelectionSnapshot s) {
@@ -102,13 +107,39 @@ class PerPlayerWorkTargetSelectionCache {
   static Set<String> _populateBuildImprovementTargets(
     WorkTargetSelectionSnapshot s,
   ) {
+    return _populateIdleNoPendingTargets(s, kWorkTargetBuildImprovement);
+  }
+
+  static Set<String> _populateUpgradeTownTargets(
+    WorkTargetSelectionSnapshot s,
+  ) {
+    return _populateIdleNoPendingTargets(s, kWorkTargetUpgradeTown);
+  }
+
+  static Set<String> _populateBuildRoadTargets(WorkTargetSelectionSnapshot s) {
+    return _populateIdleNoPendingTargets(s, kWorkTargetBuildRoad);
+  }
+
+  static Set<String> _populateBuildPortTargets(WorkTargetSelectionSnapshot s) {
+    return _populateIdleNoPendingTargets(s, kWorkTargetBuildPort);
+  }
+
+  static Set<String> _populateBuildFortTargets(WorkTargetSelectionSnapshot s) {
+    return _populateIdleNoPendingTargets(s, kWorkTargetBuildFort);
+  }
+
+  static Set<String> _populateBuildRailTargets(WorkTargetSelectionSnapshot s) {
+    return _populateIdleNoPendingTargets(s, kWorkTargetBuildRail);
+  }
+
+  static Set<String> _populateIdleNoPendingTargets(
+    WorkTargetSelectionSnapshot s,
+    String workTarget,
+  ) {
     final merged = <String>{};
     for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
       final supportsTarget =
-          workOrderTargetsByUnitType[unit.type]?.contains(
-            kWorkTargetBuildImprovement,
-          ) ??
-          false;
+          workOrderTargetsByUnitType[unit.type]?.contains(workTarget) ?? false;
       if (!supportsTarget) {
         continue;
       }
@@ -128,7 +159,7 @@ class PerPlayerWorkTargetSelectionCache {
         topology: s.topology,
         view: s.playerView,
         unitId: unit.id,
-        workTarget: kWorkTargetBuildImprovement,
+        workTarget: workTarget,
         currentOrders: s.currentOrders,
         tileMapByRegion: s.tileMapByRegion,
       );

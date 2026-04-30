@@ -37,6 +37,76 @@ class GameMapAreaStateLogic {
     return tileKey;
   }
 
+  static const Set<String> kCacheFirstWorkTargets = {
+    kWorkTargetExplore,
+    kWorkTargetBuildImprovement,
+    kWorkTargetUpgradeTown,
+    kWorkTargetBuildRoad,
+    kWorkTargetBuildPort,
+    kWorkTargetBuildFort,
+    kWorkTargetBuildRail,
+  };
+
+  static const Set<String> _runtimeConflictProtectedCacheTargets = {
+    kWorkTargetUpgradeTown,
+    kWorkTargetBuildRoad,
+    kWorkTargetBuildPort,
+    kWorkTargetBuildFort,
+    kWorkTargetBuildRail,
+  };
+
+  /// Filters stale conflict tiles from app-cached work-target selections.
+  ///
+  /// This is a post-cache set-subtraction guard only: it does not recompute
+  /// valid tiles and applies only to targets that use worker-family stale-tile
+  /// protection.
+  static Set<String> filterCacheSelectionForRuntimeStaleTileConflicts({
+    required Set<String> cachedTileKeys,
+    required ct_models.Game game,
+    required ct_models.Orders currentOrders,
+    required String playerId,
+    required String selectedUnitId,
+    required String workTarget,
+  }) {
+    if (cachedTileKeys.isEmpty ||
+        !_runtimeConflictProtectedCacheTargets.contains(workTarget)) {
+      return cachedTileKeys;
+    }
+    final conflicting = <String>{};
+    final pending = currentOrders.workOrdersByPlayerId[playerId] ?? const [];
+    for (final order in pending) {
+      if (order.targetTileKey.isEmpty || order.unitId == selectedUnitId) {
+        continue;
+      }
+      if (!_runtimeConflictProtectedCacheTargets.contains(order.target)) {
+        continue;
+      }
+      conflicting.add(order.targetTileKey);
+    }
+    for (final unit in [
+      ...game.worldState.oldWorld.units,
+      ...game.worldState.newWorld.units,
+    ]) {
+      if (unit.ownerId != playerId || unit.id == selectedUnitId) {
+        continue;
+      }
+      final currentWork = unit.currentWork;
+      if (currentWork == null || currentWork.tileKey.isEmpty) {
+        continue;
+      }
+      if (!_runtimeConflictProtectedCacheTargets.contains(
+        currentWork.workTarget,
+      )) {
+        continue;
+      }
+      conflicting.add(currentWork.tileKey);
+    }
+    if (conflicting.isEmpty) {
+      return cachedTileKeys;
+    }
+    return cachedTileKeys.difference(conflicting);
+  }
+
   static ct_models.Orders addHumanWorkOrder({
     required ct_models.Orders orders,
     required String humanPlayerId,
