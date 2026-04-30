@@ -7,11 +7,13 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         VisibilityLevel,
         buildPlayerView,
         getValidWorkOrderTileKeysWithVisibility,
+        kWorkTargetExplore,
         kWorkTargetBuildFort,
         kWorkTargetBuildImprovement,
         kWorkTargetBuildPort,
         kWorkTargetBuildRail,
         kWorkTargetBuildRoad,
+        kWorkTargetProspect,
         kWorkTargetUpgradeTown;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -112,8 +114,8 @@ void main() {
               y: 0,
               localProvinceId: 'p1',
               unitIds: [unitId],
-              unitTypes: {unitId: 'Builder'},
-              representativeUnitType: 'Builder',
+              unitTypes: {unitId: ct_models.kUnitTypeBuilder},
+              representativeUnitType: ct_models.kUnitTypeBuilder,
               stackCount: 1,
               representativeIsAssigned: false,
             ),
@@ -133,7 +135,7 @@ void main() {
               units: [
                 ct_models.Unit(
                   id: unitId,
-                  type: 'Builder',
+                  type: ct_models.kUnitTypeBuilder,
                   ownerId: humanPlayerId,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: sourceTile,
@@ -161,7 +163,7 @@ void main() {
             humanPlayerId: [
               ct_models.WorkOrder(
                 unitId: unitId,
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: targetTile,
               ),
             ],
@@ -231,7 +233,7 @@ void main() {
                 units: [
                   ct_models.Unit(
                     id: explorerId,
-                    type: 'Explorer',
+                    type: ct_models.kUnitTypeExplorer,
                     ownerId: humanPlayerId,
                     locationProvinceId: 'oldWorld|p1',
                     tileKey: sourceTile,
@@ -290,8 +292,8 @@ void main() {
                 y: 0,
                 localProvinceId: 'p1',
                 unitIds: [explorerId],
-                unitTypes: {explorerId: 'Explorer'},
-                representativeUnitType: 'Explorer',
+                unitTypes: {explorerId: ct_models.kUnitTypeExplorer},
+                representativeUnitType: ct_models.kUnitTypeExplorer,
                 stackCount: 1,
                 representativeIsAssigned: false,
               ),
@@ -303,7 +305,7 @@ void main() {
               humanPlayerId: [
                 ct_models.WorkOrder(
                   unitId: explorerId,
-                  target: 'prospect',
+                  target: kWorkTargetProspect,
                   targetTileKey: targetTile,
                 ),
               ],
@@ -357,7 +359,7 @@ void main() {
                 units: [
                   ct_models.Unit(
                     id: explorerId,
-                    type: 'Explorer',
+                    type: ct_models.kUnitTypeExplorer,
                     ownerId: humanPlayerId,
                     locationProvinceId: 'newWorld|p1',
                     tileKey: sourceTile,
@@ -398,8 +400,8 @@ void main() {
                 y: 0,
                 localProvinceId: 'p1',
                 unitIds: [explorerId],
-                unitTypes: {explorerId: 'Explorer'},
-                representativeUnitType: 'Explorer',
+                unitTypes: {explorerId: ct_models.kUnitTypeExplorer},
+                representativeUnitType: ct_models.kUnitTypeExplorer,
                 stackCount: 1,
                 representativeIsAssigned: false,
               ),
@@ -411,7 +413,7 @@ void main() {
               humanPlayerId: [
                 ct_models.WorkOrder(
                   unitId: explorerId,
-                  target: 'prospect',
+                  target: kWorkTargetProspect,
                   targetTileKey: targetTile,
                 ),
               ],
@@ -453,7 +455,7 @@ void main() {
                 humanPlayerId: [
                   ct_models.WorkOrder(
                     unitId: explorerId,
-                    target: 'prospect',
+                    target: kWorkTargetProspect,
                     targetTileKey: targetTile,
                   ),
                 ],
@@ -503,8 +505,8 @@ void main() {
                 y: 0,
                 localProvinceId: 'p1',
                 unitIds: [explorerId],
-                unitTypes: {explorerId: 'Explorer'},
-                representativeUnitType: 'Explorer',
+                unitTypes: {explorerId: ct_models.kUnitTypeExplorer},
+                representativeUnitType: ct_models.kUnitTypeExplorer,
                 stackCount: 1,
                 representativeIsAssigned: false,
               ),
@@ -516,7 +518,7 @@ void main() {
               humanPlayerId: [
                 ct_models.WorkOrder(
                   unitId: explorerId,
-                  target: 'prospect',
+                  target: kWorkTargetProspect,
                   targetTileKey: targetTile,
                 ),
               ],
@@ -585,7 +587,7 @@ void main() {
                 humanPlayerId: [
                   ct_models.WorkOrder(
                     unitId: explorerId,
-                    target: 'prospect',
+                    target: kWorkTargetProspect,
                     targetTileKey: targetA,
                   ),
                 ],
@@ -596,7 +598,7 @@ void main() {
                 humanPlayerId: [
                   ct_models.WorkOrder(
                     unitId: explorerId,
-                    target: 'prospect',
+                    target: kWorkTargetProspect,
                     targetTileKey: targetB,
                   ),
                 ],
@@ -643,7 +645,7 @@ void main() {
                 units: [
                   ct_models.Unit(
                     id: explorerId,
-                    type: 'Explorer',
+                    type: ct_models.kUnitTypeExplorer,
                     ownerId: humanPlayerId,
                     locationProvinceId: 'oldWorld|p1',
                     tileKey: sourceTile,
@@ -658,7 +660,7 @@ void main() {
                 units: [
                   ct_models.Unit(
                     id: merchantId,
-                    type: 'Merchant',
+                    type: ct_models.kUnitTypeMerchant,
                     ownerId: humanPlayerId,
                     locationProvinceId: 'newWorld|p1',
                     tileKey: targetTile,
@@ -699,8 +701,8 @@ void main() {
                 y: 0,
                 localProvinceId: 'p1',
                 unitIds: [merchantId],
-                unitTypes: {merchantId: 'Merchant'},
-                representativeUnitType: 'Merchant',
+                unitTypes: {merchantId: ct_models.kUnitTypeMerchant},
+                representativeUnitType: ct_models.kUnitTypeMerchant,
                 stackCount: 1,
                 representativeIsAssigned: false,
               ),
@@ -711,7 +713,7 @@ void main() {
               humanPlayerId: [
                 ct_models.WorkOrder(
                   unitId: explorerId,
-                  target: 'prospect',
+                  target: kWorkTargetProspect,
                   targetTileKey: targetTile,
                 ),
               ],
@@ -751,8 +753,8 @@ void main() {
                 y: 0,
                 localProvinceId: 'p1',
                 unitIds: [explorerId],
-                unitTypes: {explorerId: 'Explorer'},
-                representativeUnitType: 'Explorer',
+                unitTypes: {explorerId: ct_models.kUnitTypeExplorer},
+                representativeUnitType: ct_models.kUnitTypeExplorer,
                 stackCount: 1,
                 representativeIsAssigned: false,
               ),
@@ -824,7 +826,7 @@ void main() {
       test('explore preserves exact assigned tile key', () {
         final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1|10|20',
-          workTarget: 'explore',
+          workTarget: kWorkTargetExplore,
         );
         expect(translated, 'oldWorld|p1|10|20');
       });
@@ -840,7 +842,7 @@ void main() {
       test('short tile keys are returned unchanged', () {
         final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1',
-          workTarget: 'explore',
+          workTarget: kWorkTargetExplore,
         );
         expect(translated, 'oldWorld|p1');
       });
@@ -854,7 +856,7 @@ void main() {
         );
         final workOrder = ct_models.WorkOrder(
           unitId: 'u1',
-          target: 'explore',
+          target: kWorkTargetExplore,
           targetTileKey: 'oldWorld|p1|0|0',
         );
 
@@ -875,7 +877,7 @@ void main() {
             humanPlayerId: [
               ct_models.WorkOrder(
                 unitId: unitId,
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: 'oldWorld|p1|0|0',
               ),
             ],
@@ -883,7 +885,7 @@ void main() {
         );
         const replacement = ct_models.WorkOrder(
           unitId: unitId,
-          target: 'build_road',
+          target: kWorkTargetBuildRoad,
           targetTileKey: 'oldWorld|p1|1|0',
         );
 
@@ -909,7 +911,7 @@ void main() {
         );
         const work = ct_models.WorkOrder(
           unitId: 'u1',
-          target: 'explore',
+          target: kWorkTargetExplore,
           targetTileKey: 'oldWorld|p2|0|0',
         );
 
@@ -961,7 +963,7 @@ void main() {
                   ? [
                       ct_models.Unit(
                         id: 'u_explorer',
-                        type: 'Explorer',
+                        type: ct_models.kUnitTypeExplorer,
                         ownerId: humanPlayerId,
                         locationProvinceId: selectedProvinceId,
                         tileKey: selectedTileKey,
@@ -1193,7 +1195,7 @@ void main() {
               units: [
                 ct_models.Unit(
                   id: 'u_other',
-                  type: 'Rail Builder',
+                  type: ct_models.kUnitTypeRailBuilder,
                   ownerId: humanPlayerId,
                   locationProvinceId: 'oldWorld|p1',
                   tileKey: 'oldWorld|p1|0|0',
@@ -1258,7 +1260,7 @@ void main() {
                   ? [
                       ct_models.Unit(
                         id: 'u_builder',
-                        type: 'Builder',
+                        type: ct_models.kUnitTypeBuilder,
                         ownerId: humanPlayerId,
                         locationProvinceId: selectedProvinceId,
                         tileKey: selectedTileKey,
@@ -1428,7 +1430,7 @@ void main() {
                 units: [
                   ct_models.Unit(
                     id: 'u_builder',
-                    type: 'Builder',
+                    type: ct_models.kUnitTypeBuilder,
                     ownerId: humanPlayerId,
                     locationProvinceId: provinceId,
                     tileKey: selectedTileKey,
@@ -1513,7 +1515,7 @@ void main() {
                 units: [
                   ct_models.Unit(
                     id: 'u_builder',
-                    type: 'Builder',
+                    type: ct_models.kUnitTypeBuilder,
                     ownerId: humanPlayerId,
                     locationProvinceId: provinceId,
                     tileKey: selectedTileKey,
@@ -1592,7 +1594,7 @@ void main() {
             units: [
               ct_models.Unit(
                 id: 'u_explorer',
-                type: 'Explorer',
+                type: ct_models.kUnitTypeExplorer,
                 ownerId: humanPlayerId,
                 locationProvinceId: 'oldWorld|p1',
                 tileKey: selectedTileKey,
