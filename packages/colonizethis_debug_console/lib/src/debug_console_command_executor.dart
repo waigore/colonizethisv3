@@ -1,7 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'debug_console_command.dart';
 import 'debug_console_command_parser.dart';
+import 'debug_console_parsed_invocation.dart';
 
 class DebugConsoleCommandExecutor {
   const DebugConsoleCommandExecutor({
@@ -20,32 +20,60 @@ class DebugConsoleCommandExecutor {
         parsed.message ?? 'Invalid command.',
       );
     }
-    final command = parsed.command;
-    if (command == null) {
+    final invocation = parsed.invocation;
+    if (invocation == null) {
       return const DebugConsoleExecutionResult.error('Invalid command.');
     }
-    return _executeCommand(command, humanPlayerId: humanPlayerId);
+    return _executeInvocation(invocation, humanPlayerId: humanPlayerId);
   }
 
-  DebugConsoleExecutionResult _executeCommand(
-    DebugConsoleCommand command, {
+  DebugConsoleExecutionResult _executeInvocation(
+    DebugConsoleParsedInvocation invocation, {
     required String humanPlayerId,
   }) {
-    return switch (command.kind) {
-      DebugConsoleCommandKind.spawnCivilianAtCapital =>
+    return switch (invocation) {
+      DebugConsoleSpawnCivilianAtCapital(:final unitType, :final count) =>
         DebugConsoleExecutionResult.success(
           events: [
             SpawnDebugCivilianAtCapitalEvent(
               humanPlayerId: humanPlayerId,
-              unitType: command.unitType,
-              count: command.count,
+              unitType: unitType,
+              count: count,
             ),
           ],
           message:
-              'Queued debug spawn: ${command.count}x ${command.unitType} at capital.',
+              'Queued debug spawn: ${count}x $unitType at capital.',
+        ),
+      DebugConsoleTreasuryCredit(
+        :final requestedAmount,
+        :final creditedAmount,
+      ) =>
+        DebugConsoleExecutionResult.success(
+          events: [
+            CreditDebugTreasuryEvent(
+              humanPlayerId: humanPlayerId,
+              requestedAmount: requestedAmount,
+              creditedAmount: creditedAmount,
+            ),
+          ],
+          message: _treasuryCreditExecutorMessage(
+            requestedAmount: requestedAmount,
+            creditedAmount: creditedAmount,
+          ),
         ),
     };
   }
+}
+
+String _treasuryCreditExecutorMessage({
+  required int requestedAmount,
+  required int creditedAmount,
+}) {
+  if (requestedAmount != creditedAmount) {
+    return 'Queued debug treasury credit: requested $requestedAmount, '
+        'crediting $creditedAmount (clamped to $kDebugConsoleMaxTreasuryCreditAmount).';
+  }
+  return 'Queued debug treasury credit: $creditedAmount.';
 }
 
 class DebugConsoleExecutionResult {

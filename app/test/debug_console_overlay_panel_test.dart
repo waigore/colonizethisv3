@@ -49,6 +49,45 @@ void main() {
         snackbars.last.message,
         'Queued debug spawn: 2x Explorer at capital.',
       );
+    });
+
+    testWidgets('submitting valid add_money emits treasury credit event', (
+      tester,
+    ) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      final events = <CreditDebugTreasuryEvent>[];
+      final sub = bus.on<CreditDebugTreasuryEvent>().listen(events.add);
+      addTearDown(sub.cancel);
+      final snackbars = <ShowSnackBarEvent>[];
+      final snackbarSub = bus.on<ShowSnackBarEvent>().listen(snackbars.add);
+      addTearDown(snackbarSub.cancel);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DebugConsoleOverlayPanel(
+              bus: bus,
+              humanPlayerId: 'human_1',
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('debug-console-input')),
+        '/add_money 42',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(events, hasLength(1));
+      expect(events.single.humanPlayerId, 'human_1');
+      expect(events.single.requestedAmount, 42);
+      expect(events.single.creditedAmount, 42);
+      expect(snackbars.last.message, contains('42'));
       expect(closed, isFalse);
     });
 

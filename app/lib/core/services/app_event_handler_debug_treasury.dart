@@ -1,0 +1,53 @@
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+/// Apply immediate treasury credit for the active human player (debug console).
+({Game? game, String message}) applyDebugTreasuryCredit({
+  required Game? currentGame,
+  required CreditDebugTreasuryEvent event,
+}) {
+  if (currentGame == null) {
+    return (game: null, message: 'Debug treasury credit ignored: no active game.');
+  }
+  if (event.creditedAmount < 1) {
+    return (
+      game: null,
+      message: 'Debug treasury credit ignored: credited amount must be >= 1.',
+    );
+  }
+  Player? player;
+  for (final candidate in currentGame.players) {
+    if (candidate.id == event.humanPlayerId) {
+      player = candidate;
+      break;
+    }
+  }
+  if (player == null) {
+    return (
+      game: null,
+      message:
+          'Debug treasury credit ignored: unknown player ${event.humanPlayerId}.',
+    );
+  }
+  final oldTreasury = player.treasury;
+  final newTreasury = oldTreasury + event.creditedAmount;
+  final updatedPlayers = currentGame.players
+      .map(
+        (p) => p.id == event.humanPlayerId
+            ? p.copyWith(treasury: newTreasury)
+            : p,
+      )
+      .toList(growable: false);
+  final nextGame = currentGame.copyWith(players: updatedPlayers);
+
+  final String message;
+  if (event.requestedAmount != event.creditedAmount) {
+    message =
+        'Treasury +${event.creditedAmount} (requested ${event.requestedAmount}, '
+        'credited ${event.creditedAmount}). New balance: $newTreasury.';
+  } else {
+    message =
+        'Treasury +${event.creditedAmount}. New balance: $newTreasury.';
+  }
+
+  return (game: nextGame, message: message);
+}
