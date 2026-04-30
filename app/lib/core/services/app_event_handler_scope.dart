@@ -23,6 +23,7 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 
 import 'app_event_handler.dart';
 import 'app_event_handler_debug_spawn.dart' show applyDebugCivilianSpawnAtCapital;
+import 'app_event_handler_debug_treasury.dart' show applyDebugTreasuryCredit;
 
 part 'app_event_handler_scope_dialog_builders.dart';
 part 'app_event_handler_scope_session_subscriptions.dart';

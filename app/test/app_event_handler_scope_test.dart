@@ -1,5 +1,6 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/core/services/app_event_handler_debug_spawn.dart';
+import 'package:colonizethis_app/core/services/app_event_handler_debug_treasury.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -279,6 +280,77 @@ void main() {
 
       expect(result.game, isNull);
       expect(result.message, contains('count must be >= 1'));
+    });
+  });
+
+  group('applyDebugTreasuryCredit', () {
+    test('returns message when there is no active game', () {
+      const event = CreditDebugTreasuryEvent(
+        humanPlayerId: 'p1',
+        requestedAmount: 10,
+        creditedAmount: 10,
+      );
+      final result = applyDebugTreasuryCredit(
+        currentGame: null,
+        event: event,
+      );
+      expect(result.game, isNull);
+      expect(result.message, contains('no active game'));
+    });
+
+    test('adds credited amount to human player treasury', () {
+      final game = Game(
+        id: 'g-treasury',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: 100),
+          Player(id: 'p2', displayName: 'P2', isHuman: false),
+        ],
+      );
+      const event = CreditDebugTreasuryEvent(
+        humanPlayerId: 'p1',
+        requestedAmount: 50,
+        creditedAmount: 50,
+      );
+      final result = applyDebugTreasuryCredit(
+        currentGame: game,
+        event: event,
+      );
+      expect(result.game, isNotNull);
+      final p1 = result.game!.players.firstWhere((p) => p.id == 'p1');
+      expect(p1.treasury, 150);
+      expect(result.message, contains('+50'));
+      expect(result.message, contains('150'));
+    });
+
+    test('clamped success message includes requested and credited amounts', () {
+      final game = Game(
+        id: 'g-treasury2',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: 0),
+        ],
+      );
+      const event = CreditDebugTreasuryEvent(
+        humanPlayerId: 'p1',
+        requestedAmount: 12000,
+        creditedAmount: 9999,
+      );
+      final result = applyDebugTreasuryCredit(
+        currentGame: game,
+        event: event,
+      );
+      expect(result.game!.players.single.treasury, 9999);
+      expect(result.message, contains('12000'));
+      expect(result.message, contains('9999'));
     });
   });
 }

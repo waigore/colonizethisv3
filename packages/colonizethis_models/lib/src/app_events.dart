@@ -463,6 +463,19 @@ class SpawnDebugCivilianAtCapitalEvent extends SessionCommandEvent {
   final int count;
 }
 
+/// Immediate debug treasury credit for the human player (no economy modifiers).
+class CreditDebugTreasuryEvent extends SessionCommandEvent {
+  const CreditDebugTreasuryEvent({
+    required this.humanPlayerId,
+    required this.requestedAmount,
+    required this.creditedAmount,
+  });
+
+  final String humanPlayerId;
+  final int requestedAmount;
+  final int creditedAmount;
+}
+
 /// Request to append one diplomatic order for [playerId] in current-turn draft.
 class AppendDiplomaticOrderRequestedEvent extends SessionCommandEvent {
   AppendDiplomaticOrderRequestedEvent({
