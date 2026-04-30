@@ -355,7 +355,7 @@ void main() {
         work: const [
           WorkOrder(
             unitId: 'u1',
-            target: 'explore',
+            target: kWorkTargetExplore,
             targetTileKey: 'oldWorld|p1|0|0',
           ),
         ],

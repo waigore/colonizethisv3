@@ -28,7 +28,7 @@ void main() {
         topology,
         playerId,
         'no-such-unit',
-        'explore',
+        kWorkTargetExplore,
         const Orders(),
       );
       expect(valid, isEmpty);
@@ -69,7 +69,7 @@ void main() {
         topology,
         playerId,
         'u1',
-        'build_improvement',
+        kWorkTargetBuildImprovement,
         const Orders(),
       );
       expect(valid, isEmpty);
@@ -99,7 +99,7 @@ void main() {
         topology: topology,
         view: view,
         unitId: 'no-such-unit',
-        workTarget: 'explore',
+        workTarget: kWorkTargetExplore,
         currentOrders: const Orders(),
       );
       expect(valid, isEmpty);
@@ -143,7 +143,7 @@ void main() {
           topology: topology,
           view: view,
           unitId: 'u1',
-          workTarget: 'build_improvement',
+          workTarget: kWorkTargetBuildImprovement,
           currentOrders: const Orders(),
         );
         expect(valid, isEmpty);
@@ -189,7 +189,7 @@ void main() {
         topology: topology,
         view: viewWithFullVisibility,
         unitId: 'u1',
-        workTarget: 'build_improvement',
+        workTarget: kWorkTargetBuildImprovement,
         currentOrders: const Orders(),
       );
 
@@ -198,7 +198,7 @@ void main() {
         topology,
         playerId,
         'u1',
-        'build_improvement',
+        kWorkTargetBuildImprovement,
         const Orders(),
       );
 
@@ -271,7 +271,7 @@ void main() {
         topology: topology,
         view: view,
         unitId: 'u1',
-        workTarget: 'build_improvement',
+        workTarget: kWorkTargetBuildImprovement,
         currentOrders: const Orders(),
       );
 
@@ -348,7 +348,7 @@ void main() {
         topology: topology,
         view: viewUnprospected,
         unitId: 'u1',
-        workTarget: 'build_improvement',
+        workTarget: kWorkTargetBuildImprovement,
         currentOrders: const Orders(),
       );
       expect(validUnprospected.contains(grainTile), isTrue);
@@ -378,7 +378,7 @@ void main() {
         topology: topology,
         view: viewProspected,
         unitId: 'u1',
-        workTarget: 'build_improvement',
+        workTarget: kWorkTargetBuildImprovement,
         currentOrders: const Orders(),
       );
       expect(validProspected.contains(grainTile), isTrue);
@@ -456,7 +456,7 @@ void main() {
         topology: topology,
         view: view,
         unitId: 'u1',
-        workTarget: 'build_improvement',
+        workTarget: kWorkTargetBuildImprovement,
         currentOrders: const Orders(),
       );
 
@@ -527,7 +527,7 @@ void main() {
         topology: topology,
         view: view,
         unitId: 'u1',
-        workTarget: 'build_improvement',
+        workTarget: kWorkTargetBuildImprovement,
         currentOrders: const Orders(),
       );
 
@@ -599,7 +599,7 @@ void main() {
           topology: topology,
           view: view,
           unitId: 'u1',
-          workTarget: 'prospect',
+          workTarget: kWorkTargetProspect,
           currentOrders: const Orders(),
         );
         expect(valid.contains(grassTile), isFalse);
@@ -664,7 +664,7 @@ void main() {
           topology: topology,
           view: view,
           unitId: 'u1',
-          workTarget: 'prospect',
+          workTarget: kWorkTargetProspect,
           currentOrders: const Orders(),
         );
         expect(valid, contains(ironTile));
@@ -744,7 +744,7 @@ void main() {
           topology: topology,
           view: view,
           unitId: 'u1',
-          workTarget: 'prospect',
+          workTarget: kWorkTargetProspect,
           currentOrders: const Orders(),
           tileMapByRegion: tileMapByRegion,
         );

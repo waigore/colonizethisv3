@@ -15,6 +15,8 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetBuildImprovement, kWorkTargetExplore, kWorkTargetProspect;
 
 class _EventHandlingWrapper extends StatefulWidget {
   const _EventHandlingWrapper({
@@ -356,7 +358,7 @@ void main() {
             explorerOnly: true,
             prospectShortcutTargetTileKey: tileKey,
             availableWorkTargets: const {
-              'e1': ['prospect'],
+              'e1': [kWorkTargetProspect],
             },
           ),
         );
@@ -373,7 +375,7 @@ void main() {
         expect(upsertEvent, isNotNull);
         expect(upsertEvent!.playerId, human);
         expect(upsertEvent!.workOrder.unitId, 'e1');
-        expect(upsertEvent!.workOrder.target, 'prospect');
+        expect(upsertEvent!.workOrder.target, kWorkTargetProspect);
         expect(upsertEvent!.workOrder.targetTileKey, tileKey);
         expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
         expect(
@@ -440,7 +442,7 @@ void main() {
             explorerOnly: true,
             exploreShortcutTargetTileKey: tileKey,
             availableWorkTargets: const {
-              'e1': ['explore'],
+              'e1': [kWorkTargetExplore],
             },
           ),
         );
@@ -457,7 +459,7 @@ void main() {
         expect(upsertEvent, isNotNull);
         expect(upsertEvent!.playerId, human);
         expect(upsertEvent!.workOrder.unitId, 'e1');
-        expect(upsertEvent!.workOrder.target, 'explore');
+        expect(upsertEvent!.workOrder.target, kWorkTargetExplore);
         expect(upsertEvent!.workOrder.targetTileKey, tileKey);
         expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
         expect(
@@ -524,7 +526,7 @@ void main() {
             builderOnly: true,
             buildImprovementShortcutTargetTileKey: tileKey,
             availableWorkTargets: const {
-              'b1': ['build_improvement'],
+              'b1': [kWorkTargetBuildImprovement],
             },
           ),
         );
@@ -541,7 +543,7 @@ void main() {
         expect(upsertEvent, isNotNull);
         expect(upsertEvent!.playerId, human);
         expect(upsertEvent!.workOrder.unitId, 'b1');
-        expect(upsertEvent!.workOrder.target, 'build_improvement');
+        expect(upsertEvent!.workOrder.target, kWorkTargetBuildImprovement);
         expect(upsertEvent!.workOrder.targetTileKey, tileKey);
         expect(events.contains(StartCivilianWorkTargetSelectionEvent), isFalse);
       },

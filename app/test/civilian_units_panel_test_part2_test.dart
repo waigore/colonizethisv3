@@ -15,6 +15,8 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetBuildImprovement, kWorkTargetExplore;
 
 class _EventHandlingWrapper extends StatefulWidget {
   const _EventHandlingWrapper({
@@ -311,7 +313,7 @@ void main() {
             human: [
               WorkOrder(
                 unitId: 'u1',
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: pendingTile,
               ),
             ],
@@ -433,7 +435,7 @@ void main() {
         });
         final pendingOrder = WorkOrder(
           unitId: idleCivilian.id,
-          target: 'explore',
+          target: kWorkTargetExplore,
           targetTileKey:
               '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
         );
@@ -508,7 +510,7 @@ void main() {
 
         final pendingOrder = WorkOrder(
           unitId: idleCivilian.id,
-          target: 'explore',
+          target: kWorkTargetExplore,
           targetTileKey:
               '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
         );
@@ -579,7 +581,7 @@ void main() {
 
         final pendingOrder = WorkOrder(
           unitId: idleCivilian.id,
-          target: 'explore',
+          target: kWorkTargetExplore,
           targetTileKey:
               '${idleCivilian.tileKey!.split('|').take(2).join('|')}|0|0',
         );

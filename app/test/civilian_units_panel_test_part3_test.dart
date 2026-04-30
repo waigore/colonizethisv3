@@ -15,6 +15,8 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetBuildFort, kWorkTargetBuildImprovement, kWorkTargetBuildPort, kWorkTargetBuildRail, kWorkTargetBuildRoad, kWorkTargetCounterSpy, kWorkTargetExplore, kWorkTargetProspect, kWorkTargetPurchaseLand, kWorkTargetStealTech, kWorkTargetUpgradeTown;
 
 class _EventHandlingWrapper extends StatefulWidget {
   const _EventHandlingWrapper({
@@ -167,7 +169,7 @@ void main() {
             human: [
               WorkOrder(
                 unitId: 'b1',
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: tileKey,
               ),
             ],
@@ -237,7 +239,7 @@ void main() {
             human: [
               WorkOrder(
                 unitId: 'e1',
-                target: 'explore',
+                target: kWorkTargetExplore,
                 targetTileKey: 'oldWorld|p1|0|0',
               ),
             ],
@@ -298,7 +300,7 @@ void main() {
             human: [
               WorkOrder(
                 unitId: 'm1',
-                target: 'purchase_land',
+                target: kWorkTargetPurchaseLand,
                 targetTileKey: tileKey,
               ),
             ],
@@ -357,7 +359,7 @@ void main() {
             human: [
               WorkOrder(
                 unitId: 'm1',
-                target: 'purchase_land',
+                target: kWorkTargetPurchaseLand,
                 targetTileKey: tileKey,
               ),
             ],
@@ -389,17 +391,17 @@ void main() {
         const tileKey = 'oldWorld|p1|0|0';
         const targetTileKey = 'oldWorld|p1|1|0';
         final cases = <({String unitType, String target, int turns})>[
-          (unitType: 'Explorer', target: 'explore', turns: 3),
-          (unitType: 'Explorer', target: 'prospect', turns: 1),
-          (unitType: 'Builder', target: 'build_improvement', turns: 1),
-          (unitType: 'Builder', target: 'upgrade_town', turns: 1),
-          (unitType: 'Engineer', target: 'build_road', turns: 1),
-          (unitType: 'Engineer', target: 'build_port', turns: 1),
-          (unitType: 'Engineer', target: 'build_fort', turns: 3),
-          (unitType: 'Rail Builder', target: 'build_rail', turns: 1),
-          (unitType: 'Spy', target: 'steal_tech', turns: 5),
-          (unitType: 'Spy', target: 'counter_spy', turns: 1),
-          (unitType: 'Merchant', target: 'purchase_land', turns: 1),
+          (unitType: 'Explorer', target: kWorkTargetExplore, turns: 3),
+          (unitType: 'Explorer', target: kWorkTargetProspect, turns: 1),
+          (unitType: 'Builder', target: kWorkTargetBuildImprovement, turns: 1),
+          (unitType: 'Builder', target: kWorkTargetUpgradeTown, turns: 1),
+          (unitType: 'Engineer', target: kWorkTargetBuildRoad, turns: 1),
+          (unitType: 'Engineer', target: kWorkTargetBuildPort, turns: 1),
+          (unitType: 'Engineer', target: kWorkTargetBuildFort, turns: 3),
+          (unitType: 'Rail Builder', target: kWorkTargetBuildRail, turns: 1),
+          (unitType: 'Spy', target: kWorkTargetStealTech, turns: 5),
+          (unitType: 'Spy', target: kWorkTargetCounterSpy, turns: 1),
+          (unitType: 'Merchant', target: kWorkTargetPurchaseLand, turns: 1),
         ];
 
         for (var i = 0; i < cases.length; i++) {
@@ -523,7 +525,7 @@ void main() {
           human: [
             WorkOrder(
               unitId: 'r1',
-              target: 'build_rail',
+              target: kWorkTargetBuildRail,
               targetTileKey: tileKey,
             ),
           ],
@@ -575,7 +577,7 @@ void main() {
                 tileKey: tileKey,
                 status: UnitStatus.working,
                 currentWork: const CurrentWork(
-                  workTarget: 'build_improvement',
+                  workTarget: kWorkTargetBuildImprovement,
                   tileKey: tileKey,
                   totalTurns: 5,
                   remainingTurns: 2,

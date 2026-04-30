@@ -7,7 +7,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         VisibilityLevel,
         buildPlayerView,
         getValidWorkOrderTileKeysWithVisibility,
-        kWorkTargetBuildImprovement;
+        kWorkTargetBuildImprovement,
+        kWorkTargetBuildRoad,
+        kWorkTargetExplore,
+        kWorkTargetProspect;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -156,7 +159,7 @@ void main() {
             humanPlayerId: [
               ct_models.WorkOrder(
                 unitId: unitId,
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: targetTile,
               ),
             ],
@@ -298,7 +301,7 @@ void main() {
               humanPlayerId: [
                 ct_models.WorkOrder(
                   unitId: explorerId,
-                  target: 'prospect',
+                  target: kWorkTargetProspect,
                   targetTileKey: targetTile,
                 ),
               ],
@@ -406,7 +409,7 @@ void main() {
               humanPlayerId: [
                 ct_models.WorkOrder(
                   unitId: explorerId,
-                  target: 'prospect',
+                  target: kWorkTargetProspect,
                   targetTileKey: targetTile,
                 ),
               ],
@@ -448,7 +451,7 @@ void main() {
                 humanPlayerId: [
                   ct_models.WorkOrder(
                     unitId: explorerId,
-                    target: 'prospect',
+                    target: kWorkTargetProspect,
                     targetTileKey: targetTile,
                   ),
                 ],
@@ -511,7 +514,7 @@ void main() {
               humanPlayerId: [
                 ct_models.WorkOrder(
                   unitId: explorerId,
-                  target: 'prospect',
+                  target: kWorkTargetProspect,
                   targetTileKey: targetTile,
                 ),
               ],
@@ -580,7 +583,7 @@ void main() {
                 humanPlayerId: [
                   ct_models.WorkOrder(
                     unitId: explorerId,
-                    target: 'prospect',
+                    target: kWorkTargetProspect,
                     targetTileKey: targetA,
                   ),
                 ],
@@ -591,7 +594,7 @@ void main() {
                 humanPlayerId: [
                   ct_models.WorkOrder(
                     unitId: explorerId,
-                    target: 'prospect',
+                    target: kWorkTargetProspect,
                     targetTileKey: targetB,
                   ),
                 ],
@@ -706,7 +709,7 @@ void main() {
               humanPlayerId: [
                 ct_models.WorkOrder(
                   unitId: explorerId,
-                  target: 'prospect',
+                  target: kWorkTargetProspect,
                   targetTileKey: targetTile,
                 ),
               ],
@@ -819,7 +822,7 @@ void main() {
       test('explore preserves exact assigned tile key', () {
         final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1|10|20',
-          workTarget: 'explore',
+          workTarget: kWorkTargetExplore,
         );
         expect(translated, 'oldWorld|p1|10|20');
       });
@@ -835,7 +838,7 @@ void main() {
       test('short tile keys are returned unchanged', () {
         final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
           tileKey: 'oldWorld|p1',
-          workTarget: 'explore',
+          workTarget: kWorkTargetExplore,
         );
         expect(translated, 'oldWorld|p1');
       });
@@ -849,7 +852,7 @@ void main() {
         );
         final workOrder = ct_models.WorkOrder(
           unitId: 'u1',
-          target: 'explore',
+          target: kWorkTargetExplore,
           targetTileKey: 'oldWorld|p1|0|0',
         );
 
@@ -870,7 +873,7 @@ void main() {
             humanPlayerId: [
               ct_models.WorkOrder(
                 unitId: unitId,
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: 'oldWorld|p1|0|0',
               ),
             ],
@@ -878,7 +881,7 @@ void main() {
         );
         const replacement = ct_models.WorkOrder(
           unitId: unitId,
-          target: 'build_road',
+          target: kWorkTargetBuildRoad,
           targetTileKey: 'oldWorld|p1|1|0',
         );
 
@@ -904,7 +907,7 @@ void main() {
         );
         const work = ct_models.WorkOrder(
           unitId: 'u1',
-          target: 'explore',
+          target: kWorkTargetExplore,
           targetTileKey: 'oldWorld|p2|0|0',
         );
 

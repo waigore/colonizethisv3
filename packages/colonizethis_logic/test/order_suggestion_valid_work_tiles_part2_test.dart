@@ -316,7 +316,7 @@ void main() {
       );
 
       // Spy should have steal_tech work order suggested targeting other GP's capital
-      expect(suggestions.where((o) => o.target == 'steal_tech'), isNotEmpty);
+      expect(suggestions.where((o) => o.target == kWorkTargetStealTech), isNotEmpty);
     });
 
     test(
@@ -404,7 +404,7 @@ void main() {
 
         // Should have multiple build_improvement suggestions for different tiles
         final buildSuggestions = suggestions
-            .where((o) => o.target == 'build_improvement')
+            .where((o) => o.target == kWorkTargetBuildImprovement)
             .toList();
 
         // If multiple tiles are suggested, they should be sorted by targetTileKey
@@ -451,7 +451,7 @@ void main() {
         // Existing work order for build_improvement
         final existingOrder = WorkOrder(
           unitId: 'u1',
-          target: 'build_improvement',
+          target: kWorkTargetBuildImprovement,
           targetTileKey: 'oldWorld|p1|0|0',
         );
 
@@ -509,7 +509,7 @@ void main() {
         final buildSuggestions = suggestions
             .where(
               (o) =>
-                  o.target == 'build_improvement' &&
+                  o.target == kWorkTargetBuildImprovement &&
                   o.targetTileKey == 'oldWorld|p1|0|0',
             )
             .toList();

@@ -448,7 +448,7 @@ void main() {
                   tileKey: tileKey,
                   status: UnitStatus.working,
                   currentWork: CurrentWork(
-                    workTarget: 'build_road',
+                    workTarget: kWorkTargetBuildRoad,
                     tileKey: tileKey,
                     totalTurns: 2,
                     remainingTurns: 1,
