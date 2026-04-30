@@ -264,6 +264,15 @@ jobs:
       - name: Verify OrderEngine codegen (SPEC/program/order-engine.md)
         run: bash tool/verify_order_engine_codegen.sh
 
+      # `flutter gen-l10n` overwrites tracked split layout; `ct_repo_lint` reads the
+      # workspace tree (Refs #2021). Patch before repo lint so NCL matches committed shell.
+      - name: Restore app l10n split after gen-l10n (NCL / analyze parity)
+        run: |
+          set -e
+          cd app
+          flutter gen-l10n
+          dart run ../tool/patch_app_localizations_after_gen_l10n.dart
+
       - name: Repo convention lint (unified manifest, SPEC/program/repo-lint.md)
         env:
           CT_REPO_LINT_INCLUDE_APP: ${{ needs.changes.outputs.tests }}
