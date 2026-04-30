@@ -32,7 +32,7 @@ void main() {
     test('returns scaled explore turns from province size', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: 'h1',
         locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -53,7 +53,7 @@ void main() {
       );
       const order = WorkOrder(
         unitId: 'u1',
-        target: 'explore',
+        target: kWorkTargetExplore,
         targetTileKey: 'oldWorld|p1|0|0',
       );
 
@@ -69,7 +69,7 @@ void main() {
     test('returns fort-level scaled turns for build_fort', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Engineer',
+        type: kUnitTypeEngineer,
         ownerId: 'h1',
         locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -90,7 +90,7 @@ void main() {
       );
       const order = WorkOrder(
         unitId: 'u1',
-        target: 'build_fort',
+        target: kWorkTargetBuildFort,
         targetTileKey: 'oldWorld|p1|0|0',
       );
 
@@ -106,7 +106,7 @@ void main() {
     test('returns minimum one turn for instant targets', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: 'h1',
         locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -118,7 +118,7 @@ void main() {
         unit: unit,
         order: const WorkOrder(
           unitId: 'u1',
-          target: 'prospect',
+          target: kWorkTargetProspect,
           targetTileKey: 'oldWorld|p1|0|0',
         ),
       );
@@ -127,7 +127,7 @@ void main() {
         unit: unit,
         order: const WorkOrder(
           unitId: 'u1',
-          target: 'purchase_land',
+          target: kWorkTargetPurchaseLand,
           targetTileKey: 'oldWorld|p1|0|0',
         ),
       );

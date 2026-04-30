@@ -2,6 +2,7 @@ import 'package:colonizethis_logic/src/world/civilian_ownership_legality.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'package:colonizethis_logic/colonizethis_logic.dart' show kWorkTargetBuildRoad;
 void main() {
   group('relocateIllegalCiviliansInChangedProvinces', () {
     const ow = 'oldWorld';
@@ -50,13 +51,13 @@ void main() {
     test('relocates illegal civilian in changed province and normalizes state', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: 'gp2',
         locationProvinceId: changedProvinceId,
         tileKey: changedTile,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
-          workTarget: 'build_road',
+          workTarget: kWorkTargetBuildRoad,
           tileKey: changedTile,
           totalTurns: 2,
           remainingTurns: 1,
@@ -82,7 +83,7 @@ void main() {
       () {
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: 'gp2',
         locationProvinceId: changedProvinceId,
         tileKey: changedTile,
@@ -106,7 +107,7 @@ void main() {
     test('does not evaluate civilians outside changed provinces', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: 'gp2',
         locationProvinceId: unchangedProvinceId,
         tileKey: unchangedTile,
@@ -123,7 +124,7 @@ void main() {
     test('throws hard error when owner capital tile cannot be resolved', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: 'gp2',
         locationProvinceId: changedProvinceId,
         tileKey: changedTile,
@@ -145,7 +146,7 @@ void main() {
     test('throws hard error when owner capital province cannot be resolved', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: 'gp2',
         locationProvinceId: changedProvinceId,
         tileKey: changedTile,

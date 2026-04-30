@@ -1,6 +1,8 @@
-part of 'province_sea_zone_detail_overlay.dart';
 
 /// Supplementary GDD label for [roadLevel] on land tiles (issue #1537 / extraction-and-improvements § Transport Level).
+
+part of 'province_sea_zone_detail_overlay.dart';
+
 @visibleForTesting
 String roadRailSupplementaryLabel(int roadLevel) {
   return switch (roadLevel) {

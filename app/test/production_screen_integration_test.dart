@@ -128,7 +128,7 @@ void main() {
             buildUnitOrdersByPlayerId: {
               'test_gp_full': [
                 BuildUnitOrder(
-                  unitType: 'Builder',
+                  unitType: kUnitTypeBuilder,
                   isMilitary: false,
                   spawnProvinceId: 'ow|prov-1',
                 ),

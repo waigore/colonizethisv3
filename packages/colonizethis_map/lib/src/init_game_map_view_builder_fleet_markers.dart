@@ -1,4 +1,5 @@
 // Fleet tile marker helpers for [init_game_map_view_builder.dart].
+
 part of 'init_game_map_view_builder.dart';
 
 String _homeFleetIdForMapMarker(String playerId) => 'fleet_$playerId';

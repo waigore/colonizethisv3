@@ -1,6 +1,11 @@
 import 'package:colonizethis_app/features/game/flame/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView, VisibilityLevel;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show
+        PlayerView,
+        VisibilityLevel,
+        kWorkTargetBuildImprovement,
+        kWorkTargetExplore;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -52,14 +57,14 @@ void main() {
     test('sorted returns deterministic ordering', () {
       final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
-          'explore': (_) => {'oldWorld|p1|2|0', 'oldWorld|p1|0|0', 'oldWorld|p1|1|0'},
+          kWorkTargetExplore: (_) => {'oldWorld|p1|2|0', 'oldWorld|p1|0|0', 'oldWorld|p1|1|0'},
         },
       );
 
       cache.refresh(snapshotForPlayer('gp1'));
 
       expect(
-        cache.sorted('gp1', 'explore'),
+        cache.sorted('gp1', kWorkTargetExplore),
         ['oldWorld|p1|0|0', 'oldWorld|p1|1|0', 'oldWorld|p1|2|0'],
       );
     });
@@ -67,14 +72,14 @@ void main() {
     test('contains returns false for missing membership', () {
       final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
-          'build_improvement': (_) => {'oldWorld|p2|1|1'},
+          kWorkTargetBuildImprovement: (_) => {'oldWorld|p2|1|1'},
         },
       );
 
       cache.refresh(snapshotForPlayer('gp1'));
 
       expect(
-        cache.contains('gp1', 'build_improvement', 'oldWorld|p2|2|2'),
+        cache.contains('gp1', kWorkTargetBuildImprovement, 'oldWorld|p2|2|2'),
         isFalse,
       );
     });
@@ -83,32 +88,32 @@ void main() {
       var turnNumber = 1;
       final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
-          'explore': (_) => turnNumber == 1 ? {'oldWorld|p1|0|0'} : {'oldWorld|p1|1|0'},
+          kWorkTargetExplore: (_) => turnNumber == 1 ? {'oldWorld|p1|0|0'} : {'oldWorld|p1|1|0'},
         },
       );
 
       final snapshot = snapshotForPlayer('gp1');
       cache.refresh(snapshot);
-      expect(cache.get('gp1', 'explore'), {'oldWorld|p1|0|0'});
+      expect(cache.get('gp1', kWorkTargetExplore), {'oldWorld|p1|0|0'});
 
       turnNumber = 2;
       cache.refresh(snapshot);
-      expect(cache.get('gp1', 'explore'), {'oldWorld|p1|1|0'});
-      expect(cache.contains('gp1', 'explore', 'oldWorld|p1|0|0'), isFalse);
+      expect(cache.get('gp1', kWorkTargetExplore), {'oldWorld|p1|1|0'});
+      expect(cache.contains('gp1', kWorkTargetExplore, 'oldWorld|p1|0|0'), isFalse);
     });
 
     test('refresh keeps cache isolated per player', () {
       final cache = PerPlayerWorkTargetSelectionCache(
         strategies: {
-          'explore': (snapshot) => {'${snapshot.playerId}|tile'},
+          kWorkTargetExplore: (snapshot) => {'${snapshot.playerId}|tile'},
         },
       );
 
       cache.refresh(snapshotForPlayer('gp1'));
       cache.refresh(snapshotForPlayer('gp2'));
 
-      expect(cache.get('gp1', 'explore'), {'gp1|tile'});
-      expect(cache.get('gp2', 'explore'), {'gp2|tile'});
+      expect(cache.get('gp1', kWorkTargetExplore), {'gp1|tile'});
+      expect(cache.get('gp2', kWorkTargetExplore), {'gp2|tile'});
     });
   });
 }

@@ -317,7 +317,7 @@ void main() {
           const Player(id: 'gp1', displayName: 'A', isHuman: false)
               .copyWith(
             treasury: 600,
-            techUnlocked: const {'diplomatic_expertise': true},
+            techUnlocked: const {kTechIdDiplomaticExpertise: true},
           ),
         ],
         minorNations: const [

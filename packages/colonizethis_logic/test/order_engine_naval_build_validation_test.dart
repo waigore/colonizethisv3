@@ -24,7 +24,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -144,7 +144,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: 'oldWorld|P1|0|0',

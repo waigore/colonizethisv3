@@ -1,6 +1,8 @@
-part of 'tile_map_generator.dart';
 
 /// Sentinel value for "land not yet assigned to a province". Replaced in Pass 9.
+
+part of 'tile_map_generator.dart';
+
 const String _landSentinel = '_land';
 
 /// Centralized map generation parameters. SPEC/program/tile-map-gen-config.md § Grid size derivation.

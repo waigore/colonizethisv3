@@ -156,7 +156,7 @@ Game goldenBuildImprovementGame() {
         units: [
           Unit(
             id: 'u_builder',
-            type: 'Builder',
+            type: kUnitTypeBuilder,
             ownerId: humanPlayerId,
             locationProvinceId: provinceId,
             tileKey: tileKey,
@@ -183,7 +183,7 @@ Game goldenBuildImprovementGame() {
         isHuman: true,
         capitalProvinceId: provinceId,
         stockpile: const Stockpile(quantities: {'lumber': 10, 'castIron': 10}),
-        techUnlocked: const {'circular_saw': true},
+        techUnlocked: const {kTechIdCircularSaw: true},
       ),
     ],
     minorNations: const [],

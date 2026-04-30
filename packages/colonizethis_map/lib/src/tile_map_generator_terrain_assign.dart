@@ -1,6 +1,8 @@
-part of 'tile_map_generator.dart';
 
 /// Pass 6–7: terrain ridges, region-growing, resources.
+
+part of 'tile_map_generator.dart';
+
 class _TileMapGenTerrainResource {
   _TileMapGenTerrainResource(this.params, this._graph);
 

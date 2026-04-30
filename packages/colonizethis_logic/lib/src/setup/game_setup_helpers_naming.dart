@@ -1,3 +1,4 @@
+
 part of 'game_setup_helpers.dart';
 
 const int _kNamingCapitalCollisionSalt = 919_393;

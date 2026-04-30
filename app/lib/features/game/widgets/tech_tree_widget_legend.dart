@@ -1,6 +1,8 @@
-part of 'tech_tree_widget.dart';
 
 /// Row label for tech tree legend samples (maps to [AppLocalizations] state strings).
+
+part of 'tech_tree_widget.dart';
+
 enum _TechLegendStateKind { researched, inProgress, available, locked }
 
 class _TechTreeLegend extends StatelessWidget {

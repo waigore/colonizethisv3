@@ -9,7 +9,7 @@ void main() {
     test('prefers pending work-order target tile key', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -20,7 +20,7 @@ void main() {
           playerId: [
             WorkOrder(
               unitId: 'u1',
-              target: 'build_improvement',
+              target: kWorkTargetBuildImprovement,
               targetTileKey: 'oldWorld|p2|2|3',
             ),
           ],
@@ -38,7 +38,7 @@ void main() {
     test('keeps exact pending tile key for explore projection', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: playerId,
         locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
@@ -48,7 +48,7 @@ void main() {
           playerId: [
             WorkOrder(
               unitId: 'u1',
-              target: 'explore',
+              target: kWorkTargetExplore,
               targetTileKey: 'oldWorld|p9|7|8',
             ),
           ],

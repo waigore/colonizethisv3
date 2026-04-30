@@ -39,7 +39,7 @@ void main() {
             units: [
               Unit(
                   id: 'u1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1'),
             ],
@@ -184,7 +184,7 @@ void main() {
               Province(id: '$ow|P2', regionId: ow, ownerId: 'minor1'),
             ],
             units: [
-              Unit(id: 'u1', type: 'Builder', ownerId: 'p1', locationProvinceId: '$ow|P1'),
+              Unit(id: 'u1', type: kUnitTypeBuilder, ownerId: 'p1', locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -228,7 +228,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: 'oldWorld|P1|0|0',
@@ -275,7 +275,7 @@ void main() {
             units: [
               Unit(
                 id: 's1',
-                type: 'Spy',
+                type: kUnitTypeSpy,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: 'oldWorld|P1|0|0',
@@ -334,7 +334,7 @@ void main() {
               units: [
                 Unit(
                   id: 'u1',
-                  type: 'Explorer',
+                  type: kUnitTypeExplorer,
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1',
                   tileKey: '$ow|P1|0|0',
@@ -397,7 +397,7 @@ void main() {
               units: [
                 Unit(
                   id: 'u1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1',
                   tileKey: '$ow|P1|0|0',
@@ -450,7 +450,7 @@ void main() {
               Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
             ],
             units: [
-              Unit(id: 'u1', type: 'Builder', ownerId: 'p1', locationProvinceId: '$ow|P1'),
+              Unit(id: 'u1', type: kUnitTypeBuilder, ownerId: 'p1', locationProvinceId: '$ow|P1'),
             ],
           ),
           newWorld: const RegionData(),

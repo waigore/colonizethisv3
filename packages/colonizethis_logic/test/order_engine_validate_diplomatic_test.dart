@@ -28,7 +28,7 @@ void main() {
               displayName: 'GP1',
               isHuman: true,
               treasury: treasury,
-              techUnlocked: techUnlocked ?? const {'diplomatic_expertise': true},
+              techUnlocked: techUnlocked ?? const {kTechIdDiplomaticExpertise: true},
             ),
           ],
           minorNations: const [

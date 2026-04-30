@@ -31,7 +31,7 @@ void main() {
         final tileState = TileMapState().setImprovement(tileKey, 0);
         final unit = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -39,7 +39,7 @@ void main() {
           assignedTileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'build_improvement',
+            workTarget: kWorkTargetBuildImprovement,
             tileKey: tileKey,
             totalTurns: 1,
             remainingTurns: 1,
@@ -78,7 +78,7 @@ void main() {
         final tileState = TileMapState().setImprovement(tileKey, 0);
         final unit = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -86,7 +86,7 @@ void main() {
           assignedTileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'build_improvement',
+            workTarget: kWorkTargetBuildImprovement,
             tileKey: tileKey,
             totalTurns: 1,
             remainingTurns: 1,
@@ -124,7 +124,7 @@ void main() {
         final tileState = TileMapState().setImprovement(tileKey, 0);
         final unit = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: aiId,
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -132,7 +132,7 @@ void main() {
           assignedTileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'build_improvement',
+            workTarget: kWorkTargetBuildImprovement,
             tileKey: tileKey,
             totalTurns: 1,
             remainingTurns: 1,
@@ -179,7 +179,7 @@ void main() {
         final tileState = TileMapState().setImprovement(tileKey, 3);
         final unit = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -187,7 +187,7 @@ void main() {
           assignedTileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'build_improvement',
+            workTarget: kWorkTargetBuildImprovement,
             tileKey: tileKey,
             totalTurns: 1,
             remainingTurns: 1,
@@ -223,14 +223,14 @@ void main() {
         // Assign-time would reject 3→4 with extraction cap 2; completion still applies +1 to stored level.
         expect(
           extractionCapForResourceForUnlocked(const {
-            'saw_mill': true,
+            kTechIdSawMill: true,
           }, 'grain'),
           1,
         );
         final tileState = TileMapState().setImprovement(tileKey, 3);
         final unit = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -238,7 +238,7 @@ void main() {
           assignedTileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'build_improvement',
+            workTarget: kWorkTargetBuildImprovement,
             tileKey: tileKey,
             totalTurns: 1,
             remainingTurns: 1,
@@ -263,7 +263,7 @@ void main() {
               id: 'p1',
               displayName: 'P1',
               isHuman: true,
-              techUnlocked: {'saw_mill': true},
+              techUnlocked: {kTechIdSawMill: true},
             ),
           ],
         );
@@ -282,7 +282,7 @@ void main() {
         final tileState = TileMapState().setImprovement(tileKey, 0);
         final unit = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -290,7 +290,7 @@ void main() {
           assignedTileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'build_improvement',
+            workTarget: kWorkTargetBuildImprovement,
             tileKey: tileKey,
             totalTurns: 2,
             remainingTurns: 2,
@@ -336,13 +336,13 @@ void main() {
         final tileState = TileMapState().setImprovement(tileKey, 0);
         final unit = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
           status: UnitStatus.working,
           currentWork: CurrentWork(
-            workTarget: 'build_improvement',
+            workTarget: kWorkTargetBuildImprovement,
             tileKey: tileKey,
             totalTurns: 2,
             remainingTurns: 2,
@@ -381,13 +381,13 @@ void main() {
     test('explore completion sets visibility and clears currentWork', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
-          workTarget: 'explore',
+          workTarget: kWorkTargetExplore,
           tileKey: tileKey,
           totalTurns: 1,
           remainingTurns: 1,
@@ -423,13 +423,13 @@ void main() {
         const tileKey2 = 'oldWorld|P1|1|0';
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'explore',
+            workTarget: kWorkTargetExplore,
             tileKey: tileKey,
             totalTurns: 1,
             remainingTurns: 1,
@@ -485,13 +485,13 @@ void main() {
       final tileState = TileMapState().setRoadLevel(tileKey, 0);
       final unit = Unit(
         id: 'u1',
-        type: 'Engineer',
+        type: kUnitTypeEngineer,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
-          workTarget: 'build_road',
+          workTarget: kWorkTargetBuildRoad,
           tileKey: tileKey,
           totalTurns: 1,
           remainingTurns: 1,
@@ -527,13 +527,13 @@ void main() {
             .setRoadLevel(capitalTileKey, 2);
         final unit = Unit(
           id: 'u1',
-          type: 'Engineer',
+          type: kUnitTypeEngineer,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'build_road',
+            workTarget: kWorkTargetBuildRoad,
             tileKey: tileKey,
             totalTurns: 1,
             remainingTurns: 1,
@@ -588,13 +588,13 @@ void main() {
             .setRoadLevel(portTileKey, 1);
         final unit = Unit(
           id: 'u1',
-          type: 'Engineer',
+          type: kUnitTypeEngineer,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'build_road',
+            workTarget: kWorkTargetBuildRoad,
             tileKey: tileKey,
             totalTurns: 1,
             remainingTurns: 1,
@@ -605,7 +605,7 @@ void main() {
           displayName: 'P1',
           isHuman: true,
           capitalProvinceId: provinceId,
-          techUnlocked: const {'road_construction': true},
+          techUnlocked: const {kTechIdRoadConstruction: true},
         );
         final world = WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
@@ -652,13 +652,13 @@ void main() {
         );
         final unit = Unit(
           id: 'u1',
-          type: 'Engineer',
+          type: kUnitTypeEngineer,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'build_port',
+            workTarget: kWorkTargetBuildPort,
             tileKey: tileKey,
             totalTurns: 1,
             remainingTurns: 1,
@@ -696,13 +696,13 @@ void main() {
     test('build_fort completion increases province fortLevel', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Engineer',
+        type: kUnitTypeEngineer,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
-          workTarget: 'build_fort',
+          workTarget: kWorkTargetBuildFort,
           tileKey: tileKey,
           totalTurns: 1,
           remainingTurns: 1,
@@ -735,13 +735,13 @@ void main() {
       final tileState = TileMapState().setRoadLevel(tileKey, 0);
       final unit = Unit(
         id: 'u1',
-        type: 'Rail Builder',
+        type: kUnitTypeRailBuilder,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
-          workTarget: 'build_rail',
+          workTarget: kWorkTargetBuildRail,
           tileKey: tileKey,
           totalTurns: 1,
           remainingTurns: 1,
@@ -773,7 +773,7 @@ void main() {
             id: 'p1',
             displayName: 'P1',
             isHuman: true,
-            techUnlocked: const {'early_steam_engine': true},
+            techUnlocked: const {kTechIdEarlySteamEngine: true},
           ),
         ],
       );
@@ -789,13 +789,13 @@ void main() {
       final tileState = TileMapState().setRoadLevel(tileKey, 1);
       final unit = Unit(
         id: 'u1',
-        type: 'Rail Builder',
+        type: kUnitTypeRailBuilder,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
         status: UnitStatus.working,
         currentWork: const CurrentWork(
-          workTarget: 'build_rail',
+          workTarget: kWorkTargetBuildRail,
           tileKey: tileKey,
           totalTurns: 1,
           remainingTurns: 1,
@@ -827,7 +827,7 @@ void main() {
             id: 'p1',
             displayName: 'P1',
             isHuman: true,
-            techUnlocked: const {'early_steam_engine': true},
+            techUnlocked: const {kTechIdEarlySteamEngine: true},
           ),
         ],
       );

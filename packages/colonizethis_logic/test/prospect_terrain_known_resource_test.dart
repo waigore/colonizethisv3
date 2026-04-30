@@ -53,7 +53,7 @@ void main() {
                 units: [
                   Unit(
                     id: 'u1',
-                    type: 'Explorer',
+                    type: kUnitTypeExplorer,
                     ownerId: 'p1',
                     locationProvinceId: provinceId,
                     tileKey: tileKey,
@@ -80,7 +80,7 @@ void main() {
             'p1',
             const WorkOrder(
               unitId: 'u1',
-              target: 'prospect',
+              target: kWorkTargetProspect,
               targetTileKey: tileKey,
             ),
           );
@@ -112,7 +112,7 @@ void main() {
                 units: [
                   Unit(
                     id: 'u1',
-                    type: 'Explorer',
+                    type: kUnitTypeExplorer,
                     ownerId: 'p1',
                     locationProvinceId: provinceId,
                     tileKey: tileKey,
@@ -142,7 +142,7 @@ void main() {
             'p1',
             const WorkOrder(
               unitId: 'u1',
-              target: 'prospect',
+              target: kWorkTargetProspect,
               targetTileKey: tileKey,
             ),
           );
@@ -188,7 +188,7 @@ void main() {
         final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
         );
