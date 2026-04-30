@@ -113,6 +113,47 @@ void main() {
       expect(terrainTypeForTileKey(null, 'bad'), isNull);
     });
 
+    test('returns null when region map is missing', () {
+      expect(
+        terrainTypeForTileKey({}, 'oldWorld|P|0|0'),
+        isNull,
+      );
+    });
+
+    test('returns null when x or y are not integers', () {
+      final m = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: const [
+          ['P'],
+        ],
+        terrainGrid: [
+          [TerrainType.plains],
+        ],
+      );
+      expect(
+        terrainTypeForTileKey({'oldWorld': m}, 'oldWorld|P|x|0'),
+        isNull,
+      );
+    });
+
+    test('returns null when coordinates are out of bounds', () {
+      final m = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: const [
+          ['P'],
+        ],
+        terrainGrid: [
+          [TerrainType.plains],
+        ],
+      );
+      expect(
+        terrainTypeForTileKey({'oldWorld': m}, 'oldWorld|P|1|0'),
+        isNull,
+      );
+    });
+
     test('returns terrain from tile map', () {
       final m = TileMapResult(
         width: 1,

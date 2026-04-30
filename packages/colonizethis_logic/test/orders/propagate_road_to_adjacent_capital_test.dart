@@ -104,5 +104,52 @@ void main() {
 
       expect(out.roadLevel(capitalKey), nextLevel);
     });
+
+    test('propagates road level to adjacent port tile when higher', () {
+      const portKey = '$ow|P|0|1';
+      const buildKey = '$ow|P|1|0';
+      final tileMap = TileMapResult(
+        width: 3,
+        height: 3,
+        grid: const [
+          ['P', 'P', 'P'],
+          ['P', 'P', 'P'],
+          ['P', 'P', 'P'],
+        ],
+        terrainGrid: [
+          [for (var i = 0; i < 3; i++) TerrainType.plains],
+          [for (var i = 0; i < 3; i++) TerrainType.plains],
+          [for (var i = 0; i < 3; i++) TerrainType.plains],
+        ],
+      );
+      final tileState = TileMapState()
+          .setRoadLevel(portKey, 1)
+          .setRoadLevel(buildKey, 2);
+      final ws = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        portsByProvinceSeaboard: {
+          '$provinceFull|sz1': portKey,
+        },
+      );
+      const player = Player(
+        id: 'p1',
+        displayName: 'P1',
+        isHuman: true,
+      );
+      const nextLevel = 3;
+
+      final out = propagateRoadToAdjacentCapitalOrPort(
+        tileKey: buildKey,
+        nextLevel: nextLevel,
+        player: player,
+        worldState: ws,
+        tileMapByRegion: {ow: tileMap},
+        tileState: tileState,
+      );
+
+      expect(out.roadLevel(portKey), nextLevel);
+    });
   });
 }
