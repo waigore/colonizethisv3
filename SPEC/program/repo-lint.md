@@ -10,7 +10,9 @@
 
 **Allowed:** Scope-only wiring in `tool/ct_repo_lint_scan_contract.dart`, checker path predicates, and env such as `CT_REPO_LINT_INCLUDE_APP` that exclude whole paths—not waivers inside an analyzed file.
 
-Grandfather YAMLs named in the table below are **legacy** until removed; **do not add new violation allowlists.**
+**Do not add new violation allowlists** for any `repo.*` rule.
+
+**Implementation status (GitHub #1912, checker slice):** `repo.function_size`, `repo.control_flow_nesting_depth`, and `repo.part_unit_size` enforce universal thresholds only; they do **not** read keyed waiver YAML or other per-symbol / per-file exemption tables. Per-rule contracts: `SPEC/program/function-size.md`, `SPEC/program/control-flow-nesting-depth.md`, `SPEC/program/part-unit-size.md`.
 
 ### Acceptance criteria (policy)
 
@@ -140,7 +142,7 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 
 - Given the repository root as cwd, when CI runs `dart run tool/ct_repo_lint.dart` with the workflow env, then all manifest rules applicable to that job execute and failures surface with `rule_id` in the orchestrator banner.
 - Given a contributor adds a convention, when they follow CONTRIBUTING and this doc, then they register the rule in the manifest rather than adding a new standalone Quality workflow step for the same concern.
-- Given the [Policy: no violation allowlists](#policy-no-violation-allowlists-repo-lint) section, when implementation work completes for a legacy checker still loading grandfather YAML, then that checker, its tests, and the per-rule SPEC no longer document or depend on violation allowlists.
+- Given the [Policy: no violation allowlists](#policy-no-violation-allowlists-repo-lint) section, when `repo.function_size`, `repo.control_flow_nesting_depth`, or `repo.part_unit_size` runs, then that checker does not load keyed waiver data and the matching per-rule SPEC documents universal enforcement only.
 - Given app game feature code, when `dart run tool/ct_repo_lint.dart` runs rule `repo.no_screen_in_game_widgets`, then no file matching `*_screen.dart` exists under `app/lib/features/game/widgets/**`.
 - Given app game widget files, when `dart run tool/ct_repo_lint.dart` runs rule `repo.game_widgets_file_size`, then each Dart file under `app/lib/features/game/widgets/**` has 700 physical lines or fewer.
 - Given repository Dart files (excluding generated suffixes `.g.dart`, `.freezed.dart`, `.mocks.dart`, `.gen.dart`), when `dart run tool/ct_repo_lint.dart` runs rule `repo.dart_file_non_comment_line_size`, then each scanned file has at most 1000 non-comment lines and the run fails while listing every violating file when any file is strictly greater than 1000.
