@@ -1,8 +1,11 @@
 import 'package:colonizethis_logic/debug_console_api.dart';
 
-import 'debug_console_command.dart';
+import 'debug_console_parsed_invocation.dart';
 
 const int kDebugConsoleMaxSpawnCount = 25;
+
+/// Upper bound for `/add_money` credited amount (parser clamps here).
+const int kDebugConsoleMaxTreasuryCreditAmount = 9999;
 
 class DebugConsoleCommandParser {
   const DebugConsoleCommandParser();
@@ -24,8 +27,11 @@ class DebugConsoleCommandParser {
     final command = tokens.first.toLowerCase();
     return switch (command) {
       '/spawn_civilian' => _parseSpawnCivilian(tokens),
+      '/add_money' => _parseAddMoney(tokens),
       '/help' => const DebugConsoleParseResult.error(
-        'Supported: /spawn_civilian <explorer|builder|engineer|spy|merchant|rail_builder> [count]',
+        'Supported: /spawn_civilian <explorer|builder|engineer|spy|merchant|rail_builder> [count]; '
+        '/add_money <amount> (integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
+        '$kDebugConsoleMaxTreasuryCreditAmount are clamped).',
       ),
       _ => DebugConsoleParseResult.error(
         'Unknown command: $command. Try /help.',
@@ -57,24 +63,52 @@ class DebugConsoleCommandParser {
       );
     }
     return DebugConsoleParseResult.success(
-      DebugConsoleCommand.spawnCivilian(
+      DebugConsoleParsedInvocation.spawnCivilianAtCapital(
         unitType: canonicalUnitType,
         count: parsedCount,
+      ),
+    );
+  }
+
+  DebugConsoleParseResult _parseAddMoney(List<String> tokens) {
+    if (tokens.length < 2) {
+      return const DebugConsoleParseResult.error(
+        'Usage: /add_money <amount>',
+      );
+    }
+    final rawAmount = int.tryParse(tokens[1]);
+    if (rawAmount == null) {
+      return const DebugConsoleParseResult.error(
+        'Amount must be an integer.',
+      );
+    }
+    if (rawAmount < 1) {
+      return const DebugConsoleParseResult.error(
+        'Amount must be at least 1.',
+      );
+    }
+    final creditedAmount = rawAmount > kDebugConsoleMaxTreasuryCreditAmount
+        ? kDebugConsoleMaxTreasuryCreditAmount
+        : rawAmount;
+    return DebugConsoleParseResult.success(
+      DebugConsoleParsedInvocation.treasuryCredit(
+        requestedAmount: rawAmount,
+        creditedAmount: creditedAmount,
       ),
     );
   }
 }
 
 class DebugConsoleParseResult {
-  const DebugConsoleParseResult.success(this.command)
+  const DebugConsoleParseResult.success(this.invocation)
     : message = null,
       isError = false;
 
   const DebugConsoleParseResult.error(this.message)
-    : command = null,
+    : invocation = null,
       isError = true;
 
-  final DebugConsoleCommand? command;
+  final DebugConsoleParsedInvocation? invocation;
   final String? message;
   final bool isError;
 }
