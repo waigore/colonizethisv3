@@ -25,15 +25,15 @@ int runCheckTechIdConstants(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
   final root = p.normalize(repoRoot);
-  final techIds = _loadCanonicalTechIds(root);
+  final constantNameByTechId = _loadTechIdConstantNames(root);
+  final techIds = constantNameByTechId.keys.toSet();
   if (techIds.isEmpty) {
     logE(
-      'ERROR: Could not derive canonical tech IDs from '
-      'packages/colonizethis_data/lib/src/tech_catalog.dart.',
+      'ERROR: Could not load canonical tech ID strings from '
+      'packages/colonizethis_data/lib/src/tech_ids.dart.',
     );
     return 1;
   }
-  final constantNameByTechId = _loadTechIdConstantNames(root);
   final requested = incrementalRelativeDartPaths ?? const <String>[];
   final candidateFiles = _collectCandidateFiles(root, requested);
 
@@ -147,24 +147,6 @@ List<File> _collectCandidateFiles(String root, List<String> requestedPaths) {
   return files;
 }
 
-Set<String> _loadCanonicalTechIds(String root) {
-  final catalogRelPath = 'packages/colonizethis_data/lib/src/tech_catalog.dart';
-  final catalogAbsPath = p.join(root, catalogRelPath);
-  final file = File(catalogAbsPath);
-  if (!file.existsSync()) {
-    return const {};
-  }
-  final source = file.readAsStringSync();
-  final parsed = parseString(
-    content: source,
-    path: catalogAbsPath,
-    throwIfDiagnostics: false,
-  );
-  final collector = _TechCatalogIdCollector();
-  parsed.unit.visitChildren(collector);
-  return collector.ids;
-}
-
 Map<String, String> _loadTechIdConstantNames(String root) {
   final constantsRelPath = 'packages/colonizethis_data/lib/src/tech_ids.dart';
   final constantsAbsPath = p.join(root, constantsRelPath);
@@ -181,28 +163,6 @@ Map<String, String> _loadTechIdConstantNames(String root) {
   final collector = _TechIdConstantCollector();
   parsed.unit.visitChildren(collector);
   return collector.constantNameByTechId;
-}
-
-class _TechCatalogIdCollector extends RecursiveAstVisitor<void> {
-  final Set<String> ids = <String>{};
-
-  @override
-  void visitAssignmentExpression(AssignmentExpression node) {
-    final left = node.leftHandSide;
-    if (left is IndexExpression &&
-        _isIdentifierNamed(left.target, 'm') &&
-        left.index is SimpleStringLiteral) {
-      final index = left.index as SimpleStringLiteral;
-      if (index.value.isNotEmpty) {
-        ids.add(index.value);
-      }
-    }
-    super.visitAssignmentExpression(node);
-  }
-
-  bool _isIdentifierNamed(Expression? expression, String name) {
-    return expression is SimpleIdentifier && expression.name == name;
-  }
 }
 
 class _TechIdConstantCollector extends RecursiveAstVisitor<void> {

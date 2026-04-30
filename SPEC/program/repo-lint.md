@@ -14,6 +14,8 @@
 
 **Implementation status (GitHub #1912, checker slice):** `repo.function_size`, `repo.control_flow_nesting_depth`, and `repo.part_unit_size` enforce universal thresholds only; they do **not** read keyed waiver YAML or other per-symbol / per-file exemption tables. Per-rule contracts: `SPEC/program/function-size.md`, `SPEC/program/control-flow-nesting-depth.md`, `SPEC/program/part-unit-size.md`.
 
+**Implementation status (GitHub #1912, tech id literals):** `repo.tech_id_constants` treats the string values of every `const String kTechId*` in `packages/colonizethis_data/lib/src/tech_ids.dart` as the canonical tech-id set (replacing the prior `tech_catalog.dart` map-key scrape). `tech_catalog.dart` uses those same constants for map keys and `TechDefinition` ids so the catalog stays aligned with the checker.
+
 ### Acceptance criteria (policy)
 
 - Given a `repo.*` rule implementation, when a maintainer audits it for waiver data, then the maintainer finds no keyed tables loaded solely to raise effective limits for specific in-scope symbols or files.

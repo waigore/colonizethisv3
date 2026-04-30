@@ -63,7 +63,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: 'oldWorld|P1|0|0',
@@ -117,7 +117,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -220,7 +220,7 @@ void main() {
               units: [
                 Unit(
                   id: 'u1',
-                  type: 'Merchant',
+                  type: kUnitTypeMerchant,
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1',
                   tileKey: '$ow|P1|0|0',
@@ -307,7 +307,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -371,7 +371,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -607,7 +607,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -669,7 +669,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),

@@ -12,7 +12,7 @@ void main() {
     test('unknown work target is skipped and unit stays idle', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
@@ -49,7 +49,7 @@ void main() {
     test('counter_spy work order sets currentWork for Spy unit', () {
       final unit = Unit(
         id: 'spy1',
-        type: 'Spy',
+        type: kUnitTypeSpy,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
@@ -74,7 +74,7 @@ void main() {
           'p1': [
             WorkOrder(
               unitId: 'spy1',
-              target: 'counter_spy',
+              target: kWorkTargetCounterSpy,
               targetTileKey: tileKey,
             ),
           ],
@@ -83,7 +83,7 @@ void main() {
       final next = applyBuildAndWorkOrders(game, orders);
       final spyAfter = next.worldState.oldWorld.units.single;
       expect(spyAfter.currentWork, isNotNull);
-      expect(spyAfter.currentWork!.workTarget, 'counter_spy');
+      expect(spyAfter.currentWork!.workTarget, kWorkTargetCounterSpy);
       expect(spyAfter.currentWork!.totalTurns, 0);
       expect(spyAfter.currentWork!.remainingTurns, 1);
     });
@@ -96,7 +96,7 @@ void main() {
         const cost = 15 * 10; // grain base price 10
         final unit = Unit(
           id: 'merchant1',
-          type: 'Merchant',
+          type: kUnitTypeMerchant,
           ownerId: 'p1',
           locationProvinceId: minorProvinceId,
           tileKey: tileKeyMinor,
@@ -146,7 +146,7 @@ void main() {
             'p1': [
               const WorkOrder(
                 unitId: 'merchant1',
-                target: 'purchase_land',
+                target: kWorkTargetPurchaseLand,
                 targetTileKey: tileKeyMinor,
               ),
             ],
@@ -175,7 +175,7 @@ void main() {
         const cost = 15 * 10; // grain base price 10
         final unit = Unit(
           id: 'merchant1',
-          type: 'Merchant',
+          type: kUnitTypeMerchant,
           ownerId: 'p1',
           locationProvinceId: minorProvinceId,
           tileKey: tileKeyMinor,
@@ -219,7 +219,7 @@ void main() {
             'p1': [
               const WorkOrder(
                 unitId: 'merchant1',
-                target: 'purchase_land',
+                target: kWorkTargetPurchaseLand,
                 targetTileKey: tileKeyMinor,
               ),
             ],
@@ -239,7 +239,7 @@ void main() {
         const cost = 15 * 10; // grain base price 10
         final unit = Unit(
           id: 'merchant1',
-          type: 'Merchant',
+          type: kUnitTypeMerchant,
           ownerId: 'p1',
           locationProvinceId: minorProvinceId,
           tileKey: tileKeyMinor,
@@ -288,7 +288,7 @@ void main() {
             'p1': [
               const WorkOrder(
                 unitId: 'merchant1',
-                target: 'purchase_land',
+                target: kWorkTargetPurchaseLand,
                 targetTileKey: tileKeyMinor,
               ),
             ],
@@ -318,14 +318,14 @@ void main() {
               units: [
                 Unit(
                   id: 'merchant1',
-                  type: 'Merchant',
+                  type: kUnitTypeMerchant,
                   ownerId: 'p1',
                   locationProvinceId: minorProvinceId,
                   tileKey: tileKeyMinor,
                 ),
                 Unit(
                   id: 'merchant2',
-                  type: 'Merchant',
+                  type: kUnitTypeMerchant,
                   ownerId: 'p2',
                   locationProvinceId: minorProvinceId,
                   tileKey: tileKeyMinor,
@@ -380,14 +380,14 @@ void main() {
             'p1': [
               const WorkOrder(
                 unitId: 'merchant1',
-                target: 'purchase_land',
+                target: kWorkTargetPurchaseLand,
                 targetTileKey: tileKeyMinor,
               ),
             ],
             'p2': [
               const WorkOrder(
                 unitId: 'merchant2',
-                target: 'purchase_land',
+                target: kWorkTargetPurchaseLand,
                 targetTileKey: tileKeyMinor,
               ),
             ],
@@ -407,7 +407,7 @@ void main() {
       () {
         final unit = Unit(
           id: 'u1',
-          type: 'Engineer',
+          type: kUnitTypeEngineer,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -438,7 +438,7 @@ void main() {
             'p1': [
               WorkOrder(
                 unitId: 'u1',
-                target: 'build_road',
+                target: kWorkTargetBuildRoad,
                 targetTileKey: tileKey,
               ),
             ],
@@ -460,7 +460,7 @@ void main() {
       () {
         final unit = Unit(
           id: 'u1',
-          type: 'Engineer',
+          type: kUnitTypeEngineer,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -496,7 +496,7 @@ void main() {
             'p1': [
               WorkOrder(
                 unitId: 'u1',
-                target: 'build_road',
+                target: kWorkTargetBuildRoad,
                 targetTileKey: tileKey,
               ),
             ],

@@ -35,7 +35,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -85,7 +85,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: 'oldWorld|P1|0|0',
@@ -103,7 +103,7 @@ void main() {
         'p1',
         const WorkOrder(
           unitId: 'u1',
-          target: 'explore',
+          target: kWorkTargetExplore,
           targetTileKey: 'oldWorld|P1|0|0',
         ),
       );
@@ -147,7 +147,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: 'oldWorld|P1|0|0',
@@ -179,7 +179,7 @@ void main() {
         'p1',
         const WorkOrder(
           unitId: 'u1',
-          target: 'explore',
+          target: kWorkTargetExplore,
           targetTileKey: targetTileKey,
         ),
       );
@@ -217,7 +217,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: 'oldWorld|P1|0|0',
@@ -238,7 +238,7 @@ void main() {
         'p1',
         const WorkOrder(
           unitId: 'u1',
-          target: 'prospect',
+          target: kWorkTargetProspect,
           targetTileKey: 'oldWorld|P1|0|0',
         ),
       );
@@ -276,7 +276,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: tileKey,
@@ -298,7 +298,7 @@ void main() {
         'p1',
         const WorkOrder(
           unitId: 'u1',
-          target: 'prospect',
+          target: kWorkTargetProspect,
           targetTileKey: tileKey,
         ),
       );
@@ -336,7 +336,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: tileKey,
@@ -361,7 +361,7 @@ void main() {
         'p1',
         const WorkOrder(
           unitId: 'u1',
-          target: 'prospect',
+          target: kWorkTargetProspect,
           targetTileKey: tileKey,
         ),
       );
@@ -401,7 +401,7 @@ void main() {
               units: [
                 Unit(
                   id: 'u1',
-                  type: 'Explorer',
+                  type: kUnitTypeExplorer,
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1',
                   tileKey: tileKey,
@@ -423,7 +423,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'u1',
-            target: 'prospect',
+            target: kWorkTargetProspect,
             targetTileKey: tileKey,
           ),
         );
@@ -467,7 +467,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: 'oldWorld|P1|0|0',
@@ -497,7 +497,7 @@ void main() {
         'p1',
         const WorkOrder(
           unitId: 'u1',
-          target: 'prospect',
+          target: kWorkTargetProspect,
           targetTileKey: targetTileKey,
         ),
       );
@@ -625,7 +625,7 @@ void main() {
               units: [
                 Unit(
                   id: 'u1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1',
                 ),

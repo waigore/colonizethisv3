@@ -42,7 +42,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Merchant',
+                type: kUnitTypeMerchant,
                 ownerId: 'p1',
                 locationProvinceId: 'oldWorld|P1',
                 tileKey: 'oldWorld|P1|0|0',

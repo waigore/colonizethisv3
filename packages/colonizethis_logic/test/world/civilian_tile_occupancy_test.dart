@@ -29,7 +29,7 @@ void main() {
         civilianMayOccupyLandTileKey(
           game: game,
           playerId: 'gp1',
-          unitType: 'Spy',
+          unitType: kUnitTypeSpy,
           destinationTileKey: tileP2,
         ),
         isTrue,
@@ -45,7 +45,7 @@ void main() {
         civilianMayOccupyLandTileKey(
           game: game,
           playerId: 'gp1',
-          unitType: 'Builder',
+          unitType: kUnitTypeBuilder,
           destinationTileKey: tileP2,
         ),
         isFalse,
@@ -76,7 +76,7 @@ void main() {
         civilianMayOccupyLandTileKey(
           game: game,
           playerId: 'gp1',
-          unitType: 'Builder',
+          unitType: kUnitTypeBuilder,
           destinationTileKey: tileP2,
         ),
         isTrue,

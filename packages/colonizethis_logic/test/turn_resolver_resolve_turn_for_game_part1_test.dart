@@ -189,7 +189,7 @@ void main() {
               units: [
                 Unit(
                   id: 'c1',
-                  type: 'Merchant',
+                  type: kUnitTypeMerchant,
                   ownerId: 'p1',
                   locationProvinceId: owProv,
                   tileKey: '$ow|P1|0|0',

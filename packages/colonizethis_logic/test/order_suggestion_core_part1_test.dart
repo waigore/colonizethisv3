@@ -19,7 +19,7 @@ void main() {
 
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
       );
@@ -86,7 +86,7 @@ void main() {
         final p2 = Province(id: '$ow|p2', regionId: ow, ownerId: playerId);
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
         );
@@ -136,7 +136,7 @@ void main() {
         // Civilian in p2 by tileKey; provinceId can differ (e.g. legacy). Source = locationProvinceId = p2.
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: 'oldWorld|p2|0|0',
@@ -205,7 +205,7 @@ void main() {
       final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
       );
@@ -233,7 +233,7 @@ void main() {
         topology,
         const Orders(),
       );
-      expect(suggestions.where((o) => o.target == 'explore'), isEmpty);
+      expect(suggestions.where((o) => o.target == kWorkTargetExplore), isEmpty);
     });
 
     test('suggestWorkOrders explore target uses kWorkTargetExplore', () {
@@ -250,7 +250,7 @@ void main() {
       final p1 = Province(id: p1Id, regionId: ow, ownerId: playerId);
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: playerId,
         locationProvinceId: p1Id,
       );
@@ -308,7 +308,7 @@ void main() {
         );
         final explorer = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: playerId,
           locationProvinceId: partialProvince,
           tileKey: partialKnownTile,
@@ -374,7 +374,7 @@ void main() {
       final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: 'tribe1');
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
       );
@@ -410,7 +410,7 @@ void main() {
         topology,
         const Orders(),
       );
-      expect(suggestions.where((o) => o.target == 'prospect'), isEmpty);
+      expect(suggestions.where((o) => o.target == kWorkTargetProspect), isEmpty);
     });
 
     test('prospect suggestion when province fogged and tiles in province', () {
@@ -424,7 +424,7 @@ void main() {
       final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
       );
@@ -461,9 +461,9 @@ void main() {
         topology,
         const Orders(),
       );
-      expect(suggestions.where((o) => o.target == 'prospect'), isNotEmpty);
+      expect(suggestions.where((o) => o.target == kWorkTargetProspect), isNotEmpty);
       expect(
-        suggestions.firstWhere((o) => o.target == 'prospect').targetTileKey,
+        suggestions.firstWhere((o) => o.target == kWorkTargetProspect).targetTileKey,
         tileKey,
       );
     });
@@ -481,7 +481,7 @@ void main() {
       final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
       final unit = Unit(
         id: 'u1',
-        type: 'Builder',
+        type: kUnitTypeBuilder,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
       );
@@ -542,7 +542,7 @@ void main() {
         final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
         final unit = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: tileNoResource,
@@ -583,7 +583,7 @@ void main() {
           topology,
           const Orders(),
         );
-        final buildImp = suggestions.where((o) => o.target == 'build_improvement');
+        final buildImp = suggestions.where((o) => o.target == kWorkTargetBuildImprovement);
         expect(buildImp, isNotEmpty);
         expect(
           buildImp.first.targetTileKey,
@@ -611,7 +611,7 @@ void main() {
         final p2 = Province(id: '$ow|p2', regionId: ow, ownerId: playerId);
         final unit = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: tileP1,
@@ -655,7 +655,7 @@ void main() {
           topology,
           const Orders(),
         );
-        final buildImp = suggestions.where((o) => o.target == 'build_improvement');
+        final buildImp = suggestions.where((o) => o.target == kWorkTargetBuildImprovement);
         expect(buildImp, isNotEmpty);
         expect(buildImp.first.targetTileKey, tileP2);
       },
@@ -678,14 +678,14 @@ void main() {
         final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
         final b1 = Unit(
           id: 'b1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: tileA,
         );
         final b2 = Unit(
           id: 'b2',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: tileA,
@@ -724,7 +724,7 @@ void main() {
             playerId: [
               WorkOrder(
                 unitId: 'b1',
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: tileA,
               ),
             ],
@@ -737,7 +737,7 @@ void main() {
           orders,
         );
         final b2Build = suggestions
-            .where((o) => o.unitId == 'b2' && o.target == 'build_improvement')
+            .where((o) => o.unitId == 'b2' && o.target == kWorkTargetBuildImprovement)
             .toList();
         expect(b2Build, isNotEmpty);
         expect(b2Build.first.targetTileKey, tileB);
@@ -761,14 +761,14 @@ void main() {
         final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
         final b1 = Unit(
           id: 'b1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: tileA,
         );
         final b2 = Unit(
           id: 'b2',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
           tileKey: tileA,
@@ -798,7 +798,7 @@ void main() {
             playerId: [
               WorkOrder(
                 unitId: 'b1',
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: tileA,
               ),
             ],
@@ -809,7 +809,7 @@ void main() {
           topology: topology,
           view: view,
           unitId: 'b2',
-          workTarget: 'build_improvement',
+          workTarget: kWorkTargetBuildImprovement,
           currentOrders: orders,
         );
         expect(validB2, isNot(contains(tileA)));

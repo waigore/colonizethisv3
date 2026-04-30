@@ -120,7 +120,7 @@ void main() {
         locationProvinceId: 'oldWorld|p1',
       );
       expect(
-        workOrderVisibilityOk(view, unit, 'explore'),
+        workOrderVisibilityOk(view, unit, kWorkTargetExplore),
         isTrue,
       );
       expect(
@@ -140,7 +140,7 @@ void main() {
         locationProvinceId: 'oldWorld|p1',
       );
       expect(
-        workOrderVisibilityOk(view, unit, 'prospect'),
+        workOrderVisibilityOk(view, unit, kWorkTargetProspect),
         isTrue,
       );
     });
@@ -165,7 +165,7 @@ void main() {
         locationProvinceId: 'oldWorld|p1',
       );
       expect(
-        workOrderVisibilityOk(view, unit, 'build_improvement'),
+        workOrderVisibilityOk(view, unit, kWorkTargetBuildImprovement),
         isTrue,
       );
     });
@@ -199,12 +199,12 @@ void main() {
       );
       final unit = Unit(
         id: 'u1',
-        type: 'Spy',
+        type: kUnitTypeSpy,
         ownerId: 'gp1',
         locationProvinceId: 'oldWorld|p1',
       );
       expect(
-        workOrderVisibilityOk(view, unit, 'counter_spy'),
+        workOrderVisibilityOk(view, unit, kWorkTargetCounterSpy),
         isTrue,
       );
     });
@@ -230,7 +230,7 @@ void main() {
         locationProvinceId: 'oldWorld|p1',
       );
       expect(
-        workOrderVisibilityOk(view, unit, 'build_fort'),
+        workOrderVisibilityOk(view, unit, kWorkTargetBuildFort),
         isTrue,
       );
     });
@@ -254,7 +254,7 @@ void main() {
         locationProvinceId: 'oldWorld|p2',
       );
       expect(
-        workOrderVisibilityOk(view, unit, 'build_road', 'oldWorld|p2|1|1'),
+        workOrderVisibilityOk(view, unit, kWorkTargetBuildRoad, 'oldWorld|p2|1|1'),
         isTrue,
       );
     });

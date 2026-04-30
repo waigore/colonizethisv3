@@ -29,7 +29,7 @@ void main() {
               units: [
                 Unit(
                   id: 'e1',
-                  type: 'Engineer',
+                  type: kUnitTypeEngineer,
                   ownerId: 'gp1',
                   locationProvinceId: minorProvId,
                   tileKey: tileKey,
@@ -73,7 +73,7 @@ void main() {
           'gp1',
           const WorkOrder(
             unitId: 'e1',
-            target: 'build_road',
+            target: kWorkTargetBuildRoad,
             targetTileKey: tileKey,
           ),
         );
@@ -100,7 +100,7 @@ void main() {
               units: [
                 Unit(
                   id: 'e1',
-                  type: 'Engineer',
+                  type: kUnitTypeEngineer,
                   ownerId: 'gp1',
                   locationProvinceId: minorProvId,
                   tileKey: tileKey,
@@ -152,7 +152,7 @@ void main() {
           'gp1',
           const WorkOrder(
             unitId: 'e1',
-            target: 'build_road',
+            target: kWorkTargetBuildRoad,
             targetTileKey: tileKey,
           ),
         );
