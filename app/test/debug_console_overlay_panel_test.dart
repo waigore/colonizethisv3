@@ -49,6 +49,7 @@ void main() {
         snackbars.last.message,
         'Queued debug spawn: 2x Explorer at capital.',
       );
+      expect(closed, isFalse);
     });
 
     testWidgets('submitting valid add_money emits treasury credit event', (
@@ -88,7 +89,6 @@ void main() {
       expect(events.single.requestedAmount, 42);
       expect(events.single.creditedAmount, 42);
       expect(snackbars.last.message, contains('42'));
-      expect(closed, isFalse);
     });
 
     testWidgets('invalid command does not emit spawn event', (tester) async {
