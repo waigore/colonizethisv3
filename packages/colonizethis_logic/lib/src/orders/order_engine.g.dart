@@ -2,7 +2,6 @@
 // Run: dart run tool/generate_order_engine_slots.dart
 // Source: order_engine_manifest.yaml
 
-
 part of 'order_engine.dart';
 
 Map<String, List<MoveOrder>> _orderEngineGetMoveOrder(Orders o) => o.moveOrdersByPlayerId;
@@ -248,3 +247,4 @@ mixin _OrderEngineGeneratedOrderMethods {
       (this as OrderEngine).removeOrderForSlot(playerId, index, _orderSlotNavalMissionOrder);
 
 }
+
