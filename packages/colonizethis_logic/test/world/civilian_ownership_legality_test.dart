@@ -2,6 +2,7 @@ import 'package:colonizethis_logic/src/world/civilian_ownership_legality.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'package:colonizethis_logic/colonizethis_logic.dart' show kWorkTargetBuildRoad;
 void main() {
   group('relocateIllegalCiviliansInChangedProvinces', () {
     const ow = 'oldWorld';

@@ -3,6 +3,13 @@ import 'package:colonizethis_logic/src/orders/validators/work_order_cost_calcula
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show
+        kWorkTargetBuildFort,
+        kWorkTargetBuildImprovement,
+        kWorkTargetCounterSpy,
+        kWorkTargetPurchaseLand,
+        kWorkTargetStealTech;
 void main() {
   group('WorkOrderCostCalculator', () {
     test('calculateCost returns null for steal_tech, counter_spy, purchase_land', () {

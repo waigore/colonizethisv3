@@ -15,10 +15,13 @@ import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
 import 'tech_effect_summary_lookup.dart';
 
+
+/// Node position for layout. Exposed for tests (column rule: A→B→C and A→C ⇒ gap between A and C).
+
+
 part 'tech_tree_widget_nodes.dart';
 part 'tech_tree_widget_legend.dart';
 
-/// Node position for layout. Exposed for tests (column rule: A→B→C and A→C ⇒ gap between A and C).
 class TechNodePosition {
   const TechNodePosition({
     required this.techId,

@@ -1,6 +1,8 @@
-part of 'tile_map_generator.dart';
 
 /// Pass 4–5, Pass 8–9: lakes, moats, border noise, province seeds and assignment.
+
+part of 'tile_map_generator.dart';
+
 class _TileMapGenLakesProvinces {
   _TileMapGenLakesProvinces(this.params, this._graph, this._join);
 

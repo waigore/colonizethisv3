@@ -19,9 +19,12 @@ import 'units/shared/units_entity_action_row.dart';
 import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
 
-part 'civilian_units_panel_support.dart';
 
 /// Panel that lists all civilian units for the human player. SPEC/ui/civilian-units-panel.md.
+
+
+part 'civilian_units_panel_support.dart';
+
 class CivilianUnitsPanel extends StatefulWidget {
   const CivilianUnitsPanel({
     super.key,

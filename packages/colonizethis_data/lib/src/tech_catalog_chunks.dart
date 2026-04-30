@@ -1,3 +1,4 @@
+
 part of 'tech_catalog.dart';
 
 void _addTechCatalogChunk5(Map<String, TechDefinition> m) {

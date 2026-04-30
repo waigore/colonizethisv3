@@ -4,6 +4,12 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:sim_scenarios/scenario.dart';
 
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show
+        kTechIdOrganisedRegiments,
+        kTechIdRoadConstruction,
+        kTechIdWeaponCraftsmanship;
+import 'package:colonizethis_logic/colonizethis_logic.dart' show kWorkTargetExplore;
 void main() {
   group('sim_scenarios', () {
     group('parseScenarioFromJson', () {

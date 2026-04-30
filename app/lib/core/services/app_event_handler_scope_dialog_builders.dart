@@ -1,3 +1,4 @@
+
 part of 'app_event_handler_scope.dart';
 
 extension _DialogBuilders on _AppEventHandlerScopeState {

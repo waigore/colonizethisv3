@@ -1,7 +1,9 @@
-part of 'tile_map_generator.dart';
 
 /// Grid and connectivity helpers shared by tile map generation passes.
 /// SPEC/program/tile-map-gen-algorithm.md
+
+part of 'tile_map_generator.dart';
+
 class TileMapGridGraph {
   TileMapGridGraph(this.params);
 
