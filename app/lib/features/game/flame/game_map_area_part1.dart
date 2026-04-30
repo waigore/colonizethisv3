@@ -274,9 +274,18 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     final view = buildPlayerView(game, topology, _humanPlayerId);
     final workTarget = _workTargetSelection!.workTarget;
     final valid =
-        workTarget == kWorkTargetExplore ||
-            workTarget == kWorkTargetBuildImprovement
-        ? _workTargetSelectionCache.get(_humanPlayerId, workTarget)
+        GameMapAreaStateLogic.kCacheFirstWorkTargets.contains(workTarget)
+        ? GameMapAreaStateLogic.filterCacheSelectionForRuntimeStaleTileConflicts(
+            cachedTileKeys: _workTargetSelectionCache.get(
+              _humanPlayerId,
+              workTarget,
+            ),
+            game: game,
+            currentOrders: orders,
+            playerId: _humanPlayerId,
+            selectedUnitId: _workTargetSelection!.unit.id,
+            workTarget: workTarget,
+          )
         : getValidWorkOrderTileKeysWithVisibility(
             game: game,
             topology: topology,

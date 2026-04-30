@@ -39,6 +39,7 @@ class GameMapAreaStateLogic {
 
   static const Set<String> kCacheFirstWorkTargets = {
     kWorkTargetExplore,
+    kWorkTargetProspect,
     kWorkTargetBuildImprovement,
     kWorkTargetUpgradeTown,
     kWorkTargetBuildRoad,
@@ -48,6 +49,9 @@ class GameMapAreaStateLogic {
   };
 
   static const Set<String> _runtimeConflictProtectedCacheTargets = {
+    kWorkTargetExplore,
+    kWorkTargetProspect,
+    kWorkTargetBuildImprovement,
     kWorkTargetUpgradeTown,
     kWorkTargetBuildRoad,
     kWorkTargetBuildPort,

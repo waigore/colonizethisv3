@@ -73,6 +73,7 @@ class PerPlayerWorkTargetSelectionCache {
   static final Map<String, WorkTargetSelectionPopulationStrategy>
   _defaultStrategies = {
     kWorkTargetExplore: _populateExploreTargets,
+    kWorkTargetProspect: _populateProspectTargets,
     kWorkTargetBuildImprovement: _populateBuildImprovementTargets,
     kWorkTargetUpgradeTown: _populateUpgradeTownTargets,
     kWorkTargetBuildRoad: _populateBuildRoadTargets,
@@ -108,6 +109,10 @@ class PerPlayerWorkTargetSelectionCache {
     WorkTargetSelectionSnapshot s,
   ) {
     return _populateIdleNoPendingTargets(s, kWorkTargetBuildImprovement);
+  }
+
+  static Set<String> _populateProspectTargets(WorkTargetSelectionSnapshot s) {
+    return _populateIdleNoPendingTargets(s, kWorkTargetProspect);
   }
 
   static Set<String> _populateUpgradeTownTargets(
