@@ -6,7 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/army_migration.dart';
-import '../world/fog_resolution.dart';
+import '../world/province_ownership_transfer.dart';
 import 'conflict_detection.dart';
 
 final _qbLog = packageLogger();
@@ -674,17 +674,6 @@ Game applyQuickBattleResultToGame(
       .toList();
 
   var provinces = region.provinces;
-  if (result.provinceFlips &&
-      result.winner == QuickBattleWinner.attacker &&
-      ctx.attackers.isNotEmpty) {
-    final attackerFactionId = ctx.attackers.first.factionId;
-    final idx = provinces.indexWhere((p) => p.id == ctx.provinceId);
-    if (idx >= 0) {
-      provinces = List.from(provinces)
-        ..[idx] = provinces[idx].copyWith(ownerId: attackerFactionId);
-    }
-  }
-
   if (result.fortDowngradeFromDestroyedEmplaced) {
     final idx = provinces.indexWhere((p) => p.id == ctx.provinceId);
     if (idx >= 0) {
@@ -702,19 +691,20 @@ Game applyQuickBattleResultToGame(
     newWorldState = game.worldState.copyWith(newWorld: newRegion);
   }
 
+  var updatedGame = game.copyWith(worldState: newWorldState);
+
   if (result.provinceFlips &&
       result.winner == QuickBattleWinner.attacker &&
       ctx.attackers.isNotEmpty) {
     final attackerFactionId = ctx.attackers.first.factionId;
-    final timers = clearSpyRevealTimersForProvince(
-      game.worldState.spyRevealTurnsByPlayer,
-      attackerFactionId,
-      ctx.provinceId,
+    updatedGame = applyCanonicalSingleProvinceOwnershipTransfer(
+      updatedGame,
+      targetProvinceId: ctx.provinceId,
+      oldOwnerId: ctx.defenderFactionId,
+      newOwnerId: attackerFactionId,
     );
-    newWorldState = newWorldState.copyWith(spyRevealTurnsByPlayer: timers);
   }
 
-  var updatedGame = game.copyWith(worldState: newWorldState);
   updatedGame = updatedGame.copyWith(
     worldState: reconcileArmiesAfterUnitsChanged(
       updatedGame.worldState,

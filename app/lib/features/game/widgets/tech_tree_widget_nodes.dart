@@ -51,7 +51,7 @@ class _TechTreeEdgePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _TechTreeEdgePainter oldDelegate) => false;
 }
 
 class _TechNode extends StatelessWidget {

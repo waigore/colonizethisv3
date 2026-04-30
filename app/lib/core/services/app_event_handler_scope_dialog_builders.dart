@@ -106,7 +106,7 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
       game: game,
       humanPlayerId: _AppEventHandlerScopeState._humanPlayerId(game),
       targetFactionId: params?['targetFactionId'] as String? ?? '',
-      isSubsidy: params?['isSubsidy'] as bool? ?? false,
+      isSubsidy: params?['isSubsidy'] == true,
       bus: container.read(appEventBusProvider),
     );
   }
@@ -119,7 +119,7 @@ extension _DialogBuilders on _AppEventHandlerScopeState {
     return CombatModeChoiceDialog(
       bus: container.read(appEventBusProvider),
       provinceName: params?['provinceName'] as String? ?? '',
-      isCapitalSiege: params?['isCapitalSiege'] as bool? ?? false,
+      isCapitalSiege: params?['isCapitalSiege'] == true,
     );
   }
 
