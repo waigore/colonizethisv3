@@ -19,6 +19,17 @@ void main() {
       );
     });
 
+    test('rejects when road level is 3 (intermediate, not 1 or 2)', () {
+      expect(
+        rejectionReasonForBuildRailOrder(
+          techUnlocked: const {early: true},
+          roadLevel: 3,
+          terrain: TerrainType.plains,
+        ),
+        'Railroad requires an existing road (transport level 1 or 2) on the tile',
+      );
+    });
+
     test('rejects when road level is 0', () {
       expect(
         rejectionReasonForBuildRailOrder(
@@ -93,6 +104,28 @@ void main() {
           terrain: TerrainType.mountain,
         ),
         'Dynamite required for rail in mountains',
+      );
+    });
+
+    test('hills: allows with Dynamite only', () {
+      expect(
+        rejectionReasonForBuildRailOrder(
+          techUnlocked: const {dynamite: true},
+          roadLevel: 2,
+          terrain: TerrainType.hills,
+        ),
+        isNull,
+      );
+    });
+
+    test('plains: allows with Later Steam only', () {
+      expect(
+        rejectionReasonForBuildRailOrder(
+          techUnlocked: const {later: true},
+          roadLevel: 1,
+          terrain: TerrainType.desert,
+        ),
+        isNull,
       );
     });
 
