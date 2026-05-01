@@ -1,3 +1,5 @@
+// Physical line limit for game feature widgets (`repo.game_widgets_file_size`).
+// SPEC: SPEC/program/game-widgets-file-size.md
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,8 +9,6 @@ const _maxPhysicalLines = 700;
 
 /// PR-blocking structural check: files under
 /// `app/lib/features/game/widgets/**` must stay at or below 700 physical lines.
-///
-/// SPEC: SPEC/program/repo-lint.md
 int runCheckGameWidgetsFileSize(
   String repoRoot, {
   void Function(String line)? info,
