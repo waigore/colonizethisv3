@@ -33,7 +33,7 @@ class DesktopWindowState {
   };
 
   static DesktopWindowState? fromSettingsValue(Object? value) {
-    if (value is! Map) {
+    if (value is! Map<Object?, Object?>) {
       return null;
     }
     final x = _readFiniteDouble(value['x']);

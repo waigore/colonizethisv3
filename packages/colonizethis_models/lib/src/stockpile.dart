@@ -51,13 +51,11 @@ class Stockpile {
     return Stockpile(quantities: merged);
   }
 
-  Map<String, dynamic> toJson() => {
-        'quantities': quantities,
-      };
+  Map<String, dynamic> toJson() => {'quantities': quantities};
 
   static Stockpile fromJson(Map<String, dynamic> json) {
     final raw = json['quantities'];
-    if (raw is! Map) {
+    if (raw is! Map<dynamic, dynamic>) {
       return const Stockpile();
     }
     final map = <CommodityId, int>{};
@@ -80,10 +78,10 @@ class Stockpile {
 
   @override
   int get hashCode => Object.hashAll(
-        quantities.entries
-            .map((e) => Object.hash(e.key, e.value))
-            .toList(growable: false),
-      );
+    quantities.entries
+        .map((e) => Object.hash(e.key, e.value))
+        .toList(growable: false),
+  );
 
   static bool _mapEquals<K, V>(Map<K, V> a, Map<K, V> b) {
     if (identical(a, b)) return true;
@@ -96,4 +94,3 @@ class Stockpile {
     return true;
   }
 }
-

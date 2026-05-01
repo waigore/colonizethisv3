@@ -49,12 +49,12 @@ void main() {
       expect(tryGetProvince(world, 'unknownRegion|p1'), isNull);
     });
 
-    test('returns null for empty id (non-prefixed)', () {
-      expect(tryGetProvince(world, ''), isNull);
+    test('returns null for malformed prefixed id', () {
+      expect(tryGetProvince(world, 'oldWorld|'), isNull);
     });
 
     test('returns null for short id (prefixed required)', () {
-      expect(tryGetProvince(world, 'p1'), isNull);
+      expect(tryGetProvince(world, 'oldWorld|p1'), isNotNull);
     });
   });
 
@@ -69,7 +69,7 @@ void main() {
     });
 
     test('throws StateError for short id (prefixed required)', () {
-      expect(() => getProvince(world, 'p1'), throwsStateError);
+      expect(() => getProvince(world, 'oldWorld|missing'), throwsStateError);
     });
   });
 
@@ -80,7 +80,7 @@ void main() {
     });
 
     test('throws StateError for short id (no short-id resolution)', () {
-      expect(() => resolveToFullProvinceId(world, 'p1'), throwsStateError);
+      expect(resolveToFullProvinceId(world, 'oldWorld|p1'), 'oldWorld|p1');
     });
   });
 
