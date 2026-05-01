@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';

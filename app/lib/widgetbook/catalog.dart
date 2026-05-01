@@ -23,7 +23,6 @@ import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
 import '../features/game/widgets/turn_news_dialog.dart';
-import '../l10n/app_localizations.dart';
 import '../l10n/l10n.dart';
 import '../widgets/debug_init_game.dart';
 import '../widgets/ct_choice_chip.dart';

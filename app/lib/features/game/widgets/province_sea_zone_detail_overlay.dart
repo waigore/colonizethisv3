@@ -22,7 +22,6 @@ import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/constants.dart';
-import '../../../l10n/app_localizations.dart';
 import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
 import '../utils/sea_zone_name_resolver.dart';

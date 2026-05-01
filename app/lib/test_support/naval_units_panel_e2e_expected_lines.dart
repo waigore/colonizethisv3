@@ -6,7 +6,7 @@ import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/utils/naval_tree_builder.dart'
     show FleetRow, NavalTreeLocationNode, buildNavalTree, flattenNavalTree;
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 
 void _addFleetRowTexts({
   required List<String> out,
