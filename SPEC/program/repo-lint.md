@@ -14,6 +14,8 @@
 
 **Implementation status (GitHub #1912, checker slice):** `repo.function_size`, `repo.control_flow_nesting_depth`, and `repo.part_unit_size` enforce universal thresholds only; they do **not** read keyed waiver YAML or other per-symbol / per-file exemption tables. Per-rule contracts: `SPEC/program/function-size.md`, `SPEC/program/control-flow-nesting-depth.md`, `SPEC/program/part-unit-size.md`.
 
+**Implementation status (GitHub #1912, checker slice):** `repo.disallowed_ast_patterns` does not use per-file suppression allowlists for sea-zone rules; in-file suppressions follow the same `ignore` / `ignore_for_file` contract as other disallowed-AST rules.
+
 **Implementation status (GitHub #1912, dart file size):** `repo.dart_file_non_comment_line_size` enforces a universal **1000** non-comment-line cap for scanned hand-written Dart; it skips only **generated whole paths** (suffixes `.g.dart`, `.freezed.dart`, `.mocks.dart`, `.gen.dart`, and generated Flutter l10n path prefixes under `app/lib/l10n/`). Per-rule contract: `SPEC/program/dart-file-non-comment-line-size.md`.
 
 **Implementation status (GitHub #1912, game widgets file size):** `repo.game_widgets_file_size` enforces a universal **700** physical-line cap for every `.dart` file under `app/lib/features/game/widgets/**` with no keyed waivers. Per-rule contract: `SPEC/program/game-widgets-file-size.md`.
