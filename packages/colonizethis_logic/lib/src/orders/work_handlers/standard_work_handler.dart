@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
 import '../build_rail_work_rules.dart';
+import 'work_order_handler.dart';
 
 final _log = packageLogger();
 
@@ -29,7 +30,8 @@ _StandardWorkTargetConfig _buildStandardWorkTargetConfig({
   switch (target) {
     case kWorkTargetBuildImprovement:
       return _StandardWorkTargetConfig(
-        allowedForUnitType: (t) => isWorkOrderTargetAllowedForUnitType(t, target),
+        allowedForUnitType: (t) =>
+            isWorkOrderTargetAllowedForUnitType(t, target),
         costFn: () => workOrderMaterialCost(
           target,
           improvementLevel: tileState.improvementLevel(targetTileKey),
@@ -41,7 +43,8 @@ _StandardWorkTargetConfig _buildStandardWorkTargetConfig({
       );
     case kWorkTargetBuildFort:
       return _StandardWorkTargetConfig(
-        allowedForUnitType: (t) => isWorkOrderTargetAllowedForUnitType(t, target),
+        allowedForUnitType: (t) =>
+            isWorkOrderTargetAllowedForUnitType(t, target),
         costFn: () {
           final prov = provinceById(unit.locationProvinceId);
           final fortLevel = prov?.fortLevel ?? 0;
@@ -58,7 +61,8 @@ _StandardWorkTargetConfig _buildStandardWorkTargetConfig({
     case kWorkTargetBuildRail:
     case kWorkTargetUpgradeTown:
       return _StandardWorkTargetConfig(
-        allowedForUnitType: (t) => isWorkOrderTargetAllowedForUnitType(t, target),
+        allowedForUnitType: (t) =>
+            isWorkOrderTargetAllowedForUnitType(t, target),
         costFn: () => workOrderMaterialCost(target),
         totalTurnsFn: () => totalTurnsForWork(target),
       );
@@ -226,4 +230,74 @@ bool tryApplyRemainingStandardBuildTargets({
     deductMaterialCost: deductMaterialCost,
     updateUnit: updateUnit,
   );
+}
+
+class BuildImprovementWorkOrderHandler implements WorkOrderHandler {
+  const BuildImprovementWorkOrderHandler();
+
+  @override
+  bool supports(String target) => target == kWorkTargetBuildImprovement;
+
+  @override
+  bool tryApply(
+    WorkOrderExecutionContext context,
+    WorkOrder order,
+    Unit unit,
+    String targetTileKey,
+    bool hasValidTarget,
+  ) {
+    return applyStandardWorkOrder(
+      order: order,
+      unit: unit,
+      targetTileKey: targetTileKey,
+      hasValidTarget: hasValidTarget,
+      orderTarget: kWorkTargetBuildImprovement,
+      tileState: context.state.work.tileState,
+      provinceById: context.provinceById,
+      canAffordMaterialCost: context.canAffordMaterialCost,
+      deductMaterialCost: context.deductMaterialCost,
+      updateUnit: context.updateUnit,
+    );
+  }
+}
+
+class RemainingStandardBuildTargetsWorkOrderHandler
+    implements WorkOrderHandler {
+  const RemainingStandardBuildTargetsWorkOrderHandler();
+
+  @override
+  bool supports(String target) {
+    return target == kWorkTargetBuildRoad ||
+        target == kWorkTargetBuildPort ||
+        target == kWorkTargetUpgradeTown ||
+        target == kWorkTargetBuildFort ||
+        target == kWorkTargetBuildRail;
+  }
+
+  @override
+  bool tryApply(
+    WorkOrderExecutionContext context,
+    WorkOrder order,
+    Unit unit,
+    String targetTileKey,
+    bool hasValidTarget,
+  ) {
+    return tryApplyRemainingStandardBuildTargets(
+      workTarget: order.target,
+      order: order,
+      player: context.player,
+      unit: unit,
+      targetTileKey: targetTileKey,
+      hasValidTarget: hasValidTarget,
+      tileState: context.state.work.tileState,
+      provinceById: context.provinceById,
+      canAffordMaterialCost: context.canAffordMaterialCost,
+      deductMaterialCost: context.deductMaterialCost,
+      updateUnit: context.updateUnit,
+      terrain: terrainTypeForTileKey(
+        context.state.tileMapByRegion,
+        targetTileKey,
+      ),
+    );
+  }
 }
