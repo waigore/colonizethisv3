@@ -39,6 +39,9 @@ class GameMapAreaStateLogic {
 
   static const Set<String> kCacheFirstWorkTargets = {
     kWorkTargetExplore,
+    kWorkTargetStealTech,
+    kWorkTargetCounterSpy,
+    kWorkTargetPurchaseLand,
     kWorkTargetProspect,
     kWorkTargetBuildImprovement,
     kWorkTargetUpgradeTown,
@@ -50,6 +53,9 @@ class GameMapAreaStateLogic {
 
   static const Set<String> _runtimeConflictProtectedCacheTargets = {
     kWorkTargetExplore,
+    kWorkTargetStealTech,
+    kWorkTargetCounterSpy,
+    kWorkTargetPurchaseLand,
     kWorkTargetProspect,
     kWorkTargetBuildImprovement,
     kWorkTargetUpgradeTown,
@@ -109,6 +115,42 @@ class GameMapAreaStateLogic {
       return cachedTileKeys;
     }
     return cachedTileKeys.difference(conflicting);
+  }
+
+  /// Resolves selectable work-target tile keys for the civilian map picker.
+  ///
+  /// [kCacheFirstWorkTargets] read from [workTargetSelectionCache] only (no
+  /// live `getValidWorkOrderTileKeysWithVisibility` fallback in that path).
+  static Set<String> resolveValidTileKeysForCivilianWorkSelection({
+    required String workTarget,
+    required PerPlayerWorkTargetSelectionCache workTargetSelectionCache,
+    required String humanPlayerId,
+    required String selectedUnitId,
+    required ct_models.Game game,
+    required ct_models.Orders currentOrders,
+    required PlayerView playerView,
+    required MapTopology topology,
+    required Map<String, TileMapResult>? tileMapByRegion,
+  }) {
+    if (kCacheFirstWorkTargets.contains(workTarget)) {
+      return filterCacheSelectionForRuntimeStaleTileConflicts(
+        cachedTileKeys: workTargetSelectionCache.get(humanPlayerId, workTarget),
+        game: game,
+        currentOrders: currentOrders,
+        playerId: humanPlayerId,
+        selectedUnitId: selectedUnitId,
+        workTarget: workTarget,
+      );
+    }
+    return getValidWorkOrderTileKeysWithVisibility(
+      game: game,
+      topology: topology,
+      view: playerView,
+      unitId: selectedUnitId,
+      workTarget: workTarget,
+      currentOrders: currentOrders,
+      tileMapByRegion: tileMapByRegion,
+    );
   }
 
   static ct_models.Orders addHumanWorkOrder({
