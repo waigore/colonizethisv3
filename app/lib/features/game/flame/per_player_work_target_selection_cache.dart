@@ -2,7 +2,6 @@ import 'dart:collection';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 typedef WorkTargetSelectionPopulationStrategy =
@@ -73,6 +72,9 @@ class PerPlayerWorkTargetSelectionCache {
   static final Map<String, WorkTargetSelectionPopulationStrategy>
   _defaultStrategies = {
     kWorkTargetExplore: _populateExploreTargets,
+    kWorkTargetStealTech: _populateStealTechTargets,
+    kWorkTargetCounterSpy: _populateCounterSpyTargets,
+    kWorkTargetPurchaseLand: _populatePurchaseLandTargets,
     kWorkTargetProspect: _populateProspectTargets,
     kWorkTargetBuildImprovement: _populateBuildImprovementTargets,
     kWorkTargetUpgradeTown: _populateUpgradeTownTargets,
@@ -83,11 +85,33 @@ class PerPlayerWorkTargetSelectionCache {
   };
 
   static Set<String> _populateExploreTargets(WorkTargetSelectionSnapshot s) {
+    return _populateMergedValidForTarget(s, kWorkTargetExplore);
+  }
+
+  static Set<String> _populateStealTechTargets(WorkTargetSelectionSnapshot s) {
+    return _populateMergedValidForTarget(s, kWorkTargetStealTech);
+  }
+
+  static Set<String> _populateCounterSpyTargets(WorkTargetSelectionSnapshot s) {
+    return _populateMergedValidForTarget(s, kWorkTargetCounterSpy);
+  }
+
+  static Set<String> _populatePurchaseLandTargets(
+    WorkTargetSelectionSnapshot s,
+  ) {
+    return _populateMergedValidForTarget(s, kWorkTargetPurchaseLand);
+  }
+
+  /// Per-unit union of `getValidWorkOrderTileKeysWithVisibility` (same as
+  /// `explore` cache population).
+  static Set<String> _populateMergedValidForTarget(
+    WorkTargetSelectionSnapshot s,
+    String workTarget,
+  ) {
     final merged = <String>{};
     for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
       final supportsTarget =
-          workOrderTargetsByUnitType[unit.type]?.contains(kWorkTargetExplore) ??
-          false;
+          workOrderTargetsByUnitType[unit.type]?.contains(workTarget) ?? false;
       if (!supportsTarget) {
         continue;
       }
@@ -96,7 +120,7 @@ class PerPlayerWorkTargetSelectionCache {
         topology: s.topology,
         view: s.playerView,
         unitId: unit.id,
-        workTarget: kWorkTargetExplore,
+        workTarget: workTarget,
         currentOrders: s.currentOrders,
         tileMapByRegion: s.tileMapByRegion,
       );

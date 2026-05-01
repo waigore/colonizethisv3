@@ -273,29 +273,18 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     final topology = mapData?.combinedTopology ?? const MapTopology();
     final view = buildPlayerView(game, topology, _humanPlayerId);
     final workTarget = _workTargetSelection!.workTarget;
-    final valid =
-        GameMapAreaStateLogic.kCacheFirstWorkTargets.contains(workTarget)
-        ? GameMapAreaStateLogic.filterCacheSelectionForRuntimeStaleTileConflicts(
-            cachedTileKeys: _workTargetSelectionCache.get(
-              _humanPlayerId,
-              workTarget,
-            ),
-            game: game,
-            currentOrders: orders,
-            playerId: _humanPlayerId,
-            selectedUnitId: _workTargetSelection!.unit.id,
-            workTarget: workTarget,
-          )
-        : getValidWorkOrderTileKeysWithVisibility(
-            game: game,
-            topology: topology,
-            view: view,
-            unitId: _workTargetSelection!.unit.id,
-            workTarget: workTarget,
-            currentOrders: orders,
-            tileMapByRegion: mapData?.tileMapByRegion,
-          );
-    _cachedValidTileKeys = valid;
+    _cachedValidTileKeys =
+        GameMapAreaStateLogic.resolveValidTileKeysForCivilianWorkSelection(
+          workTarget: workTarget,
+          workTargetSelectionCache: _workTargetSelectionCache,
+          humanPlayerId: _humanPlayerId,
+          selectedUnitId: _workTargetSelection!.unit.id,
+          game: game,
+          currentOrders: orders,
+          playerView: view,
+          topology: topology,
+          tileMapByRegion: mapData?.tileMapByRegion,
+        );
   }
 
   void _cycleBaseLayerDisplayMode() {

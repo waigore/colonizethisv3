@@ -6,8 +6,11 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         kWorkTargetBuildPort,
         kWorkTargetBuildRail,
         kWorkTargetBuildRoad,
+        kWorkTargetCounterSpy,
         kWorkTargetExplore,
         kWorkTargetProspect,
+        kWorkTargetPurchaseLand,
+        kWorkTargetStealTech,
         kWorkTargetUpgradeTown;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -18,12 +21,16 @@ void main() {
 
   group('GameMapAreaStateLogic cache stale-tile filtering', () {
     test(
-      'cache-first target set includes explore, prospect, and worker targets',
+      'cache-first target set includes explore, spy, merchant, prospect, and '
+      'worker targets',
       () {
         expect(
           GameMapAreaStateLogic.kCacheFirstWorkTargets,
           containsAll(<String>{
             kWorkTargetExplore,
+            kWorkTargetStealTech,
+            kWorkTargetCounterSpy,
+            kWorkTargetPurchaseLand,
             kWorkTargetProspect,
             kWorkTargetBuildImprovement,
             kWorkTargetUpgradeTown,
@@ -62,6 +69,9 @@ void main() {
 
         for (final workTarget in <String>[
           kWorkTargetExplore,
+          kWorkTargetStealTech,
+          kWorkTargetCounterSpy,
+          kWorkTargetPurchaseLand,
           kWorkTargetProspect,
           kWorkTargetBuildImprovement,
           kWorkTargetUpgradeTown,
