@@ -1,10 +1,16 @@
 import 'package:colonizethis_app/features/game/flame/game_map_area_state_logic.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
+        kWorkTargetBuildImprovement,
         kWorkTargetBuildFort,
         kWorkTargetBuildPort,
         kWorkTargetBuildRail,
         kWorkTargetBuildRoad,
+        kWorkTargetCounterSpy,
+        kWorkTargetExplore,
+        kWorkTargetProspect,
+        kWorkTargetPurchaseLand,
+        kWorkTargetStealTech,
         kWorkTargetUpgradeTown;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -14,21 +20,31 @@ void main() {
   suppressLogsForTests();
 
   group('GameMapAreaStateLogic cache stale-tile filtering', () {
-    test('cache-first target set includes worker-family cache slice', () {
-      expect(
-        GameMapAreaStateLogic.kCacheFirstWorkTargets,
-        containsAll(<String>{
-          kWorkTargetUpgradeTown,
-          kWorkTargetBuildRoad,
-          kWorkTargetBuildPort,
-          kWorkTargetBuildFort,
-          kWorkTargetBuildRail,
-        }),
-      );
-    });
+    test(
+      'cache-first target set includes explore, spy, merchant, prospect, and '
+      'worker targets',
+      () {
+        expect(
+          GameMapAreaStateLogic.kCacheFirstWorkTargets,
+          containsAll(<String>{
+            kWorkTargetExplore,
+            kWorkTargetStealTech,
+            kWorkTargetCounterSpy,
+            kWorkTargetPurchaseLand,
+            kWorkTargetProspect,
+            kWorkTargetBuildImprovement,
+            kWorkTargetUpgradeTown,
+            kWorkTargetBuildRoad,
+            kWorkTargetBuildPort,
+            kWorkTargetBuildFort,
+            kWorkTargetBuildRail,
+          }),
+        );
+      },
+    );
 
     test(
-      'runtime stale-tile filter subtracts pending conflicts for each worker cache target',
+      'runtime stale-tile filter subtracts pending conflicts for cache-first targets',
       () {
         const humanPlayerId = 'gp1';
         const selectedUnitId = 'u_selected';
@@ -52,6 +68,12 @@ void main() {
         );
 
         for (final workTarget in <String>[
+          kWorkTargetExplore,
+          kWorkTargetStealTech,
+          kWorkTargetCounterSpy,
+          kWorkTargetPurchaseLand,
+          kWorkTargetProspect,
+          kWorkTargetBuildImprovement,
           kWorkTargetUpgradeTown,
           kWorkTargetBuildRoad,
           kWorkTargetBuildPort,

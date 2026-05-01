@@ -37,15 +37,9 @@ coverage/
 coverage_merged/
 app/coverage_report/
 
-# Flutter localization (generated)
-app/lib/l10n/app_localizations*.dart
-# Manual `AppLocalizationsEn` library + part shards (Refs #2021); not flutter_gen output.
-!app/lib/l10n/app_localizations_en.dart
-!app/lib/l10n/app_localizations_en_part*.dart
-!app/lib/l10n/app_localizations_lookup.dart
-!app/lib/l10n/app_localizations_contract.dart
-!app/lib/l10n/app_localizations_delegate.dart
-!app/lib/l10n/app_localizations.dart
+# Flutter localization: gen output (see app/l10n.yaml `output-localization-file`).
+# Do not ignore tracked `app/lib/l10n/app_localizations_*.dart` sources (en + parts + contract).
+app/lib/l10n/app_l10n_flutter_gen*.dart
 app/lib/l10n/untranslated.json
 
 # IDE

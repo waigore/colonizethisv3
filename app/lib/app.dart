@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/config/desktop_window_settings.dart';
@@ -31,12 +29,7 @@ class App extends ConsumerWidget {
     final app = MaterialApp(
       navigatorKey: appNavigatorKey,
       onGenerateTitle: (context) => appL10n(context).app_title,
-      localizationsDelegates: const [
-        AppLocalizationsBinding.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       theme: AppThemes.light,
       initialRoute: Routes.shell,

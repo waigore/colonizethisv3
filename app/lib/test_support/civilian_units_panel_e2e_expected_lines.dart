@@ -8,7 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 
 const Map<String, String> _workTargetLabels = {
   kWorkTargetExplore: 'Explore',

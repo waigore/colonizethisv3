@@ -17,7 +17,7 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show MoveOrder, ProvinceId, Unit, WorkOrder, kUnitTypeExplorer;
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';

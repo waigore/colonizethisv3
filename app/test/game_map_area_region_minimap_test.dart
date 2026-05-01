@@ -9,7 +9,7 @@ import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
         kRegionMinimapToggleKey,
         kRegionMinimapZoomSliderKey;
 import 'package:colonizethis_app/features/game/flame/region_minimap_math.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';

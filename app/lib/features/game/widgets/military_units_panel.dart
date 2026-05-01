@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/services/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
-import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import 'utils/military_tree_builder.dart';

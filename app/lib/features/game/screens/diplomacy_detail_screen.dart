@@ -5,7 +5,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../l10n/app_localizations.dart';
 import '../../../l10n/l10n.dart';
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../widgets/ct_panel.dart';

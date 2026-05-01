@@ -5,7 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show homeFleetIdFor, regionIdForSeaZone, tryGetProvince;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/l10n.dart';
 import '../units/shared/units_panel_region_label.dart';
 import '../../utils/map_location_resolver.dart';
 import '../../utils/sea_zone_name_resolver.dart';
