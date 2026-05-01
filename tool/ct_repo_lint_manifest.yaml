@@ -140,7 +140,7 @@ rules:
   - rule_id: repo.game_widgets_file_size
     group: structure
     title: app/lib/features/game/widgets files must stay at or below 700 lines
-    spec: SPEC/program/repo-lint.md
+    spec: SPEC/program/game-widgets-file-size.md
     runner: dart
     script: tool/check_game_widgets_file_size.dart
 

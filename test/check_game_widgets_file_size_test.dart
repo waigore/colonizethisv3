@@ -28,6 +28,23 @@ void main() {
     expect(logs.join('\n'), contains('701 physical lines > 700'));
   });
 
+  test('fails when game widgets directory is missing', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_game_widgets_file_size_no_dir_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    final logs = <String>[];
+    final code = runCheckGameWidgetsFileSize(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(logs.join('\n'), contains('widgets not found'));
+  });
+
   test('passes when all game widget files are at or below 700 lines', () {
     final temp = Directory.systemTemp.createTempSync(
       'check_game_widgets_file_size_pass_',

@@ -51,6 +51,10 @@ void main() {
         'SPEC/program/dart-file-non-comment-line-size.md',
       );
       expect(
+        rules.firstWhere((r) => r.ruleId == 'repo.game_widgets_file_size').spec,
+        'SPEC/program/game-widgets-file-size.md',
+      );
+      expect(
         rules
             .firstWhere((r) => r.ruleId == 'repo.app_hardcoded_ui_strings')
             .includeOnlyWhenEnvName,
