@@ -88,6 +88,12 @@ if search_has_match "^export 'package:colonizethis_logic/src/ai/" "$LOGIC_BARREL
   FAIL=1
 fi
 
+# 5c) Keep hidden-agenda setup helper off the broad barrel (Refs #1958).
+if search_has_match "^export 'src/setup/hidden_agenda_assignment\\.dart';" "$LOGIC_BARREL"; then
+  echo "ERROR: $LOGIC_BARREL must not export src/setup/hidden_agenda_assignment.dart."
+  FAIL=1
+fi
+
 if [[ $FAIL -eq 1 ]]; then
   exit 1
 fi
