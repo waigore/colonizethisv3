@@ -17,7 +17,7 @@
 ## File layout
 - **Config:** `app/l10n.yaml`
 - **ARB directory:** `app/lib/l10n/`
-- **Generated output:** `app/l10n.yaml` sets **`synthetic-package: false`** so `flutter gen-l10n` writes `app_localizations*.dart` under `app/lib/l10n/` (gitignored). App code and tests import via **`package:colonizethis_app/l10n/app_localizations.dart`** (and `l10n.dart` helpers), which resolves to those generated files after `flutter gen-l10n`.
+- **Generated output:** `app/l10n.yaml` sets **`output-localization-file: app_l10n_flutter_gen.dart`** so `flutter gen-l10n` (including the build/run integration) writes **`app_l10n_flutter_gen*.dart`** under `app/lib/l10n/` (gitignored) and does not clobber the tracked English library shell **`app/lib/l10n/app_localizations_en.dart`**. CI runs `dart run tool/patch_app_localizations_after_gen_l10n.dart` after `flutter gen-l10n` to restore that shell if gen overwrote it. App code and tests import **`package:colonizethis_app/l10n/l10n.dart`**, which exports the hand-maintained contract + delegate (`Refs #2021`) and defines **`appL10n`**.
 - **Maintainability:** Keys are namespaced/prefixed by feature (e.g. `mainMenu_newGame`, `victory_titleMilitary`), and messages include ARB metadata for translator context.
 
 ## CI quality gate (GitHub)

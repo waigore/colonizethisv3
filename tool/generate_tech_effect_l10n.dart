@@ -58,7 +58,7 @@ void main() {
   buf.writeln('// Run: dart tool/generate_tech_effect_l10n.dart');
   buf.writeln('// Then: cd app && flutter gen-l10n');
   buf.writeln();
-  buf.writeln("import 'package:colonizethis_app/l10n/app_localizations.dart';");
+  buf.writeln("import 'package:colonizethis_app/l10n/l10n.dart';");
   buf.writeln();
   buf.writeln(
     '/// Resolves a tech effect line id from [tech_effect_summary.yaml] via [AppLocalizations].',
