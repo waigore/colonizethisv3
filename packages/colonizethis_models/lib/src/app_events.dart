@@ -476,6 +476,19 @@ class CreditDebugTreasuryEvent extends SessionCommandEvent {
   final int creditedAmount;
 }
 
+/// Immediate debug province ownership transfer for the active human player.
+class FlipDebugProvinceOwnershipEvent extends SessionCommandEvent {
+  const FlipDebugProvinceOwnershipEvent({
+    required this.humanPlayerId,
+    required this.regionId,
+    required this.provinceDisplayName,
+  });
+
+  final String humanPlayerId;
+  final String regionId;
+  final String provinceDisplayName;
+}
+
 /// Request to append one diplomatic order for [playerId] in current-turn draft.
 class AppendDiplomaticOrderRequestedEvent extends SessionCommandEvent {
   AppendDiplomaticOrderRequestedEvent({

@@ -51,5 +51,18 @@ void main() {
       expect(result.isError, isTrue);
       expect(result.events, isEmpty);
     });
+
+    test('emits flip_province event for valid command', () {
+      final result = executor.executeRaw(
+        rawInput: '/flip_province oldWorld New Bordeaux',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      expect(result.events, hasLength(1));
+      final event = result.events.single as FlipDebugProvinceOwnershipEvent;
+      expect(event.humanPlayerId, 'p1');
+      expect(event.regionId, 'oldWorld');
+      expect(event.provinceDisplayName, 'New Bordeaux');
+    });
   });
 }

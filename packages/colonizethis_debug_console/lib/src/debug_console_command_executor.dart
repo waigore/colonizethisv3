@@ -41,8 +41,7 @@ class DebugConsoleCommandExecutor {
               count: count,
             ),
           ],
-          message:
-              'Queued debug spawn: ${count}x $unitType at capital.',
+          message: 'Queued debug spawn: ${count}x $unitType at capital.',
         ),
       DebugConsoleTreasuryCredit(
         :final requestedAmount,
@@ -60,6 +59,18 @@ class DebugConsoleCommandExecutor {
             requestedAmount: requestedAmount,
             creditedAmount: creditedAmount,
           ),
+        ),
+      DebugConsoleFlipProvince(:final regionId, :final provinceDisplayName) =>
+        DebugConsoleExecutionResult.success(
+          events: [
+            FlipDebugProvinceOwnershipEvent(
+              humanPlayerId: humanPlayerId,
+              regionId: regionId,
+              provinceDisplayName: provinceDisplayName,
+            ),
+          ],
+          message:
+              'Queued debug province flip: $regionId / $provinceDisplayName.',
         ),
     };
   }
