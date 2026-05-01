@@ -121,13 +121,50 @@ void main() {
       expect(events, isEmpty);
     });
 
+    testWidgets('submitting flip_province emits ownership flip event', (
+      tester,
+    ) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      final events = <FlipDebugProvinceOwnershipEvent>[];
+      final sub = bus.on<FlipDebugProvinceOwnershipEvent>().listen(events.add);
+      addTearDown(sub.cancel);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DebugConsoleOverlayPanel(
+              bus: bus,
+              humanPlayerId: 'human_1',
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('debug-console-input')),
+        '/flip_province oldWorld New Bordeaux',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(events, hasLength(1));
+      expect(events.single.humanPlayerId, 'human_1');
+      expect(events.single.regionId, 'oldWorld');
+      expect(events.single.provinceDisplayName, 'New Bordeaux');
+    });
+
     testWidgets(
       'submitting rail_builder command emits rail builder spawn event',
       (tester) async {
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
         final events = <SpawnDebugCivilianAtCapitalEvent>[];
-        final sub = bus.on<SpawnDebugCivilianAtCapitalEvent>().listen(events.add);
+        final sub = bus.on<SpawnDebugCivilianAtCapitalEvent>().listen(
+          events.add,
+        );
         addTearDown(sub.cancel);
 
         await tester.pumpWidget(
@@ -220,57 +257,56 @@ void main() {
       expect(closeCount, 1);
     });
 
-    testWidgets(
-      'arrow up and down navigate submitted command history',
-      (tester) async {
-        final bus = AppEventBus.create();
-        addTearDown(bus.dispose);
+    testWidgets('arrow up and down navigate submitted command history', (
+      tester,
+    ) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: DebugConsoleOverlayPanel(
-                bus: bus,
-                humanPlayerId: 'human_1',
-                onClose: () {},
-              ),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DebugConsoleOverlayPanel(
+              bus: bus,
+              humanPlayerId: 'human_1',
+              onClose: () {},
             ),
           ),
-        );
-        await tester.pump();
+        ),
+      );
+      await tester.pump();
 
-        final inputFinder = find.byKey(
-          const ValueKey<String>('debug-console-input'),
-        );
+      final inputFinder = find.byKey(
+        const ValueKey<String>('debug-console-input'),
+      );
 
-        await tester.enterText(inputFinder, '/spawn_civilian explorer 1');
-        await tester.testTextInput.receiveAction(TextInputAction.done);
-        await tester.pump();
+      await tester.enterText(inputFinder, '/spawn_civilian explorer 1');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
 
-        await tester.enterText(inputFinder, '/spawn_civilian builder 2');
-        await tester.testTextInput.receiveAction(TextInputAction.done);
-        await tester.pump();
+      await tester.enterText(inputFinder, '/spawn_civilian builder 2');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
 
-        await tester.tap(inputFinder);
-        await tester.pump();
+      await tester.tap(inputFinder);
+      await tester.pump();
 
-        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-        await tester.pump();
-        EditableText editableText = tester.widget<EditableText>(
-          find.byType(EditableText),
-        );
-        expect(editableText.controller.text, '/spawn_civilian builder 2');
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      EditableText editableText = tester.widget<EditableText>(
+        find.byType(EditableText),
+      );
+      expect(editableText.controller.text, '/spawn_civilian builder 2');
 
-        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-        await tester.pump();
-        editableText = tester.widget<EditableText>(find.byType(EditableText));
-        expect(editableText.controller.text, '/spawn_civilian explorer 1');
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      editableText = tester.widget<EditableText>(find.byType(EditableText));
+      expect(editableText.controller.text, '/spawn_civilian explorer 1');
 
-        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-        await tester.pump();
-        editableText = tester.widget<EditableText>(find.byType(EditableText));
-        expect(editableText.controller.text, '/spawn_civilian builder 2');
-      },
-    );
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      editableText = tester.widget<EditableText>(find.byType(EditableText));
+      expect(editableText.controller.text, '/spawn_civilian builder 2');
+    });
   });
 }

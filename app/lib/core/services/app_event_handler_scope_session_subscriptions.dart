@@ -1,4 +1,3 @@
-
 part of 'app_event_handler_scope.dart';
 
 extension _SessionCommands on _AppEventHandlerScopeState {
@@ -202,9 +201,27 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<CreditDebugTreasuryEvent>().listen((e) {
         final current = ref.read(currentGameProvider);
-        final result = applyDebugTreasuryCredit(
+        final result = applyDebugTreasuryCredit(currentGame: current, event: e);
+        final nextGame = result.game;
+        if (nextGame == null) {
+          _logEvent.w(result.message);
+          _showSnackBar(ShowSnackBarEvent(message: result.message));
+          return;
+        }
+        ref.read(currentGameProvider.notifier).setGame(nextGame);
+        ref.read(gameServiceProvider).saveGame(nextGame);
+        _showSnackBar(ShowSnackBarEvent(message: result.message));
+      }),
+      bus.on<FlipDebugProvinceOwnershipEvent>().listen((e) {
+        final current = ref.read(currentGameProvider);
+        final mapData = current == null
+            ? null
+            : ref.read(gameServiceProvider).getMapData(current.id);
+        final result = applyDebugFlipProvinceOwnership(
           currentGame: current,
           event: e,
+          combinedTopology: mapData?.combinedTopology ?? const MapTopology(),
+          topologyByRegion: mapData?.topologyByRegion,
         );
         final nextGame = result.game;
         if (nextGame == null) {

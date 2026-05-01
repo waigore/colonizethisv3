@@ -1,4 +1,6 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_app/core/services/app_event_handler_debug_flip_province.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_debug_spawn.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_debug_treasury.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
@@ -290,10 +292,7 @@ void main() {
         requestedAmount: 10,
         creditedAmount: 10,
       );
-      final result = applyDebugTreasuryCredit(
-        currentGame: null,
-        event: event,
-      );
+      final result = applyDebugTreasuryCredit(currentGame: null, event: event);
       expect(result.game, isNull);
       expect(result.message, contains('no active game'));
     });
@@ -316,10 +315,7 @@ void main() {
         requestedAmount: 50,
         creditedAmount: 50,
       );
-      final result = applyDebugTreasuryCredit(
-        currentGame: game,
-        event: event,
-      );
+      final result = applyDebugTreasuryCredit(currentGame: game, event: event);
       expect(result.game, isNotNull);
       final p1 = result.game!.players.firstWhere((p) => p.id == 'p1');
       expect(p1.treasury, 150);
@@ -344,13 +340,131 @@ void main() {
         requestedAmount: 12000,
         creditedAmount: 9999,
       );
-      final result = applyDebugTreasuryCredit(
-        currentGame: game,
-        event: event,
-      );
+      final result = applyDebugTreasuryCredit(currentGame: game, event: event);
       expect(result.game!.players.single.treasury, 9999);
       expect(result.message, contains('12000'));
       expect(result.message, contains('9999'));
+    });
+  });
+
+  group('applyDebugFlipProvinceOwnership', () {
+    Game _baseGame({
+      required TurnPhase phase,
+      required String ownerId,
+      required String humanVisibility,
+    }) {
+      return Game(
+        id: 'g-flip',
+        worldState: WorldState(
+          turnState: TurnState(phase: phase, turnNumber: 2),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: 'oldWorld|P1',
+                regionId: 'oldWorld',
+                ownerId: ownerId,
+                displayName: 'New Bordeaux',
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'r1',
+                type: 'musketeers',
+                ownerId: ownerId,
+                locationProvinceId: 'oldWorld|P1',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: const {
+            'oldWorld': {
+              'oldWorld|P1': ['oldWorld|P1|0|0'],
+            },
+          },
+          playerVisibilityByTile: {
+            'human_1': {'oldWorld|P1|0|0': humanVisibility},
+          },
+        ),
+        players: const [
+          Player(id: 'human_1', displayName: 'Human', isHuman: true),
+          Player(id: 'ai_1', displayName: 'AI', isHuman: false),
+        ],
+      );
+    }
+
+    test('flips province through canonical transfer on valid command', () {
+      final game = _baseGame(
+        phase: TurnPhase.orders,
+        ownerId: 'ai_1',
+        humanVisibility: 'fogged',
+      );
+      const event = FlipDebugProvinceOwnershipEvent(
+        humanPlayerId: 'human_1',
+        regionId: 'oldWorld',
+        provinceDisplayName: 'New Bordeaux',
+      );
+
+      final result = applyDebugFlipProvinceOwnership(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+
+      expect(result.game, isNotNull);
+      expect(
+        result.game!.worldState.oldWorld.provinces.single.ownerId,
+        'human_1',
+      );
+      expect(result.game!.worldState.oldWorld.units.single.ownerId, 'human_1');
+      expect(result.message, contains('Flipped province oldWorld|P1'));
+      expect(result.message, contains('Regiments transferred: 1'));
+    });
+
+    test('rejects command outside human orders phase', () {
+      final game = _baseGame(
+        phase: TurnPhase.movement,
+        ownerId: 'ai_1',
+        humanVisibility: 'fogged',
+      );
+      const event = FlipDebugProvinceOwnershipEvent(
+        humanPlayerId: 'human_1',
+        regionId: 'oldWorld',
+        provinceDisplayName: 'New Bordeaux',
+      );
+
+      final result = applyDebugFlipProvinceOwnership(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+
+      expect(result.game, isNull);
+      expect(
+        result.message,
+        contains('allowed only during human Orders phase'),
+      );
+    });
+
+    test('rejects unknown province visibility to human', () {
+      final game = _baseGame(
+        phase: TurnPhase.orders,
+        ownerId: 'ai_1',
+        humanVisibility: 'unknown',
+      );
+      const event = FlipDebugProvinceOwnershipEvent(
+        humanPlayerId: 'human_1',
+        regionId: 'oldWorld',
+        provinceDisplayName: 'New Bordeaux',
+      );
+
+      final result = applyDebugFlipProvinceOwnership(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+
+      expect(result.game, isNull);
+      expect(result.message, contains('unknown to human player'));
     });
   });
 }

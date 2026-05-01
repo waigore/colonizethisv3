@@ -28,10 +28,12 @@ class DebugConsoleCommandParser {
     return switch (command) {
       '/spawn_civilian' => _parseSpawnCivilian(tokens),
       '/add_money' => _parseAddMoney(tokens),
+      '/flip_province' => _parseFlipProvince(tokens),
       '/help' => const DebugConsoleParseResult.error(
         'Supported: /spawn_civilian <explorer|builder|engineer|spy|merchant|rail_builder> [count]; '
         '/add_money <amount> (integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
-        '$kDebugConsoleMaxTreasuryCreditAmount are clamped).',
+        '$kDebugConsoleMaxTreasuryCreditAmount are clamped); '
+        '/flip_province <regionId> <province_display_name>.',
       ),
       _ => DebugConsoleParseResult.error(
         'Unknown command: $command. Try /help.',
@@ -72,20 +74,14 @@ class DebugConsoleCommandParser {
 
   DebugConsoleParseResult _parseAddMoney(List<String> tokens) {
     if (tokens.length < 2) {
-      return const DebugConsoleParseResult.error(
-        'Usage: /add_money <amount>',
-      );
+      return const DebugConsoleParseResult.error('Usage: /add_money <amount>');
     }
     final rawAmount = int.tryParse(tokens[1]);
     if (rawAmount == null) {
-      return const DebugConsoleParseResult.error(
-        'Amount must be an integer.',
-      );
+      return const DebugConsoleParseResult.error('Amount must be an integer.');
     }
     if (rawAmount < 1) {
-      return const DebugConsoleParseResult.error(
-        'Amount must be at least 1.',
-      );
+      return const DebugConsoleParseResult.error('Amount must be at least 1.');
     }
     final creditedAmount = rawAmount > kDebugConsoleMaxTreasuryCreditAmount
         ? kDebugConsoleMaxTreasuryCreditAmount
@@ -94,6 +90,32 @@ class DebugConsoleCommandParser {
       DebugConsoleParsedInvocation.treasuryCredit(
         requestedAmount: rawAmount,
         creditedAmount: creditedAmount,
+      ),
+    );
+  }
+
+  DebugConsoleParseResult _parseFlipProvince(List<String> tokens) {
+    if (tokens.length < 3) {
+      return const DebugConsoleParseResult.error(
+        'Usage: /flip_province <regionId> <province_display_name>',
+      );
+    }
+    final regionId = tokens[1].trim();
+    if (regionId.isEmpty) {
+      return const DebugConsoleParseResult.error(
+        'Region id must not be empty.',
+      );
+    }
+    final provinceDisplayName = tokens.sublist(2).join(' ').trim();
+    if (provinceDisplayName.isEmpty) {
+      return const DebugConsoleParseResult.error(
+        'Province display name must not be empty.',
+      );
+    }
+    return DebugConsoleParseResult.success(
+      DebugConsoleParsedInvocation.flipProvince(
+        regionId: regionId,
+        provinceDisplayName: provinceDisplayName,
       ),
     );
   }

@@ -91,6 +91,7 @@ export 'src/world/minor_military_parity.dart';
 export 'src/world/movement.dart';
 export 'src/world/naval.dart';
 export 'src/world/naval_fleet_commands.dart';
+export 'src/world/fog_resolution.dart' show applyCoastalSeaZoneFullVisibility;
 export 'src/world/player_view.dart';
 export 'src/world/province_ownership_transfer.dart';
 export 'src/world/province_lookup.dart';
