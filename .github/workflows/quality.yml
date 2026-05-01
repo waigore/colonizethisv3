@@ -143,6 +143,8 @@ jobs:
           path: app-test-cache.tar.gz
           retention-days: 2
 
+  # Linux compile gate: parallel to `app_tests_shard` (same cache). Not wired into `app_e2e_linux`
+  # (e2e job is intentionally a no-op); add this job to branch protection if merges must wait on it.
   app_build_linux:
     name: App Linux desktop build (release)
     needs: [changes, app_tests_cache]
@@ -267,18 +269,16 @@ jobs:
           path: app/coverage/lcov.shard${{ matrix.shard }}.info
           retention-days: 2
 
+  # No integration_test runs: single skip step (see SPEC/program/e2e-integration-tests.md).
   app_e2e_linux:
     name: App e2e (Linux desktop + xvfb)
-    needs: [changes, app_tests_shard, app_build_linux]
+    needs: [changes, app_tests_shard]
     if: |
       always() &&
       needs.changes.result == 'success' &&
       (
         needs.changes.outputs.tests != 'true' ||
-        (
-          needs.app_tests_shard.result == 'success' &&
-          needs.app_build_linux.result == 'success'
-        )
+        needs.app_tests_shard.result == 'success'
       )
     runs-on: ubuntu-latest
     timeout-minutes: 2
