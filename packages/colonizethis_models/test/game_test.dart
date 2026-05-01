@@ -215,9 +215,9 @@ void main() {
         tribes: [tribe],
       );
       final json = game.toJson();
-      expect(json['minorNations'], isA<List>());
-      expect((json['minorNations'] as List).length, 1);
-      expect(json['tribes'], isA<List>());
+      expect(json['minorNations'], isA<List<dynamic>>());
+      expect((json['minorNations'] as List<dynamic>).length, 1);
+      expect(json['tribes'], isA<List<dynamic>>());
       final round = Game.fromJson(json);
       expect(round.minorNations.length, 1);
       expect(round.minorNations.first.id, 'min1');
