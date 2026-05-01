@@ -70,11 +70,11 @@ colonizethis_data    (no package deps)
 - **Given** the main logic public barrel `packages/colonizethis_logic/lib/colonizethis_logic.dart`, **when** static analysis inspects exported libraries, **then** no `src/ai/*` export is present; AI internals stay outside the broad logic export surface.
 - **Given** Dart source under `app/lib` except `app/lib/config/app_assets.dart` and `app/lib/config/app_constants.dart`, **when** static analysis inspects string literals, **then** direct asset path literals matching `assets/...` or `packages/<pkg>/assets/...` are rejected and diagnostics include file, line, and reason.
 - **Given** an app runtime asset reference in `app/lib`, **when** the code compiles, **then** the reference uses root-relative path constants in `app/lib/config/app_constants.dart` (re-exported from `app/lib/config/app_assets.dart`) and/or path builders such as `terrainTileAssetPath` in `app/lib/config/app_assets.dart`.
-- **Given** Dart source under `app/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical tech IDs are rejected outside allowlisted declaration/config and fixture paths.
+- **Given** Dart source under `app/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical tech IDs are rejected outside canonical declaration sources, generated outputs skipped as whole paths by the identifier-literal scan contract, and approved fixture or test-data paths, with **no** keyed per-symbol waivers (see `SPEC/program/repo-lint.md` — policy distinguishes scope-only wiring from violation allowlists).
 - **Given** the tech-ID convention gate reports a violation, **when** a developer inspects the output, **then** each violation includes file path, line, column, and the offending tech ID literal for direct remediation.
-- **Given** Dart source under `app/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical work target IDs are rejected outside the allowlisted work-target declaration file and fixture paths.
+- **Given** Dart source under `app/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical work target IDs are rejected outside the canonical work-target declaration file, whole-file scope skips for generated or catalog surfaces documented in `tool/check_work_target_constants.dart`, and approved fixture paths, with **no** keyed per-symbol waivers.
 - **Given** the work-target convention gate reports a violation, **when** a developer inspects the output, **then** each violation includes file path, line, column, and the offending work target literal with a suggested `kWorkTarget*` constant when available.
-- **Given** Dart source under `app/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical civilian unit type ids (`Explorer`, `Builder`, `Engineer`, `Spy`, `Merchant`, `Rail Builder` per `SPEC/game/civilian-units.md`) are rejected outside `packages/colonizethis_models/lib/src/civilian_unit_type_ids.dart`, approved fixture/test-data paths, and an explicit allowlist for ambiguous spellings (e.g. naval ship category vs civilian `Merchant`, personality archetype display strings).
+- **Given** Dart source under `app/`, `packages/`, and `tool/`, **when** static analysis inspects executable AST string literals, **then** raw literals equal to canonical civilian unit type ids (`Explorer`, `Builder`, `Engineer`, `Spy`, `Merchant`, `Rail Builder` per `SPEC/game/civilian-units.md`) are rejected outside `packages/colonizethis_models/lib/src/civilian_unit_type_ids.dart`, approved fixture/test-data paths, and the single whole-file scope skip for `packages/colonizethis_data/lib/src/ai_personality_config.dart` (personality display strings that may collide with civilian spellings), with **no** keyed per-symbol waivers.
 - **Given** the civilian unit type convention gate reports a violation, **when** a developer inspects the output, **then** each violation includes file path, line, column, and the offending literal with a suggested `kUnitType*` constant when available.
 
 ### Automated guard gate (CI)
@@ -93,23 +93,23 @@ Guard behavior:
 - Fails if `packages/colonizethis_logic/test/**` imports `package:colonizethis_ai/...`.
 - Fails if `packages/colonizethis_logic/lib/colonizethis_logic.dart` exports any `src/ai/*` library.
 - Fails if `app/lib/**` contains direct `assets/...` or `packages/<pkg>/assets/...` string literals outside `app/lib/config/app_assets.dart` and `app/lib/config/app_constants.dart`.
-- Fails if executable `StringLiteral` AST nodes equal to canonical tech IDs appear outside allowlisted tech declaration/config files and approved fixture/test-data paths.
-- Fails if executable `StringLiteral` AST nodes equal to canonical work target IDs appear outside `packages/colonizethis_logic/lib/src/constants.dart`, approved fixture/test-data paths, and an explicit temporary allowlist for generated/legacy surfaces pending migration.
+- Fails if executable `StringLiteral` AST nodes equal to canonical tech IDs appear outside canonical declaration sources, generated outputs skipped as whole paths by the scan contract, and approved fixture/test-data paths.
+- Fails if executable `StringLiteral` AST nodes equal to canonical work target IDs appear outside `packages/colonizethis_logic/lib/src/constants.dart`, approved fixture/test-data paths, and whole-file scope skips for generated or catalog surfaces encoded in `tool/check_work_target_constants.dart` (not keyed per-symbol waivers).
 - In PR CI, the tech-ID guard may scan only changed Dart files for faster feedback; if PR diff context is unavailable, it falls back to a full repository scan with the same violation rules.
 - In PR CI, the work-target guard may scan only changed Dart files for faster feedback; if PR diff context is unavailable, it falls back to a full repository scan with the same violation rules.
-- Fails if executable `StringLiteral` AST nodes equal to canonical civilian unit type ids appear outside `packages/colonizethis_models/lib/src/civilian_unit_type_ids.dart`, approved fixture/test-data paths, and the explicit allowlist in `tool/check_civilian_unit_type_constants.dart`.
+- Fails if executable `StringLiteral` AST nodes equal to canonical civilian unit type ids appear outside `packages/colonizethis_models/lib/src/civilian_unit_type_ids.dart`, approved fixture/test-data paths, and the whole-file scope skip set in `tool/check_civilian_unit_type_constants.dart` (see acceptance criteria above).
 - In PR CI, the civilian unit type guard may scan only changed Dart files for faster feedback; if PR diff context is unavailable, it falls back to a full repository scan with the same violation rules.
 
 Civilian unit type guard remediation:
 
 - Add or reuse `kUnitType*` constants in `packages/colonizethis_models/lib/src/civilian_unit_type_ids.dart` (also re-exported from `packages/colonizethis_logic/lib/src/constants.dart` for logic consumers).
-- Replace direct string literals in executable code with those constants; extend the tool allowlist only for documented ambiguous literals.
+- Replace direct string literals in executable code with those constants; extend whole-file scope skips only with SPEC updates and issue tracking—prefer constants and refactors over new waivers.
 
 Asset-path guard remediation:
 
 - Add new root-relative asset path constants in `app/lib/config/app_constants.dart`; add or extend path builders in `app/lib/config/app_assets.dart` (which re-exports the constants library).
 - Replace direct string literals in `app/lib/**` with those constants/helpers.
-- Keep exclusions explicit and minimal; allowlisted files are `app/lib/config/app_assets.dart` and `app/lib/config/app_constants.dart`.
+- Keep exclusions explicit and minimal; whole-file scope skips for asset path literals are `app/lib/config/app_assets.dart` and `app/lib/config/app_constants.dart`.
 
 ---
 

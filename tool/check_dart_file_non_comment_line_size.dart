@@ -1,3 +1,5 @@
+// Repository-wide non-comment line limit (`repo.dart_file_non_comment_line_size`).
+// SPEC: SPEC/program/dart-file-non-comment-line-size.md
 import 'dart:convert';
 import 'dart:io';
 
