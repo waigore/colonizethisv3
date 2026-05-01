@@ -200,6 +200,8 @@ jobs:
         run: |
           set -euo pipefail
           cd app
+          # Gitignored linux/flutter/generated_plugins.cmake; workspace dart pub get does not emit it.
+          flutter pub get
           flutter build linux --release --no-pub
 
   app_tests_shard:
