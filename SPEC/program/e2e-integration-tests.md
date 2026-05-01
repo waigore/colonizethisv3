@@ -65,8 +65,8 @@ Headed desktop on a dev machine without Xvfb: use **`-d macos`** or **`-d linux`
 
 ## CI
 
-- Job **`app_e2e_linux`** in `.github/workflows/quality.yml` runs after **`app_tests_shard`** and does **not** block **`quality_app_coverage`**.
-- Ubuntu installs **clang / cmake / ninja / GTK** deps, enables **linux** desktop, then runs **`new_game_capital_panel_e2e_test.dart`**, **`new_game_full_turn_e2e_test.dart`**, and **`new_game_fleet_reaches_new_world_e2e_test.dart`** under **[GabrielBB/xvfb-action](https://github.com/GabrielBB/xvfb-action)** (Xvfb + `DISPLAY`).
+- Job **`app_build_linux`** in `.github/workflows/quality.yml` runs in parallel with **`app_tests_shard`** (both need **`app_tests_cache`**). When test-relevant paths change, it restores the same pub + `gen-l10n` artifact as the shard runners, installs **clang / cmake / ninja / pkg-config / GTK / lzma** build deps on Ubuntu, then runs **`flutter build linux --release --no-pub`** under `app/`. This is the merge gate that proves the Linux desktop target compiles end-to-end (beyond `flutter analyze`).
+- Job **`app_e2e_linux`** runs after **`app_tests_shard`** and **`app_build_linux`**; it remains a required gate for branch protection but is currently a **no-op** (integration suites are not executed on the PR VM for stability/speed). It does **not** block **`quality_app_coverage`** beyond the existing `needs` graph.
 - Widget/coverage jobs use **`flutter test test/`** only so `integration_test/` is not executed on the VM shard runner.
 
 ## Expectations helper
