@@ -214,9 +214,14 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<FlipDebugProvinceOwnershipEvent>().listen((e) {
         final current = ref.read(currentGameProvider);
+        final mapData = current == null
+            ? null
+            : ref.read(gameServiceProvider).getMapData(current.id);
         final result = applyDebugFlipProvinceOwnership(
           currentGame: current,
           event: e,
+          combinedTopology: mapData?.combinedTopology ?? const MapTopology(),
+          topologyByRegion: mapData?.topologyByRegion,
         );
         final nextGame = result.game;
         if (nextGame == null) {

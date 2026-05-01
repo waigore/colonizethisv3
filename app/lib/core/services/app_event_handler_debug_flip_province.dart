@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -5,6 +6,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 ({Game? game, String message}) applyDebugFlipProvinceOwnership({
   required Game? currentGame,
   required FlipDebugProvinceOwnershipEvent event,
+  required MapTopology combinedTopology,
+  Map<String, MapTopology>? topologyByRegion,
 }) {
   if (currentGame == null) {
     return (
@@ -96,13 +99,30 @@ import 'package:colonizethis_models/colonizethis_models.dart';
       newOwnerId: event.humanPlayerId,
     );
     final result = out.result;
+    final visibilityBeforeCoastal = out.game.worldState.playerVisibilityByTile;
+    final visibilityAfterCoastal = applyCoastalSeaZoneFullVisibility(
+      out.game,
+      visibilityBeforeCoastal,
+      combinedTopology,
+      topologyByRegion: topologyByRegion,
+    );
+    final coastalUpdatedTiles = _countNewlyVisibleTiles(
+      before: visibilityBeforeCoastal,
+      after: visibilityAfterCoastal,
+    );
+    final nextGame = out.game.copyWith(
+      worldState: out.game.worldState.copyWith(
+        playerVisibilityByTile: visibilityAfterCoastal,
+      ),
+    );
     return (
-      game: out.game,
+      game: nextGame,
       message:
           'Flipped province ${result.provinceId}: ${result.oldOwnerId} -> ${result.newOwnerId}. '
           'Regiments transferred: ${result.regimentsTransferred}; fleets transferred: '
           '${result.inPortFleetsTransferred}; visibility updates: +${result.visibilitySummary.tilesSetFullyVisibleForNewOwner} '
-          'new-owner land tiles, -${result.visibilitySummary.tilesDowngradedForFormerOwner} former-owner land tiles.',
+          'new-owner land tiles, -${result.visibilitySummary.tilesDowngradedForFormerOwner} former-owner land tiles, '
+          '+$coastalUpdatedTiles coastal/sea-zone tiles.',
     );
   } on StateError catch (error) {
     return (
@@ -134,4 +154,21 @@ bool _isProvinceKnownToPlayer({
     }
   }
   return false;
+}
+
+int _countNewlyVisibleTiles({
+  required Map<String, Map<String, String>> before,
+  required Map<String, Map<String, String>> after,
+}) {
+  var count = 0;
+  for (final MapEntry(key: playerId, value: updated) in after.entries) {
+    final previous = before[playerId] ?? const <String, String>{};
+    for (final MapEntry(key: tileKey, value: level) in updated.entries) {
+      if (level != VisibilityLevel.fullyVisible.name) continue;
+      if (previous[tileKey] != VisibilityLevel.fullyVisible.name) {
+        count++;
+      }
+    }
+  }
+  return count;
 }

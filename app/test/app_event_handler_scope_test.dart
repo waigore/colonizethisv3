@@ -1,4 +1,5 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_debug_flip_province.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_debug_spawn.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_debug_treasury.dart';
@@ -406,6 +407,7 @@ void main() {
       final result = applyDebugFlipProvinceOwnership(
         currentGame: game,
         event: event,
+        combinedTopology: const MapTopology(),
       );
 
       expect(result.game, isNotNull);
@@ -433,6 +435,7 @@ void main() {
       final result = applyDebugFlipProvinceOwnership(
         currentGame: game,
         event: event,
+        combinedTopology: const MapTopology(),
       );
 
       expect(result.game, isNull);
@@ -457,6 +460,7 @@ void main() {
       final result = applyDebugFlipProvinceOwnership(
         currentGame: game,
         event: event,
+        combinedTopology: const MapTopology(),
       );
 
       expect(result.game, isNull);
