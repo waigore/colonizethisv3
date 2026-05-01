@@ -14,6 +14,8 @@
 
 **Implementation status (GitHub #1912, checker slice):** `repo.function_size`, `repo.control_flow_nesting_depth`, and `repo.part_unit_size` enforce universal thresholds only; they do **not** read keyed waiver YAML or other per-symbol / per-file exemption tables. Per-rule contracts: `SPEC/program/function-size.md`, `SPEC/program/control-flow-nesting-depth.md`, `SPEC/program/part-unit-size.md`.
 
+**Implementation status (GitHub #1912, dart file size):** `repo.dart_file_non_comment_line_size` enforces a universal **1000** non-comment-line cap for scanned hand-written Dart; it skips only **generated whole paths** (suffixes `.g.dart`, `.freezed.dart`, `.mocks.dart`, `.gen.dart`, and generated Flutter l10n path prefixes under `app/lib/l10n/`). Per-rule contract: `SPEC/program/dart-file-non-comment-line-size.md`.
+
 **Implementation status (GitHub #1912, tech id literals):** `repo.tech_id_constants` treats the string values of every `const String kTechId*` in `packages/colonizethis_data/lib/src/tech_ids.dart` as the canonical tech-id set (replacing the prior `tech_catalog.dart` map-key scrape). `tech_catalog.dart` uses those same constants for map keys and `TechDefinition` ids so the catalog stays aligned with the checker.
 
 ### Acceptance criteria (policy)
@@ -38,7 +40,7 @@
 | `tool/check_no_flame_in_widgets.dart` | Disallow direct `package:flame/*` **import** and **export** lines (single- or double-quoted URI) under `app/lib/widgets/**`; rule `repo.no_flame_in_widgets` |
 | `tool/check_no_screen_in_game_widgets.dart` | Disallow `*_screen.dart` files under `app/lib/features/game/widgets/**`; rule `repo.no_screen_in_game_widgets` |
 | `tool/check_game_widgets_file_size.dart` | Enforce `app/lib/features/game/widgets/**` Dart files at **700 physical lines or fewer**; rule `repo.game_widgets_file_size` |
-| `tool/check_dart_file_non_comment_line_size.dart` | Enforce repository-wide Dart files at **1000 non-comment lines or fewer** (fail when strictly greater), excluding generated suffixes (`.g.dart`, `.freezed.dart`, `.mocks.dart`, `.gen.dart`); rule `repo.dart_file_non_comment_line_size` |
+| `tool/check_dart_file_non_comment_line_size.dart` | Enforce repository-wide Dart files at **1000 non-comment lines or fewer** (fail when strictly greater), excluding generated suffixes and generated l10n path prefixes — see `SPEC/program/dart-file-non-comment-line-size.md`; rule `repo.dart_file_non_comment_line_size` |
 | `tool/check_land_province_bucket_keys.dart` | For guarded explore/fog/news paths, disallow local-only land-province tile-bucket lookups (`tileKeysByRegionAndProvince[region]?[localId]`); require canonical full-id buckets only; rule `repo.land_province_bucket_keys` |
 
 ## Rule IDs and groups
@@ -147,7 +149,7 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 - Given the [Policy: no violation allowlists](#policy-no-violation-allowlists-repo-lint) section, when `repo.function_size`, `repo.control_flow_nesting_depth`, or `repo.part_unit_size` runs, then that checker does not load keyed waiver data and the matching per-rule SPEC documents universal enforcement only.
 - Given app game feature code, when `dart run tool/ct_repo_lint.dart` runs rule `repo.no_screen_in_game_widgets`, then no file matching `*_screen.dart` exists under `app/lib/features/game/widgets/**`.
 - Given app game widget files, when `dart run tool/ct_repo_lint.dart` runs rule `repo.game_widgets_file_size`, then each Dart file under `app/lib/features/game/widgets/**` has 700 physical lines or fewer.
-- Given repository Dart files (excluding generated suffixes `.g.dart`, `.freezed.dart`, `.mocks.dart`, `.gen.dart`), when `dart run tool/ct_repo_lint.dart` runs rule `repo.dart_file_non_comment_line_size`, then each scanned file has at most 1000 non-comment lines and the run fails while listing every violating file when any file is strictly greater than 1000.
+- Given repository Dart files excluding generated suffixes (`.g.dart`, `.freezed.dart`, `.mocks.dart`, `.gen.dart`) and generated app l10n paths under `app/lib/l10n/` matching the checker’s prefix list, when `dart run tool/ct_repo_lint.dart` runs rule `repo.dart_file_non_comment_line_size`, then each remaining scanned file has at most 1000 non-comment lines and the run fails while listing every violating file when any file is strictly greater than 1000.
 - Given `packages/colonizethis_debug_console/lib/**` imports only allowlisted `colonizethis_logic` contract entrypoints, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_logic_contract_boundary`, then the rule passes without violations.
 - Given any debug-console file imports `package:colonizethis_logic/src/**` or another non-allowlisted `package:colonizethis_logic/...` entrypoint, when repo lint runs rule `repo.debug_console_logic_contract_boundary`, then the run fails and reports file path, line, and disallowed import context in checker output.
 - Given `app/lib/core/services/app_event_handler_scope.dart` has no direct imports from `package:colonizethis_app/features/game/logic/**`, when repo lint runs rule `repo.app_event_handler_scope_logic_boundary`, then the rule passes without violations.

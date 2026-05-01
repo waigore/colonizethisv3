@@ -44,6 +44,14 @@ void main() {
       );
       expect(
         rules
+            .firstWhere(
+              (r) => r.ruleId == 'repo.dart_file_non_comment_line_size',
+            )
+            .spec,
+        'SPEC/program/dart-file-non-comment-line-size.md',
+      );
+      expect(
+        rules
             .firstWhere((r) => r.ruleId == 'repo.app_hardcoded_ui_strings')
             .includeOnlyWhenEnvName,
         'CT_REPO_LINT_INCLUDE_APP',
