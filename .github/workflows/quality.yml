@@ -25,6 +25,7 @@ jobs:
     outputs:
       tests: ${{ steps.filter.outputs.tests }}
       opencode_scope: ${{ steps.filter.outputs.opencode_scope }}
+      infra_daytona: ${{ steps.filter.outputs.infra_daytona }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -59,6 +60,31 @@ jobs:
               - '!.vscode/**'
               - '!.idea/**'
               - '!.husky/**'
+            infra_daytona:
+              - 'infra/**'
+
+  # AC1 strong gate: real `docker build` for Daytona tools image when infra/** changes (Refs #2065).
+  infra_daytona_docker_build:
+    name: Infra Daytona docker build (linux/amd64)
+    needs: changes
+    if: always() && needs.changes.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Skip when infra paths unchanged
+        if: needs.changes.outputs.infra_daytona != 'true'
+        run: |
+          echo "No infra/** changes; skipping docker build (AC1)."
+          echo "Strong gate runs in this job when infra_daytona filter is true."
+
+      - name: Docker build tools image (AC1)
+        if: needs.changes.outputs.infra_daytona == 'true'
+        run: |
+          set -euo pipefail
+          docker build --platform linux/amd64 -f infra/Dockerfile infra
 
   # Resolved pub cache + .dart_tool + gen-l10n; flutter analyze gate; then pack for shards (--no-pub).
   # `app_build_linux` reuses the same artifact to compile the Linux desktop target (release), catching
@@ -322,6 +348,13 @@ jobs:
 
       - name: Resolve dependencies
         run: dart pub get
+
+      - name: Infra Daytona Python tests (Refs #2065)
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/infra-venv-ci
+          /tmp/infra-venv-ci/bin/pip install -q -r infra/requirements.txt
+          (cd infra && /tmp/infra-venv-ci/bin/pytest test/ -q --tb=short)
 
       - name: Workspace analyzer gate (errors only; includes test/ and integration_test/)
         run: dart run tool/run_workspace_analyze_errors_only.dart
