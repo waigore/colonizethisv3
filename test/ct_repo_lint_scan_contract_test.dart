@@ -456,4 +456,27 @@ void main() {
       expect(r.missingValueError, isFalse);
     });
   });
+
+  group('repoLintParseStrictIncrementalFilesArgs', () {
+    test('empty argv yields no paths and no errors', () {
+      final r = repoLintParseStrictIncrementalFilesArgs(const []);
+      expect(r.paths, isNull);
+      expect(r.missingValueError, isFalse);
+      expect(r.unsupportedArgument, isNull);
+    });
+
+    test('rejects unknown flags', () {
+      final r = repoLintParseStrictIncrementalFilesArgs(const ['--verbose']);
+      expect(r.unsupportedArgument, '--verbose');
+    });
+
+    test('parses --files= then rejects trailing junk', () {
+      final r = repoLintParseStrictIncrementalFilesArgs(const [
+        '--files=a.dart',
+        '--other',
+      ]);
+      expect(r.paths, ['a.dart']);
+      expect(r.unsupportedArgument, '--other');
+    });
+  });
 }

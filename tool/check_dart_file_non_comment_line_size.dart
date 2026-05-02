@@ -293,33 +293,19 @@ final class _SourceScanState {
 }
 
 _ParsedArgs _parseArgs(List<String> args) {
-  String? filesArgValue;
-  for (var i = 0; i < args.length; i++) {
-    final arg = args[i];
-    if (arg == _argFiles) {
-      if (i + 1 >= args.length) {
-        stderr.writeln('ERROR: Missing value for $_argFiles.');
-        exit(2);
-      }
-      filesArgValue = args[i + 1];
-      i++;
-      continue;
-    }
-    if (arg.startsWith('$_argFiles=')) {
-      filesArgValue = arg.substring('$_argFiles='.length);
-      continue;
-    }
+  final r = repoLintParseStrictIncrementalFilesArgs(args);
+  if (r.missingValueError) {
+    stderr.writeln('ERROR: Missing value for $_argFiles.');
+    exit(2);
+  }
+  if (r.unsupportedArgument != null) {
     stderr.writeln(
-      'ERROR: Unsupported argument "$arg". Supported: $_argFiles '
+      'ERROR: Unsupported argument "${r.unsupportedArgument}". Supported: $_argFiles '
       '(comma-separated or newline-separated relative paths).',
     );
     exit(2);
   }
-  return _ParsedArgs(
-    files: filesArgValue == null
-        ? const []
-        : repoLintSplitRelativeDartPathsArg(filesArgValue),
-  );
+  return _ParsedArgs(files: r.paths ?? const []);
 }
 
 final class _ParsedArgs {

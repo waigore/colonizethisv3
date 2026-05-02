@@ -243,6 +243,43 @@ repoLintParseIncrementalRelativeDartPathsFromArgs(List<String> args) {
   return (paths: out, missingValueError: missingValue);
 }
 
+/// Like [repoLintParseIncrementalRelativeDartPathsFromArgs], but rejects any
+/// token that is not `--files`, `--files=…`, or the single value token after a
+/// bare `--files` (for checkers that accept only incremental file lists).
+///
+/// [unsupportedArgument] is the first argv token that violates that contract.
+({List<String>? paths, bool missingValueError, String? unsupportedArgument})
+repoLintParseStrictIncrementalFilesArgs(List<String> args) {
+  List<String>? out;
+  var missingValue = false;
+  for (var i = 0; i < args.length; i++) {
+    final arg = args[i];
+    if (arg.startsWith('--files=')) {
+      out = repoLintSplitRelativeDartPathsArg(arg.substring('--files='.length));
+      continue;
+    }
+    if (arg == '--files') {
+      if (i + 1 >= args.length) {
+        missingValue = true;
+      } else {
+        i++;
+        out = repoLintSplitRelativeDartPathsArg(args[i]);
+      }
+      continue;
+    }
+    return (
+      paths: out,
+      missingValueError: missingValue,
+      unsupportedArgument: arg,
+    );
+  }
+  return (
+    paths: out,
+    missingValueError: missingValue,
+    unsupportedArgument: null,
+  );
+}
+
 // --- Identifier-literal checkers (tech / work-target / civilian unit type) ---
 
 /// Scan roots for tech / work-target / civilian literal checkers (top-level

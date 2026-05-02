@@ -125,7 +125,7 @@ Only **`.github/workflows/quality.yml`** runs **`dart run tool/run_workspace_ana
 
 Rules marked `pr_incremental: true` in the manifest receive `--files <csv>` when `GITHUB_BASE_REF` is set and `git fetch` / `git diff origin/<base>...HEAD -- '*.dart'` succeeds and yields paths—matching the previous inline `quality.yml` behavior. Use `--force-full-scan` to disable incremental arguments locally or in scripts.
 
-Checker CLIs that accept `--files` / `--files=` should parse them via `repoLintParseIncrementalRelativeDartPathsFromArgs` and `repoLintSplitRelativeDartPathsArg` in `tool/ct_repo_lint_scan_contract.dart` so incremental path splitting stays consistent (see `test/ct_repo_lint_scan_contract_test.dart`).
+Checker CLIs that accept `--files` / `--files=` should use `repoLintSplitRelativeDartPathsArg` in `tool/ct_repo_lint_scan_contract.dart` for splitting. Checkers that **ignore** unknown argv tokens use `repoLintParseIncrementalRelativeDartPathsFromArgs`; checkers that accept **only** `--files` / `--files=` use `repoLintParseStrictIncrementalFilesArgs` (see `test/ct_repo_lint_scan_contract_test.dart`).
 
 ## Adding or changing rules
 
