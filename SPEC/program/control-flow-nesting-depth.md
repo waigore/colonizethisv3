@@ -6,7 +6,8 @@
 
 | Artifact | Role |
 |----------|------|
-| `tool/check_control_flow_nesting_depth.dart` | Analyzer visitor and CLI |
+| `tool/control_flow_nesting_depth_scan.dart` | Analyzer visitors and per-unit violation collection (test entry: `maxControlFlowNestingDepthForTestBody`) |
+| `tool/check_control_flow_nesting_depth.dart` | Repo scan + CLI (`runCheckControlFlowNestingDepth`); re-exports scan for consumers that import the checker |
 
 ## Scan scope
 

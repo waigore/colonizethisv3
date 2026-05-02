@@ -38,7 +38,8 @@
 | `tool/disallowed_ast_pattern_rules.dart` | Rule model + YAML parse (`parseDisallowedAstRulesFromYaml`) from `tool/disallowed_ast_patterns.yaml` (`SPEC/program/disallowed-ast-patterns.md`); consumed by `tool/check_disallowed_ast_patterns.dart` |
 | `tool/check_disallowed_ast_patterns.dart` | Config-driven AST visitor and scan CLI; rule `repo.disallowed_ast_patterns`; also invoked in-process for `repo.debug_console_logic_contract_boundary` |
 | `tool/check_repeated_magic_numbers.dart` | Repeated **hash/LCG-style** integer literals (`SPEC/program/repeated-magic-numbers.md`); rule `repo.repeated_magic_numbers` |
-| `tool/check_control_flow_nesting_depth.dart` | Control-flow nesting depth (`SPEC/program/control-flow-nesting-depth.md`); rule `repo.control_flow_nesting_depth` |
+| `tool/control_flow_nesting_depth_scan.dart` | Control-flow nesting visitors (`SPEC/program/control-flow-nesting-depth.md`) |
+| `tool/check_control_flow_nesting_depth.dart` | Control-flow nesting depth scan + CLI; rule `repo.control_flow_nesting_depth` |
 | `tool/check_function_size.dart` | Function measured-line threshold (`SPEC/program/function-size.md`); rule `repo.function_size` |
 | `tool/check_part_unit_size.dart` | Dart `part` fragment physical line limit (`SPEC/program/part-unit-size.md`); rule `repo.part_unit_size` |
 | `tool/check_debug_console_logic_contract_boundary.dart` | AST-enforced scoped package import contract for debug-console → logic boundary; rule `repo.debug_console_logic_contract_boundary` |
