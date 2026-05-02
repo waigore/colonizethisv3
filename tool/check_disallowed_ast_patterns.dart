@@ -437,14 +437,14 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
           allowedPackageImports: const {},
         ),
       );
-    } else if (kind == 'package_import_allowlist') {
+    } else if (kind == 'scoped_package_import_contract') {
       final scopeNode = match['scoped_relative_path_prefixes'];
       final packageName = match['package_name']?.toString();
-      final allowlistNode = match['allowed_imports'];
+      final allowedImportsYamlList = match['allowed_imports'];
       if (scopeNode is! YamlList ||
           packageName == null ||
           packageName.isEmpty ||
-          allowlistNode is! YamlList) {
+          allowedImportsYamlList is! YamlList) {
         continue;
       }
       final scopedRelativePathPrefixes = <String>{};
@@ -455,8 +455,8 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
         }
       }
       final allowedPackageImports = <String>{};
-      for (final allowlistEntry in allowlistNode.nodes) {
-        final importPath = allowlistEntry.value?.toString();
+      for (final importUriEntry in allowedImportsYamlList.nodes) {
+        final importPath = importUriEntry.value?.toString();
         if (importPath != null && importPath.isNotEmpty) {
           allowedPackageImports.add(importPath);
         }
@@ -468,7 +468,7 @@ List<DisallowedPatternRule> _parseRulesYaml(Object? yamlRoot) {
         DisallowedPatternRule(
           id: id,
           message: message,
-          kind: DisallowedAstMatchKind.packageImportAllowlist,
+          kind: DisallowedAstMatchKind.scopedPackageImportContract,
           cascadedMethodNames: const {},
           commentSubstring: null,
           rawNamedTypeNames: const {},
@@ -535,7 +535,7 @@ enum DisallowedAstMatchKind {
   seaZoneBucketLookupWithoutCanonicalKey,
   unprefixedProvinceIdStringLiteralArgument,
   provinceLocalSegmentBoundaryOnly,
-  packageImportAllowlist,
+  scopedPackageImportContract,
 }
 
 class DisallowedPatternRule {
@@ -929,7 +929,7 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
   @override
   void visitImportDirective(ImportDirective node) {
     for (final rule in rules) {
-      if (rule.kind != DisallowedAstMatchKind.packageImportAllowlist) {
+      if (rule.kind != DisallowedAstMatchKind.scopedPackageImportContract) {
         continue;
       }
       if (!_pathIsInScopedPrefix(rule)) {
