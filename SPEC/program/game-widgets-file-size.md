@@ -51,3 +51,11 @@ effective cap for a specific path.
   `dart run tool/ct_repo_lint.dart` and rule `repo.game_widgets_file_size` is in
   scope, then the rule enforces the threshold above and does not load keyed
   waiver data to waive failures for in-scope Dart files.
+
+- Given a temporary workspace that contains
+  `app/lib/features/game/widgets/huge.dart` with **701** physical lines and a
+  decoy file `tool/legacy_game_widgets_waiver_table.yaml` shaped like historical
+  keyed waiver YAML (for example listing `huge.dart` under `exempt_files`), when
+  the System runs `runCheckGameWidgetsFileSize` with that workspace root, then
+  the checker still exits non-zero and reports `huge.dart` as over the line
+  limit, because no keyed waiver data is loaded.
