@@ -35,6 +35,8 @@
 | `tool/ct_repo_lint.dart` | Orchestrator: loads manifest, runs rules in order, stops on first failure |
 | `tool/ct_repo_lint_lib.dart` | Parse/execute helpers (also covered by `test/ct_repo_lint_test.dart`) |
 | `tool/ct_repo_lint_scan_contract.dart` | Shared roots, skip helpers, canonical tile-key collectors, app UI path gate, PR path split — see `test/ct_repo_lint_scan_contract_test.dart` |
+| `tool/disallowed_ast_pattern_rules.dart` | Rule model + YAML parse (`parseDisallowedAstRulesFromYaml`) from `tool/disallowed_ast_patterns.yaml` (`SPEC/program/disallowed-ast-patterns.md`); consumed by `tool/check_disallowed_ast_patterns.dart` |
+| `tool/check_disallowed_ast_patterns.dart` | Config-driven AST visitor and scan CLI; rule `repo.disallowed_ast_patterns`; also invoked in-process for `repo.debug_console_logic_contract_boundary` |
 | `tool/check_repeated_magic_numbers.dart` | Repeated **hash/LCG-style** integer literals (`SPEC/program/repeated-magic-numbers.md`); rule `repo.repeated_magic_numbers` |
 | `tool/check_control_flow_nesting_depth.dart` | Control-flow nesting depth (`SPEC/program/control-flow-nesting-depth.md`); rule `repo.control_flow_nesting_depth` |
 | `tool/check_function_size.dart` | Function measured-line threshold (`SPEC/program/function-size.md`); rule `repo.function_size` |

@@ -8,6 +8,8 @@ Block a small, explicit set of Dart **structural** patterns that harm readabilit
 
 - Policy and rule kinds: this document.
 - Concrete rules (IDs, messages, matchers): `tool/disallowed_ast_patterns.yaml`.
+- Rule model and YAML parsing (`parseDisallowedAstRulesFromYaml`): `tool/disallowed_ast_pattern_rules.dart`.
+- AST visitor and CLI entrypoint: `tool/check_disallowed_ast_patterns.dart`.
 
 ## Policy
 
@@ -172,7 +174,7 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
 
 ## Implementation contract
 
-- **Given** the repository root as the working directory, **when** CI runs `dart run tool/ct_repo_lint.dart` (rule `repo.disallowed_ast_patterns`; see [repo-lint.md](repo-lint.md)), **then** the orchestrator invokes `tool/check_disallowed_ast_patterns.dart`, which loads `tool/disallowed_ast_patterns.yaml`, parses each listed Dart file, and reports violations with file path and line number.
+- **Given** the repository root as the working directory, **when** CI runs `dart run tool/ct_repo_lint.dart` (rule `repo.disallowed_ast_patterns`; see [repo-lint.md](repo-lint.md)), **then** the orchestrator invokes `tool/check_disallowed_ast_patterns.dart`, which loads `tool/disallowed_ast_patterns.yaml`, builds rules via `tool/disallowed_ast_pattern_rules.dart`, parses each listed Dart file, and reports violations with file path and line number.
 - **Given** a violation and an in-file suppression, **when** the offending line or the line above contains `ignore: disallowed_ast_<rule_id>`, or the file begins with `ignore_for_file: disallowed_ast_<rule_id>` for that rule, **then** the tool does not fail for that occurrence (`<rule_id>` matches the `id` field in YAML, e.g. `cascade_void_clear` → `disallowed_ast_cascade_void_clear`).
 - **Given** a new disallowed pattern, **when** maintainers extend `tool/disallowed_ast_patterns.yaml` with a documented `match.kind`, **then** the checker implementation supports that kind or the change includes the corresponding visitor logic and SPEC update.
 

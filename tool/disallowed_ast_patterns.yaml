@@ -1,4 +1,5 @@
 # Disallowed AST patterns — rules for tool/check_disallowed_ast_patterns.dart
+# (YAML → rule model: tool/disallowed_ast_pattern_rules.dart)
 # SPEC: SPEC/program/disallowed-ast-patterns.md
 #
 # Suppress: // ignore: disallowed_ast_<id>  or  // ignore_for_file: disallowed_ast_<id>
