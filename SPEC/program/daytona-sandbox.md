@@ -65,7 +65,9 @@ If **`AGENT`** or **`CT_AGENT`** is set (non-empty), **`run-sandbox-agent`** exi
 | **AC5** | `infra/test/test_ac5_opencode_model.py`. |
 | **AC6** | `infra/test/test_ac6_flutter_doctor_integration.py` — **skipped** unless **`RUN_INFRA_FLUTTER_DOCTOR=1`** (optional slow / Docker). |
 
+**CI:** In **`.github/workflows/quality.yml`**, the **`quality`** job runs **`pytest infra/test`** only when the **`infra_daytona`** path filter is true (**`infra/**`** changed); Dart/app gates continue to use the existing **`tests`** filter.
+
 ## OpenCode / Cursor invocation (v1)
 
-- **OpenCode:** `opencode run -m <resolved-model> -- <prompt words…>` (non-interactive).
+- **OpenCode:** `opencode run -m <resolved-model> <prompt>` (single shell command; prompt shell-quoted).
 - **Cursor:** `agent -p <prompt>` with **`CURSOR_API_KEY`** in the process environment (headless pattern per Cursor CLI docs).

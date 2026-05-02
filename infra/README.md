@@ -41,6 +41,8 @@ python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
 pytest test/ -q
 ```
 
+On GitHub Actions, **`pytest infra/test`** runs in the **`quality`** workflow **only when `infra/**` changes** (same path filter as the Docker AC1 job).
+
 Optional **`RUN_INFRA_FLUTTER_DOCTOR=1`**: slow integration that runs `flutter doctor -v` in Docker (see `test_ac6_…`).
 
 ## Optional operator workflow

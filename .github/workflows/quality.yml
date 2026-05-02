@@ -349,7 +349,13 @@ jobs:
       - name: Resolve dependencies
         run: dart pub get
 
+      - name: Skip infra pytest when infra/** unchanged
+        if: needs.changes.outputs.infra_daytona != 'true'
+        run: |
+          echo "No infra/** changes; skipping infra Daytona Python tests (Refs #2065)."
+
       - name: Infra Daytona Python tests (Refs #2065)
+        if: needs.changes.outputs.infra_daytona == 'true'
         run: |
           set -euo pipefail
           python3 -m venv /tmp/infra-venv-ci

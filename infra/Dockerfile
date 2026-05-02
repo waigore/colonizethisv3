@@ -40,7 +40,7 @@ RUN apt-get update \
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/* \
-    && npm install -g @opencode-ai/cli
+    && npm install -g opencode-ai
 
 # Android SDK command-line tools (API 34 / build-tools 34).
 ENV ANDROID_SDK_ROOT=/opt/android-sdk \
