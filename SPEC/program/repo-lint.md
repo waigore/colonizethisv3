@@ -22,6 +22,8 @@
 
 **Implementation status (GitHub #1912, tech id literals):** `repo.tech_id_constants` treats the string values of every `const String kTechId*` in `packages/colonizethis_data/lib/src/tech_ids.dart` as the canonical tech-id set (replacing the prior `tech_catalog.dart` map-key scrape). `tech_catalog.dart` uses those same constants for map keys and `TechDefinition` ids so the catalog stays aligned with the checker.
 
+**Implementation status (GitHub #1912, custom exceptions):** `repo.custom_exceptions` (`tool/check_custom_exceptions.dart` + `packages/colonizethis_exception_lint`) enforces the generic-throw ban on in-scope domain files only; it does **not** read keyed waiver YAML or per-symbol / per-file exemption tables. Whole-tree scope follows `collectRepoLintDomainDartFiles` / `shouldEnforceDomainExceptions` (generated suffixes and test-path skips are scope wiring, not violation waivers). Per-rule contract: `SPEC/program/exception-enforcement.md`.
+
 ### Acceptance criteria (policy)
 
 - Given a `repo.*` rule implementation, when a maintainer audits it for waiver data, then the maintainer finds no keyed tables loaded solely to raise effective limits for specific in-scope symbols or files.
@@ -156,6 +158,7 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 - Given the repository root as cwd, when CI runs `dart run tool/ct_repo_lint.dart` with the workflow env, then all manifest rules applicable to that job execute and failures surface with `rule_id` in the orchestrator banner.
 - Given a contributor adds a convention, when they follow CONTRIBUTING and this doc, then they register the rule in the manifest rather than adding a new standalone Quality workflow step for the same concern.
 - Given the [Policy: no violation allowlists](#policy-no-violation-allowlists-repo-lint) section, when `repo.function_size`, `repo.control_flow_nesting_depth`, or `repo.part_unit_size` runs, then that checker does not load keyed waiver data and the matching per-rule SPEC documents universal enforcement only.
+- Given the same policy section, when `repo.custom_exceptions` runs, then that checker does not load keyed waiver data and `SPEC/program/exception-enforcement.md` documents enforcement with scope-only skips (generated suffixes, test paths, and the shared domain file collector) only.
 - Given app game feature code, when `dart run tool/ct_repo_lint.dart` runs rule `repo.no_screen_in_game_widgets`, then no file matching `*_screen.dart` exists under `app/lib/features/game/widgets/**`.
 - Given app game widget Dart files under `app/lib/features/game/widgets/**`, when `dart run tool/ct_repo_lint.dart` runs rule `repo.game_widgets_file_size`, then each scanned file has at most 700 physical lines, the run fails listing each violating path when any file exceeds 700, and the checker does not load keyed waiver data.
 - Given repository Dart files excluding generated suffixes (`.g.dart`, `.freezed.dart`, `.mocks.dart`, `.gen.dart`) and generated app l10n paths under `app/lib/l10n/` matching the checker’s prefix list, when `dart run tool/ct_repo_lint.dart` runs rule `repo.dart_file_non_comment_line_size`, then each remaining scanned file has at most 1000 non-comment lines and the run fails while listing every violating file when any file is strictly greater than 1000.
