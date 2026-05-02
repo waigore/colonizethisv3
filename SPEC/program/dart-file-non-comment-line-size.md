@@ -63,3 +63,12 @@ specific hand-written library file.
   is in scope for the job, then the rule uses the measurement and exclusions
   above and does not load keyed waiver data to waive failures for in-scope
   hand-written Dart files.
+
+- Given a temporary workspace whose hand-written Dart file
+  `packages/x/lib/big.dart` has more than 1000 non-comment lines, and a decoy
+  file `tool/legacy_dart_ncl_waiver_table.yaml` shaped like historical keyed
+  waiver YAML (for example listing `packages/x/lib/big.dart` under
+  `exempt_files`), when the System runs `runCheckDartFileNonCommentLineSize`
+  with that workspace root, then the checker still exits non-zero and reports
+  `big.dart` as over the non-comment line limit, because no keyed waiver data is
+  loaded.

@@ -130,5 +130,44 @@ final a = 1; // ignore: avoid_print
       );
       expect(incrementalCode, 0);
     });
+
+    test(
+      'fails on violation; legacy keyed waiver YAML under tool/ is not read',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'dart-ncl-size-legacy-waiver-',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
+
+        final violating = File(
+          p.join(temp.path, 'packages', 'x', 'lib', 'big.dart'),
+        )..createSync(recursive: true);
+        violating.writeAsStringSync(
+          List.filled(1001, 'final x = 1;').join('\n'),
+        );
+
+        final toolDir = Directory(p.join(temp.path, 'tool'))
+          ..createSync(recursive: true);
+        File(
+          p.join(toolDir.path, 'legacy_dart_ncl_waiver_table.yaml'),
+        ).writeAsStringSync('''
+# Decoy: historical repo-lint keyed waiver shape; checker must not load this.
+exempt_files:
+  - packages/x/lib/big.dart
+''');
+
+        final logs = <String>[];
+        final code = runCheckDartFileNonCommentLineSize(
+          temp.path,
+          info: logs.add,
+          err: logs.add,
+        );
+
+        expect(code, 1);
+        final output = logs.join('\n');
+        expect(output, contains('packages/x/lib/big.dart'));
+        expect(output, contains('1001 non-comment lines > 1000'));
+      },
+    );
   });
 }
