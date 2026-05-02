@@ -15,9 +15,15 @@ sealed class DebugConsoleParsedInvocation {
     required int requestedAmount,
     required int creditedAmount,
   }) = DebugConsoleTreasuryCredit;
+
+  const factory DebugConsoleParsedInvocation.flipProvince({
+    required String regionId,
+    required String provinceDisplayName,
+  }) = DebugConsoleFlipProvince;
 }
 
-final class DebugConsoleSpawnCivilianAtCapital extends DebugConsoleParsedInvocation {
+final class DebugConsoleSpawnCivilianAtCapital
+    extends DebugConsoleParsedInvocation {
   const DebugConsoleSpawnCivilianAtCapital({
     required this.unitType,
     required this.count,
@@ -38,4 +44,14 @@ final class DebugConsoleTreasuryCredit extends DebugConsoleParsedInvocation {
 
   /// Amount applied after clamp to the debug-console treasury credit cap (9999).
   final int creditedAmount;
+}
+
+final class DebugConsoleFlipProvince extends DebugConsoleParsedInvocation {
+  const DebugConsoleFlipProvince({
+    required this.regionId,
+    required this.provinceDisplayName,
+  });
+
+  final String regionId;
+  final String provinceDisplayName;
 }

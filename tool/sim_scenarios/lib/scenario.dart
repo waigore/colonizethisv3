@@ -240,7 +240,7 @@ class OrderCommand {
 
   final String player;
   final String
-      type; // move, build, work, diplomatic, research, naval_move, naval_mission
+  type; // move, build, work, diplomatic, research, naval_move, naval_mission
   // Move fields
   final String? unit;
   final String? to;
@@ -439,12 +439,7 @@ class Assertion {
 }
 
 /// Type of value matching for assertions.
-enum MatchType {
-  exact,
-  range,
-  atLeast,
-  atMost,
-}
+enum MatchType { exact, range, atLeast, atMost }
 
 // JSON Parsing
 
@@ -457,11 +452,13 @@ Scenario parseScenarioFromJson(Map<String, dynamic> json) {
     setup: json['setup'] != null
         ? _parseScenarioSetup(json['setup'] as Map<String, dynamic>)
         : null,
-    turns: (json['turns'] as List<dynamic>?)
+    turns:
+        (json['turns'] as List<dynamic>?)
             ?.map((t) => _parseTurnScript(t as Map<String, dynamic>))
             .toList() ??
         [],
-    assertions: (json['assertions'] as List<dynamic>?)
+    assertions:
+        (json['assertions'] as List<dynamic>?)
             ?.map((a) => _parseAssertion(a as Map<String, dynamic>))
             .toList() ??
         [],
@@ -483,12 +480,12 @@ ScenarioInit _parseScenarioInit(Map<String, dynamic>? json) {
 
 ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
   Map<String, Map<String, int>>? _parseInitialStockpile(dynamic raw) {
-    if (raw is! Map) return null;
+    if (raw is! Map<dynamic, dynamic>) return null;
     final result = <String, Map<String, int>>{};
     for (final entry in (raw as Map<String, dynamic>).entries) {
-      if (entry.value is Map) {
+      if (entry.value is Map<dynamic, dynamic>) {
         final inner = <String, int>{};
-        for (final e in (entry.value as Map).entries) {
+        for (final e in (entry.value as Map<dynamic, dynamic>).entries) {
           final v = e.value;
           inner[e.key.toString()] = v is int ? v : (int.tryParse('$v') ?? 0);
         }
@@ -499,12 +496,12 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
   }
 
   Map<String, Map<String, int>>? _parseInitialWorkers(dynamic raw) {
-    if (raw is! Map) return null;
+    if (raw is! Map<dynamic, dynamic>) return null;
     final result = <String, Map<String, int>>{};
     for (final entry in (raw as Map<String, dynamic>).entries) {
-      if (entry.value is Map) {
+      if (entry.value is Map<dynamic, dynamic>) {
         final inner = <String, int>{};
-        for (final e in (entry.value as Map).entries) {
+        for (final e in (entry.value as Map<dynamic, dynamic>).entries) {
           final v = e.value;
           inner[e.key.toString()] = v is int ? v : (int.tryParse('$v') ?? 0);
         }
@@ -518,9 +515,9 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
     if (raw is! Map<String, dynamic>) return null;
     final result = <String, Map<String, int>>{};
     for (final entry in raw.entries) {
-      if (entry.value is Map) {
+      if (entry.value is Map<dynamic, dynamic>) {
         final inner = <String, int>{};
-        for (final e in (entry.value as Map).entries) {
+        for (final e in (entry.value as Map<dynamic, dynamic>).entries) {
           final v = e.value;
           inner[e.key.toString()] = v is int ? v : (int.tryParse('$v') ?? 0);
         }
@@ -553,14 +550,17 @@ ScenarioSetup _parseScenarioSetup(Map<String, dynamic> json) {
         ?.map((k, v) => MapEntry(k, v.toInt())),
     initialWorkers: _parseInitialWorkers(json['initialWorkers']),
     initialStockpile: _parseInitialStockpile(json['initialStockpile']),
-    productionAssignments:
-        _parseProductionAssignments(json['productionAssignments']),
+    productionAssignments: _parseProductionAssignments(
+      json['productionAssignments'],
+    ),
     initialTileState: _parseInitialTileState(json['initialTileState']),
     leaderKeys: _parseLeaderKeys(json['leaderKeys']),
     initialTech: _parseInitialTech(json['initialTech']),
     initialTreasury: _parseInitialTreasury(json['initialTreasury']),
     defaultCombatMode: json['defaultCombatMode'] as String?,
-    purchasedTilesByTileKey: _parsePurchasedTilesByTileKey(json['purchasedTilesByTileKey']),
+    purchasedTilesByTileKey: _parsePurchasedTilesByTileKey(
+      json['purchasedTilesByTileKey'],
+    ),
   );
 }
 
@@ -589,7 +589,7 @@ Map<String, String>? _parsePurchasedTilesByTileKey(dynamic raw) {
 }
 
 Map<String, int>? _parseInitialTreasury(dynamic value) {
-  if (value == null || value is! Map) return null;
+  if (value == null || value is! Map<dynamic, dynamic>) return null;
   final out = <String, int>{};
   for (final e in value.entries) {
     final v = e.value;
@@ -616,10 +616,12 @@ List<ProductionAssignment>? _parseProductionAssignments(dynamic raw) {
     final recipeId = e['recipeId'] as String?;
     final labour = e['assignedLabour'];
     if (recipeId == null || recipeId.isEmpty || labour == null) continue;
-    out.add(ProductionAssignment(
-      recipeId: recipeId,
-      assignedLabour: (labour as num).toInt(),
-    ));
+    out.add(
+      ProductionAssignment(
+        recipeId: recipeId,
+        assignedLabour: (labour as num).toInt(),
+      ),
+    );
   }
   return out.isEmpty ? null : out;
 }
@@ -635,10 +637,10 @@ UnitPlacement _parseUnitPlacement(Map<String, dynamic> json) {
 
 TurnScript _parseTurnScript(Map<String, dynamic> json) {
   List<WorkerAssignment>? _parseWorkerAssignments(dynamic raw) {
-    if (raw is! List) return null;
+    if (raw is! List<dynamic>) return null;
     final list = <WorkerAssignment>[];
     for (final e in raw) {
-      if (e is! Map) continue;
+      if (e is! Map<dynamic, dynamic>) continue;
       final m = Map<String, dynamic>.from(e);
       final recipeId = m['recipeId'] as String?;
       final labour = m['assignedLabour'] as int? ?? 0;
@@ -651,7 +653,8 @@ TurnScript _parseTurnScript(Map<String, dynamic> json) {
 
   return TurnScript(
     turn: json['turn'] as int,
-    orders: (json['orders'] as List<dynamic>?)
+    orders:
+        (json['orders'] as List<dynamic>?)
             ?.map((o) => _parseOrderCommand(o as Map<String, dynamic>))
             .toList() ??
         [],
@@ -676,12 +679,14 @@ List<CallToArmsDecisionScript>? _parseCallToArmsDecisions(dynamic raw) {
         accepted == null) {
       continue;
     }
-    list.add(CallToArmsDecisionScript(
-      allyGpId: allyGpId,
-      defenderGpId: defenderGpId,
-      aggressorGpId: aggressorGpId,
-      accepted: accepted,
-    ));
+    list.add(
+      CallToArmsDecisionScript(
+        allyGpId: allyGpId,
+        defenderGpId: defenderGpId,
+        aggressorGpId: aggressorGpId,
+        accepted: accepted,
+      ),
+    );
   }
   return list.isEmpty ? null : list;
 }
@@ -698,13 +703,16 @@ List<OvertureDecisionScript>? _parseOvertureDecisions(dynamic raw) {
     if (offererGpId == null ||
         targetFactionId == null ||
         stage == null ||
-        accepted == null) continue;
-    list.add(OvertureDecisionScript(
-      offererGpId: offererGpId,
-      targetFactionId: targetFactionId,
-      stage: stage,
-      accepted: accepted,
-    ));
+        accepted == null)
+      continue;
+    list.add(
+      OvertureDecisionScript(
+        offererGpId: offererGpId,
+        targetFactionId: targetFactionId,
+        stage: stage,
+        accepted: accepted,
+      ),
+    );
   }
   return list.isEmpty ? null : list;
 }

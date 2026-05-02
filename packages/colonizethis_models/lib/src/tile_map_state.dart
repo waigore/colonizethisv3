@@ -44,9 +44,9 @@ class TileMapState {
   }
 
   Map<String, dynamic> toJson() => {
-        'improvementByTile': improvementByTile,
-        'roadLevelByTile': roadLevelByTile,
-      };
+    'improvementByTile': improvementByTile,
+    'roadLevelByTile': roadLevelByTile,
+  };
 
   static TileMapState fromJson(Map<String, dynamic>? json) {
     if (json == null) return const TileMapState();
@@ -55,16 +55,18 @@ class TileMapState {
     return TileMapState(
       improvementByTile: imp is Map<String, int>
           ? imp
-          : imp is Map
-              ? Map<String, int>.from(
-                  imp.map((k, v) => MapEntry(k.toString(), v is int ? v : 0)))
-              : const {},
+          : imp is Map<dynamic, dynamic>
+          ? Map<String, int>.from(
+              imp.map((k, v) => MapEntry(k.toString(), v is int ? v : 0)),
+            )
+          : const {},
       roadLevelByTile: road is Map<String, int>
           ? road
-          : road is Map
-              ? Map<String, int>.from(
-                  road.map((k, v) => MapEntry(k.toString(), v is int ? v : 0)))
-              : const {},
+          : road is Map<dynamic, dynamic>
+          ? Map<String, int>.from(
+              road.map((k, v) => MapEntry(k.toString(), v is int ? v : 0)),
+            )
+          : const {},
     );
   }
 
@@ -77,8 +79,10 @@ class TileMapState {
           _mapEquals(roadLevelByTile, other.roadLevelByTile);
 
   @override
-  int get hashCode =>
-      Object.hash(Object.hashAll(improvementByTile.entries), Object.hashAll(roadLevelByTile.entries));
+  int get hashCode => Object.hash(
+    Object.hashAll(improvementByTile.entries),
+    Object.hashAll(roadLevelByTile.entries),
+  );
 
   static bool _mapEquals(Map<String, int> a, Map<String, int> b) {
     if (a.length != b.length) return false;

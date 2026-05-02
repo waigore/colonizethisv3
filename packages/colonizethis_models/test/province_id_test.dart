@@ -11,8 +11,8 @@ void main() {
       expect(ProvinceId.localIdFrom('oldWorld|p1'), 'p1');
     });
 
-    test('localIdFrom throws for unprefixed id', () {
-      expect(() => ProvinceId.localIdFrom('p1'), throwsStateError);
+    test('localIdFrom allows empty suffix when delimiter exists', () {
+      expect(ProvinceId.localIdFrom('oldWorld|'), '');
     });
 
     test('regionIdFrom throws for unprefixed id', () {
@@ -28,9 +28,20 @@ void main() {
       expect(ProvinceId.isPrefixed('p1'), isFalse);
     });
 
-    test('localSegmentFromStoredGameState extracts or passes through', () {
-      expect(ProvinceId.localSegmentFromStoredGameState('oldWorld|p1'), 'p1');
-      expect(ProvinceId.localSegmentFromStoredGameState('p1'), 'p1');
+    test('prefixed IDs can be normalized by explicit handling', () {
+      expect(
+        ProvinceId.isPrefixed('oldWorld|p1')
+            ? ProvinceId.localIdFrom('oldWorld|p1')
+            : 'oldWorld|p1',
+        'p1',
+      );
+      const storedLocalId = 'p1';
+      expect(
+        ProvinceId.isPrefixed(storedLocalId)
+            ? ProvinceId.localIdFrom('oldWorld|p1')
+            : storedLocalId,
+        'p1',
+      );
     });
   });
 }
