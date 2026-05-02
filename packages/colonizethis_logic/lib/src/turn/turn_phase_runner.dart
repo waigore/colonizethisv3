@@ -14,9 +14,6 @@ import 'phases.dart';
 
 final _log = packageLogger();
 
-typedef TurnPhaseHandler =
-    TurnPhaseStepOutcome Function(TurnPipelineState, TurnResolverConfig, int);
-
 /// Runs full turn phase sequence; may return early for pending diplomacy.
 TurnResolutionResult runTurnResolutionPipeline({
   required Game gameAtResolutionStart,
@@ -27,7 +24,13 @@ TurnResolutionResult runTurnResolutionPipeline({
   final phaseIndex = config.startFromPhase != null
       ? turnResolutionSequence.indexOf(config.startFromPhase!)
       : 0;
-  final handlers = _defaultTurnPhaseHandlers();
+  final defaults = _defaultTurnPhaseHandlers();
+  final handlers = config.phaseHandlerOverrides == null
+      ? defaults
+      : <TurnPhase, TurnPhaseHandler>{
+          ...defaults,
+          ...config.phaseHandlerOverrides!,
+        };
 
   for (var i = 0; i < turnResolutionSequence.length; i++) {
     final phase = turnResolutionSequence[i];
@@ -107,7 +110,9 @@ TurnPhaseStepOutcome _runRichesToTreasuryPhaseHandler(
   TurnPipelineState acc,
   TurnResolverConfig config,
   int turn,
-) => TurnPhaseStepContinue(acc.copyWith(game: runRichesToTreasuryPhase(acc.game)));
+) => TurnPhaseStepContinue(
+  acc.copyWith(game: runRichesToTreasuryPhase(acc.game)),
+);
 
 TurnPhaseStepOutcome _runConsumptionPhaseHandler(
   TurnPipelineState acc,
@@ -222,7 +227,9 @@ TurnPhaseStepOutcome _runMovementPhaseHandler(
   int turn,
 ) {
   return TurnPhaseStepContinue(
-    acc.copyWith(game: runMovementPhase(acc.game, config.topology, config.orders)),
+    acc.copyWith(
+      game: runMovementPhase(acc.game, config.topology, config.orders),
+    ),
   );
 }
 
@@ -230,7 +237,9 @@ TurnPhaseStepOutcome _runMinorRegimentUpgradePhaseHandler(
   TurnPipelineState acc,
   TurnResolverConfig config,
   int turn,
-) => TurnPhaseStepContinue(acc.copyWith(game: runMinorRegimentUpgradePhase(acc.game)));
+) => TurnPhaseStepContinue(
+  acc.copyWith(game: runMinorRegimentUpgradePhase(acc.game)),
+);
 
 TurnPhaseStepOutcome _runNavalInterceptionCombatPhaseHandler(
   TurnPipelineState acc,
@@ -255,7 +264,10 @@ TurnPhaseStepOutcome _runCombatPhaseHandler(
   int turn,
 ) {
   final previousOwnership = <String, String?>{};
-  for (final region in [acc.game.worldState.oldWorld, acc.game.worldState.newWorld]) {
+  for (final region in [
+    acc.game.worldState.oldWorld,
+    acc.game.worldState.newWorld,
+  ]) {
     for (final prov in region.provinces) {
       previousOwnership[prov.id] = prov.ownerId;
     }
