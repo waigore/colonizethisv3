@@ -27,3 +27,6 @@ Same domain trees as other repo-lint AST rules: `collectRepoLintDomainDartFiles`
 ## Acceptance criteria
 
 - Given the repository root as cwd, when CI runs `dart run tool/ct_repo_lint.dart`, then rule `repo.control_flow_nesting_depth` executes and a max depth ≥4 fails the run with file, line, and symbol in the checker output.
+- Given repository root as cwd, when rule `repo.control_flow_nesting_depth`
+  runs, then the checker does not load keyed waiver YAML or per-symbol
+  exemption tables; max depth ≥4 in any scanned executable body fails the run.

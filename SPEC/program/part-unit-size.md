@@ -47,3 +47,6 @@ leading `part of` directive are out of scope for this rule.
   when the checker runs, then the checker fails and the violation text names that
   file’s repo-relative path and reports the measured line count and the max
   threshold.
+- Given repository root as cwd, when rule `repo.part_unit_size` runs, then the
+  checker applies the universal **1000** physical-line threshold only and does not
+  load keyed waiver YAML or per-file exemption tables.
