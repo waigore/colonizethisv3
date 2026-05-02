@@ -219,6 +219,30 @@ List<String> repoLintSplitRelativeDartPathsArg(String value) {
       .toList(growable: false);
 }
 
+/// Parses `--files=` / `--files <csv>` from a checker `main(argv)` list.
+///
+/// When a bare `--files` has no following argument, [missingValueError] is true
+/// and callers should print a tool-specific prefix then exit `2`.
+({List<String>? paths, bool missingValueError})
+repoLintParseIncrementalRelativeDartPathsFromArgs(List<String> args) {
+  List<String>? out;
+  var missingValue = false;
+  for (var i = 0; i < args.length; i++) {
+    final arg = args[i];
+    if (arg.startsWith('--files=')) {
+      out = repoLintSplitRelativeDartPathsArg(arg.substring('--files='.length));
+    } else if (arg == '--files') {
+      if (i + 1 >= args.length) {
+        missingValue = true;
+      } else {
+        i++;
+        out = repoLintSplitRelativeDartPathsArg(args[i]);
+      }
+    }
+  }
+  return (paths: out, missingValueError: missingValue);
+}
+
 // --- Identifier-literal checkers (tech / work-target / civilian unit type) ---
 
 /// Scan roots for tech / work-target / civilian literal checkers (top-level
