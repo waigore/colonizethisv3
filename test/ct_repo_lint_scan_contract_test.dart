@@ -413,4 +413,70 @@ void main() {
       ]);
     });
   });
+
+  group('repoLintParseIncrementalRelativeDartPathsFromArgs', () {
+    test('returns null paths when no --files', () {
+      final r = repoLintParseIncrementalRelativeDartPathsFromArgs(const []);
+      expect(r.paths, isNull);
+      expect(r.missingValueError, isFalse);
+    });
+
+    test('parses --files= comma list', () {
+      final r = repoLintParseIncrementalRelativeDartPathsFromArgs(const [
+        '--files=lib/a.dart,lib/b.dart',
+      ]);
+      expect(r.paths, ['lib/a.dart', 'lib/b.dart']);
+      expect(r.missingValueError, isFalse);
+    });
+
+    test('parses --files followed by csv', () {
+      final r = repoLintParseIncrementalRelativeDartPathsFromArgs(const [
+        '--files',
+        'lib/a.dart,lib/b.dart',
+      ]);
+      expect(r.paths, ['lib/a.dart', 'lib/b.dart']);
+      expect(r.missingValueError, isFalse);
+    });
+
+    test('sets missingValueError when --files has no value', () {
+      final r = repoLintParseIncrementalRelativeDartPathsFromArgs(const [
+        '--files',
+      ]);
+      expect(r.paths, isNull);
+      expect(r.missingValueError, isTrue);
+    });
+
+    test('last --files wins', () {
+      final r = repoLintParseIncrementalRelativeDartPathsFromArgs(const [
+        '--files=first.dart',
+        '--files',
+        'second.dart',
+      ]);
+      expect(r.paths, ['second.dart']);
+      expect(r.missingValueError, isFalse);
+    });
+  });
+
+  group('repoLintParseStrictIncrementalFilesArgs', () {
+    test('empty argv yields no paths and no errors', () {
+      final r = repoLintParseStrictIncrementalFilesArgs(const []);
+      expect(r.paths, isNull);
+      expect(r.missingValueError, isFalse);
+      expect(r.unsupportedArgument, isNull);
+    });
+
+    test('rejects unknown flags', () {
+      final r = repoLintParseStrictIncrementalFilesArgs(const ['--verbose']);
+      expect(r.unsupportedArgument, '--verbose');
+    });
+
+    test('parses --files= then rejects trailing junk', () {
+      final r = repoLintParseStrictIncrementalFilesArgs(const [
+        '--files=a.dart',
+        '--other',
+      ]);
+      expect(r.paths, ['a.dart']);
+      expect(r.unsupportedArgument, '--other');
+    });
+  });
 }

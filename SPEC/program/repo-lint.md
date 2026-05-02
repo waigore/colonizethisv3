@@ -14,7 +14,7 @@
 
 **Implementation status (GitHub #1912, checker slice):** `repo.function_size`, `repo.control_flow_nesting_depth`, and `repo.part_unit_size` enforce universal thresholds only; they do **not** read keyed waiver YAML or other per-symbol / per-file exemption tables. Per-rule contracts: `SPEC/program/function-size.md`, `SPEC/program/control-flow-nesting-depth.md`, `SPEC/program/part-unit-size.md`.
 
-**Implementation status (GitHub #1912, checker slice):** `repo.disallowed_ast_patterns` does not use per-file suppression allowlists for sea-zone rules; in-file suppressions follow the same `ignore` / `ignore_for_file` contract as other disallowed-AST rules.
+**Implementation status (GitHub #1912, checker slice):** `repo.disallowed_ast_patterns` does not use per-file suppression allowlists for sea-zone rules; in-file suppressions follow the same `ignore` / `ignore_for_file` contract as other disallowed-AST rules. The debug-console logic boundary rule uses YAML `match.kind` **`scoped_package_import_contract`** (closed URI set per scope), not the legacy identifier `package_import_allowlist`.
 
 **Implementation status (GitHub #1912, dart file size):** `repo.dart_file_non_comment_line_size` enforces a universal **1000** non-comment-line cap for scanned hand-written Dart; it skips only **generated whole paths** (suffixes `.g.dart`, `.freezed.dart`, `.mocks.dart`, `.gen.dart`, and generated Flutter l10n path prefixes under `app/lib/l10n/`). Per-rule contract: `SPEC/program/dart-file-non-comment-line-size.md`.
 
@@ -35,11 +35,14 @@
 | `tool/ct_repo_lint.dart` | Orchestrator: loads manifest, runs rules in order, stops on first failure |
 | `tool/ct_repo_lint_lib.dart` | Parse/execute helpers (also covered by `test/ct_repo_lint_test.dart`) |
 | `tool/ct_repo_lint_scan_contract.dart` | Shared roots, skip helpers, canonical tile-key collectors, app UI path gate, PR path split — see `test/ct_repo_lint_scan_contract_test.dart` |
+| `tool/disallowed_ast_pattern_rules.dart` | Rule model + YAML parse (`parseDisallowedAstRulesFromYaml`) from `tool/disallowed_ast_patterns.yaml` (`SPEC/program/disallowed-ast-patterns.md`); consumed by `tool/check_disallowed_ast_patterns.dart` |
+| `tool/check_disallowed_ast_patterns.dart` | Config-driven AST visitor and scan CLI; rule `repo.disallowed_ast_patterns`; also invoked in-process for `repo.debug_console_logic_contract_boundary` |
 | `tool/check_repeated_magic_numbers.dart` | Repeated **hash/LCG-style** integer literals (`SPEC/program/repeated-magic-numbers.md`); rule `repo.repeated_magic_numbers` |
-| `tool/check_control_flow_nesting_depth.dart` | Control-flow nesting depth (`SPEC/program/control-flow-nesting-depth.md`); rule `repo.control_flow_nesting_depth` |
+| `tool/control_flow_nesting_depth_scan.dart` | Control-flow nesting visitors (`SPEC/program/control-flow-nesting-depth.md`) |
+| `tool/check_control_flow_nesting_depth.dart` | Control-flow nesting depth scan + CLI; rule `repo.control_flow_nesting_depth` |
 | `tool/check_function_size.dart` | Function measured-line threshold (`SPEC/program/function-size.md`); rule `repo.function_size` |
 | `tool/check_part_unit_size.dart` | Dart `part` fragment physical line limit (`SPEC/program/part-unit-size.md`); rule `repo.part_unit_size` |
-| `tool/check_debug_console_logic_contract_boundary.dart` | AST-enforced import allowlist for debug-console -> logic boundary; rule `repo.debug_console_logic_contract_boundary` |
+| `tool/check_debug_console_logic_contract_boundary.dart` | AST-enforced scoped package import contract for debug-console → logic boundary; rule `repo.debug_console_logic_contract_boundary` |
 | `tool/check_app_event_handler_scope_logic_boundary.dart` | Enforce that `app/lib/core/services/app_event_handler_scope.dart` has no direct import from `app/lib/features/game/logic/**`; rule `repo.app_event_handler_scope_logic_boundary` |
 | `tool/check_no_flame_in_widgets.dart` | Disallow direct `package:flame/*` **import** and **export** lines (single- or double-quoted URI) under `app/lib/widgets/**`; rule `repo.no_flame_in_widgets` |
 | `tool/check_no_screen_in_game_widgets.dart` | Disallow `*_screen.dart` files under `app/lib/features/game/widgets/**`; rule `repo.no_screen_in_game_widgets` |
@@ -123,6 +126,8 @@ Only **`.github/workflows/quality.yml`** runs **`dart run tool/run_workspace_ana
 
 Rules marked `pr_incremental: true` in the manifest receive `--files <csv>` when `GITHUB_BASE_REF` is set and `git fetch` / `git diff origin/<base>...HEAD -- '*.dart'` succeeds and yields paths—matching the previous inline `quality.yml` behavior. Use `--force-full-scan` to disable incremental arguments locally or in scripts.
 
+Checker CLIs that accept `--files` / `--files=` should use `repoLintSplitRelativeDartPathsArg` in `tool/ct_repo_lint_scan_contract.dart` for splitting. Checkers that **ignore** unknown argv tokens use `repoLintParseIncrementalRelativeDartPathsFromArgs`; checkers that accept **only** `--files` / `--files=` use `repoLintParseStrictIncrementalFilesArgs`, or `repoLintStrictIncrementalFilesArgListOrExit` when they print the shared `ERROR:` stderr lines and exit 2 on parse failure (see `test/ct_repo_lint_scan_contract_test.dart`).
+
 ## Adding or changing rules
 
 Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without updating this SPEC and the manifest. Prefer:
@@ -154,7 +159,7 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 - Given app game feature code, when `dart run tool/ct_repo_lint.dart` runs rule `repo.no_screen_in_game_widgets`, then no file matching `*_screen.dart` exists under `app/lib/features/game/widgets/**`.
 - Given app game widget Dart files under `app/lib/features/game/widgets/**`, when `dart run tool/ct_repo_lint.dart` runs rule `repo.game_widgets_file_size`, then each scanned file has at most 700 physical lines, the run fails listing each violating path when any file exceeds 700, and the checker does not load keyed waiver data.
 - Given repository Dart files excluding generated suffixes (`.g.dart`, `.freezed.dart`, `.mocks.dart`, `.gen.dart`) and generated app l10n paths under `app/lib/l10n/` matching the checker’s prefix list, when `dart run tool/ct_repo_lint.dart` runs rule `repo.dart_file_non_comment_line_size`, then each remaining scanned file has at most 1000 non-comment lines and the run fails while listing every violating file when any file is strictly greater than 1000.
-- Given `packages/colonizethis_debug_console/lib/**` imports only allowlisted `colonizethis_logic` contract entrypoints, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_logic_contract_boundary`, then the rule passes without violations.
-- Given any debug-console file imports `package:colonizethis_logic/src/**` or another non-allowlisted `package:colonizethis_logic/...` entrypoint, when repo lint runs rule `repo.debug_console_logic_contract_boundary`, then the run fails and reports file path, line, and disallowed import context in checker output.
+- Given `packages/colonizethis_debug_console/lib/**` imports only `colonizethis_logic` URIs in the rule's closed `allowed_imports` contract set, when `dart run tool/ct_repo_lint.dart` runs rule `repo.debug_console_logic_contract_boundary`, then the rule passes without violations.
+- Given any debug-console file imports `package:colonizethis_logic/src/**` or another `package:colonizethis_logic/...` URI outside that closed contract set, when repo lint runs rule `repo.debug_console_logic_contract_boundary`, then the run fails and reports file path, line, and disallowed import context in checker output.
 - Given `app/lib/core/services/app_event_handler_scope.dart` has no direct imports from `package:colonizethis_app/features/game/logic/**`, when repo lint runs rule `repo.app_event_handler_scope_logic_boundary`, then the rule passes without violations.
 - Given `app/lib/core/services/app_event_handler_scope.dart` directly imports any `package:colonizethis_app/features/game/logic/**` path, when repo lint runs rule `repo.app_event_handler_scope_logic_boundary`, then the run fails and reports file path and line number.

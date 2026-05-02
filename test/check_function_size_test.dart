@@ -84,7 +84,7 @@ int f() {
     });
 
     test(
-      'fails when oversized; ignores stray tool/function_size_allowlist.yaml',
+      'fails when oversized; legacy keyed waiver YAML under tool/ is not read',
       () {
         final temp = Directory.systemTemp.createTempSync('fn-size-legacy-');
         try {
@@ -97,8 +97,9 @@ int f() {
           final toolDir = Directory(p.join(temp.path, 'tool'))
             ..createSync(recursive: true);
           File(
-            p.join(toolDir.path, 'function_size_allowlist.yaml'),
+            p.join(toolDir.path, 'legacy_function_size_waiver_table.yaml'),
           ).writeAsStringSync('''
+# Decoy: historical repo-lint keyed waiver shape; checker must not load this.
 allowed_over_20:
   - file: packages/colonizethis_logic/lib/src/big.dart
     symbol: giant

@@ -8,6 +8,8 @@ Block a small, explicit set of Dart **structural** patterns that harm readabilit
 
 - Policy and rule kinds: this document.
 - Concrete rules (IDs, messages, matchers): `tool/disallowed_ast_patterns.yaml`.
+- Rule model and YAML parsing (`parseDisallowedAstRulesFromYaml`): `tool/disallowed_ast_pattern_rules.dart`.
+- AST visitor and CLI entrypoint: `tool/check_disallowed_ast_patterns.dart`.
 
 ## Policy
 
@@ -134,7 +136,7 @@ disallowed in all scanned files.
 
 Rationale: this helper intentionally tolerates legacy bare local ids. Runtime
 identity paths must use explicit prefixed-id handling at the call site instead
-of a grandfathered compatibility helper.
+of this legacy compatibility helper.
 
 Rule id: `province_local_segment_boundary_only` (`match.kind`:
 `province_local_segment_boundary_only`).
@@ -142,7 +144,8 @@ Rule id: `province_local_segment_boundary_only` (`match.kind`:
 ### Debug-console imports must use logic contract entrypoints only
 
 In debug-console runtime code, imports from `colonizethis_logic` are disallowed
-unless they match an explicit allowlist of contract entrypoints.
+unless the import URI appears in the rule's `allowed_imports` list (a scoped
+closed contract, not a keyed violation waiver; see `SPEC/program/repo-lint.md`).
 
 Configured policy:
 
@@ -150,14 +153,14 @@ Configured policy:
 - Package target: `package:colonizethis_logic/...`
 - Allowed import: `package:colonizethis_logic/debug_console_api.dart`
 - Disallowed: `package:colonizethis_logic/src/**`
-- Disallowed: non-allowlisted entrypoints (including
+- Disallowed: imports outside the closed contract set (including
   `package:colonizethis_logic/colonizethis_logic.dart`)
 
 Rationale: preserve one-way architecture boundaries and keep debug console
 decoupled from logic internals behind narrow contracts.
 
 Rule id: `debug_console_logic_contract_boundary` (`match.kind`:
-`package_import_allowlist`).
+`scoped_package_import_contract`).
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -171,7 +174,7 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
 
 ## Implementation contract
 
-- **Given** the repository root as the working directory, **when** CI runs `dart run tool/ct_repo_lint.dart` (rule `repo.disallowed_ast_patterns`; see [repo-lint.md](repo-lint.md)), **then** the orchestrator invokes `tool/check_disallowed_ast_patterns.dart`, which loads `tool/disallowed_ast_patterns.yaml`, parses each listed Dart file, and reports violations with file path and line number.
+- **Given** the repository root as the working directory, **when** CI runs `dart run tool/ct_repo_lint.dart` (rule `repo.disallowed_ast_patterns`; see [repo-lint.md](repo-lint.md)), **then** the orchestrator invokes `tool/check_disallowed_ast_patterns.dart`, which loads `tool/disallowed_ast_patterns.yaml`, builds rules via `tool/disallowed_ast_pattern_rules.dart`, parses each listed Dart file, and reports violations with file path and line number.
 - **Given** a violation and an in-file suppression, **when** the offending line or the line above contains `ignore: disallowed_ast_<rule_id>`, or the file begins with `ignore_for_file: disallowed_ast_<rule_id>` for that rule, **then** the tool does not fail for that occurrence (`<rule_id>` matches the `id` field in YAML, e.g. `cascade_void_clear` → `disallowed_ast_cascade_void_clear`).
 - **Given** a new disallowed pattern, **when** maintainers extend `tool/disallowed_ast_patterns.yaml` with a documented `match.kind`, **then** the checker implementation supports that kind or the change includes the corresponding visitor logic and SPEC update.
 
@@ -269,8 +272,9 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   line.
 
 - **Given** runtime Dart source in
-  `packages/colonizethis_debug_console/lib/**` that imports a non-allowlisted
-  logic entrypoint such as `package:colonizethis_logic/colonizethis_logic.dart`,
+  `packages/colonizethis_debug_console/lib/**` that imports a logic entrypoint
+  outside the closed contract set, such as
+  `package:colonizethis_logic/colonizethis_logic.dart`,
   **when** the disallowed AST checker runs, **then** it reports at least one
   `debug_console_logic_contract_boundary` violation with the correct file and
   line.
