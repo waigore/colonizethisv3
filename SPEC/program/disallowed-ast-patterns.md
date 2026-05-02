@@ -134,7 +134,7 @@ disallowed in all scanned files.
 
 Rationale: this helper intentionally tolerates legacy bare local ids. Runtime
 identity paths must use explicit prefixed-id handling at the call site instead
-of a grandfathered compatibility helper.
+of this legacy compatibility helper.
 
 Rule id: `province_local_segment_boundary_only` (`match.kind`:
 `province_local_segment_boundary_only`).

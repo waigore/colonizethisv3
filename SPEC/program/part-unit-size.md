@@ -50,3 +50,7 @@ leading `part of` directive are out of scope for this rule.
 - Given repository root as cwd, when rule `repo.part_unit_size` runs, then the
   checker applies the universal **1000** physical-line threshold only and does not
   load keyed waiver YAML or per-file exemption tables.
+- Given a repository layout that includes a legacy keyed waiver YAML file under
+  `tool/` (any filename; not read by the checker), when rule `repo.part_unit_size`
+  runs on a part fragment over **1000** physical lines, then the run still fails
+  because thresholds are enforced without loading keyed waiver data.

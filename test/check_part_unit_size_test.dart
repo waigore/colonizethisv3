@@ -33,6 +33,45 @@ void main() {
       }
     });
 
+    test(
+      'fails when part over max; legacy keyed waiver YAML under tool/ is not read',
+      () {
+        final temp = Directory.systemTemp.createTempSync('part-size-legacy-');
+        try {
+          final logicDir = Directory(
+            p.join(temp.path, 'packages', 'colonizethis_logic', 'lib', 'src'),
+          )..createSync(recursive: true);
+          final body = List.generate(1002, (_) => '  final _ = 0;').join('\n');
+          _writeDartFile(
+            p.join(logicDir.path, 'huge_part.dart'),
+            "part of 'parent.dart';\nvoid _x() {\n$body\n}\n",
+          );
+          final toolDir = Directory(p.join(temp.path, 'tool'))
+            ..createSync(recursive: true);
+          File(
+            p.join(toolDir.path, 'legacy_part_unit_waiver_table.yaml'),
+          ).writeAsStringSync('''
+# Decoy: historical repo-lint keyed waiver shape; checker must not load this.
+exempt_files:
+  - packages/colonizethis_logic/lib/src/huge_part.dart
+  max_physical_lines: 2000
+''');
+
+          final errors = <String>[];
+          final exitCode = runCheckPartUnitSize(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('huge_part.dart'));
+          expect(errors.join('\n'), contains('max=1000'));
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
+
     test('passes when part fragment is within max physical lines', () {
       final temp = Directory.systemTemp.createTempSync('part-size-ok-');
       try {
