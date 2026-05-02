@@ -8,6 +8,8 @@ from colonizethis_infra import run_sandbox_agent
 
 
 def test_whitespace_sandbox_agent_falls_back_to_argv(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("AGENT", raising=False)
+    monkeypatch.delenv("CT_AGENT", raising=False)
     monkeypatch.setenv("SANDBOX_AGENT", "   ")
     monkeypatch.setenv("CURSOR_API_KEY", "k")
     monkeypatch.setenv("DAYTONA_API_KEY", "d")

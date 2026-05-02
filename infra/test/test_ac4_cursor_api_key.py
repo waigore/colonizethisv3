@@ -8,6 +8,8 @@ from colonizethis_infra import run_sandbox_agent
 
 
 def test_cursor_missing_key_returns_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("AGENT", raising=False)
+    monkeypatch.delenv("CT_AGENT", raising=False)
     monkeypatch.delenv("CURSOR_API_KEY", raising=False)
     monkeypatch.setenv("SANDBOX_AGENT", "cursor")
     monkeypatch.setenv("DAYTONA_API_KEY", "dummy")
@@ -31,6 +33,8 @@ def test_cursor_missing_key_returns_error(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 def test_invalid_sandbox_agent_value(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("AGENT", raising=False)
+    monkeypatch.delenv("CT_AGENT", raising=False)
     monkeypatch.setenv("SANDBOX_AGENT", "vscode")
     code, err = run_sandbox_agent.run_pipeline(
         argv_agent=None,

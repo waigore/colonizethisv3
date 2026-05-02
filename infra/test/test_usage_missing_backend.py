@@ -8,6 +8,8 @@ from colonizethis_infra import run_sandbox_agent
 
 
 def test_missing_backend_before_daytona(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("AGENT", raising=False)
+    monkeypatch.delenv("CT_AGENT", raising=False)
     monkeypatch.delenv("SANDBOX_AGENT", raising=False)
     monkeypatch.setenv("DAYTONA_API_KEY", "x")
     monkeypatch.setenv("GITHUB_TOKEN", "x")
@@ -29,6 +31,8 @@ def test_missing_backend_before_daytona(monkeypatch: pytest.MonkeyPatch) -> None
 
 
 def test_argv_agent_overrides_sandbox_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("AGENT", raising=False)
+    monkeypatch.delenv("CT_AGENT", raising=False)
     monkeypatch.setenv("SANDBOX_AGENT", "opencode")
     monkeypatch.setenv("CURSOR_API_KEY", "should-not-be-required")
     monkeypatch.setenv("OPENCODE_API_KEY", "ok")
