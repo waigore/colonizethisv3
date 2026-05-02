@@ -466,5 +466,175 @@ void main() {
       expect(result.game, isNull);
       expect(result.message, contains('unknown to human player'));
     });
+
+    test('rejects already human-owned province', () {
+      final game = _baseGame(
+        phase: TurnPhase.orders,
+        ownerId: 'human_1',
+        humanVisibility: 'fogged',
+      );
+      const event = FlipDebugProvinceOwnershipEvent(
+        humanPlayerId: 'human_1',
+        regionId: 'oldWorld',
+        provinceDisplayName: 'New Bordeaux',
+      );
+
+      final result = applyDebugFlipProvinceOwnership(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+
+      expect(result.game, isNull);
+      expect(result.message, contains('already human-owned'));
+    });
+
+    test('rejects ambiguous province display name in region', () {
+      final game = Game(
+        id: 'g-flip-amb',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'oldWorld|P1',
+                regionId: 'oldWorld',
+                ownerId: 'ai_1',
+                displayName: 'New Bordeaux',
+              ),
+              Province(
+                id: 'oldWorld|P2',
+                regionId: 'oldWorld',
+                ownerId: 'ai_1',
+                displayName: 'new bordeaux',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: const {
+            'oldWorld': {
+              'P1': ['oldWorld|P1|0|0'],
+              'P2': ['oldWorld|P2|0|0'],
+            },
+          },
+          playerVisibilityByTile: {
+            'human_1': {
+              'oldWorld|P1|0|0': 'fogged',
+              'oldWorld|P2|0|0': 'fogged',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'human_1', displayName: 'Human', isHuman: true),
+          Player(id: 'ai_1', displayName: 'AI', isHuman: false),
+        ],
+      );
+      const event = FlipDebugProvinceOwnershipEvent(
+        humanPlayerId: 'human_1',
+        regionId: 'oldWorld',
+        provinceDisplayName: 'New Bordeaux',
+      );
+
+      final result = applyDebugFlipProvinceOwnership(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+
+      expect(result.game, isNull);
+      expect(result.message, contains('ambiguous'));
+    });
+
+    test('rejects province display name not found in region', () {
+      final game = _baseGame(
+        phase: TurnPhase.orders,
+        ownerId: 'ai_1',
+        humanVisibility: 'fogged',
+      );
+      const event = FlipDebugProvinceOwnershipEvent(
+        humanPlayerId: 'human_1',
+        regionId: 'oldWorld',
+        provinceDisplayName: 'Nonexistent Province',
+      );
+
+      final result = applyDebugFlipProvinceOwnership(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+
+      expect(result.game, isNull);
+      expect(result.message, contains('not found'));
+    });
+
+    test('rejects province with no current owner', () {
+      final game = Game(
+        id: 'g-flip-null-owner',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+          oldWorld: const RegionData(
+            provinces: [
+              Province(
+                id: 'oldWorld|P1',
+                regionId: 'oldWorld',
+                ownerId: null,
+                displayName: 'New Bordeaux',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: const {
+            'oldWorld': {
+              'P1': ['oldWorld|P1|0|0'],
+            },
+          },
+          playerVisibilityByTile: {
+            'human_1': {'oldWorld|P1|0|0': 'fogged'},
+          },
+        ),
+        players: const [
+          Player(id: 'human_1', displayName: 'Human', isHuman: true),
+          Player(id: 'ai_1', displayName: 'AI', isHuman: false),
+        ],
+      );
+      const event = FlipDebugProvinceOwnershipEvent(
+        humanPlayerId: 'human_1',
+        regionId: 'oldWorld',
+        provinceDisplayName: 'New Bordeaux',
+      );
+
+      final result = applyDebugFlipProvinceOwnership(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+
+      expect(result.game, isNull);
+      expect(result.message, contains('no current owner'));
+    });
+
+    test('JSON round-trip preserves flip outcome (persistence parity)', () {
+      final game = _baseGame(
+        phase: TurnPhase.orders,
+        ownerId: 'ai_1',
+        humanVisibility: 'fogged',
+      );
+      const event = FlipDebugProvinceOwnershipEvent(
+        humanPlayerId: 'human_1',
+        regionId: 'oldWorld',
+        provinceDisplayName: 'New Bordeaux',
+      );
+
+      final result = applyDebugFlipProvinceOwnership(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+
+      expect(result.game, isNotNull);
+      final restored = Game.fromJson(result.game!.toJson());
+      expect(restored.worldState.oldWorld.provinces.single.ownerId, 'human_1');
+      expect(restored.worldState.oldWorld.units.single.ownerId, 'human_1');
+    });
   });
 }
