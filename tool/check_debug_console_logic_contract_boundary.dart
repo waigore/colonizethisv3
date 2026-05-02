@@ -17,33 +17,18 @@ int runCheckDebugConsoleLogicContractBoundary(
 }
 
 void main(List<String> args) {
-  List<String>? incrementalRelativeDartPaths;
-  for (var i = 0; i < args.length; i++) {
-    final arg = args[i];
-    if (arg.startsWith('--files=')) {
-      incrementalRelativeDartPaths = repoLintSplitRelativeDartPathsArg(
-        arg.substring('--files='.length),
-      );
-      continue;
-    }
-    if (arg == '--files') {
-      if (i + 1 >= args.length) {
-        stderr.writeln(
-          'check_debug_console_logic_contract_boundary: --files requires a comma-separated list',
-        );
-        exit(2);
-      }
-      incrementalRelativeDartPaths = repoLintSplitRelativeDartPathsArg(
-        args[++i],
-      );
-      continue;
-    }
+  final parsed = repoLintParseIncrementalRelativeDartPathsFromArgs(args);
+  if (parsed.missingValueError) {
+    stderr.writeln(
+      'check_debug_console_logic_contract_boundary: --files requires a comma-separated list',
+    );
+    exit(2);
   }
 
   exit(
     runCheckDebugConsoleLogicContractBoundary(
       Directory.current.path,
-      incrementalRelativeDartPaths: incrementalRelativeDartPaths,
+      incrementalRelativeDartPaths: parsed.paths,
     ),
   );
 }

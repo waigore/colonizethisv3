@@ -77,7 +77,7 @@ rules:
   - id: debug_console_logic_contract_boundary
     message: 'debug console must use logic contract imports only'
     match:
-      kind: package_import_allowlist
+      kind: scoped_package_import_contract
       scoped_relative_path_prefixes:
         - packages/colonizethis_debug_console/lib/
       package_name: colonizethis_logic
@@ -639,7 +639,7 @@ bool ok(String seaZoneId) {
       );
     });
 
-    test('allows allowlisted logic contract import in debug console scope', () {
+    test('allows approved logic contract import in debug console scope', () {
       const src = r'''
 import 'package:colonizethis_logic/debug_console_api.dart';
 ''';

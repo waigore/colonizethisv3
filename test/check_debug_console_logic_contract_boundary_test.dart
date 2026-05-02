@@ -7,7 +7,7 @@ import '../tool/check_debug_console_logic_contract_boundary.dart';
 
 void main() {
   group('runCheckDebugConsoleLogicContractBoundary', () {
-    test('passes when debug console imports only allowlisted logic contract', () {
+    test('passes when debug console imports only approved logic contract', () {
       final temp = Directory.systemTemp.createTempSync(
         'check_debug_console_logic_contract_boundary_pass_',
       );
@@ -77,14 +77,15 @@ void main() {
 }
 
 void _writeRulesYaml(String repoRoot) {
-  final rulesFile = File(p.join(repoRoot, 'tool', 'disallowed_ast_patterns.yaml'))
-    ..createSync(recursive: true);
+  final rulesFile = File(
+    p.join(repoRoot, 'tool', 'disallowed_ast_patterns.yaml'),
+  )..createSync(recursive: true);
   rulesFile.writeAsStringSync('''
 rules:
   - id: debug_console_logic_contract_boundary
     message: import policy
     match:
-      kind: package_import_allowlist
+      kind: scoped_package_import_contract
       scoped_relative_path_prefixes:
         - packages/colonizethis_debug_console/lib/
       package_name: colonizethis_logic
@@ -94,6 +95,7 @@ rules:
 }
 
 void _writeDartFile(String repoRoot, String relativePath, String contents) {
-  final file = File(p.join(repoRoot, relativePath))..createSync(recursive: true);
+  final file = File(p.join(repoRoot, relativePath))
+    ..createSync(recursive: true);
   file.writeAsStringSync(contents);
 }

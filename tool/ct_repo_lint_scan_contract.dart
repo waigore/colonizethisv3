@@ -219,6 +219,86 @@ List<String> repoLintSplitRelativeDartPathsArg(String value) {
       .toList(growable: false);
 }
 
+/// Parses `--files=` / `--files <csv>` from a checker `main(argv)` list.
+///
+/// When a bare `--files` has no following argument, [missingValueError] is true
+/// and callers should print a tool-specific prefix then exit `2`.
+({List<String>? paths, bool missingValueError})
+repoLintParseIncrementalRelativeDartPathsFromArgs(List<String> args) {
+  List<String>? out;
+  var missingValue = false;
+  for (var i = 0; i < args.length; i++) {
+    final arg = args[i];
+    if (arg.startsWith('--files=')) {
+      out = repoLintSplitRelativeDartPathsArg(arg.substring('--files='.length));
+    } else if (arg == '--files') {
+      if (i + 1 >= args.length) {
+        missingValue = true;
+      } else {
+        i++;
+        out = repoLintSplitRelativeDartPathsArg(args[i]);
+      }
+    }
+  }
+  return (paths: out, missingValueError: missingValue);
+}
+
+/// Like [repoLintParseIncrementalRelativeDartPathsFromArgs], but rejects any
+/// token that is not `--files`, `--files=…`, or the single value token after a
+/// bare `--files` (for checkers that accept only incremental file lists).
+///
+/// [unsupportedArgument] is the first argv token that violates that contract.
+({List<String>? paths, bool missingValueError, String? unsupportedArgument})
+repoLintParseStrictIncrementalFilesArgs(List<String> args) {
+  List<String>? out;
+  var missingValue = false;
+  for (var i = 0; i < args.length; i++) {
+    final arg = args[i];
+    if (arg.startsWith('--files=')) {
+      out = repoLintSplitRelativeDartPathsArg(arg.substring('--files='.length));
+      continue;
+    }
+    if (arg == '--files') {
+      if (i + 1 >= args.length) {
+        missingValue = true;
+      } else {
+        i++;
+        out = repoLintSplitRelativeDartPathsArg(args[i]);
+      }
+      continue;
+    }
+    return (
+      paths: out,
+      missingValueError: missingValue,
+      unsupportedArgument: arg,
+    );
+  }
+  return (
+    paths: out,
+    missingValueError: missingValue,
+    unsupportedArgument: null,
+  );
+}
+
+/// Same as [repoLintParseStrictIncrementalFilesArgs], but prints the shared
+/// `ERROR:` stderr lines and **exits 2** on missing `--files` value or unknown
+/// argv tokens (identifier-literal and dart file-size checkers).
+List<String> repoLintStrictIncrementalFilesArgListOrExit(List<String> args) {
+  final r = repoLintParseStrictIncrementalFilesArgs(args);
+  if (r.missingValueError) {
+    stderr.writeln('ERROR: Missing value for --files.');
+    exit(2);
+  }
+  if (r.unsupportedArgument != null) {
+    stderr.writeln(
+      'ERROR: Unsupported argument "${r.unsupportedArgument}". Supported: --files '
+      '(comma-separated or newline-separated relative paths).',
+    );
+    exit(2);
+  }
+  return r.paths ?? const [];
+}
+
 // --- Identifier-literal checkers (tech / work-target / civilian unit type) ---
 
 /// Scan roots for tech / work-target / civilian literal checkers (top-level

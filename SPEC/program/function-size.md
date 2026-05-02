@@ -31,6 +31,7 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and fixture/golde
 - Given repository root as cwd, when CI runs `dart run tool/ct_repo_lint.dart`,
   then rule `repo.function_size` runs and fails on any symbol measured over 200
   lines with no per-file or per-symbol exemptions.
-- Given a repo that contains a legacy waiver YAML file for function-size
-  violations, when rule `repo.function_size` runs, then the checker behavior is
-  unchanged because thresholds are enforced without keyed waiver data.
+- Given a repository layout that includes a legacy keyed waiver YAML file under
+  `tool/` (any filename; not read by the checker), when rule `repo.function_size`
+  runs on an oversized symbol, then the run still fails because thresholds are
+  enforced without loading keyed waiver data.

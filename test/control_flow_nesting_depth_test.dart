@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
 
-import '../tool/check_control_flow_nesting_depth.dart';
+import '../tool/control_flow_nesting_depth_scan.dart';
 
 void main() {
   group('maxControlFlowNestingDepthForTestBody', () {
