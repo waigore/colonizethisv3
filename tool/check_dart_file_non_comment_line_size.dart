@@ -8,7 +8,6 @@ import 'package:path/path.dart' as p;
 import 'ct_repo_lint_scan_contract.dart';
 
 const _maxNonCommentLines = 1000;
-const _argFiles = '--files';
 const _generatedSuffixes = <String>[
   '.g.dart',
   '.freezed.dart',
@@ -293,19 +292,7 @@ final class _SourceScanState {
 }
 
 _ParsedArgs _parseArgs(List<String> args) {
-  final r = repoLintParseStrictIncrementalFilesArgs(args);
-  if (r.missingValueError) {
-    stderr.writeln('ERROR: Missing value for $_argFiles.');
-    exit(2);
-  }
-  if (r.unsupportedArgument != null) {
-    stderr.writeln(
-      'ERROR: Unsupported argument "${r.unsupportedArgument}". Supported: $_argFiles '
-      '(comma-separated or newline-separated relative paths).',
-    );
-    exit(2);
-  }
-  return _ParsedArgs(files: r.paths ?? const []);
+  return _ParsedArgs(files: repoLintStrictIncrementalFilesArgListOrExit(args));
 }
 
 final class _ParsedArgs {

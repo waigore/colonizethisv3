@@ -280,6 +280,25 @@ repoLintParseStrictIncrementalFilesArgs(List<String> args) {
   );
 }
 
+/// Same as [repoLintParseStrictIncrementalFilesArgs], but prints the shared
+/// `ERROR:` stderr lines and **exits 2** on missing `--files` value or unknown
+/// argv tokens (identifier-literal and dart file-size checkers).
+List<String> repoLintStrictIncrementalFilesArgListOrExit(List<String> args) {
+  final r = repoLintParseStrictIncrementalFilesArgs(args);
+  if (r.missingValueError) {
+    stderr.writeln('ERROR: Missing value for --files.');
+    exit(2);
+  }
+  if (r.unsupportedArgument != null) {
+    stderr.writeln(
+      'ERROR: Unsupported argument "${r.unsupportedArgument}". Supported: --files '
+      '(comma-separated or newline-separated relative paths).',
+    );
+    exit(2);
+  }
+  return r.paths ?? const [];
+}
+
 // --- Identifier-literal checkers (tech / work-target / civilian unit type) ---
 
 /// Scan roots for tech / work-target / civilian literal checkers (top-level

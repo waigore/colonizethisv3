@@ -7,8 +7,6 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const _argFiles = '--files';
-
 /// Declarations for [kUnitTypeExplorer], etc. SPEC/game/civilian-units.md.
 const _civilianUnitTypeIdsRelPath =
     'packages/colonizethis_models/lib/src/civilian_unit_type_ids.dart';
@@ -117,19 +115,7 @@ List<CivilianUnitTypeConstantViolation> findCivilianUnitTypeConstantViolations({
 }
 
 _ParsedArgs _parseArgs(List<String> args) {
-  final r = repoLintParseStrictIncrementalFilesArgs(args);
-  if (r.missingValueError) {
-    stderr.writeln('ERROR: Missing value for $_argFiles.');
-    exit(2);
-  }
-  if (r.unsupportedArgument != null) {
-    stderr.writeln(
-      'ERROR: Unsupported argument "${r.unsupportedArgument}". Supported: $_argFiles '
-      '(comma-separated or newline-separated relative paths).',
-    );
-    exit(2);
-  }
-  return _ParsedArgs(files: r.paths ?? const []);
+  return _ParsedArgs(files: repoLintStrictIncrementalFilesArgListOrExit(args));
 }
 
 List<File> _collectCandidateFiles(String root, List<String> requestedPaths) {
