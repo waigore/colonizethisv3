@@ -50,3 +50,10 @@
 - Given panel input `/flip_province oldWorld New Bordeaux`, when the player submits and parser validation succeeds, then the system emits one `FlipDebugProvinceOwnershipEvent` with `regionId=oldWorld` and `provinceDisplayName=New Bordeaux`.
 - Given panel input `/flip_province oldWorld` or `/flip_province` with missing arguments, when the player submits, then the UI layer emits no `FlipDebugProvinceOwnershipEvent` and shows deterministic usage feedback.
 - Given panel input is focused and command history contains at least one command, when the player presses `ArrowUp` then `ArrowDown`, then the UI layer updates the input text to older/newer history entries in order.
+
+---
+
+## Automated verification (`/flip_province`)
+
+- **App handler and JSON persistence parity:** `app/test/app_event_handler_scope_test.dart` (`applyDebugFlipProvinceOwnership` — success, Orders-phase gate, unknown-to-human, already-owned, ambiguous name, not found, null owner, `Game.fromJson` / `toJson` round-trip).
+- **Logic downstream after canonical transfer:** `packages/colonizethis_logic/test/debug_flip_province_turn_downstream_test.dart` (`emitProvinceCapturedEvents`, `resolveConnectivity` via `runExtractionPhase`, `findMilitaryVictoryWinner`, `runEndOfTurnPhase`).
