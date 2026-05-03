@@ -117,20 +117,12 @@ Province? tryGetProvince(WorldState world, String fullProvinceId) {
 /// Returns the authoritative [Province.id] as [canonicalProvinceId] for bucket
 /// keys and timer maps.
 ({Province province, String canonicalProvinceId})?
-resolveProvinceRowForOwnershipTransfer(
-  WorldState world,
-  String provinceKey,
-) {
+resolveProvinceRowForOwnershipTransfer(WorldState world, String provinceKey) {
   final prefixed = tryGetProvince(world, provinceKey);
   if (prefixed != null) {
     return (province: prefixed, canonicalProvinceId: prefixed.id);
   }
-  for (final p in world.oldWorld.provinces) {
-    if (p.id == provinceKey) {
-      return (province: p, canonicalProvinceId: p.id);
-    }
-  }
-  for (final p in world.newWorld.provinces) {
+  for (final p in world.allProvinces()) {
     if (p.id == provinceKey) {
       return (province: p, canonicalProvinceId: p.id);
     }

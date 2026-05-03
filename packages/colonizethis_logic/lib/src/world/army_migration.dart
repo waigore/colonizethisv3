@@ -46,10 +46,9 @@ Game ensureMilitaryArmiesForGame(Game game) {
 
 bool _armiesMatchUnits(Game game) {
   final ws = game.worldState;
-  final militaryUnits = [
-    ...ws.oldWorld.units.where((u) => isMilitaryUnit(u.type)),
-    ...ws.newWorld.units.where((u) => isMilitaryUnit(u.type)),
-  ];
+  final militaryUnits = allUnitsFromWorld(
+    ws,
+  ).where((u) => isMilitaryUnit(u.type)).toList();
   if (ws.armies.isEmpty) {
     return militaryUnits.isEmpty;
   }
@@ -126,10 +125,8 @@ Game _rebuildArmiesFromMilitaryUnits(Game game) {
   );
 }
 
-List<Unit> _militaryUnitsFromWorld(WorldState ws) => [
-  ...ws.oldWorld.units.where((u) => isMilitaryUnit(u.type)),
-  ...ws.newWorld.units.where((u) => isMilitaryUnit(u.type)),
-];
+List<Unit> _militaryUnitsFromWorld(WorldState ws) =>
+    allUnitsFromWorld(ws).where((u) => isMilitaryUnit(u.type)).toList();
 
 Map<String, String> _capitalByPlayer(List<Player> players) => {
   for (final p in players)
@@ -231,10 +228,7 @@ int _nextArmySequence(List<Army> armies) {
 
 /// Removes dead unit ids from armies, drops empty non-home armies, assigns orphan regiments.
 WorldState reconcileArmiesAfterUnitsChanged(WorldState worldState, Game game) {
-  final unitIds = <String>{
-    ...worldState.oldWorld.units.map((u) => u.id),
-    ...worldState.newWorld.units.map((u) => u.id),
-  };
+  final unitIds = <String>{for (final u in allUnitsFromWorld(worldState)) u.id};
   var armies = worldState.armies
       .map(
         (a) => a.copyWith(
@@ -248,10 +242,9 @@ WorldState reconcileArmiesAfterUnitsChanged(WorldState worldState, Game game) {
 
   final claimed = <String>{for (final a in armies) ...a.regimentUnitIds};
 
-  final military = [
-    ...worldState.oldWorld.units.where((u) => isMilitaryUnit(u.type)),
-    ...worldState.newWorld.units.where((u) => isMilitaryUnit(u.type)),
-  ];
+  final military = allUnitsFromWorld(
+    worldState,
+  ).where((u) => isMilitaryUnit(u.type)).toList();
 
   final capitals = {
     for (final p in game.players)
