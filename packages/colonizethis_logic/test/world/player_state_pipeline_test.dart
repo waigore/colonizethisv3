@@ -44,10 +44,7 @@ void main() {
 
     test('mapPlayers identity yields equal game', () {
       const p = Player(id: 'x', displayName: 'X', isHuman: true);
-      final game = TestFixtures.minimalGame(
-        id: 'g',
-        players: const [p],
-      );
+      final game = TestFixtures.minimalGame(id: 'g', players: const [p]);
       final next = game.mapPlayers((q) => q);
       expect(next.players, game.players);
     });

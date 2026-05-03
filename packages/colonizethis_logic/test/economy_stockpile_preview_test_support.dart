@@ -3,6 +3,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'test_fixtures.dart';
+
 void expectPhaseDeltasSumToNet({
   required Game game,
   required String playerId,
@@ -43,47 +45,16 @@ void expectPhaseDeltasSumToNet({
   }
 }
 
-Game singlePlayerGame(Player player) {
-  return Game(
-    id: 't',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: [player],
-  );
-}
+/// Back-compat wrapper; prefer [TestFixtures.singlePlayerGame].
+Game singlePlayerGame(Player player) => TestFixtures.singlePlayerGame(player);
 
+/// Back-compat wrapper; prefer [TestFixtures.singlePlayerWorkPreviewGame].
 Game singlePlayerWorkPreviewGame({
   required Stockpile playerStockpile,
   required List<Unit> units,
   TileMapState tileState = const TileMapState(),
-}) {
-  final player = Player(
-    id: 'p1',
-    displayName: 'A',
-    isHuman: true,
-    stockpile: playerStockpile,
-  );
-  return Game(
-    id: 't',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        units: units,
-        provinces: const [
-          Province(
-            id: 'ow|p1',
-            regionId: 'oldWorld',
-            ownerId: 'p1',
-            fortLevel: 0,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileState: tileState,
-    ),
-    players: [player],
-  );
-}
+}) => TestFixtures.singlePlayerWorkPreviewGame(
+  playerStockpile: playerStockpile,
+  units: units,
+  tileState: tileState,
+);

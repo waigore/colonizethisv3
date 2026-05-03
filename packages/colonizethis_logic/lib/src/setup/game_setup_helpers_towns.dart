@@ -2,6 +2,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/province_lookup.dart';
 import 'game_setup_context.dart';
 import 'game_setup_town_tile_ranking.dart';
 
@@ -18,7 +19,7 @@ Game assignProvinceTowns({
   final capitalData = _collectCapitalData(game);
   final coordToKey = _buildCoordToTileKeyByRegion(tileKeysByRegion);
 
-  final oldProvinces = game.worldState.oldWorld.provinces.map((p) {
+  Province assignTownTile(Province p) {
     final tk = _townTileKeyForProvince(
       province: p,
       tileKeysByRegion: tileKeysByRegion,
@@ -30,30 +31,13 @@ Game assignProvinceTowns({
       coordToKeyByRegion: coordToKey,
     );
     return tk != null ? p.copyWith(townTileKey: tk) : p;
-  }).toList();
-  final newProvinces = game.worldState.newWorld.provinces.map((p) {
-    final tk = _townTileKeyForProvince(
-      province: p,
-      tileKeysByRegion: tileKeysByRegion,
-      capitalProvinceIdByOwner: capitalData.capitalProvinceIdByOwner,
-      capitalTileKeyByOwner: capitalData.capitalTileKeyByOwner,
-      topologyByRegion: topologyByRegion,
-      tileMapByRegion: tileMapByRegion,
-      portsByProvinceSeaboard: ports,
-      coordToKeyByRegion: coordToKey,
-    );
-    return tk != null ? p.copyWith(townTileKey: tk) : p;
-  }).toList();
+  }
 
   return game.copyWith(
-    worldState: game.worldState.copyWith(
-      oldWorld: RegionData(
-        provinces: oldProvinces,
-        units: game.worldState.oldWorld.units,
-      ),
-      newWorld: RegionData(
-        provinces: newProvinces,
-        units: game.worldState.newWorld.units,
+    worldState: game.worldState.mapBothRegions(
+      (_, region) => RegionData(
+        provinces: region.provinces.map(assignTownTile).toList(),
+        units: region.units,
       ),
     ),
   );

@@ -2,6 +2,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 void main() {
   group('WorldState mapBothRegions', () {
     test('invokes update for old then new with stable region ids', () {
@@ -12,8 +14,7 @@ void main() {
       );
       const ow = RegionData(provinces: [p], units: const []);
       const nw = RegionData(provinces: const [], units: const []);
-      final ws = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      final ws = TestFixtures.worldStateAtOrdersPhase(
         oldWorld: ow,
         newWorld: nw,
       );
@@ -23,9 +24,7 @@ void main() {
         seen.add(regionId);
         if (regionId == kRegionOldWorld) {
           return RegionData(
-            provinces: [
-              region.provinces.single.copyWith(ownerId: 'x'),
-            ],
+            provinces: [region.provinces.single.copyWith(ownerId: 'x')],
             units: region.units,
           );
         }
@@ -54,17 +53,14 @@ void main() {
         tileKey: 'newWorld|P2|0|0',
         locationProvinceId: 'newWorld|P2',
       );
-      final ws = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      final ws = TestFixtures.worldStateAtOrdersPhase(
         oldWorld: RegionData(units: [u1]),
         newWorld: RegionData(units: [u2]),
       );
 
       final next = ws.mapBothRegionUnits((regionId, units) {
         if (regionId == kRegionOldWorld) {
-          return [
-            units.single.copyWith(ownerId: 'b'),
-          ];
+          return [units.single.copyWith(ownerId: 'b')];
         }
         return units;
       });
