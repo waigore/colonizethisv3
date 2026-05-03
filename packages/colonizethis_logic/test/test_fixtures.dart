@@ -29,6 +29,7 @@ abstract final class TestFixtures {
     RegionData? newWorld,
     Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
         const {},
+    Map<String, Map<String, String>>? playerVisibilityByTile,
     TileMapState? tileState,
     double richesCashMultiplier = 1.0,
   }) =>
@@ -39,6 +40,7 @@ abstract final class TestFixtures {
           oldWorld: oldWorld ?? const RegionData(),
           newWorld: newWorld ?? const RegionData(),
           tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+          playerVisibilityByTile: playerVisibilityByTile ?? const {},
           tileState: tileState ?? const TileMapState(),
         ),
         players: players,

@@ -3,6 +3,8 @@ import 'package:colonizethis_logic/src/orders/work_handlers/explore_work_handler
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../../test_fixtures.dart';
+
 void main() {
   group('ExploreWorkOrderHandler', () {
     test('supports only explore target', () {
@@ -18,31 +20,26 @@ void main() {
     const tileKey = '$ow|P1|0|0';
 
     test('assigns explore currentWork when province has discoverable tiles', () {
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: kUnitTypeExplorer,
-                ownerId: 'p1',
-                locationProvinceId: provinceId,
-                tileKey: tileKey,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            ow: {
-              provinceId: [tileKey, '$ow|P1|0|1'],
-            },
-          },
+      final game = TestFixtures.minimalGame(
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+          ],
+          units: [
+            Unit(
+              id: 'u1',
+              type: kUnitTypeExplorer,
+              ownerId: 'p1',
+              locationProvinceId: provinceId,
+              tileKey: tileKey,
+            ),
+          ],
         ),
+        tileKeysByRegionAndProvince: {
+          ow: {
+            provinceId: [tileKey, '$ow|P1|0|1'],
+          },
+        },
         players: const [
           Player(id: 'p1', displayName: 'P1', isHuman: true),
         ],
@@ -73,26 +70,20 @@ void main() {
     });
 
     test('returns false when province has no tile keys in world state', () {
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: kUnitTypeExplorer,
-                ownerId: 'p1',
-                locationProvinceId: provinceId,
-                tileKey: tileKey,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {},
+      final game = TestFixtures.minimalGame(
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+          ],
+          units: [
+            Unit(
+              id: 'u1',
+              type: kUnitTypeExplorer,
+              ownerId: 'p1',
+              locationProvinceId: provinceId,
+              tileKey: tileKey,
+            ),
+          ],
         ),
         players: const [
           Player(id: 'p1', displayName: 'P1', isHuman: true),

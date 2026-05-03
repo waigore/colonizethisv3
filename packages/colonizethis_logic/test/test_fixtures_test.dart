@@ -16,6 +16,16 @@ void main() {
       expect(ws.turnState.turnNumber, 7);
     });
 
+    test('minimalGame passes playerVisibilityByTile into world state', () {
+      const vis = {
+        'p1': {'oldWorld|x|0|0': 'fullyVisible'},
+      };
+      final game = TestFixtures.minimalGame(
+        playerVisibilityByTile: vis,
+      );
+      expect(game.worldState.playerVisibilityByTile, vis);
+    });
+
     test('minimalGame preserves richesCashMultiplier and players', () {
       const p1 = Player(
         id: 'a',
