@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
+import '../../economy/projected_cost_engine.dart';
 import '../orders_application_context.dart';
 import '../../world/province_lookup.dart';
 
@@ -63,17 +64,11 @@ class WorkOrderExecutionContext {
 
   Province? provinceById(String id) => state.game.worldState.tryGetProvince(id);
 
-  bool canAffordMaterialCost(WorkOrderCost cost) {
-    for (final e in cost.entries) {
-      if (stockpile.quantityOf(e.key) < e.value) return false;
-    }
-    return true;
-  }
+  bool canAffordMaterialCost(WorkOrderCost cost) =>
+      ProjectedCostEngine.canAffordWorkMaterialCost(stockpile, cost);
 
   void deductMaterialCost(WorkOrderCost cost) {
-    for (final e in cost.entries) {
-      stockpile = stockpile.applyDelta(e.key, -e.value);
-    }
+    stockpile = ProjectedCostEngine.deductWorkMaterialCost(stockpile, cost);
   }
 
   void persistPlayerSnapshot() {
