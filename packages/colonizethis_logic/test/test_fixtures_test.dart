@@ -16,6 +16,22 @@ void main() {
       expect(ws.turnState.turnNumber, 7);
     });
 
+    test('worldStateAtOrdersPhase respects turnNumber and regions', () {
+      const ow = RegionData(
+        provinces: [
+          Province(id: 'oldWorld|x', regionId: 'oldWorld', ownerId: 'o'),
+        ],
+      );
+      final ws = TestFixtures.worldStateAtOrdersPhase(
+        turnNumber: 7,
+        oldWorld: ow,
+      );
+      expect(ws.turnState.phase, TurnPhase.orders);
+      expect(ws.turnState.turnNumber, 7);
+      expect(ws.oldWorld.provinces.single.id, 'oldWorld|x');
+      expect(ws.newWorld.provinces, isEmpty);
+    });
+
     test('minimalGame passes resourceByTileKey into world state', () {
       const res = {'oldWorld|p|0|0': 'grain'};
       final game = TestFixtures.minimalGame(resourceByTileKey: res);
@@ -45,19 +61,12 @@ void main() {
       const vis = {
         'p1': {'oldWorld|x|0|0': 'fullyVisible'},
       };
-      final game = TestFixtures.minimalGame(
-        playerVisibilityByTile: vis,
-      );
+      final game = TestFixtures.minimalGame(playerVisibilityByTile: vis);
       expect(game.worldState.playerVisibilityByTile, vis);
     });
 
     test('minimalGame preserves richesCashMultiplier and players', () {
-      const p1 = Player(
-        id: 'a',
-        displayName: 'A',
-        isHuman: true,
-        treasury: 10,
-      );
+      const p1 = Player(id: 'a', displayName: 'A', isHuman: true, treasury: 10);
       const p2 = Player(
         id: 'b',
         displayName: 'B',
@@ -98,10 +107,50 @@ void main() {
       expect(game.players.single.id, 'gp1');
       expect(game.players.single.capitalProvinceId, 'oldWorld|p1');
       expect(game.players.single.treasury, 42);
-      expect(
-        game.worldState.oldWorld.provinces.single.ownerId,
-        'gp1',
+      expect(game.worldState.oldWorld.provinces.single.ownerId, 'gp1');
+    });
+
+    test('singlePlayerGame uses orders phase turn 1 by default', () {
+      const p = Player(id: 'p1', displayName: 'A', isHuman: true);
+      final g = TestFixtures.singlePlayerGame(p);
+      expect(g.players, [p]);
+      expect(g.worldState.turnState.phase, TurnPhase.orders);
+      expect(g.worldState.turnState.turnNumber, 1);
+    });
+
+    test('twoPlayerGame preserves richesCashMultiplier', () {
+      const p1 = Player(id: 'a', displayName: 'A', isHuman: true, treasury: 10);
+      const p2 = Player(
+        id: 'b',
+        displayName: 'B',
+        isHuman: false,
+        treasury: 20,
       );
+      final g = TestFixtures.twoPlayerGame(
+        player1: p1,
+        player2: p2,
+        richesCashMultiplier: 2.0,
+      );
+      expect(g.richesCashMultiplier, 2.0);
+      expect(g.players.length, 2);
+    });
+
+    test('singlePlayerWorkPreviewGame wires p1 province and units', () {
+      final g = TestFixtures.singlePlayerWorkPreviewGame(
+        playerStockpile: const Stockpile(),
+        units: [
+          Unit(
+            id: 'u1',
+            type: kUnitTypeBuilder,
+            ownerId: 'p1',
+            locationProvinceId: 'ow|p1',
+            tileKey: 'ow|p1|0|0',
+          ),
+        ],
+      );
+      expect(g.players.single.id, 'p1');
+      expect(g.worldState.oldWorld.provinces.single.ownerId, 'p1');
+      expect(g.worldState.oldWorld.units.single.id, 'u1');
     });
   });
 }
