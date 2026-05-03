@@ -4,6 +4,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_logic/src/combat/military_attack_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'test_fixtures.dart';
+
 void main() {
   group('landBattleAttackTreasuryCostForPlayer', () {
     test('base cost 100 without military tech discounts', () {
@@ -33,13 +35,7 @@ void main() {
 
   group('applyLandBattleAttackTreasuryCosts', () {
     test('deducts per attacker Great Power once per battle context', () {
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+      final game = TestFixtures.minimalGame(
         players: const [
           Player(id: 'a1', displayName: 'A1', isHuman: true, treasury: 500),
           Player(id: 'd1', displayName: 'D1', isHuman: false, treasury: 0),

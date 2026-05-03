@@ -1,18 +1,15 @@
-import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import 'test_fixtures.dart';
 
 void main() {
-  late Game minimalGame;
+  late Game baseGame;
 
   setUp(() {
-    minimalGame = Game(
+    baseGame = TestFixtures.minimalGame(
       id: 'g1',
-      worldState: WorldState(
-        turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-      ),
       players: [Player(id: 'gp1', displayName: 'A', isHuman: true)],
     );
   });
@@ -180,7 +177,7 @@ void main() {
   group('DiplomacyPhaseResult', () {
     test('isPending true when pendingOvertures non-empty', () {
       final result = DiplomacyPhaseResult(
-        minimalGame,
+        baseGame,
         pendingOvertures: [
           OvertureOffer(
             offererGpId: 'gp1',
@@ -194,7 +191,7 @@ void main() {
 
     test('isPending true when pendingInterventions non-empty', () {
       final result = DiplomacyPhaseResult(
-        minimalGame,
+        baseGame,
         pendingInterventions: const [
           InterventionPrompt(
             aggressorGpId: 'gp2',
@@ -208,7 +205,7 @@ void main() {
 
     test('isPending true when pendingCallToArms non-empty', () {
       final result = DiplomacyPhaseResult(
-        minimalGame,
+        baseGame,
         pendingCallToArms: [
           CallToArmsPending(
             allyGpId: 'gp1',
@@ -221,12 +218,12 @@ void main() {
     });
 
     test('isPending false when pendingOvertures null', () {
-      final result = DiplomacyPhaseResult(minimalGame);
+      final result = DiplomacyPhaseResult(baseGame);
       expect(result.isPending, isFalse);
     });
 
     test('isPending false when pendingOvertures empty', () {
-      final result = DiplomacyPhaseResult(minimalGame, pendingOvertures: []);
+      final result = DiplomacyPhaseResult(baseGame, pendingOvertures: []);
       expect(result.isPending, isFalse);
     });
   });
@@ -234,13 +231,13 @@ void main() {
   group('TurnResolutionResult', () {
     test('TurnResolutionComplete holds game and optional digest', () {
       final result = TurnResolutionComplete(
-        minimalGame,
+        baseGame,
         turnNewsDigest: const TurnNewsDigest(
           resolvedTurnNumber: 1,
           lines: [],
         ),
       );
-      expect(result.game, minimalGame);
+      expect(result.game, baseGame);
       expect(result.turnNewsDigest, isNotNull);
     });
 
@@ -253,10 +250,10 @@ void main() {
         ),
       ];
       final result = TurnResolutionPendingOvertures(
-        game: minimalGame,
+        game: baseGame,
         pendingOvertures: offers,
       );
-      expect(result.game, minimalGame);
+      expect(result.game, baseGame);
       expect(result.pendingOvertures, offers);
     });
 
@@ -269,10 +266,10 @@ void main() {
         ),
       ];
       final result = TurnResolutionPendingIntervention(
-        game: minimalGame,
+        game: baseGame,
         pendingInterventions: prompts,
       );
-      expect(result.game, minimalGame);
+      expect(result.game, baseGame);
       expect(result.pendingInterventions, prompts);
     });
 
@@ -285,10 +282,10 @@ void main() {
         ),
       ];
       final result = TurnResolutionPendingCallToArms(
-        game: minimalGame,
+        game: baseGame,
         pendingCallToArms: pending,
       );
-      expect(result.game, minimalGame);
+      expect(result.game, baseGame);
       expect(result.pendingCallToArms, pending);
     });
   });

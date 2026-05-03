@@ -22,6 +22,12 @@ void main() {
       expect(game.worldState.resourceByTileKey, res);
     });
 
+    test('minimalGame passes purchasedTilesByTileKey into world state', () {
+      const purchased = {'oldWorld|p2|0|0': 'gp1'};
+      final game = TestFixtures.minimalGame(purchasedTilesByTileKey: purchased);
+      expect(game.worldState.purchasedTilesByTileKey, purchased);
+    });
+
     test('minimalGame passes playerVisibilityByTile into world state', () {
       const vis = {
         'p1': {'oldWorld|x|0|0': 'fullyVisible'},
