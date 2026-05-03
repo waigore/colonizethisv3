@@ -1,4 +1,3 @@
-
 part of 'game_setup_helpers.dart';
 
 void _spawnCivilianUnitsOfType({
@@ -105,15 +104,8 @@ Game addStartingUnits({required Game game, required GameSetupConfig config}) {
   }
 
   return game.copyWith(
-    worldState: game.worldState.copyWith(
-      oldWorld: RegionData(
-        provinces: game.worldState.oldWorld.provinces,
-        units: oldWorldUnits,
-      ),
-      newWorld: RegionData(
-        provinces: game.worldState.newWorld.provinces,
-        units: newWorldUnits,
-      ),
+    worldState: game.worldState.mapBothRegionUnits(
+      (rid, _) => rid == kRegionOldWorld ? oldWorldUnits : newWorldUnits,
     ),
   );
 }
@@ -226,18 +218,11 @@ Game addStartingMilitaryAndNaval({
   }
 
   return game.copyWith(
-    worldState: game.worldState.copyWith(
-      oldWorld: RegionData(
-        provinces: game.worldState.oldWorld.provinces,
-        units: oldWorldUnits,
-      ),
-      newWorld: RegionData(
-        provinces: game.worldState.newWorld.provinces,
-        units: newWorldUnits,
-      ),
-      fleets: fleets,
-      nextShipInstanceSeq: nextSeq,
-    ),
+    worldState: game.worldState
+        .mapBothRegionUnits(
+          (rid, _) => rid == kRegionOldWorld ? oldWorldUnits : newWorldUnits,
+        )
+        .copyWith(fleets: fleets, nextShipInstanceSeq: nextSeq),
   );
 }
 
