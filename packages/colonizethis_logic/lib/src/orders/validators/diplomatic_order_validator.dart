@@ -5,13 +5,13 @@ import '../../constants.dart';
 import '../../diplomacy/diplomacy_resolver.dart';
 import '../order_validation_result.dart';
 
+import 'stateful_validator.dart';
+
 /// Validates diplomatic orders for a single player in submission order.
 /// SPEC/program/orders.md § Diplomatic orders.
-class DiplomaticOrderValidator extends OrderValidator {
+class DiplomaticOrderValidator extends StatefulValidator {
   final Game _game;
   final String _playerId;
-
-  int _treasury;
 
   /// Types already accepted toward each target this turn. SPEC/program/orders.md § diplomatic cap.
   final Map<String, Set<DiplomaticOrderType>> _typesByTarget =
@@ -23,15 +23,20 @@ class DiplomaticOrderValidator extends OrderValidator {
     required int initialTreasury,
   }) : _game = game,
        _playerId = playerId,
-       _treasury = initialTreasury;
+       super(
+         stockpileState: game.playerById(playerId)?.stockpile ?? Stockpile.empty,
+         treasuryState: initialTreasury,
+         workerPoolState:
+             game.playerById(playerId)?.workerPool ?? WorkerPool.empty,
+       );
 
-  int get treasury => _treasury;
+  int get treasury => treasuryState;
 
   ({OrderValidationResult result, int treasury}) _reject(String reason) =>
-      (result: OrderValidationResult.rejected(reason), treasury: _treasury);
+      (result: OrderValidationResult.rejected(reason), treasury: treasuryState);
 
   ({OrderValidationResult result, int treasury}) _accept() =>
-      (result: OrderValidationResult.accepted(), treasury: _treasury);
+      (result: OrderValidationResult.accepted(), treasury: treasuryState);
 
   ({OrderValidationResult result, int treasury}) _acceptRecordingTarget(
     String targetId,
@@ -67,7 +72,7 @@ class DiplomaticOrderValidator extends OrderValidator {
   }) {
     return shortCircuitIfPreviousRejectedWithTreasury(
       previousRejected: previousRejected,
-      currentTreasury: _treasury,
+      currentTreasury: treasuryState,
       body: () => _validateOne(order),
     );
   }
@@ -196,12 +201,12 @@ class DiplomaticOrderValidator extends OrderValidator {
         'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
       );
     }
-    if (_treasury < overtureConsulateCost) {
+    if (treasuryState < overtureConsulateCost) {
       return _reject(
         'Insufficient treasury for Trade Consulate (need $overtureConsulateCost)',
       );
     }
-    _treasury -= overtureConsulateCost;
+    treasuryState -= overtureConsulateCost;
     return _acceptRecordingTarget(targetId, order.type);
   }
 
@@ -222,12 +227,12 @@ class DiplomaticOrderValidator extends OrderValidator {
         'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
       );
     }
-    if (_treasury < overtureEmbassyCost) {
+    if (treasuryState < overtureEmbassyCost) {
       return _reject(
         'Insufficient treasury for Embassy (need $overtureEmbassyCost)',
       );
     }
-    _treasury -= overtureEmbassyCost;
+    treasuryState -= overtureEmbassyCost;
     return _acceptRecordingTarget(targetId, order.type);
   }
 
@@ -277,9 +282,9 @@ class DiplomaticOrderValidator extends OrderValidator {
       );
     }
     final cost = joinEmpireCostForMinorOrTribe(_game, targetId);
-    if (_treasury < cost) {
+    if (treasuryState < cost) {
       return _reject(
-        'Join Empire requires £$cost (scales with target size); treasury is $_treasury',
+        'Join Empire requires £$cost (scales with target size); treasury is $treasuryState',
       );
     }
     return _acceptRecordingTarget(targetId, order.type);
@@ -321,10 +326,10 @@ class DiplomaticOrderValidator extends OrderValidator {
     if (overture == null || !overture.hasEmbassy) {
       return _reject('Embassy required for GrantAid');
     }
-    if (_treasury < amount) {
+    if (treasuryState < amount) {
       return _reject('Insufficient treasury for GrantAid (need $amount)');
     }
-    _treasury -= amount;
+    treasuryState -= amount;
     return _acceptRecordingTarget(targetId, order.type);
   }
 
@@ -350,10 +355,10 @@ class DiplomaticOrderValidator extends OrderValidator {
     if (overture == null || !overture.hasConsulate) {
       return _reject('Consulate or Embassy required for SetSubsidy');
     }
-    if (_treasury < amount) {
+    if (treasuryState < amount) {
       return _reject('Insufficient treasury for SetSubsidy (need $amount)');
     }
-    _treasury -= amount;
+    treasuryState -= amount;
     return _acceptRecordingTarget(targetId, order.type);
   }
 

@@ -2,12 +2,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../economy/build_cost.dart';
+import '../economy/projected_cost_engine.dart';
 import '../world/naval.dart';
 import '../world/ship_instance_allocate.dart';
 import 'build_spawn_province.dart';
 import 'orders_application_context.dart';
-import 'orders_application_helpers.dart';
 
 /// Home-fleet ship spawn when capital has a seaboard port (naval build slice, #1618).
 class _NavalBuildSession {
@@ -191,10 +190,16 @@ BuildWorkState runBuildPhase(BuildWorkState state) {
       final category = buildUnitCategoryForUnitType(order.unitType);
       if (category == BuildUnitCategory.unknown) continue;
 
-      final check = canAffordBuild(player, order, workers, stockpile, treasury);
+      final check = ProjectedCostEngine.canAffordBuildOrder(
+        player,
+        order,
+        workers,
+        stockpile,
+        treasury,
+      );
       if (!check.canAfford) continue;
 
-      final after = applyBuildCostDeduction(
+      final after = ProjectedCostEngine.applyBuildOrderCostDeduction(
         player,
         order,
         workers,

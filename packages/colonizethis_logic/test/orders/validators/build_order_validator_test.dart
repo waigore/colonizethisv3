@@ -1,5 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/orders/validators/stateful_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
@@ -29,6 +30,7 @@ void main() {
         game: game,
         player: game.players.first,
       );
+      expect(validator, isA<StatefulValidator>());
       final order = BuildUnitOrder(
         unitType: kUnitTypeBuilder,
         isMilitary: false,
