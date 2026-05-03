@@ -26,13 +26,11 @@ String _regionIdForUnitInWorld(WorldState ws, Unit u) {
   if (ProvinceId.isPrefixed(u.locationProvinceId)) {
     return ProvinceId.regionIdFrom(u.locationProvinceId);
   }
-  if (ws.oldWorld.units.any((x) => x.id == u.id)) {
-    return kRegionOldWorld;
+  final region = ws.tryGetRegionIdForUnit(u);
+  if (region == null) {
+    throw StateError('Military unit ${u.id} not found in world state regions');
   }
-  if (ws.newWorld.units.any((x) => x.id == u.id)) {
-    return kRegionNewWorld;
-  }
-  throw StateError('Military unit ${u.id} not found in world state regions');
+  return region;
 }
 
 /// Ensures every military regiment is in exactly one army and every GP has a home army.

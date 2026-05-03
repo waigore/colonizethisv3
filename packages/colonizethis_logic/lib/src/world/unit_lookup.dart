@@ -1,6 +1,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart'
     show RegionData, Unit, WorldState;
 
+import '../constants.dart';
+
 /// Central unit lookup. Units live in [WorldState.oldWorld] and [WorldState.newWorld];
 /// lookup is by unit id. SPEC/game/world-model-identity.md.
 ///
@@ -63,6 +65,18 @@ extension WorldStateUnitLookup on WorldState {
     }
     for (final u in newWorld.units) {
       if (u.id == unitId) return u;
+    }
+    return null;
+  }
+
+  /// [kRegionOldWorld] or [kRegionNewWorld] based on which regional unit list
+  /// contains [unit]'s id (old world checked first). Null if absent from both.
+  String? tryGetRegionIdForUnit(Unit unit) {
+    if (oldWorld.units.indexWhere((x) => x.id == unit.id) >= 0) {
+      return kRegionOldWorld;
+    }
+    if (newWorld.units.indexWhere((x) => x.id == unit.id) >= 0) {
+      return kRegionNewWorld;
     }
     return null;
   }
