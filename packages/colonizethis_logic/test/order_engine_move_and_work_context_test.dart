@@ -120,6 +120,7 @@ void main() {
     test('work order explore rejected on foreign GP tile for explorer', () {
       const ow = 'oldWorld';
       const targetTileKey = 'oldWorld|P2|0|0';
+      const p2OtherLand = 'oldWorld|P2|1|0';
       final topology = MapTopology(
         nodes: const [
           TopologyNode(
@@ -159,12 +160,13 @@ void main() {
             'p1': {
               'oldWorld|P1|0|0': 'fullyVisible',
               targetTileKey: 'fullyVisible',
+              p2OtherLand: 'unknown',
             },
           },
           tileKeysByRegionAndProvince: const {
             ow: {
               '$ow|P1': ['oldWorld|P1|0|0'],
-              '$ow|P2': [targetTileKey],
+              '$ow|P2': [targetTileKey, p2OtherLand],
             },
           },
         ),

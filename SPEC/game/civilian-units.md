@@ -32,7 +32,7 @@ Canonical list of WorkOrder targets per civilian type. Order engine and suggesti
 | Target | Unit | Cost / gates | Duration | Notes |
 |--------|------|--------------|----------|-------|
 | explore | Explorer | Free | Multi-turn (province size) | Province-level; reveals tiles |
-| prospect | Explorer | Free | Instant (Build/Work phase) | Tile-level; mineral-eligible; resolved immediately when order is accepted |
+| prospect | Explorer | Free | 1 turn (`currentWork`) | Tile-level; mineral-eligible; prospected set updated when work **completes** |
 | build_improvement | Builder | Lumber + cast iron per level | Config (default 1) | Tile-level; level 1–4; prospect-required minerals → tile must be prospected (same gate as extraction / `purchase_land`) |
 | upgrade_town | Builder | Per ruleset | Config | Town tile; town development level |
 | build_road | Engineer | 1 lumber + 1 cast iron (level 1); Road Construction for level 2 | Config | 0→1→2; tech for 2 |
@@ -41,7 +41,7 @@ Canonical list of WorkOrder targets per civilian type. Order engine and suggesti
 | build_rail | Rail Builder | 2 lumber + 2 steel | Config | Road 1–2→4; rail tech vs terrain |
 | steal_tech | Spy | — | Up to 5 turns | Target = **GP capital province**; 8%/turn success; random tech player lacks |
 | counter_spy | Spy | — | Ongoing | Target = **owned province**; +5% per friendly spy/turn (cap 30%) to kill enemy spies |
-| purchase_land | Merchant | 15 × resource base price (treasury); embassy in Minor/Tribe | 1 turn | Tile in Minor/Tribe with resource; not at war; mineral → must be prospected |
+| purchase_land | Merchant | 15 × resource base price (treasury); validate ≥ cost at assign; **debit at completion**; embassy in Minor/Tribe | 1 turn (`currentWork`) | Tile in Minor/Tribe with resource; not at war; mineral → must be prospected; `purchasedTilesByTileKey` updated at completion |
 
 Spy does not have explore/prospect; Spy's garrison reveal is handled by visibility (see [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md)), not a work order.
 
@@ -51,13 +51,13 @@ Spy does not have explore/prospect; Spy's garrison reveal is handled by visibili
 
 ## Work Types and Multi-Turn Builds
 
-- **Explorer work:** Uses `WorkOrder` targets `explore` and `prospect`. Explore is **province-level** and completes over multiple turns per [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md); prospect is **tile-level** and is resolved immediately when the order is accepted (instantaneous in Build/Work phase).
+- **Explorer work:** Uses `WorkOrder` targets `explore` and `prospect`. Explore is **province-level** and completes over multiple turns per [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md). Prospect is **tile-level** with **one** turn of `currentWork`; the prospected-set update runs at **completion** in Build/Work, not at accept-only.
 - **WorkOrder** specifies both an **action** (e.g. `build_improvement`, `build_road`) and a **target tile** (`targetTileKey`). Civilians can move to and act on a tile different from their current tile (Imperialism-style).
 - **Builder work:** Uses `WorkOrder` targets `build_improvement` and `upgrade_town`. Each completed order increases the tile's improvement level by 1 (or upgrades a town) after a **multi-turn build** whose duration increases with target level and terrain; costs and turn counts derive from Imperialism II (e.g. Level 1 cheaper/faster than Level 4). See [extraction-and-improvements.md](extraction-and-improvements.md) and [development-resolution.md](../program/development-resolution.md).
 - **Engineer work:** Uses `WorkOrder` targets `build_road`, `build_port`, and `build_fort`. Each completed order constructs or upgrades transport/fortification on the **target tile** after one or more turns, consuming lumber and metal per [02-economy](../../Obsidian/obsidian-shared/Projects/ColonizeThisV3/Imperialism II/02-economy.md) mirrored in ruleset config.
 - **Rail Builder work:** Uses `WorkOrder` target `build_rail`. Each completed order upgrades an existing road tile (transport level 1 or 2) to railroad (transport level 4) over multiple turns, costing 2 lumber + 2 steel; validation requires per-tile terrain from the region tile map and the transport tech appropriate to that terrain per [tech-tree-transport.md](tech-tree-transport.md). Authoritative material cost: `packages/colonizethis_data` `work_order_costs.dart` (`workOrderCostBuildRail`).
 - **Spy:** (1) **Presence reveal:** While a Spy is in a non-owner province, that province is fully visible to the Spy's owner; when the Spy leaves, the province returns to fogged after 5 turns (turn timer). (2) **steal_tech:** WorkOrder target = other GP's **capital province**; up to 5 turns; 8% per turn to steal a random tech the player does not have; completion or expiry clears work. (3) **counter_spy:** WorkOrder target = any **owned** province; each friendly Spy in that province adds 5% per turn (capped 30%) chance to kill an enemy Spy there. (4) **Invisibility:** Spy province locations are invisible to all players except the Spy's owner.
-- **Merchant:** **purchase_land** WorkOrder: target = tile in Minor/Tribe province that has a resource; if resource requires prospecting, player must have prospected that tile; player must not be at war with that Minor/Tribe; cost = 15 × resource base price (treasury); requires **embassy** with that Minor/Tribe. **A tile may be purchased by at most one GP;** once recorded in `purchasedTilesByTileKey`, no other GP may purchase that tile (validation rejects). Building a Merchant unit requires Merchant Companies tech; purchasing land requires embassy (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)).
+- **Merchant:** **purchase_land** WorkOrder: target = tile in Minor/Tribe province that has a resource; if resource requires prospecting, player must have prospected that tile; player must not be at war with that Minor/Tribe; cost = 15 × resource base price (treasury) debited when work **completes**; requires **embassy** with that Minor/Tribe; assign-time validates `treasury >= cost` without debiting. **A tile may be purchased by at most one GP;** once recorded in `purchasedTilesByTileKey` at completion, no other GP may purchase that tile (validation rejects). Building a Merchant unit requires Merchant Companies tech; purchasing land requires embassy (see [tech-tree-diplomacy-civilian.md](tech-tree-diplomacy-civilian.md)).
 
 ---
 
@@ -80,8 +80,8 @@ Multi-turn progress for all civilian work is tracked in the model and resolved d
   Then the system creates a civilian `Unit` with `type` equal to the requested civilian type, deducts the listed cash from the player's treasury, deducts the listed paper from the player's stockpile, and does not change any worker counts or food consumption.
 
 - Given the player submits a `WorkOrder` with `unitId` referencing a civilian unit and `action` equal to one of the Work Order Summary targets that is allowed for that unit type  
-  When the system applies Build/Work orders for the turn and the player has all required materials in treasury/stockpile  
-  Then the system marks that civilian unit's `status` as `working`, reserves or deducts the listed materials once at order application time, and starts multi-turn progress for that work without applying any improvement until progress completes.
+  When the system applies Build/Work orders for the turn and the player has all required materials in treasury/stockpile (for `purchase_land`, sufficient treasury is validated at assign; treasury is debited only when that work completes)  
+  Then the system marks that civilian unit's `status` as `working`, reserves or deducts material costs that are due at assign time per target rules, and starts multi-turn progress (`currentWork`) without applying terrain, visibility, purchase, or prospection **primary** effects until progress completes (except where a target explicitly completes in the same tick after decrement per [development-resolution.md](../program/development-resolution.md)).
 
 - Given a civilian unit has an active multi-turn `WorkOrder` and its work duration expires at the end of the current Build/Work phase  
   When the system resolves development for that phase  
@@ -100,8 +100,8 @@ Multi-turn progress for all civilian work is tracked in the model and resolved d
   Then the system computes a per-turn kill chance equal to 5% per friendly Spy in that province, capped at 30%, and removes the enemy Spy from the game if the random roll succeeds while leaving all friendly Spies in place.
 
 - Given a Merchant civilian unit controlled by the player has an active `purchase_land` `WorkOrder` targeting a tile in a Minor Nation or Tribe province that has a resource, the player is not at war with that Minor/Tribe, the player has an embassy with that Minor/Tribe, and any mineral resource on that tile has already been prospected by that player  
-  When the system resolves that `purchase_land` order  
-  Then the system deducts treasury cash equal to 15 times the resource base price, transfers ownership of that tile (and its resource) to the player, and leaves diplomatic status with that Minor/Tribe unchanged.
+  When the system completes that `purchase_land` work (`remainingTurns` reaches 0 in Build/Work)  
+  Then the system deducts treasury cash equal to 15 times the resource base price, transfers ownership of that tile (and its resource) to the player, records the tile in `purchasedTilesByTileKey`, and leaves diplomatic status with that Minor/Tribe unchanged.
 
 - Given a Rail Builder civilian unit controlled by the player has an active `build_rail` `WorkOrder` targeting a tile that currently has transport level 1 or 2, per-tile terrain is present on the region tile map, and the player's unlocked transport techs allow railroad on that terrain per [tech-tree-transport.md](tech-tree-transport.md)  
   When the system completes that work after the configured duration  

@@ -103,7 +103,7 @@ void main() {
       expect(turns, 3);
     });
 
-    test('returns minimum one turn for instant targets', () {
+    test('returns minimum one turn for prospect and purchase_land', () {
       final unit = Unit(
         id: 'u1',
         type: kUnitTypeExplorer,

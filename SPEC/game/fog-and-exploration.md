@@ -4,6 +4,8 @@
 
 Per-player tile visibility governing what each Great Power knows about the map. Exploration and prospecting reveal tiles and mineral deposits.
 
+**Program alignment:** `explore` assignment visibility (partial reveal on **land** tiles) and deferred completion for `prospect` / `purchase_land` primary effects are specified in [orders.md](../program/orders.md) and [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md).
+
 ---
 
 ## Rules
@@ -55,7 +57,7 @@ For explore target selection, a province is **partially revealed** for a player 
 
 ### Prospecting (Tile-Level)
 
-Explorer with work order target `prospect` prospects the tile under the unit. One turn per tile. Per-player; minerals must be prospected before extraction.
+Explorer with work order target `prospect` prospects the target tile. **One** `currentWork` turn; the tile is added to the player's prospected set when that work **completes** in the Build/Work phase (not merely when the order is accepted). Per-player; minerals must be prospected before extraction.
 
 ### Prospect-Required Resources
 

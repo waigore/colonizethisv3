@@ -9,6 +9,7 @@ import 'bundled_civilian_work_order.dart';
 import 'order_suggestion_build_research.dart';
 import 'order_suggestion_context.dart';
 import 'order_visibility.dart';
+import 'partial_province_reveal.dart';
 import 'orders_application_helpers.dart';
 import 'unit_type_helpers.dart';
 
@@ -38,7 +39,10 @@ Set<String> _partiallyRevealedProvinceCacheForPlayer({
     for (final provinceEntry in regionEntry.value.entries) {
       final provinceId = provinceEntry.key;
       if (!ProvinceId.isPrefixed(provinceId)) continue;
-      if (!_isPartiallyRevealedProvinceForPlayer(view, provinceEntry.value)) {
+      if (!isPartiallyRevealedProvinceLandTilesForPlayer(
+        view,
+        provinceEntry.value,
+      )) {
         continue;
       }
       cached.add(provinceId);
@@ -77,7 +81,8 @@ Set<String> _partiallyRevealedProvinceCacheForPlayer({
     view,
     unit,
     kWorkTargetExplore,
-    targetTileKey,
+    targetTileKey: targetTileKey,
+    worldState: game.worldState,
   )) {
     return (chosen: null, lastReason: 'visibility');
   }
@@ -128,24 +133,6 @@ Set<String> _partiallyRevealedProvinceCacheForPlayer({
     return (chosen: candidate, lastReason: '');
   }
   return (chosen: null, lastReason: 'engine_rejected');
-}
-
-bool _isPartiallyRevealedProvinceForPlayer(
-  PlayerView view,
-  List<String> tileKeys,
-) {
-  var hasKnown = false;
-  var hasUnknown = false;
-  for (final tileKey in tileKeys) {
-    final level = view.visibilityForTile(tileKey);
-    if (level == VisibilityLevel.unknown) {
-      hasUnknown = true;
-    } else {
-      hasKnown = true;
-    }
-    if (hasKnown && hasUnknown) return true;
-  }
-  return false;
 }
 
 void _addExplorerWorkSuggestionsForUnit({

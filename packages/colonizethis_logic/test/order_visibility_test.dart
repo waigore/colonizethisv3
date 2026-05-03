@@ -109,9 +109,78 @@ void main() {
   });
 
   group('workOrderVisibilityOk', () {
-    test('explore requires at least fogged', () {
+    WorldState worldStateTwoLandTilesP1() {
+      const full = 'oldWorld|p1';
+      return WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(provinces: []),
+        newWorld: const RegionData(provinces: []),
+        tileKeysByRegionAndProvince: {
+          'oldWorld': {
+            full: ['oldWorld|p1|0|0', 'oldWorld|p1|1|0'],
+          },
+        },
+      );
+    }
+
+    test('explore requires partial reveal (known + unknown land tiles)', () {
       final view = view0(
-        visibilityByTile: {'oldWorld|p1|0|0': VisibilityLevel.fogged},
+        visibilityByTile: {
+          'oldWorld|p1|0|0': VisibilityLevel.fogged,
+          'oldWorld|p1|1|0': VisibilityLevel.unknown,
+        },
+      );
+      final unit = Unit(
+        id: 'u1',
+        type: 'inf',
+        ownerId: 'gp1',
+        locationProvinceId: 'oldWorld|p1',
+      );
+      final ws = worldStateTwoLandTilesP1();
+      expect(
+        workOrderVisibilityOk(
+          view,
+          unit,
+          kWorkTargetExplore,
+          targetTileKey: 'oldWorld|p1|0|0',
+          worldState: ws,
+        ),
+        isTrue,
+      );
+    });
+
+    test('explore rejects province with no unknown land tile', () {
+      final view = view0(
+        visibilityByTile: {
+          'oldWorld|p1|0|0': VisibilityLevel.fogged,
+          'oldWorld|p1|1|0': VisibilityLevel.fogged,
+        },
+      );
+      final unit = Unit(
+        id: 'u1',
+        type: 'inf',
+        ownerId: 'gp1',
+        locationProvinceId: 'oldWorld|p1',
+      );
+      final ws = worldStateTwoLandTilesP1();
+      expect(
+        workOrderVisibilityOk(
+          view,
+          unit,
+          kWorkTargetExplore,
+          targetTileKey: 'oldWorld|p1|0|0',
+          worldState: ws,
+        ),
+        isFalse,
+      );
+    });
+
+    test('explore rejects when worldState omitted', () {
+      final view = view0(
+        visibilityByTile: {
+          'oldWorld|p1|0|0': VisibilityLevel.fogged,
+          'oldWorld|p1|1|0': VisibilityLevel.unknown,
+        },
       );
       final unit = Unit(
         id: 'u1',
@@ -120,12 +189,13 @@ void main() {
         locationProvinceId: 'oldWorld|p1',
       );
       expect(
-        workOrderVisibilityOk(view, unit, kWorkTargetExplore),
-        isTrue,
-      );
-      expect(
-        workOrderVisibilityOk(view, unit, kWorkTargetExplore),
-        isTrue,
+        workOrderVisibilityOk(
+          view,
+          unit,
+          kWorkTargetExplore,
+          targetTileKey: 'oldWorld|p1|0|0',
+        ),
+        isFalse,
       );
     });
 
@@ -139,10 +209,7 @@ void main() {
         ownerId: 'gp1',
         locationProvinceId: 'oldWorld|p1',
       );
-      expect(
-        workOrderVisibilityOk(view, unit, kWorkTargetProspect),
-        isTrue,
-      );
+      expect(workOrderVisibilityOk(view, unit, kWorkTargetProspect), isTrue);
     });
 
     test('build_improvement allows owned province', () {
@@ -181,7 +248,10 @@ void main() {
         locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
-      expect(workOrderVisibilityOk(view, unit, 'unknown_work'), isFalse);
+      expect(
+        workOrderVisibilityOk(view, unit, 'unknown_work'),
+        isFalse,
+      );
     });
 
     test('counter_spy allows owned province without fogged', () {
@@ -254,7 +324,12 @@ void main() {
         locationProvinceId: 'oldWorld|p2',
       );
       expect(
-        workOrderVisibilityOk(view, unit, kWorkTargetBuildRoad, 'oldWorld|p2|1|1'),
+        workOrderVisibilityOk(
+          view,
+          unit,
+          kWorkTargetBuildRoad,
+          targetTileKey: 'oldWorld|p2|1|1',
+        ),
         isTrue,
       );
     });
