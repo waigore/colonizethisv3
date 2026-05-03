@@ -56,26 +56,28 @@ Map<String, int> shipTypeCountsForPlayer(WorldState world, String playerId) {
   return map;
 }
 
+Unit? _firstUnitWithId(List<Unit> units, String unitId) {
+  for (final u in units) {
+    if (u.id == unitId) return u;
+  }
+  return null;
+}
+
 /// Cross-region unit lookup on [WorldState] (waigore/colonizethis#2071 Phase 1).
 extension WorldStateUnitLookup on WorldState {
   /// Returns the unit with [unitId] in old world first, then new world, or null.
   Unit? tryGetUnitById(String unitId) {
-    for (final u in oldWorld.units) {
-      if (u.id == unitId) return u;
-    }
-    for (final u in newWorld.units) {
-      if (u.id == unitId) return u;
-    }
-    return null;
+    return _firstUnitWithId(oldWorld.units, unitId) ??
+        _firstUnitWithId(newWorld.units, unitId);
   }
 
   /// [kRegionOldWorld] or [kRegionNewWorld] based on which regional unit list
   /// contains [unit]'s id (old world checked first). Null if absent from both.
   String? tryGetRegionIdForUnit(Unit unit) {
-    if (oldWorld.units.indexWhere((x) => x.id == unit.id) >= 0) {
+    if (_firstUnitWithId(oldWorld.units, unit.id) != null) {
       return kRegionOldWorld;
     }
-    if (newWorld.units.indexWhere((x) => x.id == unit.id) >= 0) {
+    if (_firstUnitWithId(newWorld.units, unit.id) != null) {
       return kRegionNewWorld;
     }
     return null;

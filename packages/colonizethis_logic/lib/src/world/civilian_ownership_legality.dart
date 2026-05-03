@@ -45,7 +45,8 @@ Game relocateIllegalCiviliansInChangedProvinces(
       );
     }
     final capitalProvinceId = Unit.provinceIdFromTileKey(capitalTileKey);
-    if (capitalProvinceId == null || tryGetProvince(game.worldState, capitalProvinceId) == null) {
+    if (capitalProvinceId == null ||
+        tryGetProvince(game.worldState, capitalProvinceId) == null) {
       throw StateError(
         'Cannot relocate illegal civilian ${unit.id}: unresolved capital province for owner ${unit.ownerId}',
       );
@@ -67,23 +68,11 @@ Game relocateIllegalCiviliansInChangedProvinces(
   bool isCivilian(Unit u) =>
       !canUnitInitiateCombat(u.type) && !isShipUnitType(u.type);
 
-  final oldUnits = game.worldState.oldWorld.units
-      .map((u) => isCivilian(u) ? normalizeIllegalCivilian(u) : u)
-      .toList(growable: false);
-  final newUnits = game.worldState.newWorld.units
-      .map((u) => isCivilian(u) ? normalizeIllegalCivilian(u) : u)
-      .toList(growable: false);
-
   return game.copyWith(
-    worldState: game.worldState.copyWith(
-      oldWorld: RegionData(
-        provinces: game.worldState.oldWorld.provinces,
-        units: oldUnits,
-      ),
-      newWorld: RegionData(
-        provinces: game.worldState.newWorld.provinces,
-        units: newUnits,
-      ),
+    worldState: game.worldState.mapBothRegionUnits(
+      (_, units) => units
+          .map((u) => isCivilian(u) ? normalizeIllegalCivilian(u) : u)
+          .toList(growable: false),
     ),
   );
 }
