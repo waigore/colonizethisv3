@@ -178,31 +178,17 @@ Game absorbMinorOrTribeIntoGp(
   );
   next = bulk.game;
 
-  next = next.copyWith(
-    worldState: next.worldState.copyWith(
-      fleets: _remapAllFleetsFromTo(next.worldState.fleets, targetId, gpId),
-      oldWorld: RegionData(
-        provinces: next.worldState.oldWorld.provinces,
-        units: _remapAllUnitsFromTo(
-          next.worldState.oldWorld.units,
-          targetId,
-          gpId,
-        ),
-      ),
-      newWorld: RegionData(
-        provinces: next.worldState.newWorld.provinces,
-        units: _remapAllUnitsFromTo(
-          next.worldState.newWorld.units,
-          targetId,
-          gpId,
-        ),
-      ),
-      spyRevealTurnsByPlayer: _spyTimersWithoutPlayer(
-        next.worldState.spyRevealTurnsByPlayer,
-        targetId,
-      ),
+  var wsMinor = next.worldState.copyWith(
+    fleets: _remapAllFleetsFromTo(next.worldState.fleets, targetId, gpId),
+    spyRevealTurnsByPlayer: _spyTimersWithoutPlayer(
+      next.worldState.spyRevealTurnsByPlayer,
+      targetId,
     ),
   );
+  wsMinor = wsMinor.mapBothRegionUnits(
+    (_, units) => _remapAllUnitsFromTo(units, targetId, gpId),
+  );
+  next = next.copyWith(worldState: wsMinor);
 
   next = relocateIllegalCiviliansInChangedProvinces(
     next,
@@ -280,34 +266,19 @@ Game absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) {
     prospected.putIfAbsent(gpId, () => <String>{}).addAll(targetPros);
   }
 
-  next = next.copyWith(
-    generals: generals,
-    worldState: next.worldState.copyWith(
-      fleets: _remapAllFleetsFromTo(next.worldState.fleets, targetGpId, gpId),
-      oldWorld: RegionData(
-        provinces: next.worldState.oldWorld.provinces,
-        units: _remapAllUnitsFromTo(
-          next.worldState.oldWorld.units,
-          targetGpId,
-          gpId,
-        ),
-      ),
-      newWorld: RegionData(
-        provinces: next.worldState.newWorld.provinces,
-        units: _remapAllUnitsFromTo(
-          next.worldState.newWorld.units,
-          targetGpId,
-          gpId,
-        ),
-      ),
-      purchasedTilesByTileKey: purchased,
-      playerProspectedTiles: prospected,
-      spyRevealTurnsByPlayer: _spyTimersWithoutPlayer(
-        next.worldState.spyRevealTurnsByPlayer,
-        targetGpId,
-      ),
+  var wsGp = next.worldState.copyWith(
+    fleets: _remapAllFleetsFromTo(next.worldState.fleets, targetGpId, gpId),
+    purchasedTilesByTileKey: purchased,
+    playerProspectedTiles: prospected,
+    spyRevealTurnsByPlayer: _spyTimersWithoutPlayer(
+      next.worldState.spyRevealTurnsByPlayer,
+      targetGpId,
     ),
   );
+  wsGp = wsGp.mapBothRegionUnits(
+    (_, units) => _remapAllUnitsFromTo(units, targetGpId, gpId),
+  );
+  next = next.copyWith(generals: generals, worldState: wsGp);
 
   next = relocateIllegalCiviliansInChangedProvinces(
     next,

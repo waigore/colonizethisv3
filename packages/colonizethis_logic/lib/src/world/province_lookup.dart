@@ -1,5 +1,5 @@
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show Province, ProvinceId, RegionData, WorldState;
+    show Province, ProvinceId, RegionData, Unit, WorldState;
 
 import '../constants.dart';
 
@@ -214,6 +214,31 @@ extension WorldStateProvinceLookup on WorldState {
     return tryGetProvinceByRegion(
       ProvinceId.regionIdFrom(fullProvinceId),
       ProvinceId.localIdFrom(fullProvinceId),
+    );
+  }
+
+  /// Replaces [oldWorld] and [newWorld] via [update].
+  ///
+  /// [update] receives [kRegionOldWorld] or [kRegionNewWorld] and the current
+  /// [RegionData] for that region. Refactor helper (waigore/colonizethis#2071).
+  WorldState mapBothRegions(
+    RegionData Function(String regionId, RegionData region) update,
+  ) {
+    return copyWith(
+      oldWorld: update(kRegionOldWorld, oldWorld),
+      newWorld: update(kRegionNewWorld, newWorld),
+    );
+  }
+
+  /// Updates unit lists in both regions; province rows are unchanged.
+  WorldState mapBothRegionUnits(
+    List<Unit> Function(String regionId, List<Unit> units) updateUnits,
+  ) {
+    return mapBothRegions(
+      (regionId, region) => RegionData(
+        provinces: region.provinces,
+        units: updateUnits(regionId, region.units),
+      ),
     );
   }
 }
