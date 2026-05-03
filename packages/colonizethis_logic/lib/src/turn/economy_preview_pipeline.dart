@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
-import '../economy/build_cost.dart';
+import '../economy/projected_cost_engine.dart';
 import '../economy/economy_preview_stockpile_phase.dart';
 import '../world/player_state_pipeline.dart';
 import '../world/province_lookup.dart';
@@ -45,11 +45,17 @@ Game _applyPendingBuildOrderCostsForPreview({
       return player;
     }
     for (final order in orders) {
-      final check = canAffordBuild(player, order, workers, stockpile, treasury);
+      final check = ProjectedCostEngine.canAffordBuildOrder(
+        player,
+        order,
+        workers,
+        stockpile,
+        treasury,
+      );
       if (!check.canAfford) {
         continue;
       }
-      final after = applyBuildCostDeduction(
+      final after = ProjectedCostEngine.applyBuildOrderCostDeduction(
         player,
         order,
         workers,
@@ -120,19 +126,10 @@ Game _applyPendingMaterialWorkOrderCostsForPreview({
       if (cost == null) {
         continue;
       }
-      var canAfford = true;
-      for (final e in cost.entries) {
-        if (stockpile.quantityOf(e.key) < e.value) {
-          canAfford = false;
-          break;
-        }
-      }
-      if (!canAfford) {
+      if (!ProjectedCostEngine.canAffordWorkMaterialCost(stockpile, cost)) {
         continue;
       }
-      for (final e in cost.entries) {
-        stockpile = stockpile.applyDelta(e.key, -e.value);
-      }
+      stockpile = ProjectedCostEngine.deductWorkMaterialCost(stockpile, cost);
     }
     return player.copyWith(stockpile: stockpile);
   });

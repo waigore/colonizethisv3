@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
+import '../../economy/projected_cost_engine.dart';
 import '../../diplomacy/diplomacy_resolver.dart';
 import '../../world/civilian_tile_occupancy.dart';
 import '../../world/player_view.dart';
@@ -13,6 +14,7 @@ import '../orders_application_helpers.dart';
 import '../order_visibility.dart';
 import '../order_validation_result.dart';
 import '../unit_type_helpers.dart';
+import 'stateful_validator.dart';
 import 'work_order_cost_calculator.dart';
 import 'work_order_target_prechecks.dart';
 
@@ -45,11 +47,9 @@ class WorkOrderValidationContext {
   final MapTopology? topology;
 }
 
-class WorkOrderValidator extends OrderValidator {
+class WorkOrderValidator extends StatefulValidator {
   final WorkOrderValidationContext _context;
 
-  Stockpile _stockpile;
-  int _treasury;
   final Set<String> _seenUnitIds;
 
   WorkOrderValidator({
@@ -58,12 +58,15 @@ class WorkOrderValidator extends OrderValidator {
     required int treasury,
     Set<String> initialSeenUnitIds = const <String>{},
   }) : _context = context,
-       _stockpile = stockpile,
-       _treasury = treasury,
-       _seenUnitIds = {...initialSeenUnitIds};
+       _seenUnitIds = {...initialSeenUnitIds},
+       super(
+         stockpileState: stockpile,
+         treasuryState: treasury,
+         workerPoolState: context.player.workerPool,
+       );
 
-  Stockpile get stockpile => _stockpile;
-  int get treasury => _treasury;
+  Stockpile get stockpile => stockpileState;
+  int get treasury => treasuryState;
 
   /// Validates one [WorkOrder]. When accepted, deducts cost from internal
   /// stockpile/treasury and may add to [devExclusiveTiles]. Caller should sync
@@ -200,7 +203,7 @@ class WorkOrderValidator extends OrderValidator {
       game: _context.game,
       player: _context.player,
       playerId: _context.playerId,
-      treasury: _treasury,
+      treasury: treasuryState,
       civilianEmbassyWorkAllowed: _civilianWorkAllowedInMinorTribeProvince,
     );
     return runWorkOrderTargetPrecheck(
@@ -367,12 +370,8 @@ class WorkOrderValidator extends OrderValidator {
     roadLevel: roadLevel,
   );
 
-  bool _hasInsufficientStockpileForCost(Map<String, int> costMap) {
-    for (final entry in costMap.entries) {
-      if (_stockpile.quantityOf(entry.key) < entry.value) return true;
-    }
-    return false;
-  }
+  bool _hasInsufficientStockpileForCost(Map<String, int> costMap) =>
+      !ProjectedCostEngine.canAffordWorkMaterialCost(stockpileState, costMap);
 
   OrderValidationResult? _validateProspectTarget(WorkOrder o) {
     if (o.target != kWorkTargetProspect) return null;
@@ -411,7 +410,7 @@ class WorkOrderValidator extends OrderValidator {
     final resourceId =
         _context.game.worldState.resourceByTileKey[o.targetTileKey];
     if (resourceId != null && resourceId.isNotEmpty) {
-      _treasury -= purchaseLandCost(resourceId);
+      treasuryState -= purchaseLandCost(resourceId);
     }
     return true;
   }
@@ -420,11 +419,13 @@ class WorkOrderValidator extends OrderValidator {
       target == kWorkTargetStealTech || target == kWorkTargetCounterSpy;
 
   void _applyProjectedCostMap(Map<String, int> costMap) {
-    for (final entry in costMap.entries) {
-      if (_stockpile.quantityOf(entry.key) >= entry.value) {
-        _stockpile = _stockpile.applyDelta(entry.key, -entry.value);
-      }
+    if (!ProjectedCostEngine.canAffordWorkMaterialCost(stockpileState, costMap)) {
+      return;
     }
+    stockpileState = ProjectedCostEngine.deductWorkMaterialCost(
+      stockpileState,
+      costMap,
+    );
   }
 
   /// Builder / Engineer / Merchant may work in Minor/Tribe provinces with embassy + Diplomatic Expertise. SPEC/game/tech-tree-diplomacy-civilian.md.
