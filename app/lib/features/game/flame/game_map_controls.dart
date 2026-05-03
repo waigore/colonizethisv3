@@ -6,6 +6,7 @@ import '../../../config/ct_e2e.dart';
 import '../../../widgets/ct_choice_chip.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/strict_asset_icon.dart';
+import '../widgets/player_turn_event_feed.dart';
 import 'game_screen_shared.dart'
     show
         kCargoHoldIndicatorKey,
@@ -25,6 +26,9 @@ class GameMapControls extends StatefulWidget {
     required this.cargoCapacity,
     required this.treasury,
     required this.treasuryDelta,
+    required this.playerTurnEventsFeedCount,
+    required this.showPlayerTurnEventsFeed,
+    required this.onTogglePlayerTurnEventsFeed,
     this.isCargoUsedReliable = true,
     super.key,
   });
@@ -39,6 +43,9 @@ class GameMapControls extends StatefulWidget {
   final int cargoCapacity;
   final int treasury;
   final int? treasuryDelta;
+  final int playerTurnEventsFeedCount;
+  final bool showPlayerTurnEventsFeed;
+  final VoidCallback onTogglePlayerTurnEventsFeed;
   final bool isCargoUsedReliable;
 
   @override
@@ -112,85 +119,111 @@ class _GameMapControlsState extends State<GameMapControls> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CtChoiceChip(
-                label: Text(l10n.region_oldWorld),
-                selected: widget.regionIndex == 0,
-                onSelected: (_) => widget.onRegionIndexChanged(0),
-              ),
-              const SizedBox(width: 8),
-              // E2E-only wrapper: same layout as bare chip; adds a stable subtree key
-              // for integration tests (`kCtE2ERegionTabNewWorldKey`).
-              if (kCtE2EEnabled)
-                KeyedSubtree(
-                  key: kCtE2ERegionTabNewWorldKey,
-                  child: CtChoiceChip(
-                    label: Text(l10n.region_newWorld),
-                    selected: widget.regionIndex == 1,
-                    onSelected: (_) => widget.onRegionIndexChanged(1),
-                  ),
-                )
-              else
-                CtChoiceChip(
-                  label: Text(l10n.region_newWorld),
-                  selected: widget.regionIndex == 1,
-                  onSelected: (_) => widget.onRegionIndexChanged(1),
-                ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                key: kTreasuryIndicatorKey,
-                onTap: () =>
-                    setState(() => _showExactTreasury = !_showExactTreasury),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
-                  ),
-                  color: Colors.black.withValues(alpha: 0.1),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const StrictAssetIcon(
-                        assetPath:
-                            '${kAppIconAssetPrefix}ui_icon_treasury_coin.png',
-                        width: 16,
-                        height: 16,
+                      CtChoiceChip(
+                        label: Text(l10n.region_oldWorld),
+                        selected: widget.regionIndex == 0,
+                        onSelected: (_) => widget.onRegionIndexChanged(0),
                       ),
-                      const SizedBox(width: 4),
-                      Text(treasuryLabel),
-                      if (deltaLabel != null) ...[
-                        const SizedBox(width: 4),
-                        Text(deltaLabel, style: TextStyle(color: deltaColor)),
-                      ],
+                      const SizedBox(width: 8),
+                      // E2E-only wrapper: same layout as bare chip; adds a stable subtree key
+                      // for integration tests (`kCtE2ERegionTabNewWorldKey`).
+                      if (kCtE2EEnabled)
+                        KeyedSubtree(
+                          key: kCtE2ERegionTabNewWorldKey,
+                          child: CtChoiceChip(
+                            label: Text(l10n.region_newWorld),
+                            selected: widget.regionIndex == 1,
+                            onSelected: (_) => widget.onRegionIndexChanged(1),
+                          ),
+                        )
+                      else
+                        CtChoiceChip(
+                          label: Text(l10n.region_newWorld),
+                          selected: widget.regionIndex == 1,
+                          onSelected: (_) => widget.onRegionIndexChanged(1),
+                        ),
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        key: kTreasuryIndicatorKey,
+                        onTap: () => setState(
+                          () => _showExactTreasury = !_showExactTreasury,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          color: Colors.black.withValues(alpha: 0.1),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const StrictAssetIcon(
+                                assetPath:
+                                    '${kAppIconAssetPrefix}ui_icon_treasury_coin.png',
+                                width: 16,
+                                height: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(treasuryLabel),
+                              if (deltaLabel != null) ...[
+                                const SizedBox(width: 4),
+                                Text(
+                                  deltaLabel,
+                                  style: TextStyle(color: deltaColor),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
+                        key: kCargoHoldIndicatorKey,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        color: Colors.black.withValues(alpha: 0.1),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const StrictAssetIcon(
+                              assetPath:
+                                  '${kAppIconAssetPrefix}ui_icon_cargo_hold.png',
+                              width: 16,
+                              height: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              l10n.mapControls_cargoHold(
+                                widget.isCargoUsedReliable
+                                    ? '${widget.cargoUsed}'
+                                    : '—',
+                                '${widget.cargoCapacity}',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Container(
-                key: kCargoHoldIndicatorKey,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                color: Colors.black.withValues(alpha: 0.1),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const StrictAssetIcon(
-                      assetPath: '${kAppIconAssetPrefix}ui_icon_cargo_hold.png',
-                      width: 16,
-                      height: 16,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      l10n.mapControls_cargoHold(
-                        widget.isCargoUsedReliable
-                            ? '${widget.cargoUsed}'
-                            : '—',
-                        '${widget.cargoCapacity}',
-                      ),
-                    ),
-                  ],
+              PlayerTurnEventsFeedToggleButton(
+                eventCount: widget.playerTurnEventsFeedCount,
+                tooltip: l10n.playerTurnFeed_eventsChip(
+                  widget.playerTurnEventsFeedCount,
                 ),
+                showFeed: widget.showPlayerTurnEventsFeed,
+                onPressed: widget.onTogglePlayerTurnEventsFeed,
               ),
             ],
           ),
