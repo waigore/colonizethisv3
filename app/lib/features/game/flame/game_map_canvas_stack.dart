@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
 import '../../../../providers/map_province_panel_provider.dart';
+import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
 import '../../../../widgets/ct_region_map.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode, CtRegionMap;
 
@@ -135,7 +136,9 @@ class GameMapCanvasStack extends ConsumerWidget {
             Positioned(
               top: 8,
               left: 0,
-              right: !isNarrow && panel.overlayOpen ? 320 : 0,
+              right: !isNarrow && panel.overlayOpen
+                  ? kGameMapWideProvinceSidePanelWidth
+                  : 0,
               child: Center(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
