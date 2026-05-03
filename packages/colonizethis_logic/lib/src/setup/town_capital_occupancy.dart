@@ -3,6 +3,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/province_lookup.dart';
+
 /// Every player / minor / tribe capital tile and every province [Province.townTileKey].
 /// Used to forbid resources and extraction improvements on those tiles only
 /// (roads / rail / ports remain). SPEC/game/tile-map-and-generation.md.
@@ -20,11 +22,7 @@ Set<String> collectTownAndCapitalTileKeys(Game game) {
     final c = t.capitalTile;
     if (c != null) keys.add(c.toTileKey());
   }
-  for (final p in game.worldState.oldWorld.provinces) {
-    final tk = p.townTileKey;
-    if (tk != null && tk.isNotEmpty) keys.add(tk);
-  }
-  for (final p in game.worldState.newWorld.provinces) {
+  for (final p in game.worldState.allProvinces()) {
     final tk = p.townTileKey;
     if (tk != null && tk.isNotEmpty) keys.add(tk);
   }
