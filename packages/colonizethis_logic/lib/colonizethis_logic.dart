@@ -92,6 +92,7 @@ export 'src/world/movement.dart';
 export 'src/world/naval.dart';
 export 'src/world/naval_fleet_commands.dart';
 export 'src/world/fog_resolution.dart' show applyCoastalSeaZoneFullVisibility;
+export 'src/world/player_state_pipeline.dart';
 export 'src/world/player_view.dart';
 export 'src/world/province_ownership_transfer.dart';
 export 'src/world/province_lookup.dart';

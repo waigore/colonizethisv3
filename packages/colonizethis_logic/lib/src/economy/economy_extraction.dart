@@ -1,6 +1,8 @@
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/player_state_pipeline.dart';
+
 final _log = packageLogger();
 
 /// Extraction and auto-transport helpers.
@@ -56,19 +58,15 @@ Game applyExtractionForPlayers(
 ) {
   if (extractedByPlayerId.isEmpty) return game;
 
-  final updatedPlayers = <Player>[];
-  for (final player in game.players) {
+  return game.mapPlayers((player) {
     final extracted = extractedByPlayerId[player.id];
     if (extracted == null || extracted.isEmpty) {
-      updatedPlayers.add(player);
-      continue;
+      return player;
     }
     final updatedStockpile = applyExtractionToStockpile(
       player.stockpile,
       extracted,
     );
-    updatedPlayers.add(player.copyWith(stockpile: updatedStockpile));
-  }
-
-  return game.copyWith(players: updatedPlayers);
+    return player.copyWith(stockpile: updatedStockpile);
+  });
 }

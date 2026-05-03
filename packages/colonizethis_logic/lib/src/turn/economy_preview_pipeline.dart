@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../economy/build_cost.dart';
 import '../economy/economy_preview_stockpile_phase.dart';
+import '../world/player_state_pipeline.dart';
 import '../world/province_lookup.dart';
 import 'phases/consumption_phase.dart';
 import 'phases/extraction_phase.dart';
@@ -33,7 +34,7 @@ Game _applyPendingBuildOrderCostsForPreview({
   if (currentOrders.buildUnitOrdersByPlayerId.isEmpty) {
     return game;
   }
-  final updatedPlayers = game.players.map((player) {
+  return game.mapPlayers((player) {
     var workers = player.workerPool;
     var stockpile = player.stockpile;
     var treasury = player.treasury;
@@ -63,8 +64,7 @@ Game _applyPendingBuildOrderCostsForPreview({
       stockpile: stockpile,
       treasury: treasury,
     );
-  }).toList();
-  return game.copyWith(players: updatedPlayers);
+  });
 }
 
 Unit? _unitByIdInGame(Game game, String unitId) {
@@ -98,7 +98,7 @@ Game _applyPendingMaterialWorkOrderCostsForPreview({
     return game;
   }
   final tileState = game.worldState.tileState;
-  final updatedPlayers = game.players.map((player) {
+  return game.mapPlayers((player) {
     final orders = currentOrders.workOrdersByPlayerId[player.id];
     if (orders == null || orders.isEmpty) {
       return player;
@@ -144,8 +144,7 @@ Game _applyPendingMaterialWorkOrderCostsForPreview({
       }
     }
     return player.copyWith(stockpile: stockpile);
-  }).toList();
-  return game.copyWith(players: updatedPlayers);
+  });
 }
 
 Game _applyPendingStockpileCostsForPreview({

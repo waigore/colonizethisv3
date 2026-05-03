@@ -241,6 +241,7 @@ Game resolveResearchPhase(Game game, Orders orders) {
       .length;
   var state = game;
   final extraEvidence = <DossierEvidenceEntry>[];
+  // Not Game.mapPlayers: [state] evolves per player during resolution.
   final updatedPlayers = <Player>[];
 
   for (final p in game.players) {

@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../economy/economy_production.dart';
+import '../../world/player_state_pipeline.dart';
 import '../turn_pipeline_state.dart';
 
 /// Production phase using idle labour from [acc].
@@ -12,10 +13,9 @@ TurnPipelineState runProductionPipelinePhase(
   onProductionComplete,
 ) {
   final game = acc.game;
-  final updatedPlayers = <Player>[];
   final productionByRecipeByPlayerId = <String, Map<String, int>>{};
 
-  for (final player in game.players) {
+  final mappedGame = game.mapPlayers((player) {
     final assignments =
         defaultAssignmentsByPlayerId?[player.id] ?? defaultAssignments;
     final idleLabour =
@@ -31,14 +31,12 @@ TurnPipelineState runProductionPipelinePhase(
         result.productionByRecipe,
       );
     }
-    updatedPlayers.add(
-      player.copyWith(
-        stockpile: result.stockpile,
-        workerPool: result.workerPool,
-      ),
+    return player.copyWith(
+      stockpile: result.stockpile,
+      workerPool: result.workerPool,
     );
-  }
+  });
 
   onProductionComplete?.call(productionByRecipeByPlayerId);
-  return acc.copyWith(game: game.copyWith(players: updatedPlayers));
+  return acc.copyWith(game: mappedGame);
 }

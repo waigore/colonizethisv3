@@ -43,6 +43,7 @@ Game runExtractionPhase(
     },
   );
   var currentState = state;
+  // Not [Game.mapPlayers]: [currentState] (fleets) may change between players.
   final updatedPlayers = <Player>[];
   var extractionSeed =
       (state.globalGameSeed ?? 0) ^
