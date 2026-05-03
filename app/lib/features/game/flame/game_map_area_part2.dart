@@ -46,10 +46,6 @@ mixin _GameMapAreaStatePart2
     final treasurySummary = ref.watch(treasurySummaryProvider);
     final feedEntries = _feedEntries();
     final debugConsoleEnabled = ref.watch(debugConsoleEnabledProvider);
-    final feedButtonTopInset = kMapOverlayEdgeInset;
-    final feedButtonRightInset = kCtE2EEnabled
-        ? kMapOverlayEdgeInset + 48
-        : kMapOverlayEdgeInset;
     return Column(
       children: [
         GameMapControls(
@@ -66,6 +62,9 @@ mixin _GameMapAreaStatePart2
           isCargoUsedReliable: cargoSummary.isCargoUsedReliable,
           treasury: treasurySummary.treasury,
           treasuryDelta: treasurySummary.projectedDelta,
+          playerTurnEventsFeedCount: feedEntries.length,
+          showPlayerTurnEventsFeed: _mapViewState.showPlayerTurnEventsFeed,
+          onTogglePlayerTurnEventsFeed: _togglePlayerTurnEventsFeedVisibility,
         ),
         Expanded(
           child: Stack(
@@ -263,19 +262,6 @@ mixin _GameMapAreaStatePart2
                           },
                         ),
                       ),
-                      Positioned(
-                        right: feedButtonRightInset,
-                        top: feedButtonTopInset,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildPlayerTurnEventsToggleButton(
-                              eventCount: feedEntries.length,
-                              tooltipLabel: 'Events',
-                            ),
-                          ],
-                        ),
-                      ),
                       if (kCtE2EEnabled) ...[
                         Positioned(
                           right: kMapOverlayEdgeInset,
@@ -361,9 +347,11 @@ mixin _GameMapAreaStatePart2
                           final panelOpen = ref
                               .watch(mapProvincePanelProvider)
                               .overlayOpen;
-                          final rightInset = (!isNarrow && panelOpen)
-                              ? 8.0 + 320.0
-                              : 8.0;
+                          final rightInset = !isNarrow
+                              ? gameMapWideOverlayRightInset(
+                                  provincePanelOpen: panelOpen,
+                                )
+                              : kGameMapWideStackRightGutter;
                           return Positioned(
                             right: rightInset,
                             bottom: 8,
@@ -382,7 +370,9 @@ mixin _GameMapAreaStatePart2
                             final panelOpen = ref
                                 .watch(mapProvincePanelProvider)
                                 .overlayOpen;
-                            final rightInset = panelOpen ? 8.0 + 320.0 : 8.0;
+                            final rightInset = gameMapWideOverlayRightInset(
+                              provincePanelOpen: panelOpen,
+                            );
                             if (!_mapViewState.showPlayerTurnEventsFeed) {
                               return const SizedBox.shrink();
                             }
