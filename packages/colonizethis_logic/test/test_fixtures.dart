@@ -30,8 +30,12 @@ abstract final class TestFixtures {
     Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
         const {},
     Map<String, Map<String, String>>? playerVisibilityByTile,
+    Map<String, String>? resourceByTileKey,
     TileMapState? tileState,
     double richesCashMultiplier = 1.0,
+    List<MinorNation> minorNations = const [],
+    List<OvertureState> overtureStates = const [],
+    List<DiplomacyRelation> diplomacyRelations = const [],
   }) =>
       Game(
         id: id,
@@ -41,10 +45,14 @@ abstract final class TestFixtures {
           newWorld: newWorld ?? const RegionData(),
           tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
           playerVisibilityByTile: playerVisibilityByTile ?? const {},
+          resourceByTileKey: resourceByTileKey ?? const {},
           tileState: tileState ?? const TileMapState(),
         ),
         players: players,
         richesCashMultiplier: richesCashMultiplier,
+        minorNations: minorNations,
+        overtureStates: overtureStates,
+        diplomacyRelations: diplomacyRelations,
       );
 
   /// Old World land with [unit]; New World empty. Default provinces match

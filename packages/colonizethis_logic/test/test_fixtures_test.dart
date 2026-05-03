@@ -16,6 +16,12 @@ void main() {
       expect(ws.turnState.turnNumber, 7);
     });
 
+    test('minimalGame passes resourceByTileKey into world state', () {
+      const res = {'oldWorld|p|0|0': 'grain'};
+      final game = TestFixtures.minimalGame(resourceByTileKey: res);
+      expect(game.worldState.resourceByTileKey, res);
+    });
+
     test('minimalGame passes playerVisibilityByTile into world state', () {
       const vis = {
         'p1': {'oldWorld|x|0|0': 'fullyVisible'},
