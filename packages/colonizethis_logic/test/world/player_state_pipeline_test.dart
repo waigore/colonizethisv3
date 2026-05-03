@@ -2,6 +2,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../test_fixtures.dart';
+
 void main() {
   group('GameMapPlayers', () {
     test(
@@ -19,15 +21,10 @@ void main() {
           isHuman: false,
           treasury: 20,
         );
-        final world = WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        );
-        final game = Game(
+        final game = TestFixtures.minimalGame(
           id: 'gid',
-          worldState: world,
           players: const [p1, p2],
+          turnNumber: 3,
           richesCashMultiplier: 2.0,
         );
 
@@ -47,13 +44,8 @@ void main() {
 
     test('mapPlayers identity yields equal game', () {
       const p = Player(id: 'x', displayName: 'X', isHuman: true);
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
         players: const [p],
       );
       final next = game.mapPlayers((q) => q);
