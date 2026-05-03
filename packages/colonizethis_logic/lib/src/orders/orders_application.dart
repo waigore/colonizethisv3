@@ -24,19 +24,10 @@ import 'orders_application_work_phase.dart';
 /// has no currentWork.
 Game clearUnitCurrentWork(Game game, String unitId) {
   final ws = game.worldState;
-  final oldIdx = ws.oldWorld.units.indexWhere((u) => u.id == unitId);
-  late final Unit unit;
-  late final bool inOldWorld;
-  if (oldIdx >= 0) {
-    unit = ws.oldWorld.units[oldIdx];
-    inOldWorld = true;
-  } else {
-    final newIdx = ws.newWorld.units.indexWhere((u) => u.id == unitId);
-    if (newIdx < 0) return game;
-    unit = ws.newWorld.units[newIdx];
-    inOldWorld = false;
-  }
-  if (unit.currentWork == null) return game;
+  final unit = ws.tryGetUnitById(unitId);
+  if (unit == null || unit.currentWork == null) return game;
+  final regionId = ws.tryGetRegionIdForUnit(unit);
+  if (regionId == null) return game;
   final restoredTile = unit.originTileKey ?? unit.tileKey;
   final cleared = unit.copyWith(
     clearCurrentWork: true,
@@ -45,21 +36,14 @@ Game clearUnitCurrentWork(Game game, String unitId) {
     clearOriginTileKey: true,
     clearAssignedTileKey: true,
   );
-  if (inOldWorld) {
-    final list = ws.oldWorld.units
+  final updatedWs = ws.mapBothRegions((rid, region) {
+    if (rid != regionId) return region;
+    final list = region.units
         .map((u) => u.id == unitId ? cleared : u)
         .toList();
-    final newOldWorld = RegionData(
-      provinces: ws.oldWorld.provinces,
-      units: list,
-    );
-    return game.copyWith(worldState: ws.copyWith(oldWorld: newOldWorld));
-  }
-  final list = ws.newWorld.units
-      .map((u) => u.id == unitId ? cleared : u)
-      .toList();
-  final newNewWorld = RegionData(provinces: ws.newWorld.provinces, units: list);
-  return game.copyWith(worldState: ws.copyWith(newWorld: newNewWorld));
+    return RegionData(provinces: region.provinces, units: list);
+  });
+  return game.copyWith(worldState: updatedWs);
 }
 
 /// Applies BuildUnitOrder and WorkOrder for all players in [game].
