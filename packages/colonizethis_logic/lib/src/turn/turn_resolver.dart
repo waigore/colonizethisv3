@@ -10,7 +10,9 @@ import '../world/army_migration.dart';
 export 'economy_preview_pipeline.dart'
     show
         applyEconomyPhasesForPreview,
-        economyPreviewStockpilePhaseDeltasForPlayer;
+        economyPreviewStockpilePhaseDeltasForPlayer,
+        previewStockpileNetDeltaByCommodityForPlayer,
+        previewStockpilePhaseDeltasByCommodityForPlayer;
 import 'turn_order_acceptance.dart';
 import 'turn_phase_runner.dart';
 import 'turn_resolution_result.dart';

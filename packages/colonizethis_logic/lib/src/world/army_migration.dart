@@ -3,6 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'army_ids.dart';
+import 'province_lookup.dart';
+import 'unit_lookup.dart';
 
 /// Prefixed ids use [ProvinceId.regionIdFrom]; otherwise resolve from [WorldState]
 /// (legacy tests and fixtures may use local province ids only).
@@ -10,13 +12,11 @@ String _regionIdForProvinceInWorld(WorldState ws, String provinceId) {
   if (ProvinceId.isPrefixed(provinceId)) {
     return ProvinceId.regionIdFrom(provinceId);
   }
-  if (ws.oldWorld.provinces.any((p) => p.id == provinceId)) {
-    return kRegionOldWorld;
+  final region = ws.tryGetRegionIdForLegacyProvinceKey(provinceId);
+  if (region == null) {
+    throw StateError('Province id not found in either region: "$provinceId"');
   }
-  if (ws.newWorld.provinces.any((p) => p.id == provinceId)) {
-    return kRegionNewWorld;
-  }
-  throw StateError('Province id not found in either region: "$provinceId"');
+  return region;
 }
 
 /// Prefixed [Unit.locationProvinceId] uses [ProvinceId.regionIdFrom]; otherwise
@@ -25,13 +25,11 @@ String _regionIdForUnitInWorld(WorldState ws, Unit u) {
   if (ProvinceId.isPrefixed(u.locationProvinceId)) {
     return ProvinceId.regionIdFrom(u.locationProvinceId);
   }
-  if (ws.oldWorld.units.any((x) => x.id == u.id)) {
-    return kRegionOldWorld;
+  final region = ws.tryGetRegionIdForUnit(u);
+  if (region == null) {
+    throw StateError('Military unit ${u.id} not found in world state regions');
   }
-  if (ws.newWorld.units.any((x) => x.id == u.id)) {
-    return kRegionNewWorld;
-  }
-  throw StateError('Military unit ${u.id} not found in world state regions');
+  return region;
 }
 
 /// Ensures every military regiment is in exactly one army and every GP has a home army.
@@ -45,10 +43,9 @@ Game ensureMilitaryArmiesForGame(Game game) {
 
 bool _armiesMatchUnits(Game game) {
   final ws = game.worldState;
-  final militaryUnits = [
-    ...ws.oldWorld.units.where((u) => isMilitaryUnit(u.type)),
-    ...ws.newWorld.units.where((u) => isMilitaryUnit(u.type)),
-  ];
+  final militaryUnits = allUnitsFromWorld(
+    ws,
+  ).where((u) => isMilitaryUnit(u.type)).toList();
   if (ws.armies.isEmpty) {
     return militaryUnits.isEmpty;
   }
@@ -67,23 +64,13 @@ bool _armiesMatchUnits(Game game) {
   }
   for (final a in ws.armies) {
     for (final uid in a.regimentUnitIds) {
-      final u = _findUnit(game, uid);
+      final u = game.worldState.tryGetUnitById(uid);
       if (u == null) return false;
       if (u.ownerId != a.ownerId) return false;
       if (u.locationProvinceId != a.stationedProvinceId) return false;
     }
   }
   return true;
-}
-
-Unit? _findUnit(Game game, String unitId) {
-  for (final u in game.worldState.oldWorld.units) {
-    if (u.id == unitId) return u;
-  }
-  for (final u in game.worldState.newWorld.units) {
-    if (u.id == unitId) return u;
-  }
-  return null;
 }
 
 Game _ensureHomeArmiesExist(Game game) {
@@ -135,10 +122,8 @@ Game _rebuildArmiesFromMilitaryUnits(Game game) {
   );
 }
 
-List<Unit> _militaryUnitsFromWorld(WorldState ws) => [
-  ...ws.oldWorld.units.where((u) => isMilitaryUnit(u.type)),
-  ...ws.newWorld.units.where((u) => isMilitaryUnit(u.type)),
-];
+List<Unit> _militaryUnitsFromWorld(WorldState ws) =>
+    allUnitsFromWorld(ws).where((u) => isMilitaryUnit(u.type)).toList();
 
 Map<String, String> _capitalByPlayer(List<Player> players) => {
   for (final p in players)
@@ -240,10 +225,7 @@ int _nextArmySequence(List<Army> armies) {
 
 /// Removes dead unit ids from armies, drops empty non-home armies, assigns orphan regiments.
 WorldState reconcileArmiesAfterUnitsChanged(WorldState worldState, Game game) {
-  final unitIds = <String>{
-    ...worldState.oldWorld.units.map((u) => u.id),
-    ...worldState.newWorld.units.map((u) => u.id),
-  };
+  final unitIds = <String>{for (final u in allUnitsFromWorld(worldState)) u.id};
   var armies = worldState.armies
       .map(
         (a) => a.copyWith(
@@ -257,10 +239,9 @@ WorldState reconcileArmiesAfterUnitsChanged(WorldState worldState, Game game) {
 
   final claimed = <String>{for (final a in armies) ...a.regimentUnitIds};
 
-  final military = [
-    ...worldState.oldWorld.units.where((u) => isMilitaryUnit(u.type)),
-    ...worldState.newWorld.units.where((u) => isMilitaryUnit(u.type)),
-  ];
+  final military = allUnitsFromWorld(
+    worldState,
+  ).where((u) => isMilitaryUnit(u.type)).toList();
 
   final capitals = {
     for (final p in game.players)

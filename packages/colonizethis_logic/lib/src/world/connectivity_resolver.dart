@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../utils/graph_traversal.dart';
 import 'naval.dart';
 import 'province_lookup.dart';
 import 'topology_helpers.dart';
@@ -141,17 +142,11 @@ Set<String> _seaZonesReachableBySeaPath(
       neighbours.putIfAbsent(b, () => {}).add(a);
     }
   }
-  final reachable = Set<String>.from(startSeaZoneIds);
-  final queue = List<String>.from(startSeaZoneIds);
-  while (queue.isNotEmpty) {
-    final z = queue.removeAt(0);
-    for (final n in neighbours[z] ?? {}) {
-      if (reachable.contains(n)) continue;
-      reachable.add(n);
-      queue.add(n);
-    }
-  }
-  return reachable;
+  return breadthFirstReachableInSubgraph(
+    startSeaZoneIds,
+    neighbours,
+    seaZoneIds,
+  );
 }
 
 /// Sea zone ids adjacent to province [localProvinceId] in topology (P–S edges).
@@ -385,6 +380,8 @@ ConnectivityResult _connectedTilesForPlayer({
   );
 }
 
+/// Queue propagation with per-tile transport bottleneck updates; not a plain
+/// graph BFS (see `lib/src/utils/graph_traversal.dart`).
 void _propagateConnectivity({
   required List<String> queue,
   required Set<String> connected,

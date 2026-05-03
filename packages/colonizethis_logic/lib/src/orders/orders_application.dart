@@ -6,7 +6,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../dossier/event_dialogue.dart';
 import '../dossier/evidence_rules.dart';
-import 'orders_application_helpers.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/tile_control.dart';
@@ -24,12 +23,20 @@ import 'orders_application_work_phase.dart';
 /// § Player-initiated cancel. Returns [game] unchanged if unit not found or
 /// has no currentWork.
 Game clearUnitCurrentWork(Game game, String unitId) {
-  final oldUnits = game.worldState.oldWorld.units;
-  final newUnits = game.worldState.newWorld.units;
-  final inOld = oldUnits.where((u) => u.id == unitId).firstOrNull;
-  final inNew = newUnits.where((u) => u.id == unitId).firstOrNull;
-  final unit = inOld ?? inNew;
-  if (unit == null || unit.currentWork == null) return game;
+  final ws = game.worldState;
+  final oldIdx = ws.oldWorld.units.indexWhere((u) => u.id == unitId);
+  late final Unit unit;
+  late final bool inOldWorld;
+  if (oldIdx >= 0) {
+    unit = ws.oldWorld.units[oldIdx];
+    inOldWorld = true;
+  } else {
+    final newIdx = ws.newWorld.units.indexWhere((u) => u.id == unitId);
+    if (newIdx < 0) return game;
+    unit = ws.newWorld.units[newIdx];
+    inOldWorld = false;
+  }
+  if (unit.currentWork == null) return game;
   final restoredTile = unit.originTileKey ?? unit.tileKey;
   final cleared = unit.copyWith(
     clearCurrentWork: true,
@@ -38,25 +45,21 @@ Game clearUnitCurrentWork(Game game, String unitId) {
     clearOriginTileKey: true,
     clearAssignedTileKey: true,
   );
-  if (inOld != null) {
-    final list = oldUnits.map((u) => u.id == unitId ? cleared : u).toList();
+  if (inOldWorld) {
+    final list = ws.oldWorld.units
+        .map((u) => u.id == unitId ? cleared : u)
+        .toList();
     final newOldWorld = RegionData(
-      provinces: game.worldState.oldWorld.provinces,
+      provinces: ws.oldWorld.provinces,
       units: list,
     );
-    return game.copyWith(
-      worldState: game.worldState.copyWith(oldWorld: newOldWorld),
-    );
-  } else {
-    final list = newUnits.map((u) => u.id == unitId ? cleared : u).toList();
-    final newNewWorld = RegionData(
-      provinces: game.worldState.newWorld.provinces,
-      units: list,
-    );
-    return game.copyWith(
-      worldState: game.worldState.copyWith(newWorld: newNewWorld),
-    );
+    return game.copyWith(worldState: ws.copyWith(oldWorld: newOldWorld));
   }
+  final list = ws.newWorld.units
+      .map((u) => u.id == unitId ? cleared : u)
+      .toList();
+  final newNewWorld = RegionData(provinces: ws.newWorld.provinces, units: list);
+  return game.copyWith(worldState: ws.copyWith(newWorld: newNewWorld));
 }
 
 /// Applies BuildUnitOrder and WorkOrder for all players in [game].
@@ -114,7 +117,11 @@ Game applyBuildAndWorkOrders(
   );
 
   state = runBuildPhase(state);
-  state = runWorkPhase(state, _applyExploreCompletion, _applyCompletedWorkTarget);
+  state = runWorkPhase(
+    state,
+    _applyExploreCompletion,
+    _applyCompletedWorkTarget,
+  );
 
   state = _processWorkUnits(
     state,
@@ -439,10 +446,7 @@ BuildWorkState _resolveStealTechCompletion(
   );
   if (spyEvidence.isNotEmpty) {
     game = game.copyWith(
-      dossierEvidenceEntries: [
-        ...game.dossierEvidenceEntries,
-        ...spyEvidence,
-      ],
+      dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...spyEvidence],
     );
   }
   return s.copyWith(game: game);

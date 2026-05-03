@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/unit_lookup.dart';
 import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
@@ -266,14 +267,8 @@ void emitWorkOrderCompletedEvents(
   GameEventBus? eventBus,
   void Function(GameEvent)? onGameEvent,
 ) {
-  final beforeById = <String, Unit>{
-    for (final unit in stateBefore.worldState.oldWorld.units) unit.id: unit,
-    for (final unit in stateBefore.worldState.newWorld.units) unit.id: unit,
-  };
-  final afterById = <String, Unit>{
-    for (final unit in stateAfter.worldState.oldWorld.units) unit.id: unit,
-    for (final unit in stateAfter.worldState.newWorld.units) unit.id: unit,
-  };
+  final beforeById = unitsByIdFromWorld(stateBefore.worldState);
+  final afterById = unitsByIdFromWorld(stateAfter.worldState);
   final supportedTargets = <String>{
     kWorkTargetBuildImprovement,
     kWorkTargetUpgradeTown,

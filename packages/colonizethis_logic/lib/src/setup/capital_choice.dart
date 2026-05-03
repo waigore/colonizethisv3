@@ -2,9 +2,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/player_state_pipeline.dart';
 import 'setup_exceptions.dart';
 
-export 'package:colonizethis_data/colonizethis_data.dart' show isProvinceSeaBound;
+export 'package:colonizethis_data/colonizethis_data.dart'
+    show isProvinceSeaBound;
 
 /// Capital-choice phase stub. SPEC/game/capital-choice-phase.
 ///
@@ -27,17 +29,13 @@ final class _CapitalTileCandidateScan {
   int? classCCoastalX;
   int? classCCoastalY;
 
-  void mergeClassC(
-    int x,
-    int y,
-    TileMapResult tileMap,
-    MapTopology topology,
-  ) {
+  void mergeClassC(int x, int y, TileMapResult tileMap, MapTopology topology) {
     if (classCx == null) {
       classCx = x;
       classCy = y;
     }
-    if (_isTileAdjacentToSea(x, y, tileMap, topology) && classCCoastalX == null) {
+    if (_isTileAdjacentToSea(x, y, tileMap, topology) &&
+        classCCoastalX == null) {
       classCCoastalX = x;
       classCCoastalY = y;
     }
@@ -77,7 +75,8 @@ final class _CapitalTileCandidateScan {
   int? classCy,
   int? classCCoastalX,
   int? classCCoastalY,
-}) _scanCapitalTileCandidates({
+})
+_scanCapitalTileCandidates({
   required TileMapResult tileMap,
   required MapTopology topology,
   required String localProvinceId,
@@ -437,12 +436,10 @@ Game setCapital({
     provinceId,
   );
 
-  final updatedPlayers = game.players.map((p) {
+  return game.copyWith(worldState: worldState).mapPlayers((p) {
     if (p.id != playerId) return p;
     return p.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
-  }).toList();
-
-  return game.copyWith(worldState: worldState, players: updatedPlayers);
+  });
 }
 
 /// Sets [playerId]'s capital after runtime reassignment (combat). Updates **only** player
@@ -460,11 +457,10 @@ Game setCapitalForReassignment({
           'Capital tile province ${tile.provinceId} does not match $provinceId',
     );
   }
-  final updatedPlayers = game.players.map((p) {
+  return game.mapPlayers((p) {
     if (p.id != playerId) return p;
     return p.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
-  }).toList();
-  return game.copyWith(players: updatedPlayers);
+  });
 }
 
 /// Sets a Minor Nation's capital. Port/road applied only when province is sea-bound.
