@@ -2,33 +2,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'test_fixtures.dart';
+
 void main() {
   group('previewTotalTurnsForPendingWorkOrder', () {
-    Game buildGame({
-      required Unit unit,
-      Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
-          const {},
-      TileMapState? tileState,
-    }) {
-      return Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
-              Province(id: 'oldWorld|p2', regionId: 'oldWorld'),
-            ],
-            units: [unit],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
-          tileState: tileState ?? TileMapState(),
-        ),
-        players: const [Player(id: 'h1', displayName: 'Human', isHuman: true)],
-      );
-    }
-
     test('returns scaled explore turns from province size', () {
       final unit = Unit(
         id: 'u1',
@@ -37,7 +14,7 @@ void main() {
         locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
-      final game = buildGame(
+      final game = TestFixtures.oldWorldGameWithUnit(
         unit: unit,
         tileKeysByRegionAndProvince: const {
           'oldWorld': {
@@ -74,19 +51,11 @@ void main() {
         locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: 'oldWorld|p1', regionId: 'oldWorld', fortLevel: 2),
-            ],
-            units: [unit],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [Player(id: 'h1', displayName: 'Human', isHuman: true)],
+      final game = TestFixtures.oldWorldGameWithUnit(
+        unit: unit,
+        provinces: const [
+          Province(id: 'oldWorld|p1', regionId: 'oldWorld', fortLevel: 2),
+        ],
       );
       const order = WorkOrder(
         unitId: 'u1',
@@ -111,7 +80,7 @@ void main() {
         locationProvinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
-      final game = buildGame(unit: unit);
+      final game = TestFixtures.oldWorldGameWithUnit(unit: unit);
 
       final prospectTurns = previewTotalTurnsForPendingWorkOrder(
         game: game,

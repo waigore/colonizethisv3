@@ -8,6 +8,8 @@ import 'package:colonizethis_logic/src/orders/work_handlers/work_order_handler.d
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../../test_fixtures.dart';
+
 void main() {
   group('PurchaseLandWorkOrderHandler', () {
     test('supports only purchase_land target', () {
@@ -20,37 +22,34 @@ void main() {
       const ow = 'oldWorld';
       const minorProvinceId = '$ow|M1';
       const tileKey = '$ow|M1|0|0';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-              Province(id: minorProvinceId, regionId: ow, ownerId: 'minor1'),
-            ],
-            units: [
-              Unit(
-                id: 'merchant1',
-                type: kUnitTypeMerchant,
-                ownerId: 'p1',
-                locationProvinceId: minorProvinceId,
-                tileKey: tileKey,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          resourceByTileKey: const {tileKey: 'grain'},
-          playerVisibilityByTile: const {
-            'p1': {tileKey: 'fullyVisible'},
-          },
-          tileKeysByRegionAndProvince: {
-            ow: {
-              minorProvinceId: [tileKey],
-              '$ow|P1': ['$ow|P1|0|0'],
-            },
-          },
+        turnNumber: 0,
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+            Province(id: minorProvinceId, regionId: ow, ownerId: 'minor1'),
+          ],
+          units: [
+            Unit(
+              id: 'merchant1',
+              type: kUnitTypeMerchant,
+              ownerId: 'p1',
+              locationProvinceId: minorProvinceId,
+              tileKey: tileKey,
+            ),
+          ],
         ),
+        resourceByTileKey: const {tileKey: 'grain'},
+        playerVisibilityByTile: const {
+          'p1': {tileKey: 'fullyVisible'},
+        },
+        tileKeysByRegionAndProvince: {
+          ow: {
+            minorProvinceId: [tileKey],
+            '$ow|P1': ['$ow|P1|0|0'],
+          },
+        },
         players: [
           Player(
             id: 'p1',
@@ -144,14 +143,7 @@ void main() {
     }
 
     test('returns unchanged treasury when tile has no resource entry', () {
-      final game = Game(
-        id: 'g',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-          resourceByTileKey: {},
-        ),
+      final game = TestFixtures.minimalGame(
         players: const [],
       );
       final unit = Unit(

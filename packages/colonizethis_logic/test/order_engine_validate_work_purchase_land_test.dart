@@ -1,7 +1,9 @@
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import 'test_fixtures.dart';
 
 void main() {
   group('OrderEngine', () {
@@ -25,39 +27,36 @@ void main() {
         Map<String, Set<String>>? playerProspectedTiles,
         Map<String, String>? purchasedTilesByTileKey,
       }) {
-        return Game(
+        return TestFixtures.minimalGame(
           id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                Province(id: minorProvinceId, regionId: ow, ownerId: 'minor1'),
-              ],
-              units: [
-                Unit(
-                  id: 'merchant1',
-                  type: kUnitTypeMerchant,
-                  ownerId: 'p1',
-                  locationProvinceId: minorProvinceId,
-                  tileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            resourceByTileKey: resourceByTileKey ?? {tileKey: 'grain'},
-            playerVisibilityByTile: const {
-              'p1': {tileKey: 'fullyVisible'},
-            },
-            tileKeysByRegionAndProvince: {
-              ow: {
-                minorProvinceId: [tileKey],
-                '$ow|P1': ['$ow|P1|0|0'],
-              },
-            },
-            playerProspectedTiles: playerProspectedTiles ?? const {},
-            purchasedTilesByTileKey: purchasedTilesByTileKey ?? const {},
+          turnNumber: 0,
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: minorProvinceId, regionId: ow, ownerId: 'minor1'),
+            ],
+            units: [
+              Unit(
+                id: 'merchant1',
+                type: kUnitTypeMerchant,
+                ownerId: 'p1',
+                locationProvinceId: minorProvinceId,
+                tileKey: tileKey,
+              ),
+            ],
           ),
+          resourceByTileKey: resourceByTileKey ?? {tileKey: 'grain'},
+          playerVisibilityByTile: const {
+            'p1': {tileKey: 'fullyVisible'},
+          },
+          tileKeysByRegionAndProvince: {
+            ow: {
+              minorProvinceId: [tileKey],
+              '$ow|P1': ['$ow|P1|0|0'],
+            },
+          },
+          playerProspectedTiles: playerProspectedTiles,
+          purchasedTilesByTileKey: purchasedTilesByTileKey,
           players: [
             Player(
               id: 'p1',
@@ -72,8 +71,8 @@ void main() {
           minorNations: const [
             MinorNation(id: 'minor1', displayName: 'Minor 1'),
           ],
-          overtureStates: overtureStates ?? [],
-          diplomacyRelations: diplomacyRelations ?? [],
+          overtureStates: overtureStates ?? const [],
+          diplomacyRelations: diplomacyRelations ?? const [],
         );
       }
 

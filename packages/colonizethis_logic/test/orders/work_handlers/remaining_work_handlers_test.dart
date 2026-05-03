@@ -9,6 +9,8 @@ import 'package:colonizethis_logic/src/orders/work_handlers/work_order_handler.d
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../../test_fixtures.dart';
+
 void main() {
   group('StealTechWorkOrderHandler', () {
     test('supports only steal_tech', () {
@@ -28,15 +30,10 @@ void main() {
         locationProvinceId: provinceId,
         tileKey: tileKey,
       );
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-            units: [spy],
-          ),
-          newWorld: const RegionData(),
+      final game = TestFixtures.minimalGame(
+        oldWorld: RegionData(
+          provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+          units: [spy],
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
@@ -92,15 +89,10 @@ void main() {
         locationProvinceId: provinceId,
         tileKey: tileKey,
       );
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
-            units: [spy],
-          ),
-          newWorld: const RegionData(),
+      final game = TestFixtures.minimalGame(
+        oldWorld: RegionData(
+          provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
+          units: [spy],
         ),
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
@@ -156,19 +148,14 @@ void main() {
         locationProvinceId: provinceId,
         tileKey: tileKey,
       );
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-            ],
-            units: [explorer],
-          ),
-          newWorld: const RegionData(),
-          resourceByTileKey: const {tileKey: 'grain'},
+      final game = TestFixtures.minimalGame(
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+          ],
+          units: [explorer],
         ),
+        resourceByTileKey: const {tileKey: 'grain'},
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
       );
       final work = WorkOrderState(

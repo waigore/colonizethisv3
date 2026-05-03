@@ -11,6 +11,8 @@ import 'package:colonizethis_logic/src/orders/validators/work_order_validator.da
 import 'package:colonizethis_logic/src/world/player_view.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'test_fixtures.dart';
+
 class _AlwaysRejectMoveValidator extends MoveValidator {
   const _AlwaysRejectMoveValidator();
 
@@ -31,14 +33,8 @@ class _AlwaysRejectMoveValidator extends MoveValidator {
 
 void main() {
   test('OrderEngine validator factory allows injected validators', () {
-    final game = Game(
-      id: 'g',
+    final game = TestFixtures.minimalGame(
       players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-      worldState: const WorldState(
-        oldWorld: RegionData(),
-        newWorld: RegionData(),
-        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      ),
     );
     final topology = MapTopology(nodes: const [], edges: const []);
     final engine = OrderEngine(

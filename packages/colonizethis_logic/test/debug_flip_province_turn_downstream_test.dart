@@ -7,6 +7,8 @@ import 'package:colonizethis_logic/src/turn/turn_resolution_events.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'test_fixtures.dart';
+
 /// Regression for GitHub #2025 AC: after command-style canonical ownership
 /// transfer, persistence round-trip and named turn-resolution hooks stay usable
 /// (emitProvinceCapturedEvents, resolveConnectivity via extraction,
@@ -17,39 +19,36 @@ void main() {
     const tileKey = '$kRegionOldWorld|p1|1|1';
 
     Game gameBeforeFlip() {
-      return Game(
+      return TestFixtures.minimalGame(
         id: 'g-flip-downstream',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: pid,
-                regionId: kRegionOldWorld,
-                ownerId: 'ai_1',
-                displayName: 'New Bordeaux',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'r1',
-                type: 'musketeers',
-                ownerId: 'ai_1',
-                locationProvinceId: pid,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: const {
-            kRegionOldWorld: {
-              'p1': [tileKey],
-            },
-          },
-          playerVisibilityByTile: {
-            'human_1': {tileKey: VisibilityLevel.fogged.name},
-            'ai_1': {tileKey: VisibilityLevel.fullyVisible.name},
-          },
+        turnNumber: 3,
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: pid,
+              regionId: kRegionOldWorld,
+              ownerId: 'ai_1',
+              displayName: 'New Bordeaux',
+            ),
+          ],
+          units: [
+            Unit(
+              id: 'r1',
+              type: 'musketeers',
+              ownerId: 'ai_1',
+              locationProvinceId: pid,
+            ),
+          ],
         ),
+        tileKeysByRegionAndProvince: const {
+          kRegionOldWorld: {
+            'p1': [tileKey],
+          },
+        },
+        playerVisibilityByTile: {
+          'human_1': {tileKey: VisibilityLevel.fogged.name},
+          'ai_1': {tileKey: VisibilityLevel.fullyVisible.name},
+        },
         players: const [
           Player(
             id: 'human_1',
