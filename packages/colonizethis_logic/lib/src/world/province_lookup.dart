@@ -153,6 +153,20 @@ extension WorldStateProvinceLookup on WorldState {
     yield* newWorld.provinces;
   }
 
+  /// Returns [kRegionOldWorld] or [kRegionNewWorld] when a province row's `id`
+  /// equals [key] in that region (old world checked first). For canonical
+  /// lookups prefer [tryGetProvince] with a prefixed id; this exists for
+  /// legacy short ids and tests (waigore/colonizethis#2071 Phase 1).
+  String? tryGetRegionIdForLegacyProvinceKey(String key) {
+    if (oldWorld.provinces.indexWhere((p) => p.id == key) >= 0) {
+      return kRegionOldWorld;
+    }
+    if (newWorld.provinces.indexWhere((p) => p.id == key) >= 0) {
+      return kRegionNewWorld;
+    }
+    return null;
+  }
+
   String resolveToFullProvinceId(String provinceId) =>
       ProvinceId.isPrefixed(provinceId)
       ? provinceId

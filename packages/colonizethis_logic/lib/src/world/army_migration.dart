@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'army_ids.dart';
+import 'province_lookup.dart';
 import 'unit_lookup.dart';
 
 /// Prefixed ids use [ProvinceId.regionIdFrom]; otherwise resolve from [WorldState]
@@ -11,13 +12,11 @@ String _regionIdForProvinceInWorld(WorldState ws, String provinceId) {
   if (ProvinceId.isPrefixed(provinceId)) {
     return ProvinceId.regionIdFrom(provinceId);
   }
-  if (ws.oldWorld.provinces.any((p) => p.id == provinceId)) {
-    return kRegionOldWorld;
+  final region = ws.tryGetRegionIdForLegacyProvinceKey(provinceId);
+  if (region == null) {
+    throw StateError('Province id not found in either region: "$provinceId"');
   }
-  if (ws.newWorld.provinces.any((p) => p.id == provinceId)) {
-    return kRegionNewWorld;
-  }
-  throw StateError('Province id not found in either region: "$provinceId"');
+  return region;
 }
 
 /// Prefixed [Unit.locationProvinceId] uses [ProvinceId.regionIdFrom]; otherwise
