@@ -28,6 +28,19 @@ void main() {
       expect(game.worldState.purchasedTilesByTileKey, purchased);
     });
 
+    test('minimalGame passes ports and prospected tiles into world state', () {
+      const ports = {'oldWorld|p1|sea1': 'oldWorld|p1|0|0'};
+      const prospected = {
+        'p1': {'oldWorld|p1|0|0'},
+      };
+      final game = TestFixtures.minimalGame(
+        portsByProvinceSeaboard: ports,
+        playerProspectedTiles: prospected,
+      );
+      expect(game.worldState.portsByProvinceSeaboard, ports);
+      expect(game.worldState.playerProspectedTiles, prospected);
+    });
+
     test('minimalGame passes playerVisibilityByTile into world state', () {
       const vis = {
         'p1': {'oldWorld|x|0|0': 'fullyVisible'},
