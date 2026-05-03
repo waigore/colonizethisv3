@@ -7,6 +7,7 @@ import 'civilian_tile_occupancy.dart';
 import 'civilian_ownership_legality.dart';
 import 'fog_resolution.dart';
 import 'province_lookup.dart';
+import 'unit_lookup.dart';
 
 /// Structured result of a single canonical province ownership transfer.
 /// SPEC GitHub #2026 / SPEC/program/fog-and-exploration-resolution.md.
@@ -87,10 +88,7 @@ int _spyTimerRemovalsForProvince(
 
 int _civilianRelocationCountBefore(Game game, Set<String> changedProvinceIds) {
   var count = 0;
-  for (final u in [
-    ...game.worldState.oldWorld.units,
-    ...game.worldState.newWorld.units,
-  ]) {
+  for (final u in allUnitsFromWorld(game.worldState)) {
     if (!changedProvinceIds.contains(u.locationProvinceId)) continue;
     if (canUnitInitiateCombat(u.type) || isShipUnitType(u.type)) continue;
     final tileKey = u.tileKey;
@@ -273,10 +271,7 @@ _applyCanonicalSingleProvinceOwnershipTransferCore(
   }
 
   nextGame = nextGame.copyWith(
-    worldState: reconcileArmiesAfterUnitsChanged(
-      nextGame.worldState,
-      nextGame,
-    ),
+    worldState: reconcileArmiesAfterUnitsChanged(nextGame.worldState, nextGame),
   );
 
   return (game: nextGame, visibilitySummary: visOutcome.visibilitySummary);
@@ -357,10 +352,10 @@ applyCanonicalSingleProvinceOwnershipTransferWithResult(
     newOwnerId,
   );
 
-  final civilianRelocations = _civilianRelocationCountBefore(
-    game,
-    {targetProvinceId, canonicalId},
-  );
+  final civilianRelocations = _civilianRelocationCountBefore(game, {
+    targetProvinceId,
+    canonicalId,
+  });
 
   final core = _applyCanonicalSingleProvinceOwnershipTransferCore(
     game,
@@ -392,7 +387,8 @@ applyCanonicalSingleProvinceOwnershipTransferWithResult(
 /// Set [relocateIllegalCivilians] to false when callers will remap unit
 /// ownership globally after the bulk step (e.g. Join Empire), then run
 /// [relocateIllegalCiviliansInChangedProvinces] once for all provinces.
-BulkProvinceOwnershipTransferResult applyBulkCanonicalProvinceOwnershipTransfers(
+BulkProvinceOwnershipTransferResult
+applyBulkCanonicalProvinceOwnershipTransfers(
   Game game, {
   required List<String> provinceIdsInOrder,
   required String oldOwnerId,

@@ -39,20 +39,20 @@ Game runMovementPhase(Game game, MapTopology topology, Orders orders) {
       spyTimers.putIfAbsent(ownerId, () => {})[provinceId] = 5;
     }
 
-    for (final u in originalOldWorld.units) {
-      if (!isSpyUnit(u.type)) continue;
-      final after = oldWorld.units.where((x) => x.id == u.id).firstOrNull;
-      if (after != null && after.locationProvinceId != u.locationProvinceId) {
-        recordSpyLeft(u.ownerId, u.locationProvinceId);
+    void recordSpyProvinceChanges(RegionData before, RegionData after) {
+      for (final u in before.units) {
+        if (!isSpyUnit(u.type)) continue;
+        final idx = after.units.indexWhere((x) => x.id == u.id);
+        if (idx < 0) continue;
+        final afterUnit = after.units[idx];
+        if (afterUnit.locationProvinceId != u.locationProvinceId) {
+          recordSpyLeft(u.ownerId, u.locationProvinceId);
+        }
       }
     }
-    for (final u in originalNewWorld.units) {
-      if (!isSpyUnit(u.type)) continue;
-      final after = newWorld.units.where((x) => x.id == u.id).firstOrNull;
-      if (after != null && after.locationProvinceId != u.locationProvinceId) {
-        recordSpyLeft(u.ownerId, u.locationProvinceId);
-      }
-    }
+
+    recordSpyProvinceChanges(originalOldWorld, oldWorld);
+    recordSpyProvinceChanges(originalNewWorld, newWorld);
     state = state.copyWith(
       worldState: state.worldState.copyWith(
         oldWorld: oldWorld,

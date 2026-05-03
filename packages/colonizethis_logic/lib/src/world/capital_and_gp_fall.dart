@@ -4,7 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../setup/capital_choice.dart';
 import '../setup/town_capital_occupancy.dart';
-import '../world/province_lookup.dart';
+import 'player_state_pipeline.dart';
+import 'province_lookup.dart';
 import 'capital_reassignment_fatal.dart';
 
 final _log = packageLogger();
@@ -34,11 +35,11 @@ Game applyCapitalReassignmentAfterCombat(
         .map((p) => p.id)
         .toList();
     if (ownedInRegion.isEmpty) {
-      final updatedPlayers = game.players.map((p) {
-        if (p.id != player.id) return p;
-        return p.copyWith(capitalProvinceId: null, capitalTile: null);
-      }).toList();
-      game = game.copyWith(players: updatedPlayers);
+      game = game.mapPlayers(
+        (p) => p.id != player.id
+            ? p
+            : p.copyWith(capitalProvinceId: null, capitalTile: null),
+      );
       _log.i(
         'player ${player.id} lost capital and has no provinces in $regionId; capital cleared',
       );
@@ -55,11 +56,7 @@ Game applyCapitalReassignmentAfterCombat(
     if (newProvince == null) {
       final msg =
           'capital reassignment: province $newProvinceId not found in region $regionId for player ${player.id}';
-      _log.e(
-        msg,
-        error: StateError(msg),
-        stackTrace: StackTrace.current,
-      );
+      _log.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
       throw CapitalReassignmentFatalError(msg);
     }
 
@@ -68,11 +65,7 @@ Game applyCapitalReassignmentAfterCombat(
       final msg =
           'capital reassignment: missing townTileKey for province $newProvinceId player ${player.id}';
       final err = StateError(msg);
-      _log.e(
-        msg,
-        error: err,
-        stackTrace: StackTrace.current,
-      );
+      _log.e(msg, error: err, stackTrace: StackTrace.current);
       throw CapitalReassignmentFatalError(msg, err);
     }
 
@@ -82,11 +75,7 @@ Game applyCapitalReassignmentAfterCombat(
     } catch (e, st) {
       final msg =
           'capital reassignment: invalid townTileKey for province $newProvinceId player ${player.id} raw="$rawTown"';
-      _log.e(
-        msg,
-        error: e,
-        stackTrace: st,
-      );
+      _log.e(msg, error: e, stackTrace: st);
       throw CapitalReassignmentFatalError(
         'Invalid townTileKey for province $newProvinceId (player ${player.id}): $e',
         e,
@@ -126,11 +115,7 @@ Game applyCapitalReassignmentAfterCombat(
     } catch (e, st) {
       final msg =
           'capital reassignment: failed to apply new capital for ${player.id}';
-      _log.e(
-        msg,
-        error: e,
-        stackTrace: st,
-      );
+      _log.e(msg, error: e, stackTrace: st);
       rethrow;
     }
   }
@@ -195,20 +180,19 @@ Game applyGreatPowerFall(
         .where((f) => f.ownerId != playerId)
         .toList();
 
-    game = game.copyWith(
-      worldState: game.worldState.copyWith(
-        oldWorld: newOldWorld,
-        newWorld: newNewWorld,
-        fleets: remainingFleets,
-      ),
-      players: game.players
-          .map(
-            (p) => p.id == playerId
-                ? p.copyWith(capitalProvinceId: null, capitalTile: null)
-                : p,
-          )
-          .toList(),
-    );
+    game = game
+        .copyWith(
+          worldState: game.worldState.copyWith(
+            oldWorld: newOldWorld,
+            newWorld: newNewWorld,
+            fleets: remainingFleets,
+          ),
+        )
+        .mapPlayers(
+          (p) => p.id == playerId
+              ? p.copyWith(capitalProvinceId: null, capitalTile: null)
+              : p,
+        );
   }
 
   return game;

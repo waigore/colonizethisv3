@@ -5,6 +5,7 @@ import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import '../world/army_migration.dart';
 import '../world/civilian_ownership_legality.dart';
+import '../world/province_lookup.dart';
 import '../world/province_ownership_transfer.dart';
 import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
@@ -108,15 +109,9 @@ Game _resolveJoinEmpireGreatPower(
   return next;
 }
 
-List<String> _sortedFullProvinceIdsOwnedBy(
-  Game game,
-  String ownerId,
-) {
+List<String> _sortedFullProvinceIdsOwnedBy(Game game, String ownerId) {
   final ids = <String>[];
-  for (final p in game.worldState.oldWorld.provinces) {
-    if (p.ownerId == ownerId) ids.add(p.id);
-  }
-  for (final p in game.worldState.newWorld.provinces) {
+  for (final p in game.worldState.allProvinces()) {
     if (p.ownerId == ownerId) ids.add(p.id);
   }
   ids.sort();
@@ -129,9 +124,7 @@ List<Fleet> _remapAllFleetsFromTo(
   String toId,
 ) {
   return fleets
-      .map(
-        (f) => f.ownerId == fromId ? f.copyWith(ownerId: toId) : f,
-      )
+      .map((f) => f.ownerId == fromId ? f.copyWith(ownerId: toId) : f)
       .toList();
 }
 
@@ -187,11 +180,7 @@ Game absorbMinorOrTribeIntoGp(
 
   next = next.copyWith(
     worldState: next.worldState.copyWith(
-      fleets: _remapAllFleetsFromTo(
-        next.worldState.fleets,
-        targetId,
-        gpId,
-      ),
+      fleets: _remapAllFleetsFromTo(next.worldState.fleets, targetId, gpId),
       oldWorld: RegionData(
         provinces: next.worldState.oldWorld.provinces,
         units: _remapAllUnitsFromTo(
@@ -221,10 +210,7 @@ Game absorbMinorOrTribeIntoGp(
   );
 
   next = next.copyWith(
-    worldState: reconcileArmiesAfterUnitsChanged(
-      next.worldState,
-      next,
-    ),
+    worldState: reconcileArmiesAfterUnitsChanged(next.worldState, next),
   );
 
   var minorNations = next.minorNations;
@@ -297,11 +283,7 @@ Game absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) {
   next = next.copyWith(
     generals: generals,
     worldState: next.worldState.copyWith(
-      fleets: _remapAllFleetsFromTo(
-        next.worldState.fleets,
-        targetGpId,
-        gpId,
-      ),
+      fleets: _remapAllFleetsFromTo(next.worldState.fleets, targetGpId, gpId),
       oldWorld: RegionData(
         provinces: next.worldState.oldWorld.provinces,
         units: _remapAllUnitsFromTo(
@@ -333,10 +315,7 @@ Game absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) {
   );
 
   next = next.copyWith(
-    worldState: reconcileArmiesAfterUnitsChanged(
-      next.worldState,
-      next,
-    ),
+    worldState: reconcileArmiesAfterUnitsChanged(next.worldState, next),
   );
 
   Map<String, bool> aiControl = Map<String, bool>.from(next.aiControlByGpId);

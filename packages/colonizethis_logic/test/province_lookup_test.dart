@@ -28,6 +28,49 @@ void main() {
     newWorld: RegionData(provinces: const []),
   );
 
+  group('tryGetRegionIdForLegacyProvinceKey', () {
+    test('resolves legacy short province id to oldWorld', () {
+      expect(
+        worldWithLegacyUnprefixedProvince.tryGetRegionIdForLegacyProvinceKey(
+          'p1',
+        ),
+        kRegionOldWorld,
+      );
+    });
+
+    test('resolves prefixed province id via row id match', () {
+      expect(
+        world.tryGetRegionIdForLegacyProvinceKey('oldWorld|p1'),
+        kRegionOldWorld,
+      );
+      expect(
+        world.tryGetRegionIdForLegacyProvinceKey('newWorld|n1'),
+        kRegionNewWorld,
+      );
+    });
+
+    test('returns null when key absent from both regions', () {
+      expect(world.tryGetRegionIdForLegacyProvinceKey('none'), isNull);
+    });
+
+    test('prefers oldWorld when same id string exists in both regions', () {
+      final dup = WorldState(
+        turnState: world.turnState,
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: 'dup', regionId: 'oldWorld', displayName: 'A'),
+          ],
+        ),
+        newWorld: RegionData(
+          provinces: [
+            Province(id: 'dup', regionId: 'newWorld', displayName: 'B'),
+          ],
+        ),
+      );
+      expect(dup.tryGetRegionIdForLegacyProvinceKey('dup'), kRegionOldWorld);
+    });
+  });
+
   group('tryGetProvince', () {
     test('finds OW province by full prefixed id', () {
       final p = tryGetProvince(world, 'oldWorld|p1');

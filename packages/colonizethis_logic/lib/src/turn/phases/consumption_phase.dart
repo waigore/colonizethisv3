@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../economy/economy_consumption.dart';
+import '../../world/player_state_pipeline.dart';
 import '../../world/unit_lookup.dart';
 import '../turn_pipeline_state.dart';
 
@@ -17,9 +18,7 @@ TurnPipelineState runConsumptionPipelinePhase(TurnPipelineState acc) {
     acc.idleLabourByPlayerId,
   );
 
-  final updatedPlayers = <Player>[];
-
-  for (final player in game.players) {
+  final mappedGame = game.mapPlayers((player) {
     final regimentCounts = regimentTypeCountsForPlayer(
       game.worldState,
       player.id,
@@ -53,16 +52,14 @@ TurnPipelineState runConsumptionPipelinePhase(TurnPipelineState acc) {
     }
     navalFeeding[player.id] = navalCoverage;
     idleLabour[player.id] = result.idleLabour;
-    updatedPlayers.add(
-      player.copyWith(
-        stockpile: result.stockpile,
-        workerPool: result.workerPool,
-      ),
+    return player.copyWith(
+      stockpile: result.stockpile,
+      workerPool: result.workerPool,
     );
-  }
+  });
 
   return acc.copyWith(
-    game: game.copyWith(players: updatedPlayers),
+    game: mappedGame,
     landFeedingCoverageByPlayerId: landFeeding,
     navalFeedingCoverageByPlayerId: navalFeeding,
     idleLabourByPlayerId: idleLabour,

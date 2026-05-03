@@ -117,20 +117,12 @@ Province? tryGetProvince(WorldState world, String fullProvinceId) {
 /// Returns the authoritative [Province.id] as [canonicalProvinceId] for bucket
 /// keys and timer maps.
 ({Province province, String canonicalProvinceId})?
-resolveProvinceRowForOwnershipTransfer(
-  WorldState world,
-  String provinceKey,
-) {
+resolveProvinceRowForOwnershipTransfer(WorldState world, String provinceKey) {
   final prefixed = tryGetProvince(world, provinceKey);
   if (prefixed != null) {
     return (province: prefixed, canonicalProvinceId: prefixed.id);
   }
-  for (final p in world.oldWorld.provinces) {
-    if (p.id == provinceKey) {
-      return (province: p, canonicalProvinceId: p.id);
-    }
-  }
-  for (final p in world.newWorld.provinces) {
+  for (final p in world.allProvinces()) {
     if (p.id == provinceKey) {
       return (province: p, canonicalProvinceId: p.id);
     }
@@ -159,6 +151,20 @@ extension WorldStateProvinceLookup on WorldState {
   Iterable<Province> allProvinces() sync* {
     yield* oldWorld.provinces;
     yield* newWorld.provinces;
+  }
+
+  /// Returns [kRegionOldWorld] or [kRegionNewWorld] when a province row's `id`
+  /// equals [key] in that region (old world checked first). For canonical
+  /// lookups prefer [tryGetProvince] with a prefixed id; this exists for
+  /// legacy short ids and tests (waigore/colonizethis#2071 Phase 1).
+  String? tryGetRegionIdForLegacyProvinceKey(String key) {
+    if (oldWorld.provinces.indexWhere((p) => p.id == key) >= 0) {
+      return kRegionOldWorld;
+    }
+    if (newWorld.provinces.indexWhere((p) => p.id == key) >= 0) {
+      return kRegionNewWorld;
+    }
+    return null;
   }
 
   String resolveToFullProvinceId(String provinceId) =>
