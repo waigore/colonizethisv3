@@ -2,6 +2,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/player_view.dart';
+import '../world/province_lookup.dart';
+import 'partial_province_reveal.dart';
 
 /// Order visibility rules. SPEC/program/fog-and-exploration-resolution.md.
 ///
@@ -117,13 +119,37 @@ typedef _WorkTargetVisibilityFn =
       String regionId,
       String provinceId,
       bool isOwned,
+      WorldState? worldState,
     );
+
+bool _workVisExplorePartialReveal(
+  PlayerView view,
+  String regionId,
+  String provinceId,
+  bool isOwned,
+  WorldState? worldState,
+) {
+  final ws = worldState;
+  if (ws == null) {
+    return false;
+  }
+  final fullProvinceId = ProvinceId.isPrefixed(provinceId)
+      ? provinceId
+      : ProvinceId.full(regionId, provinceId);
+  final landKeys = landTileKeysForProvinceBucket(
+    ws,
+    regionId,
+    fullProvinceId,
+  );
+  return isPartiallyRevealedProvinceLandTilesForPlayer(view, landKeys);
+}
 
 bool _workVisFoggedOrBetterProvince(
   PlayerView view,
   String regionId,
   String provinceId,
   bool isOwned,
+  WorldState? _,
 ) {
   return provinceHasAtLeastVisibility(
     view,
@@ -138,6 +164,7 @@ bool _workVisFoggedProvince(
   String regionId,
   String provinceId,
   bool isOwned,
+  WorldState? _,
 ) {
   return provinceHasAtLeastVisibility(
     view,
@@ -152,6 +179,7 @@ bool _workVisOwnedOrFoggedProvince(
   String regionId,
   String provinceId,
   bool isOwned,
+  WorldState? _,
 ) {
   return isOwned ||
       provinceHasAtLeastVisibility(
@@ -165,7 +193,7 @@ bool _workVisOwnedOrFoggedProvince(
 /// Map dispatch for work-target visibility (Refs #1531); unknown targets use default.
 final Map<String, _WorkTargetVisibilityFn> _workOrderVisibilityByTarget =
     <String, _WorkTargetVisibilityFn>{
-      kWorkTargetExplore: _workVisFoggedOrBetterProvince,
+      kWorkTargetExplore: _workVisExplorePartialReveal,
       kWorkTargetProspect: _workVisFoggedProvince,
       kWorkTargetBuildImprovement: _workVisOwnedOrFoggedProvince,
       kWorkTargetUpgradeTown: _workVisOwnedOrFoggedProvince,
@@ -180,12 +208,15 @@ final Map<String, _WorkTargetVisibilityFn> _workOrderVisibilityByTarget =
 
 /// Work order: true iff the unit's province (and [targetTileKey] when applicable) meets
 /// the minimum visibility for [workTarget]. SPEC/program/fog-and-exploration-resolution.md.
+///
+/// [worldState] is required for [kWorkTargetExplore] (partial-reveal land bucket).
 bool workOrderVisibilityOk(
   PlayerView view,
   Unit unit,
-  String workTarget, [
+  String workTarget, {
   String? targetTileKey,
-]) {
+  WorldState? worldState,
+}) {
   final regionId = targetTileKey != null && targetTileKey.isNotEmpty
       ? Unit.requireRegionIdFromTileKey(targetTileKey)
       : regionIdForUnit(view, unit);
@@ -197,7 +228,7 @@ bool workOrderVisibilityOk(
 
   final fn = _workOrderVisibilityByTarget[workTarget];
   if (fn != null) {
-    return fn(view, regionId, provinceId, isOwned);
+    return fn(view, regionId, provinceId, isOwned, worldState);
   }
   return false;
 }

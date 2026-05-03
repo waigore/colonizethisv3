@@ -38,6 +38,15 @@ masks policy violations instead of fixing them.
 Rule id: `avoid_print_suppression` (`match.kind`: `comment_substring`,
 `match.contains`: `ignore: avoid_print`).
 
+### Instant civilian work completion helper
+
+In runtime domain code, references to **`completeInstantCivilianOrder`** (identifier substring match) are disallowed.
+
+Rationale: `prospect` and `purchase_land` must use the normal **assign → tick → complete** civilian work path per [orders.md](orders.md) and [development-resolution.md](development-resolution.md); an assign-only instant completion bypass breaks treasury timing, `work.updatedPlayers`, and cancel semantics.
+
+Rule id: `no_complete_instant_civilian_order` (`match.kind`: `comment_substring`,
+`match.contains`: `completeInstantCivilianOrder`).
+
 ### Strict raw generic core types
 
 In runtime domain code, raw generic core types are disallowed when used without

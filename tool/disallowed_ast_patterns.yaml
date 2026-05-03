@@ -99,6 +99,13 @@ rules:
       Normalize with explicit prefixed-id handling at call sites.
     match:
       kind: province_local_segment_boundary_only
+  - id: no_complete_instant_civilian_order
+    message: >-
+      Do not reintroduce completeInstantCivilianOrder; civilian work primary
+      effects must run on Build/Work completion (Refs #2070).
+    match:
+      kind: comment_substring
+      contains: completeInstantCivilianOrder
   - id: debug_console_logic_contract_boundary
     message: >-
       Debug console code must import colonizethis_logic only through approved

@@ -1,6 +1,8 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show Stockpile, kTechIdMerchantCompanies;
 import 'package:colonizethis_logic/src/constants.dart';
 import 'package:colonizethis_logic/src/orders/orders_application_context.dart';
+import 'package:colonizethis_logic/src/orders/purchase_land_work_completion.dart';
 import 'package:colonizethis_logic/src/orders/work_handlers/purchase_land_handler.dart';
 import 'package:colonizethis_logic/src/orders/work_handlers/work_order_handler.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -14,7 +16,7 @@ void main() {
       expect(handler.supports(kWorkTargetExplore), isFalse);
     });
 
-    test('tryApply purchases land when embassy, peace, and treasury allow', () {
+    test('tryApply assigns currentWork without treasury deduction', () {
       const ow = 'oldWorld';
       const minorProvinceId = '$ow|M1';
       const tileKey = '$ow|M1|0|0';
@@ -109,18 +111,20 @@ void main() {
       );
 
       expect(applied, isTrue);
-      expect(context.treasury, 500 - purchaseLandCost('grain'));
-      expect(context.purchasedTilesByTileKey[tileKey], 'p1');
+      expect(context.treasury, 500);
+      expect(context.purchasedTilesByTileKey.containsKey(tileKey), isFalse);
       final updatedMerchant =
           context.state.work.newUnitsById['merchant1'] ??
           context.state.work.oldUnitsById['merchant1'];
       expect(updatedMerchant, isNotNull);
-      expect(updatedMerchant!.status, UnitStatus.idle);
+      expect(updatedMerchant!.status, UnitStatus.working);
       expect(updatedMerchant.tileKey, tileKey);
+      expect(updatedMerchant.currentWork?.workTarget, kWorkTargetPurchaseLand);
+      expect(updatedMerchant.currentWork?.remainingTurns, 1);
     });
   });
 
-  group('applyPurchaseLandWorkOrder', () {
+  group('applyPurchaseLandCompletion', () {
     BuildWorkState minimalState(Game game) {
       return BuildWorkState(
         game: game,
@@ -157,7 +161,7 @@ void main() {
         locationProvinceId: 'oldWorld|P1',
         tileKey: 'oldWorld|P1|0|0',
       );
-      final out = applyPurchaseLandWorkOrder(
+      final out = applyPurchaseLandCompletion(
         state: minimalState(game),
         player: const Player(
           id: 'p1',
@@ -169,7 +173,6 @@ void main() {
         treasury: 100,
         purchasedTilesByTileKey: const {},
         provinceById: (_) => null,
-        updateUnit: (_, __) => fail('updateUnit should not run'),
       );
       expect(out.treasury, 100);
       expect(out.purchasedTilesByTileKey, isEmpty);

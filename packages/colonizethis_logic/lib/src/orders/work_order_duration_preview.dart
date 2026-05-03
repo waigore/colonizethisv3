@@ -9,18 +9,12 @@ import '../world/province_lookup.dart';
 /// Returns deterministic assign-time total turns for a pending civilian work
 /// order preview shown before turn resolution.
 ///
-/// The return value is always at least `1` for UI display consistency, even
-/// for targets that resolve immediately in build/work (`prospect`,
-/// `purchase_land`).
+/// The return value is always at least `1` for UI display consistency.
 int previewTotalTurnsForPendingWorkOrder({
   required Game game,
   required Unit unit,
   required WorkOrder order,
 }) {
-  if (order.target == kWorkTargetProspect ||
-      order.target == kWorkTargetPurchaseLand) {
-    return 1;
-  }
   if (order.target == kWorkTargetCounterSpy) {
     return 1;
   }

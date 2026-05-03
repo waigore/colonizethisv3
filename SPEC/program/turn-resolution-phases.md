@@ -19,7 +19,7 @@ TurnResolver runs phases in **fixed order**:
 9. **Minor Regiment Upgrade** — Compute `maxGreatPowerMilitaryLevel` from post-Research Great Power buildable regiment tiers; set Old World Minor Nations `effectiveMilitaryLevel`; upgrade eligible minor land regiments in place; set Tribe `effectiveMilitaryLevel` to 1 (no parity).
 10. **Naval Interception & Naval Combat** — Patrol/blockade/beachhead interceptions; sea battles; fleet updates. [naval-movement-resolution.md](naval-movement-resolution.md), [naval-combat-resolution.md](naval-combat-resolution.md)
 11. **Combat** — Land battles; casualties; province flips.
-12. **Build / work** — BuildUnitOrder; WorkOrder (explore, prospect, improvements, roads, ports, forts, rails). [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md), [development-resolution.md](development-resolution.md)
+12. **Build / work** — BuildUnitOrder; WorkOrder (explore, prospect, `purchase_land`, improvements, roads, ports, forts, rails, spy targets, etc.). `prospect` and `purchase_land` use `currentWork` with assign-time duration from `totalTurnsForWork` but **no** instant primary effects at accept: see [orders.md](orders.md) (Civilian deferred primary effects) and [development-resolution.md](development-resolution.md). Exploration and visibility: [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
 13. **End-of-turn** — Victory check; era-change dialogue; fog decay (Spy 5-turn + Explorer/Spy); coastal sea zone full visibility; advance turn number. See [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § End-of-turn.
 
 ---

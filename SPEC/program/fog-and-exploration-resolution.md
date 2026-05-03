@@ -28,8 +28,8 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 
 **Prospect resolution** (Build/Work phase):
 
-1. For each Explorer with work order `prospect` on tile T, verify T is mineral-eligible.
-2. Add T to player's prospected set. **Instantaneous** — prospect is resolved immediately when the work order is accepted (in the Build/Work phase), not as a multi-turn countdown. This is consistent with other single-turn actions like `purchase_land`. For pending civilian row display before resolution, shared logic duration preview still returns minimum `1` turn so panel turn counters remain deterministic across all targets.
+1. For each Explorer with `currentWork.target == prospect` on tile T whose `remainingTurns` reaches **0** this tick, verify T is mineral-eligible.
+2. Add T to the player's prospected set. **Assign** only validates and sets `currentWork` (typically `totalTurns = 1` from `totalTurnsForWork`); the prospected-set mutation occurs at **completion**, same tick ordering as other civilian work. For pending civilian row display before resolution, shared logic duration preview returns `1` turn for `prospect` and `purchase_land` so panel turn counters stay deterministic.
 
 **Spy presence reveal:** When building visibility (or PlayerView), for each Spy in a **non-owner** province, that province's tiles are treated as **fully visible** for the Spy's owner for as long as the Spy is there.
 
