@@ -2,7 +2,8 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
 import 'package:colonizethis_app/features/game/flame/debug_console_overlay_panel.dart';
-import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
+import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
+    show kPlayerTurnFeedToggleButtonKey;
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/debug_console_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -217,7 +218,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
 
-    await tester.tap(find.byTooltip('Events'));
+    await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
     await tester.pump();
 
     expect(
@@ -282,7 +283,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
 
-      await tester.tap(find.byTooltip('Events'));
+      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
       await tester.pump();
 
       final navalLine = find.textContaining('naval battle resolved');
@@ -349,7 +350,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
 
-      await tester.tap(find.byTooltip('Events'));
+      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
       await tester.pump();
 
       final navalLine = find.textContaining('naval battle resolved');
@@ -414,7 +415,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
 
-    await tester.tap(find.byTooltip('Events'));
+    await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
     await tester.pump();
 
     expect(
@@ -476,7 +477,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
 
-      await tester.tap(find.byTooltip('Events'));
+      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
       await tester.pump();
 
       final line = find.textContaining('work completed');
@@ -544,7 +545,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
 
-    await tester.tap(find.byTooltip('Events'));
+    await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
     await tester.pump();
 
     expect(find.textContaining('discovered!'), findsOneWidget);
@@ -596,7 +597,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
 
-      expect(find.byTooltip('Events'), findsOneWidget);
+      expect(find.byKey(kPlayerTurnFeedToggleButtonKey), findsOneWidget);
       expect(find.text('1'), findsOneWidget);
       expect(
         find.textContaining('Research complete! agri_1 unlocked!'),
@@ -604,7 +605,7 @@ void main() {
       );
       expect(find.text('Events'), findsNothing);
 
-      await tester.tap(find.byTooltip('Events'));
+      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
       await tester.pump();
 
       expect(
@@ -613,7 +614,7 @@ void main() {
       );
       expect(find.text('Events'), findsNothing);
 
-      await tester.tap(find.byTooltip('Events'));
+      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
       await tester.pump();
 
       expect(
@@ -678,7 +679,7 @@ void main() {
         find.textContaining('Research complete! agri_1 unlocked!'),
         findsNothing,
       );
-      await tester.tap(find.byTooltip('Events'));
+      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
       expect(
@@ -686,7 +687,7 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.byTooltip('Events'));
+      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
       await tester.pump();
 
       bus.emit(
@@ -704,7 +705,7 @@ void main() {
         find.textContaining('Research complete! agri_1 unlocked!'),
         findsNothing,
       );
-      await tester.tap(find.byTooltip('Events'));
+      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
       expect(
@@ -765,7 +766,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
 
-      final eventsButton = find.byTooltip('Events');
+      final eventsButton = find.byKey(kPlayerTurnFeedToggleButtonKey);
       expect(eventsButton, findsOneWidget);
       final lineFinder = find.textContaining(
         'Research complete! agri_1 unlocked!',

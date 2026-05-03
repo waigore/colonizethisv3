@@ -1,9 +1,6 @@
 part of 'game_map_area.dart';
 
 mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
-  static const ValueKey<String> _playerTurnFeedToggleButtonKey = ValueKey(
-    'player-turn-feed-toggle-button',
-  );
   int _regionIndex = 0;
   RegionMapViewportSnapshot? _regionViewportSnapshot;
   RegionMapViewportSnapshot? _pendingRegionViewport;
@@ -321,55 +318,6 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     _setMapViewState(
       _mapViewState.copyWith(
         showPlayerTurnEventsFeed: !_mapViewState.showPlayerTurnEventsFeed,
-      ),
-    );
-  }
-
-  Widget _buildPlayerTurnEventsToggleButton({
-    required int eventCount,
-    required String tooltipLabel,
-  }) {
-    final badgeLabel = eventCount > 99 ? '99+' : '$eventCount';
-    return Tooltip(
-      message: tooltipLabel,
-      child: IconButton(
-        key: _playerTurnFeedToggleButtonKey,
-        onPressed: _togglePlayerTurnEventsFeedVisibility,
-        style: IconButton.styleFrom(
-          backgroundColor: Colors.black.withValues(alpha: 0.62),
-          foregroundColor: Colors.white,
-        ),
-        icon: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Icon(
-              _mapViewState.showPlayerTurnEventsFeed
-                  ? Icons.newspaper
-                  : Icons.newspaper_outlined,
-            ),
-            Positioned(
-              right: -8,
-              top: -8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: const BoxDecoration(
-                  color: Colors.redAccent,
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-                constraints: const BoxConstraints(minHeight: 16, minWidth: 16),
-                child: Text(
-                  badgeLabel,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -33,6 +33,25 @@ const Key kTreasuryIndicatorKey = Key('treasury_indicator');
 /// Key for the in-map Next turn control (integration / widget tests).
 const Key kGameMapNextTurnButtonKey = Key('game_map_next_turn_button');
 
+/// Key for the player turn event feed toggle (widget / integration tests).
+/// SPEC/ui/player-turn-event-feed.md.
+const Key kPlayerTurnFeedToggleButtonKey = Key(
+  'player-turn-feed-toggle-button',
+);
+
+/// Right gutter (logical px) from the map stack viewport edge for wide-layout overlays that hug the map column (minimap, feed card). SPEC/ui/player-turn-event-feed.md.
+const double kGameMapWideStackRightGutter = 8;
+
+/// Province / sea zone detail side panel width on wide layout (logical px).
+/// SPEC/ui/in-game-shell-narrow.md; parity with [GameMapProvinceDetailSidePanel].
+const double kGameMapWideProvinceSidePanelWidth = 320;
+
+/// Combined `Positioned.right` inset so overlays clear the 320 dp wide province column when open.
+/// LTR-only for this workstream. SPEC/ui/player-turn-event-feed.md.
+double gameMapWideOverlayRightInset({required bool provincePanelOpen}) =>
+    kGameMapWideStackRightGutter +
+    (provincePanelOpen ? kGameMapWideProvinceSidePanelWidth : 0);
+
 /// Key for the region minimap globe toggle. SPEC/ui/empire-overview.md § Region minimap.
 const Key kRegionMinimapToggleKey = Key('region_minimap_toggle');
 

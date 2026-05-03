@@ -11,6 +11,7 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import 'game_map_area_state_logic.dart';
+import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
 import 'per_player_work_target_selection_cache.dart';
 import '../widgets/province_sea_zone_detail_overlay.dart';
 
@@ -207,6 +208,6 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
     if (kCtE2EEnabled) {
       overlay = KeyedSubtree(key: kCtE2EProvincePanelRootKey, child: overlay);
     }
-    return SizedBox(width: 320, child: overlay);
+    return SizedBox(width: kGameMapWideProvinceSidePanelWidth, child: overlay);
   }
 }
