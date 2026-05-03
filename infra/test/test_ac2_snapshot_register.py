@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock
 
+from daytona import Resources
+
 from colonizethis_infra.constants import DEFAULT_DAYTONA_SNAPSHOT_NAME
 from colonizethis_infra.snapshot_register import register_tools_snapshot
 
@@ -36,3 +38,21 @@ def test_register_tools_snapshot_calls_create_with_params() -> None:
     from daytona import Image
 
     assert isinstance(params.image, Image)
+    assert params.resources is None
+
+
+def test_register_tools_snapshot_passes_resources_when_provided() -> None:
+    daytona = MagicMock()
+    dockerfile = Path(__file__).resolve().parent.parent / "Dockerfile"
+    res = Resources(cpu=2, memory=4, disk=8)
+
+    register_tools_snapshot(
+        daytona,
+        snapshot_name="ct_dev_base",
+        dockerfile_path=dockerfile,
+        on_logs=lambda _c: None,
+        resources=res,
+    )
+
+    params = daytona.snapshot.create.call_args.args[0]
+    assert params.resources == res

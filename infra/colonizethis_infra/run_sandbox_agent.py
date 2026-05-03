@@ -107,14 +107,35 @@ def run_pipeline(
     if cerr or target is None:
         return 1, cerr or "Clone target unresolved."
 
+    from colonizethis_infra.network_allowlist import (
+        flutter_pub_egress_allowlist_cidrs as _resolve_egress_cidrs,
+        truncate_cidr_allowlist_csv,
+    )
     from daytona import CreateSandboxFromSnapshotParams
 
     daytona = daytona_factory()
-    params = CreateSandboxFromSnapshotParams(
-        snapshot=_snapshot_name(),
-        env_vars={},
-        auto_stop_interval=0,
-    )
+    allow = os.environ.get("DAYTONA_FLUTTER_EGRESS_ALLOWLIST_CIDRS", "").strip()
+    if allow:
+        allow = truncate_cidr_allowlist_csv(allow)
+    else:
+        allow = _resolve_egress_cidrs()
+    if allow:
+        # Allowlist CIDRs for pub/GitHub edges while keeping general egress open so
+        # DNS (UDP) and other endpoints work; Daytona still receives the whitelist for policy.
+        params = CreateSandboxFromSnapshotParams(
+            snapshot=_snapshot_name(),
+            env_vars={},
+            auto_stop_interval=0,
+            network_block_all=False,
+            network_allow_list=allow,
+        )
+    else:
+        params = CreateSandboxFromSnapshotParams(
+            snapshot=_snapshot_name(),
+            env_vars={},
+            auto_stop_interval=0,
+            network_block_all=False,
+        )
     sandbox = daytona.create(params, timeout=0)
     sandbox.wait_for_sandbox_start(timeout=0)
 
