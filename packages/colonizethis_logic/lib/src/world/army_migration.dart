@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import 'army_ids.dart';
+import 'unit_lookup.dart';
 
 /// Prefixed ids use [ProvinceId.regionIdFrom]; otherwise resolve from [WorldState]
 /// (legacy tests and fixtures may use local province ids only).
@@ -67,23 +68,13 @@ bool _armiesMatchUnits(Game game) {
   }
   for (final a in ws.armies) {
     for (final uid in a.regimentUnitIds) {
-      final u = _findUnit(game, uid);
+      final u = game.worldState.tryGetUnitById(uid);
       if (u == null) return false;
       if (u.ownerId != a.ownerId) return false;
       if (u.locationProvinceId != a.stationedProvinceId) return false;
     }
   }
   return true;
-}
-
-Unit? _findUnit(Game game, String unitId) {
-  for (final u in game.worldState.oldWorld.units) {
-    if (u.id == unitId) return u;
-  }
-  for (final u in game.worldState.newWorld.units) {
-    if (u.id == unitId) return u;
-  }
-  return null;
 }
 
 Game _ensureHomeArmiesExist(Game game) {

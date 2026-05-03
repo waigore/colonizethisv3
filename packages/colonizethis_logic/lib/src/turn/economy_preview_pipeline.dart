@@ -6,6 +6,7 @@ import '../economy/build_cost.dart';
 import '../economy/economy_preview_stockpile_phase.dart';
 import '../world/player_state_pipeline.dart';
 import '../world/province_lookup.dart';
+import '../world/unit_lookup.dart';
 import 'phases/consumption_phase.dart';
 import 'phases/extraction_phase.dart';
 import 'phases/production_phase.dart';
@@ -67,16 +68,6 @@ Game _applyPendingBuildOrderCostsForPreview({
   });
 }
 
-Unit? _unitByIdInGame(Game game, String unitId) {
-  for (final u in game.worldState.oldWorld.units) {
-    if (u.id == unitId) return u;
-  }
-  for (final u in game.worldState.newWorld.units) {
-    if (u.id == unitId) return u;
-  }
-  return null;
-}
-
 const Set<String> _pendingStockpileWorkTargetsForPreview = {
   kWorkTargetBuildImprovement,
   kWorkTargetUpgradeTown,
@@ -109,7 +100,7 @@ Game _applyPendingMaterialWorkOrderCostsForPreview({
       if (!_pendingStockpileWorkTargetsForPreview.contains(target)) {
         continue;
       }
-      final u = _unitByIdInGame(game, order.unitId);
+      final u = game.worldState.tryGetUnitById(order.unitId);
       if (u == null || u.currentWork != null) {
         continue;
       }

@@ -29,7 +29,10 @@ List<Unit> allUnitsFromWorld(WorldState world) {
 
 /// Unit type id → count of land units owned by [playerId] (both regions).
 /// Used for military food upkeep during Consumption. SPEC/program/turn-resolution-phase-details.md.
-Map<String, int> regimentTypeCountsForPlayer(WorldState world, String playerId) {
+Map<String, int> regimentTypeCountsForPlayer(
+  WorldState world,
+  String playerId,
+) {
   final map = <String, int>{};
   for (final u in allUnitsFromWorld(world)) {
     if (u.ownerId != playerId) continue;
@@ -49,4 +52,18 @@ Map<String, int> shipTypeCountsForPlayer(WorldState world, String playerId) {
     }
   }
   return map;
+}
+
+/// Cross-region unit lookup on [WorldState] (waigore/colonizethis#2071 Phase 1).
+extension WorldStateUnitLookup on WorldState {
+  /// Returns the unit with [unitId] in old world first, then new world, or null.
+  Unit? tryGetUnitById(String unitId) {
+    for (final u in oldWorld.units) {
+      if (u.id == unitId) return u;
+    }
+    for (final u in newWorld.units) {
+      if (u.id == unitId) return u;
+    }
+    return null;
+  }
 }
