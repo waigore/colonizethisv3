@@ -240,6 +240,8 @@ BuildWorkState _processWorkUnits(
     }
     if (cw.workTarget != kWorkTargetCounterSpy &&
         cw.workTarget != kWorkTargetStealTech &&
+        cw.workTarget != kWorkTargetExplore &&
+        cw.workTarget != kWorkTargetPurchaseLand &&
         !isTileControlledByPlayer(current.game, u.ownerId, cw.tileKey)) {
       final restoredTile = u.originTileKey ?? u.tileKey;
       unitsById[entry.key] = u.copyWith(

@@ -2,12 +2,16 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/province_lookup.dart';
+import 'orders_application_helpers.dart';
 import '../dossier/event_dialogue.dart';
 import '../dossier/evidence_rules.dart';
 import '../economy/build_cost.dart';
 import '../world/naval.dart';
 import 'build_rail_work_rules.dart';
 import 'orders_application_context.dart';
+import 'purchase_land_work_completion.dart';
+import 'work_updated_players.dart';
 
 /// Propagates road transport level to adjacent capital/port tiles.
 ///
@@ -335,6 +339,70 @@ BuildWorkState _completedWorkNoop(
   BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) => s;
 
+BuildWorkState _completedWorkProspect(
+  BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
+) {
+  if (!isMineralEligibleTile(s.game, s.tileMapByRegion, cw.tileKey)) {
+    return s;
+  }
+  final existing =
+      s.game.worldState.playerProspectedTiles[u.ownerId] ?? const <String>{};
+  if (existing.contains(cw.tileKey)) {
+    return s;
+  }
+  final newProspected = Set<String>.from(existing)..add(cw.tileKey);
+  final ws = s.game.worldState.copyWith(
+    playerProspectedTiles: {
+      ...s.game.worldState.playerProspectedTiles,
+      u.ownerId: newProspected,
+    },
+  );
+  return s.copyWith(game: s.game.copyWith(worldState: ws));
+}
+
+BuildWorkState _completedWorkPurchaseLand(
+  BuildWorkState s,
+  Unit u,
+  CurrentWork cw,
+  List<Province> Function() getProvinces,
+  WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
+  BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
+) {
+  final player = s.game.playerById(u.ownerId);
+  if (player == null) {
+    return s;
+  }
+  final land = applyPurchaseLandCompletion(
+    state: s,
+    player: player,
+    unit: u,
+    targetTileKey: cw.tileKey,
+    treasury: player.treasury,
+    purchasedTilesByTileKey: s.work.purchasedTilesByTileKey,
+    provinceById: (id) => s.game.worldState.tryGetProvince(id),
+  );
+  final updatedPlayer = player.copyWith(treasury: land.treasury);
+  final nextPlayers = s.game.players
+      .map((p) => p.id == u.ownerId ? updatedPlayer : p)
+      .toList();
+  return s.copyWith(
+    game: s.game.copyWith(players: nextPlayers),
+    work: s.work.copyWith(
+      purchasedTilesByTileKey: land.purchasedTilesByTileKey,
+      updatedPlayers: upsertPlayerSnapshot(
+        s.work.updatedPlayers,
+        u.ownerId,
+        updatedPlayer,
+      ),
+    ),
+  );
+}
+
 /// Map-based work completion (Refs #1531). Unknown targets no-op.
 final Map<String, _CompletedWorkHandler> _completedWorkTargetHandlers =
     <String, _CompletedWorkHandler>{
@@ -345,6 +413,8 @@ final Map<String, _CompletedWorkHandler> _completedWorkTargetHandlers =
       kWorkTargetBuildPort: _completedWorkBuildPort,
       kWorkTargetBuildFort: _completedWorkBuildFort,
       kWorkTargetBuildRail: _completedWorkBuildRail,
+      kWorkTargetProspect: _completedWorkProspect,
+      kWorkTargetPurchaseLand: _completedWorkPurchaseLand,
       kWorkTargetStealTech: _completedWorkNoop,
       kWorkTargetCounterSpy: _completedWorkNoop,
     };

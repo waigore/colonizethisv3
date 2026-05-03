@@ -125,7 +125,8 @@ class WorkOrderValidator extends StatefulValidator {
           _context.view,
           validatedUnit,
           o.target,
-          o.targetTileKey,
+          targetTileKey: o.targetTileKey,
+          worldState: _context.game.worldState,
         )) {
           return OrderValidationResult.rejected(
             'Province or tile not visible for this work',
@@ -407,11 +408,8 @@ class WorkOrderValidator extends StatefulValidator {
 
   bool _applyProjectedPurchaseLandCost(WorkOrder o) {
     if (o.target != kWorkTargetPurchaseLand) return false;
-    final resourceId =
-        _context.game.worldState.resourceByTileKey[o.targetTileKey];
-    if (resourceId != null && resourceId.isNotEmpty) {
-      treasuryState -= purchaseLandCost(resourceId);
-    }
+    // Treasury is validated in precheck and charged only on work completion
+    // (SPEC/program/orders.md); do not deduct here.
     return true;
   }
 

@@ -6,23 +6,6 @@ import '../../constants.dart';
 
 final _log = packageLogger();
 
-void completeInstantCivilianOrder(
-  void Function(String, Unit) updateUnit,
-  Unit unit,
-  String targetTileKey,
-) {
-  updateUnit(
-    unit.id,
-    unit.copyWith(
-      status: UnitStatus.idle,
-      tileKey: targetTileKey,
-      clearOriginTileKey: true,
-      clearAssignedTileKey: true,
-      clearCurrentWork: true,
-    ),
-  );
-}
-
 bool tryAssignFixedDurationWorkOrder({
   required WorkOrder order,
   required Unit unit,

@@ -145,49 +145,65 @@ void main() {
       expect(h.supports(kWorkTargetExplore), isFalse);
     });
 
-    test(
-      'tryApplyProspectWorkOrder leaves game unchanged for non-mineral tile',
-      () {
-        const ow = 'oldWorld';
-        const provinceId = '$ow|P1';
-        const tileKey = '$ow|P1|0|0';
-        final explorer = Unit(
-          id: 'ex1',
-          type: kUnitTypeExplorer,
-          ownerId: 'p1',
-          locationProvinceId: provinceId,
-          tileKey: tileKey,
-        );
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-              ],
-              units: [explorer],
-            ),
-            newWorld: const RegionData(),
-            resourceByTileKey: const {tileKey: 'grain'},
+    test('tryApply returns false for non-mineral tile', () {
+      const ow = 'oldWorld';
+      const provinceId = '$ow|P1';
+      const tileKey = '$ow|P1|0|0';
+      final explorer = Unit(
+        id: 'ex1',
+        type: kUnitTypeExplorer,
+        ownerId: 'p1',
+        locationProvinceId: provinceId,
+        tileKey: tileKey,
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: provinceId, regionId: ow, ownerId: 'p1'),
+            ],
+            units: [explorer],
           ),
-          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-        );
-        final next = tryApplyProspectWorkOrder(
-          game: game,
-          tileMapByRegion: null,
-          player: game.players.single,
-          unit: explorer,
-          targetTileKey: tileKey,
-          updateUnit: (_, __) => fail('should not update unit'),
-        );
-        expect(identical(next, game), isTrue);
-        expect(
-          next.worldState.playerProspectedTiles['p1'] ?? const {},
-          isEmpty,
-        );
-      },
-    );
+          newWorld: const RegionData(),
+          resourceByTileKey: const {tileKey: 'grain'},
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      final work = WorkOrderState(
+        oldUnitsById: {'ex1': explorer},
+        newUnitsById: const {},
+        tileState: game.worldState.tileState,
+        visibilityByTile: const {},
+        portsByProvinceSeaboard: const {},
+        purchasedTilesByTileKey: const {},
+        oldProvinces: List<Province>.from(game.worldState.oldWorld.provinces),
+        newProvinces: const [],
+      );
+      final state = BuildWorkState(
+        game: game,
+        buildOrders: const {},
+        workOrders: const {},
+        work: work,
+      );
+      final context = WorkOrderExecutionContext(
+        state: state,
+        player: game.players.single,
+      );
+      const handler = ProspectWorkOrderHandler();
+      const order = WorkOrder(
+        unitId: 'ex1',
+        target: kWorkTargetProspect,
+        targetTileKey: tileKey,
+      );
+      expect(handler.tryApply(context, order, explorer, tileKey, true), isFalse);
+      expect(
+        context.state.game.worldState.playerProspectedTiles['p1'] ??
+            const <String>{},
+        isEmpty,
+      );
+    });
   });
 
   group('applyStandardWorkOrder', () {

@@ -6,35 +6,6 @@ import '../orders_application_helpers.dart';
 import 'shared_work_assignment.dart';
 import 'work_order_handler.dart';
 
-Game tryApplyProspectWorkOrder({
-  required Game game,
-  required Map<String, TileMapResult>? tileMapByRegion,
-  required Player player,
-  required Unit unit,
-  required String targetTileKey,
-  required void Function(String, Unit) updateUnit,
-}) {
-  if (targetTileKey.isEmpty ||
-      unit.currentWork != null ||
-      !isExplorerUnit(unit.type)) {
-    return game;
-  }
-  if (!isMineralEligibleTile(game, tileMapByRegion, targetTileKey)) return game;
-
-  final existing = game.worldState.playerProspectedTiles[player.id] ?? const {};
-  final newProspected = Set<String>.from(existing)..add(targetTileKey);
-  final updated = game.copyWith(
-    worldState: game.worldState.copyWith(
-      playerProspectedTiles: {
-        ...game.worldState.playerProspectedTiles,
-        player.id: newProspected,
-      },
-    ),
-  );
-  completeInstantCivilianOrder(updateUnit, unit, targetTileKey);
-  return updated;
-}
-
 class ProspectWorkOrderHandler implements WorkOrderHandler {
   const ProspectWorkOrderHandler();
 
@@ -49,16 +20,33 @@ class ProspectWorkOrderHandler implements WorkOrderHandler {
     String targetTileKey,
     bool hasValidTarget,
   ) {
-    context.state = context.state.copyWith(
-      game: tryApplyProspectWorkOrder(
-        game: context.state.game,
-        tileMapByRegion: context.state.tileMapByRegion,
-        player: context.player,
-        unit: unit,
-        targetTileKey: targetTileKey,
-        updateUnit: context.updateUnit,
-      ),
+    if (!isExplorerUnit(unit.type) ||
+        unit.currentWork != null ||
+        !hasValidTarget ||
+        targetTileKey.isEmpty) {
+      return false;
+    }
+    if (!isMineralEligibleTile(
+      context.state.game,
+      context.state.tileMapByRegion,
+      targetTileKey,
+    )) {
+      return false;
+    }
+    final existing =
+        context.state.game.worldState.playerProspectedTiles[context.player.id] ??
+        const <String>{};
+    if (existing.contains(targetTileKey)) {
+      return false;
+    }
+    return tryAssignFixedDurationWorkOrder(
+      order: order,
+      unit: unit,
+      targetTileKey: targetTileKey,
+      target: kWorkTargetProspect,
+      totalTurns: totalTurnsForWork(kWorkTargetProspect),
+      remainingTurns: totalTurnsForWork(kWorkTargetProspect),
+      updateUnit: context.updateUnit,
     );
-    return true;
   }
 }
