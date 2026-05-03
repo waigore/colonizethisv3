@@ -13,10 +13,16 @@ def register_tools_snapshot(
     snapshot_name: str,
     dockerfile_path: Path,
     on_logs: Callable[[str], None],
+    resources: Any | None = None,
 ) -> Any:
-    """Call `daytona.snapshot.create` with declarative image from Dockerfile."""
+    """Call `daytona.snapshot.create` with declarative image from Dockerfile.
+
+    When ``resources`` is set (Daytona ``Resources``), sandboxes created from this
+    snapshot use that CPU / memory (GiB) / disk (GiB) template unless the API
+    overrides it.
+    """
     from daytona import CreateSnapshotParams, Image
 
     image = Image.from_dockerfile(str(dockerfile_path))
-    params = CreateSnapshotParams(name=snapshot_name, image=image)
+    params = CreateSnapshotParams(name=snapshot_name, image=image, resources=resources)
     return daytona.snapshot.create(params, on_logs=on_logs)

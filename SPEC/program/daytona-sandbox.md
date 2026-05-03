@@ -6,13 +6,14 @@ Authoritative operator contract for **`infra/build-daytona-snapshot`** and **`in
 
 - **linux/amd64** Ubuntu-based **tools-only** image: Flutter (`stable` resolved at **image build time**), Dart within root **`pubspec.yaml`** `environment.sdk`, Android SDK, Linux desktop build deps, **xvfb**, **git**, **gh**, **Cursor CLI** (`agent`), **OpenCode CLI** (`opencode` via npm global). **No** repository clone in the image.
 - **Clone after start** over **HTTPS** using **`GITHUB_TOKEN`** (and Daytona sandbox APIs).
+- **Egress:** **`run-sandbox-agent`** always sets **`network_block_all=False`** so DNS and arbitrary HTTPS work. When resolved CIDRs exist, it also sets **`network_allow_list`** (comma-separated **IPv4 /32**s, **max 10** per API) built from **public DNS resolvers** (**`1.1.1.1`**, **`1.0.0.1`**, **`8.8.8.8`**, **`8.8.4.4`**), optional **`DAYTONA_EXTRA_EGRESS_RESOLVER_IPV4`**, then **round-robin** one **A** record per Flutter/pub/GitHub hostname per wave (operator **`dig` / `getaddrinfo`**). If no host addresses resolve, **`network_allow_list`** is omitted. Override CIDRs with **`DAYTONA_FLUTTER_EGRESS_ALLOWLIST_CIDRS`** (truncated to **10**). If **`dart pub get`** still fails, widen the override list, extend **`infra/colonizethis_infra/network_allowlist.py`**, or fix org policy.
 - **Manual** snapshot lifecycle: operators run **`infra/build-daytona-snapshot`** to rebuild when toolchains should advance.
 
 ## Scripts (repo root relative)
 
 | Entry | Role |
 |-------|------|
-| **`infra/build-daytona-snapshot`** | Thin shim → **`python3 -m colonizethis_infra.build_daytona_snapshot`**. (1) `docker build --platform linux/amd64`. (2) Register a Daytona Snapshot via Python **`daytona.snapshot.create`** with **`on_logs`**. |
+| **`infra/build-daytona-snapshot`** | Thin shim → **`python3 -m colonizethis_infra.build_daytona_snapshot`**. (1) `docker build --platform linux/amd64`. (2) Register a Daytona Snapshot via Python **`daytona.snapshot.create`** with **`on_logs`**. Optional snapshot template sizing: pass **`--snapshot-cpu`**, **`--snapshot-memory-gib`**, and **`--snapshot-disk-gib`** together (maps to Daytona **`Resources`** on **`CreateSnapshotParams`**); omit all three for API defaults. |
 | **`infra/run-sandbox-agent`** | Thin shim → **`python3 -m colonizethis_infra.run_sandbox_agent`**. Create sandbox from snapshot → clone → run **Cursor** or **OpenCode** with the given prompt. |
 
 Install Python deps once per machine/CI: **`pip install -r infra/requirements.txt`** (see **`infra/README.md`**).
@@ -36,6 +37,8 @@ If **`AGENT`** or **`CT_AGENT`** is set (non-empty), **`run-sandbox-agent`** exi
 | **`DAYTONA_API_KEY`** | Required for Daytona API (build snapshot registration + run sandbox). |
 | **`DAYTONA_API_URL`**, **`DAYTONA_TARGET`** | Optional Daytona SDK overrides ([Configuration](https://www.daytona.io/docs/en/configuration.md)). |
 | **`DAYTONA_SNAPSHOT_NAME`** | Optional; default sticky name **`colonizethis-daytona-flutter-tools`** (constant in `infra/colonizethis_infra/constants.py`). |
+| **`DAYTONA_FLUTTER_EGRESS_ALLOWLIST_CIDRS`** | Optional; comma-separated IPv4 **CIDRs** for **`network_allow_list`** when creating the sandbox (bypasses hostname resolution). |
+| **`DAYTONA_EXTRA_EGRESS_RESOLVER_IPV4`** | Optional; comma-separated extra **DNS resolver** IPv4 addresses (no ``/32`` suffix) merged into the built-in resolver list—use when the sandbox ``resolv.conf`` lists nameservers not already covered (e.g. host-specific ``213.x``). |
 | **`GITHUB_TOKEN`** | HTTPS clone + `gh`. |
 | **`CURSOR_API_KEY`** | Required when backend is **cursor** (before invoking Cursor). |
 | **`OPENCODE_API_KEY`** | Required when backend is **opencode**. |
@@ -64,6 +67,7 @@ If **`AGENT`** or **`CT_AGENT`** is set (non-empty), **`run-sandbox-agent`** exi
 | **AC4** | `infra/test/test_ac4_cursor_api_key.py`. |
 | **AC5** | `infra/test/test_ac5_opencode_model.py`. |
 | **AC6** | `infra/test/test_ac6_flutter_doctor_integration.py` — **skipped** unless **`RUN_INFRA_FLUTTER_DOCTOR=1`** (optional slow / Docker). |
+| **AC7** | `infra/test/test_usage_missing_backend.py` + **`infra/test/test_network_allowlist.py`** — **`run-sandbox-agent`** uses **`network_block_all=False`** always; sets **`network_allow_list`** when resolved CIDRs or **`DAYTONA_FLUTTER_EGRESS_ALLOWLIST_CIDRS`** is non-empty, else omits **`network_allow_list`**. |
 
 **CI:** In **`.github/workflows/quality.yml`**, the **`quality`** job runs **`pytest infra/test`** only when the **`infra_daytona`** path filter is true (**`infra/**`** changed); Dart/app gates continue to use the existing **`tests`** filter.
 
