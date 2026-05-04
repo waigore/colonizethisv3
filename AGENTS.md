@@ -59,6 +59,10 @@ Skills live under `.cursor/skills/<name>/SKILL.md`. When a skill matches the tas
 | `fix-pr` | Unblock a PR by fixing failing checks and quality gates. |
 | `implement-github-issue` | User gives an issue **#** or **URL**; validate problem/design/testable ACs, update **SPEC** if needed, implement, add positive/negative tests, open PR to **`dev`** with **`Refs #…`** (do **not** auto-close). Very large issues: one isolatable slice only. |
 | `merge-dev-into-android-build` | Merge `dev` into `build/app/android` for APK build workflows. |
+| `backlog-implement-agent` | Pick one open issue labeled `backlog:implementation`, run strict `implement-github-issue` delivery, open a PR documenting implemented vs deferred scope, and relabel to `backlog:verification` only when fully complete. |
+| `backlog-review-agent` | Pick one open issue labeled `backlog:review`, run strict `review-github-issue` analysis, comment findings, then relabel to `backlog:implementation` (pass) or `backlog:refinement` (fail). |
+| `backlog-refine-agent` | Pick one open issue labeled `backlog:refinement`, run strict `refine-github-issue` updates against comment feedback, then relabel to `backlog:review` (resolved) or `backlog:clarification` (uncertain). |
+| `backlog-verify-agent` | Pick one open issue labeled `backlog:verification`, run strict `verify-github-issue` verification, post findings, then relabel to `backlog:acceptance` (complete) or `backlog:implementation` (gaps remain). |
 | `plan-feature` | Scope a feature from SPEC/code (read-only), then open a capturing issue—no implementation. |
 | `refine-github-issue` | Refine an open issue from comment feedback (repro, root cause, priorities); update the body or return numbered clarifications when feedback conflicts with SPEC. |
 | `review-pr` | Review an open pull request against issue alignment, acceptance-criteria coverage, architecture conventions, and linting compliance; post all findings as a PR comment with strict YES/CONDITIONAL YES/NO outcomes. |
