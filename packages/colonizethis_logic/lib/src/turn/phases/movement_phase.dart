@@ -159,31 +159,18 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
       }
 
       final destinationRegion = ProvinceId.regionIdFrom(destination);
-      final inOldWorld = destinationRegion == kRegionOldWorld;
-      final oldUnits = [...state.worldState.oldWorld.units];
-      final newUnits = [...state.worldState.newWorld.units];
-      oldUnits.removeWhere((u) => u.id == unit.id);
-      newUnits.removeWhere((u) => u.id == unit.id);
       final movedUnit = unit.copyWith(
         locationProvinceId: destination,
         tileKey: destinationTile,
       );
-      if (inOldWorld) {
-        oldUnits.add(movedUnit);
-      } else {
-        newUnits.add(movedUnit);
-      }
       state = state.copyWith(
-        worldState: state.worldState.copyWith(
-          oldWorld: RegionData(
-            provinces: state.worldState.oldWorld.provinces,
-            units: oldUnits,
-          ),
-          newWorld: RegionData(
-            provinces: state.worldState.newWorld.provinces,
-            units: newUnits,
-          ),
-        ),
+        worldState: state.worldState.mapBothRegionUnits((rid, units) {
+          final next = [...units]..removeWhere((u) => u.id == unit.id);
+          if (rid == destinationRegion) {
+            next.add(movedUnit);
+          }
+          return next;
+        }),
       );
     }
   }
