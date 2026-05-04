@@ -10,6 +10,7 @@
 - **Goals:** **Info** when a **primary goal** (or equivalent) is **selected**, with goal id/name and any **major** constraint that changed the choice.
 - **Planners (build/move/naval/diplomacy/economy):** **Info** when a **concrete action** is **chosen** (unit type, target province where allowed, diplomacy action class, cargo preference summary). Include **turn** and **nationId**.
 - **Economy plan:** **Info** summary: `cargoPreference`, assignment **count**, `playerId`/`nationId` (per [economy-planner.md](../../ai/economy-planner.md) intent).
+- **Full AI civilian work (Refs #2082):** **Info** only; prefix `ai:` (package logger). One line per emitted civilian `WorkOrder`: tag **`civilian_work_assigned`** with `nationId`, `unitId`, `unitType`, `target`, `targetTileKey`. One line per idle civilian land unit that received **no** new work this pass: tag **`civilian_work_idle`** with `nationId`, `unitId`, `unitType`, `reason` (e.g. `no_suggestions` when `W(u)` / Explorer `C(e)` had no selectable row). Do **not** replace per-unit lines with a single summary line.
 
 ---
 
@@ -31,3 +32,4 @@
 
 - **Given** a full AI order pass for a nation, **when** generation completes, **then** there is at least one **info** line recording the **chosen** high-level outcome (goal and/or representative orders) with `turn` and nation/player id.
 - **Given** a planner that scores multiple candidates, **when** it selects a non-empty action, **then** **debug** logs include either **per-candidate** scores for the top N or an explicit **summary** that lists runner-up scores.
+- **Given** Full AI civilian work runs for a nation with **K** emitted civilian `WorkOrder`s and **N** idle work-capable civilians without new work, **when** logging at **info**, **then** the system emits exactly **K** `civilian_work_assigned` lines and **N** `civilian_work_idle` lines for that pass (Refs #2082, § Info above).
