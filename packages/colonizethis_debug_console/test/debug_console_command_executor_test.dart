@@ -33,6 +33,20 @@ void main() {
       expect(result.message, contains('500'));
     });
 
+    test('emits spawn regiment event for valid command', () {
+      final result = executor.executeRaw(
+        rawInput: '/spawn_regiment peasant_levies 2',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      expect(result.events, hasLength(1));
+      final event = result.events.single as SpawnDebugRegimentAtCapitalEvent;
+      expect(event.humanPlayerId, 'p1');
+      expect(event.regimentTypeId, 'peasant_levies');
+      expect(event.count, 2);
+      expect(result.message, contains('peasant_levies'));
+    });
+
     test('executor message for clamped add_money includes both amounts', () {
       final result = executor.executeRaw(
         rawInput: '/add_money 20000',

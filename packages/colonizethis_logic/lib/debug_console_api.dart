@@ -12,4 +12,8 @@ export 'package:colonizethis_models/colonizethis_models.dart'
         kUnitTypeMerchant,
         kUnitTypeRailBuilder,
         kUnitTypeSpy;
+export 'src/debug_console/debug_console_regiments.dart'
+    show
+        debugConsoleSupportedRegimentTypeIds,
+        debugConsoleSupportedRegimentTypeIdsSorted;
 export 'src/orders/build_spawn_province.dart' show resolveCivilianSpawnTileKey;
