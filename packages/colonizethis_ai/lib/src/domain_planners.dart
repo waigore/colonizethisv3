@@ -53,32 +53,37 @@ Orders runDomainPlanners({
   );
   final workThreshold =
       40 - (hasSpyWork ? agendaSpyOrderModifier(config.hiddenAgendaId) : 0);
+  final runFullAiCivilianWork =
+      primaryGoal == StrategicGoal.expand ||
+      domainWeights.economy >= workThreshold;
   _log.d(
     'work eval nationId=$nationId workThreshold=$workThreshold '
     'domainWeights.economy=${domainWeights.economy} primaryGoal=$primaryGoal '
     'workCandidates=${workCandidates.map((o) => "${o.unitId}:${o.target}").toList()}',
   );
-  if (workCandidates.isNotEmpty &&
-      (primaryGoal == StrategicGoal.expand ||
-          domainWeights.economy >= workThreshold)) {
-    final agendaId = config.hiddenAgendaId;
-    final pickFrom = (agendaId == 'tech_thief' && hasSpyWork)
-        ? workCandidates
-              .where(
-                (o) =>
-                    o.target == kWorkTargetStealTech ||
-                    o.target == kWorkTargetCounterSpy,
-              )
-              .toList()
-        : workCandidates;
-    final list = pickFrom.isNotEmpty ? pickFrom : workCandidates;
-    final rng = math.Random(seeds.economySeed);
-    final idx = rng.nextInt(list.length);
-    final chosen = list[idx];
-    _log.i(
-      'work chosen nationId=$nationId unitId=${chosen.unitId} target=${chosen.target}',
+  if (runFullAiCivilianWork) {
+    final selection = selectFullAiCivilianWorkOrders(
+      workSuggestions: workCandidates,
+      view: view,
+      game: game,
+      tileMapByRegion: tileMapByRegion,
     );
-    orders = _appendWorkOrders(orders, nationId, [chosen]);
+    for (final w in selection.workOrders) {
+      final unitType = view.ownUnitsById[w.unitId]?.type ?? 'unknown';
+      _log.i(
+        'civilian_work_assigned nationId=$nationId unitId=${w.unitId} '
+        'unitType=$unitType target=${w.target} targetTileKey=${w.targetTileKey}',
+      );
+    }
+    for (final idle in selection.idleEvents) {
+      _log.i(
+        'civilian_work_idle nationId=$nationId unitId=${idle.unitId} '
+        'unitType=${idle.unitType} reason=${idle.reason}',
+      );
+    }
+    if (selection.workOrders.isNotEmpty) {
+      orders = _appendWorkOrders(orders, nationId, selection.workOrders);
+    }
   } else if (workCandidates.isNotEmpty) {
     _log.d('work skipped nationId=$nationId weight below threshold');
   }
@@ -248,8 +253,7 @@ Orders _runMovePlanner({
   final provinceOwner = getProvinceOwnerMap(game);
   final scores = filtered.map((m) {
     final destProv = Unit.provinceIdFromTileKey(m.destinationTileKey);
-    final destOwner =
-        destProv != null ? provinceOwner[destProv] : null;
+    final destOwner = destProv != null ? provinceOwner[destProv] : null;
     if (destOwner == null || destOwner == nationId) return 1.0;
     final rel = getRelation(game, nationId, destOwner);
     final atWar = rel != null && rel.atWar;

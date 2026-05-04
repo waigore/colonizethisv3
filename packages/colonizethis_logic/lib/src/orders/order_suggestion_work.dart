@@ -171,7 +171,7 @@ void _addExplorerWorkSuggestionsForUnit({
             game.worldState,
           ).where((p) => partiallyRevealedProvinceCache.contains(p.id)).toList()
           ..sort((a, b) => a.id.compareTo(b.id));
-    WorkOrder? chosen;
+    final acceptedExplores = <WorkOrder>[];
     var lastReason = 'no_valid_tile';
     for (final prov in provinces) {
       final attempt = _tryExploreWorkOrderForProvince(
@@ -188,25 +188,27 @@ void _addExplorerWorkSuggestionsForUnit({
         tileMapByRegion: tileMapByRegion,
       );
       if (attempt.chosen != null) {
-        chosen = attempt.chosen;
-        break;
+        acceptedExplores.add(attempt.chosen!);
+      } else {
+        lastReason = attempt.lastReason;
       }
-      lastReason = attempt.lastReason;
     }
-    if (chosen != null) {
-      suggestions.add(chosen);
+    if (acceptedExplores.isNotEmpty) {
       existingTargetsByUnit
           .putIfAbsent(unit.id, () => <String>{})
           .add(kWorkTargetExplore);
-      _suggestionWorkLog(
-        unitId: unit.id,
-        unitType: unit.type,
-        unitRegionId: regionId,
-        atProvinceId: provinceId,
-        workTarget: kWorkTargetExplore,
-        outcome: 'included',
-        tile: chosen.targetTileKey,
-      );
+      for (final chosen in acceptedExplores) {
+        suggestions.add(chosen);
+        _suggestionWorkLog(
+          unitId: unit.id,
+          unitType: unit.type,
+          unitRegionId: regionId,
+          atProvinceId: provinceId,
+          workTarget: kWorkTargetExplore,
+          outcome: 'included',
+          tile: chosen.targetTileKey,
+        );
+      }
     } else {
       _suggestionWorkLog(
         unitId: unit.id,
@@ -236,7 +238,9 @@ void _addExplorerWorkSuggestionsForUnit({
   );
 }
 
-({String? tileKey, String lastReason}) _firstAcceptedProspectTileInProvince({
+/// Every engine-valid prospect tile in [tilesInProvince], in sorted tile order.
+/// [lastReason] is the last rejection reason when the list is empty.
+({List<String> tiles, String lastReason}) _allAcceptedProspectTilesInProvince({
   required PlayerView view,
   required Game game,
   required MapTopology topology,
@@ -250,7 +254,9 @@ void _addExplorerWorkSuggestionsForUnit({
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   var lastReason = 'no_valid_tile';
-  for (final tk in tilesInProvince) {
+  final sortedTiles = List<String>.from(tilesInProvince)..sort();
+  final accepted = <String>[];
+  for (final tk in sortedTiles) {
     if (prospected.contains(tk)) continue;
     if (!isMineralEligibleTile(game, tileMapByRegion, tk)) continue;
     final candidate = WorkOrder(
@@ -282,11 +288,12 @@ void _addExplorerWorkSuggestionsForUnit({
       candidate,
       tileMapByRegion: tileMapByRegion,
     )) {
-      return (tileKey: tk, lastReason: lastReason);
+      accepted.add(tk);
+    } else {
+      lastReason = 'engine_rejected';
     }
-    lastReason = 'engine_rejected';
   }
-  return (tileKey: null, lastReason: lastReason);
+  return (tiles: accepted, lastReason: lastReason);
 }
 
 void _addProspectSuggestionIfEligible({
@@ -327,8 +334,8 @@ void _addProspectSuggestionIfEligible({
   final provinces = allProvinces(game.worldState).toList()
     ..sort((a, b) => a.id.compareTo(b.id));
 
-  String? prospectTileKey;
   var lastReason = 'no_valid_tile';
+  final prospectRows = <WorkOrder>[];
   for (final prov in provinces) {
     final regionIdP = prov.regionId;
     final provinceIdFull = prov.id;
@@ -347,7 +354,7 @@ void _addProspectSuggestionIfEligible({
       lastReason = 'no_valid_tile';
       continue;
     }
-    final scan = _firstAcceptedProspectTileInProvince(
+    final scan = _allAcceptedProspectTilesInProvince(
       view: view,
       game: game,
       topology: topology,
@@ -361,12 +368,17 @@ void _addProspectSuggestionIfEligible({
       tileMapByRegion: tileMapByRegion,
     );
     lastReason = scan.lastReason;
-    prospectTileKey = scan.tileKey;
-    if (prospectTileKey != null) {
-      break;
+    for (final tk in scan.tiles) {
+      prospectRows.add(
+        WorkOrder(
+          unitId: unit.id,
+          target: kWorkTargetProspect,
+          targetTileKey: tk,
+        ),
+      );
     }
   }
-  if (prospectTileKey == null) {
+  if (prospectRows.isEmpty) {
     _suggestionWorkLog(
       unitId: unit.id,
       unitType: unit.type,
@@ -379,24 +391,21 @@ void _addProspectSuggestionIfEligible({
     return;
   }
 
-  final candidate = WorkOrder(
-    unitId: unit.id,
-    target: kWorkTargetProspect,
-    targetTileKey: prospectTileKey,
-  );
-  suggestions.add(candidate);
   existingTargetsByUnit
       .putIfAbsent(unit.id, () => <String>{})
       .add(kWorkTargetProspect);
-  _suggestionWorkLog(
-    unitId: unit.id,
-    unitType: unit.type,
-    unitRegionId: regionId,
-    atProvinceId: provinceId,
-    workTarget: kWorkTargetProspect,
-    outcome: 'included',
-    tile: prospectTileKey,
-  );
+  for (final candidate in prospectRows) {
+    suggestions.add(candidate);
+    _suggestionWorkLog(
+      unitId: unit.id,
+      unitType: unit.type,
+      unitRegionId: regionId,
+      atProvinceId: provinceId,
+      workTarget: kWorkTargetProspect,
+      outcome: 'included',
+      tile: candidate.targetTileKey,
+    );
+  }
 }
 
 /// Suggests candidate work orders for explorers and civilian workers owned by
