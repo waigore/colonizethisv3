@@ -5,7 +5,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import 'province_lookup.dart';
 import 'topology_helpers.dart';
-import 'unit_lookup.dart';
 
 final _log = packageLogger();
 
@@ -158,16 +157,12 @@ applyCivilianTileMoveOrdersToWorldRegions(
   Game game,
   List<Unit> ow,
   List<Unit> nw,
-) => (
-  oldWorld: RegionData(
-    provinces: game.worldState.oldWorld.provinces,
-    units: ow,
-  ),
-  newWorld: RegionData(
-    provinces: game.worldState.newWorld.provinces,
-    units: nw,
-  ),
-);
+) {
+  final ws = game.worldState.mapBothRegionUnits((regionId, _) {
+    return regionId == kRegionOldWorld ? ow : nw;
+  });
+  return (oldWorld: ws.oldWorld, newWorld: ws.newWorld);
+}
 
 ({List<Unit> ow, List<Unit> nw, int ordersSeen, int applied, int ignored})
 _applyCivilianMoveOrders(

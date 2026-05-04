@@ -345,17 +345,10 @@ WorldState _worldStateWithUpdatedArmyAndUnits(
   List<Army> armies,
   List<Unit> owUnits,
   List<Unit> nwUnits,
-) => worldState.copyWith(
-  armies: armies,
-  oldWorld: RegionData(
-    provinces: worldState.oldWorld.provinces,
-    units: owUnits,
-  ),
-  newWorld: RegionData(
-    provinces: worldState.newWorld.provinces,
-    units: nwUnits,
-  ),
-);
+) =>
+    worldState.copyWith(armies: armies).mapBothRegionUnits((regionId, _) {
+      return regionId == kRegionOldWorld ? owUnits : nwUnits;
+    });
 
 List<Army> _retargetArmyStation(
   List<Army> armies,
