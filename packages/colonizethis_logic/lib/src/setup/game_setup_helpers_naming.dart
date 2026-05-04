@@ -256,8 +256,14 @@ Game applyNaming({
   required Map<String, MapTopology> topologyByRegion,
 }) {
   final naming = defaultNamingConfig;
-  final owProvinces = game.worldState.oldWorld.provinces;
-  final nwProvinces = game.worldState.newWorld.provinces;
+  final owProvinces = <Province>[
+    for (final p in allProvinces(game.worldState))
+      if (p.regionId == kRegionOldWorld) p,
+  ];
+  final nwProvinces = <Province>[
+    for (final p in allProvinces(game.worldState))
+      if (p.regionId == kRegionNewWorld) p,
+  ];
   final owById = {for (final p in owProvinces) p.id: p};
   final nwById = {for (final p in nwProvinces) p.id: p};
   final usedOwProvinceDisplayNames = <String>{};

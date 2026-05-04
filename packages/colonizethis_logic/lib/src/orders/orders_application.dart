@@ -87,8 +87,14 @@ Game applyBuildAndWorkOrders(
     purchasedTilesByTileKey: Map<String, String>.from(
       game.worldState.purchasedTilesByTileKey,
     ),
-    oldProvinces: List<Province>.from(game.worldState.oldWorld.provinces),
-    newProvinces: List<Province>.from(game.worldState.newWorld.provinces),
+    oldProvinces: [
+      for (final p in allProvinces(game.worldState))
+        if (p.regionId == kRegionOldWorld) p,
+    ],
+    newProvinces: [
+      for (final p in allProvinces(game.worldState))
+        if (p.regionId == kRegionNewWorld) p,
+    ],
   );
   var state = BuildWorkState(
     game: game,
