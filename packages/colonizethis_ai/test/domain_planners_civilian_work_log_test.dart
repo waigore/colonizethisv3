@@ -222,6 +222,118 @@ void main() {
     });
 
     test(
+      'civilian_work_idle for all work-capable civilians when workCandidates '
+      'is empty (Refs #2082)',
+      () {
+        const nationId = 'gp1';
+        const ow = 'oldWorld';
+        const provinceId = '$ow|p1';
+        const tileKey = '$ow|p1|0|0';
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: ow, ownerId: nationId),
+              ],
+              units: [
+                Unit(
+                  id: 'e1',
+                  type: kUnitTypeExplorer,
+                  ownerId: nationId,
+                  locationProvinceId: provinceId,
+                  tileKey: tileKey,
+                ),
+                Unit(
+                  id: 'e2',
+                  type: kUnitTypeExplorer,
+                  ownerId: nationId,
+                  locationProvinceId: provinceId,
+                  tileKey: tileKey,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            playerVisibilityByTile: const {
+              nationId: {tileKey: 'fullyVisible'},
+            },
+            tileKeysByRegionAndProvince: const {
+              ow: {
+                provinceId: [tileKey],
+              },
+            },
+          ),
+          players: const [
+            Player(
+              id: nationId,
+              displayName: 'GP',
+              isHuman: false,
+              leaderKey: 'victoria',
+            ),
+          ],
+        );
+        const topology = MapTopology(nodes: [], edges: []);
+        final view = buildPlayerView(game, topology, nationId);
+        final snapshot = AIWorldSnapshot.fromPlayerView(view);
+        const config = AIConfig(
+          leaderId: 'victoria',
+          personalityId: 'victoria',
+          hiddenAgendaId: 'peacemaker',
+        );
+        final seeds = AISeedBundle.fromTurnSeed(20825);
+        const fakeApi = FakeOrderSuggestionAPIForDomainPlannerTests(
+          work: const [],
+          build: const [],
+          move: const [],
+          research: const [],
+          navalMove: const [],
+          navalMission: const [],
+        );
+        const economyPlan = EconomyPlan(
+          productionAssignments: [],
+          cargoPreference: CargoPreference.none,
+        );
+
+        final captured = <LogEvent>[];
+        void listener(LogEvent e) => captured.add(e);
+        Logger.addLogListener(listener);
+        Logger.level = Level.info;
+        try {
+          runDomainPlanners(
+            game: game,
+            topology: topology,
+            nationId: nationId,
+            view: view,
+            snapshot: snapshot,
+            config: config,
+            primaryGoal: StrategicGoal.expand,
+            seeds: seeds,
+            suggestionAPI: fakeApi,
+            economyPlan: economyPlan,
+          );
+        } finally {
+          Logger.removeLogListener(listener);
+          Logger.level = Level.info;
+        }
+
+        final idleLines = captured
+            .where((e) => e.message.contains('civilian_work_idle'))
+            .map((e) => e.message)
+            .toList();
+        expect(idleLines, hasLength(2));
+        expect(idleLines.every((m) => m.contains('reason=no_suggestions')), isTrue);
+        expect(idleLines.any((m) => m.contains('unitId=e1')), isTrue);
+        expect(idleLines.any((m) => m.contains('unitId=e2')), isTrue);
+
+        final assigned = captured
+            .where((e) => e.message.contains('civilian_work_assigned'))
+            .toList();
+        expect(assigned, isEmpty);
+      },
+    );
+
+    test(
       'tech_thief: spy work present still assigns Explorer work (per-unit, '
       'Refs #2082)',
       () {

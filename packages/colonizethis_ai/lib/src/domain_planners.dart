@@ -53,14 +53,15 @@ Orders runDomainPlanners({
   );
   final workThreshold =
       40 - (hasSpyWork ? agendaSpyOrderModifier(config.hiddenAgendaId) : 0);
+  final runFullAiCivilianWork =
+      primaryGoal == StrategicGoal.expand ||
+      domainWeights.economy >= workThreshold;
   _log.d(
     'work eval nationId=$nationId workThreshold=$workThreshold '
     'domainWeights.economy=${domainWeights.economy} primaryGoal=$primaryGoal '
     'workCandidates=${workCandidates.map((o) => "${o.unitId}:${o.target}").toList()}',
   );
-  if (workCandidates.isNotEmpty &&
-      (primaryGoal == StrategicGoal.expand ||
-          domainWeights.economy >= workThreshold)) {
+  if (runFullAiCivilianWork) {
     final selection = selectFullAiCivilianWorkOrders(
       workSuggestions: workCandidates,
       view: view,
