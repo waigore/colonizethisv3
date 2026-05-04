@@ -67,10 +67,12 @@ Complete condition:
 
 - The issue requirements are fully implemented and validated.
 - No substantive work remains for the issue.
+- All open PRs linked to this issue are successfully merged. If any linked PR is still open (including draft), the issue is not complete by definition.
 
 Partial condition:
 
 - Any material work remains (including intentionally deferred scope).
+- Any PR linked to the issue remains open or unmerged.
 
 ### 6) Move label only when complete
 
