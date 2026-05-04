@@ -10,7 +10,7 @@ Land military forces consist of **regiments** grouped into **armies**, and **gen
 
 **Regiment buildability:** A regiment type is **buildable** iff the player has researched the **tech that unlocks that regiment** (per [tech-tree-military.md](tech-tree-military.md)). There is **no era gate**: if the unlocking tech is in the player's techUnlocked set, that regiment can be built regardless of era. Build validation (order engine) and recruitment UI must consult the tech catalog.
 
-**Debug spawn exception (`/spawn_regiment`):** Debug-console regiment spawn is a debug-only path and does **not** consult normal affordability or tech unlock checks. It spawns only for the active human player at their capital and appends each spawned regiment to Home Army through `appendMilitaryRegimentToArmy`.
+**Debug spawn exception (`/spawn_regiment`):** Debug-console regiment spawn is a debug-only path and does **not** consult normal affordability or tech unlock checks. It spawns only for the active human player at their capital, appends each spawned regiment to Home Army through `appendMilitaryRegimentToArmy`, and mints canonical regiment unit ids in global sequence form `unit_<n>` (never `debug_*`).
 
 **Debug regiment hard-fail matrix:** Debug spawn hard-fails with no mutation and deterministic error when any of these checks fails: unknown `humanPlayerId`; targeted player is not human; unknown regiment id (not in catalog); missing `capitalProvinceId`; invalid capital province id region segment; invalid requested count (`<1`).
 

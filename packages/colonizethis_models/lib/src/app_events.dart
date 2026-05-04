@@ -476,6 +476,19 @@ class SpawnDebugRegimentAtCapitalEvent extends SessionCommandEvent {
   final int count;
 }
 
+/// Immediate debug ship spawn into the human player's home fleet at capital.
+class SpawnDebugShipAtCapitalHomeFleetEvent extends SessionCommandEvent {
+  const SpawnDebugShipAtCapitalHomeFleetEvent({
+    required this.humanPlayerId,
+    required this.shipTypeId,
+    this.count = 1,
+  });
+
+  final String humanPlayerId;
+  final String shipTypeId;
+  final int count;
+}
+
 /// Immediate debug treasury credit for the human player (no economy modifiers).
 class CreditDebugTreasuryEvent extends SessionCommandEvent {
   const CreditDebugTreasuryEvent({

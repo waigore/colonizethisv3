@@ -126,6 +126,43 @@ void main() {
       expect(events.single.count, 2);
     });
 
+    testWidgets('submitting valid spawn_ship emits ship spawn event', (
+      tester,
+    ) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      final events = <SpawnDebugShipAtCapitalHomeFleetEvent>[];
+      final sub = bus.on<SpawnDebugShipAtCapitalHomeFleetEvent>().listen(
+        events.add,
+      );
+      addTearDown(sub.cancel);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DebugConsoleOverlayPanel(
+              bus: bus,
+              humanPlayerId: 'human_1',
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('debug-console-input')),
+        '/spawn_ship carrack 2',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(events, hasLength(1));
+      expect(events.single.humanPlayerId, 'human_1');
+      expect(events.single.shipTypeId, 'carrack');
+      expect(events.single.count, 2);
+    });
+
     testWidgets('invalid command does not emit spawn event', (tester) async {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);

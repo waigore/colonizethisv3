@@ -55,6 +55,21 @@ class DebugConsoleCommandExecutor {
           message:
               'Queued debug regiment spawn: ${count}x $regimentTypeId at capital.',
         ),
+      DebugConsoleSpawnShipAtCapitalHomeFleet(
+        :final shipTypeId,
+        :final count,
+      ) =>
+        DebugConsoleExecutionResult.success(
+          events: [
+            SpawnDebugShipAtCapitalHomeFleetEvent(
+              humanPlayerId: humanPlayerId,
+              shipTypeId: shipTypeId,
+              count: count,
+            ),
+          ],
+          message:
+              'Queued debug ship spawn: ${count}x $shipTypeId at capital home fleet.',
+        ),
       DebugConsoleTreasuryCredit(
         :final requestedAmount,
         :final creditedAmount,
