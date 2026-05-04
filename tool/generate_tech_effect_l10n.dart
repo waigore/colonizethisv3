@@ -1,5 +1,5 @@
 // Reads tech_effect_summary.yaml and merges tech effect ARB entries into
-// app/lib/l10n/app_en.arb, and writes
+// app/lib/l10n/arb/app_en.arb, and writes
 // app/lib/features/game/widgets/tech_effect_summary_lookup.dart
 //
 // Run from repo root: dart tool/generate_tech_effect_l10n.dart
@@ -15,7 +15,7 @@ void main() {
   final yamlFile = File(
     '$root/packages/colonizethis_data/lib/src/data/tech_effect_summary.yaml',
   );
-  final appEnArb = File('$root/app/lib/l10n/app_en.arb');
+  final appEnArb = File('$root/app/lib/l10n/arb/app_en.arb');
   final lookupPath = File(
     '$root/app/lib/features/game/widgets/tech_effect_summary_lookup.dart',
   );

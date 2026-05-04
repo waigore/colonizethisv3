@@ -91,6 +91,41 @@ void main() {
       expect(snackbars.last.message, contains('42'));
     });
 
+    testWidgets('submitting valid spawn_regiment emits regiment event', (
+      tester,
+    ) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      final events = <SpawnDebugRegimentAtCapitalEvent>[];
+      final sub = bus.on<SpawnDebugRegimentAtCapitalEvent>().listen(events.add);
+      addTearDown(sub.cancel);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DebugConsoleOverlayPanel(
+              bus: bus,
+              humanPlayerId: 'human_1',
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('debug-console-input')),
+        '/spawn_regiment peasant_levies 2',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(events, hasLength(1));
+      expect(events.single.humanPlayerId, 'human_1');
+      expect(events.single.regimentTypeId, 'peasant_levies');
+      expect(events.single.count, 2);
+    });
+
     testWidgets('invalid command does not emit spawn event', (tester) async {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);

@@ -25,7 +25,7 @@ import 'app_event_handler.dart';
 import 'app_event_handler_debug_flip_province.dart'
     show applyDebugFlipProvinceOwnership;
 import 'app_event_handler_debug_spawn.dart'
-    show applyDebugCivilianSpawnAtCapital;
+    show applyDebugCivilianSpawnAtCapital, applyDebugRegimentSpawnAtCapital;
 import 'app_event_handler_debug_treasury.dart' show applyDebugTreasuryCredit;
 
 /// [OpenDialogEvent] id for [TrainCiviliansDialog]. SPEC/program/app-ui-wiring.md.

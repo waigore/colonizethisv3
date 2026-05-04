@@ -376,10 +376,10 @@ bool repoLintIdentifierLiteralShouldSkipFile(
       relativePathFromRepo.endsWith('.gen.dart')) {
     return true;
   }
-  // `flutter gen-l10n` output per app/l10n.yaml (`app_l10n_flutter_gen*.dart`,
-  // gitignored). ARB-derived strings may echo canonical work-target ids; do
-  // not subject generated l10n to identifier-literal domain gates.
-  if (slash.startsWith('app/lib/l10n/app_l10n_flutter_gen')) {
+  // `flutter gen-l10n` output per app/l10n.yaml under `lib/l10n/gen/`
+  // (`app_l10n_flutter_gen*.dart`, gitignored). ARB-derived strings may echo
+  // canonical work-target ids; do not subject generated l10n to identifier-literal domain gates.
+  if (slash.startsWith('app/lib/l10n/gen/app_l10n_flutter_gen')) {
     return true;
   }
   if (_repoLintSlashPathContainsFixtureMarker(slash)) {

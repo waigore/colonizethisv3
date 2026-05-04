@@ -35,7 +35,7 @@ bool packageDeclaresFlutterSdk(String pubspecYaml) {
 }
 
 /// True when [packageRoot] has Flutter l10n config (`l10n.yaml`), so generated
-/// `lib/l10n/*.dart` must exist before `flutter analyze` (CI parity with
+/// `lib/l10n/gen/*.dart` must exist before `flutter analyze` (CI parity with
 /// `app_tests_cache` / local clones without committed codegen).
 bool packageHasL10nConfig(String packageRoot) {
   return File(p.join(packageRoot, 'l10n.yaml')).existsSync();
@@ -119,21 +119,6 @@ Future<int> main(List<String> args) async {
           );
           stderr.writeln(gen.stderr);
           stderr.writeln(gen.stdout);
-          return 1;
-        }
-      }
-      if (p.basename(pkgPath) == 'app') {
-        final patch = await _run(
-          'dart',
-          ['run', 'tool/patch_app_localizations_after_gen_l10n.dart'],
-          workingDirectory: repoRoot,
-        );
-        if (patch.exitCode != 0) {
-          stderr.writeln(
-            'patch_app_localizations_after_gen_l10n failed (exit ${patch.exitCode}):',
-          );
-          stderr.writeln(patch.stderr);
-          stderr.writeln(patch.stdout);
           return 1;
         }
       }
