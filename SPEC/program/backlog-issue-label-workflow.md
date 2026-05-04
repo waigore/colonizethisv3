@@ -17,16 +17,13 @@ Define one deterministic issue-label workflow so automation and humans move back
 
 ## Role ownership
 
-- Automation-owned labels and transitions:
-  - `backlog:review`
-  - `backlog:refinement`
-  - `backlog:implementation`
-  - `backlog:verification`
-- Product-owner-only labels and transitions:
-  - `backlog:clarification`
-  - `backlog:acceptance`
+- Agent-owned relabel transitions:
+  - Agent performs all label transitions in this workflow, including transitions into and out of `backlog:clarification` and `backlog:acceptance`.
+- Product-owner-owned decisions:
+  - `backlog:clarification`: Product owner resolves ambiguity and provides final clarification direction.
+  - `backlog:acceptance`: Product owner performs final acceptance decisioning.
 
-Automation must not apply, remove, or transition through product-owner-only labels.
+Automation sets lifecycle labels; product owner performs the business decision steps for clarification and acceptance.
 
 ## State machine
 
@@ -35,16 +32,17 @@ Automation must not apply, remove, or transition through product-owner-only labe
 - `backlog:review` -> `backlog:implementation` (review pass)
 - `backlog:review` -> `backlog:refinement` (review fail)
 - `backlog:refinement` -> `backlog:review` (feedback fully resolved)
-- `backlog:refinement` -> `backlog:refinement` (material uncertainty remains; automation posts clarification request and waits for product-owner relabel)
+- `backlog:refinement` -> `backlog:clarification` (material uncertainty remains; agent relabels to hand off clarification work)
 - `backlog:implementation` -> `backlog:verification` (issue fully implemented)
 - `backlog:verification` -> `backlog:implementation` (gaps remain)
-- `backlog:verification` -> `backlog:verification` (verification complete; automation posts readiness and waits for product-owner relabel)
+- `backlog:verification` -> `backlog:acceptance` (verification complete; agent relabels for product-owner final acceptance decision)
 
-### Product owner handoffs (manual labels only)
+### Product owner handoffs
 
-- Product owner applies `backlog:clarification` when automation has posted unresolved uncertainties and product-owner clarification work is required.
-- `backlog:clarification` -> `backlog:review` after product owner resolves uncertainty in issue scope, behavior, or acceptance criteria.
-- Product owner applies `backlog:acceptance` after reviewing verification evidence and deciding the issue is accepted.
+- Agent applies `backlog:clarification` when unresolved uncertainty requires product-owner clarification.
+- `backlog:clarification` -> `backlog:review` after the product owner resolves uncertainty in issue scope, behavior, or acceptance criteria.
+- Agent applies `backlog:acceptance` after verification indicates completion readiness.
+- Product owner reviews acceptance evidence and performs final acceptance decisioning while the issue is in `backlog:acceptance`.
 - `backlog:acceptance` is terminal for this workflow and indicates product-owner acceptance outcome handling is outside automation scope.
 
 ## Causal link validation against skills
@@ -52,9 +50,9 @@ Automation must not apply, remove, or transition through product-owner-only labe
 The four backlog skills form a closed automation loop over quality gates:
 
 - Review gate decides implementation readiness or refinement need.
-- Refinement gate either returns to review or emits a clarification request for product-owner takeover.
+- Refinement gate either returns to review or relabels to `backlog:clarification` for product-owner clarification.
 - Implementation gate moves to verification only when no substantive work remains.
-- Verification gate either loops back to implementation for gaps or emits an acceptance-ready handoff for product-owner relabel.
+- Verification gate either loops back to implementation for gaps or relabels to `backlog:acceptance` for product-owner acceptance decisioning.
 
 This creates an auditable cause-and-effect chain where each transition is driven by explicit evidence (review findings, unresolved feedback, remaining work, or verification gaps).
 
@@ -64,7 +62,8 @@ This creates an auditable cause-and-effect chain where each transition is driven
 - Every transition removes the previous state label and adds exactly one destination label.
 - Automation never closes issues in this state workflow.
 - `backlog:verification` must not be applied when implementation work remains.
-- Only the product owner may add or remove `backlog:clarification` and `backlog:acceptance`.
+- Agent relabeling is the only mechanism for state transitions in this workflow.
+- Product owner decision ownership for clarification/acceptance does not change agent relabel authority.
 
 ## Acceptance criteria
 
@@ -82,7 +81,7 @@ This creates an auditable cause-and-effect chain where each transition is driven
 
 - Given an open issue labeled `backlog:refinement`  
   When automation cannot resolve at least one material uncertainty from comments, SPEC, and code evidence  
-  Then automation keeps `backlog:refinement` unchanged and posts a numbered clarification request comment for product-owner relabel to `backlog:clarification`.
+  Then automation removes `backlog:refinement`, adds `backlog:clarification`, and posts a numbered clarification comment for product-owner decisioning.
 
 - Given an open issue labeled `backlog:implementation`  
   When automation delivers only a partial implementation slice with substantive deferred work remaining  
@@ -98,7 +97,7 @@ This creates an auditable cause-and-effect chain where each transition is driven
 
 - Given an open issue labeled `backlog:verification`  
   When automation verifies implementation and finds no unresolved material gaps  
-  Then automation keeps `backlog:verification` unchanged and posts one consolidated verification-ready comment for product-owner relabel to `backlog:acceptance`.
+  Then automation removes `backlog:verification`, adds `backlog:acceptance`, and posts one consolidated verification-ready comment for product-owner acceptance decisioning.
 
 - Given an open issue labeled `backlog:clarification`  
   When the product owner resolves uncertainty in issue description, scope, and acceptance criteria  
@@ -108,6 +107,6 @@ This creates an auditable cause-and-effect chain where each transition is driven
   When the product owner performs final product acceptance decisioning  
   Then the issue remains outside automation transition control unless the product owner explicitly re-labels it for further automation work.
 
-- Given an open issue in any automation-owned state label  
+- Given an open issue in any workflow state label  
   When an automation run reaches a point that requires clarification or acceptance decisioning  
-  Then automation does not add `backlog:clarification` or `backlog:acceptance` and instead posts a handoff comment instructing product-owner manual relabel.
+  Then automation performs the state relabel (`backlog:clarification` or `backlog:acceptance`) and the product owner performs the corresponding business decision action.
