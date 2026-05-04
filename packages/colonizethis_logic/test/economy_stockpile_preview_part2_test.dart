@@ -161,15 +161,11 @@ void main() {
         isHuman: true,
         stockpile: const Stockpile(),
       );
-      final gameBusy = Game(
+      final gameBusy = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(units: [busyUnit]),
-          newWorld: const RegionData(),
-          tileState: tileState,
-        ),
         players: [poorPlayer],
+        oldWorld: RegionData(units: [busyUnit]),
+        tileState: tileState,
       );
       final ordersBusy = Orders(
         workOrdersByPlayerId: {
@@ -200,25 +196,21 @@ void main() {
             .applyDelta(CommodityCatalog.lumber.id, 1)
             .applyDelta(CommodityCatalog.castIron.id, 1),
       );
-      final gamePoorCost = Game(
+      final gamePoorCost = TestFixtures.minimalGame(
         id: 't2',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'b2',
-                type: kUnitTypeBuilder,
-                ownerId: 'p1',
-                locationProvinceId: 'ow|p1',
-                tileKey: tileKey,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileState: const TileMapState().setImprovement(tileKey, 1),
-        ),
         players: [playerLowStock],
+        oldWorld: RegionData(
+          units: [
+            Unit(
+              id: 'b2',
+              type: kUnitTypeBuilder,
+              ownerId: 'p1',
+              locationProvinceId: 'ow|p1',
+              tileKey: tileKey,
+            ),
+          ],
+        ),
+        tileState: const TileMapState().setImprovement(tileKey, 1),
       );
       final ordersPoorCost = Orders(
         workOrdersByPlayerId: {
@@ -252,23 +244,19 @@ void main() {
             .applyDelta(CommodityCatalog.lumber.id, 10)
             .applyDelta(CommodityCatalog.castIron.id, 10),
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'peasant_levies',
-                ownerId: 'p1',
-                locationProvinceId: 'ow|p1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
         players: [player],
+        oldWorld: RegionData(
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'peasant_levies',
+              ownerId: 'p1',
+              locationProvinceId: 'ow|p1',
+            ),
+          ],
+        ),
       );
       final currentOrders = Orders(
         workOrdersByPlayerId: {
@@ -848,23 +836,19 @@ void main() {
         stockpile: stockpile,
         workerPool: workers,
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'peasant_levies',
-                ownerId: 'p1',
-                locationProvinceId: 'ow|p1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
         players: [player],
+        oldWorld: RegionData(
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'peasant_levies',
+              ownerId: 'p1',
+              locationProvinceId: 'ow|p1',
+            ),
+          ],
+        ),
       );
       final delta = previewStockpileNetDeltaByCommodityForPlayer(
         game: game,
