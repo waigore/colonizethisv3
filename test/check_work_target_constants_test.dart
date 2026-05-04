@@ -84,7 +84,7 @@ void f() {
 }
 ''';
       final violations = findWorkTargetConstantViolations(
-        relativePath: 'app/lib/l10n/app_l10n_flutter_gen_en.dart',
+        relativePath: 'app/lib/l10n/gen/app_l10n_flutter_gen_en.dart',
         source: src,
         canonicalWorkTargets: canonicalWorkTargets,
         constantNameByWorkTarget: constantNameByWorkTarget,

@@ -463,6 +463,19 @@ class SpawnDebugCivilianAtCapitalEvent extends SessionCommandEvent {
   final int count;
 }
 
+/// Immediate debug military regiment spawn at the human player's capital.
+class SpawnDebugRegimentAtCapitalEvent extends SessionCommandEvent {
+  const SpawnDebugRegimentAtCapitalEvent({
+    required this.humanPlayerId,
+    required this.regimentTypeId,
+    this.count = 1,
+  });
+
+  final String humanPlayerId;
+  final String regimentTypeId;
+  final int count;
+}
+
 /// Immediate debug treasury credit for the human player (no economy modifiers).
 class CreditDebugTreasuryEvent extends SessionCommandEvent {
   const CreditDebugTreasuryEvent({

@@ -59,6 +59,8 @@ Summary for contributors and CI authors:
 
 **Workspace analyzer (GitHub #2014):** **`dart run tool/run_workspace_analyze_errors_only.dart`** or **`melos run workspace_analyze_errors_only`** (see root `pubspec.yaml` → `melos.scripts`) skips the **workspace host root** package, then runs **`flutter pub get`** then **`flutter gen-l10n`** for each Flutter workspace package that has **`l10n.yaml`**, then analyzes every other Pub workspace member with **`dart analyze`** or **`flutter analyze`**, failing only on **analyzer errors** (not warnings). CI runs this in the **`quality` job** of `.github/workflows/quality.yml` after `dart pub get`; **`tool/run_quality_gate_tests.sh`** runs the same command locally. See **[SPEC/program/repo-lint.md](./SPEC/program/repo-lint.md)** (*Phased roadmap* and *Workflow audit*) for the five-slice status and workflow parity.
 
+**App l10n layout (GitHub #2074):** ARB inputs live under **`app/lib/l10n/arb/`**; **`flutter gen-l10n`** writes only under **`app/lib/l10n/gen/`** (gitignored). If you pull after an older layout and see **`git`** report deleted hand files under **`app/lib/l10n/`** after **`flutter run`**, run **`flutter clean`** once in **`app/`** (or remove stale **`app/.dart_tool/flutter_build/**/gen_localizations.stamp`**) so incremental build metadata matches **`app/l10n.yaml`**. Details: **[SPEC/program/localization.md](./SPEC/program/localization.md)**.
+
 ## macOS Flutter build troubleshooting: Swift priors ReadError
 
 If `flutter run -d macos` or `flutter build macos` intermittently fails while compiling CocoaPods plugins with output that includes:

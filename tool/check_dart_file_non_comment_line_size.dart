@@ -16,7 +16,7 @@ const _generatedSuffixes = <String>[
 ];
 const _generatedPathPatterns = <Pattern>[
   'app/lib/l10n/app_localizations_',
-  'app/lib/l10n/app_l10n_flutter_gen_',
+  'app/lib/l10n/gen/app_l10n_flutter_gen_',
 ];
 const _excludedDirectoryNames = <String>{
   '.git',

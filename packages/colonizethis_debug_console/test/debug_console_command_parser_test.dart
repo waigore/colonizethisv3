@@ -79,5 +79,30 @@ void main() {
       expect(result.message, contains('/add_money'));
       expect(result.message, contains('9999'));
     });
+
+    test('parses spawn regiment command with defaults', () {
+      final result = parser.parse('/spawn_regiment peasant_levies');
+      expect(result.isError, isFalse);
+      final spawn = result.invocation! as DebugConsoleSpawnRegimentAtCapital;
+      expect(spawn.regimentTypeId, 'peasant_levies');
+      expect(spawn.count, 1);
+    });
+
+    test('rejects unknown regiment id', () {
+      final result = parser.parse('/spawn_regiment nope');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Unknown regiment type id'));
+    });
+
+    test('help includes all regiment ids in stable order', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      final sorted = debugConsoleSupportedRegimentTypeIdsSorted;
+      for (final id in sorted) {
+        expect(message, contains(id));
+      }
+      final joined = sorted.join(', ');
+      expect(message, contains(joined));
+    });
   });
 }

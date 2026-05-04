@@ -27,14 +27,10 @@ class DebugConsoleCommandParser {
     final command = tokens.first.toLowerCase();
     return switch (command) {
       '/spawn_civilian' => _parseSpawnCivilian(tokens),
+      '/spawn_regiment' => _parseSpawnRegiment(tokens),
       '/add_money' => _parseAddMoney(tokens),
       '/flip_province' => _parseFlipProvince(tokens),
-      '/help' => const DebugConsoleParseResult.error(
-        'Supported: /spawn_civilian <explorer|builder|engineer|spy|merchant|rail_builder> [count]; '
-        '/add_money <amount> (integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
-        '$kDebugConsoleMaxTreasuryCreditAmount are clamped); '
-        '/flip_province <regionId> <province_display_name>.',
-      ),
+      '/help' => DebugConsoleParseResult.error(_buildHelpMessage()),
       _ => DebugConsoleParseResult.error(
         'Unknown command: $command. Try /help.',
       ),
@@ -94,6 +90,37 @@ class DebugConsoleCommandParser {
     );
   }
 
+  DebugConsoleParseResult _parseSpawnRegiment(List<String> tokens) {
+    if (tokens.length < 2) {
+      return const DebugConsoleParseResult.error(
+        'Usage: /spawn_regiment <regiment_type_id> [count]',
+      );
+    }
+    final regimentTypeId = tokens[1].trim().toLowerCase();
+    if (!debugConsoleSupportedRegimentTypeIds.contains(regimentTypeId)) {
+      return const DebugConsoleParseResult.error(
+        'Unknown regiment type id. Use /help for supported regiment ids.',
+      );
+    }
+    final parsedCount = tokens.length >= 3 ? int.tryParse(tokens[2]) : 1;
+    if (parsedCount == null) {
+      return const DebugConsoleParseResult.error(
+        'Count must be an integer between 1 and 25.',
+      );
+    }
+    if (parsedCount < 1 || parsedCount > kDebugConsoleMaxSpawnCount) {
+      return const DebugConsoleParseResult.error(
+        'Count must be between 1 and 25.',
+      );
+    }
+    return DebugConsoleParseResult.success(
+      DebugConsoleParsedInvocation.spawnRegimentAtCapital(
+        regimentTypeId: regimentTypeId,
+        count: parsedCount,
+      ),
+    );
+  }
+
   DebugConsoleParseResult _parseFlipProvince(List<String> tokens) {
     if (tokens.length < 3) {
       return const DebugConsoleParseResult.error(
@@ -119,6 +146,16 @@ class DebugConsoleCommandParser {
       ),
     );
   }
+}
+
+String _buildHelpMessage() {
+  final regimentIds = debugConsoleSupportedRegimentTypeIdsSorted.join(', ');
+  return 'Supported: /spawn_civilian <explorer|builder|engineer|spy|merchant|rail_builder> [count]; '
+      '/spawn_regiment <regiment_type_id> [count] '
+      '(supported ids: $regimentIds); '
+      '/add_money <amount> (integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
+      '$kDebugConsoleMaxTreasuryCreditAmount are clamped); '
+      '/flip_province <regionId> <province_display_name>.';
 }
 
 class DebugConsoleParseResult {
