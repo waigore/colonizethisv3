@@ -388,6 +388,64 @@ void main() {
       expect(result.message, contains('no capital province'));
     });
 
+    test('fails when matched player is not human', () {
+      final game = Game(
+        id: 'g-reg-not-human',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'p2',
+            displayName: 'P2',
+            isHuman: false,
+            capitalProvinceId: 'oldWorld|1',
+          ),
+        ],
+      );
+      const event = SpawnDebugRegimentAtCapitalEvent(
+        humanPlayerId: 'p2',
+        regimentTypeId: 'peasant_levies',
+      );
+      final result = applyDebugRegimentSpawnAtCapital(
+        currentGame: game,
+        event: event,
+      );
+      expect(result.game, isNull);
+      expect(result.message, contains('is not human'));
+    });
+
+    test('fails on malformed capital province id and keeps state unchanged', () {
+      final game = Game(
+        id: 'g-reg-invalid-capital',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: 'malformed',
+          ),
+        ],
+      );
+      const event = SpawnDebugRegimentAtCapitalEvent(
+        humanPlayerId: 'p1',
+        regimentTypeId: 'peasant_levies',
+      );
+      final result = applyDebugRegimentSpawnAtCapital(
+        currentGame: game,
+        event: event,
+      );
+      expect(result.game, isNull);
+      expect(result.message, contains('invalid capital province id'));
+    });
+
     test('fails on unsupported regiment type and keeps state unchanged', () {
       final game = Game(
         id: 'g-reg-4',

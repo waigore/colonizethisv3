@@ -136,7 +136,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
       message: 'Debug spawn ignored: player has no capital province.',
     );
   }
-  final spawnRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
+  String? spawnRegionId;
+  try {
+    spawnRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
+  } on StateError {
+    spawnRegionId = null;
+  }
   if (spawnRegionId == null || spawnRegionId.isEmpty) {
     return (
       game: null,
