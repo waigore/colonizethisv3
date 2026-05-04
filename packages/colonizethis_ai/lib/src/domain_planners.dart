@@ -68,9 +68,10 @@ Orders runDomainPlanners({
       tileMapByRegion: tileMapByRegion,
     );
     for (final w in selection.workOrders) {
+      final unitType = view.ownUnitsById[w.unitId]?.type ?? 'unknown';
       _log.i(
         'civilian_work_assigned nationId=$nationId unitId=${w.unitId} '
-        'target=${w.target} targetTileKey=${w.targetTileKey}',
+        'unitType=$unitType target=${w.target} targetTileKey=${w.targetTileKey}',
       );
     }
     for (final idle in selection.idleEvents) {

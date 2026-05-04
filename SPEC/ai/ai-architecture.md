@@ -34,6 +34,8 @@ Behavior trees pick top-level goals; utility AI scores and selects concrete obje
 4. **Execution** — Combine, cap, and validate orders; emit dialogue/mood events. Strategic AI may emit **optional** agenda-flavoured dialogue and a matching base PortraitMoodEvent for each AI leader on a deterministic cadence derived from the dialogue seed (see [dialogue-and-mood.md](dialogue-and-mood.md) § When to emit for `kDialogueTurnsBetweenComments` and cadence rules).
 5. **Tactical** — Quick Battle: CP-based actions per lane, deterministic given state and seed.
 
+**Full AI civilian work observability (Refs #2082):** When domain planners emit civilian `WorkOrder` choices from `suggestWorkOrders`, the `ai` package logger emits **`Level.info`** lines (prefix `ai:`) — one per emitted order: tag **`civilian_work_assigned`** with `nationId`, `unitId`, `unitType`, `target`, `targetTileKey`; and one per idle civilian with no new work: tag **`civilian_work_idle`** with `nationId`, `unitId`, `unitType`, `reason` (e.g. `no_suggestions`). No summary-only line replaces per-unit lines.
+
 ### Tactical Behavior Rules
 - Prefer occupying good terrain (hill, town, woods) with high-value units.
 - Avoid exposing fragile units in swamp unless numerically overwhelming.
