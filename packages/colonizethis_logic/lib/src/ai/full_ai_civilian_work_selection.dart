@@ -76,6 +76,37 @@ bool _tileShowsMineralForExposure(
   return prospected.contains(tileKey) && res == mineralId;
 }
 
+void _bumpExposureForTile(
+  Game game,
+  PlayerView view,
+  String playerId,
+  String tileKey,
+  Province province,
+  Map<String, int> counts,
+) {
+  if (!_observationEligible(view, game, playerId, tileKey, province)) {
+    return;
+  }
+  for (final m in kMineralResourceIds) {
+    if (!_tileShowsMineralForExposure(game, playerId, tileKey, m)) continue;
+    counts[m] = (counts[m] ?? 0) + 1;
+  }
+}
+
+void _bumpExposureForProvinceEntry(
+  Game game,
+  PlayerView view,
+  String playerId,
+  MapEntry<String, List<String>> entry,
+  Map<String, int> counts,
+) {
+  final province = tryGetProvince(game.worldState, entry.key);
+  if (province == null) return;
+  for (final tk in entry.value) {
+    _bumpExposureForTile(game, view, playerId, tk, province, counts);
+  }
+}
+
 Map<String, int> _exposureCountsByMineral(
   Game game,
   PlayerView view,
@@ -84,19 +115,7 @@ Map<String, int> _exposureCountsByMineral(
   final counts = <String, int>{for (final m in kMineralResourceIds) m: 0};
   for (final byProvince in game.worldState.tileKeysByRegionAndProvince.values) {
     for (final entry in byProvince.entries) {
-      final provId = entry.key;
-      final province = tryGetProvince(game.worldState, provId);
-      if (province == null) continue;
-      for (final tk in entry.value) {
-        if (!_observationEligible(view, game, playerId, tk, province)) {
-          continue;
-        }
-        for (final m in kMineralResourceIds) {
-          if (_tileShowsMineralForExposure(game, playerId, tk, m)) {
-            counts[m] = (counts[m] ?? 0) + 1;
-          }
-        }
-      }
+      _bumpExposureForProvinceEntry(game, view, playerId, entry, counts);
     }
   }
   return counts;
@@ -152,6 +171,24 @@ int _prospectTerritoryPoints(
   return 0;
 }
 
+Resource? _resourceByMineralId(String mId) {
+  for (final r in Resource.values) {
+    if (r.name == mId) return r;
+  }
+  return null;
+}
+
+bool _terrainHostsMineral(
+  TerrainType terrain,
+  String mId,
+  ResourceRules rules,
+) {
+  final res = _resourceByMineralId(mId);
+  if (res == null) return false;
+  final allowed = rules.allowedTerrains[res];
+  return allowed != null && allowed.contains(terrain);
+}
+
 bool _tileCanHostAnyMineralInSet(
   Map<String, TileMapResult>? tileMapByRegion,
   String tileKey,
@@ -162,16 +199,7 @@ bool _tileCanHostAnyMineralInSet(
   if (terrain == null) return false;
   final rules = ResourceRules.defaultRules;
   for (final mId in mineralIds) {
-    Resource? res;
-    for (final r in Resource.values) {
-      if (r.name == mId) {
-        res = r;
-        break;
-      }
-    }
-    if (res == null) continue;
-    final allowed = rules.allowedTerrains[res];
-    if (allowed != null && allowed.contains(terrain)) return true;
+    if (_terrainHostsMineral(terrain, mId, rules)) return true;
   }
   return false;
 }
@@ -193,29 +221,31 @@ int _pScore(
   return base + urgent;
 }
 
+int _exploreTieCompare(WorkOrder w, WorkOrder best) {
+  final tk = w.targetTileKey.compareTo(best.targetTileKey);
+  if (tk != 0) return tk;
+  final pw = Unit.provinceIdFromTileKey(w.targetTileKey) ?? '';
+  final pb = Unit.provinceIdFromTileKey(best.targetTileKey) ?? '';
+  return pw.compareTo(pb);
+}
+
 WorkOrder? _bestExploreRow(
   List<WorkOrder> explores,
   PlayerView view,
   Game game,
 ) {
   if (explores.isEmpty) return null;
-  WorkOrder? best;
-  var bestScore = -1 << 30;
-  for (final w in explores) {
+  var best = explores.first;
+  var bestScore = _eScore(best, view, game);
+  for (var i = 1; i < explores.length; i++) {
+    final w = explores[i];
     final s = _eScore(w, view, game);
     if (s > bestScore) {
       bestScore = s;
       best = w;
-    } else if (s == bestScore && best != null) {
-      final tk = w.targetTileKey.compareTo(best.targetTileKey);
-      if (tk < 0) {
-        best = w;
-      } else if (tk == 0) {
-        final pw = Unit.provinceIdFromTileKey(w.targetTileKey) ?? '';
-        final pb = Unit.provinceIdFromTileKey(best.targetTileKey) ?? '';
-        if (pw.compareTo(pb) < 0) best = w;
-      }
+      continue;
     }
+    if (s == bestScore && _exploreTieCompare(w, best) < 0) best = w;
   }
   return best;
 }
@@ -229,15 +259,18 @@ WorkOrder? _bestProspectRow(
   Set<String> sHigh,
 ) {
   if (prospects.isEmpty) return null;
-  WorkOrder? best;
-  var bestScore = -1 << 30;
-  for (final w in prospects) {
+  var best = prospects.first;
+  var bestScore = _pScore(best, game, view, playerId, tileMapByRegion, sHigh);
+  for (var i = 1; i < prospects.length; i++) {
+    final w = prospects[i];
     final s = _pScore(w, game, view, playerId, tileMapByRegion, sHigh);
     if (s > bestScore) {
       bestScore = s;
       best = w;
-    } else if (s == bestScore && best != null) {
-      if (w.targetTileKey.compareTo(best.targetTileKey) < 0) best = w;
+      continue;
+    }
+    if (s == bestScore && w.targetTileKey.compareTo(best.targetTileKey) < 0) {
+      best = w;
     }
   }
   return best;
@@ -286,6 +319,120 @@ bool _explorerOnlySuggestions(List<WorkOrder> w) {
   );
 }
 
+void _appendExplorerPathResult({
+  required Unit? unit,
+  required List<WorkOrder> w,
+  required Game game,
+  required PlayerView view,
+  required String playerId,
+  Map<String, TileMapResult>? tileMapByRegion,
+  required List<WorkOrder> workOrders,
+  required List<FullAiCivilianWorkIdle> idleEvents,
+}) {
+  final c = w
+      .where(
+        (o) =>
+            o.target == kWorkTargetExplore || o.target == kWorkTargetProspect,
+      )
+      .toList();
+  if (c.isEmpty) {
+    if (unit == null) return;
+    idleEvents.add(
+      FullAiCivilianWorkIdle(
+        unitId: unit.id,
+        unitType: unit.type,
+        reason: 'no_suggestions',
+      ),
+    );
+    return;
+  }
+  final chosen = _pickExplorerCandidateSet(
+    c,
+    game,
+    view,
+    playerId,
+    tileMapByRegion,
+  );
+  if (chosen != null) {
+    workOrders.add(chosen);
+    return;
+  }
+  if (unit == null) return;
+  idleEvents.add(
+    FullAiCivilianWorkIdle(
+      unitId: unit.id,
+      unitType: unit.type,
+      reason: 'no_suggestions',
+    ),
+  );
+}
+
+void _appendLexicographicPathResult({
+  required Unit? unit,
+  required List<WorkOrder> w,
+  required List<WorkOrder> workOrders,
+  required List<FullAiCivilianWorkIdle> idleEvents,
+}) {
+  if (w.isEmpty) {
+    if (unit == null) return;
+    idleEvents.add(
+      FullAiCivilianWorkIdle(
+        unitId: unit.id,
+        unitType: unit.type,
+        reason: 'no_suggestions',
+      ),
+    );
+    return;
+  }
+  final chosen = _pickLexicographic(w);
+  if (chosen == null) return;
+  workOrders.add(chosen);
+}
+
+void _appendSelectionForUnitId({
+  required String unitId,
+  required Map<String, List<WorkOrder>> byUnit,
+  required PlayerView view,
+  required Game game,
+  Map<String, TileMapResult>? tileMapByRegion,
+  required List<WorkOrder> workOrders,
+  required List<FullAiCivilianWorkIdle> idleEvents,
+}) {
+  final W = List<WorkOrder>.from(byUnit[unitId] ?? const <WorkOrder>[]);
+  _sortWorkOrdersLex(W);
+  final unit = view.ownUnitsById[unitId];
+
+  if (unit != null &&
+      (unit.currentWork != null || !_civilianWorkCapableType(unit.type))) {
+    return;
+  }
+
+  final isExplorerCase = unit != null && isExplorerUnit(unit.type);
+  final orphanExplorerScoring =
+      unit == null && W.isNotEmpty && _explorerOnlySuggestions(W);
+
+  if (isExplorerCase || orphanExplorerScoring) {
+    _appendExplorerPathResult(
+      unit: unit,
+      w: W,
+      game: game,
+      view: view,
+      playerId: view.playerId,
+      tileMapByRegion: tileMapByRegion,
+      workOrders: workOrders,
+      idleEvents: idleEvents,
+    );
+    return;
+  }
+
+  _appendLexicographicPathResult(
+    unit: unit,
+    w: W,
+    workOrders: workOrders,
+    idleEvents: idleEvents,
+  );
+}
+
 /// Selects per-unit civilian work for Full AI from [workSuggestions].
 FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   required List<WorkOrder> workSuggestions,
@@ -293,7 +440,6 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   required Game game,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  final playerId = view.playerId;
   final byUnit = <String, List<WorkOrder>>{};
   for (final w in workSuggestions) {
     byUnit.putIfAbsent(w.unitId, () => <WorkOrder>[]).add(w);
@@ -314,77 +460,15 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   final idleEvents = <FullAiCivilianWorkIdle>[];
 
   for (final unitId in allUnitIds) {
-    final W = List<WorkOrder>.from(byUnit[unitId] ?? const <WorkOrder>[]);
-    _sortWorkOrdersLex(W);
-    final unit = view.ownUnitsById[unitId];
-
-    if (unit != null &&
-        (unit.currentWork != null || !_civilianWorkCapableType(unit.type))) {
-      continue;
-    }
-
-    final isExplorerCase = unit != null && isExplorerUnit(unit.type);
-    final orphanExplorerScoring =
-        unit == null && W.isNotEmpty && _explorerOnlySuggestions(W);
-
-    if (isExplorerCase || orphanExplorerScoring) {
-      final c = W
-          .where(
-            (w) =>
-                w.target == kWorkTargetExplore ||
-                w.target == kWorkTargetProspect,
-          )
-          .toList();
-      if (c.isEmpty) {
-        if (unit != null) {
-          idleEvents.add(
-            FullAiCivilianWorkIdle(
-              unitId: unit.id,
-              unitType: unit.type,
-              reason: 'no_suggestions',
-            ),
-          );
-        }
-        continue;
-      }
-      final chosen = _pickExplorerCandidateSet(
-        c,
-        game,
-        view,
-        playerId,
-        tileMapByRegion,
-      );
-      if (chosen != null) {
-        workOrders.add(chosen);
-      } else if (unit != null) {
-        idleEvents.add(
-          FullAiCivilianWorkIdle(
-            unitId: unit.id,
-            unitType: unit.type,
-            reason: 'no_suggestions',
-          ),
-        );
-      }
-      continue;
-    }
-
-    if (W.isEmpty) {
-      if (unit != null) {
-        idleEvents.add(
-          FullAiCivilianWorkIdle(
-            unitId: unit.id,
-            unitType: unit.type,
-            reason: 'no_suggestions',
-          ),
-        );
-      }
-      continue;
-    }
-
-    final chosen = _pickLexicographic(W);
-    if (chosen != null) {
-      workOrders.add(chosen);
-    }
+    _appendSelectionForUnitId(
+      unitId: unitId,
+      byUnit: byUnit,
+      view: view,
+      game: game,
+      tileMapByRegion: tileMapByRegion,
+      workOrders: workOrders,
+      idleEvents: idleEvents,
+    );
   }
 
   workOrders.sort(_compareWorkOrderLex);
