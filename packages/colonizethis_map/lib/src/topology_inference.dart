@@ -2,6 +2,8 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'tile_key_util.dart';
+
 /// Infers MapTopology from a tile map result. SPEC/program/tile-map-gen-resources.md § Topology inference.
 /// Collects unique region ids from grid; classifies province vs sea zone; builds edges from adjacencies.
 MapTopology inferTopologyFromTileMap(
@@ -26,8 +28,8 @@ MapTopology inferTopologyFromTileMap(
   final pairs = result.adjacentRegionPairs();
   final edges = <TopologyEdge>[];
   for (final pair in pairs) {
-    final parts = pair.split('|');
-    if (parts.length == 2) {
+    final parts = trySplitExactlyTwoPipeSegments(pair);
+    if (parts != null) {
       edges.add(TopologyEdge(id1: parts[0], id2: parts[1]));
     }
   }

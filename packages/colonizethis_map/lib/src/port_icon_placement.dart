@@ -93,17 +93,7 @@ String? localProvinceIdFromPortsSeaboardKey(
   String seaboardKey,
   String regionId,
 ) {
-  final parts = seaboardKey.split('|');
-  if (parts.length >= 3) {
-    if (parts[0] != regionId) {
-      return null;
-    }
-    return parts[1];
-  }
-  if (parts.length == 2) {
-    return parts[0];
-  }
-  return null;
+  return tryLocalProvinceIdFromPortsSeaboardKey(seaboardKey, regionId);
 }
 
 /// Authoritative **land** port tile key from [Game.worldState.portsByProvinceSeaboard]

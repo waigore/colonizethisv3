@@ -433,6 +433,9 @@ jobs:
       - name: Test canonical province tile-key checker (SPEC/game/world-model-identity.md)
         run: dart test test/check_canonical_province_tile_keys_test.dart --reporter=compact
 
+      - name: Test colonizethis_map lib pipe-split gate (Refs #2087)
+        run: dart test test/check_colonizethis_map_lib_pipe_splits_test.dart --reporter=compact
+
       - name: Wang incremental assets gate (Python)
         run: |
           set -euo pipefail

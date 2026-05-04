@@ -27,3 +27,37 @@ ParsedMapTileSuffixXY? tryParseMapTileKeySuffixXY(String tileKey) {
   }
   return (x: x, y: y);
 }
+
+/// Returns [a, b] when [s] splits into exactly two segments (e.g. topology edge ids).
+List<String>? trySplitExactlyTwoPipeSegments(String s) {
+  final parts = s.split('|');
+  if (parts.length != 2) {
+    return null;
+  }
+  return parts;
+}
+
+/// Last `|` segment, or [delimited] when there is no delimiter (same as a single-segment split).
+String lastPipeSegment(String delimited) {
+  final parts = delimited.split('|');
+  return parts.last;
+}
+
+/// Local province id from a `portsByProvinceSeaboard` map **key** for [regionId].
+/// SPEC/ui/town-port-icons.md.
+String? tryLocalProvinceIdFromPortsSeaboardKey(
+  String seaboardKey,
+  String regionId,
+) {
+  final parts = seaboardKey.split('|');
+  if (parts.length >= 3) {
+    if (parts[0] != regionId) {
+      return null;
+    }
+    return parts[1];
+  }
+  if (parts.length == 2) {
+    return parts[0];
+  }
+  return null;
+}

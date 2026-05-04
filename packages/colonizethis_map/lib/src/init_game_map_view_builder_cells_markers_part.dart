@@ -70,48 +70,52 @@ List<CapitalMarkerView> _buildCapitalMarkers({
   required String regionId,
 }) {
   final capitals = <CapitalMarkerView>[];
-  _appendCapitalMarkers(
-    capitals: capitals,
-    regionId: regionId,
-    factions: game.players,
-    idOf: (player) => player.id,
-    displayNameOf: (player) => player.displayName,
-    capitalOf: (player) {
-      final capital = player.capitalTile;
-      if (capital == null) {
-        return null;
-      }
-      return (regionId: capital.regionId, x: capital.x, y: capital.y);
-    },
-  );
-  _appendCapitalMarkers(
-    capitals: capitals,
-    regionId: regionId,
-    factions: game.minorNations,
-    idOf: (nation) => nation.id,
-    displayNameOf: (nation) => nation.displayName ?? nation.id,
-    capitalOf: (nation) {
-      final capital = nation.capitalTile;
-      if (capital == null) {
-        return null;
-      }
-      return (regionId: capital.regionId, x: capital.x, y: capital.y);
-    },
-  );
-  _appendCapitalMarkers(
-    capitals: capitals,
-    regionId: regionId,
-    factions: game.tribes,
-    idOf: (tribe) => tribe.id,
-    displayNameOf: (tribe) => tribe.displayName ?? tribe.id,
-    capitalOf: (tribe) {
-      final capital = tribe.capitalTile;
-      if (capital == null) {
-        return null;
-      }
-      return (regionId: capital.regionId, x: capital.x, y: capital.y);
-    },
-  );
+  for (final append in <void Function()>[
+    () => _appendCapitalMarkers(
+      capitals: capitals,
+      regionId: regionId,
+      factions: game.players,
+      idOf: (player) => player.id,
+      displayNameOf: (player) => player.displayName,
+      capitalOf: (player) {
+        final capital = player.capitalTile;
+        if (capital == null) {
+          return null;
+        }
+        return (regionId: capital.regionId, x: capital.x, y: capital.y);
+      },
+    ),
+    () => _appendCapitalMarkers(
+      capitals: capitals,
+      regionId: regionId,
+      factions: game.minorNations,
+      idOf: (nation) => nation.id,
+      displayNameOf: (nation) => nation.displayName ?? nation.id,
+      capitalOf: (nation) {
+        final capital = nation.capitalTile;
+        if (capital == null) {
+          return null;
+        }
+        return (regionId: capital.regionId, x: capital.x, y: capital.y);
+      },
+    ),
+    () => _appendCapitalMarkers(
+      capitals: capitals,
+      regionId: regionId,
+      factions: game.tribes,
+      idOf: (tribe) => tribe.id,
+      displayNameOf: (tribe) => tribe.displayName ?? tribe.id,
+      capitalOf: (tribe) {
+        final capital = tribe.capitalTile;
+        if (capital == null) {
+          return null;
+        }
+        return (regionId: capital.regionId, x: capital.x, y: capital.y);
+      },
+    ),
+  ]) {
+    append();
+  }
   return capitals;
 }
 
