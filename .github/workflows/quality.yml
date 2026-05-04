@@ -125,7 +125,6 @@ jobs:
           set -e
           cd app
           flutter gen-l10n
-          dart run ../tool/patch_app_localizations_after_gen_l10n.dart
 
       - name: Check long string switches (AST)
         if: needs.changes.outputs.tests == 'true'
@@ -229,6 +228,28 @@ jobs:
           # Gitignored linux/flutter/generated_plugins.cmake; workspace dart pub get does not emit it.
           flutter pub get
           flutter build linux --release --no-pub
+
+      # Refs #2074: full assemble must not delete or rewrite tracked hand l10n (stale gen stamp regression).
+      - name: Verify hand-maintained app l10n after Linux build
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          rels=(
+            app/lib/l10n/app_localizations_en.dart
+            app/lib/l10n/app_localizations_contract.dart
+            app/lib/l10n/app_localizations_delegate.dart
+            app/lib/l10n/l10n.dart
+            app/lib/l10n/app_localizations_lookup.dart
+            app/lib/l10n/app_localizations_en_part1.dart
+            app/lib/l10n/app_localizations_en_part2.dart
+            app/lib/l10n/app_localizations_en_part3.dart
+            app/lib/l10n/app_localizations_en_part4.dart
+            app/lib/l10n/app_localizations_en_part5.dart
+          )
+          for f in "${rels[@]}"; do
+            test -f "$f" || { echo "missing tracked l10n file: $f"; exit 1; }
+          done
+          git diff --exit-code -- "${rels[@]}"
 
   app_tests_shard:
     # job.name cannot use env.* (GitHub limitation); keep "2" in sync with APP_TEST_TOTAL_SHARDS and matrix.shard.
@@ -368,14 +389,12 @@ jobs:
       - name: Verify OrderEngine codegen (SPEC/program/order-engine.md)
         run: bash tool/verify_order_engine_codegen.sh
 
-      # `flutter gen-l10n` overwrites tracked split layout; `ct_repo_lint` reads the
-      # workspace tree (Refs #2021). Patch before repo lint so NCL matches committed shell.
-      - name: Restore app l10n split after gen-l10n (NCL / analyze parity)
+      # Regenerate `lib/l10n/gen/` before `ct_repo_lint` / NCL so analyzer-visible gen exists (Refs #2074).
+      - name: App flutter gen-l10n (workspace parity)
         run: |
           set -e
           cd app
           flutter gen-l10n
-          dart run ../tool/patch_app_localizations_after_gen_l10n.dart
 
       - name: Repo convention lint (unified manifest, SPEC/program/repo-lint.md)
         env:
@@ -499,12 +518,11 @@ jobs:
           if [ -d app ]; then
             cd app
             flutter gen-l10n
-            dart run ../tool/patch_app_localizations_after_gen_l10n.dart
-            if [ -f lib/l10n/untranslated.json ]; then
-              content=$(cat lib/l10n/untranslated.json | tr -d '[:space:]')
+            if [ -f lib/l10n/gen/untranslated.json ]; then
+              content=$(cat lib/l10n/gen/untranslated.json | tr -d '[:space:]')
               if [ "$content" != "{}" ] && [ "$content" != "" ]; then
                 echo "Untranslated localization messages detected:"
-                cat lib/l10n/untranslated.json
+                cat lib/l10n/gen/untranslated.json
                 exit 1
               fi
             fi
