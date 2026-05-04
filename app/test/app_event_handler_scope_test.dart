@@ -514,7 +514,7 @@ void main() {
       );
       const event = SpawnDebugShipAtCapitalHomeFleetEvent(
         humanPlayerId: 'p1',
-        shipTypeId: 'ship_of_the_line',
+        shipTypeId: kTechIdShipOfTheLine,
         count: 2,
       );
       final result = applyDebugShipSpawnAtCapitalHomeFleet(
