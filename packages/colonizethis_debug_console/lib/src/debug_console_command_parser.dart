@@ -28,6 +28,7 @@ class DebugConsoleCommandParser {
     return switch (command) {
       '/spawn_civilian' => _parseSpawnCivilian(tokens),
       '/spawn_regiment' => _parseSpawnRegiment(tokens),
+      '/spawn_ship' => _parseSpawnShip(tokens),
       '/add_money' => _parseAddMoney(tokens),
       '/flip_province' => _parseFlipProvince(tokens),
       '/help' => DebugConsoleParseResult.error(_buildHelpMessage()),
@@ -121,6 +122,37 @@ class DebugConsoleCommandParser {
     );
   }
 
+  DebugConsoleParseResult _parseSpawnShip(List<String> tokens) {
+    if (tokens.length < 2) {
+      return const DebugConsoleParseResult.error(
+        'Usage: /spawn_ship <ship_type_id> [count]',
+      );
+    }
+    final shipTypeId = tokens[1].trim().toLowerCase();
+    if (!debugConsoleSupportedShipTypeIds.contains(shipTypeId)) {
+      return const DebugConsoleParseResult.error(
+        'Unknown ship type id. Use /help for supported ship ids.',
+      );
+    }
+    final parsedCount = tokens.length >= 3 ? int.tryParse(tokens[2]) : 1;
+    if (parsedCount == null) {
+      return const DebugConsoleParseResult.error(
+        'Count must be an integer between 1 and 25.',
+      );
+    }
+    if (parsedCount < 1 || parsedCount > kDebugConsoleMaxSpawnCount) {
+      return const DebugConsoleParseResult.error(
+        'Count must be between 1 and 25.',
+      );
+    }
+    return DebugConsoleParseResult.success(
+      DebugConsoleParsedInvocation.spawnShipAtCapitalHomeFleet(
+        shipTypeId: shipTypeId,
+        count: parsedCount,
+      ),
+    );
+  }
+
   DebugConsoleParseResult _parseFlipProvince(List<String> tokens) {
     if (tokens.length < 3) {
       return const DebugConsoleParseResult.error(
@@ -150,9 +182,12 @@ class DebugConsoleCommandParser {
 
 String _buildHelpMessage() {
   final regimentIds = debugConsoleSupportedRegimentTypeIdsSorted.join(', ');
+  final shipIds = debugConsoleSupportedShipTypeIdsSorted.join(', ');
   return 'Supported: /spawn_civilian <explorer|builder|engineer|spy|merchant|rail_builder> [count]; '
       '/spawn_regiment <regiment_type_id> [count] '
       '(supported ids: $regimentIds); '
+      '/spawn_ship <ship_type_id> [count] '
+      '(supported ids: $shipIds); '
       '/add_money <amount> (integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
       '$kDebugConsoleMaxTreasuryCreditAmount are clamped); '
       '/flip_province <regionId> <province_display_name>.';

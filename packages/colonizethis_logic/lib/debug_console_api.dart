@@ -16,4 +16,8 @@ export 'src/debug_console/debug_console_regiments.dart'
     show
         debugConsoleSupportedRegimentTypeIds,
         debugConsoleSupportedRegimentTypeIdsSorted;
+export 'src/debug_console/debug_console_ships.dart'
+    show
+        debugConsoleSupportedShipTypeIds,
+        debugConsoleSupportedShipTypeIdsSorted;
 export 'src/orders/build_spawn_province.dart' show resolveCivilianSpawnTileKey;

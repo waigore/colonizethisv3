@@ -47,6 +47,21 @@ void main() {
       expect(result.message, contains('peasant_levies'));
     });
 
+    test('emits spawn ship event for valid command', () {
+      final result = executor.executeRaw(
+        rawInput: '/spawn_ship carrack 2',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      expect(result.events, hasLength(1));
+      final event =
+          result.events.single as SpawnDebugShipAtCapitalHomeFleetEvent;
+      expect(event.humanPlayerId, 'p1');
+      expect(event.shipTypeId, 'carrack');
+      expect(event.count, 2);
+      expect(result.message, contains('carrack'));
+    });
+
     test('executor message for clamped add_money includes both amounts', () {
       final result = executor.executeRaw(
         rawInput: '/add_money 20000',
