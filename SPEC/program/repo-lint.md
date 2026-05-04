@@ -53,6 +53,7 @@
 | `tool/check_game_widgets_file_size.dart` | Enforce `app/lib/features/game/widgets/**` Dart files at **700 physical lines or fewer** — see `SPEC/program/game-widgets-file-size.md`; rule `repo.game_widgets_file_size` |
 | `tool/check_dart_file_non_comment_line_size.dart` | Enforce repository-wide Dart files at **1000 non-comment lines or fewer** (fail when strictly greater), excluding generated suffixes and generated l10n path prefixes — see `SPEC/program/dart-file-non-comment-line-size.md`; rule `repo.dart_file_non_comment_line_size` |
 | `tool/check_land_province_bucket_keys.dart` | For guarded explore/fog/news paths, disallow local-only land-province tile-bucket lookups (`tileKeysByRegionAndProvince[region]?[localId]`); require canonical full-id buckets only; rule `repo.land_province_bucket_keys` |
+| `tool/check_logic_dual_region_province_field_access.dart` | Caps direct `oldWorld.provinces` / `newWorld.provinces` references in `packages/colonizethis_logic/lib/src/**` outside `province_lookup.dart` (GitHub #2071); rule `repo.logic_dual_region_province_field_access` — see `SPEC/program/logic-dual-region-province-access.md` |
 
 ## Rule IDs and groups
 
@@ -169,3 +170,4 @@ Do **not** add new top-level `tool/check_*.dart` **entrypoints** for CI without 
 - Given any debug-console file imports `package:colonizethis_logic/src/**` or another `package:colonizethis_logic/...` URI outside that closed contract set, when repo lint runs rule `repo.debug_console_logic_contract_boundary`, then the run fails and reports file path, line, and disallowed import context in checker output.
 - Given `app/lib/core/services/app_event_handler_scope.dart` has no direct imports from `package:colonizethis_app/features/game/logic/**`, when repo lint runs rule `repo.app_event_handler_scope_logic_boundary`, then the rule passes without violations.
 - Given `app/lib/core/services/app_event_handler_scope.dart` directly imports any `package:colonizethis_app/features/game/logic/**` path, when repo lint runs rule `repo.app_event_handler_scope_logic_boundary`, then the run fails and reports file path and line number.
+- Given `packages/colonizethis_logic/lib/src/**` Dart sources excluding `world/province_lookup.dart`, when repo lint runs rule `repo.logic_dual_region_province_field_access`, then at most 10 physical lines contain `oldWorld.provinces` or `newWorld.provinces`, and the checker does not use keyed waiver tables (whole-file exclusion of the canonical helper only).

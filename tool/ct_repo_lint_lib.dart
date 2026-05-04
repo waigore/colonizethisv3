@@ -17,6 +17,7 @@ import 'check_disallowed_ast_patterns.dart';
 import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_land_province_bucket_keys.dart';
+import 'check_logic_dual_region_province_field_access.dart';
 import 'check_no_flame_in_widgets.dart';
 import 'check_no_screen_in_game_widgets.dart';
 import 'check_part_unit_size.dart';
@@ -740,6 +741,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckCanonicalProvinceTileKeys(repoRoot);
     case 'repo.land_province_bucket_keys':
       return runCheckLandProvinceBucketKeys(repoRoot);
+    case 'repo.logic_dual_region_province_field_access':
+      return runCheckLogicDualRegionProvinceFieldAccess(repoRoot);
     case 'repo.app_hardcoded_ui_strings':
       return runCheckAppHardcodedUiStrings(repoRoot);
     default:
