@@ -19,12 +19,12 @@ bool _fleetAtHumanCapital(Game game, String playerId, Fleet fleet) {
   if (cap == null) {
     return false;
   }
-  final capParts = cap.toTileKey().split('|');
-  if (capParts.length < 2) {
+  final parsed = tryParseMapTileKey(cap.toTileKey());
+  if (parsed == null) {
     return false;
   }
-  final capReg = capParts[0];
-  final capProvLocal = capParts[1];
+  final capReg = parsed.regionId;
+  final capProvLocal = parsed.localId;
   if (fleet.regionId != capReg) {
     return false;
   }
@@ -74,13 +74,11 @@ String? _inPortFleetMarkerTileKey({
 }
 
 (int?, int?) _xyFromMapTileKey(String tileKey) {
-  final parts = tileKey.split('|');
-  if (parts.length < 4) {
+  final parsed = tryParseMapTileKeySuffixXY(tileKey);
+  if (parsed == null) {
     return (null, null);
   }
-  final x = int.tryParse(parts[parts.length - 2]);
-  final y = int.tryParse(parts[parts.length - 1]);
-  return (x, y);
+  return (parsed.x, parsed.y);
 }
 
 String? _fleetMarkerTileKeyForLocationScope({

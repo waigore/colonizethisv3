@@ -70,46 +70,73 @@ List<CapitalMarkerView> _buildCapitalMarkers({
   required String regionId,
 }) {
   final capitals = <CapitalMarkerView>[];
-  for (final p in game.players) {
-    final cap = p.capitalTile;
-    if (cap != null && cap.regionId == regionId) {
-      capitals.add(
-        CapitalMarkerView(
-          factionId: p.id,
-          displayName: p.displayName,
-          x: cap.x,
-          y: cap.y,
-        ),
-      );
-    }
-  }
-  for (final m in game.minorNations) {
-    final cap = m.capitalTile;
-    if (cap != null && cap.regionId == regionId) {
-      capitals.add(
-        CapitalMarkerView(
-          factionId: m.id,
-          displayName: m.displayName ?? m.id,
-          x: cap.x,
-          y: cap.y,
-        ),
-      );
-    }
-  }
-  for (final t in game.tribes) {
-    final cap = t.capitalTile;
-    if (cap != null && cap.regionId == regionId) {
-      capitals.add(
-        CapitalMarkerView(
-          factionId: t.id,
-          displayName: t.displayName ?? t.id,
-          x: cap.x,
-          y: cap.y,
-        ),
-      );
-    }
-  }
+  _appendCapitalMarkers(
+    capitals: capitals,
+    regionId: regionId,
+    factions: game.players,
+    idOf: (player) => player.id,
+    displayNameOf: (player) => player.displayName,
+    capitalOf: (player) {
+      final capital = player.capitalTile;
+      if (capital == null) {
+        return null;
+      }
+      return (regionId: capital.regionId, x: capital.x, y: capital.y);
+    },
+  );
+  _appendCapitalMarkers(
+    capitals: capitals,
+    regionId: regionId,
+    factions: game.minorNations,
+    idOf: (nation) => nation.id,
+    displayNameOf: (nation) => nation.displayName ?? nation.id,
+    capitalOf: (nation) {
+      final capital = nation.capitalTile;
+      if (capital == null) {
+        return null;
+      }
+      return (regionId: capital.regionId, x: capital.x, y: capital.y);
+    },
+  );
+  _appendCapitalMarkers(
+    capitals: capitals,
+    regionId: regionId,
+    factions: game.tribes,
+    idOf: (tribe) => tribe.id,
+    displayNameOf: (tribe) => tribe.displayName ?? tribe.id,
+    capitalOf: (tribe) {
+      final capital = tribe.capitalTile;
+      if (capital == null) {
+        return null;
+      }
+      return (regionId: capital.regionId, x: capital.x, y: capital.y);
+    },
+  );
   return capitals;
+}
+
+void _appendCapitalMarkers<T>({
+  required List<CapitalMarkerView> capitals,
+  required String regionId,
+  required Iterable<T> factions,
+  required String Function(T) idOf,
+  required String Function(T) displayNameOf,
+  required ({String regionId, int x, int y})? Function(T) capitalOf,
+}) {
+  for (final faction in factions) {
+    final capital = capitalOf(faction);
+    if (capital == null || capital.regionId != regionId) {
+      continue;
+    }
+    capitals.add(
+      CapitalMarkerView(
+        factionId: idOf(faction),
+        displayName: displayNameOf(faction),
+        x: capital.x,
+        y: capital.y,
+      ),
+    );
+  }
 }
 
 Map<String, (int x, int y)> _buildProvinceToRepresentativeTile({
@@ -224,13 +251,8 @@ _buildUnitAndCivilianMarkerData({
         }
         return a.id.compareTo(b.id);
       });
-    final parts = tileKey.split('|');
-    if (parts.length < 4) {
-      continue;
-    }
-    final x = int.tryParse(parts[2]);
-    final y = int.tryParse(parts[3]);
-    if (x == null || y == null) {
+    final parsed = tryParseMapTileKey(tileKey);
+    if (parsed == null) {
       continue;
     }
     final representativeUnit = units.first;
@@ -240,9 +262,9 @@ _buildUnitAndCivilianMarkerData({
     playerOwnedCivilianTileMarkers.add(
       CivilianTileMarkerView(
         tileKey: tileKey,
-        x: x,
-        y: y,
-        localProvinceId: parts[1],
+        x: parsed.x,
+        y: parsed.y,
+        localProvinceId: parsed.localId,
         unitIds: units.map((unit) => unit.id).toList(),
         unitTypes: {for (final unit in units) unit.id: unit.type},
         representativeUnitType: representativeUnit.type,
@@ -279,8 +301,8 @@ void _addCivilianUnitToTileKeyBucket({
   if (tileKey == null || tileKey.isEmpty) {
     return;
   }
-  final parts = tileKey.split('|');
-  if (parts.length < 4 || parts[0] != regionId) {
+  final parsed = tryParseMapTileKey(tileKey);
+  if (parsed == null || parsed.regionId != regionId) {
     return;
   }
   civilianUnitsByTileKey.putIfAbsent(tileKey, () => []).add(unit);
@@ -292,21 +314,16 @@ List<PortMarkerView> _buildPortMarkers({
 }) {
   final ports = <PortMarkerView>[];
   portsByProvinceSeaboard.forEach((key, tileKey) {
-    final parts = tileKey.split('|');
-    if (parts.length < 4 || parts[0] != regionId) {
+    final parsed = tryParseMapTileKey(tileKey);
+    if (parsed == null || parsed.regionId != regionId) {
       return;
     }
     final fromKey = localProvinceIdFromPortsSeaboardKey(key, regionId);
-    final provinceIdForMarker = fromKey ?? parts[1];
-    final x = int.tryParse(parts[2]);
-    final y = int.tryParse(parts[3]);
-    if (x == null || y == null) {
-      return;
-    }
+    final provinceIdForMarker = fromKey ?? parsed.localId;
     ports.add(
       PortMarkerView(
-        x: x,
-        y: y,
+        x: parsed.x,
+        y: parsed.y,
         provinceId: provinceIdForMarker,
         seaZoneId: '',
         seaboardKey: key,
@@ -347,13 +364,8 @@ List<TownMarkerView> _buildTownMarkers({
     if (townTileKey == null || townTileKey.isEmpty) {
       continue;
     }
-    final parts = townTileKey.split('|');
-    if (parts.length < 4 || parts[0] != regionId) {
-      continue;
-    }
-    final x = int.tryParse(parts[2]);
-    final y = int.tryParse(parts[3]);
-    if (x == null || y == null) {
+    final parsed = tryParseMapTileKey(townTileKey);
+    if (parsed == null || parsed.regionId != regionId) {
       continue;
     }
     final localProvinceId = ProvinceId.localIdFrom(p.id);
@@ -377,8 +389,8 @@ List<TownMarkerView> _buildTownMarkers({
     final touchesSea = coastalProvinceIds.contains(localProvinceId);
     towns.add(
       TownMarkerView(
-        x: x,
-        y: y,
+        x: parsed.x,
+        y: parsed.y,
         provinceId: localProvinceId,
         isCoastal: touchesSea && !hasPort,
         isPort: hasPort,

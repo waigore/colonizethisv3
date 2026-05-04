@@ -11,11 +11,12 @@ import 'tile_map_visualization.dart';
 import 'tile_map_visualization_shared.dart';
 import 'multi_region_map_rendering.dart';
 import 'init_game_map_view_data.dart';
+import 'region_constants.dart';
+import 'tile_key_util.dart';
 
-const String _regionOldWorld = 'oldWorld';
-const String _regionNewWorld = 'newWorld';
-
-Map<String, String> _provinceIdToOwnerIdFromProvinces(List<Province> provinces) {
+Map<String, String> _provinceIdToOwnerIdFromProvinces(
+  List<Province> provinces,
+) {
   final out = <String, String>{};
   for (final p in provinces) {
     final oid = p.ownerId;
@@ -31,18 +32,14 @@ void _appendPortTileToRegionLists(
   List<({int x, int y})> owPortTiles,
   List<({int x, int y})> nwPortTiles,
 ) {
-  final parts = tileKey.split('|');
-  if (parts.length < 4) return;
-  final regionId = parts[0];
-  final x = int.tryParse(parts[2]);
-  final y = int.tryParse(parts[3]);
-  if (x == null || y == null) return;
-  if (regionId == _regionOldWorld) {
-    owPortTiles.add((x: x, y: y));
+  final parsed = tryParseMapTileKey(tileKey);
+  if (parsed == null) return;
+  if (parsed.regionId == kRegionOldWorld) {
+    owPortTiles.add((x: parsed.x, y: parsed.y));
     return;
   }
-  if (regionId == _regionNewWorld) {
-    nwPortTiles.add((x: x, y: y));
+  if (parsed.regionId == kRegionNewWorld) {
+    nwPortTiles.add((x: parsed.x, y: parsed.y));
   }
 }
 
@@ -226,7 +223,7 @@ Uint8List renderInitGameMapToPng({
   final owCapitals = <({String factionId, String displayName, int x, int y})>[];
   for (final p in game.players) {
     final cap = p.capitalTile;
-    if (cap != null && cap.regionId == _regionOldWorld) {
+    if (cap != null && cap.regionId == kRegionOldWorld) {
       owCapitals.add((
         factionId: p.id,
         displayName: p.displayName,
@@ -237,7 +234,7 @@ Uint8List renderInitGameMapToPng({
   }
   for (final m in game.minorNations) {
     final cap = m.capitalTile;
-    if (cap != null && cap.regionId == _regionOldWorld) {
+    if (cap != null && cap.regionId == kRegionOldWorld) {
       owCapitals.add((
         factionId: m.id,
         displayName: m.displayName ?? m.id,
@@ -249,7 +246,7 @@ Uint8List renderInitGameMapToPng({
   final nwCapitals = <({String factionId, String displayName, int x, int y})>[];
   for (final t in game.tribes) {
     final cap = t.capitalTile;
-    if (cap != null && cap.regionId == _regionNewWorld) {
+    if (cap != null && cap.regionId == kRegionNewWorld) {
       nwCapitals.add((
         factionId: t.id,
         displayName: t.displayName ?? t.id,
@@ -276,15 +273,15 @@ Uint8List renderInitGameMapToPng({
     _appendPortTileToRegionLists(tileKey, owPortTiles, nwPortTiles);
   }
 
-  final owResult = tileMapByRegion[_regionOldWorld]!;
-  final owTopo = topologyByRegion[_regionOldWorld]!;
-  final nwResult = tileMapByRegion[_regionNewWorld]!;
-  final nwTopo = topologyByRegion[_regionNewWorld]!;
+  final owResult = tileMapByRegion[kRegionOldWorld]!;
+  final owTopo = topologyByRegion[kRegionOldWorld]!;
+  final nwResult = tileMapByRegion[kRegionNewWorld]!;
+  final nwTopo = topologyByRegion[kRegionNewWorld]!;
 
   final owPng = renderSingleRegionGameStateMapToPng(
     result: owResult,
     topology: owTopo,
-    regionId: _regionOldWorld,
+    regionId: kRegionOldWorld,
     ownerByProvinceId: owOwnerByProvinceId,
     capitalTiles: owCapitals,
     cellSize: cellSize,
@@ -294,7 +291,7 @@ Uint8List renderInitGameMapToPng({
   final nwPng = renderSingleRegionGameStateMapToPng(
     result: nwResult,
     topology: nwTopo,
-    regionId: _regionNewWorld,
+    regionId: kRegionNewWorld,
     ownerByProvinceId: nwOwnerByProvinceId,
     capitalTiles: nwCapitals,
     cellSize: cellSize,
