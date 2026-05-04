@@ -3,24 +3,22 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'test_fixtures.dart';
+
 void main() {
   group('getValidWorkOrderTileKeys', () {
     test('returns empty for unknown unit id', () {
       const playerId = 'gp1';
       const ow = 'oldWorld';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(provinces: [], units: []),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            ow: {
-              '$ow|p1': ['oldWorld|p1|0|0'],
-            },
-          },
-        ),
         players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
+        oldWorld: const RegionData(provinces: [], units: []),
+        tileKeysByRegionAndProvince: {
+          ow: {
+            '$ow|p1': ['oldWorld|p1|0|0'],
+          },
+        },
       );
       final topology = const MapTopology(nodes: [], edges: []);
       final valid = getValidWorkOrderTileKeys(
@@ -44,24 +42,18 @@ void main() {
         locationProvinceId: '$ow|p1',
         tileKey: 'oldWorld|p1|0|0',
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|p1', regionId: ow, ownerId: playerId),
-            ],
-            units: [unit],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            ow: {
-              '$ow|p1': ['oldWorld|p1|0|0'],
-            },
-          },
-        ),
         players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
+        oldWorld: RegionData(
+          provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: playerId)],
+          units: [unit],
+        ),
+        tileKeysByRegionAndProvince: {
+          ow: {
+            '$ow|p1': ['oldWorld|p1|0|0'],
+          },
+        },
       );
       final topology = const MapTopology(nodes: [], edges: []);
       final valid = getValidWorkOrderTileKeys(
@@ -78,19 +70,15 @@ void main() {
     test('returns empty for unknown unit id with visibility', () {
       const playerId = 'gp1';
       const ow = 'oldWorld';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(provinces: [], units: []),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            ow: {
-              '$ow|p1': ['oldWorld|p1|0|0'],
-            },
-          },
-        ),
         players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
+        oldWorld: const RegionData(provinces: [], units: []),
+        tileKeysByRegionAndProvince: {
+          ow: {
+            '$ow|p1': ['oldWorld|p1|0|0'],
+          },
+        },
       );
       final topology = const MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, playerId);
@@ -751,6 +739,5 @@ void main() {
         expect(valid.contains(woolTile), isFalse);
       },
     );
-
   });
 }
