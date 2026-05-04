@@ -166,6 +166,13 @@ rules:
     runner: dart
     script: tool/check_land_province_bucket_keys.dart
 
+  - rule_id: repo.logic_dual_region_province_field_access
+    group: architecture
+    title: colonizethis_logic limits direct oldWorld/newWorld province list access
+    spec: SPEC/program/logic-dual-region-province-access.md
+    runner: dart
+    script: tool/check_logic_dual_region_province_field_access.dart
+
   - rule_id: repo.app_hardcoded_ui_strings
     group: ui_i18n
     title: No hardcoded user-visible UI strings in app/lib (AST gate)
