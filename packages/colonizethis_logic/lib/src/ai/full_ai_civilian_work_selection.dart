@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -149,7 +151,8 @@ int _unknownTilesInExploreProvince(PlayerView view, Game game, WorkOrder w) {
 
 int _eScore(WorkOrder w, PlayerView view, Game game) {
   final unknown = _unknownTilesInExploreProvince(view, game, w);
-  return 100 + (unknown > 24 ? 24 : 3 * unknown);
+  // Issue #2082: E_unknown = min(24, 3 × U), not min(24, unknown) on the tile count.
+  return 100 + math.min(24, 3 * unknown);
 }
 
 int _prospectTerritoryPoints(
