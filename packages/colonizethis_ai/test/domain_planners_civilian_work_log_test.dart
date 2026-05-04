@@ -330,5 +330,131 @@ void main() {
         );
       },
     );
+
+    test(
+      'mixed idle + assigned: K civilian_work_assigned and N civilian_work_idle',
+      () {
+        const nationId = 'gp1';
+        const ow = 'oldWorld';
+        const provinceId = '$ow|p1';
+        const tileA = '$ow|p1|0|0';
+        const tileB = '$ow|p1|1|0';
+        const tileC = '$ow|p1|0|1';
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: provinceId, regionId: ow, ownerId: nationId),
+              ],
+              units: [
+                Unit(
+                  id: 'e1',
+                  type: kUnitTypeExplorer,
+                  ownerId: nationId,
+                  locationProvinceId: provinceId,
+                  tileKey: tileA,
+                ),
+                Unit(
+                  id: 'e2',
+                  type: kUnitTypeExplorer,
+                  ownerId: nationId,
+                  locationProvinceId: provinceId,
+                  tileKey: tileB,
+                ),
+                Unit(
+                  id: 'b1',
+                  type: kUnitTypeBuilder,
+                  ownerId: nationId,
+                  locationProvinceId: provinceId,
+                  tileKey: tileC,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            playerVisibilityByTile: const {
+              nationId: {
+                tileA: 'fullyVisible',
+                tileB: 'fullyVisible',
+                tileC: 'fullyVisible',
+              },
+            },
+            tileKeysByRegionAndProvince: const {
+              ow: {
+                provinceId: [tileA, tileB, tileC],
+              },
+            },
+          ),
+          players: const [
+            Player(
+              id: nationId,
+              displayName: 'GP',
+              isHuman: false,
+              leaderKey: 'victoria',
+            ),
+          ],
+        );
+        const topology = MapTopology(nodes: [], edges: []);
+        final view = buildPlayerView(game, topology, nationId);
+        final snapshot = AIWorldSnapshot.fromPlayerView(view);
+        const config = AIConfig(
+          leaderId: 'victoria',
+          personalityId: 'victoria',
+          hiddenAgendaId: 'peacemaker',
+        );
+        final seeds = AISeedBundle.fromTurnSeed(20824);
+        const workOrder = WorkOrder(
+          unitId: 'e1',
+          target: kWorkTargetExplore,
+          targetTileKey: tileA,
+        );
+        const fakeApi = FakeOrderSuggestionAPIForDomainPlannerTests(
+          work: [workOrder],
+          build: const [],
+          move: const [],
+          research: const [],
+          navalMove: const [],
+          navalMission: const [],
+        );
+        const economyPlan = EconomyPlan(
+          productionAssignments: [],
+          cargoPreference: CargoPreference.none,
+        );
+
+        final captured = <LogEvent>[];
+        void listener(LogEvent e) => captured.add(e);
+        Logger.addLogListener(listener);
+        Logger.level = Level.info;
+        try {
+          runDomainPlanners(
+            game: game,
+            topology: topology,
+            nationId: nationId,
+            view: view,
+            snapshot: snapshot,
+            config: config,
+            primaryGoal: StrategicGoal.expand,
+            seeds: seeds,
+            suggestionAPI: fakeApi,
+            economyPlan: economyPlan,
+          );
+        } finally {
+          Logger.removeLogListener(listener);
+          Logger.level = Level.info;
+        }
+
+        final assigned = captured
+            .where((e) => e.message.contains('civilian_work_assigned'))
+            .toList();
+        final idle = captured
+            .where((e) => e.message.contains('civilian_work_idle'))
+            .toList();
+        expect(assigned, hasLength(1));
+        expect(idle, hasLength(2));
+        expect(idle.any((e) => e.message.contains('unitId=e2')), isTrue);
+        expect(idle.any((e) => e.message.contains('unitId=b1')), isTrue);
+      },
+    );
   });
 }
