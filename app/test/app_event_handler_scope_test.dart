@@ -285,6 +285,139 @@ void main() {
     });
   });
 
+  group('applyDebugRegimentSpawnAtCapital', () {
+    test('returns message when there is no active game', () {
+      const event = SpawnDebugRegimentAtCapitalEvent(
+        humanPlayerId: 'p1',
+        regimentTypeId: 'peasant_levies',
+      );
+      final result = applyDebugRegimentSpawnAtCapital(
+        currentGame: null,
+        event: event,
+      );
+      expect(result.game, isNull);
+      expect(result.message, contains('no active game'));
+    });
+
+    test('spawns regiment into region units and home army', () {
+      final game = Game(
+        id: 'g-reg-1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: 'oldWorld|1',
+          ),
+        ],
+      );
+      const event = SpawnDebugRegimentAtCapitalEvent(
+        humanPlayerId: 'p1',
+        regimentTypeId: 'peasant_levies',
+        count: 2,
+      );
+      final result = applyDebugRegimentSpawnAtCapital(
+        currentGame: game,
+        event: event,
+      );
+      final next = result.game;
+      expect(next, isNotNull);
+      final units = next!.worldState.oldWorld.units;
+      expect(units, hasLength(2));
+      expect(units.every((u) => u.type == 'peasant_levies'), isTrue);
+      expect(units.every((u) => u.tileKey == null), isTrue);
+      expect(units.every((u) => u.status == UnitStatus.idle), isTrue);
+      expect(units.every((u) => u.medals == 0), isTrue);
+      expect(units.every((u) => u.currentWork == null), isTrue);
+      final homeArmy = next.worldState.armies.singleWhere(
+        (a) => a.id == 'army_p1',
+      );
+      expect(homeArmy.regimentUnitIds, hasLength(2));
+    });
+
+    test('fails on unknown player and keeps state unchanged', () {
+      final game = Game(
+        id: 'g-reg-2',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      const event = SpawnDebugRegimentAtCapitalEvent(
+        humanPlayerId: 'unknown',
+        regimentTypeId: 'peasant_levies',
+      );
+      final result = applyDebugRegimentSpawnAtCapital(
+        currentGame: game,
+        event: event,
+      );
+      expect(result.game, isNull);
+      expect(result.message, contains('unknown player'));
+    });
+
+    test('fails on missing capital and keeps state unchanged', () {
+      final game = Game(
+        id: 'g-reg-3',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+      );
+      const event = SpawnDebugRegimentAtCapitalEvent(
+        humanPlayerId: 'p1',
+        regimentTypeId: 'peasant_levies',
+      );
+      final result = applyDebugRegimentSpawnAtCapital(
+        currentGame: game,
+        event: event,
+      );
+      expect(result.game, isNull);
+      expect(result.message, contains('no capital province'));
+    });
+
+    test('fails on unsupported regiment type and keeps state unchanged', () {
+      final game = Game(
+        id: 'g-reg-4',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(),
+          newWorld: RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: 'oldWorld|1',
+          ),
+        ],
+      );
+      const event = SpawnDebugRegimentAtCapitalEvent(
+        humanPlayerId: 'p1',
+        regimentTypeId: 'unknown',
+      );
+      final result = applyDebugRegimentSpawnAtCapital(
+        currentGame: game,
+        event: event,
+      );
+      expect(result.game, isNull);
+      expect(result.message, contains('unsupported regiment type'));
+    });
+  });
+
   group('applyDebugTreasuryCredit', () {
     test('returns message when there is no active game', () {
       const event = CreditDebugTreasuryEvent(

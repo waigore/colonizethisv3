@@ -11,6 +11,11 @@ sealed class DebugConsoleParsedInvocation {
     required int count,
   }) = DebugConsoleSpawnCivilianAtCapital;
 
+  const factory DebugConsoleParsedInvocation.spawnRegimentAtCapital({
+    required String regimentTypeId,
+    required int count,
+  }) = DebugConsoleSpawnRegimentAtCapital;
+
   const factory DebugConsoleParsedInvocation.treasuryCredit({
     required int requestedAmount,
     required int creditedAmount,
@@ -30,6 +35,17 @@ final class DebugConsoleSpawnCivilianAtCapital
   });
 
   final String unitType;
+  final int count;
+}
+
+final class DebugConsoleSpawnRegimentAtCapital
+    extends DebugConsoleParsedInvocation {
+  const DebugConsoleSpawnRegimentAtCapital({
+    required this.regimentTypeId,
+    required this.count,
+  });
+
+  final String regimentTypeId;
   final int count;
 }
 

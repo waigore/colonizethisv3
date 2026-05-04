@@ -485,5 +485,6 @@ mixin _AppLocalizationsEnStrings5 on AppLocalizations {
   String get debugConsole_title => 'Debug Console';
 
   @override
-  String get debugConsole_hintSpawnCivilian => '/spawn_civilian explorer 1';
+  String get debugConsole_hintSpawnCivilian =>
+      '/spawn_regiment peasant_levies 1';
 }

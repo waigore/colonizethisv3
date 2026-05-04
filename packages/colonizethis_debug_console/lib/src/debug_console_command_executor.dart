@@ -43,6 +43,18 @@ class DebugConsoleCommandExecutor {
           ],
           message: 'Queued debug spawn: ${count}x $unitType at capital.',
         ),
+      DebugConsoleSpawnRegimentAtCapital(:final regimentTypeId, :final count) =>
+        DebugConsoleExecutionResult.success(
+          events: [
+            SpawnDebugRegimentAtCapitalEvent(
+              humanPlayerId: humanPlayerId,
+              regimentTypeId: regimentTypeId,
+              count: count,
+            ),
+          ],
+          message:
+              'Queued debug regiment spawn: ${count}x $regimentTypeId at capital.',
+        ),
       DebugConsoleTreasuryCredit(
         :final requestedAmount,
         :final creditedAmount,
