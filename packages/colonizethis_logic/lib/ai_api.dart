@@ -5,6 +5,11 @@
 library;
 
 export 'src/ai/ai_control.dart' show isAiControlled;
+export 'src/ai/full_ai_civilian_work_selection.dart'
+    show
+        FullAiCivilianWorkIdle,
+        FullAiCivilianWorkSelectionResult,
+        selectFullAiCivilianWorkOrders;
 export 'src/ai/simple_ai_heuristics.dart' show turnSeedForPlayer;
 export 'src/constants.dart'
     show GamePlayerLookup, kWorkTargetCounterSpy, kWorkTargetStealTech;
@@ -22,7 +27,8 @@ export 'src/orders/order_suggestion_helpers.dart'
         filterArmyMoveOrdersByDiplomacy,
         filterMoveOrdersByDiplomacy,
         getProvinceOwnerMap;
-export 'src/world/player_view.dart' show PlayerView, buildPlayerView;
+export 'src/world/player_view.dart'
+    show PlayerView, VisibilityLevel, buildPlayerView;
 export 'src/world/province_lookup.dart' show allProvinces;
 export 'src/world/unit_lookup.dart'
     show

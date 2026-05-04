@@ -28,41 +28,35 @@ InitGameMapViewData buildInitGameMapViewData({
   Map<String, int>? resourceExtractionBlockedUnitsByTile,
 }) {
   _log.i('buildInitGameMapViewData start gameId=${game.id}');
-  final owTileMap = tileMapByRegion[_regionOldWorld]!;
-  final nwTileMap = tileMapByRegion[_regionNewWorld]!;
-  final owTopology = topologyByRegion[_regionOldWorld]!;
-  final nwTopology = topologyByRegion[_regionNewWorld]!;
-
-  final owRegion = _buildRegionViewData(
-    regionId: _regionOldWorld,
-    tileMap: owTileMap,
-    topology: owTopology,
-    game: game,
-    cellSize: cellSize,
-    isOldWorld: true,
-    greatPowerColorOverride: greatPowerColorOverride,
-    visibilityByTile: visibilityByTile,
-    warpLinks: warpLinks,
-    resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
-    resourceExtractionEffectiveUnitsByTile:
-        resourceExtractionEffectiveUnitsByTile,
-    resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
-  );
-  final nwRegion = _buildRegionViewData(
-    regionId: _regionNewWorld,
-    tileMap: nwTileMap,
-    topology: nwTopology,
-    game: game,
-    cellSize: cellSize,
-    isOldWorld: false,
-    greatPowerColorOverride: greatPowerColorOverride,
-    visibilityByTile: visibilityByTile,
-    warpLinks: warpLinks,
-    resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
-    resourceExtractionEffectiveUnitsByTile:
-        resourceExtractionEffectiveUnitsByTile,
-    resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
-  );
+  RegionMapViewData? oldWorld;
+  RegionMapViewData? newWorld;
+  final regionConfigs = [
+    (regionId: kRegionOldWorld, isOldWorld: true),
+    (regionId: kRegionNewWorld, isOldWorld: false),
+  ];
+  for (final region in regionConfigs) {
+    final regionView = _buildRegionViewData(
+      regionId: region.regionId,
+      tileMap: tileMapByRegion[region.regionId]!,
+      topology: topologyByRegion[region.regionId]!,
+      game: game,
+      cellSize: cellSize,
+      isOldWorld: region.isOldWorld,
+      greatPowerColorOverride: greatPowerColorOverride,
+      visibilityByTile: visibilityByTile,
+      warpLinks: warpLinks,
+      resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
+      resourceExtractionEffectiveUnitsByTile:
+          resourceExtractionEffectiveUnitsByTile,
+      resourceExtractionBlockedUnitsByTile:
+          resourceExtractionBlockedUnitsByTile,
+    );
+    if (region.isOldWorld) {
+      oldWorld = regionView;
+    } else {
+      newWorld = regionView;
+    }
+  }
 
   _log.i('buildInitGameMapViewData end');
   final combinedTopology = combineRegionTopologies(
@@ -70,8 +64,8 @@ InitGameMapViewData buildInitGameMapViewData({
     warpLinks: warpLinks ?? const [],
   );
   return InitGameMapViewData(
-    oldWorld: owRegion,
-    newWorld: nwRegion,
+    oldWorld: oldWorld!,
+    newWorld: newWorld!,
     combinedTopology: combinedTopology,
     seed: seed,
     configSummary: configSummary,
@@ -390,4 +384,3 @@ _buildMarkerData({
     fleetTileMarkers: fleetTileMarkers,
   );
 }
-

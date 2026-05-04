@@ -9,17 +9,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'combine_region_topologies.dart';
 import 'init_game_map_view_data.dart';
 import 'port_icon_placement.dart';
+import 'region_constants.dart';
 import 'sea_zone_centroid_tile.dart';
+import 'tile_key_util.dart';
 import 'tile_map_visualization_shared.dart';
 
-part 'init_game_map_view_builder_fleet_markers.dart';
-part 'init_game_map_view_builder_impl.dart';
-part 'init_game_map_view_builder_impl2.dart';
+part 'init_game_map_view_builder_fleet_markers_part.dart';
+part 'init_game_map_view_builder_orchestration_part.dart';
+part 'init_game_map_view_builder_cells_markers_part.dart';
 
 final _log = packageLogger();
-
-const String _regionOldWorld = 'oldWorld';
-const String _regionNewWorld = 'newWorld';
 
 String _normalizeCivilianTypeForPriority(String type) {
   return type.toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '');
