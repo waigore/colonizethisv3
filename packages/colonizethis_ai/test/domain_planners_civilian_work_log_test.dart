@@ -8,7 +8,7 @@ import 'package:logger/logger.dart';
 import 'domain_planners_test_fake_api.dart';
 
 void main() {
-  group('runDomainPlanners civilian work logging (#2082)', () {
+  group('runDomainPlanners civilian work logging', () {
     test('one civilian_work_assigned info line per emitted WorkOrder', () {
       const nationId = 'gp1';
       const ow = 'oldWorld';
@@ -566,6 +566,13 @@ void main() {
         expect(idle, hasLength(2));
         expect(idle.any((e) => e.message.contains('unitId=e2')), isTrue);
         expect(idle.any((e) => e.message.contains('unitId=b1')), isTrue);
+
+        final unitIdPattern = RegExp(r'unitId=([A-Za-z0-9_-]+)');
+        final idsFromMessages = <String>{
+          for (final e in [...assigned, ...idle])
+            ...unitIdPattern.allMatches(e.message).map((m) => m.group(1)!),
+        };
+        expect(idsFromMessages, {'e1', 'e2', 'b1'});
       },
     );
   });
