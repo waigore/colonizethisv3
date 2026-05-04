@@ -51,6 +51,7 @@ abstract final class TestFixtures {
     TileMapState? tileState,
     double richesCashMultiplier = 1.0,
     List<MinorNation> minorNations = const [],
+    List<Tribe> tribes = const [],
     List<OvertureState> overtureStates = const [],
     List<DiplomacyRelation> diplomacyRelations = const [],
   }) => Game(
@@ -70,6 +71,7 @@ abstract final class TestFixtures {
     players: players,
     richesCashMultiplier: richesCashMultiplier,
     minorNations: minorNations,
+    tribes: tribes,
     overtureStates: overtureStates,
     diplomacyRelations: diplomacyRelations,
   );

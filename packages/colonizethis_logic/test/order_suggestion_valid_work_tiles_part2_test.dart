@@ -3,6 +3,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'test_fixtures.dart';
+
 void main() {
   group('getValidWorkOrderTileKeys', () {
     test(
@@ -25,38 +27,34 @@ void main() {
           locationProvinceId: partialProvince,
           tileKey: partialKnownTile,
         );
-        final game = Game(
+        final game = TestFixtures.minimalGame(
           id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: partialProvince, regionId: ow, ownerId: 'tribe1'),
-                Province(id: fullProvince, regionId: ow, ownerId: 'tribe1'),
-                Province(id: unknownProvince, regionId: ow, ownerId: 'tribe1'),
-              ],
-              units: [explorer],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: {
-              ow: {
-                partialProvince: [partialKnownTile, partialUnknownTile],
-                fullProvince: [fullTile],
-                unknownProvince: [unknownTile],
-              },
-            },
-            playerVisibilityByTile: const {
-              playerId: {
-                partialKnownTile: 'fogged',
-                fullTile: 'fullyVisible',
-                unknownTile: 'unknown',
-              },
-            },
-          ),
           players: const [
             Player(id: playerId, displayName: 'GP', isHuman: false),
           ],
           tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe')],
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: partialProvince, regionId: ow, ownerId: 'tribe1'),
+              Province(id: fullProvince, regionId: ow, ownerId: 'tribe1'),
+              Province(id: unknownProvince, regionId: ow, ownerId: 'tribe1'),
+            ],
+            units: [explorer],
+          ),
+          tileKeysByRegionAndProvince: {
+            ow: {
+              partialProvince: [partialKnownTile, partialUnknownTile],
+              fullProvince: [fullTile],
+              unknownProvince: [unknownTile],
+            },
+          },
+          playerVisibilityByTile: const {
+            playerId: {
+              partialKnownTile: 'fogged',
+              fullTile: 'fullyVisible',
+              unknownTile: 'unknown',
+            },
+          },
         );
         final topology = const MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, playerId);
@@ -316,7 +314,10 @@ void main() {
       );
 
       // Spy should have steal_tech work order suggested targeting other GP's capital
-      expect(suggestions.where((o) => o.target == kWorkTargetStealTech), isNotEmpty);
+      expect(
+        suggestions.where((o) => o.target == kWorkTargetStealTech),
+        isNotEmpty,
+      );
     });
 
     test(

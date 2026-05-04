@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'economy_stockpile_preview_test_support.dart';
+import 'test_fixtures.dart';
 
 /// Stockpile preview for production panel. SPEC/ui/production-panel.md,
 /// SPEC/game/stockpiles-and-production.md.
@@ -95,23 +96,19 @@ void main() {
         isHuman: true,
         stockpile: const Stockpile().applyDelta(CommodityCatalog.grain.id, 10),
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'peasant_levies',
-                ownerId: 'p1',
-                locationProvinceId: 'ow|p1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
         players: [player],
+        oldWorld: RegionData(
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'peasant_levies',
+              ownerId: 'p1',
+              locationProvinceId: 'ow|p1',
+            ),
+          ],
+        ),
       );
       final delta = previewStockpileNetDeltaByCommodityForPlayer(
         game: game,

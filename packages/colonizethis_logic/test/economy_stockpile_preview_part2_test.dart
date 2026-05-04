@@ -3,12 +3,12 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'economy_stockpile_preview_test_support.dart';
+import 'test_fixtures.dart';
 
 /// Stockpile preview for production panel. SPEC/ui/production-panel.md,
 /// SPEC/game/stockpiles-and-production.md.
 void main() {
   suppressLogsForTests();
-
 
   group('previewStockpilePhaseDeltasByCommodityForPlayer', () {
     test('unknown player yields empty maps per phase', () {
@@ -36,33 +36,21 @@ void main() {
       () {
         const tileKey = 'oldWorld|ow|p1|0|0';
         final tileState = const TileMapState().setImprovement(tileKey, 0);
-        final player = Player(
-          id: 'p1',
-          displayName: 'A',
-          isHuman: true,
-          stockpile: const Stockpile()
-              .applyDelta(CommodityCatalog.lumber.id, 10)
-              .applyDelta(CommodityCatalog.castIron.id, 10),
-        );
-        final game = Game(
-          id: 't',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              units: [
-                Unit(
-                  id: 'b1',
-                  type: kUnitTypeBuilder,
-                  ownerId: 'p1',
-                  locationProvinceId: 'ow|p1',
-                  tileKey: tileKey,
-                ),
-              ],
+        final stockpile = const Stockpile()
+            .applyDelta(CommodityCatalog.lumber.id, 10)
+            .applyDelta(CommodityCatalog.castIron.id, 10);
+        final game = TestFixtures.singlePlayerWorkPreviewGame(
+          playerStockpile: stockpile,
+          units: [
+            Unit(
+              id: 'b1',
+              type: kUnitTypeBuilder,
+              ownerId: 'p1',
+              locationProvinceId: 'ow|p1',
+              tileKey: tileKey,
             ),
-            newWorld: const RegionData(),
-            tileState: tileState,
-          ),
-          players: [player],
+          ],
+          tileState: tileState,
         );
         final currentOrders = Orders(
           workOrdersByPlayerId: {
@@ -112,33 +100,21 @@ void main() {
       () {
         const tileKey = 'oldWorld|ow|p1|0|0';
         final tileState = const TileMapState().setImprovement(tileKey, 1);
-        final player = Player(
-          id: 'p1',
-          displayName: 'A',
-          isHuman: true,
-          stockpile: const Stockpile()
-              .applyDelta(CommodityCatalog.lumber.id, 10)
-              .applyDelta(CommodityCatalog.castIron.id, 10),
-        );
-        final game = Game(
-          id: 't',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              units: [
-                Unit(
-                  id: 'b1',
-                  type: kUnitTypeBuilder,
-                  ownerId: 'p1',
-                  locationProvinceId: 'ow|p1',
-                  tileKey: tileKey,
-                ),
-              ],
+        final stockpile = const Stockpile()
+            .applyDelta(CommodityCatalog.lumber.id, 10)
+            .applyDelta(CommodityCatalog.castIron.id, 10);
+        final game = TestFixtures.singlePlayerWorkPreviewGame(
+          playerStockpile: stockpile,
+          units: [
+            Unit(
+              id: 'b1',
+              type: kUnitTypeBuilder,
+              ownerId: 'p1',
+              locationProvinceId: 'ow|p1',
+              tileKey: tileKey,
             ),
-            newWorld: const RegionData(),
-            tileState: tileState,
-          ),
-          players: [player],
+          ],
+          tileState: tileState,
         );
         final currentOrders = Orders(
           workOrdersByPlayerId: {
@@ -185,15 +161,11 @@ void main() {
         isHuman: true,
         stockpile: const Stockpile(),
       );
-      final gameBusy = Game(
+      final gameBusy = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(units: [busyUnit]),
-          newWorld: const RegionData(),
-          tileState: tileState,
-        ),
         players: [poorPlayer],
+        oldWorld: RegionData(units: [busyUnit]),
+        tileState: tileState,
       );
       final ordersBusy = Orders(
         workOrdersByPlayerId: {
@@ -224,25 +196,21 @@ void main() {
             .applyDelta(CommodityCatalog.lumber.id, 1)
             .applyDelta(CommodityCatalog.castIron.id, 1),
       );
-      final gamePoorCost = Game(
+      final gamePoorCost = TestFixtures.minimalGame(
         id: 't2',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'b2',
-                type: kUnitTypeBuilder,
-                ownerId: 'p1',
-                locationProvinceId: 'ow|p1',
-                tileKey: tileKey,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          tileState: const TileMapState().setImprovement(tileKey, 1),
-        ),
         players: [playerLowStock],
+        oldWorld: RegionData(
+          units: [
+            Unit(
+              id: 'b2',
+              type: kUnitTypeBuilder,
+              ownerId: 'p1',
+              locationProvinceId: 'ow|p1',
+              tileKey: tileKey,
+            ),
+          ],
+        ),
+        tileState: const TileMapState().setImprovement(tileKey, 1),
       );
       final ordersPoorCost = Orders(
         workOrdersByPlayerId: {
@@ -276,23 +244,19 @@ void main() {
             .applyDelta(CommodityCatalog.lumber.id, 10)
             .applyDelta(CommodityCatalog.castIron.id, 10),
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'peasant_levies',
-                ownerId: 'p1',
-                locationProvinceId: 'ow|p1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
         players: [player],
+        oldWorld: RegionData(
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'peasant_levies',
+              ownerId: 'p1',
+              locationProvinceId: 'ow|p1',
+            ),
+          ],
+        ),
       );
       final currentOrders = Orders(
         workOrdersByPlayerId: {
@@ -872,23 +836,19 @@ void main() {
         stockpile: stockpile,
         workerPool: workers,
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'peasant_levies',
-                ownerId: 'p1',
-                locationProvinceId: 'ow|p1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
         players: [player],
+        oldWorld: RegionData(
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'peasant_levies',
+              ownerId: 'p1',
+              locationProvinceId: 'ow|p1',
+            ),
+          ],
+        ),
       );
       final delta = previewStockpileNetDeltaByCommodityForPlayer(
         game: game,

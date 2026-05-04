@@ -6,7 +6,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
+import '../world/province_lookup.dart';
 
 final _log = packageLogger();
 
@@ -167,13 +167,7 @@ Set<String> _allowedTileKeysForFaction(
 }
 
 Iterable<Province> _provincesWithRegionId(WorldState ws, String regionId) {
-  if (regionId == kRegionOldWorld) {
-    return ws.oldWorld.provinces;
-  }
-  if (regionId == kRegionNewWorld) {
-    return ws.newWorld.provinces;
-  }
-  return const [];
+  return allProvinces(ws).where((p) => p.regionId == regionId);
 }
 
 /// Returns map tileKey -> predecessor tileKey toward [capitalKey]. [capitalKey] maps to
