@@ -1,5 +1,5 @@
 import 'package:colonizethis_map/src/tile_key_util.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('tryParseMapTileKey', () {
