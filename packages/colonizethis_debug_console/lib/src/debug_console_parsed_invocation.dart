@@ -16,6 +16,11 @@ sealed class DebugConsoleParsedInvocation {
     required int count,
   }) = DebugConsoleSpawnRegimentAtCapital;
 
+  const factory DebugConsoleParsedInvocation.spawnShipAtCapitalHomeFleet({
+    required String shipTypeId,
+    required int count,
+  }) = DebugConsoleSpawnShipAtCapitalHomeFleet;
+
   const factory DebugConsoleParsedInvocation.treasuryCredit({
     required int requestedAmount,
     required int creditedAmount,
@@ -46,6 +51,17 @@ final class DebugConsoleSpawnRegimentAtCapital
   });
 
   final String regimentTypeId;
+  final int count;
+}
+
+final class DebugConsoleSpawnShipAtCapitalHomeFleet
+    extends DebugConsoleParsedInvocation {
+  const DebugConsoleSpawnShipAtCapitalHomeFleet({
+    required this.shipTypeId,
+    required this.count,
+  });
+
+  final String shipTypeId;
   final int count;
 }
 

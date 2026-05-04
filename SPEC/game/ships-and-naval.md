@@ -138,6 +138,7 @@ The **home fleet** is a special fleet for each Great Power:
   - A naval **move** order **docks** at the player’s **capital province** during turn resolution, or
   - A `join home fleet` order resolves successfully when a sea‑going fleet is **in port at the capital** (legacy or transitional saves only; under normal rules no sea‑going fleet occupies the capital port).
 - Ships **leave** the home fleet when they receive a naval move or mission order that creates or updates a non‑home fleet (a fleet that can move and receive missions).
+- Debug console `/spawn_ship` also appends new hulls to the home fleet (in port at capital), bypassing normal tech and build-cost checks; it must fail with no mutation when the player has no valid capital/home-fleet context.
 
 ### Missions and movement
 
@@ -322,6 +323,10 @@ current product contract: trade/transport interception uses hardcoded constants 
 - Given a player owns a capital province adjacent to a sea zone, has treasury and stockpile sufficient for a non-`carrack` ship per the build economy table, and has the unlocking tech for that ship in `techUnlocked`  
   When the player issues a valid naval `BuildUnitOrder` for that ship type during the build phase  
   Then the System accepts the order, deducts treasury and commodities per the table, and adds the ship to the home fleet (subject to topology and capital rules elsewhere in this document).
+
+- Given debug console input `/spawn_ship <ship_type_id> [count]` with a canonical `ship_type_id`, `count` in `1..25`, and a valid human capital/home-fleet context  
+  When the app listener applies the typed debug ship spawn event  
+  Then the System appends `count` new hull instances to the home fleet using canonical ids `ship_<n>` from `WorldState.nextShipInstanceSeq`, updates `nextShipInstanceSeq` monotonically, persists, and bypasses tech/cost gates.
 
 ---
 

@@ -94,10 +94,42 @@ void main() {
       expect(result.message, contains('Unknown regiment type id'));
     });
 
+    test('parses spawn ship command with defaults', () {
+      final result = parser.parse('/spawn_ship carrack');
+      expect(result.isError, isFalse);
+      final spawn =
+          result.invocation! as DebugConsoleSpawnShipAtCapitalHomeFleet;
+      expect(spawn.shipTypeId, 'carrack');
+      expect(spawn.count, 1);
+    });
+
+    test('rejects unknown ship id', () {
+      final result = parser.parse('/spawn_ship nope');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Unknown ship type id'));
+    });
+
+    test('rejects spawn ship count above max limit', () {
+      final result = parser.parse('/spawn_ship carrack 26');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('between 1 and 25'));
+    });
+
     test('help includes all regiment ids in stable order', () {
       final result = parser.parse('/help');
       final message = result.message ?? '';
       final sorted = debugConsoleSupportedRegimentTypeIdsSorted;
+      for (final id in sorted) {
+        expect(message, contains(id));
+      }
+      final joined = sorted.join(', ');
+      expect(message, contains(joined));
+    });
+
+    test('help includes all ship ids in stable order', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      final sorted = debugConsoleSupportedShipTypeIdsSorted;
       for (final id in sorted) {
         expect(message, contains(id));
       }

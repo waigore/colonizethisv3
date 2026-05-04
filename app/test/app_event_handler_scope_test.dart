@@ -148,7 +148,7 @@ void main() {
       expect(result.message, contains('unsupported civilian type'));
     });
 
-    test('continues deterministic id suffix after existing debug units', () {
+    test('continues deterministic canonical unit id sequence', () {
       final game = Game(
         id: 'g4',
         worldState: WorldState(
@@ -159,7 +159,7 @@ void main() {
             ],
             units: [
               Unit(
-                id: 'debug_p1_builder_7',
+                id: 'unit_7',
                 type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: 'oldWorld|1',
@@ -197,8 +197,8 @@ void main() {
       final ids = result.game!.worldState.oldWorld.units
           .map((u) => u.id)
           .toList();
-      expect(ids, contains('debug_p1_builder_8'));
-      expect(ids, contains('debug_p1_builder_9'));
+      expect(ids, contains('unit_8'));
+      expect(ids, contains('unit_9'));
     });
 
     test('caps oversized debug spawn count to 25', () {
@@ -342,6 +342,7 @@ void main() {
         (a) => a.id == 'army_p1',
       );
       expect(homeArmy.regimentUnitIds, hasLength(2));
+      expect(units.every((u) => u.id.startsWith('unit_')), isTrue);
     });
 
     test('fails on unknown player and keeps state unchanged', () {
@@ -417,34 +418,37 @@ void main() {
       expect(result.message, contains('is not human'));
     });
 
-    test('fails on malformed capital province id and keeps state unchanged', () {
-      final game = Game(
-        id: 'g-reg-invalid-capital',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(
-            id: 'p1',
-            displayName: 'P1',
-            isHuman: true,
-            capitalProvinceId: 'malformed',
+    test(
+      'fails on malformed capital province id and keeps state unchanged',
+      () {
+        final game = Game(
+          id: 'g-reg-invalid-capital',
+          worldState: const WorldState(
+            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(),
+            newWorld: RegionData(),
           ),
-        ],
-      );
-      const event = SpawnDebugRegimentAtCapitalEvent(
-        humanPlayerId: 'p1',
-        regimentTypeId: 'peasant_levies',
-      );
-      final result = applyDebugRegimentSpawnAtCapital(
-        currentGame: game,
-        event: event,
-      );
-      expect(result.game, isNull);
-      expect(result.message, contains('invalid capital province id'));
-    });
+          players: const [
+            Player(
+              id: 'p1',
+              displayName: 'P1',
+              isHuman: true,
+              capitalProvinceId: 'malformed',
+            ),
+          ],
+        );
+        const event = SpawnDebugRegimentAtCapitalEvent(
+          humanPlayerId: 'p1',
+          regimentTypeId: 'peasant_levies',
+        );
+        final result = applyDebugRegimentSpawnAtCapital(
+          currentGame: game,
+          event: event,
+        );
+        expect(result.game, isNull);
+        expect(result.message, contains('invalid capital province id'));
+      },
+    );
 
     test('fails on unsupported regiment type and keeps state unchanged', () {
       final game = Game(
@@ -473,6 +477,92 @@ void main() {
       );
       expect(result.game, isNull);
       expect(result.message, contains('unsupported regiment type'));
+    });
+  });
+
+  group('applyDebugShipSpawnAtCapitalHomeFleet', () {
+    test('spawns ships into home fleet and advances global ship sequence', () {
+      final game = Game(
+        id: 'g-ship-1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: [
+            Fleet(
+              id: 'fleet_p1',
+              ownerId: 'p1',
+              inPortAtProvinceId: 'oldWorld|1',
+              regionId: 'oldWorld',
+              ships: const [ShipInstance(id: 'ship_3', typeId: 'carrack')],
+            ),
+          ],
+          nextShipInstanceSeq: 4,
+        ),
+        players: const [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: 'oldWorld|1',
+          ),
+        ],
+      );
+      const event = SpawnDebugShipAtCapitalHomeFleetEvent(
+        humanPlayerId: 'p1',
+        shipTypeId: 'ship_of_the_line',
+        count: 2,
+      );
+      final result = applyDebugShipSpawnAtCapitalHomeFleet(
+        currentGame: game,
+        event: event,
+      );
+      final next = result.game;
+      expect(next, isNotNull);
+      expect(result.message, contains('Spawned 2 ship_of_the_line'));
+      final fleet = next!.worldState.fleets.singleWhere(
+        (f) => f.id == 'fleet_p1',
+      );
+      expect(fleet.ships.map((s) => s.id), containsAll(['ship_4', 'ship_5']));
+      expect(next.worldState.nextShipInstanceSeq, 6);
+    });
+
+    test('fails when player has no valid home fleet at capital', () {
+      final game = Game(
+        id: 'g-ship-2',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          fleets: const [],
+        ),
+        players: const [
+          Player(
+            id: 'p1',
+            displayName: 'P1',
+            isHuman: true,
+            capitalProvinceId: 'oldWorld|1',
+          ),
+        ],
+      );
+      const event = SpawnDebugShipAtCapitalHomeFleetEvent(
+        humanPlayerId: 'p1',
+        shipTypeId: 'carrack',
+      );
+      final result = applyDebugShipSpawnAtCapitalHomeFleet(
+        currentGame: game,
+        event: event,
+      );
+      expect(result.game, isNull);
+      expect(result.message, contains('no valid home fleet at capital'));
     });
   });
 
