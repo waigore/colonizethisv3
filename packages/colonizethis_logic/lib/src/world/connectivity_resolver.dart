@@ -289,7 +289,7 @@ ConnectivityResult _connectedTilesForPlayer({
   final connected = <String>{capitalKey};
   final pathCap = <String, int>{};
   pathCap[capitalKey] = _transportLevelAtTile(worldState, capitalKey);
-  _propagateConnectivity(
+  _runConnectivityPropagation(
     queue: <String>[capitalKey],
     connected: connected,
     pathCap: pathCap,
@@ -297,7 +297,6 @@ ConnectivityResult _connectedTilesForPlayer({
     tileMapByRegion: tileMapByRegion,
     provinceIdsByType: provinceIdsByType,
     ownedProvinceIds: owned,
-    portInfo: portInfo,
     canExpandFrom: (tileKey) =>
         (tileKey == capitalKey) ||
         (tileState.roadLevel(tileKey) > 0) ||
@@ -338,7 +337,7 @@ ConnectivityResult _connectedTilesForPlayer({
     );
   }
 
-  _propagateConnectivity(
+  _runConnectivityPropagation(
     queue: expansionSeedQueue,
     connected: connected,
     pathCap: pathCap,
@@ -346,7 +345,6 @@ ConnectivityResult _connectedTilesForPlayer({
     tileMapByRegion: tileMapByRegion,
     provinceIdsByType: provinceIdsByType,
     ownedProvinceIds: owned,
-    portInfo: portInfo,
     canExpandFrom: (tileKey) =>
         (tileState.roadLevel(tileKey) > 0) || portInfo.containsKey(tileKey),
   );
@@ -380,9 +378,7 @@ ConnectivityResult _connectedTilesForPlayer({
   );
 }
 
-/// Queue propagation with per-tile transport bottleneck updates; not a plain
-/// graph BFS (see `lib/src/utils/graph_traversal.dart`).
-void _propagateConnectivity({
+void _runConnectivityPropagation({
   required List<String> queue,
   required Set<String> connected,
   required Map<String, int> pathCap,
@@ -390,64 +386,47 @@ void _propagateConnectivity({
   required Map<String, TileMapResult> tileMapByRegion,
   required Set<String> provinceIdsByType,
   required Set<String> ownedProvinceIds,
-  required Map<String, (String, String)> portInfo,
   required bool Function(String tileKey) canExpandFrom,
 }) {
-  while (queue.isNotEmpty) {
-    final key = queue.removeAt(0);
-    final parts = key.split('|');
-    if (parts.length != 4) continue;
-    final regionId = parts[0];
-    final localProvinceId = parts[1];
-    final fullProvinceId = '$regionId|$localProvinceId';
-    final x = int.tryParse(parts[2]) ?? -1;
-    final y = int.tryParse(parts[3]) ?? -1;
-    if (x < 0 || y < 0) continue;
-    if (!ownedProvinceIds.contains(fullProvinceId)) continue;
-    final map = tileMapByRegion[regionId];
-    if (map == null) continue;
-    if (!canExpandFrom(key)) continue;
-    final bottleneckU = pathCap[key] ?? 0;
-    for (final neighbor in _adjacentTileKeys(
-      regionId,
-      localProvinceId,
-      x,
-      y,
-      map,
-      provinceIdsByType,
-    )) {
-      final transportN = _transportLevelAtTile(worldState, neighbor);
-      final candidate = bottleneckU < transportN ? bottleneckU : transportN;
-      _updateNeighborConnectivity(
-        neighbor: neighbor,
-        candidate: candidate,
-        connected: connected,
-        pathCap: pathCap,
-        queue: queue,
+  propagateConnectivityBottleneckQueue(
+    queue: queue,
+    connected: connected,
+    pathCap: pathCap,
+    shouldExpandEdgesFrom: (key) {
+      final parts = key.split('|');
+      if (parts.length != 4) return false;
+      final regionId = parts[0];
+      final localProvinceId = parts[1];
+      final fullProvinceId = '$regionId|$localProvinceId';
+      final x = int.tryParse(parts[2]) ?? -1;
+      final y = int.tryParse(parts[3]) ?? -1;
+      if (x < 0 || y < 0) return false;
+      if (!ownedProvinceIds.contains(fullProvinceId)) return false;
+      final map = tileMapByRegion[regionId];
+      if (map == null) return false;
+      return canExpandFrom(key);
+    },
+    neighborsOf: (key) {
+      final parts = key.split('|');
+      if (parts.length != 4) return const <String>[];
+      final regionId = parts[0];
+      final localProvinceId = parts[1];
+      final x = int.tryParse(parts[2]) ?? -1;
+      final y = int.tryParse(parts[3]) ?? -1;
+      if (x < 0 || y < 0) return const <String>[];
+      final map = tileMapByRegion[regionId];
+      if (map == null) return const <String>[];
+      return _adjacentTileKeys(
+        regionId,
+        localProvinceId,
+        x,
+        y,
+        map,
+        provinceIdsByType,
       );
-    }
-  }
-}
-
-void _updateNeighborConnectivity({
-  required String neighbor,
-  required int candidate,
-  required Set<String> connected,
-  required Map<String, int> pathCap,
-  required List<String> queue,
-}) {
-  final existing = pathCap[neighbor] ?? -1;
-  if (candidate > existing) {
-    pathCap[neighbor] = candidate;
-    connected.add(neighbor);
-    queue.add(neighbor);
-    return;
-  }
-  if (!connected.contains(neighbor)) {
-    connected.add(neighbor);
-    pathCap[neighbor] = candidate;
-    queue.add(neighbor);
-  }
+    },
+    transportLevelAt: (neighbor) => _transportLevelAtTile(worldState, neighbor),
+  );
 }
 
 Set<String> _seaConnectedPortKeysForCapital({

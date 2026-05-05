@@ -121,6 +121,13 @@ Game _absorbIntoGp(
   );
   next = bulk.game;
 
+  // Great Power absorption remaps GP-only game fields (`generals`,
+  // `purchasedTilesByTileKey`, `playerProspectedTiles`, AI metadata maps,
+  // `politicalGlyphByPlayerId`, `subsidyStates`). Minor/Tribe targets are not
+  // GPs: `SPEC/game/diplomacy.md` Join Empire mandates province/unit/fleet
+  // transfer and relation cleanup for them, but does **not** require those
+  // GP-only cleanups on the minor path—so the branch below is intentionally
+  // GP-only (avoids conflating nation ids with player-owned persistence).
   if (kind == _AbsorptionKind.greatPower) {
     final generals = next.generals
         .map(
