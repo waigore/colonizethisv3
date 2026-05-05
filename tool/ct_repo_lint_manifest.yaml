@@ -41,6 +41,13 @@ rules:
     runner: dart
     script: tool/check_workspace_outdated_resolvable.dart
 
+  - rule_id: repo.workspace_outdated_latest_direct
+    group: structure
+    title: direct dependencies must be latest when latest is resolvable
+    spec: SPEC/program/pub-workspace-toolchain.md
+    runner: dart
+    script: tool/check_workspace_outdated_latest_direct.dart
+
   - rule_id: repo.asset_path_constants
     group: identifiers
     title: Asset path constants in app runtime code

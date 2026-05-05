@@ -44,6 +44,7 @@ Interpretation:
 - If a package is at **Resolvable** but below **Latest**, verify it is covered by one of the intentional caps documented above before considering the issue complete.
 - Record the audit result in the linked issue/PR so reviewers can distinguish solved vs deferred dependency gaps.
 - CI-facing equivalent: `dart run tool/ct_repo_lint.dart --rule repo.workspace_outdated_resolvable` (fails when any audited package row has `current != resolvable`).
+- CI-facing direct-latest guard: `dart run tool/ct_repo_lint.dart --rule repo.workspace_outdated_latest_direct` (fails when a direct/dev row is below `Latest` even though `Latest == Resolvable`).
 
 ## Pre-PR Checklist
 
