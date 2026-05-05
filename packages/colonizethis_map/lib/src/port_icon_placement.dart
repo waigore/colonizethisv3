@@ -1,5 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'map_pipe_string_util.dart';
 import 'tile_key_util.dart';
 
 /// Orthogonal scan order: North, East, South, West.
@@ -92,19 +93,7 @@ String _portPlacementContextSuffix(String? contextLabel) {
 String? localProvinceIdFromPortsSeaboardKey(
   String seaboardKey,
   String regionId,
-) {
-  final parts = seaboardKey.split('|');
-  if (parts.length >= 3) {
-    if (parts[0] != regionId) {
-      return null;
-    }
-    return parts[1];
-  }
-  if (parts.length == 2) {
-    return parts[0];
-  }
-  return null;
-}
+) => mapPipeLocalProvinceIdFromPortsSeaboardKey(seaboardKey, regionId);
 
 /// Authoritative **land** port tile key from [Game.worldState.portsByProvinceSeaboard]
 /// for [localProvinceId] in [regionId]. Null when no entry matches.

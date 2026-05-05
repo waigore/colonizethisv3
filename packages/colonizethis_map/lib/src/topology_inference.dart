@@ -2,12 +2,11 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'map_pipe_string_util.dart';
+
 /// Infers MapTopology from a tile map result. SPEC/program/tile-map-gen-resources.md § Topology inference.
 /// Collects unique region ids from grid; classifies province vs sea zone; builds edges from adjacencies.
-MapTopology inferTopologyFromTileMap(
-  TileMapResult result,
-  String regionId,
-) {
+MapTopology inferTopologyFromTileMap(TileMapResult result, String regionId) {
   final ids = <String>{};
   for (var y = 0; y < result.height; y++) {
     for (var x = 0; x < result.width; x++) {
@@ -26,15 +25,17 @@ MapTopology inferTopologyFromTileMap(
   final pairs = result.adjacentRegionPairs();
   final edges = <TopologyEdge>[];
   for (final pair in pairs) {
-    final parts = pair.split('|');
-    if (parts.length == 2) {
-      edges.add(TopologyEdge(id1: parts[0], id2: parts[1]));
+    final parsed = mapPipeTryParseTwoPartPair(pair);
+    if (parsed != null) {
+      edges.add(TopologyEdge(id1: parsed.$1, id2: parsed.$2));
     }
   }
 
-  return MapTopology(nodes: nodes..sort((a, b) => a.id.compareTo(b.id)), edges: edges);
+  return MapTopology(
+    nodes: nodes..sort((a, b) => a.id.compareTo(b.id)),
+    edges: edges,
+  );
 }
 
 /// Ids matching s + digits (e.g. s1, s2) are sea zones. Others are provinces.
 bool _isSeaZoneId(String id) => RegExp(r'^s\d+$').hasMatch(id);
-

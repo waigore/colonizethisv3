@@ -159,6 +159,13 @@ rules:
     runner: dart
     script: tool/check_canonical_province_tile_keys.dart
 
+  - rule_id: repo.colonizethis_map_lib_pipe_split
+    group: structure
+    title: colonizethis_map lib limits `.split('|')` to tile_key_util / map_pipe_string_util
+    spec: SPEC/program/map-visualization.md
+    runner: dart
+    script: tool/check_colonizethis_map_lib_pipe_split.dart
+
   - rule_id: repo.land_province_bucket_keys
     group: game_invariants
     title: Canonical full-id land province bucket lookups in guarded paths
