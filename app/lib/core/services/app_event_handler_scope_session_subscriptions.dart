@@ -219,6 +219,12 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           applyDebugTreasuryCredit(currentGame: current, event: e),
         );
       }),
+      bus.on<CreditDebugStockpileCommodityEvent>().listen((e) {
+        final current = ref.read(currentGameProvider);
+        _applyDebugCommand(
+          applyDebugStockpileCredit(currentGame: current, event: e),
+        );
+      }),
       bus.on<FlipDebugProvinceOwnershipEvent>().listen((e) {
         final current = ref.read(currentGameProvider);
         final mapData = current == null

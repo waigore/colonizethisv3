@@ -80,6 +80,50 @@ void main() {
       expect(result.message, contains('9999'));
     });
 
+    test('parses add_resource with canonical commodity id', () {
+      final result = parser.parse('/add_resource grain 500');
+      expect(result.isError, isFalse);
+      final credit = result.invocation! as DebugConsoleStockpileCredit;
+      expect(credit.commodityId, 'grain');
+      expect(credit.requestedAmount, 500);
+      expect(credit.creditedAmount, 500);
+    });
+
+    test('parses add_resource case-insensitively and emits canonical id', () {
+      final result = parser.parse('/add_resource castIRON 10');
+      expect(result.isError, isFalse);
+      final credit = result.invocation! as DebugConsoleStockpileCredit;
+      expect(credit.commodityId, 'castIron');
+      expect(credit.requestedAmount, 10);
+      expect(credit.creditedAmount, 10);
+    });
+
+    test('clamps add_resource above cap in parser', () {
+      final result = parser.parse('/add_resource grain 12000');
+      expect(result.isError, isFalse);
+      final credit = result.invocation! as DebugConsoleStockpileCredit;
+      expect(credit.requestedAmount, 12000);
+      expect(credit.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
+    });
+
+    test('rejects add_resource unknown commodity id', () {
+      final result = parser.parse('/add_resource nope 10');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Unknown commodity id'));
+    });
+
+    test('rejects add_resource invalid amount input', () {
+      final result = parser.parse('/add_resource grain abc');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Amount must be an integer'));
+    });
+
+    test('rejects add_resource amount below 1', () {
+      final result = parser.parse('/add_resource grain 0');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('at least 1'));
+    });
+
     test('parses spawn regiment command with defaults', () {
       final result = parser.parse('/spawn_regiment peasant_levies');
       expect(result.isError, isFalse);
@@ -130,6 +174,17 @@ void main() {
       final result = parser.parse('/help');
       final message = result.message ?? '';
       final sorted = debugConsoleSupportedShipTypeIdsSorted;
+      for (final id in sorted) {
+        expect(message, contains(id));
+      }
+      final joined = sorted.join(', ');
+      expect(message, contains(joined));
+    });
+
+    test('help includes all commodity ids in stable order', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      final sorted = debugConsoleSupportedCommodityIdsSorted;
       for (final id in sorted) {
         expect(message, contains(id));
       }

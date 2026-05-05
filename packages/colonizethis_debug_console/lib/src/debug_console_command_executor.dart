@@ -87,6 +87,26 @@ class DebugConsoleCommandExecutor {
             creditedAmount: creditedAmount,
           ),
         ),
+      DebugConsoleStockpileCredit(
+        :final commodityId,
+        :final requestedAmount,
+        :final creditedAmount,
+      ) =>
+        DebugConsoleExecutionResult.success(
+          events: [
+            CreditDebugStockpileCommodityEvent(
+              humanPlayerId: humanPlayerId,
+              commodityId: commodityId,
+              requestedAmount: requestedAmount,
+              creditedAmount: creditedAmount,
+            ),
+          ],
+          message: _stockpileCreditExecutorMessage(
+            commodityId: commodityId,
+            requestedAmount: requestedAmount,
+            creditedAmount: creditedAmount,
+          ),
+        ),
       DebugConsoleFlipProvince(:final regionId, :final provinceDisplayName) =>
         DebugConsoleExecutionResult.success(
           events: [
@@ -112,6 +132,19 @@ String _treasuryCreditExecutorMessage({
         'crediting $creditedAmount (clamped to $kDebugConsoleMaxTreasuryCreditAmount).';
   }
   return 'Queued debug treasury credit: $creditedAmount.';
+}
+
+String _stockpileCreditExecutorMessage({
+  required String commodityId,
+  required int requestedAmount,
+  required int creditedAmount,
+}) {
+  if (requestedAmount != creditedAmount) {
+    return 'Queued debug stockpile credit for $commodityId: requested '
+        '$requestedAmount, crediting $creditedAmount (clamped to '
+        '$kDebugConsoleMaxTreasuryCreditAmount).';
+  }
+  return 'Queued debug stockpile credit for $commodityId: $creditedAmount.';
 }
 
 class DebugConsoleExecutionResult {

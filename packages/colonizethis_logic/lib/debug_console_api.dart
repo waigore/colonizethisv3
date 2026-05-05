@@ -12,6 +12,10 @@ export 'package:colonizethis_models/colonizethis_models.dart'
         kUnitTypeMerchant,
         kUnitTypeRailBuilder,
         kUnitTypeSpy;
+export 'src/debug_console/debug_console_commodities.dart'
+    show
+        debugConsoleSupportedCommodityIds,
+        debugConsoleSupportedCommodityIdsSorted;
 export 'src/debug_console/debug_console_regiments.dart'
     show
         debugConsoleSupportedRegimentTypeIds,
