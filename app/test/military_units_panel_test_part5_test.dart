@@ -824,14 +824,14 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final homeTile = find.widgetWithText(ExpansionTile, 'Home Army');
+        final homeTile = find.widgetWithText(ExpansionTile, 'Home Army').first;
         await tester.tap(homeTile);
         await tester.pumpAndSettle();
 
         final splitBtn = find.descendant(
           of: homeTile,
           matching: find.widgetWithText(CtNinePatchButton, 'Split'),
-        );
+        ).first;
         await tester.ensureVisible(splitBtn);
         await tester.tap(splitBtn);
         await tester.pumpAndSettle();
@@ -937,14 +937,14 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final homeTile = find.widgetWithText(ExpansionTile, 'Home Army');
+        final homeTile = find.widgetWithText(ExpansionTile, 'Home Army').first;
         await tester.tap(homeTile);
         await tester.pumpAndSettle();
 
         final splitBtn = find.descendant(
           of: homeTile,
           matching: find.widgetWithText(CtNinePatchButton, 'Split'),
-        );
+        ).first;
         await tester.ensureVisible(splitBtn);
         await tester.tap(splitBtn);
         await tester.pumpAndSettle();

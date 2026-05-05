@@ -30,6 +30,7 @@ class DebugConsoleCommandParser {
       '/spawn_regiment' => _parseSpawnRegiment(tokens),
       '/spawn_ship' => _parseSpawnShip(tokens),
       '/add_money' => _parseAddMoney(tokens),
+      '/add_resource' => _parseAddResource(tokens),
       '/flip_province' => _parseFlipProvince(tokens),
       '/help' => DebugConsoleParseResult.error(_buildHelpMessage()),
       _ => DebugConsoleParseResult.error(
@@ -85,6 +86,41 @@ class DebugConsoleCommandParser {
         : rawAmount;
     return DebugConsoleParseResult.success(
       DebugConsoleParsedInvocation.treasuryCredit(
+        requestedAmount: rawAmount,
+        creditedAmount: creditedAmount,
+      ),
+    );
+  }
+
+  DebugConsoleParseResult _parseAddResource(List<String> tokens) {
+    if (tokens.length < 3) {
+      return const DebugConsoleParseResult.error(
+        'Usage: /add_resource <commodity_id> <amount>',
+      );
+    }
+    final requestedCommodityId = tokens[1].trim();
+    final normalizedCommodityId = requestedCommodityId.toLowerCase();
+    final canonicalCommodityId = _canonicalCommodityIdForInput(
+      normalizedCommodityId,
+    );
+    if (canonicalCommodityId == null) {
+      return const DebugConsoleParseResult.error(
+        'Unknown commodity id. Use /help for supported commodity ids.',
+      );
+    }
+    final rawAmount = int.tryParse(tokens[2]);
+    if (rawAmount == null) {
+      return const DebugConsoleParseResult.error('Amount must be an integer.');
+    }
+    if (rawAmount < 1) {
+      return const DebugConsoleParseResult.error('Amount must be at least 1.');
+    }
+    final creditedAmount = rawAmount > kDebugConsoleMaxTreasuryCreditAmount
+        ? kDebugConsoleMaxTreasuryCreditAmount
+        : rawAmount;
+    return DebugConsoleParseResult.success(
+      DebugConsoleParsedInvocation.stockpileCredit(
+        commodityId: canonicalCommodityId,
         requestedAmount: rawAmount,
         creditedAmount: creditedAmount,
       ),
@@ -180,17 +216,33 @@ class DebugConsoleCommandParser {
   }
 }
 
+String? _canonicalCommodityIdForInput(String normalizedInput) {
+  for (final candidate in debugConsoleSupportedCommodityIds) {
+    if (candidate.toLowerCase() == normalizedInput) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 String _buildHelpMessage() {
   final regimentIds = debugConsoleSupportedRegimentTypeIdsSorted.join(', ');
   final shipIds = debugConsoleSupportedShipTypeIdsSorted.join(', ');
-  return 'Supported: /spawn_civilian <explorer|builder|engineer|spy|merchant|rail_builder> [count]; '
-      '/spawn_regiment <regiment_type_id> [count] '
-      '(supported ids: $regimentIds); '
-      '/spawn_ship <ship_type_id> [count] '
-      '(supported ids: $shipIds); '
-      '/add_money <amount> (integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
-      '$kDebugConsoleMaxTreasuryCreditAmount are clamped); '
-      '/flip_province <regionId> <province_display_name>.';
+  final commodityIds = debugConsoleSupportedCommodityIdsSorted.join(', ');
+  return 'Supported commands:\n'
+      '- /spawn_civilian <explorer|builder|engineer|spy|merchant|rail_builder> [count]\n'
+      '- /spawn_regiment <regiment_type_id> [count]\n'
+      '  supported ids: $regimentIds\n'
+      '- /spawn_ship <ship_type_id> [count]\n'
+      '  supported ids: $shipIds\n'
+      '- /add_money <amount>\n'
+      '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
+      '$kDebugConsoleMaxTreasuryCreditAmount are clamped\n'
+      '- /add_resource <commodity_id> <amount>\n'
+      '  supported ids: $commodityIds\n'
+      '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
+      '$kDebugConsoleMaxTreasuryCreditAmount are clamped\n'
+      '- /flip_province <regionId> <province_display_name>.';
 }
 
 class DebugConsoleParseResult {
