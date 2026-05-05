@@ -5,21 +5,17 @@ import 'package:colonizethis_logic/debug_console_api.dart'
     show resolveCivilianSpawnTileKey;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'debug_command_helpers.dart';
+
 /// Debug spawn civilians at the human player's capital (console / dev tooling).
-({Game? game, String message}) applyDebugCivilianSpawnAtCapital({
+DebugCommandResult applyDebugCivilianSpawnAtCapital({
   required Game? currentGame,
   required SpawnDebugCivilianAtCapitalEvent event,
 }) {
   if (currentGame == null) {
     return (game: null, message: 'Debug spawn ignored: no active game.');
   }
-  Player? player;
-  for (final candidate in currentGame.players) {
-    if (candidate.id == event.humanPlayerId) {
-      player = candidate;
-      break;
-    }
-  }
+  final player = findPlayerById(currentGame, event.humanPlayerId);
   if (player == null) {
     return (
       game: null,
@@ -94,20 +90,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 }
 
 /// Debug spawn military regiments at the human player's capital (console / dev tooling).
-({Game? game, String message}) applyDebugRegimentSpawnAtCapital({
+DebugCommandResult applyDebugRegimentSpawnAtCapital({
   required Game? currentGame,
   required SpawnDebugRegimentAtCapitalEvent event,
 }) {
   if (currentGame == null) {
     return (game: null, message: 'Debug spawn ignored: no active game.');
   }
-  Player? player;
-  for (final candidate in currentGame.players) {
-    if (candidate.id == event.humanPlayerId) {
-      player = candidate;
-      break;
-    }
-  }
+  final player = findPlayerById(currentGame, event.humanPlayerId);
   if (player == null) {
     return (
       game: null,
@@ -208,20 +198,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 }
 
 /// Debug spawn ships into the human player's home fleet at capital.
-({Game? game, String message}) applyDebugShipSpawnAtCapitalHomeFleet({
+DebugCommandResult applyDebugShipSpawnAtCapitalHomeFleet({
   required Game? currentGame,
   required SpawnDebugShipAtCapitalHomeFleetEvent event,
 }) {
   if (currentGame == null) {
     return (game: null, message: 'Debug spawn ignored: no active game.');
   }
-  Player? player;
-  for (final candidate in currentGame.players) {
-    if (candidate.id == event.humanPlayerId) {
-      player = candidate;
-      break;
-    }
-  }
+  final player = findPlayerById(currentGame, event.humanPlayerId);
   if (player == null) {
     return (
       game: null,
