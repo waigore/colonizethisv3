@@ -66,69 +66,74 @@ class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.debugConsole_title,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Close debug console',
-                    onPressed: widget.onClose,
-                    icon: const Icon(Icons.close, color: Colors.white),
-                  ),
-                ],
-              ),
+              _buildHeader(l10n),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   color: Colors.black54,
-                  child: ListView(
-                    children: _controller.lines
-                        .map(
-                          (line) => Text(
-                            line,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontFamily: 'monospace',
-                              fontSize: 12,
-                            ),
-                          ),
-                        )
-                        .toList(growable: false),
-                  ),
+                  child: _buildLogList(),
                 ),
               ),
               const SizedBox(height: 6),
-              Focus(
-                onKeyEvent: _handleKey,
-                child: TextField(
-                  key: const ValueKey<String>('debug-console-input'),
-                  focusNode: _controller.focusNode,
-                  controller: _controller.textController,
-                  onSubmitted: (_) => _submit(),
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: l10n.debugConsole_hintSpawnCivilian,
-                    hintStyle: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
-                    ),
-                    filled: true,
-                    fillColor: Colors.black54,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ),
+              _buildInput(l10n),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(AppLocalizations l10n) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            l10n.debugConsole_title,
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
+        ),
+        IconButton(
+          tooltip: 'Close debug console',
+          onPressed: widget.onClose,
+          icon: const Icon(Icons.close, color: Colors.white),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLogList() {
+    return ListView(
+      children: _controller.lines
+          .map(
+            (line) => Text(
+              line,
+              style: const TextStyle(
+                color: Colors.white,
+                fontFamily: 'monospace',
+                fontSize: 12,
+              ),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  Widget _buildInput(AppLocalizations l10n) {
+    return Focus(
+      onKeyEvent: _handleKey,
+      child: TextField(
+        key: const ValueKey<String>('debug-console-input'),
+        focusNode: _controller.focusNode,
+        controller: _controller.textController,
+        onSubmitted: (_) => _submit(),
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: l10n.debugConsole_hintSpawnCivilian,
+          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+          filled: true,
+          fillColor: Colors.black54,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
         ),
       ),
     );
