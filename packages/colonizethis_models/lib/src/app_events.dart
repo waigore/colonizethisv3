@@ -521,13 +521,26 @@ class CreditDebugStockpileCommodityEvent extends SessionCommandEvent {
 class FlipDebugProvinceOwnershipEvent extends SessionCommandEvent {
   const FlipDebugProvinceOwnershipEvent({
     required this.humanPlayerId,
-    required this.regionId,
-    required this.provinceDisplayName,
+    this.regionId,
+    this.provinceDisplayName,
+    this.provinceId,
   });
 
   final String humanPlayerId;
-  final String regionId;
-  final String provinceDisplayName;
+  final String? regionId;
+  final String? provinceDisplayName;
+  final String? provinceId;
+}
+
+/// Immediate debug reveal of province visibility for the active human player.
+class RevealDebugProvinceEvent extends SessionCommandEvent {
+  const RevealDebugProvinceEvent({
+    required this.humanPlayerId,
+    required this.target,
+  });
+
+  final String humanPlayerId;
+  final String target;
 }
 
 /// Request to append one diplomatic order for [playerId] in current-turn draft.

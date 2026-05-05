@@ -24,6 +24,8 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'app_event_handler.dart';
 import 'app_event_handler_debug_flip_province.dart'
     show applyDebugFlipProvinceOwnership;
+import 'app_event_handler_debug_reveal_province.dart'
+    show applyDebugRevealProvince;
 import 'app_event_handler_debug_spawn_civilian.dart'
     show applyDebugCivilianSpawnAtCapital;
 import 'app_event_handler_debug_spawn_regiment.dart'

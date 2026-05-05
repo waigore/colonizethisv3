@@ -107,17 +107,33 @@ class DebugConsoleCommandExecutor {
             creditedAmount: creditedAmount,
           ),
         ),
-      DebugConsoleFlipProvince(:final regionId, :final provinceDisplayName) =>
+      DebugConsoleFlipProvince(
+        :final regionId,
+        :final provinceDisplayName,
+        :final provinceId,
+      ) =>
         DebugConsoleExecutionResult.success(
           events: [
             FlipDebugProvinceOwnershipEvent(
               humanPlayerId: humanPlayerId,
               regionId: regionId,
               provinceDisplayName: provinceDisplayName,
+              provinceId: provinceId,
             ),
           ],
-          message:
-              'Queued debug province flip: $regionId / $provinceDisplayName.',
+          message: provinceId != null
+              ? 'Queued debug province flip: $provinceId.'
+              : 'Queued debug province flip: $regionId / $provinceDisplayName.',
+        ),
+      DebugConsoleRevealProvince(:final target) =>
+        DebugConsoleExecutionResult.success(
+          events: [
+            RevealDebugProvinceEvent(
+              humanPlayerId: humanPlayerId,
+              target: target,
+            ),
+          ],
+          message: 'Queued debug province reveal: $target.',
         ),
     };
   }

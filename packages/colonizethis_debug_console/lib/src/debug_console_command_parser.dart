@@ -32,6 +32,7 @@ class DebugConsoleCommandParser {
       '/add_money' => _parseAddMoney(tokens),
       '/add_resource' => _parseAddResource(tokens),
       '/flip_province' => _parseFlipProvince(tokens),
+      '/reveal_province' => _parseRevealProvince(tokens),
       '/help' => DebugConsoleParseResult.error(_buildHelpMessage()),
       _ => DebugConsoleParseResult.error(
         'Unknown command: $command. Try /help.',
@@ -190,9 +191,20 @@ class DebugConsoleCommandParser {
   }
 
   DebugConsoleParseResult _parseFlipProvince(List<String> tokens) {
-    if (tokens.length < 3) {
+    if (tokens.length < 2) {
       return const DebugConsoleParseResult.error(
-        'Usage: /flip_province <regionId> <province_display_name>',
+        'Usage: /flip_province <regionId> <province_display_name> or /flip_province <regionId|localId>',
+      );
+    }
+    if (tokens.length == 2) {
+      final provinceId = tokens[1].trim();
+      if (provinceId.isEmpty || !provinceId.contains('|')) {
+        return const DebugConsoleParseResult.error(
+          'Usage: /flip_province <regionId> <province_display_name> or /flip_province <regionId|localId>',
+        );
+      }
+      return DebugConsoleParseResult.success(
+        DebugConsoleParsedInvocation.flipProvince(provinceId: provinceId),
       );
     }
     final regionId = tokens[1].trim();
@@ -212,6 +224,28 @@ class DebugConsoleCommandParser {
         regionId: regionId,
         provinceDisplayName: provinceDisplayName,
       ),
+    );
+  }
+
+  DebugConsoleParseResult _parseRevealProvince(List<String> tokens) {
+    if (tokens.length < 2) {
+      return const DebugConsoleParseResult.error(
+        'Usage: /reveal_province <regionId|localId | province_display_name>',
+      );
+    }
+    final target = tokens.sublist(1).join(' ').trim();
+    if (target.isEmpty) {
+      return const DebugConsoleParseResult.error(
+        'Usage: /reveal_province <regionId|localId | province_display_name>',
+      );
+    }
+    if (_looksLikeUnprefixedProvinceLocalId(target)) {
+      return const DebugConsoleParseResult.error(
+        'Use full province id format: regionId|localId',
+      );
+    }
+    return DebugConsoleParseResult.success(
+      DebugConsoleParsedInvocation.revealProvince(target: target),
     );
   }
 }
@@ -242,7 +276,10 @@ String _buildHelpMessage() {
       '  supported ids: $commodityIds\n'
       '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
       '$kDebugConsoleMaxTreasuryCreditAmount are clamped\n'
-      '- /flip_province <regionId> <province_display_name>.';
+      '- /flip_province <regionId> <province_display_name>\n'
+      '- /flip_province <regionId|localId> (retry path for ambiguity)\n'
+      '- /reveal_province <regionId|localId | province_display_name>\n'
+      '  use full id fallback when display name is ambiguous.';
 }
 
 class DebugConsoleParseResult {
@@ -270,4 +307,8 @@ String? _unitTypeFromAlias(String alias) {
     'rail_builder' || 'rail-builder' || 'railbuilder' => kUnitTypeRailBuilder,
     _ => null,
   };
+}
+
+bool _looksLikeUnprefixedProvinceLocalId(String target) {
+  return RegExp(r'^P[0-9]+$', caseSensitive: false).hasMatch(target.trim());
 }
