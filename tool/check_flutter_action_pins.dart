@@ -1,12 +1,14 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:pub_semver/pub_semver.dart';
 import 'package:yaml/yaml.dart';
 
 /// Enforces Flutter CI pinning: every `subosito/flutter-action@...` workflow
-/// step must define a non-empty `with.flutter-version`.
+/// step must define `with.flutter-version` and the version must be >= 3.41.9.
 ///
 /// SPEC: SPEC/program/pub-workspace-toolchain.md
+final Version _kMinPinnedFlutterVersion = Version(3, 41, 9);
 int runCheckFlutterActionPins(
   String repoRoot, {
   void Function(String line)? info,
@@ -48,7 +50,7 @@ int runCheckFlutterActionPins(
   }
 
   logE(
-    'check_flutter_action_pins: found ${violations.length} workflow step(s) without with.flutter-version pin:',
+    'check_flutter_action_pins: found ${violations.length} workflow step(s) with invalid flutter-version pin:',
   );
   for (final violation in violations) {
     logE(' - $violation');
@@ -86,17 +88,56 @@ void _checkStepMap(
     return;
   }
   final withMap = step['with'];
-  final flutterVersion = withMap is YamlMap ? withMap['flutter-version'] : null;
-  if (flutterVersion is String && flutterVersion.trim().isNotEmpty) {
+  final flutterVersionRaw = withMap is YamlMap ? withMap['flutter-version'] : null;
+  if (flutterVersionRaw is String && flutterVersionRaw.trim().isEmpty) {
+    _addViolation(relPath, uses, step, index, violations, 'flutter-version is empty');
     return;
   }
+  if (flutterVersionRaw is String) {
+    final normalized = flutterVersionRaw.trim().replaceAll("'", '').replaceAll('"', '');
+    Version? parsedVersion;
+    try {
+      parsedVersion = Version.parse(normalized);
+    } on FormatException {
+      _addViolation(
+        relPath,
+        uses,
+        step,
+        index,
+        violations,
+        'flutter-version "$flutterVersionRaw" is not a valid semantic version',
+      );
+      return;
+    }
+    if (parsedVersion < _kMinPinnedFlutterVersion) {
+      _addViolation(
+        relPath,
+        uses,
+        step,
+        index,
+        violations,
+        'flutter-version "$parsedVersion" is below minimum $_kMinPinnedFlutterVersion',
+      );
+      return;
+    }
+    return;
+  }
+  _addViolation(relPath, uses, step, index, violations, 'missing flutter-version pin');
+}
+
+void _addViolation(
+  String relPath,
+  String uses,
+  YamlMap step,
+  int index,
+  List<String> violations,
+  String detail,
+) {
   final name = step['name'];
   final stepLabel = name is String && name.trim().isNotEmpty
       ? '"${name.trim()}"'
       : 'index $index';
-  violations.add(
-    '$relPath step $stepLabel uses $uses without flutter-version pin',
-  );
+  violations.add('$relPath step $stepLabel uses $uses with $detail');
 }
 
 void main() {
