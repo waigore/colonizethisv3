@@ -5,7 +5,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         PlayerView,
         VisibilityLevel,
         kWorkTargetBuildImprovement,
-        kWorkTargetExplore;
+        kWorkTargetExplore,
+        kWorkTargetProspect;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -114,6 +115,25 @@ void main() {
 
       expect(cache.get('gp1', kWorkTargetExplore), {'gp1|tile'});
       expect(cache.get('gp2', kWorkTargetExplore), {'gp2|tile'});
+    });
+
+    test('refresh stores and reads prospect membership', () {
+      final cache = PerPlayerWorkTargetSelectionCache(
+        strategies: {
+          kWorkTargetProspect: (_) => {'oldWorld|p3|4|2', 'oldWorld|p3|2|1'},
+        },
+      );
+
+      cache.refresh(snapshotForPlayer('gp1'));
+
+      expect(
+        cache.get('gp1', kWorkTargetProspect),
+        {'oldWorld|p3|4|2', 'oldWorld|p3|2|1'},
+      );
+      expect(
+        cache.sorted('gp1', kWorkTargetProspect),
+        ['oldWorld|p3|2|1', 'oldWorld|p3|4|2'],
+      );
     });
   });
 }
