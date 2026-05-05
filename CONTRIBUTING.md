@@ -33,9 +33,30 @@ Run this sequence from a clean checkout on the pinned Flutter/Dart toolchain:
 
 ```bash
 dart pub outdated
-cd app && flutter pub outdated && cd ..
-cd ctdev && flutter pub outdated && cd ..
-cd widgetbook_host && flutter pub outdated && cd ..
+for pkg in $(python3 - <<'PY'
+import pathlib
+root = pathlib.Path('.')
+lines = (root / 'pubspec.yaml').read_text().splitlines()
+members = []
+in_workspace = False
+for line in lines:
+    stripped = line.strip()
+    if not in_workspace:
+        if stripped == 'workspace:':
+            in_workspace = True
+        continue
+    if stripped.endswith(':') and not line.startswith(' '):
+        break
+    if stripped.startswith('- '):
+        members.append(stripped[2:].strip())
+for member in members:
+    pubspec = root / member / 'pubspec.yaml'
+    if pubspec.exists() and 'sdk: flutter' in pubspec.read_text():
+        print(member)
+PY
+); do
+  (cd "$pkg" && flutter pub outdated)
+done
 ```
 
 Interpretation:

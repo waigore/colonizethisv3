@@ -34,16 +34,11 @@ int runCheckWorkspaceOutdatedResolvable(
   void Function(String line)? err,
   ProcessRunner? processRunner,
 }) {
-  final logI = info ?? stdout.writeln;
-  final logE = err ?? stderr.writeln;
+  final void Function(String) logI = info ?? stdout.writeln;
+  final void Function(String) logE = err ?? stderr.writeln;
   final run = processRunner ?? _defaultRunner;
 
-  final auditTargets = <({String relativePath, String executable})>[
-    (relativePath: '.', executable: 'dart'),
-    (relativePath: 'app', executable: 'flutter'),
-    (relativePath: 'ctdev', executable: 'flutter'),
-    (relativePath: 'widgetbook_host', executable: 'flutter'),
-  ];
+  final auditTargets = _buildAuditTargets(repoRoot, logI);
 
   final violations = <WorkspaceOutdatedViolation>[];
   for (final target in auditTargets) {
@@ -119,6 +114,80 @@ int runCheckWorkspaceOutdatedResolvable(
     );
   }
   return 1;
+}
+
+List<({String relativePath, String executable})> _buildAuditTargets(
+  String repoRoot,
+  void Function(String line) logI,
+) {
+  final targets = <({String relativePath, String executable})>[
+    (relativePath: '.', executable: 'dart'),
+  ];
+
+  for (final member in _readWorkspaceMembers(repoRoot, logI)) {
+    if (member == '.') {
+      continue;
+    }
+    final memberRoot = p.normalize(p.join(repoRoot, member));
+    if (!Directory(memberRoot).existsSync()) {
+      continue;
+    }
+    final pubspecPath = p.join(memberRoot, 'pubspec.yaml');
+    final pubspecFile = File(pubspecPath);
+    if (!pubspecFile.existsSync()) {
+      continue;
+    }
+    final pubspecText = pubspecFile.readAsStringSync();
+    if (!_usesFlutterSdk(pubspecText)) {
+      continue;
+    }
+    targets.add((relativePath: member, executable: 'flutter'));
+  }
+
+  return targets;
+}
+
+List<String> _readWorkspaceMembers(String repoRoot, void Function(String line) logI) {
+  final rootPubspec = File(p.join(repoRoot, 'pubspec.yaml'));
+  if (!rootPubspec.existsSync()) {
+    logI(
+      'check_workspace_outdated_resolvable: root pubspec.yaml missing; only auditing repo root.',
+    );
+    return const <String>[];
+  }
+
+  final lines = rootPubspec.readAsLinesSync();
+  final members = <String>[];
+  var inWorkspace = false;
+  for (final rawLine in lines) {
+    final trimmedRight = rawLine.trimRight();
+    final trimmedLeft = trimmedRight.trimLeft();
+    if (!inWorkspace) {
+      if (trimmedRight == 'workspace:') {
+        inWorkspace = true;
+      }
+      continue;
+    }
+
+    final startsWithTopLevelKey =
+        trimmedLeft.isNotEmpty && !rawLine.startsWith(' ') && trimmedLeft.endsWith(':');
+    if (startsWithTopLevelKey) {
+      break;
+    }
+
+    if (trimmedLeft.startsWith('- ')) {
+      final value = trimmedLeft.substring(2).trim();
+      if (value.isNotEmpty) {
+        members.add(value);
+      }
+    }
+  }
+
+  return members;
+}
+
+bool _usesFlutterSdk(String pubspecText) {
+  return RegExp(r'^\s*sdk\s*:\s*flutter\s*$', multiLine: true).hasMatch(pubspecText);
 }
 
 ProcessResult _defaultRunner(
