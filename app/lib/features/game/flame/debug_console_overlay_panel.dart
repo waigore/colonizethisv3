@@ -1,8 +1,9 @@
-import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'debug_console_controller.dart';
 
 class DebugConsoleOverlayPanel extends StatefulWidget {
   const DebugConsoleOverlayPanel({
@@ -22,69 +23,33 @@ class DebugConsoleOverlayPanel extends StatefulWidget {
 }
 
 class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
-  final DebugConsoleHistory _history = DebugConsoleHistory();
-  final DebugConsoleCommandExecutor _executor =
-      const DebugConsoleCommandExecutor();
-  final TextEditingController _controller = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
-  final List<String> _lines = <String>[
-    'Debug console ready. Type /help for commands.',
-  ];
+  late final DebugConsoleController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = DebugConsoleController(
+      bus: widget.bus,
+      humanPlayerId: widget.humanPlayerId,
+      onClose: widget.onClose,
+    );
+  }
 
   @override
   void dispose() {
     _controller.dispose();
-    _focusNode.dispose();
     super.dispose();
   }
 
   void _submit() {
-    final rawInput = _controller.text;
-    final result = _executor.executeRaw(
-      rawInput: rawInput,
-      humanPlayerId: widget.humanPlayerId,
-    );
     setState(() {
-      _lines.add('> ${rawInput.trim()}');
-      _lines.add(result.message);
+      _controller.submit();
     });
-    if (!result.isError) {
-      _history.push(rawInput);
-      _controller.clear();
-      for (final event in result.events) {
-        widget.bus.emit(event);
-      }
-    }
-    widget.bus.emit(ShowSnackBarEvent(message: result.message));
   }
 
   KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent) {
-      return KeyEventResult.ignored;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.escape) {
-      widget.onClose();
-      return KeyEventResult.handled;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-      final older = _history.older();
-      if (older != null) {
-        _controller
-          ..text = older
-          ..selection = TextSelection.collapsed(offset: older.length);
-      }
-      return KeyEventResult.handled;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-      final newer = _history.newer();
-      if (newer != null) {
-        _controller
-          ..text = newer
-          ..selection = TextSelection.collapsed(offset: newer.length);
-      }
-      return KeyEventResult.handled;
-    }
-    return KeyEventResult.ignored;
+    final handled = _controller.handleKeyEvent(event);
+    return handled ? KeyEventResult.handled : KeyEventResult.ignored;
   }
 
   @override
@@ -124,7 +89,7 @@ class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
                   padding: const EdgeInsets.all(6),
                   color: Colors.black54,
                   child: ListView(
-                    children: _lines
+                    children: _controller.lines
                         .map(
                           (line) => Text(
                             line,
@@ -144,8 +109,8 @@ class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
                 onKeyEvent: _handleKey,
                 child: TextField(
                   key: const ValueKey<String>('debug-console-input'),
-                  focusNode: _focusNode,
-                  controller: _controller,
+                  focusNode: _controller.focusNode,
+                  controller: _controller.textController,
                   onSubmitted: (_) => _submit(),
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(

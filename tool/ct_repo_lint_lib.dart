@@ -13,6 +13,7 @@ import 'check_civilian_unit_type_constants.dart';
 import 'check_control_flow_nesting_depth.dart';
 import 'check_custom_exceptions.dart';
 import 'check_dart_file_non_comment_line_size.dart';
+import 'check_debug_handler_one_per_file.dart';
 import 'check_debug_console_logic_contract_boundary.dart';
 import 'check_disallowed_ast_patterns.dart';
 import 'check_flutter_action_pins.dart';
@@ -719,6 +720,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckRepeatedMagicNumbers(repoRoot);
     case 'repo.function_size':
       return runCheckFunctionSize(repoRoot);
+    case 'repo.debug_handler_one_per_file':
+      return runCheckDebugHandlerOnePerFile(repoRoot);
     case 'repo.game_widgets_file_size':
       return runCheckGameWidgetsFileSize(repoRoot);
     case 'repo.dart_file_non_comment_line_size':
