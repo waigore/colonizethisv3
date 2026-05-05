@@ -270,92 +270,97 @@ class _CivilianPanelWithMapStoryState
         : mapViewData.newWorld;
     // Panel at bottom, like province overlay "With map" story. SPEC/ui/civilian-units-panel.md.
     const panelHeight = 220.0;
-    return SizedBox(
-      width: 900,
-      height: 550,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                CtChoiceChip(
-                  label: Text(appL10n(context).region_oldWorld),
-                  selected: _regionIndex == 0,
-                  onSelected: (_) => setState(() => _regionIndex = 0),
-                ),
-                CtChoiceChip(
-                  label: Text(appL10n(context).region_newWorld),
-                  selected: _regionIndex == 1,
-                  onSelected: (_) => setState(() => _regionIndex = 1),
-                ),
-                CtChoiceChip(
-                  label: Text(appL10n(context).mapDebug_fullVisibility),
-                  selected: _visibilityMode == CtMapVisibilityMode.full,
-                  onSelected: (_) => setState(
-                    () => _visibilityMode = CtMapVisibilityMode.full,
+    return civilianUnitsPanelWithRiverpod(
+      game: _game,
+      child: SizedBox(
+        width: 900,
+        height: 550,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  CtChoiceChip(
+                    label: Text(appL10n(context).region_oldWorld),
+                    selected: _regionIndex == 0,
+                    onSelected: (_) => setState(() => _regionIndex = 0),
                   ),
-                ),
-                CtChoiceChip(
-                  label: Text(appL10n(context).mapDebug_playerConstrained),
-                  selected:
-                      _visibilityMode == CtMapVisibilityMode.playerConstrained,
-                  onSelected: (_) => setState(
-                    () =>
-                        _visibilityMode = CtMapVisibilityMode.playerConstrained,
+                  CtChoiceChip(
+                    label: Text(appL10n(context).region_newWorld),
+                    selected: _regionIndex == 1,
+                    onSelected: (_) => setState(() => _regionIndex = 1),
                   ),
-                ),
-                CtChoiceChip(
-                  label: Text(
-                    appL10n(context).map_displayOptions_showProvinceNames,
+                  CtChoiceChip(
+                    label: Text(appL10n(context).mapDebug_fullVisibility),
+                    selected: _visibilityMode == CtMapVisibilityMode.full,
+                    onSelected: (_) => setState(
+                      () => _visibilityMode = CtMapVisibilityMode.full,
+                    ),
                   ),
-                  selected: _showProvinceNames,
-                  onSelected: (_) => setState(() => _showProvinceNames = true),
-                ),
-                CtChoiceChip(
-                  label: Text(appL10n(context).mapDebug_hideProvinceNames),
-                  selected: !_showProvinceNames,
-                  onSelected: (_) => setState(() => _showProvinceNames = false),
-                ),
-              ],
+                  CtChoiceChip(
+                    label: Text(appL10n(context).mapDebug_playerConstrained),
+                    selected:
+                        _visibilityMode ==
+                        CtMapVisibilityMode.playerConstrained,
+                    onSelected: (_) => setState(
+                      () => _visibilityMode =
+                          CtMapVisibilityMode.playerConstrained,
+                    ),
+                  ),
+                  CtChoiceChip(
+                    label: Text(
+                      appL10n(context).map_displayOptions_showProvinceNames,
+                    ),
+                    selected: _showProvinceNames,
+                    onSelected: (_) =>
+                        setState(() => _showProvinceNames = true),
+                  ),
+                  CtChoiceChip(
+                    label: Text(appL10n(context).mapDebug_hideProvinceNames),
+                    selected: !_showProvinceNames,
+                    onSelected: (_) =>
+                        setState(() => _showProvinceNames = false),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: CtRegionMap(
-              region: region,
-              cellSizePx: 24,
-              visibilityMode: _visibilityMode,
-              playerViewForResources:
-                  _visibilityMode == CtMapVisibilityMode.playerConstrained
-                  ? debugPlayerViewForFirstPlayer()
-                  : null,
-              showProvinceNamesLayer: _showProvinceNames,
-              onProvinceSelected: (_) {},
-              secondaryHighlightTileKey: _secondaryHighlightTileKey,
-              centerOnTileKey: _centerOnTileKey,
-              validTileKeys: _validTileKeys,
-              onTileSelected: _workTargetSelection != null
-                  ? _onTileSelectedForWork
-                  : null,
-              onWorkTargetSelectionCancelled: _workTargetSelection != null
-                  ? () => setState(() => _workTargetSelection = null)
-                  : null,
+            Expanded(
+              child: CtRegionMap(
+                region: region,
+                cellSizePx: 24,
+                visibilityMode: _visibilityMode,
+                playerViewForResources:
+                    _visibilityMode == CtMapVisibilityMode.playerConstrained
+                    ? debugPlayerViewForFirstPlayer()
+                    : null,
+                showProvinceNamesLayer: _showProvinceNames,
+                onProvinceSelected: (_) {},
+                secondaryHighlightTileKey: _secondaryHighlightTileKey,
+                centerOnTileKey: _centerOnTileKey,
+                validTileKeys: _validTileKeys,
+                onTileSelected: _workTargetSelection != null
+                    ? _onTileSelectedForWork
+                    : null,
+                onWorkTargetSelectionCancelled: _workTargetSelection != null
+                    ? () => setState(() => _workTargetSelection = null)
+                    : null,
+              ),
             ),
-          ),
-          SizedBox(
-            height: panelHeight,
-            child: CivilianUnitsPanel(
-              game: _game,
-              humanPlayerId: _humanPlayerId,
-              currentOrders: _orders,
-              availableWorkTargets: const {},
-              bus: _panelBus,
+            SizedBox(
+              height: panelHeight,
+              child: CivilianUnitsPanel(
+                game: _game,
+                humanPlayerId: _humanPlayerId,
+                currentOrders: _orders,
+                bus: _panelBus,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -372,55 +377,60 @@ class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
     final humanPlayerId = game.players.isNotEmpty
         ? game.players.first.id
         : 'gp1';
-    return SizedBox(
-      width: 600,
-      height: 400,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: CtNinePatchButton(
-              onPressed: () {
-                showModalBottomSheet<void>(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (ctx) {
-                    final maxHeight = MediaQuery.sizeOf(ctx).height * 0.5;
-                    return ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: maxHeight),
-                      child: CivilianUnitsPanel(
+    return civilianUnitsPanelWithRiverpod(
+      game: game,
+      child: SizedBox(
+        width: 600,
+        height: 400,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: CtNinePatchButton(
+                onPressed: () {
+                  showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (ctx) {
+                      final maxHeight = MediaQuery.sizeOf(ctx).height * 0.5;
+                      return civilianUnitsPanelWithRiverpod(
                         game: game,
-                        humanPlayerId: humanPlayerId,
-                        availableWorkTargets: const {},
-                        bus: AppEventBus(),
-                      ),
-                    );
-                  },
-                );
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.people_outline, size: 20),
-                  const SizedBox(width: 8),
-                  Text(appL10n(context).civilian_units_title),
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: ColoredBox(
-              color: const Color(0xFFE0E0E0),
-              child: Center(
-                child: Text(
-                  appL10n(context).widgetbook_openPanelHint,
-                  style: const TextStyle(color: Color(0xFF616161)),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxHeight: maxHeight),
+                          child: CivilianUnitsPanel(
+                            game: game,
+                            humanPlayerId: humanPlayerId,
+                            bus: AppEventBus(),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.people_outline, size: 20),
+                    const SizedBox(width: 8),
+                    Text(appL10n(context).civilian_units_title),
+                  ],
                 ),
               ),
             ),
-          ),
-        ],
+            Expanded(
+              child: ColoredBox(
+                color: const Color(0xFFE0E0E0),
+                child: Center(
+                  child: Text(
+                    appL10n(context).widgetbook_openPanelHint,
+                    style: const TextStyle(color: Color(0xFF616161)),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
