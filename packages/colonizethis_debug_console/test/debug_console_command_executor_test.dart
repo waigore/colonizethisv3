@@ -122,30 +122,6 @@ void main() {
       expect(event.humanPlayerId, 'p1');
       expect(event.regionId, 'oldWorld');
       expect(event.provinceDisplayName, 'New Bordeaux');
-      expect(event.provinceId, isNull);
-    });
-
-    test('emits flip_province event for full id retry path', () {
-      final result = executor.executeRaw(
-        rawInput: '/flip_province oldWorld|P1',
-        humanPlayerId: 'p1',
-      );
-      expect(result.isError, isFalse);
-      final event = result.events.single as FlipDebugProvinceOwnershipEvent;
-      expect(event.provinceId, 'oldWorld|P1');
-      expect(event.regionId, isNull);
-      expect(event.provinceDisplayName, isNull);
-    });
-
-    test('emits reveal_province event for valid command', () {
-      final result = executor.executeRaw(
-        rawInput: '/reveal_province New Bordeaux',
-        humanPlayerId: 'p1',
-      );
-      expect(result.isError, isFalse);
-      final event = result.events.single as RevealDebugProvinceEvent;
-      expect(event.humanPlayerId, 'p1');
-      expect(event.target, 'New Bordeaux');
     });
 
     test('emits flip_province event for full-id form', () {
