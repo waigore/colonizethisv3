@@ -121,5 +121,5 @@ Always preserve the complete draft on fallback; it is the backup deliverable.
 
 ## Related
 
-- For **verifying or closing** an existing issue: see [.cursor/skills/verify-github-issue/SKILL.md](../verify-github-issue/SKILL.md).
+- For **verifying** an existing issue: see [.cursor/skills/verify-github-issue/SKILL.md](../verify-github-issue/SKILL.md).
 - For **implementation** after the issue exists: **AGENTS.md**, **CONTRIBUTING.md**, and `.cursor/rules/` (testing, SPEC-required, etc.).

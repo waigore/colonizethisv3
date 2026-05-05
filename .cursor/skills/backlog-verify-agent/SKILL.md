@@ -13,7 +13,7 @@ Use when the user asks to run backlog verification workflow and move one issue f
 
 Before executing this skill:
 
-- Read and apply `.cursor/skills/verify-github-issue/SKILL.md` strictly for acceptance-criteria closure method, evidence standards, and gap reporting.
+- Read and apply `.cursor/skills/verify-github-issue/SKILL.md` strictly for verification method, evidence standards, gap reporting, and posting the comment on the issue.
 - Follow `AGENTS.md` and repository rules.
 
 Do not weaken or substitute the verification method from `verify-github-issue`.
@@ -48,9 +48,9 @@ For the selected issue:
 Post one consolidated issue comment with:
 
 - Verification outcome (`COMPLETE` or `GAPS REMAIN`).
-- AC/spec/test closure summary per `verify-github-issue`.
+- AC/spec/test mapping summary per `verify-github-issue`.
 - Explicit gap list and required follow-ups when incomplete.
-- Explicit readiness statement when complete (state that the issue is ready to close).
+- When complete, state clearly that verification found no material gaps (per `verify-github-issue`); do not instruct closing the issue.
 
 Use `gh` to post:
 

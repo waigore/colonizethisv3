@@ -9,7 +9,7 @@ description: Implements a fix from a GitHub issue number or URL after validating
 
 The user provides a GitHub **issue number** or **issue URL** (and repo context if ambiguous) and wants the agent to **implement** the described work—not only to plan, verify, or file an issue.
 
-**Related skills:** Use [verify-github-issue](../verify-github-issue/SKILL.md) when the goal is verification or closure only; use [plan-feature](../plan-feature/SKILL.md) when the goal is planning and issue creation without code changes.
+**Related skills:** Use [verify-github-issue](../verify-github-issue/SKILL.md) when the goal is verification only; use [plan-feature](../plan-feature/SKILL.md) when the goal is planning and issue creation without code changes.
 
 ## Non-negotiables
 
