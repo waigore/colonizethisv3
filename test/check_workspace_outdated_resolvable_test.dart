@@ -72,6 +72,33 @@ void main() {
     expect(logs.join('\n'), contains('failed in repo root'));
     expect(logs.join('\n'), contains('network unavailable'));
   });
+
+  test('ignores explicitly excluded package names', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_workspace_outdated_resolvable_excluded_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _createWorkspaceRoots(temp.path);
+
+    final code = runCheckWorkspaceOutdatedResolvable(
+      temp.path,
+      excludedPackages: {'known_cap'},
+      processRunner: (exe, args, {workingDirectory}) {
+        return ProcessResult(1, 0, _outdatedJson('1.0.0', '1.2.0'), '');
+      },
+    );
+
+    expect(code, 1);
+
+    final excludedCode = runCheckWorkspaceOutdatedResolvable(
+      temp.path,
+      excludedPackages: {'example_pkg'},
+      processRunner: (exe, args, {workingDirectory}) {
+        return ProcessResult(1, 0, _outdatedJson('1.0.0', '1.2.0'), '');
+      },
+    );
+    expect(excludedCode, 0);
+  });
 }
 
 void _createWorkspaceRoots(String root) {
