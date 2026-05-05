@@ -124,6 +124,37 @@ void main() {
 
     expect(code, 0);
   });
+
+  test('ignores explicitly excluded direct dependencies', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_workspace_outdated_latest_direct_excluded_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _createWorkspaceRoots(temp.path);
+
+    final code = runCheckWorkspaceOutdatedLatestDirect(
+      temp.path,
+      excludedPackages: {'stale_direct'},
+      processRunner: (exe, args, {workingDirectory}) {
+        return ProcessResult(
+          1,
+          0,
+          _outdatedJson([
+            _pkg(
+              package: 'stale_direct',
+              kind: 'direct',
+              current: '1.0.0',
+              resolvable: '1.2.0',
+              latest: '1.2.0',
+            ),
+          ]),
+          '',
+        );
+      },
+    );
+
+    expect(code, 0);
+  });
 }
 
 void _createWorkspaceRoots(String root) {

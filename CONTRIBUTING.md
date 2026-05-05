@@ -66,6 +66,7 @@ Interpretation:
 - Record the audit result in the linked issue/PR so reviewers can distinguish solved vs deferred dependency gaps.
 - CI-facing equivalent: `dart run tool/ct_repo_lint.dart --rule repo.workspace_outdated_resolvable` (fails when any audited package row has `current != resolvable`).
 - CI-facing direct-latest guard: `dart run tool/ct_repo_lint.dart --rule repo.workspace_outdated_latest_direct` (fails when a direct/dev row is below `Latest` even though `Latest == Resolvable`).
+- Optional temporary exclusion override for both rules: set `CT_WORKSPACE_OUTDATED_EXCLUDE` to a comma-separated package list (example: `export CT_WORKSPACE_OUTDATED_EXCLUDE="custom_lint_builder,analyzer_plugin"`). Keep this list minimal and always document the exact blocker in the linked issue/PR.
 
 ## Pre-PR Checklist
 

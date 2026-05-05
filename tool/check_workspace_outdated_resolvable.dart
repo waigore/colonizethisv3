@@ -33,10 +33,12 @@ int runCheckWorkspaceOutdatedResolvable(
   void Function(String line)? info,
   void Function(String line)? err,
   ProcessRunner? processRunner,
+  Set<String>? excludedPackages,
 }) {
   final void Function(String) logI = info ?? stdout.writeln;
   final void Function(String) logE = err ?? stderr.writeln;
   final run = processRunner ?? _defaultRunner;
+  final exclusions = excludedPackages ?? _readExcludedPackages();
 
   final auditTargets = _buildAuditTargets(repoRoot, logI);
 
@@ -79,6 +81,9 @@ int runCheckWorkspaceOutdatedResolvable(
       final current = _extractVersion(pkg['current']);
       final resolvable = _extractVersion(pkg['resolvable']);
       if (packageName is! String || current == null || resolvable == null) {
+        continue;
+      }
+      if (exclusions.contains(packageName)) {
         continue;
       }
       if (current == resolvable) {
@@ -231,6 +236,18 @@ String? _extractVersion(Object? node) {
     return null;
   }
   return version.trim();
+}
+
+Set<String> _readExcludedPackages() {
+  final raw = Platform.environment['CT_WORKSPACE_OUTDATED_EXCLUDE'];
+  if (raw == null || raw.trim().isEmpty) {
+    return const <String>{};
+  }
+  return raw
+      .split(',')
+      .map((entry) => entry.trim())
+      .where((entry) => entry.isNotEmpty)
+      .toSet();
 }
 
 void main() {
