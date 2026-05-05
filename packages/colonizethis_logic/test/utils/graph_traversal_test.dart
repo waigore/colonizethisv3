@@ -76,4 +76,32 @@ void main() {
       expect(r, {'a', 'b'});
     });
   });
+
+  group('propagateConnectivityBottleneckQueue', () {
+    test('relaxes neighbors with min bottleneck vs transport cap', () {
+      final connected = <String>{'a'};
+      final pathCap = <String, int>{'a': 5};
+      final queue = <String>['a'];
+      propagateConnectivityBottleneckQueue(
+        queue: queue,
+        connected: connected,
+        pathCap: pathCap,
+        shouldExpandEdgesFrom: (_) => true,
+        neighborsOf: (k) {
+          if (k == 'a') return ['b'];
+          if (k == 'b') return ['a', 'c'];
+          if (k == 'c') return ['b'];
+          return const [];
+        },
+        transportLevelAt: (n) {
+          if (n == 'b') return 10;
+          if (n == 'c') return 1;
+          return 0;
+        },
+      );
+      expect(connected, {'a', 'b', 'c'});
+      expect(pathCap['b'], 5);
+      expect(pathCap['c'], 1);
+    });
+  });
 }

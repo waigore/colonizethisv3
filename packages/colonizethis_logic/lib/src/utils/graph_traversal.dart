@@ -1,9 +1,9 @@
 import 'dart:collection';
 
-/// Shared undirected graph traversals. Refactor slice for waigore/colonizethis#2071.
+/// Shared graph traversals. Refactor slice for waigore/colonizethis#2071.
 ///
-/// **Not a substitute for** domain-specific queues (e.g. tile connectivity with
-/// per-edge transport caps in connectivity resolution).
+/// Includes [propagateConnectivityBottleneckQueue] for capital connectivity
+/// (per-edge transport caps; not the same as [breadthFirstReachableInSubgraph]).
 
 /// Connected components of the subgraph induced by [subset].
 ///
@@ -79,4 +79,57 @@ Set<T> breadthFirstReachableInSubgraph<T>(
     }
   }
   return reachable;
+}
+
+/// Propagates tile connectivity using [queue], updating [pathCap] bottleneck
+/// caps per neighbor (max candidate path min transport). Tiles may be re-queued
+/// when their cap improves; this is **not** a plain undirected BFS.
+///
+/// Callers supply predicates and neighbor iteration; see
+/// `connectivity_resolver.dart` § capital land connectivity.
+void propagateConnectivityBottleneckQueue({
+  required List<String> queue,
+  required Set<String> connected,
+  required Map<String, int> pathCap,
+  required bool Function(String tileKey) shouldExpandEdgesFrom,
+  required Iterable<String> Function(String tileKey) neighborsOf,
+  required int Function(String neighborKey) transportLevelAt,
+}) {
+  while (queue.isNotEmpty) {
+    final key = queue.removeAt(0);
+    if (!shouldExpandEdgesFrom(key)) continue;
+    final bottleneckU = pathCap[key] ?? 0;
+    for (final neighbor in neighborsOf(key)) {
+      final transportN = transportLevelAt(neighbor);
+      final candidate = bottleneckU < transportN ? bottleneckU : transportN;
+      _relaxBottleneckNeighbor(
+        neighbor: neighbor,
+        candidate: candidate,
+        connected: connected,
+        pathCap: pathCap,
+        queue: queue,
+      );
+    }
+  }
+}
+
+void _relaxBottleneckNeighbor({
+  required String neighbor,
+  required int candidate,
+  required Set<String> connected,
+  required Map<String, int> pathCap,
+  required List<String> queue,
+}) {
+  final existing = pathCap[neighbor] ?? -1;
+  if (candidate > existing) {
+    pathCap[neighbor] = candidate;
+    connected.add(neighbor);
+    queue.add(neighbor);
+    return;
+  }
+  if (!connected.contains(neighbor)) {
+    connected.add(neighbor);
+    pathCap[neighbor] = candidate;
+    queue.add(neighbor);
+  }
 }
