@@ -33,7 +33,7 @@ Run this sequence from a clean checkout on the pinned Flutter/Dart toolchain:
 
 ```bash
 dart pub outdated
-for pkg in $(python3 - <<'PY'
+python3 - <<'PY' | while IFS=$'\t' read -r tool pkg; do
 import pathlib
 root = pathlib.Path('.')
 lines = (root / 'pubspec.yaml').read_text().splitlines()
@@ -51,11 +51,12 @@ for line in lines:
         members.append(stripped[2:].strip())
 for member in members:
     pubspec = root / member / 'pubspec.yaml'
-    if pubspec.exists() and 'sdk: flutter' in pubspec.read_text():
-        print(member)
+    if not pubspec.exists():
+        continue
+    tool = 'flutter' if 'sdk: flutter' in pubspec.read_text() else 'dart'
+    print(f"{tool}\t{member}")
 PY
-); do
-  (cd "$pkg" && flutter pub outdated)
+  (cd "$pkg" && "$tool" pub outdated)
 done
 ```
 

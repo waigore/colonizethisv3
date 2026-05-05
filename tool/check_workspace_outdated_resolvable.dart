@@ -143,10 +143,8 @@ List<({String relativePath, String executable})> _buildAuditTargets(
       continue;
     }
     final pubspecText = pubspecFile.readAsStringSync();
-    if (!_usesFlutterSdk(pubspecText)) {
-      continue;
-    }
-    targets.add((relativePath: member, executable: 'flutter'));
+    final executable = _usesFlutterSdk(pubspecText) ? 'flutter' : 'dart';
+    targets.add((relativePath: member, executable: executable));
   }
 
   return targets;
