@@ -238,6 +238,19 @@ extension _SessionCommands on _AppEventHandlerScopeState {
         );
         _applyDebugCommand(result);
       }),
+      bus.on<RevealDebugProvinceEvent>().listen((e) {
+        final current = ref.read(currentGameProvider);
+        final mapData = current == null
+            ? null
+            : ref.read(gameServiceProvider).getMapData(current.id);
+        final result = applyDebugRevealProvince(
+          currentGame: current,
+          event: e,
+          combinedTopology: mapData?.combinedTopology ?? const MapTopology(),
+          topologyByRegion: mapData?.topologyByRegion,
+        );
+        _applyDebugCommand(result);
+      }),
       bus.on<AppendDiplomaticOrderRequestedEvent>().listen((e) {
         final current = ref.read(currentOrdersProvider);
         ref

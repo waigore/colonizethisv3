@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_debug_flip_province.dart';
+import 'package:colonizethis_app/core/services/app_event_handler_debug_reveal_province.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_debug_spawn_civilian.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_debug_spawn_regiment.dart';
 import 'package:colonizethis_app/core/services/app_event_handler_debug_spawn_ship.dart';
@@ -1028,6 +1029,244 @@ void main() {
       final restored = Game.fromJson(result.game!.toJson());
       expect(restored.worldState.oldWorld.provinces.single.ownerId, 'human_1');
       expect(restored.worldState.oldWorld.units.single.ownerId, 'human_1');
+    });
+
+    test(
+      'flip ambiguity error includes candidate ids and id retry guidance',
+      () {
+        final game = Game(
+          id: 'g-flip-amb-ids',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|P2',
+                  regionId: 'oldWorld',
+                  ownerId: 'ai_1',
+                  displayName: 'New Bordeaux',
+                ),
+                Province(
+                  id: 'oldWorld|P1',
+                  regionId: 'oldWorld',
+                  ownerId: 'ai_1',
+                  displayName: 'New Bordeaux',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            tileKeysByRegionAndProvince: const {
+              'oldWorld': {
+                'oldWorld|P1': ['oldWorld|P1|0|0'],
+                'oldWorld|P2': ['oldWorld|P2|0|0'],
+              },
+            },
+            playerVisibilityByTile: {
+              'human_1': {
+                'oldWorld|P1|0|0': 'fogged',
+                'oldWorld|P2|0|0': 'fogged',
+              },
+            },
+          ),
+          players: const [
+            Player(id: 'human_1', displayName: 'Human', isHuman: true),
+            Player(id: 'ai_1', displayName: 'AI', isHuman: false),
+          ],
+        );
+        const event = FlipDebugProvinceOwnershipEvent(
+          humanPlayerId: 'human_1',
+          regionId: 'oldWorld',
+          provinceDisplayName: 'New Bordeaux',
+        );
+        final result = applyDebugFlipProvinceOwnership(
+          currentGame: game,
+          event: event,
+          combinedTopology: const MapTopology(),
+        );
+        expect(result.game, isNull);
+        expect(
+          result.message,
+          contains('Candidates: oldWorld|P1, oldWorld|P2'),
+        );
+        expect(result.message, contains('/flip_province <regionId|localId>'));
+      },
+    );
+
+    test('flip resolves directly by full province id', () {
+      final game = _baseGame(
+        phase: TurnPhase.orders,
+        ownerId: 'ai_1',
+        humanVisibility: 'fogged',
+      );
+      const event = FlipDebugProvinceOwnershipEvent(
+        humanPlayerId: 'human_1',
+        fullProvinceId: 'oldWorld|P1',
+      );
+      final result = applyDebugFlipProvinceOwnership(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+      expect(result.game, isNotNull);
+      expect(
+        result.game!.worldState.oldWorld.provinces.single.ownerId,
+        'human_1',
+      );
+    });
+  });
+
+  group('applyDebugRevealProvince', () {
+    Game _revealBaseGame() {
+      return Game(
+        id: 'g-reveal',
+        worldState: const WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 2),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: 'oldWorld|P1',
+                regionId: 'oldWorld',
+                ownerId: 'ai_1',
+                displayName: 'New Bordeaux',
+              ),
+            ],
+          ),
+          newWorld: RegionData(),
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|P1': ['oldWorld|P1|0|0'],
+              'oldWorld|s1': ['oldWorld|s1|0|0'],
+            },
+          },
+          playerVisibilityByTile: {
+            'human_1': {
+              'oldWorld|P1|0|0': 'unknown',
+              'oldWorld|s1|0|0': 'unknown',
+            },
+          },
+        ),
+        players: const [
+          Player(id: 'human_1', displayName: 'Human', isHuman: true),
+          Player(id: 'ai_1', displayName: 'AI', isHuman: false),
+        ],
+      );
+    }
+
+    test('reveals province by full id for unknown target', () {
+      final game = _revealBaseGame();
+      const event = RevealDebugProvinceEvent(
+        humanPlayerId: 'human_1',
+        target: 'oldWorld|P1',
+        targetIsFullProvinceId: true,
+      );
+      final result = applyDebugRevealProvince(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+      expect(result.game, isNotNull);
+      final vis = result.game!.worldState.playerVisibilityByTile['human_1']!;
+      expect(vis['oldWorld|P1|0|0'], 'fullyVisible');
+    });
+
+    test('reveal by display name returns disambiguation candidates', () {
+      final game = _revealBaseGame().copyWith(
+        worldState: _revealBaseGame().worldState.copyWith(
+          newWorld: const RegionData(
+            provinces: [
+              Province(
+                id: 'newWorld|P7',
+                regionId: 'newWorld',
+                ownerId: 'ai_1',
+                displayName: 'New Bordeaux',
+              ),
+            ],
+          ),
+        ),
+      );
+      const event = RevealDebugProvinceEvent(
+        humanPlayerId: 'human_1',
+        target: 'New Bordeaux',
+        targetIsFullProvinceId: false,
+      );
+      final result = applyDebugRevealProvince(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+      expect(result.game, isNull);
+      expect(result.message, contains('Candidates: newWorld|P7, oldWorld|P1'));
+      expect(result.message, contains('/reveal_province <regionId|localId>'));
+    });
+
+    test('reveals adjacent sea-zone tiles for coastal province', () {
+      final game = _revealBaseGame();
+      const event = RevealDebugProvinceEvent(
+        humanPlayerId: 'human_1',
+        target: 'oldWorld|P1',
+        targetIsFullProvinceId: true,
+      );
+      final topology = const MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 's1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [TopologyEdge(id1: 'P1', id2: 's1')],
+      );
+      final result = applyDebugRevealProvince(
+        currentGame: game,
+        event: event,
+        combinedTopology: topology,
+      );
+      final vis = result.game!.worldState.playerVisibilityByTile['human_1']!;
+      expect(vis['oldWorld|s1|0|0'], 'fullyVisible');
+    });
+
+    test('returns deterministic no-op when already fully revealed', () {
+      final game = _revealBaseGame().copyWith(
+        worldState: _revealBaseGame().worldState.copyWith(
+          playerVisibilityByTile: {
+            'human_1': {
+              'oldWorld|P1|0|0': 'fullyVisible',
+              'oldWorld|s1|0|0': 'fullyVisible',
+            },
+          },
+        ),
+      );
+      const event = RevealDebugProvinceEvent(
+        humanPlayerId: 'human_1',
+        target: 'oldWorld|P1',
+        targetIsFullProvinceId: true,
+      );
+      final topology = const MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 's1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [TopologyEdge(id1: 'P1', id2: 's1')],
+      );
+      final result = applyDebugRevealProvince(
+        currentGame: game,
+        event: event,
+        combinedTopology: topology,
+      );
+      expect(result.message, contains('no-op'));
     });
   });
 }
