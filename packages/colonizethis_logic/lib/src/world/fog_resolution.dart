@@ -217,7 +217,10 @@ applyProvinceOwnershipChangeVisibility(
   String oldOwnerId,
   String newOwnerId,
 ) {
-  final row = resolveProvinceRowForOwnershipTransfer(game.worldState, provinceId);
+  final row = resolveProvinceRowForOwnershipTransfer(
+    game.worldState,
+    provinceId,
+  );
   if (row == null) {
     return (
       game: game,
@@ -325,10 +328,7 @@ void _fullyVisibleAllTilesInSeaZoneBuckets(
   Iterable<String> adjacentSeaZoneIds,
 ) {
   for (final seaZoneId in adjacentSeaZoneIds) {
-    final seaZoneBucketKey = canonicalSeaZoneTileBucketKey(
-      regionId,
-      seaZoneId,
-    );
+    final seaZoneBucketKey = canonicalSeaZoneTileBucketKey(regionId, seaZoneId);
     final tileKeys = regionTileKeys[seaZoneBucketKey];
     if (tileKeys == null) continue;
     for (final tileKey in tileKeys) {
@@ -409,6 +409,46 @@ Map<String, Map<String, String>> applyCoastalSeaZoneFullVisibility(
   return result;
 }
 
+/// Sets adjacent sea-zone water tiles to fullyVisible for [playerId] for each
+/// targeted coastal province id in [targetProvinceIds].
+Map<String, String> applyCoastalSeaZoneFullVisibilityForProvinceTargets({
+  required Game game,
+  required String playerId,
+  required Iterable<String> targetProvinceIds,
+  required Map<String, String> visibility,
+  required MapTopology topology,
+  Map<String, MapTopology>? topologyByRegion,
+}) {
+  final updated = Map<String, String>.from(visibility);
+  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
+  final uniqueProvinceIds = targetProvinceIds.toSet();
+  for (final provinceId in uniqueProvinceIds) {
+    if (!ProvinceId.isPrefixed(provinceId)) {
+      continue;
+    }
+    final regionId = ProvinceId.regionIdFrom(provinceId);
+    final regionTileKeys = tileKeysByRegion[regionId];
+    if (regionTileKeys == null) continue;
+    final regionTopology = _topologyForRegion(
+      topology,
+      topologyByRegion,
+      regionId,
+    );
+    final adjacentSeaZones = seaZoneIdsAdjacentToProvince(
+      regionTopology,
+      provinceId,
+      regionId: regionId,
+    );
+    _fullyVisibleAllTilesInSeaZoneBuckets(
+      updated,
+      regionTileKeys,
+      regionId,
+      adjacentSeaZones,
+    );
+  }
+  return updated;
+}
+
 bool _seaZoneHasOwnedCoastalProvinceForPlayer(
   Game game,
   String playerId,
@@ -435,10 +475,7 @@ bool _playerHasFleetAtSeaInZone(
   String regionId,
   String seaZoneId,
 ) {
-  final expectedSeaZoneId = canonicalSeaZoneTileBucketKey(
-    regionId,
-    seaZoneId,
-  );
+  final expectedSeaZoneId = canonicalSeaZoneTileBucketKey(regionId, seaZoneId);
   for (final f in game.worldState.fleets) {
     if (f.ownerId != playerId) continue;
     if (!f.isAtSea || f.seaZoneId == null) continue;
@@ -489,10 +526,7 @@ void _applyDistantSeaFogForGpPlayerInRegion({
     if (_playerHasFleetAtSeaInZone(game, playerId, regionId, seaZoneId)) {
       continue;
     }
-    final seaZoneBucketKey = canonicalSeaZoneTileBucketKey(
-      regionId,
-      seaZoneId,
-    );
+    final seaZoneBucketKey = canonicalSeaZoneTileBucketKey(regionId, seaZoneId);
     final keys = regionTileKeys[seaZoneBucketKey];
     if (keys == null) continue;
     _fogSeaZoneWaterTilesExceptUnknown(vis, keys);

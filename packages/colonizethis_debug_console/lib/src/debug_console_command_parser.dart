@@ -6,6 +6,7 @@ const int kDebugConsoleMaxSpawnCount = 25;
 
 /// Upper bound for `/add_money` credited amount (parser clamps here).
 const int kDebugConsoleMaxTreasuryCreditAmount = 9999;
+final RegExp _localProvinceIdPattern = RegExp(r'^P[0-9]+$');
 
 class DebugConsoleCommandParser {
   const DebugConsoleCommandParser();
@@ -32,6 +33,7 @@ class DebugConsoleCommandParser {
       '/add_money' => _parseAddMoney(tokens),
       '/add_resource' => _parseAddResource(tokens),
       '/flip_province' => _parseFlipProvince(tokens),
+      '/reveal_province' => _parseRevealProvince(tokens),
       '/help' => DebugConsoleParseResult.error(_buildHelpMessage()),
       _ => DebugConsoleParseResult.error(
         'Unknown command: $command. Try /help.',
@@ -190,9 +192,22 @@ class DebugConsoleCommandParser {
   }
 
   DebugConsoleParseResult _parseFlipProvince(List<String> tokens) {
+    if (tokens.length == 2) {
+      final fullProvinceId = tokens[1].trim();
+      if (!_looksLikePrefixedProvinceId(fullProvinceId)) {
+        return const DebugConsoleParseResult.error(
+          'Usage: /flip_province <regionId> <province_display_name> OR /flip_province <regionId|localId>',
+        );
+      }
+      return DebugConsoleParseResult.success(
+        DebugConsoleParsedInvocation.flipProvince(
+          fullProvinceId: fullProvinceId,
+        ),
+      );
+    }
     if (tokens.length < 3) {
       return const DebugConsoleParseResult.error(
-        'Usage: /flip_province <regionId> <province_display_name>',
+        'Usage: /flip_province <regionId> <province_display_name> OR /flip_province <regionId|localId>',
       );
     }
     final regionId = tokens[1].trim();
@@ -211,6 +226,32 @@ class DebugConsoleCommandParser {
       DebugConsoleParsedInvocation.flipProvince(
         regionId: regionId,
         provinceDisplayName: provinceDisplayName,
+      ),
+    );
+  }
+
+  DebugConsoleParseResult _parseRevealProvince(List<String> tokens) {
+    if (tokens.length < 2) {
+      return const DebugConsoleParseResult.error(
+        'Usage: /reveal_province <regionId|localId | province_display_name>',
+      );
+    }
+    final target = tokens.sublist(1).join(' ').trim();
+    if (target.isEmpty) {
+      return const DebugConsoleParseResult.error(
+        'Usage: /reveal_province <regionId|localId | province_display_name>',
+      );
+    }
+    if (_localProvinceIdPattern.hasMatch(target)) {
+      return const DebugConsoleParseResult.error(
+        'Use full province id format: regionId|localId',
+      );
+    }
+    final targetIsFullProvinceId = _looksLikePrefixedProvinceId(target);
+    return DebugConsoleParseResult.success(
+      DebugConsoleParsedInvocation.revealProvince(
+        target: target,
+        targetIsFullProvinceId: targetIsFullProvinceId,
       ),
     );
   }
@@ -242,7 +283,18 @@ String _buildHelpMessage() {
       '  supported ids: $commodityIds\n'
       '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
       '$kDebugConsoleMaxTreasuryCreditAmount are clamped\n'
-      '- /flip_province <regionId> <province_display_name>.';
+      '- /flip_province <regionId> <province_display_name>\n'
+      '- /flip_province <regionId|localId>\n'
+      '- /reveal_province <regionId|localId | province_display_name>\n'
+      '  if name is ambiguous, retry with full province id.';
+}
+
+bool _looksLikePrefixedProvinceId(String value) {
+  final separator = value.indexOf('|');
+  if (separator <= 0 || separator == value.length - 1) {
+    return false;
+  }
+  return true;
 }
 
 class DebugConsoleParseResult {

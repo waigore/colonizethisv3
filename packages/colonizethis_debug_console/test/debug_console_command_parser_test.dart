@@ -191,5 +191,36 @@ void main() {
       final joined = sorted.join(', ');
       expect(message, contains(joined));
     });
+
+    test('parses flip_province full-id form', () {
+      final result = parser.parse('/flip_province oldWorld|P1');
+      expect(result.isError, isFalse);
+      final flip = result.invocation! as DebugConsoleFlipProvince;
+      expect(flip.fullProvinceId, 'oldWorld|P1');
+      expect(flip.regionId, isNull);
+      expect(flip.provinceDisplayName, isNull);
+    });
+
+    test('parses reveal_province full-id form', () {
+      final result = parser.parse('/reveal_province oldWorld|P1');
+      expect(result.isError, isFalse);
+      final reveal = result.invocation! as DebugConsoleRevealProvince;
+      expect(reveal.target, 'oldWorld|P1');
+      expect(reveal.targetIsFullProvinceId, isTrue);
+    });
+
+    test('parses reveal_province display-name form', () {
+      final result = parser.parse('/reveal_province New Bordeaux');
+      expect(result.isError, isFalse);
+      final reveal = result.invocation! as DebugConsoleRevealProvince;
+      expect(reveal.target, 'New Bordeaux');
+      expect(reveal.targetIsFullProvinceId, isFalse);
+    });
+
+    test('rejects reveal_province local id without region prefix', () {
+      final result = parser.parse('/reveal_province P1');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Use full province id format'));
+    });
   });
 }
