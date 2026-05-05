@@ -26,6 +26,8 @@ import 'check_part_unit_size.dart';
 import 'check_repeated_magic_numbers.dart';
 import 'check_tech_id_constants.dart';
 import 'check_work_target_constants.dart';
+import 'check_workspace_outdated_latest_direct.dart';
+import 'check_workspace_outdated_resolvable.dart';
 import 'ct_repo_lint_scan_contract.dart';
 
 /// One entry from [tool/ct_repo_lint_manifest.yaml].
@@ -700,6 +702,10 @@ int? _tryRunDartRuleInProcess({
       );
     case 'repo.flutter_action_pins':
       return runCheckFlutterActionPins(repoRoot);
+    case 'repo.workspace_outdated_resolvable':
+      return runCheckWorkspaceOutdatedResolvable(repoRoot);
+    case 'repo.workspace_outdated_latest_direct':
+      return runCheckWorkspaceOutdatedLatestDirect(repoRoot);
     case 'repo.debug_console_logic_contract_boundary':
       return runCheckDebugConsoleLogicContractBoundary(
         repoRoot,

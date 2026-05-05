@@ -9,7 +9,6 @@ import 'package:yaml/yaml.dart';
 ///
 /// SPEC: SPEC/program/pub-workspace-toolchain.md
 final Version _kMinPinnedFlutterVersion = Version(3, 41, 9);
-
 int runCheckFlutterActionPins(
   String repoRoot, {
   void Function(String line)? info,

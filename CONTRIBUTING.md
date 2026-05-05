@@ -33,9 +33,30 @@ Run this sequence from a clean checkout on the pinned Flutter/Dart toolchain:
 
 ```bash
 dart pub outdated
-cd app && flutter pub outdated && cd ..
-cd ctdev && flutter pub outdated && cd ..
-cd widgetbook_host && flutter pub outdated && cd ..
+for pkg in $(python3 - <<'PY'
+import pathlib
+root = pathlib.Path('.')
+lines = (root / 'pubspec.yaml').read_text().splitlines()
+members = []
+in_workspace = False
+for line in lines:
+    stripped = line.strip()
+    if not in_workspace:
+        if stripped == 'workspace:':
+            in_workspace = True
+        continue
+    if stripped.endswith(':') and not line.startswith(' '):
+        break
+    if stripped.startswith('- '):
+        members.append(stripped[2:].strip())
+for member in members:
+    pubspec = root / member / 'pubspec.yaml'
+    if pubspec.exists() and 'sdk: flutter' in pubspec.read_text():
+        print(member)
+PY
+); do
+  (cd "$pkg" && flutter pub outdated)
+done
 ```
 
 Interpretation:
@@ -43,6 +64,8 @@ Interpretation:
 - If a package is below **Resolvable**, treat it as actionable implementation work (constraints/lockfile are lagging).
 - If a package is at **Resolvable** but below **Latest**, verify it is covered by one of the intentional caps documented above before considering the issue complete.
 - Record the audit result in the linked issue/PR so reviewers can distinguish solved vs deferred dependency gaps.
+- CI-facing equivalent: `dart run tool/ct_repo_lint.dart --rule repo.workspace_outdated_resolvable` (fails when any audited package row has `current != resolvable`).
+- CI-facing direct-latest guard: `dart run tool/ct_repo_lint.dart --rule repo.workspace_outdated_latest_direct` (fails when a direct/dev row is below `Latest` even though `Latest == Resolvable`).
 
 ## Pre-PR Checklist
 

@@ -21,6 +21,8 @@ void main() {
       expect(ids, contains('repo.app_event_handler_scope_logic_boundary'));
       expect(ids, contains('repo.control_flow_nesting_depth'));
       expect(ids, contains('repo.repeated_magic_numbers'));
+      expect(ids, contains('repo.workspace_outdated_resolvable'));
+      expect(ids, contains('repo.workspace_outdated_latest_direct'));
       expect(ids, contains('repo.function_size'));
       expect(ids, contains('repo.part_unit_size'));
       expect(ids, contains('repo.no_flame_in_widgets'));
