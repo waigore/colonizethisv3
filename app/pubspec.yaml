@@ -28,7 +28,7 @@ dependencies:
   colonizethis_ai:
   colonizethis_debug_console:
   widgetbook: ^3.22.0
-  google_fonts: ^6.3.3
+  google_fonts: ^8.1.0
   intl: ^0.20.2
   window_manager: ^0.5.1
 
