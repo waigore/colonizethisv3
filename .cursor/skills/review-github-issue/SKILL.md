@@ -1,7 +1,7 @@
 ---
 name: review-github-issue
 description: |-
-  Reviews a GitHub issue for coherence between its stated purpose and its proposed approach (design, scope, ACs). Produces a consolidated comment: primary focus is purpose↔method gaps and internal contradictions; code/spec/test evidence only when needed to show the proposed method cannot satisfy the purpose. Use before implementation; use verify-github-issue for issue vs implementation/SPEC/tests closure.
+  Reviews a GitHub issue for coherence between its stated purpose and its proposed approach (design, scope, ACs). Produces a consolidated comment: primary focus is purpose↔method gaps and internal contradictions; code/spec/test evidence only when needed to show the proposed method cannot satisfy the purpose. Use before implementation; use verify-github-issue for AC↔implementation/SPEC/tests verification posted on the issue.
 
   Examples:
   - user: "Review issue #42" → state purpose, assess whether the proposed method plausibly achieves it, flag internal gaps; repo evidence only if method cannot satisfy purpose
@@ -26,7 +26,7 @@ The goal is a **consolidated comment** whose **primary** analysis is:
 
 - **Purpose ↔ method**: gaps or tensions between **what the issue purportedly addresses** (its purpose / outcome) and **how it proposes to get there** (design, steps, scope, dependencies, acceptance criteria as a solution shape).
 
-This skill is **not** centered on re-deriving **“issue description vs current SPEC/implementation/tests”** as the main output. That reconciliation should already live in a well-written issue; **systematic** mapping of acceptance criteria to code, specs, and tests for closure belongs in **`.cursor/skills/verify-github-issue/SKILL.md`**.
+This skill is **not** centered on re-deriving **“issue description vs current SPEC/implementation/tests”** as the main output. That reconciliation should already live in a well-written issue; **systematic** mapping of acceptance criteria to code, specs, and tests belongs in **`.cursor/skills/verify-github-issue/SKILL.md`** (posted as an issue comment).
 
 ## Boundary: review vs verify
 
@@ -148,5 +148,5 @@ Use a neutral, factual tone. Do not close the issue.
 ## Related skills
 
 - **Implement**: `.cursor/skills/implement-github-issue/SKILL.md`
-- **Verify / close** (issue vs implementation, SPEC, tests): `.cursor/skills/verify-github-issue/SKILL.md`
+- **Verify** (issue vs implementation, SPEC, tests): `.cursor/skills/verify-github-issue/SKILL.md`
 - Tracing hints (when step 5 applies): `.opencode/skills/review-github-issue/references/review-reference.md`

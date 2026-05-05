@@ -151,5 +151,5 @@ Same as sibling skill: always preserve the full draft if `gh` cannot create the 
 ## Related
 
 - **Bug / gap reports → structured issue (read-only):** [.cursor/skills/create-github-issue/SKILL.md](../create-github-issue/SKILL.md)
-- **Verify or close issues:** [.cursor/skills/verify-github-issue/SKILL.md](../verify-github-issue/SKILL.md)
+- **Verify issues:** [.cursor/skills/verify-github-issue/SKILL.md](../verify-github-issue/SKILL.md)
 - **After the issue exists:** implementation follows **AGENTS.md**, **CONTRIBUTING.md**, and `.cursor/rules/` (SPEC-first, testing, UI wiring).
