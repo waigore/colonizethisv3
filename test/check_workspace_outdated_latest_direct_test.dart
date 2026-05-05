@@ -13,9 +13,11 @@ void main() {
     addTearDown(() => temp.deleteSync(recursive: true));
     _createWorkspaceRoots(temp.path);
 
+    final calls = <String>[];
     final code = runCheckWorkspaceOutdatedLatestDirect(
       temp.path,
       processRunner: (exe, args, {workingDirectory}) {
+        calls.add('$exe ${args.join(' ')} @${workingDirectory ?? ''}');
         return ProcessResult(
           1,
           0,
@@ -41,6 +43,11 @@ void main() {
     );
 
     expect(code, 0);
+    expect(calls, hasLength(5));
+    expect(
+      calls,
+      contains('dart pub outdated --json @${temp.path}/packages/example_pure_dart'),
+    );
   });
 
   test('fails when direct dependency is below latest and latest is resolvable', () {

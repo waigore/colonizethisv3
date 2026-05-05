@@ -23,7 +23,11 @@ void main() {
     );
 
     expect(code, 0);
-    expect(calls, hasLength(4));
+    expect(calls, hasLength(5));
+    expect(
+      calls,
+      contains('dart pub outdated --json @${temp.path}/packages/example_pure_dart'),
+    );
   });
 
   test('fails when a package is below resolvable', () {
