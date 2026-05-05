@@ -21,6 +21,7 @@ When running in OpenCode:
   - what was implemented in this PR
   - what was deferred (if anything)
   - why any deferred work remains
+- Treat issue completion as blocked until all open PRs linked to the issue are merged. If any linked PR remains open (including draft), keep the issue in `backlog:implementation`.
 - Relabel only when complete:
   - Complete: remove `backlog:implementation`, add `backlog:verification`
   - Partial: keep `backlog:implementation`
