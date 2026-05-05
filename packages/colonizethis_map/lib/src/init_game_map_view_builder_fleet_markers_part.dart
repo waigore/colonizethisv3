@@ -91,7 +91,7 @@ String? _fleetMarkerTileKeyForLocationScope({
 }) {
   if (scopeKey.startsWith('sea:')) {
     final zoneKey = scopeKey.substring(4);
-    final local = zoneKey.contains('|') ? zoneKey.split('|').last : zoneKey;
+    final local = mapPipeLastSegmentOrWhole(zoneKey);
     return seaZoneCentroidTileKey(
       tileMap: tileMap,
       regionId: regionId,

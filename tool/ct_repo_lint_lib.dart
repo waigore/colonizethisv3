@@ -8,6 +8,7 @@ import 'check_app_hardcoded_ui_strings.dart';
 import 'check_app_event_handler_scope_logic_boundary.dart';
 import 'check_asset_path_constants.dart';
 import 'check_canonical_province_tile_keys.dart';
+import 'check_colonizethis_map_lib_pipe_split.dart';
 import 'check_civilian_unit_type_constants.dart';
 import 'check_control_flow_nesting_depth.dart';
 import 'check_custom_exceptions.dart';
@@ -739,6 +740,8 @@ int? _tryRunDartRuleInProcess({
       );
     case 'repo.canonical_province_tile_keys':
       return runCheckCanonicalProvinceTileKeys(repoRoot);
+    case 'repo.colonizethis_map_lib_pipe_split':
+      return runCheckColonizethisMapLibPipeSplit(repoRoot);
     case 'repo.land_province_bucket_keys':
       return runCheckLandProvinceBucketKeys(repoRoot);
     case 'repo.logic_dual_region_province_field_access':
