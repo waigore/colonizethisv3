@@ -39,6 +39,6 @@
 
 ## Workspace outdated audit (manual)
 
-- **Given** a maintainer is validating dependency-refresh progress for #2073, **when** they run `flutter pub outdated` from each Flutter package root (`app/`, `ctdev/`, `widgetbook_host/`) and `dart pub outdated` from the repository root (Pub workspace host), **then** the combined output is the authoritative audit for direct and transitive version drift in this repository.
+- **Given** a maintainer is validating dependency-refresh progress for #2073, **when** they run `dart pub outdated` from the repository root (Pub workspace host) plus `flutter pub outdated` from every workspace member whose `pubspec.yaml` declares `sdk: flutter`, **then** the combined output is the authoritative audit for direct and transitive version drift in this repository.
 - **Given** an outdated row remains below pub.dev **Latest**, **when** the row is constrained by the pinned Flutter SDK (`flutter_test` -> `test_api`) or the documented `analyzer`/`custom_lint_builder` stack cap, **then** that row is treated as an intentional exception and must match the rationale documented in **[CONTRIBUTING.md](../../CONTRIBUTING.md)**.
 - **Given** an outdated row remains below **Resolvable** (not just below **Latest**), **when** no intentional exception applies, **then** follow-up implementation work is required on #2073 (constraint update, coordinated major bump, or lockfile refresh) before the issue can be considered complete.

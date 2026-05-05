@@ -75,9 +75,41 @@ void main() {
 }
 
 void _createWorkspaceRoots(String root) {
+  File('$root/pubspec.yaml').writeAsStringSync('''
+name: temp_repo
+workspace:
+  - app
+  - ctdev
+  - widgetbook_host
+  - packages/example_pure_dart
+''');
   Directory('$root/app').createSync(recursive: true);
+  File('$root/app/pubspec.yaml').writeAsStringSync('''
+name: app
+dependencies:
+  flutter:
+    sdk: flutter
+''');
   Directory('$root/ctdev').createSync(recursive: true);
+  File('$root/ctdev/pubspec.yaml').writeAsStringSync('''
+name: ctdev
+dependencies:
+  flutter:
+    sdk: flutter
+''');
   Directory('$root/widgetbook_host').createSync(recursive: true);
+  File('$root/widgetbook_host/pubspec.yaml').writeAsStringSync('''
+name: widgetbook_host
+dependencies:
+  flutter:
+    sdk: flutter
+''');
+  Directory('$root/packages/example_pure_dart').createSync(recursive: true);
+  File('$root/packages/example_pure_dart/pubspec.yaml').writeAsStringSync('''
+name: example_pure_dart
+environment:
+  sdk: ^3.9.0
+''');
 }
 
 String _outdatedJson(String current, String resolvable) {
