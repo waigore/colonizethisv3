@@ -14,6 +14,7 @@
 ## CI and local SDK
 
 - GitHub Actions installs Flutter via `subosito/flutter-action@v2` with an explicit **`flutter-version`** pin (`3.41.9` at time of writing) on **`.github/workflows/quality.yml`**, **`app-android-release.yml`**, and **`widgetbook-release.yml`**. That stable release bundles **Dart 3.11.5**.
+- Repo lint rule **`repo.flutter_action_pins`** (`tool/check_flutter_action_pins.dart`) enforces that every workflow step using `subosito/flutter-action@...` includes a non-empty `with.flutter-version` pin.
 - **CONTRIBUTING.md** states the same minimum for local development so resolution, advisories behavior, and analyzer output match automation.
 - Workspace `pubspec.yaml` files use **`environment.sdk: '>=3.11.5 <4.0.0'`** so pure-Dart packages do not claim compatibility below the Dart shipped with the supported Flutter pin.
 
@@ -30,6 +31,7 @@
 - **`dart pub get`** at the repository root after a clean cache is the primary smoke test for advisories + workspace resolution on the pinned SDK.
 - **`dart run tool/run_workspace_analyze_errors_only.dart`** and **`dart run tool/ct_repo_lint.dart`** exercise the post-resolution graph used in **Quality** CI.
 - **GitHub Actions:** Confirm the latest **`quality`** workflow run for **`dev`** completed successfully (includes `pub get` / Flutter install under the pin). Record the outcome on **#2073** when auditing acceptance criteria.
+- **Repo lint:** `dart run tool/ct_repo_lint.dart --rule repo.flutter_action_pins` passes, confirming all workflow Flutter installs remain pinned.
 
 ## Workspace outdated audit (manual)
 

@@ -15,6 +15,7 @@ import 'check_custom_exceptions.dart';
 import 'check_dart_file_non_comment_line_size.dart';
 import 'check_debug_console_logic_contract_boundary.dart';
 import 'check_disallowed_ast_patterns.dart';
+import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_land_province_bucket_keys.dart';
@@ -697,6 +698,8 @@ int? _tryRunDartRuleInProcess({
         repoRoot,
         incrementalRelativeDartPaths: incrementalPaths,
       );
+    case 'repo.flutter_action_pins':
+      return runCheckFlutterActionPins(repoRoot);
     case 'repo.debug_console_logic_contract_boundary':
       return runCheckDebugConsoleLogicContractBoundary(
         repoRoot,

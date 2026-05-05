@@ -27,6 +27,13 @@ rules:
     runner: shell
     argv: [tool/check_logic_ai_decoupling.sh]
 
+  - rule_id: repo.flutter_action_pins
+    group: structure
+    title: flutter-action workflow steps must pin flutter-version
+    spec: SPEC/program/pub-workspace-toolchain.md
+    runner: dart
+    script: tool/check_flutter_action_pins.dart
+
   - rule_id: repo.asset_path_constants
     group: identifiers
     title: Asset path constants in app runtime code
