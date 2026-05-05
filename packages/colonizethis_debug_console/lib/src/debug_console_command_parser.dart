@@ -6,6 +6,7 @@ const int kDebugConsoleMaxSpawnCount = 25;
 
 /// Upper bound for `/add_money` credited amount (parser clamps here).
 const int kDebugConsoleMaxTreasuryCreditAmount = 9999;
+final RegExp _localProvinceIdPattern = RegExp(r'^P[0-9]+$');
 
 class DebugConsoleCommandParser {
   const DebugConsoleCommandParser();
@@ -191,20 +192,22 @@ class DebugConsoleCommandParser {
   }
 
   DebugConsoleParseResult _parseFlipProvince(List<String> tokens) {
-    if (tokens.length < 2) {
-      return const DebugConsoleParseResult.error(
-        'Usage: /flip_province <regionId> <province_display_name> or /flip_province <regionId|localId>',
-      );
-    }
     if (tokens.length == 2) {
-      final provinceId = tokens[1].trim();
-      if (provinceId.isEmpty || !provinceId.contains('|')) {
+      final fullProvinceId = tokens[1].trim();
+      if (!_looksLikePrefixedProvinceId(fullProvinceId)) {
         return const DebugConsoleParseResult.error(
-          'Usage: /flip_province <regionId> <province_display_name> or /flip_province <regionId|localId>',
+          'Usage: /flip_province <regionId> <province_display_name> OR /flip_province <regionId|localId>',
         );
       }
       return DebugConsoleParseResult.success(
-        DebugConsoleParsedInvocation.flipProvince(provinceId: provinceId),
+        DebugConsoleParsedInvocation.flipProvince(
+          fullProvinceId: fullProvinceId,
+        ),
+      );
+    }
+    if (tokens.length < 3) {
+      return const DebugConsoleParseResult.error(
+        'Usage: /flip_province <regionId> <province_display_name> OR /flip_province <regionId|localId>',
       );
     }
     final regionId = tokens[1].trim();
@@ -239,13 +242,17 @@ class DebugConsoleCommandParser {
         'Usage: /reveal_province <regionId|localId | province_display_name>',
       );
     }
-    if (_looksLikeUnprefixedProvinceLocalId(target)) {
+    if (_localProvinceIdPattern.hasMatch(target)) {
       return const DebugConsoleParseResult.error(
         'Use full province id format: regionId|localId',
       );
     }
+    final targetIsFullProvinceId = _looksLikePrefixedProvinceId(target);
     return DebugConsoleParseResult.success(
-      DebugConsoleParsedInvocation.revealProvince(target: target),
+      DebugConsoleParsedInvocation.revealProvince(
+        target: target,
+        targetIsFullProvinceId: targetIsFullProvinceId,
+      ),
     );
   }
 }
@@ -277,9 +284,17 @@ String _buildHelpMessage() {
       '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
       '$kDebugConsoleMaxTreasuryCreditAmount are clamped\n'
       '- /flip_province <regionId> <province_display_name>\n'
-      '- /flip_province <regionId|localId> (retry path for ambiguity)\n'
+      '- /flip_province <regionId|localId>\n'
       '- /reveal_province <regionId|localId | province_display_name>\n'
-      '  use full id fallback when display name is ambiguous.';
+      '  if name is ambiguous, retry with full province id.';
+}
+
+bool _looksLikePrefixedProvinceId(String value) {
+  final separator = value.indexOf('|');
+  if (separator <= 0 || separator == value.length - 1) {
+    return false;
+  }
+  return true;
 }
 
 class DebugConsoleParseResult {
@@ -307,8 +322,4 @@ String? _unitTypeFromAlias(String alias) {
     'rail_builder' || 'rail-builder' || 'railbuilder' => kUnitTypeRailBuilder,
     _ => null,
   };
-}
-
-bool _looksLikeUnprefixedProvinceLocalId(String target) {
-  return RegExp(r'^P[0-9]+$', caseSensitive: false).hasMatch(target.trim());
 }

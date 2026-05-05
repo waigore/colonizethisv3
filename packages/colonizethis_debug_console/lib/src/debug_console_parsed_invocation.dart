@@ -33,13 +33,14 @@ sealed class DebugConsoleParsedInvocation {
   }) = DebugConsoleStockpileCredit;
 
   const factory DebugConsoleParsedInvocation.flipProvince({
+    String? fullProvinceId,
     String? regionId,
     String? provinceDisplayName,
-    String? provinceId,
   }) = DebugConsoleFlipProvince;
 
   const factory DebugConsoleParsedInvocation.revealProvince({
     required String target,
+    required bool targetIsFullProvinceId,
   }) = DebugConsoleRevealProvince;
 }
 
@@ -107,18 +108,30 @@ final class DebugConsoleStockpileCredit extends DebugConsoleParsedInvocation {
 
 final class DebugConsoleFlipProvince extends DebugConsoleParsedInvocation {
   const DebugConsoleFlipProvince({
+    this.fullProvinceId,
     this.regionId,
     this.provinceDisplayName,
-    this.provinceId,
-  });
+  }) : assert(
+         (fullProvinceId != null &&
+                 regionId == null &&
+                 provinceDisplayName == null) ||
+             (fullProvinceId == null &&
+                 regionId != null &&
+                 provinceDisplayName != null),
+         'flipProvince requires either fullProvinceId, or regionId + provinceDisplayName.',
+       );
 
+  final String? fullProvinceId;
   final String? regionId;
   final String? provinceDisplayName;
-  final String? provinceId;
 }
 
 final class DebugConsoleRevealProvince extends DebugConsoleParsedInvocation {
-  const DebugConsoleRevealProvince({required this.target});
+  const DebugConsoleRevealProvince({
+    required this.target,
+    required this.targetIsFullProvinceId,
+  });
 
   final String target;
+  final bool targetIsFullProvinceId;
 }

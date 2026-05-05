@@ -147,5 +147,29 @@ void main() {
       expect(event.humanPlayerId, 'p1');
       expect(event.target, 'New Bordeaux');
     });
+
+    test('emits flip_province event for full-id form', () {
+      final result = executor.executeRaw(
+        rawInput: '/flip_province oldWorld|P1',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      final event = result.events.single as FlipDebugProvinceOwnershipEvent;
+      expect(event.fullProvinceId, 'oldWorld|P1');
+      expect(event.regionId, isNull);
+      expect(event.provinceDisplayName, isNull);
+    });
+
+    test('emits reveal_province event', () {
+      final result = executor.executeRaw(
+        rawInput: '/reveal_province oldWorld|P1',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      final event = result.events.single as RevealDebugProvinceEvent;
+      expect(event.humanPlayerId, 'p1');
+      expect(event.target, 'oldWorld|P1');
+      expect(event.targetIsFullProvinceId, isTrue);
+    });
   });
 }
