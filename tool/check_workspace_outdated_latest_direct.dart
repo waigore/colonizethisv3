@@ -33,10 +33,12 @@ int runCheckWorkspaceOutdatedLatestDirect(
   void Function(String line)? info,
   void Function(String line)? err,
   ProcessRunner? processRunner,
+  Set<String>? excludedPackages,
 }) {
   final void Function(String) logI = info ?? stdout.writeln;
   final void Function(String) logE = err ?? stderr.writeln;
   final run = processRunner ?? _defaultRunner;
+  final exclusions = excludedPackages ?? _readExcludedPackages();
 
   final auditTargets = _buildAuditTargets(repoRoot, logI);
 
@@ -77,6 +79,9 @@ int runCheckWorkspaceOutdatedLatestDirect(
     for (final pkg in decoded) {
       final packageName = pkg['package'];
       if (packageName is! String || !_isDirectDependency(pkg)) {
+        continue;
+      }
+      if (exclusions.contains(packageName)) {
         continue;
       }
 
@@ -254,6 +259,18 @@ bool _isDirectDependency(Map<String, Object?> pkg) {
     return dependency == 'direct' || dependency == 'dev';
   }
   return false;
+}
+
+Set<String> _readExcludedPackages() {
+  final raw = Platform.environment['CT_WORKSPACE_OUTDATED_EXCLUDE'];
+  if (raw == null || raw.trim().isEmpty) {
+    return const <String>{};
+  }
+  return raw
+      .split(',')
+      .map((entry) => entry.trim())
+      .where((entry) => entry.isNotEmpty)
+      .toSet();
 }
 
 void main() {
