@@ -15,6 +15,16 @@ GitHub Actions workflows that install Flutter (see `.github/workflows/quality.ym
 
 If `dart pub get` or `flutter pub get` fails while resolving hosted packages with **`FormatException: advisoriesUpdated must be a String`**, upgrade your Flutter/Dart install to at least this pair (or newer stable that remains compatible with the repo’s `environment.sdk` lower bound in each `pubspec.yaml`).
 
+### `dart pub outdated` / “Latest” vs what the workspace resolves
+
+`dart pub outdated` and `flutter pub outdated` compare the lockfile to **pub.dev “Latest”**; several rows often stay behind even on a healthy workspace. Common reasons in this repo:
+
+- **`test` / `test_api` / `test_core`:** Flutter’s **`flutter_test`** (from the SDK) pins **`test_api`** to the version shipped with that Flutter release. The standalone **`test`** package may therefore sit **below** pub.dev “Latest” (for example when Latest needs a newer `test_api`) until a **newer Flutter stable** relaxes that pin. This is expected; do not “fix” it by forcing `dependency_overrides` on `test_api` for normal work.
+- **`analyzer` / `analyzer_plugin` / `_fe_analyzer_shared`:** **`colonizethis_exception_lint`** and **`custom_lint_builder`** must agree on an **`analyzer`** major. **`analyzer_plugin` 0.14.x** depends on **`analyzer` 13**, while today’s **`custom_lint_builder`** line stays on **`analyzer` ^8.x**—so the workspace intentionally holds **`analyzer` ^8** and **`analyzer_plugin` ^0.13.x`** until upstream `custom_lint` packages publish a compatible analyzer-13 stack. Treat that gap as an **intentional cap**, not a stale lockfile.
+- **Other transitives (`xml`, `inspector`, …):** May lag “Latest” until a **direct** dependency raises its constraints; the solver picks the **newest jointly resolvable** graph across all workspace members.
+
+When bumping dependencies, prefer **`dart pub upgrade`** / **`flutter pub upgrade`** (and coordinated `pubspec.yaml` edits) over overrides; if a row cannot move yet, note the **blocker** (SDK pin or shared dev-tool stack) in the PR or issue.
+
 ## Pre-PR Checklist
 
 Before opening a pull request, ensure the following:
