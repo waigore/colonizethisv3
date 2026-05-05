@@ -13,6 +13,8 @@ All contributions must be submitted via a Pull Request (PR).
 
 GitHub Actions workflows that install Flutter (see `.github/workflows/quality.yml`, `app-android-release.yml`, and `widgetbook-release.yml`) pin **`flutter-version: '3.41.9'`** on the stable channel, which bundles **Dart 3.11.5**. Use the same Flutter stable locally so dependency resolution and pub.dev advisories decoding match CI.
 
+Every workspace `pubspec.yaml` declares **`environment.sdk: '>=3.11.5 <4.0.0'`** so pure Dart packages are not advertised as compatible with a Dart older than the one shipped with that Flutter pin.
+
 If `dart pub get` or `flutter pub get` fails while resolving hosted packages with **`FormatException: advisoriesUpdated must be a String`**, upgrade your Flutter/Dart install to at least this pair (or newer stable that remains compatible with the repo’s `environment.sdk` lower bound in each `pubspec.yaml`).
 
 ### `dart pub outdated` / “Latest” vs what the workspace resolves
