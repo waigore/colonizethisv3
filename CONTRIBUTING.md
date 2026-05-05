@@ -27,6 +27,23 @@ If `dart pub get` or `flutter pub get` fails while resolving hosted packages wit
 
 When bumping dependencies, prefer **`dart pub upgrade`** / **`flutter pub upgrade`** (and coordinated `pubspec.yaml` edits) over overrides; if a row cannot move yet, note the **blocker** (SDK pin or shared dev-tool stack) in the PR or issue.
 
+### Workspace outdated audit command set (GitHub #2073)
+
+Run this sequence from a clean checkout on the pinned Flutter/Dart toolchain:
+
+```bash
+dart pub outdated
+cd app && flutter pub outdated && cd ..
+cd ctdev && flutter pub outdated && cd ..
+cd widgetbook_host && flutter pub outdated && cd ..
+```
+
+Interpretation:
+
+- If a package is below **Resolvable**, treat it as actionable implementation work (constraints/lockfile are lagging).
+- If a package is at **Resolvable** but below **Latest**, verify it is covered by one of the intentional caps documented above before considering the issue complete.
+- Record the audit result in the linked issue/PR so reviewers can distinguish solved vs deferred dependency gaps.
+
 ## Pre-PR Checklist
 
 Before opening a pull request, ensure the following:

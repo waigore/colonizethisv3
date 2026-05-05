@@ -30,3 +30,9 @@
 - **`dart pub get`** at the repository root after a clean cache is the primary smoke test for advisories + workspace resolution on the pinned SDK.
 - **`dart run tool/run_workspace_analyze_errors_only.dart`** and **`dart run tool/ct_repo_lint.dart`** exercise the post-resolution graph used in **Quality** CI.
 - **GitHub Actions:** Confirm the latest **`quality`** workflow run for **`dev`** completed successfully (includes `pub get` / Flutter install under the pin). Record the outcome on **#2073** when auditing acceptance criteria.
+
+## Workspace outdated audit (manual)
+
+- **Given** a maintainer is validating dependency-refresh progress for #2073, **when** they run `flutter pub outdated` from each Flutter package root (`app/`, `ctdev/`, `widgetbook_host/`) and `dart pub outdated` from the repository root (Pub workspace host), **then** the combined output is the authoritative audit for direct and transitive version drift in this repository.
+- **Given** an outdated row remains below pub.dev **Latest**, **when** the row is constrained by the pinned Flutter SDK (`flutter_test` -> `test_api`) or the documented `analyzer`/`custom_lint_builder` stack cap, **then** that row is treated as an intentional exception and must match the rationale documented in **[CONTRIBUTING.md](../../CONTRIBUTING.md)**.
+- **Given** an outdated row remains below **Resolvable** (not just below **Latest**), **when** no intentional exception applies, **then** follow-up implementation work is required on #2073 (constraint update, coordinated major bump, or lockfile refresh) before the issue can be considered complete.
