@@ -86,21 +86,25 @@ final availableWorkTargetsProvider = Provider<Map<String, List<String>>>((ref) {
   final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
   final view = buildPlayerView(game, topology, humanPlayerId);
 
-  final suggestions = suggestWorkOrders(
-    view,
-    game,
-    topology,
-    orders,
-    tileMapByRegion: mapData?.tileMapByRegion,
-  );
-
   final byUnitId = <String, List<String>>{};
-  for (final order in suggestions) {
-    byUnitId.putIfAbsent(order.unitId, () => []).add(order.target);
+  for (final unit in view.ownUnits) {
+    final availability = getAvailableWorkTargetsForUnit(
+      view: view,
+      game: game,
+      topology: topology,
+      currentOrders: orders,
+      unitId: unit.id,
+      tileMapByRegion: mapData?.tileMapByRegion,
+    );
+    if (!availability.assignable ||
+        availability.validTileKeysByTarget.isEmpty) {
+      continue;
+    }
+    byUnitId[unit.id] = availability.validTileKeysByTarget.keys
+        .toSet()
+        .toList();
   }
-  return {
-    for (final e in byUnitId.entries) e.key: e.value.toSet().toList(),
-  };
+  return byUnitId;
 });
 
 /// Tile keys reserved for the human player’s Builder/Engineer/Merchant

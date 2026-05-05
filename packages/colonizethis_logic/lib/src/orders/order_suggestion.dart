@@ -44,4 +44,8 @@ export 'order_suggestion_naval_diplomatic.dart'
         suggestDiplomaticOrders,
         suggestNavalMissionOrders,
         suggestNavalMoveOrders;
-export 'order_suggestion_work.dart' show suggestWorkOrders;
+export 'order_suggestion_work.dart'
+    show
+        AvailableWorkTargetsForUnit,
+        getAvailableWorkTargetsForUnit,
+        suggestWorkOrders;

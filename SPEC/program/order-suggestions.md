@@ -154,6 +154,59 @@ For `explore`, step (1) must use the same per-player partially-revealed-province
 
 ---
 
+### `getAvailableWorkTargetsForUnit`
+
+**Purpose:** Returns per-target work availability for a **single civilian unit** without scanning other units, with a cheap pre-assign gating layer that short-circuits when the unit is already represented in the draft order list or has pending work.
+
+**Signature:**
+```dart
+AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
+  required PlayerView view,
+  required Game game,
+  required MapTopology topology,
+  required Orders currentOrders,
+  required String unitId,
+  Map<String, TileMapResult>? tileMapByRegion,
+});
+```
+
+**Return type:**
+- `unitId`: the queried unit id.
+- `assignable`: `true` when at least one work target has non-empty valid tiles; `false` otherwise.
+- `blockedReason`: nullable; when `assignable == false` contains a stable reason token such as:
+  - `unit_not_found_or_not_owned`
+  - `unit_has_current_work`
+  - `unit_has_pending_work_order`
+  - `unit_has_pending_move_order`
+  - `no_work_targets_for_unit_type`
+  - `no_valid_work_targets`
+- `validTileKeysByTarget`: map from work-target id to the **set** of valid tile keys for that unit and target (visibility + engine validated), matching `getValidWorkOrderTileKeysWithVisibility` semantics.
+
+**Behavior:**
+1. Look up `unitId` in world state and verify ownership for `view.playerId`. If not found or not owned, return `assignable = false` with `blockedReason = unit_not_found_or_not_owned`.
+2. Compute:
+   - whether the unit has `currentWork` in world state,
+   - whether `currentOrders.workOrdersByPlayerId[view.playerId]` already contains any work order for this `unitId`,
+   - whether `currentOrders.moveOrdersByPlayerId[view.playerId]` contains a move order for this `unitId`.
+3. If any of the above is true, return `assignable = false`, `validTileKeysByTarget = {}`, and a `blockedReason` token indicating the first matching condition. **Do not** call `getValidWorkOrderTileKeysWithVisibility` or the order engine in this branch.
+4. Determine allowed work targets for the unit type from `workOrderTargetsByUnitType`. If empty, return `assignable = false`, `blockedReason = no_work_targets_for_unit_type`, `validTileKeysByTarget = {}`.
+5. For each allowed work target, call `getValidWorkOrderTileKeysWithVisibility` with the same arguments (`game`, `topology`, `view`, `unitId`, `workTarget`, `currentOrders`, `tileMapByRegion`) and, when the returned set is non-empty, insert an entry into `validTileKeysByTarget` for that target.
+6. Set `assignable = validTileKeysByTarget.isNotEmpty`. When `assignable == true`, `blockedReason` is `null`; otherwise `blockedReason = no_valid_work_targets`.
+
+**Consumers:**
+- App UI (`availableWorkTargetsProvider` and explorer/builder shortcut flows) for **per-unit** Assign enablement and valid-tile enumeration.
+- Must not be used by AI; AI consumers continue to use `suggestWorkOrders`.
+
+**Acceptance criteria (selected-unit availability)**
+
+- Given a Great Power player, a builder `B1` owned by that player, and `currentOrders` containing a pending work order for `B1`, when the system calls `getAvailableWorkTargetsForUnit` for `unitId = B1`, then the result has `assignable = false`, `validTileKeysByTarget = {}`, and `blockedReason` equal to one of:
+  - `unit_has_current_work`
+  - `unit_has_pending_work_order`.
+- Given the same setup and instrumentation counting `isWorkOrderAccepted` invocations in the order engine, when `getAvailableWorkTargetsForUnit` returns a blocked result as above, then the instrumentation counter for `isWorkOrderAccepted` attributable to that call remains `0`.
+- Given a Great Power player, an idle builder `B2` owned by that player, and at least one tile that is a valid `build_improvement` target for `B2`, when the system calls `getAvailableWorkTargetsForUnit` for `unitId = B2`, then the result has `assignable = true`, `blockedReason = null`, and `validTileKeysByTarget['build_improvement']` contains at least one tile key.
+
+---
+
 ## Suggestion observability (debug)
 
 When diagnosing why a civilian work target is missing from Assign / AI suggestions, `suggestWorkOrders` may emit **summary-only** `logger` **`debug`** lines (prefix `logic.order_suggestion`, token `suggest_work`): **per unit** (`unitId`, `unitType`, `region`, `at` province) and **per work target** one line with `outcome=` `included` or `excluded`, optional `tile=`, and for exclusions a **stable** `reason=` token (e.g. `visibility`, `no_valid_tile`, `no_single_hop`, `duplicate_pending`, `engine_rejected`, `not_applicable`). **No** per-candidate-tile log flood. Tests in `colonizethis_logic` assert the contract for representative fixtures (Refs GitHub #1869).
