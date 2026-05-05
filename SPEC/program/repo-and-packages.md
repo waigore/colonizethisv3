@@ -114,6 +114,12 @@ Asset-path guard remediation:
 
 ---
 
+## Pub workspace toolchain
+
+Dart/Flutter pin, `pub.dev` advisories expectations, and intentional “not at Latest” dependency caps (until upstream unblocks) are documented in **[pub-workspace-toolchain.md](pub-workspace-toolchain.md)** and **[CONTRIBUTING.md](../../CONTRIBUTING.md)**. See **GitHub #2073** for the rolling upgrade issue.
+
+---
+
 ## Flutter app `lib/` structure (TDD 15)
 
 Structure under `app/lib/`:
