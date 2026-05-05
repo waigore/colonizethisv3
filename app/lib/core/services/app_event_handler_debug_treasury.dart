@@ -13,6 +13,13 @@ DebugCommandResult applyDebugTreasuryCredit({
       message: 'Debug treasury credit ignored: no active game.',
     );
   }
+  if (currentGame.worldState.turnState.phase != TurnPhase.orders) {
+    return (
+      game: null,
+      message:
+          'Debug add_money rejected: command is allowed only during human Orders phase.',
+    );
+  }
   if (event.creditedAmount < 1) {
     return (
       game: null,

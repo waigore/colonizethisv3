@@ -502,6 +502,21 @@ class CreditDebugTreasuryEvent extends SessionCommandEvent {
   final int creditedAmount;
 }
 
+/// Immediate debug stockpile commodity credit for the human player.
+class CreditDebugStockpileCommodityEvent extends SessionCommandEvent {
+  const CreditDebugStockpileCommodityEvent({
+    required this.humanPlayerId,
+    required this.commodityId,
+    required this.requestedAmount,
+    required this.creditedAmount,
+  });
+
+  final String humanPlayerId;
+  final String commodityId;
+  final int requestedAmount;
+  final int creditedAmount;
+}
+
 /// Immediate debug province ownership transfer for the active human player.
 class FlipDebugProvinceOwnershipEvent extends SessionCommandEvent {
   const FlipDebugProvinceOwnershipEvent({

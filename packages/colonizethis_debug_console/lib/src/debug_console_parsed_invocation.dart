@@ -26,6 +26,12 @@ sealed class DebugConsoleParsedInvocation {
     required int creditedAmount,
   }) = DebugConsoleTreasuryCredit;
 
+  const factory DebugConsoleParsedInvocation.stockpileCredit({
+    required String commodityId,
+    required int requestedAmount,
+    required int creditedAmount,
+  }) = DebugConsoleStockpileCredit;
+
   const factory DebugConsoleParsedInvocation.flipProvince({
     required String regionId,
     required String provinceDisplayName,
@@ -75,6 +81,22 @@ final class DebugConsoleTreasuryCredit extends DebugConsoleParsedInvocation {
   final int requestedAmount;
 
   /// Amount applied after clamp to the debug-console treasury credit cap (9999).
+  final int creditedAmount;
+}
+
+final class DebugConsoleStockpileCredit extends DebugConsoleParsedInvocation {
+  const DebugConsoleStockpileCredit({
+    required this.commodityId,
+    required this.requestedAmount,
+    required this.creditedAmount,
+  });
+
+  final String commodityId;
+
+  /// Raw integer from user input before upper-bound clamp.
+  final int requestedAmount;
+
+  /// Amount applied after clamp to the debug-console stockpile credit cap (9999).
   final int creditedAmount;
 }
 
