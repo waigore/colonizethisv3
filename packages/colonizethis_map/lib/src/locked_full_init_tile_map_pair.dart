@@ -1,10 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 import 'map_partition_gates_exhausted.dart';
+import 'region_constants.dart';
 import 'tile_map_generator.dart';
-
-const String _kRegionOldWorld = 'oldWorld';
-const String _kRegionNewWorld = 'newWorld';
 
 const double _kDefaultSeaFraction = 0.6;
 
@@ -59,7 +57,7 @@ generateLockedFullInitTileMapPair({
     final (tileOw, topoOw) = TileMapGenerator(params: paramsOW).generate(
       numProvinces: config.numProvincesOldWorld,
       numContinents: config.continentCount,
-      regionId: _kRegionOldWorld,
+      regionId: kRegionOldWorld,
       resourceRules: ResourceRules.defaultRules,
       onLog: onLog,
       continentProvinceSizes: const [13, 13, 17, 17],
@@ -88,7 +86,7 @@ generateLockedFullInitTileMapPair({
         1,
         config.numProvincesNewWorld,
       ),
-      regionId: _kRegionNewWorld,
+      regionId: kRegionNewWorld,
       resourceRules: ResourceRules.defaultRules,
       onLog: onLog,
       continentProvinceSizes: const [6, 6, 9, 9],
