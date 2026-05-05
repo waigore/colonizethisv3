@@ -196,7 +196,9 @@ python3 pytool/wang_incremental_64.py --run-dir /path/to/other_run --init
 - All masks `0..15` exist for both families.
 - Every tile `bounding_box` is unique, 64px grid-aligned, and inside atlas dimensions.
 - `app/assets/data/map_terrain_tilesets.json` includes `transport_tilesets.road` and `transport_tilesets.rail` entries pointing to the emitted atlas/spec files.
+- Atlas PNGs contain substantive rendered content (not near-empty placeholders): each 256x256 transport atlas must have at least 2,500 non-transparent pixels.
 - App tests covering transport contract pass (`flutter test test/transport_overlay_assets_test.dart` and `flutter test test/transport_overlay_tileset_cache_test.dart`).
+- Visual sanity test passes (`flutter test test/transport_overlay_visual_sanity_test.dart`).
 
 This contract is normative for issue #1775 transport overlays and future atlas refreshes.
 
