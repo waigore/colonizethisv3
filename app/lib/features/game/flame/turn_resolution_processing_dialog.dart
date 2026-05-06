@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 
 class TurnResolutionProcessingDialog extends StatelessWidget {
@@ -16,7 +17,7 @@ class TurnResolutionProcessingDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Processing Turn',
+              appL10n(context).game_turnResolutionProcessingTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),

@@ -518,9 +518,10 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       applyTurnResolutionResult(ref, result);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Turn resolution failed.')),
-        );
+        final failureMessage = appL10n(context).game_turnResolutionFailedMessage;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failureMessage)));
       }
       rethrow;
     } finally {

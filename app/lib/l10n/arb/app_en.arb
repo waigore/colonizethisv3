@@ -104,6 +104,14 @@
       }
     }
   },
+  "game_turnResolutionFailedMessage": "Turn resolution failed.",
+  "@game_turnResolutionFailedMessage": {
+    "description": "Snackbar shown when turn resolution throws an error."
+  },
+  "game_turnResolutionProcessingTitle": "Processing Turn",
+  "@game_turnResolutionProcessingTitle": {
+    "description": "Title shown in the modal dialog while resolving the turn."
+  },
   "common_no": "No",
   "@common_no": {
     "description": "Generic 'No' button label."
