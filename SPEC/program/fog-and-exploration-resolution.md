@@ -64,8 +64,8 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 
 **Immediate debug reveal update** (debug `reveal_province` command path):
 
-1. When debug command `reveal_province` resolves one province target (by prefixed id or global display-name match), set all target province land tiles to `fullyVisible` for the human player immediately.
-2. In the same transaction, set all water tiles in sea zones directly adjacent to the target province (P–S edges, same region) to `fullyVisible` for the same player.
+1. When `/reveal_province` succeeds for the human player during Orders phase and the debug command resolves one province target (by prefixed id or global display-name match), set all target province land tiles to `fullyVisible` for the human player immediately in `WorldState.playerVisibilityByTile`.
+2. In the same transaction, invoke `applyCoastalSeaZoneFullVisibilityForProvinceTargets` so water tiles in sea zones with direct P–S topology adjacency to that province (same region) become `fullyVisible` for that player, using the same adjacency geometry as **Coastal sea zone full visibility**; this debug path is **not** gated on Great Power ownership of the revealed province. See [debug-console-panel.md](../ui/debug-console-panel.md).
 3. If all required land and adjacent sea-zone tiles are already `fullyVisible` for the player, return deterministic success/no-op feedback and keep world state unchanged.
 
 **Distant sea zone fog** (End-of-turn phase, after Explorer/Spy fog decay, **before** coastal sea zone full visibility):
