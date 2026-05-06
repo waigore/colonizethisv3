@@ -379,58 +379,76 @@ class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
         : 'gp1';
     return civilianUnitsPanelWithRiverpod(
       game: game,
-      child: SizedBox(
-        width: 600,
-        height: 400,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: CtNinePatchButton(
-                onPressed: () {
-                  showModalBottomSheet<void>(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (ctx) {
-                      final maxHeight = MediaQuery.sizeOf(ctx).height * 0.5;
-                      return civilianUnitsPanelWithRiverpod(
-                        game: game,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(maxHeight: maxHeight),
-                          child: CivilianUnitsPanel(
-                            game: game,
-                            humanPlayerId: humanPlayerId,
-                            bus: AppEventBus(),
-                          ),
+      child: _CivilianPanelBottomSheetDemoLayout(
+        game: game,
+        humanPlayerId: humanPlayerId,
+      ),
+    );
+  }
+}
+
+class _CivilianPanelBottomSheetDemoLayout extends StatelessWidget {
+  const _CivilianPanelBottomSheetDemoLayout({
+    required this.game,
+    required this.humanPlayerId,
+  });
+
+  final Game game;
+  final String humanPlayerId;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 600,
+      height: 400,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: CtNinePatchButton(
+              onPressed: () {
+                showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (ctx) {
+                    final maxHeight = MediaQuery.sizeOf(ctx).height * 0.5;
+                    return civilianUnitsPanelWithRiverpod(
+                      game: game,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: maxHeight),
+                        child: CivilianUnitsPanel(
+                          game: game,
+                          humanPlayerId: humanPlayerId,
+                          bus: AppEventBus(),
                         ),
-                      );
-                    },
-                  );
-                },
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.people_outline, size: 20),
-                    const SizedBox(width: 8),
-                    Text(appL10n(context).civilian_units_title),
-                  ],
+                      ),
+                    );
+                  },
+                );
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.people_outline, size: 20),
+                  const SizedBox(width: 8),
+                  Text(appL10n(context).civilian_units_title),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: ColoredBox(
+              color: const Color(0xFFE0E0E0),
+              child: Center(
+                child: Text(
+                  appL10n(context).widgetbook_openPanelHint,
+                  style: const TextStyle(color: Color(0xFF616161)),
                 ),
               ),
             ),
-            Expanded(
-              child: ColoredBox(
-                color: const Color(0xFFE0E0E0),
-                child: Center(
-                  child: Text(
-                    appL10n(context).widgetbook_openPanelHint,
-                    style: const TextStyle(color: Color(0xFF616161)),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
