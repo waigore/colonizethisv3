@@ -1,5 +1,5 @@
 /// Game rules, turn resolution, victory, validation. SPEC/program/turn-resolution.
-library;
+library colonizethis_logic;
 
 // Root
 export 'package:colonizethis_models/colonizethis_models.dart'
@@ -16,6 +16,7 @@ export 'src/setup/capital_choice.dart';
 export 'src/setup/game_setup.dart';
 export 'src/setup/setup_validation_exception.dart';
 export 'src/setup/gp_old_world_resource_redistribution.dart';
+export 'src/setup/gp_old_world_terrain_redistribution.dart';
 export 'src/setup/gp_starting_grain.dart';
 export 'src/setup/town_capital_occupancy.dart';
 export 'src/setup/effective_setup_seed.dart';
@@ -53,7 +54,6 @@ export 'src/economy/economy_extraction.dart';
 export 'src/economy/economy_production.dart';
 export 'src/economy/economy_preview_stockpile_phase.dart';
 export 'src/economy/economy_riches_to_treasury.dart';
-export 'src/economy/economy_stockpile_preview.dart';
 export 'src/economy/resource_extractor.dart';
 export 'src/economy/sea_transport.dart';
 export 'src/economy/worker_economy.dart';
@@ -63,7 +63,13 @@ export 'src/orders/orders.dart';
 export 'src/orders/civilian_projected_tile.dart';
 export 'src/orders/validators/work_order_cost_calculator.dart';
 export 'src/orders/order_suggestion.dart'
-    show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;
+    show
+        AvailableWorkTargetsForUnit,
+        getAvailableWorkTargetsForUnit,
+        getValidWorkOrderTileKeys,
+        getValidWorkOrderTileKeysWithVisibility,
+        orderSuggestionWorkOrderAcceptanceProbeCountForTests,
+        setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests;
 export 'src/orders/unit_type_helpers.dart'
     show
         devExclusiveReservedTileKeysForPlayer,
@@ -78,13 +84,6 @@ export 'src/diplomacy/diplomacy_resolver.dart';
 export 'src/dossier/evidence_rules.dart';
 export 'src/dossier/event_dialogue.dart';
 
-// AI
-export 'src/ai/hidden_agenda_assignment.dart';
-export 'src/ai/ai_planner.dart';
-export 'src/ai/ai_control.dart';
-export 'src/ai/sim_game_ai.dart';
-export 'src/ai/simple_ai_heuristics.dart';
-
 // World
 export 'src/world/army_commands.dart';
 export 'src/world/army_ids.dart';
@@ -96,6 +95,14 @@ export 'src/world/unit_lookup.dart';
 export 'src/world/minor_military_parity.dart';
 export 'src/world/movement.dart';
 export 'src/world/naval.dart';
+export 'src/world/naval_fleet_commands.dart';
+export 'src/world/fog_resolution.dart'
+    show
+        applyCoastalSeaZoneFullVisibility,
+        applyCoastalSeaZoneFullVisibilityForProvinceTargets;
+export 'src/world/player_state_pipeline.dart';
 export 'src/world/player_view.dart';
+export 'src/world/province_ownership_transfer.dart';
 export 'src/world/province_lookup.dart';
+export 'src/world/sea_zone_identity.dart';
 export 'src/world/tile_control.dart';

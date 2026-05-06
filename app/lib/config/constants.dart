@@ -14,3 +14,15 @@ abstract final class HiveBoxNames {
   static const String games = 'games';
   static const String offlineQueue = 'offline_queue';
 }
+
+/// Desktop window minimum width in logical pixels.
+const double kDesktopWindowMinWidth = 800;
+
+/// Desktop window minimum height in logical pixels.
+const double kDesktopWindowMinHeight = 600;
+
+/// Desktop window fallback width in logical pixels.
+const double kDesktopWindowDefaultWidth = 1280;
+
+/// Desktop window fallback height in logical pixels.
+const double kDesktopWindowDefaultHeight = 720;

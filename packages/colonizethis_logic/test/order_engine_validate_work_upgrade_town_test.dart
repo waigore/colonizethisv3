@@ -35,7 +35,7 @@ void main() {
               units: [
                 Unit(
                   id: 'b1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'p1',
                   locationProvinceId: provinceId,
                   tileKey: tileKey,
@@ -68,7 +68,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'b1',
-            target: 'upgrade_town',
+            target: kWorkTargetUpgradeTown,
             targetTileKey: tileKey,
           ),
         );
@@ -99,7 +99,7 @@ void main() {
               units: [
                 Unit(
                   id: 'b1',
-                  type: 'Builder',
+                  type: kUnitTypeBuilder,
                   ownerId: 'p1',
                   locationProvinceId: provinceId,
                   tileKey: tileKey,
@@ -132,7 +132,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'b1',
-            target: 'upgrade_town',
+            target: kWorkTargetUpgradeTown,
             targetTileKey: tileKey,
           ),
         );

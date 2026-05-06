@@ -1,6 +1,9 @@
-arb-dir: lib/l10n
+arb-dir: lib/l10n/arb
 template-arb-file: app_en.arb
-output-localization-file: app_localizations.dart
-untranslated-messages-file: lib/l10n/untranslated.json
+# All `flutter gen-l10n` output lives under `lib/l10n/gen/` (gitignored) so incremental
+# build stamps never treat hand-maintained `lib/l10n/*.dart` as removed gen outputs (Refs #2074).
+output-dir: lib/l10n/gen
+output-localization-file: app_l10n_flutter_gen.dart
+untranslated-messages-file: lib/l10n/gen/untranslated.json
 required-resource-attributes: true
-
+# App code imports `package:colonizethis_app/l10n/l10n.dart` (contract + delegate + `appL10n`).

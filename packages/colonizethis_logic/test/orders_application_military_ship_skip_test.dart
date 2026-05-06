@@ -220,7 +220,7 @@ void main() {
         stockpile: stockpile,
         workerPool: const WorkerPool(peasants: 1),
         treasury: shipEcon.buildTreasuryCost + 10,
-        techUnlocked: {'superior_hull_design': true},
+        techUnlocked: {kTechIdSuperiorHullDesign: true},
       );
       final game = Game(
         id: 'g',
@@ -291,7 +291,7 @@ void main() {
         stockpile: stockpile,
         workerPool: const WorkerPool(peasants: 1),
         treasury: shipEcon.buildTreasuryCost + 10,
-        techUnlocked: {'superior_hull_design': true},
+        techUnlocked: {kTechIdSuperiorHullDesign: true},
       );
       final game = Game(
         id: 'g',
@@ -362,7 +362,7 @@ void main() {
         stockpile: stockpile,
         workerPool: const WorkerPool(peasants: 1),
         treasury: shipEcon.buildTreasuryCost + 10,
-        techUnlocked: {'superior_hull_design': true},
+        techUnlocked: {kTechIdSuperiorHullDesign: true},
       );
       final game = Game(
         id: 'g',

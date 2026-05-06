@@ -1,5 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/setup/hidden_agenda_assignment.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
@@ -36,9 +37,7 @@ void main() {
           oldWorld: const RegionData(),
           newWorld: const RegionData(),
         ),
-        players: const [
-          Player(id: 'gp1', displayName: 'Human', isHuman: true),
-        ],
+        players: const [Player(id: 'gp1', displayName: 'Human', isHuman: true)],
         aiControlByGpId: const {'gp1': false},
       );
       final out = assignHiddenAgendasForGame(game);
@@ -53,18 +52,13 @@ void main() {
           oldWorld: const RegionData(),
           newWorld: const RegionData(),
         ),
-        players: const [
-          Player(id: 'gp1', displayName: 'AI', isHuman: false),
-        ],
+        players: const [Player(id: 'gp1', displayName: 'AI', isHuman: false)],
         globalGameSeed: 42,
         aiSeedByGpId: const {'gp1': 100},
       );
       final out = assignHiddenAgendasForGame(game);
       expect(out.hiddenAgendaByGpId.length, 1);
-      expect(
-        kHiddenAgendaIds,
-        contains(out.hiddenAgendaByGpId['gp1']),
-      );
+      expect(kHiddenAgendaIds, contains(out.hiddenAgendaByGpId['gp1']));
     });
   });
 }

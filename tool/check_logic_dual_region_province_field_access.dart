@@ -1,0 +1,93 @@
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
+
+/// Canonical dual-region province iteration lives here; all other logic `lib/src`
+/// code should prefer `allProvinces` / `WorldState.allProvinces()` (GitHub #2071).
+const _canonicalRelativePath =
+    'packages/colonizethis_logic/lib/src/world/province_lookup.dart';
+
+const _scanDirRelative = 'packages/colonizethis_logic/lib/src';
+
+/// Target from #2071: keep direct field access rare; small buffer over current count.
+const _maxMatchingLinesOutsideCanonical = 10;
+
+final RegExp _generatedSuffix = RegExp(
+  r'\.(g|freezed|mocks|gen)\.dart$',
+);
+
+bool logicDualRegionProvinceFieldAccessLineMatches(String line) {
+  return line.contains('oldWorld.provinces') || line.contains('newWorld.provinces');
+}
+
+/// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
+int runCheckLogicDualRegionProvinceFieldAccess(
+  String repoRoot, {
+  void Function(String line)? info,
+  void Function(String line)? err,
+}) {
+  final logI = info ?? stdout.writeln;
+  final logE = err ?? stderr.writeln;
+  final root = p.normalize(repoRoot);
+  final scanRoot = Directory(p.join(root, _scanDirRelative));
+  if (!scanRoot.existsSync()) {
+    logE('ERROR: Expected logic lib tree missing: $_scanDirRelative');
+    return 1;
+  }
+
+  final hits = <LogicDualRegionProvinceFieldHit>[];
+  for (final entity in scanRoot.listSync(recursive: true, followLinks: false)) {
+    if (entity is! File) continue;
+    final fullPath = p.normalize(entity.path);
+    if (!fullPath.endsWith('.dart')) continue;
+    if (_generatedSuffix.hasMatch(fullPath)) continue;
+    final relative = p.relative(fullPath, from: root);
+    if (p.normalize(relative) == _canonicalRelativePath) continue;
+
+    final lines = entity.readAsLinesSync();
+    for (var i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      if (logicDualRegionProvinceFieldAccessLineMatches(line)) {
+        hits.add(
+          LogicDualRegionProvinceFieldHit(
+            path: p.normalize(relative),
+            line: i + 1,
+          ),
+        );
+      }
+    }
+  }
+
+  if (hits.length <= _maxMatchingLinesOutsideCanonical) {
+    logI(
+      'Logic dual-region province field access check passed '
+      '(${hits.length}/$_maxMatchingLinesOutsideCanonical lines outside $_canonicalRelativePath).',
+    );
+    return 0;
+  }
+
+  logE(
+    'ERROR: Too many direct oldWorld.provinces / newWorld.provinces references '
+    'outside $_canonicalRelativePath '
+    '(${hits.length} > $_maxMatchingLinesOutsideCanonical). '
+    'Prefer allProvinces(world) or WorldState.allProvinces() per SPEC/program/logic-dual-region-province-access.md.',
+  );
+  for (final h in hits) {
+    logE('${h.path}:${h.line}');
+  }
+  return 1;
+}
+
+void main() {
+  exit(runCheckLogicDualRegionProvinceFieldAccess(Directory.current.path));
+}
+
+final class LogicDualRegionProvinceFieldHit {
+  const LogicDualRegionProvinceFieldHit({
+    required this.path,
+    required this.line,
+  });
+
+  final String path;
+  final int line;
+}

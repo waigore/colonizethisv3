@@ -23,12 +23,14 @@ Given a player, their current valid order list, and game context, enumerate **ca
 
 For every suggested order `o`, appending it to the current list and validating via `validatePlayerOrdersWithContext` yields `accepted`.
 
+**Civilian work alignment:** Suggestions never assume instant primary effects for `prospect` or `purchase_land`; those targets follow the same **assign → tick → complete** invariant as validation and resolution (prospected set, treasury debit, and `purchasedTilesByTileKey` only when work completes in Build/Work). Authoritative rules: [orders.md](orders.md) (Civilian deferred primary effects) and [development-resolution.md](development-resolution.md).
+
 ---
 
 ## Rules
 
 - **Province / tile identity:** Province ids and tile keys in suggested orders (destination province, targetTileKey, spawn province, fleet/sea zone ids) use the **prefixed** form and resolution rules per [world-model-identity.md](../game/world-model-identity.md) (same as [orders.md](orders.md)).
-- **Work orders (`suggestWorkOrders`):** For civilian **workers** (Builder, Engineer, Rail Builder), candidate work targets use the same tile scope as validation: any **player-controlled** tile (owned province or `purchasedTilesByTileKey`) that passes visibility and the order engine, not only tiles in the unit’s current province (see [civilian-units.md](../game/civilian-units.md): civilians may act on a tile other than their current tile). Explorers, Spies, and Merchants keep their existing province- or rules-specific enumeration. **Performance:** `suggestWorkOrders` may cache, per invocation, the pre-filtered + visibility-sorted tile list keyed by `workTarget` so each distinct work target is computed once per call; per-unit acceptance still runs the order engine over that list until the first valid tile is found.
+- **Work orders (`suggestWorkOrders`):** For civilian **workers** (Builder, Engineer, Rail Builder), candidate work targets use the same tile scope as validation: any **player-controlled** tile (owned province or `purchasedTilesByTileKey`) that passes visibility and the order engine, not only tiles in the unit’s current province (see [civilian-units.md](../game/civilian-units.md): civilians may act on a tile other than their current tile). **Explorers:** `explore` and `prospect` candidates consider **all relevant provinces** (sorted), not only the unit’s current province. The API returns **every** engine-valid `explore` row (one accepted row per qualifying province, in sorted province order, without stopping after the first) and **every** engine-valid `prospect` row (each accepted mineral-eligible tile in each visible province; provinces sorted, tiles sorted within province). Full AI consumes this full per-unit set for Explorer explore/prospect scoring and selection (Refs #2082). Explorer explore-row `E_score` uses `E_unknown = min(24, 3×U)` where `U` is the count of land tiles in that row’s target province that are `unknown` in `PlayerView`. For `explore`, relevance is constrained by per-player **partially revealed province semantics**: provinces where the player has at least one tile at `fogged`/`fullyVisible` and at least one tile at `unknown`. Logic computes this scope from authoritative game state + `PlayerView`; app integration may maintain an app-owned per-player selection cache that stays semantics-aligned with this definition. Eligibility uses **bundle-aware** checks where a leg may be required: province visibility gates, **authoritative province land tiles** from `WorldState.tileKeysByRegionAndProvince` (same class of data as `tilesInProvince` in the implementation), plus **`PlayerView.visibilityForTile`** for “still useful” / residual exploration value — do **not** exclude `explore` solely from “stored visibility keys only” when inland tiles lack keys but exploration remains useful per authoritative tiles. When a bundle leg is required, the implicit bundled **move** destination within the destination province prefers the order `targetTileKey` when that tile is **MoveValidator**-legal; otherwise it falls back to the first **MoveValidator**-legal land tile in deterministic sorted province tile order (bounded scan). The same preference+fallback rule applies in movement-phase implicit relocation so suggestion validation and execution stay aligned (Refs #1916, #1964). When a bundle leg is required, Explorer candidates may include cross-region non-owned destinations only when the destination is **not Great Power-owned** (Minor / Tribe / unowned) and move visibility / diplomatic-war gates pass; GP-owned destinations still follow GP entry constraints. **Spies** and **Merchants** keep their existing rules-specific enumeration. **Performance:** `suggestWorkOrders` may cache, per invocation, the pre-filtered + visibility-sorted tile list keyed by `workTarget` so each distinct work target is computed once per call; per-unit acceptance still runs the order engine over that list until the first valid tile is found. Summary **debug** lines (no per-tile spam): see § Suggestion observability.
 - **Work order tile selection (`getValidWorkOrderTileKeysWithVisibility`):** For UI tile selection, apply the work-target-specific pre-filter table (e.g. `build_improvement`: owned or purchased tiles with a resource; prospect-required minerals must also pass order-engine validation including prospection (unprospected mineral tiles are excluded); `prospect`: land tiles that are mineral-eligible and not yet prospected — then visibility and order engine). Not every work target is limited to owned/purchased tiles.
 - **Visibility:** Uses PlayerView only; may not inspect hidden tiles or enemy units directly. Checks per [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md). Undiscovered factions are **never** valid diplomatic targets for order suggestions.
 - **Determinism:** Fixed inputs produce the same set and ordering of suggestions.
@@ -55,7 +57,16 @@ For every suggested order `o`, appending it to the current list and validating v
 - Minimal AIPlanner (see [ai-planner.md](ai-planner.md)) — passes `tileMapByRegion` when the caller provides it.
 - Sim-game default AI (see [sim-game-default-ai.md](sim-game-default-ai.md)) — sim controller passes the same maps used for order validation.
 - Full AI (see [ai-systems-impl.md](ai-systems-impl.md)) — domain planners pass `tileMapByRegion` through to `suggestWorkOrders` when provided.
-- **Flutter app (`colonizethis_app`):** Riverpod providers (e.g. `availableWorkTargetsProvider`, optional `devExclusiveReservedWorkTileKeysProvider`) **delegate** to `colonizethis_logic` only. They **must not** reimplement Builder/Engineer/Merchant per-tile exclusivity or reservation rules. Reservations combine in-map `currentWork` and pending dev-exclusive work orders per [orders.md](orders.md) § WorkOrder per-tile exclusivity.
+- **Flutter app (`colonizethis_app`):** Riverpod providers (e.g. `availableWorkTargetIdsForUnitProvider`, optional `devExclusiveReservedWorkTileKeysProvider`) **delegate** to `colonizethis_logic` only (`getAvailableWorkTargetsForUnit` per known `unitId`). They **must not** reimplement Builder/Engineer/Merchant per-tile exclusivity or reservation rules. Reservations combine in-map `currentWork` and pending dev-exclusive work orders per [orders.md](orders.md) § WorkOrder per-tile exclusivity. **Do not** call broad `suggestWorkOrders` from panel-open or per-row Assign availability hot paths (Refs #2133).
+- **App-owned selection cache contract (`explore`, `steal_tech`, `counter_spy`, `purchase_land`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, `build_rail`):** The app may keep a per-player work-target selection cache keyed by `(playerId, workTarget)` and exact `tileKey` members for UI target presentation. Ownership is app-only; `colonizethis_logic` remains source-of-truth for rules and validation and must not persist per-player caches across calls.
+- **Cache-first selection (app shell):** For `explore`, `steal_tech`, `counter_spy`, `purchase_land`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, and `build_rail`, the app shell reads the cached tile set when entering work-target selection mode (no live recomputation fallback in that interaction). Cache population eligibility is per-target and per-unit: `explore`, `steal_tech`, `counter_spy`, and `purchase_land` union `getValidWorkOrderTileKeysWithVisibility` across all human civilian units that support the target (same merged pattern as `explore`). Other cache-first targets include tiles from units that support the target and are `idle` with no `currentWork` and no pending work order for that unit in current draft orders.
+- **Runtime stale-tile filter for cache-first protected targets (app shell):** Before rendering cached selections for `explore`, `steal_tech`, `counter_spy`, `purchase_land`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, and `build_rail`, the app shell applies a post-cache conflict filter (set subtraction on cached tile keys) using current draft orders and in-progress work so stale conflicting cached tiles are not selectable; this filter does not trigger live recomputation.
+
+### Province Tile `Build improvement` shortcut enablement (pipeline contract A)
+
+- **Authoritative pipeline (branch A):** The province overlay’s **`Build improvement`** row uses **`GameMapAreaStateLogic.provinceBuildImprovementActionState`**. Its **`enabled`** flag is **true** iff the human player has at least one idle Builder (no `currentWork`, type allows `build_improvement`) **and** the selected tile key appears in **`getValidWorkOrderTileKeysWithVisibility`** for **at least one** such Builder, with the **same** arguments as the civilian work-target picker: `game`, `topology` (combined map topology from map data), `PlayerView`, `unitId`, `workTarget: build_improvement`, `currentOrders`, and optional `tileMapByRegion` from loaded map data. **`showIcon`** remains improvability-only (resource + improvement level vs tech cap); it does **not** call this pipeline. Accepted consequence: an unprospected mineral tile can be shown as visible-but-disabled for this shortcut until prospection makes it assignable.
+- **Relationship to `availableWorkTargetIdsForUnitProvider`:** That provider reads **`getAvailableWorkTargetsForUnit`** (selected-unit availability). Shortcut **enablement** does **not** reimplement exclusivity rules; it aligns with **per-unit** valid tile keys from **`getValidWorkOrderTileKeysWithVisibility`**, the same entrypoint used when the shell enters tile-target selection after choosing an order. Full rule coverage stays in **`colonizethis_logic`** tests (e.g. `order_engine_validate_work_build_improvement_test.dart`, `work_order_target_prechecks_test.dart`, `order_suggestion_valid_work_tiles_test.dart`).
+- **CI / app tests:** App-level tests assert wiring, visibility vs enablement split, drift no-op, and **contract (A)** equivalence between **`provinceBuildImprovementActionState(...).enabled`** and the pipeline above; they do not duplicate every `WorkOrderValidator` branch. Golden snapshots (wide side panel host vs narrow bottom-sheet host) assert consistent rendering of the shortcut control in each layout shell.
 
 ### Dev-exclusive tile reservations (logic package)
 
@@ -91,7 +102,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
 });
 ```
 
-When `tileMapByRegion` is non-null (app shell, turn resolution), prospect pre-filtering and `prospect` work-order validation use the same terrain-aware eligibility as work application. When null, eligibility falls back to mineral resource ids on `resourceByTileKey` only.
+When `tileMapByRegion` is non-null (app shell, turn resolution), prospect pre-filtering and `prospect` work-order validation use the same `isMineralEligibleTile` rules as work application: prospectable terrain from tile maps combined with `resourceByTileKey` so a known non-mineral (e.g. wool on hills) is never mineral-eligible. When `tileMapByRegion` is null, eligibility uses `resourceByTileKey` and mineral ids only (no terrain-from-map branch).
 
 **Pre-filtering by work target type:**
 
@@ -99,8 +110,8 @@ Before iterating candidate tiles, apply work-target-specific filters to dramatic
 
 | Work target | Province scope | Tile requirements |
 |-------------|----------------|-------------------|
-| `explore` | Any visible province | Any tile in the province (province-level work) |
-| `prospect` | Land provinces (prefixed province id) | Tile must be mineral-eligible (terrain from tile maps when provided, else mineral resource on tile per `isMineralEligibleTile`); tile must **not** already appear in `WorldState.playerProspectedTiles[playerId]` |
+| `explore` | Per-player partially revealed province semantics (app may use app-owned cache) | Any tile in the province (province-level work) |
+| `prospect` | Land provinces (prefixed province id) | Tile must be mineral-eligible per `isMineralEligibleTile` (prospectable terrain when resolvable from tile maps; known non-mineral resources excluded); tile must **not** already appear in `WorldState.playerProspectedTiles[playerId]` |
 | `build_improvement` | Owned or purchased tiles | Tile must have a resource (`resourceByTileKey` non-empty); tile controlled by player |
 | `upgrade_town` | Owned provinces only | Province's town tile only |
 | `build_road` | Owned or purchased tiles | Any tile controlled by player |
@@ -121,6 +132,8 @@ Before iterating candidate tiles, apply work-target-specific filters to dramatic
 3. For remaining candidate tiles, validate via the order engine (same as `getValidWorkOrderTileKeys`).
 4. Returns only tiles that pass all three filters (pre-filter, visibility, validation).
 
+For `explore`, step (1) must use the same per-player partially-revealed-province semantics as `suggestWorkOrders` so picker and suggestion flows remain aligned.
+
 **Why separate from `getValidWorkOrderTileKeys`:**
 - `getValidWorkOrderTileKeys` is agnostic to player view (used by AI that operates on full game state).
 - The app needs visibility-aware filtering to avoid expensive order-engine calls for invisible tiles.
@@ -138,3 +151,22 @@ Before iterating candidate tiles, apply work-target-specific filters to dramatic
 **Notes:**
 - When `view` is `null` or visibility data is unavailable, falls back to full map iteration (same as `getValidWorkOrderTileKeys`).
 - Tile keys use the standard format: `{regionId}|{provinceId}|{x}|{y}`.
+
+---
+
+## Selected-unit availability (`getAvailableWorkTargetsForUnit`)
+
+**Purpose:** Human-shell **per-unit** work availability (which work targets have ≥1 valid tile) without broad per-player `suggestWorkOrders` enumeration. Return type `AvailableWorkTargetsForUnit` holds `assignable`, optional `blockedReason`, and `validTileKeysByTarget` (only targets with non-empty tile sets).
+
+**Rules:** When the unit has **any** pending `WorkOrder` in `currentOrders` for `view.playerId`, or `unit.currentWork != null`, or the unit is absent from `view.ownUnits`, the API returns not assignable with a stable `blockedReason` token and **does not** run per-candidate tile probing / order-engine loops for availability. Optional `workTargetFilter` limits evaluation to one work target id.
+
+**Acceptance criteria**
+
+- Given a civilian unit with a pending draft `WorkOrder` for that `unitId` on the current turn, when `getAvailableWorkTargetsForUnit` or `getValidWorkOrderTileKeysWithVisibility` runs for that unit, then the system returns empty target/tile availability for new assignments for that call without order-engine candidate-tile probing attributable to that unit.
+- Given Dart source under `app/lib`, when repository lint rule `repo.app_lib_no_broad_suggest_work_orders` runs, then no `.dart` file under `app/lib` contains a `suggestWorkOrders(` call site (Refs #2133; full enumeration remains available to AI, `integration_test`, and other non-`app/lib` tooling).
+
+---
+
+## Suggestion observability (debug)
+
+When diagnosing why a civilian work target is missing from Assign / AI suggestions, `suggestWorkOrders` may emit **summary-only** `logger` **`debug`** lines (prefix `logic.order_suggestion`, token `suggest_work`): **per unit** (`unitId`, `unitType`, `region`, `at` province) and **per work target** one line with `outcome=` `included` or `excluded`, optional `tile=`, and for exclusions a **stable** `reason=` token (e.g. `visibility`, `no_valid_tile`, `no_single_hop`, `duplicate_pending`, `engine_rejected`, `not_applicable`). **No** per-candidate-tile log flood. Optional `suggestWorkOrders detail preview` lines must remain **bounded** (capped length with truncation marker when candidate count is large; Refs #2133). Tests in `colonizethis_logic` assert the contract for representative fixtures (Refs GitHub #1869).

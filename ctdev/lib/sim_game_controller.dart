@@ -1,6 +1,11 @@
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/ai/ai_planner.dart'
+    show generateOrdersForGame, generateOrdersForPlayer;
+import 'package:colonizethis_logic/src/ai/sim_game_ai.dart' show defaultSimGameAi;
+import 'package:colonizethis_logic/src/setup/hidden_agenda_assignment.dart'
+    show assignHiddenAgendasForGame;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:ctdev/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -440,7 +445,13 @@ class SimGameController {
         final origin = unit != null
             ? provinceLabelInRegion(regionId, unit.locationProvinceId)
             : '?';
-        final dest = provinceLabelInRegion(regionId, o.destinationProvinceId);
+        final destTile = o.destinationTileKey;
+        final destRegion =
+            Unit.regionIdFromTileKey(destTile) ?? regionId;
+        final destProv = Unit.provinceIdFromTileKey(destTile);
+        final dest = destProv != null
+            ? provinceLabelInRegion(destRegion, destProv)
+            : destTile;
         final validation = nextResult();
         _orderHistory.add(
           SimOrderHistoryEntry(

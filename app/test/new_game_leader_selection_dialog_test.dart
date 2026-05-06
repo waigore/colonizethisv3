@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
@@ -28,7 +28,7 @@ void main() {
   });
 
   group('NewGameLeaderSelectionDialog', () {
-    Future<void> _ensureTapStart(WidgetTester tester) async {
+    Future<void> ensureTapStart(WidgetTester tester) async {
       final startButton = find.ancestor(
         of: find.text('Start'),
         matching: find.byType(CtNinePatchButton),
@@ -39,7 +39,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    Future<void> _ensureTapCancel(WidgetTester tester) async {
+    Future<void> ensureTapCancel(WidgetTester tester) async {
       final cancelButton = find.ancestor(
         of: find.text('Cancel'),
         matching: find.byType(CtNinePatchButton),
@@ -66,7 +66,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppThemes.colonial,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: Scaffold(
@@ -191,7 +191,7 @@ void main() {
         },
       );
 
-      await _ensureTapStart(tester);
+      await ensureTapStart(tester);
 
       expect(gotIds, GameSetupConfig.defaultConfig.selectedGreatPowerIds);
       expect(gotLeaders, isNotNull);
@@ -211,7 +211,7 @@ void main() {
         },
       );
 
-      await _ensureTapCancel(tester);
+      await ensureTapCancel(tester);
 
       expect(confirmed, isFalse);
       expect(find.text('New game — Setup'), findsNothing);
@@ -236,7 +236,7 @@ void main() {
       await tester.tap(find.text('Sweden'));
       await tester.pumpAndSettle();
 
-      await _ensureTapStart(tester);
+      await ensureTapStart(tester);
 
       expect(gotIds, isNotNull);
       expect(gotIds!.first, 'sweden');
@@ -254,7 +254,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(field, '0');
       await tester.pump();
-      await _ensureTapStart(tester);
+      await ensureTapStart(tester);
       expect(gotSeed, 0);
     });
 
@@ -268,7 +268,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(field, '');
       await tester.pump();
-      await _ensureTapStart(tester);
+      await ensureTapStart(tester);
       expect(gotSeed, 42);
     });
   });

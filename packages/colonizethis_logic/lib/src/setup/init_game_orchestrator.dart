@@ -8,7 +8,7 @@ import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../ai/hidden_agenda_assignment.dart';
+import 'hidden_agenda_assignment.dart';
 import '../constants.dart';
 import '../world/unit_lookup.dart';
 import 'effective_setup_seed.dart';
@@ -99,207 +99,22 @@ InitGameResult runInitGame({
   final effectiveSeed = resolveEffectiveSetupSeed(config.seed);
 
   final gen = generateRegion ?? defaultTileMapRegionGenerator;
-  late final List<WarpLink> warpLinks;
-  late final GameSetupResult setupResult;
-
-  if (config.isLockedFullInitProfile &&
-      identical(gen, defaultTileMapRegionGenerator)) {
-    _log.d(
-      'init game generating OW+NW maps (locked partition + setup retries)',
-    );
-    const maxPipelineAttempts = 64;
-    var pipelineOk = false;
-    for (
-      var pipelineTry = 0;
-      pipelineTry < maxPipelineAttempts;
-      pipelineTry++
-    ) {
-      final mapSeed = effectiveSeed + pipelineTry * 100003;
-      try {
-        final locked = generateLockedFullInitTileMapPair(
+  final pipelineResult =
+      config.isLockedFullInitProfile &&
+          identical(gen, defaultTileMapRegionGenerator)
+      ? _runLockedFullInitPipeline(
           config: config,
-          effectiveSeed: mapSeed,
-          skipFillLakes: options.skipFillLakes,
-          onLog: _log.d,
-        );
-        final wl = generateWarpZones(
-          tileMapOldWorld: locked.tileOw,
-          topologyOldWorld: locked.topoOw,
-          tileMapNewWorld: locked.tileNw,
-          topologyNewWorld: locked.topoNw,
-          regionIdOld: kRegionOldWorld,
-          regionIdNew: kRegionNewWorld,
-          seed: mapSeed,
-        );
-        final sr = createGameFromGeneratedMaps(
+          options: options,
+          effectiveSeed: effectiveSeed,
+        )
+      : _runFreeformInitPipeline(
           config: config,
-          tileMapOldWorld: locked.tileOw,
-          topologyOldWorld: locked.topoOw,
-          tileMapNewWorld: locked.tileNw,
-          topologyNewWorld: locked.topoNw,
-          gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
-          namingSeed: effectiveSeed,
-          warpLinks: wl,
+          options: options,
+          effectiveSeed: effectiveSeed,
+          generateRegion: gen,
         );
-        warpLinks = wl;
-        setupResult = sr;
-        pipelineOk = true;
-        break;
-      } on MapPartitionGatesExhaustedException catch (e) {
-        if (pipelineTry < maxPipelineAttempts - 1) {
-          _log.w(
-            'logic: locked full-init partition gates exhausted at '
-            'pipelineTry=$pipelineTry; bumping mapSeed (details=$e)',
-          );
-          continue;
-        }
-        throw SetupTopologyDataException(
-          code: MapPartitionGatesExhaustedException.codeValue,
-          details: e.toString(),
-        );
-      } on SetupTopologyDataException catch (e, st) {
-        final retriableTopology =
-            e.code == 'assigner_exhausted' ||
-            e.code == 'faction_component_bin_pack_failed' ||
-            e.code == 'assignment_remainder_not_connected';
-        if (retriableTopology && pipelineTry < maxPipelineAttempts - 1) {
-          _log.w(
-            'logic: locked full-init setup topology retry at pipelineTry=$pipelineTry '
-            '(code=${e.code}; regenerating maps mapSeed=$mapSeed)',
-          );
-          continue;
-        }
-        _log.e(
-          'logic: locked full-init setup failed: $e',
-          error: e,
-          stackTrace: st,
-        );
-        rethrow;
-      }
-    }
-    if (!pipelineOk) {
-      throw SetupTopologyDataException(
-        code: 'assigner_exhausted',
-        details:
-            'Locked full-init pipeline exhausted after $maxPipelineAttempts '
-            'map+setup attempts',
-      );
-    }
-  } else {
-    // Non–locked-full-init configs (e.g. init_game CLI with small maps) can yield
-    // fragmented NW P–P components; retry map+setup with bumped seeds like locked path.
-    const maxFreeformAttempts = 64;
-    var freeformOk = false;
-    for (var attempt = 0; attempt < maxFreeformAttempts; attempt++) {
-      final mapSeed = effectiveSeed + attempt * 100003;
-      try {
-        final mapGenParams = MapGenerationParams(
-          numContinents: config.continentCount,
-          seed: mapSeed,
-          seaFraction: kDefaultSeaFraction,
-        );
-        final sizeOW = computeGridSizeFromParams(
-          config.numProvincesOldWorld,
-          mapGenParams,
-        );
-        final paramsOW = TileMapParams(
-          width: sizeOW.width,
-          height: sizeOW.height,
-          seed: mapSeed,
-          seaFraction: kDefaultSeaFraction,
-          skipFillLakes: options.skipFillLakes,
-        );
-        _log.d(
-          'init game generating OW map (freeform attempt=$attempt mapSeed=$mapSeed)',
-        );
-        final ow = gen(
-          params: paramsOW,
-          numProvinces: config.numProvincesOldWorld,
-          numContinents: config.continentCount,
-          regionId: kRegionOldWorld,
-          resourceRules: ResourceRules.defaultRules,
-        );
-        final nextTileOw = ow.$1;
-        final nextTopoOw = ow.$2;
-
-        _log.d('init game generating NW map');
-        final sizeNW = computeGridSizeFromParams(
-          config.numProvincesNewWorld,
-          mapGenParams,
-        );
-        final paramsNW = TileMapParams(
-          width: sizeNW.width,
-          height: sizeNW.height,
-          seed: mapSeed + 1,
-          seaFraction: kDefaultSeaFraction,
-          skipFillLakes: options.skipFillLakes,
-        );
-        final nw = gen(
-          params: paramsNW,
-          numProvinces: config.numProvincesNewWorld,
-          numContinents: config.continentCount.clamp(
-            1,
-            config.numProvincesNewWorld,
-          ),
-          regionId: kRegionNewWorld,
-          resourceRules: ResourceRules.defaultRules,
-        );
-        final nextTileNw = nw.$1;
-        final nextTopoNw = nw.$2;
-
-        final nextWarpLinks = generateWarpZones(
-          tileMapOldWorld: nextTileOw,
-          topologyOldWorld: nextTopoOw,
-          tileMapNewWorld: nextTileNw,
-          topologyNewWorld: nextTopoNw,
-          regionIdOld: kRegionOldWorld,
-          regionIdNew: kRegionNewWorld,
-          seed: mapSeed,
-        );
-
-        final nextSetup = createGameFromGeneratedMaps(
-          config: config,
-          tileMapOldWorld: nextTileOw,
-          topologyOldWorld: nextTopoOw,
-          tileMapNewWorld: nextTileNw,
-          topologyNewWorld: nextTopoNw,
-          gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
-          namingSeed: effectiveSeed,
-          warpLinks: nextWarpLinks,
-        );
-        warpLinks = nextWarpLinks;
-        setupResult = nextSetup;
-        freeformOk = true;
-        break;
-      } on SetupTopologyDataException catch (e, st) {
-        final retriableTopology =
-            e.code == 'assigner_exhausted' ||
-            e.code == 'faction_component_bin_pack_failed' ||
-            e.code == 'assignment_remainder_not_connected';
-        if (retriableTopology && attempt < maxFreeformAttempts - 1) {
-          _log.w(
-            'logic: freeform init topology retry at attempt=$attempt '
-            '(code=${e.code}; mapSeed=$mapSeed)',
-          );
-          continue;
-        }
-        _log.e(
-          'logic: freeform init setup failed: $e',
-          error: e,
-          stackTrace: st,
-        );
-        rethrow;
-      }
-    }
-    if (!freeformOk) {
-      throw SetupTopologyDataException(
-        code: 'assigner_exhausted',
-        details:
-            'Freeform init pipeline exhausted after $maxFreeformAttempts '
-            'map+setup attempts',
-      );
-    }
-  }
+  final warpLinks = pipelineResult.warpLinks;
+  final setupResult = pipelineResult.setupResult;
 
   // Map semantic GP ids from config.selectedGreatPowerIds to runtime Player ids
   // so colour overrides can be keyed by Player.id for map builders and saves.
@@ -386,6 +201,186 @@ InitGameResult runInitGame({
     combinedTopology: setupResult.combinedTopology,
     warpLinks: setupResult.warpLinks,
     greatPowerColorOverride: mapColorTuples,
+  );
+}
+
+({List<WarpLink> warpLinks, GameSetupResult setupResult}) _runLockedFullInitPipeline({
+  required GameSetupConfig config,
+  required InitGameOptions options,
+  required int effectiveSeed,
+}) {
+  _log.d('init game generating OW+NW maps (locked partition + setup retries)');
+  const maxPipelineAttempts = 64;
+  for (var pipelineTry = 0; pipelineTry < maxPipelineAttempts; pipelineTry++) {
+    final mapSeed = effectiveSeed + pipelineTry * 100003;
+    try {
+      final locked = generateLockedFullInitTileMapPair(
+        config: config,
+        effectiveSeed: mapSeed,
+        skipFillLakes: options.skipFillLakes,
+        onLog: _log.d,
+      );
+      final warpLinks = generateWarpZones(
+        tileMapOldWorld: locked.tileOw,
+        topologyOldWorld: locked.topoOw,
+        tileMapNewWorld: locked.tileNw,
+        topologyNewWorld: locked.topoNw,
+        regionIdOld: kRegionOldWorld,
+        regionIdNew: kRegionNewWorld,
+        seed: mapSeed,
+      );
+      final setupResult = createGameFromGeneratedMaps(
+        config: config,
+        tileMapOldWorld: locked.tileOw,
+        topologyOldWorld: locked.topoOw,
+        tileMapNewWorld: locked.tileNw,
+        topologyNewWorld: locked.topoNw,
+        gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
+        namingSeed: effectiveSeed,
+        warpLinks: warpLinks,
+      );
+      return (warpLinks: warpLinks, setupResult: setupResult);
+    } on MapPartitionGatesExhaustedException catch (e) {
+      if (pipelineTry < maxPipelineAttempts - 1) {
+        _log.w(
+          'logic: locked full-init partition gates exhausted at '
+          'pipelineTry=$pipelineTry; bumping mapSeed (details=$e)',
+        );
+        continue;
+      }
+      throw SetupTopologyDataException(
+        code: MapPartitionGatesExhaustedException.codeValue,
+        details: e.toString(),
+      );
+    } on SetupTopologyDataException catch (e, st) {
+      final retriableTopology =
+          e.code == 'assigner_exhausted' ||
+          e.code == 'faction_component_bin_pack_failed' ||
+          e.code == 'assignment_remainder_not_connected';
+      if (retriableTopology && pipelineTry < maxPipelineAttempts - 1) {
+        _log.w(
+          'logic: locked full-init setup topology retry at pipelineTry=$pipelineTry '
+          '(code=${e.code}; regenerating maps mapSeed=$mapSeed)',
+        );
+        continue;
+      }
+      _log.e(
+        'logic: locked full-init setup failed: $e',
+        error: e,
+        stackTrace: st,
+      );
+      rethrow;
+    }
+  }
+  throw SetupTopologyDataException(
+    code: 'assigner_exhausted',
+    details:
+        'Locked full-init pipeline exhausted after $maxPipelineAttempts '
+        'map+setup attempts',
+  );
+}
+
+({List<WarpLink> warpLinks, GameSetupResult setupResult}) _runFreeformInitPipeline({
+  required GameSetupConfig config,
+  required InitGameOptions options,
+  required int effectiveSeed,
+  required TileMapRegionGenerator generateRegion,
+}) {
+  const maxFreeformAttempts = 64;
+  for (var attempt = 0; attempt < maxFreeformAttempts; attempt++) {
+    final mapSeed = effectiveSeed + attempt * 100003;
+    try {
+      final mapGenParams = MapGenerationParams(
+        numContinents: config.continentCount,
+        seed: mapSeed,
+        seaFraction: kDefaultSeaFraction,
+      );
+      final sizeOW = computeGridSizeFromParams(
+        config.numProvincesOldWorld,
+        mapGenParams,
+      );
+      final paramsOW = TileMapParams(
+        width: sizeOW.width,
+        height: sizeOW.height,
+        seed: mapSeed,
+        seaFraction: kDefaultSeaFraction,
+        skipFillLakes: options.skipFillLakes,
+      );
+      _log.d(
+        'init game generating OW map (freeform attempt=$attempt mapSeed=$mapSeed)',
+      );
+      final ow = generateRegion(
+        params: paramsOW,
+        numProvinces: config.numProvincesOldWorld,
+        numContinents: config.continentCount,
+        regionId: kRegionOldWorld,
+        resourceRules: ResourceRules.defaultRules,
+      );
+
+      _log.d('init game generating NW map');
+      final sizeNW = computeGridSizeFromParams(
+        config.numProvincesNewWorld,
+        mapGenParams,
+      );
+      final paramsNW = TileMapParams(
+        width: sizeNW.width,
+        height: sizeNW.height,
+        seed: mapSeed + 1,
+        seaFraction: kDefaultSeaFraction,
+        skipFillLakes: options.skipFillLakes,
+      );
+      final nw = generateRegion(
+        params: paramsNW,
+        numProvinces: config.numProvincesNewWorld,
+        numContinents: config.continentCount.clamp(1, config.numProvincesNewWorld),
+        regionId: kRegionNewWorld,
+        resourceRules: ResourceRules.defaultRules,
+      );
+      final warpLinks = generateWarpZones(
+        tileMapOldWorld: ow.$1,
+        topologyOldWorld: ow.$2,
+        tileMapNewWorld: nw.$1,
+        topologyNewWorld: nw.$2,
+        regionIdOld: kRegionOldWorld,
+        regionIdNew: kRegionNewWorld,
+        seed: mapSeed,
+      );
+      final setupResult = createGameFromGeneratedMaps(
+        config: config,
+        tileMapOldWorld: ow.$1,
+        topologyOldWorld: ow.$2,
+        tileMapNewWorld: nw.$1,
+        topologyNewWorld: nw.$2,
+        gameId: 'game_${DateTime.now().millisecondsSinceEpoch}',
+        namingSeed: effectiveSeed,
+        warpLinks: warpLinks,
+      );
+      return (warpLinks: warpLinks, setupResult: setupResult);
+    } on SetupTopologyDataException catch (e, st) {
+      final retriableTopology =
+          e.code == 'assigner_exhausted' ||
+          e.code == 'faction_component_bin_pack_failed' ||
+          e.code == 'assignment_remainder_not_connected';
+      if (retriableTopology && attempt < maxFreeformAttempts - 1) {
+        _log.w(
+          'logic: freeform init topology retry at attempt=$attempt '
+          '(code=${e.code}; mapSeed=$mapSeed)',
+        );
+        continue;
+      }
+      _log.e(
+        'logic: freeform init setup failed: $e',
+        error: e,
+        stackTrace: st,
+      );
+      rethrow;
+    }
+  }
+  throw SetupTopologyDataException(
+    code: 'assigner_exhausted',
+    details:
+        'Freeform init pipeline exhausted after $maxFreeformAttempts '
+        'map+setup attempts',
   );
 }
 

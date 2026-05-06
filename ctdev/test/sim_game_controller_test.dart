@@ -212,7 +212,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: 'oldWorld|P1',
               ),
@@ -267,14 +267,14 @@ void main() {
       final orders = Orders(
         moveOrdersByPlayerId: {
           'p1': [
-            MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+            MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
           ],
         },
         researchOrdersByPlayerId: {
           'p1': [
             ResearchOrder(
               slotIndex: 0,
-              techId: 'printing_press',
+              techId: kTechIdPrintingPress,
               funding: ResearchFundingLevel.low,
             ),
           ],

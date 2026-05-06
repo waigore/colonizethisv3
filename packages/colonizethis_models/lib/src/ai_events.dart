@@ -41,7 +41,7 @@ class DialogueEvent extends AppEvent {
       situation: json['situation'] as String,
       era: json['era'] as String,
       mood: json['mood'] as String?,
-      variables: vars is Map
+      variables: vars is Map<dynamic, dynamic>
           ? Map<String, String>.from(
               vars.map((k, v) => MapEntry(k.toString(), v.toString())),
             )

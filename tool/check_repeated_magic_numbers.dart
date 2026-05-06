@@ -97,6 +97,9 @@ List<MagicLiteralOccurrence> collectMagicLiteralsFromSource(
   String relativePath,
   String content,
 ) {
+  // Keep repeated-magic-numbers scoped to production code paths.
+  // Per SPEC/program/repeated-magic-numbers.md, package/app test trees remain
+  // excluded even though other AST checkers now scan tests (#2014).
   if (repoLintPathIsExcludedTestOrGeneratedDart(relativePath)) {
     return const [];
   }

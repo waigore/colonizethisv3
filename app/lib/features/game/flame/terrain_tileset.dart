@@ -68,7 +68,9 @@ class WangTile {
   factory WangTile.fromJson(Map<String, dynamic> json) {
     return WangTile(
       id: json['id'] as String,
-      corners: Map<String, String>.from(json['corners'] as Map),
+      corners: Map<String, String>.from(
+        json['corners'] as Map<dynamic, dynamic>,
+      ),
       boundingBox: Rect.fromLTWH(
         (json['bounding_box']['x'] as num).toDouble(),
         (json['bounding_box']['y'] as num).toDouble(),
@@ -345,7 +347,7 @@ class TerrainTilesetCache {
       );
       final image = await completer.future;
 
-      final tiles = (json['tileset_data']['tiles'] as List)
+      final tiles = (json['tileset_data']['tiles'] as List<dynamic>)
           .map((t) => WangTile.fromJson(t as Map<String, dynamic>))
           .toList();
 

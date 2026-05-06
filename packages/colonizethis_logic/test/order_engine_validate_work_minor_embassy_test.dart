@@ -29,7 +29,7 @@ void main() {
               units: [
                 Unit(
                   id: 'e1',
-                  type: 'Engineer',
+                  type: kUnitTypeEngineer,
                   ownerId: 'gp1',
                   locationProvinceId: minorProvId,
                   tileKey: tileKey,
@@ -73,7 +73,7 @@ void main() {
           'gp1',
           const WorkOrder(
             unitId: 'e1',
-            target: 'build_road',
+            target: kWorkTargetBuildRoad,
             targetTileKey: tileKey,
           ),
         );
@@ -86,8 +86,9 @@ void main() {
         expect(results.single.reason, contains('foreign province'));
       });
 
-      test('accepts build_road in minor province with embassy and diplomatic_expertise',
-          () {
+      test(
+        'rejects build_road in minor province even with embassy when occupancy disallows tile',
+        () {
         final game = Game(
           id: 'g1',
           worldState: WorldState(
@@ -99,7 +100,7 @@ void main() {
               units: [
                 Unit(
                   id: 'e1',
-                  type: 'Engineer',
+                  type: kUnitTypeEngineer,
                   ownerId: 'gp1',
                   locationProvinceId: minorProvId,
                   tileKey: tileKey,
@@ -151,7 +152,7 @@ void main() {
           'gp1',
           const WorkOrder(
             unitId: 'e1',
-            target: 'build_road',
+            target: kWorkTargetBuildRoad,
             targetTileKey: tileKey,
           ),
         );
@@ -160,8 +161,10 @@ void main() {
           topology,
           'gp1',
         );
-        expect(results.single.status, OrderValidationStatus.accepted);
-      });
+        expect(results.single.status, OrderValidationStatus.rejected);
+        expect(results.single.reason, contains('cannot occupy'));
+      },
+      );
     });
   });
 }

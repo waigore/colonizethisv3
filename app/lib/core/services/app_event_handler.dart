@@ -91,40 +91,47 @@ class AppEventHandler {
 
   void _handleUIAction(UIActionEvent event) {
     final nav = _navigatorKey.currentState;
-    if (event is OpenDialogEvent) {
-      _openDialog(event, nav);
-    } else if (event is ConfirmDialogEvent) {
-      _showConfirmDialog(event, nav);
-    } else if (event is NavigateToRouteEvent) {
-      nav?.pushNamed(event.route, arguments: event.arguments);
-    } else if (event is NavigateToShellEvent) {
-      _navigateToShell(nav);
-    } else if (event is PopNavigationEvent) {
-      nav?.pop();
-    } else if (event is OpenPauseMenuPanelEvent) {
-      _openPauseMenuPanel(event, nav);
-    } else if (event is OpenCivilianUnitsPanelEvent) {
-      _openCivilianUnitsPanel(event, nav);
-    } else if (event is OpenMilitaryUnitsPanelEvent) {
-      _openMilitaryUnitsPanel(event, nav);
-    } else if (event is OpenNavalUnitsPanelEvent) {
-      _openNavalUnitsPanel(event, nav);
-    } else if (event is OpenPanelEvent) {
-      _openPanel(event, nav);
-    } else if (event is ClosePanelEvent) {
-      nav?.maybePop();
+    switch (event) {
+      case OpenDialogEvent():
+        _openDialog(event, nav);
+      case ConfirmDialogEvent():
+        _showConfirmDialog(event, nav);
+      case NavigateToRouteEvent():
+        nav?.pushNamed(event.route, arguments: event.arguments);
+      case NavigateToShellEvent():
+        _navigateToShell(nav);
+      case PopNavigationEvent():
+        nav?.pop();
+      case OpenPauseMenuPanelEvent():
+        _openPauseMenuPanel(event, nav);
+      case OpenCivilianUnitsPanelEvent():
+        _openCivilianUnitsPanel(event, nav);
+      case OpenMilitaryUnitsPanelEvent():
+        _openMilitaryUnitsPanel(event, nav);
+      case OpenNavalUnitsPanelEvent():
+        _openNavalUnitsPanel(event, nav);
+      case OpenPanelEvent():
+        _openPanel(event, nav);
+      case ClosePanelEvent():
+        nav?.maybePop();
+      case LocateMapTileEvent():
+        // Handled by map/game listeners directly on the shared app event bus.
+        return;
+      case _:
+        return;
     }
   }
 
   void _handleUISystem(UISystemEvent event) {
-    if (event is ShowSnackBarEvent) {
-      _onShowSnackBar?.call(event);
-    } else if (event is ShowOverlayEvent) {
-      _onShowOverlay?.call(event);
-    } else if (event is DismissOverlayEvent) {
-      _onDismissOverlay?.call(event);
-    } else if (event is NotifyEvent) {
-      _onNotify?.call(event);
+    switch (event) {
+      case ShowSnackBarEvent():
+        _onShowSnackBar?.call(event);
+      case ShowOverlayEvent():
+        _onShowOverlay?.call(event);
+      case DismissOverlayEvent():
+        _onDismissOverlay?.call(event);
+      case NotifyEvent():
+        _onNotify?.call(event);
     }
   }
 
@@ -247,7 +254,6 @@ class AppEventHandler {
           }
           final humanPlayerId = _humanPlayerId(game);
           final currentOrders = ref.watch(currentOrdersProvider);
-          final availableWorkTargets = ref.watch(availableWorkTargetsProvider);
           final bus = ref.watch(appEventBusProvider);
           final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
           final maxHeight =
@@ -259,9 +265,15 @@ class AppEventHandler {
               humanPlayerId: humanPlayerId,
               bus: bus,
               currentOrders: currentOrders,
-              availableWorkTargets: availableWorkTargets,
               tileScopeTileKey: event.tileScopeTileKey,
               initialSelectedUnitId: event.initialSelectedUnitId,
+              explorerOnly: event.explorerOnly,
+              builderOnly: event.builderOnly,
+              prospectShortcutTargetTileKey:
+                  event.prospectShortcutTargetTileKey,
+              exploreShortcutTargetTileKey: event.exploreShortcutTargetTileKey,
+              buildImprovementShortcutTargetTileKey:
+                  event.buildImprovementShortcutTargetTileKey,
             ),
           );
         },

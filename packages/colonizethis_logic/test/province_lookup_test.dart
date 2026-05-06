@@ -5,14 +5,71 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 void main() {
   final world = WorldState(
     turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: RegionData(provinces: [
-      Province(id: 'oldWorld|p1', regionId: 'oldWorld', displayName: 'Alpha'),
-      Province(id: 'oldWorld|p2', regionId: 'oldWorld', displayName: 'Beta'),
-    ]),
-    newWorld: RegionData(provinces: [
-      Province(id: 'newWorld|n1', regionId: 'newWorld', displayName: 'Gamma'),
-    ]),
+    oldWorld: RegionData(
+      provinces: [
+        Province(id: 'oldWorld|p1', regionId: 'oldWorld', displayName: 'Alpha'),
+        Province(id: 'oldWorld|p2', regionId: 'oldWorld', displayName: 'Beta'),
+      ],
+    ),
+    newWorld: RegionData(
+      provinces: [
+        Province(id: 'newWorld|n1', regionId: 'newWorld', displayName: 'Gamma'),
+      ],
+    ),
   );
+
+  final worldWithLegacyUnprefixedProvince = WorldState(
+    turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: RegionData(
+      provinces: [
+        Province(id: 'p1', regionId: 'oldWorld', displayName: 'Legacy Alpha'),
+      ],
+    ),
+    newWorld: RegionData(provinces: const []),
+  );
+
+  group('tryGetRegionIdForLegacyProvinceKey', () {
+    test('resolves legacy short province id to oldWorld', () {
+      expect(
+        worldWithLegacyUnprefixedProvince.tryGetRegionIdForLegacyProvinceKey(
+          'p1',
+        ),
+        kRegionOldWorld,
+      );
+    });
+
+    test('resolves prefixed province id via row id match', () {
+      expect(
+        world.tryGetRegionIdForLegacyProvinceKey('oldWorld|p1'),
+        kRegionOldWorld,
+      );
+      expect(
+        world.tryGetRegionIdForLegacyProvinceKey('newWorld|n1'),
+        kRegionNewWorld,
+      );
+    });
+
+    test('returns null when key absent from both regions', () {
+      expect(world.tryGetRegionIdForLegacyProvinceKey('none'), isNull);
+    });
+
+    test('prefers oldWorld when same id string exists in both regions', () {
+      final dup = WorldState(
+        turnState: world.turnState,
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: 'dup', regionId: 'oldWorld', displayName: 'A'),
+          ],
+        ),
+        newWorld: RegionData(
+          provinces: [
+            Province(id: 'dup', regionId: 'newWorld', displayName: 'B'),
+          ],
+        ),
+      );
+      expect(dup.tryGetRegionIdForLegacyProvinceKey('dup'), kRegionOldWorld);
+    });
+  });
 
   group('tryGetProvince', () {
     test('finds OW province by full prefixed id', () {
@@ -35,12 +92,12 @@ void main() {
       expect(tryGetProvince(world, 'unknownRegion|p1'), isNull);
     });
 
-    test('returns null for empty id (non-prefixed)', () {
-      expect(tryGetProvince(world, ''), isNull);
+    test('returns null for malformed prefixed id', () {
+      expect(tryGetProvince(world, 'oldWorld|'), isNull);
     });
 
     test('returns null for short id (prefixed required)', () {
-      expect(tryGetProvince(world, 'p1'), isNull);
+      expect(tryGetProvince(world, 'oldWorld|p1'), isNotNull);
     });
   });
 
@@ -51,17 +108,11 @@ void main() {
     });
 
     test('throws StateError for unknown province', () {
-      expect(
-        () => getProvince(world, 'oldWorld|missing'),
-        throwsStateError,
-      );
+      expect(() => getProvince(world, 'oldWorld|missing'), throwsStateError);
     });
 
     test('throws StateError for short id (prefixed required)', () {
-      expect(
-        () => getProvince(world, 'p1'),
-        throwsStateError,
-      );
+      expect(() => getProvince(world, 'oldWorld|missing'), throwsStateError);
     });
   });
 
@@ -72,10 +123,7 @@ void main() {
     });
 
     test('throws StateError for short id (no short-id resolution)', () {
-      expect(
-        () => resolveToFullProvinceId(world, 'p1'),
-        throwsStateError,
-      );
+      expect(resolveToFullProvinceId(world, 'oldWorld|p1'), 'oldWorld|p1');
     });
   });
 
@@ -99,6 +147,24 @@ void main() {
     test('tryGetProvinceByRegion returns null for missing in region', () {
       expect(tryGetProvinceByRegion(world, 'oldWorld', 'missing'), isNull);
       expect(tryGetProvinceByRegion(world, 'unknownRegion', 'p1'), isNull);
+    });
+    test('does not match legacy unprefixed province ids in region lookup', () {
+      expect(
+        () => getProvinceByRegion(
+          worldWithLegacyUnprefixedProvince,
+          'oldWorld',
+          'p1',
+        ),
+        throwsStateError,
+      );
+      expect(
+        tryGetProvinceByRegion(
+          worldWithLegacyUnprefixedProvince,
+          'oldWorld',
+          'p1',
+        ),
+        isNull,
+      );
     });
     test('getProvince(fullId) delegates to region-scoped lookup', () {
       expect(getProvince(world, 'oldWorld|p1').displayName, 'Alpha');

@@ -1,15 +1,20 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_area.dart';
+import 'package:colonizethis_app/features/game/flame/game_map_controls.dart';
 import 'package:colonizethis_app/features/game/flame/game_region_minimap.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart'
     show
+        gameMapWideOverlayRightInset,
+        kGameMapWideStackRightGutter,
+        kPlayerTurnFeedToggleButtonKey,
         kRegionMinimapCustomPaintKey,
         kRegionMinimapGestureKey,
         kRegionMinimapToggleKey,
         kRegionMinimapZoomSliderKey;
+import 'package:colonizethis_app/features/game/widgets/player_turn_event_feed.dart';
 import 'package:colonizethis_app/features/game/flame/region_minimap_math.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
@@ -60,6 +65,11 @@ double? _minimapPositionedRight(WidgetTester tester) {
   return ctx.findAncestorWidgetOfExactType<Positioned>()?.right;
 }
 
+double? _feedCardPositionedRight(WidgetTester tester) {
+  final ctx = tester.element(find.byType(PlayerTurnEventFeedCard));
+  return ctx.findAncestorWidgetOfExactType<Positioned>()?.right;
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -102,7 +112,8 @@ void main() {
           mapViewData: init.mapViewData,
         ),
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: Scaffold(
@@ -175,7 +186,8 @@ void main() {
           mapViewData: init.mapViewData,
         ),
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: Scaffold(
@@ -227,7 +239,8 @@ void main() {
           mapViewData: init.mapViewData,
         ),
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: Scaffold(
@@ -287,7 +300,8 @@ void main() {
           mapViewData: init.mapViewData,
         ),
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: Scaffold(
@@ -349,7 +363,8 @@ void main() {
             mapViewData: init.mapViewData,
           ),
           child: MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en'),
             home: Scaffold(
@@ -360,7 +375,7 @@ void main() {
       );
       await _pumpUntilMinimapPaintVisible(tester);
 
-      expect(_minimapPositionedRight(tester), 8.0);
+      expect(_minimapPositionedRight(tester), kGameMapWideStackRightGutter);
 
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameMapArea)),
@@ -371,7 +386,111 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
 
-      expect(_minimapPositionedRight(tester), 8.0 + 320.0);
+      expect(
+        _minimapPositionedRight(tester),
+        gameMapWideOverlayRightInset(provincePanelOpen: true),
+      );
+    },
+  );
+
+  testWidgets(
+    'wide layout: player turn feed toggle lives in GameMapControls row',
+    (WidgetTester tester) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.binding.setSurfaceSize(const Size(900, 800));
+
+      final init = getDebugInitGameResult();
+      final game = init.game;
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: mapAreaProviderOverrides(
+            bus: bus,
+            game: game,
+            mapViewData: init.mapViewData,
+          ),
+          child: MaterialApp(
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: GameMapArea(game: game, mapViewData: init.mapViewData),
+            ),
+          ),
+        ),
+      );
+      await _pumpUntilMinimapPaintVisible(tester);
+
+      expect(
+        find.descendant(
+          of: find.byType(GameMapControls),
+          matching: find.byKey(kPlayerTurnFeedToggleButtonKey),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'wide layout: feed card Positioned.right clears province panel when feed and panel open',
+    (WidgetTester tester) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.binding.setSurfaceSize(const Size(900, 800));
+
+      final init = getDebugInitGameResult();
+      final game = init.game.copyWith(
+        mapViewState: init.game.mapViewState.copyWith(
+          showPlayerTurnEventsFeed: true,
+        ),
+      );
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: mapAreaProviderOverrides(
+            bus: bus,
+            game: game,
+            mapViewData: init.mapViewData,
+          ),
+          child: MaterialApp(
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            home: Scaffold(
+              body: GameMapArea(game: game, mapViewData: init.mapViewData),
+            ),
+          ),
+        ),
+      );
+      await _pumpUntilMinimapPaintVisible(tester);
+
+      expect(
+        _feedCardPositionedRight(tester),
+        gameMapWideOverlayRightInset(provincePanelOpen: false),
+      );
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(GameMapArea)),
+      );
+      container
+          .read(mapProvincePanelProvider.notifier)
+          .reportMapTileTapped(_firstOldWorldTileKey(game));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(
+        _feedCardPositionedRight(tester),
+        gameMapWideOverlayRightInset(provincePanelOpen: true),
+      );
+      expect(
+        _minimapPositionedRight(tester),
+        gameMapWideOverlayRightInset(provincePanelOpen: true),
+      );
     },
   );
 }

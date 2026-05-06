@@ -8,20 +8,20 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 
 const Map<String, String> _workTargetLabels = {
-  'explore': 'Explore',
-  'prospect': 'Prospect',
-  'build_improvement': 'Build improvement',
-  'upgrade_town': 'Upgrade town',
-  'build_road': 'Build road',
-  'build_port': 'Build port',
-  'build_fort': 'Build fort',
-  'build_rail': 'Build rail',
-  'steal_tech': 'Steal tech',
-  'counter_spy': 'Counter spy',
-  'purchase_land': 'Purchase land',
+  kWorkTargetExplore: 'Explore',
+  kWorkTargetProspect: 'Prospect',
+  kWorkTargetBuildImprovement: 'Build improvement',
+  kWorkTargetUpgradeTown: 'Upgrade town',
+  kWorkTargetBuildRoad: 'Build road',
+  kWorkTargetBuildPort: 'Build port',
+  kWorkTargetBuildFort: 'Build fort',
+  kWorkTargetBuildRail: 'Build rail',
+  kWorkTargetStealTech: 'Steal tech',
+  kWorkTargetCounterSpy: 'Counter spy',
+  kWorkTargetPurchaseLand: 'Purchase land',
 };
 
 Map<String, String> _provinceNamesByPrefixedId(Game game) {
@@ -86,17 +86,20 @@ List<Unit> _civilianUnitsInRegion(
 class _PendingAssignedResolution {
   const _PendingAssignedResolution({
     required this.mainLine,
+    required this.totalTurns,
     this.materialCosts,
     this.treasuryAmount,
   });
 
   final String mainLine;
+  final int totalTurns;
   final Map<String, int>? materialCosts;
   final int? treasuryAmount;
 }
 
 _PendingAssignedResolution _resolvePendingAssignedResolution(
   Game game,
+  Unit unit,
   WorkOrder order,
   Map<String, String> provinceNames,
 ) {
@@ -110,20 +113,26 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
     location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
   }
   final base = '$workLabel$location';
+  final totalTurns = previewTotalTurnsForPendingWorkOrder(
+    game: game,
+    unit: unit,
+    order: order,
+  );
 
   if (order.target == kWorkTargetPurchaseLand) {
     final resourceId = game.worldState.resourceByTileKey[order.targetTileKey];
     if (resourceId != null && resourceId.isNotEmpty) {
       return _PendingAssignedResolution(
         mainLine: base,
+        totalTurns: totalTurns,
         treasuryAmount: purchaseLandCost(resourceId),
       );
     }
-    return _PendingAssignedResolution(mainLine: '$base (pending)');
+    return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
   }
   if (order.target == kWorkTargetStealTech ||
       order.target == kWorkTargetCounterSpy) {
-    return _PendingAssignedResolution(mainLine: '$base (pending)');
+    return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
   }
 
   final targetProvinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
@@ -145,9 +154,13 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
     roadLevel: roadLevel,
   );
   if (costMap != null && costMap.isNotEmpty) {
-    return _PendingAssignedResolution(mainLine: base, materialCosts: costMap);
+    return _PendingAssignedResolution(
+      mainLine: base,
+      totalTurns: totalTurns,
+      materialCosts: costMap,
+    );
   }
-  return _PendingAssignedResolution(mainLine: '$base (pending)');
+  return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
 }
 
 List<MapEntry<String, int>> _sortedMaterialCostEntries(Map<String, int> m) {
@@ -189,6 +202,7 @@ String _locationLabel(
 String _assignedToLabelNonPending(
   Unit unit,
   Map<String, String> provinceNames,
+  AppLocalizations l10n,
 ) {
   if (unit.status != UnitStatus.working || unit.currentWork == null) {
     return '—';
@@ -204,9 +218,14 @@ String _assignedToLabelNonPending(
     location = ' (${unitsPanelRegionLabel(regionId)} — $name)';
   }
   final progress = cw.totalTurns > 0
-      ? ' ${cw.remainingTurns}/${cw.totalTurns} turns'
-      : '';
-  return '$workLabel$location$progress';
+      ? l10n.civilian_units_turnProgress(
+          cw.remainingTurns.toString(),
+          cw.totalTurns.toString(),
+        )
+      : l10n.civilian_units_turns(
+          cw.remainingTurns <= 0 ? 1 : cw.remainingTurns,
+        );
+  return '$workLabel$location — $progress';
 }
 
 void _addAssignedLines(
@@ -220,8 +239,14 @@ void _addAssignedLines(
 ) {
   final pending = _pendingWorkOrder(unit, currentOrders, humanId);
   if (pending != null) {
-    final r = _resolvePendingAssignedResolution(game, pending, provinceNames);
-    out.add(l10n.civilian_units_assignedTo(r.mainLine));
+    final r = _resolvePendingAssignedResolution(
+      game,
+      unit,
+      pending,
+      provinceNames,
+    );
+    final turns = l10n.civilian_units_turns(r.totalTurns);
+    out.add(l10n.civilian_units_assignedTo('${r.mainLine} — $turns'));
     if (r.materialCosts != null && r.materialCosts!.isNotEmpty) {
       for (final e in _sortedMaterialCostEntries(r.materialCosts!)) {
         out.add(e.value.toString());
@@ -234,7 +259,7 @@ void _addAssignedLines(
   }
   out.add(
     l10n.civilian_units_assignedTo(
-      _assignedToLabelNonPending(unit, provinceNames),
+      _assignedToLabelNonPending(unit, provinceNames, l10n),
     ),
   );
 }

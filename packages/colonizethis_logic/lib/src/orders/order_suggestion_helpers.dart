@@ -6,13 +6,28 @@ import '../world/province_lookup.dart';
 /// Shared helpers for order suggestion. SPEC/ai/ai-architecture.md.
 /// Used by order_suggestion and AI planners.
 
+/// True when [orders] contains a draft [WorkOrder] for [unitId] for [playerId].
+/// SPEC/program/order-suggestions.md § Pre-assign gating (Refs #2133).
+bool playerHasPendingWorkOrderForUnit(
+  Orders orders,
+  String playerId,
+  String unitId,
+) {
+  for (final o in orders.workOrdersByPlayerId[playerId] ?? const []) {
+    if (o.unitId == unitId) return true;
+  }
+  return false;
+}
+
 /// Builds a map from full province id (regionId|localId) to owner faction id.
 /// Used by AI to filter move orders by diplomacy.
 Map<String, String> getProvinceOwnerMap(Game game) {
   final out = <String, String>{};
   for (final p in allProvinces(game.worldState)) {
     if (p.ownerId != null && p.ownerId!.isNotEmpty) {
-      final key = ProvinceId.full(p.regionId, ProvinceId.localIdFrom(p.id));
+      final key = ProvinceId.isPrefixed(p.id)
+          ? p.id
+          : ProvinceId.full(p.regionId, p.id);
       out[key] = p.ownerId!;
     }
   }
@@ -50,27 +65,23 @@ List<T> filterOrdersByDiplomacy<T>(
 
 /// Filters move orders to those allowed by diplomacy: no move into province of
 /// a faction at peace with [playerId], or into Minor territory without war.
+/// Civilian [MoveOrder] legality is enforced by [MoveValidator] (tile occupancy,
+/// visibility, etc.), not by diplomacy-based province filtering — e.g. Spy may
+/// enter GP-controlled tiles without war. See issue #1877.
 List<MoveOrder> filterMoveOrdersByDiplomacy(
   Game game,
   String playerId,
   List<MoveOrder> orders,
-) =>
-    filterOrdersByDiplomacy(
-      game,
-      playerId,
-      orders,
-      (MoveOrder o) => o.destinationProvinceId,
-    );
+) => List<MoveOrder>.from(orders);
 
 /// Same diplomacy filter as [filterMoveOrdersByDiplomacy] for [ArmyMoveOrder].
 List<ArmyMoveOrder> filterArmyMoveOrdersByDiplomacy(
   Game game,
   String playerId,
   List<ArmyMoveOrder> orders,
-) =>
-    filterOrdersByDiplomacy(
-      game,
-      playerId,
-      orders,
-      (ArmyMoveOrder o) => o.destinationProvinceId,
-    );
+) => filterOrdersByDiplomacy(
+  game,
+  playerId,
+  orders,
+  (ArmyMoveOrder o) => o.destinationProvinceId,
+);

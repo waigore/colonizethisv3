@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/setup/hidden_agenda_assignment.dart'
+    show assignHiddenAgendasForGame;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -439,9 +441,7 @@ class GameService {
     required int effectiveSeed,
   }) {
     final log = packageLogger();
-    for (var attempt = 0;
-        attempt < _kFreeformPipelineMaxAttempts;
-        attempt++) {
+    for (var attempt = 0; attempt < _kFreeformPipelineMaxAttempts; attempt++) {
       final mapSeed = effectiveSeed + attempt * 100003;
       try {
         final ow = _generateTileMapOldWorld(cfg, mapSeed);
@@ -475,11 +475,7 @@ class GameService {
           );
           continue;
         }
-        log.e(
-          'app: freeform init setup failed: $e',
-          error: e,
-          stackTrace: st,
-        );
+        log.e('app: freeform init setup failed: $e', error: e, stackTrace: st);
         rethrow;
       }
     }
@@ -497,9 +493,11 @@ class GameService {
     required int effectiveSeed,
   }) {
     final log = packageLogger();
-    for (var attempt = 0;
-        attempt < _kLockedFullInitPipelineMaxAttempts;
-        attempt++) {
+    for (
+      var attempt = 0;
+      attempt < _kLockedFullInitPipelineMaxAttempts;
+      attempt++
+    ) {
       final mapSeed = effectiveSeed + attempt * 100003;
       try {
         final r = generateLockedFullInitTileMapPair(
@@ -676,13 +674,19 @@ class GameService {
           turnNewsDigest: complete.turnNewsDigest,
         ),
       );
-    } else if (result is TurnResolutionPendingOvertures) {
+      return;
+    }
+    if (result is TurnResolutionPendingOvertures) {
       eventBus?.emit(OvertureRequiredEvent(overtures: result.pendingOvertures));
-    } else if (result is TurnResolutionPendingIntervention) {
+      return;
+    }
+    if (result is TurnResolutionPendingIntervention) {
       eventBus?.emit(
         InterventionRequiredEvent(prompts: result.pendingInterventions),
       );
-    } else if (result is TurnResolutionPendingCallToArms) {
+      return;
+    }
+    if (result is TurnResolutionPendingCallToArms) {
       eventBus?.emit(
         CallToArmsRequiredEvent(pending: result.pendingCallToArms),
       );

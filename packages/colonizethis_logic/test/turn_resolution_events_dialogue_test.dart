@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/src/turn/turn_resolution_events.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'package:colonizethis_data/colonizethis_data.dart' show kTechIdBanking;
 void main() {
   group('turn resolution dialogue emissions', () {
     test('emitResearchCompleteEvents emits tech_discovered for AI', () {
@@ -69,7 +70,7 @@ void main() {
             id: 'h1',
             displayName: 'Human',
             isHuman: true,
-            techUnlocked: {'banking': true},
+            techUnlocked: {kTechIdBanking: true},
           ),
           Player(id: 'a1', displayName: 'AI', isHuman: false, techUnlocked: {}),
         ],

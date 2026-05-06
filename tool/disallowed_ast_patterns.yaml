@@ -1,4 +1,5 @@
 # Disallowed AST patterns — rules for tool/check_disallowed_ast_patterns.dart
+# (YAML → rule model: tool/disallowed_ast_pattern_rules.dart)
 # SPEC: SPEC/program/disallowed-ast-patterns.md
 #
 # Suppress: // ignore: disallowed_ast_<id>  or  // ignore_for_file: disallowed_ast_<id>
@@ -18,3 +19,102 @@ rules:
       .whereType<T>() on Stream or Iterable instead.
     match:
       kind: stream_where_is_map_as
+  - id: avoid_print_suppression
+    message: >-
+      Do not suppress avoid_print via // ignore comments in runtime code.
+      Route diagnostics through package logger instead.
+    match:
+      kind: comment_substring
+      contains: "ignore: avoid_print"
+  - id: strict_raw_types
+    message: >-
+      Do not use raw generic core types without explicit type arguments.
+      Use concrete types such as List<int>, Map<String, Object?>, Set<Foo>,
+      Future<Bar>, Stream<Baz>, or Iterable<Qux>.
+    match:
+      kind: raw_named_type
+      type_names:
+        - List
+        - Map
+        - Set
+        - Iterable
+        - Future
+        - Stream
+  - id: widget_build_method_too_long
+    message: >-
+      Do not allow widget build() method bodies above 60 physical lines.
+      Extract sub-widgets or helper builders to keep build logic readable.
+    match:
+      kind: method_body_line_span
+      function_name: build
+      max_body_line_span: 60
+      require_widget_class_extends: true
+  - id: sea_zone_local_id_extraction
+    message: >-
+      Do not strip sea-zone ids to local form via ProvinceId.localIdFrom(...).
+      Use canonical prefixed sea-zone ids (regionId|localSeaZoneId) for comparisons.
+    match:
+      kind: sea_zone_local_id_extraction
+  - id: sea_zone_bucket_lookup_without_canonical_key
+    message: >-
+      Sea-zone tile bucket lookups must use canonical prefixed ids via
+      canonicalizeSeaZoneId/canonicalSeaZoneTileBucketKey; local sea-zone keys are disallowed.
+    match:
+      kind: sea_zone_bucket_lookup_without_canonical_key
+  - id: province_lookup_unprefixed_literal
+    message: >-
+      Do not pass unprefixed province id string literals to province lookup
+      APIs. Use full province ids in the form regionId|localId.
+    match:
+      kind: unprefixed_province_id_string_literal_argument
+      method_names:
+        - getProvince
+        - tryGetProvince
+        - resolveToFullProvinceId
+      argument_index: 1
+  - id: province_local_id_from_unprefixed_literal
+    message: >-
+      Do not pass unprefixed province id string literals to
+      ProvinceId.localIdFrom. Use full province ids in the form
+      regionId|localId.
+    match:
+      kind: unprefixed_province_id_string_literal_argument
+      method_names:
+        - localIdFrom
+      argument_index: 0
+  - id: province_world_state_lookup_unprefixed_literal
+    message: >-
+      Do not pass unprefixed province id string literals to WorldState lookup
+      methods. Use full province ids in the form regionId|localId.
+    match:
+      kind: unprefixed_province_id_string_literal_argument
+      method_names:
+        - tryGetProvince
+        - getProvince
+        - resolveToFullProvinceId
+      argument_index: 0
+  - id: province_local_segment_boundary_only
+    message: >-
+      ProvinceId.localSegmentFromStoredGameState(...) is disallowed.
+      Normalize with explicit prefixed-id handling at call sites.
+    match:
+      kind: province_local_segment_boundary_only
+  - id: no_complete_instant_civilian_order
+    message: >-
+      Do not reintroduce completeInstantCivilianOrder; civilian work primary
+      effects must run on Build/Work completion (Refs #2070).
+    match:
+      kind: comment_substring
+      contains: completeInstantCivilianOrder
+  - id: debug_console_logic_contract_boundary
+    message: >-
+      Debug console code must import colonizethis_logic only through approved
+      contract entrypoints. Imports from src/ internals and broad logic barrels
+      are disallowed.
+    match:
+      kind: scoped_package_import_contract
+      scoped_relative_path_prefixes:
+        - packages/colonizethis_debug_console/lib/
+      package_name: colonizethis_logic
+      allowed_imports:
+        - package:colonizethis_logic/debug_console_api.dart

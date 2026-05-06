@@ -2,9 +2,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/player_state_pipeline.dart';
 import 'setup_exceptions.dart';
 
-export 'package:colonizethis_data/colonizethis_data.dart' show isProvinceSeaBound;
+export 'package:colonizethis_data/colonizethis_data.dart'
+    show isProvinceSeaBound;
 
 /// Capital-choice phase stub. SPEC/game/capital-choice-phase.
 ///
@@ -17,6 +19,155 @@ export 'package:colonizethis_data/colonizethis_data.dart' show isProvinceSeaBoun
 /// - C: all remaining tiles
 enum CapitalTileClass { a, b, c }
 
+final class _CapitalTileCandidateScan {
+  int? classAx;
+  int? classAy;
+  int? classBx;
+  int? classBy;
+  int? classCx;
+  int? classCy;
+  int? classCCoastalX;
+  int? classCCoastalY;
+
+  void mergeClassC(int x, int y, TileMapResult tileMap, MapTopology topology) {
+    if (classCx == null) {
+      classCx = x;
+      classCy = y;
+    }
+    if (_isTileAdjacentToSea(x, y, tileMap, topology) &&
+        classCCoastalX == null) {
+      classCCoastalX = x;
+      classCCoastalY = y;
+    }
+  }
+
+  void accept(
+    CapitalTileClass tileClass,
+    int x,
+    int y,
+    TileMapResult tileMap,
+    MapTopology topology,
+  ) {
+    if (tileClass == CapitalTileClass.a) {
+      if (classAx == null) {
+        classAx = x;
+        classAy = y;
+      }
+      return;
+    }
+    if (tileClass == CapitalTileClass.b) {
+      if (classBx == null) {
+        classBx = x;
+        classBy = y;
+      }
+      return;
+    }
+    mergeClassC(x, y, tileMap, topology);
+  }
+}
+
+({
+  int? classAx,
+  int? classAy,
+  int? classBx,
+  int? classBy,
+  int? classCx,
+  int? classCy,
+  int? classCCoastalX,
+  int? classCCoastalY,
+})
+_scanCapitalTileCandidates({
+  required TileMapResult tileMap,
+  required MapTopology topology,
+  required String localProvinceId,
+  required Set<String> provinceIds,
+}) {
+  final acc = _CapitalTileCandidateScan();
+  for (var y = 0; y < tileMap.height; y++) {
+    for (var x = 0; x < tileMap.width; x++) {
+      if (tileMap.cell(x, y) != localProvinceId) continue;
+      final tileClass = classifyCapitalTile(
+        x: x,
+        y: y,
+        tileMap: tileMap,
+        topology: topology,
+        localProvinceId: localProvinceId,
+        provinceIds: provinceIds,
+      );
+      acc.accept(tileClass, x, y, tileMap, topology);
+    }
+  }
+  return (
+    classAx: acc.classAx,
+    classAy: acc.classAy,
+    classBx: acc.classBx,
+    classBy: acc.classBy,
+    classCx: acc.classCx,
+    classCy: acc.classCy,
+    classCCoastalX: acc.classCCoastalX,
+    classCCoastalY: acc.classCCoastalY,
+  );
+}
+
+String _capitalProvinceIdFromSeaBoundOrFallback(
+  List<String> ownedProvinceIds,
+  MapTopology topology, {
+  required bool requireSeaBound,
+}) {
+  final seaBound =
+      ownedProvinceIds
+          .where(
+            (id) => isProvinceSeaBound(topology, ProvinceId.localIdFrom(id)),
+          )
+          .toList()
+        ..sort();
+  if (seaBound.isNotEmpty) return seaBound.first;
+  if (requireSeaBound) {
+    throw NoSeaBoundCapitalProvinceException(
+      details:
+          'No sea-bound province among $ownedProvinceIds; setup must assign at least one sea-bound per faction',
+    );
+  }
+  return (List<String>.from(ownedProvinceIds)..sort()).first;
+}
+
+(int, int) _capitalTileXYFromScan({
+  required bool requireSeaBound,
+  required String provinceId,
+  required String regionId,
+  required int? classAx,
+  required int? classAy,
+  required int? classBx,
+  required int? classBy,
+  required int? classCx,
+  required int? classCy,
+  required int? classCCoastalX,
+  required int? classCCoastalY,
+}) {
+  if (classAx != null && classAy != null) {
+    return (classAx, classAy);
+  }
+  if (requireSeaBound) {
+    if (classCCoastalX != null && classCCoastalY != null) {
+      return (classCCoastalX, classCCoastalY);
+    }
+    throw NoCoastalCapitalTileForGpException(
+      details:
+          'No coastal tile found in sea-bound province $provinceId in region $regionId',
+    );
+  }
+  if (classBx != null && classBy != null) {
+    return (classBx, classBy);
+  }
+  if (classCx != null && classCy != null) {
+    return (classCx, classCy);
+  }
+  throw SetupTopologyDataException(
+    code: 'capital_tile_not_found',
+    details: 'No tile found in province $provinceId in region $regionId',
+  );
+}
+
 /// Picks a capital province and tile for a faction. SPEC/game/capital-choice-phase#auto-choice-game-setup.
 /// [ownedProvinceIds] and [regionId] come from assignment; [topology] and [tileMap] are for that region.
 /// Returns (provinceId, CapitalTile). When [requireSeaBound] is true (GPs), throws if no sea-bound province.
@@ -28,22 +179,11 @@ enum CapitalTileClass { a, b, c }
   TileMapResult tileMap, {
   bool requireSeaBound = true,
 }) {
-  // Topology/tileMap use local ids; ownedProvinceIds are full (regionId|localId).
-  final seaBound =
-      ownedProvinceIds
-          .where(
-            (id) => isProvinceSeaBound(topology, ProvinceId.localIdFrom(id)),
-          )
-          .toList()
-        ..sort();
-  final provinceId = seaBound.isNotEmpty
-      ? seaBound.first
-      : (requireSeaBound
-            ? (throw NoSeaBoundCapitalProvinceException(
-                details:
-                    'No sea-bound province among $ownedProvinceIds; setup must assign at least one sea-bound per faction',
-              ))
-            : (List<String>.from(ownedProvinceIds)..sort()).first);
+  final provinceId = _capitalProvinceIdFromSeaBoundOrFallback(
+    ownedProvinceIds,
+    topology,
+    requireSeaBound: requireSeaBound,
+  );
 
   final localProvinceId = ProvinceId.localIdFrom(provinceId);
 
@@ -56,81 +196,34 @@ enum CapitalTileClass { a, b, c }
       .map((n) => n.id)
       .toSet();
 
-  int? classAx;
-  int? classAy;
-  int? classBx;
-  int? classBy;
-  int? classCx;
-  int? classCy;
-  int? classCCoastalX;
-  int? classCCoastalY;
+  final c = _scanCapitalTileCandidates(
+    tileMap: tileMap,
+    topology: topology,
+    localProvinceId: localProvinceId,
+    provinceIds: provinceIds,
+  );
+  final classAx = c.classAx;
+  final classAy = c.classAy;
+  final classBx = c.classBx;
+  final classBy = c.classBy;
+  final classCx = c.classCx;
+  final classCy = c.classCy;
+  final classCCoastalX = c.classCCoastalX;
+  final classCCoastalY = c.classCCoastalY;
 
-  for (var y = 0; y < tileMap.height; y++) {
-    for (var x = 0; x < tileMap.width; x++) {
-      if (tileMap.cell(x, y) != localProvinceId) continue;
-      final tileClass = classifyCapitalTile(
-        x: x,
-        y: y,
-        tileMap: tileMap,
-        topology: topology,
-        localProvinceId: localProvinceId,
-        provinceIds: provinceIds,
-      );
-
-      if (tileClass == CapitalTileClass.a) {
-        if (classAx == null) {
-          classAx = x;
-          classAy = y;
-        }
-      } else if (tileClass == CapitalTileClass.b) {
-        if (classBx == null) {
-          classBx = x;
-          classBy = y;
-        }
-      } else {
-        if (classCx == null) {
-          classCx = x;
-          classCy = y;
-        }
-        if (_isTileAdjacentToSea(x, y, tileMap, topology) &&
-            classCCoastalX == null) {
-          classCCoastalX = x;
-          classCCoastalY = y;
-        }
-      }
-    }
-  }
-
-  int? x;
-  int? y;
-
-  if (classAx != null) {
-    x = classAx;
-    y = classAy;
-  } else if (requireSeaBound) {
-    if (classCCoastalX != null) {
-      x = classCCoastalX;
-      y = classCCoastalY;
-    } else {
-      throw NoCoastalCapitalTileForGpException(
-        details:
-            'No coastal tile found in sea-bound province $provinceId in region $regionId',
-      );
-    }
-  } else if (classBx != null) {
-    x = classBx;
-    y = classBy;
-  } else if (classCx != null) {
-    x = classCx;
-    y = classCy;
-  }
-
-  if (x == null || y == null) {
-    throw SetupTopologyDataException(
-      code: 'capital_tile_not_found',
-      details: 'No tile found in province $provinceId in region $regionId',
-    );
-  }
+  final (x, y) = _capitalTileXYFromScan(
+    requireSeaBound: requireSeaBound,
+    provinceId: provinceId,
+    regionId: regionId,
+    classAx: classAx,
+    classAy: classAy,
+    classBx: classBx,
+    classBy: classBy,
+    classCx: classCx,
+    classCy: classCy,
+    classCCoastalX: classCCoastalX,
+    classCCoastalY: classCCoastalY,
+  );
   final tile = CapitalTile(
     regionId: regionId,
     provinceId: provinceId,
@@ -343,12 +436,10 @@ Game setCapital({
     provinceId,
   );
 
-  final updatedPlayers = game.players.map((p) {
+  return game.copyWith(worldState: worldState).mapPlayers((p) {
     if (p.id != playerId) return p;
     return p.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
-  }).toList();
-
-  return game.copyWith(worldState: worldState, players: updatedPlayers);
+  });
 }
 
 /// Sets [playerId]'s capital after runtime reassignment (combat). Updates **only** player
@@ -366,11 +457,10 @@ Game setCapitalForReassignment({
           'Capital tile province ${tile.provinceId} does not match $provinceId',
     );
   }
-  final updatedPlayers = game.players.map((p) {
+  return game.mapPlayers((p) {
     if (p.id != playerId) return p;
     return p.copyWith(capitalProvinceId: provinceId, capitalTile: tile);
-  }).toList();
-  return game.copyWith(players: updatedPlayers);
+  });
 }
 
 /// Sets a Minor Nation's capital. Port/road applied only when province is sea-bound.

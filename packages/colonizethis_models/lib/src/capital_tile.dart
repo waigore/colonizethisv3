@@ -10,17 +10,19 @@ class CapitalTile {
   });
 
   final String regionId;
-  /// Full province id (regionId|localId). Use [ProvinceId.localIdFrom] for tile key second segment.
+
+  /// Full province id (regionId|localId). Tile keys normalize the second segment
+  /// by stripping region prefix when present and otherwise preserving legacy bare ids.
   final String provinceId;
   final int x;
   final int y;
 
   /// Tile key for use in connectivity and extraction: "regionId|localId|x|y".
   String toTileKey() =>
-      '$regionId|${ProvinceId.localIdFrom(provinceId)}|$x|$y';
+      '$regionId|${ProvinceId.isPrefixed(provinceId) ? ProvinceId.localIdFrom(provinceId) : provinceId}|$x|$y';
 
   static String tileKey(String regionId, String provinceId, int x, int y) =>
-      '$regionId|${ProvinceId.localIdFrom(provinceId)}|$x|$y';
+      '$regionId|${ProvinceId.isPrefixed(provinceId) ? ProvinceId.localIdFrom(provinceId) : provinceId}|$x|$y';
 
   /// Parses a stored town/capital tile key `regionId|localId|x|y`.
   /// [expectedProvinceId] must be the full id `regionId|localId` and match the key.
@@ -57,20 +59,15 @@ class CapitalTile {
         'townTileKey implies province "$fullProv" but expected "$expectedProvinceId"',
       );
     }
-    return CapitalTile(
-      regionId: regionId,
-      provinceId: fullProv,
-      x: x,
-      y: y,
-    );
+    return CapitalTile(regionId: regionId, provinceId: fullProv, x: x, y: y);
   }
 
   Map<String, dynamic> toJson() => {
-        'regionId': regionId,
-        'provinceId': provinceId,
-        'x': x,
-        'y': y,
-      };
+    'regionId': regionId,
+    'provinceId': provinceId,
+    'x': x,
+    'y': y,
+  };
 
   static CapitalTile? fromJson(Map<String, dynamic>? json) {
     if (json == null) return null;

@@ -139,12 +139,12 @@ void main() {
           buildUnitOrdersByPlayerId: {
             humanPlayerId: [
               BuildUnitOrder(
-                unitType: 'Builder',
+                unitType: kUnitTypeBuilder,
                 isMilitary: false,
                 spawnProvinceId: cap,
               ),
               BuildUnitOrder(
-                unitType: 'Builder',
+                unitType: kUnitTypeBuilder,
                 isMilitary: false,
                 spawnProvinceId: cap,
               ),
@@ -248,7 +248,7 @@ void main() {
 
       // Tap + once for Builder (should succeed)
       final builderIndex = CivilianEconomyCatalog.all.indexWhere(
-        (e) => e.id == 'Builder',
+        (e) => e.id == kUnitTypeBuilder,
       );
       final builderPlus = find.text('+').at(builderIndex);
       await tester.ensureVisible(builderPlus);
@@ -315,7 +315,7 @@ void main() {
 
       // Find the + button for a locked unit (Merchant)
       final merchantIndex = CivilianEconomyCatalog.all.indexWhere(
-        (e) => e.id == 'Merchant',
+        (e) => e.id == kUnitTypeMerchant,
       );
 
       // Merchant's + button should be disabled
@@ -428,9 +428,9 @@ void main() {
 
         expect(capturedOrders, isNotNull);
         expect(capturedOrders!.length, 2);
-        expect(capturedOrders![0].unitType, 'Builder');
+        expect(capturedOrders![0].unitType, kUnitTypeBuilder);
         expect(capturedOrders![0].isMilitary, false);
-        expect(capturedOrders![1].unitType, 'Builder');
+        expect(capturedOrders![1].unitType, kUnitTypeBuilder);
       },
     );
 
@@ -449,6 +449,9 @@ void main() {
               ref.onDispose(bus.dispose);
               return bus;
             }),
+            availableWorkTargetIdsForUnitProvider.overrideWith(
+              (ref, _) => const <String>[],
+            ),
           ],
           child: AppEventHandlerScope(
             child: MaterialApp(
@@ -488,6 +491,9 @@ void main() {
                 ref.onDispose(bus.dispose);
                 return bus;
               }),
+              availableWorkTargetIdsForUnitProvider.overrideWith(
+                (ref, _) => const <String>[],
+              ),
             ],
             child: AppEventHandlerScope(
               child: MaterialApp(

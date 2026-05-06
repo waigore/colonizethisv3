@@ -1,5 +1,5 @@
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show Province, ProvinceId, RegionData, WorldState;
+    show Province, ProvinceId, RegionData, Unit, WorldState;
 
 import '../constants.dart';
 
@@ -15,12 +15,7 @@ Province? _findProvinceInRegion(
   String localId,
 ) {
   final fullId = ProvinceId.full(regionId, localId);
-  final idx = region.provinces.indexWhere(
-    (p) =>
-        p.id == fullId ||
-        (p.regionId == regionId &&
-            (p.id == localId || ProvinceId.localIdFrom(p.id) == localId)),
-  );
+  final idx = region.provinces.indexWhere((p) => p.id == fullId);
   if (idx < 0) return null;
   return region.provinces[idx];
 }
@@ -116,6 +111,39 @@ Province? tryGetProvince(WorldState world, String fullProvinceId) {
   );
 }
 
+/// Resolves a province row for transfer paths that accept either a prefixed id
+/// or a legacy short [Province.id] (tests and some fixtures).
+///
+/// Returns the authoritative [Province.id] as [canonicalProvinceId] for bucket
+/// keys and timer maps.
+({Province province, String canonicalProvinceId})?
+resolveProvinceRowForOwnershipTransfer(WorldState world, String provinceKey) {
+  final prefixed = tryGetProvince(world, provinceKey);
+  if (prefixed != null) {
+    return (province: prefixed, canonicalProvinceId: prefixed.id);
+  }
+  for (final p in world.allProvinces()) {
+    if (p.id == provinceKey) {
+      return (province: p, canonicalProvinceId: p.id);
+    }
+  }
+  return null;
+}
+
+/// Returns land tile keys for a province bucket using canonical full province id.
+///
+/// This helper intentionally does not fall back to local-only ids. Callers must
+/// pass `regionId|localId` to keep multi-region lookups deterministic.
+List<String> landTileKeysForProvinceBucket(
+  WorldState world,
+  String regionId,
+  String fullProvinceId,
+) {
+  return List<String>.from(
+    world.tileKeysByRegionAndProvince[regionId]?[fullProvinceId] ?? const [],
+  );
+}
+
 /// Province lookup helpers on [WorldState] to avoid repeatedly passing the world state.
 extension WorldStateProvinceLookup on WorldState {
   RegionData? regionDataForId(String regionId) => _regionForId(this, regionId);
@@ -123,6 +151,20 @@ extension WorldStateProvinceLookup on WorldState {
   Iterable<Province> allProvinces() sync* {
     yield* oldWorld.provinces;
     yield* newWorld.provinces;
+  }
+
+  /// Returns [kRegionOldWorld] or [kRegionNewWorld] when a province row's `id`
+  /// equals [key] in that region (old world checked first). For canonical
+  /// lookups prefer [tryGetProvince] with a prefixed id; this exists for
+  /// legacy short ids and tests (waigore/colonizethis#2071 Phase 1).
+  String? tryGetRegionIdForLegacyProvinceKey(String key) {
+    if (oldWorld.provinces.indexWhere((p) => p.id == key) >= 0) {
+      return kRegionOldWorld;
+    }
+    if (newWorld.provinces.indexWhere((p) => p.id == key) >= 0) {
+      return kRegionNewWorld;
+    }
+    return null;
   }
 
   String resolveToFullProvinceId(String provinceId) =>
@@ -172,6 +214,31 @@ extension WorldStateProvinceLookup on WorldState {
     return tryGetProvinceByRegion(
       ProvinceId.regionIdFrom(fullProvinceId),
       ProvinceId.localIdFrom(fullProvinceId),
+    );
+  }
+
+  /// Replaces [oldWorld] and [newWorld] via [update].
+  ///
+  /// [update] receives [kRegionOldWorld] or [kRegionNewWorld] and the current
+  /// [RegionData] for that region. Refactor helper (waigore/colonizethis#2071).
+  WorldState mapBothRegions(
+    RegionData Function(String regionId, RegionData region) update,
+  ) {
+    return copyWith(
+      oldWorld: update(kRegionOldWorld, oldWorld),
+      newWorld: update(kRegionNewWorld, newWorld),
+    );
+  }
+
+  /// Updates unit lists in both regions; province rows are unchanged.
+  WorldState mapBothRegionUnits(
+    List<Unit> Function(String regionId, List<Unit> units) updateUnits,
+  ) {
+    return mapBothRegions(
+      (regionId, region) => RegionData(
+        provinces: region.provinces,
+        units: updateUnits(regionId, region.units),
+      ),
     );
   }
 }

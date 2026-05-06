@@ -44,7 +44,7 @@
 
 ## Maintenance: tech effect copy and ARB
 
-- After editing `packages/colonizethis_data/lib/src/data/tech_effect_summary.yaml`, run `dart tool/generate_tech_effect_l10n.dart` from the repo root, then `cd app && flutter gen-l10n`, so `app_en.arb` and `tech_effect_summary_lookup.dart` stay aligned with the YAML.
+- After editing `packages/colonizethis_data/lib/src/data/tech_effect_summary.yaml`, run `dart tool/generate_tech_effect_l10n.dart` from the repo root, then `cd app && flutter gen-l10n`, so `app/lib/l10n/arb/app_en.arb` and `tech_effect_summary_lookup.dart` stay aligned with the YAML.
 - If the YAML file alone changes, refresh the embed with `dart tool/embed_tech_effect_summary.dart` (or re-run the flow that regenerates `tech_effect_summary_embed.dart`).
 
 ## CI: long string switches

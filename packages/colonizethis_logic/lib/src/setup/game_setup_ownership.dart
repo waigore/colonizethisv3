@@ -1,6 +1,15 @@
-part of 'game_setup.dart';
+import 'dart:math';
 
-Map<String, Set<String>> _provinceNeighboursFromTopology(MapTopology topology) {
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../utils/graph_traversal.dart';
+import 'capital_choice.dart';
+import 'locked_province_assigner.dart';
+import 'province_assignment.dart';
+import 'setup_exceptions.dart';
+
+Map<String, Set<String>> provinceNeighboursFromTopology(MapTopology topology) {
   final provinces = {
     for (final n in topology.nodes)
       if (n.type == TopologyNodeType.province) n.id,
@@ -18,30 +27,7 @@ Map<String, Set<String>> _provinceNeighboursFromTopology(MapTopology topology) {
   return neighbours;
 }
 
-/// Computes a landmass id (connected component id) per province based on P–P adjacency.
-Map<String, int> _landmassIdsFromNeighbours(
-  Map<String, Set<String>> neighbours,
-) {
-  final landmassByProvince = <String, int>{};
-  var currentId = 0;
-  for (final province in neighbours.keys) {
-    if (landmassByProvince.containsKey(province)) continue;
-    final queue = <String>[province];
-    landmassByProvince[province] = currentId;
-    while (queue.isNotEmpty) {
-      final p = queue.removeLast();
-      for (final n in neighbours[p] ?? const <String>{}) {
-        if (landmassByProvince.containsKey(n)) continue;
-        landmassByProvince[n] = currentId;
-        queue.add(n);
-      }
-    }
-    currentId++;
-  }
-  return landmassByProvince;
-}
-
-Game _assignCapitalsForFactions({
+Game assignCapitalsForFactions({
   required Game game,
   required List<String> factionIds,
   required List<Province> provinces,
@@ -208,41 +194,6 @@ int _largestFeasibleGpProvinceBudgetByPacking({
   return best;
 }
 
-void _pushSubsetNeighbors(
-  String u,
-  Set<String> nodes,
-  Set<String> unseen,
-  Map<String, Set<String>> neighbours,
-  List<String> stack,
-) {
-  for (final v in neighbours[u] ?? const <String>{}) {
-    if (!nodes.contains(v)) continue;
-    if (!unseen.contains(v)) continue;
-    stack.add(v);
-  }
-}
-
-List<Set<String>> _ppComponentsInSubset(
-  Set<String> nodes,
-  Map<String, Set<String>> neighbours,
-) {
-  final unseen = nodes.toSet();
-  final comps = <Set<String>>[];
-  while (unseen.isNotEmpty) {
-    final start = unseen.first;
-    final comp = <String>{};
-    final stack = <String>[start];
-    while (stack.isNotEmpty) {
-      final u = stack.removeLast();
-      if (!unseen.remove(u)) continue;
-      comp.add(u);
-      _pushSubsetNeighbors(u, nodes, unseen, neighbours, stack);
-    }
-    comps.add(comp);
-  }
-  return comps;
-}
-
 List<String> _lockedGrowthOrder(
   List<String> factionIds,
   Map<String, int> targetPerFaction,
@@ -298,7 +249,7 @@ Map<String, String> _assignFactionsSingleComponentLocked({
 }) {
   if (factionIds.isEmpty || universe.isEmpty) return {};
   final targets = computeFairTargets(factionIds, universe.length);
-  final comps = _ppComponentsInSubset(universe, neighbours);
+  final comps = connectedComponentsInSubset(universe, neighbours);
   if (comps.length != 1) {
     throw SetupTopologyDataException(
       code: 'assignment_remainder_not_connected',
@@ -380,7 +331,7 @@ Map<String, String> _assignFactionsMultiComponentLocked({
 }) {
   if (factionIds.isEmpty || universe.isEmpty) return {};
   final targets = computeFairTargets(factionIds, universe.length);
-  var components = _ppComponentsInSubset(universe, neighbours);
+  var components = connectedComponentsInSubset(universe, neighbours);
   components.sort((a, b) {
     final c = b.length.compareTo(a.length);
     if (c != 0) return c;
@@ -453,7 +404,7 @@ Map<String, String> _assignFactionsOnRemainderAuto({
   required Random? assignmentRandom,
   required int backtrackLimitPerFaction,
 }) {
-  final comps = _ppComponentsInSubset(universe, neighbours);
+  final comps = connectedComponentsInSubset(universe, neighbours);
   if (comps.length == 1) {
     return _assignFactionsSingleComponentLocked(
       factionIds: factionIds,
@@ -570,7 +521,7 @@ Map<String, String> _assignOldWorldSingleLandmass({
   );
 }
 
-Map<String, String> _assignOldWorldOwnershipContiguous({
+Map<String, String> assignOldWorldOwnershipContiguous({
   required Map<String, Set<String>> neighbours,
   required List<String> provinceIds,
   required List<String> seaBoundProvinceIds,
@@ -580,7 +531,7 @@ Map<String, String> _assignOldWorldOwnershipContiguous({
   Random? assignmentRandom,
   required bool useLockedSixMinorContinentPainting,
 }) {
-  final landmassIds = _landmassIdsFromNeighbours(neighbours);
+  final landmassIds = landmassIdsFromProvinceAdjacency(neighbours);
 
   final gpCount = gpIds.length;
   final minorCount = minorIds.length;
@@ -809,7 +760,7 @@ Map<String, String> _selectGpSeedsForLandmass({
   return gpSeeds;
 }
 
-Map<String, String> _assignNewWorldOwnershipContiguous({
+Map<String, String> assignNewWorldOwnershipContiguous({
   required MapTopology topologyNewWorld,
   required List<String> provinceIds,
   required List<String> tribeIds,
@@ -818,7 +769,7 @@ Map<String, String> _assignNewWorldOwnershipContiguous({
     return {for (final p in provinceIds) p: ''};
   }
 
-  final neighbours = _provinceNeighboursFromTopology(topologyNewWorld);
+  final neighbours = provinceNeighboursFromTopology(topologyNewWorld);
   final universe = provinceIds.toSet();
   return _assignFactionsOnRemainderAuto(
     factionIds: tribeIds,

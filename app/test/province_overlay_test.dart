@@ -371,6 +371,93 @@ void main() {
     });
 
     testWidgets(
+      'Tile prospected row shows prospect shortcut icon with tooltip when enabled',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: demoGameForOverlay,
+                region: demoRegionForOverlay,
+                displayId: sampleProvinceIdForOverlay,
+                selectedTileKey: sampleTileKeyForProvinceOverlay,
+                humanPlayerId: demoGameForOverlay.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
+                showProspectActionIcon: true,
+                prospectActionEnabled: true,
+                onProspectWithExplorerTap: () {},
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byTooltip('Prospect with explorer'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Tile prospected row shows explore icon before prospect when both enabled',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: demoGameForOverlay,
+                region: demoRegionForOverlay,
+                displayId: sampleProvinceIdForOverlay,
+                selectedTileKey: sampleTileKeyForProvinceOverlay,
+                humanPlayerId: demoGameForOverlay.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
+                showExploreActionIcon: true,
+                exploreActionEnabled: true,
+                onExploreWithExplorerTap: () {},
+                showProspectActionIcon: true,
+                prospectActionEnabled: true,
+                onProspectWithExplorerTap: () {},
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final exploreFinder = find.byTooltip('Explore with explorer');
+        final prospectFinder = find.byTooltip('Prospect with explorer');
+        expect(exploreFinder, findsOneWidget);
+        expect(prospectFinder, findsOneWidget);
+        final exploreX = tester.getTopLeft(exploreFinder).dx;
+        final prospectX = tester.getTopLeft(prospectFinder).dx;
+        expect(exploreX, lessThan(prospectX));
+      },
+    );
+
+    testWidgets(
+      'Tile improvement row shows build improvement shortcut icon tooltip when enabled',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ProvinceSeaZoneDetailOverlay(
+                game: demoGameForOverlay,
+                region: demoRegionForOverlay,
+                displayId: sampleProvinceIdForOverlay,
+                selectedTileKey: sampleTileKeyForProvinceOverlay,
+                humanPlayerId: demoGameForOverlay.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
+                showBuildImprovementActionIcon: true,
+                buildImprovementActionEnabled: true,
+                onBuildImprovementTap: () {},
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byTooltip('Build improvement'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'AC: Overlay constrained to one-third height on narrow viewport',
       (WidgetTester tester) async {
         const viewportHeight = 600.0;

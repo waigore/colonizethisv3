@@ -5,14 +5,15 @@ import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/game_map_empire_left_rail.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy_screen.dart';
+import 'package:colonizethis_app/features/game/screens/diplomacy_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/production_screen.dart';
+import 'package:colonizethis_app/features/game/screens/production_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train_military_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/debug_console_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
@@ -43,24 +44,29 @@ void main() {
       ? game.players.where((p) => p.isHuman).first.id
       : game.players.first.id;
 
-  overrides() => [
+  overrides({bool debugConsoleEnabled = false}) => [
     gamesBoxProvider.overrideWith((ref) => gamesBox),
     gameServiceProvider.overrideWith(
       (ref) => GameService(gamesBox, GameSaveAdapter()),
     ),
     currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-    currentOrdersProvider.overrideWith(() => CurrentOrdersNotifier(const Orders())),
-    availableWorkTargetsProvider.overrideWith((ref) => <String, List<String>>{}),
+    currentOrdersProvider.overrideWith(
+      () => CurrentOrdersNotifier(const Orders()),
+    ),
+    availableWorkTargetIdsForUnitProvider.overrideWith(
+      (ref, _) => const <String>[],
+    ),
     appEventBusProvider.overrideWith((ref) {
       final bus = AppEventBus.create();
       ref.onDispose(bus.dispose);
       return bus;
     }),
+    debugConsoleEnabledProvider.overrideWithValue(debugConsoleEnabled),
   ];
 
-  Widget railScaffold() {
+  Widget railScaffold({bool debugConsoleEnabled = false}) {
     return ProviderScope(
-      overrides: overrides(),
+      overrides: overrides(debugConsoleEnabled: debugConsoleEnabled),
       child: AppEventHandlerScope(
         child: MaterialApp(
           navigatorKey: appNavigatorKey,
@@ -83,41 +89,42 @@ void main() {
     );
   }
 
-  testWidgets('GameMapEmpireLeftRail tapping Production navigates to ProductionScreen', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: overrides(),
-        child: AppEventHandlerScope(
-          child: MaterialApp(
-            navigatorKey: appNavigatorKey,
-            onGenerateRoute: Routes.generate,
-            home: Scaffold(
-              body: Stack(
-                children: [
-                  Positioned(
-                    left: 20,
-                    top: 0,
-                    child: GameMapEmpireLeftRail(
-                      game: game,
-                      humanPlayerId: humanId(),
+  testWidgets(
+    'GameMapEmpireLeftRail tapping Production navigates to ProductionScreen',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: overrides(),
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              onGenerateRoute: Routes.generate,
+              home: Scaffold(
+                body: Stack(
+                  children: [
+                    Positioned(
+                      left: 20,
+                      top: 0,
+                      child: GameMapEmpireLeftRail(
+                        game: game,
+                        humanPlayerId: humanId(),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(kEmpireProductionButtonKey));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byKey(kEmpireProductionButtonKey));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(ProductionScreen), findsOneWidget);
-  });
+      expect(find.byType(ProductionScreen), findsOneWidget);
+    },
+  );
 
   testWidgets('GameMapEmpireLeftRail tapping Technology navigates', (
     WidgetTester tester,
@@ -241,6 +248,24 @@ void main() {
     expect(find.byType(CivilianUnitsPanel), findsOneWidget);
   });
 
+  testWidgets('GameMapEmpireLeftRail hides debug console icon by default', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(railScaffold());
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(kEmpireDebugConsoleButtonKey), findsNothing);
+  });
+
+  testWidgets('GameMapEmpireLeftRail shows debug console icon when enabled', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(railScaffold(debugConsoleEnabled: true));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(kEmpireDebugConsoleButtonKey), findsOneWidget);
+  });
+
   testWidgets(
     'Train presents dialog after opening Civilian Units from rail (regression)',
     (WidgetTester tester) async {
@@ -268,38 +293,8 @@ void main() {
     },
   );
 
-  testWidgets(
-    'TrainCiviliansDialog onClose completes without error',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: overrides(),
-          child: AppEventHandlerScope(
-            child: MaterialApp(
-              navigatorKey: appNavigatorKey,
-              home: _RailOnlyHost(game: game, humanPlayerId: humanId()),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Train'));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byIcon(Icons.close));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(TrainCiviliansDialog), findsNothing);
-    },
-  );
-
-  testWidgets(
-    'GameMapEmpireLeftRail Military Train opens TrainMilitaryDialog via bus',
-    (WidgetTester tester,
+  testWidgets('TrainCiviliansDialog onClose completes without error', (
+    WidgetTester tester,
   ) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -307,35 +302,64 @@ void main() {
         child: AppEventHandlerScope(
           child: MaterialApp(
             navigatorKey: appNavigatorKey,
-            home: Scaffold(
-              body: Stack(
-                children: [
-                  Positioned(
-                    left: 20,
-                    top: 0,
-                    child: GameMapEmpireLeftRail(
-                      game: game,
-                      humanPlayerId: humanId(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            home: _RailOnlyHost(game: game, humanPlayerId: humanId()),
           ),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(kEmpireMilitaryUnitsButtonKey));
+    await tester.tap(find.byKey(kEmpireCivilianUnitsButtonKey));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Train'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(TrainMilitaryDialog), findsOneWidget);
-    expect(find.text('Train Military'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TrainCiviliansDialog), findsNothing);
   });
+
+  testWidgets(
+    'GameMapEmpireLeftRail Military Train opens TrainMilitaryDialog via bus',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: overrides(),
+          child: AppEventHandlerScope(
+            child: MaterialApp(
+              navigatorKey: appNavigatorKey,
+              home: Scaffold(
+                body: Stack(
+                  children: [
+                    Positioned(
+                      left: 20,
+                      top: 0,
+                      child: GameMapEmpireLeftRail(
+                        game: game,
+                        humanPlayerId: humanId(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(kEmpireMilitaryUnitsButtonKey));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Train'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TrainMilitaryDialog), findsOneWidget);
+      expect(find.text('Train Military'), findsOneWidget);
+    },
+  );
 
   testWidgets('GameMapEmpireLeftRail Diplomacy pushes DiplomacyScreen', (
     WidgetTester tester,

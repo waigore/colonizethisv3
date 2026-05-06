@@ -11,9 +11,9 @@ void main() {
         id: 'p1',
         displayName: 'P1',
         isHuman: true,
-        techUnlocked: const {'industrial_funding_of_research': true},
+        techUnlocked: const {kTechIdIndustrialFundingOfResearch: true},
       );
-      final tech = techById('organised_regiments')!;
+      final tech = techById(kTechIdOrganisedRegiments)!;
       expect(tech.category, 'military');
       expect(
         effectiveResearchPointsForTechAllocation(player, tech, 100),
@@ -26,9 +26,9 @@ void main() {
         id: 'p1',
         displayName: 'P1',
         isHuman: true,
-        techUnlocked: const {'industrial_funding_of_research': true},
+        techUnlocked: const {kTechIdIndustrialFundingOfResearch: true},
       );
-      final tech = techById('crop_rotation')!;
+      final tech = techById(kTechIdCropRotation)!;
       expect(
         effectiveResearchPointsForTechAllocation(player, tech, 100),
         100,
