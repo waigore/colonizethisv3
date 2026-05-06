@@ -62,6 +62,12 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 2. In the same debug command transaction, run coastal sea-zone full-visibility normalization so Great Power visibility for sea zones adjacent to newly owned or lost coastal provinces is updated immediately, not deferred until end-of-turn.
 3. The immediate coastal step is additive with the normal End-of-turn sequence (`applyDistantSeaZoneFogRevert` then `applyCoastalSeaZoneFullVisibility`) and must not contradict those invariants.
 
+**Immediate debug reveal update** (debug `reveal_province` command path):
+
+1. When debug command `reveal_province` resolves one province target (by prefixed id or global display-name match), set all target province land tiles to `fullyVisible` for the human player immediately.
+2. In the same transaction, set all water tiles in sea zones directly adjacent to the target province (P–S edges, same region) to `fullyVisible` for the same player.
+3. If all required land and adjacent sea-zone tiles are already `fullyVisible` for the player, return deterministic success/no-op feedback and keep world state unchanged.
+
 **Distant sea zone fog** (End-of-turn phase, after Explorer/Spy fog decay, **before** coastal sea zone full visibility):
 
 1. For each Great Power player and each sea zone S in each region (from topology sea-zone nodes in that region):
@@ -118,6 +124,7 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 - **Ship reveal and integration:** When a fleet successfully enters a sea zone, **coastal ring** land tiles of adjacent provinces become **`fullyVisible`** and **water** tiles in that sea zone become **`fullyVisible`** for that player, delegated to naval-movement-resolution; PlayerView construction (including Spy invisibility rules) is the single source for AI and order-suggestion visibility, never reading visibility directly from WorldState.
 - **Coastal sea zone full visibility:** During Game Setup (after initial visibility) and every turn in End-of-turn (after fog decay), for each Great Power (including human): all tiles in sea zones that are adjacent (P–S in topology) to provinces that player fully owns are set to fullyVisible in WorldState; PlayerView reflects this; Tribes and Minor Nations do not receive this rule.
 - **Immediate debug ownership-transfer visibility contract:** Given debug command `flip_province` applies canonical transfer successfully, when the command transaction completes, then the system applies immediate land ownership visibility changes and an immediate coastal sea-zone full-visibility normalization pass for affected Great Powers before control returns to callers.
+- **Immediate debug reveal visibility contract:** Given debug command `reveal_province` applies successfully for a resolved province target, when the command transaction completes, then the system sets target province land tiles and directly adjacent sea-zone water tiles to `fullyVisible` for the human player in `WorldState.playerVisibilityByTile`, and if those tiles were already fully visible the command returns deterministic success/no-op feedback without mutating state.
 
 - **Distant sea zone fog:** given a Great Power player, a sea zone S in region R, and water tile keys for S in `tileKeysByRegionAndProvince`, when End-of-turn runs after Movement and S is **not** P–S adjacent to any province owned by that player and that player has **no** fleet **at sea** in S, then every such water tile that is **not** `unknown` in that player’s visibility map is set to **fogged** before the coastal sea zone visibility pass; when that player **does** have a fleet **at sea** in S, water tiles in S are **not** forced to fogged by this rule solely due to lack of adjacent owned coast.
 
