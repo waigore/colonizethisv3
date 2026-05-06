@@ -19,6 +19,8 @@ const double _kChainWeight = 1.0;
 /// Weight for agenda/personality modifier.
 const double _kAgendaWeight = 0.5;
 
+const int _kVeryLargeRuns = 999999;
+
 /// Runs the economy planner for one AI-controlled player. Deterministic given
 /// [game], [view], [config], and [seeds]. Returns production assignments and
 /// cargo preference. SPEC/ai/economy-planner.md.
@@ -122,18 +124,11 @@ List<AssignedRecipe> _allocateLabour({
   for (final recipe in recipes) {
     final labourPerOutput = recipe.labourPerOutput;
     if (labourPerOutput <= 0) continue;
-    int maxByInputs = 999999;
-    for (final entry in recipe.inputQuantities.entries) {
-      final have = virtual.quantityOf(entry.key);
-      final need = entry.value;
-      if (need <= 0) continue;
-      final runs = have ~/ need;
-      if (runs < maxByInputs) maxByInputs = runs;
-    }
-    if (maxByInputs <= 0) continue;
-    final maxByLabour = remainingLabour ~/ labourPerOutput;
-    if (maxByLabour <= 0) continue;
-    final feasibleRuns = maxByInputs < maxByLabour ? maxByInputs : maxByLabour;
+    final feasibleRuns = _feasibleRuns(
+      recipe: recipe,
+      stockpile: virtual,
+      remainingLabour: remainingLabour,
+    );
     if (feasibleRuns <= 0) continue;
 
     final score = _scoreRecipe(
@@ -166,18 +161,11 @@ List<AssignedRecipe> _allocateLabour({
   for (final scored in candidates) {
     if (remainingLabour <= 0) break;
     final recipe = scored.recipe;
-    int maxByInputs = 999999;
-    for (final entry in recipe.inputQuantities.entries) {
-      final have = virtual.quantityOf(entry.key);
-      final need = entry.value;
-      if (need <= 0) continue;
-      final runs = have ~/ need;
-      if (runs < maxByInputs) maxByInputs = runs;
-    }
-    if (maxByInputs <= 0) continue;
-    final maxByLabour = remainingLabour ~/ recipe.labourPerOutput;
-    if (maxByLabour <= 0) continue;
-    final runs = maxByInputs < maxByLabour ? maxByInputs : maxByLabour;
+    final runs = _feasibleRuns(
+      recipe: recipe,
+      stockpile: virtual,
+      remainingLabour: remainingLabour,
+    );
     if (runs <= 0) continue;
 
     final labourUsed = runs * recipe.labourPerOutput;
@@ -209,6 +197,26 @@ class _ScoredRecipe {
   _ScoredRecipe({required this.recipe, required this.score});
   final ProductionRecipe recipe;
   final double score;
+}
+
+int _feasibleRuns({
+  required ProductionRecipe recipe,
+  required Stockpile stockpile,
+  required int remainingLabour,
+}) {
+  if (recipe.labourPerOutput <= 0) return 0;
+  int maxByInputs = _kVeryLargeRuns;
+  for (final entry in recipe.inputQuantities.entries) {
+    final have = stockpile.quantityOf(entry.key);
+    final need = entry.value;
+    if (need <= 0) continue;
+    final runs = have ~/ need;
+    if (runs < maxByInputs) maxByInputs = runs;
+  }
+  if (maxByInputs <= 0) return 0;
+  final maxByLabour = remainingLabour ~/ recipe.labourPerOutput;
+  if (maxByLabour <= 0) return 0;
+  return maxByInputs < maxByLabour ? maxByInputs : maxByLabour;
 }
 
 double _scoreRecipe({
