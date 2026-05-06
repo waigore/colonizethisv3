@@ -1,5 +1,11 @@
 part of 'app_event_handler_scope.dart';
 
+int civilianWorkUpsertValidationPassCountForTests = 0;
+
+void resetCivilianWorkUpsertValidationPassCountForTests() {
+  civilianWorkUpsertValidationPassCountForTests = 0;
+}
+
 extension _SessionCommands on _AppEventHandlerScopeState {
   void _applyDebugCommand(DebugCommandResult result) {
     final nextGame = result.game;
@@ -45,11 +51,17 @@ extension _SessionCommands on _AppEventHandlerScopeState {
         final game = ref.read(currentGameProvider);
         if (game != null) {
           final topo =
-              ref.read(gameServiceProvider).getMapData(game.id)?.combinedTopology ??
+              ref
+                  .read(gameServiceProvider)
+                  .getMapData(game.id)
+                  ?.combinedTopology ??
               const MapTopology();
-          final tileMaps =
-              ref.read(gameServiceProvider).getMapData(game.id)?.tileMapByRegion;
+          final tileMaps = ref
+              .read(gameServiceProvider)
+              .getMapData(game.id)
+              ?.tileMapByRegion;
           final engine = OrderEngine(initialOrders: next);
+          civilianWorkUpsertValidationPassCountForTests += 1;
           final results = engine.validatePlayerOrdersWithContext(
             game,
             topo,
