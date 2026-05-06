@@ -449,6 +449,9 @@ void main() {
               ref.onDispose(bus.dispose);
               return bus;
             }),
+            availableWorkTargetIdsForUnitProvider.overrideWith(
+              (ref, _) => const <String>[],
+            ),
           ],
           child: AppEventHandlerScope(
             child: MaterialApp(
@@ -488,6 +491,9 @@ void main() {
                 ref.onDispose(bus.dispose);
                 return bus;
               }),
+              availableWorkTargetIdsForUnitProvider.overrideWith(
+                (ref, _) => const <String>[],
+              ),
             ],
             child: AppEventHandlerScope(
               child: MaterialApp(

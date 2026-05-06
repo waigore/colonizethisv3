@@ -6,6 +6,19 @@ import '../world/province_lookup.dart';
 /// Shared helpers for order suggestion. SPEC/ai/ai-architecture.md.
 /// Used by order_suggestion and AI planners.
 
+/// True when [orders] contains a draft [WorkOrder] for [unitId] for [playerId].
+/// SPEC/program/order-suggestions.md § Pre-assign gating (Refs #2133).
+bool playerHasPendingWorkOrderForUnit(
+  Orders orders,
+  String playerId,
+  String unitId,
+) {
+  for (final o in orders.workOrdersByPlayerId[playerId] ?? const []) {
+    if (o.unitId == unitId) return true;
+  }
+  return false;
+}
+
 /// Builds a map from full province id (regionId|localId) to owner faction id.
 /// Used by AI to filter move orders by diplomacy.
 Map<String, String> getProvinceOwnerMap(Game game) {

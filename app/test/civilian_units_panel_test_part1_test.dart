@@ -6,9 +6,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
@@ -106,24 +108,30 @@ void main() {
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     final navigatorKey = GlobalKey<NavigatorState>();
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      home: Scaffold(
-        body: _EventHandlingWrapper(
-          bus: resolvedBus,
-          navigatorKey: navigatorKey,
-          child: CivilianUnitsPanel(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            currentOrders: currentOrders,
-            availableWorkTargets: availableWorkTargets,
+    return ProviderScope(
+      overrides: [
+        availableWorkTargetIdsForUnitProvider.overrideWith(
+          (ref, unitId) => availableWorkTargets[unitId] ?? const [],
+        ),
+      ],
+      child: MaterialApp(
+        navigatorKey: navigatorKey,
+        home: Scaffold(
+          body: _EventHandlingWrapper(
             bus: resolvedBus,
-            explorerOnly: explorerOnly,
-            builderOnly: builderOnly,
-            prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
-            exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
-            buildImprovementShortcutTargetTileKey:
-                buildImprovementShortcutTargetTileKey,
+            navigatorKey: navigatorKey,
+            child: CivilianUnitsPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              currentOrders: currentOrders,
+              bus: resolvedBus,
+              explorerOnly: explorerOnly,
+              builderOnly: builderOnly,
+              prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
+              exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
+              buildImprovementShortcutTargetTileKey:
+                  buildImprovementShortcutTargetTileKey,
+            ),
           ),
         ),
       ),
