@@ -487,9 +487,8 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       locationScopeKeyFilter: widget.locationScopeKey,
     );
     final flat = flattenNavalTree(tree);
-    _visibleScopedFleetIds
-      ..clear()
-      ..addAll(flat.map((row) => row.fleetId));
+    _visibleScopedFleetIds.clear();
+    _visibleScopedFleetIds.addAll(flat.map((row) => row.fleetId));
     final hasAny = tree.any(
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
     );
