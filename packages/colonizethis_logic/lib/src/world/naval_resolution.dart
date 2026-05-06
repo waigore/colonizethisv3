@@ -14,17 +14,15 @@ import 'naval.dart';
 import 'player_view.dart';
 import 'province_lookup.dart';
 import 'sea_zone_identity.dart';
+import 'tile_key_coordinates.dart';
 import 'topology_helpers.dart';
 
 final _log = packageLogger();
 
 ({int x, int y})? _xyFromTileKey(String tileKey) {
-  final parts = tileKey.split('|');
-  if (parts.length < 4) return null;
-  final x = int.tryParse(parts[parts.length - 2]);
-  final y = int.tryParse(parts[parts.length - 1]);
-  if (x == null || y == null) return null;
-  return (x: x, y: y);
+  final coords = parseTileKeyCoordinates(tileKey);
+  if (coords == null) return null;
+  return (x: coords.x, y: coords.y);
 }
 
 /// Canonical key used for sea-zone buckets in
@@ -354,7 +352,8 @@ Map<String, Map<String, String>> _revealTilesAfterMoveToSeaZone({
   List<Fleet> fleets,
   Map<String, Fleet> fleetById,
   Map<String, Map<String, String>> visibilityByTile,
-}) _applyDockNavalMoveOrder({
+})
+_applyDockNavalMoveOrder({
   required Game game,
   required MapTopology topology,
   required List<Fleet> fleets,
@@ -367,19 +366,31 @@ Map<String, Map<String, String>> _revealTilesAfterMoveToSeaZone({
 }) {
   final portProvinceId = order.destinationPortProvinceId!;
   if (!fleet.isAtSea || fleet.seaZoneId == null) {
-    return (fleets: fleets, fleetById: fleetById, visibilityByTile: visibilityByTile);
+    return (
+      fleets: fleets,
+      fleetById: fleetById,
+      visibilityByTile: visibilityByTile,
+    );
   }
   final fullProvinceId = toFullProvinceId(fleet.regionId, portProvinceId);
   final province = game.worldState.tryGetProvince(fullProvinceId);
   if (province == null || province.ownerId != playerId) {
-    return (fleets: fleets, fleetById: fleetById, visibilityByTile: visibilityByTile);
+    return (
+      fleets: fleets,
+      fleetById: fleetById,
+      visibilityByTile: visibilityByTile,
+    );
   }
   final adjacentSeaZones = seaZoneIdsAdjacentToProvince(
     topology,
     fullProvinceId,
   );
   if (!adjacentSeaZones.contains(fleet.seaZoneId)) {
-    return (fleets: fleets, fleetById: fleetById, visibilityByTile: visibilityByTile);
+    return (
+      fleets: fleets,
+      fleetById: fleetById,
+      visibilityByTile: visibilityByTile,
+    );
   }
 
   var nextVis = _revealProvinceTilesForPlayer(
@@ -411,7 +422,11 @@ Map<String, Map<String, String>> _revealTilesAfterMoveToSeaZone({
         .toList();
     fleetById[homeFleetId] = updatedHome;
     fleetById.remove(fleet.id);
-    return (fleets: nextFleets, fleetById: fleetById, visibilityByTile: nextVis);
+    return (
+      fleets: nextFleets,
+      fleetById: fleetById,
+      visibilityByTile: nextVis,
+    );
   }
 
   final portRegionId = ProvinceId.regionIdFrom(fullProvinceId);
@@ -430,7 +445,11 @@ Map<String, Map<String, String>> _revealTilesAfterMoveToSeaZone({
   if (idx >= 0) {
     final nextFleets = List<Fleet>.from(fleets)..[idx] = newFleet;
     fleetById[fleet.id] = newFleet;
-    return (fleets: nextFleets, fleetById: fleetById, visibilityByTile: nextVis);
+    return (
+      fleets: nextFleets,
+      fleetById: fleetById,
+      visibilityByTile: nextVis,
+    );
   }
   return (fleets: fleets, fleetById: fleetById, visibilityByTile: nextVis);
 }
@@ -439,7 +458,8 @@ Map<String, Map<String, String>> _revealTilesAfterMoveToSeaZone({
   List<Fleet> fleets,
   Map<String, Fleet> fleetById,
   Map<String, Map<String, String>> visibilityByTile,
-}) _applySeaNavalMoveOrder({
+})
+_applySeaNavalMoveOrder({
   required Game game,
   required MapTopology topology,
   required List<Fleet> fleets,
@@ -451,17 +471,29 @@ Map<String, Map<String, String>> _revealTilesAfterMoveToSeaZone({
 }) {
   final destZoneId = order.destinationSeaZoneId;
   if (destZoneId == null || destZoneId.isEmpty) {
-    return (fleets: fleets, fleetById: fleetById, visibilityByTile: visibilityByTile);
+    return (
+      fleets: fleets,
+      fleetById: fleetById,
+      visibilityByTile: visibilityByTile,
+    );
   }
   if (!seaZoneNodeIds(topology).contains(destZoneId)) {
-    return (fleets: fleets, fleetById: fleetById, visibilityByTile: visibilityByTile);
+    return (
+      fleets: fleets,
+      fleetById: fleetById,
+      visibilityByTile: visibilityByTile,
+    );
   }
   if (!_navalMoveDestinationIsReachable(
     topology: topology,
     fleet: fleet,
     destZoneId: destZoneId,
   )) {
-    return (fleets: fleets, fleetById: fleetById, visibilityByTile: visibilityByTile);
+    return (
+      fleets: fleets,
+      fleetById: fleetById,
+      visibilityByTile: visibilityByTile,
+    );
   }
 
   final destRegionId = regionIdForSeaZone(topology, destZoneId);
@@ -642,18 +674,10 @@ Game _applyNavalBattleVictoryDossierAndDialogue({
   if (victorId == null || loserId == null) return state;
 
   var next = state;
-  final evidence = evidenceForNavalBattleVictory(
-    next,
-    victorId,
-    loserId,
-    turn,
-  );
+  final evidence = evidenceForNavalBattleVictory(next, victorId, loserId, turn);
   if (evidence.isNotEmpty) {
     next = next.copyWith(
-      dossierEvidenceEntries: [
-        ...next.dossierEvidenceEntries,
-        ...evidence,
-      ],
+      dossierEvidenceEntries: [...next.dossierEvidenceEntries, ...evidence],
     );
   }
   final dialogueSeed =
