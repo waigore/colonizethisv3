@@ -1,7 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
 import 'army_migration.dart';
 import 'civilian_tile_occupancy.dart';
 import 'civilian_ownership_legality.dart';
@@ -129,9 +128,13 @@ void _validateCanonicalTransfer(
 
   final canonicalId = row.canonicalProvinceId;
   final regionId = row.province.regionId;
-  final region = regionId == kRegionOldWorld
-      ? game.worldState.oldWorld
-      : game.worldState.newWorld;
+  final region = regionDataForId(game.worldState, regionId);
+  if (region == null) {
+    throw StateError(
+      'Canonical province transfer: region not found for province '
+      '$canonicalId (regionId=$regionId)',
+    );
+  }
   if (!region.provinces.any((p) => p.id == canonicalId)) {
     throw StateError(
       'Canonical province transfer: province missing from region data '
@@ -190,9 +193,13 @@ _applyCanonicalSingleProvinceOwnershipTransferCore(
   )!;
   final canonicalId = row.canonicalProvinceId;
   final regionId = row.province.regionId;
-  final region = regionId == kRegionOldWorld
-      ? game.worldState.oldWorld
-      : game.worldState.newWorld;
+  final region = regionDataForId(game.worldState, regionId);
+  if (region == null) {
+    throw StateError(
+      'Canonical province transfer: region not found for province '
+      '$canonicalId (regionId=$regionId)',
+    );
+  }
 
   final pIdx = region.provinces.indexWhere((p) => p.id == canonicalId);
   if (pIdx < 0) {
@@ -237,7 +244,10 @@ _applyCanonicalSingleProvinceOwnershipTransferCore(
     newOwnerId,
   );
 
-  final newRegion = RegionData(provinces: updatedProvinces, units: updatedUnits);
+  final newRegion = RegionData(
+    provinces: updatedProvinces,
+    units: updatedUnits,
+  );
 
   var nextWs = game.worldState.copyWith(
     fleets: updatedFleets,
@@ -308,9 +318,13 @@ applyCanonicalSingleProvinceOwnershipTransferWithResult(
   )!;
   final canonicalId = row.canonicalProvinceId;
   final regionId = row.province.regionId;
-  final region = regionId == kRegionOldWorld
-      ? game.worldState.oldWorld
-      : game.worldState.newWorld;
+  final region = regionDataForId(game.worldState, regionId);
+  if (region == null) {
+    throw StateError(
+      'Canonical province transfer: region not found for province '
+      '$canonicalId (regionId=$regionId)',
+    );
+  }
 
   var regimentsTransferred = 0;
   for (final u in region.units) {
