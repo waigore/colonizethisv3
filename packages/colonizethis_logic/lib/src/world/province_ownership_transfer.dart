@@ -237,21 +237,14 @@ _applyCanonicalSingleProvinceOwnershipTransferCore(
     newOwnerId,
   );
 
-  final newRegion = RegionData(
-    provinces: updatedProvinces,
-    units: updatedUnits,
-  );
+  final newRegion = RegionData(provinces: updatedProvinces, units: updatedUnits);
 
   var nextWs = game.worldState.copyWith(
     fleets: updatedFleets,
     purchasedTilesByTileKey: purchasedAfter,
     spyRevealTurnsByPlayer: spyNext,
   );
-  if (regionId == kRegionOldWorld) {
-    nextWs = nextWs.copyWith(oldWorld: newRegion);
-  } else {
-    nextWs = nextWs.copyWith(newWorld: newRegion);
-  }
+  nextWs = nextWs.updateRegionById(regionId, (_) => newRegion);
 
   var nextGame = game.copyWith(worldState: nextWs);
 
