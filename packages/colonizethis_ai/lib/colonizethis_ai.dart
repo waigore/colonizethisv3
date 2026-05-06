@@ -1,6 +1,7 @@
 // AI behavior, planning, personalities. SPEC/ai/ai-architecture.md, SPEC/program/ai-systems-impl.md.
 
-export 'package:colonizethis_data/colonizethis_data.dart' show kPortraitMoodValues;
+export 'package:colonizethis_data/colonizethis_data.dart'
+    show kPortraitMoodValues;
 export 'package:colonizethis_models/colonizethis_models.dart'
     show
         AIConfig,
@@ -11,6 +12,7 @@ export 'package:colonizethis_models/colonizethis_models.dart'
         StrategicOrderResult;
 export 'src/dossier.dart';
 export 'src/domain_planners.dart';
+export 'src/diplomacy_planner.dart';
 export 'src/economy_planner.dart';
 export 'src/full_ai_planner.dart';
 export 'src/goal_manager.dart';

@@ -1,9 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'ai_random_utils.dart';
 import 'hidden_agenda.dart';
 import 'perception.dart';
 
@@ -19,9 +18,10 @@ enum StrategicGoal { defend, expand, conquer, trade, tech, diplomacy }
 StrategicGoal selectPrimaryGoal(
   AIWorldSnapshot snapshot,
   AIConfig config,
-  int goalSeed,
-  {required String nationId, required int turn}
-) {
+  int goalSeed, {
+  required String nationId,
+  required int turn,
+}) {
   final weights = getGoalWeightsForLeader(config.personalityId);
   final thresholds = getThresholdsForLeader(config.personalityId);
 
@@ -33,8 +33,8 @@ StrategicGoal selectPrimaryGoal(
   int tech = weights.tech;
   int diplomacy = weights.diplomacy;
 
-  conquer += agendaConquerModifier(config.hiddenAgendaId);
-  diplomacy += agendaDiplomacyModifier(config.hiddenAgendaId);
+  conquer += getAgendaConquerModifier(config.hiddenAgendaId);
+  diplomacy += getAgendaDiplomacyModifier(config.hiddenAgendaId);
   // Personality thresholds: war likelihood boosts conquer; peace/alliance boost diplomacy goal.
   conquer += (thresholds.warLikelihood - 50);
   diplomacy +=
@@ -68,41 +68,41 @@ StrategicGoal selectPrimaryGoal(
   );
 
   // Weighted random choice using goalSeed.
-  final total = candidates.values.fold<int>(0, (a, b) => a + b);
-  if (total <= 0) return StrategicGoal.expand;
-  var r = math.Random(goalSeed).nextInt(total);
-  StrategicGoal selected = StrategicGoal.expand;
-  for (final e in candidates.entries) {
-    r -= e.value;
-    if (r < 0) {
-      selected = e.key;
-      break;
-    }
-  }
+  final candidateEntries = candidates.entries.toList();
+  final selectedIndex = pickWeightedIndex(
+    candidateEntries.map((e) => e.value).toList(),
+    goalSeed,
+    useIntRoll: true,
+  );
+  final selected = selectedIndex == null
+      ? StrategicGoal.expand
+      : candidateEntries[selectedIndex].key;
   final majorConstraint = switch (selected) {
-    StrategicGoal.defend => snapshot.threats.capitalThreatened
-        ? 'capitalThreatened'
-        : snapshot.threats.atWarWith.isNotEmpty
-            ? 'atWarWith'
-            : 'none',
-    StrategicGoal.expand => snapshot.opportunities.unclaimedProvinces > 0
-        ? 'unclaimedProvinces'
-        : snapshot.economy.workerCount < 3
-            ? 'lowWorkerCount'
-            : 'none',
-    StrategicGoal.conquer => agendaConquerModifier(config.hiddenAgendaId) != 0
-        ? 'hiddenAgendaConquerModifier'
-        : (thresholds.warLikelihood - 50) != 0
-            ? 'warLikelihoodThreshold'
-            : 'none',
+    StrategicGoal.defend =>
+      snapshot.threats.capitalThreatened
+          ? 'capitalThreatened'
+          : snapshot.threats.atWarWith.isNotEmpty
+          ? 'atWarWith'
+          : 'none',
+    StrategicGoal.expand =>
+      snapshot.opportunities.unclaimedProvinces > 0
+          ? 'unclaimedProvinces'
+          : snapshot.economy.workerCount < 3
+          ? 'lowWorkerCount'
+          : 'none',
+    StrategicGoal.conquer =>
+      getAgendaConquerModifier(config.hiddenAgendaId) != 0
+          ? 'hiddenAgendaConquerModifier'
+          : (thresholds.warLikelihood - 50) != 0
+          ? 'warLikelihoodThreshold'
+          : 'none',
     StrategicGoal.diplomacy =>
-      agendaDiplomacyModifier(config.hiddenAgendaId) != 0
+      getAgendaDiplomacyModifier(config.hiddenAgendaId) != 0
           ? 'hiddenAgendaDiplomacyModifier'
-          : ((thresholds.peaceTendency + thresholds.allianceTendency) ~/
-                      2) !=
-                  50
-              ? 'peaceAllianceTendency'
-              : 'none',
+          : ((thresholds.peaceTendency + thresholds.allianceTendency) ~/ 2) !=
+                50
+          ? 'peaceAllianceTendency'
+          : 'none',
     _ => 'none',
   };
   _log.i(
