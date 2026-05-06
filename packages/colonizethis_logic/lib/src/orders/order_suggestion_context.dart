@@ -4,9 +4,27 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'draft_orders_mutations.dart';
 import 'order_engine.dart';
-import 'order_suggestion_accept_probe.dart';
 
 final orderSuggestionLog = packageLogger('order_suggestion');
+
+bool _orderSuggestionTrackWorkOrderAcceptanceProbes = false;
+int _orderSuggestionWorkOrderAcceptanceProbeCount = 0;
+
+/// Test hook: enable counting of order-engine work-order acceptance probes.
+void setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests(bool enabled) {
+  _orderSuggestionTrackWorkOrderAcceptanceProbes = enabled;
+  _orderSuggestionWorkOrderAcceptanceProbeCount = 0;
+}
+
+/// Test hook: probes counted while tracking is enabled (Refs #2133).
+int get orderSuggestionWorkOrderAcceptanceProbeCountForTests =>
+    _orderSuggestionWorkOrderAcceptanceProbeCount;
+
+void bumpOrderSuggestionWorkOrderAcceptanceProbeIfTracking() {
+  if (_orderSuggestionTrackWorkOrderAcceptanceProbes) {
+    _orderSuggestionWorkOrderAcceptanceProbeCount++;
+  }
+}
 
 bool isMoveOrderAccepted(
   Game game,
@@ -51,7 +69,7 @@ bool isWorkOrderAccepted(
   WorkOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  OrderSuggestionAcceptProbe.bump();
+  bumpOrderSuggestionWorkOrderAcceptanceProbeIfTracking();
   final engine = OrderEngine(initialOrders: baseOrders);
   final result = engine.addWorkOrderWithContext(
     game,

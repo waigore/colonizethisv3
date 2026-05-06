@@ -6,11 +6,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/ct_e2e.dart';
 import '../../../config/ct_e2e_last_panel_snapshot.dart';
 import '../../../core/services/app_event_handler_scope.dart';
 import '../../../l10n/l10n.dart';
+import '../../../providers/games_provider.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/resource_icon.dart';
 import 'units/shared/region_section_header.dart';
@@ -18,20 +20,17 @@ import 'units/shared/units_entity_action_row.dart';
 import 'units/shared/units_panel_region_label.dart';
 import 'units/shared/units_panel_shell.dart';
 
-
 /// Panel that lists all civilian units for the human player. SPEC/ui/civilian-units-panel.md.
-
 
 part 'civilian_units_panel_support.dart';
 
-class CivilianUnitsPanel extends StatefulWidget {
+class CivilianUnitsPanel extends ConsumerStatefulWidget {
   const CivilianUnitsPanel({
     super.key,
     required this.game,
     required this.humanPlayerId,
     required this.bus,
     this.currentOrders = const Orders(),
-    this.availableWorkTargets = const {},
     this.tileScopeTileKey,
     this.initialSelectedUnitId,
     this.explorerOnly = false,
@@ -47,9 +46,6 @@ class CivilianUnitsPanel extends StatefulWidget {
 
   /// Current-turn orders (to show Assign only when no pending work, Cancel when pending or in-progress).
   final Orders currentOrders;
-
-  /// Available work targets per unit (computed at turn start). Work targets not in this list are grayed out.
-  final Map<String, List<String>> availableWorkTargets;
 
   /// Optional tile key (`regionId|provinceId|x|y`) for tile-scoped mode.
   final String? tileScopeTileKey;
@@ -73,10 +69,10 @@ class CivilianUnitsPanel extends StatefulWidget {
   final String? buildImprovementShortcutTargetTileKey;
 
   @override
-  State<CivilianUnitsPanel> createState() => _CivilianUnitsPanelState();
+  ConsumerState<CivilianUnitsPanel> createState() => _CivilianUnitsPanelState();
 }
 
-class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
+class _CivilianUnitsPanelState extends ConsumerState<CivilianUnitsPanel> {
   String? _selectedUnitId;
 
   @override
@@ -224,7 +220,6 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
               unit: u,
               provinceNames: provinceNames,
               currentOrders: widget.currentOrders,
-              availableWorkTargets: widget.availableWorkTargets,
               humanPlayerId: widget.humanPlayerId,
               bus: widget.bus,
               isTileScope: tileScopeActive,
@@ -251,7 +246,6 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
               unit: u,
               provinceNames: provinceNames,
               currentOrders: widget.currentOrders,
-              availableWorkTargets: widget.availableWorkTargets,
               humanPlayerId: widget.humanPlayerId,
               bus: widget.bus,
               isTileScope: tileScopeActive,
@@ -274,12 +268,16 @@ class _CivilianUnitsPanelState extends State<CivilianUnitsPanel> {
       emptyMessage: l10n.civilian_units_empty,
     );
     if (kCtE2EEnabled) {
+      final snapshotTargets = <String, List<String>>{
+        for (final u in allScopedUnits)
+          u.id: ref.read(availableWorkTargetIdsForUnitProvider(u.id)),
+      };
       updateCtE2eCivilianPanelSnapshotIfEnabled(
         CtE2eCivilianPanelSnapshot(
           game: widget.game,
           humanPlayerId: widget.humanPlayerId,
           currentOrders: widget.currentOrders,
-          availableWorkTargets: widget.availableWorkTargets,
+          availableWorkTargets: snapshotTargets,
           tileScopeTileKey: widget.tileScopeTileKey,
           initialSelectedUnitId: widget.initialSelectedUnitId,
           resolvedSelectedUnitId: resolvedSelectedUnitId,

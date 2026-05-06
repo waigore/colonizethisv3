@@ -2,54 +2,48 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/player_view.dart';
-import '../world/unit_lookup.dart';
 import 'order_suggestion_build_research.dart';
+import 'order_suggestion_helpers.dart';
 
-/// Per-unit work-target availability for UI pre-assign gating (Refs #2133).
-///
-/// Populated via [getValidWorkOrderTileKeysWithVisibility] per allowed target;
-/// short-circuits when the unit already has pending draft work.
+/// Per-unit civilian work availability for UI (Refs #2133).
+/// SPEC/program/order-suggestions.md § Selected-unit availability.
 class AvailableWorkTargetsForUnit {
   const AvailableWorkTargetsForUnit({
     required this.unitId,
     required this.assignable,
-    this.blockedReason,
     required this.validTileKeysByTarget,
+    this.blockedReason,
   });
 
   final String unitId;
+
+  /// True when the unit may receive a new draft work order this turn
+  /// (idle, no pending draft work, and at least one allowed target has a valid tile).
   final bool assignable;
+
+  /// When [assignable] is false, a stable token for diagnostics (not user-facing).
   final String? blockedReason;
 
-  /// Non-empty valid tile sets per work target id (e.g. `explore`, `prospect`).
+  /// Non-empty value sets per work target id (only targets with ≥1 valid tile).
   final Map<String, Set<String>> validTileKeysByTarget;
 
-  /// Deterministic target ids the shell may enable for Assign (non-empty sets).
-  List<String> enabledWorkTargetIds() {
-    if (!assignable) return const [];
-    final out = validTileKeysByTarget.entries
-        .where((e) => e.value.isNotEmpty)
-        .map((e) => e.key)
-        .toList()
-      ..sort();
-    return out;
+  /// Sorted work target ids that have at least one valid tile (Assign menu wiring).
+  List<String> availableWorkTargetIdsSorted() {
+    if (validTileKeysByTarget.isEmpty) return const [];
+    final keys =
+        validTileKeysByTarget.entries
+            .where((e) => e.value.isNotEmpty)
+            .map((e) => e.key)
+            .toList()
+          ..sort();
+    return keys;
   }
 }
 
-bool _unitHasPendingDraftWorkOrder(
-  String playerId,
-  Orders orders,
-  String unitId,
-) {
-  final list = orders.workOrdersByPlayerId[playerId] ?? const [];
-  return list.any((o) => o.unitId == unitId);
-}
-
-/// Selected-unit availability for civilian work assignment UI (Refs #2133).
+/// Selected-unit civilian work availability for the human shell (Refs #2133).
 ///
-/// Scopes computation to [unitId] only; does not enumerate other units.
-/// When [workTargetFilter] is non-null, only that target is evaluated (must be
-/// allowed for the unit type).
+/// Does not enumerate broad per-player [suggestWorkOrders] candidate rows.
+/// When [workTargetFilter] is non-null, only that target is evaluated.
 AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
   required PlayerView view,
   required Game game,
@@ -60,44 +54,35 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
   String? workTargetFilter,
 }) {
   final playerId = view.playerId;
-  final unit = allUnitsFromWorld(
-    game.worldState,
-  ).where((u) => u.id == unitId).firstOrNull;
-  if (unit == null || unit.ownerId != playerId) {
+  Unit? unit;
+  for (final u in view.ownUnits) {
+    if (u.id == unitId) {
+      unit = u;
+      break;
+    }
+  }
+  if (unit == null) {
     return AvailableWorkTargetsForUnit(
       unitId: unitId,
       assignable: false,
-      blockedReason: 'unit_not_found',
       validTileKeysByTarget: const {},
+      blockedReason: 'unit_not_in_player_view',
     );
   }
   if (unit.currentWork != null) {
     return AvailableWorkTargetsForUnit(
       unitId: unitId,
       assignable: false,
-      blockedReason: 'current_work',
       validTileKeysByTarget: const {},
+      blockedReason: 'unit_has_current_work',
     );
   }
-  if (_unitHasPendingDraftWorkOrder(playerId, currentOrders, unitId)) {
+  if (playerHasPendingWorkOrderForUnit(currentOrders, playerId, unitId)) {
     return AvailableWorkTargetsForUnit(
       unitId: unitId,
       assignable: false,
-      blockedReason: 'pending_draft_work',
       validTileKeysByTarget: const {},
-    );
-  }
-
-  final isExplorer = isExplorerUnit(unit.type);
-  final isWorker = isCivilianWorkerUnit(unit.type);
-  final isSpy = isSpyUnit(unit.type);
-  final isMerchant = isMerchantUnit(unit.type);
-  if (!isExplorer && !isWorker && !isSpy && !isMerchant) {
-    return AvailableWorkTargetsForUnit(
-      unitId: unitId,
-      assignable: false,
-      blockedReason: 'not_applicable',
-      validTileKeysByTarget: const {},
+      blockedReason: 'pending_draft_work_order',
     );
   }
 
@@ -106,28 +91,14 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
     return AvailableWorkTargetsForUnit(
       unitId: unitId,
       assignable: false,
-      blockedReason: 'no_targets',
       validTileKeysByTarget: const {},
+      blockedReason: 'no_work_targets_for_unit_type',
     );
   }
 
-  final Iterable<String> targetsToScan;
-  if (workTargetFilter != null) {
-    if (!allowed.contains(workTargetFilter)) {
-      return AvailableWorkTargetsForUnit(
-        unitId: unitId,
-        assignable: false,
-        blockedReason: 'target_not_allowed',
-        validTileKeysByTarget: const {},
-      );
-    }
-    targetsToScan = [workTargetFilter];
-  } else {
-    targetsToScan = allowed;
-  }
-
-  final map = <String, Set<String>>{};
-  for (final target in targetsToScan) {
+  final byTarget = <String, Set<String>>{};
+  for (final target in allowed) {
+    if (workTargetFilter != null && target != workTargetFilter) continue;
     final tiles = getValidWorkOrderTileKeysWithVisibility(
       game: game,
       topology: topology,
@@ -137,14 +108,16 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
       currentOrders: currentOrders,
       tileMapByRegion: tileMapByRegion,
     );
-    map[target] = tiles;
+    if (tiles.isNotEmpty) {
+      byTarget[target] = tiles;
+    }
   }
 
-  final assignable = map.values.any((s) => s.isNotEmpty);
+  final assignable = byTarget.values.any((s) => s.isNotEmpty);
   return AvailableWorkTargetsForUnit(
     unitId: unitId,
     assignable: assignable,
-    blockedReason: assignable ? null : 'no_valid_tile',
-    validTileKeysByTarget: map,
+    validTileKeysByTarget: byTarget,
+    blockedReason: assignable ? null : 'no_valid_work_targets',
   );
 }

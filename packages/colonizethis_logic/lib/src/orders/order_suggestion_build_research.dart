@@ -8,7 +8,6 @@ import '../world/unit_lookup.dart';
 import 'build_rail_work_rules.dart';
 import 'draft_orders_mutations.dart';
 import 'order_engine.dart';
-import 'order_suggestion_accept_probe.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
 import 'orders_application_helpers.dart';
@@ -197,7 +196,7 @@ bool _isWorkOrderAccepted(
   WorkOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  OrderSuggestionAcceptProbe.bump();
+  bumpOrderSuggestionWorkOrderAcceptanceProbeIfTracking();
   final engine = OrderEngine(initialOrders: baseOrders);
   final result = engine.addWorkOrderWithContext(
     game,
@@ -226,11 +225,12 @@ Set<String> getValidWorkOrderTileKeys(
   ).where((u) => u.id == unitId).firstOrNull;
   if (unit == null || unit.ownerId != playerId) return {};
   if (unit.currentWork != null) return {};
-  final pendingWork =
-      currentOrders.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
-  final pendingForUnit = pendingWork.where((o) => o.unitId == unitId).toList();
-  if (pendingForUnit.isNotEmpty &&
-      pendingForUnit.first.target != workTarget) {
+  if (pendingDraftWorkOrderBlocksTileEnumerationForTarget(
+    currentOrders,
+    playerId,
+    unitId,
+    workTarget,
+  )) {
     return {};
   }
   if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) return {};
@@ -299,22 +299,21 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     );
     return {};
   }
-  final playerId = view.playerId;
   if (unit.currentWork != null) {
     orderSuggestionLog.d(
       'getValidWorkOrderTileKeysWithVisibility unit has current work',
     );
     return {};
   }
-  final pendingWork =
-      currentOrders.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
-  final pendingForUnit = pendingWork.where((o) => o.unitId == unitId).toList();
-  if (pendingForUnit.isNotEmpty &&
-      pendingForUnit.first.target != workTarget) {
+  if (pendingDraftWorkOrderBlocksTileEnumerationForTarget(
+    currentOrders,
+    view.playerId,
+    unitId,
+    workTarget,
+  )) {
     orderSuggestionLog.d(
       'getValidWorkOrderTileKeysWithVisibility short_circuit pending draft '
-      'work for other target unit=$unitId pending=${pendingForUnit.first.target} '
-      'requested=$workTarget',
+      'other target unit=$unitId requested=$workTarget',
     );
     return {};
   }
@@ -328,6 +327,8 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   orderSuggestionLog.d(
     'getValidWorkOrderTileKeysWithVisibility unit=${unit.id} type=${unit.type} workTarget=$workTarget',
   );
+
+  final playerId = view.playerId;
 
   final reservedForPicker = devExclusiveReservedTileKeysForPlayer(
     game,
@@ -385,7 +386,8 @@ Set<String> _partiallyRevealedProvinceCacheForPlayer({
   required PlayerView view,
 }) {
   final cached = <String>{};
-  for (final regionEntry in game.worldState.tileKeysByRegionAndProvince.entries) {
+  for (final regionEntry
+      in game.worldState.tileKeysByRegionAndProvince.entries) {
     for (final provinceEntry in regionEntry.value.entries) {
       final provinceId = provinceEntry.key;
       if (!ProvinceId.isPrefixed(provinceId)) continue;
@@ -397,7 +399,10 @@ Set<String> _partiallyRevealedProvinceCacheForPlayer({
   return cached;
 }
 
-bool _hasMixedKnownAndUnknownVisibility(PlayerView view, List<String> tileKeys) {
+bool _hasMixedKnownAndUnknownVisibility(
+  PlayerView view,
+  List<String> tileKeys,
+) {
   var hasKnown = false;
   var hasUnknown = false;
   for (final tileKey in tileKeys) {

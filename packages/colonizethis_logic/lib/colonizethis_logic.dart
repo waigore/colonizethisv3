@@ -65,10 +65,11 @@ export 'src/orders/validators/work_order_cost_calculator.dart';
 export 'src/orders/order_suggestion.dart'
     show
         AvailableWorkTargetsForUnit,
-        OrderSuggestionAcceptProbe,
         getAvailableWorkTargetsForUnit,
         getValidWorkOrderTileKeys,
-        getValidWorkOrderTileKeysWithVisibility;
+        getValidWorkOrderTileKeysWithVisibility,
+        orderSuggestionWorkOrderAcceptanceProbeCountForTests,
+        setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests;
 export 'src/orders/unit_type_helpers.dart'
     show
         devExclusiveReservedTileKeysForPlayer,
