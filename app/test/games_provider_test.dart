@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logger/logger.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
@@ -158,6 +159,87 @@ void main() {
       expected,
     );
   });
+
+  test(
+    'pending draft work: repeated availableWorkTarget reads do not log '
+    'per-unit work order rejection spam (Refs #2133)',
+    () {
+      setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests(true);
+      addTearDown(
+        () => setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests(false),
+      );
+
+      final logMessages = <String>[];
+      void onLog(LogEvent e) {
+        final m = e.message;
+        if (m is String) {
+          logMessages.add(m);
+        }
+      }
+
+      Logger.addLogListener(onLog);
+      addTearDown(() => Logger.removeLogListener(onLog));
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final gameService = container.read(gameServiceProvider);
+      final game = gameService.createNewGame(
+        id: 'games_provider_pending_work_log',
+        config: GameSetupConfig(
+          selectedGreatPowerIds: const ['england', 'france'],
+          continentCount: 1,
+          minorNationCount: 0,
+          tribeCount: 1,
+          numProvincesOldWorld: 4,
+          numProvincesNewWorld: 2,
+        ),
+      );
+
+      final humanId = game.players.firstWhere((p) => p.isHuman).id;
+      Unit? explorer;
+      for (final u in [
+        ...game.worldState.oldWorld.units,
+        ...game.worldState.newWorld.units,
+      ]) {
+        if (u.ownerId == humanId && u.type == kUnitTypeExplorer) {
+          explorer = u;
+          break;
+        }
+      }
+      expect(explorer, isNotNull);
+      final e = explorer!;
+      expect(e.tileKey, isNotNull);
+
+      container.read(currentGameProvider.notifier).setGame(game);
+      container.read(currentOrdersProvider.notifier).replaceAll(
+        Orders(
+          workOrdersByPlayerId: {
+            humanId: [
+              WorkOrder(
+                unitId: e.id,
+                target: kWorkTargetExplore,
+                targetTileKey: e.tileKey!,
+              ),
+            ],
+          },
+        ),
+      );
+
+      for (var i = 0; i < 40; i++) {
+        container.read(availableWorkTargetIdsForUnitProvider(e.id));
+      }
+
+      expect(
+        logMessages.where(
+          (m) => m.contains('Only one work order per unit is allowed each turn'),
+        ),
+        isEmpty,
+        reason: 'Layer A availability must short-circuit before order-engine probing',
+      );
+      expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
+    },
+  );
 
   test('gameIdsWithIntroShownProvider defaults empty and can be updated', () {
     final container = ProviderContainer();
