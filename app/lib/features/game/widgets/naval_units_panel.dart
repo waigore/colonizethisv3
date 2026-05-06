@@ -355,8 +355,10 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   @override
   void didUpdateWidget(covariant NavalUnitsPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.game != widget.game ||
-        oldWidget.draftOrders != widget.draftOrders) {
+    final gameOrDraftChanged =
+        oldWidget.game != widget.game ||
+        oldWidget.draftOrders != widget.draftOrders;
+    if (gameOrDraftChanged) {
       final oldFlat = flattenNavalTree(
         buildNavalTree(
           oldWidget.game,
@@ -431,7 +433,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     );
   }
 
-  void _openMoveFleetDialog(FleetRow row) {
+  Future<void> _openMoveFleetDialog(FleetRow row) async {
     if (row.isHomeFleet) return;
     Fleet? fleet;
     for (final f in widget.game.worldState.fleets) {
@@ -442,7 +444,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     }
     final nonNullFleet = fleet;
     if (nonNullFleet == null) return;
-    showDialog<void>(
+    await showDialog<bool>(
       context: context,
       builder: (ctx) => MoveFleetDialog(
         game: widget.game,
