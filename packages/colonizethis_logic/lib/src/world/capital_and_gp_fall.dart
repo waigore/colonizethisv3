@@ -237,8 +237,9 @@ Game applyGreatPowerFall(
       return RegionData(provinces: updatedProvinces, units: remainingUnits);
     }
 
-    final newOldWorld = transferRegion(game.worldState.oldWorld);
-    final newNewWorld = transferRegion(game.worldState.newWorld);
+    final updatedWorldState = game.worldState.mapBothRegions(
+      (_, region) => transferRegion(region),
+    );
 
     final remainingFleets = game.worldState.fleets
         .where((f) => f.ownerId != playerId)
@@ -246,11 +247,7 @@ Game applyGreatPowerFall(
 
     game = game
         .copyWith(
-          worldState: game.worldState.copyWith(
-            oldWorld: newOldWorld,
-            newWorld: newNewWorld,
-            fleets: remainingFleets,
-          ),
+          worldState: updatedWorldState.copyWith(fleets: remainingFleets),
         )
         .mapPlayers(
           (p) => p.id == playerId
