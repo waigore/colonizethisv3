@@ -22,10 +22,37 @@ void main() {
       );
     });
 
+    test('matches oldWorld.units', () {
+      expect(
+        logicDualRegionProvinceFieldAccessLineMatches(
+          'for (final u in game.worldState.oldWorld.units) {',
+        ),
+        isTrue,
+      );
+    });
+
+    test('matches newWorld.units', () {
+      expect(
+        logicDualRegionProvinceFieldAccessLineMatches(
+          'game.worldState.newWorld.units',
+        ),
+        isTrue,
+      );
+    });
+
     test('ignores allProvinces', () {
       expect(
         logicDualRegionProvinceFieldAccessLineMatches(
           'for (final p in allProvinces(game.worldState)) {',
+        ),
+        isFalse,
+      );
+    });
+
+    test('ignores allUnits', () {
+      expect(
+        logicDualRegionProvinceFieldAccessLineMatches(
+          'for (final u in allUnits(game.worldState)) {',
         ),
         isFalse,
       );
