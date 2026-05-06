@@ -17,6 +17,8 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
   final List<ct_models.GameToUIEvent> _pendingPlayerTurnEvents = [];
   List<ct_models.GameToUIEvent> _resolvedPlayerTurnEvents = const [];
+  bool _isTurnResolving = false;
+  String _turnResolutionPhaseText = 'Resolving turn...';
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode _baseLayerDisplayMode =
@@ -462,6 +464,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   }
 
   Future<void> _onNextTurn() async {
+    if (_isTurnResolving) {
+      return;
+    }
     final game = ref.read(currentGameProvider);
     if (game == null) return;
 
@@ -474,9 +479,60 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
     final service = ref.read(gameServiceProvider);
     final orders = ref.read(currentOrdersProvider);
-    final newGame = service.nextTurn(game, orders: orders);
-    ref.read(currentGameProvider.notifier).setGame(newGame);
-    ref.read(currentOrdersProvider.notifier).clear();
+    final mapData = service.getMapData(game.id);
+    if (mapData == null) {
+      throw StateError('Missing required map data for gameId=${game.id}');
+    }
+
+    setState(() {
+      _isTurnResolving = true;
+      _turnResolutionPhaseText = 'Resolving turn...';
+    });
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        useRootNavigator: true,
+        builder: (_) =>
+            TurnResolutionProcessingDialog(phaseText: _turnResolutionPhaseText),
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    try {
+      final result = resolveNextTurnForGameScreen(
+        game: game,
+        orders: orders,
+        topologyForAi: mapData.combinedTopology,
+        tileMapByRegion: mapData.tileMapByRegion,
+        runTurnResolution:
+            ({required ct_models.Orders orders, ct_models.Orders? aiOrders}) =>
+                service.runTurnResolution(
+                  game,
+                  orders: orders,
+                  aiOrders: aiOrders,
+                ),
+      );
+      if (!mounted) {
+        return;
+      }
+      applyTurnResolutionResult(ref, result);
+    } catch (_) {
+      if (mounted) {
+        final failureMessage = appL10n(context).game_turnResolutionFailedMessage;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failureMessage)));
+      }
+      rethrow;
+    } finally {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isTurnResolving = false;
+      });
+      Navigator.of(context, rootNavigator: true).maybePop();
+    }
   }
 
   void _e2eSelectFirstValidWorkTargetTile() {

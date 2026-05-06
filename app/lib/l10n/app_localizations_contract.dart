@@ -84,6 +84,12 @@ abstract class AppLocalizations {
   /// Body text of the end-turn confirmation dialog.
   String game_nextTurnConfirm_body(int turn);
 
+  /// Title of the modal shown while next-turn resolution runs.
+  String get game_turnResolutionProcessingTitle;
+
+  /// Snackbar text shown when turn resolution fails.
+  String get game_turnResolutionFailedMessage;
+
   /// Generic 'No' button label.
   String get common_no;
 

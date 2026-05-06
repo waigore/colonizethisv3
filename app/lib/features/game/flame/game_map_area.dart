@@ -38,6 +38,9 @@ import 'debug_console_overlay_panel.dart';
 import 'game_map_area_state_logic.dart';
 import 'per_player_work_target_selection_cache.dart';
 import 'next_turn_confirmation_dialog.dart';
+import 'turn_resolution_flow.dart';
+import 'turn_resolution_processing_dialog.dart';
+import 'turn_resolution_result_applier.dart';
 import '../utils/map_location_resolver.dart';
 import '../widgets/player_turn_event_feed.dart';
 
@@ -56,5 +59,4 @@ class GameMapArea extends ConsumerStatefulWidget {
 }
 
 class _GameMapAreaState extends ConsumerState<GameMapArea>
-    with _GameMapAreaStatePart1, _GameMapAreaStatePart2 {
-}
+    with _GameMapAreaStatePart1, _GameMapAreaStatePart2 {}
