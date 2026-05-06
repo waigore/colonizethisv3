@@ -250,11 +250,9 @@ void _removeBlockadedPortTilesExceptCapital({
   required String capitalProvinceId,
 }) {
   for (final key in connected.toList()) {
-    final parts = key.split('|');
-    if (parts.length < 2) continue;
-    final fullProvinceId = parts.length >= 3
-        ? '${parts[0]}|${parts[1]}'
-        : parts[0];
+    final coords = parseTileKeyCoordinates(key);
+    if (coords == null) continue;
+    final fullProvinceId = '${coords.regionId}|${coords.provinceLocalId}';
     if (!blockadedPortProvinces.contains(fullProvinceId)) continue;
     if (fullProvinceId == capitalProvinceId) continue;
     connected.remove(key);
@@ -306,9 +304,9 @@ ConnectivityResult _connectedTilesForPlayer({
   for (final k in connected) {
     final info = portInfo[k];
     if (info == null) continue;
-    final parts = k.split('|');
-    if (parts.isEmpty) continue;
-    if (parts[0] == capitalRegionId) capitalRegionPortKeys.add(k);
+    final coords = parseTileKeyCoordinates(k);
+    if (coords == null) continue;
+    if (coords.regionId == capitalRegionId) capitalRegionPortKeys.add(k);
   }
 
   final seaConnectedPortKeys = _seaConnectedPortKeysForCapital(

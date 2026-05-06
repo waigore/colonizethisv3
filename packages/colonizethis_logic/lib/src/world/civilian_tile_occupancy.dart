@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../diplomacy/diplomacy_resolver.dart';
 import 'province_lookup.dart';
+import 'tile_key_coordinates.dart';
 
 /// True when [tileKey] is a known land tile: listed in [WorldState.tileKeysByRegionAndProvince],
 /// or (fallback for sparse test worlds) a 4-part key whose enclosing prefixed province exists.
@@ -15,9 +16,9 @@ bool isLandTileKeyForGame(Game game, String tileKey) {
       if (tiles.contains(tileKey)) return true;
     }
   }
-  final parts = tileKey.split('|');
-  if (parts.length == 4) {
-    final provinceId = '${parts[0]}|${parts[1]}';
+  final coords = parseTileKeyCoordinates(tileKey);
+  if (coords != null) {
+    final provinceId = '${coords.regionId}|${coords.provinceLocalId}';
     if (tryGetProvince(ws, provinceId) != null) return true;
   }
   return false;
