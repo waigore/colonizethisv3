@@ -8,6 +8,7 @@ import '../world/province_lookup.dart';
 import '../world/topology_helpers.dart';
 import 'order_engine.dart';
 import 'order_suggestion_context.dart';
+import 'orders_application_helpers.dart';
 
 void _addAcceptedSeaZoneCandidates({
   required Game game,
@@ -503,10 +504,10 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
 
   for (final entry in view.visibilityByTile.entries) {
     if (entry.value == VisibilityLevel.unknown) continue;
-    final parts = entry.key.split('|');
-    if (parts.length != 4) continue;
-    final regionId = parts[0];
-    final provinceLocalId = parts[1];
+    final parsed = parseTileKeyCoordinates(entry.key);
+    if (parsed == null) continue;
+    final regionId = parsed.regionId;
+    final provinceLocalId = parsed.provinceLocalId;
     final provinceId = ProvinceId.full(regionId, provinceLocalId);
     final province = view.provinceByRegionAndId(regionId, provinceId);
     final ownerId = province?.ownerId;
