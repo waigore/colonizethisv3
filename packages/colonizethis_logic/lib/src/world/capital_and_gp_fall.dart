@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../setup/capital_choice.dart';
 import '../setup/town_capital_occupancy.dart';
 import 'player_state_pipeline.dart';
+import 'port_seaboard_registry_key.dart';
 import 'province_lookup.dart';
 import 'capital_reassignment_fatal.dart';
 
@@ -198,11 +199,9 @@ Game applyGreatPowerFall(
 
   final portsByProvince = <String, List<String>>{};
   game.worldState.portsByProvinceSeaboard.forEach((key, _) {
-    final parts = key.split('|');
-    if (parts.length >= 3) {
-      final provinceId = '${parts[0]}|${parts[1]}';
-      portsByProvince.putIfAbsent(provinceId, () => []).add(key);
-    }
+    final decoded = decodePortSeaboardRegistryKey(key);
+    if (decoded == null || !decoded.isPrefixedKey) return;
+    portsByProvince.putIfAbsent(decoded.fullProvinceId, () => []).add(key);
   });
 
   for (final player in game.players) {

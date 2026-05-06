@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../utils/graph_traversal.dart';
 import 'naval.dart';
+import 'port_seaboard_registry_key.dart';
 import 'province_lookup.dart';
 import 'tile_key_coordinates.dart';
 import 'topology_helpers.dart';
@@ -203,14 +204,9 @@ Set<String> _ownedProvinceIdsForPlayer(Game game, String playerId) {
 Map<String, (String, String)> _portToProvinceSeaZone(WorldState worldState) {
   final out = <String, (String, String)>{};
   for (final e in worldState.portsByProvinceSeaboard.entries) {
-    final key = e.key;
-    final tileKey = e.value;
-    final parts = key.split('|');
-    if (parts.length >= 3) {
-      out[tileKey] = ('${parts[0]}|${parts[1]}', parts[2]);
-    } else if (parts.length >= 2) {
-      out[tileKey] = (parts[0], parts[1]);
-    }
+    final decoded = decodePortSeaboardRegistryKey(e.key);
+    if (decoded == null) continue;
+    out[e.value] = (decoded.fullProvinceId, decoded.seaZoneId);
   }
   return out;
 }
@@ -449,7 +445,7 @@ Set<String> _seaConnectedPortKeysForCapital({
     );
     final seaReachable = _seaZonesReachableBySeaPath(topology, capitalSeaZones);
     for (final entry in worldState.portsByProvinceSeaboard.entries) {
-      final portMeta = _decodePortEntry(entry.key);
+      final portMeta = decodePortSeaboardRegistryKey(entry.key);
       if (portMeta == null) continue;
       if (blockadedPortProvinces.contains(portMeta.fullProvinceId)) continue;
       final seaZoneIdForReachable = prefixedTopology && portMeta.isPrefixedKey
@@ -480,33 +476,6 @@ String? _fullProvinceIdFromTileKey(String tileKey) {
   final coords = parseTileKeyCoordinates(tileKey);
   if (coords == null) return null;
   return '${coords.regionId}|${coords.provinceLocalId}';
-}
-
-({
-  String fullProvinceId,
-  String seaZoneId,
-  String regionId,
-  bool isPrefixedKey,
-})?
-_decodePortEntry(String portKey) {
-  final parts = portKey.split('|');
-  if (parts.length >= 3) {
-    return (
-      fullProvinceId: '${parts[0]}|${parts[1]}',
-      seaZoneId: parts[2],
-      regionId: parts[0],
-      isPrefixedKey: true,
-    );
-  }
-  if (parts.length >= 2) {
-    return (
-      fullProvinceId: parts[0],
-      seaZoneId: parts[1],
-      regionId: '',
-      isPrefixedKey: false,
-    );
-  }
-  return null;
 }
 
 /// § Connectivity (Game Rule) Town rule: 4-adjacent to a connected town in the **same** province.
