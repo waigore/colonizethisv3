@@ -451,10 +451,10 @@ packages:
     dependency: transitive
     description:
       name: inspector
-      sha256: a01ea538b15947a9189835cc910041bab91aea3ad7c421684118aa1040189ded
+      sha256: "60782d94c8851b0eee3ffdfea9fd43e7c37f919b54cb587e4de9da0e09d491b5"
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.0"
+    version: "4.0.0"
   integration_test:
     dependency: transitive
     description: flutter
@@ -1149,10 +1149,10 @@ packages:
     dependency: transitive
     description:
       name: widgetbook
-      sha256: d4723df880c59e5df00da7ee02c5e29faf230d860319547e8fea011821ae93a9
+      sha256: "4ff857b441b7fc43432a69ec6fe56494184c895e36cec502e400648024710b9c"
       url: "https://pub.dev"
     source: hosted
-    version: "3.22.0"
+    version: "3.23.0"
   widgetbook_annotation:
     dependency: transitive
     description:

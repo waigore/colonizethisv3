@@ -13,6 +13,7 @@ import '../world/unit_lookup.dart';
 import 'orders_application_build_phase.dart';
 import 'orders_application_completed_work.dart';
 import 'orders_application_context.dart';
+import 'orders_application_helpers.dart';
 import 'orders_application_work_phase.dart';
 
 /// Order application helpers for build and work phases.
@@ -28,19 +29,10 @@ Game clearUnitCurrentWork(Game game, String unitId) {
   if (unit == null || unit.currentWork == null) return game;
   final regionId = ws.tryGetRegionIdForUnit(unit);
   if (regionId == null) return game;
-  final restoredTile = unit.originTileKey ?? unit.tileKey;
-  final cleared = unit.copyWith(
-    clearCurrentWork: true,
-    status: UnitStatus.idle,
-    tileKey: restoredTile,
-    clearOriginTileKey: true,
-    clearAssignedTileKey: true,
-  );
+  final cleared = cancelUnitWork(unit);
   final updatedWs = ws.mapBothRegions((rid, region) {
     if (rid != regionId) return region;
-    final list = region.units
-        .map((u) => u.id == unitId ? cleared : u)
-        .toList();
+    final list = region.units.map((u) => u.id == unitId ? cleared : u).toList();
     return RegionData(provinces: region.provinces, units: list);
   });
   return game.copyWith(worldState: updatedWs);
@@ -149,9 +141,7 @@ Game applyBuildAndWorkOrders(
   return withWorld.copyWith(
     players: state.work.updatedPlayers,
     worldState: withWorld.worldState
-        .copyWith(
-          purchasedTilesByTileKey: state.work.purchasedTilesByTileKey,
-        )
+        .copyWith(purchasedTilesByTileKey: state.work.purchasedTilesByTileKey)
         .mapBothRegionUnits((regionId, _) {
           return regionId == kRegionOldWorld
               ? state.work.oldUnitsById.values.toList()
@@ -166,12 +156,12 @@ BuildWorkState _applyExploreCompletion(
   String regionId,
 ) {
   final cw = u.currentWork!;
-  final parts = cw.tileKey.split('|');
-  final regionIdFromWork = parts.isNotEmpty ? parts[0] : regionId;
-  final provinceId = parts.length > 1
-      ? parts[1]
-      : ProvinceId.localIdFrom(u.locationProvinceId);
-  final fullProvinceId = parts.length > 1
+  final parsedTarget = parseTileKeyCoordinates(cw.tileKey);
+  final regionIdFromWork = parsedTarget?.regionId ?? regionId;
+  final provinceId =
+      parsedTarget?.provinceLocalId ??
+      ProvinceId.localIdFrom(u.locationProvinceId);
+  final fullProvinceId = parsedTarget != null
       ? ProvinceId.full(regionIdFromWork, provinceId)
       : u.locationProvinceId;
   final tileKeys = landTileKeysForProvinceBucket(
@@ -232,14 +222,7 @@ BuildWorkState _processWorkUnits(
     final purchasedByTile = current.game.worldState.purchasedTilesByTileKey;
     if (purchasedByTile.containsKey(cw.tileKey) &&
         purchasedByTile[cw.tileKey] != u.ownerId) {
-      final restoredTile = u.originTileKey ?? u.tileKey;
-      unitsById[entry.key] = u.copyWith(
-        status: UnitStatus.idle,
-        tileKey: restoredTile,
-        clearCurrentWork: true,
-        clearOriginTileKey: true,
-        clearAssignedTileKey: true,
-      );
+      unitsById[entry.key] = cancelUnitWork(u);
       ordersApplicationLog.d(
         'work cancelled unit=${u.id} reason=tile no longer owned tileKey=${cw.tileKey}',
       );
@@ -250,14 +233,7 @@ BuildWorkState _processWorkUnits(
         cw.workTarget != kWorkTargetExplore &&
         cw.workTarget != kWorkTargetPurchaseLand &&
         !isTileControlledByPlayer(current.game, u.ownerId, cw.tileKey)) {
-      final restoredTile = u.originTileKey ?? u.tileKey;
-      unitsById[entry.key] = u.copyWith(
-        status: UnitStatus.idle,
-        tileKey: restoredTile,
-        clearCurrentWork: true,
-        clearOriginTileKey: true,
-        clearAssignedTileKey: true,
-      );
+      unitsById[entry.key] = cancelUnitWork(u);
       ordersApplicationLog.d(
         'work cancelled unit=${u.id} reason=tile no longer under control tileKey=${cw.tileKey}',
       );

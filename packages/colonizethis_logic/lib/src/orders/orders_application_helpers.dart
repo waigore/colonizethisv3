@@ -4,6 +4,29 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import 'build_rail_work_rules.dart';
 
+/// Canonical tile-key coordinate parser for `regionId|provinceId|x|y`.
+({String regionId, String provinceLocalId, int x, int y})?
+parseTileKeyCoordinates(String tileKey) {
+  final parts = tileKey.split('|');
+  if (parts.length != 4) return null;
+  final x = int.tryParse(parts[2]);
+  final y = int.tryParse(parts[3]);
+  if (x == null || y == null) return null;
+  return (regionId: parts[0], provinceLocalId: parts[1], x: x, y: y);
+}
+
+/// Clears active work state for a unit and restores its pre-assignment tile.
+Unit cancelUnitWork(Unit unit, {String? restoredTile}) {
+  final restored = restoredTile ?? unit.originTileKey ?? unit.tileKey;
+  return unit.copyWith(
+    status: UnitStatus.idle,
+    tileKey: restored,
+    clearCurrentWork: true,
+    clearOriginTileKey: true,
+    clearAssignedTileKey: true,
+  );
+}
+
 /// Helpers for order application. SPEC/program/orders.md, development-resolution.
 /// Used by orders_application for work and build phases.
 

@@ -32,13 +32,11 @@ TileMapState propagateRoadToAdjacentCapitalOrPort({
   var current = tileState;
   if (player == null) return current;
 
-  // Parse the target tile key: regionId|provinceId|x|y
-  final parts = tileKey.split('|');
-  if (parts.length != 4) return current;
-  final targetRegionId = parts[0];
-  final targetX = int.tryParse(parts[2]);
-  final targetY = int.tryParse(parts[3]);
-  if (targetX == null || targetY == null) return current;
+  final parsedTile = parseTileKeyCoordinates(tileKey);
+  if (parsedTile == null) return current;
+  final targetRegionId = parsedTile.regionId;
+  final targetX = parsedTile.x;
+  final targetY = parsedTile.y;
 
   // Get player's capital tile key
   final capitalTileKey = player.capitalTile?.toTileKey();
@@ -100,7 +98,8 @@ typedef _CompletedWorkHandler =
       CurrentWork cw,
       List<Province> Function() getProvinces,
       WorkOrderState Function(WorkOrderState, List<Province>) replaceProvinces,
-      BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
+      BuildWorkState Function(BuildWorkState, Unit, String)
+      applyExploreCompletion,
     );
 
 BuildWorkState dispatchCompletedWorkTarget(
@@ -116,7 +115,14 @@ BuildWorkState dispatchCompletedWorkTarget(
   );
   final handler = _completedWorkTargetHandlers[cw.workTarget];
   if (handler == null) return s;
-  return handler(s, u, cw, getProvinces, replaceProvinces, applyExploreCompletion);
+  return handler(
+    s,
+    u,
+    cw,
+    getProvinces,
+    replaceProvinces,
+    applyExploreCompletion,
+  );
 }
 
 BuildWorkState _completedWorkBuildImprovement(
@@ -241,13 +247,12 @@ BuildWorkState _completedWorkBuildPort(
   if (s.topology == null) {
     return s;
   }
-  final parts = cw.tileKey.split('|');
-  final regionIdFromTile = parts.isNotEmpty
-      ? parts[0]
-      : ProvinceId.regionIdFrom(u.locationProvinceId);
-  final localId = parts.length > 1
-      ? parts[1]
-      : ProvinceId.localIdFrom(u.locationProvinceId);
+  final parsedTile = parseTileKeyCoordinates(cw.tileKey);
+  final regionIdFromTile =
+      parsedTile?.regionId ?? ProvinceId.regionIdFrom(u.locationProvinceId);
+  final localId =
+      parsedTile?.provinceLocalId ??
+      ProvinceId.localIdFrom(u.locationProvinceId);
   final fullProvinceId = ProvinceId.full(regionIdFromTile, localId);
   final seaZoneId = seaZoneIdForProvince(
     s.topology!,
@@ -259,10 +264,7 @@ BuildWorkState _completedWorkBuildPort(
     ..['$fullProvinceId|$seaZoneId'] = cw.tileKey;
   final tileState = s.work.tileState.setRoadLevel(cw.tileKey, 4);
   return s.copyWith(
-    work: s.work.copyWith(
-      portsByProvinceSeaboard: ports,
-      tileState: tileState,
-    ),
+    work: s.work.copyWith(portsByProvinceSeaboard: ports, tileState: tileState),
   );
 }
 
@@ -326,7 +328,9 @@ BuildWorkState _completedWorkBuildRail(
       ),
     );
   }
-  ordersApplicationLog.d('build_rail completion skipped unit=${u.id} reason=$reason');
+  ordersApplicationLog.d(
+    'build_rail completion skipped unit=${u.id} reason=$reason',
+  );
   return s;
 }
 
