@@ -26,12 +26,15 @@ import '../world/unit_lookup.dart';
 
 export 'order_suggestion_api.dart';
 export 'order_suggestion_helpers.dart';
+export 'order_suggestion_accept_probe.dart' show OrderSuggestionAcceptProbe;
 export 'order_suggestion_build_research.dart'
     show
         getValidWorkOrderTileKeys,
         getValidWorkOrderTileKeysWithVisibility,
         suggestBuildOrders,
         suggestResearchOrders;
+export 'order_suggestion_unit_availability.dart'
+    show AvailableWorkTargetsForUnit, getAvailableWorkTargetsForUnit;
 export 'order_suggestion_move_army.dart'
     show
         ArmyMovePickerDestination,

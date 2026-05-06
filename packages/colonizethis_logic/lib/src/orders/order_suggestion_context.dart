@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'draft_orders_mutations.dart';
 import 'order_engine.dart';
+import 'order_suggestion_accept_probe.dart';
 
 final orderSuggestionLog = packageLogger('order_suggestion');
 
@@ -50,6 +51,7 @@ bool isWorkOrderAccepted(
   WorkOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
+  OrderSuggestionAcceptProbe.bump();
   final engine = OrderEngine(initialOrders: baseOrders);
   final result = engine.addWorkOrderWithContext(
     game,

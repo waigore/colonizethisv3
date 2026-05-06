@@ -71,9 +71,10 @@ final currentOrdersProvider = NotifierProvider<CurrentOrdersNotifier, Orders>(
 
 /// Available work targets per civilian unit (unitId → allowed target ids).
 ///
-/// **SPEC/program/order-suggestions.md** and **orders.md**: derived entirely from
-/// [suggestWorkOrders] in `colonizethis_logic` (including dev-exclusive tile
-/// reservations). The app does not compute exclusivity itself.
+/// **SPEC/program/order-suggestions.md** and **orders.md**: derived from
+/// [getAvailableWorkTargetsForUnit] (per-unit, visibility-aware valid tiles) so
+/// panel hot paths do not invoke broad [suggestWorkOrders]. The app does not
+/// compute exclusivity itself.
 final availableWorkTargetsProvider = Provider<Map<String, List<String>>>((ref) {
   final game = ref.watch(currentGameProvider);
   if (game == null) return {};
@@ -82,25 +83,34 @@ final availableWorkTargetsProvider = Provider<Map<String, List<String>>>((ref) {
   final service = ref.watch(gameServiceProvider);
   final mapData = service.getMapData(game.id);
   final topology = mapData?.combinedTopology ?? const MapTopology();
+  final tileMapByRegion = mapData?.tileMapByRegion;
 
   final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
   final view = buildPlayerView(game, topology, humanPlayerId);
 
-  final suggestions = suggestWorkOrders(
-    view,
-    game,
-    topology,
-    orders,
-    tileMapByRegion: mapData?.tileMapByRegion,
-  );
-
-  final byUnitId = <String, List<String>>{};
-  for (final order in suggestions) {
-    byUnitId.putIfAbsent(order.unitId, () => []).add(order.target);
+  final out = <String, List<String>>{};
+  for (final unit in view.ownUnits) {
+    final t = unit.type;
+    if (!isExplorerUnit(t) &&
+        !isCivilianWorkerUnit(t) &&
+        !isSpyUnit(t) &&
+        !isMerchantUnit(t)) {
+      continue;
+    }
+    final availability = getAvailableWorkTargetsForUnit(
+      view: view,
+      game: game,
+      topology: topology,
+      currentOrders: orders,
+      unitId: unit.id,
+      tileMapByRegion: tileMapByRegion,
+    );
+    final enabled = availability.enabledWorkTargetIds();
+    if (enabled.isNotEmpty) {
+      out[unit.id] = enabled;
+    }
   }
-  return {
-    for (final e in byUnitId.entries) e.key: e.value.toSet().toList(),
-  };
+  return out;
 });
 
 /// Tile keys reserved for the human player’s Builder/Engineer/Merchant

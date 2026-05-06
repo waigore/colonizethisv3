@@ -150,6 +150,29 @@ void _addExplorerWorkSuggestionsForUnit({
   required List<WorkOrder> suggestions,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
+  final pendingTargets = existingTargetsByUnit[unit.id];
+  if (pendingTargets != null && pendingTargets.isNotEmpty) {
+    _suggestionWorkLog(
+      unitId: unit.id,
+      unitType: unit.type,
+      unitRegionId: regionId,
+      atProvinceId: provinceId,
+      workTarget: kWorkTargetExplore,
+      outcome: 'excluded',
+      reason: 'duplicate_pending',
+    );
+    _suggestionWorkLog(
+      unitId: unit.id,
+      unitType: unit.type,
+      unitRegionId: regionId,
+      atProvinceId: provinceId,
+      workTarget: kWorkTargetProspect,
+      outcome: 'excluded',
+      reason: 'duplicate_pending',
+    );
+    return;
+  }
+
   final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
   final diplomatic =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ?? const [];
@@ -476,9 +499,24 @@ List<WorkOrder> suggestWorkOrders(
   orderSuggestionLog.d(
     'suggestWorkOrders player=$playerId candidates=${suggestions.length}',
   );
-  orderSuggestionLog.d(
-    'suggestWorkOrders full list ${suggestions.map((o) => "${o.unitId}:${o.target}").toList()}',
-  );
+  const detailCap = 50;
+  if (suggestions.isEmpty) {
+    // no detail line
+  } else if (suggestions.length <= detailCap) {
+    orderSuggestionLog.d(
+      'suggestWorkOrders detail sample '
+      '${suggestions.map((o) => "${o.unitId}:${o.target}").join(", ")}',
+    );
+  } else {
+    final head = suggestions
+        .take(detailCap)
+        .map((o) => '${o.unitId}:${o.target}')
+        .join(', ');
+    orderSuggestionLog.d(
+      'suggestWorkOrders detail truncated '
+      'first_$detailCap of ${suggestions.length}: $head …',
+    );
+  }
   if (suggestions.isEmpty) {
     orderSuggestionLog.w('suggestWorkOrders no candidates player=$playerId');
   }
