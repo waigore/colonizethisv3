@@ -171,4 +171,35 @@ void main() {
       expect(getProvince(world, 'newWorld|n1').displayName, 'Gamma');
     });
   });
+
+  group('WorldState.updateRegionById', () {
+    test('updates oldWorld and preserves newWorld', () {
+      final updated = world.updateRegionById(
+        kRegionOldWorld,
+        (region) => RegionData(
+          provinces: [
+            ...region.provinces,
+            Province(
+              id: 'oldWorld|p3',
+              regionId: 'oldWorld',
+              displayName: 'Delta',
+            ),
+          ],
+          units: region.units,
+        ),
+      );
+
+      expect(updated.oldWorld.provinces.length, 3);
+      expect(updated.oldWorld.provinces.last.id, 'oldWorld|p3');
+      expect(updated.newWorld.provinces, hasLength(1));
+      expect(updated.newWorld.provinces.first.id, 'newWorld|n1');
+    });
+
+    test('throws for unknown region id', () {
+      expect(
+        () => world.updateRegionById('unknownRegion', (region) => region),
+        throwsStateError,
+      );
+    });
+  });
 }

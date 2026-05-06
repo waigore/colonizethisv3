@@ -118,35 +118,44 @@ Game applyBuildAndWorkOrders(
     (w, p) => w.copyWith(newProvinces: p),
   );
 
-  final withWorld = state.game.copyWith(
-    worldState: state.game.worldState
-        .copyWith(
-          tileState: state.work.tileState,
-          playerVisibilityByTile: state.work.visibilityByTile,
-          portsByProvinceSeaboard: state.work.portsByProvinceSeaboard,
-          purchasedTilesByTileKey: state.work.purchasedTilesByTileKey,
-        )
-        .mapBothRegions(
-          (regionId, _) => RegionData(
-            provinces: regionId == kRegionOldWorld
-                ? state.work.oldProvinces
-                : state.work.newProvinces,
-            units: regionId == kRegionOldWorld
-                ? state.work.oldUnitsById.values.toList()
-                : state.work.newUnitsById.values.toList(),
-          ),
-        ),
+  final provincesByRegion = <String, List<Province>>{
+    kRegionOldWorld: state.work.oldProvinces,
+    kRegionNewWorld: state.work.newProvinces,
+  };
+  final unitsByRegion = <String, List<Unit>>{
+    kRegionOldWorld: state.work.oldUnitsById.values.toList(),
+    kRegionNewWorld: state.work.newUnitsById.values.toList(),
+  };
+  var nextWorldState = state.game.worldState.copyWith(
+    tileState: state.work.tileState,
+    playerVisibilityByTile: state.work.visibilityByTile,
+    portsByProvinceSeaboard: state.work.portsByProvinceSeaboard,
+    purchasedTilesByTileKey: state.work.purchasedTilesByTileKey,
   );
+  nextWorldState = nextWorldState.updateRegionById(
+    kRegionOldWorld,
+    (_) => RegionData(
+      provinces: provincesByRegion[kRegionOldWorld]!,
+      units: unitsByRegion[kRegionOldWorld]!,
+    ),
+  );
+  nextWorldState = nextWorldState.updateRegionById(
+    kRegionNewWorld,
+    (_) => RegionData(
+      provinces: provincesByRegion[kRegionNewWorld]!,
+      units: unitsByRegion[kRegionNewWorld]!,
+    ),
+  );
+
+  final withWorld = state.game.copyWith(worldState: nextWorldState);
 
   return withWorld.copyWith(
     players: state.work.updatedPlayers,
     worldState: withWorld.worldState
         .copyWith(purchasedTilesByTileKey: state.work.purchasedTilesByTileKey)
-        .mapBothRegionUnits((regionId, _) {
-          return regionId == kRegionOldWorld
-              ? state.work.oldUnitsById.values.toList()
-              : state.work.newUnitsById.values.toList();
-        }),
+        .mapBothRegionUnits(
+          (regionId, _) => unitsByRegion[regionId] ?? const <Unit>[],
+        ),
   );
 }
 
