@@ -196,6 +196,7 @@ bool _isWorkOrderAccepted(
   WorkOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
+  bumpOrderSuggestionWorkOrderAcceptanceProbeIfTracking();
   final engine = OrderEngine(initialOrders: baseOrders);
   final result = engine.addWorkOrderWithContext(
     game,
@@ -224,6 +225,9 @@ Set<String> getValidWorkOrderTileKeys(
   ).where((u) => u.id == unitId).firstOrNull;
   if (unit == null || unit.ownerId != playerId) return {};
   if (unit.currentWork != null) return {};
+  if (playerHasPendingWorkOrderForUnit(currentOrders, playerId, unitId)) {
+    return {};
+  }
   if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) return {};
 
   final reservedForPicker = devExclusiveReservedTileKeysForPlayer(
@@ -293,6 +297,13 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   if (unit.currentWork != null) {
     orderSuggestionLog.d(
       'getValidWorkOrderTileKeysWithVisibility unit has current work',
+    );
+    return {};
+  }
+  if (playerHasPendingWorkOrderForUnit(currentOrders, view.playerId, unitId)) {
+    orderSuggestionLog.d(
+      'getValidWorkOrderTileKeysWithVisibility skipped pending draft work '
+      'unit=$unitId',
     );
     return {};
   }

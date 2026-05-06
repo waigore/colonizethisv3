@@ -160,5 +160,109 @@ void main() {
       );
       expect(result.message, contains('no-op'));
     });
+
+    test('rejects reveal outside human Orders phase without mutating state', () {
+      final game = revealBaseGame().copyWith(
+        worldState: revealBaseGame().worldState.copyWith(
+          turnState: const TurnState(phase: TurnPhase.buildWork, turnNumber: 2),
+        ),
+      );
+      const event = RevealDebugProvinceEvent(
+        humanPlayerId: 'human_1',
+        target: 'oldWorld|P1',
+        targetIsFullProvinceId: true,
+      );
+      final result = applyDebugRevealProvince(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+      expect(result.game, isNull);
+      expect(
+        result.message,
+        contains('allowed only during human Orders phase'),
+      );
+      expect(
+        game.worldState.playerVisibilityByTile['human_1']!['oldWorld|P1|0|0'],
+        'unknown',
+      );
+    });
+
+    test('reveals province by global display name when exactly one match', () {
+      final game = revealBaseGame();
+      const event = RevealDebugProvinceEvent(
+        humanPlayerId: 'human_1',
+        target: 'New Bordeaux',
+        targetIsFullProvinceId: false,
+      );
+      final result = applyDebugRevealProvince(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+      expect(result.game, isNotNull);
+      final vis = result.game!.worldState.playerVisibilityByTile['human_1']!;
+      expect(vis['oldWorld|P1|0|0'], 'fullyVisible');
+    });
+
+    test('not-found full province id leaves visibility unchanged', () {
+      final game = revealBaseGame();
+      const event = RevealDebugProvinceEvent(
+        humanPlayerId: 'human_1',
+        target: 'oldWorld|MissingProvince',
+        targetIsFullProvinceId: true,
+      );
+      final result = applyDebugRevealProvince(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+      expect(result.game, isNull);
+      expect(result.message, contains('not found'));
+      expect(
+        game.worldState.playerVisibilityByTile['human_1']!['oldWorld|P1|0|0'],
+        'unknown',
+      );
+    });
+
+    test('not-found display name leaves visibility unchanged', () {
+      final game = revealBaseGame();
+      const event = RevealDebugProvinceEvent(
+        humanPlayerId: 'human_1',
+        target: 'No Such Display Name Xyz',
+        targetIsFullProvinceId: false,
+      );
+      final result = applyDebugRevealProvince(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+      expect(result.game, isNull);
+      expect(result.message, contains('not found'));
+      expect(
+        game.worldState.playerVisibilityByTile['human_1']!['oldWorld|P1|0|0'],
+        'unknown',
+      );
+    });
+
+    test('JSON round-trip preserves reveal visibility (persistence parity)', () {
+      final game = revealBaseGame();
+      const event = RevealDebugProvinceEvent(
+        humanPlayerId: 'human_1',
+        target: 'oldWorld|P1',
+        targetIsFullProvinceId: true,
+      );
+      final result = applyDebugRevealProvince(
+        currentGame: game,
+        event: event,
+        combinedTopology: const MapTopology(),
+      );
+      expect(result.game, isNotNull);
+      final restored = Game.fromJson(result.game!.toJson());
+      expect(
+        restored.worldState.playerVisibilityByTile['human_1']!['oldWorld|P1|0|0'],
+        'fullyVisible',
+      );
+    });
   });
 }
