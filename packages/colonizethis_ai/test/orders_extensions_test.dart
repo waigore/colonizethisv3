@@ -2,7 +2,6 @@ import 'package:colonizethis_ai/src/orders_extensions.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('appendMoveOrders appends without mutating other players', () {
