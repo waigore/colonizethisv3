@@ -10,6 +10,64 @@ import 'capital_reassignment_fatal.dart';
 
 final _log = packageLogger();
 
+class CapitalReassignmentEligibility {
+  const CapitalReassignmentEligibility({
+    required this.eligible,
+    required this.reasonCode,
+    required this.ownedProvinceIdsInRegion,
+    this.candidateProvinceId,
+  });
+
+  final bool eligible;
+  final String reasonCode;
+  final List<String> ownedProvinceIdsInRegion;
+  final String? candidateProvinceId;
+}
+
+CapitalReassignmentEligibility evaluateCapitalReassignmentEligibility({
+  required Game state,
+  required String playerId,
+  required String regionId,
+  required MapTopology regionTopology,
+  String? excludedProvinceId,
+}) {
+  final region = regionDataForId(state.worldState, regionId);
+  if (region == null) {
+    return const CapitalReassignmentEligibility(
+      eligible: false,
+      reasonCode: 'region_not_found',
+      ownedProvinceIdsInRegion: <String>[],
+    );
+  }
+
+  final ownedInRegion = region.provinces
+      .where(
+        (p) =>
+            p.ownerId == playerId &&
+            (excludedProvinceId == null || p.id != excludedProvinceId),
+      )
+      .map((p) => p.id)
+      .toList(growable: false);
+  if (ownedInRegion.isEmpty) {
+    return const CapitalReassignmentEligibility(
+      eligible: false,
+      reasonCode: 'no_owned_provinces_in_region',
+      ownedProvinceIdsInRegion: <String>[],
+    );
+  }
+
+  final candidateProvinceId = pickCapitalProvinceIdForReassignment(
+    ownedInRegion,
+    regionTopology,
+  );
+  return CapitalReassignmentEligibility(
+    eligible: true,
+    reasonCode: 'eligible',
+    ownedProvinceIdsInRegion: ownedInRegion,
+    candidateProvinceId: candidateProvinceId,
+  );
+}
+
 Game applyCapitalReassignmentAfterCombat(
   Game state,
   MapTopology topology, {
@@ -30,11 +88,13 @@ Game applyCapitalReassignmentAfterCombat(
     if (province == null) continue;
     if (province.ownerId == player.id) continue;
 
-    final ownedInRegion = region.provinces
-        .where((p) => p.ownerId == player.id)
-        .map((p) => p.id)
-        .toList();
-    if (ownedInRegion.isEmpty) {
+    final eligibility = evaluateCapitalReassignmentEligibility(
+      state: game,
+      playerId: player.id,
+      regionId: regionId,
+      regionTopology: regionTopology,
+    );
+    if (!eligibility.eligible) {
       game = game.mapPlayers(
         (p) => p.id != player.id
             ? p
@@ -46,10 +106,14 @@ Game applyCapitalReassignmentAfterCombat(
       continue;
     }
 
-    final newProvinceId = pickCapitalProvinceIdForReassignment(
-      ownedInRegion,
-      regionTopology,
-    );
+    final newProvinceId = eligibility.candidateProvinceId;
+    if (newProvinceId == null || newProvinceId.isEmpty) {
+      final msg =
+          'capital reassignment: missing deterministic candidate in region $regionId for player ${player.id}';
+      final err = StateError(msg);
+      _log.e(msg, error: err, stackTrace: StackTrace.current);
+      throw CapitalReassignmentFatalError(msg, err);
+    }
     final newProvince = region.provinces
         .where((p) => p.id == newProvinceId)
         .firstOrNull;

@@ -4,6 +4,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'debug_command_helpers.dart';
 
+const _kFlipProvinceRejectAlreadyHumanOwned =
+    'Debug flip_province rejected: target province is already human-owned.';
+const _kFlipProvinceRejectNoEligibleReplacementCapital =
+    'Debug flip_province rejected: cannot flip target capital because owning faction has no eligible replacement capital.';
+
 /// Apply immediate canonical province ownership transfer from debug console.
 DebugCommandResult applyDebugFlipProvinceOwnership({
   required Game? currentGame,
@@ -54,11 +59,7 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
     );
   }
   if (oldOwnerId == event.humanPlayerId) {
-    return (
-      game: null,
-      message:
-          'Debug flip_province rejected: target province is already human-owned.',
-    );
+    return (game: null, message: _kFlipProvinceRejectAlreadyHumanOwned);
   }
 
   if (!_isProvinceKnownToPlayer(
@@ -74,16 +75,50 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
   }
 
   try {
+    final previousCapitalByPlayer = {
+      for (final player in currentGame.players)
+        player.id: player.capitalProvinceId,
+    };
+    final priorOwner = findPlayerById(currentGame, oldOwnerId);
+    final ownerLosesCapital = priorOwner?.capitalProvinceId == province.id;
+    if (ownerLosesCapital) {
+      final regionTopology =
+          topologyByRegion?[province.regionId] ?? combinedTopology;
+      final eligibility = evaluateCapitalReassignmentEligibility(
+        state: currentGame,
+        playerId: oldOwnerId,
+        regionId: province.regionId,
+        regionTopology: regionTopology,
+        excludedProvinceId: province.id,
+      );
+      if (!eligibility.eligible) {
+        return (
+          game: null,
+          message: _kFlipProvinceRejectNoEligibleReplacementCapital,
+        );
+      }
+    }
+
     final out = applyCanonicalSingleProvinceOwnershipTransferWithResult(
       currentGame,
       targetProvinceId: province.id,
       oldOwnerId: oldOwnerId,
       newOwnerId: event.humanPlayerId,
     );
-    final result = out.result;
-    final visibilityBeforeCoastal = out.game.worldState.playerVisibilityByTile;
-    final visibilityAfterCoastal = applyCoastalSeaZoneFullVisibility(
+    final afterCapitalReassignment = applyCapitalReassignmentAfterCombat(
       out.game,
+      combinedTopology,
+      topologyByRegion: topologyByRegion,
+    );
+    final afterGreatPowerFall = applyGreatPowerFall(
+      afterCapitalReassignment,
+      previousCapitalByPlayer,
+    );
+    final result = out.result;
+    final visibilityBeforeCoastal =
+        afterGreatPowerFall.worldState.playerVisibilityByTile;
+    final visibilityAfterCoastal = applyCoastalSeaZoneFullVisibility(
+      afterGreatPowerFall,
       visibilityBeforeCoastal,
       combinedTopology,
       topologyByRegion: topologyByRegion,
@@ -92,8 +127,8 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
       before: visibilityBeforeCoastal,
       after: visibilityAfterCoastal,
     );
-    final nextGame = out.game.copyWith(
-      worldState: out.game.worldState.copyWith(
+    final nextGame = afterGreatPowerFall.copyWith(
+      worldState: afterGreatPowerFall.worldState.copyWith(
         playerVisibilityByTile: visibilityAfterCoastal,
       ),
     );

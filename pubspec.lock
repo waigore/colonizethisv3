@@ -69,10 +69,10 @@ packages:
     dependency: transitive
     description:
       name: basic_logger
-      sha256: "8e8aad2ab62b21535fb033410e0dbd32ef99b1cab41e182336a833f5ebcaee42"
+      sha256: dbcfbac193be12ed6412a02198664b0aeaec40696a76878c86e9dcdbb70dbc2a
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.2"
+    version: "0.2.3"
   basic_logger_file:
     dependency: transitive
     description:
