@@ -22,6 +22,16 @@ Duration _medianDuration(List<Duration> values) {
   return sorted[sorted.length ~/ 2];
 }
 
+String _fixtureTileVisibility({required int provinceIndex, required int tileIndex}) {
+  if (provinceIndex == 0 && tileIndex == 0) {
+    return 'fullyVisible';
+  }
+  if (tileIndex == 0) {
+    return 'fogged';
+  }
+  return 'unknown';
+}
+
 Game _buildExplorerFixtureGame({
   required String id,
   required int provinceCount,
@@ -46,13 +56,10 @@ Game _buildExplorerFixtureGame({
     for (var t = 0; t < tilesPerProvince; t++) {
       final tileKey = '$regionId|p$p|$t|0';
       tiles.add(tileKey);
-      if (p == 0 && t == 0) {
-        visibility[tileKey] = 'fullyVisible';
-      } else if (t == 0) {
-        visibility[tileKey] = 'fogged';
-      } else {
-        visibility[tileKey] = 'unknown';
-      }
+      visibility[tileKey] = _fixtureTileVisibility(
+        provinceIndex: p,
+        tileIndex: t,
+      );
     }
     byProvince[provinceId] = tiles;
   }
