@@ -62,6 +62,10 @@ Maintains per-player visibility and prospected state on world state; resolves ex
 2. In the same debug command transaction, run coastal sea-zone full-visibility normalization so Great Power visibility for sea zones adjacent to newly owned or lost coastal provinces is updated immediately, not deferred until end-of-turn.
 3. The immediate coastal step is additive with the normal End-of-turn sequence (`applyDistantSeaZoneFogRevert` then `applyCoastalSeaZoneFullVisibility`) and must not contradict those invariants.
 
+**Debug reveal_province coastal water** (debug console command path):
+
+1. When `/reveal_province` succeeds for the human player during Orders phase, the app handler sets all land tiles in the resolved province to `fullyVisible` and invokes `applyCoastalSeaZoneFullVisibilityForProvinceTargets` so water tiles in sea zones with direct P–S topology adjacency to that province (same region) become `fullyVisible` for that player, using the same adjacency geometry as **Coastal sea zone full visibility** but as an immediate debug mutation for the chosen province (not gated on Great Power ownership of the revealed province). See [debug-console-panel.md](../ui/debug-console-panel.md).
+
 **Distant sea zone fog** (End-of-turn phase, after Explorer/Spy fog decay, **before** coastal sea zone full visibility):
 
 1. For each Great Power player and each sea zone S in each region (from topology sea-zone nodes in that region):

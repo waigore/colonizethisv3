@@ -222,5 +222,13 @@ void main() {
       expect(result.isError, isTrue);
       expect(result.message, contains('Use full province id format'));
     });
+
+    test('help includes reveal_province usage and flip full-id retry form', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      expect(message, contains('/reveal_province <regionId|localId'));
+      expect(message, contains('/flip_province <regionId|localId>'));
+      expect(message, contains('ambiguous'));
+    });
   });
 }
