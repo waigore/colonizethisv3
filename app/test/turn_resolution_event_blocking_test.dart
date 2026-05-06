@@ -108,5 +108,43 @@ void main() {
         expect(find.byType(PauseMenuPanel), findsOneWidget);
       },
     );
+
+    testWidgets('given turnResolutionBlockingProvider is active, '
+        'OpenCivilianUnitsPanelEvent does not push a modal route', (
+      tester,
+    ) async {
+      handler.bind();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            turnResolutionBlockingProvider.overrideWith(
+              _ForcedTurnResolutionBlocking.new,
+            ),
+          ],
+          child: MaterialApp(
+            navigatorKey: navKey,
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Builder(
+              builder: (ctx) => TextButton(
+                onPressed: () => bus.emit(const OpenCivilianUnitsPanelEvent()),
+                child: const Text('open_civilian'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final navCtx = tester.element(find.text('open_civilian'));
+      expect(Navigator.of(navCtx).canPop(), isFalse);
+
+      await tester.tap(find.text('open_civilian'));
+      await tester.pumpAndSettle();
+
+      expect(Navigator.of(navCtx).canPop(), isFalse);
+    });
   });
 }

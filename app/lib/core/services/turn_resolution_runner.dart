@@ -2,9 +2,12 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+final _runnerLog = packageLogger('logic');
 
 class TurnResolutionProgressEvent {
   const TurnResolutionProgressEvent({
@@ -75,88 +78,138 @@ class TurnResolutionRunner {
     Isolate? isolate;
     StreamSubscription<dynamic>? sub;
 
-    final aiOrders = generateOrdersForGameFullAI(
-      game,
-      topology,
-      tileMapByRegion: tileMapByRegion,
-    ).orders;
-    final mergedOrders = mergeOrderLists(
-      humanOrders: orders,
-      aiOrders: aiOrders,
+    _runnerLog.i(
+      'logic: turn_resolution_runner session_start sessionId=$sessionId '
+      'gameId=${game.id}',
     );
 
     Future<void> cleanup() async {
+      // Clear re-entrancy flag before awaiting subscription cancel so callers
+      // that await [TurnResolutionRunnerSession.done] observe a released runner
+      // even if cancel is deferred (#2160).
+      _active = false;
       await sub?.cancel();
       receivePort.close();
       isolate?.kill(priority: Isolate.immediate);
       if (!progressController.isClosed) {
         await progressController.close();
       }
-      _active = false;
     }
 
-    sub = receivePort.listen((dynamic message) async {
-      if (message is! Map<Object?, Object?>) {
-        return;
-      }
-      final kind = message['kind'];
-      if (kind == 'phase') {
-        final phaseName = message['phase'] as String;
-        final markerName = message['marker'] as String;
-        progressController.add(
-          TurnResolutionProgressEvent(
-            sessionId: sessionId,
-            phase: phaseName,
-            marker: markerName,
-          ),
-        );
-        return;
-      }
-      if (kind == 'success') {
-        doneCompleter.complete(
-          TurnResolutionTerminalComplete(
+    try {
+      final aiOrders = generateOrdersForGameFullAI(
+        game,
+        topology,
+        tileMapByRegion: tileMapByRegion,
+      ).orders;
+      final mergedOrders = mergeOrderLists(
+        humanOrders: orders,
+        aiOrders: aiOrders,
+      );
+
+      sub = receivePort.listen((dynamic message) async {
+        if (message is! Map<Object?, Object?>) {
+          return;
+        }
+        final kind = message['kind'];
+        if (kind == 'phase') {
+          final phaseName = message['phase'] as String;
+          final markerName = message['marker'] as String;
+          progressController.add(
+            TurnResolutionProgressEvent(
+              sessionId: sessionId,
+              phase: phaseName,
+              marker: markerName,
+            ),
+          );
+          return;
+        }
+        if (kind == 'success') {
+          _runnerLog.i(
+            'logic: turn_resolution_runner session_complete sessionId=$sessionId '
+            'outcome=success',
+          );
+          final terminal = TurnResolutionTerminalComplete(
             _decodeTurnResolutionResult(
               Map<String, dynamic>.from(
                 message['result'] as Map<Object?, Object?>,
               ),
             ),
-          ),
-        );
-        await cleanup();
-        return;
-      }
-      if (kind == 'error') {
-        doneCompleter.complete(
-          TurnResolutionTerminalError(
-            errorMessage: (message['error'] as String?) ?? 'Unknown error',
-            stackTrace: (message['stackTrace'] as String?) ?? '',
-          ),
-        );
-        await cleanup();
-      }
-    });
+          );
+          if (!doneCompleter.isCompleted) {
+            doneCompleter.complete(terminal);
+          }
+          await cleanup();
+          return;
+        }
+        if (kind == 'error') {
+          final errMsg = (message['error'] as String?) ?? 'Unknown error';
+          final stackStr = (message['stackTrace'] as String?) ?? '';
+          _runnerLog.e(
+            'logic: turn_resolution_runner session_complete sessionId=$sessionId '
+            'outcome=error',
+            error: errMsg,
+            stackTrace: stackStr.isEmpty
+                ? null
+                : StackTrace.fromString(stackStr),
+          );
+          final terminal = TurnResolutionTerminalError(
+            errorMessage: errMsg,
+            stackTrace: stackStr,
+          );
+          if (!doneCompleter.isCompleted) {
+            doneCompleter.complete(terminal);
+          }
+          await cleanup();
+        }
+      });
 
-    Isolate.spawn<Map<String, Object?>>(_turnResolutionIsolateMain, {
-          'sendPort': receivePort.sendPort,
-          'game': game.toJson(),
-          'orders': mergedOrders.toJson(),
-          'topology': topology.toJson(),
-          'tileMapByRegion': tileMapByRegion.map(
-            (k, v) => MapEntry(k, v.toJson()),
-          ),
-        })
-        .then((spawned) {
-          isolate = spawned;
-        })
-        .catchError((Object e, StackTrace st) async {
-          doneCompleter.complete(
-            TurnResolutionTerminalError(
+      Isolate.spawn<Map<String, Object?>>(_turnResolutionIsolateMain, {
+            'sendPort': receivePort.sendPort,
+            'game': game.toJson(),
+            'orders': mergedOrders.toJson(),
+            'topology': topology.toJson(),
+            'tileMapByRegion': tileMapByRegion.map(
+              (k, v) => MapEntry(k, v.toJson()),
+            ),
+          })
+          .then((spawned) {
+            isolate = spawned;
+            _runnerLog.d(
+              'logic: turn_resolution_runner isolate_spawned '
+              'sessionId=$sessionId',
+            );
+          })
+          .catchError((Object e, StackTrace st) async {
+            _runnerLog.e(
+              'logic: turn_resolution_runner isolate_spawn_failed '
+              'sessionId=$sessionId',
+              error: e,
+              stackTrace: st,
+            );
+            final terminal = TurnResolutionTerminalError(
               errorMessage: e.toString(),
               stackTrace: st.toString(),
-            ),
-          );
-          await cleanup();
-        });
+            );
+            if (!doneCompleter.isCompleted) {
+              doneCompleter.complete(terminal);
+            }
+            await cleanup();
+          });
+    } on Object catch (e, st) {
+      _runnerLog.e(
+        'logic: turn_resolution_runner session_start_failed '
+        'sessionId=$sessionId',
+        error: e,
+        stackTrace: st,
+      );
+      receivePort.close();
+      if (!progressController.isClosed) {
+        progressController.close();
+      }
+      _active = false;
+      Error.throwWithStackTrace(e, st);
+    }
 
     return TurnResolutionRunnerSession(
       sessionId: sessionId,
