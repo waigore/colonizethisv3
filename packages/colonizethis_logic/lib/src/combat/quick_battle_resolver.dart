@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/army_migration.dart';
+import '../world/province_lookup.dart';
 import '../world/province_ownership_transfer.dart';
 import 'conflict_detection.dart';
 
@@ -684,12 +685,10 @@ Game applyQuickBattleResultToGame(
   }
 
   final newRegion = RegionData(provinces: provinces, units: survivingUnits);
-  WorldState newWorldState;
-  if (ctx.regionId == kRegionOldWorld) {
-    newWorldState = game.worldState.copyWith(oldWorld: newRegion);
-  } else {
-    newWorldState = game.worldState.copyWith(newWorld: newRegion);
-  }
+  final newWorldState = game.worldState.updateRegionById(
+    ctx.regionId,
+    (_) => newRegion,
+  );
 
   var updatedGame = game.copyWith(worldState: newWorldState);
 

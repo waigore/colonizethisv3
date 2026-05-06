@@ -451,9 +451,10 @@ Game _buildResolvedBattleGame({
   required Map<String, General> generalsById,
   required CombatPhaseGeneralLedger ledger,
 }) {
-  var newWorldState = ctx.regionId == kRegionOldWorld
-      ? game.worldState.copyWith(oldWorld: post.region)
-      : game.worldState.copyWith(newWorld: post.region);
+  var newWorldState = game.worldState.updateRegionById(
+    ctx.regionId,
+    (_) => post.region,
+  );
 
   recordAttackCommandersForResolvedBattle(ctx, null, ledger);
 
@@ -472,10 +473,7 @@ Game _buildResolvedBattleGame({
     );
   } else {
     result = result.copyWith(
-      worldState: reconcileArmiesAfterUnitsChanged(
-        result.worldState,
-        result,
-      ),
+      worldState: reconcileArmiesAfterUnitsChanged(result.worldState, result),
     );
   }
   return result;
@@ -685,7 +683,8 @@ EngagementOutcome resolveEngagement({
   double defLossFrac,
   bool bluntAttackerVictory,
   EngagementResult bothDeadResult,
-}) _lossFractionsForRatio(double ratio, bool attackerLowMorale) {
+})
+_lossFractionsForRatio(double ratio, bool attackerLowMorale) {
   if (ratio >= kStrongAttackerRatioThreshold &&
       attackerLowMorale &&
       ratio < kBluntAttackerVictoryUpperRatio) {

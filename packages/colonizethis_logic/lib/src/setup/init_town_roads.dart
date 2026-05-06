@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/province_lookup.dart';
+import '../world/tile_key_coordinates.dart';
 
 final _log = packageLogger();
 
@@ -206,12 +207,9 @@ Map<String, String> _bfsParentsFromCapital({
 }
 
 (int, int)? _parseTileKeyXY(String tileKey) {
-  final parts = tileKey.split('|');
-  if (parts.length < 4) return null;
-  final x = int.tryParse(parts[parts.length - 2]);
-  final y = int.tryParse(parts[parts.length - 1]);
-  if (x == null || y == null) return null;
-  return (x, y);
+  final coords = parseTileKeyCoordinates(tileKey);
+  if (coords == null) return null;
+  return (coords.x, coords.y);
 }
 
 void _addPathTilesToSet({

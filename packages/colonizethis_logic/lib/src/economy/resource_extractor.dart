@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../world/connectivity_resolver.dart';
 import '../world/province_lookup.dart';
+import '../world/tile_key_coordinates.dart';
 
 final _log = packageLogger();
 
@@ -150,23 +151,20 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
   if (!connectedTileKeys.contains(tileKey)) {
     return null;
   }
-  final parts = tileKey.split('|');
-  if (parts.length != 4) {
+  final coords = parseTileKeyCoordinates(tileKey);
+  if (coords == null) {
     return null;
   }
-  final regionId = parts[0];
-  final x = int.tryParse(parts[2]) ?? -1;
-  final y = int.tryParse(parts[3]) ?? -1;
-  if (x < 0 || y < 0) {
+  if (coords.x < 0 || coords.y < 0) {
     return null;
   }
 
-  final map = tileMapByRegion[regionId];
+  final map = tileMapByRegion[coords.regionId];
   if (map == null) {
     return null;
   }
 
-  final resource = map.resourceAt(x, y);
+  final resource = map.resourceAt(coords.x, coords.y);
   if (resource == null) {
     return null;
   }
@@ -181,8 +179,8 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
   }
 
   // Province lookup must be region-scoped. SPEC/game/world-model-identity.md.
-  final provinceId = '$regionId|${parts[1]}';
-  final regionData = regionDataForId(game.worldState, regionId);
+  final provinceId = '${coords.regionId}|${coords.provinceLocalId}';
+  final regionData = regionDataForId(game.worldState, coords.regionId);
   final province = regionData?.provinces
       .where((p) => p.id == provinceId)
       .firstOrNull;
@@ -235,7 +233,7 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
     tileKey: tileKey,
     commodityId: commodityId,
     units: effectiveCapped,
-    isLandRelativeToCapital: regionId == capitalRegionId,
+    isLandRelativeToCapital: coords.regionId == capitalRegionId,
   );
 }
 
