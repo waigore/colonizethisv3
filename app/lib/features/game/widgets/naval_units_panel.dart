@@ -336,8 +336,9 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   @override
   void didUpdateWidget(covariant NavalUnitsPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.game != widget.game ||
-        oldWidget.draftOrders != widget.draftOrders) {
+    final gameOrDraftChanged =
+        oldWidget.game != widget.game || oldWidget.draftOrders != widget.draftOrders;
+    if (gameOrDraftChanged) {
       final flat = flattenNavalTree(
         buildNavalTree(
           widget.game,
@@ -360,6 +361,29 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
             _selectedFleetIds.addAll(pruned);
           });
         });
+      }
+
+      final isScopedPanel =
+          widget.locationScopeKey != null && widget.locationScopeKey!.isNotEmpty;
+      final draftChanged = oldWidget.draftOrders != widget.draftOrders;
+      if (isScopedPanel && draftChanged) {
+        final oldFlat = flattenNavalTree(
+          buildNavalTree(
+            oldWidget.game,
+            oldWidget.humanPlayerId,
+            oldWidget.topology,
+            oldWidget.draftOrders,
+            appL10n(context),
+            tileMapByRegion: oldWidget.tileMapByRegion,
+            topologyByRegion: oldWidget.topologyByRegion,
+            locationScopeKeyFilter: oldWidget.locationScopeKey,
+          ),
+        );
+        if (oldFlat.isNotEmpty && flat.isEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            widget.bus.emit(const ClosePanelEvent());
+          });
+        }
       }
     }
   }
@@ -388,7 +412,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     );
   }
 
-  void _openMoveFleetDialog(FleetRow row) {
+  Future<void> _openMoveFleetDialog(FleetRow row) async {
     if (row.isHomeFleet) return;
     Fleet? fleet;
     for (final f in widget.game.worldState.fleets) {
@@ -399,7 +423,7 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     }
     final nonNullFleet = fleet;
     if (nonNullFleet == null) return;
-    showDialog<void>(
+    await showDialog<bool>(
       context: context,
       builder: (ctx) => MoveFleetDialog(
         game: widget.game,
