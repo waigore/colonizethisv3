@@ -692,4 +692,9 @@ class GameService {
       );
     }
   }
+
+  /// Emits app-level events and persistence side effects for externally resolved turns.
+  void handleExternallyResolvedTurnResult(TurnResolutionResult result) {
+    _emitTurnResolutionEvents(result);
+  }
 }

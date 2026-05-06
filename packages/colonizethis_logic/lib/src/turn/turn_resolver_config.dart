@@ -14,6 +14,8 @@ typedef TurnPhaseHandler =
       int turn,
     );
 
+enum TurnPhaseProgressMarker { start, end }
+
 /// Bundles inputs for [resolveTurnForGameWithConfig] / full turn resolution.
 class TurnResolverConfig {
   const TurnResolverConfig({
@@ -33,6 +35,7 @@ class TurnResolverConfig {
     this.interventionDecisions,
     this.callToArmsDecisions,
     this.phaseHandlerOverrides,
+    this.onPhaseProgress,
   });
 
   final MapTopology topology;
@@ -58,4 +61,8 @@ class TurnResolverConfig {
   /// key replaces the default). Used for tests and narrow customization; the
   /// default sequence and semantics remain authoritative. Refs #1958.
   final Map<TurnPhase, TurnPhaseHandler>? phaseHandlerOverrides;
+
+  /// Optional callback invoked at each phase start/end during pipeline execution.
+  final void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
+  onPhaseProgress;
 }

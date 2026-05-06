@@ -156,6 +156,8 @@ TurnResolutionResult resolveTurnForGame({
   List<OvertureDecision>? overtureDecisions,
   List<InterventionDecision>? interventionDecisions,
   List<CallToArmsDecision>? callToArmsDecisions,
+  void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
+  onPhaseProgress,
 }) {
   return resolveTurnForGameWithConfig(
     game: game,
@@ -175,6 +177,7 @@ TurnResolutionResult resolveTurnForGame({
       overtureDecisions: overtureDecisions,
       interventionDecisions: interventionDecisions,
       callToArmsDecisions: callToArmsDecisions,
+      onPhaseProgress: onPhaseProgress,
     ),
   );
 }

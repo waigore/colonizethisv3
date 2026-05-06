@@ -35,6 +35,7 @@ TurnResolutionResult runTurnResolutionPipeline({
   for (var i = 0; i < turnResolutionSequence.length; i++) {
     final phase = turnResolutionSequence[i];
     if (i < phaseIndex) continue;
+    config.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.start);
     _log.i('phase ${phase.name} start');
     final handler = handlers[phase];
     if (handler == null) {
@@ -48,6 +49,7 @@ TurnResolutionResult runTurnResolutionPipeline({
         acc = pipeline;
     }
     _log.i('phase ${phase.name} end');
+    config.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.end);
   }
 
   _log.i('turn $turn resolve end');

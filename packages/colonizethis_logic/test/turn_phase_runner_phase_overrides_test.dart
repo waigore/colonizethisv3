@@ -81,4 +81,38 @@ void main() {
       );
     },
   );
+
+  test('phase progress callback emits start and end markers', () {
+    final topology = MapTopology(
+      nodes: const [
+        TopologyNode(
+          id: 'P1',
+          regionId: 'oldWorld',
+          type: TopologyNodeType.province,
+        ),
+      ],
+      edges: const [],
+    );
+    final game = TestFixtures.minimalGame(
+      id: 'g1',
+      turnNumber: 0,
+      players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
+      oldWorld: RegionData(
+        provinces: [Province(id: 'oldWorld|P1', regionId: 'oldWorld')],
+      ),
+    );
+    final events = <(TurnPhase, TurnPhaseProgressMarker)>[];
+    resolveTurnForGameWithConfig(
+      game: game,
+      config: TurnResolverConfig(
+        topology: topology,
+        orders: const Orders(),
+        onPhaseProgress: (phase, marker) => events.add((phase, marker)),
+      ),
+    );
+
+    expect(events.isNotEmpty, isTrue);
+    expect(events.first.$2, TurnPhaseProgressMarker.start);
+    expect(events.last.$2, TurnPhaseProgressMarker.end);
+  });
 }
