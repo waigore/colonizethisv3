@@ -10,6 +10,7 @@ import 'naval_resolution.dart'
         landTileKeysForProvinceBucket;
 import 'player_view.dart';
 import 'province_lookup.dart' hide landTileKeysForProvinceBucket;
+import 'tile_key_coordinates.dart';
 import 'unit_lookup.dart';
 
 void _fogFullyVisibleTilesForSpyExpiry(
@@ -140,9 +141,12 @@ Map<String, Map<String, String>> applyFogDecay(
     final navalCoastalIntel = navalCoastalIntelByPlayer[playerId] ?? const {};
 
     for (final tileKey in visibility.keys.toList()) {
-      final parts = tileKey.split('|');
-      if (parts.length != 4) continue;
-      final fullProvinceId = ProvinceId.full(parts[0], parts[1]);
+      final parsedTile = parseTileKeyCoordinates(tileKey);
+      if (parsedTile == null) continue;
+      final fullProvinceId = ProvinceId.full(
+        parsedTile.regionId,
+        parsedTile.provinceLocalId,
+      );
       final ownerId = ownerByProvince[fullProvinceId];
       if (ownerId == null || ownerId == playerId) continue;
       if (hasExplorerIn.contains(fullProvinceId)) continue;
