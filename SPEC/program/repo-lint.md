@@ -48,6 +48,7 @@
 | `tool/check_part_unit_size.dart` | Dart `part` fragment physical line limit (`SPEC/program/part-unit-size.md`); rule `repo.part_unit_size` |
 | `tool/check_debug_console_logic_contract_boundary.dart` | AST-enforced scoped package import contract for debug-console → logic boundary; rule `repo.debug_console_logic_contract_boundary` |
 | `tool/check_app_event_handler_scope_logic_boundary.dart` | Enforce that `app/lib/core/services/app_event_handler_scope.dart` has no direct import from `app/lib/features/game/logic/**`; rule `repo.app_event_handler_scope_logic_boundary` |
+| `tool/check_app_lib_no_suggest_work_orders.sh` | Forbid `suggestWorkOrders(` call sites under `app/lib/**` (per-unit UI uses `getAvailableWorkTargetsForUnit` / `getValidWorkOrderTileKeysWithVisibility`; Refs #2133); rule `repo.app_lib_no_broad_suggest_work_orders` |
 | `tool/check_flutter_action_pins.dart` | Enforce that every `.github/workflows/*.{yml,yaml}` step using `subosito/flutter-action@...` defines `with.flutter-version` with semantic version value **>= `3.41.9`**; rule `repo.flutter_action_pins` |
 | `tool/check_workspace_outdated_resolvable.dart` | Enforce that the #2073 outdated audit targets (repo root + every workspace member using `sdk: flutter`) are at `current == resolvable`; rule `repo.workspace_outdated_resolvable` |
 | `tool/check_workspace_outdated_latest_direct.dart` | Enforce that audited direct dependency rows are at `Latest` whenever `resolvable == latest` (repo root + every workspace member using `sdk: flutter`); rule `repo.workspace_outdated_latest_direct` |
