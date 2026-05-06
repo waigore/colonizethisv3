@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
+import 'orders_application_helpers.dart';
 import 'partial_province_reveal.dart';
 
 /// Order visibility rules. SPEC/program/fog-and-exploration-resolution.md.
@@ -27,10 +28,10 @@ bool provinceHasAtLeastVisibility(
       ? ProvinceId.localIdFrom(provinceId)
       : provinceId;
   return view.visibilityByTile.entries.any((e) {
-    final parts = e.key.split('|');
-    if (parts.length != 4) return false;
-    return parts[0] == regionId &&
-        parts[1] == localId &&
+    final parsed = parseTileKeyCoordinates(e.key);
+    if (parsed == null) return false;
+    return parsed.regionId == regionId &&
+        parsed.provinceLocalId == localId &&
         _visibilityAtLeast(e.value, min);
   });
 }
@@ -99,9 +100,9 @@ String regionIdForUnit(PlayerView view, Unit unit) {
     }
   }
   for (final tileKey in view.visibilityByTile.keys) {
-    final parts = tileKey.split('|');
-    if (parts.length == 4 && parts[1] == unit.locationProvinceId) {
-      return parts[0];
+    final parsed = parseTileKeyCoordinates(tileKey);
+    if (parsed != null && parsed.provinceLocalId == unit.locationProvinceId) {
+      return parsed.regionId;
     }
   }
   if (!ProvinceId.isPrefixed(unit.locationProvinceId)) {

@@ -356,12 +356,7 @@ BuildWorkState _advanceWorkUnitTick(
         replaceProvinces,
       );
     }
-    unitsById[unitKey] = u.copyWith(
-      status: UnitStatus.idle,
-      clearOriginTileKey: true,
-      clearAssignedTileKey: true,
-      clearCurrentWork: true,
-    );
+    unitsById[unitKey] = cancelUnitWork(u, restoredTile: u.tileKey);
     return oldWorldUnits
         ? next.copyWith(work: next.work.copyWith(oldUnitsById: unitsById))
         : next.copyWith(work: next.work.copyWith(newUnitsById: unitsById));
