@@ -40,6 +40,15 @@ void main() {
       );
     });
 
+    test('matches manual regionId old-world branching', () {
+      expect(
+        logicDualRegionProvinceFieldAccessLineMatches(
+          'if (regionId == kRegionOldWorld) {',
+        ),
+        isTrue,
+      );
+    });
+
     test('ignores allProvinces', () {
       expect(
         logicDualRegionProvinceFieldAccessLineMatches(
