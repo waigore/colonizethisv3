@@ -2,10 +2,13 @@
 
 import 'package:colonizethis_app/features/game/flame/turn_resolution_processing_dialog.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
+
   testWidgets('TurnResolutionProcessingDialog shows title and phase text', (
     WidgetTester tester,
   ) async {
