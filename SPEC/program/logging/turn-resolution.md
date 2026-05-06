@@ -8,6 +8,15 @@
 
 - **Turn frame:** **Info** `turn` (and `year` if available) at **start** and **end** of full turn resolution when exposed by the API.
 - **Each phase:** **Info** **phase start** and **phase end** with `phase=<name>` and `turn=<n>`. Phase names must be stable grep tokens (e.g. `phase=production`, `phase=extraction`, `phase=consumption`, `phase=research`, `phase=diplomacy`, `phase=movement`, `phase=combat`, `phase=naval`, … per actual resolver order in code).
+
+### App isolate runner (`TurnResolutionRunner`, #2160)
+
+The app emits **info** / **debug** / **error** lines (under the app `logic` logger sub-prefix) for **session lifecycle** only (not a duplicate of per-phase logic logs):
+
+- **Info** `logic: turn_resolution_runner session_start` with `sessionId=` and `gameId=`.
+- **Debug** `logic: turn_resolution_runner isolate_spawned` with `sessionId=` after the worker isolate is created.
+- **Info** `logic: turn_resolution_runner session_complete` with `sessionId=` and `outcome=success` when the isolate returns a terminal success payload.
+- **Error** `logic: turn_resolution_runner session_complete` with `sessionId=` and `outcome=error` when the isolate reports a terminal error; **error** `logic: turn_resolution_runner isolate_spawn_failed` when isolate spawn fails; **error** `logic: turn_resolution_runner session_start_failed` when pre-spawn preparation fails (e.g. serialization / AI order merge).
 - **Per-player work:** Where a phase processes **each player** (or GP), emit **info** **summary** lines: `playerId=` or `nationId=`, counts changed (orders applied, resources delta summary, research completion flag), and **high-level** diplomacy/combat outcomes. Avoid duplicating full state dumps at info.
 - **Order engine:** **Info** for **batch** accept/reject summaries; **debug** for each validation branch (see [logging.md](logging.md) level split).
 - **Movement / naval:** **Info** apply summaries per spec’d flows; **debug** for rejected move reasons already partially covered by tests — keep consistent tokens.

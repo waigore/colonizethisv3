@@ -38,6 +38,10 @@ Signature (conceptual): `WorldState resolve(WorldState current)` or `Game resolv
 - **App** (or a service) calls TurnResolver when user (or AI) commits “next turn”; then persists the returned state via colonizethis_save. After each **completed** resolution, the Flutter app also mirrors the same playable state into the **auto-save** slot ([save-load.md](save-load.md) § Auto-save slot).
 - **Load game** restores Game/WorldState from storage; “next turn” runs on that state and overwrites or replaces the saved state after resolve.
 
+### Background execution (app, #2160)
+
+The Flutter app may run full turn resolution in a **worker isolate** via **`TurnResolutionRunner`** (`app/lib/core/services/turn_resolution_runner.dart`): AI orders are computed on the **main** isolate, merged with human orders, then serialized `Game` + `Orders` + map topology are passed to the isolate. The isolate calls **`resolveTurnForGame`** with an **`onPhaseProgress`** callback so the UI can show live phase labels. The app applies **`TurnResolutionResult`** on the main isolate when the session completes. See [logging/turn-resolution.md](logging/turn-resolution.md) for app-layer runner log lines and [app-event-bus.md](app-event-bus.md) for UI blocking while resolution is active.
+
 ---
 
 ## Stub Semantics
