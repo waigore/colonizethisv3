@@ -1,6 +1,18 @@
 part of 'app_event_handler_scope.dart';
 
 extension _SessionCommands on _AppEventHandlerScopeState {
+  void _applyDebugCommand(DebugCommandResult result) {
+    final nextGame = result.game;
+    if (nextGame == null) {
+      _logEvent.w(result.message);
+      _showSnackBar(ShowSnackBarEvent(message: result.message));
+      return;
+    }
+    ref.read(currentGameProvider.notifier).setGame(nextGame);
+    ref.read(gameServiceProvider).saveGame(nextGame);
+    _showSnackBar(ShowSnackBarEvent(message: result.message));
+  }
+
   List<StreamSubscription<dynamic>> _sessionCommandListeners(AppEventBus bus) {
     return [
       bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
@@ -185,64 +197,33 @@ extension _SessionCommands on _AppEventHandlerScopeState {
       }),
       bus.on<SpawnDebugCivilianAtCapitalEvent>().listen((e) {
         final current = ref.read(currentGameProvider);
-        final result = applyDebugCivilianSpawnAtCapital(
-          currentGame: current,
-          event: e,
+        _applyDebugCommand(
+          applyDebugCivilianSpawnAtCapital(currentGame: current, event: e),
         );
-        final nextGame = result.game;
-        if (nextGame == null) {
-          _logEvent.w(result.message);
-          _showSnackBar(ShowSnackBarEvent(message: result.message));
-          return;
-        }
-        ref.read(currentGameProvider.notifier).setGame(nextGame);
-        ref.read(gameServiceProvider).saveGame(nextGame);
-        _showSnackBar(ShowSnackBarEvent(message: result.message));
       }),
       bus.on<SpawnDebugRegimentAtCapitalEvent>().listen((e) {
         final current = ref.read(currentGameProvider);
-        final result = applyDebugRegimentSpawnAtCapital(
-          currentGame: current,
-          event: e,
+        _applyDebugCommand(
+          applyDebugRegimentSpawnAtCapital(currentGame: current, event: e),
         );
-        final nextGame = result.game;
-        if (nextGame == null) {
-          _logEvent.w(result.message);
-          _showSnackBar(ShowSnackBarEvent(message: result.message));
-          return;
-        }
-        ref.read(currentGameProvider.notifier).setGame(nextGame);
-        ref.read(gameServiceProvider).saveGame(nextGame);
-        _showSnackBar(ShowSnackBarEvent(message: result.message));
       }),
       bus.on<SpawnDebugShipAtCapitalHomeFleetEvent>().listen((e) {
         final current = ref.read(currentGameProvider);
-        final result = applyDebugShipSpawnAtCapitalHomeFleet(
-          currentGame: current,
-          event: e,
+        _applyDebugCommand(
+          applyDebugShipSpawnAtCapitalHomeFleet(currentGame: current, event: e),
         );
-        final nextGame = result.game;
-        if (nextGame == null) {
-          _logEvent.w(result.message);
-          _showSnackBar(ShowSnackBarEvent(message: result.message));
-          return;
-        }
-        ref.read(currentGameProvider.notifier).setGame(nextGame);
-        ref.read(gameServiceProvider).saveGame(nextGame);
-        _showSnackBar(ShowSnackBarEvent(message: result.message));
       }),
       bus.on<CreditDebugTreasuryEvent>().listen((e) {
         final current = ref.read(currentGameProvider);
-        final result = applyDebugTreasuryCredit(currentGame: current, event: e);
-        final nextGame = result.game;
-        if (nextGame == null) {
-          _logEvent.w(result.message);
-          _showSnackBar(ShowSnackBarEvent(message: result.message));
-          return;
-        }
-        ref.read(currentGameProvider.notifier).setGame(nextGame);
-        ref.read(gameServiceProvider).saveGame(nextGame);
-        _showSnackBar(ShowSnackBarEvent(message: result.message));
+        _applyDebugCommand(
+          applyDebugTreasuryCredit(currentGame: current, event: e),
+        );
+      }),
+      bus.on<CreditDebugStockpileCommodityEvent>().listen((e) {
+        final current = ref.read(currentGameProvider);
+        _applyDebugCommand(
+          applyDebugStockpileCredit(currentGame: current, event: e),
+        );
       }),
       bus.on<FlipDebugProvinceOwnershipEvent>().listen((e) {
         final current = ref.read(currentGameProvider);
@@ -255,15 +236,20 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           combinedTopology: mapData?.combinedTopology ?? const MapTopology(),
           topologyByRegion: mapData?.topologyByRegion,
         );
-        final nextGame = result.game;
-        if (nextGame == null) {
-          _logEvent.w(result.message);
-          _showSnackBar(ShowSnackBarEvent(message: result.message));
-          return;
-        }
-        ref.read(currentGameProvider.notifier).setGame(nextGame);
-        ref.read(gameServiceProvider).saveGame(nextGame);
-        _showSnackBar(ShowSnackBarEvent(message: result.message));
+        _applyDebugCommand(result);
+      }),
+      bus.on<RevealDebugProvinceEvent>().listen((e) {
+        final current = ref.read(currentGameProvider);
+        final mapData = current == null
+            ? null
+            : ref.read(gameServiceProvider).getMapData(current.id);
+        final result = applyDebugRevealProvince(
+          currentGame: current,
+          event: e,
+          combinedTopology: mapData?.combinedTopology ?? const MapTopology(),
+          topologyByRegion: mapData?.topologyByRegion,
+        );
+        _applyDebugCommand(result);
       }),
       bus.on<AppendDiplomaticOrderRequestedEvent>().listen((e) {
         final current = ref.read(currentOrdersProvider);

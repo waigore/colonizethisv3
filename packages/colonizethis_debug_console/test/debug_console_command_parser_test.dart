@@ -80,6 +80,50 @@ void main() {
       expect(result.message, contains('9999'));
     });
 
+    test('parses add_resource with canonical commodity id', () {
+      final result = parser.parse('/add_resource grain 500');
+      expect(result.isError, isFalse);
+      final credit = result.invocation! as DebugConsoleStockpileCredit;
+      expect(credit.commodityId, 'grain');
+      expect(credit.requestedAmount, 500);
+      expect(credit.creditedAmount, 500);
+    });
+
+    test('parses add_resource case-insensitively and emits canonical id', () {
+      final result = parser.parse('/add_resource castIRON 10');
+      expect(result.isError, isFalse);
+      final credit = result.invocation! as DebugConsoleStockpileCredit;
+      expect(credit.commodityId, 'castIron');
+      expect(credit.requestedAmount, 10);
+      expect(credit.creditedAmount, 10);
+    });
+
+    test('clamps add_resource above cap in parser', () {
+      final result = parser.parse('/add_resource grain 12000');
+      expect(result.isError, isFalse);
+      final credit = result.invocation! as DebugConsoleStockpileCredit;
+      expect(credit.requestedAmount, 12000);
+      expect(credit.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
+    });
+
+    test('rejects add_resource unknown commodity id', () {
+      final result = parser.parse('/add_resource nope 10');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Unknown commodity id'));
+    });
+
+    test('rejects add_resource invalid amount input', () {
+      final result = parser.parse('/add_resource grain abc');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Amount must be an integer'));
+    });
+
+    test('rejects add_resource amount below 1', () {
+      final result = parser.parse('/add_resource grain 0');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('at least 1'));
+    });
+
     test('parses spawn regiment command with defaults', () {
       final result = parser.parse('/spawn_regiment peasant_levies');
       expect(result.isError, isFalse);
@@ -135,6 +179,48 @@ void main() {
       }
       final joined = sorted.join(', ');
       expect(message, contains(joined));
+    });
+
+    test('help includes all commodity ids in stable order', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      final sorted = debugConsoleSupportedCommodityIdsSorted;
+      for (final id in sorted) {
+        expect(message, contains(id));
+      }
+      final joined = sorted.join(', ');
+      expect(message, contains(joined));
+    });
+
+    test('parses flip_province full-id form', () {
+      final result = parser.parse('/flip_province oldWorld|P1');
+      expect(result.isError, isFalse);
+      final flip = result.invocation! as DebugConsoleFlipProvince;
+      expect(flip.fullProvinceId, 'oldWorld|P1');
+      expect(flip.regionId, isNull);
+      expect(flip.provinceDisplayName, isNull);
+    });
+
+    test('parses reveal_province full-id form', () {
+      final result = parser.parse('/reveal_province oldWorld|P1');
+      expect(result.isError, isFalse);
+      final reveal = result.invocation! as DebugConsoleRevealProvince;
+      expect(reveal.target, 'oldWorld|P1');
+      expect(reveal.targetIsFullProvinceId, isTrue);
+    });
+
+    test('parses reveal_province display-name form', () {
+      final result = parser.parse('/reveal_province New Bordeaux');
+      expect(result.isError, isFalse);
+      final reveal = result.invocation! as DebugConsoleRevealProvince;
+      expect(reveal.target, 'New Bordeaux');
+      expect(reveal.targetIsFullProvinceId, isFalse);
+    });
+
+    test('rejects reveal_province local id without region prefix', () {
+      final result = parser.parse('/reveal_province P1');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Use full province id format'));
     });
   });
 }

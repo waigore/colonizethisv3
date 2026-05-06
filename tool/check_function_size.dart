@@ -18,10 +18,10 @@ int runCheckFunctionSize(
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
-  final packageScanPrefixes = _collectPackageScanPathPrefixes(repoRoot);
+  final scanPrefixes = _collectScanPathPrefixes(repoRoot);
   final files = collectRepoLintDomainDartFiles(repoRoot).where((file) {
     final rel = p.relative(file.path, from: repoRoot);
-    return packageScanPrefixes.any(rel.startsWith);
+    return scanPrefixes.any(rel.startsWith);
   });
   final violations = <String>[];
 
@@ -52,19 +52,18 @@ int runCheckFunctionSize(
   return 1;
 }
 
-/// `packages/<name>/lib/` roots per package.
-List<String> _collectPackageScanPathPrefixes(String repoRoot) {
+/// `packages/<name>/lib/` roots plus app debug handler files.
+List<String> _collectScanPathPrefixes(String repoRoot) {
   final packagesDir = Directory(p.join(repoRoot, 'packages'));
-  if (!packagesDir.existsSync()) {
-    return const [];
-  }
-  final prefixes = <String>[];
-  for (final entity in packagesDir.listSync(followLinks: false)) {
-    if (entity is! Directory) {
-      continue;
+  final prefixes = <String>['app/lib/core/services/app_event_handler_debug_'];
+  if (packagesDir.existsSync()) {
+    for (final entity in packagesDir.listSync(followLinks: false)) {
+      if (entity is! Directory) {
+        continue;
+      }
+      final packageName = p.basename(entity.path);
+      prefixes.add('packages/$packageName/lib/');
     }
-    final packageName = p.basename(entity.path);
-    prefixes.add('packages/$packageName/lib/');
   }
   prefixes.sort();
   return prefixes;

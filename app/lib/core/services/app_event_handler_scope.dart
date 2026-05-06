@@ -24,12 +24,17 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'app_event_handler.dart';
 import 'app_event_handler_debug_flip_province.dart'
     show applyDebugFlipProvinceOwnership;
-import 'app_event_handler_debug_spawn.dart'
-    show
-        applyDebugCivilianSpawnAtCapital,
-        applyDebugRegimentSpawnAtCapital,
-        applyDebugShipSpawnAtCapitalHomeFleet;
+import 'app_event_handler_debug_reveal_province.dart'
+    show applyDebugRevealProvince;
+import 'app_event_handler_debug_spawn_civilian.dart'
+    show applyDebugCivilianSpawnAtCapital;
+import 'app_event_handler_debug_spawn_regiment.dart'
+    show applyDebugRegimentSpawnAtCapital;
+import 'app_event_handler_debug_spawn_ship.dart'
+    show applyDebugShipSpawnAtCapitalHomeFleet;
+import 'app_event_handler_debug_stockpile.dart' show applyDebugStockpileCredit;
 import 'app_event_handler_debug_treasury.dart' show applyDebugTreasuryCredit;
+import 'debug_command_helpers.dart' show DebugCommandResult;
 
 /// [OpenDialogEvent] id for [TrainCiviliansDialog]. SPEC/program/app-ui-wiring.md.
 

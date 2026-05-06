@@ -33,6 +33,36 @@ void main() {
       expect(result.message, contains('500'));
     });
 
+    test('emits stockpile credit event for add_resource', () {
+      final result = executor.executeRaw(
+        rawInput: '/add_resource grain 500',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      expect(result.events, hasLength(1));
+      final event = result.events.single as CreditDebugStockpileCommodityEvent;
+      expect(event.humanPlayerId, 'p1');
+      expect(event.commodityId, 'grain');
+      expect(event.requestedAmount, 500);
+      expect(event.creditedAmount, 500);
+      expect(result.message, contains('grain'));
+      expect(result.message, contains('500'));
+    });
+
+    test('executor add_resource clamp message includes both amounts', () {
+      final result = executor.executeRaw(
+        rawInput: '/add_resource castIron 20000',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      final event = result.events.single as CreditDebugStockpileCommodityEvent;
+      expect(event.commodityId, 'castIron');
+      expect(event.requestedAmount, 20000);
+      expect(event.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
+      expect(result.message, contains('20000'));
+      expect(result.message, contains('9999'));
+    });
+
     test('emits spawn regiment event for valid command', () {
       final result = executor.executeRaw(
         rawInput: '/spawn_regiment peasant_levies 2',
@@ -92,6 +122,30 @@ void main() {
       expect(event.humanPlayerId, 'p1');
       expect(event.regionId, 'oldWorld');
       expect(event.provinceDisplayName, 'New Bordeaux');
+    });
+
+    test('emits flip_province event for full-id form', () {
+      final result = executor.executeRaw(
+        rawInput: '/flip_province oldWorld|P1',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      final event = result.events.single as FlipDebugProvinceOwnershipEvent;
+      expect(event.fullProvinceId, 'oldWorld|P1');
+      expect(event.regionId, isNull);
+      expect(event.provinceDisplayName, isNull);
+    });
+
+    test('emits reveal_province event', () {
+      final result = executor.executeRaw(
+        rawInput: '/reveal_province oldWorld|P1',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      final event = result.events.single as RevealDebugProvinceEvent;
+      expect(event.humanPlayerId, 'p1');
+      expect(event.target, 'oldWorld|P1');
+      expect(event.targetIsFullProvinceId, isTrue);
     });
   });
 }

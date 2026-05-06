@@ -502,17 +502,55 @@ class CreditDebugTreasuryEvent extends SessionCommandEvent {
   final int creditedAmount;
 }
 
+/// Immediate debug stockpile commodity credit for the human player.
+class CreditDebugStockpileCommodityEvent extends SessionCommandEvent {
+  const CreditDebugStockpileCommodityEvent({
+    required this.humanPlayerId,
+    required this.commodityId,
+    required this.requestedAmount,
+    required this.creditedAmount,
+  });
+
+  final String humanPlayerId;
+  final String commodityId;
+  final int requestedAmount;
+  final int creditedAmount;
+}
+
 /// Immediate debug province ownership transfer for the active human player.
 class FlipDebugProvinceOwnershipEvent extends SessionCommandEvent {
   const FlipDebugProvinceOwnershipEvent({
     required this.humanPlayerId,
-    required this.regionId,
-    required this.provinceDisplayName,
+    this.fullProvinceId,
+    this.regionId,
+    this.provinceDisplayName,
+  }) : assert(
+         (fullProvinceId != null &&
+                 regionId == null &&
+                 provinceDisplayName == null) ||
+             (fullProvinceId == null &&
+                 regionId != null &&
+                 provinceDisplayName != null),
+         'FlipDebugProvinceOwnershipEvent requires fullProvinceId OR regionId+provinceDisplayName.',
+       );
+
+  final String humanPlayerId;
+  final String? fullProvinceId;
+  final String? regionId;
+  final String? provinceDisplayName;
+}
+
+/// Immediate debug province visibility reveal for the active human player.
+class RevealDebugProvinceEvent extends SessionCommandEvent {
+  const RevealDebugProvinceEvent({
+    required this.humanPlayerId,
+    required this.target,
+    required this.targetIsFullProvinceId,
   });
 
   final String humanPlayerId;
-  final String regionId;
-  final String provinceDisplayName;
+  final String target;
+  final bool targetIsFullProvinceId;
 }
 
 /// Request to append one diplomatic order for [playerId] in current-turn draft.

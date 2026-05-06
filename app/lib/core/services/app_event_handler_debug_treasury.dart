@@ -1,12 +1,24 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'debug_command_helpers.dart';
+
 /// Apply immediate treasury credit for the active human player (debug console).
-({Game? game, String message}) applyDebugTreasuryCredit({
+DebugCommandResult applyDebugTreasuryCredit({
   required Game? currentGame,
   required CreditDebugTreasuryEvent event,
 }) {
   if (currentGame == null) {
-    return (game: null, message: 'Debug treasury credit ignored: no active game.');
+    return (
+      game: null,
+      message: 'Debug treasury credit ignored: no active game.',
+    );
+  }
+  if (currentGame.worldState.turnState.phase != TurnPhase.orders) {
+    return (
+      game: null,
+      message:
+          'Debug add_money rejected: command is allowed only during human Orders phase.',
+    );
   }
   if (event.creditedAmount < 1) {
     return (
@@ -14,13 +26,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
       message: 'Debug treasury credit ignored: credited amount must be >= 1.',
     );
   }
-  Player? player;
-  for (final candidate in currentGame.players) {
-    if (candidate.id == event.humanPlayerId) {
-      player = candidate;
-      break;
-    }
-  }
+  final player = findPlayerById(currentGame, event.humanPlayerId);
   if (player == null) {
     return (
       game: null,
@@ -32,9 +38,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
   final newTreasury = oldTreasury + event.creditedAmount;
   final updatedPlayers = currentGame.players
       .map(
-        (p) => p.id == event.humanPlayerId
-            ? p.copyWith(treasury: newTreasury)
-            : p,
+        (p) =>
+            p.id == event.humanPlayerId ? p.copyWith(treasury: newTreasury) : p,
       )
       .toList(growable: false);
   final nextGame = currentGame.copyWith(players: updatedPlayers);
@@ -45,8 +50,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
         'Treasury +${event.creditedAmount} (requested ${event.requestedAmount}, '
         'credited ${event.creditedAmount}). New balance: $newTreasury.';
   } else {
-    message =
-        'Treasury +${event.creditedAmount}. New balance: $newTreasury.';
+    message = 'Treasury +${event.creditedAmount}. New balance: $newTreasury.';
   }
 
   return (game: nextGame, message: message);

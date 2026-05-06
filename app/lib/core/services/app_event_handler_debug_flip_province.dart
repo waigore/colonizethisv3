@@ -2,8 +2,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'debug_command_helpers.dart';
+
 /// Apply immediate canonical province ownership transfer from debug console.
-({Game? game, String message}) applyDebugFlipProvinceOwnership({
+DebugCommandResult applyDebugFlipProvinceOwnership({
   required Game? currentGame,
   required FlipDebugProvinceOwnershipEvent event,
   required MapTopology combinedTopology,
@@ -22,8 +24,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
           'Debug flip_province rejected: command is allowed only during human Orders phase.',
     );
   }
-  final human = currentGame.players.where((p) => p.id == event.humanPlayerId);
-  if (human.isEmpty) {
+  final human = findPlayerById(currentGame, event.humanPlayerId);
+  if (human == null) {
     return (
       game: null,
       message:
@@ -31,38 +33,18 @@ import 'package:colonizethis_models/colonizethis_models.dart';
     );
   }
 
-  final regionData = regionDataForId(currentGame.worldState, event.regionId);
-  if (regionData == null) {
+  final resolved = _resolveFlipTarget(currentGame, event);
+  final failure = resolved.failureMessage;
+  if (failure != null) {
+    return (game: null, message: failure);
+  }
+  final province = resolved.province;
+  if (province == null) {
     return (
       game: null,
-      message:
-          'Debug flip_province rejected: unknown region "${event.regionId}".',
+      message: 'Debug flip_province rejected: target resolution failed.',
     );
   }
-
-  final normalizedDisplayName = event.provinceDisplayName.trim().toLowerCase();
-  final matched = regionData.provinces
-      .where(
-        (p) =>
-            (p.displayName ?? '').trim().toLowerCase() == normalizedDisplayName,
-      )
-      .toList(growable: false);
-  if (matched.isEmpty) {
-    return (
-      game: null,
-      message:
-          'Debug flip_province rejected: province "${event.provinceDisplayName}" not found in region "${event.regionId}".',
-    );
-  }
-  if (matched.length > 1) {
-    return (
-      game: null,
-      message:
-          'Debug flip_province rejected: province "${event.provinceDisplayName}" is ambiguous in region "${event.regionId}".',
-    );
-  }
-
-  final province = matched.single;
   final oldOwnerId = province.ownerId;
   if (oldOwnerId == null || oldOwnerId.isEmpty) {
     return (
@@ -130,6 +112,66 @@ import 'package:colonizethis_models/colonizethis_models.dart';
       message: 'Debug flip_province rejected: ${error.message}',
     );
   }
+}
+
+({Province? province, String? failureMessage}) _resolveFlipTarget(
+  Game game,
+  FlipDebugProvinceOwnershipEvent event,
+) {
+  final fullProvinceId = event.fullProvinceId;
+  if (fullProvinceId != null) {
+    final province = game.worldState.tryGetProvince(fullProvinceId);
+    if (province == null) {
+      return (
+        province: null,
+        failureMessage:
+            'Debug flip_province rejected: province "$fullProvinceId" not found.',
+      );
+    }
+    return (province: province, failureMessage: null);
+  }
+
+  final regionId = event.regionId;
+  final provinceDisplayName = event.provinceDisplayName;
+  if (regionId == null || provinceDisplayName == null) {
+    return (
+      province: null,
+      failureMessage:
+          'Debug flip_province rejected: invalid command target. Use region+name or full province id.',
+    );
+  }
+  final regionData = regionDataForId(game.worldState, regionId);
+  if (regionData == null) {
+    return (
+      province: null,
+      failureMessage:
+          'Debug flip_province rejected: unknown region "$regionId".',
+    );
+  }
+  final normalizedDisplayName = provinceDisplayName.trim().toLowerCase();
+  final matched = regionData.provinces
+      .where(
+        (p) =>
+            (p.displayName ?? '').trim().toLowerCase() == normalizedDisplayName,
+      )
+      .toList(growable: false);
+  if (matched.isEmpty) {
+    return (
+      province: null,
+      failureMessage:
+          'Debug flip_province rejected: province "$provinceDisplayName" not found in region "$regionId".',
+    );
+  }
+  if (matched.length > 1) {
+    final candidateIds = matched.map((p) => p.id).toList()..sort();
+    return (
+      province: null,
+      failureMessage:
+          'Debug flip_province rejected: province "$provinceDisplayName" is ambiguous in region "$regionId". '
+          'Candidates: ${candidateIds.join(', ')}. Retry with /flip_province <regionId|localId>.',
+    );
+  }
+  return (province: matched.single, failureMessage: null);
 }
 
 bool _isProvinceKnownToPlayer({

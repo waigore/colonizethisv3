@@ -26,10 +26,22 @@ sealed class DebugConsoleParsedInvocation {
     required int creditedAmount,
   }) = DebugConsoleTreasuryCredit;
 
+  const factory DebugConsoleParsedInvocation.stockpileCredit({
+    required String commodityId,
+    required int requestedAmount,
+    required int creditedAmount,
+  }) = DebugConsoleStockpileCredit;
+
   const factory DebugConsoleParsedInvocation.flipProvince({
-    required String regionId,
-    required String provinceDisplayName,
+    String? fullProvinceId,
+    String? regionId,
+    String? provinceDisplayName,
   }) = DebugConsoleFlipProvince;
+
+  const factory DebugConsoleParsedInvocation.revealProvince({
+    required String target,
+    required bool targetIsFullProvinceId,
+  }) = DebugConsoleRevealProvince;
 }
 
 final class DebugConsoleSpawnCivilianAtCapital
@@ -78,12 +90,48 @@ final class DebugConsoleTreasuryCredit extends DebugConsoleParsedInvocation {
   final int creditedAmount;
 }
 
-final class DebugConsoleFlipProvince extends DebugConsoleParsedInvocation {
-  const DebugConsoleFlipProvince({
-    required this.regionId,
-    required this.provinceDisplayName,
+final class DebugConsoleStockpileCredit extends DebugConsoleParsedInvocation {
+  const DebugConsoleStockpileCredit({
+    required this.commodityId,
+    required this.requestedAmount,
+    required this.creditedAmount,
   });
 
-  final String regionId;
-  final String provinceDisplayName;
+  final String commodityId;
+
+  /// Raw integer from user input before upper-bound clamp.
+  final int requestedAmount;
+
+  /// Amount applied after clamp to the debug-console stockpile credit cap (9999).
+  final int creditedAmount;
+}
+
+final class DebugConsoleFlipProvince extends DebugConsoleParsedInvocation {
+  const DebugConsoleFlipProvince({
+    this.fullProvinceId,
+    this.regionId,
+    this.provinceDisplayName,
+  }) : assert(
+         (fullProvinceId != null &&
+                 regionId == null &&
+                 provinceDisplayName == null) ||
+             (fullProvinceId == null &&
+                 regionId != null &&
+                 provinceDisplayName != null),
+         'flipProvince requires either fullProvinceId, or regionId + provinceDisplayName.',
+       );
+
+  final String? fullProvinceId;
+  final String? regionId;
+  final String? provinceDisplayName;
+}
+
+final class DebugConsoleRevealProvince extends DebugConsoleParsedInvocation {
+  const DebugConsoleRevealProvince({
+    required this.target,
+    required this.targetIsFullProvinceId,
+  });
+
+  final String target;
+  final bool targetIsFullProvinceId;
 }
