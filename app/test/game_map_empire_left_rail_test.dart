@@ -53,8 +53,8 @@ void main() {
     currentOrdersProvider.overrideWith(
       () => CurrentOrdersNotifier(const Orders()),
     ),
-    availableWorkTargetsProvider.overrideWith(
-      (ref) => <String, List<String>>{},
+    availableWorkTargetIdsForUnitProvider.overrideWith(
+      (ref, _) => const <String>[],
     ),
     appEventBusProvider.overrideWith((ref) {
       final bus = AppEventBus.create();

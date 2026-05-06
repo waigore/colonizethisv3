@@ -270,92 +270,97 @@ class _CivilianPanelWithMapStoryState
         : mapViewData.newWorld;
     // Panel at bottom, like province overlay "With map" story. SPEC/ui/civilian-units-panel.md.
     const panelHeight = 220.0;
-    return SizedBox(
-      width: 900,
-      height: 550,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                CtChoiceChip(
-                  label: Text(appL10n(context).region_oldWorld),
-                  selected: _regionIndex == 0,
-                  onSelected: (_) => setState(() => _regionIndex = 0),
-                ),
-                CtChoiceChip(
-                  label: Text(appL10n(context).region_newWorld),
-                  selected: _regionIndex == 1,
-                  onSelected: (_) => setState(() => _regionIndex = 1),
-                ),
-                CtChoiceChip(
-                  label: Text(appL10n(context).mapDebug_fullVisibility),
-                  selected: _visibilityMode == CtMapVisibilityMode.full,
-                  onSelected: (_) => setState(
-                    () => _visibilityMode = CtMapVisibilityMode.full,
+    return civilianUnitsPanelWithRiverpod(
+      game: _game,
+      child: SizedBox(
+        width: 900,
+        height: 550,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  CtChoiceChip(
+                    label: Text(appL10n(context).region_oldWorld),
+                    selected: _regionIndex == 0,
+                    onSelected: (_) => setState(() => _regionIndex = 0),
                   ),
-                ),
-                CtChoiceChip(
-                  label: Text(appL10n(context).mapDebug_playerConstrained),
-                  selected:
-                      _visibilityMode == CtMapVisibilityMode.playerConstrained,
-                  onSelected: (_) => setState(
-                    () =>
-                        _visibilityMode = CtMapVisibilityMode.playerConstrained,
+                  CtChoiceChip(
+                    label: Text(appL10n(context).region_newWorld),
+                    selected: _regionIndex == 1,
+                    onSelected: (_) => setState(() => _regionIndex = 1),
                   ),
-                ),
-                CtChoiceChip(
-                  label: Text(
-                    appL10n(context).map_displayOptions_showProvinceNames,
+                  CtChoiceChip(
+                    label: Text(appL10n(context).mapDebug_fullVisibility),
+                    selected: _visibilityMode == CtMapVisibilityMode.full,
+                    onSelected: (_) => setState(
+                      () => _visibilityMode = CtMapVisibilityMode.full,
+                    ),
                   ),
-                  selected: _showProvinceNames,
-                  onSelected: (_) => setState(() => _showProvinceNames = true),
-                ),
-                CtChoiceChip(
-                  label: Text(appL10n(context).mapDebug_hideProvinceNames),
-                  selected: !_showProvinceNames,
-                  onSelected: (_) => setState(() => _showProvinceNames = false),
-                ),
-              ],
+                  CtChoiceChip(
+                    label: Text(appL10n(context).mapDebug_playerConstrained),
+                    selected:
+                        _visibilityMode ==
+                        CtMapVisibilityMode.playerConstrained,
+                    onSelected: (_) => setState(
+                      () => _visibilityMode =
+                          CtMapVisibilityMode.playerConstrained,
+                    ),
+                  ),
+                  CtChoiceChip(
+                    label: Text(
+                      appL10n(context).map_displayOptions_showProvinceNames,
+                    ),
+                    selected: _showProvinceNames,
+                    onSelected: (_) =>
+                        setState(() => _showProvinceNames = true),
+                  ),
+                  CtChoiceChip(
+                    label: Text(appL10n(context).mapDebug_hideProvinceNames),
+                    selected: !_showProvinceNames,
+                    onSelected: (_) =>
+                        setState(() => _showProvinceNames = false),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: CtRegionMap(
-              region: region,
-              cellSizePx: 24,
-              visibilityMode: _visibilityMode,
-              playerViewForResources:
-                  _visibilityMode == CtMapVisibilityMode.playerConstrained
-                  ? debugPlayerViewForFirstPlayer()
-                  : null,
-              showProvinceNamesLayer: _showProvinceNames,
-              onProvinceSelected: (_) {},
-              secondaryHighlightTileKey: _secondaryHighlightTileKey,
-              centerOnTileKey: _centerOnTileKey,
-              validTileKeys: _validTileKeys,
-              onTileSelected: _workTargetSelection != null
-                  ? _onTileSelectedForWork
-                  : null,
-              onWorkTargetSelectionCancelled: _workTargetSelection != null
-                  ? () => setState(() => _workTargetSelection = null)
-                  : null,
+            Expanded(
+              child: CtRegionMap(
+                region: region,
+                cellSizePx: 24,
+                visibilityMode: _visibilityMode,
+                playerViewForResources:
+                    _visibilityMode == CtMapVisibilityMode.playerConstrained
+                    ? debugPlayerViewForFirstPlayer()
+                    : null,
+                showProvinceNamesLayer: _showProvinceNames,
+                onProvinceSelected: (_) {},
+                secondaryHighlightTileKey: _secondaryHighlightTileKey,
+                centerOnTileKey: _centerOnTileKey,
+                validTileKeys: _validTileKeys,
+                onTileSelected: _workTargetSelection != null
+                    ? _onTileSelectedForWork
+                    : null,
+                onWorkTargetSelectionCancelled: _workTargetSelection != null
+                    ? () => setState(() => _workTargetSelection = null)
+                    : null,
+              ),
             ),
-          ),
-          SizedBox(
-            height: panelHeight,
-            child: CivilianUnitsPanel(
-              game: _game,
-              humanPlayerId: _humanPlayerId,
-              currentOrders: _orders,
-              availableWorkTargets: const {},
-              bus: _panelBus,
+            SizedBox(
+              height: panelHeight,
+              child: CivilianUnitsPanel(
+                game: _game,
+                humanPlayerId: _humanPlayerId,
+                currentOrders: _orders,
+                bus: _panelBus,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -372,6 +377,27 @@ class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
     final humanPlayerId = game.players.isNotEmpty
         ? game.players.first.id
         : 'gp1';
+    return civilianUnitsPanelWithRiverpod(
+      game: game,
+      child: _CivilianPanelBottomSheetDemoLayout(
+        game: game,
+        humanPlayerId: humanPlayerId,
+      ),
+    );
+  }
+}
+
+class _CivilianPanelBottomSheetDemoLayout extends StatelessWidget {
+  const _CivilianPanelBottomSheetDemoLayout({
+    required this.game,
+    required this.humanPlayerId,
+  });
+
+  final Game game;
+  final String humanPlayerId;
+
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
       width: 600,
       height: 400,
@@ -387,13 +413,15 @@ class _CivilianPanelAsBottomSheetStory extends StatelessWidget {
                   isScrollControlled: true,
                   builder: (ctx) {
                     final maxHeight = MediaQuery.sizeOf(ctx).height * 0.5;
-                    return ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: maxHeight),
-                      child: CivilianUnitsPanel(
-                        game: game,
-                        humanPlayerId: humanPlayerId,
-                        availableWorkTargets: const {},
-                        bus: AppEventBus(),
+                    return civilianUnitsPanelWithRiverpod(
+                      game: game,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: maxHeight),
+                        child: CivilianUnitsPanel(
+                          game: game,
+                          humanPlayerId: humanPlayerId,
+                          bus: AppEventBus(),
+                        ),
                       ),
                     );
                   },

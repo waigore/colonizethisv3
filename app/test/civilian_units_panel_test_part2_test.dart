@@ -6,9 +6,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/core/services/app_event_handler_scope.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
@@ -106,24 +108,30 @@ void main() {
   }) {
     final resolvedBus = bus ?? AppEventBus.create();
     final navigatorKey = GlobalKey<NavigatorState>();
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      home: Scaffold(
-        body: _EventHandlingWrapper(
-          bus: resolvedBus,
-          navigatorKey: navigatorKey,
-          child: CivilianUnitsPanel(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            currentOrders: currentOrders,
-            availableWorkTargets: availableWorkTargets,
+    return ProviderScope(
+      overrides: [
+        availableWorkTargetIdsForUnitProvider.overrideWith(
+          (ref, unitId) => availableWorkTargets[unitId] ?? const [],
+        ),
+      ],
+      child: MaterialApp(
+        navigatorKey: navigatorKey,
+        home: Scaffold(
+          body: _EventHandlingWrapper(
             bus: resolvedBus,
-            explorerOnly: explorerOnly,
-            builderOnly: builderOnly,
-            prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
-            exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
-            buildImprovementShortcutTargetTileKey:
-                buildImprovementShortcutTargetTileKey,
+            navigatorKey: navigatorKey,
+            child: CivilianUnitsPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              currentOrders: currentOrders,
+              bus: resolvedBus,
+              explorerOnly: explorerOnly,
+              builderOnly: builderOnly,
+              prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
+              exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
+              buildImprovementShortcutTargetTileKey:
+                  buildImprovementShortcutTargetTileKey,
+            ),
           ),
         ),
       ),
@@ -240,16 +248,22 @@ void main() {
         bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: CivilianUnitsPanel(
-                game: miniGame,
-                humanPlayerId: human,
-                currentOrders: const Orders(),
-                availableWorkTargets: const {},
-                bus: bus,
-                tileScopeTileKey: tileKey,
-                initialSelectedUnitId: 'civ_a',
+          ProviderScope(
+            overrides: [
+              availableWorkTargetIdsForUnitProvider.overrideWith(
+                (ref, _) => const <String>[],
+              ),
+            ],
+            child: MaterialApp(
+              home: Scaffold(
+                body: CivilianUnitsPanel(
+                  game: miniGame,
+                  humanPlayerId: human,
+                  currentOrders: const Orders(),
+                  bus: bus,
+                  tileScopeTileKey: tileKey,
+                  initialSelectedUnitId: 'civ_a',
+                ),
               ),
             ),
           ),
@@ -592,29 +606,35 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MaterialApp(
-            navigatorKey: navigatorKey,
-            home: Scaffold(
-              body: Column(
-                children: [
-                  ValueListenableBuilder<int>(
-                    valueListenable: observedRemovals,
-                    builder: (_, count, _) => Text('observed-removals:$count'),
-                  ),
-                  Expanded(
-                    child: _EventHandlingWrapper(
-                      bus: bus,
-                      navigatorKey: navigatorKey,
-                      child: CivilianUnitsPanel(
-                        game: game,
-                        humanPlayerId: humanPlayerIdWithUnits,
-                        currentOrders: ordersWithOne,
-                        availableWorkTargets: const {},
+          ProviderScope(
+            overrides: [
+              availableWorkTargetIdsForUnitProvider.overrideWith(
+                (ref, _) => const <String>[],
+              ),
+            ],
+            child: MaterialApp(
+              navigatorKey: navigatorKey,
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    ValueListenableBuilder<int>(
+                      valueListenable: observedRemovals,
+                      builder: (_, count, _) => Text('observed-removals:$count'),
+                    ),
+                    Expanded(
+                      child: _EventHandlingWrapper(
                         bus: bus,
+                        navigatorKey: navigatorKey,
+                        child: CivilianUnitsPanel(
+                          game: game,
+                          humanPlayerId: humanPlayerIdWithUnits,
+                          currentOrders: ordersWithOne,
+                          bus: bus,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -671,29 +691,35 @@ void main() {
         if (workingCivilians.isEmpty) return;
 
         await tester.pumpWidget(
-          MaterialApp(
-            navigatorKey: navigatorKey,
-            home: Scaffold(
-              body: Column(
-                children: [
-                  ValueListenableBuilder<int>(
-                    valueListenable: observedCancels,
-                    builder: (_, count, _) => Text('observed-cancels:$count'),
-                  ),
-                  Expanded(
-                    child: _EventHandlingWrapper(
-                      bus: bus,
-                      navigatorKey: navigatorKey,
-                      child: CivilianUnitsPanel(
-                        game: game,
-                        humanPlayerId: humanPlayerIdWithUnits,
-                        currentOrders: const Orders(),
-                        availableWorkTargets: const {},
+          ProviderScope(
+            overrides: [
+              availableWorkTargetIdsForUnitProvider.overrideWith(
+                (ref, _) => const <String>[],
+              ),
+            ],
+            child: MaterialApp(
+              navigatorKey: navigatorKey,
+              home: Scaffold(
+                body: Column(
+                  children: [
+                    ValueListenableBuilder<int>(
+                      valueListenable: observedCancels,
+                      builder: (_, count, _) => Text('observed-cancels:$count'),
+                    ),
+                    Expanded(
+                      child: _EventHandlingWrapper(
                         bus: bus,
+                        navigatorKey: navigatorKey,
+                        child: CivilianUnitsPanel(
+                          game: game,
+                          humanPlayerId: humanPlayerIdWithUnits,
+                          currentOrders: const Orders(),
+                          bus: bus,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
