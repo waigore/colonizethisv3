@@ -41,6 +41,14 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
   - Hamburger menu remains available from the top bar.
   - The modal cannot be dismissed by outside tap or back/escape.
 
+### Turn-resolution active state (slice 2)
+
+- Scope: this slice moves heavy turn-resolution execution to a worker isolate and streams live phase labels into the processing modal.
+- AI order generation remains on the main isolate before worker spawn; the worker receives merged orders payload.
+- The worker emits per-phase start/end progress events through a typed callback (`TurnPhaseProgressMarker`) and the UI updates phase text on `start`.
+- Terminal success and terminal failure both close the modal; success applies the resolved result and failure shows the existing error snackbar.
+- Existing pending-human-input outcomes (overture/intervention/call-to-arms) remain valid terminal outputs for post-resolution UI flow.
+
 ---
 
 ## Acceptance criteria

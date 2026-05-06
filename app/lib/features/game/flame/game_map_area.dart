@@ -12,7 +12,6 @@ import 'package:colonizethis_map/colonizethis_map.dart'
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 import '../../../config/ct_e2e.dart';
-import '../../../config/ct_debug_console.dart';
 import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
 
 import '../../../../providers/app_event_bus_provider.dart';
@@ -22,6 +21,8 @@ import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../providers/region_minimap_provider.dart';
 import '../../../../providers/treasury_summary_provider.dart';
+import '../../../../providers/turn_resolution_runner_provider.dart';
+import '../../../core/services/turn_resolution_runner.dart';
 import 'region_map_viewport_snapshot.dart';
 import '../../../../providers/home_fleet_cargo_provider.dart';
 
@@ -38,7 +39,6 @@ import 'debug_console_overlay_panel.dart';
 import 'game_map_area_state_logic.dart';
 import 'per_player_work_target_selection_cache.dart';
 import 'next_turn_confirmation_dialog.dart';
-import 'turn_resolution_flow.dart';
 import 'turn_resolution_processing_dialog.dart';
 import 'turn_resolution_result_applier.dart';
 import '../utils/map_location_resolver.dart';

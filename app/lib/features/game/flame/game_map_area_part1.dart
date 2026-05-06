@@ -19,6 +19,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   List<ct_models.GameToUIEvent> _resolvedPlayerTurnEvents = const [];
   bool _isTurnResolving = false;
   String _turnResolutionPhaseText = 'Resolving turn...';
+  StreamSubscription<TurnResolutionProgressEvent>? _turnResolutionProgressSub;
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode _baseLayerDisplayMode =
@@ -211,6 +212,8 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
   @override
   void dispose() {
+    _turnResolutionProgressSub?.cancel();
+    _turnResolutionProgressSub = null;
     for (final s in _busSubscriptions) {
       s.cancel();
     }
@@ -476,8 +479,13 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       currentTurn: currentTurn,
     );
     if (ok != true) return;
+    if (!mounted) return;
 
     final service = ref.read(gameServiceProvider);
+    final runner = ref.read(turnResolutionRunnerProvider);
+    final failureMessage = appL10n(context).game_turnResolutionFailedMessage;
+    final messenger = ScaffoldMessenger.of(context);
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
     final orders = ref.read(currentOrdersProvider);
     final mapData = service.getMapData(game.id);
     if (mapData == null) {
@@ -499,40 +507,67 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     );
     await Future<void>.delayed(Duration.zero);
     try {
-      final result = resolveNextTurnForGameScreen(
+      final session = runner.startResolution(
         game: game,
         orders: orders,
-        topologyForAi: mapData.combinedTopology,
+        topology: mapData.combinedTopology,
         tileMapByRegion: mapData.tileMapByRegion,
-        runTurnResolution:
-            ({required ct_models.Orders orders, ct_models.Orders? aiOrders}) =>
-                service.runTurnResolution(
-                  game,
-                  orders: orders,
-                  aiOrders: aiOrders,
-                ),
       );
+      _turnResolutionProgressSub?.cancel();
+      _turnResolutionProgressSub = session.progress.listen((event) {
+        if (!mounted || event.marker != 'start') {
+          return;
+        }
+        setState(() {
+          _turnResolutionPhaseText = _phaseLabel(event.phase);
+        });
+      });
+      final terminal = await session.done;
       if (!mounted) {
         return;
       }
-      applyTurnResolutionResult(ref, result);
+      switch (terminal) {
+        case TurnResolutionTerminalComplete():
+          service.handleExternallyResolvedTurnResult(terminal.result);
+          applyTurnResolutionResult(ref, terminal.result);
+        case TurnResolutionTerminalError():
+          messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
+          throw StateError(terminal.errorMessage);
+      }
     } catch (_) {
       if (mounted) {
-        final failureMessage = appL10n(context).game_turnResolutionFailedMessage;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(failureMessage)));
+        messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
       }
       rethrow;
     } finally {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        setState(() {
+          _isTurnResolving = false;
+        });
+        rootNavigator.maybePop();
       }
-      setState(() {
-        _isTurnResolving = false;
-      });
-      Navigator.of(context, rootNavigator: true).maybePop();
+      _turnResolutionProgressSub?.cancel();
+      _turnResolutionProgressSub = null;
     }
+  }
+
+  String _phaseLabel(String phase) {
+    return switch (phase) {
+      'orders' => 'Validating orders...',
+      'extraction' => 'Resolving extraction...',
+      'richesToTreasury' => 'Moving riches to treasury...',
+      'consumption' => 'Resolving consumption...',
+      'production' => 'Resolving production...',
+      'research' => 'Resolving research...',
+      'diplomacy' => 'Resolving diplomacy...',
+      'movement' => 'Resolving movement...',
+      'minorRegimentUpgrade' => 'Upgrading minor regiments...',
+      'navalInterceptionCombat' => 'Resolving naval interceptions...',
+      'combat' => 'Resolving combat...',
+      'buildWork' => 'Resolving work orders...',
+      'endOfTurn' => 'Finalizing turn...',
+      _ => 'Resolving turn...',
+    };
   }
 
   void _e2eSelectFirstValidWorkTargetTile() {
