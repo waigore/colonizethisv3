@@ -145,6 +145,7 @@ void main() {
       ),
     );
   }
+
   group('NavalUnitsPanel', () {
     testWidgets('AC: Beachhead mission appears in status line', (
       WidgetTester tester,
@@ -352,6 +353,195 @@ void main() {
         expect(find.text('New World'), findsOneWidget);
         expect(find.text('Old World'), findsNothing);
         expect(find.textContaining('Fleet f1'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'AC: Scoped panel auto-closes after confirmed move empties scope',
+      (WidgetTester tester) async {
+        const humanId = 'gp_scope_autoclose_yes';
+        final bus = AppEventBus.create();
+        final closeEvents = <ClosePanelEvent>[];
+        final closeSub = bus.on<ClosePanelEvent>().listen(closeEvents.add);
+        addTearDown(closeSub.cancel);
+
+        final scopedGame = Game(
+          id: 'g_scope_autoclose_yes',
+          worldState: WorldState(
+            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(),
+            newWorld: RegionData(),
+            fleets: [
+              Fleet(
+                id: 'f1',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                seaZoneId: 's1',
+                ships: [ShipInstance(id: 'ship_1', typeId: 'frigate')],
+              ),
+            ],
+          ),
+          players: const [
+            Player(id: humanId, displayName: 'Scoped AutoClose', isHuman: true),
+          ],
+        );
+        const topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'oldWorld|s1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 'oldWorld|s2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [TopologyEdge(id1: 'oldWorld|s1', id2: 'oldWorld|s2')],
+        );
+
+        await tester.pumpWidget(
+          _ScopedNavalPanelHarness(
+            game: scopedGame,
+            humanPlayerId: humanId,
+            bus: bus,
+            topology: topology,
+            locationScopeKey: 'sea:oldWorld|s1',
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Fleet f1'), findsOneWidget);
+
+        bus.emit(
+          NavalMoveFleetRequestedEvent(
+            humanPlayerId: humanId,
+            moveOrder: NavalMoveOrder(
+              fleetId: 'f1',
+              destinationSeaZoneId: 'oldWorld|s2',
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(closeEvents.length, 1);
+      },
+    );
+
+    testWidgets(
+      'AC: Full-list mode move confirm does not emit scoped auto-close event',
+      (WidgetTester tester) async {
+        const humanId = 'gp_scope_autoclose_no_full';
+        final bus = AppEventBus.create();
+        final closeEvents = <ClosePanelEvent>[];
+        final closeSub = bus.on<ClosePanelEvent>().listen(closeEvents.add);
+        addTearDown(closeSub.cancel);
+
+        final gameFull = Game(
+          id: 'g_scope_autoclose_no_full',
+          worldState: WorldState(
+            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(),
+            newWorld: RegionData(),
+            fleets: [
+              Fleet(
+                id: 'f1',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                seaZoneId: 's1',
+                ships: [ShipInstance(id: 'ship_1', typeId: 'frigate')],
+              ),
+            ],
+          ),
+          players: const [
+            Player(id: humanId, displayName: 'Full List', isHuman: true),
+          ],
+        );
+        const topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'oldWorld|s1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: 'oldWorld|s2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: [TopologyEdge(id1: 'oldWorld|s1', id2: 'oldWorld|s2')],
+        );
+
+        await tester.pumpWidget(
+          _ScopedNavalPanelHarness(
+            game: gameFull,
+            humanPlayerId: humanId,
+            bus: bus,
+            topology: topology,
+            locationScopeKey: null,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        bus.emit(
+          NavalMoveFleetRequestedEvent(
+            humanPlayerId: humanId,
+            moveOrder: NavalMoveOrder(
+              fleetId: 'f1',
+              destinationSeaZoneId: 'oldWorld|s2',
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(closeEvents, isEmpty);
+      },
+    );
+
+    testWidgets(
+      'AC: Scoped empty state without move confirm does not auto-close',
+      (WidgetTester tester) async {
+        const humanId = 'gp_scope_autoclose_no_external';
+        final bus = AppEventBus.create();
+        final closeEvents = <ClosePanelEvent>[];
+        final closeSub = bus.on<ClosePanelEvent>().listen(closeEvents.add);
+        addTearDown(closeSub.cancel);
+
+        final gameScoped = Game(
+          id: 'g_scope_autoclose_no_external',
+          worldState: WorldState(
+            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(),
+            newWorld: RegionData(),
+            fleets: [
+              Fleet(
+                id: 'f1',
+                ownerId: humanId,
+                regionId: 'oldWorld',
+                seaZoneId: 's1',
+                ships: [ShipInstance(id: 'ship_1', typeId: 'frigate')],
+              ),
+            ],
+          ),
+          players: const [
+            Player(id: humanId, displayName: 'Scoped External', isHuman: true),
+          ],
+        );
+
+        await tester.pumpWidget(
+          _ScopedNavalPanelHarness(
+            game: gameScoped,
+            humanPlayerId: humanId,
+            bus: bus,
+            topology: const MapTopology(),
+            locationScopeKey: 'sea:oldWorld|s1',
+            removeFleetOnNextFrame: true,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(closeEvents, isEmpty);
       },
     );
 
@@ -744,167 +934,89 @@ void main() {
         expect(updated, isNull);
       },
     );
+  });
+}
 
-    testWidgets(
-      'AC: scoped panel emits ClosePanelEvent after confirmed move empties scope',
-      (WidgetTester tester) async {
-        const humanId = 'gp_scope_close';
-        const sourceScope = 'sea:oldWorld|s1';
-        final scopedGame = Game(
-          id: 'g_scope_close',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'f_scope',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                seaZoneId: 'oldWorld|s1',
-                shipTypeIds: ['frigate'],
-              ),
-            ],
-            seaZoneDisplayNameById: {'oldWorld|s2': 'South Sea'},
-          ),
-          players: const [
-            Player(id: humanId, displayName: 'Scoped', isHuman: true),
-          ],
-        );
-        const topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'oldWorld|s1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 'oldWorld|s2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: [TopologyEdge(id1: 'oldWorld|s1', id2: 'oldWorld|s2')],
-        );
-        final bus = AppEventBus.create();
-        final closeEvents = <ClosePanelEvent>[];
-        final closeSub = bus.on<ClosePanelEvent>().listen(closeEvents.add);
-        addTearDown(closeSub.cancel);
+class _ScopedNavalPanelHarness extends StatefulWidget {
+  const _ScopedNavalPanelHarness({
+    required this.game,
+    required this.humanPlayerId,
+    required this.bus,
+    required this.topology,
+    required this.locationScopeKey,
+    this.removeFleetOnNextFrame = false,
+  });
 
-        await tester.pumpWidget(
-          buildPanel(
-            game: scopedGame,
-            humanPlayerId: humanId,
-            bus: bus,
-            topology: topology,
-            locationScopeKey: sourceScope,
-          ),
-        );
-        await tester.pumpAndSettle();
+  final Game game;
+  final String humanPlayerId;
+  final AppEventBus bus;
+  final MapTopology topology;
+  final String? locationScopeKey;
+  final bool removeFleetOnNextFrame;
 
-        const movedOrders = Orders(
+  @override
+  State<_ScopedNavalPanelHarness> createState() =>
+      _ScopedNavalPanelHarnessState();
+}
+
+class _ScopedNavalPanelHarnessState extends State<_ScopedNavalPanelHarness> {
+  late Orders _draftOrders;
+  late Game _game;
+  StreamSubscription<NavalMoveFleetRequestedEvent>? _moveSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _draftOrders = const Orders();
+    _game = widget.game;
+    _moveSub = widget.bus.on<NavalMoveFleetRequestedEvent>().listen((event) {
+      if (!mounted) return;
+      setState(() {
+        _draftOrders = Orders(
           navalMoveOrdersByPlayerId: {
-            humanId: [
+            event.humanPlayerId: [
               NavalMoveOrder(
-                fleetId: 'f_scope',
-                destinationSeaZoneId: 'oldWorld|s2',
+                fleetId: event.moveOrder.fleetId,
+                destinationSeaZoneId: event.moveOrder.destinationSeaZoneId,
+                destinationPortProvinceId:
+                    event.moveOrder.destinationPortProvinceId,
               ),
             ],
           },
         );
-        await tester.pumpWidget(
-          buildPanel(
-            game: scopedGame,
-            humanPlayerId: humanId,
-            bus: bus,
-            topology: topology,
-            draftOrders: movedOrders,
-            locationScopeKey: sourceScope,
-          ),
-        );
-        await tester.pump();
-
-        expect(closeEvents.length, 1);
-      },
-    );
-
-    testWidgets(
-      'AC: full-list panel does not auto-close after confirmed move',
-      (WidgetTester tester) async {
-        const humanId = 'gp_full_list_no_close';
-        final fullListGame = Game(
-          id: 'g_full_list_no_close',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'f_full',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                seaZoneId: 'oldWorld|s1',
-                shipTypeIds: ['frigate'],
-              ),
-            ],
-          ),
-          players: const [
-            Player(id: humanId, displayName: 'Full List', isHuman: true),
-          ],
-        );
-        const topology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: 'oldWorld|s1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 'oldWorld|s2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: [TopologyEdge(id1: 'oldWorld|s1', id2: 'oldWorld|s2')],
-        );
-        final bus = AppEventBus.create();
-        final closeEvents = <ClosePanelEvent>[];
-        final closeSub = bus.on<ClosePanelEvent>().listen(closeEvents.add);
-        addTearDown(closeSub.cancel);
-
-        await tester.pumpWidget(
-          buildPanel(
-            game: fullListGame,
-            humanPlayerId: humanId,
-            bus: bus,
-            topology: topology,
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        const movedOrders = Orders(
-          navalMoveOrdersByPlayerId: {
-            humanId: [
-              NavalMoveOrder(
-                fleetId: 'f_full',
-                destinationSeaZoneId: 'oldWorld|s2',
-              ),
-            ],
-          },
-        );
-        await tester.pumpWidget(
-          buildPanel(
-            game: fullListGame,
-            humanPlayerId: humanId,
-            bus: bus,
-            topology: topology,
-            draftOrders: movedOrders,
-          ),
-        );
-        await tester.pump();
-
-        expect(closeEvents, isEmpty);
-      },
-    );
+      });
     });
+    if (widget.removeFleetOnNextFrame) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _game = _game.copyWith(
+            worldState: _game.worldState.copyWith(fleets: const []),
+          );
+        });
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _moveSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: NavalUnitsPanel(
+          game: _game,
+          humanPlayerId: widget.humanPlayerId,
+          bus: widget.bus,
+          topology: widget.topology,
+          draftOrders: _draftOrders,
+          locationScopeKey: widget.locationScopeKey,
+        ),
+      ),
+    );
+  }
 }
