@@ -141,10 +141,9 @@ Map<String, String> _coordToTileKey(WorldState ws, String regionId) {
   if (byProvince == null) return m;
   for (final list in byProvince.values) {
     for (final tk in list) {
-      final parts = tk.split('|');
-      if (parts.length >= 4) {
-        m['${parts[parts.length - 2]}|${parts[parts.length - 1]}'] = tk;
-      }
+      final coords = parseTileKeyCoordinates(tk);
+      if (coords == null || coords.regionId != regionId) continue;
+      m['${coords.x}|${coords.y}'] = tk;
     }
   }
   return m;
