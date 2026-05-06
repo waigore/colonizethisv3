@@ -1,5 +1,6 @@
 part of 'game_map_area.dart';
 
+extension _GameMapAreaStateTurnFeed on _GameMapAreaState {
   List<PlayerTurnEventFeedEntry> _feedEntries() {
     return _resolvedPlayerTurnEvents
         .map((event) {
@@ -183,51 +184,5 @@ part of 'game_map_area.dart';
           };
         })
         .toList(growable: false);
-  }
-
-  @override
-  void didUpdateWidget(covariant GameMapArea oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.game.id != widget.game.id) {
-      ref.read(mapProvincePanelProvider.notifier).reset();
-      ref.read(regionMinimapVisibleProvider.notifier).resetToDefault();
-      setState(() {
-        _refreshWorkTargetSelectionCache(widget.game);
-        _mapViewState = widget.game.mapViewState;
-        _regionViewportSnapshot = null;
-        _pendingRegionViewport = null;
-        _regionViewportFrameScheduled = false;
-      });
-    } else if (oldWidget.game.mapViewState != widget.game.mapViewState) {
-      _mapViewState = widget.game.mapViewState;
-    }
-    if (oldWidget.game.worldState.turnState.turnNumber !=
-        widget.game.worldState.turnState.turnNumber) {
-      setState(() {
-        _refreshWorkTargetSelectionCache(widget.game);
-      });
-    }
-  }
-
-  void _onRegionViewportSnapshot(RegionMapViewportSnapshot snapshot) {
-    final clampedMultiplier = snapshot.zoomMultiplier.clamp(0.5, 8.0);
-    if ((clampedMultiplier - _mapViewState.zoomMultiplier).abs() > 0.001) {
-      _setMapViewState(
-        _mapViewState.copyWith(zoomMultiplier: clampedMultiplier),
-      );
-    }
-    _pendingRegionViewport = snapshot;
-    if (_regionViewportFrameScheduled) return;
-    _regionViewportFrameScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _regionViewportFrameScheduled = false;
-      if (!mounted) return;
-      final next = _pendingRegionViewport;
-      _pendingRegionViewport = null;
-      if (next == null) return;
-      final cur = _regionViewportSnapshot;
-      if (cur != null && cur.matches(next)) return;
-      setState(() => _regionViewportSnapshot = next);
-    });
   }
 }
