@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
+import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay_demo_data.dart'
@@ -90,6 +91,72 @@ void main() {
     }
     final reserved = container.read(devExclusiveReservedWorkTileKeysProvider);
     expect(reserved, isA<Set<String>>());
+  });
+
+  test(
+    'availableWorkTargetIdsForUnitProvider matches getAvailableWorkTargetsForUnit',
+    () {
+    final container = ProviderContainer(
+      overrides: [
+        appEventBusProvider.overrideWith((ref) {
+          final bus = AppEventBus.create();
+          ref.onDispose(bus.dispose);
+          return bus;
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final gameService = container.read(gameServiceProvider);
+    final game = gameService.createNewGame(
+      id: 'games_provider_work_targets',
+      config: GameSetupConfig(
+        selectedGreatPowerIds: const ['england', 'france'],
+        continentCount: 1,
+        minorNationCount: 0,
+        tribeCount: 1,
+        numProvincesOldWorld: 4,
+        numProvincesNewWorld: 2,
+      ),
+    );
+    container.read(currentGameProvider.notifier).setGame(game);
+
+    final humanId = game.players.firstWhere((p) => p.isHuman).id;
+    String? unitId;
+    for (final u in game.worldState.oldWorld.units) {
+      if (u.ownerId == humanId) {
+        unitId = u.id;
+        break;
+      }
+    }
+    if (unitId == null) {
+      for (final u in game.worldState.newWorld.units) {
+        if (u.ownerId == humanId) {
+          unitId = u.id;
+          break;
+        }
+      }
+    }
+    expect(unitId, isNotNull);
+
+    final mapData = gameService.getMapData(game.id);
+    final topology = mapData?.combinedTopology ?? const MapTopology();
+    final view = buildPlayerView(game, topology, humanId);
+    final orders = container.read(currentOrdersProvider);
+
+    final expected = getAvailableWorkTargetsForUnit(
+      view: view,
+      game: game,
+      topology: topology,
+      currentOrders: orders,
+      unitId: unitId!,
+      tileMapByRegion: mapData?.tileMapByRegion,
+    ).availableWorkTargetIdsSorted();
+
+    expect(
+      container.read(availableWorkTargetIdsForUnitProvider(unitId)),
+      expected,
+    );
   });
 
   test('gameIdsWithIntroShownProvider defaults empty and can be updated', () {

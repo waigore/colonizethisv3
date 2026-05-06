@@ -165,5 +165,71 @@ void main() {
       );
       expect(lines.length, lessThan(80), reason: 'summary-only, no tile spam');
     });
+
+    test('suggestWorkOrders logger lines never emit unbounded full list payload',
+        () {
+      const playerId = 'gp1';
+      const ow = 'oldWorld';
+      final player = const Player(
+        id: playerId,
+        displayName: 'Human',
+        isHuman: true,
+        treasury: 5000,
+      );
+
+      final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
+      final explorer = Unit(
+        id: 'u_explorer',
+        type: kUnitTypeExplorer,
+        ownerId: playerId,
+        locationProvinceId: p1.id,
+        tileKey: '$ow|p1|0|0',
+        status: UnitStatus.idle,
+      );
+
+      final world = WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(provinces: [p1], units: [explorer]),
+        newWorld: const RegionData(),
+        playerVisibilityByTile: {
+          playerId: {'$ow|p1|0|0': 'fullyVisible', '$ow|p1|0|1': 'unknown'},
+        },
+        tileKeysByRegionAndProvince: {
+          ow: {
+            p1.id: ['$ow|p1|0|0', '$ow|p1|0|1'],
+          },
+        },
+        resourceByTileKey: const {'$ow|p1|0|0': 'grain'},
+      );
+
+      final game = Game(
+        id: 'g1',
+        worldState: world,
+        players: [player],
+        minorNations: const [],
+        tribes: const [],
+      );
+
+      final topology = MapTopology(
+        nodes: [
+          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
+        ],
+        edges: const [],
+      );
+
+      final view = buildPlayerView(game, topology, playerId);
+
+      suggestWorkOrders(view, game, topology, const Orders());
+
+      for (final e in capturedEvents) {
+        if (e.message.contains('suggestWorkOrders')) {
+          expect(
+            e.message,
+            isNot(contains('full list')),
+            reason: 'bounded preview only (Refs #2133)',
+          );
+        }
+      }
+    });
   });
 }
