@@ -6,8 +6,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
+import 'ai_random_utils.dart';
 import 'goal_manager.dart';
 import 'hidden_agenda.dart';
+import 'orders_extensions.dart';
 import 'perception.dart';
 
 final _log = packageLogger();
@@ -82,7 +84,7 @@ Orders runDomainPlanners({
       );
     }
     if (selection.workOrders.isNotEmpty) {
-      orders = _appendWorkOrders(orders, nationId, selection.workOrders);
+      orders = orders.appendWorkOrders(nationId, selection.workOrders);
     }
   } else if (workCandidates.isNotEmpty) {
     _log.d('work skipped nationId=$nationId weight below threshold');
@@ -103,7 +105,7 @@ Orders runDomainPlanners({
     );
     if (chosen != null) {
       _log.i('build chosen nationId=$nationId unitType=${chosen.unitType}');
-      orders = _appendBuildOrders(orders, nationId, [chosen]);
+      orders = orders.appendBuildOrders(nationId, [chosen]);
     }
   } else if (buildCandidates.isNotEmpty) {
     _log.d('build skipped nationId=$nationId weight below threshold');
@@ -190,19 +192,13 @@ Orders runDomainPlanners({
       'research eval nationId=$nationId researchThreshold=$researchThreshold '
       'candidates=${researchCandidates.map((o) => o.techId).toList()} scores=$scores',
     );
-    final total = scores.reduce((a, b) => a + b);
-    final rng = math.Random(seeds.researchSeed);
-    var r = rng.nextInt(total);
-    var idx = 0;
-    for (; idx < scores.length && r >= scores[idx]; idx++) {
-      r -= scores[idx];
-    }
-    if (idx >= researchCandidates.length) idx = researchCandidates.length - 1;
+    final idx = pickWeightedIndex(scores, seeds.researchSeed, useIntRoll: true);
+    if (idx == null) return orders;
     final chosen = researchCandidates[idx];
     _log.i(
       'research chosen nationId=$nationId techId=${chosen.techId} score=${scores[idx]}',
     );
-    orders = _appendResearchOrders(orders, nationId, [chosen]);
+    orders = orders.appendResearchOrders(nationId, [chosen]);
   } else if (researchCandidates.isNotEmpty) {
     _log.d(
       'research skipped nationId=$nationId threshold not met or no candidates',
@@ -260,21 +256,14 @@ Orders _runMovePlanner({
     return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
   }).toList();
   _log.d('move scores nationId=$nationId scores=$scores');
-  final total = scores.reduce((a, b) => a + b);
-  if (total <= 0) return orders;
-  final rng = math.Random(seeds.militarySeed);
-  var r = rng.nextDouble() * total;
-  var idx = 0;
-  for (; idx < filtered.length && r > scores[idx]; idx++) {
-    r -= scores[idx];
-  }
-  if (idx >= filtered.length) idx = filtered.length - 1;
+  final idx = pickWeightedIndex(scores, seeds.militarySeed);
+  if (idx == null) return orders;
   final selected = [filtered[idx]];
   _log.i(
     'move chosen nationId=$nationId '
     'unitId=${selected.first.unitId} destinationTileKey=${selected.first.destinationTileKey}',
   );
-  return _appendMoveOrders(orders, nationId, selected);
+  return orders.appendMoveOrders(nationId, selected);
 }
 
 Orders _runArmyMovePlanner({
@@ -332,45 +321,14 @@ Orders _runArmyMovePlanner({
     final atWar = rel != null && rel.atWar;
     return 1.0 + (atWar ? kMovePreferEnemyTerritoryBonus.toDouble() : 0);
   }).toList();
-  final total = scores.reduce((a, b) => a + b);
-  if (total <= 0) return orders;
-  final rng = math.Random(seeds.militarySeed + 2000);
-  var r = rng.nextDouble() * total;
-  var idx = 0;
-  for (; idx < filtered.length && r > scores[idx]; idx++) {
-    r -= scores[idx];
-  }
-  if (idx >= filtered.length) idx = filtered.length - 1;
+  final idx = pickWeightedIndex(scores, seeds.militarySeed + 2000);
+  if (idx == null) return orders;
   final selected = filtered[idx];
   _log.i(
     'army move chosen nationId=$nationId '
     'armyId=${selected.armyId} destinationProvinceId=${selected.destinationProvinceId}',
   );
   return applyArmyMoveOrderForPlayer(orders, nationId, selected);
-}
-
-Orders _appendMoveOrders(Orders o, String playerId, List<MoveOrder> list) {
-  final existing = o.moveOrdersByPlayerId[playerId] ?? const [];
-  return o.copyWith(
-    moveOrdersByPlayerId: {
-      ...o.moveOrdersByPlayerId,
-      playerId: [...existing, ...list],
-    },
-  );
-}
-
-Orders _appendBuildOrders(
-  Orders o,
-  String playerId,
-  List<BuildUnitOrder> list,
-) {
-  final existing = o.buildUnitOrdersByPlayerId[playerId] ?? const [];
-  return o.copyWith(
-    buildUnitOrdersByPlayerId: {
-      ...o.buildUnitOrdersByPlayerId,
-      playerId: [...existing, ...list],
-    },
-  );
 }
 
 /// Scores build candidates (ships vs regiments) by cargo preference, goal, and personality.
@@ -431,39 +389,9 @@ BuildUnitOrder? _pickBuildOrder({
     'scores=$scores',
   );
 
-  final total = scores.reduce((a, b) => a + b);
-  if (total <= 0) return buildCandidates.first;
-  final rng = math.Random(seed);
-  var r = rng.nextDouble() * total;
-  for (var idx = 0; idx < buildCandidates.length; idx++) {
-    if (r < scores[idx]) return buildCandidates[idx];
-    r -= scores[idx];
-  }
-  return buildCandidates.last;
-}
-
-Orders _appendWorkOrders(Orders o, String playerId, List<WorkOrder> list) {
-  final existing = o.workOrdersByPlayerId[playerId] ?? const [];
-  return o.copyWith(
-    workOrdersByPlayerId: {
-      ...o.workOrdersByPlayerId,
-      playerId: [...existing, ...list],
-    },
-  );
-}
-
-Orders _appendResearchOrders(
-  Orders o,
-  String playerId,
-  List<ResearchOrder> list,
-) {
-  final existing = o.researchOrdersByPlayerId[playerId] ?? const [];
-  return o.copyWith(
-    researchOrdersByPlayerId: {
-      ...o.researchOrdersByPlayerId,
-      playerId: [...existing, ...list],
-    },
-  );
+  final idx = pickWeightedIndex(scores, seed);
+  if (idx == null) return buildCandidates.first;
+  return buildCandidates[idx];
 }
 
 Orders _runNavalPlanner({
@@ -511,7 +439,7 @@ Orders _runNavalPlanner({
         'naval move chosen nationId=$nationId '
         'take=$take selected=${selected.map((m) => "fleetId=${m.fleetId} destSea=${m.destinationSeaZoneId} destPort=${m.destinationPortProvinceId}").toList()}',
       );
-      o = _appendNavalMoveOrders(o, nationId, selected);
+      o = o.appendNavalMoveOrders(nationId, selected);
     }
   }
 
@@ -533,38 +461,10 @@ Orders _runNavalPlanner({
       'naval mission chosen nationId=$nationId '
       'mission=${chosen.mission} fleetId=${chosen.fleetId}',
     );
-    o = _appendNavalMissionOrders(o, nationId, [chosen]);
+    o = o.appendNavalMissionOrders(nationId, [chosen]);
   }
 
   return o;
-}
-
-Orders _appendNavalMoveOrders(
-  Orders o,
-  String playerId,
-  List<NavalMoveOrder> list,
-) {
-  final existing = o.navalMoveOrdersByPlayerId[playerId] ?? const [];
-  return o.copyWith(
-    navalMoveOrdersByPlayerId: {
-      ...o.navalMoveOrdersByPlayerId,
-      playerId: [...existing, ...list],
-    },
-  );
-}
-
-Orders _appendNavalMissionOrders(
-  Orders o,
-  String playerId,
-  List<NavalMissionOrder> list,
-) {
-  final existing = o.navalMissionOrdersByPlayerId[playerId] ?? const [];
-  return o.copyWith(
-    navalMissionOrdersByPlayerId: {
-      ...o.navalMissionOrdersByPlayerId,
-      playerId: [...existing, ...list],
-    },
-  );
 }
 
 Orders _runDiplomacyPlanner({
@@ -618,21 +518,14 @@ Orders _runDiplomacyPlanner({
     'candidates=$candidateDesc scores=$scores',
   );
 
-  final total = scores.reduce((a, b) => a + b);
-  if (total <= 0) return orders;
-  final rng = math.Random(seeds.diplomacySeed);
-  var r = rng.nextDouble() * total;
-  var idx = 0;
-  for (; idx < scores.length && r > scores[idx]; idx++) {
-    r -= scores[idx];
-  }
-  if (idx >= diploCandidates.length) idx = diploCandidates.length - 1;
+  final idx = pickWeightedIndex(scores, seeds.diplomacySeed);
+  if (idx == null) return orders;
   final chosen = diploCandidates[idx];
   _log.i(
     'diplomacy chosen nationId=$nationId '
     'type=${chosen.type}${chosen.type == DiplomaticOrderType.declareWar ? " targetFactionId=${chosen.targetFactionId}" : ""} score=${scores[idx]}',
   );
-  return _appendDiplomaticOrders(orders, nationId, [chosen]);
+  return orders.appendDiplomaticOrders(nationId, [chosen]);
 }
 
 /// Pre–weighted-random scores for diplomatic order candidates (0 = suppressed).
@@ -891,18 +784,4 @@ int _invasionCapacityAdjustment(
       .length;
   if (activeWars >= 2) score -= 15;
   return score;
-}
-
-Orders _appendDiplomaticOrders(
-  Orders o,
-  String playerId,
-  List<DiplomaticOrder> list,
-) {
-  final existing = o.diplomaticOrdersByPlayerId[playerId] ?? const [];
-  return o.copyWith(
-    diplomaticOrdersByPlayerId: {
-      ...o.diplomaticOrdersByPlayerId,
-      playerId: [...existing, ...list],
-    },
-  );
 }
