@@ -21,6 +21,7 @@ import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../../../../providers/region_minimap_provider.dart';
 import '../../../../providers/treasury_summary_provider.dart';
+import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
 import '../../../core/services/turn_resolution_runner.dart';
 import 'region_map_viewport_snapshot.dart';
@@ -45,6 +46,7 @@ import '../utils/map_location_resolver.dart';
 import '../widgets/player_turn_event_feed.dart';
 
 part 'game_map_area_part1.dart';
+part 'game_map_area_part1b.dart';
 part 'game_map_area_part2.dart';
 
 /// Map area with region tabs and province/sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.

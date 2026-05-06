@@ -44,7 +44,7 @@ mixin _GameMapAreaStatePart2
     );
     final cargoSummary = ref.watch(homeFleetCargoSummaryProvider);
     final treasurySummary = ref.watch(treasurySummaryProvider);
-    final feedEntries = _feedEntries();
+    final feedEntries = (this as _GameMapAreaState)._feedEntries();
     final debugConsoleEnabled = ref.watch(debugConsoleEnabledProvider);
     return Column(
       children: [

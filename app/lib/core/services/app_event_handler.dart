@@ -40,6 +40,7 @@ import '../../features/game/widgets/pause_menu_panel.dart';
 import '../../providers/app_event_bus_provider.dart';
 import '../../providers/game_service_provider.dart';
 import '../../providers/games_provider.dart';
+import '../../providers/turn_resolution_blocking_provider.dart';
 
 typedef DialogBuilder =
     Widget Function(BuildContext context, Map<String, Object?>? params);
@@ -90,7 +91,16 @@ class AppEventHandler {
   }
 
   void _handleUIAction(UIActionEvent event) {
+    if (event is LocateMapTileEvent) {
+      return;
+    }
     final nav = _navigatorKey.currentState;
+    if (_shouldBlockUiActionDuringTurnResolution(nav, event)) {
+      _log.d(
+        'logic: blocked ${event.runtimeType} during active turn resolution',
+      );
+      return;
+    }
     switch (event) {
       case OpenDialogEvent():
         _openDialog(event, nav);
@@ -114,9 +124,6 @@ class AppEventHandler {
         _openPanel(event, nav);
       case ClosePanelEvent():
         nav?.maybePop();
-      case LocateMapTileEvent():
-        // Handled by map/game listeners directly on the shared app event bus.
-        return;
       case _:
         return;
     }
@@ -359,5 +366,26 @@ class AppEventHandler {
       if (p.isHuman) return p.id;
     }
     return game.players.first.id;
+  }
+
+  /// While turn resolution blocks UI bus actions, pause menu remains reachable (#2160).
+  bool _shouldBlockUiActionDuringTurnResolution(
+    NavigatorState? nav,
+    UIActionEvent event,
+  ) {
+    // Pause sheet open/close must stay reachable while resolving (#2160).
+    if (event is OpenPauseMenuPanelEvent || event is ClosePanelEvent) {
+      return false;
+    }
+    final ctx = nav?.context;
+    if (ctx == null || !ctx.mounted) return false;
+    try {
+      return ProviderScope.containerOf(
+        ctx,
+        listen: false,
+      ).read(turnResolutionBlockingProvider);
+    } catch (_) {
+      return false;
+    }
   }
 }
