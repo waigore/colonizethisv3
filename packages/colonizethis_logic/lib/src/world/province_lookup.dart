@@ -241,4 +241,20 @@ extension WorldStateProvinceLookup on WorldState {
       ),
     );
   }
+
+  /// Updates a single region by [regionId], preserving the other region.
+  ///
+  /// Throws [StateError] when [regionId] is unknown.
+  WorldState updateRegionById(
+    String regionId,
+    RegionData Function(RegionData region) update,
+  ) {
+    if (regionId == kRegionOldWorld) {
+      return copyWith(oldWorld: update(oldWorld));
+    }
+    if (regionId == kRegionNewWorld) {
+      return copyWith(newWorld: update(newWorld));
+    }
+    throw StateError('Unknown region "$regionId"');
+  }
 }
