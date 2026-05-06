@@ -27,7 +27,19 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 1. Player clicks "Next turn" button.
 2. Confirmation dialog appears with "No" and "Yes" buttons.
 3. Player clicks "No" → dialog closes, turn does not advance.
-4. Player clicks "Yes" → dialog closes, turn advances (existing `_onNextTurn` logic executes).
+4. Player clicks "Yes" → dialog closes, the system enters turn-resolution active state.
+5. During turn-resolution active state, the UI shows a non-dismissible modal titled `Processing Turn`.
+6. After turn resolution completes or fails, the modal closes and controls return to normal.
+
+### Turn-resolution active state (slice 1)
+
+- Scope: this slice covers UI gating and completion/error handling around existing turn resolution execution.
+- Deferred: worker-isolate execution and per-phase live text updates are handled in later slices.
+- While active:
+  - The top-bar Next Turn button is disabled.
+  - Map interaction inputs are blocked.
+  - Hamburger menu remains available from the top bar.
+  - The modal cannot be dismissed by outside tap or back/escape.
 
 ---
 
@@ -35,8 +47,12 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 
 - **Given** the player is on the game screen, **when** they click the "Next turn" button, **then** a confirmation dialog appears.
 - **Given** the confirmation dialog is shown, **when** the player clicks "No", **then** the dialog closes and the turn does not advance.
-- **Given** the confirmation dialog is shown, **when** the player clicks "Yes", **then** the dialog closes and the turn advances (existing `_onNextTurn` executes).
+- **Given** the confirmation dialog is shown, **when** the player clicks "Yes", **then** the dialog closes and the system enters turn-resolution active state.
 - **Given** the dialog is shown, **when** the player presses Escape or taps outside the dialog, **then** it behaves as "No" (aborts).
+- **Given** turn-resolution active state is true, **when** the game map is visible, **then** the UI shows a modal titled `Processing Turn` and the modal is not dismissible by outside tap or back/escape.
+- **Given** turn-resolution active state is true, **when** the player attempts to press Next Turn, **then** the Next Turn button is disabled and no second resolution starts.
+- **Given** turn-resolution active state is true, **when** the player interacts with map content, **then** the map interaction is blocked while the hamburger menu remains available.
+- **Given** turn resolution reaches terminal success or terminal failure, **when** the terminal outcome is processed, **then** the processing modal closes and turn-resolution active state becomes false.
 
 ---
 

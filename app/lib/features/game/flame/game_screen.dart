@@ -1,7 +1,6 @@
 export 'game_screen_shared.dart';
+export 'turn_resolution_flow.dart';
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flame/game.dart' hide Game;
@@ -24,6 +23,8 @@ import '../dialogue/intervention_dialogue_overlay.dart';
 import '../dialogue/overture_dialogue_overlay.dart';
 import 'game_canvas.dart';
 import 'game_map_area.dart';
+import 'turn_resolution_flow.dart';
+import 'turn_resolution_result_applier.dart';
 import 'victory_overlay.dart';
 
 /// Shows the in-game pause menu (Debug log, Resume). SPEC/program/debug-log-viewer.md.
@@ -69,46 +70,6 @@ Future<bool> _showExitToMainMenuConfirmDialog(BuildContext context) async {
     ),
   );
   return shouldExit ?? false;
-}
-
-void _applyTurnResolutionResult(WidgetRef ref, TurnResolutionResult result) {
-  final gameN = ref.read(currentGameProvider.notifier);
-  final ordersN = ref.read(currentOrdersProvider.notifier);
-  final dipN = ref.read(pendingDiplomacyProvider.notifier);
-  switch (result) {
-    case TurnResolutionComplete():
-      gameN.setGame(result.game);
-      ordersN.clear();
-      dipN.clear();
-    case TurnResolutionPendingOvertures():
-      gameN.setGame(result.game);
-      dipN.setOvertures(result.pendingOvertures);
-    case TurnResolutionPendingIntervention():
-      gameN.setGame(result.game);
-      dipN.setIntervention(result.pendingInterventions);
-    case TurnResolutionPendingCallToArms():
-      gameN.setGame(result.game);
-      dipN.setCallToArms(result.pendingCallToArms);
-  }
-}
-
-TurnResolutionResult resolveNextTurnForGameScreen({
-  required Game game,
-  required Orders orders,
-  required MapTopology topologyForAi,
-  Map<String, TileMapResult>? tileMapByRegion,
-  required TurnResolutionResult Function({
-    required Orders orders,
-    Orders? aiOrders,
-  })
-  runTurnResolution,
-}) {
-  final aiOrders = generateOrdersForGameFullAI(
-    game,
-    topologyForAi,
-    tileMapByRegion: tileMapByRegion,
-  ).orders;
-  return runTurnResolution(orders: orders, aiOrders: aiOrders);
 }
 
 /// Hosts the Flame game canvas or map. When map data exists, shows map + province/sea zone overlay.
@@ -167,7 +128,7 @@ class GameScreen extends ConsumerWidget {
                             aiOrders: aiOrders,
                           ),
                 );
-                _applyTurnResolutionResult(ref, result);
+                applyTurnResolutionResult(ref, result);
               },
               child: Text(
                 appL10n(context).game_nextTurnButton(
@@ -218,7 +179,7 @@ class GameScreen extends ConsumerWidget {
                 decisions,
                 orders,
               );
-              _applyTurnResolutionResult(ref, result);
+              applyTurnResolutionResult(ref, result);
             },
             child: content,
           );
@@ -235,7 +196,7 @@ class GameScreen extends ConsumerWidget {
                 decisions,
                 orders,
               );
-              _applyTurnResolutionResult(ref, result);
+              applyTurnResolutionResult(ref, result);
             },
             child: content,
           );
@@ -251,7 +212,7 @@ class GameScreen extends ConsumerWidget {
                 decisions,
                 orders,
               );
-              _applyTurnResolutionResult(ref, result);
+              applyTurnResolutionResult(ref, result);
             },
             child: content,
           );

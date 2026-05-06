@@ -19,6 +19,7 @@ class GameMapControls extends StatefulWidget {
     required this.sideMenuOpen,
     required this.onToggleSideMenu,
     required this.onNextTurn,
+    required this.nextTurnEnabled,
     required this.regionIndex,
     required this.onRegionIndexChanged,
     required this.nextTurnText,
@@ -36,6 +37,7 @@ class GameMapControls extends StatefulWidget {
   final bool sideMenuOpen;
   final VoidCallback onToggleSideMenu;
   final Future<void> Function() onNextTurn;
+  final bool nextTurnEnabled;
   final int regionIndex;
   final void Function(int index) onRegionIndexChanged;
   final String nextTurnText;
@@ -109,7 +111,9 @@ class _GameMapControlsState extends State<GameMapControls> {
               Expanded(
                 child: CtNinePatchButton(
                   key: kGameMapNextTurnButtonKey,
-                  onPressed: () => widget.onNextTurn(),
+                  onPressed: widget.nextTurnEnabled
+                      ? () => widget.onNextTurn()
+                      : null,
                   child: Text(widget.nextTurnText),
                 ),
               ),
