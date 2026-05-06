@@ -2,6 +2,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_data/colonizethis_data.dart' show kTechIdHorseArtillery;
 void main() {
   group('applyMinorMilitaryParity', () {
     test('sets minor effectiveMilitaryLevel to max GP level; tribes capped at 1', () {
@@ -64,7 +65,7 @@ void main() {
             units: [
               Unit(
                 id: 'u_minor_nw',
-                type: 'horse_artillery',
+                type: kTechIdHorseArtillery,
                 ownerId: 'min1',
                 locationProvinceId: 'newWorld|n1',
                 medals: 1,

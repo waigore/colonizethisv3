@@ -1,7 +1,9 @@
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import 'test_fixtures.dart';
 
 void main() {
   group('OrderEngine', () {
@@ -25,39 +27,36 @@ void main() {
         Map<String, Set<String>>? playerProspectedTiles,
         Map<String, String>? purchasedTilesByTileKey,
       }) {
-        return Game(
+        return TestFixtures.minimalGame(
           id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                Province(id: minorProvinceId, regionId: ow, ownerId: 'minor1'),
-              ],
-              units: [
-                Unit(
-                  id: 'merchant1',
-                  type: 'Merchant',
-                  ownerId: 'p1',
-                  locationProvinceId: minorProvinceId,
-                  tileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            resourceByTileKey: resourceByTileKey ?? {tileKey: 'grain'},
-            playerVisibilityByTile: const {
-              'p1': {tileKey: 'fullyVisible'},
-            },
-            tileKeysByRegionAndProvince: {
-              ow: {
-                minorProvinceId: [tileKey],
-                '$ow|P1': ['$ow|P1|0|0'],
-              },
-            },
-            playerProspectedTiles: playerProspectedTiles ?? const {},
-            purchasedTilesByTileKey: purchasedTilesByTileKey ?? const {},
+          turnNumber: 0,
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+              Province(id: minorProvinceId, regionId: ow, ownerId: 'minor1'),
+            ],
+            units: [
+              Unit(
+                id: 'merchant1',
+                type: kUnitTypeMerchant,
+                ownerId: 'p1',
+                locationProvinceId: minorProvinceId,
+                tileKey: tileKey,
+              ),
+            ],
           ),
+          resourceByTileKey: resourceByTileKey ?? {tileKey: 'grain'},
+          playerVisibilityByTile: const {
+            'p1': {tileKey: 'fullyVisible'},
+          },
+          tileKeysByRegionAndProvince: {
+            ow: {
+              minorProvinceId: [tileKey],
+              '$ow|P1': ['$ow|P1|0|0'],
+            },
+          },
+          playerProspectedTiles: playerProspectedTiles,
+          purchasedTilesByTileKey: purchasedTilesByTileKey,
           players: [
             Player(
               id: 'p1',
@@ -66,14 +65,14 @@ void main() {
               capitalProvinceId: '$ow|P1',
               stockpile: const Stockpile(),
               treasury: treasury,
-              techUnlocked: {'merchant_companies': true},
+              techUnlocked: {kTechIdMerchantCompanies: true},
             ),
           ],
           minorNations: const [
             MinorNation(id: 'minor1', displayName: 'Minor 1'),
           ],
-          overtureStates: overtureStates ?? [],
-          diplomacyRelations: diplomacyRelations ?? [],
+          overtureStates: overtureStates ?? const [],
+          diplomacyRelations: diplomacyRelations ?? const [],
         );
       }
 
@@ -84,7 +83,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );
@@ -121,7 +120,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );
@@ -152,7 +151,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );
@@ -183,7 +182,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );
@@ -215,7 +214,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );
@@ -247,7 +246,7 @@ void main() {
             'p1',
             const WorkOrder(
               unitId: 'merchant1',
-              target: 'purchase_land',
+              target: kWorkTargetPurchaseLand,
               targetTileKey: tileKey,
             ),
           );
@@ -291,14 +290,14 @@ void main() {
                 units: [
                   Unit(
                     id: 'builder1',
-                    type: 'Builder',
+                    type: kUnitTypeBuilder,
                     ownerId: 'p1',
                     locationProvinceId: provinceId,
                     tileKey: tileKey,
                   ),
                   Unit(
                     id: 'engineer1',
-                    type: 'Engineer',
+                    type: kUnitTypeEngineer,
                     ownerId: 'p1',
                     locationProvinceId: provinceId,
                     tileKey: tileKey,
@@ -338,7 +337,7 @@ void main() {
               'p1',
               const WorkOrder(
                 unitId: 'builder1',
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: tileKey,
               ),
             )
@@ -346,7 +345,7 @@ void main() {
               'p1',
               const WorkOrder(
                 unitId: 'engineer1',
-                target: 'build_road',
+                target: kWorkTargetBuildRoad,
                 targetTileKey: tileKey,
               ),
             );
@@ -388,7 +387,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );
@@ -420,7 +419,7 @@ void main() {
             'p1',
             const WorkOrder(
               unitId: 'merchant1',
-              target: 'purchase_land',
+              target: kWorkTargetPurchaseLand,
               targetTileKey: tileKey,
             ),
           );
@@ -455,7 +454,7 @@ void main() {
           'p1',
           const WorkOrder(
             unitId: 'merchant1',
-            target: 'purchase_land',
+            target: kWorkTargetPurchaseLand,
             targetTileKey: tileKey,
           ),
         );

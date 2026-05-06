@@ -1,7 +1,21 @@
-part of 'diplomacy_resolver.dart';
+import 'dart:math' show Random;
 
-class _InterventionResolutionResult {
-  _InterventionResolutionResult(this.game, {this.pendingInterventions});
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../ai/ai_control.dart';
+import '../combat/conflict_detection.dart';
+import '../constants.dart';
+import '../dossier/evidence_rules.dart';
+import '../turn/turn_resolution_result.dart';
+import '../world/province_lookup.dart';
+import 'diplomacy_relation_lookup.dart';
+import 'diplomacy_relation_updates.dart';
+import 'diplomacy_resolver.dart';
+import 'overture_resolver.dart';
+
+class InterventionResolutionResult {
+  InterventionResolutionResult(this.game, {this.pendingInterventions});
 
   final Game game;
   final List<InterventionPrompt>? pendingInterventions;
@@ -81,8 +95,8 @@ InterventionDecision? _findInterventionDecision(
   return null;
 }
 
-class _CallToArmsResult {
-  _CallToArmsResult(this.game, {this.pendingCallToArms});
+class CallToArmsResult {
+  CallToArmsResult(this.game, {this.pendingCallToArms});
   final Game game;
   final List<CallToArmsPending>? pendingCallToArms;
 }
@@ -143,7 +157,7 @@ Game _clearOverturesBetweenGpAndMinorTribe(
   return game.copyWith(overtureStates: overtures);
 }
 
-_InterventionResolutionResult _processInterventionsForAggressorDefender(
+InterventionResolutionResult _processInterventionsForAggressorDefender(
   Game game, {
   required String aggressorGpId,
   required String defenderMinorOrTribeId,
@@ -218,12 +232,12 @@ _InterventionResolutionResult _processInterventionsForAggressorDefender(
     );
   }
   if (pending.isNotEmpty) {
-    return _InterventionResolutionResult(g, pendingInterventions: pending);
+    return InterventionResolutionResult(g, pendingInterventions: pending);
   }
-  return _InterventionResolutionResult(g);
+  return InterventionResolutionResult(g);
 }
 
-_InterventionResolutionResult _resolveOutstandingInterventionsForMinorTribeWars(
+InterventionResolutionResult resolveOutstandingInterventionsForMinorTribeWars(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn, {
@@ -257,7 +271,7 @@ _InterventionResolutionResult _resolveOutstandingInterventionsForMinorTribeWars(
       }
     }
   }
-  return _InterventionResolutionResult(g);
+  return InterventionResolutionResult(g);
 }
 
 /// GP–GP war pairs from declare-war orders that are at war after step 5.
@@ -284,7 +298,7 @@ List<({String aggressor, String defender})> _gpGpWarPairsFromOrders(
   return out;
 }
 
-Game _cancelSubsidiesBetweenGps(Game game, String id1, String id2, int turn) {
+Game cancelSubsidiesBetweenGps(Game game, String id1, String id2, int turn) {
   var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
   final cancelled = subsidyStates
       .where(
@@ -303,10 +317,10 @@ Game _cancelSubsidiesBetweenGps(Game game, String id1, String id2, int turn) {
       .toList();
   var g = game.copyWith(subsidyStates: subsidyStates);
   for (final s in cancelled) {
-    _diploLog.i(
+    diploLog.i(
       'diplomacy subsidies cancelled due to war ${s.payerId} vs ${s.targetId}',
     );
-    g = _appendDiplomaticEvent(
+    g = appendDiplomaticEvent(
       g,
       turn,
       DiplomaticEventType.subsidyCancelled,
@@ -334,8 +348,8 @@ Game _applyCallToArmsAccept(
     turn: turn,
   );
   var g = game.copyWith(diplomacyRelations: relations);
-  g = _cancelSubsidiesBetweenGps(g, allyGpId, aggressorGpId, turn);
-  g = _appendDiplomaticEvent(
+  g = cancelSubsidiesBetweenGps(g, allyGpId, aggressorGpId, turn);
+  g = appendDiplomaticEvent(
     g,
     turn,
     DiplomaticEventType.callToArmsAccepted,
@@ -344,7 +358,7 @@ Game _applyCallToArmsAccept(
     toFactionId: aggressorGpId,
     wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
   );
-  _diploLog.i(
+  diploLog.i(
     'diplomacy call to arms accept $allyGpId joins war vs $aggressorGpId',
   );
   return g;
@@ -397,7 +411,7 @@ Game _applyCallToArmsRefuse(
       ...refuseEvidence,
     ],
   );
-  g = _appendDiplomaticEvent(
+  g = appendDiplomaticEvent(
     g,
     turn,
     DiplomaticEventType.callToArmsRefused,
@@ -406,13 +420,66 @@ Game _applyCallToArmsRefuse(
     toFactionId: defenderGpId,
     wasAiInitiator: isAiControlledForEvidence(g, allyGpId),
   );
-  _diploLog.i(
+  diploLog.i(
     'diplomacy call to arms refuse $allyGpId breaks alliance with $defenderGpId',
   );
   return g;
 }
 
-_CallToArmsResult _processCallToArms(
+Game _processCallToArmsForWarPair(
+  Game state,
+  ({String aggressor, String defender}) pair,
+  int turn,
+  List<CallToArmsDecision>? callToArmsDecisions,
+  List<CallToArmsPending> pending,
+) {
+  final aggressorGpId = pair.aggressor;
+  final defenderGpId = pair.defender;
+  for (final p in state.players) {
+    final allyGpId = p.id;
+    if (allyGpId == defenderGpId || allyGpId == aggressorGpId) continue;
+    if (factionsAtWar(state, allyGpId, aggressorGpId)) continue;
+    final rel = getRelation(state, allyGpId, defenderGpId);
+    if (rel == null || !rel.atPeace || rel.level != RelationLevel.allied) {
+      continue;
+    }
+
+    if (isAiControlled(state, allyGpId)) {
+      final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
+      if (accept) {
+        state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
+      } else {
+        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+      }
+      continue;
+    }
+
+    final decision = _findCallToArmsDecision(
+      callToArmsDecisions,
+      allyGpId,
+      defenderGpId,
+      aggressorGpId,
+    );
+    if (decision == null) {
+      pending.add(
+        CallToArmsPending(
+          allyGpId: allyGpId,
+          defenderGpId: defenderGpId,
+          aggressorGpId: aggressorGpId,
+        ),
+      );
+      continue;
+    }
+    if (decision.accepted) {
+      state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
+    } else {
+      state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
+    }
+  }
+  return state;
+}
+
+CallToArmsResult processCallToArms(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn, {
@@ -423,47 +490,13 @@ _CallToArmsResult _processCallToArms(
   final pending = <CallToArmsPending>[];
 
   for (final pair in warPairs) {
-    final aggressorGpId = pair.aggressor;
-    final defenderGpId = pair.defender;
-    for (final p in state.players) {
-      final allyGpId = p.id;
-      if (allyGpId == defenderGpId || allyGpId == aggressorGpId) continue;
-      if (factionsAtWar(state, allyGpId, aggressorGpId)) continue;
-      final rel = getRelation(state, allyGpId, defenderGpId);
-      if (rel == null || !rel.atPeace || rel.level != RelationLevel.allied) {
-        continue;
-      }
-
-      if (isAiControlled(state, allyGpId)) {
-        final accept = rel.score >= callToArmsAiAcceptMinRelationScore;
-        if (accept) {
-          state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
-        } else {
-          state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
-        }
-        continue;
-      }
-
-      final decision = _findCallToArmsDecision(
-        callToArmsDecisions,
-        allyGpId,
-        defenderGpId,
-        aggressorGpId,
-      );
-      if (decision == null) {
-        pending.add(
-          CallToArmsPending(
-            allyGpId: allyGpId,
-            defenderGpId: defenderGpId,
-            aggressorGpId: aggressorGpId,
-          ),
-        );
-      } else if (decision.accepted) {
-        state = _applyCallToArmsAccept(state, allyGpId, aggressorGpId, turn);
-      } else {
-        state = _applyCallToArmsRefuse(state, allyGpId, defenderGpId, turn);
-      }
-    }
+    state = _processCallToArmsForWarPair(
+      state,
+      pair,
+      turn,
+      callToArmsDecisions,
+      pending,
+    );
   }
 
   pending.sort((a, b) {
@@ -475,9 +508,9 @@ _CallToArmsResult _processCallToArms(
   });
 
   if (pending.isNotEmpty) {
-    return _CallToArmsResult(state, pendingCallToArms: pending);
+    return CallToArmsResult(state, pendingCallToArms: pending);
   }
-  return _CallToArmsResult(state);
+  return CallToArmsResult(state);
 }
 
 bool _gpHasPurchasedLandInFactionProvinces(
@@ -518,7 +551,7 @@ Game applyInterventionAgainstAggressor(
       interveningGpId,
       defenderMinorOrTribeId,
     );
-    g = _appendDiplomaticEvent(
+    g = appendDiplomaticEvent(
       g,
       turn,
       DiplomaticEventType.interventionDoNothing,
@@ -591,7 +624,7 @@ Game applyInterventionAgainstAggressor(
   final eventType = choice == InterventionChoice.intervene
       ? DiplomaticEventType.interventionIntervene
       : DiplomaticEventType.interventionProtest;
-  g = _appendDiplomaticEvent(
+  g = appendDiplomaticEvent(
     g,
     turn,
     eventType,

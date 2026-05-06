@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'commodities.dart';
 
 /// Work order material costs and durations. SPEC/game/civilian-units.md, extraction-and-improvements.md, siege-mechanics.md. Single source of truth for stockpile costs in order validation and application.
-/// Durations: SPEC/program/development-resolution.md — `totalTurnsForWork` is authoritative for assign-time `currentWork.totalTurns` for standard material-backed targets (see `applyBuildAndWorkOrders`).
+/// Durations: `totalTurnsForWork` below is authoritative for **assign-time** `currentWork.totalTurns` (standard material-backed targets, `prospect`, `purchase_land`; `explore` is overridden by province-scaled logic in colonizethis_logic). **When** treasury is debited and when prospection / `purchasedTilesByTileKey` update for `prospect` / `purchase_land` is specified in SPEC/program/orders.md (§ Civilian deferred primary effects) and SPEC/program/development-resolution.md — not in this file. See `applyBuildAndWorkOrders` in colonizethis_logic.
 
 /// Material cost for a work order: commodity id -> quantity.
 typedef WorkOrderCost = Map<String, int>;

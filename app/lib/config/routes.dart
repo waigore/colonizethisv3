@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'route_paths.dart';
 import '../features/debug_log/debug_log_viewer_screen.dart';
 import '../features/game/flame/game_screen.dart';
-import '../features/game/widgets/diplomacy_detail_screen.dart';
+import '../features/game/screens/diplomacy_detail_screen.dart';
 import '../features/game/widgets/diplomacy_panel.dart' show FactionKind;
-import '../features/game/widgets/diplomacy_screen.dart';
-import '../features/game/widgets/production_screen.dart';
-import '../features/game/widgets/technology_screen.dart';
+import '../features/game/screens/diplomacy_screen.dart';
+import '../features/game/screens/production_screen.dart';
+import '../features/game/screens/technology_screen.dart';
 import '../features/shell/shell_screen.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 

@@ -247,7 +247,7 @@ void main() {
       const tileKey = 'oldWorld|p1|0|0';
       final unit = Unit(
         id: 'u1',
-        type: 'Spy',
+        type: kUnitTypeSpy,
         ownerId: playerId,
         locationProvinceId: '$ow|p1',
       );
@@ -282,7 +282,7 @@ void main() {
         topology,
         const Orders(),
       );
-      expect(suggestions.where((o) => o.target == 'counter_spy'), isNotEmpty);
+      expect(suggestions.where((o) => o.target == kWorkTargetCounterSpy), isNotEmpty);
     });
 
     test(
@@ -309,7 +309,7 @@ void main() {
         const tileKey = 'oldWorld|minor1|0|0';
         final unit = Unit(
           id: 'u1',
-          type: 'Merchant',
+          type: kUnitTypeMerchant,
           ownerId: playerId,
           locationProvinceId: '$ow|p1',
         );
@@ -373,7 +373,7 @@ void main() {
           const Orders(),
         );
         expect(
-          suggestions.where((o) => o.target == 'purchase_land'),
+          suggestions.where((o) => o.target == kWorkTargetPurchaseLand),
           isNotEmpty,
         );
       },

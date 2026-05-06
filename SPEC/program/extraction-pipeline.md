@@ -57,7 +57,7 @@ Computes per-player resource extraction each turn by resolving tile connectivity
 
 | Aspect | Detail |
 |---|---|
-| Phase | Extraction runs **after Orders and Diplomacy, before Riches to treasury and Production** per [turn-resolution-phases.md](turn-resolution-phases.md). |
+| Phase | Extraction runs **after Orders and before Riches to treasury** per [turn-resolution-phases.md](turn-resolution-phases.md). |
 | Upstream | World state, connectivity resolver, prospected state (fog module) |
 | Downstream | Player stockpiles, overseas transport ([auto-transport.md](auto-transport.md)) |
 
@@ -67,7 +67,7 @@ Read-only with respect to terrain: extraction consumes improvement/road/port sta
 
 ## Acceptance criteria
 
-- **Phase order:** Extraction runs in the position defined in [turn-resolution-phases.md](turn-resolution-phases.md) (after Orders and Diplomacy, before Riches to treasury and Production).
+- **Phase order:** Extraction runs in the position defined in [turn-resolution-phases.md](turn-resolution-phases.md) (after Orders, before Riches to treasury, Consumption, and Production).
 - **Connectivity:** Recomputed every turn; no caching across turns. Input: world state, topology, tile maps; output: per-player connected tile set and path transport cap. The resolver implements **Road rule** and **Town rule** per [capital-and-connectivity.md](../game/capital-and-connectivity.md) § Connectivity (Game Rule); **`townDevelopmentLevel` is not** an input to connectivity.
 - **Province lookup:** Town development **yield** rules use province lookup **region-scoped**: resolve province only within the tile's region ([world-model-identity.md](../game/world-model-identity.md)). Do not search regions in sequence.
 - **Province missing (logic error):** Given a tile key in the connected set with a valid tile map and extractable resource for its region, when the system resolves the full province id `regionId|localId` from the tile key and no `Province` with that id exists in that region's data, then the system logs an error whose message includes `extraction province missing` (the logic logger emits a `logic:` prefix) and the tile contributes **no** extraction quantity for that turn (the system does not apply a default town-development cap).

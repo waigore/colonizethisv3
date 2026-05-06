@@ -1,3 +1,5 @@
+import 'province_id.dart';
+
 /// One map province in a region. SPEC/game/world-model.
 /// Phase 3: fortLevel (0–3), terrain for combat. SPEC/game/siege-mechanics.md.
 /// Town: townTileKey and townDevelopmentLevel for extraction. SPEC/game/capital-and-connectivity.md.
@@ -16,6 +18,7 @@ class Province {
   final String id;
   final String regionId;
   final String? ownerId;
+
   /// Optional human-readable name (from ruleset naming config).
   final String? displayName;
 
@@ -32,19 +35,23 @@ class Province {
   final int townDevelopmentLevel;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'regionId': regionId,
-        'ownerId': ownerId,
-        if (displayName != null) 'displayName': displayName,
-        if (fortLevel != 0) 'fortLevel': fortLevel,
-        if (terrain != 'plains') 'terrain': terrain,
-        if (townTileKey != null) 'townTileKey': townTileKey,
-        if (townDevelopmentLevel != 0) 'townDevelopmentLevel': townDevelopmentLevel,
-      };
+    'id': id,
+    'regionId': regionId,
+    'ownerId': ownerId,
+    if (displayName != null) 'displayName': displayName,
+    if (fortLevel != 0) 'fortLevel': fortLevel,
+    if (terrain != 'plains') 'terrain': terrain,
+    if (townTileKey != null) 'townTileKey': townTileKey,
+    if (townDevelopmentLevel != 0) 'townDevelopmentLevel': townDevelopmentLevel,
+  };
 
   static Province fromJson(Map<String, dynamic> json) {
+    final provinceId = ProvinceId.requirePrefixed(
+      json['id'] as String,
+      fieldName: 'Province.id',
+    );
     return Province(
-      id: json['id'] as String,
+      id: provinceId,
       regionId: json['regionId'] as String,
       ownerId: json['ownerId'] as String?,
       displayName: json['displayName'] as String?,
@@ -92,6 +99,14 @@ class Province {
           townDevelopmentLevel == other.townDevelopmentLevel;
 
   @override
-  int get hashCode =>
-      Object.hash(id, regionId, ownerId, displayName, fortLevel, terrain, townTileKey, townDevelopmentLevel);
+  int get hashCode => Object.hash(
+    id,
+    regionId,
+    ownerId,
+    displayName,
+    fortLevel,
+    terrain,
+    townTileKey,
+    townDevelopmentLevel,
+  );
 }

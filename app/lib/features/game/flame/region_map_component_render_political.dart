@@ -1,3 +1,4 @@
+
 part of 'region_map_component.dart';
 
 extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
@@ -119,6 +120,7 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
           townMarker != null &&
           townMarker.x == centroidTileX &&
           townMarker.y == centroidTileY;
+      final avoidTown = shouldAvoidTownTile ? townMarker : null;
       out.add((
         cx: cx,
         cy: cy,
@@ -129,8 +131,8 @@ extension _CtRegionMapRenderPolitical on CtRegionMapComponent {
           qualifyingLandCells: cells,
         ),
         isCapital: capitalProvinceIds.contains(prefixedId),
-        avoidTileX: shouldAvoidTownTile ? townMarker!.x : null,
-        avoidTileY: shouldAvoidTownTile ? townMarker!.y : null,
+        avoidTileX: avoidTown?.x,
+        avoidTileY: avoidTown?.y,
       ));
     }
     return out;

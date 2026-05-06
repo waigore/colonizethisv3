@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:jenny/jenny.dart';
 
-import '../../../../l10n/app_localizations.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';

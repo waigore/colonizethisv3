@@ -20,8 +20,9 @@ Source: repo root `AGENTS.md`.
 # View issue (JSON for scripting)
 gh issue view 42 --json title,body,state,labels,url
 
-# Close with comment (user must be logged in)
-gh issue close 42 --comment "Verified: …"
+# Post verification result as an issue comment (user must be logged in)
+gh issue comment 42 --body-file verification.md
+# or: gh issue comment 42 --body "$(cat verification.md)"
 ```
 
-Replace `42` with the issue number; run from a clone of the repo with `gh auth login` completed.
+Replace `42` with the issue number; run from a clone of the repo with `gh auth login` completed. This skill’s GitHub write is the comment only.

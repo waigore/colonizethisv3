@@ -6,13 +6,13 @@
 
 ## Orders
 
-Phase 1. Gather and validate orders; Great Powers only submit. Merge human and AI orders; resolve cross-player effects before application. Order types, validation, and application are defined in [order-engine.md](order-engine.md) and [orders.md](orders.md). Phase-details below start at Diplomacy (phase 2).
+Phase 1. Gather and validate orders; Great Powers only submit. Merge human and AI orders; resolve cross-player effects before application. Order types, validation, and application are defined in [order-engine.md](order-engine.md) and [orders.md](orders.md). Phase-details below follow the fixed sequence in [turn-resolution-phases.md](turn-resolution-phases.md).
 
 ---
 
 ## Diplomacy
 
-Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overtures, Join Empire/Colony, alliances, war/peace, relation updates. Runs before Movement so war/peace current for movement and combat.
+Full resolution per [diplomacy-resolution.md](diplomacy-resolution.md): overtures, Join Empire/Colony, alliances, war/peace, relation updates. Runs after Production and before Research/Movement so same-turn diplomacy ownership and relation changes are visible to downstream phases.
 
 ---
 

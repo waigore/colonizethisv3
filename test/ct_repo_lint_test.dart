@@ -17,8 +17,20 @@ void main() {
       final ids = rules.map((r) => r.ruleId).toList();
       expect(ids, contains('repo.custom_exceptions'));
       expect(ids, contains('repo.disallowed_ast_patterns'));
+      expect(ids, contains('repo.debug_console_logic_contract_boundary'));
+      expect(ids, contains('repo.app_event_handler_scope_logic_boundary'));
       expect(ids, contains('repo.control_flow_nesting_depth'));
       expect(ids, contains('repo.repeated_magic_numbers'));
+      expect(ids, contains('repo.workspace_outdated_resolvable'));
+      expect(ids, contains('repo.workspace_outdated_latest_direct'));
+      expect(ids, contains('repo.function_size'));
+      expect(ids, contains('repo.part_unit_size'));
+      expect(ids, contains('repo.no_flame_in_widgets'));
+      expect(ids, contains('repo.game_widgets_file_size'));
+      expect(ids, contains('repo.dart_file_non_comment_line_size'));
+      expect(ids, contains('repo.land_province_bucket_keys'));
+      expect(ids, contains('repo.logic_dual_region_province_field_access'));
+      expect(ids, contains('repo.app_lib_no_broad_suggest_work_orders'));
       expect(ids, contains('repo.app_hardcoded_ui_strings'));
       expect(
         rules
@@ -28,12 +40,33 @@ void main() {
       );
       expect(
         rules
+            .firstWhere(
+              (r) => r.ruleId == 'repo.dart_file_non_comment_line_size',
+            )
+            .prIncremental,
+        isTrue,
+      );
+      expect(
+        rules
+            .firstWhere(
+              (r) => r.ruleId == 'repo.dart_file_non_comment_line_size',
+            )
+            .spec,
+        'SPEC/program/dart-file-non-comment-line-size.md',
+      );
+      expect(
+        rules.firstWhere((r) => r.ruleId == 'repo.game_widgets_file_size').spec,
+        'SPEC/program/game-widgets-file-size.md',
+      );
+      expect(
+        rules
             .firstWhere((r) => r.ruleId == 'repo.app_hardcoded_ui_strings')
             .includeOnlyWhenEnvName,
         'CT_REPO_LINT_INCLUDE_APP',
       );
-      final assetRule =
-          rules.firstWhere((r) => r.ruleId == 'repo.asset_path_constants');
+      final assetRule = rules.firstWhere(
+        (r) => r.ruleId == 'repo.asset_path_constants',
+      );
       expect(assetRule.runner, 'dart');
       expect(assetRule.script, 'tool/check_asset_path_constants.dart');
     });

@@ -27,7 +27,7 @@ void main() {
       () {
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -51,7 +51,7 @@ void main() {
             'p1': [
               WorkOrder(
                 unitId: 'u1',
-                target: 'prospect',
+                target: kWorkTargetProspect,
                 targetTileKey: tileKey,
               ),
             ],
@@ -63,13 +63,19 @@ void main() {
           tileMapByRegion: {ow: tileMapWithTerrain(TerrainType.hills)},
         );
         expect(next.worldState.playerProspectedTiles['p1'], contains(tileKey));
+        final explorerAfter = next.worldState.oldWorld.units.single;
+        expect(explorerAfter.tileKey, tileKey);
+        expect(explorerAfter.status, UnitStatus.idle);
+        expect(explorerAfter.currentWork, isNull);
+        expect(explorerAfter.originTileKey, isNull);
+        expect(explorerAfter.assignedTileKey, isNull);
       },
     );
 
     test('prospect on non-mineral-eligible terrain does not add tile', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
@@ -89,7 +95,7 @@ void main() {
       final orders = Orders(
         workOrdersByPlayerId: {
           'p1': [
-            WorkOrder(unitId: 'u1', target: 'prospect', targetTileKey: tileKey),
+            WorkOrder(unitId: 'u1', target: kWorkTargetProspect, targetTileKey: tileKey),
           ],
         },
       );
@@ -108,7 +114,7 @@ void main() {
       () {
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -133,7 +139,7 @@ void main() {
             'p1': [
               WorkOrder(
                 unitId: 'u1',
-                target: 'prospect',
+                target: kWorkTargetProspect,
                 targetTileKey: tileKey,
               ),
             ],
@@ -150,7 +156,7 @@ void main() {
       () {
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -175,7 +181,7 @@ void main() {
             'p1': [
               WorkOrder(
                 unitId: 'u1',
-                target: 'prospect',
+                target: kWorkTargetProspect,
                 targetTileKey: tileKey,
               ),
             ],
@@ -194,7 +200,7 @@ void main() {
       () {
         final unit = Unit(
           id: 'u1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -231,7 +237,7 @@ void main() {
             'p1': [
               WorkOrder(
                 unitId: 'u1',
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: tileKey,
               ),
             ],
@@ -251,7 +257,7 @@ void main() {
       () {
         final unit = Unit(
           id: 'u1',
-          type: 'Engineer',
+          type: kUnitTypeEngineer,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
@@ -284,7 +290,7 @@ void main() {
               displayName: 'P1',
               isHuman: true,
               stockpile: stockpile,
-              techUnlocked: const {'mine_engineering': true},
+              techUnlocked: const {kTechIdMineEngineering: true},
             ),
           ],
         );
@@ -293,7 +299,7 @@ void main() {
             'p1': [
               WorkOrder(
                 unitId: 'u1',
-                target: 'build_fort',
+                target: kWorkTargetBuildFort,
                 targetTileKey: tileKey,
               ),
             ],
@@ -303,7 +309,7 @@ void main() {
         final u = next.worldState.oldWorld.units.single;
         expect(
           u.currentWork!.totalTurns,
-          totalTurnsForWork('build_fort', fortLevel: 1),
+          totalTurnsForWork(kWorkTargetBuildFort, fortLevel: 1),
         );
         expect(u.currentWork!.remainingTurns, 1);
         expect(u.originTileKey, tileKey);
@@ -317,7 +323,7 @@ void main() {
       const targetTileKey = 'oldWorld|P2|0|0';
       final spy = Unit(
         id: 'spy1',
-        type: 'Spy',
+        type: kUnitTypeSpy,
         ownerId: 'p1',
         locationProvinceId: targetProvinceId,
         tileKey: targetTileKey,
@@ -366,7 +372,7 @@ void main() {
           'p1': [
             const WorkOrder(
               unitId: 'spy1',
-              target: 'steal_tech',
+              target: kWorkTargetStealTech,
               targetTileKey: targetTileKey,
             ),
           ],
@@ -375,7 +381,7 @@ void main() {
       final next = applyBuildAndWorkOrders(game, orders);
       final spyAfter = next.worldState.oldWorld.units.single;
       expect(spyAfter.currentWork, isNotNull);
-      expect(spyAfter.currentWork!.workTarget, 'steal_tech');
+      expect(spyAfter.currentWork!.workTarget, kWorkTargetStealTech);
       expect(spyAfter.currentWork!.totalTurns, 5);
       // One turn processed in same phase after applying, so remainingTurns 5 -> 4.
       expect(spyAfter.currentWork!.remainingTurns, 4);
@@ -384,7 +390,7 @@ void main() {
     test('explore work order sets currentWork when province has tiles', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Explorer',
+        type: kUnitTypeExplorer,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
@@ -409,14 +415,14 @@ void main() {
       final orders = Orders(
         workOrdersByPlayerId: {
           'p1': [
-            WorkOrder(unitId: 'u1', target: 'explore', targetTileKey: tileKey),
+            WorkOrder(unitId: 'u1', target: kWorkTargetExplore, targetTileKey: tileKey),
           ],
         },
       );
       final next = applyBuildAndWorkOrders(game, orders);
       final u = next.worldState.oldWorld.units.single;
       expect(u.currentWork, isNotNull);
-      expect(u.currentWork!.workTarget, 'explore');
+      expect(u.currentWork!.workTarget, kWorkTargetExplore);
       expect(u.currentWork!.totalTurns, greaterThanOrEqualTo(1));
       // One turn processed in same phase after applying.
       expect(u.currentWork!.remainingTurns, u.currentWork!.totalTurns - 1);
@@ -439,7 +445,7 @@ void main() {
 
         final unit = Unit(
           id: 'u1',
-          type: 'Explorer',
+          type: kUnitTypeExplorer,
           ownerId: 'p1',
           locationProvinceId: provinceSmall,
           tileKey: tileSmall1,
@@ -477,7 +483,7 @@ void main() {
             'p1': [
               const WorkOrder(
                 unitId: 'u1',
-                target: 'explore',
+                target: kWorkTargetExplore,
                 targetTileKey: tileSmall1,
               ),
             ],
@@ -489,7 +495,7 @@ void main() {
 
         // tilesInP = 2, maxTilesInRegion = 4 → ceil(3 * 2 / 4) = ceil(1.5) = 2.
         expect(u.currentWork, isNotNull);
-        expect(u.currentWork!.workTarget, 'explore');
+        expect(u.currentWork!.workTarget, kWorkTargetExplore);
         expect(u.currentWork!.totalTurns, 2);
         // One turn processed in same phase after applying.
         expect(u.currentWork!.remainingTurns, 1);
@@ -499,7 +505,7 @@ void main() {
     test('Engineer build_road work order sets currentWork', () {
       final unit = Unit(
         id: 'u1',
-        type: 'Engineer',
+        type: kUnitTypeEngineer,
         ownerId: 'p1',
         locationProvinceId: provinceId,
         tileKey: tileKey,
@@ -533,7 +539,7 @@ void main() {
           'p1': [
             WorkOrder(
               unitId: 'u1',
-              target: 'build_road',
+              target: kWorkTargetBuildRoad,
               targetTileKey: tileKey,
             ),
           ],
@@ -552,12 +558,12 @@ void main() {
       () {
         final unit = Unit(
           id: 'u1',
-          type: 'Engineer',
+          type: kUnitTypeEngineer,
           ownerId: 'p1',
           locationProvinceId: provinceId,
           tileKey: tileKey,
         );
-        final cost = workOrderMaterialCost('build_port');
+        final cost = workOrderMaterialCost(kWorkTargetBuildPort);
         expect(cost, isNotNull);
         var stockpile = const Stockpile();
         for (final e in cost!.entries) {
@@ -589,7 +595,7 @@ void main() {
             'p1': [
               WorkOrder(
                 unitId: 'u1',
-                target: 'build_port',
+                target: kWorkTargetBuildPort,
                 targetTileKey: tileKey,
               ),
             ],

@@ -3,7 +3,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart' show GameEvent;
+import 'turn_pipeline_state.dart';
 import 'turn_resolution_result.dart';
+
+/// One turn-resolution phase: advance or exit the pipeline with a result.
+typedef TurnPhaseHandler =
+    TurnPhaseStepOutcome Function(
+      TurnPipelineState pipeline,
+      TurnResolverConfig config,
+      int turn,
+    );
 
 /// Bundles inputs for [resolveTurnForGameWithConfig] / full turn resolution.
 class TurnResolverConfig {
@@ -23,6 +32,7 @@ class TurnResolverConfig {
     this.overtureDecisions,
     this.interventionDecisions,
     this.callToArmsDecisions,
+    this.phaseHandlerOverrides,
   });
 
   final MapTopology topology;
@@ -43,4 +53,9 @@ class TurnResolverConfig {
   final List<OvertureDecision>? overtureDecisions;
   final List<InterventionDecision>? interventionDecisions;
   final List<CallToArmsDecision>? callToArmsDecisions;
+
+  /// Optional handlers merged over the default phase registry (same [TurnPhase]
+  /// key replaces the default). Used for tests and narrow customization; the
+  /// default sequence and semantics remain authoritative. Refs #1958.
+  final Map<TurnPhase, TurnPhaseHandler>? phaseHandlerOverrides;
 }

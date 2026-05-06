@@ -1,6 +1,8 @@
-part of 'region_map_component.dart';
 
 /// Fog overlay opacity when drawing a dark rect over tiles (0 = no overlay, 1 = full black).
+
+part of 'region_map_component.dart';
+
 const double _fogOverlayOpacity = 0.4;
 
 /// Work-target valid tiles: opacity baseline in **linear 0–1** before sin pulse.
@@ -217,13 +219,32 @@ bool isCellUnderFleetRevealHalo({
   return false;
 }
 
-/// Effective terrain visibility for map painting (fog + fleet reveal halo).
+/// True when `(x, y)` is within Chebyshev distance <= 2 of a civilian marker
+/// that applies the draft assignment reveal halo.
+bool isCellUnderCivilianRevealHalo({
+  required int x,
+  required int y,
+  required List<CivilianTileMarkerView> civilianTileMarkers,
+}) {
+  for (final m in civilianTileMarkers) {
+    if (!m.applyCivilianRevealHalo) {
+      continue;
+    }
+    if (math.max((x - m.x).abs(), (y - m.y).abs()) <= 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Effective terrain visibility for map painting (fog + reveal halos).
 ///
 /// Used by the region map renderer and tests for sea zone label gating (#1756).
 TileVisibility visibilityForTerrainForMapCell({
   required CtMapVisibilityMode visibilityMode,
   required CellViewData cell,
   required List<FleetTileMarkerView> fleetTileMarkers,
+  required List<CivilianTileMarkerView> civilianTileMarkers,
 }) {
   if (visibilityMode != CtMapVisibilityMode.playerConstrained) {
     return cell.visibility;
@@ -232,6 +253,13 @@ TileVisibility visibilityForTerrainForMapCell({
     x: cell.x,
     y: cell.y,
     fleetTileMarkers: fleetTileMarkers,
+  )) {
+    return TileVisibility.visible;
+  }
+  if (isCellUnderCivilianRevealHalo(
+    x: cell.x,
+    y: cell.y,
+    civilianTileMarkers: civilianTileMarkers,
   )) {
     return TileVisibility.visible;
   }

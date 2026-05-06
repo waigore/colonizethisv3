@@ -4,6 +4,8 @@
 
 Per-player tile visibility governing what each Great Power knows about the map. Exploration and prospecting reveal tiles and mineral deposits.
 
+**Program alignment:** `explore` assignment visibility (partial reveal on **land** tiles) and deferred completion for `prospect` / `purchase_land` primary effects are specified in [orders.md](../program/orders.md) and [fog-and-exploration-resolution.md](../program/fog-and-exploration-resolution.md).
+
 ---
 
 ## Rules
@@ -51,15 +53,19 @@ While a fleet **enters** S during Movement, that player’s water tiles in S are
 
 Explorer with work order target `explore` reveals all tiles in a province. **Turns required:** `ceil(3 * tilesInProvince / maxTilesInAnyProvinceInRegion)` (up to 3 turns), where the scale is the maximum tile count in any province **in that region** (so exploration time is comparable within the same region). On completion, all tiles set to fully visible for that player.
 
+For explore target selection, a province is **partially revealed** for a player when that player has at least one tile in the province at `fogged` or `fullyVisible` and at least one tile at `unknown`.
+
 ### Prospecting (Tile-Level)
 
-Explorer with work order target `prospect` prospects the tile under the unit. One turn per tile. Per-player; minerals must be prospected before extraction.
+Explorer with work order target `prospect` prospects the target tile. **One** `currentWork` turn; the tile is added to the player's prospected set when that work **completes** in the Build/Work phase (not merely when the order is accepted). Per-player; minerals must be prospected before extraction.
 
 ### Prospect-Required Resources
 
 **Require prospecting:** iron, copper, tin, coal, silver, gold, gems, diamonds.
 
 **Known from terrain when visible:** grain, meat, wool, horses, timber, sugarCane, tobacco, cotton, furs, spices.
+
+Tiles with a **known** non-prospect (terrain-known) resource are not mineral-eligible for `prospect`, even when the underlying terrain type is normally prospectable.
 
 Mineral-eligible terrain: swamp, hills, mountain, desert (for diamonds). See [resource-terrain-region-rules.md](resource-terrain-region-rules.md).
 

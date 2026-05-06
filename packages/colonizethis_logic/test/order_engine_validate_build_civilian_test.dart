@@ -96,9 +96,9 @@ void main() {
         engine.addBuildOrder(
           'p1',
           BuildUnitOrder(
-            unitType: 'Builder',
+            unitType: kUnitTypeBuilder,
             isMilitary:
-                buildUnitCategoryForUnitType('Builder') ==
+                buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
                 BuildUnitCategory.military,
             spawnProvinceId: '$ow|P1',
           ),
@@ -145,9 +145,9 @@ void main() {
         engine.addBuildOrder(
           'p1',
           BuildUnitOrder(
-            unitType: 'Builder',
+            unitType: kUnitTypeBuilder,
             isMilitary:
-                buildUnitCategoryForUnitType('Builder') ==
+                buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
                 BuildUnitCategory.military,
             spawnProvinceId: '$ow|P1',
           ),
@@ -195,9 +195,9 @@ void main() {
         engine.addBuildOrder(
           'p1',
           BuildUnitOrder(
-            unitType: 'Merchant',
+            unitType: kUnitTypeMerchant,
             isMilitary:
-                buildUnitCategoryForUnitType('Merchant') ==
+                buildUnitCategoryForUnitType(kUnitTypeMerchant) ==
                 BuildUnitCategory.military,
             spawnProvinceId: '$ow|P1',
           ),
@@ -244,9 +244,9 @@ void main() {
         engine.addBuildOrder(
           'p1',
           BuildUnitOrder(
-            unitType: 'Builder',
+            unitType: kUnitTypeBuilder,
             isMilitary:
-                buildUnitCategoryForUnitType('Builder') ==
+                buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
                 BuildUnitCategory.military,
             spawnProvinceId: '$ow|P1',
           ),
@@ -285,7 +285,7 @@ void main() {
               stockpile: Stockpile().applyDelta(CommodityCatalog.paper.id, 5),
               workerPool: const WorkerPool(peasants: 0),
               treasury: 3000,
-              techUnlocked: {'merchant_companies': true},
+              techUnlocked: {kTechIdMerchantCompanies: true},
             ),
           ],
         );
@@ -293,9 +293,9 @@ void main() {
         engine.addBuildOrder(
           'p1',
           BuildUnitOrder(
-            unitType: 'Merchant',
+            unitType: kUnitTypeMerchant,
             isMilitary:
-                buildUnitCategoryForUnitType('Merchant') ==
+                buildUnitCategoryForUnitType(kUnitTypeMerchant) ==
                 BuildUnitCategory.military,
             spawnProvinceId: '$ow|P1',
           ),
@@ -348,9 +348,9 @@ void main() {
           engine.addBuildOrder(
             'p1',
             BuildUnitOrder(
-              unitType: 'Builder',
+              unitType: kUnitTypeBuilder,
               isMilitary:
-                  buildUnitCategoryForUnitType('Builder') ==
+                  buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
                   BuildUnitCategory.military,
               spawnProvinceId: '',
             ),
@@ -405,9 +405,9 @@ void main() {
           engine.addBuildOrder(
             'p1',
             BuildUnitOrder(
-              unitType: 'Builder',
+              unitType: kUnitTypeBuilder,
               isMilitary:
-                  buildUnitCategoryForUnitType('Builder') ==
+                  buildUnitCategoryForUnitType(kUnitTypeBuilder) ==
                   BuildUnitCategory.military,
               spawnProvinceId: '$ow|P2',
             ),

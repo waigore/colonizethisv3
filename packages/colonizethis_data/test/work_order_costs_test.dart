@@ -1,45 +1,65 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show
+        kUnitTypeBuilder,
+        kUnitTypeEngineer,
+        kUnitTypeExplorer,
+        kUnitTypeMerchant,
+        kUnitTypeRailBuilder,
+        kUnitTypeSpy;
+
+const kWorkTargetExplore = 'explore';
+const kWorkTargetProspect = 'prospect';
+const kWorkTargetBuildImprovement = 'build_improvement';
+const kWorkTargetUpgradeTown = 'upgrade_town';
+const kWorkTargetBuildRoad = 'build_road';
+const kWorkTargetBuildPort = 'build_port';
+const kWorkTargetBuildFort = 'build_fort';
+const kWorkTargetBuildRail = 'build_rail';
+const kWorkTargetStealTech = 'steal_tech';
+const kWorkTargetCounterSpy = 'counter_spy';
+const kWorkTargetPurchaseLand = 'purchase_land';
 
 void main() {
   group('totalTurnsForWork', () {
     test('explore returns 3', () {
-      expect(totalTurnsForWork('explore'), 3);
+      expect(totalTurnsForWork(kWorkTargetExplore), 3);
     });
     test('prospect returns 1', () {
-      expect(totalTurnsForWork('prospect'), 1);
+      expect(totalTurnsForWork(kWorkTargetProspect), 1);
     });
     test('build_improvement returns 1', () {
-      expect(totalTurnsForWork('build_improvement'), 1);
+      expect(totalTurnsForWork(kWorkTargetBuildImprovement), 1);
     });
     test('upgrade_town returns 1', () {
-      expect(totalTurnsForWork('upgrade_town'), 1);
+      expect(totalTurnsForWork(kWorkTargetUpgradeTown), 1);
     });
     test('build_road returns 1', () {
-      expect(totalTurnsForWork('build_road'), 1);
+      expect(totalTurnsForWork(kWorkTargetBuildRoad), 1);
     });
     test('build_port returns 1', () {
-      expect(totalTurnsForWork('build_port'), 1);
+      expect(totalTurnsForWork(kWorkTargetBuildPort), 1);
     });
     test('build_rail returns 1', () {
-      expect(totalTurnsForWork('build_rail'), 1);
+      expect(totalTurnsForWork(kWorkTargetBuildRail), 1);
     });
     test('build_fort scales by fortLevel (0->1, 1->2, 2->3)', () {
-      expect(totalTurnsForWork('build_fort', fortLevel: 0), 1);
-      expect(totalTurnsForWork('build_fort', fortLevel: 1), 2);
-      expect(totalTurnsForWork('build_fort', fortLevel: 2), 3);
+      expect(totalTurnsForWork(kWorkTargetBuildFort, fortLevel: 0), 1);
+      expect(totalTurnsForWork(kWorkTargetBuildFort, fortLevel: 1), 2);
+      expect(totalTurnsForWork(kWorkTargetBuildFort, fortLevel: 2), 3);
     });
     test('build_fort with null fortLevel uses 0', () {
-      expect(totalTurnsForWork('build_fort'), 1);
+      expect(totalTurnsForWork(kWorkTargetBuildFort), 1);
     });
     test('steal_tech returns 5', () {
-      expect(totalTurnsForWork('steal_tech'), 5);
+      expect(totalTurnsForWork(kWorkTargetStealTech), 5);
     });
     test('counter_spy returns 0', () {
-      expect(totalTurnsForWork('counter_spy'), 0);
+      expect(totalTurnsForWork(kWorkTargetCounterSpy), 0);
     });
     test('purchase_land returns 1', () {
-      expect(totalTurnsForWork('purchase_land'), 1);
+      expect(totalTurnsForWork(kWorkTargetPurchaseLand), 1);
     });
     test('unknown work target returns 1', () {
       expect(totalTurnsForWork('unknown'), 1);
@@ -133,51 +153,51 @@ void main() {
 
   group('workOrderMaterialCost', () {
     test('explore, prospect, steal_tech, counter_spy, purchase_land return null', () {
-      expect(workOrderMaterialCost('explore'), isNull);
-      expect(workOrderMaterialCost('prospect'), isNull);
-      expect(workOrderMaterialCost('steal_tech'), isNull);
-      expect(workOrderMaterialCost('counter_spy'), isNull);
-      expect(workOrderMaterialCost('purchase_land'), isNull);
+      expect(workOrderMaterialCost(kWorkTargetExplore), isNull);
+      expect(workOrderMaterialCost(kWorkTargetProspect), isNull);
+      expect(workOrderMaterialCost(kWorkTargetStealTech), isNull);
+      expect(workOrderMaterialCost(kWorkTargetCounterSpy), isNull);
+      expect(workOrderMaterialCost(kWorkTargetPurchaseLand), isNull);
     });
     test('build_improvement returns cost for improvementLevel (SPEC scaling)', () {
-      final cost = workOrderMaterialCost('build_improvement', improvementLevel: 2);
+      final cost = workOrderMaterialCost(kWorkTargetBuildImprovement, improvementLevel: 2);
       expect(cost, isNotNull);
       expect(cost![CommodityCatalog.lumber.id], 8);
       expect(cost[CommodityCatalog.castIron.id], 8);
     });
     test('build_improvement defaults improvementLevel to 0', () {
-      final cost = workOrderMaterialCost('build_improvement');
+      final cost = workOrderMaterialCost(kWorkTargetBuildImprovement);
       expect(cost, isNotNull);
       expect(cost![CommodityCatalog.lumber.id], 1);
     });
     test('upgrade_town returns upgrade cost', () {
-      final cost = workOrderMaterialCost('upgrade_town');
+      final cost = workOrderMaterialCost(kWorkTargetUpgradeTown);
       expect(cost, isNotNull);
       expect(cost![CommodityCatalog.lumber.id], 1);
     });
     test('build_road returns road cost', () {
-      final cost = workOrderMaterialCost('build_road');
+      final cost = workOrderMaterialCost(kWorkTargetBuildRoad);
       expect(cost, isNotNull);
       expect(cost![CommodityCatalog.lumber.id], 1);
     });
     test('build_port returns port cost', () {
-      final cost = workOrderMaterialCost('build_port');
+      final cost = workOrderMaterialCost(kWorkTargetBuildPort);
       expect(cost, isNotNull);
       expect(cost![CommodityCatalog.lumber.id], 1);
     });
     test('build_fort returns fort cost for fortLevel', () {
-      final cost = workOrderMaterialCost('build_fort', fortLevel: 0);
+      final cost = workOrderMaterialCost(kWorkTargetBuildFort, fortLevel: 0);
       expect(cost, isNotNull);
       expect(cost![CommodityCatalog.lumber.id], 3);
       expect(cost[CommodityCatalog.bronze.id], 3);
     });
     test('build_fort defaults fortLevel to 0', () {
-      final cost = workOrderMaterialCost('build_fort');
+      final cost = workOrderMaterialCost(kWorkTargetBuildFort);
       expect(cost, isNotNull);
       expect(cost![CommodityCatalog.bronze.id], 3);
     });
     test('build_rail returns rail cost', () {
-      final cost = workOrderMaterialCost('build_rail');
+      final cost = workOrderMaterialCost(kWorkTargetBuildRail);
       expect(cost, isNotNull);
       expect(cost![CommodityCatalog.lumber.id], 2);
       expect(cost[CommodityCatalog.steel.id], 2);
@@ -189,41 +209,41 @@ void main() {
 
   group('workOrderTargetsByUnitType', () {
     test('Explorer has explore and prospect', () {
-      expect(workOrderTargetsByUnitType['Explorer'], ['explore', 'prospect']);
+      expect(workOrderTargetsByUnitType[kUnitTypeExplorer], [kWorkTargetExplore, kWorkTargetProspect]);
     });
     test('Builder has build_improvement and upgrade_town', () {
-      expect(workOrderTargetsByUnitType['Builder'], ['build_improvement', 'upgrade_town']);
+      expect(workOrderTargetsByUnitType[kUnitTypeBuilder], [kWorkTargetBuildImprovement, kWorkTargetUpgradeTown]);
     });
     test('Engineer has build_road, build_port, build_fort', () {
-      expect(workOrderTargetsByUnitType['Engineer'], ['build_road', 'build_port', 'build_fort']);
+      expect(workOrderTargetsByUnitType[kUnitTypeEngineer], [kWorkTargetBuildRoad, kWorkTargetBuildPort, kWorkTargetBuildFort]);
     });
     test('Rail Builder has build_rail', () {
-      expect(workOrderTargetsByUnitType['Rail Builder'], ['build_rail']);
+      expect(workOrderTargetsByUnitType[kUnitTypeRailBuilder], [kWorkTargetBuildRail]);
     });
     test('Spy has steal_tech and counter_spy', () {
-      expect(workOrderTargetsByUnitType['Spy'], ['steal_tech', 'counter_spy']);
+      expect(workOrderTargetsByUnitType[kUnitTypeSpy], [kWorkTargetStealTech, kWorkTargetCounterSpy]);
     });
     test('Merchant has purchase_land', () {
-      expect(workOrderTargetsByUnitType['Merchant'], ['purchase_land']);
+      expect(workOrderTargetsByUnitType[kUnitTypeMerchant], [kWorkTargetPurchaseLand]);
     });
   });
 
   group('isWorkOrderTargetAllowedForUnitType', () {
     test('Explorer can explore and prospect', () {
-      expect(isWorkOrderTargetAllowedForUnitType('Explorer', 'explore'), isTrue);
-      expect(isWorkOrderTargetAllowedForUnitType('Explorer', 'prospect'), isTrue);
+      expect(isWorkOrderTargetAllowedForUnitType(kUnitTypeExplorer, kWorkTargetExplore), isTrue);
+      expect(isWorkOrderTargetAllowedForUnitType(kUnitTypeExplorer, kWorkTargetProspect), isTrue);
     });
     test('Explorer cannot build_road', () {
-      expect(isWorkOrderTargetAllowedForUnitType('Explorer', 'build_road'), isFalse);
+      expect(isWorkOrderTargetAllowedForUnitType(kUnitTypeExplorer, kWorkTargetBuildRoad), isFalse);
     });
     test('Engineer can build_road', () {
-      expect(isWorkOrderTargetAllowedForUnitType('Engineer', 'build_road'), isTrue);
+      expect(isWorkOrderTargetAllowedForUnitType(kUnitTypeEngineer, kWorkTargetBuildRoad), isTrue);
     });
     test('unknown unit type returns false', () {
-      expect(isWorkOrderTargetAllowedForUnitType('Unknown', 'explore'), isFalse);
+      expect(isWorkOrderTargetAllowedForUnitType('Unknown', kWorkTargetExplore), isFalse);
     });
     test('allowed target not in list returns false', () {
-      expect(isWorkOrderTargetAllowedForUnitType('Builder', 'explore'), isFalse);
+      expect(isWorkOrderTargetAllowedForUnitType(kUnitTypeBuilder, kWorkTargetExplore), isFalse);
     });
   });
 }

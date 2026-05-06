@@ -77,6 +77,21 @@ bool _ownerHadMovingFleetInZone(
 bool _isInterceptorMission(FleetMission m) =>
     m == FleetMission.patrol || m == FleetMission.blockade;
 
+bool _navalBattleShouldSwapAttackerSides({
+  required bool m1,
+  required bool m2,
+  required bool int1,
+  required bool int2,
+  required String s1OwnerId,
+  required String s2OwnerId,
+}) {
+  if (m1 && !m2 && int2) return true;
+  if (m2 && !m1 && int1) return false;
+  if (m1 && !m2) return false;
+  if (m2 && !m1) return true;
+  return s1OwnerId.compareTo(s2OwnerId) > 0;
+}
+
 /// Orders [battle] so [side1] is the attacker and [side2] is the defender per SPEC/program/naval-combat-resolution.md.
 ///
 /// Precedence: (1) If exactly one faction moved into the zone and the other is on Patrol or Blockade, the interceptor is the attacker. (2) Else if exactly one faction moved, the mover is the attacker. (3) Else (both moved, or neither) use lexicographically smaller `ownerId` as attacker for deterministic ordering.
@@ -102,18 +117,14 @@ BattleContextSea normalizeNavalBattleSidesForAttacker(
   final int1 = _isInterceptorMission(s1.mission);
   final int2 = _isInterceptorMission(s2.mission);
 
-  final bool swap;
-  if (m1 && !m2 && int2) {
-    swap = true;
-  } else if (m2 && !m1 && int1) {
-    swap = false;
-  } else if (m1 && !m2) {
-    swap = false;
-  } else if (m2 && !m1) {
-    swap = true;
-  } else {
-    swap = s1.ownerId.compareTo(s2.ownerId) > 0;
-  }
+  final swap = _navalBattleShouldSwapAttackerSides(
+    m1: m1,
+    m2: m2,
+    int1: int1,
+    int2: int2,
+    s1OwnerId: s1.ownerId,
+    s2OwnerId: s2.ownerId,
+  );
 
   if (!swap) {
     return battle;

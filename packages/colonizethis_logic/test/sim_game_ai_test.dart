@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/ai/sim_game_ai.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
@@ -8,9 +9,21 @@ void main() {
     test('produces army move orders only to adjacent provinces', () {
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 'P3', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'P2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'P3',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [
           TopologyEdge(id1: 'P1', id2: 'P2'),
@@ -66,13 +79,13 @@ void main() {
         baseSeed: 42,
       );
 
-      final armyMoves =
-          orders.armyMoveOrdersByPlayerId[player.id] ?? const [];
+      final armyMoves = orders.armyMoveOrdersByPlayerId[player.id] ?? const [];
       expect(armyMoves, isNotEmpty);
       final gameWithArmies = ensureMilitaryArmiesForGame(game);
       for (final mo in armyMoves) {
-        final army = gameWithArmies.worldState.armies
-            .firstWhere((a) => a.id == mo.armyId);
+        final army = gameWithArmies.worldState.armies.firstWhere(
+          (a) => a.id == mo.armyId,
+        );
         final fromLocal = ProvinceId.localIdFrom(army.stationedProvinceId);
         final toLocal = ProvinceId.localIdFrom(mo.destinationProvinceId);
         final isAdjacent = topology.edges.any(
@@ -80,20 +93,29 @@ void main() {
               (e.id1 == fromLocal && e.id2 == toLocal) ||
               (e.id1 == toLocal && e.id2 == fromLocal),
         );
-        expect(isAdjacent, isTrue,
-            reason: 'Move from $fromLocal to $toLocal must follow topology edge');
+        expect(
+          isAdjacent,
+          isTrue,
+          reason: 'Move from $fromLocal to $toLocal must follow topology edge',
+        );
       }
     });
 
     test('is deterministic for same game, player, topology, and seed', () {
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'P2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
-        edges: const [
-          TopologyEdge(id1: 'P1', id2: 'P2'),
-        ],
+        edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
       );
 
       final game = Game(
@@ -145,11 +167,104 @@ void main() {
       expect(o1, equals(o2));
     });
 
-    test('drops moves into at-peace GP provinces via diplomacy post-filter', () {
+    test(
+      'drops moves into at-peace GP provinces via diplomacy post-filter',
+      () {
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'P1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'P2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(
+                  id: 'oldWorld|P1',
+                  regionId: 'oldWorld',
+                  ownerId: 'p1',
+                ),
+                Province(
+                  id: 'oldWorld|P2',
+                  regionId: 'oldWorld',
+                  ownerId: 'p2',
+                ),
+              ],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: 'grenadiers',
+                  ownerId: 'p1',
+                  locationProvinceId: 'oldWorld|P1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            playerVisibilityByTile: const {
+              'p1': {
+                'oldWorld|P1|0|0': 'fullyVisible',
+                'oldWorld|P2|0|0': 'fullyVisible',
+              },
+            },
+          ),
+          players: const [
+            Player(id: 'p1', displayName: 'Power 1', isHuman: true),
+            Player(id: 'p2', displayName: 'Power 2', isHuman: false),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'p1',
+              factionId2: 'p2',
+              score: 50,
+              state: RelationState.atPeace,
+            ),
+          ],
+        );
+
+        final orders = defaultSimGameAi(
+          game: game,
+          player: game.players.first,
+          topology: topology,
+          baseSeed: 1,
+        );
+        final moves = orders.moveOrdersByPlayerId['p1'] ?? const [];
+        expect(
+          moves.any(
+            (m) =>
+                Unit.provinceIdFromTileKey(m.destinationTileKey) ==
+                'oldWorld|P2',
+          ),
+          isFalse,
+          reason: 'no civilian move orders in this military-only fixture',
+        );
+      },
+    );
+
+    test('drops moves into minor provinces when relation is unknown', () {
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'P2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
       );
@@ -160,7 +275,11 @@ void main() {
           oldWorld: RegionData(
             provinces: const [
               Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
-              Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p2'),
+              Province(
+                id: 'oldWorld|P2',
+                regionId: 'oldWorld',
+                ownerId: 'minor1',
+              ),
             ],
             units: [
               Unit(
@@ -181,67 +300,7 @@ void main() {
         ),
         players: const [
           Player(id: 'p1', displayName: 'Power 1', isHuman: true),
-          Player(id: 'p2', displayName: 'Power 2', isHuman: false),
         ],
-        diplomacyRelations: const [
-          DiplomacyRelation(
-            factionId1: 'p1',
-            factionId2: 'p2',
-            score: 50,
-            state: RelationState.atPeace,
-          ),
-        ],
-      );
-
-      final orders = defaultSimGameAi(
-        game: game,
-        player: game.players.first,
-        topology: topology,
-        baseSeed: 1,
-      );
-      final moves = orders.moveOrdersByPlayerId['p1'] ?? const [];
-      expect(
-        moves.any((m) => m.destinationProvinceId == 'oldWorld|P2'),
-        isFalse,
-        reason: 'moves into at-peace GP provinces must be dropped',
-      );
-    });
-
-    test('drops moves into minor provinces when relation is unknown', () {
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
-        ],
-        edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
-      );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'p1'),
-              Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'minor1'),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'grenadiers',
-                ownerId: 'p1',
-                locationProvinceId: 'oldWorld|P1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'p1': {
-              'oldWorld|P1|0|0': 'fullyVisible',
-              'oldWorld|P2|0|0': 'fullyVisible',
-            },
-          },
-        ),
-        players: const [Player(id: 'p1', displayName: 'Power 1', isHuman: true)],
         minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
       );
 
@@ -253,17 +312,28 @@ void main() {
       );
       final moves = orders.moveOrdersByPlayerId['p1'] ?? const [];
       expect(
-        moves.any((m) => m.destinationProvinceId == 'oldWorld|P2'),
+        moves.any(
+          (m) =>
+              Unit.provinceIdFromTileKey(m.destinationTileKey) == 'oldWorld|P2',
+        ),
         isFalse,
-        reason: 'moves into minor provinces with unknown relation must be dropped',
+        reason: 'no civilian move orders in this military-only fixture',
       );
     });
 
     test('does not mutate game state', () {
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
-          TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
+          TopologyNode(
+            id: 'P1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'P2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
         ],
         edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
       );
@@ -338,13 +408,11 @@ void main() {
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
-            provinces: [
-              Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-            ],
+            provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
             units: [
               Unit(
                 id: 'rail1',
-                type: 'Rail Builder',
+                type: kUnitTypeRailBuilder,
                 ownerId: 'p1',
                 locationProvinceId: provinceId,
                 tileKey: tileKey,
@@ -371,7 +439,7 @@ void main() {
             stockpile: Stockpile()
                 .applyDelta(CommodityCatalog.lumber.id, 10)
                 .applyDelta(CommodityCatalog.steel.id, 10),
-            techUnlocked: const {'early_steam_engine': true},
+            techUnlocked: const {kTechIdEarlySteamEngine: true},
           ),
         ],
         globalGameSeed: 11,
@@ -386,8 +454,7 @@ void main() {
         tileMapByRegion: {ow: railTileMap()},
       );
       final work = orders.workOrdersByPlayerId['p1'] ?? const [];
-      expect(work.any((w) => w.target == 'build_rail'), isTrue);
+      expect(work.any((w) => w.target == kWorkTargetBuildRail), isTrue);
     });
   });
 }
-

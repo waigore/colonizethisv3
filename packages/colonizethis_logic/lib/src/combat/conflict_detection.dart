@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/unit_lookup.dart';
+
 /// Battle context for one contested province. SPEC/program/combat-resolution.md.
 class BattleContext {
   const BattleContext({
@@ -108,10 +110,7 @@ class AttackingSide {
 List<BattleContext> detectConflicts(Game game, Orders orders) {
   final contexts = <BattleContext>[];
   final armyById = {for (final a in game.worldState.armies) a.id: a};
-  final unitById = {
-    for (final u in game.worldState.oldWorld.units) u.id: u,
-    for (final u in game.worldState.newWorld.units) u.id: u,
-  };
+  final unitById = unitsByIdFromWorld(game.worldState);
 
   void processRegion(RegionData region) {
     if (region.units.isEmpty) return;
@@ -131,11 +130,13 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       for (final order in entry.value) {
         final unit = unitById[order.unitId];
         if (unit == null || !canUnitInitiateCombat(unit.type)) continue;
-        final currentRegion = ProvinceId.regionIdFrom(unit.locationProvinceId);
-        final dest = ProvinceId.isPrefixed(order.destinationProvinceId)
-            ? order.destinationProvinceId
-            : ProvinceId.full(currentRegion, order.destinationProvinceId);
-        movedIntoByFaction.putIfAbsent(dest, () => <String>{}).add(factionId);
+        final destProvince = Unit.provinceIdFromTileKey(
+          order.destinationTileKey,
+        );
+        if (destProvince == null) continue;
+        movedIntoByFaction
+            .putIfAbsent(destProvince, () => <String>{})
+            .add(factionId);
       }
     }
     for (final entry in orders.armyMoveOrdersByPlayerId.entries) {

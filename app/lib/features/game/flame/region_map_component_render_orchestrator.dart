@@ -1,3 +1,4 @@
+
 part of 'region_map_component.dart';
 
 extension _CtRegionMapRenderOrchestrator on CtRegionMapComponent {
@@ -6,6 +7,7 @@ extension _CtRegionMapRenderOrchestrator on CtRegionMapComponent {
       visibilityMode: visibilityMode,
       cell: cell,
       fleetTileMarkers: region.fleetTileMarkers,
+      civilianTileMarkers: region.civilianTileMarkers,
     );
   }
 

@@ -9,7 +9,7 @@ void main() {
       final engine = OrderEngine();
       final result = engine.addMoveOrder(
         'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+        const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
       );
       expect(result.status, OrderValidationStatus.accepted);
       expect(engine.orders.moveOrdersByPlayerId['p1']?.length, 1);
@@ -19,11 +19,11 @@ void main() {
       final engine = OrderEngine();
       engine.addMoveOrder(
         'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+        const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
       );
       engine.addMoveOrder(
         'p1',
-        const MoveOrder(unitId: 'u2', destinationProvinceId: 'oldWorld|P3'),
+        const MoveOrder(unitId: 'u2', destinationTileKey: 'oldWorld|P3|0|0'),
       );
       expect(engine.orders.moveOrdersByPlayerId['p1']!.length, 2);
       engine.removeMoveOrder('p1', 0);
@@ -63,7 +63,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
                 tileKey: 'oldWorld|P1|0|0',
@@ -117,7 +117,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -137,15 +137,15 @@ void main() {
       final engine = OrderEngine();
       engine.addMoveOrder(
         'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+        const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
       );
       engine.addMoveOrder(
         'p1',
-        const MoveOrder(unitId: 'u999', destinationProvinceId: 'oldWorld|P2'),
+        const MoveOrder(unitId: 'u999', destinationTileKey: 'oldWorld|P2|0|0'),
       );
       engine.addMoveOrder(
         'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P3'),
+        const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P3|0|0'),
       );
 
       final results = engine.validatePlayerOrdersWithContext(
@@ -220,20 +220,27 @@ void main() {
               units: [
                 Unit(
                   id: 'u1',
-                  type: 'musketeers',
+                  type: kUnitTypeMerchant,
                   ownerId: 'p1',
                   locationProvinceId: '$ow|P1',
+                  tileKey: '$ow|P1|0|0',
                 ),
               ],
             ),
             newWorld: const RegionData(),
+            playerVisibilityByTile: const {
+              'p1': {
+                'oldWorld|P1|0|0': 'fullyVisible',
+                'oldWorld|P2|0|0': 'fullyVisible',
+              },
+            },
           ),
           players: [Player(id: 'p1', displayName: 'P1', isHuman: true)],
         );
         final engine = OrderEngine();
         engine.addMoveOrder(
           'p1',
-          const MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2'),
+          const MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0'),
         );
         final effects = engine.projectedEffects(game, topology, 'p1');
         expect(effects.unitLocations, isNotNull);
@@ -300,7 +307,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -322,13 +329,13 @@ void main() {
         game,
         topology,
         'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+        const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
       );
       final bad = engine.addMoveOrderWithContext(
         game,
         topology,
         'p1',
-        const MoveOrder(unitId: 'u999', destinationProvinceId: 'oldWorld|P2'),
+        const MoveOrder(unitId: 'u999', destinationTileKey: 'oldWorld|P2|0|0'),
       );
 
       expect(ok.status, OrderValidationStatus.accepted);
@@ -364,7 +371,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Builder',
+                type: kUnitTypeBuilder,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -387,7 +394,7 @@ void main() {
       final engine = OrderEngine();
       engine.addMoveOrder(
         'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+        const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
       );
 
       final results = engine.validatePlayerOrdersWithContext(
@@ -600,7 +607,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -621,7 +628,7 @@ void main() {
       final engine = OrderEngine();
       engine.addMoveOrder(
         'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+        const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
       );
 
       final results = engine.validatePlayerOrdersWithContext(
@@ -662,7 +669,7 @@ void main() {
             units: [
               Unit(
                 id: 'u1',
-                type: 'Explorer',
+                type: kUnitTypeExplorer,
                 ownerId: 'p1',
                 locationProvinceId: '$ow|P1',
               ),
@@ -676,7 +683,7 @@ void main() {
       final engine = OrderEngine();
       engine.addMoveOrder(
         'p1',
-        const MoveOrder(unitId: 'u1', destinationProvinceId: 'oldWorld|P2'),
+        const MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P2|0|0'),
       );
       final results = engine.validatePlayerOrdersWithContext(
         game,

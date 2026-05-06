@@ -5,15 +5,30 @@ import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
 import 'check_app_hardcoded_ui_strings.dart';
+import 'check_app_event_handler_scope_logic_boundary.dart';
 import 'check_asset_path_constants.dart';
 import 'check_canonical_province_tile_keys.dart';
+import 'check_colonizethis_map_lib_pipe_split.dart';
 import 'check_civilian_unit_type_constants.dart';
 import 'check_control_flow_nesting_depth.dart';
 import 'check_custom_exceptions.dart';
+import 'check_dart_file_non_comment_line_size.dart';
+import 'check_debug_handler_one_per_file.dart';
+import 'check_debug_console_logic_contract_boundary.dart';
 import 'check_disallowed_ast_patterns.dart';
+import 'check_flutter_action_pins.dart';
+import 'check_function_size.dart';
+import 'check_game_widgets_file_size.dart';
+import 'check_land_province_bucket_keys.dart';
+import 'check_logic_dual_region_province_field_access.dart';
+import 'check_no_flame_in_widgets.dart';
+import 'check_no_screen_in_game_widgets.dart';
+import 'check_part_unit_size.dart';
 import 'check_repeated_magic_numbers.dart';
 import 'check_tech_id_constants.dart';
 import 'check_work_target_constants.dart';
+import 'check_workspace_outdated_latest_direct.dart';
+import 'check_workspace_outdated_resolvable.dart';
 import 'ct_repo_lint_scan_contract.dart';
 
 /// One entry from [tool/ct_repo_lint_manifest.yaml].
@@ -286,6 +301,27 @@ List<RepoLintRule> loadRepoLintManifest(
 /// Resolves a comma-separated list of changed `*.dart` paths for PR workflows,
 /// matching `.github/workflows/quality.yml` (three-dot diff vs `origin/$GITHUB_BASE_REF`).
 String? resolvePrChangedDartFilesCsv() {
+  final explicitBaseSha = Platform.environment['CT_REPO_LINT_BASE_SHA'];
+  if (explicitBaseSha != null && explicitBaseSha.trim().isNotEmpty) {
+    final normalizedBaseSha = explicitBaseSha.trim();
+    final fetchExplicit = Process.runSync(
+      'git',
+      ['fetch', '--no-tags', '--depth=1', 'origin', normalizedBaseSha],
+      workingDirectory: Directory.current.path,
+      runInShell: false,
+    );
+    if (fetchExplicit.exitCode == 0) {
+      final csv = _resolveChangedDartFilesCsvForBaseSha(normalizedBaseSha);
+      if (csv != null) {
+        return csv;
+      }
+    }
+    final csv = _resolveChangedDartFilesCsvForLeft(normalizedBaseSha);
+    if (csv != null) {
+      return csv;
+    }
+  }
+
   final baseRef = Platform.environment['GITHUB_BASE_REF'];
   if (baseRef == null || baseRef.isEmpty) {
     return null;
@@ -297,14 +333,61 @@ String? resolvePrChangedDartFilesCsv() {
     workingDirectory: Directory.current.path,
     runInShell: false,
   );
-  if (fetch.exitCode != 0) {
+  final primaryLeft = 'origin/$baseRef';
+  if (fetch.exitCode == 0) {
+    final csv = _resolveChangedDartFilesCsvForLeft(primaryLeft);
+    if (csv != null) {
+      return csv;
+    }
+  }
+
+  // CI may check out a merge commit and/or omit remote refs in shallow clones.
+  // Fall back to the first parent when origin/<base> cannot be resolved.
+  return _resolveChangedDartFilesCsvForLeft('HEAD^');
+}
+
+String? _resolveChangedDartFilesCsvForBaseSha(String baseSha) {
+  final diff = Process.runSync(
+    'git',
+    ['diff', '--name-only', '$baseSha..HEAD', '--', '*.dart'],
+    workingDirectory: Directory.current.path,
+    runInShell: false,
+  );
+  if (diff.exitCode != 0) {
+    return null;
+  }
+  final lines = diff.stdout
+      .toString()
+      .split('\n')
+      .map((l) => l.trim())
+      .where((l) => l.isNotEmpty)
+      .toList();
+  if (lines.isEmpty) {
+    // Distinguish "no Dart files changed" from "could not resolve baseline".
+    // PR-incremental rules should scan zero files, not fall back to full scan.
+    return '';
+  }
+  return lines.join(',');
+}
+
+String? _resolveChangedDartFilesCsvForLeft(String leftRef) {
+  final mergeBase = Process.runSync(
+    'git',
+    ['merge-base', leftRef, 'HEAD'],
+    workingDirectory: Directory.current.path,
+    runInShell: false,
+  );
+  if (mergeBase.exitCode != 0) {
+    return null;
+  }
+  final mergeBaseSha = mergeBase.stdout.toString().trim();
+  if (mergeBaseSha.isEmpty) {
     return null;
   }
 
-  final left = 'origin/$baseRef';
   final diff = Process.runSync(
     'git',
-    ['diff', '--name-only', '$left...HEAD', '--', '*.dart'],
+    ['diff', '--name-only', '$mergeBaseSha..HEAD', '--', '*.dart'],
     workingDirectory: Directory.current.path,
     runInShell: false,
   );
@@ -320,7 +403,8 @@ String? resolvePrChangedDartFilesCsv() {
       .toList();
 
   if (lines.isEmpty) {
-    return null;
+    // Keep PR-incremental behavior explicit when there are no changed Dart files.
+    return '';
   }
   return lines.join(',');
 }
@@ -575,9 +659,7 @@ int _runOneRule({
 
   final script = rule.script!;
   final args = <String>['run', script];
-  if (rule.prIncremental &&
-      incrementalCsv != null &&
-      incrementalCsv.isNotEmpty) {
+  if (rule.prIncremental && incrementalCsv != null) {
     args.addAll(['--files', incrementalCsv]);
   }
 
@@ -605,9 +687,7 @@ int? _tryRunDartRuleInProcess({
   required String? incrementalCsv,
 }) {
   List<String>? incrementalPaths;
-  if (rule.prIncremental &&
-      incrementalCsv != null &&
-      incrementalCsv.isNotEmpty) {
+  if (rule.prIncremental && incrementalCsv != null) {
     incrementalPaths = repoLintSplitRelativeDartPathsArg(incrementalCsv);
   }
 
@@ -617,11 +697,44 @@ int? _tryRunDartRuleInProcess({
     case 'repo.asset_path_constants':
       return runCheckAssetPathConstants(repoRoot);
     case 'repo.disallowed_ast_patterns':
-      return runCheckDisallowedAstPatterns(repoRoot);
+      return runCheckDisallowedAstPatterns(
+        repoRoot,
+        incrementalRelativeDartPaths: incrementalPaths,
+      );
+    case 'repo.flutter_action_pins':
+      return runCheckFlutterActionPins(repoRoot);
+    case 'repo.workspace_outdated_resolvable':
+      return runCheckWorkspaceOutdatedResolvable(repoRoot);
+    case 'repo.workspace_outdated_latest_direct':
+      return runCheckWorkspaceOutdatedLatestDirect(repoRoot);
+    case 'repo.debug_console_logic_contract_boundary':
+      return runCheckDebugConsoleLogicContractBoundary(
+        repoRoot,
+        incrementalRelativeDartPaths: incrementalPaths,
+      );
+    case 'repo.app_event_handler_scope_logic_boundary':
+      return runCheckAppEventHandlerScopeLogicBoundary(repoRoot);
     case 'repo.control_flow_nesting_depth':
       return runCheckControlFlowNestingDepth(repoRoot);
     case 'repo.repeated_magic_numbers':
       return runCheckRepeatedMagicNumbers(repoRoot);
+    case 'repo.function_size':
+      return runCheckFunctionSize(repoRoot);
+    case 'repo.debug_handler_one_per_file':
+      return runCheckDebugHandlerOnePerFile(repoRoot);
+    case 'repo.game_widgets_file_size':
+      return runCheckGameWidgetsFileSize(repoRoot);
+    case 'repo.dart_file_non_comment_line_size':
+      return runCheckDartFileNonCommentLineSize(
+        repoRoot,
+        incrementalRelativeDartPaths: incrementalPaths,
+      );
+    case 'repo.part_unit_size':
+      return runCheckPartUnitSize(repoRoot);
+    case 'repo.no_flame_in_widgets':
+      return runCheckNoFlameInWidgets(repoRoot);
+    case 'repo.no_screen_in_game_widgets':
+      return runCheckNoScreenInGameWidgets(repoRoot);
     case 'repo.tech_id_constants':
       return runCheckTechIdConstants(
         repoRoot,
@@ -639,6 +752,12 @@ int? _tryRunDartRuleInProcess({
       );
     case 'repo.canonical_province_tile_keys':
       return runCheckCanonicalProvinceTileKeys(repoRoot);
+    case 'repo.colonizethis_map_lib_pipe_split':
+      return runCheckColonizethisMapLibPipeSplit(repoRoot);
+    case 'repo.land_province_bucket_keys':
+      return runCheckLandProvinceBucketKeys(repoRoot);
+    case 'repo.logic_dual_region_province_field_access':
+      return runCheckLogicDualRegionProvinceFieldAccess(repoRoot);
     case 'repo.app_hardcoded_ui_strings':
       return runCheckAppHardcodedUiStrings(repoRoot);
     default:

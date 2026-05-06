@@ -1,5 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetBuildImprovement;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
@@ -30,7 +32,11 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 5),
           oldWorld: const RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'player1'),
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'player1',
+              ),
             ],
             units: [],
           ),
@@ -269,7 +275,7 @@ void main() {
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
             provinces: [
-              Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'pl1'),
             ],
           ),
           newWorld: const RegionData(),
@@ -281,10 +287,10 @@ void main() {
             id: 'pl1',
             displayName: 'Spain',
             isHuman: true,
-            capitalProvinceId: 'p1',
+            capitalProvinceId: 'oldWorld|p1',
             capitalTile: CapitalTile(
               regionId: 'oldWorld',
-              provinceId: 'p1',
+              provinceId: 'oldWorld|p1',
               x: 0,
               y: 0,
             ),
@@ -303,7 +309,7 @@ void main() {
         loaded.worldState.portsByProvinceSeaboard['p1|sea1'],
         'oldWorld|p1|0|0',
       );
-      expect(loaded.players.single.capitalProvinceId, 'p1');
+      expect(loaded.players.single.capitalProvinceId, 'oldWorld|p1');
       expect(loaded.players.single.capitalTile?.regionId, 'oldWorld');
       expect(loaded.players.single.capitalTile?.x, 0);
       expect(loaded.players.single.capitalTile?.y, 0);
@@ -314,7 +320,7 @@ void main() {
       () {
         final unit = Unit(
           id: 'civ1',
-          type: 'Builder',
+          type: kUnitTypeBuilder,
           ownerId: 'pl1',
           locationProvinceId: 'oldWorld|p1',
           tileKey: 'oldWorld|p1|1|0',
@@ -322,7 +328,7 @@ void main() {
           assignedTileKey: 'oldWorld|p1|1|0',
           status: UnitStatus.working,
           currentWork: const CurrentWork(
-            workTarget: 'build_improvement',
+            workTarget: kWorkTargetBuildImprovement,
             tileKey: 'oldWorld|p1|1|0',
             totalTurns: 2,
             remainingTurns: 1,
@@ -334,7 +340,11 @@ void main() {
             turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
             oldWorld: RegionData(
               provinces: [
-                Province(id: 'p1', regionId: 'oldWorld', ownerId: 'pl1'),
+                Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: 'pl1',
+                ),
               ],
               units: [unit],
             ),
@@ -362,7 +372,7 @@ void main() {
           oldWorld: RegionData(
             provinces: [
               Province(
-                id: 'p1',
+                id: 'oldWorld|p1',
                 regionId: 'oldWorld',
                 ownerId: 'pl1',
                 fortLevel: 2,

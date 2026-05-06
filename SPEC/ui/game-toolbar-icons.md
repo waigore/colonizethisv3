@@ -409,4 +409,4 @@ All icons verified: 32×32 PNG with RGBA transparency. Generated 2026-03-17.
 | `ui_icon_production_alloc_maximize.png` | **Maximize** row | fill-to-cap / stacked bars upward, colonial UI, transparent background |
 | `ui_icon_production_alloc_clear.png` | **Clear** row | X or zero-row clear motif, colonial UI, transparent background |
 
-**Semantics / l10n:** `production_allocationDecrementRecipe`, `production_allocationIncrementRecipe`, `production_allocationMaximizeRecipe`, `production_allocationClearRecipe` in `app_en.arb`.
+**Semantics / l10n:** `production_allocationDecrementRecipe`, `production_allocationIncrementRecipe`, `production_allocationMaximizeRecipe`, `production_allocationClearRecipe` in `app/lib/l10n/arb/app_en.arb`.

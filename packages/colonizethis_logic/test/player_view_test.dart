@@ -227,7 +227,7 @@ void main() {
             units: [
               Unit(
                 id: 'spy1',
-                type: 'Spy',
+                type: kUnitTypeSpy,
                 ownerId: 'gp1',
                 locationProvinceId: '$ow|p2',
                 tileKey: '$ow|p2|0|0',
@@ -264,7 +264,7 @@ void main() {
               units: [
                 Unit(
                   id: 'spy1',
-                  type: 'Spy',
+                  type: kUnitTypeSpy,
                   ownerId: 'gp1',
                   locationProvinceId: '$ow|p2',
                   tileKey: tileKeyP2,

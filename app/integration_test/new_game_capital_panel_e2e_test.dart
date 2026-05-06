@@ -11,7 +11,7 @@ import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.d
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
-import 'package:colonizethis_app/l10n/app_localizations.dart';
+import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/test_support/province_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
@@ -20,6 +20,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+
+class _E2ePerfLog {
+  _E2ePerfLog(this.testName);
+
+  final String testName;
+  final Map<String, int> _counters = <String, int>{};
+
+  void bumpCounter(String name, {int by = 1, String? meta}) {
+    _counters[name] = (_counters[name] ?? 0) + by;
+    final metaPart = meta == null ? '' : '|meta=$meta';
+    debugPrint(
+      'E2E_COUNTER|test=$testName|name=$name|value=${_counters[name]}$metaPart',
+    );
+  }
+
+  void timing(String phase, Duration elapsed, {String? meta}) {
+    final metaPart = meta == null ? '' : '|meta=$meta';
+    debugPrint(
+      'E2E_TIMING|test=$testName|phase=$phase|ms=${elapsed.inMilliseconds}$metaPart',
+    );
+  }
+}
 
 /// Drive frames without [WidgetTester.pumpAndSettle]: new-game progress uses a
 /// non-idle [CircularProgressIndicator], and the in-game Flame view keeps tickers
@@ -38,17 +60,22 @@ Future<void> _waitUntilFound(
   Finder finder, {
   required Duration timeout,
   Duration diagnoseAfter = Duration.zero,
+  _E2ePerfLog? perf,
+  String phaseName = 'wait_until_found',
 }) async {
   final sw = Stopwatch()..start();
+  perf?.bumpCounter('wait_until_found_calls', meta: 'phase=$phaseName');
   while (sw.elapsed < timeout) {
     await tester.pump(const Duration(milliseconds: 100));
     if (finder.evaluate().isNotEmpty) {
+      perf?.timing(phaseName, sw.elapsed, meta: 'result=found');
       return;
     }
   }
   if (diagnoseAfter > Duration.zero) {
     await _pumpFor(tester, diagnoseAfter);
   }
+  perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
   fail(
     'Timed out after ${timeout.inSeconds}s waiting for $finder. '
     'Last exception: ${tester.takeException()}',
@@ -149,6 +176,9 @@ void main() {
   testWidgets('new game → capital province panel matches model (wide layout)', (
     WidgetTester tester,
   ) async {
+    const testName = 'new_game_capital_panel';
+    final perf = _E2ePerfLog(testName);
+    final testSw = Stopwatch()..start();
     expect(
       kCtE2EEnabled,
       isTrue,
@@ -157,16 +187,22 @@ void main() {
     );
 
     await tester.binding.setSurfaceSize(const Size(1280, 720));
+    final bootstrapSw = Stopwatch()..start();
     await bootstrapForIntegrationTest();
     await tester.pump();
     await tester.pump(const Duration(seconds: 2));
+    perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
+    final preloadSw = Stopwatch()..start();
     await _ensureAllRelocated64pxPngsLoad();
+    perf.timing('asset_preload', preloadSw.elapsed);
 
     await tester.tap(find.text('New Game'));
     await _waitUntilFound(
       tester,
       find.text('Start'),
       timeout: const Duration(seconds: 30),
+      perf: perf,
+      phaseName: 'wait_until_found_start_button',
     );
 
     final startButton = find.ancestor(
@@ -186,6 +222,7 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 200));
     await tester.ensureVisible(startButton);
+    final newGameToMapSw = Stopwatch()..start();
     await tester.tap(startButton);
     await tester.pump();
 
@@ -238,6 +275,7 @@ void main() {
           'Expected in-game map with home-to-capital control after setup (Refs #1592)',
     );
     await tester.pump(const Duration(milliseconds: 500));
+    perf.timing('new_game_to_map', newGameToMapSw.elapsed);
 
     await tester.tap(find.byKey(kHomeToCapitalButtonKey));
     await _pumpFor(tester, const Duration(seconds: 1));
@@ -249,6 +287,8 @@ void main() {
       tester,
       find.byKey(kCtE2EProvincePanelRootKey),
       timeout: const Duration(seconds: 30),
+      perf: perf,
+      phaseName: 'open_panel_province',
     );
 
     expect(find.byKey(kCtE2EProvincePanelRootKey), findsOneWidget);
@@ -264,5 +304,6 @@ void main() {
       actual,
     );
     expect(actual, orderedEquals(expected));
+    perf.timing('test_total', testSw.elapsed);
   });
 }

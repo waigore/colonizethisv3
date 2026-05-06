@@ -8,14 +8,14 @@ void main() {
       final human = Orders(
         moveOrdersByPlayerId: {
           'p1': [
-            const MoveOrder(unitId: 'u1', destinationProvinceId: 'HUMAN_DEST'),
+            const MoveOrder(unitId: 'u1', destinationTileKey: 'HUMAN_DEST'),
           ],
         },
       );
       final ai = Orders(
         moveOrdersByPlayerId: {
           'p1': [
-            const MoveOrder(unitId: 'u1', destinationProvinceId: 'AI_DEST'),
+            const MoveOrder(unitId: 'u1', destinationTileKey: 'AI_DEST'),
           ],
         },
       );
@@ -23,7 +23,7 @@ void main() {
       final merged = mergeOrderLists(humanOrders: human, aiOrders: ai);
       final moves = merged.moveOrdersByPlayerId['p1']!;
       expect(moves.length, 1);
-      expect(moves.single.destinationProvinceId, 'HUMAN_DEST');
+      expect(moves.single.destinationTileKey, 'HUMAN_DEST');
     });
 
     test('keeps AI move orders when human has none for unit', () {
@@ -35,7 +35,7 @@ void main() {
       final ai = Orders(
         moveOrdersByPlayerId: {
           'p1': [
-            const MoveOrder(unitId: 'u2', destinationProvinceId: 'AI_DEST'),
+            const MoveOrder(unitId: 'u2', destinationTileKey: 'AI_DEST'),
           ],
         },
       );
@@ -91,13 +91,13 @@ void main() {
       final human = Orders(
         moveOrdersByPlayerId: {
           'p1': [
-            const MoveOrder(unitId: 'u1', destinationProvinceId: 'DEST'),
+            const MoveOrder(unitId: 'u1', destinationTileKey: 'DEST'),
           ],
         },
       );
       final merged = mergeOrderLists(humanOrders: human, aiOrders: null);
       expect(merged.moveOrdersByPlayerId['p1']!.length, 1);
-      expect(merged.moveOrdersByPlayerId['p1']!.single.destinationProvinceId, 'DEST');
+      expect(merged.moveOrdersByPlayerId['p1']!.single.destinationTileKey, 'DEST');
     });
 
     test('returns human orders when aiOrders is empty (all maps empty)', () {
@@ -152,14 +152,14 @@ void main() {
       final human = Orders(
         workOrdersByPlayerId: {
           'p1': [
-            WorkOrder(unitId: 'uA', target: 'build_road', targetTileKey: 'tile1'),
+            WorkOrder(unitId: 'uA', target: kWorkTargetBuildRoad, targetTileKey: 'tile1'),
           ],
         },
       );
       final ai = Orders(
         workOrdersByPlayerId: {
           'p1': [
-            WorkOrder(unitId: 'uB', target: 'build_road', targetTileKey: 'tile2'),
+            WorkOrder(unitId: 'uB', target: kWorkTargetBuildRoad, targetTileKey: 'tile2'),
           ],
         },
       );
@@ -271,14 +271,14 @@ void main() {
     test('multiple players: both get merged lists', () {
       final human = Orders(
         moveOrdersByPlayerId: {
-          'p1': [const MoveOrder(unitId: 'u1', destinationProvinceId: 'D1')],
-          'p2': [const MoveOrder(unitId: 'u2', destinationProvinceId: 'D2')],
+          'p1': [const MoveOrder(unitId: 'u1', destinationTileKey: 'D1')],
+          'p2': [const MoveOrder(unitId: 'u2', destinationTileKey: 'D2')],
         },
       );
       final ai = Orders(
         moveOrdersByPlayerId: {
-          'p1': [const MoveOrder(unitId: 'u1b', destinationProvinceId: 'D1b')],
-          'p2': [const MoveOrder(unitId: 'u2b', destinationProvinceId: 'D2b')],
+          'p1': [const MoveOrder(unitId: 'u1b', destinationTileKey: 'D1b')],
+          'p2': [const MoveOrder(unitId: 'u2b', destinationTileKey: 'D2b')],
         },
       );
       final merged = mergeOrderLists(humanOrders: human, aiOrders: ai);
@@ -291,14 +291,14 @@ void main() {
     test('merge uses stable player ordering', () {
       final human = Orders(
         moveOrdersByPlayerId: {
-          'p2': [const MoveOrder(unitId: 'u2', destinationProvinceId: 'D2')],
-          'p1': [const MoveOrder(unitId: 'u1', destinationProvinceId: 'D1')],
+          'p2': [const MoveOrder(unitId: 'u2', destinationTileKey: 'D2')],
+          'p1': [const MoveOrder(unitId: 'u1', destinationTileKey: 'D1')],
         },
       );
       final ai = Orders(
         moveOrdersByPlayerId: {
-          'p2': [const MoveOrder(unitId: 'u2b', destinationProvinceId: 'D2b')],
-          'p1': [const MoveOrder(unitId: 'u1b', destinationProvinceId: 'D1b')],
+          'p2': [const MoveOrder(unitId: 'u2b', destinationTileKey: 'D2b')],
+          'p1': [const MoveOrder(unitId: 'u1b', destinationTileKey: 'D1b')],
         },
       );
       final merged = mergeOrderLists(humanOrders: human, aiOrders: ai);

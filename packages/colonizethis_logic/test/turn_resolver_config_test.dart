@@ -1,7 +1,9 @@
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+
+import 'test_fixtures.dart';
 
 void main() {
   group('resolveTurnForGameWithConfig', () {
@@ -23,32 +25,29 @@ void main() {
       );
 
       const ow = 'oldWorld';
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'Regiment',
-                ownerId: 'p1',
-                locationProvinceId: '$ow|P1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 0,
         players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+            Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
+          ],
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'Regiment',
+              ownerId: 'p1',
+              locationProvinceId: '$ow|P1',
+            ),
+          ],
+        ),
       );
 
       final orders = Orders(
         moveOrdersByPlayerId: {
-          'p1': [MoveOrder(unitId: 'u1', destinationProvinceId: '$ow|P2')],
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0')],
         },
       );
 

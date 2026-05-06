@@ -3,6 +3,7 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'tile_key_util.dart';
 
 /// Simple RGB tuple alias for readability.
 typedef Rgb = (int r, int g, int b);
@@ -125,6 +126,7 @@ class CivilianTileMarkerView {
     required this.representativeUnitType,
     required this.stackCount,
     this.representativeIsAssigned = false,
+    this.applyCivilianRevealHalo = false,
   });
 
   /// Canonical tile key `regionId|provinceId|x|y`.
@@ -151,6 +153,11 @@ class CivilianTileMarkerView {
   /// True when the representative unit is rendered on an assigned work tile.
   /// Used for grayscale map marker rendering in glyph-marker slices.
   final bool representativeIsAssigned;
+
+  /// When true, renderer treats Chebyshev distance <= 2 around [tileKey] as
+  /// fully visible while this marker represents a pending civilian assignment
+  /// to a fogged tile (display-only).
+  final bool applyCivilianRevealHalo;
 }
 
 /// Human-player fleet stack at one port or sea zone for interactive map markers.
@@ -369,15 +376,12 @@ String? provinceDetailDisplayIdForPortHarborMapTile({
   required RegionMapViewData region,
   required String tileKey,
 }) {
-  final parts = tileKey.split('|');
-  if (parts.length < 4 || parts[0] != region.regionId) {
+  final parsed = tryParseMapTileKey(tileKey);
+  if (parsed == null || parsed.regionId != region.regionId) {
     return null;
   }
-  final x = int.tryParse(parts[2]);
-  final y = int.tryParse(parts[3]);
-  if (x == null || y == null) {
-    return null;
-  }
+  final x = parsed.x;
+  final y = parsed.y;
   for (final t in region.townMarkers) {
     if (!t.isPort) {
       continue;
