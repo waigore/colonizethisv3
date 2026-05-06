@@ -1,5 +1,7 @@
 // Naval units panel. SPEC/ui/naval-units-panel.md.
 
+import 'dart:async';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -51,10 +53,13 @@ class NavalUnitsPanel extends StatefulWidget {
 
 class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
   final Set<String> _selectedFleetIds = {};
+  final Set<String> _visibleScopedFleetIds = <String>{};
   static const double _desktopViewportThreshold = 1280;
   static const double _scaledWidthMin = 420;
   static const double _scaledWidthMax = 640;
   static const double _scaledViewportFactor = 0.36;
+  StreamSubscription<NavalMoveFleetRequestedEvent>? _moveRequestedSub;
+  bool _pendingScopedAutoCloseAfterMove = false;
 
   @override
   void initState() {
@@ -63,6 +68,20 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     if (id != null && id.isNotEmpty) {
       _selectedFleetIds.add(id);
     }
+    _moveRequestedSub = widget.bus.on<NavalMoveFleetRequestedEvent>().listen((
+      event,
+    ) {
+      if (widget.locationScopeKey == null) return;
+      if (_visibleScopedFleetIds.contains(event.moveOrder.fleetId)) {
+        _pendingScopedAutoCloseAfterMove = true;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _moveRequestedSub?.cancel();
+    super.dispose();
   }
 
   /// Canonical fleet id for combine/split selection (Home Fleet uses [homeFleetIdFor]).
@@ -338,6 +357,18 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.game != widget.game ||
         oldWidget.draftOrders != widget.draftOrders) {
+      final oldFlat = flattenNavalTree(
+        buildNavalTree(
+          oldWidget.game,
+          oldWidget.humanPlayerId,
+          oldWidget.topology,
+          oldWidget.draftOrders,
+          appL10n(context),
+          tileMapByRegion: oldWidget.tileMapByRegion,
+          topologyByRegion: oldWidget.topologyByRegion,
+          locationScopeKeyFilter: oldWidget.locationScopeKey,
+        ),
+      );
       final flat = flattenNavalTree(
         buildNavalTree(
           widget.game,
@@ -360,6 +391,18 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
             _selectedFleetIds.addAll(pruned);
           });
         });
+      }
+      if (_pendingScopedAutoCloseAfterMove &&
+          widget.locationScopeKey != null &&
+          oldFlat.isNotEmpty &&
+          flat.isEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          widget.bus.emit(const ClosePanelEvent());
+        });
+      }
+      if (_pendingScopedAutoCloseAfterMove) {
+        _pendingScopedAutoCloseAfterMove = false;
       }
     }
   }
@@ -442,6 +485,9 @@ class _NavalUnitsPanelState extends State<NavalUnitsPanel> {
       locationScopeKeyFilter: widget.locationScopeKey,
     );
     final flat = flattenNavalTree(tree);
+    _visibleScopedFleetIds
+      ..clear()
+      ..addAll(flat.map((row) => row.fleetId));
     final hasAny = tree.any(
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
     );
