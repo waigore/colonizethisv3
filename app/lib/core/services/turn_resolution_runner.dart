@@ -116,7 +116,9 @@ class TurnResolutionRunner {
         doneCompleter.complete(
           TurnResolutionTerminalComplete(
             _decodeTurnResolutionResult(
-              Map<String, dynamic>.from(message['result'] as Map),
+              Map<String, dynamic>.from(
+                message['result'] as Map<Object?, Object?>,
+              ),
             ),
           ),
         );
@@ -168,20 +170,24 @@ class TurnResolutionRunner {
 void _turnResolutionIsolateMain(Map<String, Object?> args) {
   final sendPort = args['sendPort']! as SendPort;
   try {
-    final game = Game.fromJson(Map<String, dynamic>.from(args['game']! as Map));
+    final game = Game.fromJson(
+      Map<String, dynamic>.from(args['game']! as Map<Object?, Object?>),
+    );
     final orders = Orders.fromJson(
-      Map<String, dynamic>.from(args['orders']! as Map),
+      Map<String, dynamic>.from(args['orders']! as Map<Object?, Object?>),
     );
     final topology = MapTopology.fromJson(
-      Map<String, dynamic>.from(args['topology']! as Map),
+      Map<String, dynamic>.from(args['topology']! as Map<Object?, Object?>),
     );
     final rawTileMap = Map<String, dynamic>.from(
-      args['tileMapByRegion']! as Map,
+      args['tileMapByRegion']! as Map<Object?, Object?>,
     );
     final tileMapByRegion = rawTileMap.map<String, TileMapResult>(
       (key, value) => MapEntry(
         key,
-        TileMapResult.fromJson(Map<String, dynamic>.from(value as Map)),
+        TileMapResult.fromJson(
+          Map<String, dynamic>.from(value as Map<Object?, Object?>),
+        ),
       ),
     );
     final result = resolveTurnForGame(
@@ -260,14 +266,19 @@ Map<String, Object?> _encodeTurnResolutionResult(TurnResolutionResult result) {
 }
 
 TurnResolutionResult _decodeTurnResolutionResult(Map<String, dynamic> json) {
-  final game = Game.fromJson(Map<String, dynamic>.from(json['game'] as Map));
+  final game = Game.fromJson(
+    Map<String, dynamic>.from(json['game'] as Map<Object?, Object?>),
+  );
   final type = json['type'] as String;
   switch (type) {
     case 'complete':
       return TurnResolutionComplete(game);
     case 'pendingOvertures':
       final list = (json['pendingOvertures'] as List<dynamic>)
-          .map((entry) => Map<String, dynamic>.from(entry as Map))
+          .map(
+            (entry) =>
+                Map<String, dynamic>.from(entry as Map<Object?, Object?>),
+          )
           .map(
             (entry) => OvertureOffer(
               offererGpId: entry['offererGpId'] as String,
@@ -279,7 +290,10 @@ TurnResolutionResult _decodeTurnResolutionResult(Map<String, dynamic> json) {
       return TurnResolutionPendingOvertures(game: game, pendingOvertures: list);
     case 'pendingIntervention':
       final list = (json['pendingInterventions'] as List<dynamic>)
-          .map((entry) => Map<String, dynamic>.from(entry as Map))
+          .map(
+            (entry) =>
+                Map<String, dynamic>.from(entry as Map<Object?, Object?>),
+          )
           .map(
             (entry) => InterventionPrompt(
               aggressorGpId: entry['aggressorGpId'] as String,
@@ -294,7 +308,10 @@ TurnResolutionResult _decodeTurnResolutionResult(Map<String, dynamic> json) {
       );
     case 'pendingCallToArms':
       final list = (json['pendingCallToArms'] as List<dynamic>)
-          .map((entry) => Map<String, dynamic>.from(entry as Map))
+          .map(
+            (entry) =>
+                Map<String, dynamic>.from(entry as Map<Object?, Object?>),
+          )
           .map(
             (entry) => CallToArmsPending(
               allyGpId: entry['allyGpId'] as String,
