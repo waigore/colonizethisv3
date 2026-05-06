@@ -363,7 +363,7 @@ WorldState applyGreatPowerCapitalProvinceTownDevelopment(
       : capitalProvinceId;
   return worldState.updateRegionById(
     regionId,
-    (region) => region.copyWith(
+    (region) => RegionData(
       provinces: region.provinces
           .map(
             (p) => ProvinceId.localIdFrom(p.id) == localTarget
@@ -371,6 +371,7 @@ WorldState applyGreatPowerCapitalProvinceTownDevelopment(
                 : p,
           )
           .toList(),
+      units: region.units,
     ),
   );
 }
