@@ -90,6 +90,7 @@ export 'src/world/army_ids.dart';
 export 'src/world/army_migration.dart';
 export 'src/world/army_movement.dart';
 export 'src/world/capital_reassignment_fatal.dart';
+export 'src/world/capital_and_gp_fall.dart';
 export 'src/world/connectivity_resolver.dart';
 export 'src/world/unit_lookup.dart';
 export 'src/world/minor_military_parity.dart';
