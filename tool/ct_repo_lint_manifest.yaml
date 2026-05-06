@@ -27,6 +27,13 @@ rules:
     runner: shell
     argv: [tool/check_logic_ai_decoupling.sh]
 
+  - rule_id: repo.app_lib_no_broad_suggest_work_orders
+    group: architecture
+    title: app/lib must not call broad suggestWorkOrders (Refs #2133)
+    spec: SPEC/program/order-suggestions.md
+    runner: shell
+    argv: [tool/check_app_lib_no_suggest_work_orders.sh]
+
   - rule_id: repo.flutter_action_pins
     group: structure
     title: flutter-action workflow steps must pin flutter-version

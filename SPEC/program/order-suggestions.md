@@ -163,6 +163,7 @@ For `explore`, step (1) must use the same per-player partially-revealed-province
 **Acceptance criteria**
 
 - Given a civilian unit with a pending draft `WorkOrder` for that `unitId` on the current turn, when `getAvailableWorkTargetsForUnit` or `getValidWorkOrderTileKeysWithVisibility` runs for that unit, then the system returns empty target/tile availability for new assignments for that call without order-engine candidate-tile probing attributable to that unit.
+- Given Dart source under `app/lib`, when repository lint rule `repo.app_lib_no_broad_suggest_work_orders` runs, then no `.dart` file under `app/lib` contains a `suggestWorkOrders(` call site (Refs #2133; full enumeration remains available to AI, `integration_test`, and other non-`app/lib` tooling).
 
 ---
 
