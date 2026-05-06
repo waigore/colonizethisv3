@@ -31,20 +31,54 @@ extension _SessionCommands on _AppEventHandlerScopeState {
         final nextMoveOrders = List<MoveOrder>.from(
           current.moveOrdersByPlayerId[playerId] ?? const <MoveOrder>[],
         )..removeWhere((o) => o.unitId == workOrder.unitId);
-        ref
-            .read(currentOrdersProvider.notifier)
-            .replaceAll(
-              current.copyWith(
-                moveOrdersByPlayerId: {
-                  ...current.moveOrdersByPlayerId,
-                  playerId: nextMoveOrders,
-                },
-                workOrdersByPlayerId: {
-                  ...current.workOrdersByPlayerId,
-                  playerId: nextWorkOrders,
-                },
-              ),
+        final next = current.copyWith(
+          moveOrdersByPlayerId: {
+            ...current.moveOrdersByPlayerId,
+            playerId: nextMoveOrders,
+          },
+          workOrdersByPlayerId: {
+            ...current.workOrdersByPlayerId,
+            playerId: nextWorkOrders,
+          },
+        );
+
+        final game = ref.read(currentGameProvider);
+        if (game != null) {
+          final topo =
+              ref.read(gameServiceProvider).getMapData(game.id)?.combinedTopology ??
+              const MapTopology();
+          final tileMaps =
+              ref.read(gameServiceProvider).getMapData(game.id)?.tileMapByRegion;
+          final engine = OrderEngine(initialOrders: next);
+          final results = engine.validatePlayerOrdersWithContext(
+            game,
+            topo,
+            playerId,
+            tileMapByRegion: tileMaps,
+          );
+          if (!results.every((r) => r.isAccepted)) {
+            _logEvent.e(
+              'ui: civilian work upsert rejected: draft failed order validation',
             );
+            var message = 'Could not assign work order (orders invalid).';
+            for (final r in results) {
+              if (!r.isAccepted &&
+                  (r.reason?.isNotEmpty ?? false) &&
+                  r.reason != 'Previous invalid') {
+                message = 'Could not assign work: ${r.reason}';
+                break;
+              }
+            }
+            _showSnackBar(ShowSnackBarEvent(message: message));
+            assert(
+              results.every((r) => r.isAccepted),
+              'UpsertPendingCivilianWorkOrderRequestedEvent produced an invalid draft',
+            );
+            return;
+          }
+        }
+
+        ref.read(currentOrdersProvider.notifier).replaceAll(next);
       }),
       bus.on<CancelInProgressCivilianWorkRequestedEvent>().listen((e) {
         final game = ref.read(currentGameProvider);
