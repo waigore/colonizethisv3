@@ -72,26 +72,24 @@ import '../world/province_lookup.dart';
 
 List<TurnNewsProvinceCapturedLine> _provinceCaptureLines(Game start, Game end) {
   final out = <TurnNewsProvinceCapturedLine>[];
-  for (final region in [end.worldState.oldWorld, end.worldState.newWorld]) {
-    for (final prov in region.provinces) {
-      final pid = _fullProvinceId(prov);
-      final before = _ownerForProvince(start, pid);
-      final after = _ownerForProvince(end, pid);
-      // Same predicate as emitProvinceCapturedEvents: both owners non-empty faction
-      // ids and owner changed (no null/empty "new owner" capture). See SPEC/game/world-model.md.
-      if (before != null &&
-          before.isNotEmpty &&
-          after != null &&
-          after.isNotEmpty &&
-          before != after) {
-        out.add(
-          TurnNewsProvinceCapturedLine(
-            provinceId: pid,
-            previousOwnerId: before,
-            newOwnerId: after,
-          ),
-        );
-      }
+  for (final prov in allProvinces(end.worldState)) {
+    final pid = _fullProvinceId(prov);
+    final before = _ownerForProvince(start, pid);
+    final after = _ownerForProvince(end, pid);
+    // Same predicate as emitProvinceCapturedEvents: both owners non-empty faction
+    // ids and owner changed (no null/empty "new owner" capture). See SPEC/game/world-model.md.
+    if (before != null &&
+        before.isNotEmpty &&
+        after != null &&
+        after.isNotEmpty &&
+        before != after) {
+      out.add(
+        TurnNewsProvinceCapturedLine(
+          provinceId: pid,
+          previousOwnerId: before,
+          newOwnerId: after,
+        ),
+      );
     }
   }
   out.sort((a, b) => a.provinceId.compareTo(b.provinceId));
@@ -99,14 +97,7 @@ List<TurnNewsProvinceCapturedLine> _provinceCaptureLines(Game start, Game end) {
 }
 
 String? _ownerForProvince(Game g, String fullProvinceId) {
-  for (final region in [g.worldState.oldWorld, g.worldState.newWorld]) {
-    for (final p in region.provinces) {
-      if (_fullProvinceId(p) == fullProvinceId) {
-        return p.ownerId;
-      }
-    }
-  }
-  return null;
+  return g.worldState.tryGetProvince(fullProvinceId)?.ownerId;
 }
 
 String _fullProvinceId(Province p) =>
@@ -228,18 +219,16 @@ List<TurnNewsProvinceDiscoveredLine> _provinceDiscoveryLines({
 }) {
   final out = <TurnNewsProvinceDiscoveredLine>[];
   final seen = <String>{};
-  for (final region in [end.worldState.oldWorld, end.worldState.newWorld]) {
-    for (final p in region.provinces) {
-      final pid = _fullProvinceId(p);
-      if (seen.contains(pid)) continue;
-      seen.add(pid);
-      if (readDone.contains(pid)) continue;
-      final was = _provinceKnownToAnyGp(start, p);
-      final now = _provinceKnownToAnyGp(end, p);
-      if (!was && now) {
-        out.add(TurnNewsProvinceDiscoveredLine(provinceId: pid));
-        writeDone.add(pid);
-      }
+  for (final p in allProvinces(end.worldState)) {
+    final pid = _fullProvinceId(p);
+    if (seen.contains(pid)) continue;
+    seen.add(pid);
+    if (readDone.contains(pid)) continue;
+    final was = _provinceKnownToAnyGp(start, p);
+    final now = _provinceKnownToAnyGp(end, p);
+    if (!was && now) {
+      out.add(TurnNewsProvinceDiscoveredLine(provinceId: pid));
+      writeDone.add(pid);
     }
   }
   out.sort((a, b) => a.provinceId.compareTo(b.provinceId));
