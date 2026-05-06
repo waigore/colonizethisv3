@@ -46,6 +46,7 @@ import '../utils/map_location_resolver.dart';
 import '../widgets/player_turn_event_feed.dart';
 
 part 'game_map_area_part1.dart';
+part 'game_map_area_part1b.dart';
 part 'game_map_area_part2.dart';
 
 /// Map area with region tabs and province/sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
