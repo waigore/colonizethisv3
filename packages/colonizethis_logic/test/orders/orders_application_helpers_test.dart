@@ -1,4 +1,5 @@
 import 'package:colonizethis_logic/src/orders/orders_application_helpers.dart';
+import 'package:colonizethis_logic/src/constants.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -31,7 +32,7 @@ void main() {
         assignedTileKey: 'oldWorld|P1|3|3',
         status: UnitStatus.working,
         currentWork: const CurrentWork(
-          workTarget: 'build_road',
+          workTarget: kWorkTargetBuildRoad,
           tileKey: 'oldWorld|P1|3|3',
           remainingTurns: 2,
           totalTurns: 3,
@@ -56,7 +57,7 @@ void main() {
         tileKey: 'oldWorld|P1|2|2',
         status: UnitStatus.working,
         currentWork: const CurrentWork(
-          workTarget: 'build_road',
+          workTarget: kWorkTargetBuildRoad,
           tileKey: 'oldWorld|P1|3|3',
           remainingTurns: 2,
           totalTurns: 3,
