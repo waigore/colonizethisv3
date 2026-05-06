@@ -36,6 +36,72 @@ void _suggestionWorkLog({
   );
 }
 
+typedef _SuggestionCandidatesProvider = Iterable<WorkOrder> Function();
+typedef _SuggestionCandidateAcceptor = bool Function(WorkOrder candidate);
+
+void _runWorkSuggestionPipeline({
+  required Unit unit,
+  required String unitType,
+  required String unitRegionId,
+  required String atProvinceId,
+  required String workTarget,
+  required Map<String, Set<String>> existingTargetsByUnit,
+  required List<WorkOrder> suggestions,
+  required _SuggestionCandidatesProvider candidatesProvider,
+  required _SuggestionCandidateAcceptor candidateAcceptor,
+  required String noCandidateReason,
+  String engineRejectedReason = 'engine_rejected',
+  bool includeAllAccepted = false,
+}) {
+  final existing = existingTargetsByUnit[unit.id];
+  if (existing != null && existing.contains(workTarget)) {
+    _suggestionWorkLog(
+      unitId: unit.id,
+      unitType: unitType,
+      unitRegionId: unitRegionId,
+      atProvinceId: atProvinceId,
+      workTarget: workTarget,
+      outcome: 'excluded',
+      reason: 'duplicate_pending',
+    );
+    return;
+  }
+
+  var sawCandidate = false;
+  var acceptedAny = false;
+  for (final candidate in candidatesProvider()) {
+    sawCandidate = true;
+    if (!candidateAcceptor(candidate)) continue;
+    acceptedAny = true;
+    suggestions.add(candidate);
+    existingTargetsByUnit
+        .putIfAbsent(unit.id, () => <String>{})
+        .add(workTarget);
+    _suggestionWorkLog(
+      unitId: unit.id,
+      unitType: unitType,
+      unitRegionId: unitRegionId,
+      atProvinceId: atProvinceId,
+      workTarget: workTarget,
+      outcome: 'included',
+      tile: candidate.targetTileKey,
+    );
+    if (!includeAllAccepted) return;
+  }
+
+  if (!acceptedAny) {
+    _suggestionWorkLog(
+      unitId: unit.id,
+      unitType: unitType,
+      unitRegionId: unitRegionId,
+      atProvinceId: atProvinceId,
+      workTarget: workTarget,
+      outcome: 'excluded',
+      reason: sawCandidate ? engineRejectedReason : noCandidateReason,
+    );
+  }
+}
+
 /// Suggests candidate work orders for explorers and civilian workers owned by
 /// [view.playerId]. Worker units (Builder, Engineer, Rail Builder): at least
 /// one suggestion per (unit, allowed target) when any **player-controlled** tile
