@@ -3,6 +3,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/province_lookup.dart';
+import '../world/tile_key_coordinates.dart';
 import 'game_setup_context.dart';
 import 'game_setup_town_tile_ranking.dart';
 
@@ -93,11 +94,9 @@ Map<String, Map<String, String>> _buildCoordToTileKeyByRegion(
 }
 
 void _addCoordMappingIfPresent(Map<String, String> out, String tileKey) {
-  final parts = tileKey.split('|');
-  if (parts.length < 4) {
-    return;
-  }
-  out['${parts[2]}|${parts[3]}'] = tileKey;
+  final coords = parseTileKeyCoordinates(tileKey);
+  if (coords == null) return;
+  out['${coords.x}|${coords.y}'] = tileKey;
 }
 
 String? _townTileKeyForProvince({
@@ -216,18 +215,16 @@ Map<String, int> _bfsDistances({
   required Map<String, Map<String, String>> coordToKeyByRegion,
 }) {
   final result = <String, int>{};
-  final parts = startTileKey.split('|');
-  if (parts.length < 4) {
-    return result;
-  }
+  final startCoords = parseTileKeyCoordinates(startTileKey);
+  if (startCoords == null) return result;
   final map = coordToKeyByRegion[regionId];
   if (map == null) {
     return result;
   }
   final queue = <({int x, int y, int distance})>[];
-  final key = '${parts[2]}|${parts[3]}';
-  final sx = int.tryParse(parts[2]) ?? 0;
-  final sy = int.tryParse(parts[3]) ?? 0;
+  final key = '${startCoords.x}|${startCoords.y}';
+  final sx = startCoords.x;
+  final sy = startCoords.y;
   if (map[key] != null) {
     queue.add((x: sx, y: sy, distance: 0));
     result[map[key]!] = 0;
@@ -306,15 +303,10 @@ bool _tileKeyAdjacentToProvinceSeaZone({
   if (map == null || topology == null) {
     return false;
   }
-  final parts = tileKey.split('|');
-  if (parts.length < 4) {
-    return false;
-  }
-  final x = int.tryParse(parts[2]);
-  final y = int.tryParse(parts[3]);
-  if (x == null || y == null) {
-    return false;
-  }
+  final coords = parseTileKeyCoordinates(tileKey);
+  if (coords == null) return false;
+  final x = coords.x;
+  final y = coords.y;
   final provinceIds = topology.nodes
       .where((node) => node.type == TopologyNodeType.province)
       .map((node) => node.id)

@@ -1,5 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import '../world/tile_key_coordinates.dart';
+
 /// Terrain and tech rules for Rail Builder `build_rail`. SPEC/game/tech-tree-transport.md,
 /// SPEC/game/extraction-and-improvements.md, SPEC/program/orders.md.
 
@@ -8,16 +10,17 @@ TerrainType? terrainTypeForTileKey(
   Map<String, TileMapResult>? tileMapByRegion,
   String tileKey,
 ) {
-  final parts = tileKey.split('|');
-  if (parts.length != 4) return null;
-  final regionId = parts[0];
-  final x = int.tryParse(parts[2]);
-  final y = int.tryParse(parts[3]);
-  if (x == null || y == null) return null;
-  final map = tileMapByRegion?[regionId];
+  final coords = parseTileKeyCoordinates(tileKey);
+  if (coords == null) return null;
+  final map = tileMapByRegion?[coords.regionId];
   if (map == null) return null;
-  if (x < 0 || y < 0 || x >= map.width || y >= map.height) return null;
-  return map.terrainAt(x, y);
+  if (coords.x < 0 ||
+      coords.y < 0 ||
+      coords.x >= map.width ||
+      coords.y >= map.height) {
+    return null;
+  }
+  return map.terrainAt(coords.x, coords.y);
 }
 
 /// Returns `null` if the order is allowed; otherwise a rejection reason for the player.

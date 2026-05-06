@@ -14,9 +14,7 @@ const _scanDirRelative = 'packages/colonizethis_logic/lib/src';
 /// Keep direct dual-region field access rare; small buffer over current count.
 const _maxMatchingLinesOutsideCanonical = 20;
 
-final RegExp _generatedSuffix = RegExp(
-  r'\.(g|freezed|mocks|gen)\.dart$',
-);
+final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 final RegExp _manualRegionBranchPattern = RegExp(
   r'^\s*(if|else if)\s*\(\s*regionId\s*==\s*kRegionOldWorld\s*\)',
 );
@@ -26,6 +24,8 @@ bool logicDualRegionProvinceFieldAccessLineMatches(String line) {
       line.contains('newWorld.provinces') ||
       line.contains('oldWorld.units') ||
       line.contains('newWorld.units') ||
+      line.contains('copyWith(oldWorld:') ||
+      line.contains('copyWith(newWorld:') ||
       _manualRegionBranchPattern.hasMatch(line);
 }
 
@@ -82,7 +82,7 @@ int runCheckLogicDualRegionProvinceFieldAccess(
 
   logE(
     'ERROR: Too many direct oldWorld/newWorld region-field references '
-    '(provinces/units/manual regionId branching) outside '
+    '(provinces/units/manual regionId branching/copyWith oldWorld-newWorld) outside '
     '$_canonicalProvinceRelativePath and '
     '$_canonicalUnitRelativePath '
     '(${hits.length} > $_maxMatchingLinesOutsideCanonical). '

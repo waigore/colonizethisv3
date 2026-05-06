@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../utils/graph_traversal.dart';
 import 'naval.dart';
 import 'province_lookup.dart';
+import 'tile_key_coordinates.dart';
 import 'topology_helpers.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 
@@ -230,15 +231,12 @@ void _tryEnqueueSeaConnectedPortExpansion({
   required List<String> expansionSeedQueue,
 }) {
   if (connected.contains(portKey)) return;
-  final parts = portKey.split('|');
-  if (parts.length != 4) return;
-  final regionId = parts[0];
-  final fullProvinceId = '$regionId|${parts[1]}';
+  final coords = parseTileKeyCoordinates(portKey);
+  if (coords == null) return;
+  final fullProvinceId = '${coords.regionId}|${coords.provinceLocalId}';
   if (!owned.contains(fullProvinceId)) return;
-  if (tileMapByRegion[regionId] == null) return;
-  final x = int.tryParse(parts[2]) ?? -1;
-  final y = int.tryParse(parts[3]) ?? -1;
-  if (x < 0 || y < 0) return;
+  if (tileMapByRegion[coords.regionId] == null) return;
+  if (coords.x < 0 || coords.y < 0) return;
 
   connected.add(portKey);
   pathCap[portKey] = 4;
@@ -393,34 +391,26 @@ void _runConnectivityPropagation({
     connected: connected,
     pathCap: pathCap,
     shouldExpandEdgesFrom: (key) {
-      final parts = key.split('|');
-      if (parts.length != 4) return false;
-      final regionId = parts[0];
-      final localProvinceId = parts[1];
-      final fullProvinceId = '$regionId|$localProvinceId';
-      final x = int.tryParse(parts[2]) ?? -1;
-      final y = int.tryParse(parts[3]) ?? -1;
-      if (x < 0 || y < 0) return false;
+      final coords = parseTileKeyCoordinates(key);
+      if (coords == null) return false;
+      final fullProvinceId = '${coords.regionId}|${coords.provinceLocalId}';
+      if (coords.x < 0 || coords.y < 0) return false;
       if (!ownedProvinceIds.contains(fullProvinceId)) return false;
-      final map = tileMapByRegion[regionId];
+      final map = tileMapByRegion[coords.regionId];
       if (map == null) return false;
       return canExpandFrom(key);
     },
     neighborsOf: (key) {
-      final parts = key.split('|');
-      if (parts.length != 4) return const <String>[];
-      final regionId = parts[0];
-      final localProvinceId = parts[1];
-      final x = int.tryParse(parts[2]) ?? -1;
-      final y = int.tryParse(parts[3]) ?? -1;
-      if (x < 0 || y < 0) return const <String>[];
-      final map = tileMapByRegion[regionId];
+      final coords = parseTileKeyCoordinates(key);
+      if (coords == null) return const <String>[];
+      if (coords.x < 0 || coords.y < 0) return const <String>[];
+      final map = tileMapByRegion[coords.regionId];
       if (map == null) return const <String>[];
       return _adjacentTileKeys(
-        regionId,
-        localProvinceId,
-        x,
-        y,
+        coords.regionId,
+        coords.provinceLocalId,
+        coords.x,
+        coords.y,
         map,
         provinceIdsByType,
       );
@@ -489,14 +479,9 @@ Set<String> _seaConnectedPortKeysForCapital({
 }
 
 String? _fullProvinceIdFromTileKey(String tileKey) {
-  final parts = tileKey.split('|');
-  if (parts.length >= 3) {
-    return '${parts[0]}|${parts[1]}';
-  }
-  if (parts.length >= 2) {
-    return parts[0];
-  }
-  return null;
+  final coords = parseTileKeyCoordinates(tileKey);
+  if (coords == null) return null;
+  return '${coords.regionId}|${coords.provinceLocalId}';
 }
 
 ({
@@ -544,25 +529,25 @@ void _applyTownRuleConnectivityClosure({
       if (province.ownerId != playerId) continue;
       final tk = province.townTileKey;
       if (tk == null || !connected.contains(tk)) continue;
-      final parts = tk.split('|');
-      if (parts.length != 4) continue;
-      final regionId = parts[0];
-      final localProv = parts[1];
-      final tx = int.tryParse(parts[2]) ?? -1;
-      final ty = int.tryParse(parts[3]) ?? -1;
-      if (tx < 0 || ty < 0) continue;
-      final map = tileMapByRegion[regionId];
+      final coords = parseTileKeyCoordinates(tk);
+      if (coords == null) continue;
+      if (coords.x < 0 || coords.y < 0) continue;
+      final map = tileMapByRegion[coords.regionId];
       if (map == null) continue;
       for (final d in [(0, -1), (1, 0), (0, 1), (-1, 0)]) {
-        final nx = tx + d.$1;
-        final ny = ty + d.$2;
+        final nx = coords.x + d.$1;
+        final ny = coords.y + d.$2;
         if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) continue;
         final cell = map.cell(nx, ny);
-        if (!_isLandProvinceGridCell(cell, regionId, provinceIdsByType)) {
+        if (!_isLandProvinceGridCell(
+          cell,
+          coords.regionId,
+          provinceIdsByType,
+        )) {
           continue;
         }
-        if (cell != localProv) continue;
-        final nKey = CapitalTile.tileKey(regionId, province.id, nx, ny);
+        if (cell != coords.provinceLocalId) continue;
+        final nKey = CapitalTile.tileKey(coords.regionId, province.id, nx, ny);
         if (connected.contains(nKey)) continue;
         connected.add(nKey);
         pathCap[nKey] = pathCap[tk] ?? _transportLevelAtTile(worldState, tk);
