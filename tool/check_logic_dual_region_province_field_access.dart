@@ -17,12 +17,16 @@ const _maxMatchingLinesOutsideCanonical = 20;
 final RegExp _generatedSuffix = RegExp(
   r'\.(g|freezed|mocks|gen)\.dart$',
 );
+final RegExp _manualRegionBranchPattern = RegExp(
+  r'^\s*(if|else if)\s*\(\s*regionId\s*==\s*kRegionOldWorld\s*\)',
+);
 
 bool logicDualRegionProvinceFieldAccessLineMatches(String line) {
   return line.contains('oldWorld.provinces') ||
       line.contains('newWorld.provinces') ||
       line.contains('oldWorld.units') ||
-      line.contains('newWorld.units');
+      line.contains('newWorld.units') ||
+      _manualRegionBranchPattern.hasMatch(line);
 }
 
 /// Used by `ct_repo_lint` in-process; [info] / [err] default to stdout/stderr.
@@ -78,11 +82,12 @@ int runCheckLogicDualRegionProvinceFieldAccess(
 
   logE(
     'ERROR: Too many direct oldWorld/newWorld region-field references '
-    '(provinces/units) outside $_canonicalProvinceRelativePath and '
+    '(provinces/units/manual regionId branching) outside '
+    '$_canonicalProvinceRelativePath and '
     '$_canonicalUnitRelativePath '
     '(${hits.length} > $_maxMatchingLinesOutsideCanonical). '
     'Prefer allProvinces(world), WorldState.allProvinces(), allUnits(world), '
-    'or WorldState.allUnits() per '
+    'WorldState.allUnits(), or WorldState.updateRegionById(...) per '
     'SPEC/program/logic-dual-region-province-access.md.',
   );
   for (final h in hits) {

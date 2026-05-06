@@ -166,70 +166,163 @@ void main() {
       expect(lines.length, lessThan(80), reason: 'summary-only, no tile spam');
     });
 
-    test('suggestWorkOrders logger lines never emit unbounded full list payload',
-        () {
-      const playerId = 'gp1';
-      const ow = 'oldWorld';
-      final player = const Player(
-        id: playerId,
-        displayName: 'Human',
-        isHuman: true,
-        treasury: 5000,
-      );
+    test(
+      'suggestWorkOrders logger lines never emit unbounded full list payload',
+      () {
+        const playerId = 'gp1';
+        const ow = 'oldWorld';
+        final player = const Player(
+          id: playerId,
+          displayName: 'Human',
+          isHuman: true,
+          treasury: 5000,
+        );
 
-      final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
-      final explorer = Unit(
-        id: 'u_explorer',
-        type: kUnitTypeExplorer,
-        ownerId: playerId,
-        locationProvinceId: p1.id,
-        tileKey: '$ow|p1|0|0',
-        status: UnitStatus.idle,
-      );
+        final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
+        final explorer = Unit(
+          id: 'u_explorer',
+          type: kUnitTypeExplorer,
+          ownerId: playerId,
+          locationProvinceId: p1.id,
+          tileKey: '$ow|p1|0|0',
+          status: UnitStatus.idle,
+        );
 
-      final world = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: RegionData(provinces: [p1], units: [explorer]),
-        newWorld: const RegionData(),
-        playerVisibilityByTile: {
-          playerId: {'$ow|p1|0|0': 'fullyVisible', '$ow|p1|0|1': 'unknown'},
-        },
-        tileKeysByRegionAndProvince: {
-          ow: {
-            p1.id: ['$ow|p1|0|0', '$ow|p1|0|1'],
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: [p1], units: [explorer]),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: {
+            playerId: {'$ow|p1|0|0': 'fullyVisible', '$ow|p1|0|1': 'unknown'},
           },
-        },
-        resourceByTileKey: const {'$ow|p1|0|0': 'grain'},
-      );
+          tileKeysByRegionAndProvince: {
+            ow: {
+              p1.id: ['$ow|p1|0|0', '$ow|p1|0|1'],
+            },
+          },
+          resourceByTileKey: const {'$ow|p1|0|0': 'grain'},
+        );
 
-      final game = Game(
-        id: 'g1',
-        worldState: world,
-        players: [player],
-        minorNations: const [],
-        tribes: const [],
-      );
+        final game = Game(
+          id: 'g1',
+          worldState: world,
+          players: [player],
+          minorNations: const [],
+          tribes: const [],
+        );
 
-      final topology = MapTopology(
-        nodes: [
-          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-        ],
-        edges: const [],
-      );
+        final topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'p1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
 
-      final view = buildPlayerView(game, topology, playerId);
+        final view = buildPlayerView(game, topology, playerId);
 
-      suggestWorkOrders(view, game, topology, const Orders());
+        suggestWorkOrders(view, game, topology, const Orders());
 
-      for (final e in capturedEvents) {
-        if (e.message.contains('suggestWorkOrders')) {
-          expect(
-            e.message,
-            isNot(contains('full list')),
-            reason: 'bounded preview only (Refs #2133)',
-          );
+        for (final e in capturedEvents) {
+          if (e.message.contains('suggestWorkOrders')) {
+            expect(
+              e.message,
+              isNot(contains('full list')),
+              reason: 'bounded preview only (Refs #2133)',
+            );
+          }
         }
-      }
-    });
+      },
+    );
+
+    test(
+      'explorer pending targets preserve duplicate check and log ordering',
+      () {
+        const playerId = 'gp1';
+        const ow = 'oldWorld';
+        const provinceId = '$ow|p1';
+        const tile = '$ow|p1|0|0';
+
+        final player = const Player(
+          id: playerId,
+          displayName: 'Human',
+          isHuman: true,
+        );
+        final province = Province(
+          id: provinceId,
+          regionId: ow,
+          ownerId: playerId,
+        );
+        final explorer = Unit(
+          id: 'u_explorer',
+          type: kUnitTypeExplorer,
+          ownerId: playerId,
+          locationProvinceId: provinceId,
+          tileKey: tile,
+          status: UnitStatus.idle,
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: [province], units: [explorer]),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            ow: {
+              provinceId: [tile],
+            },
+          },
+          playerVisibilityByTile: {
+            playerId: {tile: 'fullyVisible'},
+          },
+        );
+        final game = Game(
+          id: 'g-order',
+          worldState: world,
+          players: [player],
+          minorNations: const [],
+          tribes: const [],
+        );
+        final topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'p1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final orders = Orders(
+          workOrdersByPlayerId: {
+            playerId: const [
+              WorkOrder(
+                unitId: 'u_explorer',
+                target: kWorkTargetExplore,
+                targetTileKey: tile,
+              ),
+              WorkOrder(
+                unitId: 'u_explorer',
+                target: kWorkTargetProspect,
+                targetTileKey: tile,
+              ),
+            ],
+          },
+        );
+
+        final view = buildPlayerView(game, topology, playerId);
+        suggestWorkOrders(view, game, topology, orders);
+
+        final explorerLines = _suggestWorkLines(
+          capturedEvents,
+        ).where((line) => line.contains('unitId=u_explorer')).toList();
+        expect(explorerLines, hasLength(2));
+        expect(explorerLines[0], contains('target=explore'));
+        expect(explorerLines[0], contains('reason=duplicate_pending'));
+        expect(explorerLines[1], contains('target=prospect'));
+        expect(explorerLines[1], contains('reason=duplicate_pending'));
+      },
+    );
   });
 }

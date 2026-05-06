@@ -18,7 +18,7 @@
 | Checker | `tool/check_logic_dual_region_province_field_access.dart` |
 | Scan root | `packages/colonizethis_logic/lib/src/` (non-generated `.dart` only) |
 | Excluded files | `packages/colonizethis_logic/lib/src/world/province_lookup.dart`, `packages/colonizethis_logic/lib/src/world/unit_lookup.dart` |
-| Budget | At most **20** physical source lines (total) outside the excluded files may contain `oldWorld.provinces`, `newWorld.provinces`, `oldWorld.units`, or `newWorld.units`. |
+| Budget | At most **20** physical source lines (total) outside the excluded files may contain `oldWorld.provinces`, `newWorld.provinces`, `oldWorld.units`, `newWorld.units`, or manual `if (regionId == kRegionOldWorld)` / `else if (regionId == kRegionOldWorld)` branching. |
 
 Raising the budget requires a SPEC update in this file and a maintainer-reviewed PR (same PR as the checker constant change).
 
