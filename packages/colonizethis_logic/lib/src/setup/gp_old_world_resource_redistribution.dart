@@ -7,6 +7,7 @@ import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/tile_key_coordinates.dart';
 import 'setup_exceptions.dart';
 import 'town_capital_occupancy.dart';
 
@@ -246,11 +247,9 @@ String? _firstLexEligibleEmptyTileForGp({
 }
 
 TileMapResult _placeResourceAtKey(TileMapResult map, String key, Resource r) {
-  final parts = key.split('|');
-  if (parts.length != 4) return map;
-  final x = int.parse(parts[2]);
-  final y = int.parse(parts[3]);
-  return map.withResourceAt(x, y, r);
+  final parsed = parseTileKeyCoordinates(key);
+  if (parsed == null) return map;
+  return map.withResourceAt(parsed.x, parsed.y, r);
 }
 
 int _sumPlacedAll(Map<String, int> placed, List<String> gpIdsSorted) {

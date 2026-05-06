@@ -4,6 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/province_lookup.dart';
+import '../world/tile_key_coordinates.dart';
 
 /// Every player / minor / tribe capital tile and every province [Province.townTileKey].
 /// Used to forbid resources and extraction improvements on those tiles only
@@ -48,17 +49,13 @@ stripResourcesAndExtractionImprovementsOnTileKeys(
       : null;
 
   for (final key in tileKeys) {
-    final parts = key.split('|');
-    if (parts.length != 4) continue;
-    final regionId = parts[0];
-    final x = int.tryParse(parts[2]);
-    final y = int.tryParse(parts[3]);
-    if (x == null || y == null) continue;
+    final parsed = parseTileKeyCoordinates(key);
+    if (parsed == null) continue;
 
     if (maps != null) {
-      final map = maps[regionId];
+      final map = maps[parsed.regionId];
       if (map?.resourceGrid != null) {
-        maps[regionId] = map!.withResourceAt(x, y, null);
+        maps[parsed.regionId] = map!.withResourceAt(parsed.x, parsed.y, null);
       }
     }
     resMap.remove(key);
