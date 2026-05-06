@@ -1,5 +1,4 @@
 part of 'game_map_area.dart';
-
 mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   int _regionIndex = 0;
   RegionMapViewportSnapshot? _regionViewportSnapshot;
@@ -20,11 +19,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   bool _isTurnResolving = false;
   String _turnResolutionPhaseText = 'Resolving turn...';
   StreamSubscription<TurnResolutionProgressEvent>? _turnResolutionProgressSub;
-
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
   BaseLayerDisplayMode _baseLayerDisplayMode =
       BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
-
   @override
   void initState() {
     super.initState();
@@ -95,7 +92,6 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       }),
     ]);
   }
-
   void _onTurnResolutionCompleteEvent(
     ct_models.TurnResolutionCompleteEvent event,
   ) {
@@ -110,7 +106,6 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       _pendingPlayerTurnEvents.clear();
     });
   }
-
   void _refreshWorkTargetSelectionCache(ct_models.Game game) {
     final view = buildPlayerView(
       game,
@@ -129,7 +124,6 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       ),
     );
   }
-
   void _onAppCombatResultEvent(ct_models.AppCombatResultEvent event) {
     if (event.attackerId != _humanPlayerId &&
         event.defenderId != _humanPlayerId) {
@@ -137,7 +131,6 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     }
     _pendingPlayerTurnEvents.add(event);
   }
-
   void _onAppNavalCombatResultEvent(ct_models.AppNavalCombatResultEvent event) {
     if (event.side1OwnerId != _humanPlayerId &&
         event.side2OwnerId != _humanPlayerId) {
@@ -145,7 +138,6 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     }
     _pendingPlayerTurnEvents.add(event);
   }
-
   void _onAppProvinceCapturedEvent(ct_models.AppProvinceCapturedEvent event) {
     if (event.previousOwnerId != _humanPlayerId &&
         event.newOwnerId != _humanPlayerId) {
@@ -153,28 +145,24 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     }
     _pendingPlayerTurnEvents.add(event);
   }
-
   void _onAppDiplomacyChangeEvent(ct_models.AppDiplomacyChangeEvent event) {
     if (event.actorId != _humanPlayerId && event.targetId != _humanPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
-
   void _onAppResearchCompleteEvent(ct_models.AppResearchCompleteEvent event) {
     if (event.playerId != _humanPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
-
   void _onAppOrderRejectedEvent(ct_models.AppOrderRejectedEvent event) {
     if (event.playerId != _humanPlayerId) {
       return;
     }
     _pendingPlayerTurnEvents.add(event);
   }
-
   void _onAppWorkOrderCompletedEvent(
     ct_models.AppWorkOrderCompletedEvent event,
   ) {
@@ -183,7 +171,6 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     }
     _pendingPlayerTurnEvents.add(event);
   }
-
   void _onAppPlayerProvinceDiscoveredEvent(
     ct_models.AppPlayerProvinceDiscoveredEvent event,
   ) {
@@ -192,7 +179,6 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     }
     _pendingPlayerTurnEvents.add(event);
   }
-
   void _onAppPlayerSeaZoneDiscoveredEvent(
     ct_models.AppPlayerSeaZoneDiscoveredEvent event,
   ) {
@@ -201,7 +187,6 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     }
     _pendingPlayerTurnEvents.add(event);
   }
-
   void _onAppOvertureAdvancedEvent(ct_models.AppOvertureAdvancedEvent event) {
     if (event.offererGpId != _humanPlayerId &&
         event.targetFactionId != _humanPlayerId) {
