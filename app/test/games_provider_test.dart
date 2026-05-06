@@ -40,12 +40,11 @@ void main() {
     expect(ids, isEmpty);
   });
 
-  test('availableWorkTargetsProvider returns empty map when no current game', () {
+  test('availableWorkTargetIdsForUnitProvider returns empty when no current game', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    final targets = container.read(availableWorkTargetsProvider);
-    expect(targets, isEmpty);
+    expect(container.read(availableWorkTargetIdsForUnitProvider('u1')), isEmpty);
   });
 
   test('devExclusiveReservedWorkTileKeysProvider empty when no current game', () {
@@ -75,9 +74,21 @@ void main() {
     );
     container.read(currentGameProvider.notifier).setGame(game);
 
-    final targets = container.read(availableWorkTargetsProvider);
+    final humanId = game.players.firstWhere((p) => p.isHuman).id;
+    var anyUnitId = '';
+    for (final u in game.worldState.oldWorld.units) {
+      if (u.ownerId == humanId) {
+        anyUnitId = u.id;
+        break;
+      }
+    }
+    if (anyUnitId.isNotEmpty) {
+      expect(
+        container.read(availableWorkTargetIdsForUnitProvider(anyUnitId)),
+        isA<List<String>>(),
+      );
+    }
     final reserved = container.read(devExclusiveReservedWorkTileKeysProvider);
-    expect(targets, isA<Map<String, List<String>>>());
     expect(reserved, isA<Set<String>>());
   });
 

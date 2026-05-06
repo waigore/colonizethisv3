@@ -6,9 +6,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import '../config/themes.dart';
+import '../providers/games_provider.dart';
 import '../features/game/widgets/civilian_units_panel.dart';
 import '../features/game/widgets/diplomacy_panel.dart';
 import '../features/game/widgets/military_units_panel.dart';
@@ -36,6 +38,32 @@ import '../widgets/ct_transfer_list.dart';
 part 'catalog_part1.dart';
 part 'catalog_part2.dart';
 part 'catalog_part3.dart';
+
+Unit? _unitByIdForCatalog(Game game, String unitId) {
+  for (final u in game.worldState.oldWorld.units) {
+    if (u.id == unitId) return u;
+  }
+  for (final u in game.worldState.newWorld.units) {
+    if (u.id == unitId) return u;
+  }
+  return null;
+}
+
+/// Widgetbook: [CivilianUnitsPanel] reads [availableWorkTargetIdsForUnitProvider].
+Widget civilianUnitsPanelWithRiverpod({
+  required Game game,
+  required Widget child,
+}) {
+  return ProviderScope(
+    overrides: [
+      availableWorkTargetIdsForUnitProvider.overrideWith((ref, unitId) {
+        final t = _unitByIdForCatalog(game, unitId)?.type;
+        return workOrderTargetsByUnitType[t] ?? const <String>[];
+      }),
+    ],
+    child: child,
+  );
+}
 
 /// Invoked from `lib/widgetbook.dart` [main]; safe to call from tests after binding init.
 void bootstrapWidgetbook() {
@@ -386,12 +414,15 @@ List<WidgetbookNode> get civilianUnitsPanelDirectories => [
           final humanPlayerId = game.players.isNotEmpty
               ? game.players.first.id
               : 'gp1';
-          return ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-            child: CivilianUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-              bus: AppEventBus(),
+          return civilianUnitsPanelWithRiverpod(
+            game: game,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+              child: CivilianUnitsPanel(
+                game: game,
+                humanPlayerId: humanPlayerId,
+                bus: AppEventBus(),
+              ),
             ),
           );
         },

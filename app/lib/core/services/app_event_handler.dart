@@ -254,7 +254,6 @@ class AppEventHandler {
           }
           final humanPlayerId = _humanPlayerId(game);
           final currentOrders = ref.watch(currentOrdersProvider);
-          final availableWorkTargets = ref.watch(availableWorkTargetsProvider);
           final bus = ref.watch(appEventBusProvider);
           final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
           final maxHeight =
@@ -266,7 +265,6 @@ class AppEventHandler {
               humanPlayerId: humanPlayerId,
               bus: bus,
               currentOrders: currentOrders,
-              availableWorkTargets: availableWorkTargets,
               tileScopeTileKey: event.tileScopeTileKey,
               initialSelectedUnitId: event.initialSelectedUnitId,
               explorerOnly: event.explorerOnly,

@@ -1,4 +1,3 @@
-
 /// Human-readable label for work target ids. SPEC/ui/civilian-units-panel.md.
 
 part of 'civilian_units_panel.dart';
@@ -165,13 +164,12 @@ List<MapEntry<String, int>> _sortedMaterialCostEntries(Map<String, int> m) {
   return list;
 }
 
-class _UnitRow extends StatelessWidget {
+class _UnitRow extends ConsumerWidget {
   const _UnitRow({
     required this.game,
     required this.unit,
     required this.provinceNames,
     required this.currentOrders,
-    required this.availableWorkTargets,
     required this.humanPlayerId,
     required this.bus,
     required this.isTileScope,
@@ -187,7 +185,6 @@ class _UnitRow extends StatelessWidget {
   final Unit unit;
   final Map<String, String> provinceNames;
   final Orders currentOrders;
-  final Map<String, List<String>> availableWorkTargets;
   final String humanPlayerId;
   final AppEventBus bus;
   final bool isTileScope;
@@ -313,12 +310,15 @@ class _UnitRow extends StatelessWidget {
     );
   }
 
-  void _showOrderMenu(BuildContext context) {
+  void _showOrderMenu(
+    BuildContext context,
+    List<String> availableWorkTargetIds,
+  ) {
     final allowed = workOrderTargetsByUnitType[unit.type];
     if (allowed == null || allowed.isEmpty) {
       return;
     }
-    final available = availableWorkTargets[unit.id] ?? [];
+    final available = availableWorkTargetIds;
     showModalBottomSheet<void>(
       context: context,
       builder: (ctx) => SafeArea(
@@ -365,7 +365,7 @@ class _UnitRow extends StatelessWidget {
     );
   }
 
-  void _startShortcutAssign() {
+  void _startShortcutAssign(List<String> availableWorkTargetIds) {
     final hasExploreShortcut =
         exploreShortcutTargetTileKey != null &&
         exploreShortcutTargetTileKey!.isNotEmpty;
@@ -388,10 +388,7 @@ class _UnitRow extends StatelessWidget {
         : hasExploreShortcut
         ? kWorkTargetExplore
         : kWorkTargetProspect;
-    final currentAvailableWorkTargets =
-        availableWorkTargets[unit.id] ?? const [];
-    if (!_isIdleNoPending ||
-        !currentAvailableWorkTargets.contains(workTarget)) {
+    if (!_isIdleNoPending || !availableWorkTargetIds.contains(workTarget)) {
       return;
     }
     bus.emit(const ClosePanelEvent());
@@ -441,6 +438,7 @@ class _UnitRow extends StatelessWidget {
     BuildContext context, {
     required bool showActions,
     required bool inExplorerShortcutMode,
+    required List<String> availableWorkTargetIds,
   }) {
     if (!showActions) {
       return const <UnitsEntityAction>[];
@@ -452,8 +450,8 @@ class _UnitRow extends StatelessWidget {
           icon: Icons.playlist_add,
           label: l10n.civilian_units_assign,
           onPressed: inExplorerShortcutMode
-              ? _startShortcutAssign
-              : () => _showOrderMenu(context),
+              ? () => _startShortcutAssign(availableWorkTargetIds)
+              : () => _showOrderMenu(context, availableWorkTargetIds),
         ),
       if (_hasWork)
         UnitsEntityAction(
@@ -513,7 +511,10 @@ class _UnitRow extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final availableWorkTargetIds = ref.watch(
+      availableWorkTargetIdsForUnitProvider(unit.id),
+    );
     final l10n = appL10n(context);
     final statusLabel = switch (unit.status) {
       UnitStatus.idle => l10n.province_unitStatus_idle,
@@ -534,6 +535,7 @@ class _UnitRow extends StatelessWidget {
       context,
       showActions: showActions,
       inExplorerShortcutMode: inExplorerShortcutMode,
+      availableWorkTargetIds: availableWorkTargetIds,
     );
     return ListTile(
       selected: isTileScope && isSelectedInTileScope,

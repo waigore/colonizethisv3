@@ -154,8 +154,66 @@ void _addExplorerWorkSuggestionsForUnit({
   final diplomatic =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ?? const [];
 
-  final existing = existingTargetsByUnit[unit.id];
-  if (existing != null && existing.contains(kWorkTargetExplore)) {
+  final pendingOrClaimed = existingTargetsByUnit[unit.id];
+  if (pendingOrClaimed != null && pendingOrClaimed.isNotEmpty) {
+    for (final target in [kWorkTargetExplore, kWorkTargetProspect]) {
+      _suggestionWorkLog(
+        unitId: unit.id,
+        unitType: unit.type,
+        unitRegionId: regionId,
+        atProvinceId: provinceId,
+        workTarget: target,
+        outcome: 'excluded',
+        reason: 'duplicate_pending',
+      );
+    }
+    return;
+  }
+
+  final provinces =
+      allProvinces(
+        game.worldState,
+      ).where((p) => partiallyRevealedProvinceCache.contains(p.id)).toList()
+        ..sort((a, b) => a.id.compareTo(b.id));
+  final acceptedExplores = <WorkOrder>[];
+  var lastReason = 'no_valid_tile';
+  for (final prov in provinces) {
+    final attempt = _tryExploreWorkOrderForProvince(
+      view: view,
+      game: game,
+      topology: topology,
+      currentOrders: currentOrders,
+      playerId: playerId,
+      unit: unit,
+      prov: prov,
+      unitsById: unitsById,
+      diplomatic: diplomatic,
+      tileKeysByRegion: tileKeysByRegion,
+      tileMapByRegion: tileMapByRegion,
+    );
+    if (attempt.chosen != null) {
+      acceptedExplores.add(attempt.chosen!);
+    } else {
+      lastReason = attempt.lastReason;
+    }
+  }
+  if (acceptedExplores.isNotEmpty) {
+    existingTargetsByUnit
+        .putIfAbsent(unit.id, () => <String>{})
+        .add(kWorkTargetExplore);
+    for (final chosen in acceptedExplores) {
+      suggestions.add(chosen);
+      _suggestionWorkLog(
+        unitId: unit.id,
+        unitType: unit.type,
+        unitRegionId: regionId,
+        atProvinceId: provinceId,
+        workTarget: kWorkTargetExplore,
+        outcome: 'included',
+        tile: chosen.targetTileKey,
+      );
+    }
+  } else {
     _suggestionWorkLog(
       unitId: unit.id,
       unitType: unit.type,
@@ -163,63 +221,8 @@ void _addExplorerWorkSuggestionsForUnit({
       atProvinceId: provinceId,
       workTarget: kWorkTargetExplore,
       outcome: 'excluded',
-      reason: 'duplicate_pending',
+      reason: lastReason,
     );
-  } else {
-    final provinces =
-        allProvinces(
-            game.worldState,
-          ).where((p) => partiallyRevealedProvinceCache.contains(p.id)).toList()
-          ..sort((a, b) => a.id.compareTo(b.id));
-    final acceptedExplores = <WorkOrder>[];
-    var lastReason = 'no_valid_tile';
-    for (final prov in provinces) {
-      final attempt = _tryExploreWorkOrderForProvince(
-        view: view,
-        game: game,
-        topology: topology,
-        currentOrders: currentOrders,
-        playerId: playerId,
-        unit: unit,
-        prov: prov,
-        unitsById: unitsById,
-        diplomatic: diplomatic,
-        tileKeysByRegion: tileKeysByRegion,
-        tileMapByRegion: tileMapByRegion,
-      );
-      if (attempt.chosen != null) {
-        acceptedExplores.add(attempt.chosen!);
-      } else {
-        lastReason = attempt.lastReason;
-      }
-    }
-    if (acceptedExplores.isNotEmpty) {
-      existingTargetsByUnit
-          .putIfAbsent(unit.id, () => <String>{})
-          .add(kWorkTargetExplore);
-      for (final chosen in acceptedExplores) {
-        suggestions.add(chosen);
-        _suggestionWorkLog(
-          unitId: unit.id,
-          unitType: unit.type,
-          unitRegionId: regionId,
-          atProvinceId: provinceId,
-          workTarget: kWorkTargetExplore,
-          outcome: 'included',
-          tile: chosen.targetTileKey,
-        );
-      }
-    } else {
-      _suggestionWorkLog(
-        unitId: unit.id,
-        unitType: unit.type,
-        unitRegionId: regionId,
-        atProvinceId: provinceId,
-        workTarget: kWorkTargetExplore,
-        outcome: 'excluded',
-        reason: lastReason,
-      );
-    }
   }
 
   _addProspectSuggestionIfEligible(
@@ -476,9 +479,21 @@ List<WorkOrder> suggestWorkOrders(
   orderSuggestionLog.d(
     'suggestWorkOrders player=$playerId candidates=${suggestions.length}',
   );
-  orderSuggestionLog.d(
-    'suggestWorkOrders full list ${suggestions.map((o) => "${o.unitId}:${o.target}").toList()}',
-  );
+  const previewCap = 40;
+  if (suggestions.isEmpty) {
+    orderSuggestionLog.d('suggestWorkOrders detail preview empty');
+  } else {
+    final preview = suggestions
+        .take(previewCap)
+        .map((o) => '${o.unitId}:${o.target}')
+        .join(', ');
+    final truncated = suggestions.length > previewCap
+        ? ' (+${suggestions.length - previewCap} more truncated)'
+        : '';
+    orderSuggestionLog.d(
+      'suggestWorkOrders detail preview first_$previewCap=$preview$truncated',
+    );
+  }
   if (suggestions.isEmpty) {
     orderSuggestionLog.w('suggestWorkOrders no candidates player=$playerId');
   }
