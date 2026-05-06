@@ -1,26 +1,33 @@
 import 'dart:math' as math;
 
-/// Selects a weighted index from [weights] using [seed].
-///
-/// Returns `null` when no positive total weight exists.
-int? pickWeightedIndex(List<num> weights, int seed, {bool useIntRoll = false}) {
+int? pickWeightedIndex(
+  List<num> weights,
+  int seed, {
+  bool useIntRoll = false,
+}) {
   if (weights.isEmpty) return null;
-  final total = weights.fold<double>(0, (sum, value) => sum + value.toDouble());
+  final normalized = weights
+      .map((weight) => weight < 0 ? 0.0 : weight.toDouble())
+      .toList();
+  final total = normalized.fold<double>(0, (sum, value) => sum + value);
   if (total <= 0) return null;
-  final rng = math.Random(seed);
-  var roll = useIntRoll
-      ? rng.nextInt(total.toInt()).toDouble()
-      : rng.nextDouble() * total;
-  for (var i = 0; i < weights.length; i++) {
-    final weight = weights[i].toDouble();
-    if (weight <= 0) continue;
-    if (useIntRoll) {
-      roll -= weight;
-      if (roll < 0) return i;
-      continue;
+
+  if (useIntRoll) {
+    final intWeights = normalized.map((weight) => weight.round()).toList();
+    final intTotal = intWeights.fold<int>(0, (a, b) => a + b);
+    if (intTotal <= 0) return null;
+    var remaining = math.Random(seed).nextInt(intTotal);
+    for (var idx = 0; idx < intWeights.length; idx++) {
+      remaining -= intWeights[idx];
+      if (remaining < 0) return idx;
     }
-    if (roll < weight) return i;
-    roll -= weight;
+    return intWeights.length - 1;
   }
-  return weights.length - 1;
+
+  var remaining = math.Random(seed).nextDouble() * total;
+  for (var idx = 0; idx < normalized.length; idx++) {
+    if (remaining < normalized[idx]) return idx;
+    remaining -= normalized[idx];
+  }
+  return normalized.length - 1;
 }

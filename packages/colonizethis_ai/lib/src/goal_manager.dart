@@ -33,8 +33,8 @@ StrategicGoal selectPrimaryGoal(
   int tech = weights.tech;
   int diplomacy = weights.diplomacy;
 
-  conquer += agendaConquerModifier(config.hiddenAgendaId);
-  diplomacy += agendaDiplomacyModifier(config.hiddenAgendaId);
+  conquer += getAgendaConquerModifier(config.hiddenAgendaId);
+  diplomacy += getAgendaDiplomacyModifier(config.hiddenAgendaId);
   // Personality thresholds: war likelihood boosts conquer; peace/alliance boost diplomacy goal.
   conquer += (thresholds.warLikelihood - 50);
   diplomacy +=
@@ -91,13 +91,13 @@ StrategicGoal selectPrimaryGoal(
           ? 'lowWorkerCount'
           : 'none',
     StrategicGoal.conquer =>
-      agendaConquerModifier(config.hiddenAgendaId) != 0
+      getAgendaConquerModifier(config.hiddenAgendaId) != 0
           ? 'hiddenAgendaConquerModifier'
           : (thresholds.warLikelihood - 50) != 0
           ? 'warLikelihoodThreshold'
           : 'none',
     StrategicGoal.diplomacy =>
-      agendaDiplomacyModifier(config.hiddenAgendaId) != 0
+      getAgendaDiplomacyModifier(config.hiddenAgendaId) != 0
           ? 'hiddenAgendaDiplomacyModifier'
           : ((thresholds.peaceTendency + thresholds.allianceTendency) ~/ 2) !=
                 50

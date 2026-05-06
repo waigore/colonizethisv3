@@ -14,7 +14,7 @@ void main() {
       expect(first, equals(second));
     });
 
-    test('supports tie-like deterministic selection with int roll mode', () {
+    test('supports deterministic tie handling with int roll mode', () {
       final first = pickWeightedIndex(const [1, 1, 1], 77, useIntRoll: true);
       final second = pickWeightedIndex(const [1, 1, 1], 77, useIntRoll: true);
       expect(first, equals(second));
