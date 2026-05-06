@@ -54,7 +54,7 @@ Orders runDomainPlanners({
         o.target == kWorkTargetStealTech || o.target == kWorkTargetCounterSpy,
   );
   final workThreshold =
-      40 - (hasSpyWork ? agendaSpyOrderModifier(config.hiddenAgendaId) : 0);
+      40 - (hasSpyWork ? getAgendaSpyOrderModifier(config.hiddenAgendaId) : 0);
   final runFullAiCivilianWork =
       primaryGoal == StrategicGoal.expand ||
       domainWeights.economy >= workThreshold;
@@ -89,7 +89,7 @@ Orders runDomainPlanners({
   } else if (workCandidates.isNotEmpty) {
     _log.d('work skipped nationId=$nationId weight below threshold');
   }
-  final buildThreshold = 30 - agendaBuildOrderModifier(config.hiddenAgendaId);
+  final buildThreshold = 30 - getAgendaBuildOrderModifier(config.hiddenAgendaId);
   _log.d(
     'build eval nationId=$nationId buildThreshold=$buildThreshold '
     'buildCandidates=${buildCandidates.map((o) => o.unitType).toList()}',
@@ -171,7 +171,7 @@ Orders runDomainPlanners({
     topology,
     orders,
   );
-  final researchThreshold = 40 - agendaResearchModifier(config.hiddenAgendaId);
+  final researchThreshold = 40 - getAgendaResearchModifier(config.hiddenAgendaId);
   if (researchCandidates.isNotEmpty &&
       (primaryGoal == StrategicGoal.tech ||
           domainWeights.research >= researchThreshold)) {
@@ -558,11 +558,11 @@ List<int> computeDiplomaticCandidateScores({
           // Lower peace desire when current war desire remains high.
           s -= (warDesire - 50);
         }
-        s += agendaPeaceAcceptanceModifier(agendaId);
+        s += getAgendaPeaceAcceptanceModifier(agendaId);
         s += (thresholds.peaceTendency - 50);
         break;
       case DiplomaticOrderType.alliance:
-        s += agendaAllianceAcceptanceModifier(agendaId);
+        s += getAgendaAllianceAcceptanceModifier(agendaId);
         s += (thresholds.allianceTendency - 50);
         break;
       case DiplomaticOrderType.declareWar:
@@ -596,8 +596,8 @@ List<int> computeDiplomaticCandidateScores({
             final desiredTerritory = targetProvinceCount <= 0
                 ? 1
                 : ((warDesire / 25).round()).clamp(1, targetProvinceCount);
-            s += agendaConquerModifier(agendaId);
-            s += agendaTreatyBreakingModifier(agendaId);
+            s += getAgendaConquerModifier(agendaId);
+            s += getAgendaTreatyBreakingModifier(agendaId);
             s += (thresholds.warLikelihood - 50);
             s += (warDesire - 50);
             if (snapshot.opportunities.weakNeighbors.contains(
