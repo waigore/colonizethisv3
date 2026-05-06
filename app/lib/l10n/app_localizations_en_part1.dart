@@ -77,6 +77,12 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   }
 
   @override
+  String get game_turnResolutionProcessingTitle => 'Processing Turn';
+
+  @override
+  String get game_turnResolutionFailedMessage => 'Turn resolution failed.';
+
+  @override
   String get common_no => 'No';
 
   @override
