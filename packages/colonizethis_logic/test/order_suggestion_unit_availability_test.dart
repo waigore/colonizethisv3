@@ -94,5 +94,140 @@ void main() {
       );
       expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
     });
+
+    test(
+      'pending draft: zero probes even with high-reveal world (issue #2133 scale)',
+      () {
+        setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests(true);
+        addTearDown(
+          () =>
+              setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests(false),
+        );
+
+        const playerId = 'gp1';
+        const ow = 'oldWorld';
+        const explorerId = 'E1';
+        const tribeId = 'tribe1';
+        const partialProvinceCount = 20;
+        const extraProvinceCount = 10;
+        const tilesPerPartialProvince = 6;
+        const tilesPerDenseProvince = 10;
+
+        final player = const Player(
+          id: playerId,
+          displayName: 'Human',
+          isHuman: true,
+          treasury: 5000,
+        );
+        final provinces = <Province>[];
+        final byProvince = <String, List<String>>{};
+        final visibility = <String, String>{};
+
+        for (var p = 0; p < partialProvinceCount; p++) {
+          final provinceId = '$ow|partial$p';
+          provinces.add(
+            Province(id: provinceId, regionId: ow, ownerId: tribeId),
+          );
+          final tiles = <String>[];
+          for (var t = 0; t < tilesPerPartialProvince; t++) {
+            final tileKey = '$ow|partial$p|$t|0';
+            tiles.add(tileKey);
+            if (t == 0) {
+              visibility[tileKey] = 'fogged';
+            } else {
+              visibility[tileKey] = 'unknown';
+            }
+          }
+          byProvince[provinceId] = tiles;
+        }
+
+        for (var p = 0; p < extraProvinceCount; p++) {
+          final provinceId = '$ow|dense$p';
+          provinces.add(
+            Province(id: provinceId, regionId: ow, ownerId: tribeId),
+          );
+          final tiles = <String>[];
+          for (var t = 0; t < tilesPerDenseProvince; t++) {
+            final tileKey = '$ow|dense$p|$t|0';
+            tiles.add(tileKey);
+            visibility[tileKey] = 'fogged';
+          }
+          byProvince[provinceId] = tiles;
+        }
+
+        expect(partialProvinceCount, greaterThanOrEqualTo(20));
+        expect(
+          visibility.values.where((v) => v != 'unknown').length,
+          greaterThanOrEqualTo(100),
+        );
+
+        final startProvince = '$ow|partial0';
+        final startTile = '$ow|partial0|0|0';
+        final explorer = Unit(
+          id: explorerId,
+          type: kUnitTypeExplorer,
+          ownerId: playerId,
+          locationProvinceId: startProvince,
+          tileKey: startTile,
+          status: UnitStatus.idle,
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: provinces, units: [explorer]),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {ow: byProvince},
+          playerVisibilityByTile: {playerId: visibility},
+        );
+        final game = Game(
+          id: 'g-scale',
+          worldState: world,
+          players: [player],
+          minorNations: const [],
+          tribes: const [Tribe(id: tribeId, displayName: 'Tribe')],
+        );
+        const topology = MapTopology(nodes: [], edges: []);
+
+        final pending = WorkOrder(
+          unitId: explorerId,
+          target: kWorkTargetExplore,
+          targetTileKey: startTile,
+        );
+        final orders = Orders(
+          workOrdersByPlayerId: {
+            playerId: [pending],
+          },
+        );
+        final view = buildPlayerView(game, topology, playerId);
+
+        getAvailableWorkTargetsForUnit(
+          view: view,
+          game: game,
+          topology: topology,
+          currentOrders: orders,
+          unitId: explorerId,
+        );
+        expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
+
+        getValidWorkOrderTileKeysWithVisibility(
+          game: game,
+          topology: topology,
+          view: view,
+          unitId: explorerId,
+          workTarget: kWorkTargetExplore,
+          currentOrders: orders,
+        );
+        expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
+
+        getValidWorkOrderTileKeysWithVisibility(
+          game: game,
+          topology: topology,
+          view: view,
+          unitId: explorerId,
+          workTarget: kWorkTargetProspect,
+          currentOrders: orders,
+        );
+        expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
+      },
+    );
   });
 }
