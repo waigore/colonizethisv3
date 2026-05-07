@@ -104,4 +104,79 @@ void main() {
       expect(reset, equals(const {kUnitTypeBuilder: 0, kUnitTypeExplorer: 0}));
     });
   });
+
+  group('shared player/lock helpers', () {
+    const playerId = 'p1';
+    const otherPlayerId = 'p2';
+
+    final player = Player(
+      id: playerId,
+      displayName: 'Player 1',
+      isHuman: true,
+      treasury: 120,
+      capitalProvinceId: 'r1|cap',
+      techUnlocked: const {'bronzeWorking': true},
+    );
+    final otherPlayer = Player(
+      id: otherPlayerId,
+      displayName: 'Player 2',
+      isHuman: false,
+    );
+
+    test('finds player by id and exposes shared fields', () {
+      final found = trainDialogPlayerById(
+        players: [otherPlayer, player],
+        playerId: playerId,
+      );
+
+      expect(found?.id, playerId);
+      expect(trainDialogHasCapital(found), isTrue);
+      expect(trainDialogTreasury(found), 120);
+      expect(
+        trainDialogTechUnlocked(found),
+        equals(const {'bronzeWorking': true}),
+      );
+    });
+
+    test('returns null-safe defaults when player is missing', () {
+      final found = trainDialogPlayerById(
+        players: [otherPlayer],
+        playerId: playerId,
+      );
+
+      expect(found, isNull);
+      expect(trainDialogHasCapital(found), isFalse);
+      expect(trainDialogTreasury(found), 0);
+      expect(trainDialogTechUnlocked(found), isEmpty);
+    });
+
+    test('resolves locked status from tech requirements', () {
+      expect(
+        trainDialogIsLocked(
+          unitType: 'Infantry',
+          unlockingTechByUnitType: const {'Infantry': 'bronzeWorking'},
+          techUnlocked: const {'bronzeWorking': true},
+        ),
+        isFalse,
+      );
+
+      expect(
+        trainDialogIsLocked(
+          unitType: 'Infantry',
+          unlockingTechByUnitType: const {'Infantry': 'bronzeWorking'},
+          techUnlocked: const {'bronzeWorking': false},
+        ),
+        isTrue,
+      );
+
+      expect(
+        trainDialogIsLocked(
+          unitType: 'Worker',
+          unlockingTechByUnitType: const {'Infantry': 'bronzeWorking'},
+          techUnlocked: const {},
+        ),
+        isFalse,
+      );
+    });
+  });
 }

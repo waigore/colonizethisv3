@@ -62,3 +62,35 @@ Map<String, int> decrementTrainDialogCount(Map<String, int> counts, String id) {
 Map<String, int> resetTrainDialogCounts(Map<String, int> counts) {
   return {for (final id in counts.keys) id: 0};
 }
+
+Player? trainDialogPlayerById({
+  required Iterable<Player> players,
+  required String playerId,
+}) {
+  for (final player in players) {
+    if (player.id == playerId) return player;
+  }
+  return null;
+}
+
+bool trainDialogHasCapital(Player? player) {
+  return player?.capitalProvinceId != null;
+}
+
+int trainDialogTreasury(Player? player) {
+  return player?.treasury ?? 0;
+}
+
+Map<String, bool> trainDialogTechUnlocked(Player? player) {
+  return player?.techUnlocked ?? const {};
+}
+
+bool trainDialogIsLocked({
+  required String unitType,
+  required Map<String, String> unlockingTechByUnitType,
+  required Map<String, bool> techUnlocked,
+}) {
+  final techId = unlockingTechByUnitType[unitType];
+  if (techId == null) return false;
+  return techUnlocked[techId] != true;
+}
