@@ -172,6 +172,13 @@ rules:
     runner: dart
     script: tool/check_no_flame_in_widgets.dart
 
+  - rule_id: repo.app_widget_imports
+    group: structure
+    title: app/lib/widgets must not import/export app/lib/features paths
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_widget_imports.dart
+
   - rule_id: repo.no_screen_in_game_widgets
     group: structure
     title: app/lib/features/game/widgets must not contain *_screen.dart files
