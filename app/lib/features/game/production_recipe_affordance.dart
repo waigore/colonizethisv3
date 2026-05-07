@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'utils/commodity_ui_helpers.dart';
+
 /// Maximum desired output the production panel slider allows per recipe.
 /// SPEC/ui/production-panel.md
 const int kProductionAllocationSliderCap = 50;
@@ -65,11 +67,6 @@ Map<String, int> _remainingStockByCommodity({
   return remaining;
 }
 
-String _commodityDisplayName(String commodityId) {
-  final c = CommodityCatalog.byId[commodityId];
-  return c?.displayName ?? commodityId;
-}
-
 /// Computes max desired output and bottleneck label for [recipe].
 ///
 /// Uses current stockpile minus inputs committed by **other** recipes'
@@ -127,7 +124,7 @@ RecipeAffordance computeRecipeAffordance({
     }
     final runs = runsPerInput[entry.key] ?? 0;
     if (runs == trueMax) {
-      limitingLabel = _commodityDisplayName(entry.key);
+      limitingLabel = commodityDisplayName(entry.key);
       break;
     }
   }
