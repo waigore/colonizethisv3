@@ -10,6 +10,7 @@ import '../world/province_lookup.dart';
 import '../world/province_ownership_transfer.dart';
 import '../world/unit_lookup.dart';
 import 'battle_general_assignment.dart';
+import 'combat_loss_profile.dart';
 import 'conflict_detection.dart';
 import 'leader_bonus_helpers.dart';
 import 'military_strength.dart';
@@ -19,20 +20,6 @@ final _combatLog = packageLogger();
 const String kRecoveryUnitPrefix = 'recover_';
 const double kGarrisonRecoveryFraction = 0.2;
 const double kNoDefenderRatioFallback = 10.0;
-const double kStrongAttackerRatioThreshold = 1.5;
-const double kBluntAttackerVictoryUpperRatio = 4.0;
-const double kStrongDefenderRatioThreshold = 0.67;
-const double kAttackerEdgeRatioThreshold = 1.0;
-const double kBluntAttackerLossFraction = 0.6;
-const double kBluntDefenderLossFraction = 0.4;
-const double kStrongAttackerLossFraction = 0.15;
-const double kStrongDefenderLossFraction = 1.0;
-const double kStrongDefenderAttackerLossFraction = 1.0;
-const double kStrongDefenderDefenderLossFraction = 0.15;
-const double kAttackerEdgeAttackerLossFraction = 0.3;
-const double kAttackerEdgeDefenderLossFraction = 0.6;
-const double kDefaultAttackerLossFraction = 0.5;
-const double kDefaultDefenderLossFraction = 0.4;
 
 /// When feeding coverage is omitted for a faction, treat as full supply.
 const double kDefaultFeedingCoverageMultiplier = 1.0;
@@ -74,9 +61,6 @@ const int kInitiativeTieBreakRngUpperExclusive = 1 << 31;
 
 /// Cavalry share when an army lists no regiments (sort key only).
 const double kZeroCavalryShareWhenNoUnits = 0.0;
-
-/// Minimum casualty slots when applying fractional losses (obvious index floor).
-const int kMinCasualtySlots = 0;
 
 /// Result of one engagement. SPEC/game/combat.md.
 enum EngagementResult {
@@ -267,7 +251,6 @@ Game resolveBattleContext(
     ctx: ctx,
     allCasualties: allCasualties,
     unitsById: unitsById,
-    provinceOwnerId: provinceOwnerId,
     defenderFactionId: ctx.defenderFactionId,
     survivingAttackerFactionId: survivingAttackerFactionId,
     defenderUnitIds: defenderUnitIds,
@@ -486,7 +469,6 @@ Game _buildResolvedBattleGame({
   required BattleContext ctx,
   required Set<String> allCasualties,
   required Map<String, Unit> unitsById,
-  required String provinceOwnerId,
   required String defenderFactionId,
   required String? survivingAttackerFactionId,
   required List<String> defenderUnitIds,
@@ -496,13 +478,11 @@ Game _buildResolvedBattleGame({
       .toList();
 
   var updatedProvinces = region.provinces;
-  var ownerId = provinceOwnerId;
   var provinceChangedOwner = false;
   if (defenderUnitIds.isEmpty && survivingAttackerFactionId != null) {
     final idx = updatedProvinces.indexWhere((p) => p.id == ctx.provinceId);
     if (idx >= 0) {
       provinceChangedOwner = true;
-      ownerId = survivingAttackerFactionId;
     }
   }
 
@@ -678,55 +658,6 @@ EngagementOutcome resolveEngagement({
   );
 }
 
-({
-  double attLossFrac,
-  double defLossFrac,
-  bool bluntAttackerVictory,
-  EngagementResult bothDeadResult,
-})
-_lossFractionsForRatio(double ratio, bool attackerLowMorale) {
-  if (ratio >= kStrongAttackerRatioThreshold &&
-      attackerLowMorale &&
-      ratio < kBluntAttackerVictoryUpperRatio) {
-    return (
-      attLossFrac: kBluntAttackerLossFraction,
-      defLossFrac: kBluntDefenderLossFraction,
-      bluntAttackerVictory: true,
-      bothDeadResult: EngagementResult.mutualAnnihilation,
-    );
-  }
-  if (ratio >= kStrongAttackerRatioThreshold) {
-    return (
-      attLossFrac: kStrongAttackerLossFraction,
-      defLossFrac: kStrongDefenderLossFraction,
-      bluntAttackerVictory: false,
-      bothDeadResult: EngagementResult.attackerVictory,
-    );
-  }
-  if (ratio <= kStrongDefenderRatioThreshold) {
-    return (
-      attLossFrac: kStrongDefenderAttackerLossFraction,
-      defLossFrac: kStrongDefenderDefenderLossFraction,
-      bluntAttackerVictory: false,
-      bothDeadResult: EngagementResult.defenderVictory,
-    );
-  }
-  if (ratio >= kAttackerEdgeRatioThreshold) {
-    return (
-      attLossFrac: kAttackerEdgeAttackerLossFraction,
-      defLossFrac: kAttackerEdgeDefenderLossFraction,
-      bluntAttackerVictory: false,
-      bothDeadResult: EngagementResult.attackerVictory,
-    );
-  }
-  return (
-    attLossFrac: kDefaultAttackerLossFraction,
-    defLossFrac: kDefaultDefenderLossFraction,
-    bluntAttackerVictory: false,
-    bothDeadResult: EngagementResult.mutualAnnihilation,
-  );
-}
-
 EngagementOutcome _resolveByRatio({
   required double ratio,
   required bool attackerLowMorale,
@@ -735,17 +666,35 @@ EngagementOutcome _resolveByRatio({
   required double attStr,
   required double defStr,
 }) {
-  final frac = _lossFractionsForRatio(ratio, attackerLowMorale);
+  final profile = combatLossProfileForStrengthRatio(
+    attackerDefenderStrengthRatio: ratio,
+    attackerLowMorale: attackerLowMorale,
+  );
   return _buildOutcome(
     attackerUnits: attackerUnits,
     defenderUnits: defenderUnits,
-    attLossFrac: frac.attLossFrac,
-    defLossFrac: frac.defLossFrac,
+    attLossFrac: profile.attackerLossFraction,
+    defLossFrac: profile.defenderLossFraction,
     attStr: attStr,
     defStr: defStr,
-    bluntAttackerVictory: frac.bluntAttackerVictory,
-    bothDeadResult: frac.bothDeadResult,
+    bluntAttackerVictory: profile.bluntsAttackerVictory,
+    bothDeadResult: _engagementResultForMutualElimination(
+      profile.mutualEliminationOutcome,
+    ),
   );
+}
+
+EngagementResult _engagementResultForMutualElimination(
+  CombatMutualEliminationOutcome outcome,
+) {
+  return switch (outcome) {
+    CombatMutualEliminationOutcome.attackerVictory =>
+      EngagementResult.attackerVictory,
+    CombatMutualEliminationOutcome.defenderVictory =>
+      EngagementResult.defenderVictory,
+    CombatMutualEliminationOutcome.mutualAnnihilation =>
+      EngagementResult.mutualAnnihilation,
+  };
 }
 
 EngagementOutcome _buildOutcome({
@@ -758,13 +707,13 @@ EngagementOutcome _buildOutcome({
   bool bluntAttackerVictory = false,
   EngagementResult bothDeadResult = EngagementResult.mutualAnnihilation,
 }) {
-  final attLoss = (attackerUnits.length * attLossFrac).ceil().clamp(
-    kMinCasualtySlots,
-    attackerUnits.length,
+  final attLoss = combatCasualtyCount(
+    unitCount: attackerUnits.length,
+    lossFraction: attLossFrac,
   );
-  final defLoss = (defenderUnits.length * defLossFrac).ceil().clamp(
-    kMinCasualtySlots,
-    defenderUnits.length,
+  final defLoss = combatCasualtyCount(
+    unitCount: defenderUnits.length,
+    lossFraction: defLossFrac,
   );
 
   final attackerCasualties = [
