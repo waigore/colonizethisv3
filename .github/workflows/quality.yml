@@ -127,10 +127,6 @@ jobs:
           cd app
           flutter gen-l10n
 
-      - name: Check long string switches (AST)
-        if: needs.changes.outputs.tests == 'true'
-        run: dart tool/check_long_string_switches.dart
-
       - name: Compile app entrypoints (Flutter analyze)
         if: needs.changes.outputs.tests == 'true'
         run: |
@@ -410,38 +406,17 @@ jobs:
       - name: Run domain exception custom_lint (SPEC/program/exception-enforcement.md)
         run: bash tool/run_custom_lint_domain_exceptions.sh
 
-      - name: Test colonizethis_exception_lint (SPEC/program/exception-enforcement.md)
+      - name: Test checker suites (group 1/3)
         run: dart test packages/colonizethis_exception_lint/test --reporter=compact
 
-      - name: Test disallowed AST patterns checker (SPEC/program/disallowed-ast-patterns.md)
-        run: dart test test/check_disallowed_ast_patterns_test.dart --reporter=compact
+      - name: Test checker suites (group 2/3)
+        run: dart test test/check_*_test.dart --reporter=compact
 
-      - name: Test repeated magic numbers checker (SPEC/program/repeated-magic-numbers.md)
-        run: dart test test/check_repeated_magic_numbers_test.dart --reporter=compact
+      - name: Test checker suites (group 3/3)
+        run: dart test test/ct_repo_lint*_test.dart --reporter=compact
 
       - name: Test OrderEngine slot generator (SPEC/program/order-engine.md)
         run: dart test test/generate_order_engine_slots_test.dart --reporter=compact
-
-      - name: Test app hardcoded UI string checker (SPEC/program/localization.md)
-        run: dart test test/check_app_hardcoded_ui_strings_test.dart --reporter=compact
-
-      - name: Test work target constants checker (SPEC/program/repo-and-packages.md)
-        run: dart test test/check_work_target_constants_test.dart --reporter=compact
-
-      - name: Test asset path constants checker (SPEC/program/repo-and-packages.md)
-        run: dart test test/check_asset_path_constants_test.dart --reporter=compact
-
-      - name: Test civilian unit type constants checker (SPEC/program/repo-and-packages.md)
-        run: dart test test/check_civilian_unit_type_constants_test.dart --reporter=compact
-
-      - name: Test canonical province tile-key checker (SPEC/game/world-model-identity.md)
-        run: dart test test/check_canonical_province_tile_keys_test.dart --reporter=compact
-
-      - name: Test colonizethis_map lib pipe-split checker (SPEC/program/map-visualization.md)
-        run: dart test test/check_colonizethis_map_lib_pipe_split_test.dart --reporter=compact
-
-      - name: Test rule routing checker (issue #2190)
-        run: dart test test/check_rule_routing_test.dart --reporter=compact
 
       - name: Wang incremental assets gate (Python)
         run: |
