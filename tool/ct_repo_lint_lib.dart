@@ -23,6 +23,7 @@ import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_land_province_bucket_keys.dart';
+import 'check_logic_dead_files.dart';
 import 'check_logic_dual_region_province_field_access.dart';
 import 'check_no_flame_in_widgets.dart';
 import 'check_no_screen_in_game_widgets.dart';
@@ -766,6 +767,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckLandProvinceBucketKeys(repoRoot);
     case 'repo.logic_dual_region_province_field_access':
       return runCheckLogicDualRegionProvinceFieldAccess(repoRoot);
+    case 'repo.logic_dead_files':
+      return runCheckLogicDeadFiles(repoRoot);
     case 'repo.app_hardcoded_ui_strings':
       return runCheckAppHardcodedUiStrings(repoRoot);
     case 'repo.app_no_duplicate_helpers':
