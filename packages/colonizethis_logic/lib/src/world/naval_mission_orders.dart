@@ -1,0 +1,139 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import '../diplomacy/diplomacy_relation_lookup.dart';
+import 'naval.dart';
+import 'province_lookup.dart';
+
+FleetMission _fleetMissionFromOrderName(String name) {
+  for (final m in FleetMission.values) {
+    if (m.name == name) return m;
+  }
+  return FleetMission.none;
+}
+
+List<Fleet> _applySingleNavalMissionOrder({
+  required Game game,
+  required List<Fleet> fleets,
+  required Map<String, Fleet> fleetById,
+  required String playerId,
+  required NavalMissionOrder order,
+}) {
+  final fleet = fleetById[order.fleetId];
+  if (fleet == null || fleet.ownerId != playerId) return fleets;
+  final homeFleetId = homeFleetIdFor(playerId);
+
+  if (order.mission == 'join_home_fleet') {
+    final homeFleet = fleetById[homeFleetId];
+    if (homeFleet == null) return fleets;
+    final capitalProvinceId = game.playerById(playerId)?.capitalProvinceId;
+    if (capitalProvinceId == null ||
+        fleet.inPortAtProvinceId != capitalProvinceId) {
+      return fleets;
+    }
+    if (fleet.shipTypeIds.isEmpty) return fleets;
+    final updatedHome = homeFleet.copyWith(
+      ships: [...homeFleet.ships, ...fleet.ships],
+    );
+    final next = fleets
+        .where((f) => f.id != fleet.id)
+        .map((f) => f.id == homeFleetId ? updatedHome : f)
+        .toList();
+    fleetById[homeFleetId] = updatedHome;
+    return next;
+  }
+
+  if (fleet.id == homeFleetId) {
+    return fleets;
+  }
+  final mission = _fleetMissionFromOrderName(order.mission);
+
+  if (mission == FleetMission.blockade) {
+    final targetProvinceId = order.targetProvinceId;
+    final province =
+        targetProvinceId != null &&
+            targetProvinceId.isNotEmpty &&
+            ProvinceId.isPrefixed(targetProvinceId)
+        ? game.worldState.tryGetProvince(targetProvinceId)
+        : null;
+    final ownerId = province?.ownerId;
+    final atWar =
+        ownerId != null &&
+        ownerId != playerId &&
+        factionsAtWar(game, playerId, ownerId);
+    if (!atWar) {
+      final cleared = fleet.copyWith(
+        mission: FleetMission.none,
+        targetPortId: null,
+        targetProvinceId: null,
+      );
+      final idx = fleets.indexWhere((f) => f.id == fleet.id);
+      if (idx >= 0) {
+        final next = List<Fleet>.from(fleets)..[idx] = cleared;
+        fleetById[fleet.id] = cleared;
+        return next;
+      }
+      return fleets;
+    }
+  }
+
+  final newFleet = fleet.copyWith(
+    mission: mission,
+    targetPortId: order.targetPortId,
+    targetProvinceId: order.targetProvinceId,
+  );
+  final idx = fleets.indexWhere((f) => f.id == fleet.id);
+  if (idx >= 0) {
+    final next = List<Fleet>.from(fleets)..[idx] = newFleet;
+    fleetById[fleet.id] = newFleet;
+    return next;
+  }
+  return fleets;
+}
+
+Game applyNavalMissionOrders(
+  Game game,
+  Map<String, List<NavalMissionOrder>> navalMissionOrdersByPlayerId,
+) {
+  var fleets = List<Fleet>.from(game.worldState.fleets);
+  final fleetById = {for (final f in fleets) f.id: f};
+
+  for (final entry in navalMissionOrdersByPlayerId.entries) {
+    final playerId = entry.key;
+    for (final order in entry.value) {
+      fleets = _applySingleNavalMissionOrder(
+        game: game,
+        fleets: fleets,
+        fleetById: fleetById,
+        playerId: playerId,
+        order: order,
+      );
+    }
+  }
+
+  for (var i = 0; i < fleets.length; i++) {
+    final f = fleets[i];
+    if (f.mission != FleetMission.blockade) continue;
+    final targetProvinceId = f.targetProvinceId;
+    if (targetProvinceId == null || targetProvinceId.isEmpty) continue;
+    final province = ProvinceId.isPrefixed(targetProvinceId)
+        ? game.worldState.tryGetProvince(targetProvinceId)
+        : null;
+    final ownerId = province?.ownerId;
+    final atWar =
+        ownerId != null &&
+        ownerId != f.ownerId &&
+        factionsAtWar(game, f.ownerId, ownerId);
+    if (!atWar) {
+      fleets = List<Fleet>.from(fleets)
+        ..[i] = f.copyWith(
+          mission: FleetMission.none,
+          targetPortId: null,
+          targetProvinceId: null,
+        );
+    }
+  }
+
+  return game.copyWith(worldState: game.worldState.copyWith(fleets: fleets));
+}
