@@ -440,6 +440,9 @@ jobs:
       - name: Test colonizethis_map lib pipe-split checker (SPEC/program/map-visualization.md)
         run: dart test test/check_colonizethis_map_lib_pipe_split_test.dart --reporter=compact
 
+      - name: Test rule routing checker (issue #2190)
+        run: dart test test/check_rule_routing_test.dart --reporter=compact
+
       - name: Wang incremental assets gate (Python)
         run: |
           set -euo pipefail
