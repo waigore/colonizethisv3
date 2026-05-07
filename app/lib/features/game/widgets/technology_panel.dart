@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
+import '../utils/tech_ui_helpers.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_panel.dart';
 
@@ -312,8 +313,8 @@ void _showAssignDialog({
             title: Text(techDisplayName(tech.id)),
             subtitle: Text(
               l10n.technologyPanel_pickSubtitle(
-                _eraRoman(tech.era),
-                _categoryLabel(tech.category),
+                eraRoman(tech.era),
+                techCategoryLabelL10n(l10n, tech.category),
                 tech.cost,
               ),
             ),
@@ -391,23 +392,4 @@ void _cancelSlot({
     SnackBar(content: Text(l10n.technologyPanel_slotCancelled)),
   );
   onOrdersChanged(updated);
-}
-
-String _categoryLabel(String category) {
-  const labels = {
-    'gathering': 'Gathering',
-    'transport': 'Transport',
-    'labour': 'Labour',
-    'civilian': 'Civilian',
-    'diplomacy': 'Diplomacy',
-    'naval': 'Naval',
-    'military': 'Military',
-    'new-world': 'New World',
-  };
-  return labels[category] ?? category;
-}
-
-String _eraRoman(int era) {
-  const romans = ['I', 'II', 'III', 'IV'];
-  return era >= 1 && era <= romans.length ? romans[era - 1] : '$era';
 }

@@ -6,6 +6,7 @@ import '../../../l10n/l10n.dart';
 import '../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/resource_icon.dart';
+import '../utils/commodity_ui_helpers.dart';
 import 'train_unit_dialog_helper.dart';
 
 class TrainMilitaryDialog extends StatefulWidget {
@@ -122,7 +123,7 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     final totalComms = _totalCommodityCosts();
     for (final e in totalComms.entries) {
       if (e.value > _stockpileQty(e.key)) {
-        deficits.add(_commodityDisplayName(e.key));
+        deficits.add(commodityDisplayName(e.key));
       }
     }
     if (deficits.isEmpty) return null;
@@ -130,10 +131,6 @@ class _TrainMilitaryDialogState extends State<TrainMilitaryDialog> {
     if (deficits.length == 2) return '${deficits[0]} and ${deficits[1]} low';
     final head = deficits.sublist(0, deficits.length - 1).join(', ');
     return '$head and ${deficits.last} low';
-  }
-
-  String _commodityDisplayName(String commodityId) {
-    return CommodityCatalog.byId[commodityId]?.displayName ?? commodityId;
   }
 
   void _increment(String unitType) {

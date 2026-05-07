@@ -1,4 +1,3 @@
-
 /// Row label for tech tree legend samples (maps to [AppLocalizations] state strings).
 
 part of 'tech_tree_widget.dart';
@@ -33,7 +32,7 @@ class _TechTreeLegend extends StatelessWidget {
           .map(
             (e) => _LegendChip(
               color: e.value,
-              label: TechTreeWidget._categoryLabelL10n(l10n, e.key),
+              label: techCategoryLabelL10n(l10n, e.key),
             ),
           )
           .toList(),
