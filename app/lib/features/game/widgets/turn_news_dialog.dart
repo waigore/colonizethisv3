@@ -5,9 +5,6 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/l10n.dart';
 
-/// [OpenDialogEvent] id. SPEC/program/app-ui-wiring.md.
-const String turnNewsDialogId = 'turn_news';
-
 /// Prior-turn summary dialog; [newTurnNumber] is current turn after resolution.
 class TurnNewsDialog extends StatelessWidget {
   const TurnNewsDialog({
@@ -69,7 +66,9 @@ String _factionLabel(Game g, String id) {
 String _provinceLabel(Game g, String fullProvinceId) {
   for (final r in [g.worldState.oldWorld, g.worldState.newWorld]) {
     for (final p in r.provinces) {
-      final full = p.id.contains('|') ? p.id : ProvinceId.full(p.regionId, p.id);
+      final full = p.id.contains('|')
+          ? p.id
+          : ProvinceId.full(p.regionId, p.id);
       if (full == fullProvinceId) {
         return p.displayName ?? fullProvinceId;
       }
@@ -127,7 +126,8 @@ String formatTurnNewsLine(AppLocalizations l10n, Game game, TurnNewsLine line) {
       ),
     TurnNewsProvinceDiscoveredLine(:final provinceId) =>
       l10n.turnNews_provinceDiscovered(_provinceLabel(game, provinceId)),
-    TurnNewsSeaZoneFleetLine(:final seaZoneId) =>
-      l10n.turnNews_seaDiscovered(_seaZoneLabel(game, seaZoneId)),
+    TurnNewsSeaZoneFleetLine(:final seaZoneId) => l10n.turnNews_seaDiscovered(
+      _seaZoneLabel(game, seaZoneId),
+    ),
   };
 }

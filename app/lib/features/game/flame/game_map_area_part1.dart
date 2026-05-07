@@ -13,7 +13,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       PerPlayerWorkTargetSelectionCache();
   bool _sideMenuOpen = false;
   bool _debugConsoleOpen = false;
-  final List<StreamSubscription<dynamic>> _busSubscriptions = [];
+  final SubscriptionTracker _busSubscriptions = SubscriptionTracker();
   ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
   final List<ct_models.GameToUIEvent> _pendingPlayerTurnEvents = [];
   List<ct_models.GameToUIEvent> _resolvedPlayerTurnEvents = const [];
@@ -29,7 +29,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     _mapViewState = widget.game.mapViewState;
     _refreshWorkTargetSelectionCache(widget.game);
     final bus = ref.read(appEventBusProvider);
-    _busSubscriptions.addAll([
+    for (final subscription in [
       bus.on<ct_models.OpenProvinceDetailPanelEvent>().listen((_) {
         if (!mounted) return;
         setState(() {
@@ -91,7 +91,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         if (!mounted || !ref.read(debugConsoleEnabledProvider)) return;
         setState(() => _debugConsoleOpen = !_debugConsoleOpen);
       }),
-    ]);
+    ]) {
+      _busSubscriptions.track(subscription);
+    }
   }
 
   void _onTurnResolutionCompleteEvent(
@@ -212,10 +214,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
   void dispose() {
     _turnResolutionProgressSub?.cancel();
     _turnResolutionProgressSub = null;
-    for (final s in _busSubscriptions) {
-      s.cancel();
-    }
-    _busSubscriptions.clear();
+    _busSubscriptions.cancelAll();
     super.dispose();
   }
 
