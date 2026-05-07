@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+const Color darkWood = Color(0xFF5D3A1A);
+
 /// App themes. Phase 6: pixel-art canon and styling per UXD apply to existing UIs (03a–03m).
 /// Asset pipeline: `assets/images/` (terrain, nine-patch, main menu art); `assets/icons/` (`ui_icon_*.png`); load via rootBundle or Flame cache.
 class AppThemes {
@@ -14,7 +16,6 @@ class AppThemes {
   static ThemeData get colonial {
     const Color parchment = Color(0xFFF5F5DC);
     const Color colonialBrown = Color(0xFF8B4513);
-    const Color darkWood = Color(0xFF5D3A1A);
     const Color goldBrass = Color(0xFFC9A227);
     const Color textPrimary = Color(0xFF212121);
     const Color textSecondary = Color(0xFF757575);

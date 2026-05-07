@@ -7,6 +7,7 @@ import 'package:jenny/jenny.dart';
 
 import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import 'ct_dialogue_view.dart';
 
@@ -18,12 +19,7 @@ class GameStartIntroLoadingIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Center(
-      child: CircularProgressIndicator(
-        strokeWidth: 2,
-        color: theme.colorScheme.primary,
-      ),
-    );
+    return CtLoadingIndicator(strokeWidth: 2, color: theme.colorScheme.primary);
   }
 }
 

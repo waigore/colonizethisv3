@@ -84,8 +84,7 @@ class CtMainMenu extends StatelessWidget {
                 kMainMenuBackgroundAsset,
                 fit: BoxFit.cover,
                 filterQuality: FilterQuality.none,
-                errorBuilder: (_, _, _) =>
-                    Container(color: const Color(0xFF5D3A1A)),
+                errorBuilder: (_, _, _) => Container(color: darkWood),
               ),
             ),
             Theme(data: AppThemes.colonialPixelArt, child: content),
