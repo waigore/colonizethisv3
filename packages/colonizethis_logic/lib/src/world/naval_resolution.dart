@@ -11,94 +11,19 @@ import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
 import '../turn/turn_seed_constants.dart';
 import 'naval.dart';
-import 'player_view.dart';
-import 'province_lookup.dart';
-import 'sea_zone_identity.dart';
-import 'tile_key_coordinates.dart';
+import 'naval_coastal_visibility.dart';
+import 'province_lookup.dart' hide landTileKeysForProvinceBucket;
 import 'topology_helpers.dart';
 
+export 'naval_coastal_visibility.dart'
+    show
+        canonicalSeaZoneTileBucketKey,
+        coastalLandTileKeysFromNavalPresenceAtSea,
+        landTileKeysForProvinceBucket,
+        revealProvinceTilesForPlayer,
+        revealTilesAfterMoveToSeaZone;
+
 final _log = packageLogger();
-
-({int x, int y})? _xyFromTileKey(String tileKey) {
-  final coords = parseTileKeyCoordinates(tileKey);
-  if (coords == null) return null;
-  return (x: coords.x, y: coords.y);
-}
-
-/// Canonical key used for sea-zone buckets in
-/// `tileKeysByRegionAndProvince[regionId][bucketKey]`.
-///
-/// Buckets must be keyed by prefixed sea-zone id (`regionId|localSeaId`) so
-/// topology ids from both per-region and combined topologies resolve through one
-/// contract.
-String canonicalSeaZoneTileBucketKey(
-  String regionId,
-  String seaZoneTopologyId,
-) => canonicalizeSeaZoneId(regionId: regionId, seaZoneId: seaZoneTopologyId);
-
-/// [tileKeysByRegionAndProvince] normally keys land provinces by full id
-/// (`regionId|localId`); some fixtures or legacy maps key by **local** id only.
-/// Ship reveal and dock visibility must resolve tiles using whichever bucket exists.
-List<String> landTileKeysForProvinceBucket(
-  WorldState ws,
-  String regionId,
-  String fullProvinceId,
-) {
-  final byProv = ws.tileKeysByRegionAndProvince[regionId];
-  if (byProv == null) return const [];
-  final byFull = byProv[fullProvinceId];
-  if (byFull != null && byFull.isNotEmpty) {
-    return byFull;
-  }
-  final localId = ProvinceId.localIdFrom(fullProvinceId);
-  return byProv[localId] ?? const [];
-}
-
-Set<String> _coastalTileKeysAdjacentToSeaZone({
-  required List<String> provinceTileKeys,
-  required List<String> seaWaterTileKeys,
-}) {
-  if (provinceTileKeys.isEmpty || seaWaterTileKeys.isEmpty) return const {};
-  final seaCoords = <String>{};
-  for (final seaTileKey in seaWaterTileKeys) {
-    final xy = _xyFromTileKey(seaTileKey);
-    if (xy == null) continue;
-    seaCoords.add('${xy.x}|${xy.y}');
-  }
-  if (seaCoords.isEmpty) return const {};
-  final coastal = <String>{};
-  const deltas = [(0, -1), (1, 0), (0, 1), (-1, 0)];
-  for (final provinceTileKey in provinceTileKeys) {
-    final xy = _xyFromTileKey(provinceTileKey);
-    if (xy == null) continue;
-    final isCoastal = deltas.any(
-      (delta) => seaCoords.contains('${xy.x + delta.$1}|${xy.y + delta.$2}'),
-    );
-    if (isCoastal) coastal.add(provinceTileKey);
-  }
-  return coastal;
-}
-
-Map<String, Map<String, String>> _revealProvinceTilesForPlayer(
-  Game game,
-  Map<String, Map<String, String>> visibilityByTile,
-  String playerId,
-  String fullProvinceId,
-) {
-  final regionId = ProvinceId.regionIdFrom(fullProvinceId);
-  final tileKeys = landTileKeysForProvinceBucket(
-    game.worldState,
-    regionId,
-    fullProvinceId,
-  );
-  if (tileKeys.isEmpty) return visibilityByTile;
-  final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
-  for (final tk in tileKeys) {
-    vis[tk] = VisibilityLevel.fullyVisible.name;
-  }
-  return Map<String, Map<String, String>>.from(visibilityByTile)
-    ..[playerId] = vis;
-}
 
 List<String> _adjacentSeaZones(MapTopology topology, String seaZoneId) {
   final out = <String>[];
@@ -293,51 +218,6 @@ bool _navalMoveDestinationIsReachable({
   ).contains(destZoneId);
 }
 
-Map<String, Map<String, String>> _revealTilesAfterMoveToSeaZone({
-  required Game game,
-  required MapTopology topology,
-  required Map<String, Map<String, String>> visibilityByTile,
-  required String playerId,
-  required String destRegionId,
-  required String destZoneId,
-}) {
-  final provinceIds = provinceIdsAdjacentToSeaZone(
-    topology,
-    destZoneId,
-    regionId: destRegionId,
-  );
-  final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
-  final seaZoneKeyForTiles = canonicalSeaZoneTileBucketKey(
-    destRegionId,
-    destZoneId,
-  );
-  final seaWaterKeys = game
-      .worldState
-      .tileKeysByRegionAndProvince[destRegionId]?[seaZoneKeyForTiles];
-  for (final provinceNodeId in provinceIds) {
-    final fullProvinceId = toFullProvinceId(destRegionId, provinceNodeId);
-    final provinceTileKeys = landTileKeysForProvinceBucket(
-      game.worldState,
-      destRegionId,
-      fullProvinceId,
-    );
-    final coastalTileKeys = _coastalTileKeysAdjacentToSeaZone(
-      provinceTileKeys: provinceTileKeys,
-      seaWaterTileKeys: seaWaterKeys ?? const [],
-    );
-    for (final tk in coastalTileKeys) {
-      vis[tk] = VisibilityLevel.fullyVisible.name;
-    }
-  }
-  if (seaWaterKeys != null) {
-    for (final tk in seaWaterKeys) {
-      vis[tk] = VisibilityLevel.fullyVisible.name;
-    }
-  }
-  return Map<String, Map<String, String>>.from(visibilityByTile)
-    ..[playerId] = vis;
-}
-
 ({
   List<Fleet> fleets,
   Map<String, Fleet> fleetById,
@@ -383,7 +263,7 @@ _applyDockNavalMoveOrder({
     );
   }
 
-  var nextVis = _revealProvinceTilesForPlayer(
+  var nextVis = revealProvinceTilesForPlayer(
     game,
     visibilityByTile,
     playerId,
@@ -507,7 +387,7 @@ _applySeaNavalMoveOrder({
 
   var nextVis = visibilityByTile;
   if (destRegionId != null) {
-    nextVis = _revealTilesAfterMoveToSeaZone(
+    nextVis = revealTilesAfterMoveToSeaZone(
       game: game,
       topology: topology,
       visibilityByTile: nextVis,
@@ -577,53 +457,6 @@ Game applyNavalMovesAndShipReveal(
       playerVisibilityByTile: visibilityByTile,
     ),
   );
-}
-
-/// Land tile keys orthogonally adjacent to water in sea zones where [playerId] has
-/// a non–home fleet **at sea**. Same geometry as ship reveal in this file; used so
-/// [applyFogDecay] does not strip that coastal intel while the fleet remains offshore.
-Set<String> coastalLandTileKeysFromNavalPresenceAtSea(
-  Game game,
-  MapTopology topology,
-  String playerId,
-) {
-  final out = <String>{};
-  final ws = game.worldState;
-  final homeFleetId = homeFleetIdFor(playerId);
-  for (final f in ws.fleets) {
-    if (f.ownerId != playerId) continue;
-    if (f.id == homeFleetId) continue;
-    if (!f.isAtSea || f.seaZoneId == null) continue;
-    final destRegionId = f.regionId;
-    final destZoneId = f.seaZoneId!;
-    final provinceIds = provinceIdsAdjacentToSeaZone(
-      topology,
-      destZoneId,
-      regionId: destRegionId,
-    );
-    final seaZoneKeyForTiles = canonicalSeaZoneTileBucketKey(
-      destRegionId,
-      destZoneId,
-    );
-    final seaWaterKeys =
-        ws.tileKeysByRegionAndProvince[destRegionId]?[seaZoneKeyForTiles] ??
-        const <String>[];
-    for (final provinceNodeId in provinceIds) {
-      final fullProvinceId = toFullProvinceId(destRegionId, provinceNodeId);
-      final provinceTileKeys = landTileKeysForProvinceBucket(
-        ws,
-        destRegionId,
-        fullProvinceId,
-      );
-      out.addAll(
-        _coastalTileKeysAdjacentToSeaZone(
-          provinceTileKeys: provinceTileKeys,
-          seaWaterTileKeys: seaWaterKeys,
-        ),
-      );
-    }
-  }
-  return out;
 }
 
 String? _navalBattleWinnerOwnerId(
