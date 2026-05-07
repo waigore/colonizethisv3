@@ -18,6 +18,7 @@ import 'tile_map_visualization_shared.dart';
 part 'init_game_map_view_builder_fleet_markers_part.dart';
 part 'init_game_map_view_builder_orchestration_part.dart';
 part 'init_game_map_view_builder_cells_markers_part.dart';
+part 'init_game_map_view_builder_map_markers_part.dart';
 
 final _log = packageLogger();
 
