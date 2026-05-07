@@ -1,6 +1,7 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' show Player;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show AppEventBus, Player;
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/widgets/ct_region_map.dart'
@@ -40,13 +41,14 @@ Widget ctRegionMapTestHarness({
   void Function(String?)? onProvinceHovered,
   void Function(String?)? onTileHovered,
   void Function(String)? onMapTileTappedForDetail,
-  void Function(String)? onCivilianTileTapped,
+  void Function(String)? onCivilianTileStateChanged,
   VoidCallback? onCivilianTileSelectionCleared,
   String? selectedTileKey,
   String? selectedCivilianTileKey,
   String? secondaryHighlightTileKey,
   VoidCallback? onRegionViewChanged,
   PlayerView? playerViewForResources,
+  AppEventBus? bus,
 }) {
   return MaterialApp(
     home: Scaffold(
@@ -69,12 +71,13 @@ Widget ctRegionMapTestHarness({
             onProvinceHovered: onProvinceHovered,
             onTileHovered: onTileHovered,
             onMapTileTappedForDetail: onMapTileTappedForDetail,
-            onCivilianTileTapped: onCivilianTileTapped,
+            onCivilianTileStateChanged: onCivilianTileStateChanged,
             onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
             selectedTileKey: selectedTileKey,
             selectedCivilianTileKey: selectedCivilianTileKey,
             secondaryHighlightTileKey: secondaryHighlightTileKey,
             onRegionViewChanged: onRegionViewChanged,
+            bus: bus,
           ),
         ),
       ),

@@ -8,7 +8,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show TerrainType;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show AppEventBus, OpenProvinceDetailPanelEvent, kUnitTypeBuilder;
+    show
+        AppEventBus,
+        OpenCivilianUnitsPanelEvent,
+        OpenNavalUnitsPanelEvent,
+        OpenProvinceDetailPanelEvent,
+        kUnitTypeBuilder;
 
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
@@ -445,6 +450,13 @@ void main() {
         String? tappedCivilianTileKey;
         String? detailTileKey;
         String? selectedProvinceId;
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        final openedPanels = <OpenCivilianUnitsPanelEvent>[];
+        final panelSub = bus.on<OpenCivilianUnitsPanelEvent>().listen(
+          openedPanels.add,
+        );
+        addTearDown(panelSub.cancel);
 
         await tester.pumpWidget(
           ctRegionMapTestHarness(
@@ -452,7 +464,9 @@ void main() {
             width: 64,
             height: 64,
             cellSizePx: 32,
-            onCivilianTileTapped: (tileKey) => tappedCivilianTileKey = tileKey,
+            bus: bus,
+            onCivilianTileStateChanged: (tileKey) =>
+                tappedCivilianTileKey = tileKey,
             onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
             onProvinceSelected: (id) => selectedProvinceId = id,
           ),
@@ -464,8 +478,86 @@ void main() {
         await tester.pump();
 
         expect(tappedCivilianTileKey, equals(markerTileKey));
+        expect(openedPanels, hasLength(1));
+        expect(openedPanels.single.tileScopeTileKey, equals(markerTileKey));
+        expect(openedPanels.single.initialSelectedUnitId, equals('u_builder'));
         expect(detailTileKey, isNull);
         expect(selectedProvinceId, isNull);
+      },
+      timeout: const Timeout(Duration(seconds: 5)),
+    );
+
+    testWidgets(
+      'tapping fleet marker emits naval units panel event',
+      (WidgetTester tester) async {
+        final base = ctRegionMapTestOldWorldRegion();
+        final seaTemplate = base.cells.firstWhere((c) => c.isSea);
+        const markerTileKey = 'oldWorld|sMarker|0|0';
+        final region = RegionMapViewData(
+          regionId: 'oldWorld',
+          width: 1,
+          height: 1,
+          cellSize: 24,
+          cells: [
+            CellViewData(
+              x: 0,
+              y: 0,
+              regionCellId: 'sMarker',
+              isSea: true,
+              terrainTypeId: seaTemplate.terrainTypeId,
+              terrainType: seaTemplate.terrainType,
+              ownerFactionId: seaTemplate.ownerFactionId,
+              provinceDisplayName: 'Marker Sea',
+            ),
+          ],
+          capitalMarkers: const [],
+          portMarkers: const [],
+          townMarkers: const [],
+          factionColors: base.factionColors,
+          greatPowerFactionIds: base.greatPowerFactionIds,
+          terrainColors: base.terrainColors,
+          unitMarkers: const [],
+          fleetTileMarkers: [
+            FleetTileMarkerView(
+              tileKey: markerTileKey,
+              x: 0,
+              y: 0,
+              locationScopeKey: 'sea:oldWorld|fleet_scope',
+              fleetIds: const ['fleet_1'],
+              stackCount: 1,
+            ),
+          ],
+          civilianTileMarkers: const [],
+          warpMarkers: const [],
+        );
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        final openedPanels = <OpenNavalUnitsPanelEvent>[];
+        final panelSub = bus.on<OpenNavalUnitsPanelEvent>().listen(
+          openedPanels.add,
+        );
+        addTearDown(panelSub.cancel);
+
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            width: 64,
+            height: 64,
+            cellSizePx: 32,
+            bus: bus,
+          ),
+        );
+        await tester.pump();
+        await tester.tap(find.byType(CtRegionMap));
+        await tester.pump();
+
+        expect(openedPanels, hasLength(1));
+        expect(
+          openedPanels.single.locationScopeKey,
+          equals('sea:oldWorld|fleet_scope'),
+        );
+        expect(openedPanels.single.initialSelectedFleetId, equals('fleet_1'));
+        expect(openedPanels.single.tileScopeTileKey, equals(markerTileKey));
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );
@@ -1015,7 +1107,5 @@ void main() {
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
-
-
   });
 }

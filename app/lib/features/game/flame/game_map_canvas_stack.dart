@@ -34,8 +34,7 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.onTileSelectedForWork,
     required this.onWorkTargetSelectionCancelled,
     required this.selectedCivilianTileKey,
-    required this.onCivilianTileTapped,
-    this.onFleetMarkerTapped,
+    required this.onCivilianTileStateChanged,
     required this.onCivilianTileSelectionCleared,
     required this.onRegionViewportSnapshot,
     required this.zoomMultiplier,
@@ -59,13 +58,7 @@ class GameMapCanvasStack extends ConsumerWidget {
   final void Function(String tileKey)? onTileSelectedForWork;
   final VoidCallback? onWorkTargetSelectionCancelled;
   final String? selectedCivilianTileKey;
-  final void Function(String tileKey)? onCivilianTileTapped;
-  final void Function(
-    String locationScopeKey,
-    String? initialFleetId,
-    String markerTileKey,
-  )?
-  onFleetMarkerTapped;
+  final void Function(String tileKey)? onCivilianTileStateChanged;
   final VoidCallback? onCivilianTileSelectionCleared;
   final void Function(RegionMapViewportSnapshot snapshot)
   onRegionViewportSnapshot;
@@ -100,12 +93,9 @@ class GameMapCanvasStack extends ConsumerWidget {
                             .reportMapTileTapped(tk),
                   onProvinceHovered: (_) {},
                   onTileHovered: (_) {},
-                  onCivilianTileTapped: inWorkTargetSelectionMode
+                  onCivilianTileStateChanged: inWorkTargetSelectionMode
                       ? null
-                      : onCivilianTileTapped,
-                  onFleetMarkerTapped: inWorkTargetSelectionMode
-                      ? null
-                      : onFleetMarkerTapped,
+                      : onCivilianTileStateChanged,
                   onCivilianTileSelectionCleared: inWorkTargetSelectionMode
                       ? null
                       : onCivilianTileSelectionCleared,
@@ -117,7 +107,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   onTileSelected: onTileSelectedForWork,
                   onWorkTargetSelectionCancelled:
                       onWorkTargetSelectionCancelled,
-                  bus: bus,
+                  bus: inWorkTargetSelectionMode ? null : bus,
                   onViewportSnapshotChanged: onRegionViewportSnapshot,
                   zoomMultiplier: zoomMultiplier,
                 ),
