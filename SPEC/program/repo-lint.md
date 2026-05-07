@@ -57,6 +57,7 @@
 | `tool/check_no_screen_in_game_widgets.dart` | Disallow `*_screen.dart` files under `app/lib/features/game/widgets/**`; rule `repo.no_screen_in_game_widgets` |
 | `tool/check_game_widgets_file_size.dart` | Enforce `app/lib/features/game/widgets/**` Dart files at **700 physical lines or fewer** — see `SPEC/program/game-widgets-file-size.md`; rule `repo.game_widgets_file_size` |
 | `tool/check_dart_file_non_comment_line_size.dart` | Enforce repository-wide Dart files at **1000 non-comment lines or fewer** (fail when strictly greater), excluding generated suffixes and generated l10n path prefixes — see `SPEC/program/dart-file-non-comment-line-size.md`; rule `repo.dart_file_non_comment_line_size` |
+| `tool/check_long_string_switches.dart` | Warn/fail on large string-literal switch statements/expressions (warn ≥20, fail ≥50) via manifest rule `repo.dart_long_string_switches`; uses shared repo-wide collector `collectRepoLintRepoWideDartFiles` — see `SPEC/program/show-tech-tool.md` |
 | `tool/check_land_province_bucket_keys.dart` | For guarded explore/fog/news paths, disallow local-only land-province tile-bucket lookups (`tileKeysByRegionAndProvince[region]?[localId]`); require canonical full-id buckets only; rule `repo.land_province_bucket_keys` |
 | `tool/check_logic_dual_region_province_field_access.dart` | Caps direct `oldWorld/newWorld` `provinces` / `units` references in `packages/colonizethis_logic/lib/src/**` outside canonical lookup files (`province_lookup.dart`, `unit_lookup.dart`) (GitHub #2071); rule `repo.logic_dual_region_province_field_access` — see `SPEC/program/logic-dual-region-province-access.md` |
 | `tool/check_app_no_duplicate_helpers.dart` | AST scan that pins **canonical helper symbols** extracted for #2180 (e.g. `eraRoman`, `techCategoryLabelL10n`, `commodityDisplayName`, the `trainDialog*` set) to one canonical file under `app/lib/**` and forbids reappearance of the previous private duplicates (`_eraRoman`, `_categoryLabel`, `_categoryLabelL10n`, `_commodityDisplayName`) anywhere as top-level functions or class methods (GitHub #2180); rule `repo.app_no_duplicate_helpers` |
@@ -86,7 +87,7 @@ Each rule has a stable `rule_id` (prefix `repo.`). **Groups** (non-exhaustive): 
 | **`dart analyze` / `flutter analyze`** (**when CI uses error-only parsing**) | Fail the job only on **analyzer `error` severity** lines; **warnings and infos do not fail** the gate unless project policy explicitly changes. |
 | **`dart run tool/ct_repo_lint.dart`** and manifest-driven `runner` rules | **Binary pass/fail** per rule design (`exit` non-zero on violation); not governed by “analyzer errors only.” |
 | **`custom_lint` / `dart run custom_lint`** | Treat as **analyzer diagnostics** (same severity model as `dart analyze` for the plugin); CI should match the wired script’s contract (see [exception-enforcement.md](exception-enforcement.md)). |
-| **Standalone AST scripts** (e.g. `dart tool/check_long_string_switches.dart`) | **Binary** on their own thresholds unless a SPEC says otherwise. |
+| **Standalone AST scripts** | **Binary** on their own thresholds unless a SPEC says otherwise. |
 
 ### Shared exclusions (test/integration_test, generation, fixtures)
 
@@ -95,7 +96,7 @@ Across tools that intentionally share skip logic, exclude at minimum:
 - Suffixes: `*.g.dart`, `*.freezed.dart`, `*.mocks.dart`, `*.gen.dart` (and any other generated suffixes called out per package).
 - Path fragments (fixture / golden trees): see `repoLintFixtureDirPathMarkers` in `tool/ct_repo_lint_scan_contract.dart` (`/test_data/`, `/fixtures/`, `/golden/`, etc.) wherever that helper applies.
 
-`tool/check_long_string_switches.dart` does **not** use `collectRepoLintDomainDartFiles`; it walks repo `.dart` files with its **own** exclusions (e.g. `.dart_tool`, `.pub-cache`, `build`, `*.g.dart`, and the tech embed path). Treat it as **already covering tests** unless SPEC is intentionally updated to narrow exclusions.
+`tool/check_long_string_switches.dart` runs as manifest rule `repo.dart_long_string_switches` and uses the shared repo-wide collector in `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintRepoWideDartFiles` + `repoLintRepoWideDartCollectorShouldSkip`) to preserve broad coverage while centralizing exclusions (`.dart_tool`, `.pub-cache`, `build`, generated suffixes, and tech embed path).
 
 ### Scan contract vs lib-only checkers (GitHub #2014)
 
@@ -105,7 +106,7 @@ Across tools that intentionally share skip logic, exclude at minimum:
 
 ### CI workflow parity
 
-**Today:** `.github/workflows/quality.yml` is the **only** workflow (as of the #2014 documentation slice) that runs `ct_repo_lint`, domain `custom_lint`, and (in `app_tests_cache`) `flutter analyze` plus `check_long_string_switches`. Any **additional** workflow that runs the same class of checks **must** match the **scope and exclusions** documented here.
+**Today:** `.github/workflows/quality.yml` is the **only** workflow (as of the #2014 documentation slice) that runs `ct_repo_lint`, domain `custom_lint`, and (in `app_tests_cache`) `flutter analyze`. Any **additional** workflow that runs the same class of checks **must** match the **scope and exclusions** documented here.
 
 **Workspace analyzer:** Implemented — see [CI contract](#ci-contract) (`quality` job, `tool/run_workspace_analyze_errors_only.dart`).
 
@@ -113,7 +114,7 @@ Across tools that intentionally share skip logic, exclude at minimum:
 
 - Given this section and CONTRIBUTING, when a maintainer widens a fatal repo rule to `test/`, then the change either **co-fixes violations** in the same PR or documents an allowed **audit/baseline** transition in SPEC with tracking reference.
 - Given `.github/workflows/quality.yml`, when a contributor adds a new job that runs `ct_repo_lint`, domain `custom_lint`, or package analyze steps, then that job follows the **failure semantics** table above and the **exclusion** rules in this section unless a narrower rule SPEC explicitly overrides.
-- Given `tool/check_long_string_switches.dart`, when triaging #2014, then implementers treat long-string switch coverage as **already including tests** unless a deliberate SPEC change narrows scope.
+- Given manifest rule `repo.dart_long_string_switches`, when triaging #2014, then implementers treat long-string switch coverage as **already including tests** unless a deliberate SPEC change narrows scope.
 
 ### Phased roadmap (GitHub #2014, ≤5 mergeable slices)
 

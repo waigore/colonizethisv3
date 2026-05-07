@@ -39,7 +39,7 @@ dart run "$ROOT/tool/check_app_hardcoded_ui_strings.dart"
 
 echo ""
 echo "=== Work target constants convention gate ==="
-bash "$ROOT/tool/check_work_target_constants.sh"
+dart run "$ROOT/tool/check_work_target_constants.dart"
 
 echo ""
 echo "=== Test app (Flutter) ==="

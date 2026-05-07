@@ -82,7 +82,7 @@ colonizethis_data    (no package deps)
 The repository enforces this boundary in CI via:
 
 - `dart run tool/ct_repo_lint.dart` (Quality workflow), including rules `repo.logic_ai_decoupling`, `repo.app_lib_no_broad_suggest_work_orders`, `repo.asset_path_constants`, `repo.tech_id_constants`, `repo.work_target_constants`, and `repo.civilian_unit_type_constants` (see `tool/ct_repo_lint_manifest.yaml` and `SPEC/program/repo-lint.md`).
-- `tool/check_logic_ai_decoupling.sh`, `tool/check_asset_path_constants.dart` (also runnable via `tool/check_asset_path_constants.sh`), and the other `tool/check_*` entrypoints invoked by repo lint.
+- `tool/check_logic_ai_decoupling.sh`, `tool/check_asset_path_constants.dart`, and the other `tool/check_*` entrypoints invoked by repo lint.
 - `.github/workflows/quality.yml` steps that run unit tests for individual convention checkers (e.g. `test/check_asset_path_constants_test.dart`, `test/check_work_target_constants_test.dart`, …) so checker logic stays covered in CI.
 
 Guard behavior:
