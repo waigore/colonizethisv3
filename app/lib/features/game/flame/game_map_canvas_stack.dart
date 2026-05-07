@@ -8,8 +8,9 @@ import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
 import '../../../../providers/map_province_panel_provider.dart';
 import 'game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
-import '../../../../widgets/ct_region_map.dart'
-    show BaseLayerDisplayMode, CtMapVisibilityMode, CtRegionMap;
+import 'region_map_component_shared.dart'
+    show BaseLayerDisplayMode, CtMapVisibilityMode;
+import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'game_map_province_detail_side_panel.dart';
 import 'per_player_work_target_selection_cache.dart';

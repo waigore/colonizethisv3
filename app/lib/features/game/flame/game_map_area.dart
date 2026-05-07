@@ -12,7 +12,7 @@ import 'package:colonizethis_map/colonizethis_map.dart'
 import 'package:colonizethis_app/l10n/l10n.dart';
 
 import '../../../config/ct_e2e.dart';
-import '../../../../widgets/ct_region_map.dart' show BaseLayerDisplayMode;
+import 'region_map_component_shared.dart' show BaseLayerDisplayMode;
 
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/debug_console_provider.dart';

@@ -25,6 +25,8 @@ import '../features/game/dialogue/intervention_dialogue_overlay.dart';
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
 import '../features/game/widgets/turn_news_dialog.dart';
+import '../features/game/flame/region_map_component_shared.dart'
+    show CtMapVisibilityMode;
 import '../l10n/l10n.dart';
 import '../widgets/debug_init_game.dart';
 import '../widgets/ct_choice_chip.dart';
@@ -550,4 +552,3 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
     ],
   ),
 ];
-

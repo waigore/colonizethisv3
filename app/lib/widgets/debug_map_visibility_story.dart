@@ -2,6 +2,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 
+import '../features/game/flame/region_map_component_shared.dart'
+    show CtMapVisibilityMode;
 import '../l10n/l10n.dart';
 import 'ct_choice_chip.dart';
 import 'ct_region_map.dart';
@@ -62,7 +64,8 @@ InitGameMapViewData debugMapViewDataWithVisibilityForFirstPlayer() {
 
 /// Stateful Widgetbook story for the debug map with a visibility mode toggle.
 class DebugMapVisibilityStory extends StatefulWidget {
-  const DebugMapVisibilityStory({super.key, 
+  const DebugMapVisibilityStory({
+    super.key,
     required this.showPoliticalOverlay,
   });
 
@@ -137,8 +140,8 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
               showPoliticalOverlay: widget.showPoliticalOverlay,
               cellSizePx: 28,
               visibilityMode: _visibilityMode,
-              playerViewForResources: _visibilityMode ==
-                      CtMapVisibilityMode.playerConstrained
+              playerViewForResources:
+                  _visibilityMode == CtMapVisibilityMode.playerConstrained
                   ? debugPlayerViewForFirstPlayer()
                   : null,
               showProvinceNamesLayer: _showProvinceNames,
@@ -150,4 +153,3 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
     );
   }
 }
-

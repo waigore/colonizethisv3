@@ -7,16 +7,10 @@ import 'package:flutter/services.dart';
 
 import '../core/services/subscription_tracker.dart';
 import '../features/game/flame/ct_region_map_game.dart';
-import '../features/game/flame/region_map_component.dart';
+import '../features/game/flame/region_map_component_shared.dart';
 import '../features/game/flame/region_map_viewport_snapshot.dart'
     show RegionMapViewportSnapshot;
 import '../features/game/widgets/chrome/region_map_game_viewport.dart';
-
-export '../features/game/flame/region_map_component.dart'
-    show
-        assertCtMapPlayerViewRequired,
-        BaseLayerDisplayMode,
-        CtMapVisibilityMode;
 
 /// Flutter wrapper for the region map; renders via Flame. SPEC/ui/map-widget.md.
 class CtRegionMap extends StatefulWidget {
