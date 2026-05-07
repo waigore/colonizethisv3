@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_loading_indicator.dart';
 
 class TurnResolutionProcessingDialog extends StatelessWidget {
   const TurnResolutionProcessingDialog({required this.phaseText, super.key});
@@ -23,11 +24,11 @@ class TurnResolutionProcessingDialog extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+            const CtLoadingIndicator(
+              size: 16,
+              strokeWidth: 2,
+              center: false,
+            ),
                 const SizedBox(width: 10),
                 Expanded(child: Text(phaseText)),
               ],

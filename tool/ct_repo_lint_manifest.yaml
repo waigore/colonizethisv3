@@ -208,6 +208,13 @@ rules:
     runner: dart
     script: tool/check_land_province_bucket_keys.dart
 
+  - rule_id: repo.app_ct_loading_indicator
+    group: ui_structure
+    title: app/lib must use CtLoadingIndicator instead of raw CircularProgressIndicator
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_ct_loading_indicator.dart
+
   - rule_id: repo.logic_dual_region_province_field_access
     group: architecture
     title: colonizethis_logic limits direct oldWorld/newWorld province list access
