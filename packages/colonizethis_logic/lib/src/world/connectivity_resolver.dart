@@ -3,12 +3,13 @@ import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../utils/graph_traversal.dart';
+import '../diplomacy/diplomacy_relation_lookup.dart';
+import 'connectivity_blockade_target.dart';
 import 'naval.dart';
 import 'port_seaboard_registry_key.dart';
 import 'province_lookup.dart';
 import 'tile_key_coordinates.dart';
 import 'topology_helpers.dart';
-import '../diplomacy/diplomacy_relation_lookup.dart';
 
 final _log = packageLogger();
 
@@ -56,21 +57,15 @@ Map<String, Set<String>> computeBlockadedPortProvincesByPlayer(
   }
   final fleets = game.worldState.fleets;
   for (final fleet in fleets) {
-    if (fleet.mission != FleetMission.blockade) continue;
-    if (!fleet.isAtSea || fleet.seaZoneId == null) continue;
-    final targetProvinceId = fleet.targetProvinceId;
-    if (targetProvinceId == null || targetProvinceId.isEmpty) continue;
-    if (!ProvinceId.isPrefixed(targetProvinceId)) continue;
-    final adjacentSeaZones = seaZoneIdsAdjacentToProvince(
-      topology,
-      targetProvinceId,
+    final ownerId = blockadedProvinceOwnerIdForFleet(
+      fleet: fleet,
+      worldState: game.worldState,
+      topology: topology,
+      areFactionsAtWar: (attackerFactionId, defenderFactionId) =>
+          factionsAtWar(game, attackerFactionId, defenderFactionId),
     );
-    if (!adjacentSeaZones.contains(fleet.seaZoneId)) continue;
-    final province = game.worldState.tryGetProvince(targetProvinceId);
-    final ownerId = province?.ownerId;
     if (ownerId == null) continue;
-    final blockaderId = fleet.ownerId;
-    if (!factionsAtWar(game, blockaderId, ownerId)) continue;
+    final targetProvinceId = fleet.targetProvinceId!;
     result[ownerId] ??= {};
     result[ownerId]!.add(targetProvinceId);
   }
