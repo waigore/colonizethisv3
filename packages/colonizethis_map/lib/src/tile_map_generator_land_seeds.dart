@@ -24,7 +24,7 @@ part 'tile_map_generator_land_seeds_placement_part.dart';
 part 'tile_map_generator_land_seeds_organic_part.dart';
 part 'tile_map_generator_land_seeds_coast_part.dart';
 
-const String _landSentinel = kTileMapLandSentinel;
+String get _landSentinel => kTileMapLandSentinel;
 
 /// Pass 2–3: land seed placement and assignment (organic and seed-before-assignment).
 class TileMapGenLandSeeds {
