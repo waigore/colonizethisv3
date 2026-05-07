@@ -7,7 +7,7 @@ import 'tile_map_distance_sentinels.dart';
 import 'tile_map_land_sentinel.dart';
 import 'tile_map_land_seed_contract.dart';
 
-const String _landSentinel = kTileMapLandSentinel;
+String get _landSentinel => kTileMapLandSentinel;
 
 (int start, int end) _landSeedIndexRangeForContinent(
   List<int> continentBySeedIndex,
