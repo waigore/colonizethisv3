@@ -5,16 +5,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/services/region_map_widget_bindings.dart';
 import '../core/services/subscription_tracker.dart';
-import '../features/game/flame/ct_region_map_game.dart';
-import '../features/game/flame/region_map_component.dart'
-    show
-        BaseLayerDisplayMode,
-        CtMapVisibilityMode,
-        assertCtMapPlayerViewRequired;
-import '../features/game/flame/region_map_viewport_snapshot.dart'
-    show RegionMapViewportSnapshot;
-import '../features/game/widgets/chrome/region_map_game_viewport.dart';
 
 /// Flutter wrapper for the region map; renders via Flame. SPEC/ui/map-widget.md.
 class CtRegionMap extends StatefulWidget {
@@ -200,7 +192,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
   }
 
   CtRegionMapGame _buildGame() {
-    return CtRegionMapGame(
+    return defaultCreateCtRegionMapGame(
       region: widget.region,
       cellSizePx: widget.cellSizePx,
       showPoliticalOverlay: widget.showPoliticalOverlay,
@@ -322,7 +314,7 @@ class _CtRegionMapState extends State<CtRegionMap> {
                 }
                 _game.panBy(details.focalPointDelta);
               },
-              child: RegionMapGameViewport(game: _game),
+              child: buildRegionMapGameViewport(_game),
             ),
           ),
         ),
