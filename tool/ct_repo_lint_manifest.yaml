@@ -27,6 +27,13 @@ rules:
     runner: shell
     argv: [tool/check_logic_ai_decoupling.sh]
 
+  - rule_id: repo.logic_dead_files
+    group: architecture
+    title: colonizethis_logic dead-file detection under lib/src
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_dead_files.dart
+
   - rule_id: repo.app_lib_no_broad_suggest_work_orders
     group: architecture
     title: app/lib must not call broad suggestWorkOrders (Refs #2133)
