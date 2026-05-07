@@ -197,6 +197,25 @@ bool factionsAtWar(Game game, String a, String b) {
   return rel?.atWar ?? false;
 }
 
+/// Undirected adjacency: for each faction id, the set of faction ids at war
+/// with it (from [game.diplomacyRelations], using [DiplomacyRelation.atWar]).
+///
+/// Used by naval visibility, naval combat conflict detection, and sea trade
+/// interception. Issue #2178 Phase A; keep in sync with [factionsAtWar].
+Map<String, Set<String>> hostileFactionsByFaction(Game game) {
+  final out = <String, Set<String>>{};
+  for (final rel in game.diplomacyRelations) {
+    if (!rel.atWar) continue;
+    out.putIfAbsent(rel.factionId1, () => <String>{}).add(rel.factionId2);
+    out.putIfAbsent(rel.factionId2, () => <String>{}).add(rel.factionId1);
+  }
+  return out;
+}
+
+/// Faction ids currently at war with [playerId] (empty if none or unknown).
+Set<String> enemiesOf(Game game, String playerId) =>
+    hostileFactionsByFaction(game)[playerId] ?? const <String>{};
+
 /// True if [playerId] may attack [targetOwnerId]: at war or declaring war this turn.
 /// Used by move validator for GP and Minor/Tribe attack checks. SPEC/program/orders.md.
 bool canAttackWithWarOrDeclaring(

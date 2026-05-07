@@ -5,6 +5,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'military_strength.dart';
 
 final _log = packageLogger();
@@ -135,12 +136,7 @@ BattleContextSea normalizeNavalBattleSidesForAttacker(
 /// Conflict detection: returns contested sea zones with two hostile sides.
 /// Populates mission per side from fleet state for retreat aggression.
 List<BattleContextSea> detectNavalConflicts(Game game) {
-  final atWar = <String, Set<String>>{};
-  for (final rel in game.diplomacyRelations) {
-    if (rel.state != RelationState.atWar) continue;
-    atWar.putIfAbsent(rel.factionId1, () => <String>{}).add(rel.factionId2);
-    atWar.putIfAbsent(rel.factionId2, () => <String>{}).add(rel.factionId1);
-  }
+  final atWar = hostileFactionsByFaction(game);
   final byZone = <String, Map<String, List<ShipInstance>>>{};
   final missionByZoneOwner = <String, Map<String, FleetMission>>{};
   for (final f in game.worldState.fleets) {
