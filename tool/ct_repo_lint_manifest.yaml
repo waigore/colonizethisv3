@@ -123,6 +123,13 @@ rules:
     runner: dart
     script: tool/check_app_event_handler_scope_logic_boundary.dart
 
+  - rule_id: repo.subscription_tracker
+    group: structure
+    title: app feature subscriptions must use SubscriptionTracker
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_subscription_tracker.dart
+
   - rule_id: repo.control_flow_nesting_depth
     group: structure
     title: Control-flow nesting depth (if/for/while/switch)

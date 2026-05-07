@@ -80,6 +80,9 @@ const String combatModeChoiceDialogId = 'combat_mode_choice';
 /// [OpenDialogEvent] id for [QuickBattleResultDialog]. SPEC/program/app-ui-wiring.md.
 const String quickBattleResultDialogId = 'quick_battle_result';
 
+/// [OpenDialogEvent] id for [TurnNewsDialog]. SPEC/program/app-ui-wiring.md.
+const String turnNewsDialogId = 'turn_news';
+
 final _logShell = packageLogger('shell');
 final _logEvent = packageLogger('event');
 
