@@ -4,8 +4,9 @@ import 'package:colonizethis_models/colonizethis_models.dart'
     show AppEventBus, Player;
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_app/widgets/ct_region_map.dart'
-    show BaseLayerDisplayMode, CtRegionMap, CtMapVisibilityMode;
+import 'package:colonizethis_app/features/game/flame/region_map_component.dart'
+    show BaseLayerDisplayMode, CtMapVisibilityMode;
+import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 import 'package:colonizethis_app/widgets/debug_init_game.dart';
 
 /// Minimal view for map tests in [CtMapVisibilityMode.playerConstrained].

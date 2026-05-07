@@ -22,13 +22,15 @@ import '../features/game/widgets/province_overlay_demo_data.dart';
 import '../features/game/widgets/tech_tree_widget.dart';
 import '../features/game/screens/technology_screen.dart';
 import '../features/game/dialogue/intervention_dialogue_overlay.dart';
+import '../features/game/flame/region_map_component.dart'
+    show CtMapVisibilityMode;
 import '../features/game/widgets/train_civilians_dialog.dart';
 import '../features/game/widgets/train_military_dialog.dart';
 import '../features/game/widgets/turn_news_dialog.dart';
 import '../l10n/l10n.dart';
 import '../widgets/debug_init_game.dart';
 import '../widgets/ct_choice_chip.dart';
-import '../widgets/debug_map_visibility_story.dart';
+import 'debug_map_visibility_story.dart';
 import '../widgets/game_setup.dart';
 import '../widgets/main_menu.dart';
 import '../widgets/ct_nine_patch_button.dart';
