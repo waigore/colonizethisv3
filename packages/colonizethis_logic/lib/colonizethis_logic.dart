@@ -11,6 +11,11 @@ export 'src/event_bus/game_event_bus.dart';
 export 'src/game_events.dart';
 export 'src/turn_to_year.dart';
 
+// Setup — GitHub #2201: these setup/dossier/world lines stay public for package
+// tests and integrators; an app/ai usage audit found no direct consumers, but
+// removing them would force broad `src/` imports in tests without shrinking
+// runtime surface meaningfully.
+
 // Setup
 export 'src/setup/capital_choice.dart';
 export 'src/setup/game_setup.dart';

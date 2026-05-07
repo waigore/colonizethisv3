@@ -60,7 +60,20 @@
 | `tool/check_long_string_switches.dart` | Warn/fail on large string-literal switch statements/expressions (warn ≥20, fail ≥50) via manifest rule `repo.dart_long_string_switches`; uses shared repo-wide collector `collectRepoLintRepoWideDartFiles` — see `SPEC/program/show-tech-tool.md` |
 | `tool/check_land_province_bucket_keys.dart` | For guarded explore/fog/news paths, disallow local-only land-province tile-bucket lookups (`tileKeysByRegionAndProvince[region]?[localId]`); require canonical full-id buckets only; rule `repo.land_province_bucket_keys` |
 | `tool/check_logic_dual_region_province_field_access.dart` | Caps direct `oldWorld/newWorld` `provinces` / `units` references in `packages/colonizethis_logic/lib/src/**` outside canonical lookup files (`province_lookup.dart`, `unit_lookup.dart`) (GitHub #2071); rule `repo.logic_dual_region_province_field_access` — see `SPEC/program/logic-dual-region-province-access.md` |
+| `tool/check_logic_dead_files.dart` | Unreferenced `lib/src` scan for `colonizethis_logic`; rule `repo.logic_dead_files` — see subsection below |
 | `tool/check_app_no_duplicate_helpers.dart` | AST scan that pins **canonical helper symbols** extracted for #2180 (e.g. `eraRoman`, `techCategoryLabelL10n`, `commodityDisplayName`, the `trainDialog*` set) to one canonical file under `app/lib/**` and forbids reappearance of the previous private duplicates (`_eraRoman`, `_categoryLabel`, `_categoryLabelL10n`, `_commodityDisplayName`) anywhere as top-level functions or class methods (GitHub #2180); rule `repo.app_no_duplicate_helpers` |
+
+### `repo.logic_dead_files` (colonizethis_logic `lib/src` orphans)
+
+**Goal (GitHub #2201):** Fail CI when a hand-written Dart file under `packages/colonizethis_logic/lib/src/**` is neither reachable from the package `lib/**` import graph nor reachable from any **barrel** entrypoint (`packages/colonizethis_logic/lib/*.dart`) via `export` edges.
+
+**Predicate:** A file under `lib/src` is **dead** when all are true: it is not a `part of` target; it is not imported (directly or transitively from parsed `import`/`export`/`part` directives) by any file under `packages/colonizethis_logic/lib/**`; and it is not on the export-reachability closure rooted at every `lib/*.dart` top-level barrel plus any `lib/src` file already imported by `lib/**`.
+
+**Test imports:** Imports from `packages/colonizethis_logic/test/**` do **not** make a `lib/src` file live.
+
+**Deferred paths:** `lib/src/ai/ai_planner.dart` and `lib/src/ai/sim_game_ai.dart` are temporarily exempt in `tool/check_logic_dead_files.dart` until product wiring or deletion is decided (issue #2201); the checker still lists them in the pass message when they are the only findings.
+
+**Consumer note:** The root barrel may export setup/dossier/world modules that are not referenced by `app/` or `colonizethis_ai/` today; that keeps tests on a single `package:colonizethis_logic/colonizethis_logic.dart` import. Narrowing those exports is optional maintenance, not required for the dead-file rule.
 
 ## Rule IDs and groups
 
