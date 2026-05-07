@@ -1,8 +1,11 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/features/game/utils/commodity_ui_helpers.dart';
 import 'package:colonizethis_app/features/game/utils/tech_ui_helpers.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
+
   group('eraRoman', () {
     test('returns roman numerals for the first four eras', () {
       expect(eraRoman(1), 'I');
