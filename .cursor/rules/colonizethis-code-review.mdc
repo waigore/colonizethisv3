@@ -1,6 +1,6 @@
 ---
 description: Code review checklist — concrete thresholds and repo paths; principles in other rules
-globs: "**/*.dart"
+globs: "app/lib/**/*.dart,packages/*/lib/**/*.dart,tool/**/*.dart"
 alwaysApply: false
 ---
 
