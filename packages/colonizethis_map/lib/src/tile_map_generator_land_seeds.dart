@@ -2,19 +2,12 @@ import 'dart:math';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'grid_voronoi.dart';
 import 'tile_map_distance_sentinels.dart';
+import 'tile_map_land_sentinel.dart';
 import 'tile_map_land_seed_contract.dart';
 
-const String _landSentinel = '_land';
-
-/// Deterministic noise in [-1, 1] for Voronoi boundary irregularity.
-double _landSeedDeterministicNoise(int seed, int x, int y) {
-  var h = (seed * 31 + x) * 31 + y;
-  h = (h ^ (h >> 16)) * 0x85ebca6b;
-  h = (h ^ (h >> 13)) * 0xc2b2ae35;
-  h = h ^ (h >> 16);
-  return (h & kDeterministicLcg31Mask) / kDeterministicLcg31Mask * 2 - 1;
-}
+const String _landSentinel = kTileMapLandSentinel;
 
 (int start, int end) _landSeedIndexRangeForContinent(
   List<int> continentBySeedIndex,
@@ -70,8 +63,7 @@ void _fillLandSeedIndexRangesByContinent(
       if (dd < d2) d2 = dd;
     }
     final noise = params.voronoiNoiseScale > 0
-        ? _landSeedDeterministicNoise(params.seed, x, y) *
-              params.voronoiNoiseScale
+        ? deterministicNoise(params.seed, x, y) * params.voronoiNoiseScale
         : 0.0;
     final effective = d2.toDouble() + noise;
     if (effective >= bestD2) continue;
