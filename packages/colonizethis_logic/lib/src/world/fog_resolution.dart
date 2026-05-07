@@ -8,55 +8,11 @@ import 'naval_resolution.dart'
         canonicalSeaZoneTileBucketKey,
         coastalLandTileKeysFromNavalPresenceAtSea,
         landTileKeysForProvinceBucket;
+import 'fog_spy_reveal_decay.dart';
 import 'player_view.dart';
 import 'province_lookup.dart' hide landTileKeysForProvinceBucket;
 import 'tile_key_coordinates.dart';
 import 'unit_lookup.dart';
-
-void _fogFullyVisibleTilesForSpyExpiry(
-  Map<String, String> vis,
-  List<String> tileKeys,
-) {
-  for (final tk in tileKeys) {
-    final cur = vis[tk];
-    if (cur == VisibilityLevel.fullyVisible.name) {
-      vis[tk] = VisibilityLevel.fogged.name;
-    }
-  }
-}
-
-Map<String, int> _nextSpyTimersForPlayerAfterDecay({
-  required WorldState world,
-  required String playerId,
-  required Map<String, int> byProvince,
-  required Map<String, String?> ownerByProvinceId,
-  required Map<String, String> vis,
-}) {
-  final newByProvince = <String, int>{};
-  for (final provEntry in byProvince.entries) {
-    final provinceId = provEntry.key;
-    final turns = provEntry.value;
-
-    final ownerId = ownerByProvinceId[provinceId];
-    if (ownerId == playerId) {
-      continue;
-    }
-
-    final nextTurns = turns - 1;
-    if (nextTurns <= 0) {
-      final regionId = ProvinceId.regionIdFrom(provinceId);
-      final tileKeys = landTileKeysForProvinceBucket(
-        world,
-        regionId,
-        provinceId,
-      );
-      _fogFullyVisibleTilesForSpyExpiry(vis, tileKeys);
-    } else {
-      newByProvince[provinceId] = nextTurns;
-    }
-  }
-  return newByProvince;
-}
 
 /// Spy 5-turn fog decay: decrement timers; when they expire, set other-faction
 /// provinces back to fogged for that player. Timers MUST NOT affect a player's
@@ -80,12 +36,16 @@ applySpyRevealTimerDecay(Game game) {
     final playerId = entry.key;
     final byProvince = entry.value;
     final vis = Map<String, String>.from(visibilityByTile[playerId] ?? {});
-    final newByProvince = _nextSpyTimersForPlayerAfterDecay(
-      world: world,
+    final newByProvince = nextSpyRevealTimersByProvinceAfterDecayStep(
       playerId: playerId,
       byProvince: byProvince,
       ownerByProvinceId: ownerByProvinceId,
-      vis: vis,
+      playerVisibility: vis,
+      landTileKeysForProvince: (provinceId) => landTileKeysForProvinceBucket(
+        world,
+        ProvinceId.regionIdFrom(provinceId),
+        provinceId,
+      ),
     );
     if (newByProvince.isNotEmpty) nextSpyTimers[playerId] = newByProvince;
     visibilityByTile[playerId] = vis;
