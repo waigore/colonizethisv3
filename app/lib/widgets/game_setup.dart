@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../config/constants.dart';
 import '../l10n/l10n.dart';
 import 'ct_dropdown.dart';
+import 'ct_loading_indicator.dart';
 import 'ct_nine_patch_button.dart';
 
 /// Visual variant of the Game Setup screen. SPEC/ui/game-setup.md; UXD 03b.
@@ -142,10 +143,10 @@ class _CtGameSetupState extends State<CtGameSetup> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                            const CtLoadingIndicator(
+                              size: 20,
+                              strokeWidth: 2,
+                              center: false,
                             ),
                             const SizedBox(width: 8),
                             Text(

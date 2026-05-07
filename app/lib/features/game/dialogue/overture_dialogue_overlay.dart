@@ -8,6 +8,7 @@ import 'package:jenny/jenny.dart';
 
 import '../../../../l10n/l10n.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_loading_indicator.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import 'ct_dialogue_view.dart';
 
@@ -204,7 +205,7 @@ class _OvertureDialogueOverlayState extends State<OvertureDialogueOverlay> {
                           ),
                         ),
                       ] else
-                        const Center(child: CircularProgressIndicator()),
+                        const CtLoadingIndicator(),
                     ],
                   ),
                 ),
