@@ -62,7 +62,8 @@ InitGameMapViewData debugMapViewDataWithVisibilityForFirstPlayer() {
 
 /// Stateful Widgetbook story for the debug map with a visibility mode toggle.
 class DebugMapVisibilityStory extends StatefulWidget {
-  const DebugMapVisibilityStory({super.key, 
+  const DebugMapVisibilityStory({
+    super.key,
     required this.showPoliticalOverlay,
   });
 
@@ -137,8 +138,8 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
               showPoliticalOverlay: widget.showPoliticalOverlay,
               cellSizePx: 28,
               visibilityMode: _visibilityMode,
-              playerViewForResources: _visibilityMode ==
-                      CtMapVisibilityMode.playerConstrained
+              playerViewForResources:
+                  _visibilityMode == CtMapVisibilityMode.playerConstrained
                   ? debugPlayerViewForFirstPlayer()
                   : null,
               showProvinceNamesLayer: _showProvinceNames,
@@ -150,4 +151,3 @@ class _DebugMapVisibilityStoryState extends State<DebugMapVisibilityStory> {
     );
   }
 }
-

@@ -550,4 +550,3 @@ List<WidgetbookNode> get trainCiviliansDialogDirectories => [
     ],
   ),
 ];
-
