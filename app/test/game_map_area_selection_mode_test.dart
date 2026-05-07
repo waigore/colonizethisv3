@@ -545,8 +545,8 @@ void main() {
 
     var regionMap = tester.widget<CtRegionMap>(find.byType(CtRegionMap).first);
     expect(regionMap.onMapTileTappedForDetail, isNotNull);
-    expect(regionMap.onCivilianTileTapped, isNotNull);
-    expect(regionMap.onFleetMarkerTapped, isNotNull);
+    expect(regionMap.onCivilianTileStateChanged, isNotNull);
+    expect(regionMap.bus, isNotNull);
 
     bus.emit(
       StartCivilianWorkTargetSelectionEvent(
@@ -560,7 +560,7 @@ void main() {
     expect(find.text('Select a tile, or click cancel'), findsOneWidget);
     regionMap = tester.widget<CtRegionMap>(find.byType(CtRegionMap).first);
     expect(regionMap.onMapTileTappedForDetail, isNull);
-    expect(regionMap.onCivilianTileTapped, isNull);
-    expect(regionMap.onFleetMarkerTapped, isNull);
+    expect(regionMap.onCivilianTileStateChanged, isNull);
+    expect(regionMap.bus, isNull);
   });
 }

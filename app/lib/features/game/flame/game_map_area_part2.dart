@@ -117,28 +117,10 @@ mixin _GameMapAreaStatePart2
                               _workTargetSelection != null
                               ? _cancelWorkTargetSelection
                               : null,
-                          onCivilianTileTapped: (tileKey) {
-                            String? initialSelectedUnitId;
-                            for (final marker
-                                in projectedRegion.civilianTileMarkers) {
-                              if (marker.tileKey == tileKey &&
-                                  marker.unitIds.isNotEmpty) {
-                                initialSelectedUnitId = marker.unitIds.first;
-                                break;
-                              }
-                            }
+                          onCivilianTileStateChanged: (tileKey) {
                             setState(() {
                               _selectedCivilianTileKey = tileKey;
                             });
-                            ref
-                                .read(appEventBusProvider)
-                                .emit(
-                                  ct_models.OpenCivilianUnitsPanelEvent(
-                                    tileScopeTileKey: tileKey,
-                                    initialSelectedUnitId:
-                                        initialSelectedUnitId,
-                                  ),
-                                );
                           },
                           onCivilianTileSelectionCleared: () {
                             if (_selectedCivilianTileKey == null) return;
@@ -146,22 +128,6 @@ mixin _GameMapAreaStatePart2
                               _selectedCivilianTileKey = null;
                             });
                           },
-                          onFleetMarkerTapped:
-                              (
-                                locationScopeKey,
-                                initialFleetId,
-                                markerTileKey,
-                              ) {
-                                ref
-                                    .read(appEventBusProvider)
-                                    .emit(
-                                      ct_models.OpenNavalUnitsPanelEvent(
-                                        locationScopeKey: locationScopeKey,
-                                        initialSelectedFleetId: initialFleetId,
-                                        tileScopeTileKey: markerTileKey,
-                                      ),
-                                    );
-                              },
                           bus: ref.read(appEventBusProvider),
                           onRegionViewportSnapshot: _onRegionViewportSnapshot,
                           zoomMultiplier: _mapViewState.zoomMultiplier,
