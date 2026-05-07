@@ -50,23 +50,25 @@ class _TrainCiviliansDialogState extends State<TrainCiviliansDialog> {
   }
 
   Player? get _player {
-    for (final p in widget.game.players) {
-      if (p.id == widget.humanPlayerId) return p;
-    }
-    return null;
+    return trainDialogPlayerById(
+      players: widget.game.players,
+      playerId: widget.humanPlayerId,
+    );
   }
 
-  bool get _hasCapital => _player?.capitalProvinceId != null;
+  bool get _hasCapital => trainDialogHasCapital(_player);
 
-  int get _treasury => _player?.treasury ?? 0;
+  int get _treasury => trainDialogTreasury(_player);
   int get _paperStockpile => _player?.stockpile.quantityOf('paper') ?? 0;
 
-  Map<String, bool> get _techUnlocked => _player?.techUnlocked ?? const {};
+  Map<String, bool> get _techUnlocked => trainDialogTechUnlocked(_player);
 
   bool _isLocked(String unitType) {
-    final techId = unlockingTechByCivilianId[unitType];
-    if (techId == null) return false;
-    return _techUnlocked[techId] != true;
+    return trainDialogIsLocked(
+      unitType: unitType,
+      unlockingTechByUnitType: unlockingTechByCivilianId,
+      techUnlocked: _techUnlocked,
+    );
   }
 
   int _totalTreasuryCost() {
