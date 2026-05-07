@@ -224,3 +224,10 @@ rules:
     include_only_when_env:
       name: CT_REPO_LINT_INCLUDE_APP
       value: "true"
+
+  - rule_id: repo.app_no_duplicate_helpers
+    group: structure
+    title: "Canonical helpers from #2180 must not be redefined or duplicated"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_duplicate_helpers.dart

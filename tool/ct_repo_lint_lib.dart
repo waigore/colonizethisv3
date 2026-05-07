@@ -6,6 +6,7 @@ import 'package:yaml/yaml.dart';
 
 import 'check_app_hardcoded_ui_strings.dart';
 import 'check_app_event_handler_scope_logic_boundary.dart';
+import 'check_app_no_duplicate_helpers.dart';
 import 'check_asset_path_constants.dart';
 import 'check_canonical_province_tile_keys.dart';
 import 'check_colonizethis_map_lib_pipe_split.dart';
@@ -760,6 +761,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckLogicDualRegionProvinceFieldAccess(repoRoot);
     case 'repo.app_hardcoded_ui_strings':
       return runCheckAppHardcodedUiStrings(repoRoot);
+    case 'repo.app_no_duplicate_helpers':
+      return runCheckAppNoDuplicateHelpers(repoRoot);
     default:
       return null;
   }
