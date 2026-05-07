@@ -100,16 +100,6 @@ Map<String, Map<String, String>> _revealProvinceTilesForPlayer(
     ..[playerId] = vis;
 }
 
-Map<String, Set<String>> _atWarByFaction(Game game) {
-  final out = <String, Set<String>>{};
-  for (final rel in game.diplomacyRelations) {
-    if (rel.state != RelationState.atWar) continue;
-    out.putIfAbsent(rel.factionId1, () => <String>{}).add(rel.factionId2);
-    out.putIfAbsent(rel.factionId2, () => <String>{}).add(rel.factionId1);
-  }
-  return out;
-}
-
 List<String> _adjacentSeaZones(MapTopology topology, String seaZoneId) {
   final out = <String>[];
   for (final e in topology.edges) {
@@ -128,7 +118,7 @@ String? _firstFriendlyOrNeutralRetreatZone(
   String fromSeaZoneId,
   String ownerId,
 ) {
-  final hostileByOwner = _atWarByFaction(game);
+  final hostileByOwner = hostileFactionsByFaction(game);
   for (final adj in _adjacentSeaZones(topology, fromSeaZoneId)) {
     final hostileOwnersPresent = game.worldState.fleets.any(
       (fleet) =>

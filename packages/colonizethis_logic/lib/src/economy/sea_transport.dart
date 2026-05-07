@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../diplomacy/diplomacy_relation_lookup.dart';
 import '../world/naval.dart';
 
 final _log = packageLogger();
@@ -164,17 +165,6 @@ class TradeInterceptionResult {
   final List<Fleet> updatedFleets;
 }
 
-/// Enemies at war with [playerId]. From game.diplomacyRelations.
-Set<String> _enemiesAtWar(Game game, String playerId) {
-  final set = <String>{};
-  for (final rel in game.diplomacyRelations) {
-    if (rel.state != RelationState.atWar) continue;
-    if (rel.factionId1 == playerId) set.add(rel.factionId2);
-    if (rel.factionId2 == playerId) set.add(rel.factionId1);
-  }
-  return set;
-}
-
 /// Intercept score and whether any enemy has Blockade mission.
 (int interceptScore, bool hasBlockade) _interceptScoreAndBlockade(
   List<Fleet> fleets,
@@ -252,7 +242,7 @@ TradeInterceptionResult applyTradeInterception(
     );
   }
 
-  final enemies = _enemiesAtWar(game, playerId);
+  final enemies = enemiesOf(game, playerId);
   if (enemies.isEmpty) {
     final unchanged = Map<CommodityId, int>.from(overseasDelivered);
     _logExtractionAutoTransportInterception(
