@@ -27,6 +27,97 @@ Map<String, String> _provinceIdToOwnerIdFromProvinces(
   return out;
 }
 
+typedef _CapitalMarker = ({String factionId, String displayName, int x, int y});
+
+typedef _RegionRenderInputs =
+    ({
+      Map<String, String> ownerByProvinceId,
+      List<_CapitalMarker> capitalTiles,
+      Map<String, (int r, int g, int b)> factionColors,
+    });
+
+List<_CapitalMarker> _collectCapitalsForRegion<T>({
+  required Iterable<T> factions,
+  required String regionId,
+  required String Function(T faction) factionIdOf,
+  required String Function(T faction) displayNameOf,
+  required CapitalTile? Function(T faction) capitalTileOf,
+}) {
+  final capitals = <_CapitalMarker>[];
+  for (final faction in factions) {
+    final capitalTile = capitalTileOf(faction);
+    if (capitalTile == null || capitalTile.regionId != regionId) {
+      continue;
+    }
+    capitals.add((
+      factionId: factionIdOf(faction),
+      displayName: displayNameOf(faction),
+      x: capitalTile.x,
+      y: capitalTile.y,
+    ));
+  }
+  return capitals;
+}
+
+_RegionRenderInputs _buildRegionRenderInputs({
+  required Game game,
+  required String regionId,
+}) {
+  if (regionId == kRegionOldWorld) {
+    final ownerByProvinceId = _provinceIdToOwnerIdFromProvinces(
+      game.worldState.oldWorld.provinces,
+    );
+    final capitals = <_CapitalMarker>[
+      ..._collectCapitalsForRegion<Player>(
+        factions: game.players,
+        regionId: regionId,
+        factionIdOf: (player) => player.id,
+        displayNameOf: (player) => player.displayName,
+        capitalTileOf: (player) => player.capitalTile,
+      ),
+      ..._collectCapitalsForRegion<MinorNation>(
+        factions: game.minorNations,
+        regionId: regionId,
+        factionIdOf: (nation) => nation.id,
+        displayNameOf: (nation) => nation.displayName ?? nation.id,
+        capitalTileOf: (nation) => nation.capitalTile,
+      ),
+    ];
+    final greatPowerIds = game.players.map((player) => player.id).toList()..sort();
+    final minorNationIds = game.minorNations
+        .map((nation) => nation.id)
+        .toList()
+      ..sort();
+    final factionColors = factionOwnershipColorMap(
+      greatPowerIds: greatPowerIds,
+      minorNationIds: minorNationIds,
+    );
+    return (
+      ownerByProvinceId: ownerByProvinceId,
+      capitalTiles: capitals,
+      factionColors: factionColors,
+    );
+  }
+
+  final ownerByProvinceId = _provinceIdToOwnerIdFromProvinces(
+    game.worldState.newWorld.provinces,
+  );
+  final capitals = _collectCapitalsForRegion<Tribe>(
+    factions: game.tribes,
+    regionId: regionId,
+    factionIdOf: (tribe) => tribe.id,
+    displayNameOf: (tribe) => tribe.displayName ?? tribe.id,
+    capitalTileOf: (tribe) => tribe.capitalTile,
+  );
+  final tribeIds = game.tribes.map((tribe) => tribe.id).toList()..sort();
+  final factionColors = factionOwnershipColorMap(tribeIds: tribeIds);
+  return (
+    ownerByProvinceId: ownerByProvinceId,
+    capitalTiles: capitals,
+    factionColors: factionColors,
+  );
+}
+
 void _appendPortTileToRegionLists(
   String tileKey,
   List<({int x, int y})> owPortTiles,
@@ -213,58 +304,14 @@ Uint8List renderInitGameMapToPng({
   required Map<String, MapTopology> topologyByRegion,
   int cellSize = 24,
 }) {
-  final owOwnerByProvinceId = _provinceIdToOwnerIdFromProvinces(
-    game.worldState.oldWorld.provinces,
+  final owInputs = _buildRegionRenderInputs(
+    game: game,
+    regionId: kRegionOldWorld,
   );
-  final nwOwnerByProvinceId = _provinceIdToOwnerIdFromProvinces(
-    game.worldState.newWorld.provinces,
+  final nwInputs = _buildRegionRenderInputs(
+    game: game,
+    regionId: kRegionNewWorld,
   );
-
-  final owCapitals = <({String factionId, String displayName, int x, int y})>[];
-  for (final p in game.players) {
-    final cap = p.capitalTile;
-    if (cap != null && cap.regionId == kRegionOldWorld) {
-      owCapitals.add((
-        factionId: p.id,
-        displayName: p.displayName,
-        x: cap.x,
-        y: cap.y,
-      ));
-    }
-  }
-  for (final m in game.minorNations) {
-    final cap = m.capitalTile;
-    if (cap != null && cap.regionId == kRegionOldWorld) {
-      owCapitals.add((
-        factionId: m.id,
-        displayName: m.displayName ?? m.id,
-        x: cap.x,
-        y: cap.y,
-      ));
-    }
-  }
-  final nwCapitals = <({String factionId, String displayName, int x, int y})>[];
-  for (final t in game.tribes) {
-    final cap = t.capitalTile;
-    if (cap != null && cap.regionId == kRegionNewWorld) {
-      nwCapitals.add((
-        factionId: t.id,
-        displayName: t.displayName ?? t.id,
-        x: cap.x,
-        y: cap.y,
-      ));
-    }
-  }
-
-  // Ownership colours by faction type (GP vibrant, minors grey, tribes vibrant)
-  final owGreatPowerIds = game.players.map((p) => p.id).toList()..sort();
-  final owMinorNationIds = game.minorNations.map((m) => m.id).toList()..sort();
-  final owFactionColors = factionOwnershipColorMap(
-    greatPowerIds: owGreatPowerIds,
-    minorNationIds: owMinorNationIds,
-  );
-  final nwTribeIds = game.tribes.map((t) => t.id).toList()..sort();
-  final nwFactionColors = factionOwnershipColorMap(tribeIds: nwTribeIds);
 
   // Port tile positions from WorldState.portsByProvinceSeaboard (value = regionId|provinceId|x|y)
   final owPortTiles = <({int x, int y})>[];
@@ -282,20 +329,20 @@ Uint8List renderInitGameMapToPng({
     result: owResult,
     topology: owTopo,
     regionId: kRegionOldWorld,
-    ownerByProvinceId: owOwnerByProvinceId,
-    capitalTiles: owCapitals,
+    ownerByProvinceId: owInputs.ownerByProvinceId,
+    capitalTiles: owInputs.capitalTiles,
     cellSize: cellSize,
-    factionColorsOverride: owFactionColors,
+    factionColorsOverride: owInputs.factionColors,
     portTiles: owPortTiles,
   );
   final nwPng = renderSingleRegionGameStateMapToPng(
     result: nwResult,
     topology: nwTopo,
     regionId: kRegionNewWorld,
-    ownerByProvinceId: nwOwnerByProvinceId,
-    capitalTiles: nwCapitals,
+    ownerByProvinceId: nwInputs.ownerByProvinceId,
+    capitalTiles: nwInputs.capitalTiles,
     cellSize: cellSize,
-    factionColorsOverride: nwFactionColors,
+    factionColorsOverride: nwInputs.factionColors,
     portTiles: nwPortTiles,
   );
 
