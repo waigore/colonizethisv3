@@ -1,9 +1,8 @@
-
 /// Sentinel value for "land not yet assigned to a province". Replaced in Pass 9.
 
 part of 'tile_map_generator.dart';
 
-const String _landSentinel = '_land';
+const String _landSentinel = kTileMapLandSentinel;
 
 /// Centralized map generation parameters. SPEC/program/tile-map-gen-config.md § Grid size derivation.
 class MapGenerationParams {
@@ -300,20 +299,27 @@ class TileMapParams implements TileMapLandSeedParams {
   final double multiRegionResourceCapFraction;
 
   /// Returns a copy with selected fields overridden (e.g. bumped map seed for tests/tools).
-  TileMapParams copyWith({int? seed}) {
+  TileMapParams copyWith({
+    int? seed,
+    double? seaFraction,
+    bool? skipFillLakes,
+    bool? joinContinents,
+    bool? seedBeforeAssignment,
+    double? borderNoise,
+  }) {
     return TileMapParams(
       width: width,
       height: height,
       seed: seed ?? this.seed,
-      seaFraction: seaFraction,
-      borderNoise: borderNoise,
+      seaFraction: seaFraction ?? this.seaFraction,
+      borderNoise: borderNoise ?? this.borderNoise,
       maxEnforceIterations: maxEnforceIterations,
       clusterShape: clusterShape,
       voronoiNoiseScale: voronoiNoiseScale,
       continentBufferTiles: continentBufferTiles,
-      skipFillLakes: skipFillLakes,
-      joinContinents: joinContinents,
-      seedBeforeAssignment: seedBeforeAssignment,
+      skipFillLakes: skipFillLakes ?? this.skipFillLakes,
+      joinContinents: joinContinents ?? this.joinContinents,
+      seedBeforeAssignment: seedBeforeAssignment ?? this.seedBeforeAssignment,
       maxSeaZoneFraction: maxSeaZoneFraction,
       mountainRangesFactor: mountainRangesFactor,
       mountainRangesMin: mountainRangesMin,

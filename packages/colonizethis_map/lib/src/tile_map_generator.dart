@@ -9,6 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'grid_voronoi.dart';
 import 'map_validation_exception.dart';
 import 'tile_map_generator_land_seeds.dart';
+import 'tile_map_land_sentinel.dart';
 import 'tile_map_land_seed_contract.dart';
 import 'tile_map_distance_sentinels.dart';
 import 'topology_inference.dart';
