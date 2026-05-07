@@ -1,6 +1,6 @@
 import 'package:colonizethis_logic/src/world/fog_spy_reveal_decay.dart';
 import 'package:colonizethis_logic/src/world/player_view.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('downgradeFullyVisibleTilesToFoggedAfterSpyTimerExpiry', () {
