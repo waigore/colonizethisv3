@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_app/config/ct_debug_console.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_app/perf/app_perf_trace.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -29,10 +30,18 @@ final _mapGenPassLog = packageLogger('tile_map');
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
 /// Phase 2: createNewGame uses full game-setup pipeline; nextTurn requires cached/persisted map data.
 class GameService {
-  GameService(this._box, this._adapter);
+  GameService(
+    this._box,
+    this._adapter, {
+    bool? turnTraceEnabled,
+    this.turnTraceRootDirectory = 'tmp',
+  }) : _turnTraceEnabled = turnTraceEnabled ?? kCtDebugConsoleEnabled;
 
   final Box<dynamic> _box;
   final GameSaveAdapter _adapter;
+  final bool _turnTraceEnabled;
+  final String turnTraceRootDirectory;
+  final Map<String, _TurnTraceSession> _turnTraceSessionsByGameId = {};
 
   /// Optional app-level bus for [GameToUIEvent] (turn complete, new game, overtures, etc.).
   /// When set, those events are emitted from turn resolution and [createNewGame].
@@ -211,13 +220,15 @@ class GameService {
     final resolvedOrders = aiOrders != null
         ? mergeOrderLists(humanOrders: humanOrders, aiOrders: aiOrders)
         : humanOrders;
-    final result = resolveTurnForGame(
+    final result = _resolveTurnWithTrace(
       game: current,
-      topology: topo,
-      orders: resolvedOrders,
-      tileMapByRegion: tileMaps,
-      eventBus: logicEventBus,
-      onGameEvent: onGameEvent,
+      config: TurnResolverConfig(
+        topology: topo,
+        orders: resolvedOrders,
+        tileMapByRegion: tileMaps,
+        eventBus: logicEventBus,
+        onGameEvent: onGameEvent,
+      ),
     );
     _emitTurnResolutionEvents(result);
     return result;
@@ -233,14 +244,17 @@ class GameService {
     final mapData = _requiredMapDataView(game.id);
     final topo = mapData.combinedTopology;
     final tileMaps = mapData.tileMapByRegion;
-    final result = resumeTurnResolutionWithCallToArmsDecisions(
+    final result = _resolveTurnWithTrace(
       game: game,
-      decisions: decisions,
-      topology: topo,
-      orders: orders,
-      tileMapByRegion: tileMaps,
-      eventBus: logicEventBus,
-      onGameEvent: onGameEvent,
+      config: TurnResolverConfig(
+        topology: topo,
+        orders: orders,
+        tileMapByRegion: tileMaps,
+        eventBus: logicEventBus,
+        onGameEvent: onGameEvent,
+        startFromPhase: TurnPhase.diplomacy,
+        callToArmsDecisions: decisions,
+      ),
     );
     _emitTurnResolutionEvents(result);
     return result;
@@ -251,7 +265,7 @@ class GameService {
   /// When [TurnResolutionComplete], saves the game. SPEC/program/dialogue-system.md.
   TurnResolutionResult resumeOvertureDecisions(
     Game game,
-    List<OvertureOffer> pendingOvertures,
+    List<OvertureOffer> _pendingOvertures,
     List<OvertureDecision> decisions,
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
@@ -259,15 +273,17 @@ class GameService {
     final mapData = _requiredMapDataView(game.id);
     final topo = mapData.combinedTopology;
     final tileMaps = mapData.tileMapByRegion;
-    final result = resumeTurnResolutionWithOvertureDecisions(
+    final result = _resolveTurnWithTrace(
       game: game,
-      pendingOvertures: pendingOvertures,
-      decisions: decisions,
-      topology: topo,
-      orders: orders,
-      tileMapByRegion: tileMaps,
-      eventBus: logicEventBus,
-      onGameEvent: onGameEvent,
+      config: TurnResolverConfig(
+        topology: topo,
+        orders: orders,
+        tileMapByRegion: tileMaps,
+        eventBus: logicEventBus,
+        onGameEvent: onGameEvent,
+        startFromPhase: TurnPhase.diplomacy,
+        overtureDecisions: decisions,
+      ),
     );
     _emitTurnResolutionEvents(result);
     return result;
@@ -283,14 +299,17 @@ class GameService {
     final mapData = _requiredMapDataView(game.id);
     final topo = mapData.combinedTopology;
     final tileMaps = mapData.tileMapByRegion;
-    final result = resumeTurnResolutionWithInterventionDecisions(
+    final result = _resolveTurnWithTrace(
       game: game,
-      decisions: decisions,
-      topology: topo,
-      orders: orders,
-      tileMapByRegion: tileMaps,
-      eventBus: logicEventBus,
-      onGameEvent: onGameEvent,
+      config: TurnResolverConfig(
+        topology: topo,
+        orders: orders,
+        tileMapByRegion: tileMaps,
+        eventBus: logicEventBus,
+        onGameEvent: onGameEvent,
+        startFromPhase: TurnPhase.diplomacy,
+        interventionDecisions: decisions,
+      ),
     );
     _emitTurnResolutionEvents(result);
     return result;
@@ -313,6 +332,95 @@ class GameService {
       tileMapByRegion: tileMapByRegion,
     );
     return requireTurnResolutionComplete(result);
+  }
+
+  TurnResolutionResult _resolveTurnWithTrace({
+    required Game game,
+    required TurnResolverConfig config,
+  }) {
+    if (!_turnTraceEnabled) {
+      return resolveTurnForGameWithConfig(game: game, config: config);
+    }
+    final session = _turnTraceSessionsByGameId.putIfAbsent(
+      game.id,
+      () => _TurnTraceSession(startedAtUtc: DateTime.now().toUtc()),
+    );
+    final tracedConfig = TurnResolverConfig(
+      topology: config.topology,
+      orders: config.orders,
+      tileMapByRegion: config.tileMapByRegion,
+      topologyByRegion: config.topologyByRegion,
+      extractedByPlayerId: config.extractedByPlayerId,
+      defaultAssignments: config.defaultAssignments,
+      defaultAssignmentsByPlayerId: config.defaultAssignmentsByPlayerId,
+      eventBus: config.eventBus,
+      onDialogue: config.onDialogue,
+      onGameEvent: config.onGameEvent,
+      onProductionComplete: config.onProductionComplete,
+      startFromPhase: config.startFromPhase,
+      overtureDecisions: config.overtureDecisions,
+      interventionDecisions: config.interventionDecisions,
+      callToArmsDecisions: config.callToArmsDecisions,
+      phaseHandlerOverrides: config.phaseHandlerOverrides,
+      onPhaseProgress: config.onPhaseProgress,
+      onTurnTracePhase: session.phases.add,
+    );
+    final result = resolveTurnForGameWithConfig(
+      game: game,
+      config: tracedConfig,
+    );
+    if (result is TurnResolutionComplete) {
+      _exportTurnTrace(
+        gameAtResolutionStart: game,
+        turnEndState: result.game,
+        phases: session.phases,
+        turnStartAt: session.startedAtUtc,
+      );
+      _turnTraceSessionsByGameId.remove(game.id);
+    }
+    return result;
+  }
+
+  void _exportTurnTrace({
+    required Game gameAtResolutionStart,
+    required Game turnEndState,
+    required List<TurnTracePhaseTrace> phases,
+    required DateTime turnStartAt,
+  }) {
+    final now = DateTime.now().toUtc();
+    final document = TurnTraceMergedDocument(
+      schemaVersion: kTurnTraceSchemaVersionV1,
+      meta: TurnTraceMeta(
+        gameId: gameAtResolutionStart.id,
+        turnNumber: gameAtResolutionStart.worldState.turnState.turnNumber,
+        traceEnabled: true,
+        source: 'app',
+        exportedAt: now.toIso8601String(),
+        turnStartAt: turnStartAt.toIso8601String(),
+        turnEndAt: now.toIso8601String(),
+      ),
+      ai: const <TurnTraceAiSection>[],
+      turnResolution: TurnTraceResolutionSection(
+        phases: List<TurnTracePhaseTrace>.unmodifiable(phases),
+      ),
+    );
+    TurnTraceFileExporter(rootDirectory: turnTraceRootDirectory)
+        .export(document)
+        .then((file) {
+          packageLogger('logic').d(
+            'logic: turn_trace_exported gameId=${gameAtResolutionStart.id} '
+            'turn=${gameAtResolutionStart.worldState.turnState.turnNumber} '
+            'nextTurn=${turnEndState.worldState.turnState.turnNumber} '
+            'path=${file.path}',
+          );
+        })
+        .catchError((Object error, StackTrace stackTrace) {
+          packageLogger('logic').e(
+            'logic: turn_trace_export_failed gameId=${gameAtResolutionStart.id}',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        });
   }
 
   /// Number of coarse progress steps reported by [createNewGameAsync]. SPEC/ui/game-initializing.md.
@@ -697,4 +805,11 @@ class GameService {
   void handleExternallyResolvedTurnResult(TurnResolutionResult result) {
     _emitTurnResolutionEvents(result);
   }
+}
+
+class _TurnTraceSession {
+  _TurnTraceSession({required this.startedAtUtc});
+
+  final DateTime startedAtUtc;
+  final List<TurnTracePhaseTrace> phases = <TurnTracePhaseTrace>[];
 }
