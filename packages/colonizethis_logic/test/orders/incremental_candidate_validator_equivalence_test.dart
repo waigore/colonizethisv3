@@ -129,7 +129,7 @@ void main() {
           'p1': [
             const WorkOrder(
               unitId: 'u_explorer',
-              target: 'explore',
+              target: kWorkTargetExplore,
               targetTileKey: 'oldWorld|P2|0|0',
             ),
           ],
