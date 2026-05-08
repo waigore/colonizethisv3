@@ -17,6 +17,7 @@ import 'turn_order_acceptance.dart';
 import 'turn_phase_runner.dart';
 import 'turn_resolution_result.dart';
 import 'turn_resolution_sequence.dart';
+import 'trace/turn_trace_contracts.dart';
 export 'turn_resolution_sequence.dart';
 import 'turn_resolver_config.dart';
 export 'turn_resolver_config.dart';
@@ -74,6 +75,7 @@ TurnResolutionResult resolveTurnForGameFromOrderEngine({
   GameEventBus? eventBus,
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
+  void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
 }) {
   final merged = mergeOrderLists(
     humanOrders: orderEngine.orders,
@@ -91,6 +93,7 @@ TurnResolutionResult resolveTurnForGameFromOrderEngine({
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    onTurnTracePhase: onTurnTracePhase,
   );
 }
 
@@ -108,6 +111,7 @@ TurnResolutionResult validateOrdersAndResolveTurn({
   GameEventBus? eventBus,
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
+  void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
 }) {
   final engine = OrderEngine(initialOrders: orders);
   final filtered = filterAcceptedOrdersForAllPlayers(
@@ -130,6 +134,7 @@ TurnResolutionResult validateOrdersAndResolveTurn({
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    onTurnTracePhase: onTurnTracePhase,
   );
 }
 
@@ -158,6 +163,7 @@ TurnResolutionResult resolveTurnForGame({
   List<CallToArmsDecision>? callToArmsDecisions,
   void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
   onPhaseProgress,
+  void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
 }) {
   return resolveTurnForGameWithConfig(
     game: game,
@@ -178,6 +184,7 @@ TurnResolutionResult resolveTurnForGame({
       interventionDecisions: interventionDecisions,
       callToArmsDecisions: callToArmsDecisions,
       onPhaseProgress: onPhaseProgress,
+      onTurnTracePhase: onTurnTracePhase,
     ),
   );
 }
