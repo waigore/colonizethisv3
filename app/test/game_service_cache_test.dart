@@ -1,4 +1,5 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -155,5 +156,64 @@ void main() {
       final g = service.createNewGame(config: config);
       expect(g.id, startsWith('game_'));
     });
+
+    test(
+      'runTurnResolution exports merged turn trace when debug trace is enabled',
+      () async {
+        final traceRoot = await Directory.systemTemp.createTemp(
+          'ct_turn_trace_app_',
+        );
+        addTearDown(() async {
+          if (await traceRoot.exists()) {
+            await traceRoot.delete(recursive: true);
+          }
+        });
+        final traceService = GameService(
+          box,
+          GameSaveAdapter(),
+          turnTraceEnabled: true,
+          turnTraceRootDirectory: traceRoot.path,
+        );
+        final config = GameSetupConfig(
+          selectedGreatPowerIds: ['england'],
+          continentCount: 1,
+          minorNationCount: 0,
+          tribeCount: 1,
+          numProvincesOldWorld: 3,
+          numProvincesNewWorld: 2,
+        );
+        final game = traceService.createNewGame(
+          id: 'trace_app_game',
+          config: config,
+        );
+
+        final result = traceService.runTurnResolution(
+          game,
+          orders: const Orders(),
+        );
+        expect(result, isA<TurnResolutionComplete>());
+
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        final traceDir = Directory('${traceRoot.path}/turn-traces/${game.id}');
+        expect(await traceDir.exists(), isTrue);
+        final files = traceDir
+            .listSync()
+            .whereType<File>()
+            .where((file) => file.path.endsWith('.json'))
+            .toList();
+        expect(files.length, 1);
+        final payload =
+            jsonDecode(await files.single.readAsString())
+                as Map<String, dynamic>;
+        expect(payload['schemaVersion'], 'v1');
+        final meta = payload['meta'] as Map<String, dynamic>;
+        expect(meta['source'], 'app');
+        expect(meta['traceEnabled'], isTrue);
+        final phases =
+            ((payload['turnResolution'] as Map<String, dynamic>)['phases']
+                as List<dynamic>);
+        expect(phases, isNotEmpty);
+      },
+    );
   });
 }
