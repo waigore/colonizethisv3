@@ -2,6 +2,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'orders_application_military_ship_skip_test_support.dart';
 
 void main() {
   group('applyBuildAndWorkOrders military and ship skip branches', () {
@@ -250,16 +251,13 @@ void main() {
         },
       );
       final next = applyBuildAndWorkOrders(game, orders); // no topology
-      expect(next.worldState.fleets, isEmpty);
-      final nextPlayer = next.players.single;
-      expect(nextPlayer.treasury, player.treasury - shipEcon.buildTreasuryCost);
-      expect(nextPlayer.workerPool.peasants, 0);
-      for (final e in shipEcon.buildInputs.entries) {
-        expect(
-          nextPlayer.stockpile.quantityOf(e.key),
-          stockpile.quantityOf(e.key) - e.value,
-        );
-      }
+      expectShipBuildSpentButNoFleet(
+        next: next,
+        baselinePlayer: player,
+        baselineStockpile: stockpile,
+        buildTreasuryCost: shipEcon.buildTreasuryCost,
+        buildInputs: shipEcon.buildInputs,
+      );
     });
 
     test('ship build with capitalProvinceId null does not add fleet', () {
@@ -321,16 +319,13 @@ void main() {
         },
       );
       final next = applyBuildAndWorkOrders(game, orders, topology: topology);
-      expect(next.worldState.fleets, isEmpty);
-      final nextPlayer = next.players.single;
-      expect(nextPlayer.treasury, player.treasury - shipEcon.buildTreasuryCost);
-      expect(nextPlayer.workerPool.peasants, 0);
-      for (final e in shipEcon.buildInputs.entries) {
-        expect(
-          nextPlayer.stockpile.quantityOf(e.key),
-          stockpile.quantityOf(e.key) - e.value,
-        );
-      }
+      expectShipBuildSpentButNoFleet(
+        next: next,
+        baselinePlayer: player,
+        baselineStockpile: stockpile,
+        buildTreasuryCost: shipEcon.buildTreasuryCost,
+        buildInputs: shipEcon.buildInputs,
+      );
     });
 
     test('ship build with capital not adjacent to sea does not add ship', () {
@@ -392,16 +387,13 @@ void main() {
         },
       );
       final next = applyBuildAndWorkOrders(game, orders, topology: topology);
-      expect(next.worldState.fleets, isEmpty);
-      final nextPlayer = next.players.single;
-      expect(nextPlayer.treasury, player.treasury - shipEcon.buildTreasuryCost);
-      expect(nextPlayer.workerPool.peasants, 0);
-      for (final e in shipEcon.buildInputs.entries) {
-        expect(
-          nextPlayer.stockpile.quantityOf(e.key),
-          stockpile.quantityOf(e.key) - e.value,
-        );
-      }
+      expectShipBuildSpentButNoFleet(
+        next: next,
+        baselinePlayer: player,
+        baselineStockpile: stockpile,
+        buildTreasuryCost: shipEcon.buildTreasuryCost,
+        buildInputs: shipEcon.buildInputs,
+      );
     });
   });
 }
