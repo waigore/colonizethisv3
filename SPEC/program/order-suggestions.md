@@ -21,9 +21,38 @@ Given a player, their current valid order list, and game context, enumerate **ca
 
 ## Guarantees
 
-For every suggested order `o`, appending it to the current list and validating via `validatePlayerOrdersWithContext` yields `accepted`.
+For every suggested order `o`, appending it to the current list and validating via `validatePlayerOrdersWithContext` yields `accepted`. The internal candidate-acceptance pipeline used to enumerate suggestions is the **incremental candidate validation primitive** described in § Incremental candidate validation. The primitive is required to produce the same `accepted` / `rejected` decision per candidate as full-pass `validatePlayerOrdersWithContext` (see [order-engine.md](order-engine.md) § Validation), so the observable suggestion contract is unchanged.
 
 **Civilian work alignment:** Suggestions never assume instant primary effects for `prospect` or `purchase_land`; those targets follow the same **assign → tick → complete** invariant as validation and resolution (prospected set, treasury debit, and `purchasedTilesByTileKey` only when work completes in Build/Work). Authoritative rules: [orders.md](orders.md) (Civilian deferred primary effects) and [development-resolution.md](development-resolution.md).
+
+---
+
+## Incremental candidate validation
+
+**Purpose.** AI suggestion enumeration evaluates many candidates per player per turn. Running full-pass `validatePlayerOrdersWithContext` (which re-validates every existing order in the player's list, across all order types) for each probe is O(candidates × |basePrefix|) and dominated next-turn cost. The incremental primitive evaluates one candidate against an already-accepted prefix in O(1) plus the candidate-type validator's intrinsic work.
+
+**Definitions.**
+
+- `basePrefix` — the player's already-accepted `Orders` at the start of a suggestion pass. By the engine invariant (see [order-engine.md](order-engine.md) § Validation), every order in `basePrefix` has already been validated in submission order and accepted.
+- `acceptedExtension` — an ordered list of additional candidates accepted earlier in the same suggestion pass (e.g. multiple diplomatic candidates within the diplomatic two-pass scheme above).
+- `currentTrial = basePrefix ⊕ acceptedExtension` — the working list against which the next candidate is evaluated.
+
+**Algorithm (per candidate `c`).**
+
+1. Validate `c` against `currentTrial` using the per-type validator (move, army move, build, work, diplomatic, naval move, naval mission), reusing the same predicate logic the full-pass validator uses for the i-th order when `i = currentTrial.length`. Because `currentTrial` is fully accepted by the basePrefix invariant, `previousRejected = false` for `c`.
+2. The predicate must read accumulated state derived from `currentTrial` (treasury, stockpile, dev-exclusive reservations, civilian occupancy, fleet/unit caps, diplomatic state) — the cumulative effects of all prior orders. It must **not** re-validate any order in `currentTrial`; those are already accepted.
+3. If `c` is accepted, the caller may append it to `acceptedExtension` and update any cumulative state cache. Otherwise discard `c` and leave `currentTrial` unchanged.
+
+**Equivalence guarantee.** Because (a) the full-pass validator processes orders strictly in submission order, (b) once an order is accepted at position i its acceptance is invariant under appending later orders (the validator is monotone in the prefix length), and (c) the candidate `c` would always be evaluated at position `currentTrial.length` in the full-pass approach, the incremental algorithm yields the same accept/reject decision for `c` as full-pass validation.
+
+**Rollout per type.** The incremental primitive is introduced incrementally across candidate types. Stateless validator types (move, army move, naval move, naval mission) — whose per-type predicate does not depend on cumulative stockpile/treasury/diplomatic state from other order types — are migrated first. Stateful types (build, work, diplomatic) are migrated in follow-up slices that introduce the matching per-type cumulative-state cache. Until a type is migrated, the existing `addXxxOrderWithContext`-based probe continues to be used; the public observable `accepted`/`rejected` contract is preserved across the rollout because of the equivalence guarantee.
+
+**Acceptance criteria (incremental candidate validation, stateless types).**
+
+- Given a `basePrefix` whose every order is `accepted` by `validatePlayerOrdersWithContext` for player P and a candidate move `c`, when the system evaluates `c` via the incremental primitive and via `OrderEngine(initialOrders: basePrefix).addMoveOrderWithContext(...)`, then both return the same boolean accept/reject decision for `c`.
+- Given a `basePrefix` whose every order is `accepted` for player P and a candidate army move `c`, when the system evaluates `c` via the incremental primitive and via the existing army-move acceptance probe, then both return the same boolean accept/reject decision for `c`.
+- Given a `basePrefix` whose every order is `accepted` for player P and a candidate naval move `c`, when the system evaluates `c` via the incremental primitive and via `OrderEngine(initialOrders: basePrefix).addNavalMoveOrderWithContext(...)`, then both return the same boolean accept/reject decision for `c`.
+- Given a `basePrefix` whose every order is `accepted` for player P and a candidate naval mission `c`, when the system evaluates `c` via the incremental primitive and via `OrderEngine(initialOrders: basePrefix).addNavalMissionOrderWithContext(...)`, then both return the same boolean accept/reject decision for `c`.
 
 ---
 

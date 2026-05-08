@@ -6,14 +6,13 @@ import '../world/naval.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/topology_helpers.dart';
+import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 import 'orders_application_helpers.dart';
 
 void _addAcceptedSeaZoneCandidates({
-  required Game game,
+  required IncrementalCandidateValidator candidateValidator,
   required MapTopology topology,
-  required String playerId,
-  required Orders currentOrders,
   required Fleet fleet,
   required String cur,
   required Map<String, Set<String>> existingByFleet,
@@ -30,23 +29,17 @@ void _addAcceptedSeaZoneCandidates({
       fleetId: fleet.id,
       destinationSeaZoneId: destId,
     );
-    if (isNavalMoveOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-    )) {
+    if (candidateValidator.isNavalMoveAccepted(candidate)) {
       suggestions.add(candidate);
     }
   }
 }
 
 void _addAcceptedDockCandidatesForSeaFleet({
+  required IncrementalCandidateValidator candidateValidator,
   required Game game,
   required MapTopology topology,
   required String playerId,
-  required Orders currentOrders,
   required Fleet fleet,
   required String cur,
   required Map<String, Set<String>> existingByFleet,
@@ -72,23 +65,15 @@ void _addAcceptedDockCandidatesForSeaFleet({
       fleetId: fleet.id,
       destinationPortProvinceId: fullProvinceId,
     );
-    if (isNavalMoveOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-    )) {
+    if (candidateValidator.isNavalMoveAccepted(candidate)) {
       suggestions.add(candidate);
     }
   }
 }
 
 void _addAcceptedMovesFromPortFleet({
-  required Game game,
+  required IncrementalCandidateValidator candidateValidator,
   required MapTopology topology,
-  required String playerId,
-  required Orders currentOrders,
   required Fleet fleet,
   required Map<String, Set<String>> existingByFleet,
   required List<NavalMoveOrder> suggestions,
@@ -107,13 +92,7 @@ void _addAcceptedMovesFromPortFleet({
       fleetId: fleet.id,
       destinationSeaZoneId: destId,
     );
-    if (isNavalMoveOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-    )) {
+    if (candidateValidator.isNavalMoveAccepted(candidate)) {
       suggestions.add(candidate);
     }
   }
@@ -140,6 +119,17 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
     }
   }
 
+  // Single per-player validator: amortizes the per-player [PlayerView] /
+  // units-by-id setup across every candidate probe in the loop.
+  // SPEC/program/order-suggestions.md § Incremental candidate validation.
+  // Refs #2237.
+  final candidateValidator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: currentOrders,
+  );
+
   final homeFleetId = homeFleetIdFor(playerId);
   for (final fleet in game.worldState.fleets) {
     if (fleet.ownerId != playerId || fleet.id == homeFleetId) continue;
@@ -147,20 +137,18 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
       final cur = fleet.seaZoneId;
       if (cur == null) continue;
       _addAcceptedSeaZoneCandidates(
-        game: game,
+        candidateValidator: candidateValidator,
         topology: topology,
-        playerId: playerId,
-        currentOrders: currentOrders,
         fleet: fleet,
         cur: cur,
         existingByFleet: existingByFleet,
         suggestions: suggestions,
       );
       _addAcceptedDockCandidatesForSeaFleet(
+        candidateValidator: candidateValidator,
         game: game,
         topology: topology,
         playerId: playerId,
-        currentOrders: currentOrders,
         fleet: fleet,
         cur: cur,
         existingByFleet: existingByFleet,
@@ -168,10 +156,8 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
       );
     } else {
       _addAcceptedMovesFromPortFleet(
-        game: game,
+        candidateValidator: candidateValidator,
         topology: topology,
-        playerId: playerId,
-        currentOrders: currentOrders,
         fleet: fleet,
         existingByFleet: existingByFleet,
         suggestions: suggestions,
@@ -215,6 +201,16 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
     existingByFleet.add(o.fleetId);
   }
 
+  // Single per-player validator amortizes per-player setup across every
+  // candidate probe (mission × fleet). SPEC/program/order-suggestions.md
+  // § Incremental candidate validation. Refs #2237.
+  final candidateValidator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: currentOrders,
+  );
+
   for (final fleet in game.worldState.fleets) {
     if (fleet.ownerId != playerId) continue;
     if (existingByFleet.contains(fleet.id)) continue;
@@ -223,13 +219,7 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
         fleetId: fleet.id,
         mission: mission.name,
       );
-      if (isNavalMissionOrderAccepted(
-        game,
-        topology,
-        playerId,
-        currentOrders,
-        candidate,
-      )) {
+      if (candidateValidator.isNavalMissionAccepted(candidate)) {
         suggestions.add(candidate);
       }
     }
