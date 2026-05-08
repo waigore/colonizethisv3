@@ -68,9 +68,7 @@ void main() {
         const ow = 'oldWorld';
         final orders = Orders(
           moveOrdersByPlayerId: {
-            'p1': [
-              MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0'),
-            ],
+            'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0')],
           },
         );
 
@@ -104,76 +102,94 @@ void main() {
     // drop it (it is dispatched to the phase pipeline, where movement-phase
     // application skips the unknown unit). The resulting state therefore
     // matches running resolveTurnForGame directly with the same Orders.
-    test(
-      'skips per-player pre-apply filter (matches resolveTurnForGame on '
-      'unfiltered orders)',
-      () {
-        final topology = buildTopology();
-        final game = buildGame();
-        const ow = 'oldWorld';
-        final orders = Orders(
-          moveOrdersByPlayerId: {
-            'p1': [
-              MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0'),
-              MoveOrder(unitId: 'u999', destinationTileKey: '$ow|P2|0|0'),
-            ],
-          },
-        );
+    test('skips per-player pre-apply filter (matches resolveTurnForGame on '
+        'unfiltered orders)', () {
+      final topology = buildTopology();
+      final game = buildGame();
+      const ow = 'oldWorld';
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [
+            MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0'),
+            MoveOrder(unitId: 'u999', destinationTileKey: '$ow|P2|0|0'),
+          ],
+        },
+      );
 
-        final trusted = requireTurnResolutionComplete(
-          validateOrdersAndResolveTurnFromTrustedOrders(
-            game: game,
-            topology: topology,
-            orders: orders,
-          ),
-        );
-        final direct = requireTurnResolutionComplete(
-          resolveTurnForGame(
-            game: game,
-            topology: topology,
-            orders: orders,
-          ),
-        );
+      final trusted = requireTurnResolutionComplete(
+        validateOrdersAndResolveTurnFromTrustedOrders(
+          game: game,
+          topology: topology,
+          orders: orders,
+        ),
+      );
+      final direct = requireTurnResolutionComplete(
+        resolveTurnForGame(game: game, topology: topology, orders: orders),
+      );
 
-        expect(trusted.toJson(), equals(direct.toJson()));
-      },
-    );
+      expect(trusted.toJson(), equals(direct.toJson()));
+    });
 
     // AC 6 (untrusted-path preservation): Untrusted entry point still drops
     // rejected orders. Reaffirms that the new trusted entry point did not
     // alter behavior of the existing entry point. SPEC AC: untrusted-path
     // preservation.
-    test(
-      'validateOrdersAndResolveTurn still filters rejected orders for '
-      'untrusted callers',
-      () {
-        final topology = buildTopology();
-        final game = buildGame();
-        const ow = 'oldWorld';
-        final orders = Orders(
-          moveOrdersByPlayerId: {
-            'p1': [
-              MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0'),
-              MoveOrder(unitId: 'u999', destinationTileKey: '$ow|P2|0|0'),
-            ],
+    test('validateOrdersAndResolveTurn still filters rejected orders for '
+        'untrusted callers', () {
+      final topology = buildTopology();
+      final game = buildGame();
+      const ow = 'oldWorld';
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [
+            MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0'),
+            MoveOrder(unitId: 'u999', destinationTileKey: '$ow|P2|0|0'),
+          ],
+        },
+      );
+
+      final next = requireTurnResolutionComplete(
+        validateOrdersAndResolveTurn(
+          game: game,
+          topology: topology,
+          orders: orders,
+        ),
+      );
+
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(next.worldState.oldWorld.units.length, 1);
+      expect(
+        next.worldState.oldWorld.units.single.locationProvinceId,
+        '$ow|P2',
+      );
+    });
+
+    test('forwards onPhaseProgress callbacks on trusted entry point', () {
+      final topology = buildTopology();
+      final game = buildGame();
+      const ow = 'oldWorld';
+      final orders = Orders(
+        moveOrdersByPlayerId: {
+          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: '$ow|P2|0|0')],
+        },
+      );
+      final phaseEvents = <String>[];
+
+      final next = requireTurnResolutionComplete(
+        validateOrdersAndResolveTurnFromTrustedOrders(
+          game: game,
+          topology: topology,
+          orders: orders,
+          onPhaseProgress: (phase, marker) {
+            phaseEvents.add('${phase.name}:${marker.name}');
           },
-        );
+        ),
+      );
 
-        final next = requireTurnResolutionComplete(
-          validateOrdersAndResolveTurn(
-            game: game,
-            topology: topology,
-            orders: orders,
-          ),
-        );
-
-        expect(next.worldState.turnState.turnNumber, 1);
-        expect(next.worldState.oldWorld.units.length, 1);
-        expect(
-          next.worldState.oldWorld.units.single.locationProvinceId,
-          '$ow|P2',
-        );
-      },
-    );
+      expect(next.worldState.turnState.turnNumber, 1);
+      expect(phaseEvents, isNotEmpty);
+      expect(phaseEvents.first, 'orders:start');
+      expect(phaseEvents.last, 'endOfTurn:end');
+    });
   });
 }

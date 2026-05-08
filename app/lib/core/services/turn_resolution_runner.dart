@@ -243,7 +243,7 @@ void _turnResolutionIsolateMain(Map<String, Object?> args) {
         ),
       ),
     );
-    final result = resolveTurnForGame(
+    final result = validateOrdersAndResolveTurnFromTrustedOrders(
       game: game,
       topology: topology,
       orders: orders,
