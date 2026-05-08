@@ -2,6 +2,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'turn_news_digest_test_support.dart';
+
 void _expectDigestLinesEqual(TurnNewsDigest a, TurnNewsDigest b) {
   expect(a.resolvedTurnNumber, b.resolvedTurnNumber);
   expect(a.lines.length, b.lines.length);
@@ -76,7 +78,7 @@ void _expectLineEqual(TurnNewsLine x, TurnNewsLine y) {
 void main() {
   group('buildTurnNewsDigestForComplete', () {
     test('Given victory on end state When build Then digest is null', () {
-      final start = _minimalGame(turn: 5);
+      final start = turnNewsMinimalGame(turn: 5);
       final end = start.copyWith(
         victory: const VictoryState(
           winnerPlayerId: 'gp1',
@@ -90,8 +92,8 @@ void main() {
     });
 
     test('Given relation atPeace to atWar When build Then war line', () {
-      final start = _twoGpGame(turn: 0, relState: RelationState.atPeace);
-      final end = _twoGpGame(turn: 1, relState: RelationState.atWar);
+      final start = turnNewsTwoGpGame(turn: 0, relState: RelationState.atPeace);
+      final end = turnNewsTwoGpGame(turn: 1, relState: RelationState.atWar);
       final r = buildTurnNewsDigestForComplete(start: start, end: end);
       expect(r.digest, isNotNull);
       final warLines = r.digest!.lines.whereType<TurnNewsDiplomacyLine>();
@@ -109,14 +111,14 @@ void main() {
         const regionId = 'oldWorld';
         const localPid = 'P1';
         final fullPid = ProvinceId.full(regionId, localPid);
-        final start = _gameWithProvinceVis(
+        final start = turnNewsGameWithProvinceVis(
           turn: 0,
           fullProvinceId: fullPid,
           regionId: regionId,
           localProvinceId: localPid,
           visibility: 'unknown',
         );
-        final end = _gameWithProvinceVis(
+        final end = turnNewsGameWithProvinceVis(
           turn: 1,
           fullProvinceId: fullPid,
           regionId: regionId,
@@ -227,8 +229,8 @@ void main() {
     );
 
     test('Given relation atWar to atPeace When build Then peace line', () {
-      final start = _twoGpGame(turn: 0, relState: RelationState.atWar);
-      final end = _twoGpGame(turn: 1, relState: RelationState.atPeace);
+      final start = turnNewsTwoGpGame(turn: 0, relState: RelationState.atWar);
+      final end = turnNewsTwoGpGame(turn: 1, relState: RelationState.atPeace);
       final r = buildTurnNewsDigestForComplete(start: start, end: end);
       final dip = r.digest!.lines.whereType<TurnNewsDiplomacyLine>();
       expect(dip, hasLength(1));
@@ -337,8 +339,8 @@ void main() {
     test(
       'Given same start and end When build twice Then identical digest lines',
       () {
-        final start = _twoGpGame(turn: 0, relState: RelationState.atPeace);
-        final end = _twoGpGame(turn: 1, relState: RelationState.atWar);
+        final start = turnNewsTwoGpGame(turn: 0, relState: RelationState.atPeace);
+        final end = turnNewsTwoGpGame(turn: 1, relState: RelationState.atWar);
         final r1 = buildTurnNewsDigestForComplete(start: start, end: end);
         final r2 = buildTurnNewsDigestForComplete(start: start, end: end);
         expect(r1.digest, isNotNull);
@@ -353,7 +355,7 @@ void main() {
         const regionId = 'oldWorld';
         const localPid = 'P1';
         final fullPid = ProvinceId.full(regionId, localPid);
-        final start = _gameWithProvinceVis(
+        final start = turnNewsGameWithProvinceVis(
           turn: 1,
           fullProvinceId: fullPid,
           regionId: regionId,
@@ -361,7 +363,7 @@ void main() {
           visibility: 'unknown',
           revealDone: [fullPid],
         );
-        final end = _gameWithProvinceVis(
+        final end = turnNewsGameWithProvinceVis(
           turn: 2,
           fullProvinceId: fullPid,
           regionId: regionId,
@@ -376,71 +378,4 @@ void main() {
       },
     );
   });
-}
-
-Game _minimalGame({required int turn}) {
-  return Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turn),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
-    ],
-  );
-}
-
-Game _twoGpGame({required int turn, required RelationState relState}) {
-  return Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turn),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
-      Player(id: 'gp2', displayName: 'B', isHuman: false, treasury: 0),
-    ],
-    diplomacyRelations: [
-      DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', state: relState),
-    ],
-  );
-}
-
-Game _gameWithProvinceVis({
-  required int turn,
-  required String fullProvinceId,
-  required String regionId,
-  required String localProvinceId,
-  required String visibility,
-  List<String> revealDone = const [],
-}) {
-  final tileKey = '$regionId|$localProvinceId|0|0';
-  return Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turn),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: fullProvinceId, regionId: regionId, ownerId: 'gp1'),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        regionId: {
-          fullProvinceId: [tileKey],
-        },
-      },
-      playerVisibilityByTile: {
-        'gp1': {tileKey: visibility},
-      },
-      newsDigestProvinceRevealDoneIds: revealDone,
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
-    ],
-  );
 }

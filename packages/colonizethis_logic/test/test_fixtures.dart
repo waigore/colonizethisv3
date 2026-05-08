@@ -266,4 +266,98 @@ abstract final class TestFixtures {
       richesCashMultiplier: richesCashMultiplier,
     );
   }
+
+  /// Adjacent provinces with default military regiments (combat integration tests).
+  static Game combatGame({
+    String regionId = 'oldWorld',
+    String player1Id = 'p1',
+    String player2Id = 'p2',
+    String localProvince1 = 'p1',
+    String localProvince2 = 'p2',
+    Unit? unit1,
+    Unit? unit2,
+  }) {
+    final pid1 = '$regionId|$localProvince1';
+    final pid2 = '$regionId|$localProvince2';
+    final u1 = unit1 ??
+        Unit(
+          id: 'u1',
+          type: 'grenadiers',
+          ownerId: player1Id,
+          locationProvinceId: pid1,
+        );
+    final u2 = unit2 ??
+        Unit(
+          id: 'u2',
+          type: 'grenadiers',
+          ownerId: player2Id,
+          locationProvinceId: pid2,
+        );
+    return twoPlayerGame(
+      player1: Player(
+        id: player1Id,
+        displayName: 'P1',
+        isHuman: true,
+      ),
+      player2: Player(
+        id: player2Id,
+        displayName: 'P2',
+        isHuman: false,
+      ),
+      worldState: worldStateAtOrdersPhase(
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: pid1, regionId: regionId, ownerId: player1Id),
+            Province(id: pid2, regionId: regionId, ownerId: player2Id),
+          ],
+          units: [u1, u2],
+        ),
+      ),
+    );
+  }
+
+  /// Typical civilian unit on a land province (optionally tile-addressed).
+  static Unit testCivilianUnit({
+    required String id,
+    String type = kUnitTypeBuilder,
+    String ownerId = 'p1',
+    String locationProvinceId = 'oldWorld|p1',
+    String? tileKey,
+  }) => Unit(
+    id: id,
+    type: type,
+    ownerId: ownerId,
+    locationProvinceId: locationProvinceId,
+    tileKey: tileKey,
+  );
+
+  /// Typical military regiment on a province.
+  static Unit testMilitaryUnit({
+    required String id,
+    String type = 'grenadiers',
+    String ownerId = 'p1',
+    String locationProvinceId = 'oldWorld|p1',
+    int medals = 0,
+  }) => Unit(
+    id: id,
+    type: type,
+    ownerId: ownerId,
+    locationProvinceId: locationProvinceId,
+    medals: medals,
+  );
+
+  /// Civilian aboard or adjacent to coastal tile (naval/boarding scenarios).
+  static Unit testNavalScenarioUnit({
+    required String id,
+    String ownerId = 'p1',
+    required String harborProvinceId,
+    required String tileKey,
+    String type = kUnitTypeExplorer,
+  }) => Unit(
+    id: id,
+    type: type,
+    ownerId: ownerId,
+    locationProvinceId: harborProvinceId,
+    tileKey: tileKey,
+  );
 }
