@@ -239,38 +239,6 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   return suggestions;
 }
 
-/// Trial append for suggestion enumeration. SPEC/program/order-suggestions.md.
-Orders _appendDiplomaticOrderForTrial(
-  Orders orders,
-  String playerId,
-  DiplomaticOrder order,
-) {
-  final prev =
-      orders.diplomaticOrdersByPlayerId[playerId] ?? const <DiplomaticOrder>[];
-  return orders.copyWith(
-    diplomaticOrdersByPlayerId: {
-      ...orders.diplomaticOrdersByPlayerId,
-      playerId: [...prev, order],
-    },
-  );
-}
-
-/// Next overture stage for suggestion (none→tradeConsulate→embassy→nap→joinEmpire).
-OvertureStage? _nextOvertureStage(OvertureStage current) {
-  switch (current) {
-    case OvertureStage.none:
-      return OvertureStage.tradeConsulate;
-    case OvertureStage.tradeConsulate:
-      return OvertureStage.embassy;
-    case OvertureStage.embassy:
-      return OvertureStage.nap;
-    case OvertureStage.nap:
-      return OvertureStage.joinEmpire;
-    case OvertureStage.joinEmpire:
-      return null;
-  }
-}
-
 /// Per-target suggestion order: first candidate that passes the order engine wins.
 /// SPEC/program/order-suggestions.md § Diplomatic orders.
 List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
@@ -374,7 +342,7 @@ DiplomaticOrder? _establishOvertureSuggestionOrder({
 
   final existing = getOverture(game, playerId, targetId);
   final current = existing?.stage ?? OvertureStage.none;
-  final next = _nextOvertureStage(current);
+  final next = nextOvertureStage(current);
   if (next == null) return null;
   if (next == OvertureStage.tradeConsulate || next == OvertureStage.embassy) {
     final cost = next == OvertureStage.tradeConsulate
@@ -502,7 +470,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
         continue;
       }
       suggestions.add(candidate);
-      trialOrders = _appendDiplomaticOrderForTrial(
+      trialOrders = appendDiplomaticOrderForTrial(
         trialOrders,
         playerId,
         candidate,
@@ -526,7 +494,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
         continue;
       }
       suggestions.add(candidate);
-      trialOrders = _appendDiplomaticOrderForTrial(
+      trialOrders = appendDiplomaticOrderForTrial(
         trialOrders,
         playerId,
         candidate,
