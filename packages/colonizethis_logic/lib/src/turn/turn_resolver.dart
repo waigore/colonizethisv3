@@ -99,6 +99,20 @@ TurnResolutionResult resolveTurnForGameFromOrderEngine({
 
 /// Validates orders and resolves the turn. Returns [TurnResolutionResult];
 /// may be [TurnResolutionPendingOvertures] when a human must accept/reject an overture.
+///
+/// **Untrusted entry point.** Runs [filterAcceptedOrdersForAllPlayers] over
+/// the supplied [orders] before applying so any rejected orders are stripped
+/// from each per-player list. Required for callers whose order sources are not
+/// pre-validated (scenario runners, ad-hoc test orders, manual JSON-loaded
+/// orders, future external/manual sources).
+///
+/// Use [validateOrdersAndResolveTurnFromTrustedOrders] when every order has
+/// already passed OrderEngine validation (human draft) or the order suggestion
+/// API guarantee (AI orders). Both entry points return the same resulting
+/// [WorldState] for inputs whose orders all pass validation.
+///
+/// SPEC: `SPEC/program/order-engine.md` § Turn Resolution Integration §
+/// Trusted-source resolution.
 TurnResolutionResult validateOrdersAndResolveTurn({
   required Game game,
   required MapTopology topology,
@@ -129,6 +143,56 @@ TurnResolutionResult validateOrdersAndResolveTurn({
     onGameEvent: onGameEvent,
     topology: topology,
     orders: filtered,
+    tileMapByRegion: tileMapByRegion,
+    topologyByRegion: topologyByRegion,
+    extractedByPlayerId: extractedByPlayerId,
+    defaultAssignments: defaultAssignments,
+    defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    onTurnTracePhase: onTurnTracePhase,
+  );
+}
+
+/// Resolves the turn using [orders] without running the per-player pre-apply
+/// validation pass.
+///
+/// **Trusted entry point.** Skips [filterAcceptedOrdersForAllPlayers] and
+/// dispatches straight to [resolveTurnForGame]. Caller contract: every order in
+/// [orders] must already have been accepted by either:
+///
+/// 1. [OrderEngine.addXxxOrderWithContext] (human draft orders), or
+/// 2. the order suggestion API guarantee (AI-generated orders) — see
+///    `SPEC/program/order-suggestions.md` § Guarantees.
+///
+/// Use this entry point only when the order sources are auditable as
+/// pre-validated. Mixing untrusted orders breaks the contract; for any other
+/// source use [validateOrdersAndResolveTurn] instead.
+///
+/// A separate function name (not a flag on [Orders]) is the chosen mechanism
+/// so trust does not propagate silently through copies or future refactors.
+///
+/// SPEC: `SPEC/program/order-engine.md` § Turn Resolution Integration §
+/// Trusted-source resolution.
+TurnResolutionResult validateOrdersAndResolveTurnFromTrustedOrders({
+  required Game game,
+  required MapTopology topology,
+  required Orders orders,
+  Map<String, TileMapResult>? tileMapByRegion,
+  Map<String, MapTopology>? topologyByRegion,
+  Map<String, Map<CommodityId, int>> extractedByPlayerId = const {},
+  List<AssignedRecipe> defaultAssignments = const [],
+  Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+  GameEventBus? eventBus,
+  void Function(DialogueEvent)? onDialogue,
+  void Function(GameEvent)? onGameEvent,
+  void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
+}) {
+  return resolveTurnForGame(
+    game: game,
+    eventBus: eventBus,
+    onDialogue: onDialogue,
+    onGameEvent: onGameEvent,
+    topology: topology,
+    orders: orders,
     tileMapByRegion: tileMapByRegion,
     topologyByRegion: topologyByRegion,
     extractedByPlayerId: extractedByPlayerId,
