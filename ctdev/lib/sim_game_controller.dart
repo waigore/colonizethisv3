@@ -3,7 +3,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_logic/src/ai/ai_planner.dart'
     show generateOrdersForGame, generateOrdersForPlayer;
-import 'package:colonizethis_logic/src/ai/sim_game_ai.dart' show defaultSimGameAi;
+import 'package:colonizethis_logic/src/ai/sim_game_ai.dart'
+    show defaultSimGameAi;
 import 'package:colonizethis_logic/src/setup/hidden_agenda_assignment.dart'
     show assignHiddenAgendasForGame;
 import 'package:colonizethis_map/colonizethis_map.dart';
@@ -61,11 +62,14 @@ class SimGameController {
     required int baseSeed,
     this.useSimGameAi = true,
     this.useFullAI = false,
-  })  : _game = _forceAllGpsAiControlled(
-            _ensureAiSeedsForSim(initialGame, baseSeed)),
-        _topology = topology,
-        _tileMapByRegion = tileMapByRegion,
-        _baseSeed = baseSeed {
+    this.turnTraceEnabled = false,
+    this.turnTraceRootDirectory = 'tmp',
+  }) : _game = _forceAllGpsAiControlled(
+         _ensureAiSeedsForSim(initialGame, baseSeed),
+       ),
+       _topology = topology,
+       _tileMapByRegion = tileMapByRegion,
+       _baseSeed = baseSeed {
     if (!useSimGameAi && useFullAI) {
       _game = assignHiddenAgendasForGame(_game);
     }
@@ -81,11 +85,14 @@ class SimGameController {
 
   /// When true and useSimGameAi is false, use Phase 6 full AI (personalities, hidden agendas, naval orders). When false, use Phase 4 simple AI.
   final bool useFullAI;
+  final bool turnTraceEnabled;
+  final String turnTraceRootDirectory;
 
   /// Base seed used for sim; also fallback for turnSeed when a GP has no aiSeed.
   int get baseSeed => _baseSeed;
 
   final Map<String, Orders> _pendingOrdersByPlayerId = {};
+
   /// When using full AI, economy plans per player for production phase. Cleared on resolve.
   final Map<String, EconomyPlan> _pendingEconomyPlansByPlayerId = {};
   final List<SimOrderHistoryEntry> _orderHistory = [];
@@ -97,17 +104,15 @@ class SimGameController {
   MapTopology get topology => _topology;
   Map<String, TileMapResult> get tileMapByRegion => _tileMapByRegion;
   Map<String, MapTopology> get topologyByRegion => {
-        'oldWorld': MapTopology(
-          nodes:
-              _topology.nodes.where((n) => n.regionId == 'oldWorld').toList(),
-          edges: _topology.edges,
-        ),
-        'newWorld': MapTopology(
-          nodes:
-              _topology.nodes.where((n) => n.regionId == 'newWorld').toList(),
-          edges: _topology.edges,
-        ),
-      };
+    'oldWorld': MapTopology(
+      nodes: _topology.nodes.where((n) => n.regionId == 'oldWorld').toList(),
+      edges: _topology.edges,
+    ),
+    'newWorld': MapTopology(
+      nodes: _topology.nodes.where((n) => n.regionId == 'newWorld').toList(),
+      edges: _topology.edges,
+    ),
+  };
 
   List<SimOrderHistoryEntry> get orderHistory =>
       List.unmodifiable(_orderHistory);
@@ -294,7 +299,9 @@ class SimGameController {
         navalByPlayer.putIfAbsent(pid, () => <NavalMoveOrder>[]).addAll(list);
       });
       o.navalMissionOrdersByPlayerId.forEach((pid, list) {
-        missionByPlayer.putIfAbsent(pid, () => <NavalMissionOrder>[]).addAll(list);
+        missionByPlayer
+            .putIfAbsent(pid, () => <NavalMissionOrder>[])
+            .addAll(list);
       });
     }
 
@@ -316,17 +323,64 @@ class SimGameController {
     _recordOrderHistory(orders);
     _lastTurnCombatSummaries.clear();
     final before = _game;
-    final next = requireTurnResolutionComplete(validateOrdersAndResolveTurn(
-      game: _game,
-      topology: _topology,
-      orders: orders,
-      tileMapByRegion: _tileMapByRegion,
-      defaultAssignments: const [],
-      defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-      onGameEvent: _recordCombatGameEvent,
-    ));
+    final phaseTraces = <TurnTracePhaseTrace>[];
+    final next = requireTurnResolutionComplete(
+      validateOrdersAndResolveTurn(
+        game: _game,
+        topology: _topology,
+        orders: orders,
+        tileMapByRegion: _tileMapByRegion,
+        defaultAssignments: const [],
+        defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+        onGameEvent: _recordCombatGameEvent,
+        onTurnTracePhase: turnTraceEnabled ? phaseTraces.add : null,
+      ),
+    );
     _game = next;
+    if (turnTraceEnabled) {
+      _exportTurnTrace(before: before, after: next, phases: phaseTraces);
+    }
     _recordTurnLog(before: before, after: next);
+  }
+
+  void _exportTurnTrace({
+    required Game before,
+    required Game after,
+    required List<TurnTracePhaseTrace> phases,
+  }) {
+    final now = DateTime.now().toUtc();
+    final document = TurnTraceMergedDocument(
+      schemaVersion: kTurnTraceSchemaVersionV1,
+      meta: TurnTraceMeta(
+        gameId: before.id,
+        turnNumber: before.worldState.turnState.turnNumber,
+        traceEnabled: true,
+        source: 'ctdev',
+        exportedAt: now.toIso8601String(),
+        turnEndAt: now.toIso8601String(),
+      ),
+      ai: const <TurnTraceAiSection>[],
+      turnResolution: TurnTraceResolutionSection(
+        phases: List<TurnTracePhaseTrace>.unmodifiable(phases),
+      ),
+    );
+    TurnTraceFileExporter(rootDirectory: turnTraceRootDirectory)
+        .export(document)
+        .then((file) {
+          _ctdevSimLog.d(
+            'logic: turn_trace_exported gameId=${before.id} '
+            'turn=${before.worldState.turnState.turnNumber} '
+            'nextTurn=${after.worldState.turnState.turnNumber} '
+            'path=${file.path}',
+          );
+        })
+        .catchError((Object error, StackTrace stackTrace) {
+          _ctdevSimLog.e(
+            'logic: turn_trace_export_failed gameId=${before.id}',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        });
   }
 
   void _recordCombatGameEvent(GameEvent event) {
@@ -368,10 +422,12 @@ class SimGameController {
 
     final provinceNamesByRegionAndId = <String, String>{};
     for (final p in _game.worldState.oldWorld.provinces) {
-      provinceNamesByRegionAndId['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
+      provinceNamesByRegionAndId['${p.regionId}|${p.id}'] =
+          p.displayName ?? p.id;
     }
     for (final p in _game.worldState.newWorld.provinces) {
-      provinceNamesByRegionAndId['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
+      provinceNamesByRegionAndId['${p.regionId}|${p.id}'] =
+          p.displayName ?? p.id;
     }
     String provinceLabelInRegion(String regionId, String id) =>
         provinceNamesByRegionAndId['$regionId|$id'] ?? id;
@@ -382,13 +438,16 @@ class SimGameController {
       final builds = orders.buildUnitOrdersByPlayerId[playerId] ?? const [];
       final works = orders.workOrdersByPlayerId[playerId] ?? const [];
       final diplo =
-          orders.diplomaticOrdersByPlayerId[playerId] ?? const <DiplomaticOrder>[];
+          orders.diplomaticOrdersByPlayerId[playerId] ??
+          const <DiplomaticOrder>[];
       final research =
           orders.researchOrdersByPlayerId[playerId] ?? const <ResearchOrder>[];
       final naval =
-          orders.navalMoveOrdersByPlayerId[playerId] ?? const <NavalMoveOrder>[];
+          orders.navalMoveOrdersByPlayerId[playerId] ??
+          const <NavalMoveOrder>[];
       final mission =
-          orders.navalMissionOrdersByPlayerId[playerId] ?? const <NavalMissionOrder>[];
+          orders.navalMissionOrdersByPlayerId[playerId] ??
+          const <NavalMissionOrder>[];
 
       if (moves.isEmpty &&
           builds.isEmpty &&
@@ -402,25 +461,35 @@ class SimGameController {
 
       final engine = OrderEngine(
         initialOrders: Orders(
-          moveOrdersByPlayerId:
-              moves.isEmpty ? const {} : {playerId: List.of(moves)},
-          buildUnitOrdersByPlayerId:
-              builds.isEmpty ? const {} : {playerId: List.of(builds)},
-          workOrdersByPlayerId:
-              works.isEmpty ? const {} : {playerId: List.of(works)},
-          diplomaticOrdersByPlayerId:
-              diplo.isEmpty ? const {} : {playerId: List.of(diplo)},
-          researchOrdersByPlayerId:
-              research.isEmpty ? const {} : {playerId: List.of(research)},
-          navalMoveOrdersByPlayerId:
-              naval.isEmpty ? const {} : {playerId: List.of(naval)},
-          navalMissionOrdersByPlayerId:
-              mission.isEmpty ? const {} : {playerId: List.of(mission)},
+          moveOrdersByPlayerId: moves.isEmpty
+              ? const {}
+              : {playerId: List.of(moves)},
+          buildUnitOrdersByPlayerId: builds.isEmpty
+              ? const {}
+              : {playerId: List.of(builds)},
+          workOrdersByPlayerId: works.isEmpty
+              ? const {}
+              : {playerId: List.of(works)},
+          diplomaticOrdersByPlayerId: diplo.isEmpty
+              ? const {}
+              : {playerId: List.of(diplo)},
+          researchOrdersByPlayerId: research.isEmpty
+              ? const {}
+              : {playerId: List.of(research)},
+          navalMoveOrdersByPlayerId: naval.isEmpty
+              ? const {}
+              : {playerId: List.of(naval)},
+          navalMissionOrdersByPlayerId: mission.isEmpty
+              ? const {}
+              : {playerId: List.of(mission)},
         ),
       );
 
-      final results =
-          engine.validatePlayerOrdersWithContext(_game, _topology, playerId);
+      final results = engine.validatePlayerOrdersWithContext(
+        _game,
+        _topology,
+        playerId,
+      );
       var resultIndex = 0;
 
       OrderValidationResult nextResult() {
@@ -436,9 +505,7 @@ class SimGameController {
 
       for (final o in moves) {
         final unit = unitsById[o.unitId];
-        final unitLabel = unit != null
-            ? '${unit.id} (${unit.type})'
-            : o.unitId;
+        final unitLabel = unit != null ? '${unit.id} (${unit.type})' : o.unitId;
         final regionId = unit != null
             ? (Unit.regionIdFromTileKey(unit.tileKey) ?? 'oldWorld')
             : 'oldWorld';
@@ -446,8 +513,7 @@ class SimGameController {
             ? provinceLabelInRegion(regionId, unit.locationProvinceId)
             : '?';
         final destTile = o.destinationTileKey;
-        final destRegion =
-            Unit.regionIdFromTileKey(destTile) ?? regionId;
+        final destRegion = Unit.regionIdFromTileKey(destTile) ?? regionId;
         final destProv = Unit.provinceIdFromTileKey(destTile);
         final dest = destProv != null
             ? provinceLabelInRegion(destRegion, destProv)
@@ -485,22 +551,26 @@ class SimGameController {
 
       for (final o in works) {
         final unit = unitsById[o.unitId];
-        final unitLabel = unit != null
-            ? '${unit.id} (${unit.type})'
-            : o.unitId;
+        final unitLabel = unit != null ? '${unit.id} (${unit.type})' : o.unitId;
         final unitRegion = unit != null
             ? (Unit.regionIdFromTileKey(unit.tileKey) ?? 'oldWorld')
             : 'oldWorld';
-        final targetRegion = Unit.regionIdFromTileKey(o.targetTileKey) ?? unitRegion;
+        final targetRegion =
+            Unit.regionIdFromTileKey(o.targetTileKey) ?? unitRegion;
         final currentProvince = unit != null
             ? provinceLabelInRegion(unitRegion, unit.locationProvinceId)
             : '?';
         final targetProvince = provinceLabelInRegion(
-            targetRegion, Unit.provinceIdFromTileKey(o.targetTileKey) ?? '');
-        final currentTile = (unit != null && unit.tileKey != null && unit.tileKey!.isNotEmpty)
+          targetRegion,
+          Unit.provinceIdFromTileKey(o.targetTileKey) ?? '',
+        );
+        final currentTile =
+            (unit != null && unit.tileKey != null && unit.tileKey!.isNotEmpty)
             ? formatTileKey(unit.tileKey!)
             : '?';
-        final targetTile = o.targetTileKey.isNotEmpty ? formatTileKey(o.targetTileKey) : '?';
+        final targetTile = o.targetTileKey.isNotEmpty
+            ? formatTileKey(o.targetTileKey)
+            : '?';
         final validation = nextResult();
         _orderHistory.add(
           SimOrderHistoryEntry(
@@ -508,7 +578,8 @@ class SimGameController {
             playerId: playerId,
             playerName: player.displayName,
             orderType: 'work',
-            summary: 'Work $unitLabel at $currentTile ($currentProvince) → ${o.target} at $targetTile ($targetProvince)',
+            summary:
+                'Work $unitLabel at $currentTile ($currentProvince) → ${o.target} at $targetTile ($targetProvince)',
             status: validation.status,
             reason: validation.reason,
           ),
@@ -628,30 +699,27 @@ class SimGameController {
 String? _combatEventUiLine(GameEvent event) {
   switch (event) {
     case CombatResultEvent(
-        :final provinceId,
-        :final attackerId,
-        :final defenderId,
-        :final winnerId,
-        :final casualties,
-      ):
+      :final provinceId,
+      :final attackerId,
+      :final defenderId,
+      :final winnerId,
+      :final casualties,
+    ):
       final cas = casualties.isEmpty ? '' : ' casualties=$casualties';
       return 'Land combat $provinceId: $attackerId vs $defenderId → '
           '$winnerId$cas';
     case NavalCombatResultEvent(
-        :final seaZoneId,
-        :final side1OwnerId,
-        :final side2OwnerId,
-        :final outcomeName,
-        :final winnerOwnerId,
-        :final side1Retreated,
-        :final side2Retreated,
-      ):
+      :final seaZoneId,
+      :final side1OwnerId,
+      :final side2OwnerId,
+      :final outcomeName,
+      :final winnerOwnerId,
+      :final side1Retreated,
+      :final side2Retreated,
+    ):
       final w = winnerOwnerId != null ? ' winner=$winnerOwnerId' : '';
       final r = (side1Retreated || side2Retreated)
-          ? ' retreat=${[
-              if (side1Retreated) 'side1',
-              if (side2Retreated) 'side2',
-            ].join(',')}'
+          ? ' retreat=${[if (side1Retreated) 'side1', if (side2Retreated) 'side2'].join(',')}'
           : '';
       return 'Naval combat sea $seaZoneId: $side1OwnerId vs '
           '$side2OwnerId → $outcomeName$w$r';
