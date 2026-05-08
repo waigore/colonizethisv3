@@ -125,6 +125,8 @@ TurnResolutionResult validateOrdersAndResolveTurn({
   GameEventBus? eventBus,
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
+  void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
+  onPhaseProgress,
   void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
 }) {
   final engine = OrderEngine(initialOrders: orders);
@@ -148,6 +150,7 @@ TurnResolutionResult validateOrdersAndResolveTurn({
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    onPhaseProgress: onPhaseProgress,
     onTurnTracePhase: onTurnTracePhase,
   );
 }
@@ -184,6 +187,8 @@ TurnResolutionResult validateOrdersAndResolveTurnFromTrustedOrders({
   GameEventBus? eventBus,
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
+  void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
+  onPhaseProgress,
   void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
 }) {
   return resolveTurnForGame(
@@ -198,6 +203,7 @@ TurnResolutionResult validateOrdersAndResolveTurnFromTrustedOrders({
     extractedByPlayerId: extractedByPlayerId,
     defaultAssignments: defaultAssignments,
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+    onPhaseProgress: onPhaseProgress,
     onTurnTracePhase: onTurnTracePhase,
   );
 }
