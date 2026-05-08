@@ -3,6 +3,7 @@ library;
 
 export 'build_rail_work_rules.dart';
 export 'draft_orders_mutations.dart';
+export 'incremental_candidate_validator.dart';
 export 'order_engine.dart';
 export 'order_merge.dart';
 export 'order_projections.dart';

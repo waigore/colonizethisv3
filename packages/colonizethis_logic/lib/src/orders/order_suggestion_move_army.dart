@@ -9,6 +9,7 @@ import '../world/province_lookup.dart';
 import '../world/civilian_tile_occupancy.dart';
 import '../world/topology_helpers.dart';
 import 'draft_orders_mutations.dart';
+import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 import 'order_visibility.dart';
 import 'unit_type_helpers.dart';
@@ -38,6 +39,18 @@ List<MoveOrder> suggestMoveOrders(
 
   final landTiles = sortedLandTileKeys(game.worldState);
 
+  // Build the incremental candidate validator once per suggestion pass: the
+  // per-player [PlayerView]/units-by-id work is amortized across every
+  // candidate probe in the loop, instead of being rebuilt per probe via the
+  // old [OrderEngine] full-pass path. SPEC/program/order-suggestions.md
+  // § Incremental candidate validation. Refs #2237.
+  final candidateValidator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: currentOrders,
+  );
+
   for (final unit in view.ownUnits) {
     if (isMilitaryUnit(unit.type)) {
       // Land regiments move via [ArmyMoveOrder]; see [suggestArmyMoveOrders].
@@ -66,13 +79,7 @@ List<MoveOrder> suggestMoveOrders(
         destinationTileKey: destinationTileKey,
       );
 
-      if (isMoveOrderAccepted(
-        game,
-        topology,
-        playerId,
-        currentOrders,
-        candidate,
-      )) {
+      if (candidateValidator.isMoveAccepted(candidate)) {
         suggestions.add(candidate);
       }
     }
@@ -183,18 +190,18 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     playerId: playerId,
     army: army,
   );
+  final baseValidator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: currentOrders,
+  );
   final out = <ArmyMovePickerDestination>[];
   for (final fullId in raw) {
     final province = game.worldState.tryGetProvince(fullId);
     final ownerId = province?.ownerId ?? '';
     final move = ArmyMoveOrder(armyId: army.id, destinationProvinceId: fullId);
-    final acceptedBase = isArmyMoveOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      move,
-    );
+    final acceptedBase = baseValidator.isArmyMoveAccepted(move);
     var requiresDeclare = false;
     if (acceptedBase) {
       requiresDeclare = false;
@@ -210,7 +217,15 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
           targetFactionId: ownerId,
         ),
       );
-      if (!isArmyMoveOrderAccepted(game, topology, playerId, trial, move)) {
+      // Trial diplomatic context differs from [currentOrders] (extra declare
+      // war), so use a per-trial validator rather than the base one above.
+      final trialValidator = IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        basePrefix: trial,
+      );
+      if (!trialValidator.isArmyMoveAccepted(move)) {
         continue;
       }
       requiresDeclare = true;
@@ -262,6 +277,16 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
         .add(m.destinationProvinceId);
   }
 
+  // Single per-player validator: amortizes the per-player [PlayerView] /
+  // units-by-id setup across every candidate probe. SPEC/program/order-
+  // suggestions.md § Incremental candidate validation. Refs #2237.
+  final candidateValidator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: currentOrders,
+  );
+
   for (final army in game.worldState.armies) {
     if (army.ownerId != playerId) continue;
     if (army.isHomeArmy) continue;
@@ -287,13 +312,7 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
         destinationProvinceId: destinationProvinceId,
       );
 
-      if (isArmyMoveOrderAccepted(
-        game,
-        topology,
-        playerId,
-        currentOrders,
-        candidate,
-      )) {
+      if (candidateValidator.isArmyMoveAccepted(candidate)) {
         suggestions.add(candidate);
       }
     }

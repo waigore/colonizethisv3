@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'draft_orders_mutations.dart';
+import 'incremental_candidate_validator.dart';
 import 'order_engine.dart';
 
 final orderSuggestionLog = packageLogger('order_suggestion');
@@ -33,14 +33,18 @@ bool isMoveOrderAccepted(
   Orders baseOrders,
   MoveOrder candidate,
 ) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addMoveOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
+  // Stateless candidate-probe path: validate the candidate against an
+  // already-accepted [baseOrders] without re-running full-pass
+  // [validatePlayerOrdersWithContext]. SPEC/program/order-suggestions.md
+  // § Incremental candidate validation; SPEC/program/order-engine.md
+  // § Validation (candidate-probe context). Refs #2237.
+  final validator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: baseOrders,
   );
-  return result.isAccepted;
+  return validator.isMoveAccepted(candidate);
 }
 
 bool isArmyMoveOrderAccepted(
@@ -50,15 +54,17 @@ bool isArmyMoveOrderAccepted(
   Orders baseOrders,
   ArmyMoveOrder candidate,
 ) {
-  final merged = applyArmyMoveOrderForPlayer(baseOrders, playerId, candidate);
-  final engine = OrderEngine(initialOrders: merged);
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    topology,
-    playerId,
+  // Stateless candidate-probe path: validate the candidate against
+  // [baseOrders]'s diplomatic context without re-running full-pass
+  // [validatePlayerOrdersWithContext]. SPEC/program/order-suggestions.md
+  // § Incremental candidate validation. Refs #2237.
+  final validator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: baseOrders,
   );
-  if (results.isEmpty) return false;
-  return results.every((r) => r.isAccepted);
+  return validator.isArmyMoveAccepted(candidate);
 }
 
 bool isWorkOrderAccepted(
@@ -105,14 +111,15 @@ bool isNavalMoveOrderAccepted(
   Orders baseOrders,
   NavalMoveOrder candidate,
 ) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addNavalMoveOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
+  // Stateless candidate-probe path. SPEC/program/order-suggestions.md
+  // § Incremental candidate validation. Refs #2237.
+  final validator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: baseOrders,
   );
-  return result.isAccepted;
+  return validator.isNavalMoveAccepted(candidate);
 }
 
 bool isNavalMissionOrderAccepted(
@@ -122,14 +129,15 @@ bool isNavalMissionOrderAccepted(
   Orders baseOrders,
   NavalMissionOrder candidate,
 ) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addNavalMissionOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
+  // Stateless candidate-probe path. SPEC/program/order-suggestions.md
+  // § Incremental candidate validation. Refs #2237.
+  final validator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: baseOrders,
   );
-  return result.isAccepted;
+  return validator.isNavalMissionAccepted(candidate);
 }
 
 bool isDiplomaticOrderAccepted(
