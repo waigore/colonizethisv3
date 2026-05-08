@@ -169,4 +169,64 @@ void main() {
       expect(schema.validate(invalid).isValid, isFalse);
     },
   );
+
+  test(
+    'merged schema rejects invalid schemaVersion and unknown top-level fields',
+    () async {
+      final schema = await createSchema('merged-trace.v1.schema.json');
+      final valid = <String, Object?>{
+        'schemaVersion': 'v1.1',
+        'meta': <String, Object?>{
+          'gameId': 'game-123',
+          'turnNumber': 22,
+          'traceEnabled': true,
+          'exportedAt': '2026-05-08T06:00:00Z',
+        },
+        'ai': <Object?>[
+          <String, Object?>{
+            'factionId': 'gp-france',
+            'state': <String, Object?>{
+              'winningCandidate': <String, Object?>{'id': 'candidate-1'},
+              'topAlternates': <Object?>[],
+              'aggregates': <String, Object?>{},
+            },
+            'thresholds': <String, Object?>{
+              'constants': <String, Object?>{},
+              'derived': <String, Object?>{},
+              'effective': <String, Object?>{},
+              'gates': <Object?>[],
+            },
+            'outcome': <String, Object?>{
+              'finalAggregatedOrders': <Object?>[],
+              'domainOutputs': <String, Object?>{},
+            },
+          },
+        ],
+        'turnResolution': <String, Object?>{
+          'phases': <Object?>[
+            <String, Object?>{
+              'phaseId': 'combat',
+              'beforeState': <String, Object?>{},
+              'afterState': <String, Object?>{},
+              'orderEvents': <Object?>[
+                <String, Object?>{
+                  'sequence': 0,
+                  'orderId': 'order-1',
+                  'eventType': 'order_applied',
+                },
+              ],
+            },
+          ],
+        },
+      };
+      final invalidVersion = Map<String, Object?>.from(valid)
+        ..['schemaVersion'] = '1.1';
+      final invalidUnknownTopLevel = Map<String, Object?>.from(valid)
+        ..['unexpectedField'] = true;
+
+      expect(schema.validate(valid).isValid, isTrue);
+      expect(schema.validate(invalidVersion).isValid, isFalse);
+      expect(schema.validate(invalidUnknownTopLevel).isValid, isFalse);
+    },
+  );
 }
