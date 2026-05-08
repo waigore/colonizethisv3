@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:colonizethis_app/config/app_display_strings.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../config/routes.dart';
@@ -21,10 +22,9 @@ class ShellScreen extends ConsumerWidget {
     return CtMainMenu(
       variant: MainMenuVariant.plain,
       state: MainMenuState.default_,
-      version: 'v0.0.1',
-      onNewGame: () => bus.emit(
-            const OpenDialogEvent(newGameLeaderSelectionDialogId),
-          ),
+      version: appDisplayVersion(),
+      onNewGame: () =>
+          bus.emit(const OpenDialogEvent(newGameLeaderSelectionDialogId)),
       resumeGameVisible: resumeAvailable,
       onResumeGame: () {
         final service = ref.read(gameServiceProvider);
