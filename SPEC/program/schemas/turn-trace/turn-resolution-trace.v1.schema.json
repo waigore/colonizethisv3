@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "SPEC/program/schemas/turn-trace/turn-resolution-trace.v1.schema.json",
+  "type": "object",
+  "required": ["phases"],
+  "properties": {
+    "phases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["phaseId", "beforeState", "afterState", "orderEvents"],
+        "properties": {
+          "phaseId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "beforeState": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "afterState": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "orderEvents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["sequence", "orderId", "eventType"],
+              "properties": {
+                "sequence": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "orderId": {
+                  "type": "string"
+                },
+                "eventType": {
+                  "type": "string"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "payload": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "effects": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
