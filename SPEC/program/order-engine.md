@@ -70,6 +70,17 @@ Supports a **dry-run**: apply orders via the resolver (which returns **new** sta
 
 Before applying orders, TurnResolver runs a **merge** step: combine per-player lists (human + AI) with **human over AI** precedence for conflicts. Merge includes **diplomatic** orders (human over AI per type+target), using only those diplomatic orders that passed OrderEngine validation for each player. Then resolve cross-player effects (conflict detection, diplomacy). Then apply in phase order per [turn-resolution-phases.md](turn-resolution-phases.md). The order engine does not perform merge or application.
 
+### Trusted-source resolution
+
+The resolver exposes **two public turn-entry points** so the per-player pre-apply validation pass (`filterAcceptedOrdersForAllPlayers` in `turn_order_acceptance.dart`) is **skipped only for callers that already validated their inputs**:
+
+- **Untrusted entry point — `validateOrdersAndResolveTurn`:** Runs `filterAcceptedOrdersForAllPlayers` over the merged `Orders` before applying. Required for any caller whose orders may contain invalid entries (scenario runners, ad-hoc test orders, manual JSON-loaded orders, future external/manual sources). Behavior is unchanged from prior releases.
+- **Trusted entry point — `validateOrdersAndResolveTurnFromTrustedOrders`:** Skips `filterAcceptedOrdersForAllPlayers` and dispatches straight to `resolveTurnForGame`. Caller contract: every order in the supplied `Orders` must already have been accepted by either (a) `OrderEngine.addXxxOrderWithContext` for human draft orders, or (b) the order suggestion API (which guarantees `validatePlayerOrdersWithContext` returns `accepted` when the suggestion is appended; see [order-suggestions.md](order-suggestions.md) § Guarantees) for AI-generated orders. Mixing untrusted orders into the trusted entry point breaks the contract; new callers must justify use of this entry point in code review.
+
+A separate function name (not a boolean flag on `Orders`) is the chosen mechanism so trust does not propagate silently through copies, merges, or future refactors. Each trusted-path caller is auditable by grep.
+
+**Equivalence:** Given identical merged `Orders` inputs whose every order is `accepted` by `validatePlayerOrdersWithContext`, the trusted and untrusted entry points produce identical post-merge accepted order sets and identical resulting `WorldState`.
+
 ---
 
 ## End-of-turn order list
@@ -131,6 +142,9 @@ The OrderEngine validates and stores **move (civilian), army move, build, work, 
 - **Work order cost (single source):** Given work orders with material costs, when validated and when projecting effects in the same pass, the same cost calculation is used via WorkOrderCostCalculator (single source of truth).
 - **Work subset move:** Given a civilian work order whose `targetTileKey` the unit may not legally occupy under shared civilian occupancy rules, when validated with context, then the order engine rejects that work order before application.
 - **Validator injection seam:** Given a caller constructs `OrderEngine` with a custom validator factory, when `validatePlayerOrdersWithContext` runs, then the engine uses validators from that factory for move/army/build/work/diplomatic/naval validation without changing public order-storage APIs.
+- **Trusted-path equivalence:** Given a merged `Orders` value whose every order is `accepted` by `validatePlayerOrdersWithContext` for its player, when the system runs `validateOrdersAndResolveTurnFromTrustedOrders` and `validateOrdersAndResolveTurn` against the same inputs, then both entry points return a `TurnResolutionComplete` whose post-merge accepted order sets per player and whose resulting `WorldState` are identical.
+- **Trusted-path bypass:** Given a merged `Orders` value passed to `validateOrdersAndResolveTurnFromTrustedOrders`, when the system resolves the turn, then it does **not** invoke `filterAcceptedOrdersForAllPlayers`; orders are dispatched to the phase pipeline as-supplied.
+- **Untrusted-path preservation:** Given a merged `Orders` value containing at least one rejected order, when the system runs `validateOrdersAndResolveTurn`, then `filterAcceptedOrdersForAllPlayers` removes each rejected order from the per-player order sets before phase application; the resulting `WorldState` reflects only accepted orders.
 
 ---
 

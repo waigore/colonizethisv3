@@ -6,7 +6,6 @@ import '../world/naval.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/topology_helpers.dart';
-import 'order_engine.dart';
 import 'order_suggestion_context.dart';
 import 'orders_application_helpers.dart';
 
@@ -31,7 +30,7 @@ void _addAcceptedSeaZoneCandidates({
       fleetId: fleet.id,
       destinationSeaZoneId: destId,
     );
-    if (_isNavalMoveOrderAccepted(
+    if (isNavalMoveOrderAccepted(
       game,
       topology,
       playerId,
@@ -64,8 +63,7 @@ void _addAcceptedDockCandidatesForSeaFleet({
     final fullProvinceId = ProvinceId.isPrefixed(localId)
         ? localId
         : ProvinceId.full(zoneRegionId, localId);
-    if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ??
-        false) {
+    if (existingByFleet[fleet.id]?.contains('port:$fullProvinceId') ?? false) {
       continue;
     }
     final province = game.worldState.tryGetProvince(fullProvinceId);
@@ -74,7 +72,7 @@ void _addAcceptedDockCandidatesForSeaFleet({
       fleetId: fleet.id,
       destinationPortProvinceId: fullProvinceId,
     );
-    if (_isNavalMoveOrderAccepted(
+    if (isNavalMoveOrderAccepted(
       game,
       topology,
       playerId,
@@ -109,7 +107,7 @@ void _addAcceptedMovesFromPortFleet({
       fleetId: fleet.id,
       destinationSeaZoneId: destId,
     );
-    if (_isNavalMoveOrderAccepted(
+    if (isNavalMoveOrderAccepted(
       game,
       topology,
       playerId,
@@ -225,7 +223,7 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
         fleetId: fleet.id,
         mission: mission.name,
       );
-      if (_isNavalMissionOrderAccepted(
+      if (isNavalMissionOrderAccepted(
         game,
         topology,
         playerId,
@@ -249,59 +247,6 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
     'suggestNavalMissionOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} mission=${o.mission}").join(", ")}',
   );
   return suggestions;
-}
-
-bool _isNavalMoveOrderAccepted(
-  Game game,
-  MapTopology topology,
-  String playerId,
-  Orders baseOrders,
-  NavalMoveOrder candidate,
-) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addNavalMoveOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
-  );
-  return result.isAccepted;
-}
-
-bool _isNavalMissionOrderAccepted(
-  Game game,
-  MapTopology topology,
-  String playerId,
-  Orders baseOrders,
-  NavalMissionOrder candidate,
-) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addNavalMissionOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
-  );
-  return result.isAccepted;
-}
-
-bool _isDiplomaticOrderAccepted(
-  Game game,
-  MapTopology topology,
-  String playerId,
-  Orders baseOrders,
-  DiplomaticOrder candidate, {
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addDiplomaticOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
-    tileMapByRegion: tileMapByRegion,
-  );
-  return result.isAccepted;
 }
 
 /// Trial append for suggestion enumeration. SPEC/program/order-suggestions.md.
@@ -556,7 +501,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
           candidate.type == DiplomaticOrderType.setSubsidy) {
         continue;
       }
-      if (!_isDiplomaticOrderAccepted(
+      if (!isDiplomaticOrderAccepted(
         game,
         topology,
         playerId,
@@ -580,7 +525,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
           candidate.type != DiplomaticOrderType.setSubsidy) {
         continue;
       }
-      if (!_isDiplomaticOrderAccepted(
+      if (!isDiplomaticOrderAccepted(
         game,
         topology,
         playerId,
