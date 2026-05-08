@@ -138,8 +138,8 @@ jobs:
           path: app-test-cache.tar.gz
           retention-days: 2
 
-  # Linux compile gate: parallel to `app_tests_shard` (same cache). Not wired into `app_e2e_linux`
-  # (e2e job is intentionally a no-op); add this job to branch protection if merges must wait on it.
+  # Linux compile gate: parallel to `app_tests_shard` (same cache).
+  # Add this job to branch protection if merges must wait on it.
   app_build_linux:
     name: App Linux desktop build (release)
     needs: [changes, app_tests_cache]
@@ -289,26 +289,6 @@ jobs:
           name: app-lcov-shard-${{ matrix.shard }}
           path: app/coverage/lcov.shard${{ matrix.shard }}.info
           retention-days: 2
-
-  # No integration_test runs: single skip step (see SPEC/program/e2e-integration-tests.md).
-  app_e2e_linux:
-    name: App e2e (Linux desktop + xvfb)
-    needs: [changes, app_tests_shard]
-    if: |
-      always() &&
-      needs.changes.result == 'success' &&
-      (
-        needs.changes.outputs.tests != 'true' ||
-        needs.app_tests_shard.result == 'success'
-      )
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Skip app e2e (temporarily disabled for CI stability/speed)
-        run: |
-          echo "app_e2e_linux gate intentionally skipped."
-          echo "Reason: e2e tests are currently flaky and too slow for PR quality pace."
-          echo "Behavior: this job remains as a required gate but does not execute integration_test suites."
 
   quality:
     needs: changes
@@ -545,81 +525,3 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: tool/check_coverage_threshold.sh 80 app
 
-  # OpenCode post-quality review: same workflow as Quality; runs only for same-repo PRs into dev after
-  # app_e2e_linux succeeds (currently a no-op required gate), when the PR changes paths outside dot-prefixed meta dirs (see changes.opencode_scope),
-  # and when either the PR has the `help wanted` label or more than 10 files changed (otherwise skipped).
-  # CI currently does not invoke OpenCode or enforce PR-comment verdicts (no-op); prompt is preserved on the job below.
-  opencode_review:
-    name: OpenCode review
-    needs: [changes, app_e2e_linux]
-    if: >-
-      github.base_ref == 'dev' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      needs.changes.result == 'success' &&
-      needs.changes.outputs.opencode_scope == 'true' &&
-      needs.app_e2e_linux.result == 'success' &&
-      (contains(github.event.pull_request.labels.*.name, 'help wanted') || github.event.pull_request.changed_files > 10)
-    runs-on: ubuntu-latest
-    # Large PRs can exceed 45m (tooling + diff reads + a long sticky-comment PATCH); cancellation fails the verdict gate.
-    timeout-minutes: 90
-    permissions:
-      pull-requests: write
-      issues: write
-      id-token: write
-      # OpenCode ends with `git push` when the workspace has local commits; the checkout
-      # token must allow contents writes and stay configured for HTTPS (persist-credentials).
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: true
-
-      # OpenCode invocation disabled (flaky); gate remains defined for branch protection / re-enable.
-      # Original model: ${{ vars.OPENCODE_REVIEW_MODEL || 'opencode-go/minimax-m2.7' }} (see anomalyco/opencode/github@latest `with.model`).
-      - name: Run OpenCode (PR review)
-        run: |
-          echo "OpenCode review gate is a no-op (OpenCode not invoked in CI)."
-        env:
-          # Preserved verbatim for restore; not passed to any runner service while disabled.
-          OPENCODE_REVIEW_PROMPT_PRESERVED: |
-            You are the final OpenCode reviewer for this pull request after the app_e2e_linux quality gate passed.
-
-            The repository is checked out in the workspace. Read and apply these files in full:
-            - .cursor/rules/colonizethis-code-review.mdc
-            - .cursor/rules/colonizethis-component-structure.mdc
-
-            Also verify:
-            - The PR diff implements what linked closing issues and the PR description request (use GitHub context available to you).
-            - SPEC documents under SPEC/ stay aligned with code for behavior touched by this diff.
-
-            Deliverables (must all be satisfied):
-            1) Put **all** detailed review text in **one** GitHub pull request **issue comment** on **this** pull request (use the PR number from the active review context, not linked issue numbers). Do not rely on CI or workflow logs for the long-form review; the PR comment is the source of truth for details.
-
-            2) **Single sticky comment only**: If a PR issue comment already exists whose body contains the literal HTML marker `<!-- ct-opencode-quality-review -->`, **edit that same comment** with your updated review (keep the marker in the updated body). If none exists, create **one** new PR issue comment that includes that marker exactly once. **Do not** post any **other** new issue comments on this PR for this review (no follow-up “review complete”, session recap, or duplicate summaries—optional links may appear only inside that sticky comment body).
-
-            3) **Comment body layout** (strict — CI parses line 1 and HTML markers):
-            - **Line 1** must be exactly the ASCII word `PASS` or `FAIL` (uppercase, no backticks, no markdown, no leading/trailing spaces).
-            - **Line 2** must be empty (no spaces).
-            - **Line 3** must be exactly: `<!-- ct-opencode-quality-review -->`
-            - **Line 4** must be exactly one of the following (must match line 1: use PASS line only with `PASS` on line 1, FAIL line only with `FAIL` on line 1):
-              - `<!-- ct-opencode-verdict:PASS -->`
-              - `<!-- ct-opencode-verdict:FAIL -->`
-            - **Line 5** must be empty.
-            - From **line 6** onward, use Markdown for the full human-readable review.
-
-            4) Use line 1 `FAIL` and line 4 `<!-- ct-opencode-verdict:FAIL -->` if anything material must change before merge (bugs, spec violations, missing tests for critical behavior, violations of the rule files above, or mismatch with linked issue intent). Otherwise use `PASS` and `<!-- ct-opencode-verdict:PASS -->`.
-
-  opencode_review_verdict:
-    name: OpenCode review verdict
-    needs: [opencode_review]
-    if: always()
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    steps:
-      # Verdict parsing disabled with OpenCode no-op; prior jq/sed logic preserved in git history.
-      - name: OpenCode review verdict (no-op)
-        run: |
-          echo "OpenCode review verdict gate is a no-op. opencode_review result: ${{ needs.opencode_review.result }}"
