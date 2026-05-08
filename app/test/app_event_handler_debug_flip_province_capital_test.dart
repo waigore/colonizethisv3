@@ -9,7 +9,7 @@ void main() {
 
   group('applyDebugFlipProvinceOwnership capital behavior', () {
     test(
-      'rejects foreign capital flip when owner has no eligible replacement capital',
+      'resolves immediate terminal outcome when owner has no eligible replacement capital',
       () {
         final game = Game(
           id: 'g-flip-no-replacement',
@@ -63,8 +63,13 @@ void main() {
           combinedTopology: const MapTopology(),
         );
 
-        expect(result.game, isNull);
-        expect(result.message, contains('has no eligible replacement capital'));
+        final next = result.game;
+        expect(next, isNotNull);
+        final ownerByProvince = {
+          for (final p in next!.worldState.oldWorld.provinces) p.id: p.ownerId,
+        };
+        expect(ownerByProvince['oldWorld|P1'], 'human_1');
+        expect(result.message, contains('Immediate terminal outcome resolved'));
       },
     );
 
