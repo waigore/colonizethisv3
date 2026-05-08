@@ -2,8 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
+import 'draft_orders_mutations.dart';
 import 'incremental_candidate_validator.dart';
-import 'order_engine.dart';
 
 final orderSuggestionLog = packageLogger('order_suggestion');
 
@@ -76,15 +77,14 @@ bool isWorkOrderAccepted(
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   bumpOrderSuggestionWorkOrderAcceptanceProbeIfTracking();
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addWorkOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
+  final validator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: baseOrders,
     tileMapByRegion: tileMapByRegion,
   );
-  return result.isAccepted;
+  return validator.isWorkAccepted(candidate);
 }
 
 bool isBuildOrderAccepted(
@@ -94,14 +94,13 @@ bool isBuildOrderAccepted(
   Orders baseOrders,
   BuildUnitOrder candidate,
 ) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addBuildOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
+  final validator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: baseOrders,
   );
-  return result.isAccepted;
+  return validator.isBuildAccepted(candidate);
 }
 
 bool isNavalMoveOrderAccepted(
@@ -148,15 +147,14 @@ bool isDiplomaticOrderAccepted(
   DiplomaticOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addDiplomaticOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
+  final validator = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: baseOrders,
     tileMapByRegion: tileMapByRegion,
   );
-  return result.isAccepted;
+  return validator.isDiplomaticAccepted(candidate);
 }
 
 Orders appendDiplomaticOrderForTrial(
