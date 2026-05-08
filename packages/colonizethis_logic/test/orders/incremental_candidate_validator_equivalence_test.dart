@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import '../test_fixtures.dart';
 import 'incremental_candidate_validator_equivalence_test_helpers.dart';
 
 void main() {
@@ -173,6 +175,90 @@ void main() {
           destinationTileKey: 'oldWorld|P2|0|0',
         ),
         label: 'builder w/ prior explorer move in basePrefix',
+      );
+    });
+
+    test('build: candidate remains equivalent to full-pass path', () {
+      final game = TestFixtures.gameWithSingleOwnedProvince(
+        ownerPlayerId: 'p1',
+        provinceId: 'oldWorld|p1',
+        treasury: 999,
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'oldWorld|p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: [],
+      );
+      expectBuildEquivalent(
+        game: game,
+        topology: topology,
+        playerId: 'p1',
+        basePrefix: const Orders(),
+        candidate: const BuildUnitOrder(
+          unitType: 'pikemen',
+          isMilitary: true,
+          spawnProvinceId: 'oldWorld|p1',
+        ),
+        label: 'single build candidate',
+      );
+    });
+
+    test('work: non-empty basePrefix replay remains equivalent', () {
+      final game = moveCorpusGame();
+      final topology = moveCorpusTopology();
+      final basePrefix = Orders(
+        workOrdersByPlayerId: {
+          'p1': [
+            const WorkOrder(
+              unitId: 'u_explorer',
+              target: kWorkTargetExplore,
+              targetTileKey: 'oldWorld|P2|0|0',
+            ),
+          ],
+        },
+      );
+      expectWorkEquivalent(
+        game: game,
+        topology: topology,
+        playerId: 'p1',
+        basePrefix: basePrefix,
+        candidate: const WorkOrder(
+          unitId: 'u_explorer',
+          target: kWorkTargetExplore,
+          targetTileKey: 'oldWorld|P2|0|0',
+        ),
+        label: 'duplicate work unit with basePrefix',
+      );
+    });
+
+    test('diplomatic: non-empty basePrefix replay remains equivalent', () {
+      final game = moveCorpusGame();
+      final topology = moveCorpusTopology();
+      final basePrefix = Orders(
+        diplomaticOrdersByPlayerId: {
+          'p1': [
+            const DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'p2',
+            ),
+          ],
+        },
+      );
+      expectDiplomaticEquivalent(
+        game: game,
+        topology: topology,
+        playerId: 'p1',
+        basePrefix: basePrefix,
+        candidate: const DiplomaticOrder(
+          type: DiplomaticOrderType.alliance,
+          targetFactionId: 'p2',
+        ),
+        label: 'same-target non-economic conflict',
       );
     });
   });

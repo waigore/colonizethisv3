@@ -34,6 +34,52 @@ bool fullPassArmyMoveAccepted(
   return results.every((r) => r.isAccepted);
 }
 
+bool fullPassBuildAccepted(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  Orders basePrefix,
+  BuildUnitOrder candidate,
+) {
+  final engine = OrderEngine(initialOrders: basePrefix);
+  return engine
+      .addBuildOrderWithContext(game, topology, playerId, candidate)
+      .isAccepted;
+}
+
+bool fullPassWorkAccepted(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  Orders basePrefix,
+  WorkOrder candidate, {
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  final engine = OrderEngine(initialOrders: basePrefix);
+  return engine
+      .addWorkOrderWithContext(
+        game,
+        topology,
+        playerId,
+        candidate,
+        tileMapByRegion: tileMapByRegion,
+      )
+      .isAccepted;
+}
+
+bool fullPassDiplomaticAccepted(
+  Game game,
+  MapTopology topology,
+  String playerId,
+  Orders basePrefix,
+  DiplomaticOrder candidate,
+) {
+  final engine = OrderEngine(initialOrders: basePrefix);
+  return engine
+      .addDiplomaticOrderWithContext(game, topology, playerId, candidate)
+      .isAccepted;
+}
+
 void expectMoveEquivalent({
   required Game game,
   required MapTopology topology,
@@ -89,6 +135,96 @@ void expectArmyMoveEquivalent({
     equals(fullPass),
     reason:
         'Army move candidate "$label" diverged: incremental=$incremental, fullPass=$fullPass',
+  );
+}
+
+void expectBuildEquivalent({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Orders basePrefix,
+  required BuildUnitOrder candidate,
+  required String label,
+}) {
+  final fullPass = fullPassBuildAccepted(
+    game,
+    topology,
+    playerId,
+    basePrefix,
+    candidate,
+  );
+  final incremental = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: basePrefix,
+  ).isBuildAccepted(candidate);
+  expect(
+    incremental,
+    equals(fullPass),
+    reason:
+        'Build candidate "$label" diverged: incremental=$incremental, fullPass=$fullPass',
+  );
+}
+
+void expectWorkEquivalent({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Orders basePrefix,
+  required WorkOrder candidate,
+  required String label,
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  final fullPass = fullPassWorkAccepted(
+    game,
+    topology,
+    playerId,
+    basePrefix,
+    candidate,
+    tileMapByRegion: tileMapByRegion,
+  );
+  final incremental = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: basePrefix,
+    tileMapByRegion: tileMapByRegion,
+  ).isWorkAccepted(candidate);
+  expect(
+    incremental,
+    equals(fullPass),
+    reason:
+        'Work candidate "$label" diverged: incremental=$incremental, fullPass=$fullPass',
+  );
+}
+
+void expectDiplomaticEquivalent({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Orders basePrefix,
+  required DiplomaticOrder candidate,
+  required String label,
+}) {
+  final fullPass = fullPassDiplomaticAccepted(
+    game,
+    topology,
+    playerId,
+    basePrefix,
+    candidate,
+  );
+  final incremental = IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: basePrefix,
+  ).isDiplomaticAccepted(candidate);
+  expect(
+    incremental,
+    equals(fullPass),
+    reason:
+        'Diplomatic candidate "$label" diverged: incremental=$incremental, fullPass=$fullPass',
   );
 }
 
