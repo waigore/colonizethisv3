@@ -53,25 +53,6 @@ bool isMoveOrderAccepted(
   Orders baseOrders,
   MoveOrder candidate,
 ) {
-  if (_hasNoPlayerOrders(baseOrders, playerId)) {
-    final player = game.playerById(playerId);
-    if (player == null) return false;
-    final view = buildPlayerView(game, topology, playerId);
-    final unitsById = Map<String, Unit>.from(
-      unitsByIdFromWorld(game.worldState),
-    );
-    final result = const MoveValidator().validate(
-      candidate,
-      game,
-      playerId,
-      unitsById,
-      const <DiplomaticOrder>[],
-      view,
-      topology,
-      previousRejected: false,
-    );
-    return result.isAccepted;
-  }
   final engine = OrderEngine(initialOrders: baseOrders);
   final result = engine.addMoveOrderWithContext(
     game,
@@ -89,17 +70,6 @@ bool isArmyMoveOrderAccepted(
   Orders baseOrders,
   ArmyMoveOrder candidate,
 ) {
-  if (_hasNoPlayerOrders(baseOrders, playerId)) {
-    final result = const ArmyMoveValidator().validate(
-      candidate,
-      game,
-      playerId,
-      const <DiplomaticOrder>[],
-      buildPlayerView(game, topology, playerId),
-      topology,
-    );
-    return result.isAccepted;
-  }
   final merged = applyArmyMoveOrderForPlayer(baseOrders, playerId, candidate);
   final engine = OrderEngine(initialOrders: merged);
   final results = engine.validatePlayerOrdersWithContext(
@@ -193,18 +163,6 @@ bool isNavalMoveOrderAccepted(
   Orders baseOrders,
   NavalMoveOrder candidate,
 ) {
-  if (_hasNoPlayerOrders(baseOrders, playerId)) {
-    final validator = NavalOrderValidator(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-    );
-    final result = validator.validateNavalMove(
-      candidate,
-      previousRejected: false,
-    );
-    return result.isAccepted;
-  }
   final engine = OrderEngine(initialOrders: baseOrders);
   final result = engine.addNavalMoveOrderWithContext(
     game,
@@ -222,18 +180,6 @@ bool isNavalMissionOrderAccepted(
   Orders baseOrders,
   NavalMissionOrder candidate,
 ) {
-  if (_hasNoPlayerOrders(baseOrders, playerId)) {
-    final validator = NavalOrderValidator(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-    );
-    final result = validator.validateNavalMission(
-      candidate,
-      previousRejected: false,
-    );
-    return result.isAccepted;
-  }
   final engine = OrderEngine(initialOrders: baseOrders);
   final result = engine.addNavalMissionOrderWithContext(
     game,
