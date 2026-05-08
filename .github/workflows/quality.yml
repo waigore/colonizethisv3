@@ -403,6 +403,20 @@ jobs:
           GITHUB_BASE_REF: ${{ github.base_ref }}
         run: dart run tool/ct_repo_lint.dart
 
+      - name: Logic test file-size gate (<= 400 physical lines)
+        if: needs.changes.outputs.tests == 'true'
+        run: |
+          set -euo pipefail
+          mapfile -t changed_logic_tests < <(
+            git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD -- \
+              ':(glob)packages/colonizethis_logic/test/**/*.dart'
+          )
+          if [ "${#changed_logic_tests[@]}" -eq 0 ]; then
+            echo "No changed colonizethis_logic tests; skipping size gate."
+            exit 0
+          fi
+          dart run tool/check_logic_test_file_size.dart "${changed_logic_tests[@]}"
+
       - name: Run domain exception custom_lint (SPEC/program/exception-enforcement.md)
         run: bash tool/run_custom_lint_domain_exceptions.sh
 

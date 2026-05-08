@@ -152,5 +152,37 @@ void main() {
       expect(g.worldState.oldWorld.provinces.single.ownerId, 'p1');
       expect(g.worldState.oldWorld.units.single.id, 'u1');
     });
+
+    test('multiProvinceGame creates owned provinces across both regions', () {
+      final game = TestFixtures.multiProvinceGame();
+      expect(game.players.single.id, 'p1');
+      expect(game.worldState.oldWorld.provinces.length, 2);
+      expect(game.worldState.newWorld.provinces.single.id, 'newWorld|n1');
+      expect(
+        game.worldState.oldWorld.provinces.every((p) => p.ownerId == 'p1'),
+        isTrue,
+      );
+    });
+
+    test('navalGame wires ports and coastal tile ownership map', () {
+      final game = TestFixtures.navalGame();
+      expect(
+        game.worldState.portsByProvinceSeaboard['oldWorld|harbor|north'],
+        'oldWorld|harbor|0|0',
+      );
+      expect(
+        game.worldState.tileKeysByRegionAndProvince['oldWorld']?['oldWorld|harbor'],
+        ['oldWorld|harbor|0|0'],
+      );
+      expect(game.worldState.oldWorld.provinces.single.ownerId, 'p1');
+    });
+
+    test('economyGame provides stockpile and mapped resources', () {
+      final game = TestFixtures.economyGame();
+      expect(game.players.single.stockpile.quantityOf('food'), 3);
+      expect(game.players.single.stockpile.quantityOf('silver'), 2);
+      expect(game.worldState.resourceByTileKey['oldWorld|farm|0|0'], 'food');
+      expect(game.worldState.oldWorld.provinces.single.ownerId, 'p1');
+    });
   });
 }
