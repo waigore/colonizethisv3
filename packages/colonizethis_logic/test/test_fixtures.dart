@@ -172,6 +172,85 @@ abstract final class TestFixtures {
     );
   }
 
+  /// One-player game with several owned provinces in old/new world.
+  static Game multiProvinceGame({
+    String playerId = 'p1',
+    List<Province> oldWorldProvinces = const [
+      Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'p1'),
+      Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'p1'),
+    ],
+    List<Province> newWorldProvinces = const [
+      Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'p1'),
+    ],
+  }) {
+    return minimalGame(
+      players: [
+        Player(
+          id: playerId,
+          displayName: 'Player 1',
+          isHuman: true,
+          capitalProvinceId: oldWorldProvinces.first.id,
+        ),
+      ],
+      oldWorld: RegionData(provinces: oldWorldProvinces),
+      newWorld: RegionData(provinces: newWorldProvinces),
+    );
+  }
+
+  /// One-player setup with seaboard ports and mapped owned coastal tiles.
+  static Game navalGame({
+    String playerId = 'p1',
+    Map<String, String> portsByProvinceSeaboard = const {
+      'oldWorld|harbor|north': 'oldWorld|harbor|0|0',
+    },
+    Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {
+      'oldWorld': {
+        'oldWorld|harbor': ['oldWorld|harbor|0|0'],
+      },
+    },
+  }) {
+    return minimalGame(
+      players: [
+        Player(id: playerId, displayName: 'Naval Player', isHuman: true),
+      ],
+      oldWorld: RegionData(
+        provinces: [
+          Province(id: 'oldWorld|harbor', regionId: 'oldWorld', ownerId: playerId),
+        ],
+      ),
+      portsByProvinceSeaboard: portsByProvinceSeaboard,
+      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+    );
+  }
+
+  /// One-player setup with stockpile and resources for economy tests.
+  static Game economyGame({
+    String playerId = 'p1',
+    Stockpile stockpile = const Stockpile(
+      quantities: {'food': 3, 'silver': 2},
+    ),
+    Map<String, String> resourceByTileKey = const {
+      'oldWorld|farm|0|0': 'food',
+    },
+  }) {
+    return minimalGame(
+      players: [
+        Player(
+          id: playerId,
+          displayName: 'Economy Player',
+          isHuman: true,
+          stockpile: stockpile,
+        ),
+      ],
+      oldWorld: RegionData(
+        provinces: [
+          Province(id: 'oldWorld|farm', regionId: 'oldWorld', ownerId: playerId),
+        ],
+      ),
+      resourceByTileKey: resourceByTileKey,
+    );
+  }
+
   /// Two players on shared [worldState] (default empty OW/NW, orders turn 1).
   static Game twoPlayerGame({
     required Player player1,
