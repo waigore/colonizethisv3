@@ -6,8 +6,8 @@ import 'debug_command_helpers.dart';
 
 const _kFlipProvinceRejectAlreadyHumanOwned =
     'Debug flip_province rejected: target province is already human-owned.';
-const _kFlipProvinceRejectNoEligibleReplacementCapital =
-    'Debug flip_province rejected: cannot flip target capital because owning faction has no eligible replacement capital.';
+const _kFlipProvinceTerminalFallResolved =
+    'Immediate terminal outcome resolved: prior owner had no eligible replacement capital; terminal fall semantics applied.';
 
 /// Apply immediate canonical province ownership transfer from debug console.
 DebugCommandResult applyDebugFlipProvinceOwnership({
@@ -81,6 +81,7 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
     };
     final priorOwner = findPlayerById(currentGame, oldOwnerId);
     final ownerLosesCapital = priorOwner?.capitalProvinceId == province.id;
+    var noEligibleReplacementCapital = false;
     if (ownerLosesCapital) {
       final regionTopology =
           topologyByRegion?[province.regionId] ?? combinedTopology;
@@ -92,10 +93,7 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
         excludedProvinceId: province.id,
       );
       if (!eligibility.eligible) {
-        return (
-          game: null,
-          message: _kFlipProvinceRejectNoEligibleReplacementCapital,
-        );
+        noEligibleReplacementCapital = true;
       }
     }
 
@@ -132,15 +130,16 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
         playerVisibilityByTile: visibilityAfterCoastal,
       ),
     );
-    return (
-      game: nextGame,
-      message:
-          'Flipped province ${result.provinceId}: ${result.oldOwnerId} -> ${result.newOwnerId}. '
-          'Regiments transferred: ${result.regimentsTransferred}; fleets transferred: '
-          '${result.inPortFleetsTransferred}; visibility updates: +${result.visibilitySummary.tilesSetFullyVisibleForNewOwner} '
-          'new-owner land tiles, -${result.visibilitySummary.tilesDowngradedForFormerOwner} former-owner land tiles, '
-          '+$coastalUpdatedTiles coastal/sea-zone tiles.',
-    );
+    final baseMessage =
+        'Flipped province ${result.provinceId}: ${result.oldOwnerId} -> ${result.newOwnerId}. '
+        'Regiments transferred: ${result.regimentsTransferred}; fleets transferred: '
+        '${result.inPortFleetsTransferred}; visibility updates: +${result.visibilitySummary.tilesSetFullyVisibleForNewOwner} '
+        'new-owner land tiles, -${result.visibilitySummary.tilesDowngradedForFormerOwner} former-owner land tiles, '
+        '+$coastalUpdatedTiles coastal/sea-zone tiles.';
+    final fullMessage = noEligibleReplacementCapital
+        ? '$baseMessage $_kFlipProvinceTerminalFallResolved'
+        : baseMessage;
+    return (game: nextGame, message: fullMessage);
   } on StateError catch (error) {
     return (
       game: null,
