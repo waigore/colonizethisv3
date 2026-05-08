@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:colonizethis_logic/src/turn/trace/turn_trace_contracts.dart';
 import 'package:json_schema/json_schema.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   final schemaDir = Directory('lib/src/turn/trace');
