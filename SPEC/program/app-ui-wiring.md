@@ -166,6 +166,8 @@ In **`colonizethis_app`**, widgets and services that hold **one or more** `Strea
 - Given a units sheet should close before the map reacts, When the player triggers locate or work-target selection from that sheet, Then the system emits `ClosePanelEvent` before `LocateMapTileEvent` or `StartCivilianWorkTargetSelectionEvent`; the map widget does not call `Navigator.maybePop` for that teardown.
 - Given `DiplomacyPanel` is mounted with a bus, When the user taps Grant Aid or Set Subsidy, Then the system emits `OpenDialogEvent('grant_or_subsidy')` (panel does not call `showDialog` directly).
 - Given `DiplomacyPanel` is mounted with a bus, When the user taps a faction row, Then the system emits `NavigateToRouteEvent(Routes.diplomacyDetail)` (panel does not call `Navigator.push` directly).
+- Given `CT_DEBUG_CONSOLE=true`, When the app shell computes a localized app title for desktop or web title surfaces, Then the shell appends the exact terminal suffix ` (debug)` using the shared debug-aware title formatter.
+- Given `CT_DEBUG_CONSOLE=false` or undefined, When the app shell computes a localized app title for desktop or web title surfaces, Then the shell keeps the title unchanged and does not alter debug-console commands, routing, persistence, or game behavior.
 
 ### Coupling rules
 

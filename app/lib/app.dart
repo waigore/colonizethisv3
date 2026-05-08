@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/config/app_display_strings.dart';
 import 'package:colonizethis_app/config/desktop_window_settings.dart';
 import 'package:colonizethis_app/providers/settings_provider.dart';
 
@@ -28,7 +29,8 @@ class App extends ConsumerWidget {
             defaultTargetPlatform == TargetPlatform.windows);
     final app = MaterialApp(
       navigatorKey: appNavigatorKey,
-      onGenerateTitle: (context) => appL10n(context).app_title,
+      onGenerateTitle: (context) =>
+          formatDebugAwareTitle(appL10n(context).app_title),
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       theme: AppThemes.light,
