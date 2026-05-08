@@ -12,11 +12,16 @@ The order engine (colonizethis_logic) maintains the **current-turn order list pe
 
 ## Validation
 
-**Trigger:** On every add/remove, re-validates the entire list for that player against world state (costs, caps, tile/province legality, tech per [orders.md](orders.md)).
+**Trigger:** Validation runs in **two distinct contexts**:
+
+- **Final-order-submission context (existing):** On every add/remove via `addXxxOrderWithContext` / `removeXxxOrder`, the engine re-validates the entire list for that player against world state (costs, caps, tile/province legality, tech per [orders.md](orders.md)). This is the contract for human draft edits, scenario runners, and external/manual callers.
+- **Candidate-probe context (new):** The order suggestion API exposes an **incremental candidate validation primitive** that evaluates one candidate against an already-accepted prefix without running full-list `validatePlayerOrdersWithContext`. The primitive is internal to suggestion code and does not change the public `addXxxOrderWithContext` / `validatePlayerOrdersWithContext` API surface used by the final-submission context. See [order-suggestions.md](order-suggestions.md) § Incremental candidate validation for the algorithm and equivalence guarantee.
 
 **Scope:** The engine validates **move** (civilian), **army move**, **build**, **work**, **diplomatic**, **naval move**, and **naval mission** orders. **Research** orders are validated in the research phase (TurnResolver), not in the engine. Diplomatic orders are held and validated per-player like other order types (preconditions for war/peace, alliances, overtures, grants, and subsidies) and then passed into the merge step.
 
 **Rule:** Validate in **submission order**. First failure rejects that order and all after it. Orders 1..N-1 remain.
+
+**Equivalence:** For any candidate evaluated through the incremental primitive against an already-accepted `basePrefix`, the accept/reject result is identical to running `validatePlayerOrdersWithContext` over `basePrefix ⊕ candidate` and inspecting the candidate's result. The two contexts are equivalent for accept/reject decisions; they differ only in cost (incremental skips redundant re-validation of `basePrefix`).
 
 **With context:** Uses a PlayerView for visibility rules (move/work orders). Source province = unit's location; need not be owned by player. See [fog-and-exploration-resolution.md](fog-and-exploration-resolution.md).
 
@@ -142,6 +147,7 @@ The OrderEngine validates and stores **move (civilian), army move, build, work, 
 - **Work order cost (single source):** Given work orders with material costs, when validated and when projecting effects in the same pass, the same cost calculation is used via WorkOrderCostCalculator (single source of truth).
 - **Work subset move:** Given a civilian work order whose `targetTileKey` the unit may not legally occupy under shared civilian occupancy rules, when validated with context, then the order engine rejects that work order before application.
 - **Validator injection seam:** Given a caller constructs `OrderEngine` with a custom validator factory, when `validatePlayerOrdersWithContext` runs, then the engine uses validators from that factory for move/army/build/work/diplomatic/naval validation without changing public order-storage APIs.
+- **Incremental candidate equivalence:** Given a `basePrefix` whose every order is `accepted` by `validatePlayerOrdersWithContext` for its player and a candidate `c` of a stateless type (move, army move, naval move, or naval mission), when the system evaluates `c` via the incremental candidate validation primitive (per [order-suggestions.md](order-suggestions.md) § Incremental candidate validation) and via the existing `OrderEngine(initialOrders: basePrefix).addXxxOrderWithContext(...)` path on the same inputs, then both paths return the same boolean accept/reject decision for `c`.
 - **Trusted-path equivalence:** Given a merged `Orders` value whose every order is `accepted` by `validatePlayerOrdersWithContext` for its player, when the system runs `validateOrdersAndResolveTurnFromTrustedOrders` and `validateOrdersAndResolveTurn` against the same inputs, then both entry points return a `TurnResolutionComplete` whose post-merge accepted order sets per player and whose resulting `WorldState` are identical.
 - **Trusted-path bypass:** Given a merged `Orders` value passed to `validateOrdersAndResolveTurnFromTrustedOrders`, when the system resolves the turn, then it does **not** invoke `filterAcceptedOrdersForAllPlayers`; orders are dispatched to the phase pipeline as-supplied.
 - **Untrusted-path preservation:** Given a merged `Orders` value containing at least one rejected order, when the system runs `validateOrdersAndResolveTurn`, then `filterAcceptedOrdersForAllPlayers` removes each rejected order from the per-player order sets before phase application; the resulting `WorldState` reflects only accepted orders.
