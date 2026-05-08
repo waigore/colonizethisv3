@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart' show GameEvent;
+import 'trace/turn_trace_contracts.dart';
 import 'turn_pipeline_state.dart';
 import 'turn_resolution_result.dart';
 
@@ -36,6 +37,7 @@ class TurnResolverConfig {
     this.callToArmsDecisions,
     this.phaseHandlerOverrides,
     this.onPhaseProgress,
+    this.onTurnTracePhase,
   });
 
   final MapTopology topology;
@@ -65,4 +67,8 @@ class TurnResolverConfig {
   /// Optional callback invoked at each phase start/end during pipeline execution.
   final void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
   onPhaseProgress;
+
+  /// Optional debug trace callback for per-phase snapshots captured during
+  /// turn resolution. This hook is observational and must not mutate state.
+  final void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase;
 }

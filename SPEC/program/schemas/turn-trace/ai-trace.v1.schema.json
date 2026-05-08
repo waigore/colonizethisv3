@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "SPEC/program/schemas/turn-trace/ai-trace.v1.schema.json",
+  "type": "object",
+  "required": ["factionId", "state", "thresholds", "outcome"],
+  "properties": {
+    "factionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "type": "object",
+      "required": ["winningCandidate", "topAlternates", "aggregates"],
+      "properties": {
+        "winningCandidate": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "topAlternates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "aggregates": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "decisionContext": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "thresholds": {
+      "type": "object",
+      "required": ["constants", "derived", "effective", "gates"],
+      "properties": {
+        "constants": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "derived": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "effective": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "gates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "outcome": {
+      "type": "object",
+      "required": ["domainOutputs", "finalAggregatedOrders"],
+      "properties": {
+        "domainOutputs": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "finalAggregatedOrders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "emittedOrderCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "SPEC/program/schemas/turn-trace/merged-trace.v1.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "meta", "ai", "turnResolution"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^v[0-9]+(\\.[0-9]+)*$"
+    },
+    "meta": {
+      "type": "object",
+      "required": ["gameId", "turnNumber", "exportedAt", "traceEnabled"],
+      "properties": {
+        "gameId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "turnNumber": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "resolutionSessionId": {
+          "type": "string"
+        },
+        "seed": {
+          "type": ["integer", "string"]
+        },
+        "buildMode": {
+          "type": "string",
+          "enum": ["debug", "profile", "release"]
+        },
+        "source": {
+          "type": "string",
+          "enum": ["app", "ctdev"]
+        },
+        "traceEnabled": {
+          "type": "boolean"
+        },
+        "exportedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "turnStartAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "turnEndAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": true
+    },
+    "ai": {
+      "type": "array",
+      "items": {
+        "$ref": "ai-trace.v1.schema.json"
+      }
+    },
+    "turnResolution": {
+      "$ref": "turn-resolution-trace.v1.schema.json"
+    }
+  },
+  "additionalProperties": false
+}

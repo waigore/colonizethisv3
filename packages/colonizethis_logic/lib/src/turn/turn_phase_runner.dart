@@ -10,6 +10,7 @@ import 'turn_resolution_events.dart';
 import 'turn_resolution_result.dart';
 import 'turn_resolution_sequence.dart';
 import 'turn_resolver_config.dart';
+import 'trace/turn_trace_contracts.dart';
 import 'phases.dart';
 
 final _log = packageLogger();
@@ -37,6 +38,7 @@ TurnResolutionResult runTurnResolutionPipeline({
     if (i < phaseIndex) continue;
     config.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.start);
     _log.i('phase ${phase.name} start');
+    final beforeState = acc.game.toJson();
     final handler = handlers[phase];
     if (handler == null) {
       throw StateError('No turn phase handler registered for ${phase.name}');
@@ -44,8 +46,20 @@ TurnResolutionResult runTurnResolutionPipeline({
     final outcome = handler(acc, config, turn);
     switch (outcome) {
       case TurnPhaseStepExit(:final result):
+        _emitPhaseTrace(
+          config: config,
+          phase: phase,
+          beforeState: beforeState,
+          afterState: _phaseExitStateSnapshot(result),
+        );
         return result;
       case TurnPhaseStepContinue(:final pipeline):
+        _emitPhaseTrace(
+          config: config,
+          phase: phase,
+          beforeState: beforeState,
+          afterState: pipeline.game.toJson(),
+        );
         acc = pipeline;
     }
     _log.i('phase ${phase.name} end');
@@ -65,6 +79,31 @@ TurnResolutionResult runTurnResolutionPipeline({
     end: acc.game,
   );
   return TurnResolutionComplete(news.game, turnNewsDigest: news.digest);
+}
+
+void _emitPhaseTrace({
+  required TurnResolverConfig config,
+  required TurnPhase phase,
+  required Map<String, Object?> beforeState,
+  required Map<String, Object?> afterState,
+}) {
+  config.onTurnTracePhase?.call(
+    TurnTracePhaseTrace(
+      phaseId: phase.name,
+      beforeState: beforeState,
+      afterState: afterState,
+      orderEvents: const <TurnTraceOrderEvent>[],
+    ),
+  );
+}
+
+Map<String, Object?> _phaseExitStateSnapshot(TurnResolutionResult result) {
+  return switch (result) {
+    TurnResolutionComplete(:final game) => game.toJson(),
+    TurnResolutionPendingOvertures(:final game) => game.toJson(),
+    TurnResolutionPendingIntervention(:final game) => game.toJson(),
+    TurnResolutionPendingCallToArms(:final game) => game.toJson(),
+  };
 }
 
 Map<TurnPhase, TurnPhaseHandler> _defaultTurnPhaseHandlers() {
