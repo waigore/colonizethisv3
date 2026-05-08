@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://colonizethis.dev/schemas/turn-trace-ai-v1.schema.json",
+  "title": "ColonizeThis AI Decision Trace V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "factionId",
+    "state",
+    "thresholds",
+    "outcome"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "factionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "winningCandidate",
+        "topAlternates",
+        "aggregates"
+      ],
+      "properties": {
+        "winningCandidate": {
+          "type": "object"
+        },
+        "topAlternates": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "aggregates": {
+          "type": "object"
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "constants",
+        "derived",
+        "effective",
+        "gatingChecks"
+      ],
+      "properties": {
+        "constants": {
+          "type": "object"
+        },
+        "derived": {
+          "type": "object"
+        },
+        "effective": {
+          "type": "object"
+        },
+        "gatingChecks": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "finalOrders",
+        "domainOutputs"
+      ],
+      "properties": {
+        "finalOrders": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "domainOutputs": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}
