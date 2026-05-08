@@ -23,6 +23,12 @@ List<BuildUnitOrder> suggestBuildOrders(
   final playerId = view.playerId;
   final player = view.player;
   final suggestions = <BuildUnitOrder>[];
+  final candidateValidator = buildIncrementalCandidateValidator(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    baseOrders: currentOrders,
+  );
 
   final capitalId = player.capitalProvinceId;
   if (capitalId == null) {
@@ -40,13 +46,7 @@ List<BuildUnitOrder> suggestBuildOrders(
       spawnProvinceId: capitalId,
     );
 
-    if (isBuildOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-    )) {
+    if (isBuildOrderAcceptedWithValidator(candidateValidator, candidate)) {
       suggestions.add(candidate);
     }
   }
@@ -60,13 +60,7 @@ List<BuildUnitOrder> suggestBuildOrders(
       spawnProvinceId: capitalId,
     );
 
-    if (isBuildOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-    )) {
+    if (isBuildOrderAcceptedWithValidator(candidateValidator, candidate)) {
       suggestions.add(candidate);
     }
   }
@@ -187,6 +181,13 @@ Set<String> getValidWorkOrderTileKeys(
     workTarget: workTarget,
     tileMapByRegion: tileMapByRegion,
   );
+  final candidateValidator = buildIncrementalCandidateValidator(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    baseOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
   final valid = <String>{};
   for (final tileKey in raw) {
     if (isDevExclusiveWorkTarget(workTarget) &&
@@ -198,14 +199,7 @@ Set<String> getValidWorkOrderTileKeys(
       target: workTarget,
       targetTileKey: tileKey,
     );
-    if (isWorkOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-      tileMapByRegion: tileMapByRegion,
-    )) {
+    if (isWorkOrderAcceptedWithValidator(candidateValidator, candidate)) {
       valid.add(tileKey);
     }
   }
@@ -281,6 +275,13 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     tileMapByRegion: tileMapByRegion,
   );
   final sortedVisible = sortedVisibleWorkTargetCandidates(view, raw);
+  final candidateValidator = buildIncrementalCandidateValidator(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    baseOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
 
   orderSuggestionLog.d(
     'getValidWorkOrderTileKeysWithVisibility visible sorted count=${sortedVisible.length}',
@@ -297,14 +298,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
       target: workTarget,
       targetTileKey: tileKey,
     );
-    if (isWorkOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-      tileMapByRegion: tileMapByRegion,
-    )) {
+    if (isWorkOrderAcceptedWithValidator(candidateValidator, candidate)) {
       valid.add(tileKey);
     }
   }
