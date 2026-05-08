@@ -71,6 +71,41 @@ void main() {
   );
 
   test(
+    'ai schema rejects unknown top-level fields and missing outcome payload keys',
+    () async {
+      final schema = await createSchema('ai-trace.v1.schema.json');
+      final valid = <String, Object?>{
+        'factionId': 'gp-spain',
+        'state': <String, Object?>{
+          'winningCandidate': <String, Object?>{'id': 'candidate-1'},
+          'topAlternates': <Object?>[],
+          'aggregates': <String, Object?>{'pressure': 7},
+        },
+        'thresholds': <String, Object?>{
+          'constants': <String, Object?>{},
+          'derived': <String, Object?>{},
+          'effective': <String, Object?>{},
+          'gates': <Object?>[],
+        },
+        'outcome': <String, Object?>{
+          'domainOutputs': <String, Object?>{},
+          'finalAggregatedOrders': <Object?>[],
+        },
+      };
+      final invalidUnknownField = Map<String, Object?>.from(valid)
+        ..['unexpected'] = <String, Object?>{};
+      final invalidOutcome = Map<String, Object?>.from(valid)
+        ..['outcome'] = <String, Object?>{
+          'domainOutputs': <String, Object?>{},
+        };
+
+      expect(schema.validate(valid).isValid, isTrue);
+      expect(schema.validate(invalidUnknownField).isValid, isFalse);
+      expect(schema.validate(invalidOutcome).isValid, isFalse);
+    },
+  );
+
+  test(
     'resolution schema validates ordered phase payload and rejects malformed events',
     () async {
       final schema = await createSchema('turn-resolution-trace.v1.schema.json');
@@ -109,6 +144,65 @@ void main() {
 
       expect(schema.validate(valid).isValid, isTrue);
       expect(schema.validate(invalid).isValid, isFalse);
+    },
+  );
+
+  test(
+    'resolution schema rejects unknown phase fields and missing order event keys',
+    () async {
+      final schema = await createSchema('turn-resolution-trace.v1.schema.json');
+      final valid = <String, Object?>{
+        'phases': <Object?>[
+          <String, Object?>{
+            'phaseId': 'support',
+            'beforeState': <String, Object?>{},
+            'afterState': <String, Object?>{},
+            'orderEvents': <Object?>[
+              <String, Object?>{
+                'sequence': 1,
+                'orderId': 'order-100',
+                'eventType': 'order_applied',
+              },
+            ],
+          },
+        ],
+      };
+      final invalidUnknownPhaseField = <String, Object?>{
+        'phases': <Object?>[
+          <String, Object?>{
+            'phaseId': 'support',
+            'beforeState': <String, Object?>{},
+            'afterState': <String, Object?>{},
+            'orderEvents': <Object?>[
+              <String, Object?>{
+                'sequence': 1,
+                'orderId': 'order-100',
+                'eventType': 'order_applied',
+              },
+            ],
+            'unexpectedField': true,
+          },
+        ],
+      };
+      final invalidMissingOrderEventType = <String, Object?>{
+        'phases': <Object?>[
+          <String, Object?>{
+            'phaseId': 'support',
+            'beforeState': <String, Object?>{},
+            'afterState': <String, Object?>{},
+            'orderEvents': <Object?>[
+              <String, Object?>{
+                'sequence': 1,
+                'orderId': 'order-100',
+              },
+            ],
+          },
+        ],
+      };
+
+      expect(schema.validate(valid).isValid, isTrue);
+      expect(schema.validate(invalidUnknownPhaseField).isValid, isFalse);
+      expect(schema.validate(invalidMissingOrderEventType).isValid, isFalse);
     },
   );
 
