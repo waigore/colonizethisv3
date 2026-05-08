@@ -115,4 +115,43 @@ void main() {
     expect(events.first.$2, TurnPhaseProgressMarker.start);
     expect(events.last.$2, TurnPhaseProgressMarker.end);
   });
+
+  test('phase trace callback emits before and after snapshots per phase', () {
+    final topology = MapTopology(
+      nodes: const [
+        TopologyNode(
+          id: 'P1',
+          regionId: 'oldWorld',
+          type: TopologyNodeType.province,
+        ),
+      ],
+      edges: const [],
+    );
+    final game = TestFixtures.minimalGame(
+      id: 'g1',
+      turnNumber: 0,
+      players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
+      oldWorld: RegionData(
+        provinces: [Province(id: 'oldWorld|P1', regionId: 'oldWorld')],
+      ),
+    );
+    final traces = <TurnTracePhaseTrace>[];
+
+    resolveTurnForGameWithConfig(
+      game: game,
+      config: TurnResolverConfig(
+        topology: topology,
+        orders: const Orders(),
+        onTurnTracePhase: traces.add,
+      ),
+    );
+
+    expect(traces, isNotEmpty);
+    expect(traces.first.phaseId, TurnPhase.orders.name);
+    expect(traces.first.beforeState, isNotEmpty);
+    expect(traces.first.afterState, isNotEmpty);
+    expect(traces.first.orderEvents, isEmpty);
+    expect(traces.last.phaseId, TurnPhase.endOfTurn.name);
+    expect(traces.last.afterState['worldState'], isA<Map<String, dynamic>>());
+  });
 }
