@@ -7,7 +7,6 @@ import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 import 'build_rail_work_rules.dart';
 import 'draft_orders_mutations.dart';
-import 'order_engine.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
 import 'orders_application_helpers.dart';
@@ -153,61 +152,6 @@ List<ResearchOrder> suggestResearchOrders(
   return suggestions;
 }
 
-bool _isMoveOrderAccepted(
-  Game game,
-  MapTopology topology,
-  String playerId,
-  Orders baseOrders,
-  MoveOrder candidate,
-) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addMoveOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
-  );
-  return result.isAccepted;
-}
-
-bool _isArmyMoveOrderAccepted(
-  Game game,
-  MapTopology topology,
-  String playerId,
-  Orders baseOrders,
-  ArmyMoveOrder candidate,
-) {
-  final merged = applyArmyMoveOrderForPlayer(baseOrders, playerId, candidate);
-  final engine = OrderEngine(initialOrders: merged);
-  final results = engine.validatePlayerOrdersWithContext(
-    game,
-    topology,
-    playerId,
-  );
-  if (results.isEmpty) return false;
-  return results.every((r) => r.isAccepted);
-}
-
-bool _isWorkOrderAccepted(
-  Game game,
-  MapTopology topology,
-  String playerId,
-  Orders baseOrders,
-  WorkOrder candidate, {
-  Map<String, TileMapResult>? tileMapByRegion,
-}) {
-  bumpOrderSuggestionWorkOrderAcceptanceProbeIfTracking();
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addWorkOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
-    tileMapByRegion: tileMapByRegion,
-  );
-  return result.isAccepted;
-}
-
 /// Returns the set of tile keys that are valid targets for a work order
 /// (unitId, workTarget) given [currentOrders]. Used by the app to highlight
 /// valid tiles when the player is assigning work. SPEC/ui/civilian-units-panel.md.
@@ -254,7 +198,7 @@ Set<String> getValidWorkOrderTileKeys(
       target: workTarget,
       targetTileKey: tileKey,
     );
-    if (_isWorkOrderAccepted(
+    if (isWorkOrderAccepted(
       game,
       topology,
       playerId,
@@ -353,7 +297,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
       target: workTarget,
       targetTileKey: tileKey,
     );
-    if (_isWorkOrderAccepted(
+    if (isWorkOrderAccepted(
       game,
       topology,
       playerId,
@@ -376,7 +320,8 @@ Set<String> _partiallyRevealedProvinceCacheForPlayer({
   required PlayerView view,
 }) {
   final cached = <String>{};
-  for (final regionEntry in game.worldState.tileKeysByRegionAndProvince.entries) {
+  for (final regionEntry
+      in game.worldState.tileKeysByRegionAndProvince.entries) {
     for (final provinceEntry in regionEntry.value.entries) {
       final provinceId = provinceEntry.key;
       if (!ProvinceId.isPrefixed(provinceId)) continue;
@@ -388,7 +333,10 @@ Set<String> _partiallyRevealedProvinceCacheForPlayer({
   return cached;
 }
 
-bool _hasMixedKnownAndUnknownVisibility(PlayerView view, List<String> tileKeys) {
+bool _hasMixedKnownAndUnknownVisibility(
+  PlayerView view,
+  List<String> tileKeys,
+) {
   var hasKnown = false;
   var hasUnknown = false;
   for (final tileKey in tileKeys) {
@@ -545,23 +493,6 @@ void _addCandidateTilesForStealTech({
       result.add(tiles.first);
     }
   }
-}
-
-bool _isBuildOrderAccepted(
-  Game game,
-  MapTopology topology,
-  String playerId,
-  Orders baseOrders,
-  BuildUnitOrder candidate,
-) {
-  final engine = OrderEngine(initialOrders: baseOrders);
-  final result = engine.addBuildOrderWithContext(
-    game,
-    topology,
-    playerId,
-    candidate,
-  );
-  return result.isAccepted;
 }
 
 /// Context for [_workTargetPrefilters] map dispatch (work-target tile pre-filter).
