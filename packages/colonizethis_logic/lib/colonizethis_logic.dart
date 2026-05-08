@@ -36,6 +36,7 @@ export 'src/setup/setup_exceptions.dart';
 export 'src/turn/economy_debt_rules.dart';
 export 'src/turn/research_resolver.dart';
 export 'src/turn/trace/turn_trace_contracts.dart';
+export 'src/turn/trace/turn_trace_file_exporter.dart';
 export 'src/turn/turn_resolution_result.dart';
 export 'src/turn/turn_resolver.dart';
 export 'src/turn/turn_news_digest.dart';
