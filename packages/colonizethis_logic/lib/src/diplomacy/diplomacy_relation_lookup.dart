@@ -18,13 +18,29 @@ const int overtureEmbassyCost = 1000;
 const int joinEmpireBaseCost = 5000;
 const int joinEmpirePerProvinceCost = 2000;
 
+/// Lazily built per [Game] instance (issue #2268 AC-5). A new [Game] from
+/// [Game.copyWith] does not share expando state with the previous instance.
+final Expando<Map<String, int>> _gameProvinceCountsByOwner =
+    Expando<Map<String, int>>('gameProvinceCountsByOwner');
+
+Map<String, int> _provinceCountsByOwner(Game game) {
+  var map = _gameProvinceCountsByOwner[game];
+  if (map == null) {
+    final built = <String, int>{};
+    for (final p in allProvinces(game.worldState)) {
+      final oid = p.ownerId;
+      if (oid == null) continue;
+      built[oid] = (built[oid] ?? 0) + 1;
+    }
+    _gameProvinceCountsByOwner[game] = built;
+    map = built;
+  }
+  return map;
+}
+
 /// Returns the number of provinces owned by [factionId] (Minor or Tribe) in [game].
 int provinceCountOwnedBy(Game game, String factionId) {
-  var count = 0;
-  for (final p in allProvinces(game.worldState)) {
-    if (p.ownerId == factionId) count++;
-  }
-  return count;
+  return _provinceCountsByOwner(game)[factionId] ?? 0;
 }
 
 /// Default weights for Great Power power score. SPEC/game/diplomacy.md § Great Power power score.
