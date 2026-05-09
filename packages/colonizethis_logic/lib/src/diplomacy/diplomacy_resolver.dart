@@ -33,6 +33,35 @@ export 'intervention_resolver.dart'
 
 final diploLog = packageLogger();
 
+/// O(1) faction classification snapshot for diplomacy hot paths (Refs #2268 AC-6).
+/// Rebuild when [Game.players], [Game.minorNations], or [Game.tribes] membership
+/// changes in the same phase (for example Join Empire absorption).
+final class DiplomacyFactionMembership {
+  DiplomacyFactionMembership._(this.greatPowerIds, this.minorOrTribeIds);
+
+  factory DiplomacyFactionMembership.from(Game game) {
+    final gp = <String>{};
+    for (final p in game.players) {
+      gp.add(p.id);
+    }
+    final minorTribe = <String>{};
+    for (final m in game.minorNations) {
+      minorTribe.add(m.id);
+    }
+    for (final t in game.tribes) {
+      minorTribe.add(t.id);
+    }
+    return DiplomacyFactionMembership._(gp, minorTribe);
+  }
+
+  final Set<String> greatPowerIds;
+  final Set<String> minorOrTribeIds;
+
+  bool isGreatPower(String factionId) => greatPowerIds.contains(factionId);
+
+  bool isMinorOrTribe(String factionId) => minorOrTribeIds.contains(factionId);
+}
+
 bool isMinorOrTribe(Game game, String factionId) {
   return game.minorNations.any((m) => m.id == factionId) ||
       game.tribes.any((t) => t.id == factionId);
@@ -43,8 +72,14 @@ bool isGreatPower(Game game, String factionId) {
 }
 
 /// Target GP is "nearly defeated" for Join Empire: ≤3 provinces and does not hold its original capital tile province. SPEC/game/diplomacy.md.
-bool isGreatPowerNearlyDefeatedForJoinEmpire(Game game, String gpId) {
-  if (!isGreatPower(game, gpId)) return false;
+bool isGreatPowerNearlyDefeatedForJoinEmpire(
+  Game game,
+  String gpId, {
+  DiplomacyFactionMembership? factionMembership,
+}) {
+  final isGp =
+      factionMembership?.isGreatPower(gpId) ?? isGreatPower(game, gpId);
+  if (!isGp) return false;
   final player = game.playerById(gpId);
   final capId = player?.capitalProvinceId;
   if (capId == null) return false;
@@ -77,12 +112,14 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
   var state = game;
 
   final diploByPlayer = orders.diplomaticOrdersByPlayerId;
+  var factionMembership = DiplomacyFactionMembership.from(game);
 
   // 1. Process overture offers (two-way: target accepts/rejects)
   final overtureResult = processOverturePayments(
     state,
     diploByPlayer,
     turn,
+    factionMembership: factionMembership,
     overtureDecisions: overtureDecisions,
   );
   state = overtureResult.game;
@@ -100,15 +137,22 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
 
   // 3. Resolve Join Empire/Colony
   state = resolveJoinEmpireColony(state, diploByPlayer, turn);
+  factionMembership = DiplomacyFactionMembership.from(state);
 
   // 4. Process alliance proposals and responses
-  state = processAlliances(state, diploByPlayer, turn);
+  state = processAlliances(
+    state,
+    diploByPlayer,
+    turn,
+    factionMembership: factionMembership,
+  );
 
   // 5. Process Declare War and Peace
   state = processWarAndPeace(
     state,
     diploByPlayer,
     turn,
+    factionMembership: factionMembership,
     onDialogue: onDialogue,
   );
 
@@ -117,6 +161,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     state,
     diploByPlayer,
     turn,
+    factionMembership: factionMembership,
     interventionDecisions: interventionDecisions,
   );
   if (interventionResult.pendingInterventions != null &&
@@ -133,6 +178,7 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
     state,
     diploByPlayer,
     turn,
+    factionMembership: factionMembership,
     callToArmsDecisions: callToArmsDecisions,
   );
   state = ctaResult.game;
@@ -150,7 +196,11 @@ DiplomacyPhaseResult resolveDiplomacyPhase(
 
   // 7. Process ongoing subsidies (+2 per 500 ducats, max +8 per turn)
   // Note: Convergence happens AFTER subsidies
-  state = processOngoingSubsidies(state, turn);
+  state = processOngoingSubsidies(
+    state,
+    turn,
+    factionMembership: factionMembership,
+  );
 
   // 8. Apply relation convergence (+/1 toward 50 for all non-war relations)
   state = applyRelationConvergence(state, turn);
