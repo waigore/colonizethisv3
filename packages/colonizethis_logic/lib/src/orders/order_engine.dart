@@ -163,7 +163,12 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     }
     final r = results.last;
     if (!r.isAccepted) {
-      _log.w('$orderLabel order rejected player=$playerId reason=${r.reason}');
+      // Keep diagnostics bounded on probe-heavy paths by suppressing repeated
+      // cascade rejections ("Previous invalid"), while preserving first-cause
+      // rejection logging for debugging.
+      if (r.reason != previousInvalidOrderResult.reason) {
+        _log.w('$orderLabel order rejected player=$playerId reason=${r.reason}');
+      }
     }
     return r;
   }
