@@ -23,6 +23,7 @@ import 'check_flutter_action_pins.dart';
 import 'check_function_size.dart';
 import 'check_game_widgets_file_size.dart';
 import 'check_land_province_bucket_keys.dart';
+import 'check_logic_test_file_size.dart';
 import 'check_logic_dead_files.dart';
 import 'check_logic_dual_region_province_field_access.dart';
 import 'check_no_flame_in_widgets.dart';
@@ -731,6 +732,19 @@ int? _tryRunDartRuleInProcess({
       return runCheckDebugHandlerOnePerFile(repoRoot);
     case 'repo.game_widgets_file_size':
       return runCheckGameWidgetsFileSize(repoRoot);
+    case 'repo.logic_test_file_size':
+      // PR-incremental only: full scans would fail until #2216 debt is cleared.
+      if (incrementalCsv == null) {
+        stderr.writeln(
+          'ct_repo_lint: [repo.logic_test_file_size] skipped '
+          '(no changed-file baseline; use CT_REPO_LINT_BASE_SHA in CI)',
+        );
+        return 0;
+      }
+      return runCheckLogicTestFileSize(
+        repoRoot,
+        targetFiles: incrementalPaths,
+      );
     case 'repo.dart_file_non_comment_line_size':
       return runCheckDartFileNonCommentLineSize(
         repoRoot,
