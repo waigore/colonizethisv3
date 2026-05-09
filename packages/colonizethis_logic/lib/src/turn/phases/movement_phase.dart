@@ -17,6 +17,7 @@ Game runMovementPhase(
   MapTopology topology,
   Orders orders, {
   CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
+  BundledWorkMoveTraceCallback? onBundledWorkMoveTrace,
 }) {
   var state = game;
 
@@ -71,7 +72,12 @@ Game runMovementPhase(
       ),
     );
   }
-  state = applyImplicitBundledCivilianWorkOrderMoves(state, topology, orders);
+  state = applyImplicitBundledCivilianWorkOrderMoves(
+    state,
+    topology,
+    orders,
+    onBundledWorkMoveTrace: onBundledWorkMoveTrace,
+  );
 
   final armyMoveOrders = orders.armyMoveOrdersByPlayerId;
   if (armyMoveOrders.isNotEmpty) {
@@ -123,8 +129,9 @@ Game runMovementPhase(
 Game applyImplicitBundledCivilianWorkOrderMoves(
   Game game,
   MapTopology topology,
-  Orders orders,
-) {
+  Orders orders, {
+  BundledWorkMoveTraceCallback? onBundledWorkMoveTrace,
+}) {
   var state = game;
   final workByPlayerId = orders.workOrdersByPlayerId;
   if (workByPlayerId.isEmpty) {
@@ -140,9 +147,21 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
       final unitById = unitsByIdFromWorld(state.worldState);
       final unit = unitById[workOrder.unitId];
       if (unit == null || unit.ownerId != playerId) {
+        onBundledWorkMoveTrace?.call(
+          playerId: playerId,
+          order: workOrder,
+          applied: false,
+          ignoreReason: 'missing_or_foreign_unit',
+        );
         continue;
       }
       if (!civilianBundledWorkNeedsProvinceMoveLeg(state, unit, workOrder)) {
+        onBundledWorkMoveTrace?.call(
+          playerId: playerId,
+          order: workOrder,
+          applied: false,
+          ignoreReason: 'move_leg_not_required',
+        );
         continue;
       }
       final destination = executionProvinceFullIdFromWorkOrder(
@@ -150,6 +169,12 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
         workOrder,
       );
       if (destination == null) {
+        onBundledWorkMoveTrace?.call(
+          playerId: playerId,
+          order: workOrder,
+          applied: false,
+          ignoreReason: 'destination_unresolved',
+        );
         continue;
       }
       final view = buildPlayerView(state, topology, playerId);
@@ -165,6 +190,13 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
         diplomaticOrders: diplomatic,
       );
       if (destinationTile == null) {
+        onBundledWorkMoveTrace?.call(
+          playerId: playerId,
+          order: workOrder,
+          applied: false,
+          destinationProvinceId: destination,
+          ignoreReason: 'destination_tile_unavailable',
+        );
         continue;
       }
 
@@ -181,6 +213,13 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
           }
           return next;
         }),
+      );
+      onBundledWorkMoveTrace?.call(
+        playerId: playerId,
+        order: workOrder,
+        applied: true,
+        destinationProvinceId: destination,
+        destinationTileKey: destinationTile,
       );
     }
   }

@@ -2,12 +2,23 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'turn_trace_contracts.dart';
 
-typedef CivilianMoveOrderTraceCallback = void Function({
-  required String playerId,
-  required MoveOrder order,
-  required bool applied,
-  String? ignoreReason,
-});
+typedef CivilianMoveOrderTraceCallback =
+    void Function({
+      required String playerId,
+      required MoveOrder order,
+      required bool applied,
+      String? ignoreReason,
+    });
+
+typedef BundledWorkMoveTraceCallback =
+    void Function({
+      required String playerId,
+      required WorkOrder order,
+      required bool applied,
+      String? destinationProvinceId,
+      String? destinationTileKey,
+      String? ignoreReason,
+    });
 
 /// Mutable per-turn-resolution buffer for order-level trace events within the
 /// current phase. Cleared at each phase boundary by [turn_phase_runner]; read
@@ -40,6 +51,34 @@ class TurnTraceRuntime {
         eventType: applied ? 'civilian_move_applied' : 'civilian_move_ignored',
         payload: <String, Object?>{
           'destinationTileKey': order.destinationTileKey,
+          if (ignoreReason != null) 'ignoreReason': ignoreReason,
+        },
+      ),
+    );
+  }
+
+  /// Records one implicit move leg generated for a civilian [WorkOrder].
+  void handleBundledWorkMoveTrace({
+    required String playerId,
+    required WorkOrder order,
+    required bool applied,
+    String? destinationProvinceId,
+    String? destinationTileKey,
+    String? ignoreReason,
+  }) {
+    _phaseOrderEvents.add(
+      TurnTraceOrderEvent(
+        sequence: _nextSequence++,
+        orderId: 'work:$playerId:${order.unitId}:${order.target}',
+        eventType: applied
+            ? 'bundled_work_move_applied'
+            : 'bundled_work_move_skipped',
+        payload: <String, Object?>{
+          'targetTileKey': order.targetTileKey,
+          if (destinationProvinceId != null)
+            'destinationProvinceId': destinationProvinceId,
+          if (destinationTileKey != null)
+            'destinationTileKey': destinationTileKey,
           if (ignoreReason != null) 'ignoreReason': ignoreReason,
         },
       ),

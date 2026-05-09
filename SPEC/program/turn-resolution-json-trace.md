@@ -85,10 +85,17 @@ Each order event requires:
 - `eventType`: string.
 
 When structured tracing is enabled with `TurnResolverConfig.turnTraceRuntime`
-and `onTurnTracePhase`, the Movement phase records civilian `MoveOrder`
-attempts in apply order: `civilian_move_applied` or `civilian_move_ignored`
-with optional `ignoreReason` in the event `payload`. Other phases may emit
-empty `orderEvents` until additional hooks land (GitHub #2218).
+and `onTurnTracePhase`, the Movement phase records civilian order attempts in
+apply order with these `eventType` values:
+
+- `civilian_move_applied` / `civilian_move_ignored` for direct `MoveOrder`
+  handling.
+- `bundled_work_move_applied` / `bundled_work_move_skipped` for implicit move
+  legs emitted while preparing `WorkOrder` execution.
+
+Movement event payloads include destination tile/province context and optional
+`ignoreReason` for skipped/ignored attempts. Other phases may emit empty
+`orderEvents` until additional hooks land (GitHub #2218).
 
 ### Merged trace (`merged-trace.v1.schema.json`)
 
@@ -127,7 +134,7 @@ Meta section requires:
 - Given a JSON payload intended as a turn-resolution trace, when validated against `turn-resolution-trace.v1.schema.json`, then validation passes only if each phase contains `beforeState`, `afterState`, and ordered `orderEvents` entries with non-negative `sequence`.
 - Given a JSON payload intended as a merged logical-turn trace, when validated against `merged-trace.v1.schema.json`, then validation passes only if `meta`, `ai`, and `turnResolution` are present and nested sections satisfy referenced contracts.
 - Given a payload with missing required fields for any of the three trace schemas, when validated, then validation fails deterministically with at least one schema violation.
-- Given turn resolution runs with `TurnResolverConfig.onTurnTracePhase` and `turnTraceRuntime` set, when each phase resolves (including pending-exit phases), then the callback receives one `TurnTracePhaseTrace` payload per phase containing `phaseId`, full `beforeState`, full `afterState`, and an ordered `orderEvents` array (Movement phase includes civilian move apply/ignore events when move orders are present; other phases may still emit empty `orderEvents` until further hooks land).
+- Given turn resolution runs with `TurnResolverConfig.onTurnTracePhase` and `turnTraceRuntime` set, when each phase resolves (including pending-exit phases), then the callback receives one `TurnTracePhaseTrace` payload per phase containing `phaseId`, full `beforeState`, full `afterState`, and an ordered `orderEvents` array (Movement phase includes direct civilian move apply/ignore events and bundled work move applied/skipped events when those orders are present; other phases may still emit empty `orderEvents` until further hooks land).
 - Given no custom trace root override is provided, when the system exports a merged turn trace for `gameId = G` and `turnNumber = N`, then the system writes one JSON file to `tmp/turn-traces/G/` using filename pattern `turn-N-YYYYMMDDTHHMMSSmmmZ.json`.
 - Given a custom trace root override path `R` is provided, when the system exports a merged turn trace for `gameId = G`, then the system writes to `R/turn-traces/G/` and keeps the same filename pattern.
 - Given a game trace directory contains more than 10 trace JSON files after a new export, when retention runs, then the system deletes oldest files first until exactly 10 files remain in that gameId directory.

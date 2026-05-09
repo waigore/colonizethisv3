@@ -88,7 +88,8 @@ void _emitPhaseTrace({
   required Map<String, Object?> beforeState,
   required Map<String, Object?> afterState,
 }) {
-  final orderEvents = config.turnTraceRuntime?.snapshotPhaseOrderEvents() ??
+  final orderEvents =
+      config.turnTraceRuntime?.snapshotPhaseOrderEvents() ??
       const <TurnTraceOrderEvent>[];
   config.onTurnTracePhase?.call(
     TurnTracePhaseTrace(
@@ -278,6 +279,8 @@ TurnPhaseStepOutcome _runMovementPhaseHandler(
         config.orders,
         onCivilianMoveOrderTrace:
             config.turnTraceRuntime?.handleCivilianMoveOrderTrace,
+        onBundledWorkMoveTrace:
+            config.turnTraceRuntime?.handleBundledWorkMoveTrace,
       ),
     ),
   );
