@@ -160,45 +160,53 @@ class SimGameController {
   /// Generates orders for the next Great Power that does not yet have orders
   /// for the current turn (player-by-player mode). All GPs use the selected AI.
   void generateOrdersForNextPlayer() {
+    final nextPlayer = _nextPlayerWithoutPendingOrders();
+    if (nextPlayer == null) return;
+
     final currentTurn = _game.worldState.turnState.turnNumber;
-    for (final player in _game.players) {
-      if (_pendingOrdersByPlayerId.containsKey(player.id)) continue;
-      if (useSimGameAi) {
-        final orders = defaultSimGameAi(
-          game: _game,
-          player: player,
-          topology: _topology,
-          baseSeed: _baseSeed,
-          tileMapByRegion: _tileMapByRegion,
-        );
-        _pendingOrdersByPlayerId[player.id] = orders;
-      } else if (useFullAI) {
-        final result = generateOrdersForPlayerFullAIWithTrace(
-          _game,
-          _topology,
-          player.id,
-          tileMapByRegion: _tileMapByRegion,
-        );
-        _pendingOrdersByPlayerId[player.id] = result.result.orders;
-        _pendingEconomyPlansByPlayerId[player.id] = result.result.economyPlan;
-        final aiTraceSection = result.aiTraceSection;
-        if (aiTraceSection != null) {
-          _pendingAiTraceSectionsByPlayerId[player.id] = aiTraceSection;
-        }
-      } else {
-        final orders = generateOrdersForPlayer(
-          _game,
-          _topology,
-          player.id,
-          tileMapByRegion: _tileMapByRegion,
-        );
-        _pendingOrdersByPlayerId[player.id] = orders;
-      }
-      _ctdevSimLog.i(
-        'Turn $currentTurn: generated orders for ${player.displayName} (${player.id})',
+    if (useSimGameAi) {
+      final orders = defaultSimGameAi(
+        game: _game,
+        player: nextPlayer,
+        topology: _topology,
+        baseSeed: _baseSeed,
+        tileMapByRegion: _tileMapByRegion,
       );
-      break;
+      _pendingOrdersByPlayerId[nextPlayer.id] = orders;
+    } else if (useFullAI) {
+      final result = generateOrdersForPlayerFullAIWithTrace(
+        _game,
+        _topology,
+        nextPlayer.id,
+        tileMapByRegion: _tileMapByRegion,
+      );
+      _pendingOrdersByPlayerId[nextPlayer.id] = result.result.orders;
+      _pendingEconomyPlansByPlayerId[nextPlayer.id] = result.result.economyPlan;
+      final aiTraceSection = result.aiTraceSection;
+      if (aiTraceSection != null) {
+        _pendingAiTraceSectionsByPlayerId[nextPlayer.id] = aiTraceSection;
+      }
+    } else {
+      final orders = generateOrdersForPlayer(
+        _game,
+        _topology,
+        nextPlayer.id,
+        tileMapByRegion: _tileMapByRegion,
+      );
+      _pendingOrdersByPlayerId[nextPlayer.id] = orders;
     }
+    _ctdevSimLog.i(
+      'Turn $currentTurn: generated orders for ${nextPlayer.displayName} (${nextPlayer.id})',
+    );
+  }
+
+  Player? _nextPlayerWithoutPendingOrders() {
+    for (final player in _game.players) {
+      if (!_pendingOrdersByPlayerId.containsKey(player.id)) {
+        return player;
+      }
+    }
+    return null;
   }
 
   /// Resolves one full turn from the currently accumulated per-player orders.
