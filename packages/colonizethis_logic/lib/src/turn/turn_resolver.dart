@@ -18,6 +18,7 @@ import 'turn_phase_runner.dart';
 import 'turn_resolution_result.dart';
 import 'turn_resolution_sequence.dart';
 import 'trace/turn_trace_contracts.dart';
+import 'trace/turn_trace_runtime.dart';
 export 'turn_resolution_sequence.dart';
 import 'turn_resolver_config.dart';
 export 'turn_resolver_config.dart';
@@ -76,6 +77,7 @@ TurnResolutionResult resolveTurnForGameFromOrderEngine({
   void Function(DialogueEvent)? onDialogue,
   void Function(GameEvent)? onGameEvent,
   void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
+  TurnTraceRuntime? turnTraceRuntime,
 }) {
   final merged = mergeOrderLists(
     humanOrders: orderEngine.orders,
@@ -94,6 +96,7 @@ TurnResolutionResult resolveTurnForGameFromOrderEngine({
     defaultAssignments: defaultAssignments,
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
     onTurnTracePhase: onTurnTracePhase,
+    turnTraceRuntime: turnTraceRuntime,
   );
 }
 
@@ -128,6 +131,7 @@ TurnResolutionResult validateOrdersAndResolveTurn({
   void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
   onPhaseProgress,
   void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
+  TurnTraceRuntime? turnTraceRuntime,
 }) {
   final engine = OrderEngine(initialOrders: orders);
   final filtered = filterAcceptedOrdersForAllPlayers(
@@ -152,6 +156,7 @@ TurnResolutionResult validateOrdersAndResolveTurn({
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
     onPhaseProgress: onPhaseProgress,
     onTurnTracePhase: onTurnTracePhase,
+    turnTraceRuntime: turnTraceRuntime,
   );
 }
 
@@ -190,6 +195,7 @@ TurnResolutionResult validateOrdersAndResolveTurnFromTrustedOrders({
   void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
   onPhaseProgress,
   void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
+  TurnTraceRuntime? turnTraceRuntime,
 }) {
   return resolveTurnForGame(
     game: game,
@@ -205,6 +211,7 @@ TurnResolutionResult validateOrdersAndResolveTurnFromTrustedOrders({
     defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
     onPhaseProgress: onPhaseProgress,
     onTurnTracePhase: onTurnTracePhase,
+    turnTraceRuntime: turnTraceRuntime,
   );
 }
 
@@ -234,6 +241,7 @@ TurnResolutionResult resolveTurnForGame({
   void Function(TurnPhase phase, TurnPhaseProgressMarker marker)?
   onPhaseProgress,
   void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase,
+  TurnTraceRuntime? turnTraceRuntime,
 }) {
   return resolveTurnForGameWithConfig(
     game: game,
@@ -255,6 +263,7 @@ TurnResolutionResult resolveTurnForGame({
       callToArmsDecisions: callToArmsDecisions,
       onPhaseProgress: onPhaseProgress,
       onTurnTracePhase: onTurnTracePhase,
+      turnTraceRuntime: turnTraceRuntime,
     ),
   );
 }
