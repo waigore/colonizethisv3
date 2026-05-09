@@ -1,4 +1,4 @@
-// Physical line limit for colonizethis_logic tests.
+// Physical line limit for colonizethis_logic tests (repo rule: `repo.logic_test_file_size`).
 import 'dart:convert';
 import 'dart:io';
 

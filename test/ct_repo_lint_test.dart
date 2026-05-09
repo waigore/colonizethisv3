@@ -28,6 +28,7 @@ void main() {
       expect(ids, contains('repo.part_unit_size'));
       expect(ids, contains('repo.no_flame_in_widgets'));
       expect(ids, contains('repo.game_widgets_file_size'));
+      expect(ids, contains('repo.logic_test_file_size'));
       expect(ids, contains('repo.dart_file_non_comment_line_size'));
       expect(ids, contains('repo.land_province_bucket_keys'));
       expect(ids, contains('repo.logic_dual_region_province_field_access'));
@@ -58,6 +59,16 @@ void main() {
       expect(
         rules.firstWhere((r) => r.ruleId == 'repo.game_widgets_file_size').spec,
         'SPEC/program/game-widgets-file-size.md',
+      );
+      expect(
+        rules.firstWhere((r) => r.ruleId == 'repo.logic_test_file_size').spec,
+        'SPEC/program/repo-lint.md',
+      );
+      expect(
+        rules
+            .firstWhere((r) => r.ruleId == 'repo.logic_test_file_size')
+            .prIncremental,
+        isTrue,
       );
       expect(
         rules
