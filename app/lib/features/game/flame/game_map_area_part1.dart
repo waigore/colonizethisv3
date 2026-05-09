@@ -513,6 +513,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         orders: orders,
         topology: mapData.combinedTopology,
         tileMapByRegion: mapData.tileMapByRegion,
+        turnTraceEnabled: service.isTurnTraceEnabled,
       );
       final activeSessionId = session.sessionId;
       _turnResolutionProgressSub?.cancel();
@@ -529,12 +530,25 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         return;
       }
       switch (terminal) {
-        case TurnResolutionTerminalComplete():
-          service.handleExternallyResolvedTurnResult(terminal.result);
-          applyTurnResolutionResult(ref, terminal.result);
-        case TurnResolutionTerminalError():
+        case TurnResolutionTerminalComplete c:
+          service.handleExternallyResolvedTurnResult(c.result);
+          if (service.isTurnTraceEnabled &&
+              c.result is TurnResolutionComplete &&
+              c.turnTracePhases != null &&
+              c.turnTraceStartedAtUtc != null) {
+            final complete = c.result as TurnResolutionComplete;
+            service.exportTurnTraceForExternallyResolvedTurn(
+              gameAtResolutionStart: game,
+              turnEndState: complete.game,
+              phases: c.turnTracePhases!,
+              ai: c.aiTraceSections ?? const <TurnTraceAiSection>[],
+              turnStartAtUtc: c.turnTraceStartedAtUtc!,
+            );
+          }
+          applyTurnResolutionResult(ref, c.result);
+        case TurnResolutionTerminalError e:
           messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
-          throw StateError(terminal.errorMessage);
+          throw StateError(e.errorMessage);
       }
     } catch (_) {
       if (mounted) {

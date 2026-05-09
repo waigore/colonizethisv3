@@ -139,6 +139,16 @@ Meta section requires:
 - Retention keeps at most 10 `.json` trace files per `gameId` directory by
   pruning oldest files first.
 
+### App worker-isolate path
+
+When the Flutter app resolves a turn in a worker isolate (`TurnResolutionRunner`,
+`SPEC/program/turn-resolution.md`), AI orders and `FullAIResult.aiTraceSections`
+are computed on the main isolate before the worker runs. When debug turn tracing
+is enabled, phase traces and order events are collected inside the isolate and
+returned with the terminal result; the app merges those phase payloads with the
+main-isolate AI sections and writes the same merged JSON document as the
+in-process `GameService.runTurnResolution` path.
+
 ---
 
 ## Acceptance Criteria

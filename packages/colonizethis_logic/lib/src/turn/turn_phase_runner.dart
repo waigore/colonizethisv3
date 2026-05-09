@@ -359,6 +359,7 @@ TurnPhaseStepOutcome _runBuildWorkPhaseHandler(
     config.topology,
     config.tileMapByRegion,
     onDialogue: config.onDialogue,
+    onWorkOrderTrace: config.turnTraceRuntime?.handleWorkOrderTrace,
   );
   emitWorkOrderCompletedEvents(
     stateBeforeBuildWork,

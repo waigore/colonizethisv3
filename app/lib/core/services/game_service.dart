@@ -43,6 +43,9 @@ class GameService {
   final String turnTraceRootDirectory;
   final Map<String, _TurnTraceSession> _turnTraceSessionsByGameId = {};
 
+  /// Whether merged JSON turn traces are emitted (app debug console gate).
+  bool get isTurnTraceEnabled => _turnTraceEnabled;
+
   /// Optional app-level bus for [GameToUIEvent] (turn complete, new game, overtures, etc.).
   /// When set, those events are emitted from turn resolution and [createNewGame].
   /// Logic-layer [GameEvent] still uses [runTurnResolution] / [resumeOvertureDecisions]
@@ -988,6 +991,27 @@ class GameService {
   /// Emits app-level events and persistence side effects for externally resolved turns.
   void handleExternallyResolvedTurnResult(TurnResolutionResult result) {
     _emitTurnResolutionEvents(result);
+  }
+
+  /// Writes merged turn trace after resolution ran outside [runTurnResolution]
+  /// (e.g. worker isolate). No-op when [isTurnTraceEnabled] is false.
+  void exportTurnTraceForExternallyResolvedTurn({
+    required Game gameAtResolutionStart,
+    required Game turnEndState,
+    required List<TurnTracePhaseTrace> phases,
+    required List<TurnTraceAiSection> ai,
+    required DateTime turnStartAtUtc,
+  }) {
+    if (!_turnTraceEnabled) {
+      return;
+    }
+    _exportTurnTrace(
+      gameAtResolutionStart: gameAtResolutionStart,
+      turnEndState: turnEndState,
+      phases: phases,
+      turnStartAt: turnStartAtUtc,
+      ai: ai,
+    );
   }
 }
 
