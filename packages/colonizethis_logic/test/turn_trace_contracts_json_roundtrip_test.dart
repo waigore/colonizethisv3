@@ -1,5 +1,5 @@
 import 'package:colonizethis_logic/src/turn/trace/turn_trace_contracts.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   test('TurnTracePhaseTrace round-trips through toJson / fromJson', () {
