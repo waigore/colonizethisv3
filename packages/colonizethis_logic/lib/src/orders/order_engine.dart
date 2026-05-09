@@ -19,6 +19,22 @@ part 'order_engine.g.dart';
 
 final _log = packageLogger();
 
+// --- Test-only instrumentation (Refs #2237 AC2) ---
+bool _trackValidatePlayerOrdersWithContextInvocationsForTests = false;
+int _validatePlayerOrdersWithContextInvocationCountForTests = 0;
+
+/// Test hook: when enabled, counts every call to [OrderEngine.validatePlayerOrdersWithContext].
+void setOrderEngineValidatePlayerOrdersWithContextTrackingForTests(
+  bool enabled,
+) {
+  _trackValidatePlayerOrdersWithContextInvocationsForTests = enabled;
+  _validatePlayerOrdersWithContextInvocationCountForTests = 0;
+}
+
+/// Test hook: invocations counted while tracking is enabled (Refs #2237).
+int get orderEngineValidatePlayerOrdersWithContextInvocationCountForTests =>
+    _validatePlayerOrdersWithContextInvocationCountForTests;
+
 /// Appends one [OrderValidationResult] per order; short-circuits when [rejected].
 /// Returns the new rejected flag (true if any result was rejected).
 bool _appendValidationResults<T>(
@@ -163,7 +179,12 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     }
     final r = results.last;
     if (!r.isAccepted) {
-      _log.w('$orderLabel order rejected player=$playerId reason=${r.reason}');
+      // Keep diagnostics bounded on probe-heavy paths by suppressing repeated
+      // cascade rejections ("Previous invalid"), while preserving first-cause
+      // rejection logging for debugging. Refs #2237 AC3.
+      if (r.reason != previousInvalidOrderResult.reason) {
+        _log.w('$orderLabel order rejected player=$playerId reason=${r.reason}');
+      }
     }
     return r;
   }
@@ -224,6 +245,9 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     String playerId, {
     Map<String, TileMapResult>? tileMapByRegion,
   }) {
+    if (_trackValidatePlayerOrdersWithContextInvocationsForTests) {
+      _validatePlayerOrdersWithContextInvocationCountForTests++;
+    }
     final results = <OrderValidationResult>[];
     final player = game.playerById(playerId);
     if (player == null) return results;
