@@ -34,8 +34,10 @@ class GameService {
     this._box,
     this._adapter, {
     bool? turnTraceEnabled,
-    this.turnTraceRootDirectory = 'tmp',
-  }) : _turnTraceEnabled = turnTraceEnabled ?? kCtDebugConsoleEnabled;
+    String? turnTraceRootDirectory,
+  }) : _turnTraceEnabled = turnTraceEnabled ?? kCtDebugConsoleEnabled,
+       turnTraceRootDirectory =
+           turnTraceRootDirectory ?? kCtTurnTraceDirectory;
 
   final Box<dynamic> _box;
   final GameSaveAdapter _adapter;
