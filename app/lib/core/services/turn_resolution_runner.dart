@@ -26,8 +26,25 @@ sealed class TurnResolutionTerminalEvent {
 }
 
 class TurnResolutionTerminalComplete extends TurnResolutionTerminalEvent {
-  const TurnResolutionTerminalComplete(this.result);
+  const TurnResolutionTerminalComplete(
+    this.result, {
+    this.turnTracePhases,
+    this.aiTraceSections,
+    this.turnTraceStartedAtUtc,
+  });
+
   final TurnResolutionResult result;
+
+  /// Phase-level traces from the worker isolate when [TurnResolutionRunner]
+  /// was started with `turnTraceEnabled: true`.
+  final List<TurnTracePhaseTrace>? turnTracePhases;
+
+  /// Full-AI diagnostic sections captured on the main isolate before the worker
+  /// ran; aligned with [turnTracePhases] when tracing is enabled.
+  final List<TurnTraceAiSection>? aiTraceSections;
+
+  /// UTC time tracing started for this resolution (after AI orders merged).
+  final DateTime? turnTraceStartedAtUtc;
 }
 
 class TurnResolutionTerminalError extends TurnResolutionTerminalEvent {
@@ -66,6 +83,7 @@ class TurnResolutionRunner {
     required Orders orders,
     required MapTopology topology,
     required Map<String, TileMapResult> tileMapByRegion,
+    bool turnTraceEnabled = false,
   }) {
     if (_active) {
       throw StateError('Turn resolution already active');
@@ -97,15 +115,20 @@ class TurnResolutionRunner {
     }
 
     try {
-      final aiOrders = generateOrdersForGameFullAI(
+      final fullAi = generateOrdersForGameFullAI(
         game,
         topology,
         tileMapByRegion: tileMapByRegion,
-      ).orders;
+      );
       final mergedOrders = mergeOrderLists(
         humanOrders: orders,
-        aiOrders: aiOrders,
+        aiOrders: fullAi.orders,
       );
+      final traceStartedAt =
+          turnTraceEnabled ? DateTime.now().toUtc() : null;
+      final aiTraceForExport = turnTraceEnabled
+          ? List<TurnTraceAiSection>.unmodifiable(fullAi.aiTraceSections)
+          : null;
 
       sub = receivePort.listen((dynamic message) async {
         if (message is! Map<Object?, Object?>) {
@@ -129,12 +152,37 @@ class TurnResolutionRunner {
             'logic: turn_resolution_runner session_complete sessionId=$sessionId '
             'outcome=success',
           );
-          final terminal = TurnResolutionTerminalComplete(
-            _decodeTurnResolutionResult(
-              Map<String, dynamic>.from(
-                message['result'] as Map<Object?, Object?>,
-              ),
+          final decodedResult = _decodeTurnResolutionResult(
+            Map<String, dynamic>.from(
+              message['result'] as Map<Object?, Object?>,
             ),
+          );
+          final phasesPayload = message['turnTracePhases'];
+          final List<TurnTracePhaseTrace>? decodedPhases;
+          if (phasesPayload is List) {
+            decodedPhases = phasesPayload
+                .map(
+                  (dynamic e) => TurnTracePhaseTrace.fromJson(
+                    Map<String, Object?>.fromEntries(
+                      (e as Map<Object?, Object?>).entries.map(
+                        (MapEntry<Object?, Object?> entry) =>
+                            MapEntry<String, Object?>(
+                              entry.key as String,
+                              entry.value,
+                            ),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(growable: false);
+          } else {
+            decodedPhases = null;
+          }
+          final terminal = TurnResolutionTerminalComplete(
+            decodedResult,
+            turnTracePhases: decodedPhases,
+            aiTraceSections: aiTraceForExport,
+            turnTraceStartedAtUtc: traceStartedAt,
           );
           if (!doneCompleter.isCompleted) {
             doneCompleter.complete(terminal);
@@ -172,6 +220,7 @@ class TurnResolutionRunner {
             'tileMapByRegion': tileMapByRegion.map(
               (k, v) => MapEntry(k, v.toJson()),
             ),
+            'turnTraceEnabled': turnTraceEnabled,
           })
           .then((spawned) {
             isolate = spawned;
@@ -243,6 +292,9 @@ void _turnResolutionIsolateMain(Map<String, Object?> args) {
         ),
       ),
     );
+    final turnTraceEnabled = args['turnTraceEnabled'] == true;
+    final phaseTraces = <TurnTracePhaseTrace>[];
+    final traceRuntime = turnTraceEnabled ? TurnTraceRuntime() : null;
     final result = validateOrdersAndResolveTurnFromTrustedOrders(
       game: game,
       topology: topology,
@@ -255,10 +307,15 @@ void _turnResolutionIsolateMain(Map<String, Object?> args) {
           'marker': marker.name,
         });
       },
+      onTurnTracePhase: turnTraceEnabled ? phaseTraces.add : null,
+      turnTraceRuntime: traceRuntime,
     );
     sendPort.send({
       'kind': 'success',
       'result': _encodeTurnResolutionResult(result),
+      if (turnTraceEnabled)
+        'turnTracePhases':
+            phaseTraces.map((TurnTracePhaseTrace p) => p.toJson()).toList(),
     });
   } catch (e, st) {
     sendPort.send({

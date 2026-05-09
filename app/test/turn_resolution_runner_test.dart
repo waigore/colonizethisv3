@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_app/core/services/turn_resolution_runner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -65,6 +66,28 @@ void main() {
         );
         await session.done;
         expect(runner.isActive, isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 60)),
+    );
+
+    test(
+      'turnTraceEnabled attaches phase traces and timestamps to terminal',
+      () async {
+        final runner = TurnResolutionRunner();
+        final session = runner.startResolution(
+          game: game,
+          orders: const Orders(),
+          topology: topology,
+          tileMapByRegion: tileMapByRegion,
+          turnTraceEnabled: true,
+        );
+        final terminal = await session.done;
+        expect(terminal, isA<TurnResolutionTerminalComplete>());
+        final c = terminal as TurnResolutionTerminalComplete;
+        expect(c.turnTracePhases, isNotNull);
+        expect(c.turnTracePhases, isNotEmpty);
+        expect(c.turnTraceStartedAtUtc, isNotNull);
+        expect(c.aiTraceSections, isNotNull);
       },
       timeout: const Timeout(Duration(seconds: 60)),
     );
