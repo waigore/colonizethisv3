@@ -186,9 +186,12 @@ void main() {
           id: 'trace_app_game',
           config: config,
         );
+        final aiEnabledGame = game.copyWith(
+          aiControlByGpId: {for (final player in game.players) player.id: true},
+        );
 
         final result = traceService.runTurnResolution(
-          game,
+          aiEnabledGame,
           orders: const Orders(),
         );
         expect(result, isA<TurnResolutionComplete>());
@@ -213,6 +216,13 @@ void main() {
             ((payload['turnResolution'] as Map<String, dynamic>)['phases']
                 as List<dynamic>);
         expect(phases, isNotEmpty);
+        final ai = payload['ai'] as List<dynamic>;
+        expect(ai, isNotEmpty);
+        final firstAi = ai.first as Map<String, dynamic>;
+        expect(firstAi['factionId'], isNotEmpty);
+        expect(firstAi['state'], isA<Map<String, dynamic>>());
+        expect(firstAi['thresholds'], isA<Map<String, dynamic>>());
+        expect(firstAi['outcome'], isA<Map<String, dynamic>>());
       },
     );
   });
