@@ -18,10 +18,9 @@ These schemas define diagnostic payload shape for:
 2. Per-phase turn-resolution execution traces.
 3. One merged logical-turn document.
 
-This spec also authorizes phase-level snapshot capture hooks in the turn
-resolver as non-exporting runtime plumbing for issue #2218 follow-up slices.
-This spec authorizes turn-trace file export path and retention behavior for
-debug tracing outputs.
+This spec also authorizes phase-level snapshot capture hooks as
+non-exporting runtime plumbing for #2218 follow-up slices, and the
+turn-trace file export path and retention behavior.
 
 ---
 
@@ -65,14 +64,12 @@ Outcome section requires:
 - `finalAggregatedOrders`: array.
 - `domainOutputs`: object.
 
-Full AI planner traces populate the AI trace section from
-`colonizethis_ai` planner internals when the caller uses full AI result
-metadata. The section includes the selected strategic goal as
-`state.winningCandidate`, ranked strategic-goal alternates in
-`state.topAlternates`, world-snapshot/order/economy aggregates in
-`state.aggregates`, seed/personality/domain-weight threshold details, and the
-final per-domain order output summary. App and ctdev exporters may fall back to
-submitted-order summaries when callers provide only an `Orders` payload.
+Full AI planner traces populate the AI section from `colonizethis_ai`
+planner internals: selected strategic goal as `state.winningCandidate`,
+ranked alternates in `state.topAlternates`, world/order/economy aggregates,
+seed/personality/domain-weight thresholds, and per-domain order output. App
+and ctdev exporters may fall back to submitted-order summaries when callers
+provide only an `Orders` payload.
 
 ### Turn-resolution trace (`turn-resolution-trace.v1.schema.json`)
 
@@ -94,17 +91,24 @@ Each order event requires:
 - `eventType`: string.
 
 When structured tracing is enabled with `TurnResolverConfig.turnTraceRuntime`
-and `onTurnTracePhase`, the Movement phase records civilian order attempts in
-apply order with these `eventType` values:
+and `onTurnTracePhase`, the Movement phase records civilian and army order
+attempts in apply order with these `eventType` values:
 
 - `civilian_move_applied` / `civilian_move_ignored` for direct `MoveOrder`
   handling.
 - `bundled_work_move_applied` / `bundled_work_move_skipped` for implicit move
   legs emitted while preparing `WorkOrder` execution.
+- `army_move_applied` / `army_move_ignored` for `ArmyMoveOrder` handling
+  across cross-region instant moves and same-region moves.
 
-Movement event payloads include destination tile/province context and optional
-`ignoreReason` for skipped/ignored attempts. Other phases may emit empty
-`orderEvents` until additional hooks land (GitHub #2218).
+Movement event payloads include destination tile/province context and
+optional `ignoreReason` for skipped/ignored attempts. Army move payloads
+include `destinationProvinceId` (always set), optional `regionId` for
+region-scoped decisions, and `ignoreReason` values from `army_not_found`,
+`owner_mismatch`, `home_army_locked`, `destination_in_other_region`, or
+`invalid_adjacency`; global-decision rejections fire exactly once per order.
+Other phases may emit empty `orderEvents` until additional hooks land
+(GitHub #2218).
 
 ### Merged trace (`merged-trace.v1.schema.json`)
 
@@ -143,7 +147,9 @@ Meta section requires:
 - Given a JSON payload intended as a turn-resolution trace, when validated against `turn-resolution-trace.v1.schema.json`, then validation passes only if each phase contains `beforeState`, `afterState`, and ordered `orderEvents` entries with non-negative `sequence`.
 - Given a JSON payload intended as a merged logical-turn trace, when validated against `merged-trace.v1.schema.json`, then validation passes only if `meta`, `ai`, and `turnResolution` are present and nested sections satisfy referenced contracts.
 - Given a payload with missing required fields for any of the three trace schemas, when validated, then validation fails deterministically with at least one schema violation.
-- Given turn resolution runs with `TurnResolverConfig.onTurnTracePhase` and `turnTraceRuntime` set, when each phase resolves (including pending-exit phases), then the callback receives one `TurnTracePhaseTrace` payload per phase containing `phaseId`, full `beforeState`, full `afterState`, and an ordered `orderEvents` array (Movement phase includes direct civilian move apply/ignore events and bundled work move applied/skipped events when those orders are present; other phases may still emit empty `orderEvents` until further hooks land).
+- Given turn resolution runs with `TurnResolverConfig.onTurnTracePhase` and `turnTraceRuntime` set, when each phase resolves (including pending-exit phases), then the callback receives one `TurnTracePhaseTrace` payload per phase containing `phaseId`, full `beforeState`, full `afterState`, and an ordered `orderEvents` array (Movement phase includes direct civilian move apply/ignore events, bundled work move applied/skipped events, and army move applied/ignored events when those orders are present; other phases may still emit empty `orderEvents` until further hooks land).
+- Given the movement phase processes `ArmyMoveOrder` entries with structured tracing enabled, when an order is rejected because the army is missing, owned by another faction, or a home army, then the runtime emits exactly one `army_move_ignored` event per order with the matching `ignoreReason` and the order's `destinationProvinceId` in the payload.
+- Given the movement phase processes `ArmyMoveOrder` entries with structured tracing enabled, when a same-region move applies via `applyArmyMoveOrdersToRegion`, then the runtime emits one `army_move_applied` event whose payload contains the resolved `destinationProvinceId` and the matching `regionId`.
 - Given the full AI planner generates orders for an AI-controlled player, when the caller reads the returned AI trace section, then the trace contains the player's `factionId`, a `state.winningCandidate.goal` strategic goal string, ranked `state.topAlternates`, `thresholds.constants`, `thresholds.derived`, `thresholds.effective`, `thresholds.gates`, and an `outcome.finalAggregatedOrders` array matching the emitted order domains.
 - Given app or ctdev turn trace export receives full AI trace sections for the resolving turn, when the merged trace is written, then the top-level `ai` array uses those full AI trace sections instead of rebuilding only submitted-order summaries.
 - Given no custom trace root override is provided, when the system exports a merged turn trace for `gameId = G` and `turnNumber = N`, then the system writes one JSON file to `tmp/turn-traces/G/` using filename pattern `turn-N-YYYYMMDDTHHMMSSmmmZ.json`.

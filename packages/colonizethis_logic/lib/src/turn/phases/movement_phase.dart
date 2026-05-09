@@ -18,6 +18,7 @@ Game runMovementPhase(
   Orders orders, {
   CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
   BundledWorkMoveTraceCallback? onBundledWorkMoveTrace,
+  ArmyMoveOrderTraceCallback? onArmyMoveOrderTrace,
 }) {
   var state = game;
 
@@ -88,10 +89,19 @@ Game runMovementPhase(
         tryGetProvince(state.worldState, destFullProvinceId)?.ownerId ==
         playerId;
 
+    final filtered = onArmyMoveOrderTrace == null
+        ? armyMoveOrders
+        : _preTraceArmyMoveGlobalRejections(
+            armyMoveOrders,
+            state.worldState,
+            onArmyMoveOrderTrace: onArmyMoveOrderTrace,
+          );
+
     final cross = applyCrossRegionArmyMovesWithinOwnedProvinces(
       game: state,
       worldState: state.worldState,
-      armyMoveOrdersByPlayerId: armyMoveOrders,
+      armyMoveOrdersByPlayerId: filtered,
+      onArmyMoveOrderTrace: onArmyMoveOrderTrace,
     );
     var ws = cross.worldState;
     final remaining = cross.remainingArmyMoveOrdersByPlayerId;
@@ -101,6 +111,7 @@ Game runMovementPhase(
       remaining,
       regionId: kRegionOldWorld,
       isDestinationOwnedByPlayer: isDestinationOwnedByPlayer,
+      onArmyMoveOrderTrace: onArmyMoveOrderTrace,
     );
     ws = applyArmyMoveOrdersToRegion(
       ws,
@@ -108,6 +119,7 @@ Game runMovementPhase(
       remaining,
       regionId: kRegionNewWorld,
       isDestinationOwnedByPlayer: isDestinationOwnedByPlayer,
+      onArmyMoveOrderTrace: onArmyMoveOrderTrace,
     );
     state = state.copyWith(worldState: ws);
   }
@@ -224,4 +236,58 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
     }
   }
   return state;
+}
+
+/// Emits trace events for army move orders rejected by global checks
+/// (army not found, owner mismatch, home army locked) and returns the orders
+/// that should still flow into the cross-region and same-region helpers.
+///
+/// Pre-tracing here avoids double-emit from the two same-region passes which
+/// otherwise both observe global-decision rejections.
+Map<String, List<ArmyMoveOrder>> _preTraceArmyMoveGlobalRejections(
+  Map<String, List<ArmyMoveOrder>> armyMoveOrdersByPlayerId,
+  WorldState worldState, {
+  required ArmyMoveOrderTraceCallback onArmyMoveOrderTrace,
+}) {
+  final armyById = {for (final a in worldState.armies) a.id: a};
+  final filtered = <String, List<ArmyMoveOrder>>{};
+  for (final entry in armyMoveOrdersByPlayerId.entries) {
+    final playerId = entry.key;
+    final keep = <ArmyMoveOrder>[];
+    for (final order in entry.value) {
+      final army = armyById[order.armyId];
+      if (army == null) {
+        onArmyMoveOrderTrace(
+          playerId: playerId,
+          order: order,
+          applied: false,
+          ignoreReason: 'army_not_found',
+        );
+        continue;
+      }
+      if (army.ownerId != playerId) {
+        onArmyMoveOrderTrace(
+          playerId: playerId,
+          order: order,
+          applied: false,
+          ignoreReason: 'owner_mismatch',
+        );
+        continue;
+      }
+      if (army.isHomeArmy) {
+        onArmyMoveOrderTrace(
+          playerId: playerId,
+          order: order,
+          applied: false,
+          ignoreReason: 'home_army_locked',
+        );
+        continue;
+      }
+      keep.add(order);
+    }
+    if (keep.isNotEmpty) {
+      filtered[playerId] = keep;
+    }
+  }
+  return filtered;
 }

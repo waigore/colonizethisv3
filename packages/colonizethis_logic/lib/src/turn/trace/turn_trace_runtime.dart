@@ -20,6 +20,16 @@ typedef BundledWorkMoveTraceCallback =
       String? ignoreReason,
     });
 
+typedef ArmyMoveOrderTraceCallback =
+    void Function({
+      required String playerId,
+      required ArmyMoveOrder order,
+      required bool applied,
+      String? regionId,
+      String? destinationProvinceId,
+      String? ignoreReason,
+    });
+
 /// Mutable per-turn-resolution buffer for order-level trace events within the
 /// current phase. Cleared at each phase boundary by [turn_phase_runner]; read
 /// via [snapshotPhaseOrderEvents] when emitting [TurnTracePhaseTrace].
@@ -79,6 +89,33 @@ class TurnTraceRuntime {
             'destinationProvinceId': destinationProvinceId,
           if (destinationTileKey != null)
             'destinationTileKey': destinationTileKey,
+          if (ignoreReason != null) 'ignoreReason': ignoreReason,
+        },
+      ),
+    );
+  }
+
+  /// Records one [ArmyMoveOrder] application attempt in movement phase order.
+  ///
+  /// Used for both same-region applies (with [regionId] set) and cross-region
+  /// owned-province applies (with [regionId] left null).
+  void handleArmyMoveOrderTrace({
+    required String playerId,
+    required ArmyMoveOrder order,
+    required bool applied,
+    String? regionId,
+    String? destinationProvinceId,
+    String? ignoreReason,
+  }) {
+    _phaseOrderEvents.add(
+      TurnTraceOrderEvent(
+        sequence: _nextSequence++,
+        orderId: 'army_move:$playerId:${order.armyId}',
+        eventType: applied ? 'army_move_applied' : 'army_move_ignored',
+        payload: <String, Object?>{
+          'destinationProvinceId':
+              destinationProvinceId ?? order.destinationProvinceId,
+          if (regionId != null) 'regionId': regionId,
           if (ignoreReason != null) 'ignoreReason': ignoreReason,
         },
       ),
