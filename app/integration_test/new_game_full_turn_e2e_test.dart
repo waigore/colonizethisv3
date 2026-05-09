@@ -391,6 +391,35 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
   );
 }
 
+Future<Duration> _waitForNextTurnLabelAdvance(
+  WidgetTester tester, {
+  required String turnLabelBefore,
+  required Duration timeout,
+  _E2ePerfLog? perf,
+}) async {
+  final sw = Stopwatch()..start();
+  while (sw.elapsed < timeout) {
+    await tester.pump(const Duration(milliseconds: 100));
+    final turnAfterFinder = find.descendant(
+      of: find.byKey(kGameMapNextTurnButtonKey),
+      matching: find.byType(Text),
+    );
+    if (turnAfterFinder.evaluate().isEmpty) {
+      continue;
+    }
+    final turnAfter = turnAfterFinder.evaluate().single.widget as Text;
+    if (turnAfter.data != turnLabelBefore) {
+      perf?.timing('next_turn_wall_clock', sw.elapsed, meta: 'result=advanced');
+      return sw.elapsed;
+    }
+  }
+  perf?.timing('next_turn_wall_clock', sw.elapsed, meta: 'result=timeout');
+  fail(
+    'Next turn label did not advance within ${timeout.inSeconds}s. '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
 Future<void> _tapFirstAssignInCivilianPanel(WidgetTester tester) async {
   final root = find.byKey(kCtE2ECivilianPanelRootKey);
   final listView = find.descendant(of: root, matching: find.byType(ListView));
@@ -740,19 +769,19 @@ void main() {
       if (confirmNextTurn.evaluate().isNotEmpty) {
         await tester.tap(confirmNextTurn.first, warnIfMissed: false);
       }
-      await _pumpFor(tester, const Duration(seconds: 3));
-
-      final turnAfter =
-          find
-                  .descendant(
-                    of: find.byKey(kGameMapNextTurnButtonKey),
-                    matching: find.byType(Text),
-                  )
-                  .evaluate()
-                  .single
-                  .widget
-              as Text;
-      expect(turnAfter.data, isNot(turnLabelBefore));
+      final nextTurnElapsed = await _waitForNextTurnLabelAdvance(
+        tester,
+        turnLabelBefore: turnLabelBefore,
+        timeout: const Duration(seconds: 10),
+        perf: perf,
+      );
+      // Refs #2237 AC1 benchmark budget on CI baseline.
+      expect(
+        nextTurnElapsed,
+        lessThan(const Duration(seconds: 10)),
+        reason:
+            'Next turn should resolve under 10s for new-game benchmark path.',
+      );
 
       // --- Production (post-resolution stockpiles) ---
       await _openProductionPanel(tester);
