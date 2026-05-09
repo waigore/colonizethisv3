@@ -27,6 +27,22 @@ void bumpOrderSuggestionWorkOrderAcceptanceProbeIfTracking() {
   }
 }
 
+IncrementalCandidateValidator buildIncrementalCandidateValidator({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  required Orders baseOrders,
+  Map<String, TileMapResult>? tileMapByRegion,
+}) {
+  return IncrementalCandidateValidator.forPlayer(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    basePrefix: baseOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
+}
+
 bool isMoveOrderAccepted(
   Game game,
   MapTopology topology,
@@ -39,11 +55,11 @@ bool isMoveOrderAccepted(
   // [validatePlayerOrdersWithContext]. SPEC/program/order-suggestions.md
   // § Incremental candidate validation; SPEC/program/order-engine.md
   // § Validation (candidate-probe context). Refs #2237.
-  final validator = IncrementalCandidateValidator.forPlayer(
+  final validator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
-    basePrefix: baseOrders,
+    baseOrders: baseOrders,
   );
   return validator.isMoveAccepted(candidate);
 }
@@ -59,11 +75,11 @@ bool isArmyMoveOrderAccepted(
   // [baseOrders]'s diplomatic context without re-running full-pass
   // [validatePlayerOrdersWithContext]. SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
-  final validator = IncrementalCandidateValidator.forPlayer(
+  final validator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
-    basePrefix: baseOrders,
+    baseOrders: baseOrders,
   );
   return validator.isArmyMoveAccepted(candidate);
 }
@@ -76,15 +92,14 @@ bool isWorkOrderAccepted(
   WorkOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  bumpOrderSuggestionWorkOrderAcceptanceProbeIfTracking();
-  final validator = IncrementalCandidateValidator.forPlayer(
+  final validator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
-    basePrefix: baseOrders,
+    baseOrders: baseOrders,
     tileMapByRegion: tileMapByRegion,
   );
-  return validator.isWorkAccepted(candidate);
+  return isWorkOrderAcceptedWithValidator(validator, candidate);
 }
 
 bool isBuildOrderAccepted(
@@ -94,13 +109,13 @@ bool isBuildOrderAccepted(
   Orders baseOrders,
   BuildUnitOrder candidate,
 ) {
-  final validator = IncrementalCandidateValidator.forPlayer(
+  final validator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
-    basePrefix: baseOrders,
+    baseOrders: baseOrders,
   );
-  return validator.isBuildAccepted(candidate);
+  return isBuildOrderAcceptedWithValidator(validator, candidate);
 }
 
 bool isNavalMoveOrderAccepted(
@@ -112,11 +127,11 @@ bool isNavalMoveOrderAccepted(
 ) {
   // Stateless candidate-probe path. SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
-  final validator = IncrementalCandidateValidator.forPlayer(
+  final validator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
-    basePrefix: baseOrders,
+    baseOrders: baseOrders,
   );
   return validator.isNavalMoveAccepted(candidate);
 }
@@ -130,11 +145,11 @@ bool isNavalMissionOrderAccepted(
 ) {
   // Stateless candidate-probe path. SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
-  final validator = IncrementalCandidateValidator.forPlayer(
+  final validator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
-    basePrefix: baseOrders,
+    baseOrders: baseOrders,
   );
   return validator.isNavalMissionAccepted(candidate);
 }
@@ -147,14 +162,29 @@ bool isDiplomaticOrderAccepted(
   DiplomaticOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  final validator = IncrementalCandidateValidator.forPlayer(
+  final validator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
-    basePrefix: baseOrders,
+    baseOrders: baseOrders,
     tileMapByRegion: tileMapByRegion,
   );
   return validator.isDiplomaticAccepted(candidate);
+}
+
+bool isBuildOrderAcceptedWithValidator(
+  IncrementalCandidateValidator validator,
+  BuildUnitOrder candidate,
+) {
+  return validator.isBuildAccepted(candidate);
+}
+
+bool isWorkOrderAcceptedWithValidator(
+  IncrementalCandidateValidator validator,
+  WorkOrder candidate,
+) {
+  bumpOrderSuggestionWorkOrderAcceptanceProbeIfTracking();
+  return validator.isWorkAccepted(candidate);
 }
 
 Orders appendDiplomaticOrderForTrial(
