@@ -194,7 +194,11 @@ Game applyRelationModifiersAndUpdateScores(
 /// Process ongoing subsidies each turn.
 /// Deducts amount from payer treasury and improves relation by +2 per 500 ducats (max +8).
 /// Per SPEC/game/diplomacy.md.
-Game processOngoingSubsidies(Game game, int turn) {
+Game processOngoingSubsidies(
+  Game game,
+  int turn, {
+  required DiplomacyFactionMembership factionMembership,
+}) {
   var players = game.players;
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
@@ -263,7 +267,7 @@ Game processOngoingSubsidies(Game game, int turn) {
             .clamp(0, subsidyBoostMax);
 
     // Apply relation boost (only for Minors/Tribes - GPs get treasury transfer)
-    if (isMinorOrTribe(game, targetId)) {
+    if (factionMembership.isMinorOrTribe(targetId)) {
       relations = applySubsidyBoost(
         relations: relations,
         payerId: payerId,

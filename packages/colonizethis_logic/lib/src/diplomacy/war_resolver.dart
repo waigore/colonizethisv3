@@ -10,17 +10,20 @@ Game processWarAndPeace(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn, {
+  required DiplomacyFactionMembership factionMembership,
   void Function(DialogueEvent)? onDialogue,
 }) {
   final peaceOffersByPairKey = _peaceOfferPairKeysForGreatPowers(
     game,
     diploByPlayer,
+    factionMembership,
   );
   return _runWarAndPeaceOrders(
     game,
     diploByPlayer,
     turn,
     peaceOffersByPairKey,
+    factionMembership,
     onDialogue,
   );
 }
@@ -30,6 +33,7 @@ Game _runWarAndPeaceOrders(
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn,
   Map<String, Set<String>> peaceOffersByPairKey,
+  DiplomacyFactionMembership factionMembership,
   void Function(DialogueEvent)? onDialogue,
 ) {
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
@@ -43,6 +47,7 @@ Game _runWarAndPeaceOrders(
         order: order,
         turn: turn,
         peaceOffersByPairKey: peaceOffersByPairKey,
+        factionMembership: factionMembership,
         onDialogue: onDialogue,
       );
       game = updated.game;
@@ -56,6 +61,7 @@ Game _runWarAndPeaceOrders(
 Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
+  DiplomacyFactionMembership factionMembership,
 ) {
   final peaceOffersByPairKey = <String, Set<String>>{};
   for (final entry in diploByPlayer.entries) {
@@ -63,7 +69,10 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
     for (final order in entry.value) {
       if (order.type != DiplomaticOrderType.offerPeace) continue;
       final targetId = order.targetFactionId;
-      if (!isGreatPower(game, gpId) || !isGreatPower(game, targetId)) continue;
+      if (!factionMembership.isGreatPower(gpId) ||
+          !factionMembership.isGreatPower(targetId)) {
+        continue;
+      }
       final key = pairKey(gpId, targetId);
       peaceOffersByPairKey.putIfAbsent(key, () => <String>{}).add(gpId);
     }
@@ -78,6 +87,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   required DiplomaticOrder order,
   required int turn,
   required Map<String, Set<String>> peaceOffersByPairKey,
+  required DiplomacyFactionMembership factionMembership,
   void Function(DialogueEvent)? onDialogue,
 }) {
   if (order.type == DiplomaticOrderType.declareWar) {
@@ -98,6 +108,7 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
       order: order,
       turn: turn,
       peaceOffersByPairKey: peaceOffersByPairKey,
+      factionMembership: factionMembership,
       onDialogue: onDialogue,
     );
   }
@@ -161,20 +172,23 @@ Map<String, Set<String>> _peaceOfferPairKeysForGreatPowers(
   required DiplomaticOrder order,
   required int turn,
   required Map<String, Set<String>> peaceOffersByPairKey,
+  required DiplomacyFactionMembership factionMembership,
   void Function(DialogueEvent)? onDialogue,
 }) {
   final targetId = order.targetFactionId;
   final rel = getRelation(game, gpId, targetId);
   final key = pairKey(gpId, targetId);
   final bothGreatPowers =
-      isGreatPower(game, gpId) && isGreatPower(game, targetId);
+      factionMembership.isGreatPower(gpId) &&
+      factionMembership.isGreatPower(targetId);
   final hasMutualOffer =
       bothGreatPowers ? (peaceOffersByPairKey[key]?.length ?? 0) >= 2 : true;
   if (rel == null || !rel.atWar) {
     return (game: game, relations: relations);
   }
   var bothSidesAgreed = true;
-  if (isGreatPower(game, targetId) && isGreatPower(game, gpId)) {
+  if (factionMembership.isGreatPower(targetId) &&
+      factionMembership.isGreatPower(gpId)) {
     final offerers = peaceOffersByPairKey[key] ?? const <String>{};
     bothSidesAgreed =
         offerers.contains(gpId) && offerers.contains(targetId);

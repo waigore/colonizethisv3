@@ -61,9 +61,12 @@ bool _interventionsOutstanding(
   int turn,
   String aggressorGpId,
   String defenderMinorOrTribeId,
+  DiplomacyFactionMembership factionMembership,
 ) {
   for (final p in game.players) {
-    if (!isGreatPower(game, p.id) || p.id == aggressorGpId) continue;
+    if (!factionMembership.isGreatPower(p.id) || p.id == aggressorGpId) {
+      continue;
+    }
     if (!_gpHasEmbassyOrPurchasedLandInMinorTribe(
       game,
       p.id,
@@ -162,11 +165,14 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
   required String aggressorGpId,
   required String defenderMinorOrTribeId,
   required int turn,
+  required DiplomacyFactionMembership factionMembership,
   List<InterventionDecision>? interventionDecisions,
 }) {
   final eligible = <String>[];
   for (final p in game.players) {
-    if (!isGreatPower(game, p.id) || p.id == aggressorGpId) continue;
+    if (!factionMembership.isGreatPower(p.id) || p.id == aggressorGpId) {
+      continue;
+    }
     if (!_gpHasEmbassyOrPurchasedLandInMinorTribe(
       game,
       p.id,
@@ -213,6 +219,7 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
         defenderMinorOrTribeId: defenderMinorOrTribeId,
         interveningGpId: interveningId,
         choice: d.choice,
+        factionMembership: factionMembership,
       );
       continue;
     }
@@ -229,6 +236,7 @@ InterventionResolutionResult _processInterventionsForAggressorDefender(
       defenderMinorOrTribeId: defenderMinorOrTribeId,
       interveningGpId: interveningId,
       choice: aiChoice,
+      factionMembership: factionMembership,
     );
   }
   if (pending.isNotEmpty) {
@@ -241,6 +249,7 @@ InterventionResolutionResult resolveOutstandingInterventionsForMinorTribeWars(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn, {
+  required DiplomacyFactionMembership factionMembership,
   List<InterventionDecision>? interventionDecisions,
 }) {
   final seen = <String>{};
@@ -250,18 +259,30 @@ InterventionResolutionResult resolveOutstandingInterventionsForMinorTribeWars(
     for (final order in entry.value) {
       if (order.type != DiplomaticOrderType.declareWar) continue;
       final targetId = order.targetFactionId;
-      if (!isGreatPower(g, gpId) || !isMinorOrTribe(g, targetId)) continue;
+      if (!factionMembership.isGreatPower(gpId) ||
+          !factionMembership.isMinorOrTribe(targetId)) {
+        continue;
+      }
       final rel = getRelation(g, gpId, targetId);
       if (rel == null || !rel.atWar) continue;
       final key = '$gpId|$targetId';
       if (seen.contains(key)) continue;
       seen.add(key);
-      if (!_interventionsOutstanding(g, turn, gpId, targetId)) continue;
+      if (!_interventionsOutstanding(
+            g,
+            turn,
+            gpId,
+            targetId,
+            factionMembership,
+          )) {
+        continue;
+      }
       final pass = _processInterventionsForAggressorDefender(
         g,
         aggressorGpId: gpId,
         defenderMinorOrTribeId: targetId,
         turn: turn,
+        factionMembership: factionMembership,
         interventionDecisions: interventionDecisions,
       );
       g = pass.game;
@@ -278,16 +299,17 @@ InterventionResolutionResult resolveOutstandingInterventionsForMinorTribeWars(
 List<({String aggressor, String defender})> _gpGpWarPairsFromOrders(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
+  DiplomacyFactionMembership factionMembership,
 ) {
   final seen = <String>{};
   final out = <({String aggressor, String defender})>[];
   for (final e in diploByPlayer.entries) {
     final aggressor = e.key;
-    if (!isGreatPower(game, aggressor)) continue;
+    if (!factionMembership.isGreatPower(aggressor)) continue;
     for (final o in e.value) {
       if (o.type != DiplomaticOrderType.declareWar) continue;
       final defender = o.targetFactionId;
-      if (!isGreatPower(game, defender)) continue;
+      if (!factionMembership.isGreatPower(defender)) continue;
       if (!factionsAtWar(game, aggressor, defender)) continue;
       final key = '$aggressor|$defender';
       if (seen.add(key)) {
@@ -483,10 +505,15 @@ CallToArmsResult processCallToArms(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn, {
+  required DiplomacyFactionMembership factionMembership,
   List<CallToArmsDecision>? callToArmsDecisions,
 }) {
   var state = game;
-  final warPairs = _gpGpWarPairsFromOrders(state, diploByPlayer);
+  final warPairs = _gpGpWarPairsFromOrders(
+    state,
+    diploByPlayer,
+    factionMembership,
+  );
   final pending = <CallToArmsPending>[];
 
   for (final pair in warPairs) {
@@ -541,9 +568,12 @@ Game applyInterventionAgainstAggressor(
   required String defenderMinorOrTribeId,
   required String interveningGpId,
   required InterventionChoice choice,
+  DiplomacyFactionMembership? factionMembership,
 }) {
   final turn = game.worldState.turnState.turnNumber;
-  if (!isGreatPower(game, aggressorGpId)) return game;
+  final aggressorIsGp = factionMembership?.isGreatPower(aggressorGpId) ??
+      isGreatPower(game, aggressorGpId);
+  if (!aggressorIsGp) return game;
 
   if (choice == InterventionChoice.doNothing) {
     var g = _clearOverturesBetweenGpAndMinorTribe(

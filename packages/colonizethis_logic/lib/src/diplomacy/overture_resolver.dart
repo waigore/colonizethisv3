@@ -143,6 +143,7 @@ _processEstablishOvertureOrderIfApplicable({
   required String gpId,
   required DiplomaticOrder order,
   required int turn,
+  required DiplomacyFactionMembership factionMembership,
   List<OvertureDecision>? overtureDecisions,
 }) {
   if (order.type != DiplomaticOrderType.establishOverture) {
@@ -166,8 +167,8 @@ _processEstablishOvertureOrderIfApplicable({
   }
 
   final targetId = order.targetFactionId;
-  final targetIsMinorOrTribe = isMinorOrTribe(state, targetId);
-  final targetIsGp = isGreatPower(state, targetId);
+  final targetIsMinorOrTribe = factionMembership.isMinorOrTribe(targetId);
+  final targetIsGp = factionMembership.isGreatPower(targetId);
   if (!targetIsMinorOrTribe && !targetIsGp) {
     return (
       players: players,
@@ -340,6 +341,7 @@ OverturePaymentsResult processOverturePayments(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn, {
+  required DiplomacyFactionMembership factionMembership,
   List<OvertureDecision>? overtureDecisions,
 }) {
   var players = List<Player>.from(game.players);
@@ -362,6 +364,7 @@ OverturePaymentsResult processOverturePayments(
         gpId: gpId,
         order: order,
         turn: turn,
+        factionMembership: factionMembership,
         overtureDecisions: overtureDecisions,
       );
       if (step.earlyExit != null) return step.earlyExit!;

@@ -16,7 +16,14 @@ Game resolveJoinEmpireColony(
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
     for (final order in entry.value) {
-      game = _resolveJoinEmpireOrderIfApplicable(game, gpId, order, turn);
+      final factionMembership = DiplomacyFactionMembership.from(game);
+      game = _resolveJoinEmpireOrderIfApplicable(
+        game,
+        gpId,
+        order,
+        turn,
+        factionMembership,
+      );
     }
   }
   return game;
@@ -27,6 +34,7 @@ Game _resolveJoinEmpireOrderIfApplicable(
   String gpId,
   DiplomaticOrder order,
   int turn,
+  DiplomacyFactionMembership factionMembership,
 ) {
   if (order.type != DiplomaticOrderType.establishOverture) return game;
   if (order.overtureStage != OvertureStage.joinEmpire) return game;
@@ -42,11 +50,18 @@ Game _resolveJoinEmpireOrderIfApplicable(
   final score = rel?.score ?? relationScoreNeutral;
   if (score < relationScoreMinFriendly) return game;
 
-  if (isMinorOrTribe(game, targetId)) {
+  if (factionMembership.isMinorOrTribe(targetId)) {
     return _resolveJoinEmpireMinorOrTribe(game, gpId, targetId, player, turn);
   }
-  if (isGreatPower(game, targetId)) {
-    return _resolveJoinEmpireGreatPower(game, gpId, targetId, player, turn);
+  if (factionMembership.isGreatPower(targetId)) {
+    return _resolveJoinEmpireGreatPower(
+      game,
+      gpId,
+      targetId,
+      player,
+      turn,
+      factionMembership,
+    );
   }
   return game;
 }
@@ -83,9 +98,16 @@ Game _resolveJoinEmpireGreatPower(
   String targetId,
   Player player,
   int turn,
+  DiplomacyFactionMembership factionMembership,
 ) {
   if (player.techUnlocked?[kTechIdEmpireBuilding] != true) return game;
-  if (!isGreatPowerNearlyDefeatedForJoinEmpire(game, targetId)) return game;
+  if (!isGreatPowerNearlyDefeatedForJoinEmpire(
+        game,
+        targetId,
+        factionMembership: factionMembership,
+      )) {
+    return game;
+  }
 
   final cost = joinEmpireCostForMinorOrTribe(game, targetId);
   if (player.treasury < cost) return game;
@@ -127,15 +149,16 @@ Game absorbGreatPowerIntoGp(Game game, String gpId, String targetGpId) =>
 Game processAlliances(
   Game game,
   Map<String, List<DiplomaticOrder>> diploByPlayer,
-  int turn,
-) {
+  int turn, {
+  required DiplomacyFactionMembership factionMembership,
+}) {
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
     for (final order in entry.value) {
       if (order.type != DiplomaticOrderType.alliance) continue;
 
       final targetId = order.targetFactionId;
-      if (!isGreatPower(game, targetId)) continue;
+      if (!factionMembership.isGreatPower(targetId)) continue;
 
       final ids = canonicalPairIds(gpId, targetId);
       final relations = upsertRelation(
