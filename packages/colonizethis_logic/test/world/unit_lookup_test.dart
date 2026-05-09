@@ -69,6 +69,55 @@ void main() {
       );
       expect(ws.tryGetUnitById('dup')!.type, kUnitTypeExplorer);
     });
+
+    test('500+ units per region matches linear old-then-new scan (AC-3)', () {
+      const n = 520;
+      final oldUnits = List<Unit>.generate(
+        n,
+        (i) => Unit(
+          id: 'old-$i',
+          type: kUnitTypeExplorer,
+          ownerId: 'p1',
+          locationProvinceId: 'oldWorld|P1',
+          tileKey: 'oldWorld|P1|0|0',
+        ),
+      );
+      final newUnits = List<Unit>.generate(
+        n,
+        (i) => Unit(
+          id: 'new-$i',
+          type: kUnitTypeBuilder,
+          ownerId: 'p2',
+          locationProvinceId: 'newWorld|P2',
+          tileKey: 'newWorld|P2|0|0',
+        ),
+      );
+      final ws = WorldState(
+        turnState: turn,
+        oldWorld: RegionData(units: oldUnits),
+        newWorld: RegionData(units: newUnits),
+      );
+
+      Unit? linearLookup(String unitId) {
+        for (final u in ws.oldWorld.units) {
+          if (u.id == unitId) return u;
+        }
+        for (final u in ws.newWorld.units) {
+          if (u.id == unitId) return u;
+        }
+        return null;
+      }
+
+      for (var i = 0; i < n; i++) {
+        final id = 'old-$i';
+        expect(ws.tryGetUnitById(id), same(linearLookup(id)));
+      }
+      for (var i = 0; i < n; i++) {
+        final id = 'new-$i';
+        expect(ws.tryGetUnitById(id), same(linearLookup(id)));
+      }
+      expect(ws.tryGetUnitById('missing'), isNull);
+    });
   });
 
   group('WorldStateUnitLookup.tryGetRegionIdForUnit', () {
