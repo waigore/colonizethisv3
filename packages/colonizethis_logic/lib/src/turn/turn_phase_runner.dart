@@ -281,6 +281,7 @@ TurnPhaseStepOutcome _runMovementPhaseHandler(
             config.turnTraceRuntime?.handleCivilianMoveOrderTrace,
         onBundledWorkMoveTrace:
             config.turnTraceRuntime?.handleBundledWorkMoveTrace,
+        onArmyMoveOrderTrace: config.turnTraceRuntime?.handleArmyMoveOrderTrace,
       ),
     ),
   );
