@@ -20,6 +20,14 @@ typedef BundledWorkMoveTraceCallback =
       String? ignoreReason,
     });
 
+typedef WorkOrderTraceCallback =
+    void Function({
+      required String playerId,
+      required WorkOrder order,
+      required bool applied,
+      String? ignoreReason,
+    });
+
 typedef ArmyMoveOrderTraceCallback =
     void Function({
       required String playerId,
@@ -27,11 +35,6 @@ typedef ArmyMoveOrderTraceCallback =
       required bool applied,
       String? regionId,
       String? destinationProvinceId,
-typedef WorkOrderTraceCallback =
-    void Function({
-      required String playerId,
-      required WorkOrder order,
-      required bool applied,
       String? ignoreReason,
     });
 
@@ -110,11 +113,6 @@ class TurnTraceRuntime {
     required bool applied,
     String? regionId,
     String? destinationProvinceId,
-  /// Records one work-order handling decision in build/work phase order.
-  void handleWorkOrderTrace({
-    required String playerId,
-    required WorkOrder order,
-    required bool applied,
     String? ignoreReason,
   }) {
     _phaseOrderEvents.add(
@@ -126,10 +124,6 @@ class TurnTraceRuntime {
           'destinationProvinceId':
               destinationProvinceId ?? order.destinationProvinceId,
           if (regionId != null) 'regionId': regionId,
-        orderId: 'work:$playerId:${order.unitId}:${order.target}',
-        eventType: applied ? 'work_order_applied' : 'work_order_skipped',
-        payload: <String, Object?>{
-          'targetTileKey': order.targetTileKey,
           if (ignoreReason != null) 'ignoreReason': ignoreReason,
         },
       ),
