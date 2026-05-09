@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../turn/trace/turn_trace_runtime.dart';
 import 'province_lookup.dart';
 import 'topology_helpers.dart';
 
@@ -136,10 +137,15 @@ bool _hasSingleResolvedFromNode(List<TopologyNode> fromNodes) {
 ({RegionData oldWorld, RegionData newWorld})
 applyCivilianTileMoveOrdersToWorldRegions(
   Game game,
-  Map<String, List<MoveOrder>> moveOrdersByPlayerId,
-) {
+  Map<String, List<MoveOrder>> moveOrdersByPlayerId, {
+  CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
+}) {
   if (moveOrdersByPlayerId.isEmpty) return _unchangedWorldRegions(game);
-  final result = _applyCivilianMoveOrders(game, moveOrdersByPlayerId);
+  final result = _applyCivilianMoveOrders(
+    game,
+    moveOrdersByPlayerId,
+    onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
+  );
   if (result.ordersSeen > 0) {
     _log.i(
       'civilian tile movement apply orders=${result.ordersSeen} '
@@ -167,8 +173,9 @@ applyCivilianTileMoveOrdersToWorldRegions(
 ({List<Unit> ow, List<Unit> nw, int ordersSeen, int applied, int ignored})
 _applyCivilianMoveOrders(
   Game game,
-  Map<String, List<MoveOrder>> moveOrdersByPlayerId,
-) {
+  Map<String, List<MoveOrder>> moveOrdersByPlayerId, {
+  CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
+}) {
   final initialLists = _initialUnitListsForCivilianMoves(game);
   var ow = initialLists.ow;
   var nw = initialLists.nw;
@@ -180,6 +187,7 @@ _applyCivilianMoveOrders(
       nw: nw,
       playerId: playerId,
       orders: moveOrdersByPlayerId[playerId] ?? const [],
+      onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
     );
     ow = forPlayer.ow;
     nw = forPlayer.nw;
@@ -226,12 +234,19 @@ _applyCivilianMoveOrdersForPlayer({
   required List<Unit> nw,
   required String playerId,
   required List<MoveOrder> orders,
+  CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
 }) {
   var localOw = ow;
   var localNw = nw;
   var totals = _zeroMoveTotals();
   for (final order in orders) {
-    final one = _applyOneCivilianMoveOrder(localOw, localNw, playerId, order);
+    final one = _applyOneCivilianMoveOrder(
+      localOw,
+      localNw,
+      playerId,
+      order,
+      onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
+    );
     localOw = one.ow;
     localNw = one.nw;
     totals = _sumPerOrderTotals(totals, one);
@@ -253,16 +268,39 @@ _applyOneCivilianMoveOrder(
   List<Unit> ow,
   List<Unit> nw,
   String playerId,
-  MoveOrder order,
-) {
-  final precheck = _precheckCivilianMoveOrder(ow, nw, playerId, order);
+  MoveOrder order, {
+  CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
+}) {
+  final precheck = _precheckCivilianMoveOrder(
+    ow,
+    nw,
+    playerId,
+    order,
+    onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
+  );
   if (precheck != null) return precheck;
   final unit = _findCivilianMoveUnit(ow, nw, order.unitId);
   if (unit == null) return (ow: ow, nw: nw, applied: 0, ignored: 1);
   final prepared = _prepareMovedCivilianUnit(unit, order.destinationTileKey);
-  if (prepared == null) return _ignoredWithoutLog(ow, nw);
+  if (prepared == null) {
+    onCivilianMoveOrderTrace?.call(
+      playerId: playerId,
+      order: order,
+      applied: false,
+      ignoreReason: 'invalid_destination',
+    );
+    return (ow: ow, nw: nw, applied: 0, ignored: 1);
+  }
   final srcRegion = _regionHoldingUnit(ow, nw, unit.id);
-  if (srcRegion.isEmpty) return _ignoredWithoutLog(ow, nw);
+  if (srcRegion.isEmpty) {
+    onCivilianMoveOrderTrace?.call(
+      playerId: playerId,
+      order: order,
+      applied: false,
+      ignoreReason: 'region_unknown',
+    );
+    return (ow: ow, nw: nw, applied: 0, ignored: 1);
+  }
   final lists = _applyCivilianMoveToWorkingUnitLists(
     ow: ow,
     nw: nw,
@@ -270,6 +308,11 @@ _applyOneCivilianMoveOrder(
     moved: prepared.moved,
     srcRegion: srcRegion,
     destRegion: prepared.destRegion,
+  );
+  onCivilianMoveOrderTrace?.call(
+    playerId: playerId,
+    order: order,
+    applied: true,
   );
   return _appliedMoveResult(lists.ow, lists.nw);
 }
@@ -289,15 +332,38 @@ _precheckCivilianMoveOrder(
   List<Unit> ow,
   List<Unit> nw,
   String playerId,
-  MoveOrder order,
-) {
+  MoveOrder order, {
+  CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
+}) {
   final unit = _findCivilianMoveUnit(ow, nw, order.unitId);
   if (unit == null) {
-    return _ignoredMove(ow, nw, 'unit_not_found', order, playerId: playerId);
+    return _ignoredMove(
+      ow,
+      nw,
+      'unit_not_found',
+      order,
+      playerId: playerId,
+      onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
+    );
   }
-  final ownerMismatch = _ownerMismatchPrecheck(ow, nw, playerId, order, unit);
+  final ownerMismatch = _ownerMismatchPrecheck(
+    ow,
+    nw,
+    playerId,
+    order,
+    unit,
+    onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
+  );
   if (ownerMismatch != null) return ownerMismatch;
-  if (isMilitaryUnit(unit.type)) return _ignoredWithoutLog(ow, nw);
+  if (isMilitaryUnit(unit.type)) {
+    onCivilianMoveOrderTrace?.call(
+      playerId: playerId,
+      order: order,
+      applied: false,
+      ignoreReason: 'military_unit',
+    );
+    return _ignoredWithoutLog(ow, nw);
+  }
   return null;
 }
 
@@ -307,8 +373,9 @@ _ownerMismatchPrecheck(
   List<Unit> nw,
   String playerId,
   MoveOrder order,
-  Unit unit,
-) {
+  Unit unit, {
+  CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
+}) {
   if (unit.ownerId == playerId) return null;
   return _ignoredMove(
     ow,
@@ -317,6 +384,7 @@ _ownerMismatchPrecheck(
     order,
     playerId: playerId,
     ownerId: unit.ownerId,
+    onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
   );
 }
 
@@ -327,10 +395,17 @@ _ownerMismatchPrecheck(
   MoveOrder order, {
   required String playerId,
   String? ownerId,
+  CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
 }) {
   _log.d(
     'civilian movement ignored reason=$reason unitId=${order.unitId} '
     'orderPlayerId=$playerId${ownerId == null ? '' : ' unitOwnerId=$ownerId'}',
+  );
+  onCivilianMoveOrderTrace?.call(
+    playerId: playerId,
+    order: order,
+    applied: false,
+    ignoreReason: reason,
   );
   return (ow: ow, nw: nw, applied: 0, ignored: 1);
 }

@@ -36,6 +36,7 @@ TurnResolutionResult runTurnResolutionPipeline({
   for (var i = 0; i < turnResolutionSequence.length; i++) {
     final phase = turnResolutionSequence[i];
     if (i < phaseIndex) continue;
+    config.turnTraceRuntime?.clearPhaseOrderEvents();
     config.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.start);
     _log.i('phase ${phase.name} start');
     final beforeState = acc.game.toJson();
@@ -87,12 +88,14 @@ void _emitPhaseTrace({
   required Map<String, Object?> beforeState,
   required Map<String, Object?> afterState,
 }) {
+  final orderEvents = config.turnTraceRuntime?.snapshotPhaseOrderEvents() ??
+      const <TurnTraceOrderEvent>[];
   config.onTurnTracePhase?.call(
     TurnTracePhaseTrace(
       phaseId: phase.name,
       beforeState: beforeState,
       afterState: afterState,
-      orderEvents: const <TurnTraceOrderEvent>[],
+      orderEvents: orderEvents,
     ),
   );
 }
@@ -269,7 +272,13 @@ TurnPhaseStepOutcome _runMovementPhaseHandler(
 ) {
   return TurnPhaseStepContinue(
     acc.copyWith(
-      game: runMovementPhase(acc.game, config.topology, config.orders),
+      game: runMovementPhase(
+        acc.game,
+        config.topology,
+        config.orders,
+        onCivilianMoveOrderTrace:
+            config.turnTraceRuntime?.handleCivilianMoveOrderTrace,
+      ),
     ),
   );
 }

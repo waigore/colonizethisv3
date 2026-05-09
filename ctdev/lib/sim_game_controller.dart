@@ -324,6 +324,7 @@ class SimGameController {
     _lastTurnCombatSummaries.clear();
     final before = _game;
     final phaseTraces = <TurnTracePhaseTrace>[];
+    final traceRuntime = turnTraceEnabled ? TurnTraceRuntime() : null;
     final next = requireTurnResolutionComplete(
       validateOrdersAndResolveTurn(
         game: _game,
@@ -334,6 +335,7 @@ class SimGameController {
         defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
         onGameEvent: _recordCombatGameEvent,
         onTurnTracePhase: turnTraceEnabled ? phaseTraces.add : null,
+        turnTraceRuntime: traceRuntime,
       ),
     );
     _game = next;

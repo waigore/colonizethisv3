@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart' show GameEvent;
 import 'trace/turn_trace_contracts.dart';
+import 'trace/turn_trace_runtime.dart';
 import 'turn_pipeline_state.dart';
 import 'turn_resolution_result.dart';
 
@@ -38,7 +39,11 @@ class TurnResolverConfig {
     this.phaseHandlerOverrides,
     this.onPhaseProgress,
     this.onTurnTracePhase,
-  });
+    this.turnTraceRuntime = null,
+  }) : assert(
+          turnTraceRuntime == null || onTurnTracePhase != null,
+          'turnTraceRuntime requires onTurnTracePhase so phase buffers flush',
+        );
 
   final MapTopology topology;
   final Orders orders;
@@ -71,4 +76,8 @@ class TurnResolverConfig {
   /// Optional debug trace callback for per-phase snapshots captured during
   /// turn resolution. This hook is observational and must not mutate state.
   final void Function(TurnTracePhaseTrace phaseTrace)? onTurnTracePhase;
+
+  /// When non-null with [onTurnTracePhase], collects order-level events (for
+  /// example civilian move apply/ignore) for the active phase.
+  final TurnTraceRuntime? turnTraceRuntime;
 }

@@ -6,12 +6,18 @@ import '../../orders/bundled_civilian_work_order.dart';
 import '../../orders/draft_orders_mutations.dart';
 import '../../world/army_movement.dart';
 import '../../world/movement.dart';
+import '../trace/turn_trace_runtime.dart';
 import '../../world/naval_resolution.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
 import '../../world/unit_lookup.dart';
 
-Game runMovementPhase(Game game, MapTopology topology, Orders orders) {
+Game runMovementPhase(
+  Game game,
+  MapTopology topology,
+  Orders orders, {
+  CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
+}) {
   var state = game;
 
   final moveOrders = orders.moveOrdersByPlayerId;
@@ -23,7 +29,11 @@ Game runMovementPhase(Game game, MapTopology topology, Orders orders) {
     final originalOldWorld = state.worldState.oldWorld;
     final originalNewWorld = state.worldState.newWorld;
 
-    final tiled = applyCivilianTileMoveOrdersToWorldRegions(state, moveOrders);
+    final tiled = applyCivilianTileMoveOrdersToWorldRegions(
+      state,
+      moveOrders,
+      onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
+    );
     final oldWorld = tiled.oldWorld;
     final newWorld = tiled.newWorld;
     final spyTimers = Map<String, Map<String, int>>.from(

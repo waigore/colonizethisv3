@@ -364,6 +364,7 @@ class GameService {
       phaseHandlerOverrides: config.phaseHandlerOverrides,
       onPhaseProgress: config.onPhaseProgress,
       onTurnTracePhase: session.phases.add,
+      turnTraceRuntime: session.turnTraceRuntime,
     );
     final result = resolveTurnForGameWithConfig(
       game: game,
@@ -812,4 +813,5 @@ class _TurnTraceSession {
 
   final DateTime startedAtUtc;
   final List<TurnTracePhaseTrace> phases = <TurnTracePhaseTrace>[];
+  final TurnTraceRuntime turnTraceRuntime = TurnTraceRuntime();
 }
