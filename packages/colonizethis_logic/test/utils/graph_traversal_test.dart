@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:colonizethis_logic/src/utils/graph_traversal.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -75,13 +77,25 @@ void main() {
       final r = breadthFirstReachableInSubgraph(['a'], adj, universe);
       expect(r, {'a', 'b'});
     });
+
+    test('expands line graph of 120 nodes within universe', () {
+      final adj = <String, Set<String>>{};
+      for (var i = 0; i < 119; i++) {
+        adj['n$i'] = {'n${i + 1}'};
+        adj['n${i + 1}'] = {'n$i'};
+      }
+      final universe = {for (var i = 0; i < 120; i++) 'n$i'};
+      final r = breadthFirstReachableInSubgraph(['n0'], adj, universe);
+      expect(r.length, 120);
+      expect(r, universe);
+    });
   });
 
   group('propagateConnectivityBottleneckQueue', () {
     test('relaxes neighbors with min bottleneck vs transport cap', () {
       final connected = <String>{'a'};
       final pathCap = <String, int>{'a': 5};
-      final queue = <String>['a'];
+      final queue = Queue<String>()..add('a');
       propagateConnectivityBottleneckQueue(
         queue: queue,
         connected: connected,

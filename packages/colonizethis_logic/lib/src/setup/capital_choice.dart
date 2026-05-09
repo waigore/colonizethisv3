@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -683,9 +685,9 @@ List<(int, int)> _shortestPathOnProvinceTiles(
   final parent = <String, (int, int)>{};
   final startKey = '$fromX|$fromY';
   visited.add(startKey);
-  final queue = <(int, int)>[(fromX, fromY)];
+  final queue = Queue<(int, int)>()..add((fromX, fromY));
   while (queue.isNotEmpty) {
-    final (cx, cy) = queue.removeAt(0);
+    final (cx, cy) = queue.removeFirst();
     if (cx == toX && cy == toY) {
       final path = <(int, int)>[];
       var (px, py) = (toX, toY);

@@ -350,6 +350,38 @@ bool _looksLikeTileKeysByRegionAndProvinceLookup(IndexExpression node) {
   return src.contains('tileKeysByRegionAndProvince[');
 }
 
+bool _isSimpleReceiverRemoveAtZeroPattern(
+  MethodInvocation node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  final prefix = rule.removeAtZeroReceiverPathPrefix;
+  final receiverName = rule.removeAtZeroReceiverIdentifier;
+  if (prefix == null || receiverName == null) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  if (!slashPath.startsWith(prefix)) {
+    return false;
+  }
+  if (node.methodName.name != 'removeAt') {
+    return false;
+  }
+  final target = node.target;
+  if (target is! SimpleIdentifier || target.name != receiverName) {
+    return false;
+  }
+  final args = node.argumentList.arguments;
+  if (args.length != 1) {
+    return false;
+  }
+  final arg0 = args.first;
+  if (arg0 is! IntegerLiteral) {
+    return false;
+  }
+  return arg0.value == 0;
+}
+
 bool _isUnprefixedProvinceIdStringLiteralInvocation(
   MethodInvocation node,
   DisallowedPatternRule rule,
@@ -416,6 +448,10 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       } else if (rule.kind ==
               DisallowedAstMatchKind.provinceLocalSegmentBoundaryOnly &&
           _isProvinceLocalSegmentInvocation(node)) {
+        _recordIfAllowed(node, rule);
+      } else if (rule.kind ==
+              DisallowedAstMatchKind.simpleReceiverRemoveAtZero &&
+          _isSimpleReceiverRemoveAtZeroPattern(node, rule, path)) {
         _recordIfAllowed(node, rule);
       }
       if (rule.kind ==

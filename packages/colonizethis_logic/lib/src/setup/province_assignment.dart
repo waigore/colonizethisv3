@@ -2,6 +2,7 @@
 /// Used by game_setup to assign Great Powers, Minor Nations, and Tribes.
 library;
 
+import 'dart:collection';
 import 'dart:math';
 
 /// True if [provinceId] shares a P–P edge with a province owned by [factionId].
@@ -75,7 +76,7 @@ bool _runBfsGrowthRound({
   required Map<String, int>? landmassIds,
   required Map<String, int>? factionLandmassIds,
   required Map<String, int> targetPerFaction,
-  required Map<String, List<String>> queues,
+  required Map<String, Queue<String>> queues,
   required Map<String, String> owners,
   required Set<String> available,
   required Map<String, int> assignedCount,
@@ -95,7 +96,7 @@ bool _runBfsGrowthRound({
     var expanded = false;
 
     while (queue.isNotEmpty && !expanded && nextTotal < total) {
-      final from = queue.removeAt(0);
+      final from = queue.removeFirst();
       final nbrOrder = (neighbours[from] ?? const <String>{}).toList()
         ..sort();
       if (neighborShuffleRandom != null) {
@@ -162,7 +163,7 @@ bool _runBfsGrowthRound({
 int _greedyAssignRemainingTerritories({
   required Set<String> available,
   required Map<String, String> owners,
-  required Map<String, List<String>> queues,
+  required Map<String, Queue<String>> queues,
   required Map<String, int> assignedCount,
   required List<String> factionIds,
   required Map<String, Set<String>> neighbours,
@@ -175,10 +176,13 @@ int _greedyAssignRemainingTerritories({
   var nextTotal = totalAssigned;
   if (available.isEmpty || nextTotal >= total) return nextTotal;
 
-  final remaining = available.toList()..sort();
-  if (neighborShuffleRandom != null) remaining.shuffle(neighborShuffleRandom);
+  final sortedRemaining = available.toList()..sort();
+  if (neighborShuffleRandom != null) {
+    sortedRemaining.shuffle(neighborShuffleRandom);
+  }
+  final remaining = Queue<String>()..addAll(sortedRemaining);
   while (remaining.isNotEmpty && nextTotal < total) {
-    final provinceId = remaining.removeAt(0);
+    final provinceId = remaining.removeFirst();
     if (!available.remove(provinceId)) continue;
 
     final chosenFactionId = _greedyPickFactionForProvince(
@@ -277,8 +281,8 @@ Map<String, String> assignTerritoriesByBfsGrowth({
   final owners = <String, String>{};
   final total = maxTotal ?? available.length;
 
-  final queues = <String, List<String>>{
-    for (final id in factionIds) id: <String>[],
+  final queues = <String, Queue<String>>{
+    for (final id in factionIds) id: Queue<String>(),
   };
   final assignedCount = <String, int>{for (final id in factionIds) id: 0};
   var totalAssigned = 0;

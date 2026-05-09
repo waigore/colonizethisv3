@@ -1,4 +1,6 @@
 // SPEC/program/game-setup-pipeline.md §7d — province town assignment (importable library).
+import 'dart:collection';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -221,7 +223,7 @@ Map<String, int> _bfsDistances({
   if (map == null) {
     return result;
   }
-  final queue = <({int x, int y, int distance})>[];
+  final queue = Queue<({int x, int y, int distance})>();
   final key = '${startCoords.x}|${startCoords.y}';
   final sx = startCoords.x;
   final sy = startCoords.y;
@@ -230,7 +232,7 @@ Map<String, int> _bfsDistances({
     result[map[key]!] = 0;
   }
   while (queue.isNotEmpty) {
-    final item = queue.removeAt(0);
+    final item = queue.removeFirst();
     for (final delta in const [
       [1, 0],
       [-1, 0],

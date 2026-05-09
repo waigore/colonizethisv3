@@ -88,7 +88,7 @@ Set<T> breadthFirstReachableInSubgraph<T>(
 /// Callers supply predicates and neighbor iteration; see
 /// `connectivity_resolver.dart` § capital land connectivity.
 void propagateConnectivityBottleneckQueue({
-  required List<String> queue,
+  required Queue<String> queue,
   required Set<String> connected,
   required Map<String, int> pathCap,
   required bool Function(String tileKey) shouldExpandEdgesFrom,
@@ -96,7 +96,7 @@ void propagateConnectivityBottleneckQueue({
   required int Function(String neighborKey) transportLevelAt,
 }) {
   while (queue.isNotEmpty) {
-    final key = queue.removeAt(0);
+    final key = queue.removeFirst();
     if (!shouldExpandEdgesFrom(key)) continue;
     final bottleneckU = pathCap[key] ?? 0;
     for (final neighbor in neighborsOf(key)) {
@@ -118,7 +118,7 @@ void _relaxBottleneckNeighbor({
   required int candidate,
   required Set<String> connected,
   required Map<String, int> pathCap,
-  required List<String> queue,
+  required Queue<String> queue,
 }) {
   final existing = pathCap[neighbor] ?? -1;
   if (candidate > existing) {

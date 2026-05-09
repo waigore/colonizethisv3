@@ -170,6 +170,21 @@ decoupled from logic internals behind narrow contracts.
 
 Rule id: `debug_console_logic_contract_boundary` (`match.kind`:
 `scoped_package_import_contract`).
+
+### List-as-queue `queue.removeAt(0)` in `colonizethis_logic` sources
+
+In `packages/colonizethis_logic/lib/src/**`, a method invocation
+**`queue.removeAt(0)`** (receiver is the simple identifier `queue`, method
+`removeAt`, literal `0`) is disallowed.
+
+Rationale: using a growable `List` as a FIFO frontier makes each dequeue **O(n)**
+in the frontier size; **`dart:collection` `Queue.removeFirst()`** keeps
+breadth-first expansion **O(1)** per tile.
+
+Rule id: `logic_lib_list_queue_remove_at_zero` (`match.kind`:
+`simple_receiver_remove_at_zero`, `match.receiver_identifier`: `queue`,
+`match.relative_path_prefix`: `packages/colonizethis_logic/lib/src/`).
+
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -287,3 +302,20 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   **when** the disallowed AST checker runs, **then** it reports at least one
   `debug_console_logic_contract_boundary` violation with the correct file and
   line.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that calls `queue.removeAt(0)`,
+  **when** the disallowed AST checker runs, **then** it reports at least one
+  violation for `logic_lib_list_queue_remove_at_zero` with the correct file
+  and line.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that dequeues with
+  `queue.removeFirst()` on a `Queue`, **when** the disallowed AST checker runs,
+  **then** it does not report a `logic_lib_list_queue_remove_at_zero`
+  violation for that call.
+
+- **Given** runtime Dart source outside
+  `packages/colonizethis_logic/lib/src/` that calls `queue.removeAt(0)`,
+  **when** the disallowed AST checker runs, **then** it does not report a
+  `logic_lib_list_queue_remove_at_zero` violation for that call.
