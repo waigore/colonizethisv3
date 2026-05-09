@@ -14,6 +14,37 @@ import 'topology_helpers.dart';
 
 final _log = packageLogger();
 
+/// Counters for connectivity hot paths (Refs #2268 AC-10); used with
+/// [setConnectivityHotPathMetricsForTests] from tests only.
+class ConnectivityHotPathMetrics {
+  int townRuleWorklistDequeues = 0;
+  int connectivityBottleneckDequeues = 0;
+  int seaZoneBreadthFirstDequeues = 0;
+
+  /// Sum of tile bottleneck propagation dequeues and sea-zone plain BFS dequeues.
+  int get connectivityBfsTotalDequeues =>
+      connectivityBottleneckDequeues + seaZoneBreadthFirstDequeues;
+}
+
+ConnectivityHotPathMetrics? _connectivityHotPathMetricsForTests;
+
+/// When non-null, connectivity resolution increments [metrics] (test hook).
+void setConnectivityHotPathMetricsForTests(ConnectivityHotPathMetrics? metrics) {
+  _connectivityHotPathMetricsForTests = metrics;
+}
+
+void _recordTownRuleWorklistDequeue() {
+  _connectivityHotPathMetricsForTests?.townRuleWorklistDequeues++;
+}
+
+void _recordConnectivityBottleneckDequeue() {
+  _connectivityHotPathMetricsForTests?.connectivityBottleneckDequeues++;
+}
+
+void _recordSeaZoneBfsDequeue() {
+  _connectivityHotPathMetricsForTests?.seaZoneBreadthFirstDequeues++;
+}
+
 /// Result of connectivity resolution: connected tile set and per-tile path transport cap.
 /// SPEC/game/capital-and-connectivity, extraction-and-improvements: effective yield is
 /// capped by min transport level along path to town then to capital; [pathTransportCap]
@@ -144,6 +175,7 @@ Set<String> _seaZonesReachableBySeaPath(
     startSeaZoneIds,
     neighbours,
     seaZoneIds,
+    onDequeue: _recordSeaZoneBfsDequeue,
   );
 }
 
@@ -391,6 +423,7 @@ void _runConnectivityPropagation({
     queue: queue,
     connected: connected,
     pathCap: pathCap,
+    onDequeue: _recordConnectivityBottleneckDequeue,
     shouldExpandEdgesFrom: (key) {
       final coords = parseTileKeyCoordinates(key);
       if (coords == null) return false;
@@ -529,6 +562,7 @@ void _applyTownRuleConnectivityClosure({
 
   while (pendingTowns.isNotEmpty) {
     final tk = pendingTowns.removeFirst();
+    _recordTownRuleWorklistDequeue();
     queuedTowns.remove(tk);
     expandedTowns.add(tk);
 

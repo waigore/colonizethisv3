@@ -65,12 +65,14 @@ Map<T, int> landmassIdsFromProvinceAdjacency<T>(Map<T, Set<T>> neighbours) {
 Set<T> breadthFirstReachableInSubgraph<T>(
   Iterable<T> seeds,
   Map<T, Set<T>> adjacency,
-  Set<T> universe,
-) {
+  Set<T> universe, {
+  void Function()? onDequeue,
+}) {
   final reachable = <T>{...seeds};
   final queue = Queue<T>()..addAll(seeds);
   while (queue.isNotEmpty) {
     final z = queue.removeFirst();
+    onDequeue?.call();
     for (final n in adjacency[z] ?? <T>{}) {
       if (!universe.contains(n)) continue;
       if (reachable.contains(n)) continue;
@@ -94,9 +96,11 @@ void propagateConnectivityBottleneckQueue({
   required bool Function(String tileKey) shouldExpandEdgesFrom,
   required Iterable<String> Function(String tileKey) neighborsOf,
   required int Function(String neighborKey) transportLevelAt,
+  void Function()? onDequeue,
 }) {
   while (queue.isNotEmpty) {
     final key = queue.removeFirst();
+    onDequeue?.call();
     if (!shouldExpandEdgesFrom(key)) continue;
     final bottleneckU = pathCap[key] ?? 0;
     for (final neighbor in neighborsOf(key)) {
