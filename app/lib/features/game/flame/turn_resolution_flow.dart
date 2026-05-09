@@ -11,13 +11,18 @@ TurnResolutionResult resolveNextTurnForGameScreen({
   required TurnResolutionResult Function({
     required Orders orders,
     Orders? aiOrders,
+    List<TurnTraceAiSection>? aiTraceSections,
   })
   runTurnResolution,
 }) {
-  final aiOrders = generateOrdersForGameFullAI(
+  final aiResult = generateOrdersForGameFullAI(
     game,
     topologyForAi,
     tileMapByRegion: tileMapByRegion,
-  ).orders;
-  return runTurnResolution(orders: orders, aiOrders: aiOrders);
+  );
+  return runTurnResolution(
+    orders: orders,
+    aiOrders: aiResult.orders,
+    aiTraceSections: aiResult.aiTraceSections,
+  );
 }

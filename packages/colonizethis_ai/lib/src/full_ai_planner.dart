@@ -19,14 +19,47 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
 }) {
+  return generateOrdersForPlayerFullAIWithTrace(
+    game,
+    topology,
+    playerId,
+    tileMapByRegion: tileMapByRegion,
+    orderSuggestionApi: orderSuggestionApi,
+    onDialogue: onDialogue,
+    onMood: onMood,
+  ).result;
+}
+
+class FullAIPlayerTraceResult {
+  const FullAIPlayerTraceResult({
+    required this.result,
+    required this.aiTraceSection,
+  });
+
+  final StrategicOrderResult result;
+  final TurnTraceAiSection? aiTraceSection;
+}
+
+FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
+  Game game,
+  MapTopology topology,
+  String playerId, {
+  Map<String, TileMapResult>? tileMapByRegion,
+  OrderSuggestionAPI? orderSuggestionApi,
+  void Function(DialogueEvent)? onDialogue,
+  void Function(PortraitMoodEvent)? onMood,
+}) {
   final player = game.playerById(playerId);
   if (player == null || !isAiControlled(game, player.id)) {
-    return const StrategicOrderResult(
-      orders: Orders(),
-      economyPlan: EconomyPlan(
-        productionAssignments: [],
-        cargoPreference: CargoPreference.none,
+    return const FullAIPlayerTraceResult(
+      result: StrategicOrderResult(
+        orders: Orders(),
+        economyPlan: EconomyPlan(
+          productionAssignments: [],
+          cargoPreference: CargoPreference.none,
+        ),
       ),
+      aiTraceSection: null,
     );
   }
   final view = buildPlayerView(game, topology, playerId);
@@ -46,7 +79,7 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
     hiddenAgendaId: agendaId,
   );
   final suggestionAPI = orderSuggestionApi ?? const DefaultOrderSuggestionAPI();
-  return generateStrategicOrders(
+  final traced = generateStrategicOrdersWithTrace(
     game: game,
     topology: topology,
     nationId: playerId,
@@ -58,6 +91,10 @@ StrategicOrderResult generateOrdersForPlayerFullAI(
     onDialogue: onDialogue,
     onMood: onMood,
   );
+  return FullAIPlayerTraceResult(
+    result: traced.result,
+    aiTraceSection: traced.aiTraceSection,
+  );
 }
 
 /// Result of full-AI order generation for all AI GPs: merged orders and per-player economy plans.
@@ -66,9 +103,11 @@ class FullAIResult {
   const FullAIResult({
     required this.orders,
     required this.economyPlansByPlayerId,
+    this.aiTraceSections = const <TurnTraceAiSection>[],
   });
   final Orders orders;
   final Map<String, EconomyPlan> economyPlansByPlayerId;
+  final List<TurnTraceAiSection> aiTraceSections;
 }
 
 /// Generates orders and economy plans for all AI-controlled GPs using full AI. Aggregates all order types including naval.
@@ -89,10 +128,11 @@ FullAIResult generateOrdersForGameFullAI(
   final navalByPlayer = <String, List<NavalMoveOrder>>{};
   final missionByPlayer = <String, List<NavalMissionOrder>>{};
   final economyPlansByPlayerId = <String, EconomyPlan>{};
+  final aiTraceSections = <TurnTraceAiSection>[];
 
   for (final player in game.players) {
     if (!isAiControlled(game, player.id)) continue;
-    final result = generateOrdersForPlayerFullAI(
+    final traced = generateOrdersForPlayerFullAIWithTrace(
       game,
       topology,
       player.id,
@@ -101,7 +141,12 @@ FullAIResult generateOrdersForGameFullAI(
       onDialogue: onDialogue,
       onMood: onMood,
     );
+    final result = traced.result;
     economyPlansByPlayerId[player.id] = result.economyPlan;
+    final aiTraceSection = traced.aiTraceSection;
+    if (aiTraceSection != null) {
+      aiTraceSections.add(aiTraceSection);
+    }
     _addOrdersIfNonEmpty(
       moveByPlayer,
       player.id,
@@ -156,6 +201,7 @@ FullAIResult generateOrdersForGameFullAI(
       navalMissionOrdersByPlayerId: missionByPlayer,
     ),
     economyPlansByPlayerId: economyPlansByPlayerId,
+    aiTraceSections: List<TurnTraceAiSection>.unmodifiable(aiTraceSections),
   );
 }
 

@@ -36,25 +36,38 @@ void main() {
         globalGameSeed: 1,
         aiSeedByGpId: const {'gp1': 1},
       );
-      final expectedAiOrders = generateOrdersForGameFullAI(
+      final expectedAiResult = generateOrdersForGameFullAI(
         game,
         const MapTopology(nodes: [], edges: []),
-      ).orders;
+      );
 
       Orders? capturedAiOrders;
+      List<TurnTraceAiSection>? capturedAiTraceSections;
       final result = resolveNextTurnForGameScreen(
         game: game,
         orders: const Orders(),
         topologyForAi: const MapTopology(nodes: [], edges: []),
-        runTurnResolution: ({required Orders orders, Orders? aiOrders}) {
-          capturedAiOrders = aiOrders;
-          return TurnResolutionComplete(game);
-        },
+        runTurnResolution:
+            ({
+              required Orders orders,
+              Orders? aiOrders,
+              List<TurnTraceAiSection>? aiTraceSections,
+            }) {
+              capturedAiOrders = aiOrders;
+              capturedAiTraceSections = aiTraceSections;
+              return TurnResolutionComplete(game);
+            },
       );
 
       expect(result, isA<TurnResolutionComplete>());
       expect(capturedAiOrders, isNotNull);
-      expect(capturedAiOrders, equals(expectedAiOrders));
+      expect(capturedAiOrders, equals(expectedAiResult.orders));
+      expect(
+        capturedAiTraceSections?.map((section) => section.factionId),
+        equals(
+          expectedAiResult.aiTraceSections.map((section) => section.factionId),
+        ),
+      );
     });
   });
 }

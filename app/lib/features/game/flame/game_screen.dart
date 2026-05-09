@@ -121,12 +121,16 @@ class GameScreen extends ConsumerWidget {
                   topologyForAi: mapData.combinedTopology,
                   tileMapByRegion: mapData.tileMapByRegion,
                   runTurnResolution:
-                      ({required Orders orders, Orders? aiOrders}) =>
-                          service.runTurnResolution(
-                            game,
-                            orders: orders,
-                            aiOrders: aiOrders,
-                          ),
+                      ({
+                        required Orders orders,
+                        Orders? aiOrders,
+                        List<TurnTraceAiSection>? aiTraceSections,
+                      }) => service.runTurnResolution(
+                        game,
+                        orders: orders,
+                        aiOrders: aiOrders,
+                        aiTraceSections: aiTraceSections,
+                      ),
                 );
                 applyTurnResolutionResult(ref, result);
               },
