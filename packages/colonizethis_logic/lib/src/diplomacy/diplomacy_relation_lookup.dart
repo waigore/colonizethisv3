@@ -148,6 +148,41 @@ String relationScoreToDisplayLabel(int score) {
 /// Normalizes faction pair for lookup (consistent ordering).
 String pairKey(String a, String b) => a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
 
+/// Lazily built per [Game] instance (issue #2268 AC-4). A new [Game] from
+/// [Game.copyWith] does not share expando state with the previous instance.
+final Expando<Map<String, DiplomacyRelation>> _gameDiplomacyRelationsByPairKey =
+    Expando<Map<String, DiplomacyRelation>>('gameDiplomacyRelationsByPairKey');
+
+/// Directed GP → Minor/Tribe overture rows, keyed by `_overtureLookupKey`.
+final Expando<Map<String, OvertureState>> _gameOvertureStatesByGpTarget =
+    Expando<Map<String, OvertureState>>('gameOvertureStatesByGpTarget');
+
+String _overtureLookupKey(String gpId, String targetId) => '$gpId|$targetId';
+
+Map<String, DiplomacyRelation> _diplomacyRelationsByPairKey(Game game) {
+  var map = _gameDiplomacyRelationsByPairKey[game];
+  if (map == null) {
+    map = <String, DiplomacyRelation>{};
+    for (final r in game.diplomacyRelations) {
+      map.putIfAbsent(pairKey(r.factionId1, r.factionId2), () => r);
+    }
+    _gameDiplomacyRelationsByPairKey[game] = map;
+  }
+  return map;
+}
+
+Map<String, OvertureState> _overtureStatesByLookupKey(Game game) {
+  var map = _gameOvertureStatesByGpTarget[game];
+  if (map == null) {
+    map = <String, OvertureState>{};
+    for (final o in game.overtureStates) {
+      map.putIfAbsent(_overtureLookupKey(o.gpId, o.targetId), () => o);
+    }
+    _gameOvertureStatesByGpTarget[game] = map;
+  }
+  return map;
+}
+
 /// Returns relation for faction pair, or null if not found.
 DiplomacyRelation? getRelation(
   Game game,
@@ -155,10 +190,7 @@ DiplomacyRelation? getRelation(
   String factionId2,
 ) {
   final key = pairKey(factionId1, factionId2);
-  for (final r in game.diplomacyRelations) {
-    if (pairKey(r.factionId1, r.factionId2) == key) return r;
-  }
-  return null;
+  return _diplomacyRelationsByPairKey(game)[key];
 }
 
 /// Finds the relation, passes it (or null) to [updater], and replaces or appends the result.
@@ -169,13 +201,17 @@ List<DiplomacyRelation> upsertRelation(
   DiplomacyRelation Function(DiplomacyRelation?) updater,
 ) {
   final key = pairKey(factionId1, factionId2);
-  final idx = relations.indexWhere(
-    (r) => pairKey(r.factionId1, r.factionId2) == key,
-  );
-  final existing = idx >= 0 ? relations[idx] : null;
+  final firstIndexByPairKey = <String, int>{};
+  for (var i = 0; i < relations.length; i++) {
+    final r = relations[i];
+    final rk = pairKey(r.factionId1, r.factionId2);
+    firstIndexByPairKey.putIfAbsent(rk, () => i);
+  }
+  final idx = firstIndexByPairKey[key];
+  final existing = idx != null ? relations[idx] : null;
   final updated = updater(existing);
   final result = List<DiplomacyRelation>.from(relations);
-  if (idx >= 0) {
+  if (idx != null) {
     result[idx] = updated;
   } else {
     result.add(updated);
@@ -185,10 +221,7 @@ List<DiplomacyRelation> upsertRelation(
 
 /// Returns overture state for GP–Minor/Tribe, or null.
 OvertureState? getOverture(Game game, String gpId, String targetId) {
-  for (final o in game.overtureStates) {
-    if (o.gpId == gpId && o.targetId == targetId) return o;
-  }
-  return null;
+  return _overtureStatesByLookupKey(game)[_overtureLookupKey(gpId, targetId)];
 }
 
 /// True when [a] and [b] are at war according to [game.diplomacyRelations].
