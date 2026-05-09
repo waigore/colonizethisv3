@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../turn/trace/turn_trace_runtime.dart';
 import '../world/army_ids.dart';
 
 final ordersApplicationLog = packageLogger();
@@ -74,6 +75,7 @@ class BuildWorkState {
     this.topology,
     this.tileMapByRegion,
     this.onDialogue,
+    this.onWorkOrderTrace,
     required this.work,
   });
 
@@ -83,6 +85,7 @@ class BuildWorkState {
   final MapTopology? topology;
   final Map<String, TileMapResult>? tileMapByRegion;
   final void Function(DialogueEvent)? onDialogue;
+  final WorkOrderTraceCallback? onWorkOrderTrace;
   final WorkOrderState work;
 
   BuildWorkState copyWith({
@@ -92,6 +95,7 @@ class BuildWorkState {
     MapTopology? topology,
     Map<String, TileMapResult>? tileMapByRegion,
     void Function(DialogueEvent)? onDialogue,
+    WorkOrderTraceCallback? onWorkOrderTrace,
     WorkOrderState? work,
   }) {
     return BuildWorkState(
@@ -101,6 +105,7 @@ class BuildWorkState {
       topology: topology ?? this.topology,
       tileMapByRegion: tileMapByRegion ?? this.tileMapByRegion,
       onDialogue: onDialogue ?? this.onDialogue,
+      onWorkOrderTrace: onWorkOrderTrace ?? this.onWorkOrderTrace,
       work: work ?? this.work,
     );
   }

@@ -20,6 +20,14 @@ typedef BundledWorkMoveTraceCallback =
       String? ignoreReason,
     });
 
+typedef WorkOrderTraceCallback =
+    void Function({
+      required String playerId,
+      required WorkOrder order,
+      required bool applied,
+      String? ignoreReason,
+    });
+
 /// Mutable per-turn-resolution buffer for order-level trace events within the
 /// current phase. Cleared at each phase boundary by [turn_phase_runner]; read
 /// via [snapshotPhaseOrderEvents] when emitting [TurnTracePhaseTrace].
@@ -79,6 +87,26 @@ class TurnTraceRuntime {
             'destinationProvinceId': destinationProvinceId,
           if (destinationTileKey != null)
             'destinationTileKey': destinationTileKey,
+          if (ignoreReason != null) 'ignoreReason': ignoreReason,
+        },
+      ),
+    );
+  }
+
+  /// Records one work-order handling decision in build/work phase order.
+  void handleWorkOrderTrace({
+    required String playerId,
+    required WorkOrder order,
+    required bool applied,
+    String? ignoreReason,
+  }) {
+    _phaseOrderEvents.add(
+      TurnTraceOrderEvent(
+        sequence: _nextSequence++,
+        orderId: 'work:$playerId:${order.unitId}:${order.target}',
+        eventType: applied ? 'work_order_applied' : 'work_order_skipped',
+        payload: <String, Object?>{
+          'targetTileKey': order.targetTileKey,
           if (ignoreReason != null) 'ignoreReason': ignoreReason,
         },
       ),

@@ -39,21 +39,42 @@ BuildWorkState runWorkPhase(
 
     for (final order in workOrders[player.id] ?? const []) {
       final u = context.lookupUnit(order.unitId);
-      if (u == null) continue;
+      if (u == null) {
+        current.onWorkOrderTrace?.call(
+          playerId: player.id,
+          order: order,
+          applied: false,
+          ignoreReason: 'unit_not_found',
+        );
+        continue;
+      }
       final targetTileKey = order.targetTileKey;
       final hasValidTarget = targetTileKey.isNotEmpty;
+      var handled = false;
+      var applied = false;
       for (final handler in _workOrderHandlers) {
         if (!handler.supports(order.target)) continue;
-        if (handler.tryApply(
+        handled = handler.tryApply(
           context,
           order,
           u,
           targetTileKey,
           hasValidTarget,
-        )) {
-          break;
-        }
+        );
+        if (!handled) continue;
+        final nextUnit = context.lookupUnit(order.unitId);
+        final nextWork = nextUnit?.currentWork;
+        applied = nextWork != null && nextWork.workTarget == order.target;
+        break;
       }
+      current.onWorkOrderTrace?.call(
+        playerId: player.id,
+        order: order,
+        applied: applied,
+        ignoreReason: handled
+            ? (applied ? null : 'order_rejected')
+            : 'unsupported_target',
+      );
     }
 
     context.persistPlayerSnapshot();
