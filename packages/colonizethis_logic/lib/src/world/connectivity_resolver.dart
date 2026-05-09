@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -219,7 +221,7 @@ void _tryEnqueueSeaConnectedPortExpansion({
   required Set<String> owned,
   required Map<String, TileMapResult> tileMapByRegion,
   required Map<String, int> pathCap,
-  required List<String> expansionSeedQueue,
+  required Queue<String> expansionSeedQueue,
 }) {
   if (connected.contains(portKey)) return;
   final coords = parseTileKeyCoordinates(portKey);
@@ -277,7 +279,7 @@ ConnectivityResult _connectedTilesForPlayer({
   final pathCap = <String, int>{};
   pathCap[capitalKey] = _transportLevelAtTile(worldState, capitalKey);
   _runConnectivityPropagation(
-    queue: <String>[capitalKey],
+    queue: Queue<String>()..add(capitalKey),
     connected: connected,
     pathCap: pathCap,
     worldState: worldState,
@@ -312,7 +314,7 @@ ConnectivityResult _connectedTilesForPlayer({
   );
   // When capital province is blockaded, seaConnectedPortKeys stays empty (no sea connectivity). SPEC § Blockade.
 
-  final expansionSeedQueue = <String>[];
+  final expansionSeedQueue = Queue<String>();
   for (final portKey in seaConnectedPortKeys) {
     _tryEnqueueSeaConnectedPortExpansion(
       portKey: portKey,
@@ -366,7 +368,7 @@ ConnectivityResult _connectedTilesForPlayer({
 }
 
 void _runConnectivityPropagation({
-  required List<String> queue,
+  required Queue<String> queue,
   required Set<String> connected,
   required Map<String, int> pathCap,
   required WorldState worldState,

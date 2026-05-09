@@ -83,6 +83,13 @@ rules:
       package_name: colonizethis_logic
       allowed_imports:
         - package:colonizethis_logic/debug_console_api.dart
+  - id: logic_lib_list_queue_remove_at_zero
+    message: >-
+      Do not use a List named queue as a FIFO frontier (queue.removeAt(0)).
+    match:
+      kind: simple_receiver_remove_at_zero
+      receiver_identifier: queue
+      relative_path_prefix: packages/colonizethis_logic/lib/src/
 ''';
 
 void main() {
@@ -683,6 +690,58 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
       );
       expect(violations, isNotEmpty);
       expect(violations.first.ruleId, 'debug_console_logic_contract_boundary');
+    });
+  });
+
+  group('logic_lib_list_queue_remove_at_zero', () {
+    test('flags queue.removeAt(0) under colonizethis_logic lib/src', () {
+      const src = r'''
+void f(List<String> queue) {
+  final x = queue.removeAt(0);
+}
+''';
+      final violations = findDisallowedAstViolations(
+        'packages/colonizethis_logic/lib/src/x.dart',
+        src,
+        rules,
+      );
+      expect(
+        violations.where((e) => e.ruleId == 'logic_lib_list_queue_remove_at_zero'),
+        isNotEmpty,
+      );
+    });
+
+    test('ignores queue.removeAt(0) outside lib/src tree', () {
+      const src = r'''
+void f(List<String> queue) {
+  final x = queue.removeAt(0);
+}
+''';
+      final violations = findDisallowedAstViolations(
+        'packages/colonizethis_logic/lib/x.dart',
+        src,
+        rules,
+      );
+      expect(
+        violations.where((e) => e.ruleId == 'logic_lib_list_queue_remove_at_zero'),
+        isEmpty,
+      );
+    });
+
+    test('respects same-line ignore for queue.removeAt(0)', () {
+      const src = r'''
+void f(List<String> queue) {
+  final x = queue.removeAt(0); // ignore: disallowed_ast_logic_lib_list_queue_remove_at_zero
+}
+''';
+      expect(
+        findDisallowedAstViolations(
+          'packages/colonizethis_logic/lib/src/x.dart',
+          src,
+          rules,
+        ).where((e) => e.ruleId == 'logic_lib_list_queue_remove_at_zero'),
+        isEmpty,
+      );
     });
   });
 }

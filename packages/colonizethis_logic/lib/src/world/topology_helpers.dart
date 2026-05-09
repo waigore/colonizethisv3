@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 
 /// Topology helpers shared by movement and connectivity. SPEC/game/map-topology.md.
@@ -49,9 +51,9 @@ Set<String> seaZonesReachableBySeaPath(
     }
   }
   final reachable = Set<String>.from(startSeaZoneIds);
-  final queue = List<String>.from(startSeaZoneIds);
+  final queue = Queue<String>()..addAll(startSeaZoneIds);
   while (queue.isNotEmpty) {
-    final z = queue.removeAt(0);
+    final z = queue.removeFirst();
     for (final n in neighbours[z] ?? {}) {
       if (reachable.contains(n)) continue;
       reachable.add(n);

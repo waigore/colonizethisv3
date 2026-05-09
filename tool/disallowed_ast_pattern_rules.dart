@@ -12,6 +12,7 @@ enum DisallowedAstMatchKind {
   unprefixedProvinceIdStringLiteralArgument,
   provinceLocalSegmentBoundaryOnly,
   scopedPackageImportContract,
+  simpleReceiverRemoveAtZero,
 }
 
 class DisallowedPatternRule {
@@ -31,6 +32,8 @@ class DisallowedPatternRule {
     required this.scopedRelativePathPrefixes,
     required this.packageName,
     required this.allowedPackageImports,
+    this.removeAtZeroReceiverPathPrefix,
+    this.removeAtZeroReceiverIdentifier,
   });
 
   final String id;
@@ -48,6 +51,14 @@ class DisallowedPatternRule {
   final Set<String> scopedRelativePathPrefixes;
   final String? packageName;
   final Set<String> allowedPackageImports;
+
+  /// When [kind] is [DisallowedAstMatchKind.simpleReceiverRemoveAtZero]: relative
+  /// path prefix (POSIX slashes) limiting matches, e.g. `packages/colonizethis_logic/lib/src/`.
+  final String? removeAtZeroReceiverPathPrefix;
+
+  /// When [kind] is [DisallowedAstMatchKind.simpleReceiverRemoveAtZero]: simple
+  /// identifier of the receiver for `removeAt(0)` (typically `queue`).
+  final String? removeAtZeroReceiverIdentifier;
 }
 
 class DisallowedAstViolation {
@@ -331,6 +342,37 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
           scopedRelativePathPrefixes: const {},
           packageName: null,
           allowedPackageImports: const {},
+        ),
+      );
+    } else if (kind == 'simple_receiver_remove_at_zero') {
+      final prefix =
+          match['relative_path_prefix']?.toString().replaceAll('\\', '/');
+      final receiver = match['receiver_identifier']?.toString();
+      if (prefix == null ||
+          prefix.isEmpty ||
+          receiver == null ||
+          receiver.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.simpleReceiverRemoveAtZero,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
+          removeAtZeroReceiverPathPrefix: prefix,
+          removeAtZeroReceiverIdentifier: receiver,
         ),
       );
     } else if (kind == 'scoped_package_import_contract') {
