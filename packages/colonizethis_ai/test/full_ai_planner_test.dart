@@ -157,6 +157,21 @@ void main() {
       expect(section.outcome['domainOutputs'], isA<Map<String, Object?>>());
       expect(section.outcome['finalAggregatedOrders'], isA<List<Object?>>());
       expect(section.outcome['emittedOrderCount'], isA<int>());
+
+      final constants = section.thresholds['constants'] as Map<String, Object?>;
+      expect(constants['goalWeights'], isA<Map<String, Object?>>());
+      expect(constants['agendaModifiers'], isA<Map<String, Object?>>());
+
+      final effective = section.thresholds['effective'] as Map<String, Object?>;
+      expect(effective['selectedGoalScore'], isA<int>());
+      expect(effective['adjustedGoalScores'], isA<Map<String, Object?>>());
+
+      final gates = section.thresholds['gates'] as List<Object?>;
+      expect(gates, isNotEmpty);
+      final firstGate = gates.first as Map<String, Object?>;
+      expect(firstGate['candidateGoal'], isA<String>());
+      expect(firstGate['candidateScore'], isA<int>());
+      expect(firstGate['selected'], isA<bool>());
     });
   });
 }

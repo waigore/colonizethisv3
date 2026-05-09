@@ -141,8 +141,13 @@ TurnTraceAiSection _buildAiTraceSection({
   final ordersByDomain = _orderCountsByDomain(nationId, orders);
   final finalOrders = _finalAggregatedOrders(nationId, orders);
   final domainWeights = getDomainWeightsForLeader(config.personalityId);
+  final goalWeights = getGoalWeightsForLeader(config.personalityId);
   final thresholds = getThresholdsForLeader(config.personalityId);
   final selectedScore = goalScores[primaryGoal] ?? 0;
+  final agendaConquerModifier = getAgendaConquerModifier(config.hiddenAgendaId);
+  final agendaDiplomacyModifier = getAgendaDiplomacyModifier(
+    config.hiddenAgendaId,
+  );
   return TurnTraceAiSection(
     factionId: nationId,
     state: <String, Object?>{
@@ -198,6 +203,18 @@ TurnTraceAiSection _buildAiTraceSection({
           'dialogue': seeds.dialogueSeed,
           'agenda': seeds.agendaSeed,
         },
+        'goalWeights': <String, Object?>{
+          'defend': goalWeights.defend,
+          'expand': goalWeights.expand,
+          'conquer': goalWeights.conquer,
+          'trade': goalWeights.trade,
+          'tech': goalWeights.tech,
+          'diplomacy': goalWeights.diplomacy,
+        },
+        'agendaModifiers': <String, Object?>{
+          'conquer': agendaConquerModifier,
+          'diplomacy': agendaDiplomacyModifier,
+        },
       },
       'derived': <String, Object?>{
         'goalCandidateScores': _goalScoresJson(goalScores),
@@ -210,6 +227,8 @@ TurnTraceAiSection _buildAiTraceSection({
       },
       'effective': <String, Object?>{
         'selectedGoal': primaryGoal.name,
+        'selectedGoalScore': selectedScore,
+        'adjustedGoalScores': _goalScoresJson(goalScores),
         'personalityThresholds': <String, Object?>{
           'warLikelihood': thresholds.warLikelihood,
           'peaceTendency': thresholds.peaceTendency,
@@ -221,12 +240,7 @@ TurnTraceAiSection _buildAiTraceSection({
         },
       },
       'gates': <Object?>[
-        <String, Object?>{
-          'gate': 'strategic_goal_selection',
-          'method': 'weighted_random',
-          'selectedGoal': primaryGoal.name,
-          'selectedScore': selectedScore,
-        },
+        ..._goalSelectionGates(goalScores, primaryGoal),
       ],
     },
     outcome: <String, Object?>{
@@ -235,6 +249,25 @@ TurnTraceAiSection _buildAiTraceSection({
       'emittedOrderCount': finalOrders.length,
     },
   );
+}
+
+List<Map<String, Object?>> _goalSelectionGates(
+  Map<StrategicGoal, int> goalScores,
+  StrategicGoal selectedGoal,
+) {
+  final entries = goalScores.entries.toList(growable: false)
+    ..sort((a, b) => b.value.compareTo(a.value));
+  return entries
+      .map(
+        (entry) => <String, Object?>{
+          'gate': 'strategic_goal_selection',
+          'method': 'weighted_random',
+          'candidateGoal': entry.key.name,
+          'candidateScore': entry.value,
+          'selected': entry.key == selectedGoal,
+        },
+      )
+      .toList(growable: false);
 }
 
 Map<String, Object?> _goalScoresJson(Map<StrategicGoal, int> goalScores) {
