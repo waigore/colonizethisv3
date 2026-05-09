@@ -112,6 +112,28 @@ class TurnTracePhaseTrace {
     this.effects,
   });
 
+  factory TurnTracePhaseTrace.fromJson(Map<String, Object?> json) {
+    final orderEventsRaw = json['orderEvents'];
+    final orderEvents = orderEventsRaw is List<Object?>
+        ? orderEventsRaw
+            .map(
+              (Object? e) => TurnTraceOrderEvent.fromJson(
+                _stringObjectMapFromDynamic(e),
+              ),
+            )
+            .toList(growable: false)
+        : const <TurnTraceOrderEvent>[];
+    return TurnTracePhaseTrace(
+      phaseId: json['phaseId']! as String,
+      beforeState: _stringObjectMapFromDynamic(json['beforeState']),
+      afterState: _stringObjectMapFromDynamic(json['afterState']),
+      orderEvents: orderEvents,
+      effects: json['effects'] == null
+          ? null
+          : _stringObjectMapFromDynamic(json['effects']),
+    );
+  }
+
   final String phaseId;
   final Map<String, Object?> beforeState;
   final Map<String, Object?> afterState;
@@ -140,6 +162,18 @@ class TurnTraceOrderEvent {
     this.payload,
   });
 
+  factory TurnTraceOrderEvent.fromJson(Map<String, Object?> json) {
+    return TurnTraceOrderEvent(
+      sequence: (json['sequence'] as num).toInt(),
+      orderId: json['orderId']! as String,
+      eventType: json['eventType']! as String,
+      timestamp: json['timestamp'] as String?,
+      payload: json['payload'] == null
+          ? null
+          : _stringObjectMapFromDynamic(json['payload']),
+    );
+  }
+
   final int sequence;
   final String orderId;
   final String eventType;
@@ -155,4 +189,14 @@ class TurnTraceOrderEvent {
       if (payload != null) 'payload': payload,
     };
   }
+}
+
+Map<String, Object?> _stringObjectMapFromDynamic(Object? value) {
+  final raw = value as Map<Object?, Object?>;
+  return Map<String, Object?>.fromEntries(
+    raw.entries.map(
+      (MapEntry<Object?, Object?> e) =>
+          MapEntry<String, Object?>(e.key as String, e.value),
+    ),
+  );
 }
