@@ -114,10 +114,10 @@ class TurnTracePhaseTrace {
 
   factory TurnTracePhaseTrace.fromJson(Map<String, Object?> json) {
     final orderEventsRaw = json['orderEvents'];
-    final orderEvents = orderEventsRaw is List
+    final orderEvents = orderEventsRaw is List<Object?>
         ? orderEventsRaw
             .map(
-              (dynamic e) => TurnTraceOrderEvent.fromJson(
+              (Object? e) => TurnTraceOrderEvent.fromJson(
                 _stringObjectMapFromDynamic(e),
               ),
             )

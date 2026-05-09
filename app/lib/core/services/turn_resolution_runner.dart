@@ -159,10 +159,10 @@ class TurnResolutionRunner {
           );
           final phasesPayload = message['turnTracePhases'];
           final List<TurnTracePhaseTrace>? decodedPhases;
-          if (phasesPayload is List) {
+          if (phasesPayload is List<Object?>) {
             decodedPhases = phasesPayload
                 .map(
-                  (dynamic e) => TurnTracePhaseTrace.fromJson(
+                  (Object? e) => TurnTracePhaseTrace.fromJson(
                     Map<String, Object?>.fromEntries(
                       (e as Map<Object?, Object?>).entries.map(
                         (MapEntry<Object?, Object?> entry) =>
