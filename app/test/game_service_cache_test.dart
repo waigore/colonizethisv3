@@ -9,6 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
 
+import 'package:colonizethis_app/config/ct_debug_console.dart';
 import 'package:colonizethis_app/core/services/game_service.dart';
 
 class _CountingGameSaveAdapter extends GameSaveAdapter {
@@ -46,6 +47,21 @@ void main() {
     test('getMapData returns null for unknown game id', () {
       final result = service.getMapData('no-such-game');
       expect(result, isNull);
+    });
+
+    test('default turn trace root directory matches startup config constant', () {
+      final defaultService = GameService(box, GameSaveAdapter());
+      expect(defaultService.turnTraceRootDirectory, kCtTurnTraceDirectory);
+    });
+
+    test('constructor turn trace root directory override takes precedence', () {
+      const overridePath = '/tmp/custom-turn-traces';
+      final overriddenService = GameService(
+        box,
+        GameSaveAdapter(),
+        turnTraceRootDirectory: overridePath,
+      );
+      expect(overriddenService.turnTraceRootDirectory, overridePath);
     });
 
     test('loadGame returns null when required map data is missing', () {
