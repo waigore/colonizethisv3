@@ -65,6 +65,15 @@ Outcome section requires:
 - `finalAggregatedOrders`: array.
 - `domainOutputs`: object.
 
+Full AI planner traces populate the AI trace section from
+`colonizethis_ai` planner internals when the caller uses full AI result
+metadata. The section includes the selected strategic goal as
+`state.winningCandidate`, ranked strategic-goal alternates in
+`state.topAlternates`, world-snapshot/order/economy aggregates in
+`state.aggregates`, seed/personality/domain-weight threshold details, and the
+final per-domain order output summary. App and ctdev exporters may fall back to
+submitted-order summaries when callers provide only an `Orders` payload.
+
 ### Turn-resolution trace (`turn-resolution-trace.v1.schema.json`)
 
 Required top-level fields:
@@ -135,6 +144,8 @@ Meta section requires:
 - Given a JSON payload intended as a merged logical-turn trace, when validated against `merged-trace.v1.schema.json`, then validation passes only if `meta`, `ai`, and `turnResolution` are present and nested sections satisfy referenced contracts.
 - Given a payload with missing required fields for any of the three trace schemas, when validated, then validation fails deterministically with at least one schema violation.
 - Given turn resolution runs with `TurnResolverConfig.onTurnTracePhase` and `turnTraceRuntime` set, when each phase resolves (including pending-exit phases), then the callback receives one `TurnTracePhaseTrace` payload per phase containing `phaseId`, full `beforeState`, full `afterState`, and an ordered `orderEvents` array (Movement phase includes direct civilian move apply/ignore events and bundled work move applied/skipped events when those orders are present; other phases may still emit empty `orderEvents` until further hooks land).
+- Given the full AI planner generates orders for an AI-controlled player, when the caller reads the returned AI trace section, then the trace contains the player's `factionId`, a `state.winningCandidate.goal` strategic goal string, ranked `state.topAlternates`, `thresholds.constants`, `thresholds.derived`, `thresholds.effective`, `thresholds.gates`, and an `outcome.finalAggregatedOrders` array matching the emitted order domains.
+- Given app or ctdev turn trace export receives full AI trace sections for the resolving turn, when the merged trace is written, then the top-level `ai` array uses those full AI trace sections instead of rebuilding only submitted-order summaries.
 - Given no custom trace root override is provided, when the system exports a merged turn trace for `gameId = G` and `turnNumber = N`, then the system writes one JSON file to `tmp/turn-traces/G/` using filename pattern `turn-N-YYYYMMDDTHHMMSSmmmZ.json`.
 - Given a custom trace root override path `R` is provided, when the system exports a merged turn trace for `gameId = G`, then the system writes to `R/turn-traces/G/` and keeps the same filename pattern.
 - Given a game trace directory contains more than 10 trace JSON files after a new export, when retention runs, then the system deletes oldest files first until exactly 10 files remain in that gameId directory.

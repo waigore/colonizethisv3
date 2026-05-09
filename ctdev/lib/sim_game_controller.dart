@@ -95,6 +95,7 @@ class SimGameController {
 
   /// When using full AI, economy plans per player for production phase. Cleared on resolve.
   final Map<String, EconomyPlan> _pendingEconomyPlansByPlayerId = {};
+  final Map<String, TurnTraceAiSection> _pendingAiTraceSectionsByPlayerId = {};
   final List<SimOrderHistoryEntry> _orderHistory = [];
   final List<String> _lastTurnCombatSummaries = [];
 
@@ -172,14 +173,18 @@ class SimGameController {
         );
         _pendingOrdersByPlayerId[player.id] = orders;
       } else if (useFullAI) {
-        final result = generateOrdersForPlayerFullAI(
+        final result = generateOrdersForPlayerFullAIWithTrace(
           _game,
           _topology,
           player.id,
           tileMapByRegion: _tileMapByRegion,
         );
-        _pendingOrdersByPlayerId[player.id] = result.orders;
-        _pendingEconomyPlansByPlayerId[player.id] = result.economyPlan;
+        _pendingOrdersByPlayerId[player.id] = result.result.orders;
+        _pendingEconomyPlansByPlayerId[player.id] = result.result.economyPlan;
+        final aiTraceSection = result.aiTraceSection;
+        if (aiTraceSection != null) {
+          _pendingAiTraceSectionsByPlayerId[player.id] = aiTraceSection;
+        }
       } else {
         final orders = generateOrdersForPlayer(
           _game,
@@ -208,9 +213,14 @@ class SimGameController {
           );
     _pendingOrdersByPlayerId.clear();
     _pendingEconomyPlansByPlayerId.clear();
+    final aiTraceSections = _pendingAiTraceSectionsByPlayerId.values.toList(
+      growable: false,
+    );
+    _pendingAiTraceSectionsByPlayerId.clear();
     _advanceOneTurnFromOrders(
       combined,
       defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+      aiTraceSections: aiTraceSections,
     );
   }
 
@@ -245,6 +255,7 @@ class SimGameController {
       _advanceOneTurnFromOrders(
         result.orders,
         defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+        aiTraceSections: result.aiTraceSections,
       );
     } else {
       final combined = generateOrdersForGame(
@@ -319,6 +330,7 @@ class SimGameController {
   void _advanceOneTurnFromOrders(
     Orders orders, {
     Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
+    List<TurnTraceAiSection>? aiTraceSections,
   }) {
     _recordOrderHistory(orders);
     _lastTurnCombatSummaries.clear();
@@ -345,6 +357,7 @@ class SimGameController {
         after: next,
         phases: phaseTraces,
         orders: orders,
+        aiTraceSections: aiTraceSections,
       );
     }
     _recordTurnLog(before: before, after: next);
@@ -355,6 +368,7 @@ class SimGameController {
     required Game after,
     required List<TurnTracePhaseTrace> phases,
     required Orders orders,
+    List<TurnTraceAiSection>? aiTraceSections,
   }) {
     final now = DateTime.now().toUtc();
     final document = TurnTraceMergedDocument(
@@ -367,7 +381,9 @@ class SimGameController {
         exportedAt: now.toIso8601String(),
         turnEndAt: now.toIso8601String(),
       ),
-      ai: _buildAiTraceSections(before: before, orders: orders),
+      ai:
+          aiTraceSections ??
+          _buildAiTraceSections(before: before, orders: orders),
       turnResolution: TurnTraceResolutionSection(
         phases: List<TurnTracePhaseTrace>.unmodifiable(phases),
       ),

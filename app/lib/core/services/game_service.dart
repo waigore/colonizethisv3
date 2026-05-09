@@ -209,6 +209,7 @@ class GameService {
     Game current, {
     Orders? orders,
     Orders? aiOrders,
+    List<TurnTraceAiSection>? aiTraceSections,
     MapTopology? topology,
     Map<String, TileMapResult>? tileMapByRegion,
     void Function(GameEvent)? onGameEvent,
@@ -222,6 +223,7 @@ class GameService {
         : humanOrders;
     final result = _resolveTurnWithTrace(
       game: current,
+      aiTraceSections: aiTraceSections,
       config: TurnResolverConfig(
         topology: topo,
         orders: resolvedOrders,
@@ -336,6 +338,7 @@ class GameService {
 
   TurnResolutionResult _resolveTurnWithTrace({
     required Game game,
+    List<TurnTraceAiSection>? aiTraceSections,
     required TurnResolverConfig config,
   }) {
     if (!_turnTraceEnabled) {
@@ -345,6 +348,11 @@ class GameService {
       game.id,
       () => _TurnTraceSession(startedAtUtc: DateTime.now().toUtc()),
     );
+    if (aiTraceSections != null) {
+      session.aiTraceSections = List<TurnTraceAiSection>.unmodifiable(
+        aiTraceSections,
+      );
+    }
     final tracedConfig = TurnResolverConfig(
       topology: config.topology,
       orders: config.orders,
@@ -371,16 +379,18 @@ class GameService {
       config: tracedConfig,
     );
     if (result is TurnResolutionComplete) {
-      final aiTraceSections = _buildAiTraceSections(
-        gameAtResolutionStart: game,
-        orders: config.orders,
-      );
+      final exportedAiTraceSections =
+          session.aiTraceSections ??
+          _buildAiTraceSections(
+            gameAtResolutionStart: game,
+            orders: config.orders,
+          );
       _exportTurnTrace(
         gameAtResolutionStart: game,
         turnEndState: result.game,
         phases: session.phases,
         turnStartAt: session.startedAtUtc,
-        ai: aiTraceSections,
+        ai: exportedAiTraceSections,
       );
       _turnTraceSessionsByGameId.remove(game.id);
     }
@@ -987,4 +997,5 @@ class _TurnTraceSession {
   final DateTime startedAtUtc;
   final List<TurnTracePhaseTrace> phases = <TurnTracePhaseTrace>[];
   final TurnTraceRuntime turnTraceRuntime = TurnTraceRuntime();
+  List<TurnTraceAiSection>? aiTraceSections;
 }

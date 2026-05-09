@@ -25,6 +25,7 @@ class _PendingTurnGameService extends GameService {
     Game current, {
     Orders? orders,
     Orders? aiOrders,
+    List<TurnTraceAiSection>? aiTraceSections,
     MapTopology? topology,
     Map<String, TileMapResult>? tileMapByRegion,
     void Function(GameEvent)? onGameEvent,
@@ -51,6 +52,7 @@ class _PendingInterventionGameService extends GameService {
     Game current, {
     Orders? orders,
     Orders? aiOrders,
+    List<TurnTraceAiSection>? aiTraceSections,
     MapTopology? topology,
     Map<String, TileMapResult>? tileMapByRegion,
     void Function(GameEvent)? onGameEvent,
@@ -146,8 +148,9 @@ void main() {
       await tester.tap(find.textContaining('Next turn').last);
       await tester.pump(const Duration(milliseconds: 400));
 
-      final container =
-          ProviderScope.containerOf(tester.element(find.byType(GameScreen)));
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(GameScreen)),
+      );
       final pending = container.read(pendingDiplomacyProvider);
       expect(pending, isA<PendingDiplomacyOvertures>());
       expect((pending! as PendingDiplomacyOvertures).offers, isNotEmpty);
@@ -209,8 +212,9 @@ void main() {
       await tester.tap(find.textContaining('Next turn').last);
       await tester.pump(const Duration(milliseconds: 400));
 
-      final container =
-          ProviderScope.containerOf(tester.element(find.byType(GameScreen)));
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(GameScreen)),
+      );
       final pending = container.read(pendingDiplomacyProvider);
       expect(pending, isA<PendingDiplomacyIntervention>());
       expect((pending! as PendingDiplomacyIntervention).prompts, isNotEmpty);

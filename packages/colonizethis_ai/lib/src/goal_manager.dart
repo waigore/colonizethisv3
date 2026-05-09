@@ -3,7 +3,6 @@ import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'ai_random_utils.dart';
-import 'hidden_agenda.dart';
 import 'perception.dart';
 
 final _log = packageLogger();
@@ -13,30 +12,25 @@ final _log = packageLogger();
 /// Top-level strategy goals for the AI.
 enum StrategicGoal { defend, expand, conquer, trade, tech, diplomacy }
 
-/// Selects primary strategic goal from snapshot, personality, and agenda modifiers.
-/// Deterministic given [snapshot], [config], and [goalSeed].
-StrategicGoal selectPrimaryGoal(
+/// Computes the effective strategic-goal candidate scores before weighted
+/// random selection. Used by both the planner and trace export.
+Map<StrategicGoal, int> evaluateStrategicGoalScores(
   AIWorldSnapshot snapshot,
   AIConfig config,
-  int goalSeed, {
-  required String nationId,
-  required int turn,
-}) {
+) {
   final weights = getGoalWeightsForLeader(config.personalityId);
   final thresholds = getThresholdsForLeader(config.personalityId);
 
-  // Situational modifiers from snapshot.
-  int defend = weights.defend;
-  int expand = weights.expand;
-  int conquer = weights.conquer;
-  int trade = weights.trade;
-  int tech = weights.tech;
-  int diplomacy = weights.diplomacy;
+  var defend = weights.defend;
+  var expand = weights.expand;
+  var conquer = weights.conquer;
+  var trade = weights.trade;
+  var tech = weights.tech;
+  var diplomacy = weights.diplomacy;
 
   conquer += getAgendaConquerModifier(config.hiddenAgendaId);
   diplomacy += getAgendaDiplomacyModifier(config.hiddenAgendaId);
-  // Personality thresholds: war likelihood boosts conquer; peace/alliance boost diplomacy goal.
-  conquer += (thresholds.warLikelihood - 50);
+  conquer += thresholds.warLikelihood - 50;
   diplomacy +=
       ((thresholds.peaceTendency + thresholds.allianceTendency) ~/ 2) - 50;
 
@@ -53,7 +47,7 @@ StrategicGoal selectPrimaryGoal(
     expand += 15;
   }
 
-  final candidates = <StrategicGoal, int>{
+  return <StrategicGoal, int>{
     StrategicGoal.defend: defend,
     StrategicGoal.expand: expand,
     StrategicGoal.conquer: conquer,
@@ -61,23 +55,15 @@ StrategicGoal selectPrimaryGoal(
     StrategicGoal.tech: tech,
     StrategicGoal.diplomacy: diplomacy,
   };
+}
 
-  _log.d(
-    'eval leaderId=${config.leaderId} hiddenAgendaId=${config.hiddenAgendaId} goalSeed=$goalSeed '
-    'weights defend=$defend expand=$expand conquer=$conquer trade=$trade tech=$tech diplomacy=$diplomacy',
-  );
-
-  // Weighted random choice using goalSeed.
-  final candidateEntries = candidates.entries.toList();
-  final selectedIndex = pickWeightedIndex(
-    candidateEntries.map((e) => e.value).toList(),
-    goalSeed,
-    useIntRoll: true,
-  );
-  final selected = selectedIndex == null
-      ? StrategicGoal.expand
-      : candidateEntries[selectedIndex].key;
-  final majorConstraint = switch (selected) {
+String majorConstraintForStrategicGoal(
+  StrategicGoal selected,
+  AIWorldSnapshot snapshot,
+  AIConfig config,
+) {
+  final thresholds = getThresholdsForLeader(config.personalityId);
+  return switch (selected) {
     StrategicGoal.defend =>
       snapshot.threats.capitalThreatened
           ? 'capitalThreatened'
@@ -105,6 +91,44 @@ StrategicGoal selectPrimaryGoal(
           : 'none',
     _ => 'none',
   };
+}
+
+/// Selects primary strategic goal from snapshot, personality, and agenda modifiers.
+/// Deterministic given [snapshot], [config], and [goalSeed].
+StrategicGoal selectPrimaryGoal(
+  AIWorldSnapshot snapshot,
+  AIConfig config,
+  int goalSeed, {
+  required String nationId,
+  required int turn,
+}) {
+  final candidates = evaluateStrategicGoalScores(snapshot, config);
+
+  _log.d(
+    'eval leaderId=${config.leaderId} hiddenAgendaId=${config.hiddenAgendaId} goalSeed=$goalSeed '
+    'weights defend=${candidates[StrategicGoal.defend]} '
+    'expand=${candidates[StrategicGoal.expand]} '
+    'conquer=${candidates[StrategicGoal.conquer]} '
+    'trade=${candidates[StrategicGoal.trade]} '
+    'tech=${candidates[StrategicGoal.tech]} '
+    'diplomacy=${candidates[StrategicGoal.diplomacy]}',
+  );
+
+  // Weighted random choice using goalSeed.
+  final candidateEntries = candidates.entries.toList();
+  final selectedIndex = pickWeightedIndex(
+    candidateEntries.map((e) => e.value).toList(),
+    goalSeed,
+    useIntRoll: true,
+  );
+  final selected = selectedIndex == null
+      ? StrategicGoal.expand
+      : candidateEntries[selectedIndex].key;
+  final majorConstraint = majorConstraintForStrategicGoal(
+    selected,
+    snapshot,
+    config,
+  );
   _log.i(
     'selected primaryGoal=$selected nationId=$nationId turn=$turn majorConstraint=$majorConstraint',
   );

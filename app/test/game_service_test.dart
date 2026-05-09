@@ -19,6 +19,7 @@ class _PendingOverturesGameService extends GameService {
     Game current, {
     Orders? orders,
     Orders? aiOrders,
+    List<TurnTraceAiSection>? aiTraceSections,
     MapTopology? topology,
     Map<String, TileMapResult>? tileMapByRegion,
     void Function(GameEvent)? onGameEvent,
