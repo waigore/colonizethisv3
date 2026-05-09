@@ -80,12 +80,22 @@ bool isProspectableTerrainId(String? terrainTypeId) {
   return false;
 }
 
+/// Lazily built once per [Game] instance (issue #2268 AC-2); invalidated when a
+/// new [Game] replaces the previous one via [Game.copyWith].
+final Expando<Map<String, Player>> _gamePlayersById =
+    Expando<Map<String, Player>>('gamePlayersById');
+
 /// Safe player lookup by id. Returns null if not found.
 extension GamePlayerLookup on Game {
   Player? playerById(String id) {
-    for (final p in players) {
-      if (p.id == id) return p;
+    var byId = _gamePlayersById[this];
+    if (byId == null) {
+      byId = <String, Player>{};
+      for (final p in players) {
+        byId.putIfAbsent(p.id, () => p);
+      }
+      _gamePlayersById[this] = byId;
     }
-    return null;
+    return byId[id];
   }
 }
