@@ -117,7 +117,7 @@ Future<void> _runFlameCanvasNextTurn(
       ),
     ),
   );
-  await Future<void>.delayed(Duration.zero);
+  await awaitTurnResolutionProcessingDialogFirstPaint();
 
   StreamSubscription<TurnResolutionProgressEvent>? progressSub;
   try {

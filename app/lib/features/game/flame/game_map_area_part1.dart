@@ -506,7 +506,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         ),
       ),
     );
-    await Future<void>.delayed(Duration.zero);
+    await awaitTurnResolutionProcessingDialogFirstPaint();
     try {
       final session = runner.startResolution(
         game: game,
