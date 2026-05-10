@@ -50,7 +50,13 @@ class CtLogger {
 - Prepends `$prefix: ` to every message
 - Delegates all other `Logger` methods via `_log`
 
-### 2.3 Global instance factories (optional convenience)
+### 2.3 Operator log timestamps (`formatOperatorLogTimestamp`)
+
+- **Purpose:** Single source of truth for the **human-readable timestamp** on listener-formatted operator log lines across **session buffer**, **ctdev day file**, and **Sim Log UI**.
+- **API:** [`formatOperatorLogTimestamp`](../../packages/colonizethis_logger/lib/src/operator_log_timestamp.dart) in package `colonizethis_logger` (exported from `colonizethis_logger.dart`).
+- **Shape:** Local wall clock as `YYYY-MM-DDTHH:mm:ss.SSS±HH:MM`, or `...SSSZ` when the effective local offset is UTC. Milliseconds are **always** three digits (including `.000` on whole-second instants).
+
+### 2.4 Global instance factories (optional convenience)
 
 For packages that use a single logger:
 
@@ -75,9 +81,11 @@ packages/colonizethis_logger/
     src/
       ct_logger.dart              # CtLogger class
       prefixes.dart               # prefix constants
+      operator_log_timestamp.dart # formatOperatorLogTimestamp
   pubspec.yaml
   test/
     ct_logger_test.dart
+    operator_log_timestamp_test.dart
 ```
 
 ---
@@ -103,7 +111,9 @@ Replace raw `Logger()` usage with `CtLogger(prefix)`:
 6. **app/lib/features/game/flame/** — prefix `game` (Flame components)
 7. **app/lib/features/debug_log/** — prefix `app`
 
-Ctdev has its own logging setup (`ctdev_log.dart`) using `basic_logger_file`; it may optionally adopt `CtLogger` internally but is not required for the debug viewer (it does not use `SessionLogBuffer`).
+**Ctdev** (`ctdev_log.dart`): **Must** format operator-facing log lines (file + Sim Log UI) using `formatOperatorLogTimestamp` (`colonizethis_logger`) — same timestamps as `SessionLogEntry.formattedLine` / session buffer convention. Ctdev MAY still use `CtLogger` where convenient; adopting `CtLogger` is orthogonal to timestamps. **Day file:** Use an `OutputLogger` with the same append/buffer contract as `basic_logger_file` 0.1.3 (see [ctdev-logging.md](ctdev-logging.md)); **message-only** disk lines so the canonical timestamp is not duplicated by a library prepend.
+
+The Flutter app debug viewer consumes `session_log_buffer` (not ctdev’s sinks); timestamps still follow this API for consistency ([debug-log-viewer.md](debug-log-viewer.md)).
 
 ### 4.3 SessionLogBuffer knownPrefixes update
 

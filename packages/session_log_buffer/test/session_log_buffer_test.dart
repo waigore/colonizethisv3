@@ -82,6 +82,19 @@ void main() {
       expect(lines.any((l) => l.contains('error:')), isTrue);
     });
 
+    test('formattedLine uses canonical operator timestamp prefix', () {
+      final buffer = SessionLogBuffer.instance;
+      buffer.add(LogEvent(Level.info, 'logic: hi'));
+      final line = buffer.entries.single.formattedLine;
+      expect(
+        RegExp(
+          r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(Z|[+-]\d{2}:\d{2}) INFO ',
+        ).hasMatch(line),
+        isTrue,
+      );
+      expect(line.endsWith('logic: hi'), isTrue);
+    });
+
     test('buffer is bounded when over maxEntries', () {
       final buffer = SessionLogBuffer(maxEntries: 5);
       for (var i = 0; i < 10; i++) {
