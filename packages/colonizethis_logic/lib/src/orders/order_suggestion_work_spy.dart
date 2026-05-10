@@ -14,7 +14,7 @@ void _addSpySuggestionsForUnit({
   required List<String> tilesInProvince,
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
-  Map<String, TileMapResult>? tileMapByRegion,
+  required IncrementalCandidateValidator candidateValidator,
 }) {
   final allowedTargets = workOrderTargetsByUnitType[type];
   if (allowedTargets == null) return;
@@ -33,7 +33,7 @@ void _addSpySuggestionsForUnit({
     tilesInProvince: tilesInProvince,
     existingTargetsByUnit: existingTargetsByUnit,
     suggestions: suggestions,
-    tileMapByRegion: tileMapByRegion,
+    candidateValidator: candidateValidator,
   );
 
   if (!allowedTargets.contains(kWorkTargetStealTech)) return;
@@ -61,14 +61,8 @@ void _addSpySuggestionsForUnit({
         );
       }
     },
-    candidateAcceptor: (candidate) => isWorkOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-      tileMapByRegion: tileMapByRegion,
-    ),
+    candidateAcceptor: (candidate) =>
+        isWorkOrderAcceptedWithValidator(candidateValidator, candidate),
   );
 }
 
@@ -86,7 +80,7 @@ void _addCounterSpySuggestionIfEligible({
   required List<String> tilesInProvince,
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
-  Map<String, TileMapResult>? tileMapByRegion,
+  required IncrementalCandidateValidator candidateValidator,
 }) {
   if (!allowedTargets.contains(kWorkTargetCounterSpy)) return;
   if (ownerId != playerId) {
@@ -119,13 +113,7 @@ void _addCounterSpySuggestionIfEligible({
         targetTileKey: tilesInProvince.first,
       );
     },
-    candidateAcceptor: (candidate) => isWorkOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-      tileMapByRegion: tileMapByRegion,
-    ),
+    candidateAcceptor: (candidate) =>
+        isWorkOrderAcceptedWithValidator(candidateValidator, candidate),
   );
 }

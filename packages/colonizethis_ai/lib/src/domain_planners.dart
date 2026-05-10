@@ -69,7 +69,7 @@ Orders runDomainPlanners({
   _log.d(
     'work eval nationId=$nationId workThreshold=$workThreshold '
     'domainWeights.economy=${domainWeights.economy} primaryGoal=$primaryGoal '
-    'workCandidates=${workCandidates.map((o) => "${o.unitId}:${o.target}").toList()}',
+    'workCandidatesCount=${workCandidates.length}',
   );
   if (runFullAiCivilianWork) {
     final selection = selectFullAiCivilianWorkOrders(
@@ -102,7 +102,7 @@ Orders runDomainPlanners({
       30 - getAgendaBuildOrderModifier(config.hiddenAgendaId);
   _log.d(
     'build eval nationId=$nationId buildThreshold=$buildThreshold '
-    'buildCandidates=${buildCandidates.map((o) => o.unitType).toList()}',
+    'buildCandidatesCount=${buildCandidates.length}',
   );
   if (buildCandidates.isNotEmpty && domainWeights.economy >= buildThreshold) {
     final chosen = _pickBuildOrder(
@@ -206,7 +206,7 @@ Orders runDomainPlanners({
     }).toList();
     _log.d(
       'research eval nationId=$nationId researchThreshold=$researchThreshold '
-      'candidates=${researchCandidates.map((o) => o.techId).toList()} scores=$scores',
+      'candidateCount=${researchCandidates.length} scores=$scores',
     );
     final idx = pickWeightedIndex(scores, seeds.researchSeed, useIntRoll: true);
     if (idx == null) {
@@ -259,8 +259,7 @@ Orders _runMovePlanner({
       : 50;
   _log.d(
     'move eval nationId=$nationId weight=$weight '
-    'filteredCount=${filtered.length} '
-    'candidates=${filtered.map((m) => "${m.unitId}->${m.destinationTileKey}").toList()}',
+    'filteredCount=${filtered.length}',
   );
   if (weight < 20) {
     _log.d('move skipped nationId=$nationId weight < 20');
@@ -330,8 +329,7 @@ Orders _runArmyMovePlanner({
   }
   _log.d(
     'army move eval nationId=$nationId weight=$weight '
-    'filteredCount=${filtered.length} '
-    'candidates=${filtered.map((m) => "${m.armyId}->${m.destinationProvinceId}").toList()}',
+    'filteredCount=${filtered.length}',
   );
   final provinceOwner = getProvinceOwnerMap(game);
   final scores = filtered.map((m) {
@@ -405,7 +403,7 @@ BuildUnitOrder? _pickBuildOrder({
 
   _log.d(
     'build scores nationId=$nationId '
-    'candidates=${buildCandidates.map((o) => o.unitType).toList()} '
+    'candidateCount=${buildCandidates.length} '
     'scores=$scores',
   );
 
@@ -457,7 +455,7 @@ Orders _runNavalPlanner({
       final selected = navalMoveCandidates.take(take).toList();
       _log.i(
         'naval move chosen nationId=$nationId '
-        'take=$take selected=${selected.map((m) => "fleetId=${m.fleetId} destSea=${m.destinationSeaZoneId} destPort=${m.destinationPortProvinceId}").toList()}',
+        'take=$take selectedCount=${selected.length}',
       );
       o = o.appendNavalMoveOrders(nationId, selected);
     }

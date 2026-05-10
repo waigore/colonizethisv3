@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:flame/game.dart' hide Game;
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
@@ -32,6 +33,8 @@ import 'turn_resolution_processing_dialog.dart';
 import 'turn_resolution_progress_labels.dart';
 import 'turn_resolution_result_applier.dart';
 import 'victory_overlay.dart';
+
+final _gameScreenLog = packageLogger('logic');
 
 /// Shows the in-game pause menu (Debug log, Resume). SPEC/program/debug-log-viewer.md.
 /// Emits [OpenPauseMenuPanelEvent]; shell event handler shows the bottom sheet.
@@ -104,7 +107,12 @@ Future<void> _runFlameCanvasNextTurn(
   }
 
   final phaseNotifier = ValueNotifier<String>('Resolving turn...');
+  final uiStopwatch = Stopwatch()..start();
   ref.read(turnResolutionBlockingProvider.notifier).setBlocking(true);
+  _gameScreenLog.i(
+    'logic: next_turn_ui started gameId=${game.id} turn=$currentTurn '
+    'turnTraceEnabled=${service.isTurnTraceEnabled}',
+  );
   unawaited(
     showDialog<void>(
       context: context,
@@ -118,6 +126,10 @@ Future<void> _runFlameCanvasNextTurn(
     ),
   );
   await awaitTurnResolutionProcessingDialogFirstPaint();
+  _gameScreenLog.i(
+    'logic: next_turn_ui processing_dialog_painted gameId=${game.id} '
+    'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+  );
 
   StreamSubscription<TurnResolutionProgressEvent>? progressSub;
   try {
@@ -130,6 +142,10 @@ Future<void> _runFlameCanvasNextTurn(
       turnTraceRootDirectory: service.turnTraceRootDirectory,
     );
     final activeSessionId = session.sessionId;
+    _gameScreenLog.i(
+      'logic: next_turn_ui session_started gameId=${game.id} '
+      'sessionId=$activeSessionId elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+    );
     progressSub = session.progress.listen((event) {
       if (!context.mounted ||
           event.sessionId != activeSessionId ||
@@ -137,14 +153,28 @@ Future<void> _runFlameCanvasNextTurn(
         return;
       }
       phaseNotifier.value = turnResolutionProgressPhaseLabel(event.phase);
+      _gameScreenLog.d(
+        'logic: next_turn_ui phase gameId=${game.id} sessionId=$activeSessionId '
+        'phase=${event.phase} elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+      );
     });
     final terminal = await session.done;
+    _gameScreenLog.i(
+      'logic: next_turn_ui session_done gameId=${game.id} sessionId=$activeSessionId '
+      'terminalType=${terminal.runtimeType} elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+    );
     if (!context.mounted) {
       return;
     }
     switch (terminal) {
       case TurnResolutionTerminalComplete c:
+        final handleStopwatch = Stopwatch()..start();
         service.handleExternallyResolvedTurnResult(c.result);
+        _gameScreenLog.i(
+          'logic: next_turn_ui external_result_handled gameId=${game.id} '
+          'sessionId=$activeSessionId handleMs=${handleStopwatch.elapsedMilliseconds} '
+          'resultType=${c.result.runtimeType}',
+        );
         if (service.isTurnTraceEnabled &&
             c.result is TurnResolutionComplete &&
             c.turnTracePhases != null &&
@@ -158,9 +188,29 @@ Future<void> _runFlameCanvasNextTurn(
             turnStartAtUtc: c.turnTraceStartedAtUtc!,
           );
         }
+        if (c.turnTraceExportPath != null) {
+          _gameScreenLog.i(
+            'logic: next_turn_ui worker_trace_export_path gameId=${game.id} '
+            'sessionId=$activeSessionId path=${c.turnTraceExportPath}',
+          );
+        }
+        final applyStopwatch = Stopwatch()..start();
         applyTurnResolutionResult(ref, c.result);
+        _gameScreenLog.i(
+          'logic: next_turn_ui result_applied gameId=${game.id} '
+          'sessionId=$activeSessionId applyMs=${applyStopwatch.elapsedMilliseconds} '
+          'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+        );
       case TurnResolutionTerminalError e:
         messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
+        _gameScreenLog.e(
+          'logic: next_turn_ui terminal_error gameId=${game.id} '
+          'sessionId=$activeSessionId elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+          error: e.errorMessage,
+          stackTrace: e.stackTrace.isEmpty
+              ? null
+              : StackTrace.fromString(e.stackTrace),
+        );
         throw StateError(e.errorMessage);
     }
   } catch (_) {
@@ -171,6 +221,10 @@ Future<void> _runFlameCanvasNextTurn(
   } finally {
     clearTurnResolutionBlockingFlag();
     await progressSub?.cancel();
+    _gameScreenLog.i(
+      'logic: next_turn_ui cleanup_complete gameId=${game.id} '
+      'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+    );
     if (context.mounted) {
       rootNavigator.maybePop();
     }

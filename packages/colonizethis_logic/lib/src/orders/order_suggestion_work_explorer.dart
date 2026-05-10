@@ -33,6 +33,7 @@ Set<String> _partiallyRevealedProvinceCacheForPlayer({
   required Map<String, Unit> unitsById,
   required List<DiplomaticOrder> diplomatic,
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required IncrementalCandidateValidator candidateValidator,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final regionIdP = prov.regionId;
@@ -93,14 +94,7 @@ Set<String> _partiallyRevealedProvinceCacheForPlayer({
     target: kWorkTargetExplore,
     targetTileKey: targetTileKey,
   );
-  if (isWorkOrderAccepted(
-    game,
-    topology,
-    playerId,
-    currentOrders,
-    candidate,
-    tileMapByRegion: tileMapByRegion,
-  )) {
+  if (isWorkOrderAcceptedWithValidator(candidateValidator, candidate)) {
     return (chosen: candidate, lastReason: '');
   }
   return (chosen: null, lastReason: 'engine_rejected');
@@ -119,6 +113,7 @@ void _addExplorerWorkSuggestionsForUnit({
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
+  required IncrementalCandidateValidator candidateValidator,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
@@ -160,6 +155,7 @@ void _addExplorerWorkSuggestionsForUnit({
       unitsById: unitsById,
       diplomatic: diplomatic,
       tileKeysByRegion: tileKeysByRegion,
+      candidateValidator: candidateValidator,
       tileMapByRegion: tileMapByRegion,
     );
     if (attempt.chosen != null) {
@@ -209,6 +205,7 @@ void _addExplorerWorkSuggestionsForUnit({
     tileKeysByRegion: tileKeysByRegion,
     existingTargetsByUnit: existingTargetsByUnit,
     suggestions: suggestions,
+    candidateValidator: candidateValidator,
     tileMapByRegion: tileMapByRegion,
   );
 }
@@ -226,11 +223,45 @@ void _addExplorerWorkSuggestionsForUnit({
   required Set<String> prospected,
   required Map<String, Unit> unitsById,
   required List<DiplomaticOrder> diplomaticOrders,
+  required IncrementalCandidateValidator candidateValidator,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   var lastReason = 'no_valid_tile';
   final sortedTiles = List<String>.from(tilesInProvince)..sort();
   final accepted = <String>[];
+  final needsProvinceMoveLeg =
+      sortedTiles.isNotEmpty &&
+      civilianBundledWorkNeedsProvinceMoveLeg(
+        game,
+        unit,
+        WorkOrder(
+          unitId: unit.id,
+          target: kWorkTargetProspect,
+          targetTileKey: sortedTiles.first,
+        ),
+      );
+  if (needsProvinceMoveLeg) {
+    final bundled = validateCivilianBundledWorkMoveLeg(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      unit: unit,
+      order: WorkOrder(
+        unitId: unit.id,
+        target: kWorkTargetProspect,
+        targetTileKey: sortedTiles.first,
+      ),
+      view: view,
+      unitsById: unitsById,
+      diplomaticOrders: diplomaticOrders,
+    );
+    if (!bundled.isAccepted) {
+      return (
+        tiles: const <String>[],
+        lastReason: bundled.reason ?? 'no_single_hop',
+      );
+    }
+  }
   for (final tk in sortedTiles) {
     if (prospected.contains(tk)) continue;
     if (!isMineralEligibleTile(game, tileMapByRegion, tk)) continue;
@@ -239,30 +270,7 @@ void _addExplorerWorkSuggestionsForUnit({
       target: kWorkTargetProspect,
       targetTileKey: tk,
     );
-    if (civilianBundledWorkNeedsProvinceMoveLeg(game, unit, candidate)) {
-      final bundled = validateCivilianBundledWorkMoveLeg(
-        game: game,
-        topology: topology,
-        playerId: playerId,
-        unit: unit,
-        order: candidate,
-        view: view,
-        unitsById: unitsById,
-        diplomaticOrders: diplomaticOrders,
-      );
-      if (!bundled.isAccepted) {
-        lastReason = bundled.reason ?? 'no_single_hop';
-        continue;
-      }
-    }
-    if (isWorkOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-      tileMapByRegion: tileMapByRegion,
-    )) {
+    if (isWorkOrderAcceptedWithValidator(candidateValidator, candidate)) {
       accepted.add(tk);
     } else {
       lastReason = 'engine_rejected';
@@ -283,6 +291,7 @@ void _addProspectSuggestionIfEligible({
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
+  required IncrementalCandidateValidator candidateValidator,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final existingProspect = existingTargetsByUnit[unit.id];
@@ -340,6 +349,7 @@ void _addProspectSuggestionIfEligible({
       prospected: prospected,
       unitsById: unitsById,
       diplomaticOrders: diplomatic,
+      candidateValidator: candidateValidator,
       tileMapByRegion: tileMapByRegion,
     );
     lastReason = scan.lastReason;

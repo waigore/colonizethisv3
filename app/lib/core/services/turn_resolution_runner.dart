@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
@@ -84,7 +85,8 @@ class TurnResolutionRunner {
 
   /// Optional hook (e.g. tests): receives the raw isolate `success` map before
   /// JSON-shaped fields are decoded. Refs #2277 (no huge trace blobs on SendPort).
-  final void Function(Map<Object?, Object?> message)? inspectSuccessIsolateEnvelope;
+  final void Function(Map<Object?, Object?> message)?
+  inspectSuccessIsolateEnvelope;
 
   bool _active = false;
 
@@ -109,12 +111,22 @@ class TurnResolutionRunner {
     final progressController = StreamController<TurnResolutionProgressEvent>();
     final doneCompleter = Completer<TurnResolutionTerminalEvent>();
     final receivePort = ReceivePort();
+    final sessionStopwatch = Stopwatch()..start();
     Isolate? isolate;
     StreamSubscription<dynamic>? sub;
 
+    final gameJson = game.toJson();
+    final ordersJson = orders.toJson();
+    final topologyJson = topology.toJson();
+    final tileMapJson = tileMapByRegion.map((k, v) => MapEntry(k, v.toJson()));
     _runnerLog.i(
       'logic: turn_resolution_runner session_start sessionId=$sessionId '
-      'gameId=${game.id}',
+      'gameId=${game.id} turnTraceEnabled=$turnTraceEnabled '
+      'payloadBytes='
+      'game:${_safeJsonUtf8Bytes(gameJson)},'
+      'orders:${_safeJsonUtf8Bytes(ordersJson)},'
+      'topology:${_safeJsonUtf8Bytes(topologyJson)},'
+      'tileMap:${_safeJsonUtf8Bytes(tileMapJson)}',
     );
 
     Future<void> tearDownSession() async {
@@ -153,6 +165,11 @@ class TurnResolutionRunner {
         if (kind == 'phase') {
           final phaseName = message['phase'] as String;
           final markerName = message['marker'] as String;
+          _runnerLog.d(
+            'logic: turn_resolution_runner phase sessionId=$sessionId '
+            'phase=$phaseName marker=$markerName '
+            'elapsedMs=${sessionStopwatch.elapsedMilliseconds}',
+          );
           progressController.add(
             TurnResolutionProgressEvent(
               sessionId: sessionId,
@@ -164,11 +181,24 @@ class TurnResolutionRunner {
         }
         if (kind == 'success') {
           try {
+            final successReceivedAtUtc = DateTime.now().toUtc();
+            final workerFinishedRaw = message['workerFinishedAtUtc'];
+            final workerFinishedAtUtc = workerFinishedRaw is String
+                ? DateTime.tryParse(workerFinishedRaw)?.toUtc()
+                : null;
+            final portTransitMs = workerFinishedAtUtc == null
+                ? null
+                : successReceivedAtUtc
+                      .difference(workerFinishedAtUtc)
+                      .inMilliseconds;
             inspectSuccessIsolateEnvelope?.call(message);
             _runnerLog.i(
               'logic: turn_resolution_runner session_complete sessionId=$sessionId '
-              'outcome=success',
+              'outcome=success elapsedMs=${sessionStopwatch.elapsedMilliseconds} '
+              'messageBytes=${_safeJsonUtf8Bytes(message)} '
+              'workerToMainMs=${portTransitMs ?? -1}',
             );
+            final decodeStopwatch = Stopwatch()..start();
             final decodedResult = _decodeTurnResolutionResult(
               Map<String, dynamic>.from(
                 message['result'] as Map<Object?, Object?>,
@@ -237,6 +267,12 @@ class TurnResolutionRunner {
             if (!doneCompleter.isCompleted) {
               doneCompleter.complete(terminal);
             }
+            _runnerLog.i(
+              'logic: turn_resolution_runner decode_complete sessionId=$sessionId '
+              'decodeMs=${decodeStopwatch.elapsedMilliseconds} '
+              'resultType=${_resultTypeName(decodedResult)} '
+              'elapsedMs=${sessionStopwatch.elapsedMilliseconds}',
+            );
           } catch (e, st) {
             _runnerLog.e(
               'logic: turn_resolution_runner session_complete_decode_failed '
@@ -261,7 +297,7 @@ class TurnResolutionRunner {
           final stackStr = (message['stackTrace'] as String?) ?? '';
           _runnerLog.e(
             'logic: turn_resolution_runner session_complete sessionId=$sessionId '
-            'outcome=error',
+            'outcome=error elapsedMs=${sessionStopwatch.elapsedMilliseconds}',
             error: errMsg,
             stackTrace: stackStr.isEmpty
                 ? null
@@ -280,12 +316,10 @@ class TurnResolutionRunner {
 
       Isolate.spawn<Map<String, Object?>>(_turnResolutionIsolateMain, {
             'sendPort': receivePort.sendPort,
-            'game': game.toJson(),
-            'orders': orders.toJson(),
-            'topology': topology.toJson(),
-            'tileMapByRegion': tileMapByRegion.map(
-              (k, v) => MapEntry(k, v.toJson()),
-            ),
+            'game': gameJson,
+            'orders': ordersJson,
+            'topology': topologyJson,
+            'tileMapByRegion': tileMapJson,
             'turnTraceEnabled': turnTraceEnabled,
             'turnTraceRootDirectory': turnTraceRootDirectory,
           })
@@ -342,7 +376,9 @@ void _turnResolutionIsolateMain(Map<String, Object?> args) {
 
 Future<void> _turnResolutionIsolateBody(Map<String, Object?> args) async {
   final sendPort = args['sendPort']! as SendPort;
+  final workerStopwatch = Stopwatch()..start();
   try {
+    final decodeStopwatch = Stopwatch()..start();
     final game = Game.fromJson(
       Map<String, dynamic>.from(args['game']! as Map<Object?, Object?>),
     );
@@ -366,11 +402,16 @@ Future<void> _turnResolutionIsolateBody(Map<String, Object?> args) async {
     final turnTraceEnabled = args['turnTraceEnabled'] == true;
     final turnTraceRootDirectory =
         (args['turnTraceRootDirectory'] as String?) ?? kCtTurnTraceDirectory;
+    _runnerLog.i(
+      'logic: turn_resolution_worker start gameId=${game.id} '
+      'turnTraceEnabled=$turnTraceEnabled decodeMs=${decodeStopwatch.elapsedMilliseconds}',
+    );
     sendPort.send(<String, Object?>{
       'kind': 'phase',
       'phase': 'aiPlanning',
       'marker': 'start',
     });
+    final aiStopwatch = Stopwatch()..start();
     final fullAi = generateOrdersForGameFullAI(
       game,
       topology,
@@ -383,18 +424,28 @@ Future<void> _turnResolutionIsolateBody(Map<String, Object?> args) async {
         });
       },
     );
+    _runnerLog.i(
+      'logic: turn_resolution_worker ai_complete gameId=${game.id} '
+      'aiMs=${aiStopwatch.elapsedMilliseconds}',
+    );
     sendPort.send(<String, Object?>{
       'kind': 'phase',
       'phase': 'aiMerge',
       'marker': 'start',
     });
+    final mergeStopwatch = Stopwatch()..start();
     final mergedOrders = mergeOrderLists(
       humanOrders: humanOrders,
       aiOrders: fullAi.orders,
     );
+    _runnerLog.d(
+      'logic: turn_resolution_worker merge_complete gameId=${game.id} '
+      'mergeMs=${mergeStopwatch.elapsedMilliseconds}',
+    );
     final traceStartedAt = turnTraceEnabled ? DateTime.now().toUtc() : null;
     final phaseTraces = <TurnTracePhaseTrace>[];
     final traceRuntime = turnTraceEnabled ? TurnTraceRuntime() : null;
+    final resolveStopwatch = Stopwatch()..start();
     final result = validateOrdersAndResolveTurnFromTrustedOrders(
       game: game,
       topology: topology,
@@ -410,11 +461,18 @@ Future<void> _turnResolutionIsolateBody(Map<String, Object?> args) async {
       onTurnTracePhase: turnTraceEnabled ? phaseTraces.add : null,
       turnTraceRuntime: traceRuntime,
     );
+    _runnerLog.i(
+      'logic: turn_resolution_worker resolve_complete gameId=${game.id} '
+      'resultType=${_resultTypeName(result)} '
+      'resolveMs=${resolveStopwatch.elapsedMilliseconds}',
+    );
 
     String? exportedTracePath;
+    int exportMs = 0;
     if (turnTraceEnabled &&
         traceStartedAt != null &&
         result is TurnResolutionComplete) {
+      final exportStopwatch = Stopwatch()..start();
       final now = DateTime.now().toUtc();
       final document = TurnTraceMergedDocument(
         schemaVersion: kTurnTraceSchemaVersionV1,
@@ -427,33 +485,68 @@ Future<void> _turnResolutionIsolateBody(Map<String, Object?> args) async {
           turnStartAt: traceStartedAt.toIso8601String(),
           turnEndAt: now.toIso8601String(),
         ),
-        ai:
-            List<TurnTraceAiSection>.unmodifiable(fullAi.aiTraceSections),
+        ai: List<TurnTraceAiSection>.unmodifiable(fullAi.aiTraceSections),
         turnResolution: TurnTraceResolutionSection(
-          phases:
-              List<TurnTracePhaseTrace>.unmodifiable(phaseTraces),
+          phases: List<TurnTracePhaseTrace>.unmodifiable(phaseTraces),
         ),
       );
       final file = await TurnTraceFileExporter(
         rootDirectory: turnTraceRootDirectory,
       ).export(document);
       exportedTracePath = file.path;
+      exportMs = exportStopwatch.elapsedMilliseconds;
+      _runnerLog.i(
+        'logic: turn_resolution_worker trace_export_complete gameId=${game.id} '
+        'exportMs=$exportMs path=$exportedTracePath',
+      );
     }
 
+    final encodedResult = _encodeTurnResolutionResult(result);
+    final workerFinishedAtUtc = DateTime.now().toUtc();
+    _runnerLog.i(
+      'logic: turn_resolution_worker success_ready gameId=${game.id} '
+      'elapsedMs=${workerStopwatch.elapsedMilliseconds} '
+      'resultBytes=${_safeJsonUtf8Bytes(encodedResult)} '
+      'exportMs=$exportMs',
+    );
     sendPort.send(<String, Object?>{
       'kind': 'success',
-      'result': _encodeTurnResolutionResult(result),
+      'result': encodedResult,
       if (traceStartedAt != null)
         'turnTraceStartedAtUtc': traceStartedAt.toIso8601String(),
       if (exportedTracePath != null) 'turnTraceExportPath': exportedTracePath,
+      'workerFinishedAtUtc': workerFinishedAtUtc.toIso8601String(),
     });
   } catch (e, st) {
+    _runnerLog.e(
+      'logic: turn_resolution_worker failed '
+      'elapsedMs=${workerStopwatch.elapsedMilliseconds}',
+      error: e,
+      stackTrace: st,
+    );
     sendPort.send({
       'kind': 'error',
       'error': e.toString(),
       'stackTrace': st.toString(),
     });
   }
+}
+
+int _safeJsonUtf8Bytes(Object? value) {
+  try {
+    return utf8.encode(jsonEncode(value)).length;
+  } catch (_) {
+    return -1;
+  }
+}
+
+String _resultTypeName(TurnResolutionResult result) {
+  return switch (result) {
+    TurnResolutionComplete() => 'complete',
+    TurnResolutionPendingOvertures() => 'pendingOvertures',
+    TurnResolutionPendingIntervention() => 'pendingIntervention',
+    TurnResolutionPendingCallToArms() => 'pendingCallToArms',
+  };
 }
 
 Map<String, Object?> _encodeTurnResolutionResult(TurnResolutionResult result) {
