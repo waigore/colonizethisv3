@@ -127,6 +127,7 @@ Future<void> _runFlameCanvasNextTurn(
       topology: mapData.combinedTopology,
       tileMapByRegion: mapData.tileMapByRegion,
       turnTraceEnabled: service.isTurnTraceEnabled,
+      turnTraceRootDirectory: service.turnTraceRootDirectory,
     );
     final activeSessionId = session.sessionId;
     progressSub = session.progress.listen((event) {

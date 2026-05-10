@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_app/config/ct_debug_console.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -31,12 +32,16 @@ class TurnResolutionTerminalComplete extends TurnResolutionTerminalEvent {
     this.turnTracePhases,
     this.aiTraceSections,
     this.turnTraceStartedAtUtc,
+    this.turnTraceExportPath,
   });
 
   final TurnResolutionResult result;
 
   /// Phase-level traces from the worker isolate when [TurnResolutionRunner]
   /// was started with `turnTraceEnabled: true`.
+  ///
+  /// Omitted when the worker wrote the merged trace file directly (Refs #2277)
+  /// to avoid multi-copy full-game JSON across [SendPort].
   final List<TurnTracePhaseTrace>? turnTracePhases;
 
   /// Full-AI diagnostic sections from the worker isolate when tracing is enabled;
@@ -45,6 +50,9 @@ class TurnResolutionTerminalComplete extends TurnResolutionTerminalEvent {
 
   /// UTC time resolution tracing started (after AI merge, before phase handlers).
   final DateTime? turnTraceStartedAtUtc;
+
+  /// Path of exported merged turn trace JSON on disk when tracing ran in the worker.
+  final String? turnTraceExportPath;
 }
 
 class TurnResolutionTerminalError extends TurnResolutionTerminalEvent {
@@ -72,7 +80,11 @@ class TurnResolutionRunnerSession {
 }
 
 class TurnResolutionRunner {
-  TurnResolutionRunner();
+  TurnResolutionRunner({this.inspectSuccessIsolateEnvelope});
+
+  /// Optional hook (e.g. tests): receives the raw isolate `success` map before
+  /// JSON-shaped fields are decoded. Refs #2277 (no huge trace blobs on SendPort).
+  final void Function(Map<Object?, Object?> message)? inspectSuccessIsolateEnvelope;
 
   bool _active = false;
 
@@ -87,6 +99,7 @@ class TurnResolutionRunner {
     required MapTopology topology,
     required Map<String, TileMapResult> tileMapByRegion,
     bool turnTraceEnabled = false,
+    String turnTraceRootDirectory = kCtTurnTraceDirectory,
   }) {
     if (_active) {
       throw StateError('Turn resolution already active');
@@ -104,11 +117,7 @@ class TurnResolutionRunner {
       'gameId=${game.id}',
     );
 
-    Future<void> cleanup() async {
-      // Clear re-entrancy flag before awaiting subscription cancel so callers
-      // that await [TurnResolutionRunnerSession.done] observe a released runner
-      // even if cancel is deferred (#2160).
-      _active = false;
+    Future<void> tearDownSession() async {
       await sub?.cancel();
       receivePort.close();
       isolate?.kill(priority: Isolate.immediate);
@@ -117,8 +126,26 @@ class TurnResolutionRunner {
       }
     }
 
+    Future<void> cleanup() async {
+      // Clear re-entrancy flag before awaiting subscription cancel so callers
+      // that await [TurnResolutionRunnerSession.done] observe a released runner
+      // even if cancel is deferred (#2160).
+      _active = false;
+      await tearDownSession();
+    }
+
+    /// Never await [StreamSubscription.cancel] synchronously from inside the same
+    /// [ReceivePort.listen] callback: it can deadlock the isolate after the last
+    /// resolver phase event (UI stuck on "Finalizing turn..."). Refs #2277.
+    void scheduleTearDownAfterPortMessage() {
+      _active = false;
+      scheduleMicrotask(() {
+        unawaited(tearDownSession());
+      });
+    }
+
     try {
-      sub = receivePort.listen((dynamic message) async {
+      sub = receivePort.listen((dynamic message) {
         if (message is! Map<Object?, Object?>) {
           return;
         }
@@ -136,71 +163,97 @@ class TurnResolutionRunner {
           return;
         }
         if (kind == 'success') {
-          _runnerLog.i(
-            'logic: turn_resolution_runner session_complete sessionId=$sessionId '
-            'outcome=success',
-          );
-          final decodedResult = _decodeTurnResolutionResult(
-            Map<String, dynamic>.from(
-              message['result'] as Map<Object?, Object?>,
-            ),
-          );
-          final phasesPayload = message['turnTracePhases'];
-          final List<TurnTracePhaseTrace>? decodedPhases;
-          if (phasesPayload is List<Object?>) {
-            decodedPhases = phasesPayload
-                .map(
-                  (Object? e) => TurnTracePhaseTrace.fromJson(
-                    Map<String, Object?>.fromEntries(
-                      (e as Map<Object?, Object?>).entries.map(
-                        (MapEntry<Object?, Object?> entry) =>
-                            MapEntry<String, Object?>(
-                              entry.key as String,
-                              entry.value,
-                            ),
+          try {
+            inspectSuccessIsolateEnvelope?.call(message);
+            _runnerLog.i(
+              'logic: turn_resolution_runner session_complete sessionId=$sessionId '
+              'outcome=success',
+            );
+            final decodedResult = _decodeTurnResolutionResult(
+              Map<String, dynamic>.from(
+                message['result'] as Map<Object?, Object?>,
+              ),
+            );
+            final phasesPayload = message['turnTracePhases'];
+            final List<TurnTracePhaseTrace>? decodedPhases;
+            if (phasesPayload is List<Object?>) {
+              decodedPhases = phasesPayload
+                  .map(
+                    (Object? e) => TurnTracePhaseTrace.fromJson(
+                      Map<String, Object?>.fromEntries(
+                        (e as Map<Object?, Object?>).entries.map(
+                          (MapEntry<Object?, Object?> entry) =>
+                              MapEntry<String, Object?>(
+                                entry.key as String,
+                                entry.value,
+                              ),
+                        ),
                       ),
                     ),
-                  ),
-                )
-                .toList(growable: false);
-          } else {
-            decodedPhases = null;
-          }
-          final startedRaw = message['turnTraceStartedAtUtc'];
-          final DateTime? traceStartedAt = startedRaw is String
-              ? DateTime.parse(startedRaw).toUtc()
-              : null;
-          final aiTracePayload = message['aiTraceSections'];
-          final List<TurnTraceAiSection>? decodedAiSections;
-          if (aiTracePayload is List<Object?>) {
-            decodedAiSections = aiTracePayload
-                .map(
-                  (Object? e) => TurnTraceAiSection.fromJson(
-                    Map<String, Object?>.fromEntries(
-                      (e as Map<Object?, Object?>).entries.map(
-                        (MapEntry<Object?, Object?> entry) =>
-                            MapEntry<String, Object?>(
-                              entry.key as String,
-                              entry.value,
-                            ),
+                  )
+                  .toList(growable: false);
+            } else {
+              decodedPhases = null;
+            }
+            final startedRaw = message['turnTraceStartedAtUtc'];
+            final DateTime? traceStartedAt = startedRaw is String
+                ? DateTime.parse(startedRaw).toUtc()
+                : null;
+            final aiTracePayload = message['aiTraceSections'];
+            final List<TurnTraceAiSection>? decodedAiSections;
+            if (aiTracePayload is List<Object?>) {
+              decodedAiSections = aiTracePayload
+                  .map(
+                    (Object? e) => TurnTraceAiSection.fromJson(
+                      Map<String, Object?>.fromEntries(
+                        (e as Map<Object?, Object?>).entries.map(
+                          (MapEntry<Object?, Object?> entry) =>
+                              MapEntry<String, Object?>(
+                                entry.key as String,
+                                entry.value,
+                              ),
+                        ),
                       ),
                     ),
-                  ),
-                )
-                .toList(growable: false);
-          } else {
-            decodedAiSections = null;
+                  )
+                  .toList(growable: false);
+            } else {
+              decodedAiSections = null;
+            }
+            final exportPath = message['turnTraceExportPath'] as String?;
+            if (exportPath != null) {
+              _runnerLog.d(
+                'logic: turn_trace_exported_worker sessionId=$sessionId '
+                'path=$exportPath',
+              );
+            }
+            final terminal = TurnResolutionTerminalComplete(
+              decodedResult,
+              turnTracePhases: decodedPhases,
+              aiTraceSections: decodedAiSections,
+              turnTraceStartedAtUtc: traceStartedAt,
+              turnTraceExportPath: exportPath,
+            );
+            if (!doneCompleter.isCompleted) {
+              doneCompleter.complete(terminal);
+            }
+          } catch (e, st) {
+            _runnerLog.e(
+              'logic: turn_resolution_runner session_complete_decode_failed '
+              'sessionId=$sessionId',
+              error: e,
+              stackTrace: st,
+            );
+            if (!doneCompleter.isCompleted) {
+              doneCompleter.complete(
+                TurnResolutionTerminalError(
+                  errorMessage: e.toString(),
+                  stackTrace: st.toString(),
+                ),
+              );
+            }
           }
-          final terminal = TurnResolutionTerminalComplete(
-            decodedResult,
-            turnTracePhases: decodedPhases,
-            aiTraceSections: decodedAiSections,
-            turnTraceStartedAtUtc: traceStartedAt,
-          );
-          if (!doneCompleter.isCompleted) {
-            doneCompleter.complete(terminal);
-          }
-          await cleanup();
+          scheduleTearDownAfterPortMessage();
           return;
         }
         if (kind == 'error') {
@@ -221,7 +274,7 @@ class TurnResolutionRunner {
           if (!doneCompleter.isCompleted) {
             doneCompleter.complete(terminal);
           }
-          await cleanup();
+          scheduleTearDownAfterPortMessage();
         }
       });
 
@@ -234,6 +287,7 @@ class TurnResolutionRunner {
               (k, v) => MapEntry(k, v.toJson()),
             ),
             'turnTraceEnabled': turnTraceEnabled,
+            'turnTraceRootDirectory': turnTraceRootDirectory,
           })
           .then((spawned) {
             isolate = spawned;
@@ -283,6 +337,10 @@ class TurnResolutionRunner {
 }
 
 void _turnResolutionIsolateMain(Map<String, Object?> args) {
+  unawaited(_turnResolutionIsolateBody(args));
+}
+
+Future<void> _turnResolutionIsolateBody(Map<String, Object?> args) async {
   final sendPort = args['sendPort']! as SendPort;
   try {
     final game = Game.fromJson(
@@ -306,6 +364,8 @@ void _turnResolutionIsolateMain(Map<String, Object?> args) {
       ),
     );
     final turnTraceEnabled = args['turnTraceEnabled'] == true;
+    final turnTraceRootDirectory =
+        (args['turnTraceRootDirectory'] as String?) ?? kCtTurnTraceDirectory;
     sendPort.send(<String, Object?>{
       'kind': 'phase',
       'phase': 'aiPlanning',
@@ -350,19 +410,42 @@ void _turnResolutionIsolateMain(Map<String, Object?> args) {
       onTurnTracePhase: turnTraceEnabled ? phaseTraces.add : null,
       turnTraceRuntime: traceRuntime,
     );
-    sendPort.send({
+
+    String? exportedTracePath;
+    if (turnTraceEnabled &&
+        traceStartedAt != null &&
+        result is TurnResolutionComplete) {
+      final now = DateTime.now().toUtc();
+      final document = TurnTraceMergedDocument(
+        schemaVersion: kTurnTraceSchemaVersionV1,
+        meta: TurnTraceMeta(
+          gameId: game.id,
+          turnNumber: game.worldState.turnState.turnNumber,
+          traceEnabled: true,
+          source: 'app_turn_worker',
+          exportedAt: now.toIso8601String(),
+          turnStartAt: traceStartedAt.toIso8601String(),
+          turnEndAt: now.toIso8601String(),
+        ),
+        ai:
+            List<TurnTraceAiSection>.unmodifiable(fullAi.aiTraceSections),
+        turnResolution: TurnTraceResolutionSection(
+          phases:
+              List<TurnTracePhaseTrace>.unmodifiable(phaseTraces),
+        ),
+      );
+      final file = await TurnTraceFileExporter(
+        rootDirectory: turnTraceRootDirectory,
+      ).export(document);
+      exportedTracePath = file.path;
+    }
+
+    sendPort.send(<String, Object?>{
       'kind': 'success',
       'result': _encodeTurnResolutionResult(result),
-      if (turnTraceEnabled)
-        'turnTracePhases': phaseTraces
-            .map((TurnTracePhaseTrace p) => p.toJson())
-            .toList(),
       if (traceStartedAt != null)
         'turnTraceStartedAtUtc': traceStartedAt.toIso8601String(),
-      if (turnTraceEnabled)
-        'aiTraceSections': fullAi.aiTraceSections
-            .map((TurnTraceAiSection s) => s.toJson())
-            .toList(growable: false),
+      if (exportedTracePath != null) 'turnTraceExportPath': exportedTracePath,
     });
   } catch (e, st) {
     sendPort.send({
