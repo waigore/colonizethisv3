@@ -45,7 +45,8 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 
 - Scope: this slice moves heavy turn-resolution execution to a worker isolate and streams live phase labels into the processing modal.
 - **Map and Flame-canvas next-turn paths (`TurnResolutionRunner`):** Full AI order generation and **`mergeOrderLists`** run **inside the same worker isolate** as trusted-path resolution so the main UI thread only serializes inputs, spawns the worker, and applies the terminal result (Refs **#2277**). Any other entry points must be migrated the same way when added.
-- The worker emits per-phase start/end progress events through a typed callback (`TurnPhaseProgressMarker`) and the UI updates phase text on `start` (including synthetic **`aiPlanning`** before Full AI runs).
+- After the shell schedules the non-dismissible `Processing Turn` dialog, it **awaits [SchedulerBinding.endOfFrame](https://api.flutter.dev/flutter/scheduler/SchedulerBinding/endOfFrame.html)** via **`awaitTurnResolutionProcessingDialogFirstPaint`** (`turn_resolution_progress_labels.dart`) so the modal can paint **before** `TurnResolutionRunner.startResolution` begins main-isolate spawn-payload serialization.
+- The worker emits per-phase start/end progress events through a typed callback (`TurnPhaseProgressMarker`) and the UI updates phase text on `start` (including synthetic **`aiPlanning`** before Full AI runs, then **`suggestionPools`**, **`aiStageA`**–**`aiStageG`**, **`aiMerge`**, and resolver phases).
 - Terminal success and terminal failure both close the modal; success applies the resolved result and failure shows the existing error snackbar.
 - Existing pending-human-input outcomes (overture/intervention/call-to-arms) remain valid terminal outputs for post-resolution UI flow.
 

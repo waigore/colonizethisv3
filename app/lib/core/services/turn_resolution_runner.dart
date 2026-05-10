@@ -315,7 +315,19 @@ void _turnResolutionIsolateMain(Map<String, Object?> args) {
       game,
       topology,
       tileMapByRegion: tileMapByRegion,
+      onStagedPlannerProgress: (String phase) {
+        sendPort.send(<String, Object?>{
+          'kind': 'phase',
+          'phase': phase,
+          'marker': 'start',
+        });
+      },
     );
+    sendPort.send(<String, Object?>{
+      'kind': 'phase',
+      'phase': 'aiMerge',
+      'marker': 'start',
+    });
     final mergedOrders = mergeOrderLists(
       humanOrders: humanOrders,
       aiOrders: fullAi.orders,

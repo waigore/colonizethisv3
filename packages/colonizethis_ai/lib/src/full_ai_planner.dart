@@ -48,6 +48,7 @@ FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
   OrderSuggestionAPI? orderSuggestionApi,
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
+  void Function(String phaseId)? onStagedPlannerProgress,
 }) {
   final player = game.playerById(playerId);
   if (player == null || !isAiControlled(game, player.id)) {
@@ -90,6 +91,7 @@ FullAIPlayerTraceResult generateOrdersForPlayerFullAIWithTrace(
     tileMapByRegion: tileMapByRegion,
     onDialogue: onDialogue,
     onMood: onMood,
+    onStagedPlannerProgress: onStagedPlannerProgress,
   );
   return FullAIPlayerTraceResult(
     result: traced.result,
@@ -118,6 +120,7 @@ FullAIResult generateOrdersForGameFullAI(
   OrderSuggestionAPI? orderSuggestionApi,
   void Function(DialogueEvent)? onDialogue,
   void Function(PortraitMoodEvent)? onMood,
+  void Function(String phaseId)? onStagedPlannerProgress,
 }) {
   final moveByPlayer = <String, List<MoveOrder>>{};
   final armyMoveByPlayer = <String, List<ArmyMoveOrder>>{};
@@ -140,6 +143,7 @@ FullAIResult generateOrdersForGameFullAI(
       orderSuggestionApi: orderSuggestionApi,
       onDialogue: onDialogue,
       onMood: onMood,
+      onStagedPlannerProgress: onStagedPlannerProgress,
     );
     final result = traced.result;
     economyPlansByPlayerId[player.id] = result.economyPlan;
