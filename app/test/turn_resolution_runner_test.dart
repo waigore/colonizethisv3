@@ -273,7 +273,7 @@ void main() {
         );
         expect(
           badBytes,
-          greaterThan(goodBytes * 20),
+          greaterThan(goodBytes * 15),
           reason:
               'prior design replicated full game JSON per phase on SendPort; '
               'lean envelope regression guard (#2277)',

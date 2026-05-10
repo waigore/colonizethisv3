@@ -490,6 +490,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     }
 
     final phaseNotifier = ValueNotifier<String>('Resolving turn...');
+    var processingDialogOpen = true;
     setState(() {
       _isTurnResolving = true;
     });
@@ -504,7 +505,9 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
           builder: (_, text, _) =>
               TurnResolutionProcessingDialog(phaseText: text),
         ),
-      ),
+      ).whenComplete(() {
+        processingDialogOpen = false;
+      }),
     );
     await awaitTurnResolutionProcessingDialogFirstPaint();
     try {
@@ -529,6 +532,10 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       final terminal = await session.done;
       if (!mounted) {
         return;
+      }
+      if (processingDialogOpen) {
+        rootNavigator.pop();
+        processingDialogOpen = false;
       }
       switch (terminal) {
         case TurnResolutionTerminalComplete c:
@@ -560,8 +567,8 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       clearTurnResolutionBlockingFlag();
       _turnResolutionProgressSub?.cancel();
       _turnResolutionProgressSub = null;
-      if (mounted) {
-        rootNavigator.maybePop();
+      if (mounted && processingDialogOpen) {
+        rootNavigator.pop();
       }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         phaseNotifier.dispose();

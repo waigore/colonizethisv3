@@ -107,6 +107,7 @@ Future<void> _runFlameCanvasNextTurn(
   }
 
   final phaseNotifier = ValueNotifier<String>('Resolving turn...');
+  var processingDialogOpen = true;
   final uiStopwatch = Stopwatch()..start();
   ref.read(turnResolutionBlockingProvider.notifier).setBlocking(true);
   _gameScreenLog.i(
@@ -123,7 +124,9 @@ Future<void> _runFlameCanvasNextTurn(
         builder: (_, text, _) =>
             TurnResolutionProcessingDialog(phaseText: text),
       ),
-    ),
+    ).whenComplete(() {
+      processingDialogOpen = false;
+    }),
   );
   await awaitTurnResolutionProcessingDialogFirstPaint();
   _gameScreenLog.i(
@@ -165,6 +168,10 @@ Future<void> _runFlameCanvasNextTurn(
     );
     if (!context.mounted) {
       return;
+    }
+    if (processingDialogOpen) {
+      rootNavigator.pop();
+      processingDialogOpen = false;
     }
     switch (terminal) {
       case TurnResolutionTerminalComplete c:
@@ -225,8 +232,8 @@ Future<void> _runFlameCanvasNextTurn(
       'logic: next_turn_ui cleanup_complete gameId=${game.id} '
       'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
     );
-    if (context.mounted) {
-      rootNavigator.maybePop();
+    if (context.mounted && processingDialogOpen) {
+      rootNavigator.pop();
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       phaseNotifier.dispose();

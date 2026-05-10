@@ -86,7 +86,7 @@ class TurnResolutionRunner {
   /// Optional hook (e.g. tests): receives the raw isolate `success` map before
   /// JSON-shaped fields are decoded. Refs #2277 (no huge trace blobs on SendPort).
   final void Function(Map<Object?, Object?> message)?
-  inspectSuccessIsolateEnvelope;
+      inspectSuccessIsolateEnvelope;
 
   bool _active = false;
 

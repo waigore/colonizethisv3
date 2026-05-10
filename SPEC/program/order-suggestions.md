@@ -23,6 +23,8 @@ Given a player, their current valid order list, and game context, enumerate **ca
 
 For every suggested order `o`, appending it to the current list and validating via `validatePlayerOrdersWithContext` yields `accepted`. The internal candidate-acceptance pipeline used to enumerate suggestions is the **incremental candidate validation primitive** described in § Incremental candidate validation. The primitive is required to produce the same `accepted` / `rejected` decision per candidate as full-pass `validatePlayerOrdersWithContext` (see [order-engine.md](order-engine.md) § Validation), so the observable suggestion contract is unchanged.
 
+**Throughput bounds (Full AI):** Enumeration for some families (notably **`suggestMoveOrders`** / **`suggestArmyMoveOrders`**) may apply **deterministic probe or acceptance caps** so Full AI completes within the next-turn usability budget ([turn-resolution.md](turn-resolution.md) § Next-turn latency budget). A capped pass still validates each emitted candidate via the incremental primitive; it may omit some engine-valid destinations that would appear only after exhaustive scan. Explorer work candidates remain subject to § Work orders (`suggestWorkOrders`) row completeness rules unless a separate spec slice narrows them for performance.
+
 **Civilian work alignment:** Suggestions never assume instant primary effects for `prospect` or `purchase_land`; those targets follow the same **assign → tick → complete** invariant as validation and resolution (prospected set, treasury debit, and `purchasedTilesByTileKey` only when work completes in Build/Work). Authoritative rules: [orders.md](orders.md) (Civilian deferred primary effects) and [development-resolution.md](development-resolution.md).
 
 ---

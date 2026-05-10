@@ -75,6 +75,8 @@ All hosts consume the **same** `Logger` stream from packages; hosts only differ 
 - **ctdev:** Day file + Sim Log (info+, capped); see [ctdev-logging.md](../ctdev-logging.md).
 - **app:** Session buffer for debug viewer; configure listeners at startup per [debug-log-viewer.md](../debug-log-viewer.md).
 
+Operator-facing **timestamp formatting** on those listener-driven lines (`formatOperatorLogTimestamp`) is normative in [colonizethis-logger.md](../colonizethis-logger.md).
+
 ---
 
 ## Acceptance criteria

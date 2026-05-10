@@ -73,14 +73,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.3"
-  basic_logger_file:
-    dependency: transitive
-    description:
-      name: basic_logger_file
-      sha256: dfcb7e39e4f855a895549bedd63f6adb9c5e012016f2617c78012e12b0e4e0a9
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.3"
   boolean_selector:
     dependency: transitive
     description:

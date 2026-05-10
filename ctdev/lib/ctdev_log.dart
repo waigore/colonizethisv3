@@ -1,12 +1,87 @@
 // ctdev file and in-memory logging. SPEC/program/ctdev-logging.md.
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:basic_logger/basic_logger.dart';
-import 'package:basic_logger_file/basic_logger_file.dart';
+import 'package:colonizethis_logger/colonizethis_logger.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:logger/logger.dart';
 import 'package:logging/logging.dart' as logging;
 import 'package:path/path.dart' as path;
+
+/// Used by [_CtdevPlainFileOutputLogger]; exposed for unit tests (no second timestamp).
+@visibleForTesting
+String ctdevFileOutputFormattedLine(logging.LogRecord logRec) =>
+    '${logRec.message}\n';
+
+/// Day-file sink with the same buffering/append contract as `basic_logger_file`
+/// `FileOutputLogger` 0.1.3 (that class is `final`, so format cannot be specialized here).
+/// Prepends only the formatted message body — canonical time is already in [formatLogEvent].
+final class _CtdevPlainFileOutputLogger extends OutputLogger {
+  final List<logging.LogRecord> _buffer = [];
+  late int _bufferSize;
+  late String _dir;
+  late String _ext;
+  late final String __logName;
+  late final logging.Logger _parentLogger;
+
+  _CtdevPlainFileOutputLogger(
+    String parentName, {
+    required logging.Logger parentLogger,
+    String selfname = 'file',
+    bool selfonly = false,
+    required String dir,
+    String ext = '.log',
+    int bufferSize = 100,
+  }) : super(parentName, selfname: selfname, listening: false) {
+    _parentLogger = parentLogger;
+    _bufferSize = bufferSize;
+    _dir = dir;
+    _ext = ext;
+    __logName = '$parentName.$selfname';
+    _parentLogger.onRecord.listen((logging.LogRecord logRec) {
+      if (selfonly) {
+        if (__logName == logRec.loggerName) _buffer.add(logRec);
+      } else {
+        if (parentName == logRec.loggerName) _buffer.add(logRec);
+      }
+      if (_buffer.length >= _bufferSize) {
+        output();
+      }
+    });
+  }
+
+  @override
+  String Function(logging.LogRecord logRec) get format =>
+      (logging.LogRecord logRec) => ctdevFileOutputFormattedLine(logRec);
+
+  @override
+  String get name => __logName;
+
+  @override
+  void output([logging.LogRecord? record]) {
+    if (_buffer.isEmpty) {
+      return;
+    }
+    final bufs = <String>[];
+    for (final logging.LogRecord log in _buffer) {
+      bufs.add(format(log));
+    }
+    final logfile = path.join(
+      _dir,
+      '${DateTime.now().toLocal().toString().substring(0, 10)}$_ext',
+    );
+    unawaited(
+      File(logfile)
+          .writeAsString(bufs.join(), mode: FileMode.writeOnlyAppend)
+          .whenComplete(() {
+        _buffer.clear();
+        bufs.clear();
+      }),
+    );
+  }
+}
 
 const int _uiLogMaxLines = 10;
 
@@ -57,7 +132,7 @@ List<String> getLastUiLogLines([int max = _uiLogMaxLines]) {
 
 /// Formats a [LogEvent] into one or more lines (message + optional error/stackTrace).
 List<String> formatLogEvent(LogEvent e) {
-  final time = e.time.toUtc().toIso8601String();
+  final time = formatOperatorLogTimestamp(e.time);
   final levelName = e.level.name.toUpperCase();
   final msg = e.message is String ? e.message as String : e.message.toString();
   final lines = <String>['$time $levelName $msg'];
@@ -92,14 +167,11 @@ void startSimSession(String id) {
   if (!dir.existsSync()) {
     dir.createSync(recursive: true);
   }
-  final now = DateTime.now().toLocal();
-  final dateStr =
-      '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   final basicLogger = BasicLogger('ctdev');
-  basicLogger.attachLogger(FileOutputLogger(
-    dateStr,
+  basicLogger.attachLogger(_CtdevPlainFileOutputLogger(
+    basicLogger.name,
+    parentLogger: basicLogger.logger,
     dir: logsDir,
-    ext: '.log',
     bufferSize: 50,
   ));
   _fileLogger = basicLogger;
