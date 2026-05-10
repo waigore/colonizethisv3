@@ -1,5 +1,6 @@
 // TurnResolutionRunner lifecycle (#2160).
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:colonizethis_app/core/services/turn_resolution_runner.dart';
@@ -8,6 +9,36 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
+
+/// Full turn pipeline phase count (historical SendPort regression embedded one
+/// full game JSON per phase as before+after). Kept in sync with
+/// `colonizethis_logic/src/turn/turn_resolution_sequence.dart`.
+const int _kTurnResolutionPhaseCountForBlobRegression = 14;
+
+/// If we ever ship full per-phase snapshots on the isolate again, the UTF-8 JSON
+/// blows up long before this (Refs #2277).
+const int _kMaxIsolateSuccessEnvelopeUtf8Bytes = 786432;
+
+Object? _deepToJsonEncodable(Object? value) {
+  if (value == null || value is bool || value is num || value is String) {
+    return value;
+  }
+  if (value is Map) {
+    final out = <String, Object?>{};
+    for (final entry in value.entries) {
+      out[entry.key.toString()] = _deepToJsonEncodable(entry.value);
+    }
+    return out;
+  }
+  if (value is List) {
+    return value.map(_deepToJsonEncodable).toList(growable: false);
+  }
+  return value.toString();
+}
+
+int _mapUtf8JsonLength(Map<Object?, Object?> raw) {
+  return utf8.encode(jsonEncode(_deepToJsonEncodable(raw))).length;
+}
 
 void main() {
   suppressLogsForTests();
@@ -106,6 +137,147 @@ void main() {
         final text = file.readAsStringSync();
         expect(text, contains('schemaVersion'));
         expect(text, contains('app_turn_worker'));
+      },
+      timeout: const Timeout(Duration(seconds: 60)),
+    );
+
+    test(
+      'isolate success map omits turnTracePhases and aiTraceSections when tracing (Refs #2277)',
+      () async {
+        final tempDir = Directory.systemTemp.createTempSync(
+          'runner_env_keys_',
+        );
+        addTearDown(() {
+          if (tempDir.existsSync()) {
+            tempDir.deleteSync(recursive: true);
+          }
+        });
+        Map<Object?, Object?>? envelope;
+        final runner = TurnResolutionRunner(
+          inspectSuccessIsolateEnvelope: (m) {
+            envelope = m;
+          },
+        );
+        final session = runner.startResolution(
+          game: game,
+          orders: const Orders(),
+          topology: topology,
+          tileMapByRegion: tileMapByRegion,
+          turnTraceEnabled: true,
+          turnTraceRootDirectory: tempDir.path,
+        );
+        await session.done;
+        expect(envelope, isNotNull);
+        final map = envelope!;
+        expect(
+          map.containsKey('turnTracePhases'),
+          isFalse,
+          reason: '#2277: never ship embedded phase blobs on SendPort',
+        );
+        expect(
+          map.containsKey('aiTraceSections'),
+          isFalse,
+          reason: '#2277: AI trace blobs must not shuttle on SendPort',
+        );
+        expect(map['kind'], 'success');
+      },
+      timeout: const Timeout(Duration(seconds: 60)),
+    );
+
+    test(
+      'isolate success UTF-8 JSON stays small with tracing (Refs #2277)',
+      () async {
+        final tempDir = Directory.systemTemp.createTempSync(
+          'runner_env_size_',
+        );
+        addTearDown(() {
+          if (tempDir.existsSync()) {
+            tempDir.deleteSync(recursive: true);
+          }
+        });
+        Map<Object?, Object?>? envelope;
+        final runner = TurnResolutionRunner(
+          inspectSuccessIsolateEnvelope: (m) {
+            envelope = m;
+          },
+        );
+        final session = runner.startResolution(
+          game: game,
+          orders: const Orders(),
+          topology: topology,
+          tileMapByRegion: tileMapByRegion,
+          turnTraceEnabled: true,
+          turnTraceRootDirectory: tempDir.path,
+        );
+        await session.done;
+        expect(envelope, isNotNull);
+        final goodBytes = _mapUtf8JsonLength(envelope!);
+        expect(
+          goodBytes,
+          lessThan(_kMaxIsolateSuccessEnvelopeUtf8Bytes),
+          reason:
+              'SendPort payloads must remain modest; oversized blobs freeze UI (#2277)',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 60)),
+    );
+
+    test(
+      'hypothetical embedded phase traces dwarf lean isolate envelope (Refs #2277)',
+      () async {
+        final tempDir = Directory.systemTemp.createTempSync(
+          'runner_blob_cmp_',
+        );
+        addTearDown(() {
+          if (tempDir.existsSync()) {
+            tempDir.deleteSync(recursive: true);
+          }
+        });
+        Map<Object?, Object?>? envelope;
+        final runner = TurnResolutionRunner(
+          inspectSuccessIsolateEnvelope: (m) {
+            envelope = m;
+          },
+        );
+        final session = runner.startResolution(
+          game: game,
+          orders: const Orders(),
+          topology: topology,
+          tileMapByRegion: tileMapByRegion,
+          turnTraceEnabled: true,
+          turnTraceRootDirectory: tempDir.path,
+        );
+        await session.done;
+        expect(envelope, isNotNull);
+        final good = envelope!;
+        final gameJson =
+            Map<String, Object?>.from(good['result']! as Map<Object?, Object?>)['game']!
+                as Map<String, Object?>;
+        final bad = Map<Object?, Object?>.from(good)
+          ..['turnTracePhases'] = [
+            for (var i = 0; i < _kTurnResolutionPhaseCountForBlobRegression; i++)
+              <String, Object?>{
+                'phaseId': 'phase$i',
+                'beforeState': gameJson,
+                'afterState': gameJson,
+                'orderEvents': <Object?>[],
+              },
+          ]
+          ..['aiTraceSections'] = <Object?>[];
+        final goodBytes = _mapUtf8JsonLength(good);
+        final badBytes = _mapUtf8JsonLength(bad);
+        expect(
+          goodBytes,
+          greaterThan(256),
+          reason: 'fixture should serialize to non-trivial result payload',
+        );
+        expect(
+          badBytes,
+          greaterThan(goodBytes * 20),
+          reason:
+              'prior design replicated full game JSON per phase on SendPort; '
+              'lean envelope regression guard (#2277)',
+        );
       },
       timeout: const Timeout(Duration(seconds: 60)),
     );

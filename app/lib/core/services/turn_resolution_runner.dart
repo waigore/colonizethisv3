@@ -80,7 +80,11 @@ class TurnResolutionRunnerSession {
 }
 
 class TurnResolutionRunner {
-  TurnResolutionRunner();
+  TurnResolutionRunner({this.inspectSuccessIsolateEnvelope});
+
+  /// Optional hook (e.g. tests): receives the raw isolate `success` map before
+  /// JSON-shaped fields are decoded. Refs #2277 (no huge trace blobs on SendPort).
+  final void Function(Map<Object?, Object?> message)? inspectSuccessIsolateEnvelope;
 
   bool _active = false;
 
@@ -160,6 +164,7 @@ class TurnResolutionRunner {
         }
         if (kind == 'success') {
           try {
+            inspectSuccessIsolateEnvelope?.call(message);
             _runnerLog.i(
               'logic: turn_resolution_runner session_complete sessionId=$sessionId '
               'outcome=success',
