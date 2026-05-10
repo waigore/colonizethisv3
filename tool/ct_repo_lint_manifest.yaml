@@ -258,6 +258,13 @@ rules:
     runner: dart
     script: tool/check_logic_dual_region_province_field_access.dart
 
+  - rule_id: repo.logic_all_provinces_sanctioned_calls
+    group: architecture
+    title: colonizethis_logic allProvinces( call sites must be YAML-sanctioned
+    spec: SPEC/program/logic-dual-region-province-access.md
+    runner: dart
+    script: tool/check_logic_all_provinces_sanctioned_calls.dart
+
   - rule_id: repo.app_hardcoded_ui_strings
     group: ui_i18n
     title: No hardcoded user-visible UI strings in app/lib (AST gate)
