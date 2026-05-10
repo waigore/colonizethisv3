@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'ai_random_utils.dart';
+import 'util/ai_random_utils.dart';
 import 'perception.dart';
 
 final _log = packageLogger();

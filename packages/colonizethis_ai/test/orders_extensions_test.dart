@@ -1,5 +1,4 @@
-import 'package:colonizethis_ai/src/orders_extensions.dart';
-import 'package:colonizethis_logic/order_suggestion_api.dart';
+import 'package:colonizethis_ai/src/util/orders_extensions.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 

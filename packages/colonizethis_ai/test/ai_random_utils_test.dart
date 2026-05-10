@@ -1,4 +1,4 @@
-import 'package:colonizethis_ai/src/ai_random_utils.dart';
+import 'package:colonizethis_ai/src/util/ai_random_utils.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
