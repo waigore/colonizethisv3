@@ -13,7 +13,7 @@ void _addMerchantSuggestionsForUnit({
   required Map<String, Set<String>> existingTargetsByUnit,
   required Set<String> devExclusiveReservedTiles,
   required List<WorkOrder> suggestions,
-  Map<String, TileMapResult>? tileMapByRegion,
+  required IncrementalCandidateValidator candidateValidator,
 }) {
   final allowedTargets = workOrderTargetsByUnitType[type];
   if (allowedTargets == null ||
@@ -48,13 +48,7 @@ void _addMerchantSuggestionsForUnit({
         }
       }
     },
-    candidateAcceptor: (candidate) => isWorkOrderAccepted(
-      game,
-      topology,
-      playerId,
-      currentOrders,
-      candidate,
-      tileMapByRegion: tileMapByRegion,
-    ),
+    candidateAcceptor: (candidate) =>
+        isWorkOrderAcceptedWithValidator(candidateValidator, candidate),
   );
 }

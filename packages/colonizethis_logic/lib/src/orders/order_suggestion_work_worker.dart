@@ -14,6 +14,7 @@ void _addWorkerSuggestionsForUnit({
   required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
   required Set<String> devExclusiveReservedTiles,
   required List<WorkOrder> suggestions,
+  required IncrementalCandidateValidator candidateValidator,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final allowedTargets = workOrderTargetsByUnitType[type];
@@ -52,18 +53,7 @@ void _addWorkerSuggestionsForUnit({
         }
       },
       candidateAcceptor: (candidate) {
-        final accepted = isWorkOrderAccepted(
-          game,
-          topology,
-          playerId,
-          currentOrders,
-          candidate,
-          tileMapByRegion: tileMapByRegion,
-        );
-        if (accepted) {
-          orderSuggestionLog.d('suggestWorkOrders candidate=$candidate');
-        }
-        return accepted;
+        return isWorkOrderAcceptedWithValidator(candidateValidator, candidate);
       },
     );
   }

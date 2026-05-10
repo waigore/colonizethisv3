@@ -8,6 +8,7 @@ import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
 import 'bundled_civilian_work_order.dart';
+import 'incremental_candidate_validator.dart';
 import 'order_suggestion_work_tile_keys.dart';
 import 'order_suggestion_work_tile_prefilter.dart';
 import 'order_suggestion_context.dart';
@@ -198,21 +199,11 @@ List<WorkOrder> suggestWorkOrders(
   orderSuggestionLog.d(
     'suggestWorkOrders player=$playerId candidates=${suggestions.length}',
   );
-  const previewCap = 40;
-  if (suggestions.isEmpty) {
-    orderSuggestionLog.d('suggestWorkOrders detail preview empty');
-  } else {
-    final preview = suggestions
-        .take(previewCap)
-        .map((o) => '${o.unitId}:${o.target}')
-        .join(', ');
-    final truncated = suggestions.length > previewCap
-        ? ' (+${suggestions.length - previewCap} more truncated)'
-        : '';
-    orderSuggestionLog.d(
-      'suggestWorkOrders detail preview first_$previewCap=$preview$truncated',
-    );
-  }
+  final uniqueUnits = suggestions.map((o) => o.unitId).toSet().length;
+  orderSuggestionLog.d(
+    'suggestWorkOrders summary player=$playerId '
+    'candidates=${suggestions.length} uniqueUnits=$uniqueUnits',
+  );
   if (suggestions.isEmpty) {
     orderSuggestionLog.w('suggestWorkOrders no candidates player=$playerId');
   }
@@ -248,9 +239,12 @@ void _addWorkSuggestionsForUnit({
   final province = view.provinceByRegionAndId(regionId, provinceId);
   final ownerId = province?.ownerId;
   final tilesInProvince = tileKeysByRegion[regionId]?[provinceId] ?? const [];
-
-  orderSuggestionLog.d(
-    'suggestWorkOrders unit=${unit.id} provinceId=$provinceId provinceName=${province?.displayName} ownerId=$ownerId regionId=$regionId tilesInProvince=${tilesInProvince.length}',
+  final candidateValidator = buildIncrementalCandidateValidator(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    baseOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
   );
 
   if (isExplorer) {
@@ -267,6 +261,7 @@ void _addWorkSuggestionsForUnit({
       tileKeysByRegion: tileKeysByRegion,
       existingTargetsByUnit: existingTargetsByUnit,
       suggestions: suggestions,
+      candidateValidator: candidateValidator,
       tileMapByRegion: tileMapByRegion,
     );
     return;
@@ -287,6 +282,7 @@ void _addWorkSuggestionsForUnit({
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
       suggestions: suggestions,
+      candidateValidator: candidateValidator,
       tileMapByRegion: tileMapByRegion,
     );
   }
@@ -296,7 +292,6 @@ void _addWorkSuggestionsForUnit({
       game: game,
       topology: topology,
       currentOrders: currentOrders,
-      tileMapByRegion: tileMapByRegion,
       tileKeysByRegion: tileKeysByRegion,
       playerId: playerId,
       unit: unit,
@@ -307,6 +302,7 @@ void _addWorkSuggestionsForUnit({
       tilesInProvince: tilesInProvince,
       existingTargetsByUnit: existingTargetsByUnit,
       suggestions: suggestions,
+      candidateValidator: candidateValidator,
     );
   }
 
@@ -315,7 +311,6 @@ void _addWorkSuggestionsForUnit({
       game: game,
       topology: topology,
       currentOrders: currentOrders,
-      tileMapByRegion: tileMapByRegion,
       tileKeysByRegion: tileKeysByRegion,
       playerId: playerId,
       unit: unit,
@@ -325,6 +320,7 @@ void _addWorkSuggestionsForUnit({
       existingTargetsByUnit: existingTargetsByUnit,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
       suggestions: suggestions,
+      candidateValidator: candidateValidator,
     );
   }
 }

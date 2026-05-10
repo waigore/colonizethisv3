@@ -10,6 +10,7 @@ Reduce irrelevant rule overlays by defining one routing map for rule applicabili
 | `colonizethis-core-principles.mdc` | Architecture and code standards |
 | `colonizethis-logging-file.mdc` | Logging standards |
 | `colonizethis-logic-ai-decoupling.mdc` | Package-boundary governance |
+| `colonizethis-turn-resolution-budget.mdc` | Turn-resolution performance governance |
 | `colonizethis-tools.mdc` | Tooling workflow |
 | `colonizethis-testing.mdc` | Test policy and coverage |
 | `colonizethis-e2e-ui-stability.mdc` | E2E UI stability |
