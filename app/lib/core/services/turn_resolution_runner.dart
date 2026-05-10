@@ -104,11 +104,7 @@ class TurnResolutionRunner {
       'gameId=${game.id}',
     );
 
-    Future<void> cleanup() async {
-      // Clear re-entrancy flag before awaiting subscription cancel so callers
-      // that await [TurnResolutionRunnerSession.done] observe a released runner
-      // even if cancel is deferred (#2160).
-      _active = false;
+    Future<void> tearDownSession() async {
       await sub?.cancel();
       receivePort.close();
       isolate?.kill(priority: Isolate.immediate);
@@ -117,8 +113,26 @@ class TurnResolutionRunner {
       }
     }
 
+    Future<void> cleanup() async {
+      // Clear re-entrancy flag before awaiting subscription cancel so callers
+      // that await [TurnResolutionRunnerSession.done] observe a released runner
+      // even if cancel is deferred (#2160).
+      _active = false;
+      await tearDownSession();
+    }
+
+    /// Never await [StreamSubscription.cancel] synchronously from inside the same
+    /// [ReceivePort.listen] callback: it can deadlock the isolate after the last
+    /// resolver phase event (UI stuck on "Finalizing turn..."). Refs #2277.
+    void scheduleTearDownAfterPortMessage() {
+      _active = false;
+      scheduleMicrotask(() {
+        unawaited(tearDownSession());
+      });
+    }
+
     try {
-      sub = receivePort.listen((dynamic message) async {
+      sub = receivePort.listen((dynamic message) {
         if (message is! Map<Object?, Object?>) {
           return;
         }
@@ -200,7 +214,7 @@ class TurnResolutionRunner {
           if (!doneCompleter.isCompleted) {
             doneCompleter.complete(terminal);
           }
-          await cleanup();
+          scheduleTearDownAfterPortMessage();
           return;
         }
         if (kind == 'error') {
@@ -221,7 +235,7 @@ class TurnResolutionRunner {
           if (!doneCompleter.isCompleted) {
             doneCompleter.complete(terminal);
           }
-          await cleanup();
+          scheduleTearDownAfterPortMessage();
         }
       });
 

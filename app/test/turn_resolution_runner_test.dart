@@ -92,5 +92,29 @@ void main() {
       },
       timeout: const Timeout(Duration(seconds: 60)),
     );
+
+    test(
+      'back-to-back resolutions complete and release runner (Refs #2277)',
+      () async {
+        final runner = TurnResolutionRunner();
+        final first = runner.startResolution(
+          game: game,
+          orders: const Orders(),
+          topology: topology,
+          tileMapByRegion: tileMapByRegion,
+        );
+        await first.done;
+        expect(runner.isActive, isFalse);
+        final second = runner.startResolution(
+          game: game,
+          orders: const Orders(),
+          topology: topology,
+          tileMapByRegion: tileMapByRegion,
+        );
+        await second.done;
+        expect(runner.isActive, isFalse);
+      },
+      timeout: const Timeout(Duration(seconds: 120)),
+    );
   });
 }
