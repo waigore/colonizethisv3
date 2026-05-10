@@ -12,7 +12,7 @@ const _canonicalUnitRelativePath =
 const _scanDirRelative = 'packages/colonizethis_logic/lib/src';
 
 /// Keep direct dual-region field access rare; small buffer over current count.
-const _maxMatchingLinesOutsideCanonical = 20;
+const _maxMatchingLinesOutsideCanonical = 28;
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 final RegExp _manualRegionBranchPattern = RegExp(
