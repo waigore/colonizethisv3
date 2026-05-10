@@ -36,19 +36,18 @@ class CtLogger {
   final Logger _log;
   final String prefix;
 
-  const CtLogger(this.prefix) : _log = Logger(prefix);
+  CtLogger(this.prefix)
+      : _log = Logger(printer: CtLoggerConsolePrinter());
 
-  void d(String msg) => _log.d('$prefix: $msg');
-  void i(String msg) => _log.i('$prefix: $msg');
-  void w(String msg) => _log.w('$prefix: $msg');
-  void e(String msg, {Object? error, StackTrace? stackTrace}) =>
-      _log.e('$prefix: $msg', error: error, stackTrace: stackTrace);
+  void d(String msg, {Object? error, StackTrace? stackTrace}) =>
+      _log.d('$prefix: $msg', error: error, stackTrace: stackTrace);
+  // … other level helpers mirror `_log`, always prefixing `$prefix: ` on the message string.
 }
 ```
 
-- Uses `Logger(loggerName: prefix)` to set the logger name (useful for tooling that reads logger names)
-- Prepends `$prefix: ` to every message
-- Delegates all other `Logger` methods via `_log`
+- Uses `Logger(printer: CtLoggerConsolePrinter())` so **stdout / IDE console** lines carry the canonical operator timestamp (§2.4).
+- Prepends `$prefix: ` to every message body
+- Delegates filtering, printing, and output to the `logger` package via `_log`
 
 ### 2.3 Operator log timestamps (`formatOperatorLogTimestamp`)
 
@@ -56,7 +55,13 @@ class CtLogger {
 - **API:** [`formatOperatorLogTimestamp`](../../packages/colonizethis_logger/lib/src/operator_log_timestamp.dart) in package `colonizethis_logger` (exported from `colonizethis_logger.dart`).
 - **Shape:** Local wall clock as `YYYY-MM-DDTHH:mm:ss.SSS±HH:MM`, or `...SSSZ` when the effective local offset is UTC. Milliseconds are **always** three digits (including `.000` on whole-second instants).
 
-### 2.4 Global instance factories (optional convenience)
+### 2.4 CtLogger console printer (`CtLoggerConsolePrinter`)
+
+- **Purpose:** The `logger` package’s default `PrettyPrinter` does **not** emit the canonical operator timestamp on stdout / IDE console. `CtLogger` therefore wires `Logger(printer: CtLoggerConsolePrinter())`.
+- **Behavior:** `CtLoggerConsolePrinter` delegates formatting to `PrettyPrinter` (same defaults as a bare `Logger()`), then injects **exactly one** `formatOperatorLogTimestamp(event.time)` segment on the **first message row** of each boxed event (after the leading `│ ` rule column). If boxing is disabled for a level such that no message row can be matched, the printer falls back to prefixing the first output line with the canonical timestamp so the event still carries one operator-facing segment.
+- **Implementation:** `packages/colonizethis_logger/lib/src/ct_logger_console_printer.dart`.
+
+### 2.5 Global instance factories (optional convenience)
 
 For packages that use a single logger:
 
@@ -79,9 +84,10 @@ packages/colonizethis_logger/
   lib/
     colonizethis_logger.dart      # exports
     src/
-      ct_logger.dart              # CtLogger class
-      prefixes.dart               # prefix constants
-      operator_log_timestamp.dart # formatOperatorLogTimestamp
+      ct_logger.dart                 # CtLogger class
+      ct_logger_console_printer.dart # stdout PrettyPrinter + canonical timestamp
+      prefixes.dart                  # prefix constants
+      operator_log_timestamp.dart    # formatOperatorLogTimestamp
   pubspec.yaml
   test/
     ct_logger_test.dart
@@ -139,6 +145,7 @@ const List<String> knownPrefixes = [
 - **Debug viewer integration:** Logs from migrated packages appear in the debug viewer under the correct prefix filter.
 - **No manual prefixing needed:** Developers call `_log.i('message')` not `_log.i('prefix: message')`.
 - **Backward compatible:** Raw `Logger()` still works; `CtLogger` is additive.
+- **Console timestamps:** Every `CtLogger` event printed through the `logger` package’s configured printer includes **exactly one** canonical `formatOperatorLogTimestamp` segment (local wall clock, fixed `.SSS`, explicit offset or `Z`), including whole-second instants (`.000`).
 
 ---
 
