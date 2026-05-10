@@ -34,7 +34,7 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 ### Turn-resolution active state (slice 1)
 
 - Scope: this slice covers UI gating and completion/error handling around existing turn resolution execution.
-- Deferred: worker-isolate execution and per-phase live text updates are handled in later slices.
+- Deferred: additional entry points that still resolve on the main isolate are migrated incrementally (Refs **#2277**).
 - While active:
   - The top-bar Next Turn button is disabled.
   - Map interaction inputs are blocked.
@@ -44,7 +44,7 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 ### Turn-resolution active state (slice 2)
 
 - Scope: this slice moves heavy turn-resolution execution to a worker isolate and streams live phase labels into the processing modal.
-- AI order generation remains on the main isolate before worker spawn; the worker receives merged orders payload.
+- **Map next-turn path (`TurnResolutionRunner`):** Full AI order generation and **`mergeOrderLists`** run **inside the same worker isolate** as trusted-path resolution so the main UI thread only serializes inputs, spawns the worker, and applies the terminal result (Refs **#2277**). Other call sites (e.g. overlay next-turn) may still run Full AI on the main isolate until migrated.
 - The worker emits per-phase start/end progress events through a typed callback (`TurnPhaseProgressMarker`) and the UI updates phase text on `start`.
 - Terminal success and terminal failure both close the modal; success applies the resolved result and failure shows the existing error snackbar.
 - Existing pending-human-input outcomes (overture/intervention/call-to-arms) remain valid terminal outputs for post-resolution UI flow.

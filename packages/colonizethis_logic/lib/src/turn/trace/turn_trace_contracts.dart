@@ -56,7 +56,8 @@ class TurnTraceMeta {
       'turnNumber': turnNumber,
       'traceEnabled': traceEnabled,
       'exportedAt': exportedAt,
-      if (resolutionSessionId != null) 'resolutionSessionId': resolutionSessionId,
+      if (resolutionSessionId != null)
+        'resolutionSessionId': resolutionSessionId,
       if (seed != null) 'seed': seed,
       if (buildMode != null) 'buildMode': buildMode,
       if (source != null) 'source': source,
@@ -87,12 +88,19 @@ class TurnTraceAiSection {
       'outcome': outcome,
     };
   }
+
+  factory TurnTraceAiSection.fromJson(Map<String, Object?> json) {
+    return TurnTraceAiSection(
+      factionId: json['factionId']! as String,
+      state: _stringObjectMapFromDynamic(json['state']),
+      thresholds: _stringObjectMapFromDynamic(json['thresholds']),
+      outcome: _stringObjectMapFromDynamic(json['outcome']),
+    );
+  }
 }
 
 class TurnTraceResolutionSection {
-  const TurnTraceResolutionSection({
-    required this.phases,
-  });
+  const TurnTraceResolutionSection({required this.phases});
 
   final List<TurnTracePhaseTrace> phases;
 
@@ -116,12 +124,12 @@ class TurnTracePhaseTrace {
     final orderEventsRaw = json['orderEvents'];
     final orderEvents = orderEventsRaw is List<Object?>
         ? orderEventsRaw
-            .map(
-              (Object? e) => TurnTraceOrderEvent.fromJson(
-                _stringObjectMapFromDynamic(e),
-              ),
-            )
-            .toList(growable: false)
+              .map(
+                (Object? e) => TurnTraceOrderEvent.fromJson(
+                  _stringObjectMapFromDynamic(e),
+                ),
+              )
+              .toList(growable: false)
         : const <TurnTraceOrderEvent>[];
     return TurnTracePhaseTrace(
       phaseId: json['phaseId']! as String,
