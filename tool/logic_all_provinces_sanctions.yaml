@@ -4,13 +4,13 @@
 version: 1
 sanctions:
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_explorer.dart
-    line: 145
+    line: 140
     rationale: Cross-region explorer work enumeration over partially revealed provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_explorer.dart
-    line: 309
+    line: 318
     rationale: Cross-region explorer candidate materialization for suggestion pool.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
@@ -58,7 +58,7 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
-    line: 123
+    line: 137
     rationale: Army move suggestions need global province ownership snapshot.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
