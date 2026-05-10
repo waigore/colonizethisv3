@@ -32,7 +32,7 @@ export 'order_suggestion_context.dart'
         orderSuggestionWorkOrderAcceptanceProbeCountForTests;
 export 'order_suggestion_build.dart' show suggestBuildOrders;
 export 'order_suggestion_research.dart' show suggestResearchOrders;
-export 'order_suggestion_build_research.dart'
+export 'order_suggestion_work_tile_keys.dart'
     show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;
 export 'order_suggestion_move_army.dart'
     show
