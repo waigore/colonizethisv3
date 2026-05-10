@@ -25,7 +25,8 @@ int previewTotalTurnsForPendingWorkOrder({
     final provinceId =
         Unit.provinceIdFromTileKey(order.targetTileKey) ??
         unit.locationProvinceId;
-    final fortLevel = _provinceById(game, provinceId)?.fortLevel ?? 0;
+    final fortLevel =
+        tryGetProvince(game.worldState, provinceId)?.fortLevel ?? 0;
     return max(1, totalTurnsForWork(order.target, fortLevel: fortLevel));
   }
   if (order.target == kWorkTargetBuildImprovement) {
@@ -35,13 +36,6 @@ int previewTotalTurnsForPendingWorkOrder({
     return max(1, totalTurnsForWork(order.target, improvementLevel: level));
   }
   return max(1, totalTurnsForWork(order.target));
-}
-
-Province? _provinceById(Game game, String provinceId) {
-  for (final province in game.worldState.allProvinces()) {
-    if (province.id == provinceId) return province;
-  }
-  return null;
 }
 
 int _previewExploreTurns({

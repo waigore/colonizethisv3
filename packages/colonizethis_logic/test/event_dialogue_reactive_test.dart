@@ -16,12 +16,12 @@ void main() {
       nodes: const [
         TopologyNode(
           id: 'P1',
-          regionId: 'ow',
+          regionId: 'oldWorld',
           type: TopologyNodeType.province,
         ),
         TopologyNode(
           id: 'P2',
-          regionId: 'ow',
+          regionId: 'oldWorld',
           type: TopologyNodeType.province,
         ),
       ],
@@ -31,8 +31,8 @@ void main() {
     test('returns empty when builder is AI', () {
       final game = dialogueGame(
         oldWorldProvinces: const [
-          Province(id: 'ow|P1', regionId: 'ow', ownerId: 'gp2'),
-          Province(id: 'ow|P2', regionId: 'ow', ownerId: 'gp1'),
+          Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp2'),
+          Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'gp1'),
         ],
         players: const [
           Player(id: 'gp1', displayName: 'Human', isHuman: true),
@@ -43,7 +43,7 @@ void main() {
         game,
         topology,
         'gp2',
-        'ow|P2',
+        'oldWorld|P2',
         0,
       );
       expect(events, isEmpty);
@@ -54,8 +54,8 @@ void main() {
       () {
         final game = dialogueGame(
           oldWorldProvinces: const [
-            Province(id: 'ow|P1', regionId: 'ow', ownerId: 'gp2'),
-            Province(id: 'ow|P2', regionId: 'ow', ownerId: 'gp1'),
+            Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp2'),
+            Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'gp1'),
           ],
           players: const [
             Player(id: 'gp1', displayName: 'Human', isHuman: true),
@@ -66,7 +66,7 @@ void main() {
           game,
           topology,
           'gp1',
-          'ow|P2',
+          'oldWorld|P2',
           0,
         );
         expect(events.length, 1);
@@ -74,7 +74,7 @@ void main() {
         expect(events.first.category, 'reactive');
         expect(events.first.situation, 'forts_on_border');
         expect(events.first.variables['otherNation'], 'gp1');
-        expect(events.first.variables['province'], 'ow|P2');
+        expect(events.first.variables['province'], 'oldWorld|P2');
       },
     );
 

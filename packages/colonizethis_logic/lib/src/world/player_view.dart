@@ -262,7 +262,8 @@ bool provincePanelShowsFullTileDerivedIntel({
   Iterable<String>? provinceTileKeys,
 }) {
   final province =
-      view.provincesById[provinceId] ?? _findProvince(game, provinceId);
+      view.provincesById[provinceId] ??
+      tryGetProvince(game.worldState, provinceId);
   final ownerId = province?.ownerId;
   if (ownerId == humanPlayerId) {
     return true;
@@ -299,13 +300,6 @@ bool provincePanelShowsFullTileDerivedIntel({
     }
   }
   return true;
-}
-
-Province? _findProvince(Game game, String provinceId) {
-  for (final p in allProvinces(game.worldState)) {
-    if (p.id == provinceId) return p;
-  }
-  return null;
 }
 
 bool _hasOwnSpyInProvince(
