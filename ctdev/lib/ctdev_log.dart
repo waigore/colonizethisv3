@@ -24,20 +24,23 @@ final class _CtdevPlainFileOutputLogger extends OutputLogger {
   late String _dir;
   late String _ext;
   late final String __logName;
+  late final logging.Logger _parentLogger;
 
   _CtdevPlainFileOutputLogger(
     String parentName, {
+    required logging.Logger parentLogger,
     String selfname = 'file',
     bool selfonly = false,
     required String dir,
     String ext = '.log',
     int bufferSize = 100,
   }) : super(parentName, selfname: selfname, listening: false) {
+    _parentLogger = parentLogger;
     _bufferSize = bufferSize;
     _dir = dir;
     _ext = ext;
     __logName = '$parentName.$selfname';
-    logging.Logger(parentName).onRecord.listen((logging.LogRecord logRec) {
+    _parentLogger.onRecord.listen((logging.LogRecord logRec) {
       if (selfonly) {
         if (__logName == logRec.loggerName) _buffer.add(logRec);
       } else {
@@ -167,6 +170,7 @@ void startSimSession(String id) {
   final basicLogger = BasicLogger('ctdev');
   basicLogger.attachLogger(_CtdevPlainFileOutputLogger(
     basicLogger.name,
+    parentLogger: basicLogger.logger,
     dir: logsDir,
     bufferSize: 50,
   ));
