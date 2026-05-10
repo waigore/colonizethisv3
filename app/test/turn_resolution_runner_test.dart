@@ -88,6 +88,7 @@ void main() {
         expect(c.turnTracePhases, isNotEmpty);
         expect(c.turnTraceStartedAtUtc, isNotNull);
         expect(c.aiTraceSections, isNotNull);
+        expect(c.aiTraceSections, isEmpty);
       },
       timeout: const Timeout(Duration(seconds: 60)),
     );

@@ -76,6 +76,7 @@ export 'src/orders/order_suggestion.dart'
         getValidWorkOrderTileKeysWithVisibility,
         orderSuggestionWorkOrderAcceptanceProbeCountForTests,
         setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests;
+export 'src/orders/per_player_work_target_selection_cache.dart';
 export 'src/orders/unit_type_helpers.dart'
     show devExclusiveReservedTileKeysForPlayer;
 

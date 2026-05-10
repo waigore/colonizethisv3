@@ -45,7 +45,7 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 
 - Scope: this slice moves heavy turn-resolution execution to a worker isolate and streams live phase labels into the processing modal.
 - **Map next-turn path (`TurnResolutionRunner`):** Full AI order generation and **`mergeOrderLists`** run **inside the same worker isolate** as trusted-path resolution so the main UI thread only serializes inputs, spawns the worker, and applies the terminal result (Refs **#2277**). Other call sites (e.g. overlay next-turn) may still run Full AI on the main isolate until migrated.
-- The worker emits per-phase start/end progress events through a typed callback (`TurnPhaseProgressMarker`) and the UI updates phase text on `start`.
+- The worker emits per-phase start/end progress events through a typed callback (`TurnPhaseProgressMarker`) and the UI updates phase text on `start`, including a synthetic **`aiPlanning`** phase while Full AI runs on the worker.
 - Terminal success and terminal failure both close the modal; success applies the resolved result and failure shows the existing error snackbar.
 - Existing pending-human-input outcomes (overture/intervention/call-to-arms) remain valid terminal outputs for post-resolution UI flow.
 
