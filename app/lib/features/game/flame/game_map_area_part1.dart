@@ -523,7 +523,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
             event.marker != 'start') {
           return;
         }
-        phaseNotifier.value = _phaseLabel(event.phase);
+        phaseNotifier.value = turnResolutionProgressPhaseLabel(event.phase);
       });
       final terminal = await session.done;
       if (!mounted) {
@@ -571,26 +571,6 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         });
       }
     }
-  }
-
-  String _phaseLabel(String phase) {
-    return switch (phase) {
-      'aiPlanning' => 'Planning AI orders...',
-      'orders' => 'Validating orders...',
-      'extraction' => 'Resolving extraction...',
-      'richesToTreasury' => 'Moving riches to treasury...',
-      'consumption' => 'Resolving consumption...',
-      'production' => 'Resolving production...',
-      'research' => 'Resolving research...',
-      'diplomacy' => 'Resolving diplomacy...',
-      'movement' => 'Resolving movement...',
-      'minorRegimentUpgrade' => 'Upgrading minor regiments...',
-      'navalInterceptionCombat' => 'Resolving naval interceptions...',
-      'combat' => 'Resolving combat...',
-      'buildWork' => 'Resolving work orders...',
-      'endOfTurn' => 'Finalizing turn...',
-      _ => 'Resolving turn...',
-    };
   }
 
   void _e2eSelectFirstValidWorkTargetTile() {

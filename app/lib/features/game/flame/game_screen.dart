@@ -1,5 +1,6 @@
 export 'game_screen_shared.dart';
-export 'turn_resolution_flow.dart';
+
+import 'dart:async';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -12,6 +13,9 @@ import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_view_provider.dart';
+import '../../../../providers/turn_resolution_blocking_provider.dart';
+import '../../../../providers/turn_resolution_runner_provider.dart';
+import '../../../core/services/turn_resolution_runner.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../widgets/ct_nine_patch_button.dart';
 import '../../../widgets/ct_screen_shell.dart';
@@ -23,7 +27,9 @@ import '../dialogue/intervention_dialogue_overlay.dart';
 import '../dialogue/overture_dialogue_overlay.dart';
 import 'game_canvas.dart';
 import 'game_map_area.dart';
-import 'turn_resolution_flow.dart';
+import 'next_turn_confirmation_dialog.dart';
+import 'turn_resolution_processing_dialog.dart';
+import 'turn_resolution_progress_labels.dart';
 import 'turn_resolution_result_applier.dart';
 import 'victory_overlay.dart';
 
@@ -72,6 +78,107 @@ Future<bool> _showExitToMainMenuConfirmDialog(BuildContext context) async {
   return shouldExit ?? false;
 }
 
+Future<void> _runFlameCanvasNextTurn(
+  BuildContext context,
+  WidgetRef ref,
+  Game game,
+) async {
+  final currentTurn = game.worldState.turnState.turnNumber;
+  final ok = await showNextTurnConfirmationDialog(
+    context,
+    currentTurn: currentTurn,
+  );
+  if (ok != true || !context.mounted) {
+    return;
+  }
+
+  final service = ref.read(gameServiceProvider);
+  final runner = ref.read(turnResolutionRunnerProvider);
+  final failureMessage = appL10n(context).game_turnResolutionFailedMessage;
+  final messenger = ScaffoldMessenger.of(context);
+  final rootNavigator = Navigator.of(context, rootNavigator: true);
+  final orders = ref.read(currentOrdersProvider);
+  final mapData = service.getMapData(game.id);
+  if (mapData == null) {
+    throw StateError('Missing required map data for gameId=${game.id}');
+  }
+
+  final phaseNotifier = ValueNotifier<String>('Resolving turn...');
+  ref.read(turnResolutionBlockingProvider.notifier).setBlocking(true);
+  unawaited(
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (_) => ValueListenableBuilder<String>(
+        valueListenable: phaseNotifier,
+        builder: (_, text, _) =>
+            TurnResolutionProcessingDialog(phaseText: text),
+      ),
+    ),
+  );
+  await Future<void>.delayed(Duration.zero);
+
+  StreamSubscription<TurnResolutionProgressEvent>? progressSub;
+  try {
+    final session = runner.startResolution(
+      game: game,
+      orders: orders,
+      topology: mapData.combinedTopology,
+      tileMapByRegion: mapData.tileMapByRegion,
+      turnTraceEnabled: service.isTurnTraceEnabled,
+    );
+    final activeSessionId = session.sessionId;
+    progressSub = session.progress.listen((event) {
+      if (!context.mounted ||
+          event.sessionId != activeSessionId ||
+          event.marker != 'start') {
+        return;
+      }
+      phaseNotifier.value = turnResolutionProgressPhaseLabel(event.phase);
+    });
+    final terminal = await session.done;
+    if (!context.mounted) {
+      return;
+    }
+    switch (terminal) {
+      case TurnResolutionTerminalComplete c:
+        service.handleExternallyResolvedTurnResult(c.result);
+        if (service.isTurnTraceEnabled &&
+            c.result is TurnResolutionComplete &&
+            c.turnTracePhases != null &&
+            c.turnTraceStartedAtUtc != null) {
+          final complete = c.result as TurnResolutionComplete;
+          service.exportTurnTraceForExternallyResolvedTurn(
+            gameAtResolutionStart: game,
+            turnEndState: complete.game,
+            phases: c.turnTracePhases!,
+            ai: c.aiTraceSections ?? const <TurnTraceAiSection>[],
+            turnStartAtUtc: c.turnTraceStartedAtUtc!,
+          );
+        }
+        applyTurnResolutionResult(ref, c.result);
+      case TurnResolutionTerminalError e:
+        messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
+        throw StateError(e.errorMessage);
+    }
+  } catch (_) {
+    if (context.mounted) {
+      messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
+    }
+    rethrow;
+  } finally {
+    clearTurnResolutionBlockingFlag();
+    await progressSub?.cancel();
+    if (context.mounted) {
+      rootNavigator.maybePop();
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      phaseNotifier.dispose();
+    });
+  }
+}
+
 /// Hosts the Flame game canvas or map. When map data exists, shows map + province/sea zone overlay.
 class GameScreen extends ConsumerWidget {
   const GameScreen({super.key});
@@ -86,6 +193,7 @@ class GameScreen extends ConsumerWidget {
     final introShownIds = ref.watch(gameIdsWithIntroShownProvider);
     final showIntro = game != null && !introShownIds.contains(game.id);
     final pendingDiplomacy = ref.watch(pendingDiplomacyProvider);
+    final turnResolutionBlocking = ref.watch(turnResolutionBlockingProvider);
     Widget content = Stack(
       children: [
         if (mapViewData != null && game != null)
@@ -106,34 +214,11 @@ class GameScreen extends ConsumerWidget {
             right: 16,
             top: 16,
             child: CtNinePatchButton(
-              onPressed: () {
-                final service = ref.read(gameServiceProvider);
-                final orders = ref.read(currentOrdersProvider);
-                final mapData = service.getMapData(game.id);
-                if (mapData == null) {
-                  throw StateError(
-                    'Missing required map data for gameId=${game.id}',
-                  );
-                }
-                final result = resolveNextTurnForGameScreen(
-                  game: game,
-                  orders: orders,
-                  topologyForAi: mapData.combinedTopology,
-                  tileMapByRegion: mapData.tileMapByRegion,
-                  runTurnResolution:
-                      ({
-                        required Orders orders,
-                        Orders? aiOrders,
-                        List<TurnTraceAiSection>? aiTraceSections,
-                      }) => service.runTurnResolution(
-                        game,
-                        orders: orders,
-                        aiOrders: aiOrders,
-                        aiTraceSections: aiTraceSections,
-                      ),
-                );
-                applyTurnResolutionResult(ref, result);
-              },
+              onPressed: turnResolutionBlocking
+                  ? null
+                  : () async {
+                      await _runFlameCanvasNextTurn(context, ref, game);
+                    },
               child: Text(
                 appL10n(context).game_nextTurnButton(
                   game.worldState.turnState.turnNumber,
