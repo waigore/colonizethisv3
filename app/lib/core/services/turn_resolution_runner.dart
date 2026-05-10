@@ -306,6 +306,11 @@ void _turnResolutionIsolateMain(Map<String, Object?> args) {
       ),
     );
     final turnTraceEnabled = args['turnTraceEnabled'] == true;
+    sendPort.send(<String, Object?>{
+      'kind': 'phase',
+      'phase': 'aiPlanning',
+      'marker': 'start',
+    });
     final fullAi = generateOrdersForGameFullAI(
       game,
       topology,

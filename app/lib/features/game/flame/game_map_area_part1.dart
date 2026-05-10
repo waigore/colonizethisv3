@@ -575,6 +575,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
 
   String _phaseLabel(String phase) {
     return switch (phase) {
+      'aiPlanning' => 'Planning AI orders...',
       'orders' => 'Validating orders...',
       'extraction' => 'Resolving extraction...',
       'richesToTreasury' => 'Moving riches to treasury...',
