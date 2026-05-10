@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:colonizethis_app/core/services/turn_resolution_runner.dart';
+import 'package:colonizethis_app/features/game/flame/turn_resolution_progress_labels.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -283,7 +284,7 @@ void main() {
     );
 
     test(
-      'successful resolution advances the game turn (Refs #2277)',
+      'endOfTurn (Finalizing) finishes, session completes, next turn starts (Refs #2277)',
       () async {
         final startTurn = game.worldState.turnState.turnNumber;
         final runner = TurnResolutionRunner();
@@ -293,7 +294,15 @@ void main() {
           topology: topology,
           tileMapByRegion: tileMapByRegion,
         );
-        final terminal = await session.done;
+        final progressEvents = <TurnResolutionProgressEvent>[];
+        final sub = session.progress.listen(progressEvents.add);
+        late final TurnResolutionTerminalEvent terminal;
+        try {
+          terminal = await session.done;
+        } finally {
+          await sub.cancel();
+        }
+
         expect(terminal, isA<TurnResolutionTerminalComplete>());
         final wrapper = terminal as TurnResolutionTerminalComplete;
         expect(
@@ -303,10 +312,31 @@ void main() {
               'Worker must return a completed turn (not stuck finalizing) (#2277)',
         );
         final resolved = wrapper.result as TurnResolutionComplete;
+
+        expect(
+          turnResolutionProgressPhaseLabel('endOfTurn'),
+          'Finalizing turn...',
+          reason: 'UI label contract for resolver final phase (#2277)',
+        );
+        expect(
+          progressEvents.any(
+            (e) => e.phase == 'endOfTurn' && e.marker == 'end',
+          ),
+          isTrue,
+          reason:
+              'Resolver must emit endOfTurn:end before success (no hang on '
+              'Finalizing) (#2277)',
+        );
+
         expect(
           resolved.game.worldState.turnState.turnNumber,
-          greaterThan(startTurn),
-          reason: 'Turn number must advance when resolution finishes (#2277)',
+          startTurn + 1,
+          reason: 'Turn counter advances after full pipeline (#2277)',
+        );
+        expect(
+          resolved.game.worldState.turnState.phase,
+          TurnPhase.orders,
+          reason: 'Next turn begins in orders phase (#2277)',
         );
       },
       timeout: const Timeout(Duration(seconds: 60)),
