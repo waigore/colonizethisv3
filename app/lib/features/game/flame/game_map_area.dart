@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -50,6 +51,8 @@ import '../widgets/player_turn_event_feed.dart';
 part 'game_map_area_part1.dart';
 part 'game_map_area_part1b.dart';
 part 'game_map_area_part2.dart';
+
+final _gameMapNextTurnUiLog = packageLogger('logic');
 
 /// Map area with region tabs and province/sea zone detail overlay. SPEC/ui/province-sea-zone-detail-overlay.md.
 class GameMapArea extends ConsumerStatefulWidget {
