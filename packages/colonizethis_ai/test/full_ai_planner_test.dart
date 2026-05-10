@@ -127,6 +127,38 @@ void main() {
       expect(r.orders.moveOrdersByPlayerId['gp1'] ?? const [], isEmpty);
     });
 
+    test('onStagedPlannerProgress emits A–G sequence per AI player', () {
+      final game = _minimalGame(
+        players: const [
+          Player(
+            id: 'gp1',
+            displayName: 'England',
+            isHuman: false,
+            leaderKey: 'victoria',
+          ),
+        ],
+        hiddenAgendaByGpId: const {'gp1': 'peacemaker'},
+      );
+      const topology = MapTopology(nodes: [], edges: []);
+      final phases = <String>[];
+      generateOrdersForGameFullAI(
+        game,
+        topology,
+        onStagedPlannerProgress: phases.add,
+      );
+      const expected = <String>[
+        'suggestionPools',
+        'aiStageA',
+        'aiStageB',
+        'aiStageC',
+        'aiStageD',
+        'aiStageE',
+        'aiStageF',
+        'aiStageG',
+      ];
+      expect(phases, expected);
+    });
+
     test('includes schema-shaped AI trace section for full AI player', () {
       final game = _minimalGame(
         players: const [

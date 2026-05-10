@@ -4,6 +4,15 @@ import 'package:flutter/scheduler.dart';
 /// isolate + resolver). Refs #2277.
 String turnResolutionProgressPhaseLabel(String phase) {
   return switch (phase) {
+    'suggestionPools' => 'Building AI suggestion pools...',
+    'aiStageA' => 'Planning civilian work...',
+    'aiStageB' => 'Planning builds...',
+    'aiStageC' => 'Planning civilian moves...',
+    'aiStageD' => 'Planning army moves...',
+    'aiStageE' => 'Planning naval orders...',
+    'aiStageF' => 'Planning diplomacy...',
+    'aiStageG' => 'Planning research...',
+    'aiMerge' => 'Merging human and AI orders...',
     'aiPlanning' => 'Planning AI orders...',
     'orders' => 'Validating orders...',
     'extraction' => 'Resolving extraction...',

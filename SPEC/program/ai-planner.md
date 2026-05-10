@@ -23,7 +23,7 @@ All AI randomness flows from these seeds. Same save + seeds → same orders and 
 - **Phase 4 (Minimal / Simple Heuristics):** Legacy/default heuristics path retained for compatibility and diagnostics.
 
 - **Phase 6 (Full AI):** Advanced AI for simulation, testing, or optional hard mode. Used by ctdev Sim Game when "Use Full AI" is enabled. May be offered as an optional setting in the main game (e.g., "Advanced AI" difficulty toggle). Note: Full AI requires hidden agenda assignment at game setup (see below).
-- **Main app turn flow:** Main app turn advancement uses Phase 6 Full AI order generation for AI-controlled Great Powers (human orders merged with full-AI orders before turn resolution).
+- **Main app turn flow:** Main app turn advancement uses Phase 6 Full AI order generation for AI-controlled Great Powers (human orders merged with full-AI orders before turn resolution). Heavy Full AI runs on the worker isolate with the trusted resolver ([turn-resolution.md](turn-resolution.md)); `runDomainPlanners` may report coarse progress ids (`suggestionPools`, `aiStageA`–`aiStageG`) via `onStagedPlannerProgress` for the processing modal ([next-turn-confirmation.md](../ui/next-turn-confirmation.md)).
 
 ### Phase 4 (Minimal)
 1. Build PlayerView for each AI GP.

@@ -20,6 +20,9 @@ final _log = packageLogger();
 /// Runs economy, military, diplomacy, and research planners; returns combined orders
 /// for [nationId]. Uses [suggestionAPI] and [economyPlan] (cargo preference) to score
 /// build candidates. Deterministic given seeds.
+///
+/// When [onStagedPlannerProgress] is set, emits coarse phase ids aligned with
+/// staged planners A–G (Refs #2277): `suggestionPools`, `aiStageA` … `aiStageG`.
 Orders runDomainPlanners({
   required Game game,
   required MapTopology topology,
@@ -32,11 +35,15 @@ Orders runDomainPlanners({
   required OrderSuggestionAPI suggestionAPI,
   required EconomyPlan economyPlan,
   Map<String, TileMapResult>? tileMapByRegion,
+  void Function(String phaseId)? onStagedPlannerProgress,
 }) {
+  void emit(String phaseId) => onStagedPlannerProgress?.call(phaseId);
+
   var orders = const Orders();
   final domainWeights = getDomainWeightsForLeader(config.personalityId);
 
   // Economy: build/work suggestions weighted by economy domain.
+  emit('suggestionPools');
   final workCandidates = suggestionAPI.suggestWorkOrders(
     view,
     game,
@@ -90,6 +97,7 @@ Orders runDomainPlanners({
   } else if (workCandidates.isNotEmpty) {
     _log.d('work skipped nationId=$nationId weight below threshold');
   }
+  emit('aiStageA');
   final buildThreshold =
       30 - getAgendaBuildOrderModifier(config.hiddenAgendaId);
   _log.d(
@@ -112,6 +120,7 @@ Orders runDomainPlanners({
   } else if (buildCandidates.isNotEmpty) {
     _log.d('build skipped nationId=$nationId weight below threshold');
   }
+  emit('aiStageB');
 
   // Movement: suggest moves; weight by military/expand.
   orders = _runMovePlanner(
@@ -126,6 +135,7 @@ Orders runDomainPlanners({
     seeds: seeds,
     suggestionAPI: suggestionAPI,
   );
+  emit('aiStageC');
 
   orders = _runArmyMovePlanner(
     nationId: nationId,
@@ -138,6 +148,7 @@ Orders runDomainPlanners({
     seeds: seeds,
     suggestionAPI: suggestionAPI,
   );
+  emit('aiStageD');
 
   // Naval: suggest naval moves and missions; weight by military/expand.
   orders = _runNavalPlanner(
@@ -151,6 +162,7 @@ Orders runDomainPlanners({
     seeds: seeds,
     suggestionAPI: suggestionAPI,
   );
+  emit('aiStageE');
 
   // Diplomacy: suggest diplomatic orders; weight by diplomacy domain and goal.
   orders = runDiplomacyPlanner(
@@ -165,6 +177,7 @@ Orders runDomainPlanners({
     seeds: seeds,
     suggestionAPI: suggestionAPI,
   );
+  emit('aiStageF');
 
   // Research: suggest research; weight by tech domain, agenda (tech_thief boost), and personality research preference.
   final researchCandidates = suggestionAPI.suggestResearchOrders(
@@ -196,7 +209,10 @@ Orders runDomainPlanners({
       'candidates=${researchCandidates.map((o) => o.techId).toList()} scores=$scores',
     );
     final idx = pickWeightedIndex(scores, seeds.researchSeed, useIntRoll: true);
-    if (idx == null) return orders;
+    if (idx == null) {
+      emit('aiStageG');
+      return orders;
+    }
     final chosen = researchCandidates[idx];
     _log.i(
       'research chosen nationId=$nationId techId=${chosen.techId} score=${scores[idx]}',
@@ -207,6 +223,7 @@ Orders runDomainPlanners({
       'research skipped nationId=$nationId threshold not met or no candidates',
     );
   }
+  emit('aiStageG');
 
   return orders;
 }
