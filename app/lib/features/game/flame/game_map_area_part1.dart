@@ -514,6 +514,7 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         topology: mapData.combinedTopology,
         tileMapByRegion: mapData.tileMapByRegion,
         turnTraceEnabled: service.isTurnTraceEnabled,
+        turnTraceRootDirectory: service.turnTraceRootDirectory,
       );
       final activeSessionId = session.sessionId;
       _turnResolutionProgressSub?.cancel();

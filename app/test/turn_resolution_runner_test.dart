@@ -1,5 +1,7 @@
 // TurnResolutionRunner lifecycle (#2160).
 
+import 'dart:io';
+
 import 'package:colonizethis_app/core/services/turn_resolution_runner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -71,8 +73,16 @@ void main() {
     );
 
     test(
-      'turnTraceEnabled attaches phase traces and timestamps to terminal',
+      'turnTraceEnabled exports merged trace from worker (no phases on SendPort) (Refs #2277)',
       () async {
+        final tempDir = Directory.systemTemp.createTempSync(
+          'runner_turn_trace_',
+        );
+        addTearDown(() {
+          if (tempDir.existsSync()) {
+            tempDir.deleteSync(recursive: true);
+          }
+        });
         final runner = TurnResolutionRunner();
         final session = runner.startResolution(
           game: game,
@@ -80,15 +90,22 @@ void main() {
           topology: topology,
           tileMapByRegion: tileMapByRegion,
           turnTraceEnabled: true,
+          turnTraceRootDirectory: tempDir.path,
         );
         final terminal = await session.done;
         expect(terminal, isA<TurnResolutionTerminalComplete>());
         final c = terminal as TurnResolutionTerminalComplete;
-        expect(c.turnTracePhases, isNotNull);
-        expect(c.turnTracePhases, isNotEmpty);
+        expect(c.turnTracePhases, isNull,
+            reason: 'large phase snapshots must not cross SendPort (#2277)',
+        );
+        expect(c.aiTraceSections, isNull);
         expect(c.turnTraceStartedAtUtc, isNotNull);
-        expect(c.aiTraceSections, isNotNull);
-        expect(c.aiTraceSections, isEmpty);
+        expect(c.turnTraceExportPath, isNotNull);
+        final file = File(c.turnTraceExportPath!);
+        expect(file.existsSync(), isTrue);
+        final text = file.readAsStringSync();
+        expect(text, contains('schemaVersion'));
+        expect(text, contains('app_turn_worker'));
       },
       timeout: const Timeout(Duration(seconds: 60)),
     );
