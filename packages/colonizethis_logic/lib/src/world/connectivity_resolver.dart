@@ -29,7 +29,9 @@ class ConnectivityHotPathMetrics {
 ConnectivityHotPathMetrics? _connectivityHotPathMetricsForTests;
 
 /// When non-null, connectivity resolution increments [metrics] (test hook).
-void setConnectivityHotPathMetricsForTests(ConnectivityHotPathMetrics? metrics) {
+void setConnectivityHotPathMetricsForTests(
+  ConnectivityHotPathMetrics? metrics,
+) {
   _connectivityHotPathMetricsForTests = metrics;
 }
 
@@ -311,11 +313,7 @@ ConnectivityResult _connectedTilesForPlayer({
   final portInfo = _portToProvinceSeaZone(worldState);
   final connected = <String>{capitalKey};
   final pathCap = <String, int>{};
-  pathCap[capitalKey] = _transportLevelAtTile(
-    worldState,
-    capitalKey,
-    portInfo,
-  );
+  pathCap[capitalKey] = _transportLevelAtTile(worldState, capitalKey, portInfo);
   _runConnectivityPropagation(
     queue: Queue<String>()..add(capitalKey),
     connected: connected,
@@ -553,10 +551,7 @@ void _applyTownRuleConnectivityClosure({
     pendingTowns.add(tk);
   }
 
-  for (final province in allProvinces(game.worldState)) {
-    if (province.ownerId != playerId) continue;
-    final tk = province.townTileKey;
-    if (tk == null) continue;
+  for (final tk in townByTileKey.keys) {
     enqueueTownForExpansion(tk);
   }
 
@@ -580,11 +575,7 @@ void _applyTownRuleConnectivityClosure({
       final ny = coords.y + d.$2;
       if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height) continue;
       final cell = map.cell(nx, ny);
-      if (!_isLandProvinceGridCell(
-        cell,
-        coords.regionId,
-        provinceIdsByType,
-      )) {
+      if (!_isLandProvinceGridCell(cell, coords.regionId, provinceIdsByType)) {
         continue;
       }
       if (cell != coords.provinceLocalId) continue;

@@ -1,4 +1,3 @@
-
 part of 'game_setup_helpers.dart';
 
 const int _kNamingCapitalCollisionSalt = 919_393;
@@ -339,19 +338,10 @@ Game applyNaming({
   required Map<String, MapTopology> topologyByRegion,
 }) {
   final naming = defaultNamingConfig;
-  final owProvinces = <Province>[];
-  final nwProvinces = <Province>[];
-  final owById = <String, Province>{};
-  final nwById = <String, Province>{};
-  for (final p in allProvinces(game.worldState)) {
-    if (p.regionId == kRegionOldWorld) {
-      owProvinces.add(p);
-      owById[p.id] = p;
-    } else if (p.regionId == kRegionNewWorld) {
-      nwProvinces.add(p);
-      nwById[p.id] = p;
-    }
-  }
+  final owProvinces = List<Province>.from(game.worldState.oldWorld.provinces);
+  final nwProvinces = List<Province>.from(game.worldState.newWorld.provinces);
+  final owById = <String, Province>{for (final p in owProvinces) p.id: p};
+  final nwById = <String, Province>{for (final p in nwProvinces) p.id: p};
   final usedOwProvinceDisplayNames = <String>{};
   final usedNwProvinceDisplayNames = <String>{};
   var proceduralFallbackCount = 0;

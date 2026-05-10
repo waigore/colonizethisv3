@@ -138,13 +138,6 @@ List<String> neighborProvinceLocalIds(
   return neighborProvinceIdsInRegion(topology, regionId, localId).toList();
 }
 
-String? _ownerOfProvince(Game game, String fullProvinceId) {
-  for (final p in allProvinces(game.worldState)) {
-    if (p.id == fullProvinceId) return p.ownerId;
-  }
-  return null;
-}
-
 /// Reactive dialogue when a human builds a fort on a province adjacent to an AI.
 /// Emits one [DialogueEvent] per AI leader who owns a neighboring province. SPEC/ai/dialogue-and-mood.md (reactive).
 List<DialogueEvent> dialogueEventsForReactiveFortsOnBorder(
@@ -170,7 +163,7 @@ List<DialogueEvent> dialogueEventsForReactiveFortsOnBorder(
   final seenAi = <String>{};
   for (final neighborLocal in neighborLocalIds) {
     final fullId = ProvinceId.full(regionId, neighborLocal);
-    final ownerId = _ownerOfProvince(game, fullId);
+    final ownerId = tryGetProvince(game.worldState, fullId)?.ownerId;
     if (ownerId == null ||
         !isAiControlledForEvidence(game, ownerId) ||
         !seenAi.add(ownerId)) {
