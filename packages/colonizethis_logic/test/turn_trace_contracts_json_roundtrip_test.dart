@@ -25,7 +25,24 @@ void main() {
     expect(decoded.orderEvents.first.sequence, 0);
     expect(decoded.orderEvents.first.orderId, 'm1');
     expect(decoded.orderEvents.first.eventType, 'civilian_move_applied');
-    expect(decoded.orderEvents.first.payload, original.orderEvents.first.payload);
+    expect(
+      decoded.orderEvents.first.payload,
+      original.orderEvents.first.payload,
+    );
     expect(decoded.effects, original.effects);
+  });
+
+  test('TurnTraceAiSection round-trips through toJson / fromJson', () {
+    const original = TurnTraceAiSection(
+      factionId: 'gp1',
+      state: <String, Object?>{'a': 1},
+      thresholds: <String, Object?>{'t': 2},
+      outcome: <String, Object?>{'o': 3},
+    );
+    final decoded = TurnTraceAiSection.fromJson(original.toJson());
+    expect(decoded.factionId, original.factionId);
+    expect(decoded.state, original.state);
+    expect(decoded.thresholds, original.thresholds);
+    expect(decoded.outcome, original.outcome);
   });
 }
