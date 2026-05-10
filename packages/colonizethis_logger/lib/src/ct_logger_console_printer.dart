@@ -2,8 +2,9 @@ import 'package:logger/logger.dart';
 
 import 'operator_log_timestamp.dart';
 
-/// [LogPrinter] that delegates to [PrettyPrinter] (same defaults as
-/// `Logger()`), then injects exactly one [formatOperatorLogTimestamp]
+/// [LogPrinter] that delegates to [PrettyPrinter] (same defaults as the
+/// logger package's typical console configuration), then injects exactly one
+/// [formatOperatorLogTimestamp]
 /// segment on the first message row of each boxed event.
 final class CtLoggerConsolePrinter extends LogPrinter {
   CtLoggerConsolePrinter({
