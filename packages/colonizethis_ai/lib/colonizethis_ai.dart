@@ -12,7 +12,7 @@ export 'package:colonizethis_models/colonizethis_models.dart'
         StrategicOrderResult;
 export 'src/perception/dossier.dart';
 export 'src/domain_planners.dart';
-export 'src/diplomacy_planner.dart';
+export 'src/planning/diplomacy_planner.dart';
 export 'src/planning/economy_planner.dart';
 export 'src/planning/full_ai_planner.dart';
 export 'src/goal_manager.dart';
