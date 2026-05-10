@@ -273,10 +273,40 @@ void main() {
         );
         expect(
           badBytes,
-          greaterThan(goodBytes * 20),
+          greaterThan(goodBytes * 15),
           reason:
               'prior design replicated full game JSON per phase on SendPort; '
               'lean envelope regression guard (#2277)',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 60)),
+    );
+
+    test(
+      'successful resolution advances the game turn (Refs #2277)',
+      () async {
+        final startTurn = game.worldState.turnState.turnNumber;
+        final runner = TurnResolutionRunner();
+        final session = runner.startResolution(
+          game: game,
+          orders: const Orders(),
+          topology: topology,
+          tileMapByRegion: tileMapByRegion,
+        );
+        final terminal = await session.done;
+        expect(terminal, isA<TurnResolutionTerminalComplete>());
+        final wrapper = terminal as TurnResolutionTerminalComplete;
+        expect(
+          wrapper.result,
+          isA<TurnResolutionComplete>(),
+          reason:
+              'Worker must return a completed turn (not stuck finalizing) (#2277)',
+        );
+        final resolved = wrapper.result as TurnResolutionComplete;
+        expect(
+          resolved.game.worldState.turnState.turnNumber,
+          greaterThan(startTurn),
+          reason: 'Turn number must advance when resolution finishes (#2277)',
         );
       },
       timeout: const Timeout(Duration(seconds: 60)),

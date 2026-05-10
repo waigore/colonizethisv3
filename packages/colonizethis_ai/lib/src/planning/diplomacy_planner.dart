@@ -92,17 +92,27 @@ List<int> computeDiplomaticCandidateScores({
   const warCooldownTurns = 4;
   const improveRelationsCooldownTurns = 2;
   final currentTurn = game.worldState.turnState.turnNumber;
+  final warDesireByTarget = <String, int>{};
+  int warDesireForTarget(String targetFactionId, int relationScore) {
+    return warDesireByTarget.putIfAbsent(
+      targetFactionId,
+      () => computeWarDesireScore(
+        game: game,
+        nationId: nationId,
+        targetFactionId: targetFactionId,
+        relationScore: relationScore,
+      ),
+    );
+  }
   return candidates.map((o) {
     var s = 50;
     switch (o.type) {
       case DiplomaticOrderType.offerPeace:
         {
           final rel = snapshot.relations[o.targetFactionId];
-          final warDesire = computeWarDesireScore(
-            game: game,
-            nationId: nationId,
-            targetFactionId: o.targetFactionId,
-            relationScore: rel?.score ?? 50,
+          final warDesire = warDesireForTarget(
+            o.targetFactionId,
+            rel?.score ?? 50,
           );
           // Lower peace desire when current war desire remains high.
           s -= (warDesire - 50);
@@ -132,11 +142,9 @@ List<int> computeDiplomaticCandidateScores({
               s = 0;
               break;
             }
-            final warDesire = computeWarDesireScore(
-              game: game,
-              nationId: nationId,
-              targetFactionId: o.targetFactionId,
-              relationScore: relationScore,
+            final warDesire = warDesireForTarget(
+              o.targetFactionId,
+              relationScore,
             );
             final targetProvinceCount = provinceCountOwnedBy(
               game,
@@ -181,11 +189,9 @@ List<int> computeDiplomaticCandidateScores({
             break;
           }
           final rel = snapshot.relations[o.targetFactionId];
-          final warDesire = computeWarDesireScore(
-            game: game,
-            nationId: nationId,
-            targetFactionId: o.targetFactionId,
-            relationScore: rel?.score ?? 50,
+          final warDesire = warDesireForTarget(
+            o.targetFactionId,
+            rel?.score ?? 50,
           );
           final improveRelationsDesire = 100 - warDesire;
           s += (improveRelationsDesire - 50);

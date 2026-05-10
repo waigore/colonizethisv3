@@ -5,7 +5,10 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_ai/package_logger.dart';
 import 'strategic_ai.dart';
+
+final _log = packageLogger();
 
 /// Generates orders and economy plan for a single AI-controlled GP using full AI (Phase 6).
 /// Caller should ensure game has hidden agendas assigned ([assignHiddenAgendasForGame]).
@@ -122,6 +125,7 @@ FullAIResult generateOrdersForGameFullAI(
   void Function(PortraitMoodEvent)? onMood,
   void Function(String phaseId)? onStagedPlannerProgress,
 }) {
+  final totalStopwatch = Stopwatch()..start();
   final moveByPlayer = <String, List<MoveOrder>>{};
   final armyMoveByPlayer = <String, List<ArmyMoveOrder>>{};
   final buildByPlayer = <String, List<BuildUnitOrder>>{};
@@ -135,6 +139,8 @@ FullAIResult generateOrdersForGameFullAI(
 
   for (final player in game.players) {
     if (!isAiControlled(game, player.id)) continue;
+    final playerStopwatch = Stopwatch()..start();
+    _log.i('full_ai player_start gameId=${game.id} playerId=${player.id}');
     final traced = generateOrdersForPlayerFullAIWithTrace(
       game,
       topology,
@@ -144,6 +150,10 @@ FullAIResult generateOrdersForGameFullAI(
       onDialogue: onDialogue,
       onMood: onMood,
       onStagedPlannerProgress: onStagedPlannerProgress,
+    );
+    _log.i(
+      'full_ai player_complete gameId=${game.id} playerId=${player.id} '
+      'elapsedMs=${playerStopwatch.elapsedMilliseconds}',
     );
     final result = traced.result;
     economyPlansByPlayerId[player.id] = result.economyPlan;
@@ -192,6 +202,12 @@ FullAIResult generateOrdersForGameFullAI(
       result.orders.navalMissionOrdersByPlayerId[player.id],
     );
   }
+
+  _log.i(
+    'full_ai complete gameId=${game.id} '
+    'aiPlayers=${economyPlansByPlayerId.length} '
+    'elapsedMs=${totalStopwatch.elapsedMilliseconds}',
+  );
 
   return FullAIResult(
     orders: Orders(

@@ -179,9 +179,6 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   orderSuggestionLog.d(
     'suggestNavalMoveOrders player=$playerId candidates=${suggestions.length}',
   );
-  orderSuggestionLog.d(
-    'suggestNavalMoveOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} destSea=${o.destinationSeaZoneId} destPort=${o.destinationPortProvinceId}").join(", ")}',
-  );
   return suggestions;
 }
 
@@ -232,9 +229,6 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   });
   orderSuggestionLog.d(
     'suggestNavalMissionOrders player=$playerId candidates=${suggestions.length}',
-  );
-  orderSuggestionLog.d(
-    'suggestNavalMissionOrders full list ${suggestions.map((o) => "fleetId=${o.fleetId} mission=${o.mission}").join(", ")}',
   );
   return suggestions;
 }
@@ -517,9 +511,6 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   });
   orderSuggestionLog.d(
     'suggestDiplomaticOrders player=$playerId candidates=${suggestions.length}',
-  );
-  orderSuggestionLog.d(
-    'suggestDiplomaticOrders full list ${suggestions.map((o) => "${o.type.name}:${o.targetFactionId}").join(", ")}',
   );
   return suggestions;
 }

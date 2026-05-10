@@ -90,34 +90,17 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     game.worldState,
   ).where((u) => u.id == unitId).firstOrNull;
   if (unit == null || unit.ownerId != view.playerId) {
-    orderSuggestionLog.d(
-      'getValidWorkOrderTileKeysWithVisibility unit not found or not owned by player',
-    );
     return {};
   }
   if (unit.currentWork != null) {
-    orderSuggestionLog.d(
-      'getValidWorkOrderTileKeysWithVisibility unit has current work',
-    );
     return {};
   }
   if (playerHasPendingWorkOrderForUnit(currentOrders, view.playerId, unitId)) {
-    orderSuggestionLog.d(
-      'getValidWorkOrderTileKeysWithVisibility skipped pending draft work '
-      'unit=$unitId',
-    );
     return {};
   }
   if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) {
-    orderSuggestionLog.d(
-      'getValidWorkOrderTileKeysWithVisibility target $workTarget not allowed for unit type ${unit.type}',
-    );
     return {};
   }
-
-  orderSuggestionLog.d(
-    'getValidWorkOrderTileKeysWithVisibility unit=${unit.id} type=${unit.type} workTarget=$workTarget',
-  );
 
   final playerId = view.playerId;
 
@@ -146,10 +129,6 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     tileMapByRegion: tileMapByRegion,
   );
 
-  orderSuggestionLog.d(
-    'getValidWorkOrderTileKeysWithVisibility visible sorted count=${sortedVisible.length}',
-  );
-
   final valid = <String>{};
   for (final tileKey in sortedVisible) {
     if (isDevExclusiveWorkTarget(workTarget) &&
@@ -165,10 +144,6 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
       valid.add(tileKey);
     }
   }
-
-  orderSuggestionLog.d(
-    'getValidWorkOrderTileKeysWithVisibility unit=$unitId target=$workTarget count=${valid.length} (filtered from ${sortedVisible.length} visible candidates)',
-  );
   return valid;
 }
 
