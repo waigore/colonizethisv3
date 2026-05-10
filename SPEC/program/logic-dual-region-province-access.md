@@ -26,3 +26,25 @@ Raising the budget requires a SPEC update in this file and a maintainer-reviewed
 
 - Given the repository at `dev` with `packages/colonizethis_logic/lib/src/**` sources, when CI runs `dart run tool/ct_repo_lint.dart` including rule `repo.logic_dual_region_province_field_access`, then the checker counts matching lines outside `province_lookup.dart` and `unit_lookup.dart` and the run passes when the count is at most 28.
 - Given a contributor adds a 29th matching line outside `province_lookup.dart` and `unit_lookup.dart` without updating the budget in this SPEC and the checker constant, when repo lint runs, then the run fails and lists each `path:line` hit.
+
+## `allProvinces(` call-site sanction gate (Refs **#2278**)
+
+Broad iteration via the top-level helper `allProvinces(WorldState)` or the `WorldState.allProvinces()` extension method must stay **reviewable**: every production call site under `packages/colonizethis_logic/lib/src/**` (excluding generated Dart suffixes per the shared repo-lint contract) is **explicitly listed** in `tool/logic_all_provinces_sanctions.yaml`, unless it lives in the canonical file below.
+
+| Field | Value |
+|-------|--------|
+| `rule_id` | `repo.logic_all_provinces_sanctioned_calls` |
+| Checker | `tool/check_logic_all_provinces_sanctioned_calls.dart` |
+| Allowlist | `tool/logic_all_provinces_sanctions.yaml` |
+| Scan root | `packages/colonizethis_logic/lib/src/` (non-generated `.dart` only) |
+| Excluded file | `packages/colonizethis_logic/lib/src/world/province_lookup.dart` (definitions of `allProvinces` / `WorldState.allProvinces()` and internal uses) |
+
+**Sanction workflow:** Any new `allProvinces(` / `*.allProvinces(` line in the scan root must add a `sanctions:` entry in the same PR: `path` (repo-relative), `line` (1-based physical line), short `rationale`, and pointer to this SPEC section or the approving issue. The checker fails on **unsanctioned** hits and on **stale** sanctions (YAML entry whose file/line no longer contains `allProvinces(`). Package tests under `packages/colonizethis_logic/test/**` are not scanned.
+
+### Acceptance criteria
+
+- Given the repository at `dev` with `packages/colonizethis_logic/lib/src/**` production sources, when CI runs `dart run tool/ct_repo_lint.dart` including rule `repo.logic_all_provinces_sanctioned_calls`, then every line outside `province_lookup.dart` that contains `allProvinces(` has a matching `path` + `line` entry in `tool/logic_all_provinces_sanctions.yaml` and the run passes.
+
+- Given a contributor adds a new `allProvinces(` call site under the scan root without extending `tool/logic_all_provinces_sanctions.yaml`, when repo lint runs, then the run fails and prints each unsanctioned `path:line`.
+
+- Given a contributor removes or moves a sanctioned call without updating the YAML entry, when repo lint runs, then the run fails and prints each stale `path:line` from the allowlist.
