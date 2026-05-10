@@ -23,14 +23,14 @@ Object? _deepToJsonEncodable(Object? value) {
   if (value == null || value is bool || value is num || value is String) {
     return value;
   }
-  if (value is Map) {
+  if (value is Map<Object?, Object?>) {
     final out = <String, Object?>{};
-    for (final entry in value.entries) {
+    for (final MapEntry<Object?, Object?> entry in value.entries) {
       out[entry.key.toString()] = _deepToJsonEncodable(entry.value);
     }
     return out;
   }
-  if (value is List) {
+  if (value is List<Object?>) {
     return value.map(_deepToJsonEncodable).toList(growable: false);
   }
   return value.toString();
