@@ -174,16 +174,17 @@ void _addExplorerWorkSuggestionsForUnit({
         .add(kWorkTargetExplore);
     for (final chosen in acceptedExplores) {
       suggestions.add(chosen);
-      _suggestionWorkLog(
-        unitId: unit.id,
-        unitType: unit.type,
-        unitRegionId: regionId,
-        atProvinceId: provinceId,
-        workTarget: kWorkTargetExplore,
-        outcome: 'included',
-        tile: chosen.targetTileKey,
-      );
     }
+    _suggestionWorkLog(
+      unitId: unit.id,
+      unitType: unit.type,
+      unitRegionId: regionId,
+      atProvinceId: provinceId,
+      workTarget: kWorkTargetExplore,
+      outcome: 'included',
+      tile: acceptedExplores.first.targetTileKey,
+      includedRowCount: acceptedExplores.length,
+    );
   } else {
     _suggestionWorkLog(
       unitId: unit.id,
@@ -370,14 +371,15 @@ void _addProspectSuggestionIfEligible({
       .add(kWorkTargetProspect);
   for (final candidate in prospectRows) {
     suggestions.add(candidate);
-    _suggestionWorkLog(
-      unitId: unit.id,
-      unitType: unit.type,
-      unitRegionId: regionId,
-      atProvinceId: provinceId,
-      workTarget: kWorkTargetProspect,
-      outcome: 'included',
-      tile: candidate.targetTileKey,
-    );
   }
+  _suggestionWorkLog(
+    unitId: unit.id,
+    unitType: unit.type,
+    unitRegionId: regionId,
+    atProvinceId: provinceId,
+    workTarget: kWorkTargetProspect,
+    outcome: 'included',
+    tile: prospectRows.first.targetTileKey,
+    includedRowCount: prospectRows.length,
+  );
 }

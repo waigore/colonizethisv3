@@ -29,10 +29,20 @@ void _suggestionWorkLog({
   required String outcome,
   String reason = '-',
   String tile = '-',
+
+  /// When [outcome] is `included` and greater than 1 row is accepted in one
+  /// pass, emit a single summary line with `includedCount=` (Refs #2277,
+  /// SPEC/program/order-suggestions.md § Suggestion observability).
+  int? includedRowCount,
 }) {
+  final multiIncluded =
+      outcome == 'included' && includedRowCount != null && includedRowCount > 1;
+  final tileField = multiIncluded ? '-' : tile;
+  final countSuffix = multiIncluded ? ' includedCount=$includedRowCount' : '';
   orderSuggestionLog.d(
     'suggest_work unitId=$unitId unitType=$unitType region=$unitRegionId '
-    'at=$atProvinceId target=$workTarget outcome=$outcome reason=$reason tile=$tile',
+    'at=$atProvinceId target=$workTarget outcome=$outcome reason=$reason '
+    'tile=$tileField$countSuffix',
   );
 }
 
@@ -68,15 +78,34 @@ void _runWorkSuggestionPipeline({
   }
 
   var sawCandidate = false;
-  var acceptedAny = false;
+  var acceptedCount = 0;
+  var firstIncludedTile = '-';
   for (final candidate in candidatesProvider()) {
     sawCandidate = true;
     if (!candidateAcceptor(candidate)) continue;
-    acceptedAny = true;
+    acceptedCount++;
     suggestions.add(candidate);
     existingTargetsByUnit
         .putIfAbsent(unit.id, () => <String>{})
         .add(workTarget);
+    if (acceptedCount == 1) {
+      firstIncludedTile = candidate.targetTileKey;
+    }
+    if (!includeAllAccepted) {
+      _suggestionWorkLog(
+        unitId: unit.id,
+        unitType: unitType,
+        unitRegionId: unitRegionId,
+        atProvinceId: atProvinceId,
+        workTarget: workTarget,
+        outcome: 'included',
+        tile: candidate.targetTileKey,
+      );
+      return;
+    }
+  }
+
+  if (acceptedCount > 0) {
     _suggestionWorkLog(
       unitId: unit.id,
       unitType: unitType,
@@ -84,12 +113,10 @@ void _runWorkSuggestionPipeline({
       atProvinceId: atProvinceId,
       workTarget: workTarget,
       outcome: 'included',
-      tile: candidate.targetTileKey,
+      tile: firstIncludedTile,
+      includedRowCount: acceptedCount,
     );
-    if (!includeAllAccepted) return;
-  }
-
-  if (!acceptedAny) {
+  } else {
     _suggestionWorkLog(
       unitId: unit.id,
       unitType: unitType,

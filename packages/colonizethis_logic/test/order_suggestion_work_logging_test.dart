@@ -239,6 +239,93 @@ void main() {
     );
 
     test(
+      'explorer multiple prospect tiles emit one suggest_work with includedCount',
+      () {
+        const playerId = 'gp1';
+        const ow = 'oldWorld';
+        const provinceId = '$ow|p1';
+        const t0 = '$ow|p1|0|0';
+        const t1 = '$ow|p1|1|0';
+        final player = const Player(
+          id: playerId,
+          displayName: 'GP',
+          isHuman: false,
+        );
+        final province = Province(
+          id: provinceId,
+          regionId: ow,
+          ownerId: playerId,
+        );
+        final explorer = Unit(
+          id: 'u_explorer',
+          type: kUnitTypeExplorer,
+          ownerId: playerId,
+          locationProvinceId: provinceId,
+          tileKey: t0,
+          status: UnitStatus.idle,
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: [province], units: [explorer]),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            ow: {
+              provinceId: [t0, t1],
+            },
+          },
+          resourceByTileKey: const {t0: 'iron', t1: 'iron'},
+          playerVisibilityByTile: const {
+            playerId: {t0: 'fogged', t1: 'fogged'},
+          },
+        );
+        final game = Game(
+          id: 'g-prospect-log',
+          worldState: world,
+          players: [player],
+          minorNations: const [],
+          tribes: const [],
+        );
+        final topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'p1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final view = buildPlayerView(game, topology, playerId);
+        final suggestions = suggestWorkOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+        final prospectOrders = suggestions
+            .where((o) => o.target == kWorkTargetProspect)
+            .toList();
+        expect(
+          prospectOrders.length,
+          greaterThanOrEqualTo(2),
+          reason:
+              'fixture must surface multiple prospect rows to assert summary',
+        );
+
+        final prospectLines = _suggestWorkLines(
+          capturedEvents,
+        ).where((l) => l.contains('target=prospect')).toList();
+        expect(prospectLines, hasLength(1));
+        expect(
+          prospectLines.single,
+          contains('includedCount=${prospectOrders.length}'),
+        );
+        expect(prospectLines.single, contains('outcome=included'));
+        expect(prospectLines.single, contains('tile=-'));
+      },
+    );
+
+    test(
       'explorer pending targets preserve duplicate check and log ordering',
       () {
         const playerId = 'gp1';
