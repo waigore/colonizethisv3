@@ -1,3 +1,5 @@
+import 'package:flutter/scheduler.dart';
+
 /// User-visible labels for [TurnResolutionRunner] progress `phase` ids (worker
 /// isolate + resolver). Refs #2277.
 String turnResolutionProgressPhaseLabel(String phase) {
@@ -18,4 +20,12 @@ String turnResolutionProgressPhaseLabel(String phase) {
     'endOfTurn' => 'Finalizing turn...',
     _ => 'Resolving turn...',
   };
+}
+
+/// After scheduling [TurnResolutionProcessingDialog] (non-awaited
+/// [showDialog]), waits until the next frame is presented so the modal can
+/// paint before [TurnResolutionRunner.startResolution] runs main-isolate work
+/// (spawn payload serialization). Refs #2277.
+Future<void> awaitTurnResolutionProcessingDialogFirstPaint() async {
+  await SchedulerBinding.instance.endOfFrame;
 }
