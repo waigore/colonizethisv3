@@ -40,7 +40,7 @@ Signature (conceptual): `WorldState resolve(WorldState current)` or `Game resolv
 
 ### Background execution (app, #2160)
 
-The Flutter app may run full turn resolution in a **worker isolate** via **`TurnResolutionRunner`** (`app/lib/core/services/turn_resolution_runner.dart`): AI orders are computed on the **main** isolate, merged with human orders, then serialized `Game` + `Orders` + map topology are passed to the isolate. The isolate calls **`resolveTurnForGame`** with an **`onPhaseProgress`** callback so the UI can show live phase labels. The app applies **`TurnResolutionResult`** on the main isolate when the session completes. See [logging/turn-resolution.md](logging/turn-resolution.md) for app-layer runner log lines and [app-event-bus.md](app-event-bus.md) for UI blocking while resolution is active.
+The Flutter app may run **Full AI order generation**, **`mergeOrderLists`**, and full turn resolution in a **single worker isolate** via **`TurnResolutionRunner`** (`app/lib/core/services/turn_resolution_runner.dart`): the main isolate passes serialized **`Game`**, **human draft `Orders`**, combined **`MapTopology`**, and **`tileMapByRegion`** (same payload shape as before; the `orders` field is human-only until merged inside the worker). The isolate runs **`generateOrdersForGameFullAI`**, merges AI + human orders, then calls **`validateOrdersAndResolveTurnFromTrustedOrders`** with an **`onPhaseProgress`** callback so the UI can show live phase labels. The app applies **`TurnResolutionResult`** on the main isolate when the session completes. See [logging/turn-resolution.md](logging/turn-resolution.md) for app-layer runner log lines and [app-event-bus.md](app-event-bus.md) for UI blocking while resolution is active. Refs **#2277**.
 
 ---
 
