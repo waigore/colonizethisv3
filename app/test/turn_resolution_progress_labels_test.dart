@@ -8,6 +8,10 @@ void main() {
       'Planning AI orders...',
     );
     expect(turnResolutionProgressPhaseLabel('orders'), isNotEmpty);
+    expect(
+      turnResolutionProgressPhaseLabel('endOfTurn'),
+      'Finalizing turn...',
+    );
     expect(turnResolutionProgressPhaseLabel('unknownPhase'), 'Resolving turn...');
   });
 }
