@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/player_view.dart';
-import 'order_suggestion_build_research.dart';
+import 'order_suggestion_work_tile_keys.dart';
 import 'order_suggestion_helpers.dart';
 
 /// Per-unit civilian work availability for UI (Refs #2133).

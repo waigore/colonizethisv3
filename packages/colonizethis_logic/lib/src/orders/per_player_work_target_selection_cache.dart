@@ -5,7 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/player_view.dart';
-import 'order_suggestion_build_research.dart';
+import 'order_suggestion_work_tile_keys.dart';
 
 /// Inputs for populating per-player work-target tile selection caches.
 ///
