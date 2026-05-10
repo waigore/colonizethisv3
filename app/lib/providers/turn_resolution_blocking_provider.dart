@@ -2,7 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app.dart' show appNavigatorKey;
 
-/// True while isolate turn resolution is active from the map screen (#2160).
+/// True while isolate turn resolution is active from the map or Flame canvas
+/// game screen (#2160, Refs #2277).
 /// [AppEventHandler] and shell session listeners consume this flag to suppress
 /// disallowed navigation/panels/commands; only pause-menu opens remain allowed at
 /// handler level unless otherwise documented in SPEC/program/app-event-bus.md.
