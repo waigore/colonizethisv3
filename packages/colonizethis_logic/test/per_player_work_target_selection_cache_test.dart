@@ -1,15 +1,8 @@
-import 'package:colonizethis_app/features/game/flame/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        PlayerView,
-        VisibilityLevel,
-        kWorkTargetBuildImprovement,
-        kWorkTargetExplore,
-        kWorkTargetProspect;
-import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
 
 void main() {
   suppressLogsForTests();
@@ -17,18 +10,18 @@ void main() {
   group('PerPlayerWorkTargetSelectionCache', () {
     WorkTargetSelectionSnapshot snapshotForPlayer(String playerId) {
       return WorkTargetSelectionSnapshot(
-        game: ct_models.Game(
+        game: Game(
           id: 'g_$playerId',
-          worldState: const ct_models.WorldState(
-            turnState: ct_models.TurnState(
-              phase: ct_models.TurnPhase.orders,
+          worldState: const WorldState(
+            turnState: TurnState(
+              phase: TurnPhase.orders,
               turnNumber: 1,
             ),
-            oldWorld: ct_models.RegionData(provinces: [], units: []),
-            newWorld: ct_models.RegionData(provinces: [], units: []),
+            oldWorld: RegionData(provinces: [], units: []),
+            newWorld: RegionData(provinces: [], units: []),
           ),
           players: [
-            ct_models.Player(
+            Player(
               id: playerId,
               displayName: playerId,
               isHuman: true,
@@ -38,7 +31,7 @@ void main() {
         playerId: playerId,
         playerView: PlayerView(
           playerId: playerId,
-          player: ct_models.Player(
+          player: Player(
             id: playerId,
             displayName: playerId,
             isHuman: true,
@@ -50,7 +43,7 @@ void main() {
           diplomacyByOtherId: const {},
         ),
         topology: const MapTopology(nodes: [], edges: []),
-        currentOrders: const ct_models.Orders(),
+        currentOrders: const Orders(),
         tileMapByRegion: null,
       );
     }
