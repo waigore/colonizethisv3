@@ -35,6 +35,7 @@ class DebugConsoleCommandParser {
       '/flip_province' => _parseFlipProvince(tokens),
       '/reveal_province' => _parseRevealProvince(tokens),
       '/get_tile_basic_info' => _parseGetTileBasicInfo(tokens),
+      '/list_players' => _parseListPlayers(tokens),
       '/help' => DebugConsoleParseResult.error(_buildHelpMessage()),
       _ => DebugConsoleParseResult.error(
         'Unknown command: $command. Try /help.',
@@ -265,6 +266,15 @@ class DebugConsoleCommandParser {
       DebugConsoleParsedInvocation.getTileBasicInfo(),
     );
   }
+
+  DebugConsoleParseResult _parseListPlayers(List<String> tokens) {
+    if (tokens.length != 1) {
+      return const DebugConsoleParseResult.error('Usage: /list_players');
+    }
+    return const DebugConsoleParseResult.success(
+      DebugConsoleParsedInvocation.listPlayers(),
+    );
+  }
 }
 
 String? _canonicalCommodityIdForInput(String normalizedInput) {
@@ -297,7 +307,8 @@ String _buildHelpMessage() {
       '- /flip_province <regionId|localId>\n'
       '- /reveal_province <regionId|localId | province_display_name>\n'
       '- /get_tile_basic_info\n'
-      '  if name is ambiguous, retry with full province id.';
+      '  if name is ambiguous, retry with full province id.\n'
+      '- /list_players';
 }
 
 bool _looksLikePrefixedProvinceId(String value) {

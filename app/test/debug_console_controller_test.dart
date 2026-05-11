@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/features/game/flame/debug_console_controller.dart';
+import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/services.dart';
@@ -25,7 +26,7 @@ void main() {
       final controller = DebugConsoleController(
         bus: bus,
         humanPlayerId: 'human_1',
-        selectedTileKeyProvider: () => null,
+        readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
         onClose: () {},
       );
       addTearDown(controller.dispose);
@@ -60,7 +61,7 @@ void main() {
         final controller = DebugConsoleController(
           bus: bus,
           humanPlayerId: 'human_1',
-          selectedTileKeyProvider: () => null,
+          readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
           onClose: () {},
         );
         addTearDown(controller.dispose);
@@ -85,7 +86,7 @@ void main() {
       final controller = DebugConsoleController(
         bus: bus,
         humanPlayerId: 'human_1',
-        selectedTileKeyProvider: () => null,
+        readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
         onClose: () => closeCount += 1,
       );
       addTearDown(controller.dispose);
@@ -148,7 +149,8 @@ void main() {
       final controller = DebugConsoleController(
         bus: bus,
         humanPlayerId: 'human_1',
-        selectedTileKeyProvider: () => selectedTileKey,
+        readOnlyContextProvider: () =>
+            DebugConsoleReadOnlyContext(selectedTileKey: selectedTileKey),
         onClose: () {},
       );
       addTearDown(controller.dispose);
@@ -169,6 +171,53 @@ void main() {
       await tester.pump();
       expect(missingMessage, 'No tile is selected.');
       expect(events, isEmpty);
+    });
+
+    testWidgets('list_players stays read-only and appends output', (
+      tester,
+    ) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      final events = <SessionCommandEvent>[];
+      final eventSub = bus.on<SessionCommandEvent>().listen(events.add);
+      addTearDown(eventSub.cancel);
+      final snackbars = <ShowSnackBarEvent>[];
+      final snackbarSub = bus.on<ShowSnackBarEvent>().listen(snackbars.add);
+      addTearDown(snackbarSub.cancel);
+
+      final controller = DebugConsoleController(
+        bus: bus,
+        humanPlayerId: 'human_1',
+        readOnlyContextProvider: () => DebugConsoleReadOnlyContext(
+          players: [
+            const DebugConsolePlayerSnapshot(
+              id: 'b',
+              displayName: 'Bee',
+              isHuman: false,
+              capitalProvinceId: 'r|P1',
+            ),
+            const DebugConsolePlayerSnapshot(
+              id: 'a',
+              displayName: 'Ay',
+              isHuman: true,
+              capitalProvinceId: null,
+            ),
+          ],
+        ),
+        onClose: () {},
+      );
+      addTearDown(controller.dispose);
+
+      controller.textController.text = '/list_players';
+      final message = controller.submit();
+      await tester.pump();
+
+      expect(message, contains('players_count: 2'));
+      expect(message, contains('player_id: a'));
+      expect(message, contains('type: human'));
+      expect(message, contains('eliminated: true'));
+      expect(events, isEmpty);
+      expect(snackbars.last.message, contains('players_count: 2'));
     });
   });
 }

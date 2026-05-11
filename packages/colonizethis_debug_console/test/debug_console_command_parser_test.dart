@@ -251,5 +251,24 @@ void main() {
       ).allMatches(message).length;
       expect(matches, 1);
     });
+
+    test('parses list_players successfully', () {
+      final result = parser.parse('/list_players');
+      expect(result.isError, isFalse);
+      expect(result.invocation, isA<DebugConsoleListPlayers>());
+    });
+
+    test('rejects list_players extra args with usage', () {
+      final result = parser.parse('/list_players foo');
+      expect(result.isError, isTrue);
+      expect(result.message, 'Usage: /list_players');
+    });
+
+    test('help includes list_players exactly once', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      final matches = RegExp(r'/list_players').allMatches(message).length;
+      expect(matches, 1);
+    });
   });
 }

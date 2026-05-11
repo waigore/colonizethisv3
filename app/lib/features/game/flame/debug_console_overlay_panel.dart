@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/l10n/l10n.dart';
+import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,14 +10,14 @@ class DebugConsoleOverlayPanel extends StatefulWidget {
   const DebugConsoleOverlayPanel({
     required this.bus,
     required this.humanPlayerId,
-    required this.selectedTileKeyProvider,
+    required this.readOnlyContextProvider,
     required this.onClose,
     super.key,
   });
 
   final AppEventBus bus;
   final String humanPlayerId;
-  final String? Function() selectedTileKeyProvider;
+  final DebugConsoleReadOnlyContext? Function() readOnlyContextProvider;
   final VoidCallback onClose;
 
   @override
@@ -33,7 +34,7 @@ class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
     _controller = DebugConsoleController(
       bus: widget.bus,
       humanPlayerId: widget.humanPlayerId,
-      selectedTileKeyProvider: widget.selectedTileKeyProvider,
+      readOnlyContextProvider: widget.readOnlyContextProvider,
       onClose: widget.onClose,
     );
   }

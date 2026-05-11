@@ -28,9 +28,9 @@
 - **`/flip_province <regionId> <province_display_name>`** and **`/flip_province <regionId|localId>`** — requests one canonical province ownership transfer to the human player by region-scoped display-name match or direct full-id targeting. Ambiguous display-name matches return deterministic candidate ids and require id-form retry.
 - **`/reveal_province <regionId|localId | province_display_name>`** — reveals one province for the human player by full province id or global display-name exact match (trim + case-insensitive). Unprefixed local ids (e.g. `P12`) are rejected deterministically; ambiguous display-name matches return deterministic candidate ids and require id-form retry.
 - **`/get_tile_basic_info`** — read-only command that reports ids from the current orange tile selection (`mapProvincePanelProvider.selectedTileKey`). Success output is multiline and includes `tile_id: <regionId|localProvinceId|x|y>` and `province_id: <regionId|localProvinceId>`. Missing selection returns deterministic error `No tile is selected.`; malformed selection returns deterministic error `Selected tile key is invalid.`.
-- **`/help`** — Lists supported commands and bounds. `/spawn_regiment` and `/spawn_ship` help text must include every canonical catalog id exactly once in stable sorted order, generated from the same catalog-derived source used for parser validation.
-- **Orders-phase gate policy** — `/add_money`, `/add_resource`, `/flip_province`, and `/reveal_province` are allowed only during human Orders phase. Outside Orders phase, the app listener rejects command apply with deterministic feedback and leaves game state unchanged.
+- **`/list_players`** — read-only command that enumerates all `Game.players` in ascending `player.id` order. Success output starts with `players_count: <N>` and one blank-line-separated block per player with `player_id`, `display_name` (empty/blank `displayName` falls back to `player_id`), `type` (`human` or `ai`), and `eliminated` (`true` when `capitalProvinceId == null`, else `false`). Extra arguments return `Usage: /list_players`. When the submit-time read-only context does not supply a `players` projection, the executor returns deterministic error `Player list is unavailable.` with no events.
 - **`/help`** — Lists supported commands and bounds. `/spawn_regiment`, `/spawn_ship`, and `/add_resource` help text must include every canonical catalog id exactly once in stable sorted order, generated from the same catalog-derived source used for parser validation.
+- **Orders-phase gate policy** — `/add_money`, `/add_resource`, `/flip_province`, and `/reveal_province` are allowed only during human Orders phase. Outside Orders phase, the app listener rejects command apply with deterministic feedback and leaves game state unchanged.
 
 ---
 
@@ -40,7 +40,7 @@
 - `ArrowUp` navigates older commands; `ArrowDown` navigates newer commands.
 - `Escape` closes panel.
 - Successful command emits typed session event and shows feedback via snackbar (same dual path as spawn: executor-queued message plus listener-applied message; dedupe out of scope).
-- Read-only info commands (for example `/get_tile_basic_info`) append deterministic output and show snackbar feedback without emitting `SessionCommandEvent`.
+- Read-only info commands (for example `/get_tile_basic_info`, `/list_players`) append deterministic output and show snackbar feedback without emitting `SessionCommandEvent`.
 - Invalid command shows deterministic error feedback and does not emit session command events.
 
 ---
@@ -85,6 +85,13 @@
 - Given panel input `/help`, when displayed, then `/add_resource` documentation includes every `CommodityCatalog.byId` id exactly once in stable sorted order.
 - Given `mapProvincePanelProvider.selectedTileKey = oldWorld|P12|34|21`, when the player submits `/get_tile_basic_info`, then the system appends multiline success output with `tile_id: oldWorld|P12|34|21` and `province_id: oldWorld|P12` and emits no session command events.
 - Given `mapProvincePanelProvider.selectedTileKey = null`, when the player submits `/get_tile_basic_info`, then the system appends deterministic error `No tile is selected.` and emits no session command events.
+- Given the active game has three players with ids `a`, `b`, and `c` and the debug console submit-time context supplies their snapshots, when the player submits `/list_players`, then the system appends multiline output whose first line is `players_count: 3` and whose `player_id:` lines appear in ascending id order `a`, then `b`, then `c`.
+- Given a player snapshot has `isHuman=true`, when `/list_players` runs, then that player block contains `type: human`; given `isHuman=false`, then that block contains `type: ai`.
+- Given a player snapshot has empty or whitespace-only `displayName`, when `/list_players` runs, then that player block contains `display_name: <player_id>` matching that snapshot id.
+- Given a player snapshot has `capitalProvinceId == null`, when `/list_players` runs, then that player block contains `eliminated: true`; given a non-null `capitalProvinceId`, then that block contains `eliminated: false`.
+- Given panel input `/list_players extra`, when the player submits, then the system shows deterministic usage feedback `Usage: /list_players` and emits no session command events.
+- Given panel input `/help`, when displayed, then the help text includes `/list_players` exactly once.
+- Given the submit-time read-only context omits `players` (null projection), when the player submits `/list_players`, then the system appends deterministic error `Player list is unavailable.` and emits no session command events.
 
 ---
 
