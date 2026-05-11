@@ -262,16 +262,15 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
         ..retainWhere(
           (army) => army.regimentUnitIds.any(defenderUnitIdSet.contains),
         )
-        ..sort((a, b) => a.id.compareTo(b.id));
-      String? primaryDefenderArmyId;
-      if (defenderArmies.isNotEmpty) {
-        defenderArmies.sort((a, b) {
+        ..sort((a, b) {
           final countCmp = b.regimentUnitIds.length.compareTo(
             a.regimentUnitIds.length,
           );
           if (countCmp != 0) return countCmp;
           return a.id.compareTo(b.id);
         });
+      String? primaryDefenderArmyId;
+      if (defenderArmies.isNotEmpty) {
         primaryDefenderArmyId = defenderArmies.first.id;
       }
 
