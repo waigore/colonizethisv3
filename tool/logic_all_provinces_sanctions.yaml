@@ -16,13 +16,13 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/world/connectivity_resolver.dart
-    line: 226
+    line: 229
     rationale: Global connectivity / capital path checks require all province rows.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/world/connectivity_resolver.dart
-    line: 533
+    line: 536
     rationale: Global connectivity evaluation iterates all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
