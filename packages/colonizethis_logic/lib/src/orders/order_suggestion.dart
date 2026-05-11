@@ -12,7 +12,6 @@ import 'build_rail_work_rules.dart';
 import 'bundled_civilian_work_order.dart';
 import 'draft_orders_mutations.dart';
 import 'order_engine.dart';
-import 'order_suggestion_build_research.dart';
 import 'order_suggestion_context.dart';
 import 'order_visibility.dart';
 import 'orders_application_helpers.dart';
@@ -31,12 +30,10 @@ export 'order_suggestion_context.dart'
     show
         setOrderSuggestionWorkOrderAcceptanceProbeTrackingForTests,
         orderSuggestionWorkOrderAcceptanceProbeCountForTests;
-export 'order_suggestion_build_research.dart'
-    show
-        getValidWorkOrderTileKeys,
-        getValidWorkOrderTileKeysWithVisibility,
-        suggestBuildOrders,
-        suggestResearchOrders;
+export 'order_suggestion_build.dart' show suggestBuildOrders;
+export 'order_suggestion_research.dart' show suggestResearchOrders;
+export 'order_suggestion_work_tile_keys.dart'
+    show getValidWorkOrderTileKeys, getValidWorkOrderTileKeysWithVisibility;
 export 'order_suggestion_move_army.dart'
     show
         ArmyMovePickerDestination,

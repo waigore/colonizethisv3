@@ -8,7 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'domain_planners.dart';
 import 'economy_planner.dart';
 import 'goal_manager.dart';
-import 'mood_state_machine.dart';
+import 'social/mood_state_machine.dart';
 import 'perception.dart';
 
 final _log = packageLogger();

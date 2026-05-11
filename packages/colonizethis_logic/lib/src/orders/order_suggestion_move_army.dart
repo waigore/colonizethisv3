@@ -14,6 +14,11 @@ import 'order_suggestion_context.dart';
 import 'order_visibility.dart';
 import 'unit_type_helpers.dart';
 
+const int _kMaxMoveSuggestionsPerUnit = 24;
+const int _kMaxArmyMoveSuggestionsPerArmy = 12;
+const int _kMaxMoveProbeAttemptsPerUnit = 160;
+const int _kMaxArmyMoveProbeAttemptsPerArmy = 80;
+
 /// Suggests candidate move orders that are information-legal (per [PlayerView])
 /// and rules-legal (per [OrderEngine]) for [view.playerId].
 List<MoveOrder> suggestMoveOrders(
@@ -38,6 +43,12 @@ List<MoveOrder> suggestMoveOrders(
   }
 
   final landTiles = sortedLandTileKeys(game.worldState);
+  final visibleLandTiles = <String>[];
+  for (final tileKey in landTiles) {
+    if (moveDestinationTileVisibilityOk(view, tileKey)) {
+      visibleLandTiles.add(tileKey);
+    }
+  }
 
   // Build the incremental candidate validator once per suggestion pass: the
   // per-player [PlayerView]/units-by-id work is amortized across every
@@ -66,13 +77,12 @@ List<MoveOrder> suggestMoveOrders(
       );
     }
 
-    for (final destinationTileKey in landTiles) {
+    var acceptedForUnit = 0;
+    var probeAttemptsForUnit = 0;
+    for (final destinationTileKey in visibleLandTiles) {
       final already = existingMoves[unit.id];
       if (already != null && already.contains(destinationTileKey)) continue;
-
-      if (!moveDestinationTileVisibilityOk(view, destinationTileKey)) {
-        continue;
-      }
+      probeAttemptsForUnit++;
 
       final candidate = MoveOrder(
         unitId: unit.id,
@@ -81,6 +91,13 @@ List<MoveOrder> suggestMoveOrders(
 
       if (candidateValidator.isMoveAccepted(candidate)) {
         suggestions.add(candidate);
+        acceptedForUnit++;
+        if (acceptedForUnit >= _kMaxMoveSuggestionsPerUnit) {
+          break;
+        }
+      }
+      if (probeAttemptsForUnit >= _kMaxMoveProbeAttemptsPerUnit) {
+        break;
       }
     }
   }
@@ -93,9 +110,6 @@ List<MoveOrder> suggestMoveOrders(
 
   orderSuggestionLog.d(
     'suggestMoveOrders player=$playerId candidates=${suggestions.length}',
-  );
-  orderSuggestionLog.d(
-    'suggestMoveOrders full list ${suggestions.map((m) => "${m.unitId}->${m.destinationTileKey}").toList()}',
   );
   if (suggestions.isEmpty) {
     orderSuggestionLog.w('suggestMoveOrders no candidates player=$playerId');
@@ -303,9 +317,12 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
       army: army,
     );
 
+    var acceptedForArmy = 0;
+    var probeAttemptsForArmy = 0;
     for (final destinationProvinceId in destIds) {
       final already = existingArmyMoves[army.id];
       if (already != null && already.contains(destinationProvinceId)) continue;
+      probeAttemptsForArmy++;
 
       final candidate = ArmyMoveOrder(
         armyId: army.id,
@@ -314,6 +331,13 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
 
       if (candidateValidator.isArmyMoveAccepted(candidate)) {
         suggestions.add(candidate);
+        acceptedForArmy++;
+        if (acceptedForArmy >= _kMaxArmyMoveSuggestionsPerArmy) {
+          break;
+        }
+      }
+      if (probeAttemptsForArmy >= _kMaxArmyMoveProbeAttemptsPerArmy) {
+        break;
       }
     }
   }

@@ -490,10 +490,16 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
     }
 
     final phaseNotifier = ValueNotifier<String>('Resolving turn...');
+    var processingDialogOpen = true;
+    final uiStopwatch = Stopwatch()..start();
     setState(() {
       _isTurnResolving = true;
     });
     ref.read(turnResolutionBlockingProvider.notifier).setBlocking(true);
+    _gameMapNextTurnUiLog.i(
+      'logic: next_turn_ui_map started gameId=${game.id} turn=$currentTurn '
+      'turnTraceEnabled=${service.isTurnTraceEnabled}',
+    );
     unawaited(
       showDialog<void>(
         context: context,
@@ -504,9 +510,15 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
           builder: (_, text, _) =>
               TurnResolutionProcessingDialog(phaseText: text),
         ),
-      ),
+      ).whenComplete(() {
+        processingDialogOpen = false;
+      }),
     );
     await awaitTurnResolutionProcessingDialogFirstPaint();
+    _gameMapNextTurnUiLog.i(
+      'logic: next_turn_ui_map processing_dialog_painted gameId=${game.id} '
+      'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+    );
     try {
       final session = runner.startResolution(
         game: game,
@@ -514,9 +526,14 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
         topology: mapData.combinedTopology,
         tileMapByRegion: mapData.tileMapByRegion,
         turnTraceEnabled: service.isTurnTraceEnabled,
+        turnTraceRootDirectory: service.turnTraceRootDirectory,
       );
       final activeSessionId = session.sessionId;
-      _turnResolutionProgressSub?.cancel();
+      _gameMapNextTurnUiLog.i(
+        'logic: next_turn_ui_map session_started gameId=${game.id} '
+        'sessionId=$activeSessionId elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+      );
+      await _turnResolutionProgressSub?.cancel();
       _turnResolutionProgressSub = session.progress.listen((event) {
         if (!mounted ||
             event.sessionId != activeSessionId ||
@@ -524,14 +541,32 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
           return;
         }
         phaseNotifier.value = turnResolutionProgressPhaseLabel(event.phase);
+        _gameMapNextTurnUiLog.d(
+          'logic: next_turn_ui_map phase gameId=${game.id} sessionId=$activeSessionId '
+          'phase=${event.phase} elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+        );
       });
       final terminal = await session.done;
+      _gameMapNextTurnUiLog.i(
+        'logic: next_turn_ui_map session_done gameId=${game.id} sessionId=$activeSessionId '
+        'terminalType=${terminal.runtimeType} elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+      );
       if (!mounted) {
         return;
       }
+      if (processingDialogOpen) {
+        rootNavigator.pop();
+        processingDialogOpen = false;
+      }
       switch (terminal) {
         case TurnResolutionTerminalComplete c:
+          final handleStopwatch = Stopwatch()..start();
           service.handleExternallyResolvedTurnResult(c.result);
+          _gameMapNextTurnUiLog.i(
+            'logic: next_turn_ui_map external_result_handled gameId=${game.id} '
+            'sessionId=$activeSessionId handleMs=${handleStopwatch.elapsedMilliseconds} '
+            'resultType=${c.result.runtimeType}',
+          );
           if (service.isTurnTraceEnabled &&
               c.result is TurnResolutionComplete &&
               c.turnTracePhases != null &&
@@ -545,9 +580,29 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
               turnStartAtUtc: c.turnTraceStartedAtUtc!,
             );
           }
+          if (c.turnTraceExportPath != null) {
+            _gameMapNextTurnUiLog.i(
+              'logic: next_turn_ui_map worker_trace_export_path gameId=${game.id} '
+              'sessionId=$activeSessionId path=${c.turnTraceExportPath}',
+            );
+          }
+          final applyStopwatch = Stopwatch()..start();
           applyTurnResolutionResult(ref, c.result);
+          _gameMapNextTurnUiLog.i(
+            'logic: next_turn_ui_map result_applied gameId=${game.id} '
+            'sessionId=$activeSessionId applyMs=${applyStopwatch.elapsedMilliseconds} '
+            'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+          );
         case TurnResolutionTerminalError e:
           messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
+          _gameMapNextTurnUiLog.e(
+            'logic: next_turn_ui_map terminal_error gameId=${game.id} '
+            'sessionId=$activeSessionId elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+            error: e.errorMessage,
+            stackTrace: e.stackTrace.isEmpty
+                ? null
+                : StackTrace.fromString(e.stackTrace),
+          );
           throw StateError(e.errorMessage);
       }
     } catch (_) {
@@ -557,10 +612,14 @@ mixin _GameMapAreaStatePart1 on ConsumerState<GameMapArea> {
       rethrow;
     } finally {
       clearTurnResolutionBlockingFlag();
-      _turnResolutionProgressSub?.cancel();
+      await _turnResolutionProgressSub?.cancel();
       _turnResolutionProgressSub = null;
-      if (mounted) {
-        rootNavigator.maybePop();
+      _gameMapNextTurnUiLog.i(
+        'logic: next_turn_ui_map cleanup_complete gameId=${game.id} '
+        'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
+      );
+      if (mounted && processingDialogOpen) {
+        rootNavigator.pop();
       }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         phaseNotifier.dispose();

@@ -36,21 +36,32 @@ class CtLogger {
   final Logger _log;
   final String prefix;
 
-  const CtLogger(this.prefix) : _log = Logger(prefix);
+  CtLogger(this.prefix)
+      : _log = Logger(printer: CtLoggerConsolePrinter());
 
-  void d(String msg) => _log.d('$prefix: $msg');
-  void i(String msg) => _log.i('$prefix: $msg');
-  void w(String msg) => _log.w('$prefix: $msg');
-  void e(String msg, {Object? error, StackTrace? stackTrace}) =>
-      _log.e('$prefix: $msg', error: error, stackTrace: stackTrace);
+  void d(String msg, {Object? error, StackTrace? stackTrace}) =>
+      _log.d('$prefix: $msg', error: error, stackTrace: stackTrace);
+  // … other level helpers mirror `_log`, always prefixing `$prefix: ` on the message string.
 }
 ```
 
-- Uses `Logger(loggerName: prefix)` to set the logger name (useful for tooling that reads logger names)
-- Prepends `$prefix: ` to every message
-- Delegates all other `Logger` methods via `_log`
+- Uses `Logger(printer: CtLoggerConsolePrinter())` so **stdout / IDE console** lines carry the canonical operator timestamp (§2.4).
+- Prepends `$prefix: ` to every message body
+- Delegates filtering, printing, and output to the `logger` package via `_log`
 
-### 2.3 Global instance factories (optional convenience)
+### 2.3 Operator log timestamps (`formatOperatorLogTimestamp`)
+
+- **Purpose:** Single source of truth for the **human-readable timestamp** on listener-formatted operator log lines across **session buffer**, **ctdev day file**, and **Sim Log UI**.
+- **API:** [`formatOperatorLogTimestamp`](../../packages/colonizethis_logger/lib/src/operator_log_timestamp.dart) in package `colonizethis_logger` (exported from `colonizethis_logger.dart`).
+- **Shape:** Local wall clock as `YYYY-MM-DDTHH:mm:ss.SSS±HH:MM`, or `...SSSZ` when the effective local offset is UTC. Milliseconds are **always** three digits (including `.000` on whole-second instants).
+
+### 2.4 CtLogger console printer (`CtLoggerConsolePrinter`)
+
+- **Purpose:** The `logger` package’s default `PrettyPrinter` does **not** emit the canonical operator timestamp on stdout / IDE console. `CtLogger` therefore wires `Logger(printer: CtLoggerConsolePrinter())`.
+- **Behavior:** `CtLoggerConsolePrinter` delegates formatting to `PrettyPrinter` (same defaults as a bare `Logger()`), then injects **exactly one** `formatOperatorLogTimestamp(event.time)` segment on the **first message row** of each boxed event (after the leading `│ ` rule column). If boxing is disabled for a level such that no message row can be matched, the printer falls back to prefixing the first output line with the canonical timestamp so the event still carries one operator-facing segment.
+- **Implementation:** `packages/colonizethis_logger/lib/src/ct_logger_console_printer.dart`.
+
+### 2.5 Global instance factories (optional convenience)
 
 For packages that use a single logger:
 
@@ -73,11 +84,14 @@ packages/colonizethis_logger/
   lib/
     colonizethis_logger.dart      # exports
     src/
-      ct_logger.dart              # CtLogger class
-      prefixes.dart               # prefix constants
+      ct_logger.dart                 # CtLogger class
+      ct_logger_console_printer.dart # stdout PrettyPrinter + canonical timestamp
+      prefixes.dart                  # prefix constants
+      operator_log_timestamp.dart    # formatOperatorLogTimestamp
   pubspec.yaml
   test/
     ct_logger_test.dart
+    operator_log_timestamp_test.dart
 ```
 
 ---
@@ -103,7 +117,9 @@ Replace raw `Logger()` usage with `CtLogger(prefix)`:
 6. **app/lib/features/game/flame/** — prefix `game` (Flame components)
 7. **app/lib/features/debug_log/** — prefix `app`
 
-Ctdev has its own logging setup (`ctdev_log.dart`) using `basic_logger_file`; it may optionally adopt `CtLogger` internally but is not required for the debug viewer (it does not use `SessionLogBuffer`).
+**Ctdev** (`ctdev_log.dart`): **Must** format operator-facing log lines (file + Sim Log UI) using `formatOperatorLogTimestamp` (`colonizethis_logger`) — same timestamps as `SessionLogEntry.formattedLine` / session buffer convention. Ctdev MAY still use `CtLogger` where convenient; adopting `CtLogger` is orthogonal to timestamps. **Day file:** Use an `OutputLogger` with the same append/buffer contract as `basic_logger_file` 0.1.3 (see [ctdev-logging.md](ctdev-logging.md)); **message-only** disk lines so the canonical timestamp is not duplicated by a library prepend.
+
+The Flutter app debug viewer consumes `session_log_buffer` (not ctdev’s sinks); timestamps still follow this API for consistency ([debug-log-viewer.md](debug-log-viewer.md)).
 
 ### 4.3 SessionLogBuffer knownPrefixes update
 
@@ -129,6 +145,7 @@ const List<String> knownPrefixes = [
 - **Debug viewer integration:** Logs from migrated packages appear in the debug viewer under the correct prefix filter.
 - **No manual prefixing needed:** Developers call `_log.i('message')` not `_log.i('prefix: message')`.
 - **Backward compatible:** Raw `Logger()` still works; `CtLogger` is additive.
+- **Console timestamps:** Every `CtLogger` event printed through the `logger` package’s configured printer includes **exactly one** canonical `formatOperatorLogTimestamp` segment (local wall clock, fixed `.SSS`, explicit offset or `Z`), including whole-second instants (`.000`).
 
 ---
 

@@ -10,6 +10,7 @@ import 'capital_choice.dart';
 import 'game_setup_context.dart';
 import 'game_setup_helpers.dart';
 import 'game_setup_ownership.dart';
+import 'game_setup_topology.dart';
 import 'gp_old_world_resource_redistribution.dart';
 import 'gp_old_world_terrain_redistribution.dart';
 import 'gp_starting_grain.dart';

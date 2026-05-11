@@ -74,6 +74,9 @@ All hosts consume the **same** `Logger` stream from packages; hosts only differ 
 
 - **ctdev:** Day file + Sim Log (info+, capped); see [ctdev-logging.md](../ctdev-logging.md).
 - **app:** Session buffer for debug viewer; configure listeners at startup per [debug-log-viewer.md](../debug-log-viewer.md).
+- **stdout / IDE console:** `CtLogger`-backed `Logger` output (boxed `flutter:` lines from Flutter, or plain stdout from Dart CLI hosts) uses `CtLoggerConsolePrinter` per [colonizethis-logger.md](../colonizethis-logger.md) §2.4 so each emitted event carries one canonical operator timestamp.
+
+Operator-facing **timestamp formatting** on listener-driven lines and on the `CtLogger` console printer (`formatOperatorLogTimestamp`) is normative in [colonizethis-logger.md](../colonizethis-logger.md).
 
 ---
 
