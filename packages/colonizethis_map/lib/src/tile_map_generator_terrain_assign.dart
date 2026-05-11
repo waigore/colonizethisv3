@@ -1,4 +1,3 @@
-
 /// Pass 6–7: terrain ridges, region-growing, resources.
 
 part of 'tile_map_generator.dart';
@@ -54,7 +53,7 @@ class _TileMapGenTerrainResource {
 
     // Pass 7: resources, using final terrainGrid and existing rules.
     final capState = (mapRegionId == 'oldWorld' || mapRegionId == 'newWorld')
-        ? _MultiRegionCapState(
+        ? MultiRegionCapState(
             params.multiRegionResourceCapFraction,
             rules,
             mapRegionId,
@@ -129,7 +128,7 @@ class _TileMapGenTerrainResource {
     List<List<Resource?>> resourceGrid,
     String mapRegionId,
     ResourceRules rules,
-    _MultiRegionCapState? capState,
+    MultiRegionCapState? capState,
     Random rnd,
     int x,
     int y,
@@ -745,13 +744,21 @@ class _TileMapGenTerrainResource {
   ) {
     final seeds = <(int x, int y, TerrainType target)>[];
     var interiorIndex = 0;
-    for (var i = 0; i < seedCount && interiorIndex < interiorShuffled.length; i++) {
+    for (
+      var i = 0;
+      i < seedCount && interiorIndex < interiorShuffled.length;
+      i++
+    ) {
       final (sx, sy) = interiorShuffled[interiorIndex++];
-      final options =
-          allowedNonMountain.where((t) => t != blobTerrain).toList();
+      final options = allowedNonMountain
+          .where((t) => t != blobTerrain)
+          .toList();
       if (options.isEmpty) break;
-      final chosen =
-          _weightedPickTerrainFromOptions(options, distribution, rnd);
+      final chosen = _weightedPickTerrainFromOptions(
+        options,
+        distribution,
+        rnd,
+      );
       seeds.add((sx, sy, chosen));
     }
     return seeds;

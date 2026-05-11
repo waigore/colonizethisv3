@@ -4,7 +4,6 @@ import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/package_logger.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'grid_voronoi.dart';
 import 'map_validation_exception.dart';
@@ -12,12 +11,13 @@ import 'tile_map_generator_land_seeds.dart';
 import 'tile_map_land_sentinel.dart';
 import 'tile_map_land_seed_contract.dart';
 import 'tile_map_distance_sentinels.dart';
+import 'tile_map_grid_graph.dart';
+import 'tile_map_resource_cap_state.dart';
 import 'topology_inference.dart';
 
 /// Shared params for [TileMapGenerator] (generation orchestration only).
 
 part 'tile_map_generator_types.dart';
-part 'tile_map_grid_graph.dart';
 part 'tile_map_generator_join_sea.dart';
 part 'tile_map_generator_join_sea_bridge_part.dart';
 part 'tile_map_generator_join_sea_jitter_part.dart';

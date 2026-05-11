@@ -7,6 +7,7 @@ export 'src/topology_generator.dart';
 export 'src/topology_inference.dart';
 export 'src/tile_map_topology_validation.dart';
 export 'src/tile_map_generator.dart';
+export 'src/tile_map_grid_graph.dart';
 export 'src/tile_map_generator_land_seeds.dart';
 export 'src/tile_map_generation_fn.dart';
 export 'src/map_partition_gates_exhausted.dart';

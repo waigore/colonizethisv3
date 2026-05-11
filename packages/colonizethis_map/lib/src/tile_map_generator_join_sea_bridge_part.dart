@@ -37,7 +37,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
             mapRegionId != null &&
             resourceRules != null &&
             (mapRegionId == 'oldWorld' || mapRegionId == 'newWorld'))
-        ? _MultiRegionCapState.fromExisting(
+        ? MultiRegionCapState.fromExisting(
             params.multiRegionResourceCapFraction,
             resourceRules,
             mapRegionId,
@@ -112,7 +112,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     String? mapRegionId,
     ResourceRules? resourceRules,
     Random rnd,
-    _MultiRegionCapState? capState,
+    MultiRegionCapState? capState,
   ) {
     for (final (x, y) in path) {
       g[y][x] = provinceId;
@@ -252,7 +252,7 @@ extension _TileMapGenJoinSeaBridgePart on _TileMapGenJoinSea {
     String mapRegionId,
     ResourceRules rules,
     Random rnd, {
-    _MultiRegionCapState? capState,
+    MultiRegionCapState? capState,
   }) {
     final landTerrains = allowedTerrainsForRegion(mapRegionId);
     if (landTerrains.isEmpty) return;
