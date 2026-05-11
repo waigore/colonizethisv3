@@ -139,13 +139,13 @@ applyCrossRegionArmyMovesWithinOwnedProvinces({
 }) {
   var ws = worldState;
   final remaining = <String, List<ArmyMoveOrder>>{};
+  final armyById = {for (final army in ws.armies) army.id: army};
 
   for (final entry in armyMoveOrdersByPlayerId.entries) {
     final playerId = entry.key;
     final left = <ArmyMoveOrder>[];
     for (final order in entry.value) {
-      final armyMap = {for (final a in ws.armies) a.id: a};
-      final army = armyMap[order.armyId];
+      final army = armyById[order.armyId];
       if (army == null || army.ownerId != playerId || army.isHomeArmy) {
         left.add(order);
         continue;
@@ -163,6 +163,10 @@ applyCrossRegionArmyMovesWithinOwnedProvinces({
         continue;
       }
       ws = updateArmyStation(ws, army.id, destFull);
+      armyById[army.id] = army.copyWith(
+        regionId: destRegion,
+        stationedProvinceId: destFull,
+      );
       onArmyMoveOrderTrace?.call(
         playerId: playerId,
         order: order,
