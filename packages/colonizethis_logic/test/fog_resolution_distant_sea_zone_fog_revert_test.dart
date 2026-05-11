@@ -119,6 +119,59 @@ void main() {
       expect(out['gp1']![tileSea2], VisibilityLevel.fullyVisible.name);
     });
 
+    test('other player fleet at sea does not block distant fog revert', () {
+      const ow = 'oldWorld';
+      const tileSea2 = 'oldWorld|s2|0|0';
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
+          TopologyNode(id: 's1', regionId: ow, type: TopologyNodeType.seaZone),
+          TopologyNode(id: 's2', regionId: ow, type: TopologyNodeType.seaZone),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'p1', id2: 's1'),
+          TopologyEdge(id1: 's1', id2: 's2'),
+        ],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.endOfTurn, turnNumber: 0),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              '$ow|s2': [tileSea2],
+            },
+          },
+          fleets: [
+            Fleet(
+              id: 'f1',
+              ownerId: 'gp2',
+              seaZoneId: 's2',
+              regionId: ow,
+              shipTypeIds: const ['carrack'],
+            ),
+          ],
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
+          Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+        ],
+      );
+      final inputVis = <String, Map<String, String>>{
+        'gp1': {tileSea2: VisibilityLevel.fullyVisible.name},
+      };
+
+      final out = applyDistantSeaZoneFogRevert(game, inputVis, topology);
+
+      expect(out['gp1']![tileSea2], VisibilityLevel.fogged.name);
+    });
+
     test(
       'GitHub #2023: distant fog revert for New World does not throw when same '
       'player has Old World fleet at sea (cross-region scan)',

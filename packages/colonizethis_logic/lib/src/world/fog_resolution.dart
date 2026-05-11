@@ -433,15 +433,12 @@ bool _seaZoneHasOwnedCoastalProvinceForPlayer(
   return false;
 }
 
-bool _playerHasFleetAtSeaInZone(
+Map<String, Set<String>> _fleetAtSeaZoneKeysByPlayerInRegion(
   Game game,
-  String playerId,
   String regionId,
-  String seaZoneId,
 ) {
-  final expectedSeaZoneId = canonicalSeaZoneTileBucketKey(regionId, seaZoneId);
+  final byPlayer = <String, Set<String>>{};
   for (final f in game.worldState.fleets) {
-    if (f.ownerId != playerId) continue;
     if (!f.isAtSea || f.seaZoneId == null) continue;
     // Same-region fleets only: canonicalizing [f.seaZoneId] requires [regionId]
     // to match the fleet's region; other-region fleets must be skipped first
@@ -451,10 +448,21 @@ bool _playerHasFleetAtSeaInZone(
       regionId,
       f.seaZoneId!,
     );
-    if (fleetSeaZoneId != expectedSeaZoneId) continue;
-    return true;
+    byPlayer.putIfAbsent(f.ownerId, () => <String>{}).add(fleetSeaZoneId);
   }
-  return false;
+  return byPlayer;
+}
+
+bool _playerHasFleetAtSeaInZone(
+  Map<String, Set<String>> fleetAtSeaZoneKeysByPlayer,
+  String playerId,
+  String regionId,
+  String seaZoneId,
+) {
+  final playerSeaZones = fleetAtSeaZoneKeysByPlayer[playerId];
+  if (playerSeaZones == null || playerSeaZones.isEmpty) return false;
+  final expectedSeaZoneId = canonicalSeaZoneTileBucketKey(regionId, seaZoneId);
+  return playerSeaZones.contains(expectedSeaZoneId);
 }
 
 void _fogSeaZoneWaterTilesExceptUnknown(
@@ -475,6 +483,7 @@ void _applyDistantSeaFogForGpPlayerInRegion({
   required MapTopology regionTopology,
   required Iterable<String> seaZoneIds,
   required Map<String, List<String>> regionTileKeys,
+  required Map<String, Set<String>> fleetAtSeaZoneKeysByPlayer,
   required Map<String, String> vis,
 }) {
   for (final seaZoneId in seaZoneIds) {
@@ -487,7 +496,12 @@ void _applyDistantSeaFogForGpPlayerInRegion({
     )) {
       continue;
     }
-    if (_playerHasFleetAtSeaInZone(game, playerId, regionId, seaZoneId)) {
+    if (_playerHasFleetAtSeaInZone(
+      fleetAtSeaZoneKeysByPlayer,
+      playerId,
+      regionId,
+      seaZoneId,
+    )) {
       continue;
     }
     final seaZoneBucketKey = canonicalSeaZoneTileBucketKey(regionId, seaZoneId);
@@ -528,6 +542,10 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
         .map((n) => n.id);
     final regionTileKeys = tileKeysByRegion[regionId];
     if (regionTileKeys == null) continue;
+    final fleetAtSeaZoneKeysByPlayer = _fleetAtSeaZoneKeysByPlayerInRegion(
+      game,
+      regionId,
+    );
 
     for (final player in game.players) {
       if (!gpIds.contains(player.id)) continue;
@@ -542,6 +560,7 @@ Map<String, Map<String, String>> applyDistantSeaZoneFogRevert(
         regionTopology: regionTopology,
         seaZoneIds: seaZoneIds,
         regionTileKeys: regionTileKeys,
+        fleetAtSeaZoneKeysByPlayer: fleetAtSeaZoneKeysByPlayer,
         vis: vis,
       );
     }
