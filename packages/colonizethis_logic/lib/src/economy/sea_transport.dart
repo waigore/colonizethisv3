@@ -204,14 +204,15 @@ _TradeInterceptionScan _scanTradeInterceptionInputs(
       if (isEnemyFleet && canEnemyIntercept) {
         interceptScore += stats.interceptRating;
       }
-      if (isPlayerFleet) {
-        evasionScore += stats.fleeRating;
-        if (_merchantShipTypes.contains(typeId)) {
-          playerMerchantShips++;
-        } else {
-          escortStrength += stats.fleeRating;
-        }
+      if (!isPlayerFleet) {
+        continue;
       }
+      evasionScore += stats.fleeRating;
+      if (_merchantShipTypes.contains(typeId)) {
+        playerMerchantShips++;
+        continue;
+      }
+      escortStrength += stats.fleeRating;
     }
     if (isEnemyFleet &&
         canEnemyIntercept &&
