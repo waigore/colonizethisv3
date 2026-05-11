@@ -11,6 +11,7 @@ import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.d
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
+import 'e2e_test_shared.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/test_support/province_panel_e2e_expected_lines.dart';
@@ -21,39 +22,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-class _E2ePerfLog {
-  _E2ePerfLog(this.testName);
-
-  final String testName;
-  final Map<String, int> _counters = <String, int>{};
-
-  void bumpCounter(String name, {int by = 1, String? meta}) {
-    _counters[name] = (_counters[name] ?? 0) + by;
-    final metaPart = meta == null ? '' : '|meta=$meta';
-    debugPrint(
-      'E2E_COUNTER|test=$testName|name=$name|value=${_counters[name]}$metaPart',
-    );
-  }
-
-  void timing(String phase, Duration elapsed, {String? meta}) {
-    final metaPart = meta == null ? '' : '|meta=$meta';
-    debugPrint(
-      'E2E_TIMING|test=$testName|phase=$phase|ms=${elapsed.inMilliseconds}$metaPart',
-    );
-  }
-}
+typedef _E2ePerfLog = E2ePerfLog;
 
 /// Drive frames without [WidgetTester.pumpAndSettle]: new-game progress uses a
 /// non-idle [CircularProgressIndicator], and the in-game Flame view keeps tickers
 /// active, so settle would hang or time out indefinitely.
-Future<void> _pumpFor(WidgetTester tester, Duration total) async {
-  const step = Duration(milliseconds: 50);
-  var elapsed = Duration.zero;
-  while (elapsed < total) {
-    await tester.pump(step);
-    elapsed += step;
-  }
-}
+Future<void> _pumpFor(WidgetTester tester, Duration total) =>
+    e2ePumpFor(tester, total);
 
 Future<void> _waitUntilFound(
   WidgetTester tester,
@@ -62,25 +37,14 @@ Future<void> _waitUntilFound(
   Duration diagnoseAfter = Duration.zero,
   _E2ePerfLog? perf,
   String phaseName = 'wait_until_found',
-}) async {
-  final sw = Stopwatch()..start();
-  perf?.bumpCounter('wait_until_found_calls', meta: 'phase=$phaseName');
-  while (sw.elapsed < timeout) {
-    await tester.pump(const Duration(milliseconds: 100));
-    if (finder.evaluate().isNotEmpty) {
-      perf?.timing(phaseName, sw.elapsed, meta: 'result=found');
-      return;
-    }
-  }
-  if (diagnoseAfter > Duration.zero) {
-    await _pumpFor(tester, diagnoseAfter);
-  }
-  perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
-  fail(
-    'Timed out after ${timeout.inSeconds}s waiting for $finder. '
-    'Last exception: ${tester.takeException()}',
-  );
-}
+}) => e2eWaitUntilFound(
+  tester,
+  finder,
+  timeout: timeout,
+  diagnoseAfter: diagnoseAfter,
+  perf: perf,
+  phaseName: phaseName,
+);
 
 void _collectTextPreorder(Element element, List<String> out) {
   final w = element.widget;
