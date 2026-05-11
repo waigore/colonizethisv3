@@ -150,13 +150,18 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
     return state;
   }
 
+  final unitById = unitsByIdFromWorld(state.worldState);
+  final viewByPlayerId = <String, PlayerView>{};
   for (final entry in workByPlayerId.entries) {
     final playerId = entry.key;
     final diplomatic =
         orders.diplomaticOrdersByPlayerId[playerId] ??
         const <DiplomaticOrder>[];
+    var view = viewByPlayerId.putIfAbsent(
+      playerId,
+      () => buildPlayerView(state, topology, playerId),
+    );
     for (final workOrder in entry.value) {
-      final unitById = unitsByIdFromWorld(state.worldState);
       final unit = unitById[workOrder.unitId];
       if (unit == null || unit.ownerId != playerId) {
         onBundledWorkMoveTrace?.call(
@@ -189,7 +194,6 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
         );
         continue;
       }
-      final view = buildPlayerView(state, topology, playerId);
       final destinationTile = firstLegalBundledEntryTileKeyInProvince(
         game: state,
         topology: topology,
@@ -226,6 +230,9 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
           return next;
         }),
       );
+      unitById[unit.id] = movedUnit;
+      view = _playerViewWithMovedUnit(view, movedUnit);
+      viewByPlayerId[playerId] = view;
       onBundledWorkMoveTrace?.call(
         playerId: playerId,
         order: workOrder,
@@ -236,6 +243,18 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
     }
   }
   return state;
+}
+
+PlayerView _playerViewWithMovedUnit(PlayerView view, Unit movedUnit) {
+  return PlayerView(
+    playerId: view.playerId,
+    player: view.player,
+    ownUnitsById: <String, Unit>{...view.ownUnitsById, movedUnit.id: movedUnit},
+    provincesById: view.provincesById,
+    visibilityByTile: view.visibilityByTile,
+    prospectedTiles: view.prospectedTiles,
+    diplomacyByOtherId: view.diplomacyByOtherId,
+  );
 }
 
 /// Emits trace events for army move orders rejected by global checks

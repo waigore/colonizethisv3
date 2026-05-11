@@ -39,7 +39,9 @@ TurnResolutionResult runTurnResolutionPipeline({
     config.turnTraceRuntime?.clearPhaseOrderEvents();
     config.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.start);
     _log.i('phase ${phase.name} start');
-    final beforeState = acc.game.toJson();
+    final beforeState = config.onTurnTracePhase == null
+        ? null
+        : acc.game.toJson();
     final handler = handlers[phase];
     if (handler == null) {
       throw StateError('No turn phase handler registered for ${phase.name}');
@@ -51,7 +53,7 @@ TurnResolutionResult runTurnResolutionPipeline({
           config: config,
           phase: phase,
           beforeState: beforeState,
-          afterState: _phaseExitStateSnapshot(result),
+          afterState: _phaseExitStateSnapshot(config, result),
         );
         return result;
       case TurnPhaseStepContinue(:final pipeline):
@@ -59,7 +61,9 @@ TurnResolutionResult runTurnResolutionPipeline({
           config: config,
           phase: phase,
           beforeState: beforeState,
-          afterState: pipeline.game.toJson(),
+          afterState: config.onTurnTracePhase == null
+              ? null
+              : pipeline.game.toJson(),
         );
         acc = pipeline;
     }
@@ -85,23 +89,33 @@ TurnResolutionResult runTurnResolutionPipeline({
 void _emitPhaseTrace({
   required TurnResolverConfig config,
   required TurnPhase phase,
-  required Map<String, Object?> beforeState,
-  required Map<String, Object?> afterState,
+  required Map<String, Object?>? beforeState,
+  required Map<String, Object?>? afterState,
 }) {
+  final onTurnTracePhase = config.onTurnTracePhase;
+  if (onTurnTracePhase == null) {
+    return;
+  }
   final orderEvents =
       config.turnTraceRuntime?.snapshotPhaseOrderEvents() ??
       const <TurnTraceOrderEvent>[];
-  config.onTurnTracePhase?.call(
+  onTurnTracePhase(
     TurnTracePhaseTrace(
       phaseId: phase.name,
-      beforeState: beforeState,
-      afterState: afterState,
+      beforeState: beforeState ?? const <String, Object?>{},
+      afterState: afterState ?? const <String, Object?>{},
       orderEvents: orderEvents,
     ),
   );
 }
 
-Map<String, Object?> _phaseExitStateSnapshot(TurnResolutionResult result) {
+Map<String, Object?>? _phaseExitStateSnapshot(
+  TurnResolverConfig config,
+  TurnResolutionResult result,
+) {
+  if (config.onTurnTracePhase == null) {
+    return null;
+  }
   return switch (result) {
     TurnResolutionComplete(:final game) => game.toJson(),
     TurnResolutionPendingOvertures(:final game) => game.toJson(),
