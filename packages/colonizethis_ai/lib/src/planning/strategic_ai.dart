@@ -6,7 +6,7 @@ import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_orchestrator.dart';
-import '../economy_planner.dart';
+import 'economy_planner.dart';
 import '../goal_manager.dart';
 import 'ai_order_reporting.dart';
 import 'ai_trace_builder.dart';
