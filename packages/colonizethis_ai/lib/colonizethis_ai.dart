@@ -11,7 +11,7 @@ export 'package:colonizethis_models/colonizethis_models.dart'
         EconomyPlan,
         StrategicOrderResult;
 export 'src/perception/dossier.dart';
-export 'src/domain_planners.dart';
+export 'src/planning/domain_planner_orchestrator.dart';
 export 'src/planning/diplomacy_planner.dart';
 export 'src/planning/economy_planner.dart';
 export 'src/planning/full_ai_planner.dart';

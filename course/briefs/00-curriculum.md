@@ -95,7 +95,7 @@ File: `packages/colonizethis_ai/lib/colonizethis_ai.dart` (lines 1-22)
 ```dart
 export 'package:colonizethis_models/colonizethis_models.dart' show AIConfig, AISeedBundle, ...;
 export 'src/dossier.dart';
-export 'src/domain_planners.dart';
+export 'src/planning/domain_planner_orchestrator.dart';
 export 'src/economy_planner.dart';
 export 'src/full_ai_planner.dart';
 export 'src/goal_manager.dart';

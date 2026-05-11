@@ -4,14 +4,14 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'goal_manager.dart';
-import 'perception.dart';
-import 'planning/build_planner.dart';
-import 'planning/diplomacy_planner.dart';
-import 'planning/move_planner.dart';
-import 'planning/naval_planner.dart';
-import 'planning/research_planner.dart';
-import 'util/orders_extensions.dart';
+import '../goal_manager.dart';
+import '../perception.dart';
+import '../util/orders_extensions.dart';
+import 'build_planner.dart';
+import 'diplomacy_planner.dart';
+import 'move_planner.dart';
+import 'naval_planner.dart';
+import 'research_planner.dart';
 
 final _log = packageLogger();
 
