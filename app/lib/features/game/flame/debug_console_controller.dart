@@ -9,14 +9,12 @@ class DebugConsoleController {
     required this.humanPlayerId,
     required this.selectedTileKeyProvider,
     required this.onClose,
-    required this.selectedTileKeyProvider,
   }) : _lines = <String>['Debug console ready. Type /help for commands.'];
 
   final AppEventBus bus;
   final String humanPlayerId;
   final String? Function() selectedTileKeyProvider;
   final VoidCallback onClose;
-  final String? Function() selectedTileKeyProvider;
 
   final DebugConsoleHistory _history = DebugConsoleHistory();
   final DebugConsoleCommandExecutor _executor =
