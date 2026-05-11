@@ -393,5 +393,6 @@ void main() {
       expect(battles[0].attackers.single.factionId, 'player1');
       expect(battles[0].attackers.single.unitIds, ['u1']);
     });
+
   });
 }

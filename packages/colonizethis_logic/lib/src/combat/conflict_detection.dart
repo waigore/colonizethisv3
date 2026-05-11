@@ -110,6 +110,9 @@ class AttackingSide {
 List<BattleContext> detectConflicts(Game game, Orders orders) {
   final contexts = <BattleContext>[];
   final armyById = {for (final a in game.worldState.armies) a.id: a};
+  final armiesByOwnerAndProvince = _indexArmiesByOwnerAndProvince(
+    game.worldState.armies,
+  );
   final unitById = unitsByIdFromWorld(game.worldState);
 
   void processRegion(RegionData region) {
@@ -169,8 +172,11 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       final combatUnits = units
           .where((u) => canUnitInitiateCombat(u.type))
           .toList();
-
-      final factionsPresent = combatUnits.map((u) => u.ownerId).toSet();
+      final combatUnitsByFaction = <String, List<Unit>>{};
+      for (final unit in combatUnits) {
+        combatUnitsByFaction.putIfAbsent(unit.ownerId, () => []).add(unit);
+      }
+      final factionsPresent = combatUnitsByFaction.keys.toSet();
       if (factionsPresent.length < 2) continue;
 
       final province = provinceById[provinceId];
@@ -199,12 +205,12 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       final attackerFactionIds = (movedIntoByFaction[provinceId] ?? {})
           .where((f) => f != defenderFactionId && gpIds.contains(f))
           .toList();
+      final attackerFactionIdSet = attackerFactionIds.toSet();
 
       if (attackerFactionIds.isEmpty) continue;
 
-      final defenderUnits = combatUnits
-          .where((u) => u.ownerId == defenderFactionId)
-          .toList();
+      final defenderUnits =
+          combatUnitsByFaction[defenderFactionId] ?? const <Unit>[];
       if (defenderUnits.isEmpty) continue;
 
       final attackers = <AttackingSide>[];
@@ -214,7 +220,7 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
         final army = armyById[armyId];
         if (army == null) continue;
         final fid = army.ownerId;
-        if (!attackerFactionIds.contains(fid)) continue;
+        if (!attackerFactionIdSet.contains(fid)) continue;
         final attackerUnits = <Unit>[];
         for (final unitId in army.regimentUnitIds) {
           final u = unitById[unitId];
@@ -235,9 +241,7 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
       }
       if (attackers.isEmpty) {
         for (final fid in attackerFactionIds) {
-          final attackerUnits = combatUnits
-              .where((u) => u.ownerId == fid)
-              .toList();
+          final attackerUnits = combatUnitsByFaction[fid] ?? const <Unit>[];
           if (attackerUnits.isEmpty) continue;
           attackers.add(
             AttackingSide(
@@ -251,17 +255,14 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
 
       if (attackers.isEmpty) continue;
 
-      final defenderArmies =
-          game.worldState.armies
-              .where((a) => a.ownerId == defenderFactionId)
-              .where((a) => a.stationedProvinceId == provinceId)
-              .where(
-                (a) => a.regimentUnitIds.any(
-                  (id) => defenderUnits.any((u) => u.id == id),
-                ),
-              )
-              .toList()
-            ..sort((a, b) => a.id.compareTo(b.id));
+      final defenderUnitIdSet = defenderUnits.map((u) => u.id).toSet();
+      final defenderArmies = [
+        ...?armiesByOwnerAndProvince[defenderFactionId]?[provinceId],
+      ]
+        ..retainWhere(
+          (army) => army.regimentUnitIds.any(defenderUnitIdSet.contains),
+        )
+        ..sort((a, b) => a.id.compareTo(b.id));
       String? primaryDefenderArmyId;
       if (defenderArmies.isNotEmpty) {
         defenderArmies.sort((a, b) {
@@ -306,4 +307,18 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
   });
 
   return contexts;
+}
+
+Map<String, Map<String, List<Army>>> _indexArmiesByOwnerAndProvince(
+  List<Army> armies,
+) {
+  final armiesByOwnerAndProvince = <String, Map<String, List<Army>>>{};
+  for (final army in armies) {
+    final byProvince = armiesByOwnerAndProvince.putIfAbsent(
+      army.ownerId,
+      () => <String, List<Army>>{},
+    );
+    byProvince.putIfAbsent(army.stationedProvinceId, () => <Army>[]).add(army);
+  }
+  return armiesByOwnerAndProvince;
 }
