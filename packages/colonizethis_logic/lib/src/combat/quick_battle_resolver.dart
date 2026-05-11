@@ -229,6 +229,26 @@ QuickBattleResult resolveQuickBattle(
     }
   }
 
+  return _resolveQuickBattleRoundLimitOutcome(
+    input: input,
+    attGroups: attGroups,
+    defGroups: defGroups,
+    attackerCasualties: attCasualties,
+    defenderCasualties: defCasualties,
+    mutableGuns: mutableGuns,
+    useVirtualEmplaced: useVirtualEmplaced,
+  );
+}
+
+QuickBattleResult _resolveQuickBattleRoundLimitOutcome({
+  required QuickBattleInput input,
+  required List<QuickBattleGroup> attGroups,
+  required List<QuickBattleGroup> defGroups,
+  required List<String> attackerCasualties,
+  required List<String> defenderCasualties,
+  required List<_MutableEmplacedGun> mutableGuns,
+  required bool useVirtualEmplaced,
+}) {
   final finalAttStr =
       _effectiveStrength(attGroups, input.attackerDeployment.laneTerrain) *
       input.attackerLeaderMultiplier;
@@ -240,8 +260,8 @@ QuickBattleResult resolveQuickBattle(
   if (finalAttStr > finalDefStr * 1.2) {
     return _finishAndLogQuickBattleResult(
       winner: QuickBattleWinner.attacker,
-      attackerCasualties: attCasualties,
-      defenderCasualties: defCasualties,
+      attackerCasualties: attackerCasualties,
+      defenderCasualties: defenderCasualties,
       provinceFlips: true,
       input: input,
       mutableGuns: mutableGuns,
@@ -251,8 +271,8 @@ QuickBattleResult resolveQuickBattle(
   if (finalDefStr > finalAttStr * 1.2) {
     return _finishAndLogQuickBattleResult(
       winner: QuickBattleWinner.defender,
-      attackerCasualties: attCasualties,
-      defenderCasualties: defCasualties,
+      attackerCasualties: attackerCasualties,
+      defenderCasualties: defenderCasualties,
       provinceFlips: false,
       input: input,
       mutableGuns: mutableGuns,
@@ -261,8 +281,8 @@ QuickBattleResult resolveQuickBattle(
   }
   return _finishAndLogQuickBattleResult(
     winner: QuickBattleWinner.mutualExhaustion,
-    attackerCasualties: attCasualties,
-    defenderCasualties: defCasualties,
+    attackerCasualties: attackerCasualties,
+    defenderCasualties: defenderCasualties,
     provinceFlips: false,
     input: input,
     mutableGuns: mutableGuns,
