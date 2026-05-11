@@ -7,11 +7,13 @@ class DebugConsoleController {
   DebugConsoleController({
     required this.bus,
     required this.humanPlayerId,
+    required this.readOnlyContextProvider,
     required this.onClose,
   }) : _lines = <String>['Debug console ready. Type /help for commands.'];
 
   final AppEventBus bus;
   final String humanPlayerId;
+  final DebugConsoleReadOnlyContext? Function() readOnlyContextProvider;
   final VoidCallback onClose;
 
   final DebugConsoleHistory _history = DebugConsoleHistory();
@@ -33,6 +35,7 @@ class DebugConsoleController {
     final result = _executor.executeRaw(
       rawInput: rawInput,
       humanPlayerId: humanPlayerId,
+      readOnlyContext: readOnlyContextProvider(),
     );
     _lines
       ..add('> ${rawInput.trim()}')

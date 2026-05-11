@@ -147,5 +147,146 @@ void main() {
       expect(event.target, 'oldWorld|P1');
       expect(event.targetIsFullProvinceId, isTrue);
     });
+
+    test(
+      'get_tile_basic_info returns multiline ids from selected tile context',
+      () {
+        final result = executor.executeRaw(
+          rawInput: '/get_tile_basic_info',
+          humanPlayerId: 'p1',
+          readOnlyContext: const DebugConsoleReadOnlyContext(
+            selectedTileKey: 'oldWorld|P12|34|21',
+          ),
+        );
+        expect(result.isError, isFalse);
+        expect(result.events, isEmpty);
+        expect(
+          result.message,
+          'tile_id: oldWorld|P12|34|21\nprovince_id: oldWorld|P12',
+        );
+      },
+    );
+
+    test('get_tile_basic_info returns deterministic no-selection error', () {
+      final result = executor.executeRaw(
+        rawInput: '/get_tile_basic_info',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isTrue);
+      expect(result.message, 'No tile is selected.');
+      expect(result.events, isEmpty);
+    });
+
+    test('get_tile_basic_info rejects malformed selected tile key', () {
+      final result = executor.executeRaw(
+        rawInput: '/get_tile_basic_info',
+        humanPlayerId: 'p1',
+        readOnlyContext: const DebugConsoleReadOnlyContext(
+          selectedTileKey: 'oldWorld|P12',
+        ),
+      );
+      expect(result.isError, isTrue);
+      expect(result.message, 'Selected tile key is invalid.');
+      expect(result.events, isEmpty);
+    });
+
+    test('existing mutating commands still emit expected event types', () {
+      final civilian = executor.executeRaw(
+        rawInput: '/spawn_civilian explorer',
+        humanPlayerId: 'p1',
+      );
+      final money = executor.executeRaw(
+        rawInput: '/add_money 5',
+        humanPlayerId: 'p1',
+      );
+      final reveal = executor.executeRaw(
+        rawInput: '/reveal_province oldWorld|P1',
+        humanPlayerId: 'p1',
+      );
+      expect(civilian.events.single, isA<SpawnDebugCivilianAtCapitalEvent>());
+      expect(money.events.single, isA<CreditDebugTreasuryEvent>());
+      expect(reveal.events.single, isA<RevealDebugProvinceEvent>());
+    });
+
+    test('list_players formats sorted blocks with types and eliminated', () {
+      final result = executor.executeRaw(
+        rawInput: '/list_players',
+        humanPlayerId: 'p1',
+        readOnlyContext: DebugConsoleReadOnlyContext(
+          players: [
+            const DebugConsolePlayerSnapshot(
+              id: 'z',
+              displayName: 'Zed',
+              isHuman: false,
+              capitalProvinceId: 'r|P1',
+            ),
+            const DebugConsolePlayerSnapshot(
+              id: 'a',
+              displayName: 'Ann',
+              isHuman: true,
+              capitalProvinceId: 'r|P2',
+            ),
+          ],
+        ),
+      );
+      expect(result.isError, isFalse);
+      expect(result.events, isEmpty);
+      expect(result.message, startsWith('players_count: 2'));
+      expect(result.message, contains('player_id: a'));
+      expect(result.message, contains('display_name: Ann'));
+      expect(result.message, contains('type: human'));
+      expect(result.message, contains('eliminated: false'));
+      expect(result.message, contains('player_id: z'));
+      expect(result.message, contains('display_name: Zed'));
+      expect(result.message, contains('type: ai'));
+      expect(result.message, contains('eliminated: false'));
+      final aPos = result.message.indexOf('player_id: a');
+      final zPos = result.message.indexOf('player_id: z');
+      expect(aPos, lessThan(zPos));
+    });
+
+    test('list_players uses id fallback for blank display name', () {
+      final result = executor.executeRaw(
+        rawInput: '/list_players',
+        humanPlayerId: 'p1',
+        readOnlyContext: const DebugConsoleReadOnlyContext(
+          players: [
+            DebugConsolePlayerSnapshot(
+              id: 'p_x',
+              displayName: '   ',
+              isHuman: true,
+              capitalProvinceId: null,
+            ),
+          ],
+        ),
+      );
+      expect(result.isError, isFalse);
+      expect(result.events, isEmpty);
+      expect(result.message, contains('display_name: p_x'));
+      expect(result.message, contains('eliminated: true'));
+    });
+
+    test('list_players unavailable when players projection missing', () {
+      final result = executor.executeRaw(
+        rawInput: '/list_players',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isTrue);
+      expect(result.message, 'Player list is unavailable.');
+      expect(result.events, isEmpty);
+    });
+
+    test('list_players unavailable when context has null players', () {
+      final result = executor.executeRaw(
+        rawInput: '/list_players',
+        humanPlayerId: 'p1',
+        readOnlyContext: const DebugConsoleReadOnlyContext(
+          selectedTileKey: 'x|y|0|0',
+        ),
+      );
+      expect(result.isError, isTrue);
+      expect(result.message, 'Player list is unavailable.');
+      expect(result.events, isEmpty);
+    });
   });
 }
