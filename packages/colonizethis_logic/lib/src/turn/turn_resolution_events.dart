@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/province_visibility_index.dart';
 import '../world/unit_lookup.dart';
 import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
@@ -213,34 +214,9 @@ void emitVictorySetEvent(
   }
 }
 
-bool _isKnownVisibility(String? raw) => raw != null && raw != 'unknown';
-
 String _prefixedProvinceId(Province province) => province.id.contains('|')
     ? province.id
     : ProvinceId.full(province.regionId, province.id);
-
-bool _provinceKnownToPlayer(Game game, String playerId, Province province) {
-  final prefixedProvinceId = _prefixedProvinceId(province);
-  final localProvinceId = ProvinceId.localIdFrom(prefixedProvinceId);
-  final tileKeys =
-      game.worldState.tileKeysByRegionAndProvince[province
-          .regionId]?[localProvinceId] ??
-      game.worldState.tileKeysByRegionAndProvince[province
-          .regionId]?[prefixedProvinceId] ??
-      const <String>[];
-  if (tileKeys.isEmpty) {
-    return false;
-  }
-  final visibility =
-      game.worldState.playerVisibilityByTile[playerId] ??
-      const <String, String>{};
-  for (final tileKey in tileKeys) {
-    if (_isKnownVisibility(visibility[tileKey])) {
-      return true;
-    }
-  }
-  return false;
-}
 
 Set<String> _seaZonesAtSeaForPlayer(Game game, String playerId) {
   final zones = <String>{};
@@ -313,14 +289,17 @@ void emitPlayerDiscoveryEvents(
   GameEventBus? eventBus,
   void Function(GameEvent)? onGameEvent,
 ) {
+  final beforeIndex = buildProvinceVisibilityIndex(stateBefore);
+  final afterIndex = buildProvinceVisibilityIndex(stateAfter);
   final sortedPlayers = List<Player>.from(stateAfter.players)
     ..sort((a, b) => a.id.compareTo(b.id));
   for (final player in sortedPlayers) {
     _emitPlayerProvinceDiscoveryEvents(
-      stateBefore: stateBefore,
       stateAfter: stateAfter,
       playerId: player.id,
       turn: turn,
+      beforeIndex: beforeIndex,
+      afterIndex: afterIndex,
       eventBus: eventBus,
       onGameEvent: onGameEvent,
     );
@@ -339,10 +318,11 @@ void emitPlayerDiscoveryEvents(
 }
 
 void _emitPlayerProvinceDiscoveryEvents({
-  required Game stateBefore,
   required Game stateAfter,
   required String playerId,
   required int turn,
+  required ProvinceVisibilityIndex beforeIndex,
+  required ProvinceVisibilityIndex afterIndex,
   required GameEventBus? eventBus,
   required void Function(GameEvent)? onGameEvent,
 }) {
@@ -351,14 +331,15 @@ void _emitPlayerProvinceDiscoveryEvents({
     stateAfter.worldState.newWorld,
   ]) {
     for (final province in region.provinces) {
-      final wasKnown = _provinceKnownToPlayer(stateBefore, playerId, province);
-      final nowKnown = _provinceKnownToPlayer(stateAfter, playerId, province);
+      final fullProvinceId = _prefixedProvinceId(province);
+      final wasKnown = beforeIndex.isKnownToPlayer(playerId, fullProvinceId);
+      final nowKnown = afterIndex.isKnownToPlayer(playerId, fullProvinceId);
       if (wasKnown || !nowKnown) {
         continue;
       }
       final event = PlayerProvinceDiscoveredEvent(
         playerId: playerId,
-        provinceId: _prefixedProvinceId(province),
+        provinceId: fullProvinceId,
         turnNumber: turn,
       );
       deliverGameEvent(event, eventBus: eventBus, onGameEvent: onGameEvent);
