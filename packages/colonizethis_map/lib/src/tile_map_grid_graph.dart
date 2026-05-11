@@ -1,13 +1,13 @@
-
 /// Grid and connectivity helpers shared by tile map generation passes.
 /// SPEC/program/tile-map-gen-algorithm.md
 
-part of 'tile_map_generator.dart';
+import 'tile_map_distance_sentinels.dart';
+import 'tile_map_land_seed_contract.dart';
 
 class TileMapGridGraph {
   TileMapGridGraph(this.params);
 
-  final TileMapParams params;
+  final TileMapLandSeedParams params;
 
   List<Set<(int x, int y)>> connectedComponentsOfLand(
     Set<(int x, int y)> landCells,
@@ -22,13 +22,7 @@ class TileMapGridGraph {
       final queue = <(int x, int y)>[start];
       while (queue.isNotEmpty) {
         final (x, y) = queue.removeLast();
-        _expandLandComponentNeighbors(
-          x,
-          y,
-          remaining,
-          component,
-          queue,
-        );
+        _expandLandComponentNeighbors(x, y, remaining, component, queue);
       }
       result.add(component);
     }

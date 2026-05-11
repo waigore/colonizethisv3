@@ -25,6 +25,7 @@ import 'tile_map_visualization_shared.dart'
         swatchSize,
         terrainColorRgb,
         tileMapResourceGlyphs;
+export 'tile_map_image_viewer.dart' show openInDefaultViewer;
 
 /// Deep blue for sea zones. SPEC/program/map-visualization.md § Tile map PNG export.
 const (int, int, int) seaColorRgb = (20, 60, 140);
@@ -526,7 +527,7 @@ Uint8List renderTileMapToPng(
   if (showContinentSeeds) {
     _drawContinentSeedMarkers(
       image: image,
-      continentSeedPositions: continentSeedPositions!,
+      continentSeedPositions: continentSeedPositions,
       cellSize: cellSize,
       black: black,
     );
@@ -535,7 +536,7 @@ Uint8List renderTileMapToPng(
   if (showLandSeeds) {
     _drawLandSeedMarkers(
       image: image,
-      landSeedPositions: landSeedPositions!,
+      landSeedPositions: landSeedPositions,
       cellSize: cellSize,
       black: black,
       useLandSeedByContinent: useLandSeedByContinent,
@@ -632,29 +633,4 @@ String writeTileMapImageToTempFile(
     continentSeedPositions: continentSeedPositions,
   );
   return file.absolute.path;
-}
-
-/// Tries to open [path] in the system default image viewer.
-/// Respects SUPPRESS_IMAGE_VIEWER=1 env var to skip opening in non-interactive contexts.
-bool openInDefaultViewer(String path) {
-  if (Platform.environment['SUPPRESS_IMAGE_VIEWER'] == '1') {
-    return false;
-  }
-  try {
-    if (Platform.isMacOS) {
-      Process.runSync('open', [path]);
-      return true;
-    } else if (Platform.isLinux) {
-      Process.runSync('xdg-open', [path]);
-      return true;
-    } else if (Platform.isWindows) {
-      Process.runSync('explorer', [path]);
-      return true;
-    }
-  } on ProcessException {
-    return false;
-  } on ArgumentError {
-    return false;
-  }
-  return false;
 }

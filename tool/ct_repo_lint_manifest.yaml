@@ -237,6 +237,13 @@ rules:
     runner: dart
     script: tool/check_colonizethis_map_lib_pipe_split.dart
 
+  - rule_id: repo.map_no_partfile_classes
+    group: structure
+    title: colonizethis_map lib/src part files must not declare non-private classes
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_no_partfile_classes.dart
+
   - rule_id: repo.land_province_bucket_keys
     group: game_invariants
     title: Canonical full-id land province bucket lookups in guarded paths
