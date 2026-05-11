@@ -165,67 +165,70 @@ class TradeInterceptionResult {
   final List<Fleet> updatedFleets;
 }
 
-/// Intercept score and whether any enemy has Blockade mission.
-(int interceptScore, bool hasBlockade) _interceptScoreAndBlockade(
+class _TradeInterceptionScan {
+  const _TradeInterceptionScan({
+    required this.interceptScore,
+    required this.hasBlockade,
+    required this.evasionScore,
+    required this.escortStrength,
+    required this.playerMerchantShips,
+  });
+
+  final int interceptScore;
+  final bool hasBlockade;
+  final int evasionScore;
+  final double escortStrength;
+  final int playerMerchantShips;
+}
+
+/// Single-pass fleet aggregation for interception/evasion/escort/merchant counters.
+_TradeInterceptionScan _scanTradeInterceptionInputs(
   List<Fleet> fleets,
   Set<String> enemyIds,
-) {
-  var sum = 0;
-  var hasBlockade = false;
-  for (final f in fleets) {
-    if (!f.isAtSea) {
-      continue; // Only fleets at sea can intercept. SPEC/game/ships-and-naval.md.
-    }
-    if (!enemyIds.contains(f.ownerId)) continue;
-    if (f.mission != FleetMission.patrol &&
-        f.mission != FleetMission.blockade) {
-      continue;
-    }
-    if (f.mission == FleetMission.blockade) hasBlockade = true;
-    for (final typeId in f.shipTypeIds) {
-      sum += NavalStatsCatalog.get(typeId).interceptRating;
-    }
-  }
-  return (sum, hasBlockade);
-}
-
-/// Sum flee rating for all ships of [playerId].
-int _evasionScoreForPlayer(List<Fleet> fleets, String playerId) {
-  var sum = 0;
-  for (final f in fleets) {
-    if (f.ownerId != playerId) continue;
-    for (final typeId in f.shipTypeIds) {
-      sum += NavalStatsCatalog.get(typeId).fleeRating;
-    }
-  }
-  return sum;
-}
-
-/// Merchant ship type ids (civilian); others count as escort/warship. SPEC/game/ships-and-naval.md.
-const Set<String> _merchantShipTypes = {'fluyte', 'carrack'};
-
-/// Escort strength = sum of fleeRating for non-merchant ships of [playerId].
-/// Cargo strength = max(1, total cargo units) for escort factor denominator.
-(double escortStrength, double cargoStrength) _escortAndCargoStrength(
-  List<Fleet> fleets,
   String playerId,
-  Map<CommodityId, int> overseasDelivered,
 ) {
+  var interceptScore = 0;
+  var hasBlockade = false;
+  var evasionScore = 0;
   var escortStrength = 0.0;
-  var cargoHolds = 0;
+  var playerMerchantShips = 0;
   for (final f in fleets) {
-    if (f.ownerId != playerId) continue;
+    final isPlayerFleet = f.ownerId == playerId;
+    final isEnemyFleet = enemyIds.contains(f.ownerId);
+    final canEnemyIntercept =
+        f.isAtSea &&
+        (f.mission == FleetMission.patrol || f.mission == FleetMission.blockade);
+
     for (final typeId in f.shipTypeIds) {
-      if (_merchantShipTypes.contains(typeId)) {
-        cargoHolds += 1; // 1 cargo hold per merchant ship
-      } else {
-        escortStrength += NavalStatsCatalog.get(typeId).fleeRating;
+      final stats = NavalStatsCatalog.get(typeId);
+      if (isEnemyFleet && canEnemyIntercept) {
+        interceptScore += stats.interceptRating;
+      }
+      if (isPlayerFleet) {
+        evasionScore += stats.fleeRating;
+        if (_merchantShipTypes.contains(typeId)) {
+          playerMerchantShips++;
+        } else {
+          escortStrength += stats.fleeRating;
+        }
       }
     }
+    if (isEnemyFleet &&
+        canEnemyIntercept &&
+        f.mission == FleetMission.blockade) {
+      hasBlockade = true;
+    }
   }
-  final cargoStrength = cargoHolds > 0 ? cargoHolds.toDouble() : 1.0;
-  return (escortStrength, cargoStrength);
+  return _TradeInterceptionScan(
+    interceptScore: interceptScore,
+    hasBlockade: hasBlockade,
+    evasionScore: evasionScore,
+    escortStrength: escortStrength,
+    playerMerchantShips: playerMerchantShips,
+  );
 }
+/// Merchant ship type ids (civilian); others count as escort/warship. SPEC/game/ships-and-naval.md.
+const Set<String> _merchantShipTypes = {'fluyte', 'carrack'};
 
 /// Apply trade interception: reduce delivered cargo and optionally remove merchant ships.
 /// Only applies when at least one enemy (at war) has patrol/blockade fleets. Deterministic from [seed].
@@ -257,13 +260,13 @@ TradeInterceptionResult applyTradeInterception(
   }
 
   final fleets = game.worldState.fleets;
-  final (interceptScore, hasBlockade) = _interceptScoreAndBlockade(
+  final scan = _scanTradeInterceptionInputs(
     fleets,
     enemies,
+    playerId,
   );
-  final evasionScore = _evasionScoreForPlayer(fleets, playerId);
 
-  if (interceptScore <= 0) {
+  if (scan.interceptScore <= 0) {
     final unchanged = Map<CommodityId, int>.from(overseasDelivered);
     _logExtractionAutoTransportInterception(
       playerId,
@@ -276,21 +279,19 @@ TradeInterceptionResult applyTradeInterception(
     );
   }
 
-  final total = interceptScore + evasionScore;
-  final ratio = total > 0 ? interceptScore / total : 1.0;
+  final total = scan.interceptScore + scan.evasionScore;
+  final ratio = total > 0 ? scan.interceptScore / total : 1.0;
 
   // Escort protection: lossReduction = min(0.5, escortStrength/cargoStrength × 0.3). SPEC.
-  final (escortStrength, cargoStrength) = _escortAndCargoStrength(
-    fleets,
-    playerId,
-    overseasDelivered,
-  );
-  final escortFactor = (escortStrength / cargoStrength * escortStrengthWeight)
+  final cargoStrength = scan.playerMerchantShips > 0
+      ? scan.playerMerchantShips.toDouble()
+      : 1.0;
+  final escortFactor = (scan.escortStrength / cargoStrength * escortStrengthWeight)
       .clamp(0.0, escortFactorMax);
 
   // Base before escort: used for cargo (with escort) and for ship loss (escort applied once per GDD).
   double baseBeforeEscort = actionFactorPatrol * ratio * civilianTargetBonus;
-  if (hasBlockade) baseBeforeEscort *= blockadeBonusFactor;
+  if (scan.hasBlockade) baseBeforeEscort *= blockadeBonusFactor;
   baseBeforeEscort = baseBeforeEscort.clamp(0.0, 1.0);
 
   double base = baseBeforeEscort * (1.0 - escortFactor);
@@ -322,15 +323,9 @@ TradeInterceptionResult applyTradeInterception(
     return rng % max;
   }
 
-  final playerFleets = fleets.where((f) => f.ownerId == playerId).toList();
   var shipsToRemove = 0;
-  for (final f in playerFleets) {
-    final merchantCount = f.shipTypeIds
-        .where((id) => _merchantShipTypes.contains(id))
-        .length;
-    for (var i = 0; i < merchantCount; i++) {
-      if (nextInt(100) < (pShip * 100)) shipsToRemove++;
-    }
+  for (var i = 0; i < scan.playerMerchantShips; i++) {
+    if (nextInt(100) < (pShip * 100)) shipsToRemove++;
   }
   if (shipsToRemove <= 0) {
     _logExtractionAutoTransportInterception(
