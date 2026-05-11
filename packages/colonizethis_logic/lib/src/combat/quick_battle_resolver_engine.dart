@@ -174,27 +174,21 @@ bool _attackerActsFirst(QuickBattleInput input) {
   return input.attackerFactionId.compareTo(input.defenderFactionId) < 0;
 }
 
+/// Computes the defender loss fraction from an attacker strike using
+/// precomputed effective strengths.
+///
+/// Callers compute `effAtt` and `effDef` once at the round level via
+/// [_attackerEffectiveStrength] and [_defenderEffectiveStrength] and only
+/// recompute the side whose state has changed between strikes. This avoids
+/// the previous O(4) `_effectiveStrength` invocations per round, where the
+/// striker side's strength was identical across both loss-fraction calls.
 double _defenderLossFractionFromAttackerStrike({
   required QuickBattleInput input,
-  required List<QuickBattleGroup> attGroups,
-  required List<QuickBattleGroup> defGroups,
+  required double effAtt,
+  required double effDef,
   required _ActionModifiers attMods,
   required _ActionModifiers defMods,
-  required List<_MutableEmplacedGun> mutableGuns,
-  required bool useVirtualEmplaced,
 }) {
-  final effAtt = _attackerEffectiveStrength(
-    input: input,
-    attGroups: attGroups,
-    attMods: attMods,
-  );
-  final effDef = _defenderEffectiveStrength(
-    input: input,
-    defGroups: defGroups,
-    defMods: defMods,
-    mutableGuns: mutableGuns,
-    useVirtualEmplaced: useVirtualEmplaced,
-  );
   final wallHp = input.fortLevel >= 1 && input.fortLevel <= 3
       ? wallHpByFortLevel[input.fortLevel]
       : 0.0;
@@ -206,27 +200,15 @@ double _defenderLossFractionFromAttackerStrike({
       .clamp(0.0, 1.0);
 }
 
+/// Computes the attacker loss fraction from a defender strike using
+/// precomputed effective strengths. See [_defenderLossFractionFromAttackerStrike]
+/// for the round-level caching contract.
 double _attackerLossFractionFromDefenderStrike({
-  required QuickBattleInput input,
-  required List<QuickBattleGroup> attGroups,
-  required List<QuickBattleGroup> defGroups,
+  required double effAtt,
+  required double effDef,
   required _ActionModifiers attMods,
   required _ActionModifiers defMods,
-  required List<_MutableEmplacedGun> mutableGuns,
-  required bool useVirtualEmplaced,
 }) {
-  final effAtt = _attackerEffectiveStrength(
-    input: input,
-    attGroups: attGroups,
-    attMods: attMods,
-  );
-  final effDef = _defenderEffectiveStrength(
-    input: input,
-    defGroups: defGroups,
-    defMods: defMods,
-    mutableGuns: mutableGuns,
-    useVirtualEmplaced: useVirtualEmplaced,
-  );
   final ratio = effAtt > 0 ? effDef / effAtt : 10.0;
   return (_targetLossFraction(ratio) *
           defMods.casualtiesDealtModifier *

@@ -17,13 +17,14 @@ TurnPipelineState runConsumptionPipelinePhase(TurnPipelineState acc) {
   final idleLabour = Map<String, WorkerIdleCounts>.from(
     acc.idleLabourByPlayerId,
   );
+  final militaryCounts = militaryTypeCountsByPlayer(game.worldState);
 
   final mappedGame = game.mapPlayers((player) {
-    final regimentCounts = regimentTypeCountsForPlayer(
-      game.worldState,
-      player.id,
-    );
-    final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
+    final regimentCounts =
+        militaryCounts.regimentCountsByPlayerId[player.id] ??
+        const <String, int>{};
+    final shipCounts =
+        militaryCounts.shipCountsByPlayerId[player.id] ?? const <String, int>{};
 
     final result = resolveConsumption(
       stockpile: player.stockpile,

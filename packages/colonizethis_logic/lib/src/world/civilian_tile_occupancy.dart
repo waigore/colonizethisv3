@@ -11,11 +11,7 @@ import 'tile_key_coordinates.dart';
 bool isLandTileKeyForGame(Game game, String tileKey) {
   if (tileKey.isEmpty) return false;
   final ws = game.worldState;
-  for (final byProvince in ws.tileKeysByRegionAndProvince.values) {
-    for (final tiles in byProvince.values) {
-      if (tiles.contains(tileKey)) return true;
-    }
-  }
+  if (_landTileKeysForWorld(ws).contains(tileKey)) return true;
   final coords = parseTileKeyCoordinates(tileKey);
   if (coords != null) {
     final provinceId = '${coords.regionId}|${coords.provinceLocalId}';
@@ -35,14 +31,26 @@ bool isLandTileKeyForGame(Game game, String tileKey) {
 /// SPEC/program/orders.md; issue #1877.
 /// All distinct land tile keys indexed on [world], sorted lexicographically.
 List<String> sortedLandTileKeys(WorldState world) {
-  final out = <String>{};
+  final list = _landTileKeysForWorld(world).toList()..sort();
+  return list;
+}
+
+final Expando<Set<String>> _landTileKeysByWorldState =
+    Expando<Set<String>>('landTileKeysByWorldState');
+
+Set<String> _landTileKeysForWorld(WorldState world) {
+  final cached = _landTileKeysByWorldState[world];
+  if (cached != null) {
+    return cached;
+  }
+  final keys = <String>{};
   for (final byProvince in world.tileKeysByRegionAndProvince.values) {
     for (final tiles in byProvince.values) {
-      out.addAll(tiles);
+      keys.addAll(tiles);
     }
   }
-  final list = out.toList()..sort();
-  return list;
+  _landTileKeysByWorldState[world] = keys;
+  return keys;
 }
 
 bool civilianMayOccupyLandTileKey({

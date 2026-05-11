@@ -50,6 +50,7 @@ Game resolveBattleContext(
   _sortAttackersByInitiative(attackerSidesWithMedals, unitsById, battleRng);
   var currentDefenderGeneralId = ctx.defenderGeneralId;
   var currentDefenderMedals = ctx.defenderGeneralMedals;
+  final defenderEffectiveLevelByFaction = <String, int>{};
 
   final allCasualties = <String>{};
   String? survivingAttackerFactionId;
@@ -99,9 +100,9 @@ Game resolveBattleContext(
     final cappedAttackerUnits = attackerUnits.take(attackerLimit).toList();
     final cappedDefenderUnits = defenderUnits.take(defenderLimit).toList();
 
-    final defenderEffectiveLevel = _defenderEffectiveLevel(
-      game,
+    final defenderEffectiveLevel = defenderEffectiveLevelByFaction.putIfAbsent(
       defenderFactionId,
+      () => _defenderEffectiveLevel(game, defenderFactionId),
     );
     final attackerCoverage =
         feedingCoverageByPlayerId[attacker.side.factionId] ??
@@ -452,20 +453,20 @@ void _sortAttackersByInitiative(
 
   final tieBreakRoll = rng.nextInt(kInitiativeTieBreakRngUpperExclusive);
   int tieRank(String factionId) => Object.hash(factionId, tieBreakRoll);
+  final initiativeByAttacker = <_AttackingSideInBattle, double>{};
+  for (final attacker in attackers) {
+    final totalUnits = attacker.side.unitIds.length;
+    final cavalryShare = totalUnits > 0
+        ? cavalryCount(attacker.side) / totalUnits
+        : kZeroCavalryShareWhenNoUnits;
+    initiativeByAttacker[attacker] =
+        cavalryShare * initiativeCavalryShareWeight +
+        attacker.side.generalMedals * initiativeGeneralMedalWeight;
+  }
 
   attackers.sort((a, b) {
-    final cavA = cavalryCount(a.side);
-    final cavB = cavalryCount(b.side);
-    final totalA = a.side.unitIds.length;
-    final totalB = b.side.unitIds.length;
-    final shareA = totalA > 0 ? cavA / totalA : kZeroCavalryShareWhenNoUnits;
-    final shareB = totalB > 0 ? cavB / totalB : kZeroCavalryShareWhenNoUnits;
-    final initA =
-        shareA * initiativeCavalryShareWeight +
-        a.side.generalMedals * initiativeGeneralMedalWeight;
-    final initB =
-        shareB * initiativeCavalryShareWeight +
-        b.side.generalMedals * initiativeGeneralMedalWeight;
+    final initA = initiativeByAttacker[a]!;
+    final initB = initiativeByAttacker[b]!;
     final cmp = initB.compareTo(initA);
     if (cmp != 0) return cmp;
     return tieRank(a.side.factionId).compareTo(tieRank(b.side.factionId));

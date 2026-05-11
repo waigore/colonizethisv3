@@ -5,6 +5,46 @@ import 'package:colonizethis_test/test.dart';
 import '../test_fixtures.dart';
 
 void main() {
+  group('isLandTileKeyForGame', () {
+    const ow = 'oldWorld';
+    const p1 = '$ow|p1';
+    const listedTile = '$p1|0|0';
+    const fallbackTile = '$p1|9|9';
+
+    test('accepts listed land tile keys from world index', () {
+      final game = TestFixtures.minimalGame(
+        oldWorld: const RegionData(
+          provinces: [Province(id: p1, regionId: ow, ownerId: 'gp1')],
+          units: [],
+        ),
+        tileKeysByRegionAndProvince: const {
+          ow: {p1: [listedTile]},
+        },
+      );
+      expect(isLandTileKeyForGame(game, listedTile), isTrue);
+    });
+
+    test('falls back to province existence for sparse worlds', () {
+      final game = TestFixtures.minimalGame(
+        oldWorld: const RegionData(
+          provinces: [Province(id: p1, regionId: ow, ownerId: 'gp1')],
+          units: [],
+        ),
+      );
+      expect(isLandTileKeyForGame(game, fallbackTile), isTrue);
+    });
+
+    test('rejects tile when not indexed and province does not exist', () {
+      final game = TestFixtures.minimalGame(
+        oldWorld: const RegionData(
+          provinces: [Province(id: p1, regionId: ow, ownerId: 'gp1')],
+          units: [],
+        ),
+      );
+      expect(isLandTileKeyForGame(game, '$ow|missing|0|0'), isFalse);
+    });
+  });
+
   group('civilianMayOccupyLandTileKey', () {
     const ow = 'oldWorld';
     const tileP2 = '$ow|p2|0|0';
