@@ -56,6 +56,48 @@ Map<String, int> shipTypeCountsForPlayer(WorldState world, String playerId) {
   return map;
 }
 
+/// Precomputed military type counts for all players in a [WorldState].
+///
+/// Consumption uses this to avoid re-scanning all units and fleets once per
+/// player.
+final class MilitaryTypeCountsByPlayer {
+  const MilitaryTypeCountsByPlayer({
+    required this.regimentCountsByPlayerId,
+    required this.shipCountsByPlayerId,
+  });
+
+  final Map<String, Map<String, int>> regimentCountsByPlayerId;
+  final Map<String, Map<String, int>> shipCountsByPlayerId;
+}
+
+/// Builds regiment and ship type counts for all players in one pass.
+MilitaryTypeCountsByPlayer militaryTypeCountsByPlayer(WorldState world) {
+  final regimentCountsByPlayerId = <String, Map<String, int>>{};
+  for (final unit in allUnitsFromWorld(world)) {
+    final perPlayer = regimentCountsByPlayerId.putIfAbsent(
+      unit.ownerId,
+      () => <String, int>{},
+    );
+    perPlayer.update(unit.type, (count) => count + 1, ifAbsent: () => 1);
+  }
+
+  final shipCountsByPlayerId = <String, Map<String, int>>{};
+  for (final fleet in world.fleets) {
+    final perPlayer = shipCountsByPlayerId.putIfAbsent(
+      fleet.ownerId,
+      () => <String, int>{},
+    );
+    for (final shipTypeId in fleet.shipTypeIds) {
+      perPlayer.update(shipTypeId, (count) => count + 1, ifAbsent: () => 1);
+    }
+  }
+
+  return MilitaryTypeCountsByPlayer(
+    regimentCountsByPlayerId: regimentCountsByPlayerId,
+    shipCountsByPlayerId: shipCountsByPlayerId,
+  );
+}
+
 /// Lazily built per [WorldState] instance (issue #2268 AC-3). A new
 /// [WorldState] from [WorldState.copyWith] gets a fresh cache via identity.
 final Expando<_WorldUnitIndex> _worldUnitIndexByState =
