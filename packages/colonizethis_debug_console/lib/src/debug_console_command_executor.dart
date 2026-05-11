@@ -161,21 +161,29 @@ class DebugConsoleCommandExecutor {
 DebugConsoleExecutionResult _executeGetTileBasicInfo(
   DebugConsoleExecutionContext? context,
 ) {
-  final rawTileKey = context?.selectedTileKey?.trim();
-  if (rawTileKey == null || rawTileKey.isEmpty) {
+  final selectedTileKey = context?.selectedTileKey?.trim();
+  if (selectedTileKey == null || selectedTileKey.isEmpty) {
     return const DebugConsoleExecutionResult.error('No tile is selected.');
   }
-  final parts = rawTileKey.split('|');
-  if (parts.length < 4) {
+  // Keep parsing local to this package to avoid app-layer coupling.
+  final provinceId = _provinceIdFromTileKey(selectedTileKey);
+  if (provinceId == null) {
     return const DebugConsoleExecutionResult.error(
       'Selected tile key is invalid.',
     );
   }
-  final provinceId = '${parts[0]}|${parts[1]}';
   return DebugConsoleExecutionResult.success(
     events: const [],
-    message: 'tile_id: $rawTileKey\nprovince_id: $provinceId',
+    message: 'tile_id: $selectedTileKey\nprovince_id: $provinceId',
   );
+}
+
+String? _provinceIdFromTileKey(String tileKey) {
+  final parts = tileKey.split('|');
+  if (parts.length < 4) {
+    return null;
+  }
+  return '${parts[0]}|${parts[1]}';
 }
 
 String _treasuryCreditExecutorMessage({

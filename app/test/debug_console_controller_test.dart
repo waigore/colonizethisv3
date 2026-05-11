@@ -134,37 +134,41 @@ void main() {
       expect(closeCount, 1);
     });
 
-    testWidgets(
-      'submit get_tile_basic_info reports ids and emits no session command events',
-      (tester) async {
-        final bus = AppEventBus.create();
-        addTearDown(bus.dispose);
-        final sessionEvents = <SessionCommandEvent>[];
-        final sessionSub = bus.on<SessionCommandEvent>().listen(
-          sessionEvents.add,
-        );
-        addTearDown(sessionSub.cancel);
+    testWidgets('get_tile_basic_info stays read-only', (tester) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      final events = <SessionCommandEvent>[];
+      final eventSub = bus.on<SessionCommandEvent>().listen(events.add);
+      addTearDown(eventSub.cancel);
+      final snackbars = <ShowSnackBarEvent>[];
+      final snackbarSub = bus.on<ShowSnackBarEvent>().listen(snackbars.add);
+      addTearDown(snackbarSub.cancel);
+      String? selectedTileKey = 'oldWorld|P12|34|21';
 
-        final controller = DebugConsoleController(
-          bus: bus,
-          humanPlayerId: 'human_1',
-          selectedTileKeyProvider: () => 'oldWorld|P12|34|21',
-          onClose: () {},
-        );
-        addTearDown(controller.dispose);
-        controller.textController.text = '/get_tile_basic_info';
+      final controller = DebugConsoleController(
+        bus: bus,
+        humanPlayerId: 'human_1',
+        selectedTileKeyProvider: () => selectedTileKey,
+        onClose: () {},
+      );
+      addTearDown(controller.dispose);
 
-        final message = controller.submit();
-        await tester.pump();
+      controller.textController.text = '/get_tile_basic_info';
+      final successMessage = controller.submit();
+      await tester.pump();
+      expect(
+        successMessage,
+        'tile_id: oldWorld|P12|34|21\nprovince_id: oldWorld|P12',
+      );
+      expect(events, isEmpty);
+      expect(snackbars.last.message, contains('province_id: oldWorld|P12'));
 
-        expect(
-          message,
-          'tile_id: oldWorld|P12|34|21\nprovince_id: oldWorld|P12',
-        );
-        expect(sessionEvents, isEmpty);
-        expect(controller.lines, contains('> /get_tile_basic_info'));
-        expect(controller.lines, contains(message));
-      },
-    );
+      selectedTileKey = null;
+      controller.textController.text = '/get_tile_basic_info';
+      final missingMessage = controller.submit();
+      await tester.pump();
+      expect(missingMessage, 'No tile is selected.');
+      expect(events, isEmpty);
+    });
   });
 }

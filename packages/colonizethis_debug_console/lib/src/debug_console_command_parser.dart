@@ -261,7 +261,7 @@ class DebugConsoleCommandParser {
     if (tokens.length != 1) {
       return const DebugConsoleParseResult.error('Usage: /get_tile_basic_info');
     }
-    return DebugConsoleParseResult.success(
+    return const DebugConsoleParseResult.success(
       DebugConsoleParsedInvocation.getTileBasicInfo(),
     );
   }

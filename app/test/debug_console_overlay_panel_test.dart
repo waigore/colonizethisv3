@@ -390,5 +390,51 @@ void main() {
       editableText = tester.widget<EditableText>(find.byType(EditableText));
       expect(editableText.controller.text, '/spawn_civilian builder 2');
     });
+
+    testWidgets('/get_tile_basic_info reads selectedTileKey at submit-time', (
+      tester,
+    ) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      final events = <SessionCommandEvent>[];
+      final eventSub = bus.on<SessionCommandEvent>().listen(events.add);
+      addTearDown(eventSub.cancel);
+      final snackbars = <ShowSnackBarEvent>[];
+      final snackbarSub = bus.on<ShowSnackBarEvent>().listen(snackbars.add);
+      addTearDown(snackbarSub.cancel);
+      String? selectedTileKey = 'oldWorld|P12|34|21';
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DebugConsoleOverlayPanel(
+              bus: bus,
+              humanPlayerId: 'human_1',
+              selectedTileKeyProvider: () => selectedTileKey,
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final inputFinder = find.byKey(
+        const ValueKey<String>('debug-console-input'),
+      );
+      await tester.enterText(inputFinder, '/get_tile_basic_info');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(snackbars.last.message, contains('tile_id: oldWorld|P12|34|21'));
+      expect(snackbars.last.message, contains('province_id: oldWorld|P12'));
+      expect(events, isEmpty);
+
+      selectedTileKey = 'oldWorld|P1|2|3';
+      await tester.enterText(inputFinder, '/get_tile_basic_info');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(snackbars.last.message, contains('tile_id: oldWorld|P1|2|3'));
+      expect(snackbars.last.message, contains('province_id: oldWorld|P1'));
+      expect(events, isEmpty);
+    });
   });
 }
