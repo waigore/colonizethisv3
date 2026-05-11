@@ -1,5 +1,4 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
@@ -124,5 +123,43 @@ void main() {
         isTrue,
       );
     });
+
+    test(
+      'applyCivilianTileMoveOrdersToWorldRegions skips per-order debug work '
+      'when Logger.level is info',
+      () {
+        Logger.level = Level.info;
+        const ow = 'oldWorld';
+        final game = Game(
+          id: 'g',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: const [
+                Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
+              ],
+              units: const [],
+            ),
+            newWorld: const RegionData(),
+          ),
+          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        );
+
+        applyCivilianTileMoveOrdersToWorldRegions(
+          game,
+          {
+            'p1': [
+              const MoveOrder(unitId: 'missing', destinationTileKey: 'oldWorld|P1|0|0'),
+            ],
+          },
+        );
+
+        final lines = _civilianMovementMessages(capturedEvents);
+        expect(
+          lines.any((m) => m.contains('civilian movement ignored')),
+          isFalse,
+        );
+      },
+    );
   });
 }

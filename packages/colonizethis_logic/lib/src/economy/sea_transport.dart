@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import '../world/naval.dart';
@@ -67,6 +68,7 @@ void logExtractionAutoTransportOverseasAllocation({
   required Map<CommodityId, int> allocatedToStockpile,
 }) {
   if (overseasTotals.isEmpty) return;
+  if (Level.debug.value < Logger.level.value) return;
   final overseasTotalUnits = overseasTotals.values.fold<int>(
     0,
     (a, b) => a + b,
@@ -90,6 +92,7 @@ void _logExtractionAutoTransportInterception(
   Map<CommodityId, int> before,
   Map<CommodityId, int> after,
 ) {
+  if (Level.debug.value < Logger.level.value) return;
   final beforeUnits = before.values.fold<int>(0, (s, v) => s + v);
   final afterUnits = after.values.fold<int>(0, (s, v) => s + v);
   final ids = {...before.keys, ...after.keys};
