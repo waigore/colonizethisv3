@@ -471,6 +471,10 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: tool/check_coverage_threshold.sh 90 packages/colonizethis_logic packages/colonizethis_map packages/colonizethis_ai
 
+      - name: Coverage gate (data >= 80%)
+        if: needs.changes.outputs.tests == 'true'
+        run: tool/check_coverage_threshold.sh 80 packages/colonizethis_data
+
       - name: sim_scenarios integration gate (all scenarios must pass)
         if: needs.changes.outputs.tests == 'true'
         run: melos run sim_scenarios
