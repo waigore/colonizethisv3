@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 import '../turn/trace/turn_trace_runtime.dart';
 import 'army_migration.dart';
@@ -49,9 +50,11 @@ WorldState applyArmyMoveOrdersToRegion(
       }
       if (army.isHomeArmy) {
         ignored++;
-        _log.d(
-          'army_move ignored reason=home_army_locked armyId=${order.armyId}',
-        );
+        if (Level.debug.value >= Logger.level.value) {
+          _log.d(
+            'army_move ignored reason=home_army_locked armyId=${order.armyId}',
+          );
+        }
         continue;
       }
       if (ProvinceId.regionIdFrom(army.stationedProvinceId) != regionId) {
@@ -85,10 +88,12 @@ WorldState applyArmyMoveOrdersToRegion(
           isValidLandMoveInRegion(topology, regionId, fromLocal, toLocal);
       if (!valid) {
         ignored++;
-        _log.d(
-          'army_move ignored reason=invalid_adjacency armyId=${order.armyId} '
-          'from=$fromLocal to=$toLocal',
-        );
+        if (Level.debug.value >= Logger.level.value) {
+          _log.d(
+            'army_move ignored reason=invalid_adjacency armyId=${order.armyId} '
+            'from=$fromLocal to=$toLocal',
+          );
+        }
         onArmyMoveOrderTrace?.call(
           playerId: playerId,
           order: order,

@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:logger/logger.dart';
 
 import '../constants.dart';
 import '../turn/trace/turn_trace_runtime.dart';
@@ -397,10 +398,12 @@ _ownerMismatchPrecheck(
   String? ownerId,
   CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
 }) {
-  _log.d(
-    'civilian movement ignored reason=$reason unitId=${order.unitId} '
-    'orderPlayerId=$playerId${ownerId == null ? '' : ' unitOwnerId=$ownerId'}',
-  );
+  if (Level.debug.value >= Logger.level.value) {
+    _log.d(
+      'civilian movement ignored reason=$reason unitId=${order.unitId} '
+      'orderPlayerId=$playerId${ownerId == null ? '' : ' unitOwnerId=$ownerId'}',
+    );
+  }
   onCivilianMoveOrderTrace?.call(
     playerId: playerId,
     order: order,
