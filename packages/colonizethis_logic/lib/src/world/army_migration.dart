@@ -46,6 +46,7 @@ bool _armiesMatchUnits(Game game) {
   final militaryUnits = allUnitsFromWorld(
     ws,
   ).where((u) => isMilitaryUnit(u.type)).toList();
+  final militaryUnitIds = {for (final unit in militaryUnits) unit.id};
   if (ws.armies.isEmpty) {
     return militaryUnits.isEmpty;
   }
@@ -60,7 +61,7 @@ bool _armiesMatchUnits(Game game) {
     if (claimed[u.id] == null) return false;
   }
   for (final uid in claimed.keys) {
-    if (!militaryUnits.any((u) => u.id == uid)) return false;
+    if (!militaryUnitIds.contains(uid)) return false;
   }
   for (final a in ws.armies) {
     for (final uid in a.regimentUnitIds) {
