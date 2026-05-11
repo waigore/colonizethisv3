@@ -45,6 +45,9 @@ sealed class DebugConsoleParsedInvocation {
 
   const factory DebugConsoleParsedInvocation.getTileBasicInfo() =
       DebugConsoleGetTileBasicInfo;
+
+  const factory DebugConsoleParsedInvocation.listPlayers() =
+      DebugConsoleListPlayers;
 }
 
 final class DebugConsoleSpawnCivilianAtCapital
@@ -141,4 +144,8 @@ final class DebugConsoleRevealProvince extends DebugConsoleParsedInvocation {
 
 final class DebugConsoleGetTileBasicInfo extends DebugConsoleParsedInvocation {
   const DebugConsoleGetTileBasicInfo();
+}
+
+final class DebugConsoleListPlayers extends DebugConsoleParsedInvocation {
+  const DebugConsoleListPlayers();
 }

@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/features/game/flame/debug_console_overlay_panel.dart';
+import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -26,7 +27,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              selectedTileKeyProvider: () => null,
+              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
               onClose: () => closed = true,
             ),
           ),
@@ -71,7 +72,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              selectedTileKeyProvider: () => null,
+              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -108,7 +109,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              selectedTileKeyProvider: () => null,
+              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -146,7 +147,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              selectedTileKeyProvider: () => null,
+              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -180,7 +181,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              selectedTileKeyProvider: () => null,
+              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -213,7 +214,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              selectedTileKeyProvider: () => null,
+              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -251,7 +252,7 @@ void main() {
               body: DebugConsoleOverlayPanel(
                 bus: bus,
                 humanPlayerId: 'human_1',
-                selectedTileKeyProvider: () => null,
+                readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
                 onClose: () {},
               ),
             ),
@@ -287,7 +288,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              selectedTileKeyProvider: () => null,
+              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -320,7 +321,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              selectedTileKeyProvider: () => null,
+              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
               onClose: () => closeCount += 1,
             ),
           ),
@@ -350,7 +351,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              selectedTileKeyProvider: () => null,
+              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -410,7 +411,9 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              selectedTileKeyProvider: () => selectedTileKey,
+              readOnlyContextProvider: () => DebugConsoleReadOnlyContext(
+                selectedTileKey: selectedTileKey,
+              ),
               onClose: () {},
             ),
           ),
@@ -434,6 +437,53 @@ void main() {
       await tester.pump();
       expect(snackbars.last.message, contains('tile_id: oldWorld|P1|2|3'));
       expect(snackbars.last.message, contains('province_id: oldWorld|P1'));
+      expect(events, isEmpty);
+    });
+
+    testWidgets('/list_players appends output and emits no session events', (
+      tester,
+    ) async {
+      final bus = AppEventBus.create();
+      addTearDown(bus.dispose);
+      final events = <SessionCommandEvent>[];
+      final eventSub = bus.on<SessionCommandEvent>().listen(events.add);
+      addTearDown(eventSub.cancel);
+      final snackbars = <ShowSnackBarEvent>[];
+      final snackbarSub = bus.on<ShowSnackBarEvent>().listen(snackbars.add);
+      addTearDown(snackbarSub.cancel);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DebugConsoleOverlayPanel(
+              bus: bus,
+              humanPlayerId: 'human_1',
+              readOnlyContextProvider: () => DebugConsoleReadOnlyContext(
+                players: [
+                  const DebugConsolePlayerSnapshot(
+                    id: 'p1',
+                    displayName: 'One',
+                    isHuman: true,
+                    capitalProvinceId: 'r|P9',
+                  ),
+                ],
+              ),
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final inputFinder = find.byKey(
+        const ValueKey<String>('debug-console-input'),
+      );
+      await tester.enterText(inputFinder, '/list_players');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(snackbars.last.message, contains('players_count: 1'));
+      expect(snackbars.last.message, contains('player_id: p1'));
       expect(events, isEmpty);
     });
   });
