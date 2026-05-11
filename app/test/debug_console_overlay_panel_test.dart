@@ -26,6 +26,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
+              selectedTileKeyProvider: () => null,
               onClose: () => closed = true,
             ),
           ),
@@ -70,6 +71,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
+              selectedTileKeyProvider: () => null,
               onClose: () {},
             ),
           ),
@@ -106,6 +108,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
+              selectedTileKeyProvider: () => null,
               onClose: () {},
             ),
           ),
@@ -143,6 +146,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
+              selectedTileKeyProvider: () => null,
               onClose: () {},
             ),
           ),
@@ -176,6 +180,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
+              selectedTileKeyProvider: () => null,
               onClose: () {},
             ),
           ),
@@ -208,6 +213,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
+              selectedTileKeyProvider: () => null,
               onClose: () {},
             ),
           ),
@@ -245,6 +251,7 @@ void main() {
               body: DebugConsoleOverlayPanel(
                 bus: bus,
                 humanPlayerId: 'human_1',
+                selectedTileKeyProvider: () => null,
                 onClose: () {},
               ),
             ),
@@ -280,6 +287,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
+              selectedTileKeyProvider: () => null,
               onClose: () {},
             ),
           ),
@@ -312,6 +320,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
+              selectedTileKeyProvider: () => null,
               onClose: () => closeCount += 1,
             ),
           ),
@@ -341,6 +350,7 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
+              selectedTileKeyProvider: () => null,
               onClose: () {},
             ),
           ),
