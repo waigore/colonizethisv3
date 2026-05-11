@@ -3,6 +3,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
+import 'e2e_test_shared.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         OrderEngine,
@@ -28,6 +29,25 @@ import 'package:integration_test/integration_test.dart';
 
 part 'new_game_fleet_reaches_new_world_e2e_helpers.dart';
 part 'new_game_fleet_reaches_new_world_e2e_helpers_part2.dart';
+
+typedef _E2ePerfLog = E2ePerfLog;
+
+Future<void> _pumpFor(WidgetTester tester, Duration total) =>
+    e2ePumpFor(tester, total);
+
+Future<void> _waitUntilFound(
+  WidgetTester tester,
+  Finder finder, {
+  Duration timeout = _kMaxUiResponseWait,
+  _E2ePerfLog? perf,
+  String phaseName = 'wait_until_found',
+}) => e2eWaitUntilFound(
+  tester,
+  finder,
+  timeout: timeout,
+  perf: perf,
+  phaseName: phaseName,
+);
 
 void main() {
   suppressLogsForTests();

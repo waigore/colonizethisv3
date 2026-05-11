@@ -1,27 +1,5 @@
 part of 'new_game_fleet_reaches_new_world_e2e_test.dart';
 
-class _E2ePerfLog {
-  _E2ePerfLog(this.testName);
-
-  final String testName;
-  final Map<String, int> _counters = <String, int>{};
-
-  void bumpCounter(String name, {int by = 1, String? meta}) {
-    _counters[name] = (_counters[name] ?? 0) + by;
-    final metaPart = meta == null ? '' : '|meta=$meta';
-    debugPrint(
-      'E2E_COUNTER|test=$testName|name=$name|value=${_counters[name]}$metaPart',
-    );
-  }
-
-  void timing(String phase, Duration elapsed, {String? meta}) {
-    final metaPart = meta == null ? '' : '|meta=$meta';
-    debugPrint(
-      'E2E_TIMING|test=$testName|phase=$phase|ms=${elapsed.inMilliseconds}$metaPart',
-    );
-  }
-}
-
 /// Locked full-init may succeed only after [GameService] bumps `mapSeed` on a
 /// topology/assigner retry (`effectiveSeed + 100003`, …), producing longer
 /// coast→warp→New World paths than nominal seed-42 alone. Keep this above the
@@ -40,41 +18,6 @@ const Duration _kBootstrapNewGameOverallCap = Duration(seconds: 60);
 ///
 /// E2E policy caps wall-clock runtime to 5 minutes so PR feedback remains fast.
 const Duration _kFleetE2eMaxWallClock = Duration(minutes: 5);
-
-/// Drive frames without [WidgetTester.pumpAndSettle] (Flame + progress spinners).
-Future<void> _pumpFor(WidgetTester tester, Duration total) async {
-  const step = Duration(milliseconds: 50);
-  var elapsed = Duration.zero;
-  while (elapsed < total) {
-    await tester.pump(step);
-    elapsed += step;
-  }
-}
-
-Future<void> _waitUntilFound(
-  WidgetTester tester,
-  Finder finder, {
-  Duration timeout = _kMaxUiResponseWait,
-  _E2ePerfLog? perf,
-  String phaseName = 'wait_until_found',
-}) async {
-  final cap = timeout > _kMaxUiResponseWait ? _kMaxUiResponseWait : timeout;
-  final sw = Stopwatch()..start();
-  perf?.bumpCounter('wait_until_found_calls', meta: 'phase=$phaseName');
-  while (sw.elapsed < cap) {
-    await tester.pump(const Duration(milliseconds: 50));
-    if (finder.evaluate().isNotEmpty) {
-      perf?.timing(phaseName, sw.elapsed, meta: 'result=found');
-      return;
-    }
-  }
-  perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
-  fail(
-    'Timed out after ${cap.inSeconds}s waiting for $finder '
-    '(max UI response ${_kMaxUiResponseWait.inSeconds}s). '
-    'Last exception: ${tester.takeException()}',
-  );
-}
 
 /// Dismisses blocking bottom sheets, dialog shells, snackbars, and generic OKs.
 ///
@@ -373,7 +316,12 @@ Future<void> _pickMoveDestinationAndConfirm(
   }
 
   ensureBudget('start');
-  await _pumpFor(tester, const Duration(milliseconds: 200));
+  await _waitUntilFound(
+    tester,
+    find.byType(AlertDialog),
+    timeout: const Duration(seconds: 2),
+    phaseName: 'wait_until_found_move_dialog',
+  );
   final warpSuffix = l10n.moveFleet_warpLinkToRegion(
     unitsPanelRegionLabel('newWorld'),
   );
@@ -394,10 +342,10 @@ Future<void> _pickMoveDestinationAndConfirm(
     }
     if (scrollable.evaluate().isNotEmpty) {
       final sc = scrollable.first;
-      for (var i = 0; i < 36 && warp.hitTestable().evaluate().isEmpty; i++) {
+      for (var i = 0; i < 24 && warp.hitTestable().evaluate().isEmpty; i++) {
         ensureBudget('warp drag $i');
         await tester.drag(sc, const Offset(0, -120));
-        await _pumpFor(tester, const Duration(milliseconds: 50));
+        await tester.pump(const Duration(milliseconds: 25));
       }
       if (warp.hitTestable().evaluate().isEmpty) {
         fail(
@@ -425,12 +373,23 @@ Future<void> _pickMoveDestinationAndConfirm(
     expect(seaRadio, findsWidgets);
     await tester.tap(seaRadio.first, warnIfMissed: false);
   }
-  await _pumpFor(tester, const Duration(milliseconds: 200));
+  await _waitUntilFound(
+    tester,
+    find.text(l10n.common_confirm),
+    timeout: const Duration(seconds: 2),
+    phaseName: 'wait_until_found_move_confirm',
+  );
   ensureBudget('confirm');
   final confirm = find.text(l10n.common_confirm).hitTestable();
   expect(confirm, findsWidgets);
   await tester.tap(confirm.first, warnIfMissed: false);
-  await _pumpFor(tester, const Duration(milliseconds: 300));
+  final dialogGone = Stopwatch()..start();
+  while (dialogGone.elapsed < const Duration(seconds: 2)) {
+    if (find.byType(AlertDialog).evaluate().isEmpty) {
+      break;
+    }
+    await tester.pump(const Duration(milliseconds: 25));
+  }
   ensureBudget('after confirm');
 }
 
@@ -457,14 +416,25 @@ Future<void> _tryNavalMoveSegment(
     );
     return;
   }
-  await _pumpFor(tester, const Duration(milliseconds: 300));
+  await _waitUntilFound(
+    tester,
+    find.byType(AlertDialog),
+    timeout: const Duration(seconds: 2),
+    phaseName: 'wait_until_found_move_dialog_after_tap',
+  );
   // No legal sea-step this turn: close dialog and rely on the outer loop +
   // next turn (Refs #1831 heuristic path).
   if (find.text(l10n.moveFleet_noAdjacentSeaZones).evaluate().isNotEmpty) {
     final cancel = find.text(l10n.common_cancel).hitTestable();
     expect(cancel, findsOneWidget);
     await tester.tap(cancel, warnIfMissed: false);
-    await _pumpFor(tester, const Duration(milliseconds: 250));
+    final cancelGone = Stopwatch()..start();
+    while (cancelGone.elapsed < const Duration(seconds: 2)) {
+      if (find.byType(AlertDialog).evaluate().isEmpty) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 25));
+    }
     perf?.timing(
       'fleet_move_segment',
       phaseSw.elapsed,
