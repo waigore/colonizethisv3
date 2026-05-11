@@ -96,15 +96,24 @@ int _sumAliveGunHp(List<_MutableEmplacedGun> guns) {
 
 void _applyRoundRobinGunHpDamage(List<_MutableEmplacedGun> guns, int amount) {
   if (amount <= 0) return;
+  // Maintain the alive list incrementally to avoid O(amount * n log n) work:
+  // sort once up front, then only rebuild when a gun reaches 0 HP. The list
+  // is sorted by id, so surviving guns retain their relative order, which is
+  // the determinism guarantee the original per-iteration rebuild provides.
+  var alive = guns.where((g) => g.hp > 0).toList()
+    ..sort((a, b) => a.id.compareTo(b.id));
+  if (alive.isEmpty) return;
   var remaining = amount;
   var turn = 0;
   while (remaining > 0) {
-    final alive = guns.where((g) => g.hp > 0).toList()
-      ..sort((a, b) => a.id.compareTo(b.id));
-    if (alive.isEmpty) break;
     final target = alive[turn % alive.length];
     target.hp -= 1;
     remaining--;
     turn++;
+    if (target.hp <= 0) {
+      alive = guns.where((g) => g.hp > 0).toList()
+        ..sort((a, b) => a.id.compareTo(b.id));
+      if (alive.isEmpty) break;
+    }
   }
 }
