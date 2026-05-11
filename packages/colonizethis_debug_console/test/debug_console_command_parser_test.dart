@@ -230,5 +230,26 @@ void main() {
       expect(message, contains('/flip_province <regionId|localId>'));
       expect(message, contains('ambiguous'));
     });
+
+    test('parses get_tile_basic_info successfully', () {
+      final result = parser.parse('/get_tile_basic_info');
+      expect(result.isError, isFalse);
+      expect(result.invocation, isA<DebugConsoleGetTileBasicInfo>());
+    });
+
+    test('rejects get_tile_basic_info extra args with usage', () {
+      final result = parser.parse('/get_tile_basic_info extra');
+      expect(result.isError, isTrue);
+      expect(result.message, 'Usage: /get_tile_basic_info');
+    });
+
+    test('help includes get_tile_basic_info exactly once', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      final matches = RegExp(
+        r'/get_tile_basic_info',
+      ).allMatches(message).length;
+      expect(matches, 1);
+    });
   });
 }

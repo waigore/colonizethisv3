@@ -147,5 +147,65 @@ void main() {
       expect(event.target, 'oldWorld|P1');
       expect(event.targetIsFullProvinceId, isTrue);
     });
+
+    test(
+      'get_tile_basic_info returns multiline ids from selected tile context',
+      () {
+        final result = executor.executeRaw(
+          rawInput: '/get_tile_basic_info',
+          humanPlayerId: 'p1',
+          context: const DebugConsoleExecutionContext(
+            selectedTileKey: 'oldWorld|P12|34|21',
+          ),
+        );
+        expect(result.isError, isFalse);
+        expect(result.events, isEmpty);
+        expect(
+          result.message,
+          'tile_id: oldWorld|P12|34|21\nprovince_id: oldWorld|P12',
+        );
+      },
+    );
+
+    test('get_tile_basic_info returns deterministic no-selection error', () {
+      final result = executor.executeRaw(
+        rawInput: '/get_tile_basic_info',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isTrue);
+      expect(result.message, 'No tile is selected.');
+      expect(result.events, isEmpty);
+    });
+
+    test('get_tile_basic_info rejects malformed selected tile key', () {
+      final result = executor.executeRaw(
+        rawInput: '/get_tile_basic_info',
+        humanPlayerId: 'p1',
+        context: const DebugConsoleExecutionContext(
+          selectedTileKey: 'oldWorld|P12',
+        ),
+      );
+      expect(result.isError, isTrue);
+      expect(result.message, 'Selected tile key is invalid.');
+      expect(result.events, isEmpty);
+    });
+
+    test('existing mutating commands still emit expected event types', () {
+      final civilian = executor.executeRaw(
+        rawInput: '/spawn_civilian explorer',
+        humanPlayerId: 'p1',
+      );
+      final money = executor.executeRaw(
+        rawInput: '/add_money 5',
+        humanPlayerId: 'p1',
+      );
+      final reveal = executor.executeRaw(
+        rawInput: '/reveal_province oldWorld|P1',
+        humanPlayerId: 'p1',
+      );
+      expect(civilian.events.single, isA<SpawnDebugCivilianAtCapitalEvent>());
+      expect(money.events.single, isA<CreditDebugTreasuryEvent>());
+      expect(reveal.events.single, isA<RevealDebugProvinceEvent>());
+    });
   });
 }

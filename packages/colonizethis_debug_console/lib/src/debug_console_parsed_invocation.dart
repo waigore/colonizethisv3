@@ -42,6 +42,9 @@ sealed class DebugConsoleParsedInvocation {
     required String target,
     required bool targetIsFullProvinceId,
   }) = DebugConsoleRevealProvince;
+
+  const factory DebugConsoleParsedInvocation.getTileBasicInfo() =
+      DebugConsoleGetTileBasicInfo;
 }
 
 final class DebugConsoleSpawnCivilianAtCapital
@@ -134,4 +137,8 @@ final class DebugConsoleRevealProvince extends DebugConsoleParsedInvocation {
 
   final String target;
   final bool targetIsFullProvinceId;
+}
+
+final class DebugConsoleGetTileBasicInfo extends DebugConsoleParsedInvocation {
+  const DebugConsoleGetTileBasicInfo();
 }

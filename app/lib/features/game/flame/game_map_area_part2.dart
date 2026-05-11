@@ -385,6 +385,8 @@ mixin _GameMapAreaStatePart2
                   child: DebugConsoleOverlayPanel(
                     bus: ref.read(appEventBusProvider),
                     humanPlayerId: _humanPlayerId,
+                    selectedTileKeyProvider: () =>
+                        ref.read(mapProvincePanelProvider).selectedTileKey,
                     onClose: () => setState(() => _debugConsoleOpen = false),
                   ),
                 ),
