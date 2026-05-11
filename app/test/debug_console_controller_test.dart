@@ -149,9 +149,8 @@ void main() {
       final controller = DebugConsoleController(
         bus: bus,
         humanPlayerId: 'human_1',
-        readOnlyContextProvider: () => DebugConsoleReadOnlyContext(
-          selectedTileKey: selectedTileKey,
-        ),
+        readOnlyContextProvider: () =>
+            DebugConsoleReadOnlyContext(selectedTileKey: selectedTileKey),
         onClose: () {},
       );
       addTearDown(controller.dispose);

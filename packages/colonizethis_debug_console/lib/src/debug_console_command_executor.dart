@@ -170,8 +170,9 @@ class DebugConsoleCommandExecutor {
               ? 'Queued debug province reveal by id: $target.'
               : 'Queued debug province reveal by name: $target.',
         ),
-      DebugConsoleGetTileBasicInfo() =>
-        _executeGetTileBasicInfo(readOnlyContext),
+      DebugConsoleGetTileBasicInfo() => _executeGetTileBasicInfo(
+        readOnlyContext,
+      ),
       DebugConsoleListPlayers() => _executeListPlayers(readOnlyContext),
     };
   }
@@ -211,8 +212,9 @@ DebugConsoleExecutionResult _executeListPlayers(
   final lines = <String>['players_count: ${sorted.length}', ''];
   for (var i = 0; i < sorted.length; i++) {
     final p = sorted[i];
-    final displayName =
-        p.displayName.trim().isEmpty ? p.id : p.displayName.trim();
+    final displayName = p.displayName.trim().isEmpty
+        ? p.id
+        : p.displayName.trim();
     final type = p.isHuman ? 'human' : 'ai';
     final eliminated = p.capitalProvinceId == null;
     lines.addAll([

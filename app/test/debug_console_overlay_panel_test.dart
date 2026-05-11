@@ -27,7 +27,8 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
+              readOnlyContextProvider: () =>
+                  const DebugConsoleReadOnlyContext(),
               onClose: () => closed = true,
             ),
           ),
@@ -72,7 +73,8 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
+              readOnlyContextProvider: () =>
+                  const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -109,7 +111,8 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
+              readOnlyContextProvider: () =>
+                  const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -147,7 +150,8 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
+              readOnlyContextProvider: () =>
+                  const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -181,7 +185,8 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
+              readOnlyContextProvider: () =>
+                  const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -214,7 +219,8 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
+              readOnlyContextProvider: () =>
+                  const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -252,7 +258,8 @@ void main() {
               body: DebugConsoleOverlayPanel(
                 bus: bus,
                 humanPlayerId: 'human_1',
-                readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
+                readOnlyContextProvider: () =>
+                    const DebugConsoleReadOnlyContext(),
                 onClose: () {},
               ),
             ),
@@ -288,7 +295,8 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
+              readOnlyContextProvider: () =>
+                  const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -321,7 +329,8 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
+              readOnlyContextProvider: () =>
+                  const DebugConsoleReadOnlyContext(),
               onClose: () => closeCount += 1,
             ),
           ),
@@ -351,7 +360,8 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              readOnlyContextProvider: () => const DebugConsoleReadOnlyContext(),
+              readOnlyContextProvider: () =>
+                  const DebugConsoleReadOnlyContext(),
               onClose: () {},
             ),
           ),
@@ -411,9 +421,8 @@ void main() {
             body: DebugConsoleOverlayPanel(
               bus: bus,
               humanPlayerId: 'human_1',
-              readOnlyContextProvider: () => DebugConsoleReadOnlyContext(
-                selectedTileKey: selectedTileKey,
-              ),
+              readOnlyContextProvider: () =>
+                  DebugConsoleReadOnlyContext(selectedTileKey: selectedTileKey),
               onClose: () {},
             ),
           ),
