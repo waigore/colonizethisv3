@@ -2,8 +2,8 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../world/player_view.dart';
 import '../world/province_lookup.dart';
+import '../world/province_visibility_index.dart';
 
 /// Builds digest lines and world-state tracking updates for the completed turn.
 /// [start] is game at resolution entry (after military ensure); [end] is final
@@ -39,6 +39,8 @@ import '../world/province_lookup.dart';
     end: end,
     readDone: provReadDone,
     writeDone: provWriteDone,
+    startIndex: buildProvinceVisibilityIndex(start),
+    endIndex: buildProvinceVisibilityIndex(end),
   );
   final seaLines = _seaZoneFleetLines(
     end: end,
@@ -181,41 +183,13 @@ List<TurnNewsOvertureAdvancedLine> _overtureLines(Game start, Game end) {
   return out;
 }
 
-bool _provinceKnownToAnyGp(Game g, Province p) {
-  final regionId = p.regionId;
-  final fullProvinceId = _fullProvinceId(p);
-  final keys = landTileKeysForProvinceBucket(
-    g.worldState,
-    regionId,
-    fullProvinceId,
-  );
-  if (keys.isEmpty) {
-    return false;
-  }
-  for (final player in g.players) {
-    final vis = g.worldState.playerVisibilityByTile[player.id] ?? {};
-    for (final tk in keys) {
-      if (_parseVis(vis[tk]) != VisibilityLevel.unknown) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-VisibilityLevel _parseVis(String? raw) {
-  if (raw == null) return VisibilityLevel.unknown;
-  for (final v in VisibilityLevel.values) {
-    if (v.name == raw) return v;
-  }
-  return VisibilityLevel.unknown;
-}
-
 List<TurnNewsProvinceDiscoveredLine> _provinceDiscoveryLines({
   required Game start,
   required Game end,
   required Set<String> readDone,
   required Set<String> writeDone,
+  required ProvinceVisibilityIndex startIndex,
+  required ProvinceVisibilityIndex endIndex,
 }) {
   final out = <TurnNewsProvinceDiscoveredLine>[];
   final seen = <String>{};
@@ -224,8 +198,8 @@ List<TurnNewsProvinceDiscoveredLine> _provinceDiscoveryLines({
     if (seen.contains(pid)) continue;
     seen.add(pid);
     if (readDone.contains(pid)) continue;
-    final was = _provinceKnownToAnyGp(start, p);
-    final now = _provinceKnownToAnyGp(end, p);
+    final was = startIndex.isKnownToAnyPlayer(pid);
+    final now = endIndex.isKnownToAnyPlayer(pid);
     if (!was && now) {
       out.add(TurnNewsProvinceDiscoveredLine(provinceId: pid));
       writeDone.add(pid);
