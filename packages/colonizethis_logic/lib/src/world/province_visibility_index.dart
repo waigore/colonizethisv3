@@ -68,19 +68,15 @@ ProvinceVisibilityIndex buildProvinceVisibilityIndex(Game game) {
       if (tileKeys.isEmpty) continue;
 
       var provinceKnownToAny = false;
-      for (final playerId in playerIds) {
-        final visibility =
-            visibilityByPlayer[playerId] ?? const <String, String>{};
-        for (final tileKey in tileKeys) {
-          final raw = visibility[tileKey];
-          if (raw != null && raw != 'unknown') {
-            knownByPlayer
-                .putIfAbsent(playerId, () => <String>{})
-                .add(fullProvinceId);
-            provinceKnownToAny = true;
-            break;
-          }
-        }
+      for (final playerId in _playerIdsWithKnownTiles(
+        playerIds: playerIds,
+        visibilityByPlayer: visibilityByPlayer,
+        tileKeys: tileKeys,
+      )) {
+        knownByPlayer
+            .putIfAbsent(playerId, () => <String>{})
+            .add(fullProvinceId);
+        provinceKnownToAny = true;
       }
       if (provinceKnownToAny) {
         knownToAny.add(fullProvinceId);
@@ -92,4 +88,30 @@ ProvinceVisibilityIndex buildProvinceVisibilityIndex(Game game) {
     knownByPlayer: knownByPlayer,
     knownToAny: knownToAny,
   );
+}
+
+Iterable<String> _playerIdsWithKnownTiles({
+  required Iterable<String> playerIds,
+  required Map<String, Map<String, String>> visibilityByPlayer,
+  required List<String> tileKeys,
+}) sync* {
+  for (final playerId in playerIds) {
+    final visibility = visibilityByPlayer[playerId] ?? const <String, String>{};
+    if (_hasAnyKnownTile(visibility: visibility, tileKeys: tileKeys)) {
+      yield playerId;
+    }
+  }
+}
+
+bool _hasAnyKnownTile({
+  required Map<String, String> visibility,
+  required List<String> tileKeys,
+}) {
+  for (final tileKey in tileKeys) {
+    final raw = visibility[tileKey];
+    if (raw != null && raw != 'unknown') {
+      return true;
+    }
+  }
+  return false;
 }
