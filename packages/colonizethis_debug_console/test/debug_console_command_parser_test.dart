@@ -230,5 +230,45 @@ void main() {
       expect(message, contains('/flip_province <regionId|localId>'));
       expect(message, contains('ambiguous'));
     });
+
+    test('parses get_tile_basic_info successfully', () {
+      final result = parser.parse('/get_tile_basic_info');
+      expect(result.isError, isFalse);
+      expect(result.invocation, isA<DebugConsoleGetTileBasicInfo>());
+    });
+
+    test('rejects get_tile_basic_info extra args with usage', () {
+      final result = parser.parse('/get_tile_basic_info extra');
+      expect(result.isError, isTrue);
+      expect(result.message, 'Usage: /get_tile_basic_info');
+    });
+
+    test('help includes get_tile_basic_info exactly once', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      final matches = RegExp(
+        r'/get_tile_basic_info',
+      ).allMatches(message).length;
+      expect(matches, 1);
+    });
+
+    test('parses list_players successfully', () {
+      final result = parser.parse('/list_players');
+      expect(result.isError, isFalse);
+      expect(result.invocation, isA<DebugConsoleListPlayers>());
+    });
+
+    test('rejects list_players extra args with usage', () {
+      final result = parser.parse('/list_players foo');
+      expect(result.isError, isTrue);
+      expect(result.message, 'Usage: /list_players');
+    });
+
+    test('help includes list_players exactly once', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      final matches = RegExp(r'/list_players').allMatches(message).length;
+      expect(matches, 1);
+    });
   });
 }

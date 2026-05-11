@@ -385,6 +385,24 @@ mixin _GameMapAreaStatePart2
                   child: DebugConsoleOverlayPanel(
                     bus: ref.read(appEventBusProvider),
                     humanPlayerId: _humanPlayerId,
+                    readOnlyContextProvider: () {
+                      final selectedTileKey =
+                          ref.read(mapProvincePanelProvider).selectedTileKey;
+                      final players = widget.game.players
+                          .map(
+                            (p) => DebugConsolePlayerSnapshot(
+                              id: p.id,
+                              displayName: p.displayName,
+                              isHuman: p.isHuman,
+                              capitalProvinceId: p.capitalProvinceId,
+                            ),
+                          )
+                          .toList(growable: false);
+                      return DebugConsoleReadOnlyContext(
+                        selectedTileKey: selectedTileKey,
+                        players: players,
+                      );
+                    },
                     onClose: () => setState(() => _debugConsoleOpen = false),
                   ),
                 ),
