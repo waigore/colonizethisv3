@@ -114,11 +114,10 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
     game.worldState.armies,
   );
   final unitById = unitsByIdFromWorld(game.worldState);
+  final gpIds = {for (final p in game.players) p.id};
 
   void processRegion(RegionData region) {
     if (region.units.isEmpty) return;
-
-    final gpIds = {for (final p in game.players) p.id};
 
     final unitsByProvince = <String, List<Unit>>{};
     for (final u in region.units) {
@@ -181,6 +180,8 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
 
       final province = provinceById[provinceId];
       if (province == null) continue;
+      final factionsMovedIntoProvince =
+          movedIntoByFaction[provinceId] ?? const <String>{};
       final ownerId = province.ownerId;
 
       String defenderFactionId;
@@ -189,7 +190,7 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
           factionsPresent.contains(ownerId)) {
         defenderFactionId = ownerId;
       } else {
-        final movers = movedIntoByFaction[provinceId] ?? {};
+        final movers = factionsMovedIntoProvince;
         final nonMovers = factionsPresent.difference(movers);
         if (nonMovers.isEmpty) {
           defenderFactionId = factionsPresent.reduce(
@@ -202,7 +203,7 @@ List<BattleContext> detectConflicts(Game game, Orders orders) {
         }
       }
 
-      final attackerFactionIds = (movedIntoByFaction[provinceId] ?? {})
+      final attackerFactionIds = factionsMovedIntoProvince
           .where((f) => f != defenderFactionId && gpIds.contains(f))
           .toList();
       final attackerFactionIdSet = attackerFactionIds.toSet();
