@@ -130,5 +130,160 @@ void main() {
       expect(p2Adj.contains('sea2'), isFalse);
     });
   });
+
+  group('topology node id caches (Refs #2316 P2 #15)', () {
+    // Per-topology Expando caches: hot-path callers (connectivity, naval,
+    // fog) reuse the same set/map instance across calls. Behaviour must be
+    // unchanged; only allocation churn is removed.
+
+    test('provinceNodeIds returns the same Set instance on repeat calls', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'sea1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: const [],
+      );
+
+      final first = provinceNodeIds(topology);
+      final second = provinceNodeIds(topology);
+
+      expect(identical(first, second), isTrue);
+      expect(first, containsAll(<String>['p1', 'p2']));
+    });
+
+    test('seaZoneNodeIds returns the same Set instance on repeat calls', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'sea1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: 'sea2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: const [],
+      );
+
+      final first = seaZoneNodeIds(topology);
+      final second = seaZoneNodeIds(topology);
+
+      expect(identical(first, second), isTrue);
+      expect(first, containsAll(<String>['sea1', 'sea2']));
+    });
+
+    test(
+      'provinceNodeIdsForRegion returns the same Set instance for repeat region lookups',
+      () {
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'p2',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+
+        final firstOw = provinceNodeIdsForRegion(topology, 'oldWorld');
+        final secondOw = provinceNodeIdsForRegion(topology, 'oldWorld');
+        final firstNw = provinceNodeIdsForRegion(topology, 'newWorld');
+
+        expect(identical(firstOw, secondOw), isTrue);
+        expect(firstOw, equals(<String>{'p1'}));
+        expect(firstNw, equals(<String>{'p2'}));
+      },
+    );
+
+    test(
+      'provinceNodeIdsForRegion returns the same empty set sentinel for unknown regions',
+      () {
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+
+        final missing = provinceNodeIdsForRegion(topology, 'unknown');
+        expect(missing, isEmpty);
+        // Lookup must not poison the cache: known regions stay populated.
+        expect(
+          provinceNodeIdsForRegion(topology, 'oldWorld'),
+          containsAll(<String>['p1']),
+        );
+      },
+    );
+
+    test('cached province node sets are read-only', () {
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+
+      final cached = provinceNodeIds(topology);
+      expect(() => cached.add('p2'), throwsUnsupportedError);
+    });
+
+    test('separate MapTopology instances do not share cached results', () {
+      final t1 = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+      final t2 = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'p2',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [],
+      );
+
+      expect(provinceNodeIds(t1), equals(<String>{'p1'}));
+      expect(provinceNodeIds(t2), equals(<String>{'p2'}));
+      expect(identical(provinceNodeIds(t1), provinceNodeIds(t2)), isFalse);
+    });
+  });
 }
 

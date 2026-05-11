@@ -46,7 +46,21 @@ String homeFleetIdFor(String playerId) => 'fleet_$playerId';
 }
 
 /// Indexes [topology] nodes by region id, then by node id (province/sea endpoints).
+///
+/// Result is cached per topology instance; the topology is treated as immutable
+/// (`MapTopology` const constructor + final fields). Hot-path callers such as
+/// `seaZoneIdForProvince`, `provinceIdsAdjacentToSeaZone`, and
+/// `provinceTopologyNodeId` reuse the same `Map` instance across calls so
+/// per-province naval-move/fog/connectivity loops avoid the O(nodes) rebuild
+/// cost every iteration.
 Map<String, Map<String, TopologyNode>> indexTopologyNodesByRegion(
+  MapTopology topology,
+) {
+  return _nodesByRegionAndIdCache[topology] ??=
+      _computeNodesByRegionAndId(topology);
+}
+
+Map<String, Map<String, TopologyNode>> _computeNodesByRegionAndId(
   MapTopology topology,
 ) {
   final nodesByRegionAndId = <String, Map<String, TopologyNode>>{};
@@ -55,6 +69,29 @@ Map<String, Map<String, TopologyNode>> indexTopologyNodesByRegion(
   }
   return nodesByRegionAndId;
 }
+
+/// All topology nodes keyed by node id. Cached per topology instance for the
+/// same reasons as [indexTopologyNodesByRegion]; the returned map is treated
+/// as read-only by callers.
+Map<String, TopologyNode> _nodesByIdFor(MapTopology topology) {
+  return _nodesByIdCache[topology] ??= _computeNodesById(topology);
+}
+
+Map<String, TopologyNode> _computeNodesById(MapTopology topology) {
+  final out = <String, TopologyNode>{};
+  for (final n in topology.nodes) {
+    out[n.id] = n;
+  }
+  return out;
+}
+
+final Expando<Map<String, Map<String, TopologyNode>>>
+_nodesByRegionAndIdCache = Expando<Map<String, Map<String, TopologyNode>>>(
+  'topology.nodesByRegionAndId',
+);
+
+final Expando<Map<String, TopologyNode>> _nodesByIdCache =
+    Expando<Map<String, TopologyNode>>('topology.nodesById');
 
 /// True if there is an edge between [fromSeaZoneId] and [toSeaZoneId] (S<->S or P<->S).
 bool isAdjacentSeaZone(
@@ -279,7 +316,7 @@ String? seaZoneIdForProvince(
       regionNodes,
     );
   }
-  final nodesById = {for (final n in topology.nodes) n.id: n};
+  final nodesById = _nodesByIdFor(topology);
   for (final e in topology.edges) {
     if (e.id1 != provinceId && e.id2 != provinceId) continue;
     final other = e.id1 == provinceId ? e.id2 : e.id1;
@@ -399,7 +436,7 @@ Set<String> seaZoneIdsAdjacentToProvince(
         ? parts.sublist(1).join('|')
         : provinceId;
   }
-  final nodeById = {for (final n in topology.nodes) n.id: n};
+  final nodeById = _nodesByIdFor(topology);
   final out = <String>{};
   for (final e in topology.edges) {
     final id1 = e.id1, id2 = e.id2;
