@@ -67,6 +67,24 @@ Map<String, String> _clearPurchasedTilesForProvince(
   return filtered;
 }
 
+int _countPurchasedTilesForProvince(
+  WorldState worldState,
+  String conqueredProvinceId,
+) {
+  final existing = worldState.purchasedTilesByTileKey;
+  if (existing.isEmpty) {
+    return 0;
+  }
+  var removed = 0;
+  for (final tileKey in existing.keys) {
+    final provinceId = Unit.provinceIdFromTileKey(tileKey);
+    if (provinceId == conqueredProvinceId) {
+      removed++;
+    }
+  }
+  return removed;
+}
+
 int _spyTimerRemovalsForProvince(
   Map<String, Map<String, int>> spyRevealTurnsByPlayer,
   String provinceId,
@@ -104,21 +122,33 @@ int _civilianRelocationCountBefore(Game game, Set<String> changedProvinceIds) {
   return count;
 }
 
-void _validateCanonicalTransfer(
-  Game game,
-  String targetProvinceId,
-  String oldOwnerId,
-  String newOwnerId,
-) {
-  final row = resolveProvinceRowForOwnershipTransfer(
+typedef _CanonicalProvinceTransferRow = ({
+  Province province,
+  String canonicalProvinceId,
+});
+
+typedef _CanonicalProvinceTransferContext = ({
+  _CanonicalProvinceTransferRow row,
+  RegionData region,
+  int provinceIndex,
+});
+
+_CanonicalProvinceTransferContext _resolveValidatedCanonicalTransfer(
+  Game game, {
+  required String targetProvinceId,
+  required String oldOwnerId,
+  required String newOwnerId,
+}) {
+  final rowNullable = resolveProvinceRowForOwnershipTransfer(
     game.worldState,
     targetProvinceId,
   );
-  if (row == null) {
+  if (rowNullable == null) {
     throw StateError(
       'Canonical province transfer: province not found: $targetProvinceId',
     );
   }
+  final row = rowNullable;
   if (row.province.ownerId != oldOwnerId) {
     throw StateError(
       'Canonical province transfer: expected owner $oldOwnerId for '
@@ -135,12 +165,14 @@ void _validateCanonicalTransfer(
       '$canonicalId (regionId=$regionId)',
     );
   }
-  if (!region.provinces.any((p) => p.id == canonicalId)) {
+  final provinceIndex = region.provinces.indexWhere((p) => p.id == canonicalId);
+  if (provinceIndex < 0) {
     throw StateError(
       'Canonical province transfer: province missing from region data '
       '$canonicalId',
     );
   }
+  return (row: row, region: region, provinceIndex: provinceIndex);
 }
 
 /// Single-province canonical ownership transfer: province owner, resident
@@ -168,46 +200,18 @@ Game applyCanonicalSingleProvinceOwnershipTransfer(
 }
 
 ({Game game, ProvinceOwnershipVisibilitySummary visibilitySummary})
-_applyCanonicalSingleProvinceOwnershipTransferCore(
+_applyCanonicalSingleProvinceOwnershipTransferFromResolved(
   Game game, {
   required String targetProvinceId,
   required String oldOwnerId,
   required String newOwnerId,
+  required _CanonicalProvinceTransferContext ctx,
   bool relocateIllegalCivilians = true,
 }) {
-  if (oldOwnerId == newOwnerId) {
-    return (
-      game: game,
-      visibilitySummary: const ProvinceOwnershipVisibilitySummary(
-        tilesSetFullyVisibleForNewOwner: 0,
-        tilesDowngradedForFormerOwner: 0,
-      ),
-    );
-  }
-
-  _validateCanonicalTransfer(game, targetProvinceId, oldOwnerId, newOwnerId);
-
-  final row = resolveProvinceRowForOwnershipTransfer(
-    game.worldState,
-    targetProvinceId,
-  )!;
-  final canonicalId = row.canonicalProvinceId;
-  final regionId = row.province.regionId;
-  final region = regionDataForId(game.worldState, regionId);
-  if (region == null) {
-    throw StateError(
-      'Canonical province transfer: region not found for province '
-      '$canonicalId (regionId=$regionId)',
-    );
-  }
-
-  final pIdx = region.provinces.indexWhere((p) => p.id == canonicalId);
-  if (pIdx < 0) {
-    throw StateError(
-      'Canonical province transfer: province missing from region data '
-      '$canonicalId',
-    );
-  }
+  final region = ctx.region;
+  final pIdx = ctx.provinceIndex;
+  final canonicalId = ctx.row.canonicalProvinceId;
+  final regionId = ctx.row.province.regionId;
 
   final updatedProvinces = List<Province>.from(region.provinces)
     ..[pIdx] = region.provinces[pIdx].copyWith(ownerId: newOwnerId);
@@ -280,6 +284,40 @@ _applyCanonicalSingleProvinceOwnershipTransferCore(
   return (game: nextGame, visibilitySummary: visOutcome.visibilitySummary);
 }
 
+({Game game, ProvinceOwnershipVisibilitySummary visibilitySummary})
+_applyCanonicalSingleProvinceOwnershipTransferCore(
+  Game game, {
+  required String targetProvinceId,
+  required String oldOwnerId,
+  required String newOwnerId,
+  bool relocateIllegalCivilians = true,
+}) {
+  if (oldOwnerId == newOwnerId) {
+    return (
+      game: game,
+      visibilitySummary: const ProvinceOwnershipVisibilitySummary(
+        tilesSetFullyVisibleForNewOwner: 0,
+        tilesDowngradedForFormerOwner: 0,
+      ),
+    );
+  }
+
+  final ctx = _resolveValidatedCanonicalTransfer(
+    game,
+    targetProvinceId: targetProvinceId,
+    oldOwnerId: oldOwnerId,
+    newOwnerId: newOwnerId,
+  );
+  return _applyCanonicalSingleProvinceOwnershipTransferFromResolved(
+    game,
+    targetProvinceId: targetProvinceId,
+    oldOwnerId: oldOwnerId,
+    newOwnerId: newOwnerId,
+    ctx: ctx,
+    relocateIllegalCivilians: relocateIllegalCivilians,
+  );
+}
+
 /// Same transfer as [applyCanonicalSingleProvinceOwnershipTransfer] with a
 /// structured result payload for reporting.
 ({Game game, CanonicalProvinceOwnershipTransferResult result})
@@ -310,21 +348,15 @@ applyCanonicalSingleProvinceOwnershipTransferWithResult(
     );
   }
 
-  _validateCanonicalTransfer(game, targetProvinceId, oldOwnerId, newOwnerId);
-
-  final row = resolveProvinceRowForOwnershipTransfer(
-    game.worldState,
-    targetProvinceId,
-  )!;
+  final ctx = _resolveValidatedCanonicalTransfer(
+    game,
+    targetProvinceId: targetProvinceId,
+    oldOwnerId: oldOwnerId,
+    newOwnerId: newOwnerId,
+  );
+  final row = ctx.row;
+  final region = ctx.region;
   final canonicalId = row.canonicalProvinceId;
-  final regionId = row.province.regionId;
-  final region = regionDataForId(game.worldState, regionId);
-  if (region == null) {
-    throw StateError(
-      'Canonical province transfer: region not found for province '
-      '$canonicalId (regionId=$regionId)',
-    );
-  }
 
   var regimentsTransferred = 0;
   for (final u in region.units) {
@@ -345,11 +377,9 @@ applyCanonicalSingleProvinceOwnershipTransferWithResult(
     }
   }
 
-  var purchasedLandEntriesRemoved = 0;
-  _clearPurchasedTilesForProvince(
+  final purchasedLandEntriesRemoved = _countPurchasedTilesForProvince(
     game.worldState,
     canonicalId,
-    (r) => purchasedLandEntriesRemoved = r,
   );
 
   final spyTimersCleared = _spyTimerRemovalsForProvince(
@@ -364,11 +394,12 @@ applyCanonicalSingleProvinceOwnershipTransferWithResult(
     canonicalId,
   });
 
-  final core = _applyCanonicalSingleProvinceOwnershipTransferCore(
+  final core = _applyCanonicalSingleProvinceOwnershipTransferFromResolved(
     game,
     targetProvinceId: targetProvinceId,
     oldOwnerId: oldOwnerId,
     newOwnerId: newOwnerId,
+    ctx: ctx,
     relocateIllegalCivilians: relocateIllegalCivilians,
   );
 
