@@ -49,6 +49,35 @@ void main() {
         );
         expect(idx['oldWorld']!['p1']!.type, TopologyNodeType.province);
       });
+
+      test(
+        'returns the same Map instance on repeat calls for the same topology (Refs #2316 P2 #15)',
+        () {
+          final first = indexTopologyNodesByRegion(topology);
+          final second = indexTopologyNodesByRegion(topology);
+          expect(identical(first, second), isTrue);
+        },
+      );
+
+      test('separate topology instances do not share cached node maps', () {
+        final other = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'pX',
+              regionId: 'newWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        expect(
+          identical(
+            indexTopologyNodesByRegion(topology),
+            indexTopologyNodesByRegion(other),
+          ),
+          isFalse,
+        );
+      });
     });
 
     group('isAdjacentSeaZone', () {
