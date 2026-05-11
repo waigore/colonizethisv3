@@ -236,23 +236,26 @@ List<BattleContextSea> filterBattlesByInterception(
 ) {
   if (battles.isEmpty) return battles;
   final rng = _SeededRng(seed);
+
+  // Pre-index moved fleets at sea by (seaZoneId, ownerId) to avoid O(fleets)
+  // scan per battle.
+  final movedAtSeaByZoneAndOwner = <String, Set<String>>{};
+  for (final f in game.worldState.fleets) {
+    if (!f.isAtSea || f.seaZoneId == null) continue;
+    if (!movedFleetIds.contains(f.id)) continue;
+    movedAtSeaByZoneAndOwner
+        .putIfAbsent('${f.seaZoneId}|${f.ownerId}', () => {})
+        .add(f.id);
+  }
+
+  bool ownerMovedInZone(String ownerId, String zone) =>
+      movedAtSeaByZoneAndOwner.containsKey('$zone|$ownerId');
+
   final out = <BattleContextSea>[];
   for (final battle in battles) {
     final zone = battle.seaZoneId;
-    final owner1Moved = game.worldState.fleets.any(
-      (f) =>
-          f.isAtSea &&
-          f.seaZoneId == zone &&
-          f.ownerId == battle.side1.ownerId &&
-          movedFleetIds.contains(f.id),
-    );
-    final owner2Moved = game.worldState.fleets.any(
-      (f) =>
-          f.isAtSea &&
-          f.seaZoneId == zone &&
-          f.ownerId == battle.side2.ownerId &&
-          movedFleetIds.contains(f.id),
-    );
+    final owner1Moved = ownerMovedInZone(battle.side1.ownerId, zone);
+    final owner2Moved = ownerMovedInZone(battle.side2.ownerId, zone);
     final side1InterceptScore = _fleetInterceptScore(battle.side1.shipTypeIds);
     final side2InterceptScore = _fleetInterceptScore(battle.side2.shipTypeIds);
     final side1FleeScore = _fleetFleeScore(battle.side1.shipTypeIds);

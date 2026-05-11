@@ -13,10 +13,11 @@ Game resolveJoinEmpireColony(
   Map<String, List<DiplomaticOrder>> diploByPlayer,
   int turn,
 ) {
+  var factionMembership = DiplomacyFactionMembership.from(game);
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
     for (final order in entry.value) {
-      final factionMembership = DiplomacyFactionMembership.from(game);
+      final prev = game;
       game = _resolveJoinEmpireOrderIfApplicable(
         game,
         gpId,
@@ -24,6 +25,9 @@ Game resolveJoinEmpireColony(
         turn,
         factionMembership,
       );
+      if (!identical(game, prev)) {
+        factionMembership = DiplomacyFactionMembership.from(game);
+      }
     }
   }
   return game;

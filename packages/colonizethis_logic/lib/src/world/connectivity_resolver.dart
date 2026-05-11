@@ -122,6 +122,8 @@ Map<String, ConnectivityResult> resolveConnectivity({
   final blockadedByPlayer =
       blockadedPortProvincesByPlayerId ??
       computeBlockadedPortProvincesByPlayer(game, topology);
+  // Pre-compute once for all players; worldState is fixed across the player loop.
+  final portInfo = _portToProvinceSeaZone(game.worldState);
   final result = <String, ConnectivityResult>{};
 
   for (final player in game.players) {
@@ -139,6 +141,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
       tileMapByRegion: tileMapByRegion,
       topology: topology,
       provinceIdsByType: provinceIdsByType,
+      portInfo: portInfo,
       blockadedPortProvinces: blockadedByPlayer[player.id] ?? const {},
     );
     result[player.id] = cr;
@@ -296,6 +299,7 @@ ConnectivityResult _connectedTilesForPlayer({
   required Map<String, TileMapResult> tileMapByRegion,
   required MapTopology topology,
   required Set<String> provinceIdsByType,
+  required Map<String, (String, String)> portInfo,
   Set<String> blockadedPortProvinces = const {},
 }) {
   final worldState = game.worldState;
@@ -310,7 +314,6 @@ ConnectivityResult _connectedTilesForPlayer({
   if (mapOpt == null) return const ConnectivityResult(connected: {});
 
   final capitalKey = capital.toTileKey();
-  final portInfo = _portToProvinceSeaZone(worldState);
   final connected = <String>{capitalKey};
   final pathCap = <String, int>{};
   pathCap[capitalKey] = _transportLevelAtTile(worldState, capitalKey, portInfo);
