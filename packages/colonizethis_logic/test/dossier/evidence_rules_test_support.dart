@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-/// Shared `Game` fixture for `evidence_rules_test.dart`.
+/// Shared `Game` fixture for dossier evidence rule tests (`test/dossier/`).
 ///
 /// Most evidence rule tests construct a near-identical empty-world game
 /// (orders phase, empty `oldWorld` / `newWorld`) varying only by

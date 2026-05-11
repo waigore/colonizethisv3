@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-/// Minimal games for turn news digest tests (`turn_news_digest_test.dart`).
+/// Minimal games for turn news digest tests (`test/turn/turn_news_digest_test.dart`).
 ///
 /// Refs waigore/colonizethis#2216.
 Game turnNewsMinimalGame({required int turn}) {
