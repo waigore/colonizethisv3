@@ -10,6 +10,25 @@ import 'province_lookup.dart';
 
 final _log = packageLogger();
 
+void _logArmyMoveIgnoredHomeArmyIfDebug(String armyId) {
+  if (Level.debug.value >= Logger.level.value) {
+    _log.d('army_move ignored reason=home_army_locked armyId=$armyId');
+  }
+}
+
+void _logArmyMoveIgnoredInvalidAdjacencyIfDebug(
+  String armyId,
+  String fromLocal,
+  String toLocal,
+) {
+  if (Level.debug.value >= Logger.level.value) {
+    _log.d(
+      'army_move ignored reason=invalid_adjacency armyId=$armyId '
+      'from=$fromLocal to=$toLocal',
+    );
+  }
+}
+
 /// Applies army moves in [regionId] (same-region leg). See [applyMoveOrdersToRegion].
 ///
 /// When [onArmyMoveOrderTrace] is set, each order processed by this region pass
@@ -50,11 +69,7 @@ WorldState applyArmyMoveOrdersToRegion(
       }
       if (army.isHomeArmy) {
         ignored++;
-        if (Level.debug.value >= Logger.level.value) {
-          _log.d(
-            'army_move ignored reason=home_army_locked armyId=${order.armyId}',
-          );
-        }
+        _logArmyMoveIgnoredHomeArmyIfDebug(order.armyId);
         continue;
       }
       if (ProvinceId.regionIdFrom(army.stationedProvinceId) != regionId) {
@@ -88,12 +103,11 @@ WorldState applyArmyMoveOrdersToRegion(
           isValidLandMoveInRegion(topology, regionId, fromLocal, toLocal);
       if (!valid) {
         ignored++;
-        if (Level.debug.value >= Logger.level.value) {
-          _log.d(
-            'army_move ignored reason=invalid_adjacency armyId=${order.armyId} '
-            'from=$fromLocal to=$toLocal',
-          );
-        }
+        _logArmyMoveIgnoredInvalidAdjacencyIfDebug(
+          order.armyId,
+          fromLocal,
+          toLocal,
+        );
         onArmyMoveOrderTrace?.call(
           playerId: playerId,
           order: order,
