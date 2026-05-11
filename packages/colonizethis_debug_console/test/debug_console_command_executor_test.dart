@@ -147,5 +147,44 @@ void main() {
       expect(event.target, 'oldWorld|P1');
       expect(event.targetIsFullProvinceId, isTrue);
     });
+
+    test('returns selected tile and province ids for get_tile_basic_info', () {
+      final result = executor.executeRaw(
+        rawInput: '/get_tile_basic_info',
+        humanPlayerId: 'p1',
+        context: const DebugConsoleExecutionContext(
+          selectedTileKey: 'oldWorld|P12|34|21',
+        ),
+      );
+      expect(result.isError, isFalse);
+      expect(result.events, isEmpty);
+      expect(
+        result.message,
+        'tile_id: oldWorld|P12|34|21\nprovince_id: oldWorld|P12',
+      );
+    });
+
+    test('returns error when no tile is selected for get_tile_basic_info', () {
+      final result = executor.executeRaw(
+        rawInput: '/get_tile_basic_info',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isTrue);
+      expect(result.events, isEmpty);
+      expect(result.message, 'No tile is selected.');
+    });
+
+    test('returns error for malformed selected tile key', () {
+      final result = executor.executeRaw(
+        rawInput: '/get_tile_basic_info',
+        humanPlayerId: 'p1',
+        context: const DebugConsoleExecutionContext(
+          selectedTileKey: 'oldWorld|P12',
+        ),
+      );
+      expect(result.isError, isTrue);
+      expect(result.events, isEmpty);
+      expect(result.message, 'Selected tile key is invalid.');
+    });
   });
 }

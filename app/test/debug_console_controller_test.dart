@@ -8,9 +8,9 @@ void main() {
   suppressLogsForTests();
 
   group('DebugConsoleController', () {
-    testWidgets(
-      'submit emits events for valid command and records output',
-      (tester) async {
+    testWidgets('submit emits events for valid command and records output', (
+      tester,
+    ) async {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
       final events = <SpawnDebugCivilianAtCapitalEvent>[];
@@ -25,6 +25,7 @@ void main() {
       final controller = DebugConsoleController(
         bus: bus,
         humanPlayerId: 'human_1',
+        selectedTileKeyProvider: () => null,
         onClose: () {},
       );
       addTearDown(controller.dispose);
@@ -40,40 +41,40 @@ void main() {
       expect(controller.textController.text, isEmpty);
       expect(controller.lines, contains('> /spawn_civilian explorer 2'));
       expect(snackbars.last.message, contains('Queued debug spawn'));
-      },
-    );
+    });
 
     testWidgets(
       'submit keeps input for invalid command and emits snackbar only',
       (tester) async {
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-      final events = <SpawnDebugCivilianAtCapitalEvent>[];
-      final eventSub = bus.on<SpawnDebugCivilianAtCapitalEvent>().listen(
-        events.add,
-      );
-      addTearDown(eventSub.cancel);
-      final snackbars = <ShowSnackBarEvent>[];
-      final snackbarSub = bus.on<ShowSnackBarEvent>().listen(snackbars.add);
-      addTearDown(snackbarSub.cancel);
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        final events = <SpawnDebugCivilianAtCapitalEvent>[];
+        final eventSub = bus.on<SpawnDebugCivilianAtCapitalEvent>().listen(
+          events.add,
+        );
+        addTearDown(eventSub.cancel);
+        final snackbars = <ShowSnackBarEvent>[];
+        final snackbarSub = bus.on<ShowSnackBarEvent>().listen(snackbars.add);
+        addTearDown(snackbarSub.cancel);
 
-      final controller = DebugConsoleController(
-        bus: bus,
-        humanPlayerId: 'human_1',
-        onClose: () {},
-      );
-      addTearDown(controller.dispose);
-      controller.textController.text = '/spawn_civilian unknown_type';
+        final controller = DebugConsoleController(
+          bus: bus,
+          humanPlayerId: 'human_1',
+          selectedTileKeyProvider: () => null,
+          onClose: () {},
+        );
+        addTearDown(controller.dispose);
+        controller.textController.text = '/spawn_civilian unknown_type';
 
-      controller.submit();
-      await tester.pump();
+        controller.submit();
+        await tester.pump();
 
-      expect(events, isEmpty);
-      expect(controller.textController.text, '/spawn_civilian unknown_type');
-      expect(
-        snackbars.last.message,
-        'Unknown civilian type. Use explorer, builder, engineer, spy, merchant, or rail_builder.',
-      );
+        expect(events, isEmpty);
+        expect(controller.textController.text, '/spawn_civilian unknown_type');
+        expect(
+          snackbars.last.message,
+          'Unknown civilian type. Use explorer, builder, engineer, spy, merchant, or rail_builder.',
+        );
       },
     );
 
@@ -84,6 +85,7 @@ void main() {
       final controller = DebugConsoleController(
         bus: bus,
         humanPlayerId: 'human_1',
+        selectedTileKeyProvider: () => null,
         onClose: () => closeCount += 1,
       );
       addTearDown(controller.dispose);
@@ -131,5 +133,38 @@ void main() {
       expect(escapeHandled, isTrue);
       expect(closeCount, 1);
     });
+
+    testWidgets(
+      'submit get_tile_basic_info reports ids and emits no session command events',
+      (tester) async {
+        final bus = AppEventBus.create();
+        addTearDown(bus.dispose);
+        final sessionEvents = <SessionCommandEvent>[];
+        final sessionSub = bus.on<SessionCommandEvent>().listen(
+          sessionEvents.add,
+        );
+        addTearDown(sessionSub.cancel);
+
+        final controller = DebugConsoleController(
+          bus: bus,
+          humanPlayerId: 'human_1',
+          selectedTileKeyProvider: () => 'oldWorld|P12|34|21',
+          onClose: () {},
+        );
+        addTearDown(controller.dispose);
+        controller.textController.text = '/get_tile_basic_info';
+
+        final message = controller.submit();
+        await tester.pump();
+
+        expect(
+          message,
+          'tile_id: oldWorld|P12|34|21\nprovince_id: oldWorld|P12',
+        );
+        expect(sessionEvents, isEmpty);
+        expect(controller.lines, contains('> /get_tile_basic_info'));
+        expect(controller.lines, contains(message));
+      },
+    );
   });
 }

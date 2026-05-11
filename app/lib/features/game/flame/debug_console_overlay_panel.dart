@@ -9,12 +9,14 @@ class DebugConsoleOverlayPanel extends StatefulWidget {
   const DebugConsoleOverlayPanel({
     required this.bus,
     required this.humanPlayerId,
+    required this.selectedTileKeyProvider,
     required this.onClose,
     super.key,
   });
 
   final AppEventBus bus;
   final String humanPlayerId;
+  final String? Function() selectedTileKeyProvider;
   final VoidCallback onClose;
 
   @override
@@ -31,6 +33,7 @@ class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
     _controller = DebugConsoleController(
       bus: widget.bus,
       humanPlayerId: widget.humanPlayerId,
+      selectedTileKeyProvider: widget.selectedTileKeyProvider,
       onClose: widget.onClose,
     );
   }

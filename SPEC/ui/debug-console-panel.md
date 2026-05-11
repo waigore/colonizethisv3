@@ -6,7 +6,7 @@
 
 ## Glossary
 
-- **`DebugConsoleParsedInvocation`** (`colonizethis_debug_console`): parser output for one accepted slash line — validated verb and per-command payload only. The executor maps each variant to a typed `SessionCommandEvent`; the app chooses `humanPlayerId` and persists.
+- **`DebugConsoleParsedInvocation`** (`colonizethis_debug_console`): parser output for one accepted slash line — validated verb and per-command payload only. The executor maps each variant either to typed `SessionCommandEvent` values (mutating commands) or to a read-only message result with zero events (info commands). The app chooses `humanPlayerId` and persists only when events are emitted.
 
 ---
 
@@ -27,6 +27,10 @@
 - **`/add_resource <commodity_id> <amount>`** — `<commodity_id>` must be one canonical id from `CommodityCatalog.byId` (no aliases/display-name parsing). Input lookup is case-insensitive at parser boundaries (`GRAIN` resolves to canonical `grain`) while emitted/stored ids remain canonical catalog ids. `<amount>` must parse as integer. Valid range for execution: `1..9999` inclusive. Values `>9999` are **clamped to 9999 in the parser** (single source of clamp); parsed invocation carries both `requestedAmount` and `creditedAmount`. Values `<1` or non-integer input are rejected with deterministic errors. Credits apply immediately to the active human player's central `Player.stockpile`.
 - **`/flip_province <regionId> <province_display_name>`** and **`/flip_province <regionId|localId>`** — requests one canonical province ownership transfer to the human player by region-scoped display-name match or direct full-id targeting. Ambiguous display-name matches return deterministic candidate ids and require id-form retry.
 - **`/reveal_province <regionId|localId | province_display_name>`** — reveals one province for the human player by full province id or global display-name exact match (trim + case-insensitive). Unprefixed local ids (e.g. `P12`) are rejected deterministically; ambiguous display-name matches return deterministic candidate ids and require id-form retry.
+- **`/get_tile_basic_info`** — read-only info command that reports selected tile identity from `mapProvincePanelProvider.selectedTileKey` as a multi-line block:
+  - `tile_id: <regionId|localProvinceId|x|y>`
+  - `province_id: <regionId|localProvinceId>`
+  If no selected tile exists, returns deterministic error `No tile is selected.`. If selected tile format is malformed, returns deterministic error `Selected tile key is invalid.`. The command emits no `SessionCommandEvent`, does not persist, and remains valid when the tile is currently unrevealed/fogged.
 - **`/help`** — Lists supported commands and bounds. `/spawn_regiment` and `/spawn_ship` help text must include every canonical catalog id exactly once in stable sorted order, generated from the same catalog-derived source used for parser validation.
 - **Orders-phase gate policy** — `/add_money`, `/add_resource`, `/flip_province`, and `/reveal_province` are allowed only during human Orders phase. Outside Orders phase, the app listener rejects command apply with deterministic feedback and leaves game state unchanged.
 - **`/help`** — Lists supported commands and bounds. `/spawn_regiment`, `/spawn_ship`, and `/add_resource` help text must include every canonical catalog id exactly once in stable sorted order, generated from the same catalog-derived source used for parser validation.
@@ -81,6 +85,8 @@
 - Given panel input `/help`, when displayed, then `/spawn_regiment` documentation includes every `RegimentEconomyCatalog.byId` id exactly once in stable sorted order.
 - Given panel input `/help`, when displayed, then `/spawn_ship` documentation includes every `ShipEconomyCatalog.byId` id exactly once in stable sorted order.
 - Given panel input `/help`, when displayed, then `/add_resource` documentation includes every `CommodityCatalog.byId` id exactly once in stable sorted order.
+- Given `CT_DEBUG_CONSOLE=true` and `mapProvincePanelProvider.selectedTileKey = oldWorld|P12|34|21`, when the player submits `/get_tile_basic_info`, then the UI layer appends `tile_id: oldWorld|P12|34|21` and `province_id: oldWorld|P12` as a multi-line result and emits no `SessionCommandEvent`.
+- Given `CT_DEBUG_CONSOLE=true` and `mapProvincePanelProvider.selectedTileKey = null`, when the player submits `/get_tile_basic_info`, then the UI layer appends deterministic error `No tile is selected.`, emits no `SessionCommandEvent`, and leaves game state unchanged.
 
 ---
 

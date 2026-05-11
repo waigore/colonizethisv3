@@ -3,6 +3,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'debug_console_command_parser.dart';
 import 'debug_console_parsed_invocation.dart';
 
+class DebugConsoleExecutionContext {
+  const DebugConsoleExecutionContext({this.selectedTileKey});
+
+  final String? selectedTileKey;
+}
+
 class DebugConsoleCommandExecutor {
   const DebugConsoleCommandExecutor({
     DebugConsoleCommandParser parser = const DebugConsoleCommandParser(),
@@ -13,6 +19,7 @@ class DebugConsoleCommandExecutor {
   DebugConsoleExecutionResult executeRaw({
     required String rawInput,
     required String humanPlayerId,
+    DebugConsoleExecutionContext? context,
   }) {
     final parsed = _parser.parse(rawInput);
     if (parsed.isError) {
@@ -24,12 +31,17 @@ class DebugConsoleCommandExecutor {
     if (invocation == null) {
       return const DebugConsoleExecutionResult.error('Invalid command.');
     }
-    return _executeInvocation(invocation, humanPlayerId: humanPlayerId);
+    return _executeInvocation(
+      invocation,
+      humanPlayerId: humanPlayerId,
+      context: context,
+    );
   }
 
   DebugConsoleExecutionResult _executeInvocation(
     DebugConsoleParsedInvocation invocation, {
     required String humanPlayerId,
+    DebugConsoleExecutionContext? context,
   }) {
     return switch (invocation) {
       DebugConsoleSpawnCivilianAtCapital(:final unitType, :final count) =>
@@ -141,8 +153,29 @@ class DebugConsoleCommandExecutor {
               ? 'Queued debug province reveal by id: $target.'
               : 'Queued debug province reveal by name: $target.',
         ),
+      DebugConsoleGetTileBasicInfo() => _executeGetTileBasicInfo(context),
     };
   }
+}
+
+DebugConsoleExecutionResult _executeGetTileBasicInfo(
+  DebugConsoleExecutionContext? context,
+) {
+  final rawTileKey = context?.selectedTileKey?.trim();
+  if (rawTileKey == null || rawTileKey.isEmpty) {
+    return const DebugConsoleExecutionResult.error('No tile is selected.');
+  }
+  final parts = rawTileKey.split('|');
+  if (parts.length < 4) {
+    return const DebugConsoleExecutionResult.error(
+      'Selected tile key is invalid.',
+    );
+  }
+  final provinceId = '${parts[0]}|${parts[1]}';
+  return DebugConsoleExecutionResult.success(
+    events: const [],
+    message: 'tile_id: $rawTileKey\nprovince_id: $provinceId',
+  );
 }
 
 String _treasuryCreditExecutorMessage({
