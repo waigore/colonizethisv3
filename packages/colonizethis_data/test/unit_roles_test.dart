@@ -1,15 +1,16 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('unit roles', () {
     test('known civilian and utility unit types map to explicit roles', () {
-      expect(unitRoleForType('Explorer'), UnitRole.explorer);
-      expect(unitRoleForType('Builder'), UnitRole.civilianWorker);
-      expect(unitRoleForType('Engineer'), UnitRole.civilianWorker);
-      expect(unitRoleForType('Spy'), UnitRole.spy);
-      expect(unitRoleForType('Merchant'), UnitRole.merchant);
-      expect(unitRoleForType('Rail Builder'), UnitRole.civilianWorker);
+      expect(unitRoleForType(kUnitTypeExplorer), UnitRole.explorer);
+      expect(unitRoleForType(kUnitTypeBuilder), UnitRole.civilianWorker);
+      expect(unitRoleForType(kUnitTypeEngineer), UnitRole.civilianWorker);
+      expect(unitRoleForType(kUnitTypeSpy), UnitRole.spy);
+      expect(unitRoleForType(kUnitTypeMerchant), UnitRole.merchant);
+      expect(unitRoleForType(kUnitTypeRailBuilder), UnitRole.civilianWorker);
     });
 
     test('known regiment type maps to military role', () {
