@@ -87,14 +87,17 @@ Future<void> e2ePumpUntilFinderEmpty(
   }
 }
 
+/// Default cap for bottom-sheet close polling (GitHub #2336).
+const Duration kE2eDefaultBottomSheetCloseTimeout = Duration(seconds: 5);
+
 /// Closes an open [BottomSheet] via repeated [handlePopRoute] polls until gone.
 ///
-/// Shared by full-turn and fleet E2E; [overallTimeout] defaults to 5 seconds
-/// (previous per-file caps). Refs GitHub #2336.
+/// Shared by full-turn and fleet E2E; [overallTimeout] defaults to
+/// [kE2eDefaultBottomSheetCloseTimeout] (previous per-file caps). Refs GitHub #2336.
 Future<void> e2eCloseBottomSheet(
   WidgetTester tester, {
   E2ePerfLog? perf,
-  Duration overallTimeout = const Duration(seconds: 5),
+  Duration overallTimeout = kE2eDefaultBottomSheetCloseTimeout,
 }) async {
   perf?.bumpCounter('close_bottom_sheet_calls');
   bool anyPanelOpen() => find.byType(BottomSheet).evaluate().isNotEmpty;
