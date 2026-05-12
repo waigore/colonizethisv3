@@ -33,6 +33,22 @@ void main() {
       expect(result.message, contains('500'));
     });
 
+    test('emits worker pool credit event for add_worker', () {
+      final result = executor.executeRaw(
+        rawInput: '/add_worker journeymen 8',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      expect(result.events, hasLength(1));
+      final event = result.events.single as CreditDebugWorkerPoolEvent;
+      expect(event.humanPlayerId, 'p1');
+      expect(event.workerTierId, 'journeymen');
+      expect(event.requestedAmount, 8);
+      expect(event.creditedAmount, 8);
+      expect(result.message, contains('journeymen'));
+      expect(result.message, contains('8'));
+    });
+
     test('emits stockpile credit event for add_resource', () {
       final result = executor.executeRaw(
         rawInput: '/add_resource grain 500',
@@ -99,6 +115,20 @@ void main() {
       );
       expect(result.isError, isFalse);
       final event = result.events.single as CreditDebugTreasuryEvent;
+      expect(event.requestedAmount, 20000);
+      expect(event.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
+      expect(result.message, contains('20000'));
+      expect(result.message, contains('9999'));
+    });
+
+    test('executor add_worker clamp message includes both amounts', () {
+      final result = executor.executeRaw(
+        rawInput: '/add_worker masters 20000',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      final event = result.events.single as CreditDebugWorkerPoolEvent;
+      expect(event.workerTierId, 'masters');
       expect(event.requestedAmount, 20000);
       expect(event.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
       expect(result.message, contains('20000'));
