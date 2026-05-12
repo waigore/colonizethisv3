@@ -734,14 +734,10 @@ int? _tryRunDartRuleInProcess({
     case 'repo.game_widgets_file_size':
       return runCheckGameWidgetsFileSize(repoRoot);
     case 'repo.logic_test_file_size':
-      // PR-incremental only: full scans would fail until #2216 debt is cleared.
-      if (incrementalCsv == null) {
-        stderr.writeln(
-          'ct_repo_lint: [repo.logic_test_file_size] skipped '
-          '(no changed-file baseline; use CT_REPO_LINT_BASE_SHA in CI)',
-        );
-        return 0;
-      }
+      // Full-tree enforcement (GitHub #2288): the #2216 file-size debt is now
+      // cleared across `packages/colonizethis_logic/test/**`, so the rule
+      // scans the entire tree when no changed-file baseline is provided and
+      // narrows to changed files when CI supplies an incremental baseline.
       return runCheckLogicTestFileSize(
         repoRoot,
         targetFiles: incrementalPaths,
