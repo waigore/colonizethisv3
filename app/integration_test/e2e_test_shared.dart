@@ -212,6 +212,34 @@ Future<void> e2eWaitUntilFound(
   );
 }
 
+/// Pumps until [condition] returns true, evaluating [condition] before the
+/// first pump and using exponential backoff on pump intervals (same cap as
+/// [e2eWaitUntilFound]). Refs GitHub #2336 (`pumpUntil` helper).
+Future<void> e2ePumpUntil(
+  WidgetTester tester,
+  bool Function() condition, {
+  required Duration timeout,
+  E2ePerfLog? perf,
+  String phaseName = 'pump_until',
+}) async {
+  final sw = Stopwatch()..start();
+  perf?.bumpCounter('pump_until_calls', meta: 'phase=$phaseName');
+  var stepMs = 25;
+  while (sw.elapsed < timeout) {
+    if (condition()) {
+      perf?.timing(phaseName, sw.elapsed, meta: 'result=met');
+      return;
+    }
+    await tester.pump(Duration(milliseconds: stepMs));
+    stepMs = math.min(500, stepMs * 2);
+  }
+  perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
+  fail(
+    'Timed out after ${timeout.inSeconds}s in e2ePumpUntil ($phaseName). '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
 /// Returns after the first [Finder] has at least one hit-testable match.
 Future<void> e2eWaitUntilAnyFinderHitTestable(
   WidgetTester tester,
@@ -439,7 +467,9 @@ Future<void> e2eEnsureRelocated64pxPngDecode(
   expect(
     failures,
     isEmpty,
-    reason: failures.isEmpty ? null : '$decodeFailuresPrefix\n${failures.join('\n')}',
+    reason: failures.isEmpty
+        ? null
+        : '$decodeFailuresPrefix\n${failures.join('\n')}',
   );
 }
 
@@ -450,19 +480,17 @@ Future<void> e2eEnsureRelocated64pxPngDecode(
 /// should still invoke at most once per [testWidgets] unless a future shared
 /// fixture deduplicates across tests (GitHub #2336).
 Future<void> e2eEnsureAllRelocated64pxPngsLoad() async {
-  await e2eEnsureRelocated64pxPngDecode(
-    <String>{
-      ...kCivilianIconSlugs.map(
-        (slug) => 'assets/icons/64/ui_icon_civ_$slug.png',
-      ),
-      ...kResourceIconIds.map(
-        (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
-      ),
-      ...kTownIconIds.map((iconId) => 'assets/icons/64/ui_icon_com_$iconId.png'),
-      ...kProvinceLabelIconIds.map(
-        (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
-      ),
-      kFleetMapIcon64PngAssetPath,
-    },
-  );
+  await e2eEnsureRelocated64pxPngDecode(<String>{
+    ...kCivilianIconSlugs.map(
+      (slug) => 'assets/icons/64/ui_icon_civ_$slug.png',
+    ),
+    ...kResourceIconIds.map(
+      (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
+    ),
+    ...kTownIconIds.map((iconId) => 'assets/icons/64/ui_icon_com_$iconId.png'),
+    ...kProvinceLabelIconIds.map(
+      (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
+    ),
+    kFleetMapIcon64PngAssetPath,
+  });
 }
