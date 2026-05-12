@@ -105,6 +105,36 @@ void main() {
       expect(result.message, contains('9999'));
     });
 
+    test('emits worker pool credit event for add_worker', () {
+      final result = executor.executeRaw(
+        rawInput: '/add_worker peasants 500',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      expect(result.events, hasLength(1));
+      final event = result.events.single as CreditDebugWorkerPoolEvent;
+      expect(event.humanPlayerId, 'p1');
+      expect(event.workerTierId, 'peasants');
+      expect(event.requestedAmount, 500);
+      expect(event.creditedAmount, 500);
+      expect(result.message, contains('peasants'));
+      expect(result.message, contains('500'));
+    });
+
+    test('executor message for clamped add_worker includes both amounts', () {
+      final result = executor.executeRaw(
+        rawInput: '/add_worker masters 20000',
+        humanPlayerId: 'p1',
+      );
+      expect(result.isError, isFalse);
+      final event = result.events.single as CreditDebugWorkerPoolEvent;
+      expect(event.workerTierId, 'masters');
+      expect(event.requestedAmount, 20000);
+      expect(event.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
+      expect(result.message, contains('20000'));
+      expect(result.message, contains('9999'));
+    });
+
     test('returns error for invalid command', () {
       final result = executor.executeRaw(rawInput: '/bad', humanPlayerId: 'p1');
       expect(result.isError, isTrue);

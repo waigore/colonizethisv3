@@ -73,6 +73,42 @@ void main() {
       expect(result.message, contains('at least 1'));
     });
 
+    test('parses add_worker with canonical tier after case-insensitive input', () {
+      final result = parser.parse('/add_worker PEASANTS 10');
+      expect(result.isError, isFalse);
+      final credit = result.invocation! as DebugConsoleWorkerPoolCredit;
+      expect(credit.workerTierId, 'peasants');
+      expect(credit.requestedAmount, 10);
+      expect(credit.creditedAmount, 10);
+    });
+
+    test('clamps add_worker above cap in parser', () {
+      final result = parser.parse('/add_worker journeymen 12000');
+      expect(result.isError, isFalse);
+      final credit = result.invocation! as DebugConsoleWorkerPoolCredit;
+      expect(credit.workerTierId, 'journeymen');
+      expect(credit.requestedAmount, 12000);
+      expect(credit.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
+    });
+
+    test('rejects add_worker unknown tier', () {
+      final result = parser.parse('/add_worker nobles 5');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Unknown worker tier'));
+    });
+
+    test('rejects add_worker invalid amount', () {
+      final result = parser.parse('/add_worker peasants abc');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Amount must be an integer'));
+    });
+
+    test('rejects add_worker amount below 1', () {
+      final result = parser.parse('/add_worker peasants 0');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('at least 1'));
+    });
+
     test('help lists add_money bounds', () {
       final result = parser.parse('/help');
       expect(result.isError, isTrue);
@@ -185,6 +221,17 @@ void main() {
       final result = parser.parse('/help');
       final message = result.message ?? '';
       final sorted = debugConsoleSupportedCommodityIdsSorted;
+      for (final id in sorted) {
+        expect(message, contains(id));
+      }
+      final joined = sorted.join(', ');
+      expect(message, contains(joined));
+    });
+
+    test('help includes all worker tier ids in stable order', () {
+      final result = parser.parse('/help');
+      final message = result.message ?? '';
+      final sorted = debugConsoleSupportedWorkerTierIdsSorted;
       for (final id in sorted) {
         expect(message, contains(id));
       }

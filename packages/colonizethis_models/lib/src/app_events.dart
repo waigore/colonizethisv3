@@ -502,6 +502,22 @@ class CreditDebugTreasuryEvent extends SessionCommandEvent {
   final int creditedAmount;
 }
 
+/// Immediate debug industrial worker pool credit for the human player
+/// ([WorkerPool] tier bump only; no economy-phase modifiers).
+class CreditDebugWorkerPoolEvent extends SessionCommandEvent {
+  const CreditDebugWorkerPoolEvent({
+    required this.humanPlayerId,
+    required this.workerTierId,
+    required this.requestedAmount,
+    required this.creditedAmount,
+  });
+
+  final String humanPlayerId;
+  final String workerTierId;
+  final int requestedAmount;
+  final int creditedAmount;
+}
+
 /// Immediate debug stockpile commodity credit for the human player.
 class CreditDebugStockpileCommodityEvent extends SessionCommandEvent {
   const CreditDebugStockpileCommodityEvent({
