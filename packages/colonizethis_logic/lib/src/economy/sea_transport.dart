@@ -110,19 +110,41 @@ void _logExtractionAutoTransportInterception(
   );
 }
 
+/// Single-pass index of [WorldState.fleets] by fleet id for O(1) lookups (Refs #2394).
+///
+/// Callers that iterate all players should build once per stable [WorldState] snapshot
+/// instead of rescanning [WorldState.fleets] per player.
+Map<String, Fleet> fleetsByIdForWorld(WorldState world) {
+  return {for (final f in world.fleets) f.id: f};
+}
+
 /// Total cargo holds for [playerId] based on ships in the home fleet at the capital port.
 ///
 /// Home fleet convention: fleet id = `fleet_<playerId>`. Each ship's cargoHold is read from
 /// NavalStatsCatalog; if no such fleet exists or the sum of cargoHold values is zero, this
 /// falls back to [defaultCargoHoldsStub] per SPEC/program/extraction-pipeline.md § Cargo holds.
-int cargoHoldsForHomeFleet(Game game, String playerId) {
+///
+/// When [fleetsById] is supplied (typically from [fleetsByIdForWorld] built once per pass),
+/// home-fleet resolution is O(1) instead of scanning [WorldState.fleets] per call.
+int cargoHoldsForHomeFleet(
+  Game game,
+  String playerId, {
+  Map<String, Fleet>? fleetsById,
+}) {
   final homeFleetId = homeFleetIdFor(playerId);
-  Fleet? homeFleet;
-  for (final f in game.worldState.fleets) {
-    if (f.id == homeFleetId && f.ownerId == playerId) {
-      homeFleet = f;
-      break;
+  final Fleet? homeFleet;
+  if (fleetsById != null) {
+    final f = fleetsById[homeFleetId];
+    homeFleet = (f != null && f.ownerId == playerId) ? f : null;
+  } else {
+    Fleet? found;
+    for (final f in game.worldState.fleets) {
+      if (f.id == homeFleetId && f.ownerId == playerId) {
+        found = f;
+        break;
+      }
     }
+    homeFleet = found;
   }
   if (homeFleet == null) {
     return defaultCargoHoldsStub;
