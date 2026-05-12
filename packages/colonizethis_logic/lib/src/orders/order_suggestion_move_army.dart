@@ -181,7 +181,11 @@ bool _armyMoveNeedsDeclareWarTrial(
     return false;
   }
   if (!isGreatPower(game, destOwnerId, factionMembership: factionMembership) &&
-      !isMinorOrTribe(game, destOwnerId, factionMembership: factionMembership)) {
+      !isMinorOrTribe(
+        game,
+        destOwnerId,
+        factionMembership: factionMembership,
+      )) {
     return false;
   }
   return !canAttackWithWarOrDeclaring(game, playerId, destOwnerId, diplo);
@@ -213,6 +217,8 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     playerId: playerId,
     basePrefix: currentOrders,
   );
+  final trialValidatorsByDeclareTarget =
+      <String, IncrementalCandidateValidator>{};
   final out = <ArmyMovePickerDestination>[];
   for (final fullId in raw) {
     final province = game.worldState.tryGetProvince(fullId);
@@ -242,11 +248,17 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
       );
       // Trial diplomatic context differs from [currentOrders] (extra declare
       // war), so use a per-trial validator rather than the base one above.
-      final trialValidator = IncrementalCandidateValidator.forPlayer(
-        game: game,
-        topology: topology,
-        playerId: playerId,
-        basePrefix: trial,
+      // Reuse one validator per declare-war target: same [trial] prefix for a
+      // given [ownerId], amortizes [buildPlayerView] across many destinations
+      // (Refs #2394, SPEC/program/order-suggestions.md).
+      final trialValidator = trialValidatorsByDeclareTarget.putIfAbsent(
+        ownerId,
+        () => IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+          basePrefix: trial,
+        ),
       );
       if (!trialValidator.isArmyMoveAccepted(move)) {
         continue;
