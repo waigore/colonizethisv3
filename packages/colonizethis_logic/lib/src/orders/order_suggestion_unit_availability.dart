@@ -2,8 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/player_view.dart';
-import 'order_suggestion_work_tile_keys.dart';
+import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
+import 'order_suggestion_work_tile_keys.dart';
 
 /// Per-unit civilian work availability for UI (Refs #2133).
 /// SPEC/program/order-suggestions.md § Selected-unit availability.
@@ -96,6 +97,13 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
     );
   }
 
+  final sharedValidator = buildIncrementalCandidateValidator(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    baseOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
   final byTarget = <String, Set<String>>{};
   for (final target in allowed) {
     if (workTargetFilter != null && target != workTargetFilter) continue;
@@ -107,6 +115,7 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
       workTarget: target,
       currentOrders: currentOrders,
       tileMapByRegion: tileMapByRegion,
+      sharedCandidateValidator: sharedValidator,
     );
     if (tiles.isNotEmpty) {
       byTarget[target] = tiles;
