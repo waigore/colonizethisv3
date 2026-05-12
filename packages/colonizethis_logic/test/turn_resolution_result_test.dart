@@ -289,4 +289,131 @@ void main() {
       expect(result.pendingCallToArms, pending);
     });
   });
+
+  group('TurnResolutionResult.game (sealed base getter)', () {
+    test('exposes game via base type for TurnResolutionComplete', () {
+      final TurnResolutionResult result = TurnResolutionComplete(baseGame);
+      expect(result.game, same(baseGame));
+    });
+
+    test('exposes game via base type for TurnResolutionPendingOvertures', () {
+      final TurnResolutionResult result = TurnResolutionPendingOvertures(
+        game: baseGame,
+        pendingOvertures: const [
+          OvertureOffer(
+            offererGpId: 'gp1',
+            targetFactionId: 'minor1',
+            stage: OvertureStage.tradeConsulate,
+          ),
+        ],
+      );
+      expect(result.game, same(baseGame));
+    });
+
+    test('exposes game via base type for TurnResolutionPendingIntervention', () {
+      final TurnResolutionResult result = TurnResolutionPendingIntervention(
+        game: baseGame,
+        pendingInterventions: const [
+          InterventionPrompt(
+            aggressorGpId: 'gp2',
+            defenderMinorOrTribeId: 'minor1',
+            interveningGpId: 'gp1',
+          ),
+        ],
+      );
+      expect(result.game, same(baseGame));
+    });
+
+    test('exposes game via base type for TurnResolutionPendingCallToArms', () {
+      final TurnResolutionResult result = TurnResolutionPendingCallToArms(
+        game: baseGame,
+        pendingCallToArms: const [
+          CallToArmsPending(
+            allyGpId: 'gp1',
+            defenderGpId: 'gp2',
+            aggressorGpId: 'gp3',
+          ),
+        ],
+      );
+      expect(result.game, same(baseGame));
+    });
+  });
+
+  group('requireTurnResolutionComplete', () {
+    test('returns game for TurnResolutionComplete', () {
+      final result = TurnResolutionComplete(baseGame);
+      expect(requireTurnResolutionComplete(result), same(baseGame));
+    });
+
+    test('throws StateError with overture hint for pending overtures', () {
+      final result = TurnResolutionPendingOvertures(
+        game: baseGame,
+        pendingOvertures: const [
+          OvertureOffer(
+            offererGpId: 'gp1',
+            targetFactionId: 'minor1',
+            stage: OvertureStage.tradeConsulate,
+          ),
+        ],
+      );
+      expect(
+        () => requireTurnResolutionComplete(result),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('resumeTurnResolutionWithOvertureDecisions'),
+          ),
+        ),
+      );
+    });
+
+    test('throws StateError with intervention hint for pending intervention',
+        () {
+      final result = TurnResolutionPendingIntervention(
+        game: baseGame,
+        pendingInterventions: const [
+          InterventionPrompt(
+            aggressorGpId: 'gp2',
+            defenderMinorOrTribeId: 'minor1',
+            interveningGpId: 'gp1',
+          ),
+        ],
+      );
+      expect(
+        () => requireTurnResolutionComplete(result),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('resumeTurnResolutionWithInterventionDecisions'),
+          ),
+        ),
+      );
+    });
+
+    test('throws StateError with call-to-arms hint for pending call to arms',
+        () {
+      final result = TurnResolutionPendingCallToArms(
+        game: baseGame,
+        pendingCallToArms: const [
+          CallToArmsPending(
+            allyGpId: 'gp1',
+            defenderGpId: 'gp2',
+            aggressorGpId: 'gp3',
+          ),
+        ],
+      );
+      expect(
+        () => requireTurnResolutionComplete(result),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('resumeTurnResolutionWithCallToArmsDecisions'),
+          ),
+        ),
+      );
+    });
+  });
 }

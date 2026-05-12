@@ -286,17 +286,25 @@ TurnResolutionResult resolveTurnForGameWithConfig({
 /// Returns the game when [result] is [TurnResolutionComplete]; throws when pending.
 /// Use in tests or callers that do not yet handle [TurnResolutionPendingOvertures].
 Game requireTurnResolutionComplete(TurnResolutionResult result) {
+  if (result is TurnResolutionComplete) {
+    return result.game;
+  }
+  throw StateError(_pendingTurnResolutionMessage(result));
+}
+
+/// Diagnostic message for a non-complete [TurnResolutionResult]. Co-locates the
+/// per-variant resume hints so adding a new pending variant requires touching a
+/// single switch instead of every caller of [requireTurnResolutionComplete].
+String _pendingTurnResolutionMessage(TurnResolutionResult result) {
   return switch (result) {
-    TurnResolutionComplete(:final game) => game,
-    TurnResolutionPendingOvertures() => throw StateError(
+    TurnResolutionComplete() =>
+      'Turn resolution is complete; no pending decisions',
+    TurnResolutionPendingOvertures() =>
       'Turn resolution is pending overture decisions; use resumeTurnResolutionWithOvertureDecisions',
-    ),
-    TurnResolutionPendingIntervention() => throw StateError(
+    TurnResolutionPendingIntervention() =>
       'Turn resolution is pending intervention decisions; use resumeTurnResolutionWithInterventionDecisions',
-    ),
-    TurnResolutionPendingCallToArms() => throw StateError(
+    TurnResolutionPendingCallToArms() =>
       'Turn resolution is pending call to arms; use resumeTurnResolutionWithCallToArmsDecisions',
-    ),
   };
 }
 
