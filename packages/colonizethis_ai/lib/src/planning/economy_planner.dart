@@ -5,21 +5,9 @@ import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'recipe_scoring.dart';
+
 final _log = packageLogger('economy_planner');
-
-/// Shortage target below which we consider a commodity "needed".
-const int _kShortageThreshold = 8;
-
-/// Weight for shortage component in recipe score.
-const double _kShortageWeight = 2.0;
-
-/// Weight for chain/luxury value.
-const double _kChainWeight = 1.0;
-
-/// Weight for agenda/personality modifier.
-const double _kAgendaWeight = 0.5;
-
-const int _kVeryLargeRuns = 999999;
 
 /// Runs the economy planner for one AI-controlled player. Deterministic given
 /// [game], [view], [config], and [seeds]. Returns production assignments and
@@ -120,24 +108,24 @@ List<AssignedRecipe> _allocateLabour({
   final result = <AssignedRecipe>[];
 
   // Build feasible recipes with scores. Feasible = can run at least 1 full run.
-  final candidates = <_ScoredRecipe>[];
+  final candidates = <ScoredRecipe>[];
   for (final recipe in recipes) {
     final labourPerOutput = recipe.labourPerOutput;
     if (labourPerOutput <= 0) continue;
-    final feasibleRuns = _feasibleRuns(
+    final runs = feasibleRuns(
       recipe: recipe,
       stockpile: virtual,
       remainingLabour: remainingLabour,
     );
-    if (feasibleRuns <= 0) continue;
+    if (runs <= 0) continue;
 
-    final score = _scoreRecipe(
+    final score = scoreRecipe(
       recipe: recipe,
       stockpile: virtual,
       workers: workers,
       agendaId: agendaId,
     );
-    candidates.add(_ScoredRecipe(recipe: recipe, score: score));
+    candidates.add(ScoredRecipe(recipe: recipe, score: score));
   }
 
   if (candidates.isEmpty) return result;
@@ -161,7 +149,7 @@ List<AssignedRecipe> _allocateLabour({
   for (final scored in candidates) {
     if (remainingLabour <= 0) break;
     final recipe = scored.recipe;
-    final runs = _feasibleRuns(
+    final runs = feasibleRuns(
       recipe: recipe,
       stockpile: virtual,
       remainingLabour: remainingLabour,
@@ -191,92 +179,4 @@ List<AssignedRecipe> _allocateLabour({
     'labourByRecipe=$labourByRecipe assignmentsCount=${result.length}',
   );
   return result;
-}
-
-class _ScoredRecipe {
-  _ScoredRecipe({required this.recipe, required this.score});
-  final ProductionRecipe recipe;
-  final double score;
-}
-
-int _feasibleRuns({
-  required ProductionRecipe recipe,
-  required Stockpile stockpile,
-  required int remainingLabour,
-}) {
-  if (recipe.labourPerOutput <= 0) return 0;
-  int maxByInputs = _kVeryLargeRuns;
-  for (final entry in recipe.inputQuantities.entries) {
-    final have = stockpile.quantityOf(entry.key);
-    final need = entry.value;
-    if (need <= 0) continue;
-    final runs = have ~/ need;
-    if (runs < maxByInputs) maxByInputs = runs;
-  }
-  if (maxByInputs <= 0) return 0;
-  final maxByLabour = remainingLabour ~/ recipe.labourPerOutput;
-  if (maxByLabour <= 0) return 0;
-  return maxByInputs < maxByLabour ? maxByInputs : maxByLabour;
-}
-
-double _scoreRecipe({
-  required ProductionRecipe recipe,
-  required Stockpile stockpile,
-  required WorkerPool workers,
-  required String agendaId,
-}) {
-  final outputId = recipe.outputCommodityId;
-  final have = stockpile.quantityOf(outputId);
-
-  // Shortage: prefer producing what we have little of.
-  final shortage = have < _kShortageThreshold
-      ? (_kShortageThreshold - have).toDouble()
-      : 0.0;
-
-  final chain = _recipeChainScore(outputId, workers);
-  final agenda = _recipeAgendaScore(agendaId, outputId);
-
-  return shortage * _kShortageWeight +
-      chain * _kChainWeight +
-      agenda * _kAgendaWeight;
-}
-
-/// Chain value: outputs that feed other recipes or are luxuries.
-double _recipeChainScore(String outputId, WorkerPool workers) {
-  if (outputId == CommodityCatalog.refinedSugar.id) {
-    return workers.apprentices > 0 ? 2.0 : 1.0;
-  }
-  if (outputId == CommodityCatalog.cigars.id) {
-    return workers.journeymen > 0 ? 2.0 : 1.0;
-  }
-  if (outputId == CommodityCatalog.furHats.id) {
-    return workers.masters > 0 ? 2.0 : 1.0;
-  }
-  if (outputId == CommodityCatalog.lumber.id ||
-      outputId == CommodityCatalog.castIron.id) {
-    return 0.8;
-  }
-  if (outputId == CommodityCatalog.fabric.id) {
-    return 0.5;
-  }
-  return 0.0;
-}
-
-/// Agenda: warmonger favours military-related; industrial_trader / merchant favour trade goods.
-double _recipeAgendaScore(String agendaId, String outputId) {
-  if (agendaId == 'warmonger' &&
-      (outputId == CommodityCatalog.castIron.id ||
-          outputId == CommodityCatalog.lumber.id)) {
-    return 1.0;
-  }
-  if (agendaId != 'industrial_trader' && agendaId != 'merchant') {
-    return 0.0;
-  }
-  if (outputId == CommodityCatalog.fabric.id ||
-      outputId == CommodityCatalog.refinedSugar.id ||
-      outputId == CommodityCatalog.cigars.id ||
-      outputId == CommodityCatalog.furHats.id) {
-    return 0.5;
-  }
-  return 0.0;
 }
