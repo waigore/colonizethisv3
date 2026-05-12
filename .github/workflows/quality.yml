@@ -151,7 +151,8 @@ jobs:
         needs.app_tests_cache.result == 'success'
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    # apt + GTK dev deps can exceed 35m on slow runner mirrors; allow headroom for flutter build.
+    timeout-minutes: 60
     env:
       PUB_CACHE: ${{ github.workspace }}/.pub-cache
     steps:
@@ -173,6 +174,8 @@ jobs:
 
       - name: Install Linux desktop build dependencies
         if: needs.changes.outputs.tests == 'true'
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
           set -euo pipefail
           sudo apt-get update -qq
