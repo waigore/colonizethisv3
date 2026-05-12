@@ -26,10 +26,10 @@ Future<bool> _pollUntilNavalPanelVisible(
   }
   var stepMs = 25;
   while (poll.elapsed < budget) {
-    await tester.pump(Duration(milliseconds: stepMs));
     if (navalPanel.evaluate().isNotEmpty) {
       return true;
     }
+    await tester.pump(Duration(milliseconds: stepMs));
     stepMs = e2eAdaptivePollRampAfterIdle(stepMs);
   }
   return false;
@@ -78,6 +78,8 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
         return;
       }
       navalPollMs = 25;
+      await tester.pump(Duration(milliseconds: navalPollMs));
+      navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
       continue;
     }
     final railHit = btn.hitTestable();
