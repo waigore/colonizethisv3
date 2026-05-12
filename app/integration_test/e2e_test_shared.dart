@@ -1,6 +1,11 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/fleet_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -134,4 +139,72 @@ Future<List<String>> e2eDecodePngAssetPathsParallel(
     }
   }
   return failures;
+}
+
+/// Relocated 64px map icon paths from the asset manifest (sorted).
+Future<List<String>> e2eDiscoverRelocated64pxPngAssets() async {
+  final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+  final assets =
+      manifest
+          .listAssets()
+          .where(
+            (assetPath) =>
+                assetPath.startsWith('assets/icons/64/') &&
+                assetPath.endsWith('.png'),
+          )
+          .toList()
+        ..sort();
+  return assets;
+}
+
+/// Asserts the manifest matches the canonical map icon families, then decodes
+/// every PNG via [e2eDecodePngAssetPathsParallel] (bounded concurrency).
+///
+/// Used by new-game E2E tests that need the same warm-cache behavior; callers
+/// should still invoke at most once per [testWidgets] unless a future shared
+/// fixture deduplicates across tests (GitHub #2336).
+Future<void> e2eEnsureAllRelocated64pxPngsLoad() async {
+  final assets = await e2eDiscoverRelocated64pxPngAssets();
+  final expectedAssets = <String>{
+    ...kCivilianIconSlugs.map(
+      (slug) => 'assets/icons/64/ui_icon_civ_$slug.png',
+    ),
+    ...kResourceIconIds.map(
+      (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
+    ),
+    ...kTownIconIds.map((iconId) => 'assets/icons/64/ui_icon_com_$iconId.png'),
+    ...kProvinceLabelIconIds.map(
+      (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
+    ),
+    kFleetMapIcon64PngAssetPath,
+  };
+  final expectedSorted = expectedAssets.toList()..sort();
+
+  expect(
+    assets,
+    isNotEmpty,
+    reason:
+        'Expected relocated map icon PNGs under assets/icons/64/, but none were found in the asset manifest.',
+  );
+  expect(
+    assets.length,
+    expectedAssets.length,
+    reason:
+        'Unexpected number of relocated 64px PNG assets. '
+        'Expected ${expectedAssets.length} map-family files, found ${assets.length}.',
+  );
+  expect(
+    assets,
+    orderedEquals(expectedSorted),
+    reason:
+        'Relocated 64px PNG manifest entries do not match expected map icon families.',
+  );
+
+  final failures = await e2eDecodePngAssetPathsParallel(assets);
+  expect(
+    failures,
+    isEmpty,
+    reason:
+        'Failed to load one or more relocated 64px PNG assets:\n${failures.join('\n')}',
+  );
 }
