@@ -116,6 +116,26 @@ class DebugConsoleCommandExecutor {
             creditedAmount: creditedAmount,
           ),
         ),
+      DebugConsoleWorkerPoolCredit(
+        :final workerTierId,
+        :final requestedAmount,
+        :final creditedAmount,
+      ) =>
+        DebugConsoleExecutionResult.success(
+          events: [
+            CreditDebugWorkerPoolEvent(
+              humanPlayerId: humanPlayerId,
+              workerTierId: workerTierId,
+              requestedAmount: requestedAmount,
+              creditedAmount: creditedAmount,
+            ),
+          ],
+          message: _workerPoolCreditExecutorMessage(
+            workerTierId: workerTierId,
+            requestedAmount: requestedAmount,
+            creditedAmount: creditedAmount,
+          ),
+        ),
       DebugConsoleStockpileCredit(
         :final commodityId,
         :final requestedAmount,
@@ -250,6 +270,18 @@ String _treasuryCreditExecutorMessage({
         'crediting $creditedAmount (clamped to $kDebugConsoleMaxTreasuryCreditAmount).';
   }
   return 'Queued debug treasury credit: $creditedAmount.';
+}
+
+String _workerPoolCreditExecutorMessage({
+  required String workerTierId,
+  required int requestedAmount,
+  required int creditedAmount,
+}) {
+  if (requestedAmount != creditedAmount) {
+    return 'Queued debug worker credit ($workerTierId): requested $requestedAmount, '
+        'crediting $creditedAmount (clamped to $kDebugConsoleMaxTreasuryCreditAmount).';
+  }
+  return 'Queued debug worker credit ($workerTierId): $creditedAmount.';
 }
 
 String _stockpileCreditExecutorMessage({
