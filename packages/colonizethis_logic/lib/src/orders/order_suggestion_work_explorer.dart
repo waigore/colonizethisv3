@@ -101,7 +101,7 @@ void _addExplorerWorkSuggestionsForUnit({
   final pendingOrClaimed = existingTargetsByUnit[unit.id];
   if (pendingOrClaimed != null && pendingOrClaimed.isNotEmpty) {
     for (final target in [kWorkTargetExplore, kWorkTargetProspect]) {
-      _suggestionWorkLog(
+      logWorkOrderSuggestion(
         unitId: unit.id,
         unitType: unit.type,
         unitRegionId: regionId,
@@ -149,7 +149,7 @@ void _addExplorerWorkSuggestionsForUnit({
     for (final chosen in acceptedExplores) {
       suggestions.add(chosen);
     }
-    _suggestionWorkLog(
+    logWorkOrderSuggestion(
       unitId: unit.id,
       unitType: unit.type,
       unitRegionId: regionId,
@@ -160,7 +160,7 @@ void _addExplorerWorkSuggestionsForUnit({
       includedRowCount: acceptedExplores.length,
     );
   } else {
-    _suggestionWorkLog(
+    logWorkOrderSuggestion(
       unitId: unit.id,
       unitType: unit.type,
       unitRegionId: regionId,
@@ -275,7 +275,7 @@ void _addProspectSuggestionIfEligible({
   final existingProspect = existingTargetsByUnit[unit.id];
   if (existingProspect != null &&
       existingProspect.contains(kWorkTargetProspect)) {
-    _suggestionWorkLog(
+    logWorkOrderSuggestion(
       unitId: unit.id,
       unitType: unit.type,
       unitRegionId: regionId,
@@ -342,7 +342,7 @@ void _addProspectSuggestionIfEligible({
     }
   }
   if (prospectRows.isEmpty) {
-    _suggestionWorkLog(
+    logWorkOrderSuggestion(
       unitId: unit.id,
       unitType: unit.type,
       unitRegionId: regionId,
@@ -360,7 +360,7 @@ void _addProspectSuggestionIfEligible({
   for (final candidate in prospectRows) {
     suggestions.add(candidate);
   }
-  _suggestionWorkLog(
+  logWorkOrderSuggestion(
     unitId: unit.id,
     unitType: unit.type,
     unitRegionId: regionId,
