@@ -10,6 +10,12 @@ import 'unit_lookup.dart';
 /// Mirrors SPEC/game/fog-and-exploration.md.
 enum VisibilityLevel { unknown, fogged, fullyVisible }
 
+const _visibilityLevelByName = <String, VisibilityLevel>{
+  'unknown': VisibilityLevel.unknown,
+  'fogged': VisibilityLevel.fogged,
+  'fullyVisible': VisibilityLevel.fullyVisible,
+};
+
 /// Read-only projection of [Game] for a single player under fog-of-war.
 ///
 /// See SPEC/program/player-view.md. This type is used by AI and order
@@ -108,11 +114,8 @@ PlayerView buildPlayerView(Game game, MapTopology _, String playerId) {
       game.worldState.playerVisibilityByTile[playerId] ?? const {};
   final visibilityByTile = <String, VisibilityLevel>{};
   rawVisibility.forEach((tileKey, levelName) {
-    final level = VisibilityLevel.values.firstWhere(
-      (e) => e.name == levelName,
-      orElse: () => VisibilityLevel.unknown,
-    );
-    visibilityByTile[tileKey] = level;
+    visibilityByTile[tileKey] =
+        _visibilityLevelByName[levelName] ?? VisibilityLevel.unknown;
   });
 
   // Spy presence reveal: while a Spy is in a non-owner province, that province is fully visible. SPEC/program/fog-and-exploration-resolution.md.
