@@ -2,12 +2,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
-import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/fleet_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
-import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'e2e_test_shared.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
@@ -19,7 +14,6 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -172,46 +166,6 @@ void _collectTextPreorder(Element element, List<String> out) {
   element.visitChildren((child) {
     _collectTextPreorder(child, out);
   });
-}
-
-Future<List<String>> _discoverRelocated64pxPngAssets() async {
-  final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-  final assets =
-      manifest
-          .listAssets()
-          .where(
-            (assetPath) =>
-                assetPath.startsWith('assets/icons/64/') &&
-                assetPath.endsWith('.png'),
-          )
-          .toList()
-        ..sort();
-  return assets;
-}
-
-Future<void> _ensureAllRelocated64pxPngsLoad() async {
-  final assets = await _discoverRelocated64pxPngAssets();
-  final expectedAssets = <String>{
-    ...kCivilianIconSlugs.map(
-      (slug) => 'assets/icons/64/ui_icon_civ_$slug.png',
-    ),
-    ...kResourceIconIds.map(
-      (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
-    ),
-    ...kTownIconIds.map((iconId) => 'assets/icons/64/ui_icon_com_$iconId.png'),
-    ...kProvinceLabelIconIds.map(
-      (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
-    ),
-    kFleetMapIcon64PngAssetPath,
-  };
-  final expectedSorted = expectedAssets.toList()..sort();
-
-  expect(assets, isNotEmpty);
-  expect(assets.length, expectedAssets.length);
-  expect(assets, orderedEquals(expectedSorted));
-
-  final failures = await e2eDecodePngAssetPathsParallel(assets);
-  expect(failures, isEmpty);
 }
 
 Future<void> _tapGameStartIntroOverlayContinueIfPresent(
@@ -543,7 +497,7 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
       perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
       final preloadSw = Stopwatch()..start();
-      await _ensureAllRelocated64pxPngsLoad();
+      await e2eEnsureAllRelocated64pxPngsLoad();
       perf.timing('asset_preload', preloadSw.elapsed);
 
       final newGameSw = Stopwatch()..start();
