@@ -144,13 +144,15 @@ Future<void> _closeBottomSheet(WidgetTester tester, {E2ePerfLog? perf}) async {
   }
 
   final sw = Stopwatch()..start();
+  var closePollMs = 25;
   while (sw.elapsed < const Duration(seconds: 5)) {
     if (!anyPanelOpen()) {
       perf?.timing('close_bottom_sheet', sw.elapsed);
       return;
     }
     await tester.binding.handlePopRoute();
-    await e2ePumpFor(tester, const Duration(milliseconds: 250));
+    await tester.pump(Duration(milliseconds: closePollMs));
+    closePollMs = e2eAdaptivePollRampAfterIdle(closePollMs);
   }
 
   fail('Timed out closing bottom sheet; panels remained visible');
@@ -160,20 +162,24 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
   final productionPanel = find.byKey(kCtE2EProductionPanelRootKey);
   final productionButton = find.byKey(kEmpireProductionButtonKey);
   final sw = Stopwatch()..start();
+  var prodPollMs = 25;
   while (sw.elapsed < const Duration(seconds: 20)) {
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(Duration(milliseconds: prodPollMs));
+    prodPollMs = e2eAdaptivePollRampAfterIdle(prodPollMs);
     if (productionPanel.evaluate().isNotEmpty) {
       return;
     }
 
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
       await _closeBottomSheet(tester);
+      prodPollMs = 25;
       continue;
     }
 
     if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
       await tester.binding.handlePopRoute();
       await e2ePumpFor(tester, const Duration(milliseconds: 250));
+      prodPollMs = 25;
       continue;
     }
 
@@ -187,9 +193,11 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
       if (productionPanel.evaluate().isNotEmpty) {
         return;
       }
+      prodPollMs = 25;
     } else {
       // Dismiss transient overlays/dialogs and retry opening from the rail.
       await _dismissTransientUi(tester);
+      prodPollMs = 25;
     }
   }
 
@@ -206,8 +214,10 @@ Future<Duration> _waitForNextTurnLabelAdvance(
   E2ePerfLog? perf,
 }) async {
   final sw = Stopwatch()..start();
+  var nextTurnPollMs = 25;
   while (sw.elapsed < timeout) {
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(Duration(milliseconds: nextTurnPollMs));
+    nextTurnPollMs = e2eAdaptivePollRampAfterIdle(nextTurnPollMs);
     final turnAfterFinder = find.descendant(
       of: find.byKey(kGameMapNextTurnButtonKey),
       matching: find.byType(Text),

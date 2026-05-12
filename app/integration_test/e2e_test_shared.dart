@@ -15,6 +15,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Next interval after an idle poll pump in E2E busy-wait loops (25→50→75→100 ms).
+/// Aligns with [e2eWaitUntilFound] backoff (`SPEC/program/e2e-integration-tests.md`, #2336).
+int e2eAdaptivePollRampAfterIdle(int previousMs) {
+  if (previousMs < 100) {
+    return previousMs + 25;
+  }
+  return 100;
+}
+
 class E2ePerfLog {
   E2ePerfLog(this.testName);
 
