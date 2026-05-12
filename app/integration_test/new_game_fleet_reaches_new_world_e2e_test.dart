@@ -31,25 +31,6 @@ import 'package:integration_test/integration_test.dart';
 part 'new_game_fleet_reaches_new_world_e2e_helpers.dart';
 part 'new_game_fleet_reaches_new_world_e2e_helpers_part2.dart';
 
-typedef _E2ePerfLog = E2ePerfLog;
-
-Future<void> _pumpFor(WidgetTester tester, Duration total) =>
-    e2ePumpFor(tester, total);
-
-Future<void> _waitUntilFound(
-  WidgetTester tester,
-  Finder finder, {
-  Duration timeout = _kMaxUiResponseWait,
-  _E2ePerfLog? perf,
-  String phaseName = 'wait_until_found',
-}) => e2eWaitUntilFound(
-  tester,
-  finder,
-  timeout: timeout,
-  perf: perf,
-  phaseName: phaseName,
-);
-
 void main() {
   suppressLogsForTests();
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -59,7 +40,7 @@ void main() {
     WidgetTester tester,
   ) async {
     const testName = 'new_game_fleet_reaches_new_world';
-    final perf = _E2ePerfLog(testName);
+    final perf = E2ePerfLog(testName);
     final testSw = Stopwatch()..start();
     expect(
       kCtE2EEnabled,
@@ -72,7 +53,7 @@ void main() {
     final bootstrapSw = Stopwatch()..start();
     await bootstrapForIntegrationTest();
     await tester.pump();
-    await _pumpFor(tester, const Duration(milliseconds: 500));
+    await e2ePumpFor(tester, const Duration(milliseconds: 500));
     perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
 
     final wallClock = Stopwatch()..start();
@@ -152,7 +133,7 @@ void main() {
     'post-bundle GitHub #1869: after NW fleet, Explorer Assign → Explore enabled',
     (WidgetTester tester) async {
       const testName = 'new_game_fleet_explore_enabled_post_bundle';
-      final perf = _E2ePerfLog(testName);
+      final perf = E2ePerfLog(testName);
       final testSw = Stopwatch()..start();
       expect(
         kCtE2EEnabled,
@@ -165,7 +146,7 @@ void main() {
       final bootstrapSw = Stopwatch()..start();
       await bootstrapForIntegrationTest();
       await tester.pump();
-      await _pumpFor(tester, const Duration(milliseconds: 500));
+      await e2ePumpFor(tester, const Duration(milliseconds: 500));
       perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
 
       final wallClock = Stopwatch()..start();
@@ -244,9 +225,10 @@ void main() {
       Future<bool> checkExploreEnabledFromCivilianPanel() async {
         final phaseSw = Stopwatch()..start();
         await _openCivilianPanelFleetE2e(tester);
-        await _waitUntilFound(
+        await e2eWaitUntilFound(
           tester,
           find.byKey(kCtE2ECivilianPanelRootKey),
+          timeout: _kMaxUiResponseWait,
           perf: perf,
           phaseName: 'wait_until_found_civilian_panel',
         );

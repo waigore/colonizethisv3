@@ -6,7 +6,7 @@ part of 'new_game_fleet_reaches_new_world_e2e_test.dart';
 /// worst observed CI need (Refs #1849 / PR 1849).
 const int _kMaxNextTurnTapsForNwFleetReach = 35;
 
-/// Hard cap for any single “wait until UI shows X” poll (`_waitUntilFound`,
+/// Hard cap for any single “wait until UI shows X” poll (`e2eWaitUntilFound`,
 /// next-turn label settle, panel-open loops). Fail immediately when exceeded.
 const Duration _kMaxUiResponseWait = Duration(seconds: 5);
 
@@ -22,7 +22,7 @@ const Duration _kFleetE2eMaxWallClock = Duration(minutes: 5);
 /// [WidgetsBinding.handlePopRoute] if none match.
 Future<void> _dismissTransientUi(
   WidgetTester tester, {
-  _E2ePerfLog? perf,
+  E2ePerfLog? perf,
 }) async {
   perf?.bumpCounter('dismiss_transient_ui_calls');
   if (find.byType(SnackBar).evaluate().isNotEmpty) {
@@ -32,14 +32,14 @@ Future<void> _dismissTransientUi(
     );
     if (snackAction.hitTestable().evaluate().isNotEmpty) {
       await tester.tap(snackAction.first, warnIfMissed: false);
-      await _pumpFor(tester, const Duration(milliseconds: 200));
+      await e2ePumpFor(tester, const Duration(milliseconds: 200));
       return;
     }
   }
   final ok = find.text('OK').hitTestable();
   if (ok.evaluate().isNotEmpty) {
     await tester.tap(ok.first, warnIfMissed: false);
-    await _pumpFor(tester, const Duration(milliseconds: 200));
+    await e2ePumpFor(tester, const Duration(milliseconds: 200));
     return;
   }
   if (find.byType(AlertDialog).evaluate().isNotEmpty) {
@@ -49,12 +49,12 @@ Future<void> _dismissTransientUi(
           .hitTestable();
       if (hit.evaluate().isNotEmpty) {
         await tester.tap(hit.first, warnIfMissed: false);
-        await _pumpFor(tester, const Duration(milliseconds: 250));
+        await e2ePumpFor(tester, const Duration(milliseconds: 250));
         return;
       }
     }
     await tester.binding.handlePopRoute();
-    await _pumpFor(tester, const Duration(milliseconds: 200));
+    await e2ePumpFor(tester, const Duration(milliseconds: 200));
     return;
   }
   if (find.byType(BottomSheet).evaluate().isNotEmpty) {
@@ -71,16 +71,16 @@ Future<void> _dismissTransientUi(
       final tappable = candidate.hitTestable();
       if (tappable.evaluate().isNotEmpty) {
         await tester.tap(tappable.first, warnIfMissed: false);
-        await _pumpFor(tester, const Duration(milliseconds: 150));
+        await e2ePumpFor(tester, const Duration(milliseconds: 150));
         return;
       }
     }
     await tester.binding.handlePopRoute();
-    await _pumpFor(tester, const Duration(milliseconds: 150));
+    await e2ePumpFor(tester, const Duration(milliseconds: 150));
   }
 }
 
-Future<void> _closeBottomSheet(WidgetTester tester, {_E2ePerfLog? perf}) async {
+Future<void> _closeBottomSheet(WidgetTester tester, {E2ePerfLog? perf}) async {
   perf?.bumpCounter('close_bottom_sheet_calls');
   bool anyPanelOpen() => find.byType(BottomSheet).evaluate().isNotEmpty;
 
@@ -95,7 +95,7 @@ Future<void> _closeBottomSheet(WidgetTester tester, {_E2ePerfLog? perf}) async {
       return;
     }
     await tester.binding.handlePopRoute();
-    await _pumpFor(tester, const Duration(milliseconds: 250));
+    await e2ePumpFor(tester, const Duration(milliseconds: 250));
   }
 
   fail(
@@ -119,9 +119,9 @@ Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
       if (expandIcon.evaluate().isEmpty) continue;
       final iconHit = expandIcon.first;
       await tester.ensureVisible(iconHit);
-      await _pumpFor(tester, const Duration(milliseconds: 80));
+      await e2ePumpFor(tester, const Duration(milliseconds: 80));
       await tester.tap(iconHit, warnIfMissed: false);
-      await _pumpFor(tester, const Duration(milliseconds: 250));
+      await e2ePumpFor(tester, const Duration(milliseconds: 250));
       expandedOne = true;
       break;
     }
@@ -149,7 +149,7 @@ Future<bool> _pollUntilNavalPanelVisible(
   return false;
 }
 
-Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
+Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
   final phaseSw = Stopwatch()..start();
   final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
   final markerBtn = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
@@ -215,7 +215,7 @@ Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
     return;
   }
   await tester.tap(tab.first, warnIfMissed: false);
-  await _pumpFor(tester, const Duration(milliseconds: 250));
+  await e2ePumpFor(tester, const Duration(milliseconds: 250));
 }
 
 /// Map HUD must show **Old World** before issuing naval moves so OW-split
@@ -231,7 +231,7 @@ Future<void> _tapOldWorldRegionTab(
     return;
   }
   await tester.tap(hit.first, warnIfMissed: false);
-  await _pumpFor(tester, const Duration(milliseconds: 250));
+  await e2ePumpFor(tester, const Duration(milliseconds: 250));
 }
 
 Finder _radioListTilesInAlertDialogs() {
@@ -264,7 +264,7 @@ Future<void> _pickMoveDestinationAndConfirm(
   }
 
   ensureBudget('start');
-  await _waitUntilFound(
+  await e2eWaitUntilFound(
     tester,
     find.byType(AlertDialog),
     timeout: const Duration(seconds: 2),
@@ -328,7 +328,7 @@ Future<void> _pickMoveDestinationAndConfirm(
     expect(seaRadio, findsWidgets);
     await tester.tap(seaRadio.first, warnIfMissed: false);
   }
-  await _waitUntilFound(
+  await e2eWaitUntilFound(
     tester,
     find.text(l10n.common_confirm),
     timeout: const Duration(seconds: 2),
@@ -353,7 +353,7 @@ Future<void> _tryNavalMoveSegment(
   AppLocalizations l10n, {
   bool useNewWorldMapTabFirst = false,
   bool allowWarpDestinations = true,
-  _E2ePerfLog? perf,
+  E2ePerfLog? perf,
 }) async {
   final phaseSw = Stopwatch()..start();
   if (useNewWorldMapTabFirst) {
@@ -371,7 +371,7 @@ Future<void> _tryNavalMoveSegment(
     );
     return;
   }
-  await _waitUntilFound(
+  await e2eWaitUntilFound(
     tester,
     find.byType(AlertDialog),
     timeout: const Duration(seconds: 2),

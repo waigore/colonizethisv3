@@ -233,3 +233,70 @@ Future<void> e2eBootstrapNewGameToMap(
   await tester.pump(const Duration(milliseconds: 500));
   perf?.timing('new_game_to_map', phaseSw.elapsed);
 }
+
+/// Collects non-empty [Text] data in depth-first preorder (E2E snapshot helpers).
+void e2eCollectTextPreorder(Element element, List<String> out) {
+  final w = element.widget;
+  if (w is Text) {
+    final d = w.data;
+    if (d != null && d.isNotEmpty) {
+      out.add(d);
+    }
+  }
+  element.visitChildren((child) {
+    e2eCollectTextPreorder(child, out);
+  });
+}
+
+/// Sorted list of `assets/icons/64/*.png` entries from the asset manifest.
+Future<List<String>> e2eDiscoverRelocated64pxPngAssets() async {
+  final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+  final assets =
+      manifest
+          .listAssets()
+          .where(
+            (assetPath) =>
+                assetPath.startsWith('assets/icons/64/') &&
+                assetPath.endsWith('.png'),
+          )
+          .toList()
+        ..sort();
+  return assets;
+}
+
+/// Asserts manifest contents match [expectedAssets], then decodes via
+/// [e2eDecodePngAssetPathsParallel] (Refs #2336 AC3).
+Future<void> e2eEnsureRelocated64pxPngDecode(
+  Set<String> expectedAssets, {
+  String emptyManifestReason =
+      'Expected relocated map icon PNGs under assets/icons/64/, but none were found in the asset manifest.',
+  String? countMismatchReason,
+  String? orderedMismatchReason,
+  String decodeFailuresPrefix =
+      'Failed to load one or more relocated 64px PNG assets:',
+}) async {
+  final assets = await e2eDiscoverRelocated64pxPngAssets();
+  final expectedSorted = expectedAssets.toList()..sort();
+  expect(assets, isNotEmpty, reason: emptyManifestReason);
+  expect(
+    assets.length,
+    expectedAssets.length,
+    reason:
+        countMismatchReason ??
+        'Unexpected number of relocated 64px PNG assets. '
+            'Expected ${expectedAssets.length} map-family files, found ${assets.length}.',
+  );
+  expect(
+    assets,
+    orderedEquals(expectedSorted),
+    reason:
+        orderedMismatchReason ??
+        'Relocated 64px PNG manifest entries do not match expected map icon families.',
+  );
+  final failures = await e2eDecodePngAssetPathsParallel(assets);
+  expect(
+    failures,
+    isEmpty,
+    reason: failures.isEmpty ? null : '$decodeFailuresPrefix\n${failures.join('\n')}',
+  );
+}
