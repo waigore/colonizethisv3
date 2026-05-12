@@ -94,17 +94,16 @@ void _applyResearchOrderIfValid({
   if (!_researchPrerequisitesMet(tech, originalUnlocked)) return;
   if (!_researchDiscoverySatisfied(game, player.id, tech)) return;
 
-  final spend = treasuryCostForFunding(order.funding);
-  if (spend <= 0) return;
+  final funding = fundingStatsForLevel(order.funding);
+  if (funding.cost <= 0) return;
   final treasury = getTreasury();
-  final nextTreasury = treasury - spend;
+  final nextTreasury = treasury - funding.cost;
   if (nextTreasury < -maxDebt) return;
 
-  final basePoints = pointsForFunding(order.funding);
   final points = effectiveResearchPointsForTechAllocation(
     player,
     tech,
-    basePoints,
+    funding.points,
   );
   if (points <= 0) return;
 
