@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/player_view.dart';
+import 'order_suggestion_context.dart';
 import 'order_suggestion_work_tile_keys.dart';
 
 /// Inputs for populating per-player work-target tile selection caches.
@@ -115,6 +116,13 @@ class PerPlayerWorkTargetSelectionCache {
     WorkTargetSelectionSnapshot s,
     String workTarget,
   ) {
+    final sharedValidator = buildIncrementalCandidateValidator(
+      game: s.game,
+      topology: s.topology,
+      playerId: s.playerId,
+      baseOrders: s.currentOrders,
+      tileMapByRegion: s.tileMapByRegion,
+    );
     final merged = <String>{};
     for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
       final supportsTarget =
@@ -130,6 +138,7 @@ class PerPlayerWorkTargetSelectionCache {
         workTarget: workTarget,
         currentOrders: s.currentOrders,
         tileMapByRegion: s.tileMapByRegion,
+        sharedCandidateValidator: sharedValidator,
       );
       merged.addAll(valid);
     }
@@ -172,6 +181,13 @@ class PerPlayerWorkTargetSelectionCache {
     WorkTargetSelectionSnapshot s,
     String workTarget,
   ) {
+    final sharedValidator = buildIncrementalCandidateValidator(
+      game: s.game,
+      topology: s.topology,
+      playerId: s.playerId,
+      baseOrders: s.currentOrders,
+      tileMapByRegion: s.tileMapByRegion,
+    );
     final merged = <String>{};
     for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
       final supportsTarget =
@@ -198,6 +214,7 @@ class PerPlayerWorkTargetSelectionCache {
         workTarget: workTarget,
         currentOrders: s.currentOrders,
         tileMapByRegion: s.tileMapByRegion,
+        sharedCandidateValidator: sharedValidator,
       );
       merged.addAll(valid);
     }
