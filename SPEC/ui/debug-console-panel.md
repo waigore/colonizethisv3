@@ -105,5 +105,5 @@
 ## Automated verification (`/flip_province`)
 
 - **App handler and JSON persistence parity:** `app/test/app_event_handler_scope_test.dart` (`applyDebugFlipProvinceOwnership` — success, Orders-phase gate, unknown-to-human, already-owned, ambiguous name, not found, null owner, `Game.fromJson` / `toJson` round-trip).
-- **Debug credits (`/add_money`, `/add_worker`):** `app/test/app_event_handler_scope_test.dart` (`applyDebugTreasuryCredit`, `applyDebugWorkerPoolCredit` — clamp messaging, non-Orders apply parity, `Game.fromJson` / `toJson` worker pool parity).
+- **Debug credits (`/add_money`, `/add_worker`):** `app/test/app_event_handler_scope_test.dart` (`applyDebugTreasuryCredit` — clamp messaging, non-Orders apply parity); `app/test/app_event_handler_debug_worker_pool_test.dart` (`applyDebugWorkerPoolCredit` — tier apply, clamp messaging, non-Orders apply parity, unsupported tier rejection, `Game.fromJson` / `toJson` worker pool parity).
 - **Logic downstream after canonical transfer:** `packages/colonizethis_logic/test/debug_flip_province_turn_downstream_test.dart` (`emitProvinceCapturedEvents`, `resolveConnectivity` via `runExtractionPhase`, `findMilitaryVictoryWinner`, `runEndOfTurnPhase`).
