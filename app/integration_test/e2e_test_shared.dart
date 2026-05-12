@@ -100,6 +100,34 @@ Future<void> e2eWaitForNewGameEntry(
   );
 }
 
+/// Pumps until [condition] returns true, evaluating [condition] before the
+/// first pump and using exponential backoff on pump intervals (same cap as
+/// [e2eWaitUntilFound]). Refs GitHub #2336 (`pumpUntil` helper).
+Future<void> e2ePumpUntil(
+  WidgetTester tester,
+  bool Function() condition, {
+  required Duration timeout,
+  E2ePerfLog? perf,
+  String phaseName = 'pump_until',
+}) async {
+  final sw = Stopwatch()..start();
+  perf?.bumpCounter('pump_until_calls', meta: 'phase=$phaseName');
+  var stepMs = 25;
+  while (sw.elapsed < timeout) {
+    if (condition()) {
+      perf?.timing(phaseName, sw.elapsed, meta: 'result=met');
+      return;
+    }
+    await tester.pump(Duration(milliseconds: stepMs));
+    stepMs = math.min(500, stepMs * 2);
+  }
+  perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
+  fail(
+    'Timed out after ${timeout.inSeconds}s in e2ePumpUntil ($phaseName). '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
 /// Returns after the first [Finder] has at least one hit-testable match.
 Future<void> e2eWaitUntilAnyFinderHitTestable(
   WidgetTester tester,
@@ -163,8 +191,9 @@ Future<void> e2ePumpUntilFinderEmpty(
   }
 }
 
-/// Dismisses blocking snackbars, OK dialogs, [AlertDialog]s, bottom sheets, and
-/// [CtDialogShell] overlays (union of new-game E2E paths; GitHub #2336 / AC2).
+/// Dismisses blocking snackbars, generic OK dialogs, [AlertDialog]s,
+/// [BottomSheet]s, and [CtDialogShell] overlays (union of fleet + full-turn
+/// E2E paths; Refs GitHub #2336).
 Future<void> e2eDismissTransientUi(
   WidgetTester tester, {
   E2ePerfLog? perf,
@@ -241,12 +270,11 @@ Future<void> e2eDismissTransientUi(
   }
 }
 
-/// Closes an open bottom sheet via [WidgetsBinding.handlePopRoute] with
-/// adaptive poll pacing (GitHub #2336 / AC5).
+/// Pops an open [BottomSheet] within [timeout] using adaptive pump pacing.
 Future<void> e2eCloseBottomSheet(
   WidgetTester tester, {
   E2ePerfLog? perf,
-  Duration maxWait = const Duration(seconds: 5),
+  Duration timeout = const Duration(seconds: 5),
 }) async {
   perf?.bumpCounter('close_bottom_sheet_calls');
   bool anyPanelOpen() => find.byType(BottomSheet).evaluate().isNotEmpty;
@@ -257,7 +285,7 @@ Future<void> e2eCloseBottomSheet(
 
   final sw = Stopwatch()..start();
   var closePollMs = 25;
-  while (sw.elapsed < maxWait) {
+  while (sw.elapsed < timeout) {
     if (!anyPanelOpen()) {
       perf?.timing('close_bottom_sheet', sw.elapsed);
       return;
@@ -268,16 +296,19 @@ Future<void> e2eCloseBottomSheet(
   }
 
   fail(
-    'Timed out after ${maxWait.inSeconds}s closing bottom sheet; '
+    'Timed out after ${timeout.inSeconds}s closing bottom sheet; '
     'panels remained visible',
   );
 }
 
+/// Expands each visible collapsed [ExpansionTile] once per outer iteration.
 Future<void> e2eExpandEachExpansionTileOnce(WidgetTester tester) async {
   for (var safety = 0; safety < 32; safety++) {
     final tiles = find.byType(ExpansionTile);
     final n = tiles.evaluate().length;
-    if (n == 0) return;
+    if (n == 0) {
+      return;
+    }
 
     var expandedOne = false;
     for (var j = 0; j < n; j++) {
@@ -285,7 +316,9 @@ Future<void> e2eExpandEachExpansionTileOnce(WidgetTester tester) async {
         of: tiles.at(j),
         matching: find.byIcon(Icons.expand_more),
       );
-      if (expandIcon.evaluate().isEmpty) continue;
+      if (expandIcon.evaluate().isEmpty) {
+        continue;
+      }
       final iconHit = expandIcon.first;
       await tester.ensureVisible(iconHit);
       await e2ePumpFor(tester, const Duration(milliseconds: 80));
@@ -294,7 +327,9 @@ Future<void> e2eExpandEachExpansionTileOnce(WidgetTester tester) async {
       expandedOne = true;
       break;
     }
-    if (!expandedOne) return;
+    if (!expandedOne) {
+      return;
+    }
   }
 }
 
