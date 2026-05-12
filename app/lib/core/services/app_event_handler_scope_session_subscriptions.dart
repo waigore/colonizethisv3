@@ -373,6 +373,18 @@ extension _SessionCommands on _AppEventHandlerScopeState {
           );
         });
       }),
+      bus.on<CreditDebugWorkerPoolEvent>().listen((e) {
+        _unlessTurnResolutionBlocksSession(
+          ref,
+          'CreditDebugWorkerPoolEvent',
+          () {
+            final current = ref.read(currentGameProvider);
+            _applyDebugCommand(
+              applyDebugWorkerPoolCredit(currentGame: current, event: e),
+            );
+          },
+        );
+      }),
       bus.on<CreditDebugStockpileCommodityEvent>().listen((e) {
         _unlessTurnResolutionBlocksSession(
           ref,

@@ -74,6 +74,40 @@ void main() {
       final holds = cargoHoldsForHomeFleet(game, 'p1');
       expect(holds, 0);
     });
+
+    test('fleetsById index matches default linear home-fleet lookup', () {
+      final home = Fleet(
+        id: 'fleet_p1',
+        ownerId: 'p1',
+        seaZoneId: 'sea1',
+        regionId: 'oldWorld',
+        shipTypeIds: const ['carrack', 'fluyte'],
+      );
+      final other = Fleet(
+        id: 'fleet_p2',
+        ownerId: 'p2',
+        seaZoneId: 'sea2',
+        regionId: 'oldWorld',
+        shipTypeIds: const ['sloop'],
+      );
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+          fleets: [other, home],
+        ),
+        players: const [
+          Player(id: 'p1', displayName: 'P1', isHuman: true),
+        ],
+      );
+      final byId = fleetsByIdForWorld(game.worldState);
+      expect(
+        cargoHoldsForHomeFleet(game, 'p1', fleetsById: byId),
+        cargoHoldsForHomeFleet(game, 'p1'),
+      );
+    });
   });
 
   group('SeaTransport', () {

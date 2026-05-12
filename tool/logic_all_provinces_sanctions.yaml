@@ -76,7 +76,7 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/world/capital_and_gp_fall.dart
-    line: 197
+    line: 191
     rationale: Capital fall logic scans province ownership across regions.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
@@ -122,3 +122,9 @@ sanctions:
     rationale: Faction absorption scans province state via WorldState.allProvinces().
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
+
+  - path: packages/colonizethis_logic/lib/src/economy/resource_extractor.dart
+    line: 60
+    rationale: Extraction builds a once-per-call province id index for O(1) tile-to-province lookups across both regions.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2394
