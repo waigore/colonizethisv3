@@ -55,10 +55,15 @@ Game applyArmySplit({
 }) {
   if (unitIdsToMove.isEmpty) return game;
 
-  final sourceList =
-      game.worldState.armies.where((a) => a.id == sourceArmyId).toList();
-  final source = sourceList.isEmpty ? null : sourceList.first;
-  if (source == null || source.ownerId != playerId) return game;
+  Army? found;
+  for (final a in game.worldState.armies) {
+    if (a.id == sourceArmyId) {
+      found = a;
+      break;
+    }
+  }
+  if (found == null || found.ownerId != playerId) return game;
+  final source = found;
   if (source.isHomeArmy) {
     // Home army may split per SPEC (naval parity).
   }
