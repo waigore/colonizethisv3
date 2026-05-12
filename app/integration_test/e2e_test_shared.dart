@@ -84,6 +84,34 @@ Future<void> e2eWaitUntilFound(
   );
 }
 
+/// Pumps until [condition] returns true, evaluating [condition] before the
+/// first pump and using exponential backoff on pump intervals (same cap as
+/// [e2eWaitUntilFound]). Refs GitHub #2336 (`pumpUntil` helper).
+Future<void> e2ePumpUntil(
+  WidgetTester tester,
+  bool Function() condition, {
+  required Duration timeout,
+  E2ePerfLog? perf,
+  String phaseName = 'pump_until',
+}) async {
+  final sw = Stopwatch()..start();
+  perf?.bumpCounter('pump_until_calls', meta: 'phase=$phaseName');
+  var stepMs = 25;
+  while (sw.elapsed < timeout) {
+    if (condition()) {
+      perf?.timing(phaseName, sw.elapsed, meta: 'result=met');
+      return;
+    }
+    await tester.pump(Duration(milliseconds: stepMs));
+    stepMs = math.min(500, stepMs * 2);
+  }
+  perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
+  fail(
+    'Timed out after ${timeout.inSeconds}s in e2ePumpUntil ($phaseName). '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
 /// Returns after the first [Finder] has at least one hit-testable match.
 Future<void> e2eWaitUntilAnyFinderHitTestable(
   WidgetTester tester,

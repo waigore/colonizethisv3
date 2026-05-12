@@ -236,13 +236,12 @@ Future<void> _pickMoveDestinationAndConfirm(
   final confirm = find.text(l10n.common_confirm).hitTestable();
   expect(confirm, findsWidgets);
   await tester.tap(confirm.first, warnIfMissed: false);
-  final dialogGone = Stopwatch()..start();
-  while (dialogGone.elapsed < const Duration(seconds: 2)) {
-    if (find.byType(AlertDialog).evaluate().isEmpty) {
-      break;
-    }
-    await tester.pump(const Duration(milliseconds: 25));
-  }
+  await e2ePumpUntil(
+    tester,
+    () => find.byType(AlertDialog).evaluate().isEmpty,
+    timeout: const Duration(seconds: 2),
+    phaseName: 'pump_until_move_dialog_closed',
+  );
   ensureBudget('after confirm');
 }
 
@@ -281,13 +280,13 @@ Future<void> _tryNavalMoveSegment(
     final cancel = find.text(l10n.common_cancel).hitTestable();
     expect(cancel, findsOneWidget);
     await tester.tap(cancel, warnIfMissed: false);
-    final cancelGone = Stopwatch()..start();
-    while (cancelGone.elapsed < const Duration(seconds: 2)) {
-      if (find.byType(AlertDialog).evaluate().isEmpty) {
-        break;
-      }
-      await tester.pump(const Duration(milliseconds: 25));
-    }
+    await e2ePumpUntil(
+      tester,
+      () => find.byType(AlertDialog).evaluate().isEmpty,
+      timeout: const Duration(seconds: 2),
+      perf: perf,
+      phaseName: 'pump_until_cancel_move_dialog_closed',
+    );
     perf?.timing(
       'fleet_move_segment',
       phaseSw.elapsed,
