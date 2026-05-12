@@ -55,7 +55,8 @@ Future<void> _openCivilianPanel(
     if (civilianPanel.evaluate().isNotEmpty ||
         navalPanel.evaluate().isNotEmpty) {
       await e2eCloseBottomSheet(tester, perf: perf);
-      panelPollMs = 25;
+      await tester.pump(Duration(milliseconds: panelPollMs));
+      panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
       continue;
     }
     if (empireRailButton.evaluate().isNotEmpty) {
@@ -102,7 +103,8 @@ Future<void> _openPanelFromMarker(
     if (tappable.evaluate().isEmpty) {
       // Clear transient overlays/dialogs that can block marker taps.
       await e2eDismissTransientUi(tester, perf: perf);
-      panelPollMs = 25;
+      await tester.pump(Duration(milliseconds: panelPollMs));
+      panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
       continue;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
@@ -183,37 +185,6 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
   fail(
     'Timed out opening production panel; '
     'button=$productionButton panel=$productionPanel',
-  );
-}
-
-Future<Duration> _waitForNextTurnLabelAdvance(
-  WidgetTester tester, {
-  required String turnLabelBefore,
-  required Duration timeout,
-  E2ePerfLog? perf,
-}) async {
-  final sw = Stopwatch()..start();
-  var nextTurnPollMs = 25;
-  while (sw.elapsed < timeout) {
-    await tester.pump(Duration(milliseconds: nextTurnPollMs));
-    nextTurnPollMs = e2eAdaptivePollRampAfterIdle(nextTurnPollMs);
-    final turnAfterFinder = find.descendant(
-      of: find.byKey(kGameMapNextTurnButtonKey),
-      matching: find.byType(Text),
-    );
-    if (turnAfterFinder.evaluate().isEmpty) {
-      continue;
-    }
-    final turnAfter = turnAfterFinder.evaluate().single.widget as Text;
-    if (turnAfter.data != turnLabelBefore) {
-      perf?.timing('next_turn_wall_clock', sw.elapsed, meta: 'result=advanced');
-      return sw.elapsed;
-    }
-  }
-  perf?.timing('next_turn_wall_clock', sw.elapsed, meta: 'result=timeout');
-  fail(
-    'Next turn label did not advance within ${timeout.inSeconds}s. '
-    'Last exception: ${tester.takeException()}',
   );
 }
 
@@ -338,14 +309,14 @@ void main() {
       final bootstrapSw = Stopwatch()..start();
       await bootstrapForIntegrationTest();
       await tester.pump();
-      await tester.pump(const Duration(seconds: 2));
+      await e2eWaitForNewGameEntry(tester, perf: perf);
       perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
       final preloadSw = Stopwatch()..start();
       await e2eEnsureAllRelocated64pxPngsLoad();
       perf.timing('asset_preload', preloadSw.elapsed);
 
       final newGameSw = Stopwatch()..start();
-      await e2eBootstrapNewGameToMap(tester);
+      await e2eBootstrapNewGameToMap(tester, perf: perf);
       perf.timing('new_game_to_map', newGameSw.elapsed);
 
       final l10n = lookupAppLocalizations(const Locale('en'));
@@ -641,7 +612,7 @@ void main() {
       if (confirmNextTurn.evaluate().isNotEmpty) {
         await tester.tap(confirmNextTurn.first, warnIfMissed: false);
       }
-      final nextTurnElapsed = await _waitForNextTurnLabelAdvance(
+      final nextTurnElapsed = await e2eWaitForNextTurnLabelAdvance(
         tester,
         turnLabelBefore: turnLabelBefore,
         timeout: const Duration(seconds: 10),
