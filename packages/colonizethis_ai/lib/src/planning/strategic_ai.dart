@@ -7,11 +7,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
-import '../goal_manager.dart';
+import 'goal_manager.dart';
 import 'ai_order_reporting.dart';
 import 'ai_trace_builder.dart';
-import '../social/mood_state_machine.dart';
-import '../perception.dart';
+import '../perception/perception_snapshot.dart';
+import '../social/strategic_dialogue_emission.dart';
 
 final _log = packageLogger();
 
@@ -108,7 +108,7 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
   _log.i(
     'generated orders nationId=$nationId move=$moveCount armyMove=$armyMoveCount build=$buildCount work=$workCount research=$researchCount',
   );
-  _emitDialogueAndMood(
+  emitStrategicDialogueAndMood(
     config: config,
     seeds: seeds,
     onDialogue: onDialogue,
@@ -133,40 +133,4 @@ StrategicOrderTraceResult generateStrategicOrdersWithTrace({
       finalOrders: finalOrders,
     ),
   );
-}
-
-void _emitDialogueAndMood({
-  required AIConfig config,
-  required AISeedBundle seeds,
-  void Function(DialogueEvent)? onDialogue,
-  void Function(PortraitMoodEvent)? onMood,
-}) {
-  // Optional dialogue/mood emission (deterministic from dialogueSeed).
-  // SPEC/ai/dialogue-and-mood.md § When to emit:
-  // Strategic AI may emit optional agenda/comment and base mood once every
-  // kDialogueTurnsBetweenComments turns per leader, when
-  // `dialogueSeed % kDialogueTurnsBetweenComments == 0`.
-  if (onDialogue != null &&
-      seeds.dialogueSeed % kDialogueTurnsBetweenComments == 0) {
-    onDialogue(
-      DialogueEvent(
-        leaderId: config.leaderId,
-        category: 'agenda',
-        situation: 'comment',
-        era: 'earlyModern',
-        variables: const {},
-      ),
-    );
-  }
-  if (onMood != null &&
-      seeds.dialogueSeed % kDialogueTurnsBetweenComments == 0) {
-    onMood(
-      PortraitMoodEvent(
-        leaderId: config.leaderId,
-        fromMood: kDefaultMood,
-        toMood: kDefaultMood,
-        durationMs: 0,
-      ),
-    );
-  }
 }

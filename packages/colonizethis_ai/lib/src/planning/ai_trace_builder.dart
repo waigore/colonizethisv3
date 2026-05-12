@@ -2,8 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart' show TurnTraceAiSection;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../goal_manager.dart';
-import '../perception.dart';
+import 'goal_manager.dart';
+import '../perception/perception_snapshot.dart';
 
 TurnTraceAiSection buildAiTraceSection({
   required String nationId,
@@ -117,9 +117,7 @@ TurnTraceAiSection buildAiTraceSection({
           'researchExploration': thresholds.researchExploration,
         },
       },
-      'gates': <Object?>[
-        ...goalSelectionGates(goalScores, primaryGoal),
-      ],
+      'gates': <Object?>[...goalSelectionGates(goalScores, primaryGoal)],
     },
     outcome: <String, Object?>{
       'domainOutputs': ordersByDomain,
