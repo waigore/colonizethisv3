@@ -6,6 +6,8 @@ import '../constants.dart';
 import 'draft_orders_mutations.dart';
 import 'incremental_candidate_validator.dart';
 
+export '../diplomacy/overture_stage_helpers.dart' show nextOvertureStage;
+
 final orderSuggestionLog = packageLogger('order_suggestion');
 
 bool _orderSuggestionTrackWorkOrderAcceptanceProbes = false;
@@ -202,17 +204,5 @@ Orders appendDiplomaticOrderForTrial(
   );
 }
 
-OvertureStage? nextOvertureStage(OvertureStage current) {
-  switch (current) {
-    case OvertureStage.none:
-      return OvertureStage.tradeConsulate;
-    case OvertureStage.tradeConsulate:
-      return OvertureStage.embassy;
-    case OvertureStage.embassy:
-      return OvertureStage.nap;
-    case OvertureStage.nap:
-      return OvertureStage.joinEmpire;
-    case OvertureStage.joinEmpire:
-      return null;
-  }
-}
+// nextOvertureStage moved to ../diplomacy/overture_stage_helpers.dart and
+// re-exported above to preserve the existing public surface (Refs #2391 AC1).
