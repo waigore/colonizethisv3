@@ -215,6 +215,21 @@ Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
   }
 }
 
+Future<bool> _pollUntilNavalPanelVisible(
+  WidgetTester tester,
+  Finder navalPanel,
+  Duration budget,
+) async {
+  final poll = Stopwatch()..start();
+  while (poll.elapsed < budget) {
+    await tester.pump(const Duration(milliseconds: 25));
+    if (navalPanel.evaluate().isNotEmpty) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
   final phaseSw = Stopwatch()..start();
   final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
@@ -242,26 +257,26 @@ Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
     final markerHit = markerBtn.hitTestable();
     if (markerHit.evaluate().isNotEmpty) {
       await tester.tap(markerHit.first, warnIfMissed: false);
-      final poll = Stopwatch()..start();
-      while (poll.elapsed < const Duration(seconds: 2)) {
-        await tester.pump(const Duration(milliseconds: 25));
-        if (navalPanel.evaluate().isNotEmpty) {
-          perf?.timing('open_panel_naval', phaseSw.elapsed);
-          return;
-        }
+      if (await _pollUntilNavalPanelVisible(
+        tester,
+        navalPanel,
+        const Duration(seconds: 2),
+      )) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
       }
       continue;
     }
     final railHit = btn.hitTestable();
     if (railHit.evaluate().isNotEmpty) {
       await tester.tap(railHit.first, warnIfMissed: false);
-      final poll = Stopwatch()..start();
-      while (poll.elapsed < const Duration(seconds: 3)) {
-        await tester.pump(const Duration(milliseconds: 25));
-        if (navalPanel.evaluate().isNotEmpty) {
-          perf?.timing('open_panel_naval', phaseSw.elapsed);
-          return;
-        }
+      if (await _pollUntilNavalPanelVisible(
+        tester,
+        navalPanel,
+        const Duration(seconds: 3),
+      )) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
       }
     } else {
       await _dismissTransientUi(tester, perf: perf);
