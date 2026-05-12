@@ -3,7 +3,12 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
+import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/fleet_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
+import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
+import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
@@ -248,7 +253,7 @@ void e2eCollectTextPreorder(Element element, List<String> out) {
   });
 }
 
-/// Sorted list of `assets/icons/64/*.png` entries from the asset manifest.
+/// Relocated 64px map icon paths from the asset manifest (sorted).
 Future<List<String>> e2eDiscoverRelocated64pxPngAssets() async {
   final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
   final assets =
@@ -298,5 +303,29 @@ Future<void> e2eEnsureRelocated64pxPngDecode(
     failures,
     isEmpty,
     reason: failures.isEmpty ? null : '$decodeFailuresPrefix\n${failures.join('\n')}',
+  );
+}
+
+/// Asserts the manifest matches the canonical map icon families, then decodes
+/// every PNG via [e2eDecodePngAssetPathsParallel] (bounded concurrency).
+///
+/// Used by new-game E2E tests that need the same warm-cache behavior; callers
+/// should still invoke at most once per [testWidgets] unless a future shared
+/// fixture deduplicates across tests (GitHub #2336).
+Future<void> e2eEnsureAllRelocated64pxPngsLoad() async {
+  await e2eEnsureRelocated64pxPngDecode(
+    <String>{
+      ...kCivilianIconSlugs.map(
+        (slug) => 'assets/icons/64/ui_icon_civ_$slug.png',
+      ),
+      ...kResourceIconIds.map(
+        (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
+      ),
+      ...kTownIconIds.map((iconId) => 'assets/icons/64/ui_icon_com_$iconId.png'),
+      ...kProvinceLabelIconIds.map(
+        (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
+      ),
+      kFleetMapIcon64PngAssetPath,
+    },
   );
 }
