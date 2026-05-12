@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
@@ -111,19 +108,7 @@ Future<void> _ensureAllRelocated64pxPngsLoad() async {
         'Relocated 64px PNG manifest entries do not match expected map icon families.',
   );
 
-  final failures = <String>[];
-  for (final assetPath in assets) {
-    try {
-      final data = await rootBundle.load(assetPath);
-      final bytes = data.buffer.asUint8List();
-      final completer = Completer<ui.Image>();
-      ui.decodeImageFromList(bytes, completer.complete);
-      final image = await completer.future;
-      image.dispose();
-    } catch (e) {
-      failures.add('$assetPath ($e)');
-    }
-  }
+  final failures = await e2eDecodePngAssetPathsParallel(assets);
 
   expect(
     failures,
@@ -192,7 +177,7 @@ void main() {
 
     // Progress dialog spins forever → never use pumpAndSettle here. Also dismiss
     // game-start intro (Yarn) once the map exists under the overlay.
-    final setupDeadline = DateTime.now().add(const Duration(minutes: 6));
+    final setupDeadline = DateTime.now().add(const Duration(seconds: 60));
     var reachedMap = false;
     while (DateTime.now().isBefore(setupDeadline)) {
       await tester.pump(const Duration(milliseconds: 100));
