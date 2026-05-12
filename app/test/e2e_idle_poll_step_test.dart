@@ -1,8 +1,11 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import '../integration_test/e2e_test_shared.dart';
 
 void main() {
+  suppressLogsForTests();
+
   group('e2eNextIdlePollStepMs', () {
     test('doubles until cap at 500', () {
       expect(e2eNextIdlePollStepMs(25), 50);
