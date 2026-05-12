@@ -71,6 +71,13 @@ void main() {
         isTrue,
       );
       expect(
+        rules.firstWhere((r) => r.ruleId == 'repo.logic_test_file_size').title,
+        isNot(contains('PR-incremental')),
+        reason:
+            'GitHub #2288 transitioned this rule to full-tree enforcement; '
+            'manifest title must no longer advertise PR-incremental only.',
+      );
+      expect(
         rules
             .firstWhere((r) => r.ruleId == 'repo.app_hardcoded_ui_strings')
             .includeOnlyWhenEnvName,
