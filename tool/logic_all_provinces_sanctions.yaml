@@ -28,7 +28,7 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/world/player_view.dart
-    line: 83
+    line: 89
     rationale: Player view aggregates province-level facts across both regions.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
