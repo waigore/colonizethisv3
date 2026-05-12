@@ -120,11 +120,17 @@ List<MoveOrder> suggestMoveOrders(
 /// Destination province ids for army moves (Military Units picker parity): adjacent
 /// land provinces in the army's region plus every province owned by [playerId]
 /// in any region; excludes the army's current province.
+///
+/// When [playerOwnedProvinceFullIds] is supplied (typically built once per
+/// [suggestArmyMoveOrders] pass from [PlayerView.provincesById]), player-owned
+/// provinces are taken from that set instead of scanning [allProvinces] again
+/// for each army (Refs #2394, SPEC/program/order-suggestions.md).
 List<String> armyMoveCandidateDestinationProvinceIds({
   required Game game,
   required MapTopology topology,
   required String playerId,
   required Army army,
+  Set<String>? playerOwnedProvinceFullIds,
 }) {
   final fromFull = army.stationedProvinceId;
   final regionId = ProvinceId.regionIdFrom(fromFull);
@@ -134,9 +140,13 @@ List<String> armyMoveCandidateDestinationProvinceIds({
   for (final n in neighborProvinceIdsInRegion(topology, regionId, fromLocal)) {
     out.add(ProvinceId.full(regionId, n));
   }
-  for (final p in allProvinces(game.worldState)) {
-    if (p.ownerId == playerId) {
-      out.add(toFullProvinceId(p.regionId, p.id));
+  if (playerOwnedProvinceFullIds != null) {
+    out.addAll(playerOwnedProvinceFullIds);
+  } else {
+    for (final p in allProvinces(game.worldState)) {
+      if (p.ownerId == playerId) {
+        out.add(toFullProvinceId(p.regionId, p.id));
+      }
     }
   }
   out.remove(fromFull);
@@ -181,7 +191,11 @@ bool _armyMoveNeedsDeclareWarTrial(
     return false;
   }
   if (!isGreatPower(game, destOwnerId, factionMembership: factionMembership) &&
-      !isMinorOrTribe(game, destOwnerId, factionMembership: factionMembership)) {
+      !isMinorOrTribe(
+        game,
+        destOwnerId,
+        factionMembership: factionMembership,
+      )) {
     return false;
   }
   return !canAttackWithWarOrDeclaring(game, playerId, destOwnerId, diplo);
@@ -310,6 +324,11 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
     basePrefix: currentOrders,
   );
 
+  final playerOwnedProvinceFullIds = <String>{
+    for (final e in view.provincesById.entries)
+      if (e.value.ownerId == playerId) e.key,
+  };
+
   for (final army in game.worldState.armies) {
     if (army.ownerId != playerId) continue;
     if (army.isHomeArmy) continue;
@@ -324,6 +343,7 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
       topology: topology,
       playerId: playerId,
       army: army,
+      playerOwnedProvinceFullIds: playerOwnedProvinceFullIds,
     );
 
     var acceptedForArmy = 0;
