@@ -33,13 +33,6 @@ DebugCommandResult applyDebugWorkerPoolCredit({
       message: 'Debug add_worker ignored: no active game.',
     );
   }
-  if (currentGame.worldState.turnState.phase != TurnPhase.orders) {
-    return (
-      game: null,
-      message:
-          'Debug add_worker rejected: command is allowed only during human Orders phase.',
-    );
-  }
   if (event.creditedAmount < 1) {
     return (
       game: null,

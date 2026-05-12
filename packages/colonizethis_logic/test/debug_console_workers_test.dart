@@ -1,5 +1,5 @@
 import 'package:colonizethis_logic/debug_console_api.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   test('debug worker tier ids are canonical and lexicographically sorted', () {
