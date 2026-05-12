@@ -2,7 +2,7 @@ import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../goal_manager.dart';
+import 'goal_manager.dart';
 import '../util/ai_random_utils.dart';
 
 final _log = packageLogger();
