@@ -24,4 +24,8 @@ export 'src/debug_console/debug_console_ships.dart'
     show
         debugConsoleSupportedShipTypeIds,
         debugConsoleSupportedShipTypeIdsSorted;
+export 'src/debug_console/debug_console_workers.dart'
+    show
+        debugConsoleSupportedWorkerTierIds,
+        debugConsoleSupportedWorkerTierIdsSorted;
 export 'src/orders/build_spawn_province.dart' show resolveCivilianSpawnTileKey;
