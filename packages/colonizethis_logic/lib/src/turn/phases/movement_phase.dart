@@ -52,11 +52,14 @@ Game runMovementPhase(
     }
 
     void recordSpyProvinceChanges(RegionData before, RegionData after) {
+      final afterById = <String, Unit>{};
+      for (final x in after.units) {
+        afterById.putIfAbsent(x.id, () => x);
+      }
       for (final u in before.units) {
         if (!isSpyUnit(u.type)) continue;
-        final idx = after.units.indexWhere((x) => x.id == u.id);
-        if (idx < 0) continue;
-        final afterUnit = after.units[idx];
+        final afterUnit = afterById[u.id];
+        if (afterUnit == null) continue;
         if (afterUnit.locationProvinceId != u.locationProvinceId) {
           recordSpyLeft(u.ownerId, u.locationProvinceId);
         }
