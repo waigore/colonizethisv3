@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
@@ -91,7 +88,7 @@ Future<void> _openCivilianPanel(
       return false;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
-    await _pumpFor(tester, const Duration(milliseconds: 250));
+    await tester.pump();
     final openDeadline = DateTime.now().add(const Duration(seconds: 3));
     while (DateTime.now().isBefore(openDeadline)) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -149,7 +146,14 @@ Future<void> _openPanelFromMarker(
       continue;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
-    await _pumpFor(tester, const Duration(milliseconds: 300));
+    final openDeadline = DateTime.now().add(const Duration(seconds: 3));
+    while (DateTime.now().isBefore(openDeadline)) {
+      await tester.pump(const Duration(milliseconds: 50));
+      if (panelRoot.evaluate().isNotEmpty) {
+        perf?.timing('open_panel_from_marker', sw.elapsed);
+        return;
+      }
+    }
   }
   fail(
     'Timed out after ${timeout.inSeconds}s opening marker panel. '
@@ -206,19 +210,7 @@ Future<void> _ensureAllRelocated64pxPngsLoad() async {
   expect(assets.length, expectedAssets.length);
   expect(assets, orderedEquals(expectedSorted));
 
-  final failures = <String>[];
-  for (final assetPath in assets) {
-    try {
-      final data = await rootBundle.load(assetPath);
-      final bytes = data.buffer.asUint8List();
-      final completer = Completer<ui.Image>();
-      ui.decodeImageFromList(bytes, completer.complete);
-      final image = await completer.future;
-      image.dispose();
-    } catch (e) {
-      failures.add('$assetPath ($e)');
-    }
-  }
+  final failures = await e2eDecodePngAssetPathsParallel(assets);
   expect(failures, isEmpty);
 }
 
@@ -264,7 +256,7 @@ Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
   await tester.tap(startButton);
   await tester.pump();
 
-  final setupDeadline = DateTime.now().add(const Duration(minutes: 6));
+  final setupDeadline = DateTime.now().add(const Duration(seconds: 60));
   var reachedMap = false;
   while (DateTime.now().isBefore(setupDeadline)) {
     await tester.pump(const Duration(milliseconds: 100));
@@ -404,9 +396,18 @@ Future<void> _tapFirstAssignInCivilianPanel(WidgetTester tester) async {
     scrollable: panelScrollable,
   );
   await tester.ensureVisible(firstAssign);
-  await _pumpFor(tester, const Duration(milliseconds: 100));
+  await tester.pump();
   await tester.tap(firstAssign);
-  await _pumpFor(tester, const Duration(milliseconds: 300));
+  await e2eWaitUntilAnyFinderHitTestable(
+    tester,
+    <Finder>[
+      find.text('Build improvement'),
+      find.text('Prospect'),
+      find.text('Explore'),
+    ],
+    timeout: const Duration(seconds: 5),
+    phaseName: 'wait_until_civilian_work_menu',
+  );
 }
 
 /// Taps Assign on a [ListTile] whose title is exactly [unitTypeTitle]
@@ -460,9 +461,18 @@ Future<void> _tapAssignOnCivilianRowWithTitle(
     }
     final assignHit = assign.first;
     await tester.ensureVisible(assignHit);
-    await _pumpFor(tester, const Duration(milliseconds: 100));
+    await tester.pump();
     await tester.tap(assignHit);
-    await _pumpFor(tester, const Duration(milliseconds: 300));
+    await e2eWaitUntilAnyFinderHitTestable(
+      tester,
+      <Finder>[
+        find.text('Build improvement'),
+        find.text('Prospect'),
+        find.text('Explore'),
+      ],
+      timeout: const Duration(seconds: 5),
+      phaseName: 'wait_until_civilian_work_menu_row',
+    );
     return;
   }
   fail('No idle Assign row for unit type "$unitTypeTitle" in civilian panel');

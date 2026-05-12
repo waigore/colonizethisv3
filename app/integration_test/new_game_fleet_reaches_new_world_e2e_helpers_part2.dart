@@ -49,7 +49,12 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
           final iconHit = expandIcon.first;
           await tester.ensureVisible(iconHit);
           await tester.tap(iconHit, warnIfMissed: false);
-          await _pumpFor(tester, const Duration(milliseconds: 180));
+          await _waitUntilFound(
+            tester,
+            find.descendant(of: sub, matching: find.text('Move')),
+            timeout: const Duration(seconds: 3),
+            phaseName: 'wait_until_found_move_after_expand',
+          );
         }
         move = find.descendant(of: sub, matching: find.text('Move'));
       }
@@ -68,14 +73,24 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       }
       if (loc.evaluate().isNotEmpty) {
         await tester.tap(hit.first, warnIfMissed: false);
-        await _pumpFor(tester, const Duration(milliseconds: 400));
+        await _waitUntilFound(
+          tester,
+          find.byType(AlertDialog),
+          timeout: const Duration(seconds: 3),
+          phaseName: 'wait_until_found_move_dialog_after_move_tap',
+        );
         return true;
       }
       fallbackMove ??= hit.first;
     }
     if (fallbackMove != null) {
       await tester.tap(fallbackMove, warnIfMissed: false);
-      await _pumpFor(tester, const Duration(milliseconds: 400));
+      await _waitUntilFound(
+        tester,
+        find.byType(AlertDialog),
+        timeout: const Duration(seconds: 3),
+        phaseName: 'wait_until_found_move_dialog_after_move_tap_fallback',
+      );
       return true;
     }
     if (allowExpandAllFallback) {
@@ -395,7 +410,6 @@ Future<void> _splitHomeFleetOnce(
 }) async {
   final phaseSw = Stopwatch()..start();
   await tester.tap(find.byKey(kEmpireNavalUnitsButtonKey));
-  await _pumpFor(tester, const Duration(milliseconds: 400));
   await _waitUntilFound(
     tester,
     find.byKey(kCtE2ENavalPanelRootKey),
@@ -409,8 +423,16 @@ Future<void> _splitHomeFleetOnce(
     matching: find.text('Split'),
   );
   expect(split, findsWidgets);
-  await tester.tap(split.first);
-  await _pumpFor(tester, const Duration(milliseconds: 400));
+  await tester.tap(split.first, warnIfMissed: false);
+  await _waitUntilFound(
+    tester,
+    find.descendant(
+      of: find.byType(CtDialogShell),
+      matching: find.widgetWithText(CtNinePatchButton, '>'),
+    ),
+    timeout: const Duration(seconds: 4),
+    phaseName: 'wait_until_found_split_nudge_right',
+  );
 
   final moveOneRight = find.descendant(
     of: find.byType(CtDialogShell),
@@ -418,9 +440,14 @@ Future<void> _splitHomeFleetOnce(
   );
   expect(moveOneRight, findsWidgets);
   await tester.tap(moveOneRight.first);
-  await _pumpFor(tester, const Duration(milliseconds: 200));
+  await _waitUntilFound(
+    tester,
+    find.text(l10n.splitFleet_confirm),
+    timeout: const Duration(seconds: 4),
+    phaseName: 'wait_until_found_split_confirm',
+  );
   await tester.tap(find.text(l10n.splitFleet_confirm));
-  await _pumpFor(tester, const Duration(milliseconds: 300));
+  await _pumpFor(tester, const Duration(milliseconds: 120));
   await _expandEachExpansionTileOnce(tester);
   perf?.timing('fleet_split', phaseSw.elapsed);
 }
@@ -453,7 +480,7 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
       return false;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
-    await _pumpFor(tester, const Duration(milliseconds: 250));
+    await tester.pump();
     final openDeadline = DateTime.now().add(const Duration(seconds: 3));
     while (DateTime.now().isBefore(openDeadline)) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -499,7 +526,7 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
   );
   expect(panelScrollable, findsOneWidget);
   final visitedAssignWidgets = <int>{};
-  const maxPanelSweepSteps = 24;
+  const maxPanelSweepSteps = 16;
   for (var step = 0; step < maxPanelSweepSteps; step++) {
     final assignCandidates = find
         .descendant(of: listView, matching: find.text('Assign'))
@@ -573,4 +600,3 @@ Future<void> _advanceOneHumanTurn(
     '(before=${before ?? '(null)'}). Last exception: ${tester.takeException()}',
   );
 }
-

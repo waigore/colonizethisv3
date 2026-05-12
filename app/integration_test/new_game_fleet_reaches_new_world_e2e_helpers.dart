@@ -215,6 +215,21 @@ Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
   }
 }
 
+Future<bool> _pollUntilNavalPanelVisible(
+  WidgetTester tester,
+  Finder navalPanel,
+  Duration budget,
+) async {
+  final poll = Stopwatch()..start();
+  while (poll.elapsed < budget) {
+    await tester.pump(const Duration(milliseconds: 25));
+    if (navalPanel.evaluate().isNotEmpty) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
   final phaseSw = Stopwatch()..start();
   final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
@@ -242,13 +257,27 @@ Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
     final markerHit = markerBtn.hitTestable();
     if (markerHit.evaluate().isNotEmpty) {
       await tester.tap(markerHit.first, warnIfMissed: false);
-      await _pumpFor(tester, const Duration(milliseconds: 250));
+      if (await _pollUntilNavalPanelVisible(
+        tester,
+        navalPanel,
+        const Duration(seconds: 2),
+      )) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
       continue;
     }
     final railHit = btn.hitTestable();
     if (railHit.evaluate().isNotEmpty) {
       await tester.tap(railHit.first, warnIfMissed: false);
-      await _pumpFor(tester, const Duration(milliseconds: 400));
+      if (await _pollUntilNavalPanelVisible(
+        tester,
+        navalPanel,
+        const Duration(seconds: 3),
+      )) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
     } else {
       await _dismissTransientUi(tester, perf: perf);
     }
@@ -342,10 +371,17 @@ Future<void> _pickMoveDestinationAndConfirm(
     }
     if (scrollable.evaluate().isNotEmpty) {
       final sc = scrollable.first;
-      for (var i = 0; i < 24 && warp.hitTestable().evaluate().isEmpty; i++) {
+      if (warp.hitTestable().evaluate().isEmpty) {
+        try {
+          await tester.scrollUntilVisible(warp.first, 200, scrollable: sc);
+        } catch (_) {
+          // Row may not be built yet; fall back to drag probing below.
+        }
+      }
+      for (var i = 0; i < 20 && warp.hitTestable().evaluate().isEmpty; i++) {
         ensureBudget('warp drag $i');
         await tester.drag(sc, const Offset(0, -120));
-        await tester.pump(const Duration(milliseconds: 25));
+        await tester.pump();
       }
       if (warp.hitTestable().evaluate().isEmpty) {
         fail(
