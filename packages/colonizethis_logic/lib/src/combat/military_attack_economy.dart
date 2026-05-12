@@ -35,14 +35,20 @@ int landBattleAttackTreasuryCostForPlayer(Player player) {
 Game applyLandBattleAttackTreasuryCosts(Game game, BattleContext ctx) {
   final ids = <String>{for (final a in ctx.attackers) a.factionId};
   var players = game.players;
+  final factionMembership = DiplomacyFactionMembership.from(game);
+  final playerIndexById = <String, int>{
+    for (var i = 0; i < players.length; i++) players[i].id: i,
+  };
   for (final id in ids) {
-    if (!isGreatPower(game, id)) continue;
+    if (!isGreatPower(game, id, factionMembership: factionMembership)) {
+      continue;
+    }
     final p = game.playerById(id);
     if (p == null) continue;
     final cost = landBattleAttackTreasuryCostForPlayer(p);
     if (cost <= 0) continue;
-    final idx = players.indexWhere((x) => x.id == id);
-    if (idx < 0) continue;
+    final idx = playerIndexById[id];
+    if (idx == null) continue;
     final nextTreasury = math.max(0, players[idx].treasury - cost);
     players = List<Player>.from(players);
     players[idx] = players[idx].copyWith(treasury: nextTreasury);
