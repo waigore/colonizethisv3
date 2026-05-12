@@ -12,7 +12,6 @@ import '../game_events.dart';
 import '../turn/turn_seed_constants.dart';
 import 'naval.dart';
 import 'naval_coastal_visibility.dart';
-import 'naval_mission_orders.dart';
 import 'province_lookup.dart' hide landTileKeysForProvinceBucket;
 import 'topology_helpers.dart';
 
@@ -55,6 +54,15 @@ String? _firstFriendlyOrNeutralRetreatZone(
           (hostileByOwner[ownerId]?.contains(fleet.ownerId) ?? false),
     );
     if (!hostileOwnersPresent) return adj;
+  }
+  return null;
+}
+
+String? _firstFleetRegionIdForSeaZone(Game game, String seaZoneId) {
+  for (final f in game.worldState.fleets) {
+    if (f.seaZoneId == seaZoneId) {
+      return f.regionId;
+    }
   }
   return null;
 }
@@ -448,17 +456,11 @@ Game runNavalInterceptionCombatPhase(
     // Single-pass first-match over fleets (Refs #2394): avoids the
     // `.where(...)` lazy chain plus `isEmpty`/`first` re-iteration and bounds
     // the per-battle scan cost regardless of fleet count when the topology
-    // resolves the zone region directly.
-    String? fallbackRegionId;
-    if (zoneRegionId == null) {
-      for (final f in state.worldState.fleets) {
-        if (f.seaZoneId == battle.seaZoneId) {
-          fallbackRegionId = f.regionId;
-          break;
-        }
-      }
-    }
-    final regionId = zoneRegionId ?? fallbackRegionId ?? kRegionOldWorld;
+    // resolves the zone region directly. Lookup is extracted to keep nesting
+    // within repo.control_flow_nesting_depth limits.
+    final regionId = zoneRegionId ??
+        _firstFleetRegionIdForSeaZone(state, battle.seaZoneId) ??
+        kRegionOldWorld;
     state = applyNavalBattleResults(
       state,
       battle,
