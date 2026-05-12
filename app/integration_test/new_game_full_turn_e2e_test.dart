@@ -182,12 +182,17 @@ Future<void> _tapGameStartIntroOverlayContinueIfPresent(
   }
 }
 
-Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
+Future<void> _bootstrapNewGameToMap(
+  WidgetTester tester, {
+  _E2ePerfLog? perf,
+}) async {
   await tester.tap(find.text('New Game'));
   await _waitUntilFound(
     tester,
     find.text('Start'),
     timeout: const Duration(seconds: 30),
+    perf: perf,
+    phaseName: 'wait_until_found_start_button',
   );
 
   final startButton = find.ancestor(
@@ -212,8 +217,8 @@ Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
 
   final setupDeadline = DateTime.now().add(const Duration(seconds: 60));
   var reachedMap = false;
+  var mapPollMs = 25;
   while (DateTime.now().isBefore(setupDeadline)) {
-    await tester.pump(const Duration(milliseconds: 100));
     if (find.text('Could not create game').evaluate().isNotEmpty) {
       fail(
         'New game setup failed (error dialog). '
@@ -223,16 +228,21 @@ Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
     final introOpen = find.byType(GameStartIntroOverlay).evaluate().isNotEmpty;
     if (introOpen) {
       await _tapGameStartIntroOverlayContinueIfPresent(tester);
+      mapPollMs = 25;
       continue;
     }
     final creating = find.text('Creating game').evaluate().isNotEmpty;
     if (creating) {
+      await tester.pump(Duration(milliseconds: mapPollMs));
+      mapPollMs = e2eNextIdlePollStepMs(mapPollMs);
       continue;
     }
     if (find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty) {
       reachedMap = true;
       break;
     }
+    await tester.pump(Duration(milliseconds: mapPollMs));
+    mapPollMs = e2eNextIdlePollStepMs(mapPollMs);
   }
   expect(reachedMap, isTrue);
   expect(find.byKey(kHomeToCapitalButtonKey), findsOneWidget);
@@ -481,14 +491,14 @@ void main() {
       final bootstrapSw = Stopwatch()..start();
       await bootstrapForIntegrationTest();
       await tester.pump();
-      await tester.pump(const Duration(seconds: 2));
+      await e2eWaitForNewGameEntry(tester, perf: perf);
       perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
       final preloadSw = Stopwatch()..start();
       await e2eEnsureAllRelocated64pxPngsLoad();
       perf.timing('asset_preload', preloadSw.elapsed);
 
       final newGameSw = Stopwatch()..start();
-      await _bootstrapNewGameToMap(tester);
+      await _bootstrapNewGameToMap(tester, perf: perf);
       perf.timing('new_game_to_map', newGameSw.elapsed);
 
       final l10n = lookupAppLocalizations(const Locale('en'));

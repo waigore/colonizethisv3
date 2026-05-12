@@ -71,7 +71,7 @@ void main() {
     final bootstrapSw = Stopwatch()..start();
     await bootstrapForIntegrationTest();
     await tester.pump();
-    await tester.pump(const Duration(seconds: 2));
+    await e2eWaitForNewGameEntry(tester, perf: perf);
     perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
     final preloadSw = Stopwatch()..start();
     await e2eEnsureAllRelocated64pxPngsLoad();
@@ -111,8 +111,8 @@ void main() {
     // game-start intro (Yarn) once the map exists under the overlay.
     final setupDeadline = DateTime.now().add(const Duration(seconds: 60));
     var reachedMap = false;
+    var mapPollMs = 25;
     while (DateTime.now().isBefore(setupDeadline)) {
-      await tester.pump(const Duration(milliseconds: 100));
       if (find.text('Could not create game').evaluate().isNotEmpty) {
         fail(
           'New game setup failed (error dialog). '
@@ -131,16 +131,21 @@ void main() {
           await tester.tap(find.text('I shall.').first);
           await tester.pump(const Duration(milliseconds: 200));
         }
+        mapPollMs = 25;
         continue;
       }
       final creating = find.text('Creating game').evaluate().isNotEmpty;
       if (creating) {
+        await tester.pump(Duration(milliseconds: mapPollMs));
+        mapPollMs = e2eNextIdlePollStepMs(mapPollMs);
         continue;
       }
       if (find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty) {
         reachedMap = true;
         break;
       }
+      await tester.pump(Duration(milliseconds: mapPollMs));
+      mapPollMs = e2eNextIdlePollStepMs(mapPollMs);
     }
     expect(
       reachedMap,
