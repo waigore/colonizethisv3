@@ -1,19 +1,16 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'orders_application_context.dart';
-import 'work_handlers/counter_spy_work_handler.dart';
 import 'work_handlers/explore_work_handler.dart';
-import 'work_handlers/prospect_work_handler.dart';
-import 'work_handlers/purchase_land_handler.dart';
-import 'work_handlers/steal_tech_work_handler.dart';
+import 'work_handlers/simple_work_order_handler.dart';
 import 'work_handlers/standard_work_handler.dart';
 import 'work_handlers/work_order_handler.dart';
 
-const List<WorkOrderHandler> _workOrderHandlers = [
-  PurchaseLandWorkOrderHandler(),
-  StealTechWorkOrderHandler(),
-  CounterSpyWorkOrderHandler(),
-  ProspectWorkOrderHandler(),
+final List<WorkOrderHandler> _workOrderHandlers = [
+  purchaseLandWorkOrderHandler,
+  stealTechWorkOrderHandler,
+  counterSpyWorkOrderHandler,
+  prospectWorkOrderHandler,
   BuildImprovementWorkOrderHandler(),
   ExploreWorkOrderHandler(),
   RemainingStandardBuildTargetsWorkOrderHandler(),
