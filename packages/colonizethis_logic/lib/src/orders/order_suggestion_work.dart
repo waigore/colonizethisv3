@@ -52,6 +52,11 @@ List<WorkOrder> suggestWorkOrders(
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
   final partiallyRevealedProvinceCache =
       partiallyRevealedPrefixedProvinceIdsForPlayer(game: game, view: view);
+  final partiallyRevealedProvincesSorted =
+      sortedProvincesForPartialRevealPrefixedIds(
+        world: game.worldState,
+        partiallyRevealedPrefixedProvinceIds: partiallyRevealedProvinceCache,
+      );
 
   // Pre-filter + visibility sort per workTarget; reused across worker units.
   final visibleCandidatesSortedByWorkTarget = <String, List<String>>{};
@@ -84,6 +89,7 @@ List<WorkOrder> suggestWorkOrders(
       unit: unit,
       existingTargetsByUnit: existingTargetsByUnit,
       partiallyRevealedProvinceCache: partiallyRevealedProvinceCache,
+      partiallyRevealedProvincesSorted: partiallyRevealedProvincesSorted,
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
       suggestions: suggestions,
@@ -123,6 +129,7 @@ void _addWorkSuggestionsForUnit({
   required Unit unit,
   required Map<String, Set<String>> existingTargetsByUnit,
   required Set<String> partiallyRevealedProvinceCache,
+  required List<Province> partiallyRevealedProvincesSorted,
   required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
   required Set<String> devExclusiveReservedTiles,
   required List<WorkOrder> suggestions,
@@ -154,7 +161,7 @@ void _addWorkSuggestionsForUnit({
       unit: unit,
       regionId: regionId,
       provinceId: provinceId,
-      partiallyRevealedProvinceCache: partiallyRevealedProvinceCache,
+      partiallyRevealedProvincesSorted: partiallyRevealedProvincesSorted,
       tileKeysByRegion: tileKeysByRegion,
       existingTargetsByUnit: existingTargetsByUnit,
       suggestions: suggestions,

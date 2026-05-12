@@ -87,7 +87,7 @@ void _addExplorerWorkSuggestionsForUnit({
   required Unit unit,
   required String regionId,
   required String provinceId,
-  required Set<String> partiallyRevealedProvinceCache,
+  required List<Province> partiallyRevealedProvincesSorted,
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
@@ -114,11 +114,7 @@ void _addExplorerWorkSuggestionsForUnit({
     return;
   }
 
-  final provinces =
-      allProvinces(
-          game.worldState,
-        ).where((p) => partiallyRevealedProvinceCache.contains(p.id)).toList()
-        ..sort((a, b) => a.id.compareTo(b.id));
+  final provinces = partiallyRevealedProvincesSorted;
   final acceptedExplores = <WorkOrder>[];
   var lastReason = 'no_valid_tile';
   for (final prov in provinces) {

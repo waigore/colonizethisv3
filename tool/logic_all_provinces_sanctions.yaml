@@ -3,9 +3,9 @@
 # from scan). See SPEC/program/logic-dual-region-province-access.md.
 version: 1
 sanctions:
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_explorer.dart
-    line: 118
-    rationale: Cross-region explorer work enumeration over partially revealed provinces.
+  - path: packages/colonizethis_logic/lib/src/orders/partial_province_reveal.dart
+    line: 44
+    rationale: Materialize partially revealed province rows once per work-suggestion pass for explorer enumeration (shared across units).
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
