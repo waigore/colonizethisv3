@@ -124,6 +124,12 @@ Map<String, ConnectivityResult> resolveConnectivity({
       computeBlockadedPortProvincesByPlayer(game, topology);
   // Pre-compute once for all players; worldState is fixed across the player loop.
   final portInfo = _portToProvinceSeaZone(game.worldState);
+  // Single dual-region province scan: bucket ownership and town-tile lookups by
+  // playerId so per-player loops below run O(1) lookups instead of repeating
+  // O(provinces) scans (Refs #2394).
+  final perPlayer = _buildPerPlayerProvinceCaches(game);
+  final ownedByPlayer = perPlayer.ownedByPlayer;
+  final townByTileKeyByPlayer = perPlayer.townByTileKeyByPlayer;
   final result = <String, ConnectivityResult>{};
 
   for (final player in game.players) {
@@ -142,6 +148,9 @@ Map<String, ConnectivityResult> resolveConnectivity({
       topology: topology,
       provinceIdsByType: provinceIdsByType,
       portInfo: portInfo,
+      owned: ownedByPlayer[player.id] ?? const <String>{},
+      townByTileKey:
+          townByTileKeyByPlayer[player.id] ?? const <String, Province>{},
       blockadedPortProvinces: blockadedByPlayer[player.id] ?? const {},
     );
     result[player.id] = cr;
@@ -152,6 +161,32 @@ Map<String, ConnectivityResult> resolveConnectivity({
       .join(' ');
   _log.d('connectivity resolve end $summary');
   return result;
+}
+
+/// Buckets a single dual-region province pass by playerId so per-player work
+/// below avoids repeating that scan. Returned maps key by `Province.ownerId`
+/// and include only provinces with a non-null owner. (Refs #2394.)
+({
+  Map<String, Set<String>> ownedByPlayer,
+  Map<String, Map<String, Province>> townByTileKeyByPlayer,
+})
+_buildPerPlayerProvinceCaches(Game game) {
+  final ownedByPlayer = <String, Set<String>>{};
+  final townByTileKeyByPlayer = <String, Map<String, Province>>{};
+  for (final province in allProvinces(game.worldState)) {
+    final ownerId = province.ownerId;
+    if (ownerId == null) continue;
+    ownedByPlayer.putIfAbsent(ownerId, () => <String>{}).add(province.id);
+    final tk = province.townTileKey;
+    if (tk != null) {
+      townByTileKeyByPlayer
+          .putIfAbsent(ownerId, () => <String, Province>{})[tk] = province;
+    }
+  }
+  return (
+    ownedByPlayer: ownedByPlayer,
+    townByTileKeyByPlayer: townByTileKeyByPlayer,
+  );
 }
 
 bool _topologyUsesPrefixedIds(MapTopology topology) {
@@ -224,14 +259,6 @@ bool _isCapitalTileOnSeaboard(
   return false;
 }
 
-Set<String> _ownedProvinceIdsForPlayer(Game game, String playerId) {
-  final owned = <String>{};
-  for (final p in allProvinces(game.worldState)) {
-    if (p.ownerId == playerId) owned.add(p.id);
-  }
-  return owned;
-}
-
 /// Port tile key -> (fullProvinceId, seaZoneId). Built from portsByProvinceSeaboard.
 /// Key format: fullProvinceId|seaZoneId (e.g. oldWorld|p1|sea1) or legacy provinceId|seaZoneId (2 parts).
 Map<String, (String, String)> _portToProvinceSeaZone(WorldState worldState) {
@@ -300,11 +327,12 @@ ConnectivityResult _connectedTilesForPlayer({
   required MapTopology topology,
   required Set<String> provinceIdsByType,
   required Map<String, (String, String)> portInfo,
+  required Set<String> owned,
+  required Map<String, Province> townByTileKey,
   Set<String> blockadedPortProvinces = const {},
 }) {
   final worldState = game.worldState;
   final tileState = worldState.tileState;
-  final owned = _ownedProvinceIdsForPlayer(game, playerId);
   if (!owned.contains(capital.provinceId)) {
     return const ConnectivityResult(connected: {});
   }
@@ -391,9 +419,7 @@ ConnectivityResult _connectedTilesForPlayer({
 
   final connectedByRoadRule = Set<String>.from(connected);
   _applyTownRuleConnectivityClosure(
-    game: game,
-    playerId: playerId,
-    owned: owned,
+    townByTileKey: townByTileKey,
     tileMapByRegion: tileMapByRegion,
     provinceIdsByType: provinceIdsByType,
     worldState: worldState,
@@ -521,10 +547,11 @@ String? _fullProvinceIdFromTileKey(String tileKey) {
 }
 
 /// § Connectivity (Game Rule) Town rule: 4-adjacent to a connected town in the **same** province.
+///
+/// [townByTileKey] is the player-scoped town-tile → province map prepared by
+/// [_buildPerPlayerProvinceCaches] in a single dual-region scan (Refs #2394).
 void _applyTownRuleConnectivityClosure({
-  required Game game,
-  required String playerId,
-  required Set<String> owned,
+  required Map<String, Province> townByTileKey,
   required Map<String, TileMapResult> tileMapByRegion,
   required Set<String> provinceIdsByType,
   required WorldState worldState,
@@ -532,14 +559,6 @@ void _applyTownRuleConnectivityClosure({
   required Set<String> connected,
   required Map<String, int> pathCap,
 }) {
-  final townByTileKey = <String, Province>{};
-  for (final province in allProvinces(game.worldState)) {
-    if (province.ownerId != playerId) continue;
-    final tk = province.townTileKey;
-    if (tk == null) continue;
-    townByTileKey[tk] = province;
-  }
-
   final pendingTowns = Queue<String>();
   final queuedTowns = <String>{};
   final expandedTowns = <String>{};
