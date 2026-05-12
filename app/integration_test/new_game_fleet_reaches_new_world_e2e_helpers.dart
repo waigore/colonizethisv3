@@ -15,138 +15,6 @@ const Duration _kMaxUiResponseWait = Duration(seconds: 5);
 /// E2E policy caps wall-clock runtime to 5 minutes so PR feedback remains fast.
 const Duration _kFleetE2eMaxWallClock = Duration(minutes: 5);
 
-/// Dismisses blocking bottom sheets, dialog shells, snackbars, and generic OKs.
-///
-/// [AlertDialog] handling uses common action labels (including **Close** for
-/// prior-turn [TurnNewsDialog], `SPEC/ui/turn-news-dialog.md`) plus
-/// [WidgetsBinding.handlePopRoute] if none match.
-Future<void> _dismissTransientUi(
-  WidgetTester tester, {
-  E2ePerfLog? perf,
-}) async {
-  perf?.bumpCounter('dismiss_transient_ui_calls');
-  if (find.byType(SnackBar).evaluate().isNotEmpty) {
-    final snackAction = find.descendant(
-      of: find.byType(SnackBar),
-      matching: find.byType(TextButton),
-    );
-    if (snackAction.hitTestable().evaluate().isNotEmpty) {
-      await tester.tap(snackAction.first, warnIfMissed: false);
-      await e2ePumpUntilFinderEmpty(
-        tester,
-        find.byType(SnackBar),
-        timeout: const Duration(seconds: 2),
-      );
-      return;
-    }
-  }
-  final ok = find.text('OK').hitTestable();
-  if (ok.evaluate().isNotEmpty) {
-    await tester.tap(ok.first, warnIfMissed: false);
-    await e2ePumpUntilFinderEmpty(
-      tester,
-      find.text('OK').hitTestable(),
-      timeout: const Duration(seconds: 2),
-    );
-    return;
-  }
-  if (find.byType(AlertDialog).evaluate().isNotEmpty) {
-    for (final label in ['Close', 'OK', 'Cancel', 'Yes']) {
-      final hit = find
-          .descendant(of: find.byType(AlertDialog), matching: find.text(label))
-          .hitTestable();
-      if (hit.evaluate().isNotEmpty) {
-        await tester.tap(hit.first, warnIfMissed: false);
-        await e2ePumpUntilFinderEmpty(
-          tester,
-          find.byType(AlertDialog),
-          timeout: const Duration(seconds: 2),
-        );
-        return;
-      }
-    }
-    await tester.binding.handlePopRoute();
-    await e2ePumpUntilFinderEmpty(
-      tester,
-      find.byType(AlertDialog),
-      timeout: const Duration(seconds: 2),
-    );
-    return;
-  }
-  if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-    await _closeBottomSheet(tester, perf: perf);
-  }
-  if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
-    final closeCandidates = <Finder>[
-      find.text('Cancel'),
-      find.text('Close'),
-      find.byIcon(Icons.close),
-      find.byIcon(Icons.arrow_back),
-    ];
-    for (final candidate in closeCandidates) {
-      final tappable = candidate.hitTestable();
-      if (tappable.evaluate().isNotEmpty) {
-        await tester.tap(tappable.first, warnIfMissed: false);
-        await e2ePumpFor(tester, const Duration(milliseconds: 150));
-        return;
-      }
-    }
-    await tester.binding.handlePopRoute();
-    await e2ePumpFor(tester, const Duration(milliseconds: 150));
-  }
-}
-
-Future<void> _closeBottomSheet(WidgetTester tester, {E2ePerfLog? perf}) async {
-  perf?.bumpCounter('close_bottom_sheet_calls');
-  bool anyPanelOpen() => find.byType(BottomSheet).evaluate().isNotEmpty;
-
-  if (!anyPanelOpen()) {
-    return;
-  }
-
-  final sw = Stopwatch()..start();
-  var closePollMs = 25;
-  while (sw.elapsed < _kMaxUiResponseWait) {
-    if (!anyPanelOpen()) {
-      perf?.timing('close_bottom_sheet', sw.elapsed);
-      return;
-    }
-    await tester.binding.handlePopRoute();
-    await tester.pump(Duration(milliseconds: closePollMs));
-    closePollMs = e2eAdaptivePollRampAfterIdle(closePollMs);
-  }
-
-  fail(
-    'Timed out after ${_kMaxUiResponseWait.inSeconds}s closing bottom sheet; '
-    'panels remained visible',
-  );
-}
-
-Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
-  for (var safety = 0; safety < 32; safety++) {
-    final tiles = find.byType(ExpansionTile);
-    final n = tiles.evaluate().length;
-    if (n == 0) return;
-
-    var expandedOne = false;
-    for (var j = 0; j < n; j++) {
-      final expandIcon = find.descendant(
-        of: tiles.at(j),
-        matching: find.byIcon(Icons.expand_more),
-      );
-      if (expandIcon.evaluate().isEmpty) continue;
-      final iconHit = expandIcon.first;
-      await tester.ensureVisible(iconHit);
-      await e2ePumpFor(tester, const Duration(milliseconds: 80));
-      await tester.tap(iconHit, warnIfMissed: false);
-      await e2ePumpFor(tester, const Duration(milliseconds: 250));
-      expandedOne = true;
-      break;
-    }
-    if (!expandedOne) return;
-  }
-}
-
 Future<bool> _pollUntilNavalPanelVisible(
   WidgetTester tester,
   Finder navalPanel,
@@ -180,17 +48,21 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
       return;
     }
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-      await _closeBottomSheet(tester, perf: perf);
+      await e2eCloseBottomSheet(
+        tester,
+        perf: perf,
+        maxWait: _kMaxUiResponseWait,
+      );
       navalPollMs = 25;
       continue;
     }
     if (find.byType(AlertDialog).evaluate().isNotEmpty) {
-      await _dismissTransientUi(tester, perf: perf);
+      await e2eDismissTransientUi(tester, perf: perf);
       navalPollMs = 25;
       continue;
     }
     if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
-      await _dismissTransientUi(tester, perf: perf);
+      await e2eDismissTransientUi(tester, perf: perf);
       navalPollMs = 25;
       continue;
     }
@@ -222,7 +94,7 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
       navalPollMs = 25;
       continue;
     }
-    await _dismissTransientUi(tester, perf: perf);
+    await e2eDismissTransientUi(tester, perf: perf);
     await tester.pump(Duration(milliseconds: navalPollMs));
     navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
   }
