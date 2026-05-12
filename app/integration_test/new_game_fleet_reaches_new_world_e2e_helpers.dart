@@ -30,7 +30,7 @@ Future<bool> _pollUntilNavalPanelVisible(
       return true;
     }
     await tester.pump(Duration(milliseconds: stepMs));
-    stepMs = math.min(500, stepMs * 2);
+    stepMs = e2eAdaptivePollRampAfterIdle(stepMs);
   }
   return false;
 }
@@ -94,10 +94,9 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
         return;
       }
       navalPollMs = 25;
-    } else {
-      await e2eDismissTransientUi(tester, perf: perf);
-      navalPollMs = 25;
+      continue;
     }
+    await e2eDismissTransientUi(tester, perf: perf);
     await tester.pump(Duration(milliseconds: navalPollMs));
     navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
   }
