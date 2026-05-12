@@ -55,6 +55,38 @@ Future<void> e2ePumpFor(WidgetTester tester, Duration total) async {
   }
 }
 
+/// Next idle poll step for E2E `while` loops (GitHub #2336 / AC5): doubles the
+/// previous pump duration until [maxMs] to reduce wasted frames on headless Linux.
+int e2eNextIdlePollStepMs(int currentMs, {int maxMs = 500}) {
+  final next = currentMs * 2;
+  return next > maxMs ? maxMs : next;
+}
+
+/// Pumps with [e2eAdaptivePollRampAfterIdle] pacing until [finder] matches
+/// nothing or [timeout] elapses.
+///
+/// Returns immediately when the finder is already empty. On timeout, returns
+/// without throwing so callers can treat the wait as best-effort post-dismiss
+/// settle (GitHub #2336 / AC5).
+Future<void> e2ePumpUntilFinderEmpty(
+  WidgetTester tester,
+  Finder finder, {
+  required Duration timeout,
+}) async {
+  final sw = Stopwatch()..start();
+  if (finder.evaluate().isEmpty) {
+    return;
+  }
+  var stepMs = 25;
+  while (sw.elapsed < timeout) {
+    await tester.pump(Duration(milliseconds: stepMs));
+    if (finder.evaluate().isEmpty) {
+      return;
+    }
+    stepMs = e2eAdaptivePollRampAfterIdle(stepMs);
+  }
+}
+
 /// Closes an open [BottomSheet] via repeated [handlePopRoute] polls until gone.
 ///
 /// Shared by full-turn and fleet E2E; [overallTimeout] defaults to 5 seconds
@@ -103,14 +135,22 @@ Future<void> e2eDismissTransientUi(
     );
     if (snackAction.hitTestable().evaluate().isNotEmpty) {
       await tester.tap(snackAction.first, warnIfMissed: false);
-      await e2ePumpFor(tester, const Duration(milliseconds: 200));
+      await e2ePumpUntilFinderEmpty(
+        tester,
+        find.byType(SnackBar),
+        timeout: const Duration(seconds: 2),
+      );
       return;
     }
   }
   final ok = find.text('OK').hitTestable();
   if (ok.evaluate().isNotEmpty) {
     await tester.tap(ok.first, warnIfMissed: false);
-    await e2ePumpFor(tester, const Duration(milliseconds: 200));
+    await e2ePumpUntilFinderEmpty(
+      tester,
+      find.text('OK').hitTestable(),
+      timeout: const Duration(seconds: 2),
+    );
     return;
   }
   if (find.byType(AlertDialog).evaluate().isNotEmpty) {
@@ -120,12 +160,20 @@ Future<void> e2eDismissTransientUi(
           .hitTestable();
       if (hit.evaluate().isNotEmpty) {
         await tester.tap(hit.first, warnIfMissed: false);
-        await e2ePumpFor(tester, const Duration(milliseconds: 250));
+        await e2ePumpUntilFinderEmpty(
+          tester,
+          find.byType(AlertDialog),
+          timeout: const Duration(seconds: 2),
+        );
         return;
       }
     }
     await tester.binding.handlePopRoute();
-    await e2ePumpFor(tester, const Duration(milliseconds: 200));
+    await e2ePumpUntilFinderEmpty(
+      tester,
+      find.byType(AlertDialog),
+      timeout: const Duration(seconds: 2),
+    );
     return;
   }
   if (find.byType(BottomSheet).evaluate().isNotEmpty) {
@@ -212,6 +260,22 @@ Future<void> e2eWaitUntilFound(
   );
 }
 
+/// Waits until the shell shows a tappable **New Game** control (replaces a
+/// fixed post-[bootstrapForIntegrationTest] pump; GitHub #2336 / AC4–AC5).
+Future<void> e2eWaitForNewGameEntry(
+  WidgetTester tester, {
+  Duration timeout = const Duration(seconds: 15),
+  E2ePerfLog? perf,
+}) async {
+  await e2eWaitUntilFound(
+    tester,
+    find.text('New Game').hitTestable(),
+    timeout: timeout,
+    perf: perf,
+    phaseName: 'wait_for_new_game_entry',
+  );
+}
+
 /// Pumps until [condition] returns true, evaluating [condition] before the
 /// first pump and using exponential backoff on pump intervals (same cap as
 /// [e2eWaitUntilFound]). Refs GitHub #2336 (`pumpUntil` helper).
@@ -267,6 +331,44 @@ Future<void> e2eWaitUntilAnyFinderHitTestable(
   perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
   fail(
     'Timed out after ${timeout.inSeconds}s waiting for any of $finders. '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
+/// Polls until the next-turn map chip label changes from [turnLabelBefore].
+///
+/// Evaluates the label **before** the first pump; uses [e2eAdaptivePollRampAfterIdle]
+/// on idle pumps (GitHub #2336 / AC5).
+Future<Duration> e2eWaitForNextTurnLabelAdvance(
+  WidgetTester tester, {
+  required String turnLabelBefore,
+  required Duration timeout,
+  E2ePerfLog? perf,
+}) async {
+  final sw = Stopwatch()..start();
+  var nextTurnPollMs = 25;
+  while (sw.elapsed < timeout) {
+    final turnAfterFinder = find.descendant(
+      of: find.byKey(kGameMapNextTurnButtonKey),
+      matching: find.byType(Text),
+    );
+    if (turnAfterFinder.evaluate().isNotEmpty) {
+      final turnAfter = turnAfterFinder.evaluate().single.widget as Text;
+      if (turnAfter.data != turnLabelBefore) {
+        perf?.timing(
+          'next_turn_wall_clock',
+          sw.elapsed,
+          meta: 'result=advanced',
+        );
+        return sw.elapsed;
+      }
+    }
+    await tester.pump(Duration(milliseconds: nextTurnPollMs));
+    nextTurnPollMs = e2eAdaptivePollRampAfterIdle(nextTurnPollMs);
+  }
+  perf?.timing('next_turn_wall_clock', sw.elapsed, meta: 'result=timeout');
+  fail(
+    'Next turn label did not advance within ${timeout.inSeconds}s. '
     'Last exception: ${tester.takeException()}',
   );
 }
