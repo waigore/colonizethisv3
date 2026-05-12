@@ -224,6 +224,28 @@ void main() {
         expect(contribution, isNotNull);
         expect(contribution!.commodityId, 'grain');
         expect(contribution.units, 1);
+
+        final provincesByFullId = {
+          for (final p in game.worldState.oldWorld.provinces) p.id: p,
+          for (final p in game.worldState.newWorld.provinces) p.id: p,
+        };
+        final withIndex = computeTileExtractionContributionForPlayer(
+          game: game,
+          tileMapByRegion: {'oldWorld': tileMap},
+          player: player,
+          tileKey: 'oldWorld|p1|0|0',
+          connectedTileKeys: connected,
+          pathTransportCap: const {},
+          connectedByRoadRule: connected,
+          portTileKeys: const {},
+          prospectedTileKeys: connected,
+          capitalRegionId: 'oldWorld',
+          techCapForPlayer: (_) => 4,
+          provincesByFullId: provincesByFullId,
+        );
+        expect(withIndex, isNotNull);
+        expect(withIndex!.commodityId, contribution.commodityId);
+        expect(withIndex.units, contribution.units);
       },
     );
 
