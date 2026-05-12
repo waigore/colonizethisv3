@@ -248,6 +248,128 @@ Future<void> e2eBootstrapNewGameToMap(
   perf?.timing('new_game_to_map', phaseSw.elapsed);
 }
 
+/// Default cap for a single bottom-sheet close poll (GitHub #2336).
+const Duration kE2eDefaultBottomSheetCloseTimeout = Duration(seconds: 5);
+
+/// Dismisses blocking snackbars, generic OK dialogs, [AlertDialog], bottom
+/// sheets, and [CtDialogShell] overlays (union of fleet + full-turn E2E; #2336).
+Future<void> e2eDismissTransientUi(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+}) async {
+  perf?.bumpCounter('dismiss_transient_ui_calls');
+  if (find.byType(SnackBar).evaluate().isNotEmpty) {
+    final snackAction = find.descendant(
+      of: find.byType(SnackBar),
+      matching: find.byType(TextButton),
+    );
+    if (snackAction.hitTestable().evaluate().isNotEmpty) {
+      await tester.tap(snackAction.first, warnIfMissed: false);
+      await e2ePumpFor(tester, const Duration(milliseconds: 200));
+      return;
+    }
+  }
+  final ok = find.text('OK').hitTestable();
+  if (ok.evaluate().isNotEmpty) {
+    await tester.tap(ok.first, warnIfMissed: false);
+    await e2ePumpFor(tester, const Duration(milliseconds: 200));
+    return;
+  }
+  if (find.byType(AlertDialog).evaluate().isNotEmpty) {
+    for (final label in ['Close', 'OK', 'Cancel', 'Yes']) {
+      final hit = find
+          .descendant(of: find.byType(AlertDialog), matching: find.text(label))
+          .hitTestable();
+      if (hit.evaluate().isNotEmpty) {
+        await tester.tap(hit.first, warnIfMissed: false);
+        await e2ePumpFor(tester, const Duration(milliseconds: 250));
+        return;
+      }
+    }
+    await tester.binding.handlePopRoute();
+    await e2ePumpFor(tester, const Duration(milliseconds: 200));
+    return;
+  }
+  if (find.byType(BottomSheet).evaluate().isNotEmpty) {
+    await e2eCloseBottomSheet(tester, perf: perf);
+  }
+  if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
+    final closeCandidates = <Finder>[
+      find.text('Cancel'),
+      find.text('Close'),
+      find.byIcon(Icons.close),
+      find.byIcon(Icons.arrow_back),
+    ];
+    for (final candidate in closeCandidates) {
+      final tappable = candidate.hitTestable();
+      if (tappable.evaluate().isNotEmpty) {
+        await tester.tap(tappable.first, warnIfMissed: false);
+        await e2ePumpFor(tester, const Duration(milliseconds: 150));
+        return;
+      }
+    }
+    await tester.binding.handlePopRoute();
+    await e2ePumpFor(tester, const Duration(milliseconds: 150));
+  }
+}
+
+Future<void> e2eCloseBottomSheet(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration timeout = kE2eDefaultBottomSheetCloseTimeout,
+}) async {
+  perf?.bumpCounter('close_bottom_sheet_calls');
+  bool anyPanelOpen() => find.byType(BottomSheet).evaluate().isNotEmpty;
+
+  if (!anyPanelOpen()) {
+    return;
+  }
+
+  final sw = Stopwatch()..start();
+  var closePollMs = 25;
+  while (sw.elapsed < timeout) {
+    if (!anyPanelOpen()) {
+      perf?.timing('close_bottom_sheet', sw.elapsed);
+      return;
+    }
+    await tester.binding.handlePopRoute();
+    await tester.pump(Duration(milliseconds: closePollMs));
+    closePollMs = e2eAdaptivePollRampAfterIdle(closePollMs);
+  }
+
+  fail(
+    'Timed out after ${timeout.inSeconds}s closing bottom sheet; '
+    'panels remained visible',
+  );
+}
+
+/// Expands each visible [ExpansionTile] once per outer iteration (re-queries
+/// after each tap; GitHub #2336).
+Future<void> e2eExpandEachExpansionTileOnce(WidgetTester tester) async {
+  for (var safety = 0; safety < 32; safety++) {
+    final tiles = find.byType(ExpansionTile);
+    final n = tiles.evaluate().length;
+    if (n == 0) return;
+
+    var expandedOne = false;
+    for (var j = 0; j < n; j++) {
+      final expandIcon = find.descendant(
+        of: tiles.at(j),
+        matching: find.byIcon(Icons.expand_more),
+      );
+      if (expandIcon.evaluate().isEmpty) continue;
+      final iconHit = expandIcon.first;
+      await tester.ensureVisible(iconHit);
+      await e2ePumpFor(tester, const Duration(milliseconds: 80));
+      await tester.tap(iconHit, warnIfMissed: false);
+      await e2ePumpFor(tester, const Duration(milliseconds: 250));
+      expandedOne = true;
+      break;
+    }
+    if (!expandedOne) return;
+  }
+}
+
 /// Collects non-empty [Text] data in depth-first preorder (E2E snapshot helpers).
 void e2eCollectTextPreorder(Element element, List<String> out) {
   final w = element.widget;
