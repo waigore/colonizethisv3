@@ -1,0 +1,155 @@
+import 'dart:math' as math;
+
+import 'package:colonizethis_ai/package_logger.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../perception/perception_snapshot.dart';
+import 'war_desire_calculator.dart';
+
+final _log = packageLogger();
+
+/// Pre-weighted-random scores for diplomatic order candidates (0 = suppressed).
+/// Exposed for deterministic tests; [runDomainPlanners] uses the same values.
+List<int> computeDiplomaticCandidateScores({
+  required List<DiplomaticOrder> candidates,
+  required String nationId,
+  required Game game,
+  required AIWorldSnapshot snapshot,
+  required AIConfig config,
+}) {
+  final agendaId = config.hiddenAgendaId;
+  final thresholds = getThresholdsForLeader(config.personalityId);
+  final maxRelationForDeclareWar = getDeclareWarMaxRelationScore(agendaId);
+  const warCooldownTurns = 4;
+  const improveRelationsCooldownTurns = 2;
+  final currentTurn = game.worldState.turnState.turnNumber;
+  final warDesireByTarget = <String, int>{};
+  int warDesireForTarget(String targetFactionId, int relationScore) {
+    return warDesireByTarget.putIfAbsent(
+      targetFactionId,
+      () => computeWarDesireScore(
+        game: game,
+        nationId: nationId,
+        targetFactionId: targetFactionId,
+        relationScore: relationScore,
+      ),
+    );
+  }
+  return candidates.map((o) {
+    var s = 50;
+    switch (o.type) {
+      case DiplomaticOrderType.offerPeace:
+        {
+          final rel = snapshot.relations[o.targetFactionId];
+          final warDesire = warDesireForTarget(
+            o.targetFactionId,
+            rel?.score ?? 50,
+          );
+          // Lower peace desire when current war desire remains high.
+          s -= (warDesire - 50);
+        }
+        s += getAgendaPeaceAcceptanceModifier(agendaId);
+        s += (thresholds.peaceTendency - 50);
+        break;
+      case DiplomaticOrderType.alliance:
+        s += getAgendaAllianceAcceptanceModifier(agendaId);
+        s += (thresholds.allianceTendency - 50);
+        break;
+      case DiplomaticOrderType.declareWar:
+        {
+          final rel = snapshot.relations[o.targetFactionId];
+          final relationScore = rel?.score ?? 50;
+          if (relationScore > maxRelationForDeclareWar) {
+            s = 0;
+          } else {
+            if (_isDecisionOnCooldown(
+              game: game,
+              actorFactionId: nationId,
+              targetFactionId: o.targetFactionId,
+              eventTypes: const [DiplomaticEventType.declareWar],
+              cooldownTurns: warCooldownTurns,
+              currentTurn: currentTurn,
+            )) {
+              s = 0;
+              break;
+            }
+            final warDesire = warDesireForTarget(
+              o.targetFactionId,
+              relationScore,
+            );
+            final targetProvinceCount = provinceCountOwnedBy(
+              game,
+              o.targetFactionId,
+            );
+            final desiredTerritory = targetProvinceCount <= 0
+                ? 1
+                : ((warDesire / 25).round()).clamp(1, targetProvinceCount);
+            s += getAgendaConquerModifier(agendaId);
+            s += getAgendaTreatyBreakingModifier(agendaId);
+            s += (thresholds.warLikelihood - 50);
+            s += (warDesire - 50);
+            if (snapshot.opportunities.weakNeighbors.contains(
+              o.targetFactionId,
+            )) {
+              s += getDeclareWarTargetBonusWeakerNeighbor(agendaId);
+            }
+            if (rel?.level == RelationLevel.allied) {
+              s += getDeclareWarTargetBonusAlly(agendaId);
+            }
+            _log.d(
+              'diplomacy warDesire nationId=$nationId targetFactionId=${o.targetFactionId} '
+              'warDesire=$warDesire desiredTerritory=$desiredTerritory',
+            );
+          }
+          break;
+        }
+      case DiplomaticOrderType.establishOverture:
+        {
+          if (_isDecisionOnCooldown(
+            game: game,
+            actorFactionId: nationId,
+            targetFactionId: o.targetFactionId,
+            eventTypes: const [
+              DiplomaticEventType.overtureAccepted,
+              DiplomaticEventType.overtureRejected,
+            ],
+            cooldownTurns: improveRelationsCooldownTurns,
+            currentTurn: currentTurn,
+          )) {
+            s = 0;
+            break;
+          }
+          final rel = snapshot.relations[o.targetFactionId];
+          final warDesire = warDesireForTarget(
+            o.targetFactionId,
+            rel?.score ?? 50,
+          );
+          final improveRelationsDesire = 100 - warDesire;
+          s += (improveRelationsDesire - 50);
+          break;
+        }
+      default:
+        break;
+    }
+    return s == 0 ? 0 : math.max(1, s);
+  }).toList();
+}
+
+bool _isDecisionOnCooldown({
+  required Game game,
+  required String actorFactionId,
+  required String targetFactionId,
+  required List<DiplomaticEventType> eventTypes,
+  required int cooldownTurns,
+  required int currentTurn,
+}) {
+  for (final event in game.diplomaticHistoryEvents.reversed) {
+    if (!eventTypes.contains(event.type)) continue;
+    if (event.fromFactionId != actorFactionId) continue;
+    if (event.toFactionId != targetFactionId) continue;
+    return (currentTurn - event.turn) < cooldownTurns;
+  }
+  return false;
+}

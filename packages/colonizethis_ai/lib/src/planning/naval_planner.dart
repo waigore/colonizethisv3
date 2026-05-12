@@ -6,7 +6,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../goal_manager.dart';
+import 'goal_manager.dart';
 import '../util/orders_extensions.dart';
 
 final _log = packageLogger();
