@@ -7,11 +7,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'domain_planner_orchestrator.dart';
 import 'economy_planner.dart';
-import '../goal_manager.dart';
+import 'goal_manager.dart';
 import 'ai_order_reporting.dart';
 import 'ai_trace_builder.dart';
 import '../social/mood_state_machine.dart';
-import '../perception.dart';
+import '../perception/perception_snapshot.dart';
 
 final _log = packageLogger();
 
