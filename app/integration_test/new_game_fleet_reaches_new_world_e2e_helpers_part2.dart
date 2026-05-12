@@ -483,22 +483,27 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
     await tester.tap(tappable.first, warnIfMissed: false);
     await tester.pump();
     final openDeadline = DateTime.now().add(const Duration(seconds: 3));
+    var openPollMs = 25;
     while (DateTime.now().isBefore(openDeadline)) {
-      await tester.pump(const Duration(milliseconds: 100));
       if (civilianPanel.evaluate().isNotEmpty) {
         return true;
       }
+      await tester.pump(Duration(milliseconds: openPollMs));
+      openPollMs = e2eAdaptivePollRampAfterIdle(openPollMs);
     }
     return false;
   }
 
+  var outerPollMs = 25;
   while (sw.elapsed < timeout) {
-    await tester.pump(const Duration(milliseconds: 100));
     if (civilianPanel.evaluate().isNotEmpty ||
         navalPanel.evaluate().isNotEmpty) {
       await _closeBottomSheet(tester);
+      outerPollMs = 25;
       continue;
     }
+    await tester.pump(Duration(milliseconds: outerPollMs));
+    outerPollMs = e2eAdaptivePollRampAfterIdle(outerPollMs);
     if (empireRailButton.evaluate().isNotEmpty) {
       if (await tryOpen(empireRailButton)) {
         return;
@@ -549,9 +554,11 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
 
       final exploreTile = find.widgetWithText(ListTile, 'Explore');
       final wait = Stopwatch()..start();
+      var exploreStepMs = 25;
       while (exploreTile.evaluate().isEmpty &&
           wait.elapsed < _kMaxUiResponseWait) {
-        await tester.pump(const Duration(milliseconds: 50));
+        await tester.pump(Duration(milliseconds: exploreStepMs));
+        exploreStepMs = math.min(500, exploreStepMs * 2);
       }
       if (exploreTile.evaluate().isNotEmpty) {
         final enabled = tester.widget<ListTile>(exploreTile.first).enabled;
@@ -588,8 +595,10 @@ Future<void> _advanceOneHumanTurn(
     await e2ePumpFor(tester, const Duration(milliseconds: 150));
   }
   final sw = Stopwatch()..start();
+  var nextTurnPollMs = 25;
   while (sw.elapsed < _kMaxUiResponseWait) {
-    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(Duration(milliseconds: nextTurnPollMs));
+    nextTurnPollMs = e2eAdaptivePollRampAfterIdle(nextTurnPollMs);
     final after = _readNextTurnButtonLabel(tester);
     if (after != null && after != before) {
       perf?.timing('next_turn_advance', phaseSw.elapsed);
