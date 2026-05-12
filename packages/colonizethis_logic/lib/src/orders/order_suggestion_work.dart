@@ -159,7 +159,7 @@ List<WorkOrder> suggestWorkOrders(
 
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
   final partiallyRevealedProvinceCache =
-      _partiallyRevealedProvinceCacheForPlayer(game: game, view: view);
+      partiallyRevealedPrefixedProvinceIdsForPlayer(game: game, view: view);
 
   // Pre-filter + visibility sort per workTarget; reused across worker units.
   final visibleCandidatesSortedByWorkTarget = <String, List<String>>{};
