@@ -193,12 +193,23 @@ Future<void> e2eDismissTransientUi(
       final tappable = candidate.hitTestable();
       if (tappable.evaluate().isNotEmpty) {
         await tester.tap(tappable.first, warnIfMissed: false);
-        await e2ePumpFor(tester, const Duration(milliseconds: 150));
+        // Adaptive replacement for the prior fixed 150ms pump (Refs #2336 AC5):
+        // pump with [e2eAdaptivePollRampAfterIdle] pacing until [CtDialogShell]
+        // leaves the tree. Hard 500ms cap preserves the worst-case wait.
+        await e2ePumpUntilFinderEmpty(
+          tester,
+          find.byType(CtDialogShell),
+          timeout: const Duration(milliseconds: 500),
+        );
         return;
       }
     }
     await tester.binding.handlePopRoute();
-    await e2ePumpFor(tester, const Duration(milliseconds: 150));
+    await e2ePumpUntilFinderEmpty(
+      tester,
+      find.byType(CtDialogShell),
+      timeout: const Duration(milliseconds: 500),
+    );
   }
 }
 
