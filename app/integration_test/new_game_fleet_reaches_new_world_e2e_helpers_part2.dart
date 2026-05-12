@@ -94,7 +94,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       return true;
     }
     if (allowExpandAllFallback) {
-      await _expandEachExpansionTileOnce(tester);
+      await e2eExpandEachExpansionTileOnce(tester);
       return false;
     }
     return false;
@@ -280,22 +280,22 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
   const maxTurns = 35;
   for (var i = 0; i < maxTurns; i++) {
     ensureUnderWallClock('NW bundled-explore readiness i=$i');
-    await _dismissTransientUi(tester);
+    await e2eDismissTransientUi(tester);
     await _tapNewWorldRegionTabIfPresent(tester);
     await _openNavalPanel(tester);
     if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
         _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
-      await _closeBottomSheet(tester);
+      await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
       return;
     }
-    await _closeBottomSheet(tester);
+    await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _tryNavalMoveSegment(
       tester,
       l10n,
       useNewWorldMapTabFirst: true,
       allowWarpDestinations: false,
     );
-    await _closeBottomSheet(tester);
+    await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _advanceOneHumanTurn(tester, l10n);
   }
   // Some generated maps can keep the non-home fleet in open-ocean NW sea lanes
@@ -417,7 +417,7 @@ Future<void> _splitHomeFleetOnce(
     perf: perf,
     phaseName: 'wait_until_found_naval_panel',
   );
-  await _expandEachExpansionTileOnce(tester);
+  await e2eExpandEachExpansionTileOnce(tester);
   final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
   final split = find.descendant(
     of: navalPanelRoot,
@@ -449,7 +449,7 @@ Future<void> _splitHomeFleetOnce(
   );
   await tester.tap(find.text(l10n.splitFleet_confirm));
   await e2ePumpFor(tester, const Duration(milliseconds: 120));
-  await _expandEachExpansionTileOnce(tester);
+  await e2eExpandEachExpansionTileOnce(tester);
   perf?.timing('fleet_split', phaseSw.elapsed);
 }
 
@@ -477,7 +477,7 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
   Future<bool> tryOpen(Finder trigger) async {
     final tappable = trigger.hitTestable();
     if (tappable.evaluate().isEmpty) {
-      await _dismissTransientUi(tester);
+      await e2eDismissTransientUi(tester);
       return false;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
@@ -496,7 +496,7 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 100));
     if (civilianPanel.evaluate().isNotEmpty ||
         navalPanel.evaluate().isNotEmpty) {
-      await _closeBottomSheet(tester);
+      await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
       continue;
     }
     if (empireRailButton.evaluate().isNotEmpty) {
