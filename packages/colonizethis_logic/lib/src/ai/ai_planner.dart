@@ -5,6 +5,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../world/army_migration.dart';
 import 'ai_control.dart';
 import 'simple_ai_heuristics.dart';
 
@@ -16,6 +17,7 @@ Orders generateOrdersForPlayer(
   MapTopology topology,
   String playerId, {
   Map<String, TileMapResult>? tileMapByRegion,
+  bool armiesAlreadyEnsured = false,
 }) {
   final player = game.playerById(playerId);
   if (player == null || !isAiControlled(game, player.id)) {
@@ -30,6 +32,7 @@ Orders generateOrdersForPlayer(
     player.id,
     turnSeed,
     tileMapByRegion: tileMapByRegion,
+    armiesAlreadyEnsured: armiesAlreadyEnsured,
   );
 }
 
@@ -55,23 +58,41 @@ Orders generateOrdersForGame(
   final workByPlayer = <String, List<WorkOrder>>{};
   final researchByPlayer = <String, List<ResearchOrder>>{};
 
+  final ensuredGame = ensureMilitaryArmiesForGame(game);
   for (final player in game.players) {
     if (!isAiControlled(game, player.id)) continue;
     final ordersForPlayer = generateOrdersForPlayer(
-      game,
+      ensuredGame,
       topology,
       player.id,
       tileMapByRegion: tileMapByRegion,
+      armiesAlreadyEnsured: true,
     );
-    _addOrdersIfNonEmpty(moveByPlayer, player.id, ordersForPlayer.moveOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(
+      moveByPlayer,
+      player.id,
+      ordersForPlayer.moveOrdersByPlayerId[player.id],
+    );
     _addOrdersIfNonEmpty(
       armyMoveByPlayer,
       player.id,
       ordersForPlayer.armyMoveOrdersByPlayerId[player.id],
     );
-    _addOrdersIfNonEmpty(buildByPlayer, player.id, ordersForPlayer.buildUnitOrdersByPlayerId[player.id]);
-    _addOrdersIfNonEmpty(workByPlayer, player.id, ordersForPlayer.workOrdersByPlayerId[player.id]);
-    _addOrdersIfNonEmpty(researchByPlayer, player.id, ordersForPlayer.researchOrdersByPlayerId[player.id]);
+    _addOrdersIfNonEmpty(
+      buildByPlayer,
+      player.id,
+      ordersForPlayer.buildUnitOrdersByPlayerId[player.id],
+    );
+    _addOrdersIfNonEmpty(
+      workByPlayer,
+      player.id,
+      ordersForPlayer.workOrdersByPlayerId[player.id],
+    );
+    _addOrdersIfNonEmpty(
+      researchByPlayer,
+      player.id,
+      ordersForPlayer.researchOrdersByPlayerId[player.id],
+    );
   }
 
   return Orders(

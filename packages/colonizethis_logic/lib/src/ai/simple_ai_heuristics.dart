@@ -247,13 +247,18 @@ Orders generateOrdersWithSimpleHeuristics(
   String playerId,
   int turnSeed, {
   Map<String, TileMapResult>? tileMapByRegion,
+
+  /// When true, [game] was already passed through [ensureMilitaryArmiesForGame]
+  /// (for example by [generateOrdersForGame]). Skips a redundant per-player
+  /// reconcile + `_armiesMatchUnits` full-unit scan (Refs #2394).
+  bool armiesAlreadyEnsured = false,
 }) {
   final player = game.playerById(playerId);
   if (player == null) {
     return const Orders();
   }
 
-  final g = ensureMilitaryArmiesForGame(game);
+  final g = armiesAlreadyEnsured ? game : ensureMilitaryArmiesForGame(game);
   final rng = math.Random(turnSeed);
   var current = const Orders();
   final view = buildPlayerView(g, topology, player.id);
