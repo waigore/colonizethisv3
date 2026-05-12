@@ -73,6 +73,52 @@ void main() {
       expect(result.message, contains('at least 1'));
     });
 
+    test('parses add_worker with canonical tier after case-insensitive input', () {
+      final result = parser.parse('/add_worker PEASANTS 10');
+      expect(result.isError, isFalse);
+      final credit = result.invocation! as DebugConsoleWorkerPoolCredit;
+      expect(credit.workerTierId, 'peasants');
+      expect(credit.requestedAmount, 10);
+      expect(credit.creditedAmount, 10);
+    });
+
+    test('rejects add_worker unknown tier', () {
+      final result = parser.parse('/add_worker nobles 1');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Unknown worker tier'));
+    });
+
+    test('rejects add_worker non-integer amount', () {
+      final result = parser.parse('/add_worker peasants abc');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('Amount must be an integer'));
+    });
+
+    test('rejects add_worker amount below 1', () {
+      final result = parser.parse('/add_worker peasants 0');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('at least 1'));
+    });
+
+    test('clamps add_worker above cap in parser', () {
+      final result = parser.parse('/add_worker apprentices 12000');
+      expect(result.isError, isFalse);
+      final credit = result.invocation! as DebugConsoleWorkerPoolCredit;
+      expect(credit.workerTierId, 'apprentices');
+      expect(credit.requestedAmount, 12000);
+      expect(credit.creditedAmount, kDebugConsoleMaxTreasuryCreditAmount);
+    });
+
+    test('help lists add_worker tier ids', () {
+      final result = parser.parse('/help');
+      expect(result.isError, isTrue);
+      expect(result.message, contains('/add_worker'));
+      expect(result.message, contains('apprentices'));
+      expect(result.message, contains('journeymen'));
+      expect(result.message, contains('masters'));
+      expect(result.message, contains('peasants'));
+    });
+
     test('help lists add_money bounds', () {
       final result = parser.parse('/help');
       expect(result.isError, isTrue);
