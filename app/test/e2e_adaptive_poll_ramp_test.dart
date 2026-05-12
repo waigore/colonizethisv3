@@ -4,11 +4,14 @@
 // this ramp for civilian panel open, Explore-row assign sweep, split-fleet
 // dialog dismissal, and next-turn label advance polls.
 
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import '../integration_test/e2e_test_shared.dart';
 
 void main() {
+  suppressLogsForTests();
+
   group('e2eAdaptivePollRampAfterIdle', () {
     test('ramps 25 -> 50 -> 75 -> 100 and saturates at 100', () {
       var stepMs = 25;
