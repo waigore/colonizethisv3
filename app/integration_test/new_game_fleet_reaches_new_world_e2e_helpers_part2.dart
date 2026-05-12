@@ -49,7 +49,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
           final iconHit = expandIcon.first;
           await tester.ensureVisible(iconHit);
           await tester.tap(iconHit, warnIfMissed: false);
-          await _waitUntilFound(
+          await e2eWaitUntilFound(
             tester,
             find.descendant(of: sub, matching: find.text('Move')),
             timeout: const Duration(seconds: 3),
@@ -73,7 +73,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       }
       if (loc.evaluate().isNotEmpty) {
         await tester.tap(hit.first, warnIfMissed: false);
-        await _waitUntilFound(
+        await e2eWaitUntilFound(
           tester,
           find.byType(AlertDialog),
           timeout: const Duration(seconds: 3),
@@ -85,7 +85,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
     }
     if (fallbackMove != null) {
       await tester.tap(fallbackMove, warnIfMissed: false);
-      await _waitUntilFound(
+      await e2eWaitUntilFound(
         tester,
         find.byType(AlertDialog),
         timeout: const Duration(seconds: 3),
@@ -406,13 +406,14 @@ String _bundledExploreRejectionDiagnostics([
 Future<void> _splitHomeFleetOnce(
   WidgetTester tester,
   AppLocalizations l10n, {
-  _E2ePerfLog? perf,
+  E2ePerfLog? perf,
 }) async {
   final phaseSw = Stopwatch()..start();
   await tester.tap(find.byKey(kEmpireNavalUnitsButtonKey));
-  await _waitUntilFound(
+  await e2eWaitUntilFound(
     tester,
     find.byKey(kCtE2ENavalPanelRootKey),
+    timeout: _kMaxUiResponseWait,
     perf: perf,
     phaseName: 'wait_until_found_naval_panel',
   );
@@ -424,7 +425,7 @@ Future<void> _splitHomeFleetOnce(
   );
   expect(split, findsWidgets);
   await tester.tap(split.first, warnIfMissed: false);
-  await _waitUntilFound(
+  await e2eWaitUntilFound(
     tester,
     find.descendant(
       of: find.byType(CtDialogShell),
@@ -440,14 +441,14 @@ Future<void> _splitHomeFleetOnce(
   );
   expect(moveOneRight, findsWidgets);
   await tester.tap(moveOneRight.first);
-  await _waitUntilFound(
+  await e2eWaitUntilFound(
     tester,
     find.text(l10n.splitFleet_confirm),
     timeout: const Duration(seconds: 4),
     phaseName: 'wait_until_found_split_confirm',
   );
   await tester.tap(find.text(l10n.splitFleet_confirm));
-  await _pumpFor(tester, const Duration(milliseconds: 120));
+  await e2ePumpFor(tester, const Duration(milliseconds: 120));
   await _expandEachExpansionTileOnce(tester);
   perf?.timing('fleet_split', phaseSw.elapsed);
 }
@@ -544,7 +545,7 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
         continue;
       }
       await tester.tap(assignFinder.first, warnIfMissed: false);
-      await _pumpFor(tester, const Duration(milliseconds: 300));
+      await e2ePumpFor(tester, const Duration(milliseconds: 300));
 
       final exploreTile = find.widgetWithText(ListTile, 'Explore');
       final wait = Stopwatch()..start();
@@ -555,18 +556,18 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
       if (exploreTile.evaluate().isNotEmpty) {
         final enabled = tester.widget<ListTile>(exploreTile.first).enabled;
         await tester.binding.handlePopRoute();
-        await _pumpFor(tester, const Duration(milliseconds: 200));
+        await e2ePumpFor(tester, const Duration(milliseconds: 200));
         if (enabled == true) {
           return true;
         }
       } else {
         await tester.binding.handlePopRoute();
-        await _pumpFor(tester, const Duration(milliseconds: 200));
+        await e2ePumpFor(tester, const Duration(milliseconds: 200));
       }
     }
 
     await tester.drag(panelScrollable, const Offset(0, -180));
-    await _pumpFor(tester, const Duration(milliseconds: 120));
+    await e2ePumpFor(tester, const Duration(milliseconds: 120));
   }
   return false;
 }
@@ -574,17 +575,17 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
 Future<void> _advanceOneHumanTurn(
   WidgetTester tester,
   AppLocalizations l10n, {
-  _E2ePerfLog? perf,
+  E2ePerfLog? perf,
 }) async {
   final phaseSw = Stopwatch()..start();
   final before = _readNextTurnButtonLabel(tester);
   await tester.tap(find.byKey(kGameMapNextTurnButtonKey));
   perf?.bumpCounter('next_turn_taps');
-  await _pumpFor(tester, const Duration(milliseconds: 200));
+  await e2ePumpFor(tester, const Duration(milliseconds: 200));
   final confirmNextTurn = find.text(l10n.common_yes).hitTestable();
   if (confirmNextTurn.evaluate().isNotEmpty) {
     await tester.tap(confirmNextTurn.first, warnIfMissed: false);
-    await _pumpFor(tester, const Duration(milliseconds: 150));
+    await e2ePumpFor(tester, const Duration(milliseconds: 150));
   }
   final sw = Stopwatch()..start();
   while (sw.elapsed < _kMaxUiResponseWait) {
