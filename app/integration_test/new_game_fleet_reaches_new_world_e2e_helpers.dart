@@ -32,14 +32,22 @@ Future<void> _dismissTransientUi(
     );
     if (snackAction.hitTestable().evaluate().isNotEmpty) {
       await tester.tap(snackAction.first, warnIfMissed: false);
-      await e2ePumpFor(tester, const Duration(milliseconds: 200));
+      await e2ePumpUntilFinderEmpty(
+        tester,
+        find.byType(SnackBar),
+        timeout: const Duration(seconds: 2),
+      );
       return;
     }
   }
   final ok = find.text('OK').hitTestable();
   if (ok.evaluate().isNotEmpty) {
     await tester.tap(ok.first, warnIfMissed: false);
-    await e2ePumpFor(tester, const Duration(milliseconds: 200));
+    await e2ePumpUntilFinderEmpty(
+      tester,
+      find.text('OK').hitTestable(),
+      timeout: const Duration(seconds: 2),
+    );
     return;
   }
   if (find.byType(AlertDialog).evaluate().isNotEmpty) {
@@ -49,12 +57,20 @@ Future<void> _dismissTransientUi(
           .hitTestable();
       if (hit.evaluate().isNotEmpty) {
         await tester.tap(hit.first, warnIfMissed: false);
-        await e2ePumpFor(tester, const Duration(milliseconds: 250));
+        await e2ePumpUntilFinderEmpty(
+          tester,
+          find.byType(AlertDialog),
+          timeout: const Duration(seconds: 2),
+        );
         return;
       }
     }
     await tester.binding.handlePopRoute();
-    await e2ePumpFor(tester, const Duration(milliseconds: 200));
+    await e2ePumpUntilFinderEmpty(
+      tester,
+      find.byType(AlertDialog),
+      timeout: const Duration(seconds: 2),
+    );
     return;
   }
   if (find.byType(BottomSheet).evaluate().isNotEmpty) {
@@ -347,13 +363,11 @@ Future<void> _pickMoveDestinationAndConfirm(
   final confirm = find.text(l10n.common_confirm).hitTestable();
   expect(confirm, findsWidgets);
   await tester.tap(confirm.first, warnIfMissed: false);
-  final dialogGone = Stopwatch()..start();
-  while (dialogGone.elapsed < const Duration(seconds: 2)) {
-    if (find.byType(AlertDialog).evaluate().isEmpty) {
-      break;
-    }
-    await tester.pump(const Duration(milliseconds: 25));
-  }
+  await e2ePumpUntilFinderEmpty(
+    tester,
+    find.byType(AlertDialog),
+    timeout: const Duration(seconds: 2),
+  );
   ensureBudget('after confirm');
 }
 
@@ -392,13 +406,11 @@ Future<void> _tryNavalMoveSegment(
     final cancel = find.text(l10n.common_cancel).hitTestable();
     expect(cancel, findsOneWidget);
     await tester.tap(cancel, warnIfMissed: false);
-    final cancelGone = Stopwatch()..start();
-    while (cancelGone.elapsed < const Duration(seconds: 2)) {
-      if (find.byType(AlertDialog).evaluate().isEmpty) {
-        break;
-      }
-      await tester.pump(const Duration(milliseconds: 25));
-    }
+    await e2ePumpUntilFinderEmpty(
+      tester,
+      find.byType(AlertDialog),
+      timeout: const Duration(seconds: 2),
+    );
     perf?.timing(
       'fleet_move_segment',
       phaseSw.elapsed,

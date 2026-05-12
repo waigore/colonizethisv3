@@ -138,6 +138,31 @@ int e2eNextIdlePollStepMs(int currentMs, {int maxMs = 500}) {
   return next > maxMs ? maxMs : next;
 }
 
+/// Pumps with [e2eAdaptivePollRampAfterIdle] pacing until [finder] matches
+/// nothing or [timeout] elapses.
+///
+/// Returns immediately when the finder is already empty. On timeout, returns
+/// without throwing so callers can treat the wait as best-effort post-dismiss
+/// settle (GitHub #2336 / AC5).
+Future<void> e2ePumpUntilFinderEmpty(
+  WidgetTester tester,
+  Finder finder, {
+  required Duration timeout,
+}) async {
+  final sw = Stopwatch()..start();
+  if (finder.evaluate().isEmpty) {
+    return;
+  }
+  var stepMs = 25;
+  while (sw.elapsed < timeout) {
+    await tester.pump(Duration(milliseconds: stepMs));
+    if (finder.evaluate().isEmpty) {
+      return;
+    }
+    stepMs = e2eAdaptivePollRampAfterIdle(stepMs);
+  }
+}
+
 /// Loads and decodes each path with bounded concurrency (overlapping I/O +
 /// image decode completion) instead of strictly serial awaits.
 Future<List<String>> e2eDecodePngAssetPathsParallel(
