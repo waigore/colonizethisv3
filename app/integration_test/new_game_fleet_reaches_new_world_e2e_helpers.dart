@@ -93,13 +93,15 @@ Future<void> _closeBottomSheet(WidgetTester tester, {_E2ePerfLog? perf}) async {
   }
 
   final sw = Stopwatch()..start();
+  var closePollMs = 25;
   while (sw.elapsed < _kMaxUiResponseWait) {
     if (!anyPanelOpen()) {
       perf?.timing('close_bottom_sheet', sw.elapsed);
       return;
     }
     await tester.binding.handlePopRoute();
-    await _pumpFor(tester, const Duration(milliseconds: 250));
+    await tester.pump(Duration(milliseconds: closePollMs));
+    closePollMs = e2eAdaptivePollRampAfterIdle(closePollMs);
   }
 
   fail(
@@ -157,8 +159,10 @@ Future<void> _bootstrapNewGameToMap(
 
   final setupDeadline = DateTime.now().add(_kBootstrapNewGameOverallCap);
   var reachedMap = false;
+  var setupPollMs = 25;
   while (DateTime.now().isBefore(setupDeadline)) {
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(Duration(milliseconds: setupPollMs));
+    setupPollMs = e2eAdaptivePollRampAfterIdle(setupPollMs);
     if (find.text('Could not create game').evaluate().isNotEmpty) {
       fail(
         'New game setup failed (error dialog). '
@@ -168,6 +172,7 @@ Future<void> _bootstrapNewGameToMap(
     final introOpen = find.byType(GameStartIntroOverlay).evaluate().isNotEmpty;
     if (introOpen) {
       await _tapGameStartIntroOverlayContinueIfPresent(tester);
+      setupPollMs = 25;
       continue;
     }
     final creating = find.text('Creating game').evaluate().isNotEmpty;
@@ -236,22 +241,27 @@ Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
   final markerBtn = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
   final btn = find.byKey(kEmpireNavalUnitsButtonKey);
   final sw = Stopwatch()..start();
+  var navalPollMs = 25;
   while (sw.elapsed < _kMaxUiResponseWait) {
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(Duration(milliseconds: navalPollMs));
+    navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
     if (navalPanel.evaluate().isNotEmpty) {
       perf?.timing('open_panel_naval', phaseSw.elapsed);
       return;
     }
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
       await _closeBottomSheet(tester, perf: perf);
+      navalPollMs = 25;
       continue;
     }
     if (find.byType(AlertDialog).evaluate().isNotEmpty) {
       await _dismissTransientUi(tester, perf: perf);
+      navalPollMs = 25;
       continue;
     }
     if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
       await _dismissTransientUi(tester, perf: perf);
+      navalPollMs = 25;
       continue;
     }
     final markerHit = markerBtn.hitTestable();
@@ -265,6 +275,7 @@ Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
         perf?.timing('open_panel_naval', phaseSw.elapsed);
         return;
       }
+      navalPollMs = 25;
       continue;
     }
     final railHit = btn.hitTestable();
@@ -278,8 +289,10 @@ Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
         perf?.timing('open_panel_naval', phaseSw.elapsed);
         return;
       }
+      navalPollMs = 25;
     } else {
       await _dismissTransientUi(tester, perf: perf);
+      navalPollMs = 25;
     }
   }
   fail(

@@ -179,8 +179,10 @@ void main() {
     // game-start intro (Yarn) once the map exists under the overlay.
     final setupDeadline = DateTime.now().add(const Duration(seconds: 60));
     var reachedMap = false;
+    var setupPollMs = 25;
     while (DateTime.now().isBefore(setupDeadline)) {
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(Duration(milliseconds: setupPollMs));
+      setupPollMs = e2eAdaptivePollRampAfterIdle(setupPollMs);
       if (find.text('Could not create game').evaluate().isNotEmpty) {
         fail(
           'New game setup failed (error dialog). '
@@ -199,6 +201,7 @@ void main() {
           await tester.tap(find.text('I shall.').first);
           await tester.pump(const Duration(milliseconds: 200));
         }
+        setupPollMs = 25;
         continue;
       }
       final creating = find.text('Creating game').evaluate().isNotEmpty;
