@@ -55,6 +55,182 @@ Future<void> e2ePumpFor(WidgetTester tester, Duration total) async {
   }
 }
 
+/// Next idle poll step for E2E `while` loops (GitHub #2336 / AC5): doubles the
+/// previous pump duration until [maxMs] to reduce wasted frames on headless Linux.
+int e2eNextIdlePollStepMs(int currentMs, {int maxMs = 500}) {
+  final next = currentMs * 2;
+  return next > maxMs ? maxMs : next;
+}
+
+/// Pumps with [e2eAdaptivePollRampAfterIdle] pacing until [finder] matches
+/// nothing or [timeout] elapses.
+///
+/// Returns immediately when the finder is already empty. On timeout, returns
+/// without throwing so callers can treat the wait as best-effort post-dismiss
+/// settle (GitHub #2336 / AC5).
+Future<void> e2ePumpUntilFinderEmpty(
+  WidgetTester tester,
+  Finder finder, {
+  required Duration timeout,
+}) async {
+  final sw = Stopwatch()..start();
+  if (finder.evaluate().isEmpty) {
+    return;
+  }
+  var stepMs = 25;
+  while (sw.elapsed < timeout) {
+    await tester.pump(Duration(milliseconds: stepMs));
+    if (finder.evaluate().isEmpty) {
+      return;
+    }
+    stepMs = e2eAdaptivePollRampAfterIdle(stepMs);
+  }
+}
+
+/// Closes an open [BottomSheet] via repeated [handlePopRoute] polls until gone.
+///
+/// Shared by full-turn and fleet E2E; [overallTimeout] defaults to 5 seconds
+/// (previous per-file caps). Refs GitHub #2336.
+Future<void> e2eCloseBottomSheet(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration overallTimeout = const Duration(seconds: 5),
+}) async {
+  perf?.bumpCounter('close_bottom_sheet_calls');
+  bool anyPanelOpen() => find.byType(BottomSheet).evaluate().isNotEmpty;
+
+  if (!anyPanelOpen()) {
+    return;
+  }
+
+  final sw = Stopwatch()..start();
+  var closePollMs = 25;
+  while (sw.elapsed < overallTimeout) {
+    if (!anyPanelOpen()) {
+      perf?.timing('close_bottom_sheet', sw.elapsed);
+      return;
+    }
+    await tester.binding.handlePopRoute();
+    await tester.pump(Duration(milliseconds: closePollMs));
+    closePollMs = e2eAdaptivePollRampAfterIdle(closePollMs);
+  }
+
+  fail(
+    'Timed out after ${overallTimeout.inSeconds}s closing bottom sheet; '
+    'panels remained visible',
+  );
+}
+
+/// Dismisses snackbars, generic OK dialogs, [AlertDialog] actions, bottom sheets,
+/// and [CtDialogShell] overlays (union of fleet + full-turn E2E paths).
+Future<void> e2eDismissTransientUi(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+}) async {
+  perf?.bumpCounter('dismiss_transient_ui_calls');
+  if (find.byType(SnackBar).evaluate().isNotEmpty) {
+    final snackAction = find.descendant(
+      of: find.byType(SnackBar),
+      matching: find.byType(TextButton),
+    );
+    if (snackAction.hitTestable().evaluate().isNotEmpty) {
+      await tester.tap(snackAction.first, warnIfMissed: false);
+      await e2ePumpUntilFinderEmpty(
+        tester,
+        find.byType(SnackBar),
+        timeout: const Duration(seconds: 2),
+      );
+      return;
+    }
+  }
+  final ok = find.text('OK').hitTestable();
+  if (ok.evaluate().isNotEmpty) {
+    await tester.tap(ok.first, warnIfMissed: false);
+    await e2ePumpUntilFinderEmpty(
+      tester,
+      find.text('OK').hitTestable(),
+      timeout: const Duration(seconds: 2),
+    );
+    return;
+  }
+  if (find.byType(AlertDialog).evaluate().isNotEmpty) {
+    for (final label in ['Close', 'OK', 'Cancel', 'Yes']) {
+      final hit = find
+          .descendant(of: find.byType(AlertDialog), matching: find.text(label))
+          .hitTestable();
+      if (hit.evaluate().isNotEmpty) {
+        await tester.tap(hit.first, warnIfMissed: false);
+        await e2ePumpUntilFinderEmpty(
+          tester,
+          find.byType(AlertDialog),
+          timeout: const Duration(seconds: 2),
+        );
+        return;
+      }
+    }
+    await tester.binding.handlePopRoute();
+    await e2ePumpUntilFinderEmpty(
+      tester,
+      find.byType(AlertDialog),
+      timeout: const Duration(seconds: 2),
+    );
+    return;
+  }
+  if (find.byType(BottomSheet).evaluate().isNotEmpty) {
+    await e2eCloseBottomSheet(tester, perf: perf);
+  }
+  if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
+    final closeCandidates = <Finder>[
+      find.text('Cancel'),
+      find.text('Close'),
+      find.byIcon(Icons.close),
+      find.byIcon(Icons.arrow_back),
+    ];
+    for (final candidate in closeCandidates) {
+      final tappable = candidate.hitTestable();
+      if (tappable.evaluate().isNotEmpty) {
+        await tester.tap(tappable.first, warnIfMissed: false);
+        await e2ePumpFor(tester, const Duration(milliseconds: 150));
+        return;
+      }
+    }
+    await tester.binding.handlePopRoute();
+    await e2ePumpFor(tester, const Duration(milliseconds: 150));
+  }
+}
+
+/// Expands one collapsed [ExpansionTile] per outer iteration (panel rebuild safe).
+Future<void> e2eExpandEachExpansionTileOnce(WidgetTester tester) async {
+  for (var safety = 0; safety < 32; safety++) {
+    final tiles = find.byType(ExpansionTile);
+    final n = tiles.evaluate().length;
+    if (n == 0) {
+      return;
+    }
+
+    var expandedOne = false;
+    for (var j = 0; j < n; j++) {
+      final expandIcon = find.descendant(
+        of: tiles.at(j),
+        matching: find.byIcon(Icons.expand_more),
+      );
+      if (expandIcon.evaluate().isEmpty) {
+        continue;
+      }
+      final iconHit = expandIcon.first;
+      await tester.ensureVisible(iconHit);
+      await e2ePumpFor(tester, const Duration(milliseconds: 80));
+      await tester.tap(iconHit, warnIfMissed: false);
+      await e2ePumpFor(tester, const Duration(milliseconds: 250));
+      expandedOne = true;
+      break;
+    }
+    if (!expandedOne) {
+      return;
+    }
+  }
+}
+
 Future<void> e2eWaitUntilFound(
   WidgetTester tester,
   Finder finder, {
@@ -80,6 +256,50 @@ Future<void> e2eWaitUntilFound(
   perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
   fail(
     'Timed out after ${timeout.inSeconds}s waiting for $finder. '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
+/// Waits until the shell shows a tappable **New Game** control (replaces a
+/// fixed post-[bootstrapForIntegrationTest] pump; GitHub #2336 / AC4–AC5).
+Future<void> e2eWaitForNewGameEntry(
+  WidgetTester tester, {
+  Duration timeout = const Duration(seconds: 15),
+  E2ePerfLog? perf,
+}) async {
+  await e2eWaitUntilFound(
+    tester,
+    find.text('New Game').hitTestable(),
+    timeout: timeout,
+    perf: perf,
+    phaseName: 'wait_for_new_game_entry',
+  );
+}
+
+/// Pumps until [condition] returns true, evaluating [condition] before the
+/// first pump and using exponential backoff on pump intervals (same cap as
+/// [e2eWaitUntilFound]). Refs GitHub #2336 (`pumpUntil` helper).
+Future<void> e2ePumpUntil(
+  WidgetTester tester,
+  bool Function() condition, {
+  required Duration timeout,
+  E2ePerfLog? perf,
+  String phaseName = 'pump_until',
+}) async {
+  final sw = Stopwatch()..start();
+  perf?.bumpCounter('pump_until_calls', meta: 'phase=$phaseName');
+  var stepMs = 25;
+  while (sw.elapsed < timeout) {
+    if (condition()) {
+      perf?.timing(phaseName, sw.elapsed, meta: 'result=met');
+      return;
+    }
+    await tester.pump(Duration(milliseconds: stepMs));
+    stepMs = math.min(500, stepMs * 2);
+  }
+  perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
+  fail(
+    'Timed out after ${timeout.inSeconds}s in e2ePumpUntil ($phaseName). '
     'Last exception: ${tester.takeException()}',
   );
 }
@@ -111,6 +331,44 @@ Future<void> e2eWaitUntilAnyFinderHitTestable(
   perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
   fail(
     'Timed out after ${timeout.inSeconds}s waiting for any of $finders. '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
+/// Polls until the next-turn map chip label changes from [turnLabelBefore].
+///
+/// Evaluates the label **before** the first pump; uses [e2eAdaptivePollRampAfterIdle]
+/// on idle pumps (GitHub #2336 / AC5).
+Future<Duration> e2eWaitForNextTurnLabelAdvance(
+  WidgetTester tester, {
+  required String turnLabelBefore,
+  required Duration timeout,
+  E2ePerfLog? perf,
+}) async {
+  final sw = Stopwatch()..start();
+  var nextTurnPollMs = 25;
+  while (sw.elapsed < timeout) {
+    final turnAfterFinder = find.descendant(
+      of: find.byKey(kGameMapNextTurnButtonKey),
+      matching: find.byType(Text),
+    );
+    if (turnAfterFinder.evaluate().isNotEmpty) {
+      final turnAfter = turnAfterFinder.evaluate().single.widget as Text;
+      if (turnAfter.data != turnLabelBefore) {
+        perf?.timing(
+          'next_turn_wall_clock',
+          sw.elapsed,
+          meta: 'result=advanced',
+        );
+        return sw.elapsed;
+      }
+    }
+    await tester.pump(Duration(milliseconds: nextTurnPollMs));
+    nextTurnPollMs = e2eAdaptivePollRampAfterIdle(nextTurnPollMs);
+  }
+  perf?.timing('next_turn_wall_clock', sw.elapsed, meta: 'result=timeout');
+  fail(
+    'Next turn label did not advance within ${timeout.inSeconds}s. '
     'Last exception: ${tester.takeException()}',
   );
 }
@@ -311,7 +569,9 @@ Future<void> e2eEnsureRelocated64pxPngDecode(
   expect(
     failures,
     isEmpty,
-    reason: failures.isEmpty ? null : '$decodeFailuresPrefix\n${failures.join('\n')}',
+    reason: failures.isEmpty
+        ? null
+        : '$decodeFailuresPrefix\n${failures.join('\n')}',
   );
 }
 
@@ -322,19 +582,17 @@ Future<void> e2eEnsureRelocated64pxPngDecode(
 /// should still invoke at most once per [testWidgets] unless a future shared
 /// fixture deduplicates across tests (GitHub #2336).
 Future<void> e2eEnsureAllRelocated64pxPngsLoad() async {
-  await e2eEnsureRelocated64pxPngDecode(
-    <String>{
-      ...kCivilianIconSlugs.map(
-        (slug) => 'assets/icons/64/ui_icon_civ_$slug.png',
-      ),
-      ...kResourceIconIds.map(
-        (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
-      ),
-      ...kTownIconIds.map((iconId) => 'assets/icons/64/ui_icon_com_$iconId.png'),
-      ...kProvinceLabelIconIds.map(
-        (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
-      ),
-      kFleetMapIcon64PngAssetPath,
-    },
-  );
+  await e2eEnsureRelocated64pxPngDecode(<String>{
+    ...kCivilianIconSlugs.map(
+      (slug) => 'assets/icons/64/ui_icon_civ_$slug.png',
+    ),
+    ...kResourceIconIds.map(
+      (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
+    ),
+    ...kTownIconIds.map((iconId) => 'assets/icons/64/ui_icon_com_$iconId.png'),
+    ...kProvinceLabelIconIds.map(
+      (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
+    ),
+    kFleetMapIcon64PngAssetPath,
+  });
 }
