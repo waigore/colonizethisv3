@@ -117,10 +117,13 @@ void _logExtractionAutoTransportInterception(
 /// falls back to [defaultCargoHoldsStub] per SPEC/program/extraction-pipeline.md § Cargo holds.
 int cargoHoldsForHomeFleet(Game game, String playerId) {
   final homeFleetId = homeFleetIdFor(playerId);
-  final fleets = game.worldState.fleets;
-  final homeFleet = fleets
-      .where((f) => f.id == homeFleetId && f.ownerId == playerId)
-      .firstOrNull;
+  Fleet? homeFleet;
+  for (final f in game.worldState.fleets) {
+    if (f.id == homeFleetId && f.ownerId == playerId) {
+      homeFleet = f;
+      break;
+    }
+  }
   if (homeFleet == null) {
     return defaultCargoHoldsStub;
   }

@@ -445,13 +445,20 @@ Game runNavalInterceptionCombatPhase(
         (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
         kTurnResolutionLcgMask;
     final zoneRegionId = regionIdForSeaZone(topology, battle.seaZoneId);
-    final fleetsInZone = state.worldState.fleets.where(
-      (f) => f.seaZoneId == battle.seaZoneId,
-    );
-    final regionId =
-        zoneRegionId ??
-        (fleetsInZone.isEmpty ? null : fleetsInZone.first.regionId) ??
-        kRegionOldWorld;
+    // Single-pass first-match over fleets (Refs #2394): avoids the
+    // `.where(...)` lazy chain plus `isEmpty`/`first` re-iteration and bounds
+    // the per-battle scan cost regardless of fleet count when the topology
+    // resolves the zone region directly.
+    String? fallbackRegionId;
+    if (zoneRegionId == null) {
+      for (final f in state.worldState.fleets) {
+        if (f.seaZoneId == battle.seaZoneId) {
+          fallbackRegionId = f.regionId;
+          break;
+        }
+      }
+    }
+    final regionId = zoneRegionId ?? fallbackRegionId ?? kRegionOldWorld;
     state = applyNavalBattleResults(
       state,
       battle,

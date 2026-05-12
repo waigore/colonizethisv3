@@ -73,6 +73,7 @@ class IncrementalCandidateValidator {
   Set<String>? _cachedCivilianDraftMoveUnitIds;
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildOrders;
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildAndWorkOrders;
+  Map<String, Army>? _cachedArmiesById;
 
   bool isMoveAccepted(MoveOrder candidate) {
     const validator = MoveValidator();
@@ -114,8 +115,31 @@ class IncrementalCandidateValidator {
   bool isArmyMoveAccepted(ArmyMoveOrder candidate) {
     const validator = ArmyMoveValidator();
     return validator
-        .validate(candidate, game, playerId, diplomaticOrders, view, topology)
+        .validate(
+          candidate,
+          game,
+          playerId,
+          diplomaticOrders,
+          view,
+          topology,
+          armiesById: _armiesById(),
+        )
         .isAccepted;
+  }
+
+  /// Lazy O(1) army lookup map. Cached for the lifetime of this validator
+  /// (single suggestion pass). Avoids rebuilding `armies.where(id == ...)` per
+  /// candidate probe (Refs #2394, SPEC/program/order-suggestions.md).
+  Map<String, Army> _armiesById() {
+    final cached = _cachedArmiesById;
+    if (cached != null) {
+      return cached;
+    }
+    final computed = <String, Army>{
+      for (final a in game.worldState.armies) a.id: a,
+    };
+    _cachedArmiesById = computed;
+    return computed;
   }
 
   bool isNavalMoveAccepted(NavalMoveOrder candidate) {
