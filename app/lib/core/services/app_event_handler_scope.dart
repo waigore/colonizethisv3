@@ -35,6 +35,8 @@ import 'app_event_handler_debug_spawn_ship.dart'
     show applyDebugShipSpawnAtCapitalHomeFleet;
 import 'app_event_handler_debug_stockpile.dart' show applyDebugStockpileCredit;
 import 'app_event_handler_debug_treasury.dart' show applyDebugTreasuryCredit;
+import 'app_event_handler_debug_worker_pool.dart'
+    show applyDebugWorkerPoolCredit;
 import 'debug_command_helpers.dart' show DebugCommandResult;
 
 /// [OpenDialogEvent] id for [TrainCiviliansDialog]. SPEC/program/app-ui-wiring.md.

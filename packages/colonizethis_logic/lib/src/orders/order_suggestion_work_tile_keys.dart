@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
+import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
 import 'order_suggestion_work_tile_prefilter.dart';
@@ -21,9 +22,7 @@ Set<String> getValidWorkOrderTileKeys(
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  final unit = allUnitsFromWorld(
-    game.worldState,
-  ).where((u) => u.id == unitId).firstOrNull;
+  final unit = game.worldState.tryGetUnitById(unitId);
   if (unit == null || unit.ownerId != playerId) return {};
   if (unit.currentWork != null) return {};
   if (playerHasPendingWorkOrderForUnit(currentOrders, playerId, unitId)) {
@@ -77,6 +76,11 @@ Set<String> getValidWorkOrderTileKeys(
 /// the order engine for efficiency.
 ///
 /// Spec: SPEC/program/order-suggestions.md § Pre-filtering by work target type.
+///
+/// When [sharedCandidateValidator] is non-null, it must have been built for the
+/// same `game`, `topology`, `view.playerId`, `currentOrders`, and
+/// `tileMapByRegion` as this call (amortizes [buildPlayerView] / validator setup
+/// across multi-unit enumeration; Refs #2394).
 Set<String> getValidWorkOrderTileKeysWithVisibility({
   required Game game,
   required MapTopology topology,
@@ -85,10 +89,13 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   required String workTarget,
   required Orders currentOrders,
   Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
-  final unit = allUnitsFromWorld(
-    game.worldState,
-  ).where((u) => u.id == unitId).firstOrNull;
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == view.playerId,
+  );
+  final unit = game.worldState.tryGetUnitById(unitId);
   if (unit == null || unit.ownerId != view.playerId) {
     return {};
   }
@@ -121,13 +128,15 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     tileMapByRegion: tileMapByRegion,
   );
   final sortedVisible = sortedVisibleWorkTargetCandidates(view, raw);
-  final candidateValidator = buildIncrementalCandidateValidator(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    baseOrders: currentOrders,
-    tileMapByRegion: tileMapByRegion,
-  );
+  final candidateValidator =
+      sharedCandidateValidator ??
+      buildIncrementalCandidateValidator(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        baseOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
 
   final valid = <String>{};
   for (final tileKey in sortedVisible) {

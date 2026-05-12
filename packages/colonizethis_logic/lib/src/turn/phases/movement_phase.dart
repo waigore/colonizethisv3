@@ -52,11 +52,14 @@ Game runMovementPhase(
     }
 
     void recordSpyProvinceChanges(RegionData before, RegionData after) {
+      final afterById = <String, Unit>{};
+      for (final x in after.units) {
+        afterById.putIfAbsent(x.id, () => x);
+      }
       for (final u in before.units) {
         if (!isSpyUnit(u.type)) continue;
-        final idx = after.units.indexWhere((x) => x.id == u.id);
-        if (idx < 0) continue;
-        final afterUnit = after.units[idx];
+        final afterUnit = afterById[u.id];
+        if (afterUnit == null) continue;
         if (afterUnit.locationProvinceId != u.locationProvinceId) {
           recordSpyLeft(u.ownerId, u.locationProvinceId);
         }
@@ -217,19 +220,36 @@ Game applyImplicitBundledCivilianWorkOrderMoves(
       }
 
       final destinationRegion = ProvinceId.regionIdFrom(destination);
+      final sourceRegion = ProvinceId.regionIdFrom(unit.locationProvinceId);
       final movedUnit = unit.copyWith(
         locationProvinceId: destination,
         tileKey: destinationTile,
       );
-      state = state.copyWith(
-        worldState: state.worldState.mapBothRegionUnits((rid, units) {
-          final next = [...units]..removeWhere((u) => u.id == unit.id);
-          if (rid == destinationRegion) {
-            next.add(movedUnit);
-          }
-          return next;
-        }),
-      );
+      var ws = state.worldState;
+      if (sourceRegion == destinationRegion) {
+        ws = ws.updateRegionById(sourceRegion, (region) {
+          final next = <Unit>[
+            for (final u in region.units)
+              if (u.id != unit.id) u,
+          ]..add(movedUnit);
+          return RegionData(provinces: region.provinces, units: next);
+        });
+      } else {
+        ws = ws.updateRegionById(sourceRegion, (region) {
+          final next = <Unit>[
+            for (final u in region.units)
+              if (u.id != unit.id) u,
+          ];
+          return RegionData(provinces: region.provinces, units: next);
+        });
+        ws = ws.updateRegionById(destinationRegion, (region) {
+          return RegionData(
+            provinces: region.provinces,
+            units: [...region.units, movedUnit],
+          );
+        });
+      }
+      state = state.copyWith(worldState: ws);
       unitById[unit.id] = movedUnit;
       view = _playerViewWithMovedUnit(view, movedUnit);
       viewByPlayerId[playerId] = view;

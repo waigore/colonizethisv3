@@ -175,11 +175,13 @@ bool _armyMoveNeedsDeclareWarTrial(
   String playerId,
   String? destOwnerId,
   List<DiplomaticOrder> diplo,
+  DiplomacyFactionMembership factionMembership,
 ) {
   if (destOwnerId == null || destOwnerId.isEmpty || destOwnerId == playerId) {
     return false;
   }
-  if (!isGreatPower(game, destOwnerId) && !isMinorOrTribe(game, destOwnerId)) {
+  if (!isGreatPower(game, destOwnerId, factionMembership: factionMembership) &&
+      !isMinorOrTribe(game, destOwnerId, factionMembership: factionMembership)) {
     return false;
   }
   return !canAttackWithWarOrDeclaring(game, playerId, destOwnerId, diplo);
@@ -198,6 +200,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
   final diplo =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ??
       const <DiplomaticOrder>[];
+  final factionMembership = DiplomacyFactionMembership.from(game);
   final raw = armyMoveCandidateDestinationProvinceIds(
     game: game,
     topology: topology,
@@ -220,7 +223,13 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     if (acceptedBase) {
       requiresDeclare = false;
     } else {
-      if (!_armyMoveNeedsDeclareWarTrial(game, playerId, ownerId, diplo)) {
+      if (!_armyMoveNeedsDeclareWarTrial(
+        game,
+        playerId,
+        ownerId,
+        diplo,
+        factionMembership,
+      )) {
         continue;
       }
       final trial = ordersWithAppendedDiplomaticOrder(
