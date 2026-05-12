@@ -81,11 +81,7 @@ Game applyCapitalReassignmentAfterCombat(
     if (capProvinceId == null || player.capitalTile == null) continue;
     final regionId = ProvinceId.regionIdFrom(capProvinceId);
     final regionTopology = topologyByRegion?[regionId] ?? topology;
-    final region = regionDataForId(state.worldState, regionId);
-    if (region == null) continue;
-    final province = region.provinces
-        .where((p) => p.id == capProvinceId)
-        .firstOrNull;
+    final province = state.worldState.tryGetProvince(capProvinceId);
     if (province == null) continue;
     if (province.ownerId == player.id) continue;
 
@@ -115,9 +111,7 @@ Game applyCapitalReassignmentAfterCombat(
       _log.e(msg, error: err, stackTrace: StackTrace.current);
       throw CapitalReassignmentFatalError(msg, err);
     }
-    final newProvince = region.provinces
-        .where((p) => p.id == newProvinceId)
-        .firstOrNull;
+    final newProvince = game.worldState.tryGetProvince(newProvinceId);
     if (newProvince == null) {
       final msg =
           'capital reassignment: province $newProvinceId not found in region $regionId for player ${player.id}';
