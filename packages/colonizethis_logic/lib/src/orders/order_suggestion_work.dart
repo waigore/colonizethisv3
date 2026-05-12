@@ -170,6 +170,16 @@ List<WorkOrder> suggestWorkOrders(
     playerId,
   );
 
+  // One validator per suggestion pass: amortizes buildPlayerView + unit map
+  // across all units (Refs #2394, IncrementalCandidateValidator.forPlayer).
+  final candidateValidator = buildIncrementalCandidateValidator(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    baseOrders: currentOrders,
+    tileMapByRegion: tileMapByRegion,
+  );
+
   for (final unit in view.ownUnits) {
     _addWorkSuggestionsForUnit(
       view: view,
@@ -185,6 +195,7 @@ List<WorkOrder> suggestWorkOrders(
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
       suggestions: suggestions,
+      candidateValidator: candidateValidator,
     );
   }
 
@@ -223,6 +234,7 @@ void _addWorkSuggestionsForUnit({
   required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
   required Set<String> devExclusiveReservedTiles,
   required List<WorkOrder> suggestions,
+  required IncrementalCandidateValidator candidateValidator,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
   if (unit.currentWork != null) return;
@@ -239,13 +251,6 @@ void _addWorkSuggestionsForUnit({
   final province = view.provinceByRegionAndId(regionId, provinceId);
   final ownerId = province?.ownerId;
   final tilesInProvince = tileKeysByRegion[regionId]?[provinceId] ?? const [];
-  final candidateValidator = buildIncrementalCandidateValidator(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    baseOrders: currentOrders,
-    tileMapByRegion: tileMapByRegion,
-  );
 
   if (isExplorer) {
     _addExplorerWorkSuggestionsForUnit(
