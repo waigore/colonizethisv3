@@ -26,10 +26,10 @@ Future<bool> _pollUntilNavalPanelVisible(
   }
   var stepMs = 25;
   while (poll.elapsed < budget) {
-    await tester.pump(Duration(milliseconds: stepMs));
     if (navalPanel.evaluate().isNotEmpty) {
       return true;
     }
+    await tester.pump(Duration(milliseconds: stepMs));
     stepMs = math.min(500, stepMs * 2);
   }
   return false;
@@ -43,8 +43,6 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
   final sw = Stopwatch()..start();
   var navalPollMs = 25;
   while (sw.elapsed < _kMaxUiResponseWait) {
-    await tester.pump(Duration(milliseconds: navalPollMs));
-    navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
     if (navalPanel.evaluate().isNotEmpty) {
       perf?.timing('open_panel_naval', phaseSw.elapsed);
       return;
@@ -80,6 +78,8 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
         return;
       }
       navalPollMs = 25;
+      await tester.pump(Duration(milliseconds: navalPollMs));
+      navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
       continue;
     }
     final railHit = btn.hitTestable();
@@ -98,6 +98,8 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
       await e2eDismissTransientUi(tester, perf: perf);
       navalPollMs = 25;
     }
+    await tester.pump(Duration(milliseconds: navalPollMs));
+    navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
   }
   fail(
     'Timed out after ${_kMaxUiResponseWait.inSeconds}s opening naval panel. '
@@ -236,13 +238,12 @@ Future<void> _pickMoveDestinationAndConfirm(
   final confirm = find.text(l10n.common_confirm).hitTestable();
   expect(confirm, findsWidgets);
   await tester.tap(confirm.first, warnIfMissed: false);
-  final dialogGone = Stopwatch()..start();
-  while (dialogGone.elapsed < const Duration(seconds: 2)) {
-    if (find.byType(AlertDialog).evaluate().isEmpty) {
-      break;
-    }
-    await tester.pump(const Duration(milliseconds: 25));
-  }
+  await e2ePumpUntil(
+    tester,
+    () => find.byType(AlertDialog).evaluate().isEmpty,
+    timeout: const Duration(seconds: 2),
+    phaseName: 'pump_until_move_dialog_closed',
+  );
   ensureBudget('after confirm');
 }
 
@@ -281,13 +282,13 @@ Future<void> _tryNavalMoveSegment(
     final cancel = find.text(l10n.common_cancel).hitTestable();
     expect(cancel, findsOneWidget);
     await tester.tap(cancel, warnIfMissed: false);
-    final cancelGone = Stopwatch()..start();
-    while (cancelGone.elapsed < const Duration(seconds: 2)) {
-      if (find.byType(AlertDialog).evaluate().isEmpty) {
-        break;
-      }
-      await tester.pump(const Duration(milliseconds: 25));
-    }
+    await e2ePumpUntil(
+      tester,
+      () => find.byType(AlertDialog).evaluate().isEmpty,
+      timeout: const Duration(seconds: 2),
+      perf: perf,
+      phaseName: 'pump_until_cancel_move_dialog_closed',
+    );
     perf?.timing(
       'fleet_move_segment',
       phaseSw.elapsed,
