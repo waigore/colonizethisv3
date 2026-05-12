@@ -6,8 +6,8 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../goal_manager.dart';
-import '../perception.dart';
+import 'goal_manager.dart';
+import '../perception/perception_snapshot.dart';
 import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
 import 'war_desire_calculator.dart';
@@ -104,6 +104,7 @@ List<int> computeDiplomaticCandidateScores({
       ),
     );
   }
+
   return candidates.map((o) {
     var s = 50;
     switch (o.type) {
