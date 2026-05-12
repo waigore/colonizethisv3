@@ -9,9 +9,13 @@ Game applyArmyCombine({
 }) {
   if (armyIds.length < 2) return game;
 
-  final selected = game.worldState.armies
-      .where((a) => armyIds.contains(a.id) && a.ownerId == playerId)
-      .toList();
+  final idSet = armyIds.toSet();
+  final selected = <Army>[];
+  for (final a in game.worldState.armies) {
+    if (a.ownerId == playerId && idSet.contains(a.id)) {
+      selected.add(a);
+    }
+  }
   if (selected.length < 2) return game;
 
   final province = selected.first.stationedProvinceId;
@@ -20,9 +24,15 @@ Game applyArmyCombine({
   }
 
   Army target;
-  final home = selected.where((a) => a.isHomeArmy).toList();
-  if (home.isNotEmpty) {
-    target = home.first;
+  Army? homeArmy;
+  for (final a in selected) {
+    if (a.isHomeArmy) {
+      homeArmy = a;
+      break;
+    }
+  }
+  if (homeArmy != null) {
+    target = homeArmy;
   } else {
     final sorted = [...selected]..sort((a, b) => a.id.compareTo(b.id));
     target = sorted.first;
@@ -55,10 +65,15 @@ Game applyArmySplit({
 }) {
   if (unitIdsToMove.isEmpty) return game;
 
-  final sourceList =
-      game.worldState.armies.where((a) => a.id == sourceArmyId).toList();
-  final source = sourceList.isEmpty ? null : sourceList.first;
-  if (source == null || source.ownerId != playerId) return game;
+  Army? found;
+  for (final a in game.worldState.armies) {
+    if (a.id == sourceArmyId) {
+      found = a;
+      break;
+    }
+  }
+  if (found == null || found.ownerId != playerId) return game;
+  final source = found;
   if (source.isHomeArmy) {
     // Home army may split per SPEC (naval parity).
   }

@@ -9,12 +9,6 @@ sanctions:
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_explorer.dart
-    line: 296
-    rationale: Cross-region explorer candidate materialization for suggestion pool.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
   - path: packages/colonizethis_logic/lib/src/world/connectivity_resolver.dart
     line: 176
     rationale: Single dual-region pass buckets owned provinces and town-tile keys
