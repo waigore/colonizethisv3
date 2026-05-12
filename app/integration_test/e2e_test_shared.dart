@@ -100,6 +100,13 @@ Future<void> e2eWaitUntilAnyFinderHitTestable(
   );
 }
 
+/// Next idle poll step for E2E `while` loops (GitHub #2336 / AC5): doubles the
+/// previous pump duration until [maxMs] to reduce wasted frames on headless Linux.
+int e2eNextIdlePollStepMs(int currentMs, {int maxMs = 500}) {
+  final next = currentMs * 2;
+  return next > maxMs ? maxMs : next;
+}
+
 /// Loads and decodes each path with bounded concurrency (overlapping I/O +
 /// image decode completion) instead of strictly serial awaits.
 Future<List<String>> e2eDecodePngAssetPathsParallel(

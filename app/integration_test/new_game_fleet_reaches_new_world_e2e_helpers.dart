@@ -93,13 +93,15 @@ Future<void> _closeBottomSheet(WidgetTester tester, {_E2ePerfLog? perf}) async {
   }
 
   final sw = Stopwatch()..start();
+  var pollMs = 25;
   while (sw.elapsed < _kMaxUiResponseWait) {
     if (!anyPanelOpen()) {
       perf?.timing('close_bottom_sheet', sw.elapsed);
       return;
     }
     await tester.binding.handlePopRoute();
-    await _pumpFor(tester, const Duration(milliseconds: 250));
+    await tester.pump(Duration(milliseconds: pollMs));
+    pollMs = e2eNextIdlePollStepMs(pollMs);
   }
 
   fail(
@@ -157,8 +159,8 @@ Future<void> _bootstrapNewGameToMap(
 
   final setupDeadline = DateTime.now().add(_kBootstrapNewGameOverallCap);
   var reachedMap = false;
+  var mapPollMs = 25;
   while (DateTime.now().isBefore(setupDeadline)) {
-    await tester.pump(const Duration(milliseconds: 100));
     if (find.text('Could not create game').evaluate().isNotEmpty) {
       fail(
         'New game setup failed (error dialog). '
@@ -168,16 +170,21 @@ Future<void> _bootstrapNewGameToMap(
     final introOpen = find.byType(GameStartIntroOverlay).evaluate().isNotEmpty;
     if (introOpen) {
       await _tapGameStartIntroOverlayContinueIfPresent(tester);
+      mapPollMs = 25;
       continue;
     }
     final creating = find.text('Creating game').evaluate().isNotEmpty;
     if (creating) {
+      await tester.pump(Duration(milliseconds: mapPollMs));
+      mapPollMs = e2eNextIdlePollStepMs(mapPollMs);
       continue;
     }
     if (find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty) {
       reachedMap = true;
       break;
     }
+    await tester.pump(Duration(milliseconds: mapPollMs));
+    mapPollMs = e2eNextIdlePollStepMs(mapPollMs);
   }
   if (!reachedMap) {
     fail(
@@ -221,11 +228,13 @@ Future<bool> _pollUntilNavalPanelVisible(
   Duration budget,
 ) async {
   final poll = Stopwatch()..start();
+  var stepMs = 25;
   while (poll.elapsed < budget) {
-    await tester.pump(const Duration(milliseconds: 25));
     if (navalPanel.evaluate().isNotEmpty) {
       return true;
     }
+    await tester.pump(Duration(milliseconds: stepMs));
+    stepMs = e2eNextIdlePollStepMs(stepMs);
   }
   return false;
 }
@@ -236,22 +245,25 @@ Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
   final markerBtn = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
   final btn = find.byKey(kEmpireNavalUnitsButtonKey);
   final sw = Stopwatch()..start();
+  var idlePollMs = 25;
   while (sw.elapsed < _kMaxUiResponseWait) {
-    await tester.pump(const Duration(milliseconds: 100));
     if (navalPanel.evaluate().isNotEmpty) {
       perf?.timing('open_panel_naval', phaseSw.elapsed);
       return;
     }
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
       await _closeBottomSheet(tester, perf: perf);
+      idlePollMs = 25;
       continue;
     }
     if (find.byType(AlertDialog).evaluate().isNotEmpty) {
       await _dismissTransientUi(tester, perf: perf);
+      idlePollMs = 25;
       continue;
     }
     if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
       await _dismissTransientUi(tester, perf: perf);
+      idlePollMs = 25;
       continue;
     }
     final markerHit = markerBtn.hitTestable();
@@ -265,6 +277,7 @@ Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
         perf?.timing('open_panel_naval', phaseSw.elapsed);
         return;
       }
+      idlePollMs = 25;
       continue;
     }
     final railHit = btn.hitTestable();
@@ -278,9 +291,12 @@ Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
         perf?.timing('open_panel_naval', phaseSw.elapsed);
         return;
       }
-    } else {
-      await _dismissTransientUi(tester, perf: perf);
+      idlePollMs = 25;
+      continue;
     }
+    await _dismissTransientUi(tester, perf: perf);
+    await tester.pump(Duration(milliseconds: idlePollMs));
+    idlePollMs = e2eNextIdlePollStepMs(idlePollMs);
   }
   fail(
     'Timed out after ${_kMaxUiResponseWait.inSeconds}s opening naval panel. '
