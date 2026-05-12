@@ -15,6 +15,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Next interval after an idle poll pump in E2E busy-wait loops (25→50→75→100 ms).
+/// Aligns with [e2eWaitUntilFound] backoff (`SPEC/program/e2e-integration-tests.md`, #2336).
+int e2eAdaptivePollRampAfterIdle(int previousMs) {
+  if (previousMs < 100) {
+    return previousMs + 25;
+  }
+  return 100;
+}
+
 class E2ePerfLog {
   E2ePerfLog(this.testName);
 
@@ -325,7 +334,9 @@ Future<void> e2eEnsureRelocated64pxPngDecode(
   expect(
     failures,
     isEmpty,
-    reason: failures.isEmpty ? null : '$decodeFailuresPrefix\n${failures.join('\n')}',
+    reason: failures.isEmpty
+        ? null
+        : '$decodeFailuresPrefix\n${failures.join('\n')}',
   );
 }
 
@@ -336,19 +347,17 @@ Future<void> e2eEnsureRelocated64pxPngDecode(
 /// should still invoke at most once per [testWidgets] unless a future shared
 /// fixture deduplicates across tests (GitHub #2336).
 Future<void> e2eEnsureAllRelocated64pxPngsLoad() async {
-  await e2eEnsureRelocated64pxPngDecode(
-    <String>{
-      ...kCivilianIconSlugs.map(
-        (slug) => 'assets/icons/64/ui_icon_civ_$slug.png',
-      ),
-      ...kResourceIconIds.map(
-        (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
-      ),
-      ...kTownIconIds.map((iconId) => 'assets/icons/64/ui_icon_com_$iconId.png'),
-      ...kProvinceLabelIconIds.map(
-        (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
-      ),
-      kFleetMapIcon64PngAssetPath,
-    },
-  );
+  await e2eEnsureRelocated64pxPngDecode(<String>{
+    ...kCivilianIconSlugs.map(
+      (slug) => 'assets/icons/64/ui_icon_civ_$slug.png',
+    ),
+    ...kResourceIconIds.map(
+      (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
+    ),
+    ...kTownIconIds.map((iconId) => 'assets/icons/64/ui_icon_com_$iconId.png'),
+    ...kProvinceLabelIconIds.map(
+      (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
+    ),
+    kFleetMapIcon64PngAssetPath,
+  });
 }

@@ -14,10 +14,7 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: Center(
-            child: TextButton(
-              onPressed: () {},
-              child: const Text('New Game'),
-            ),
+            child: TextButton(onPressed: () {}, child: const Text('New Game')),
           ),
         ),
       ),

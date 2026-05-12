@@ -89,15 +89,15 @@ Future<void> _closeBottomSheet(WidgetTester tester, {E2ePerfLog? perf}) async {
   }
 
   final sw = Stopwatch()..start();
-  var pollMs = 25;
+  var closePollMs = 25;
   while (sw.elapsed < _kMaxUiResponseWait) {
     if (!anyPanelOpen()) {
       perf?.timing('close_bottom_sheet', sw.elapsed);
       return;
     }
     await tester.binding.handlePopRoute();
-    await tester.pump(Duration(milliseconds: pollMs));
-    pollMs = e2eNextIdlePollStepMs(pollMs);
+    await tester.pump(Duration(milliseconds: closePollMs));
+    closePollMs = e2eAdaptivePollRampAfterIdle(closePollMs);
   }
 
   fail(
@@ -146,7 +146,7 @@ Future<bool> _pollUntilNavalPanelVisible(
     if (navalPanel.evaluate().isNotEmpty) {
       return true;
     }
-    stepMs = e2eNextIdlePollStepMs(stepMs);
+    stepMs = e2eAdaptivePollRampAfterIdle(stepMs);
   }
   return false;
 }
@@ -157,7 +157,7 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
   final markerBtn = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
   final btn = find.byKey(kEmpireNavalUnitsButtonKey);
   final sw = Stopwatch()..start();
-  var idlePollMs = 25;
+  var navalPollMs = 25;
   while (sw.elapsed < _kMaxUiResponseWait) {
     if (navalPanel.evaluate().isNotEmpty) {
       perf?.timing('open_panel_naval', phaseSw.elapsed);
@@ -165,17 +165,17 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
     }
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
       await _closeBottomSheet(tester, perf: perf);
-      idlePollMs = 25;
+      navalPollMs = 25;
       continue;
     }
     if (find.byType(AlertDialog).evaluate().isNotEmpty) {
       await _dismissTransientUi(tester, perf: perf);
-      idlePollMs = 25;
+      navalPollMs = 25;
       continue;
     }
     if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
       await _dismissTransientUi(tester, perf: perf);
-      idlePollMs = 25;
+      navalPollMs = 25;
       continue;
     }
     final markerHit = markerBtn.hitTestable();
@@ -189,7 +189,7 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
         perf?.timing('open_panel_naval', phaseSw.elapsed);
         return;
       }
-      idlePollMs = 25;
+      navalPollMs = 25;
       continue;
     }
     final railHit = btn.hitTestable();
@@ -203,12 +203,12 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
         perf?.timing('open_panel_naval', phaseSw.elapsed);
         return;
       }
-      idlePollMs = 25;
+      navalPollMs = 25;
       continue;
     }
     await _dismissTransientUi(tester, perf: perf);
-    await tester.pump(Duration(milliseconds: idlePollMs));
-    idlePollMs = e2eNextIdlePollStepMs(idlePollMs);
+    await tester.pump(Duration(milliseconds: navalPollMs));
+    navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
   }
   fail(
     'Timed out after ${_kMaxUiResponseWait.inSeconds}s opening naval panel. '
