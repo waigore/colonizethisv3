@@ -209,7 +209,7 @@ rules:
 
   - rule_id: repo.logic_test_file_size
     group: structure
-    title: colonizethis_logic package tests must stay at or below 400 physical lines (PR-incremental)
+    title: colonizethis_logic package tests must stay at or below 400 physical lines
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_logic_test_file_size.dart
