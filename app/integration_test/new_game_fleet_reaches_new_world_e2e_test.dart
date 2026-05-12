@@ -71,7 +71,7 @@ void main() {
     final bootstrapSw = Stopwatch()..start();
     await bootstrapForIntegrationTest();
     await tester.pump();
-    await _pumpFor(tester, const Duration(milliseconds: 500));
+    await e2eWaitForNewGameEntry(tester, perf: perf);
     perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
 
     final wallClock = Stopwatch()..start();
@@ -164,7 +164,7 @@ void main() {
       final bootstrapSw = Stopwatch()..start();
       await bootstrapForIntegrationTest();
       await tester.pump();
-      await _pumpFor(tester, const Duration(milliseconds: 500));
+      await e2eWaitForNewGameEntry(tester, perf: perf);
       perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
 
       final wallClock = Stopwatch()..start();

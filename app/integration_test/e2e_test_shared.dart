@@ -67,6 +67,22 @@ Future<void> e2eWaitUntilFound(
   );
 }
 
+/// Waits until the shell shows a tappable **New Game** control (replaces a
+/// fixed post-[bootstrapForIntegrationTest] pump; GitHub #2336 / AC4–AC5).
+Future<void> e2eWaitForNewGameEntry(
+  WidgetTester tester, {
+  Duration timeout = const Duration(seconds: 15),
+  E2ePerfLog? perf,
+}) async {
+  await e2eWaitUntilFound(
+    tester,
+    find.text('New Game').hitTestable(),
+    timeout: timeout,
+    perf: perf,
+    phaseName: 'wait_for_new_game_entry',
+  );
+}
+
 /// Returns after the first [Finder] has at least one hit-testable match.
 Future<void> e2eWaitUntilAnyFinderHitTestable(
   WidgetTester tester,
