@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import 'order_validators.dart';
@@ -73,6 +74,18 @@ class IncrementalCandidateValidator {
   Set<String>? _cachedCivilianDraftMoveUnitIds;
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildOrders;
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildAndWorkOrders;
+  Map<String, Army>? _cachedArmiesById;
+  DiplomacyFactionMembership? _cachedFactionMembership;
+
+  DiplomacyFactionMembership _factionMembership() {
+    final cached = _cachedFactionMembership;
+    if (cached != null) {
+      return cached;
+    }
+    final built = DiplomacyFactionMembership.from(game);
+    _cachedFactionMembership = built;
+    return built;
+  }
 
   bool isMoveAccepted(MoveOrder candidate) {
     const validator = MoveValidator();
@@ -114,8 +127,32 @@ class IncrementalCandidateValidator {
   bool isArmyMoveAccepted(ArmyMoveOrder candidate) {
     const validator = ArmyMoveValidator();
     return validator
-        .validate(candidate, game, playerId, diplomaticOrders, view, topology)
+        .validate(
+          candidate,
+          game,
+          playerId,
+          diplomaticOrders,
+          view,
+          topology,
+          armiesById: _armiesById(),
+          factionMembership: _factionMembership(),
+        )
         .isAccepted;
+  }
+
+  /// Lazy O(1) army lookup map. Cached for the lifetime of this validator
+  /// (single suggestion pass). Avoids rebuilding `armies.where(id == ...)` per
+  /// candidate probe (Refs #2394, SPEC/program/order-suggestions.md).
+  Map<String, Army> _armiesById() {
+    final cached = _cachedArmiesById;
+    if (cached != null) {
+      return cached;
+    }
+    final computed = <String, Army>{
+      for (final a in game.worldState.armies) a.id: a,
+    };
+    _cachedArmiesById = computed;
+    return computed;
   }
 
   bool isNavalMoveAccepted(NavalMoveOrder candidate) {

@@ -5,6 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../world/player_view.dart';
+import 'incremental_candidate_validator.dart';
+import 'order_suggestion_context.dart';
 import 'order_suggestion_work_tile_keys.dart';
 
 /// Inputs for populating per-player work-target tile selection caches.
@@ -18,6 +20,7 @@ class WorkTargetSelectionSnapshot {
     required this.topology,
     required this.currentOrders,
     required this.tileMapByRegion,
+    this.sharedCandidateValidator,
   });
 
   final Game game;
@@ -26,6 +29,11 @@ class WorkTargetSelectionSnapshot {
   final MapTopology topology;
   final Orders currentOrders;
   final Map<String, TileMapResult>? tileMapByRegion;
+
+  /// When non-null (set by [PerPlayerWorkTargetSelectionCache.refresh]), all
+  /// default population paths reuse this instance instead of rebuilding
+  /// [IncrementalCandidateValidator.forPlayer] per work target (Refs #2394).
+  final IncrementalCandidateValidator? sharedCandidateValidator;
 }
 
 typedef WorkTargetSelectionPopulationStrategy =
@@ -63,9 +71,25 @@ class PerPlayerWorkTargetSelectionCache {
   }
 
   void refresh(WorkTargetSelectionSnapshot snapshot) {
+    final sharedValidator = buildIncrementalCandidateValidator(
+      game: snapshot.game,
+      topology: snapshot.topology,
+      playerId: snapshot.playerId,
+      baseOrders: snapshot.currentOrders,
+      tileMapByRegion: snapshot.tileMapByRegion,
+    );
+    final snapshotForPopulation = WorkTargetSelectionSnapshot(
+      game: snapshot.game,
+      playerId: snapshot.playerId,
+      playerView: snapshot.playerView,
+      topology: snapshot.topology,
+      currentOrders: snapshot.currentOrders,
+      tileMapByRegion: snapshot.tileMapByRegion,
+      sharedCandidateValidator: sharedValidator,
+    );
     final nextByTarget = <String, Set<String>>{};
     for (final entry in _strategies.entries) {
-      final population = entry.value(snapshot);
+      final population = entry.value(snapshotForPopulation);
       final sorted = population.toList()..sort();
       nextByTarget[entry.key] = LinkedHashSet<String>.from(sorted);
     }
@@ -115,6 +139,14 @@ class PerPlayerWorkTargetSelectionCache {
     WorkTargetSelectionSnapshot s,
     String workTarget,
   ) {
+    final sharedValidator = s.sharedCandidateValidator ??
+        buildIncrementalCandidateValidator(
+          game: s.game,
+          topology: s.topology,
+          playerId: s.playerId,
+          baseOrders: s.currentOrders,
+          tileMapByRegion: s.tileMapByRegion,
+        );
     final merged = <String>{};
     for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
       final supportsTarget =
@@ -130,6 +162,7 @@ class PerPlayerWorkTargetSelectionCache {
         workTarget: workTarget,
         currentOrders: s.currentOrders,
         tileMapByRegion: s.tileMapByRegion,
+        sharedCandidateValidator: sharedValidator,
       );
       merged.addAll(valid);
     }
@@ -172,6 +205,14 @@ class PerPlayerWorkTargetSelectionCache {
     WorkTargetSelectionSnapshot s,
     String workTarget,
   ) {
+    final sharedValidator = s.sharedCandidateValidator ??
+        buildIncrementalCandidateValidator(
+          game: s.game,
+          topology: s.topology,
+          playerId: s.playerId,
+          baseOrders: s.currentOrders,
+          tileMapByRegion: s.tileMapByRegion,
+        );
     final merged = <String>{};
     for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
       final supportsTarget =
@@ -198,6 +239,7 @@ class PerPlayerWorkTargetSelectionCache {
         workTarget: workTarget,
         currentOrders: s.currentOrders,
         tileMapByRegion: s.tileMapByRegion,
+        sharedCandidateValidator: sharedValidator,
       );
       merged.addAll(valid);
     }

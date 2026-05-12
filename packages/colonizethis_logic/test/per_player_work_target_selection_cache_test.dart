@@ -127,5 +127,30 @@ void main() {
         ['oldWorld|p3|2|1', 'oldWorld|p3|4|2'],
       );
     });
+
+    test(
+      'refresh injects one shared incremental validator for all strategies',
+      () {
+        Object? exploreValidator;
+        Object? prospectValidator;
+        final cache = PerPlayerWorkTargetSelectionCache(
+          strategies: {
+            kWorkTargetExplore: (snapshot) {
+              exploreValidator = snapshot.sharedCandidateValidator;
+              return const {'t1'};
+            },
+            kWorkTargetProspect: (snapshot) {
+              prospectValidator = snapshot.sharedCandidateValidator;
+              return const {'t2'};
+            },
+          },
+        );
+
+        cache.refresh(snapshotForPlayer('gp1'));
+
+        expect(exploreValidator, isNotNull);
+        expect(prospectValidator, same(exploreValidator));
+      },
+    );
   });
 }

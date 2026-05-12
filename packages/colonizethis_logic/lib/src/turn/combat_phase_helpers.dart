@@ -10,11 +10,11 @@ import '../combat/conflict_detection.dart';
 import '../combat/military_attack_economy.dart';
 import '../combat/quick_battle_input_builder.dart';
 import '../combat/quick_battle_resolver.dart';
-import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import '../dossier/event_dialogue.dart';
 import '../event_bus/game_event_bus.dart';
 import '../game_events.dart';
+import '../world/province_lookup.dart';
 import 'turn_seed_constants.dart';
 
 final _combatPhaseLog = packageLogger();
@@ -142,12 +142,13 @@ Game runOneLandBattle(
       feedingCoverageByPlayerId: feedingCoverageByPlayerId,
       combatGeneralLedger: combatGeneralLedger,
     );
-    final region = ctx.regionId == kRegionOldWorld
-        ? state.worldState.oldWorld
-        : state.worldState.newWorld;
-    final province = region.provinces
-        .where((p) => p.id == ctx.provinceId)
-        .firstOrNull;
+    final province = ProvinceId.isPrefixed(ctx.provinceId)
+        ? tryGetProvince(state.worldState, ctx.provinceId)
+        : tryGetProvinceByRegion(
+            state.worldState,
+            ctx.regionId,
+            ctx.provinceId,
+          );
     final victorId = province?.ownerId;
 
     // Determine winner and casualties for auto-resolve

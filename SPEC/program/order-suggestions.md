@@ -130,8 +130,11 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   required String workTarget,
   required Orders currentOrders,
   Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
 });
 ```
+
+Optional `sharedCandidateValidator` is an **internal throughput hook** (Refs #2394): when callers enumerate many `(unitId, workTarget)` pairs against the same `game`, `view.playerId`, `currentOrders`, and `tileMapByRegion`, they may supply one validator instance built via `buildIncrementalCandidateValidator` to amortize `PlayerView` construction and shared caches. It must be built with the **same** arguments as the surrounding call; behavior is undefined if it is not. When omitted, the function constructs its own validator (default path). **Observable tile sets and acceptance decisions** must match the default path for the same inputs.
 
 When `tileMapByRegion` is non-null (app shell, turn resolution), prospect pre-filtering and `prospect` work-order validation use the same `isMineralEligibleTile` rules as work application: prospectable terrain from tile maps combined with `resourceByTileKey` so a known non-mineral (e.g. wool on hills) is never mineral-eligible. When `tileMapByRegion` is null, eligibility uses `resourceByTileKey` and mineral ids only (no terrain-from-map branch).
 
