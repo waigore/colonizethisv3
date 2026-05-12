@@ -70,7 +70,7 @@ void main() {
     final l10n = lookupAppLocalizations(const Locale('en'));
 
     await _splitHomeFleetOnce(tester, l10n, perf: perf);
-    await e2eCloseBottomSheet(tester, perf: perf);
+    await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
     ensureUnderWallClock('after split fleet');
 
     for (
@@ -84,7 +84,7 @@ void main() {
       await _tapNewWorldRegionTabIfPresent(tester);
       await _openNavalPanel(tester, perf: perf);
       if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
-        await e2eCloseBottomSheet(tester, perf: perf);
+        await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
         perf.timing(
           'test_total',
           testSw.elapsed,
@@ -92,10 +92,10 @@ void main() {
         );
         return;
       }
-      await e2eCloseBottomSheet(tester, perf: perf);
+      await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
       await _tryNavalMoveSegment(tester, l10n, perf: perf);
-      await e2eCloseBottomSheet(tester, perf: perf);
+      await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
       if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
         perf.timing(
@@ -122,7 +122,7 @@ void main() {
         'Last exception: ${tester.takeException()}',
       );
     }
-    await e2eCloseBottomSheet(tester, perf: perf);
+    await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
     ensureUnderWallClock('test complete');
     perf.timing('test_total', testSw.elapsed, meta: 'result=final_check');
   });
@@ -163,7 +163,7 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
 
       await _splitHomeFleetOnce(tester, l10n, perf: perf);
-      await e2eCloseBottomSheet(tester, perf: perf);
+      await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
       ensureUnderWallClock('after split fleet');
       CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot;
 
@@ -181,13 +181,13 @@ void main() {
           lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
         }
         if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
-          await e2eCloseBottomSheet(tester, perf: perf);
+          await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
           break;
         }
-        await e2eCloseBottomSheet(tester, perf: perf);
+        await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
         await _tryNavalMoveSegment(tester, l10n, perf: perf);
-        await e2eCloseBottomSheet(tester, perf: perf);
+        await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
         if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
           break;
@@ -210,7 +210,7 @@ void main() {
           'Last exception: ${tester.takeException()}',
         );
       }
-      await e2eCloseBottomSheet(tester, perf: perf);
+      await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
       ensureUnderWallClock('fleet in NW confirmed');
 
       await _awaitNwCoastalOrVisibleLandForBundledExploreE2e(
@@ -233,7 +233,7 @@ void main() {
         final enabled = await _anyExplorerHasEnabledExploreAssignFleetE2e(
           tester,
         );
-        await e2eCloseBottomSheet(tester, perf: perf);
+        await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
         perf.timing(
           'bundled_explore_retry_loop',
           phaseSw.elapsed,

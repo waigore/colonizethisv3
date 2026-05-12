@@ -285,17 +285,17 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
     await _openNavalPanel(tester);
     if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
         _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
-      await e2eCloseBottomSheet(tester);
+      await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
       return;
     }
-    await e2eCloseBottomSheet(tester);
+    await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _tryNavalMoveSegment(
       tester,
       l10n,
       useNewWorldMapTabFirst: true,
       allowWarpDestinations: false,
     );
-    await e2eCloseBottomSheet(tester);
+    await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _advanceOneHumanTurn(tester, l10n);
   }
   // Some generated maps can keep the non-home fleet in open-ocean NW sea lanes
@@ -518,7 +518,7 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
   while (sw.elapsed < timeout) {
     if (civilianPanel.evaluate().isNotEmpty ||
         navalPanel.evaluate().isNotEmpty) {
-      await e2eCloseBottomSheet(tester);
+      await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
       loopPollMs = 25;
       continue;
     }
