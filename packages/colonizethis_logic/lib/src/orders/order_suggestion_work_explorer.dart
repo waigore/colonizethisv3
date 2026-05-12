@@ -293,7 +293,11 @@ void _addProspectSuggestionIfEligible({
 
   final prospected =
       game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
-  final provinces = allProvinces(game.worldState).toList()
+  // [buildPlayerView] already aggregates every province row into
+  // [PlayerView.provincesById]; reuse that snapshot instead of scanning
+  // [allProvinces] again for each explorer prospect probe (Refs #2394,
+  // SPEC/program/order-suggestions.md).
+  final provinces = view.provincesById.values.toList()
     ..sort((a, b) => a.id.compareTo(b.id));
 
   var lastReason = 'no_valid_tile';

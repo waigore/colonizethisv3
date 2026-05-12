@@ -119,6 +119,72 @@ void main() {
     });
 
     test(
+      'PlayerView.provincesById matches allProvinces for prospect iteration order',
+      () {
+        const playerId = 'gp1';
+        const ow = 'oldWorld';
+        final player = const Player(
+          id: playerId,
+          displayName: 'GP',
+          isHuman: false,
+        );
+        final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
+        final p2 = Province(id: '$ow|p2', regionId: ow, ownerId: 'minor1');
+        final unit = Unit(
+          id: 'u1',
+          type: kUnitTypeExplorer,
+          ownerId: playerId,
+          locationProvinceId: '$ow|p1',
+        );
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: [p2, p1], units: [unit]),
+          newWorld: const RegionData(),
+          playerVisibilityByTile: const {
+            playerId: {'oldWorld|p1|0|0': 'fogged'},
+          },
+          tileKeysByRegionAndProvince: {
+            ow: {
+              '$ow|p1': const ['oldWorld|p1|0|0'],
+              '$ow|p2': const ['oldWorld|p2|0|0'],
+            },
+          },
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: world,
+          players: [player],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
+        );
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'p2',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final view = buildPlayerView(game, topology, playerId);
+        final fromAll = allProvinces(game.worldState).toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
+        final fromView = view.provincesById.values.toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
+        expect(fromView.length, fromAll.length);
+        expect(
+          fromView.map((p) => p.id).toList(),
+          fromAll.map((p) => p.id).toList(),
+        );
+      },
+    );
+
+    test(
       'work suggestions for worker use unit id; targets may be any valid tile',
       () {
         const playerId = 'gp1';
