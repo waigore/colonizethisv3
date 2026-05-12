@@ -6,13 +6,9 @@ part of 'new_game_fleet_reaches_new_world_e2e_test.dart';
 /// worst observed CI need (Refs #1849 / PR 1849).
 const int _kMaxNextTurnTapsForNwFleetReach = 35;
 
-/// Hard cap for any single “wait until UI shows X” poll (`_waitUntilFound`,
+/// Hard cap for any single “wait until UI shows X” poll (`e2eWaitUntilFound`,
 /// next-turn label settle, panel-open loops). Fail immediately when exceeded.
 const Duration _kMaxUiResponseWait = Duration(seconds: 5);
-
-/// Overall cap for async new-game setup (map gen + intro), not a single widget
-/// poll; still bounded so hung runs exit (`SPEC/program/e2e-integration-tests.md`).
-const Duration _kBootstrapNewGameOverallCap = Duration(seconds: 60);
 
 /// Entire fleet e2e must finish within this wall clock (success or guarded fail).
 ///
@@ -26,7 +22,7 @@ const Duration _kFleetE2eMaxWallClock = Duration(minutes: 5);
 /// [WidgetsBinding.handlePopRoute] if none match.
 Future<void> _dismissTransientUi(
   WidgetTester tester, {
-  _E2ePerfLog? perf,
+  E2ePerfLog? perf,
 }) async {
   perf?.bumpCounter('dismiss_transient_ui_calls');
   if (find.byType(SnackBar).evaluate().isNotEmpty) {
@@ -36,14 +32,14 @@ Future<void> _dismissTransientUi(
     );
     if (snackAction.hitTestable().evaluate().isNotEmpty) {
       await tester.tap(snackAction.first, warnIfMissed: false);
-      await _pumpFor(tester, const Duration(milliseconds: 200));
+      await e2ePumpFor(tester, const Duration(milliseconds: 200));
       return;
     }
   }
   final ok = find.text('OK').hitTestable();
   if (ok.evaluate().isNotEmpty) {
     await tester.tap(ok.first, warnIfMissed: false);
-    await _pumpFor(tester, const Duration(milliseconds: 200));
+    await e2ePumpFor(tester, const Duration(milliseconds: 200));
     return;
   }
   if (find.byType(AlertDialog).evaluate().isNotEmpty) {
@@ -53,12 +49,12 @@ Future<void> _dismissTransientUi(
           .hitTestable();
       if (hit.evaluate().isNotEmpty) {
         await tester.tap(hit.first, warnIfMissed: false);
-        await _pumpFor(tester, const Duration(milliseconds: 250));
+        await e2ePumpFor(tester, const Duration(milliseconds: 250));
         return;
       }
     }
     await tester.binding.handlePopRoute();
-    await _pumpFor(tester, const Duration(milliseconds: 200));
+    await e2ePumpFor(tester, const Duration(milliseconds: 200));
     return;
   }
   if (find.byType(BottomSheet).evaluate().isNotEmpty) {
@@ -75,16 +71,16 @@ Future<void> _dismissTransientUi(
       final tappable = candidate.hitTestable();
       if (tappable.evaluate().isNotEmpty) {
         await tester.tap(tappable.first, warnIfMissed: false);
-        await _pumpFor(tester, const Duration(milliseconds: 150));
+        await e2ePumpFor(tester, const Duration(milliseconds: 150));
         return;
       }
     }
     await tester.binding.handlePopRoute();
-    await _pumpFor(tester, const Duration(milliseconds: 150));
+    await e2ePumpFor(tester, const Duration(milliseconds: 150));
   }
 }
 
-Future<void> _closeBottomSheet(WidgetTester tester, {_E2ePerfLog? perf}) async {
+Future<void> _closeBottomSheet(WidgetTester tester, {E2ePerfLog? perf}) async {
   perf?.bumpCounter('close_bottom_sheet_calls');
   bool anyPanelOpen() => find.byType(BottomSheet).evaluate().isNotEmpty;
 
@@ -99,95 +95,13 @@ Future<void> _closeBottomSheet(WidgetTester tester, {_E2ePerfLog? perf}) async {
       return;
     }
     await tester.binding.handlePopRoute();
-    await _pumpFor(tester, const Duration(milliseconds: 250));
+    await e2ePumpFor(tester, const Duration(milliseconds: 250));
   }
 
   fail(
     'Timed out after ${_kMaxUiResponseWait.inSeconds}s closing bottom sheet; '
     'panels remained visible',
   );
-}
-
-Future<void> _tapGameStartIntroOverlayContinueIfPresent(
-  WidgetTester tester,
-) async {
-  if (find.text('Continue').evaluate().isNotEmpty) {
-    await tester.tap(find.text('Continue').first);
-    await tester.pump(const Duration(milliseconds: 200));
-    return;
-  }
-  if (find.text('I shall.').evaluate().isNotEmpty) {
-    await tester.tap(find.text('I shall.').first);
-    await tester.pump(const Duration(milliseconds: 200));
-  }
-}
-
-Future<void> _bootstrapNewGameToMap(
-  WidgetTester tester, {
-  _E2ePerfLog? perf,
-}) async {
-  final phaseSw = Stopwatch()..start();
-  await tester.tap(find.text('New Game'));
-  await _waitUntilFound(
-    tester,
-    find.text('Start'),
-    perf: perf,
-    phaseName: 'wait_until_found_start_button',
-  );
-
-  final startButton = find.ancestor(
-    of: find.text('Start'),
-    matching: find.byType(CtNinePatchButton),
-  );
-  expect(startButton, findsOneWidget);
-
-  final shellScrollable = find.descendant(
-    of: find.byType(CtDialogShell),
-    matching: find.byType(Scrollable),
-  );
-  await tester.dragUntilVisible(
-    startButton,
-    shellScrollable,
-    const Offset(0, -120),
-  );
-  await tester.pump(const Duration(milliseconds: 200));
-  await tester.ensureVisible(startButton);
-  await tester.tap(startButton);
-  await tester.pump();
-
-  final setupDeadline = DateTime.now().add(_kBootstrapNewGameOverallCap);
-  var reachedMap = false;
-  while (DateTime.now().isBefore(setupDeadline)) {
-    await tester.pump(const Duration(milliseconds: 100));
-    if (find.text('Could not create game').evaluate().isNotEmpty) {
-      fail(
-        'New game setup failed (error dialog). '
-        'Exception: ${tester.takeException()}',
-      );
-    }
-    final introOpen = find.byType(GameStartIntroOverlay).evaluate().isNotEmpty;
-    if (introOpen) {
-      await _tapGameStartIntroOverlayContinueIfPresent(tester);
-      continue;
-    }
-    final creating = find.text('Creating game').evaluate().isNotEmpty;
-    if (creating) {
-      continue;
-    }
-    if (find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty) {
-      reachedMap = true;
-      break;
-    }
-  }
-  if (!reachedMap) {
-    fail(
-      'Timed out after ${_kBootstrapNewGameOverallCap.inSeconds}s waiting for '
-      'map (home→capital). Last exception: ${tester.takeException()}',
-    );
-  }
-  expect(find.byKey(kHomeToCapitalButtonKey), findsOneWidget);
-  await tester.pump(const Duration(milliseconds: 500));
-  perf?.timing('new_game_to_map', phaseSw.elapsed);
 }
 
 Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
@@ -205,9 +119,9 @@ Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
       if (expandIcon.evaluate().isEmpty) continue;
       final iconHit = expandIcon.first;
       await tester.ensureVisible(iconHit);
-      await _pumpFor(tester, const Duration(milliseconds: 80));
+      await e2ePumpFor(tester, const Duration(milliseconds: 80));
       await tester.tap(iconHit, warnIfMissed: false);
-      await _pumpFor(tester, const Duration(milliseconds: 250));
+      await e2ePumpFor(tester, const Duration(milliseconds: 250));
       expandedOne = true;
       break;
     }
@@ -221,16 +135,21 @@ Future<bool> _pollUntilNavalPanelVisible(
   Duration budget,
 ) async {
   final poll = Stopwatch()..start();
+  if (navalPanel.evaluate().isNotEmpty) {
+    return true;
+  }
+  var stepMs = 25;
   while (poll.elapsed < budget) {
-    await tester.pump(const Duration(milliseconds: 25));
+    await tester.pump(Duration(milliseconds: stepMs));
     if (navalPanel.evaluate().isNotEmpty) {
       return true;
     }
+    stepMs = math.min(500, stepMs * 2);
   }
   return false;
 }
 
-Future<void> _openNavalPanel(WidgetTester tester, {_E2ePerfLog? perf}) async {
+Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
   final phaseSw = Stopwatch()..start();
   final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
   final markerBtn = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
@@ -296,7 +215,7 @@ Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
     return;
   }
   await tester.tap(tab.first, warnIfMissed: false);
-  await _pumpFor(tester, const Duration(milliseconds: 250));
+  await e2ePumpFor(tester, const Duration(milliseconds: 250));
 }
 
 /// Map HUD must show **Old World** before issuing naval moves so OW-split
@@ -312,7 +231,7 @@ Future<void> _tapOldWorldRegionTab(
     return;
   }
   await tester.tap(hit.first, warnIfMissed: false);
-  await _pumpFor(tester, const Duration(milliseconds: 250));
+  await e2ePumpFor(tester, const Duration(milliseconds: 250));
 }
 
 Finder _radioListTilesInAlertDialogs() {
@@ -345,7 +264,7 @@ Future<void> _pickMoveDestinationAndConfirm(
   }
 
   ensureBudget('start');
-  await _waitUntilFound(
+  await e2eWaitUntilFound(
     tester,
     find.byType(AlertDialog),
     timeout: const Duration(seconds: 2),
@@ -409,7 +328,7 @@ Future<void> _pickMoveDestinationAndConfirm(
     expect(seaRadio, findsWidgets);
     await tester.tap(seaRadio.first, warnIfMissed: false);
   }
-  await _waitUntilFound(
+  await e2eWaitUntilFound(
     tester,
     find.text(l10n.common_confirm),
     timeout: const Duration(seconds: 2),
@@ -434,7 +353,7 @@ Future<void> _tryNavalMoveSegment(
   AppLocalizations l10n, {
   bool useNewWorldMapTabFirst = false,
   bool allowWarpDestinations = true,
-  _E2ePerfLog? perf,
+  E2ePerfLog? perf,
 }) async {
   final phaseSw = Stopwatch()..start();
   if (useNewWorldMapTabFirst) {
@@ -452,7 +371,7 @@ Future<void> _tryNavalMoveSegment(
     );
     return;
   }
-  await _waitUntilFound(
+  await e2eWaitUntilFound(
     tester,
     find.byType(AlertDialog),
     timeout: const Duration(seconds: 2),
