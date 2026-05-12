@@ -26,10 +26,10 @@ Future<bool> _pollUntilNavalPanelVisible(
   }
   var stepMs = 25;
   while (poll.elapsed < budget) {
-    await tester.pump(Duration(milliseconds: stepMs));
     if (navalPanel.evaluate().isNotEmpty) {
       return true;
     }
+    await tester.pump(Duration(milliseconds: stepMs));
     stepMs = math.min(500, stepMs * 2);
   }
   return false;
@@ -43,8 +43,6 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
   final sw = Stopwatch()..start();
   var navalPollMs = 25;
   while (sw.elapsed < _kMaxUiResponseWait) {
-    await tester.pump(Duration(milliseconds: navalPollMs));
-    navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
     if (navalPanel.evaluate().isNotEmpty) {
       perf?.timing('open_panel_naval', phaseSw.elapsed);
       return;
@@ -80,6 +78,8 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
         return;
       }
       navalPollMs = 25;
+      await tester.pump(Duration(milliseconds: navalPollMs));
+      navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
       continue;
     }
     final railHit = btn.hitTestable();
@@ -98,6 +98,8 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
       await e2eDismissTransientUi(tester, perf: perf);
       navalPollMs = 25;
     }
+    await tester.pump(Duration(milliseconds: navalPollMs));
+    navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
   }
   fail(
     'Timed out after ${_kMaxUiResponseWait.inSeconds}s opening naval panel. '
