@@ -5,6 +5,7 @@ import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import '../turn/turn_resolution_result.dart';
 import 'diplomacy_resolver.dart';
+import 'overture_stage_helpers.dart';
 
 Game appendDiplomaticEvent(
   Game game,
@@ -115,11 +116,7 @@ int? _overtureCostForStage(OvertureStage stage) {
   }
   if (_isTargetHumanGp(state, targetId)) {
     final pending = [
-      OvertureOffer(
-        offererGpId: gpId,
-        targetFactionId: targetId,
-        stage: stage,
-      ),
+      OvertureOffer(offererGpId: gpId, targetFactionId: targetId, stage: stage),
     ];
     final wrapped = state.copyWith(players: players, overtureStates: overtures);
     return (accepted: false, pending: OverturePaymentsResult(wrapped, pending));
@@ -191,7 +188,7 @@ _processEstablishOvertureOrderIfApplicable({
   }
 
   final existing = _findOvertureForGpTarget(overtures, gpId, targetId);
-  final prevStage = previousStage(stage);
+  final prevStage = stage.previous;
   final atPrevStage =
       (existing == null && prevStage == OvertureStage.none) ||
       (existing != null && existing.stage == prevStage);
@@ -377,21 +374,6 @@ OverturePaymentsResult processOverturePayments(
 
   state = state.copyWith(players: players, overtureStates: overtures);
   return OverturePaymentsResult(state);
-}
-
-OvertureStage previousStage(OvertureStage stage) {
-  switch (stage) {
-    case OvertureStage.tradeConsulate:
-      return OvertureStage.none;
-    case OvertureStage.embassy:
-      return OvertureStage.tradeConsulate;
-    case OvertureStage.nap:
-      return OvertureStage.embassy;
-    case OvertureStage.joinEmpire:
-      return OvertureStage.nap;
-    case OvertureStage.none:
-      return OvertureStage.none;
-  }
 }
 
 Game advanceOvertures(Game game, int turn) {

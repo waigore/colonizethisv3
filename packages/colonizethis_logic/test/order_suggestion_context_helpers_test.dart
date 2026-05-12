@@ -51,25 +51,6 @@ void main() {
     });
   });
 
-  group('nextOvertureStage', () {
-    test('follows expected progression', () {
-      expect(
-        nextOvertureStage(OvertureStage.none),
-        OvertureStage.tradeConsulate,
-      );
-      expect(
-        nextOvertureStage(OvertureStage.tradeConsulate),
-        OvertureStage.embassy,
-      );
-      expect(nextOvertureStage(OvertureStage.embassy), OvertureStage.nap);
-      expect(nextOvertureStage(OvertureStage.nap), OvertureStage.joinEmpire);
-    });
-
-    test('returns null when already at final stage', () {
-      expect(nextOvertureStage(OvertureStage.joinEmpire), isNull);
-    });
-  });
-
   group('acceptance wrappers', () {
     test('isNavalMoveOrderAccepted returns a boolean result', () {
       final accepted = isNavalMoveOrderAccepted(
@@ -77,10 +58,7 @@ void main() {
         topology,
         'gp1',
         const Orders(),
-        const NavalMoveOrder(
-          fleetId: 'fleet1',
-          destinationSeaZoneId: 'sea1',
-        ),
+        const NavalMoveOrder(fleetId: 'fleet1', destinationSeaZoneId: 'sea1'),
       );
       expect(accepted, isFalse);
     });
@@ -91,10 +69,7 @@ void main() {
         topology,
         'gp1',
         const Orders(),
-        const NavalMissionOrder(
-          fleetId: 'fleet1',
-          mission: 'patrol',
-        ),
+        const NavalMissionOrder(fleetId: 'fleet1', mission: 'patrol'),
       );
       expect(accepted, isFalse);
     });
