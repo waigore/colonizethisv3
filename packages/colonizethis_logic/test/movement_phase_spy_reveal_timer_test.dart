@@ -51,7 +51,7 @@ void main() {
             },
           ),
           players: const [
-            Player(id: 'spyOwner', displayName: 'Spy', isHuman: true),
+            Player(id: 'spyOwner', displayName: 'Human spy', isHuman: true),
             Player(id: 'enemy', displayName: 'Enemy', isHuman: false),
           ],
         );
@@ -111,7 +111,7 @@ void main() {
           },
         ),
         players: const [
-          Player(id: 'spyOwner', displayName: 'Spy', isHuman: true),
+          Player(id: 'spyOwner', displayName: 'Human spy', isHuman: true),
           Player(id: 'enemy', displayName: 'Enemy', isHuman: false),
         ],
       );
