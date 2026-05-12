@@ -496,14 +496,13 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
 
   var outerPollMs = 25;
   while (sw.elapsed < timeout) {
+    await tester.pump(Duration(milliseconds: outerPollMs));
     if (civilianPanel.evaluate().isNotEmpty ||
         navalPanel.evaluate().isNotEmpty) {
       await e2eCloseBottomSheet(tester);
       outerPollMs = 25;
       continue;
     }
-    await tester.pump(Duration(milliseconds: outerPollMs));
-    outerPollMs = e2eAdaptivePollRampAfterIdle(outerPollMs);
     if (empireRailButton.evaluate().isNotEmpty) {
       if (await tryOpen(empireRailButton)) {
         return;
@@ -514,6 +513,7 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
         return;
       }
     }
+    outerPollMs = e2eAdaptivePollRampAfterIdle(outerPollMs);
   }
   fail(
     'Timed out opening civilian panel. Last exception: ${tester.takeException()}',
@@ -554,11 +554,11 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
 
       final exploreTile = find.widgetWithText(ListTile, 'Explore');
       final wait = Stopwatch()..start();
-      var exploreStepMs = 25;
+      var explorePollMs = 25;
       while (exploreTile.evaluate().isEmpty &&
           wait.elapsed < _kMaxUiResponseWait) {
-        await tester.pump(Duration(milliseconds: exploreStepMs));
-        exploreStepMs = math.min(500, exploreStepMs * 2);
+        await tester.pump(Duration(milliseconds: explorePollMs));
+        explorePollMs = e2eAdaptivePollRampAfterIdle(explorePollMs);
       }
       if (exploreTile.evaluate().isNotEmpty) {
         final enabled = tester.widget<ListTile>(exploreTile.first).enabled;

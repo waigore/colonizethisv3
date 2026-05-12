@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
@@ -53,7 +51,7 @@ void main() {
     final bootstrapSw = Stopwatch()..start();
     await bootstrapForIntegrationTest();
     await tester.pump();
-    await e2ePumpFor(tester, const Duration(milliseconds: 500));
+    await e2eWaitForNewGameEntry(tester, perf: perf);
     perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
 
     final wallClock = Stopwatch()..start();
@@ -146,7 +144,7 @@ void main() {
       final bootstrapSw = Stopwatch()..start();
       await bootstrapForIntegrationTest();
       await tester.pump();
-      await e2ePumpFor(tester, const Duration(milliseconds: 500));
+      await e2eWaitForNewGameEntry(tester, perf: perf);
       perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
 
       final wallClock = Stopwatch()..start();
