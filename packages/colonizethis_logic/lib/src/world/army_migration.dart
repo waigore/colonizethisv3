@@ -367,9 +367,13 @@ List<Army> _retargetArmyStation(
     )
     .toList();
 
+/// First matching army by id. Single-pass scan; avoids `.where(...).toList()`
+/// allocation on migration paths (Refs #2394, SPEC/program/turn-resolution.md).
 Army? _armyById(List<Army> armies, String armyId) {
-  final armyList = armies.where((a) => a.id == armyId).toList();
-  return armyList.isEmpty ? null : armyList.first;
+  for (final a in armies) {
+    if (a.id == armyId) return a;
+  }
+  return null;
 }
 
 ({List<Unit> owUnits, List<Unit> nwUnits}) _moveRegimentToProvince({

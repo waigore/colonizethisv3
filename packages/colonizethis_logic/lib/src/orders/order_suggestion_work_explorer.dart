@@ -1,27 +1,5 @@
 part of 'order_suggestion_work.dart';
 
-Set<String> _partiallyRevealedProvinceCacheForPlayer({
-  required Game game,
-  required PlayerView view,
-}) {
-  final cached = <String>{};
-  for (final regionEntry
-      in game.worldState.tileKeysByRegionAndProvince.entries) {
-    for (final provinceEntry in regionEntry.value.entries) {
-      final provinceId = provinceEntry.key;
-      if (!ProvinceId.isPrefixed(provinceId)) continue;
-      if (!isPartiallyRevealedProvinceLandTilesForPlayer(
-        view,
-        provinceEntry.value,
-      )) {
-        continue;
-      }
-      cached.add(provinceId);
-    }
-  }
-  return cached;
-}
-
 ({WorkOrder? chosen, String lastReason}) _tryExploreWorkOrderForProvince({
   required PlayerView view,
   required Game game,
@@ -123,7 +101,7 @@ void _addExplorerWorkSuggestionsForUnit({
   final pendingOrClaimed = existingTargetsByUnit[unit.id];
   if (pendingOrClaimed != null && pendingOrClaimed.isNotEmpty) {
     for (final target in [kWorkTargetExplore, kWorkTargetProspect]) {
-      _suggestionWorkLog(
+      logWorkOrderSuggestion(
         unitId: unit.id,
         unitType: unit.type,
         unitRegionId: regionId,
@@ -171,7 +149,7 @@ void _addExplorerWorkSuggestionsForUnit({
     for (final chosen in acceptedExplores) {
       suggestions.add(chosen);
     }
-    _suggestionWorkLog(
+    logWorkOrderSuggestion(
       unitId: unit.id,
       unitType: unit.type,
       unitRegionId: regionId,
@@ -182,7 +160,7 @@ void _addExplorerWorkSuggestionsForUnit({
       includedRowCount: acceptedExplores.length,
     );
   } else {
-    _suggestionWorkLog(
+    logWorkOrderSuggestion(
       unitId: unit.id,
       unitType: unit.type,
       unitRegionId: regionId,
@@ -297,7 +275,7 @@ void _addProspectSuggestionIfEligible({
   final existingProspect = existingTargetsByUnit[unit.id];
   if (existingProspect != null &&
       existingProspect.contains(kWorkTargetProspect)) {
-    _suggestionWorkLog(
+    logWorkOrderSuggestion(
       unitId: unit.id,
       unitType: unit.type,
       unitRegionId: regionId,
@@ -315,7 +293,11 @@ void _addProspectSuggestionIfEligible({
 
   final prospected =
       game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
-  final provinces = allProvinces(game.worldState).toList()
+  // [buildPlayerView] already aggregates every province row into
+  // [PlayerView.provincesById]; reuse that snapshot instead of scanning
+  // [allProvinces] again for each explorer prospect probe (Refs #2394,
+  // SPEC/program/order-suggestions.md).
+  final provinces = view.provincesById.values.toList()
     ..sort((a, b) => a.id.compareTo(b.id));
 
   var lastReason = 'no_valid_tile';
@@ -364,7 +346,7 @@ void _addProspectSuggestionIfEligible({
     }
   }
   if (prospectRows.isEmpty) {
-    _suggestionWorkLog(
+    logWorkOrderSuggestion(
       unitId: unit.id,
       unitType: unit.type,
       unitRegionId: regionId,
@@ -382,7 +364,7 @@ void _addProspectSuggestionIfEligible({
   for (final candidate in prospectRows) {
     suggestions.add(candidate);
   }
-  _suggestionWorkLog(
+  logWorkOrderSuggestion(
     unitId: unit.id,
     unitType: unit.type,
     unitRegionId: regionId,
