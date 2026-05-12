@@ -12,18 +12,30 @@ import '../order_visibility.dart';
 class ArmyMoveValidator {
   const ArmyMoveValidator();
 
+  /// Validates the army move.
+  ///
+  /// [armiesById] (optional) is an O(1) map keyed by `Army.id` used to avoid
+  /// per-candidate linear scans of `game.worldState.armies` on hot suggestion
+  /// paths (Refs #2394, SPEC/program/order-suggestions.md). When omitted, a
+  /// single-pass `firstWhereOrNull`-style scan is used to preserve current
+  /// behavior without allocating an intermediate list.
+  ///
+  /// [factionMembership] (optional) avoids per-candidate `.any()` scans over
+  /// players / minors / tribes when classifying destination owners (Refs
+  /// #2394).
   OrderValidationResult validate(
     ArmyMoveOrder order,
     Game game,
     String playerId,
     List<DiplomaticOrder> diplomaticOrders,
     PlayerView view,
-    MapTopology topology,
-  ) {
-    final armyCandidates = game.worldState.armies
-        .where((a) => a.id == order.armyId)
-        .toList();
-    final army = armyCandidates.isEmpty ? null : armyCandidates.first;
+    MapTopology topology, {
+    Map<String, Army>? armiesById,
+    DiplomacyFactionMembership? factionMembership,
+  }) {
+    final army = armiesById != null
+        ? armiesById[order.armyId]
+        : _firstArmyById(game.worldState.armies, order.armyId);
     if (army == null || army.ownerId != playerId) {
       return OrderValidationResult.rejected('Invalid army move');
     }
@@ -57,7 +69,7 @@ class ArmyMoveValidator {
 
     if (destOwnerId != null &&
         destOwnerId != playerId &&
-        isGreatPower(game, destOwnerId) &&
+        isGreatPower(game, destOwnerId, factionMembership: factionMembership) &&
         !canAttackWithWarOrDeclaring(
           game,
           playerId,
@@ -71,7 +83,7 @@ class ArmyMoveValidator {
 
     if (destOwnerId != null &&
         destOwnerId != playerId &&
-        isMinorOrTribe(game, destOwnerId) &&
+        isMinorOrTribe(game, destOwnerId, factionMembership: factionMembership) &&
         !canAttackWithWarOrDeclaring(
           game,
           playerId,
@@ -104,4 +116,14 @@ bool moveDestVisibilityOkForArmy(
     destFullProvinceId,
     'musketeers',
   );
+}
+
+/// Single-pass first-match army lookup. Used by [ArmyMoveValidator.validate]
+/// when no caller-supplied `armiesById` is available. Avoids allocating an
+/// intermediate `.where(...).toList()` (Refs #2394).
+Army? _firstArmyById(List<Army> armies, String armyId) {
+  for (final a in armies) {
+    if (a.id == armyId) return a;
+  }
+  return null;
 }

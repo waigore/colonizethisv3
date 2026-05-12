@@ -448,7 +448,18 @@ Future<void> _splitHomeFleetOnce(
     phaseName: 'wait_until_found_split_confirm',
   );
   await tester.tap(find.text(l10n.splitFleet_confirm));
-  await e2ePumpFor(tester, const Duration(milliseconds: 120));
+  // Adaptive replacement for the prior fixed 120ms pump (#2336 AC5): poll for
+  // the split dialog dismissal so we can immediately re-scan expansion tiles
+  // instead of always paying the worst-case settle.
+  final splitDialogGone = Stopwatch()..start();
+  var splitDialogPollMs = 25;
+  while (splitDialogGone.elapsed < const Duration(milliseconds: 500)) {
+    if (find.byType(CtDialogShell).evaluate().isEmpty) {
+      break;
+    }
+    await tester.pump(Duration(milliseconds: splitDialogPollMs));
+    splitDialogPollMs = e2eAdaptivePollRampAfterIdle(splitDialogPollMs);
+  }
   await e2eExpandEachExpansionTileOnce(tester);
   perf?.timing('fleet_split', phaseSw.elapsed);
 }
@@ -474,6 +485,9 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
   final civilianPanel = find.byKey(kCtE2ECivilianPanelRootKey);
   final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
 
+  // Adaptive replacement for the prior fixed-100ms poll cadence (#2336 AC5):
+  // success is evaluated before the first pump, and pump intervals ramp via
+  // [e2eAdaptivePollRampAfterIdle] (25→50→75→100 ms cap).
   Future<bool> tryOpen(Finder trigger) async {
     final tappable = trigger.hitTestable();
     if (tappable.evaluate().isEmpty) {
@@ -481,7 +495,13 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
       return false;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
     await tester.pump();
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
     final openDeadline = DateTime.now().add(const Duration(seconds: 3));
     var openPollMs = 25;
     while (DateTime.now().isBefore(openDeadline)) {
@@ -494,26 +514,30 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
     return false;
   }
 
-  var outerPollMs = 25;
+  var loopPollMs = 25;
   while (sw.elapsed < timeout) {
-    await tester.pump(Duration(milliseconds: outerPollMs));
     if (civilianPanel.evaluate().isNotEmpty ||
         navalPanel.evaluate().isNotEmpty) {
       await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
-      outerPollMs = 25;
+      loopPollMs = 25;
       continue;
     }
     if (empireRailButton.evaluate().isNotEmpty) {
       if (await tryOpen(empireRailButton)) {
         return;
       }
+      loopPollMs = 25;
+      continue;
     }
     if (markerButton.evaluate().isNotEmpty) {
       if (await tryOpen(markerButton)) {
         return;
       }
+      loopPollMs = 25;
+      continue;
     }
-    outerPollMs = e2eAdaptivePollRampAfterIdle(outerPollMs);
+    await tester.pump(Duration(milliseconds: loopPollMs));
+    loopPollMs = e2eAdaptivePollRampAfterIdle(loopPollMs);
   }
   fail(
     'Timed out opening civilian panel. Last exception: ${tester.takeException()}',
@@ -531,6 +555,40 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
     matching: find.byType(Scrollable),
   );
   expect(panelScrollable, findsOneWidget);
+  final exploreTile = find.widgetWithText(ListTile, 'Explore');
+  // Adaptive replacement (#2336 AC5 / Bottleneck 5): the prior 300ms post-tap
+  // settle plus 50ms fixed wait loop is replaced by a single condition-based
+  // wait that evaluates [exploreTile] before the first pump and ramps the
+  // pump interval via [e2eAdaptivePollRampAfterIdle]. The hard
+  // [_kMaxUiResponseWait] cap is preserved.
+  Future<void> waitForAssignSheetSettled() async {
+    final wait = Stopwatch()..start();
+    var assignPollMs = 25;
+    while (wait.elapsed < _kMaxUiResponseWait) {
+      if (exploreTile.evaluate().isNotEmpty) {
+        return;
+      }
+      await tester.pump(Duration(milliseconds: assignPollMs));
+      assignPollMs = e2eAdaptivePollRampAfterIdle(assignPollMs);
+    }
+  }
+
+  // After [handlePopRoute] the assign sheet can take a frame or two to leave
+  // the tree. Replace the prior fixed 200ms pump with a bounded adaptive
+  // poll that returns as soon as the sheet finishes dismissing.
+  Future<void> waitForAssignSheetDismissed() async {
+    final wait = Stopwatch()..start();
+    var dismissPollMs = 25;
+    const dismissCap = Duration(milliseconds: 400);
+    while (wait.elapsed < dismissCap) {
+      if (exploreTile.evaluate().isEmpty) {
+        return;
+      }
+      await tester.pump(Duration(milliseconds: dismissPollMs));
+      dismissPollMs = e2eAdaptivePollRampAfterIdle(dismissPollMs);
+    }
+  }
+
   final visitedAssignWidgets = <int>{};
   const maxPanelSweepSteps = 16;
   for (var step = 0; step < maxPanelSweepSteps; step++) {
@@ -550,35 +608,35 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
         continue;
       }
       await tester.tap(assignFinder.first, warnIfMissed: false);
-      await e2ePumpFor(tester, const Duration(milliseconds: 300));
-
-      final exploreTile = find.widgetWithText(ListTile, 'Explore');
-      final wait = Stopwatch()..start();
-      var explorePollMs = 25;
-      while (exploreTile.evaluate().isEmpty &&
-          wait.elapsed < _kMaxUiResponseWait) {
-        await tester.pump(Duration(milliseconds: explorePollMs));
-        explorePollMs = e2eAdaptivePollRampAfterIdle(explorePollMs);
-      }
+      await waitForAssignSheetSettled();
       if (exploreTile.evaluate().isNotEmpty) {
         final enabled = tester.widget<ListTile>(exploreTile.first).enabled;
         await tester.binding.handlePopRoute();
-        await e2ePumpFor(tester, const Duration(milliseconds: 200));
+        await waitForAssignSheetDismissed();
         if (enabled == true) {
           return true;
         }
       } else {
         await tester.binding.handlePopRoute();
-        await e2ePumpFor(tester, const Duration(milliseconds: 200));
+        await waitForAssignSheetDismissed();
       }
     }
 
     await tester.drag(panelScrollable, const Offset(0, -180));
-    await e2ePumpFor(tester, const Duration(milliseconds: 120));
+    // Adaptive replacement for the prior 120ms post-drag settle (#2336 AC5):
+    // pump a single short frame and let the next iteration short-circuit if
+    // new Assign rows are already visible.
+    await tester.pump(const Duration(milliseconds: 25));
   }
   return false;
 }
 
+/// Taps the map HUD next-turn button, handles the optional confirm dialog,
+/// and waits for the next-turn label to advance. This is the fleet e2e's
+/// `waitForNextTurnLabelAdvance` helper referenced by #2336 AC5: success is
+/// checked before each pump and intervals ramp via
+/// [e2eAdaptivePollRampAfterIdle] (25→50→75→100 ms cap), while the
+/// [_kMaxUiResponseWait] post-tap budget is preserved.
 Future<void> _advanceOneHumanTurn(
   WidgetTester tester,
   AppLocalizations l10n, {
@@ -588,22 +646,53 @@ Future<void> _advanceOneHumanTurn(
   final before = _readNextTurnButtonLabel(tester);
   await tester.tap(find.byKey(kGameMapNextTurnButtonKey));
   perf?.bumpCounter('next_turn_taps');
-  await e2ePumpFor(tester, const Duration(milliseconds: 200));
-  final confirmNextTurn = find.text(l10n.common_yes).hitTestable();
+
+  // After tapping Next Turn the app either pops a confirm dialog or starts
+  // resolving immediately. Poll adaptively for whichever lands first so we
+  // never pay a worst-case fixed settle here.
+  final confirmFinder = find.text(l10n.common_yes);
+  final confirmSw = Stopwatch()..start();
+  var confirmPollMs = 25;
+  const confirmCap = Duration(milliseconds: 400);
+  while (confirmSw.elapsed < confirmCap) {
+    if (confirmFinder.hitTestable().evaluate().isNotEmpty) {
+      break;
+    }
+    final maybeAfter = _readNextTurnButtonLabel(tester);
+    if (maybeAfter != null && maybeAfter != before) {
+      perf?.timing('next_turn_advance', phaseSw.elapsed);
+      return;
+    }
+    await tester.pump(Duration(milliseconds: confirmPollMs));
+    confirmPollMs = e2eAdaptivePollRampAfterIdle(confirmPollMs);
+  }
+
+  final confirmNextTurn = confirmFinder.hitTestable();
   if (confirmNextTurn.evaluate().isNotEmpty) {
     await tester.tap(confirmNextTurn.first, warnIfMissed: false);
-    await e2ePumpFor(tester, const Duration(milliseconds: 150));
+    // Adaptive replacement for the prior fixed 150ms settle (#2336 AC5):
+    // briefly pump to flush the confirm tap so the next-turn label poll
+    // below evaluates a fresh widget tree, then fall through to the
+    // condition-first poll loop.
+    await tester.pump();
   }
+
   final sw = Stopwatch()..start();
-  var nextTurnPollMs = 25;
+  // Check before the first pump so already-advanced labels short-circuit.
+  final immediateAfter = _readNextTurnButtonLabel(tester);
+  if (immediateAfter != null && immediateAfter != before) {
+    perf?.timing('next_turn_advance', phaseSw.elapsed);
+    return;
+  }
+  var labelPollMs = 25;
   while (sw.elapsed < _kMaxUiResponseWait) {
-    await tester.pump(Duration(milliseconds: nextTurnPollMs));
-    nextTurnPollMs = e2eAdaptivePollRampAfterIdle(nextTurnPollMs);
+    await tester.pump(Duration(milliseconds: labelPollMs));
     final after = _readNextTurnButtonLabel(tester);
     if (after != null && after != before) {
       perf?.timing('next_turn_advance', phaseSw.elapsed);
       return;
     }
+    labelPollMs = e2eAdaptivePollRampAfterIdle(labelPollMs);
   }
   fail(
     'Next turn label did not change within ${_kMaxUiResponseWait.inSeconds}s '

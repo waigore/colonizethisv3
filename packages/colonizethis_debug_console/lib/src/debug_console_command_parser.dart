@@ -31,6 +31,7 @@ class DebugConsoleCommandParser {
       '/spawn_regiment' => _parseSpawnRegiment(tokens),
       '/spawn_ship' => _parseSpawnShip(tokens),
       '/add_money' => _parseAddMoney(tokens),
+      '/add_worker' => _parseAddWorker(tokens),
       '/add_resource' => _parseAddResource(tokens),
       '/flip_province' => _parseFlipProvince(tokens),
       '/reveal_province' => _parseRevealProvince(tokens),
@@ -90,6 +91,38 @@ class DebugConsoleCommandParser {
         : rawAmount;
     return DebugConsoleParseResult.success(
       DebugConsoleParsedInvocation.treasuryCredit(
+        requestedAmount: rawAmount,
+        creditedAmount: creditedAmount,
+      ),
+    );
+  }
+
+  DebugConsoleParseResult _parseAddWorker(List<String> tokens) {
+    if (tokens.length < 3) {
+      return const DebugConsoleParseResult.error(
+        'Usage: /add_worker <peasants|apprentices|journeymen|masters> <amount>',
+      );
+    }
+    final tierInput = tokens[1].trim().toLowerCase();
+    final canonicalTierId = _canonicalWorkerTierIdForInput(tierInput);
+    if (canonicalTierId == null) {
+      return const DebugConsoleParseResult.error(
+        'Unknown worker tier. Use peasants, apprentices, journeymen, or masters.',
+      );
+    }
+    final rawAmount = int.tryParse(tokens[2]);
+    if (rawAmount == null) {
+      return const DebugConsoleParseResult.error('Amount must be an integer.');
+    }
+    if (rawAmount < 1) {
+      return const DebugConsoleParseResult.error('Amount must be at least 1.');
+    }
+    final creditedAmount = rawAmount > kDebugConsoleMaxTreasuryCreditAmount
+        ? kDebugConsoleMaxTreasuryCreditAmount
+        : rawAmount;
+    return DebugConsoleParseResult.success(
+      DebugConsoleParsedInvocation.workerPoolCredit(
+        workerTierId: canonicalTierId,
         requestedAmount: rawAmount,
         creditedAmount: creditedAmount,
       ),
@@ -286,10 +319,20 @@ String? _canonicalCommodityIdForInput(String normalizedInput) {
   return null;
 }
 
+String? _canonicalWorkerTierIdForInput(String normalizedInput) {
+  for (final candidate in debugConsoleSupportedWorkerTierIds) {
+    if (candidate.toLowerCase() == normalizedInput) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 String _buildHelpMessage() {
   final regimentIds = debugConsoleSupportedRegimentTypeIdsSorted.join(', ');
   final shipIds = debugConsoleSupportedShipTypeIdsSorted.join(', ');
   final commodityIds = debugConsoleSupportedCommodityIdsSorted.join(', ');
+  final workerTierIds = debugConsoleSupportedWorkerTierIdsSorted.join(', ');
   return 'Supported commands:\n'
       '- /spawn_civilian <explorer|builder|engineer|spy|merchant|rail_builder> [count]\n'
       '- /spawn_regiment <regiment_type_id> [count]\n'
@@ -297,6 +340,10 @@ String _buildHelpMessage() {
       '- /spawn_ship <ship_type_id> [count]\n'
       '  supported ids: $shipIds\n'
       '- /add_money <amount>\n'
+      '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
+      '$kDebugConsoleMaxTreasuryCreditAmount are clamped\n'
+      '- /add_worker <peasants|apprentices|journeymen|masters> <amount>\n'
+      '  supported tier ids: $workerTierIds\n'
       '  integer 1..$kDebugConsoleMaxTreasuryCreditAmount; values above '
       '$kDebugConsoleMaxTreasuryCreditAmount are clamped\n'
       '- /add_resource <commodity_id> <amount>\n'

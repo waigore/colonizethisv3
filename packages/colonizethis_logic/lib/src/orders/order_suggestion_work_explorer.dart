@@ -1,27 +1,5 @@
 part of 'order_suggestion_work.dart';
 
-Set<String> _partiallyRevealedProvinceCacheForPlayer({
-  required Game game,
-  required PlayerView view,
-}) {
-  final cached = <String>{};
-  for (final regionEntry
-      in game.worldState.tileKeysByRegionAndProvince.entries) {
-    for (final provinceEntry in regionEntry.value.entries) {
-      final provinceId = provinceEntry.key;
-      if (!ProvinceId.isPrefixed(provinceId)) continue;
-      if (!isPartiallyRevealedProvinceLandTilesForPlayer(
-        view,
-        provinceEntry.value,
-      )) {
-        continue;
-      }
-      cached.add(provinceId);
-    }
-  }
-  return cached;
-}
-
 ({WorkOrder? chosen, String lastReason}) _tryExploreWorkOrderForProvince({
   required PlayerView view,
   required Game game,
