@@ -31,13 +31,7 @@ void main() {
     final bootstrapSw = Stopwatch()..start();
     await bootstrapForIntegrationTest();
     await tester.pump();
-    await e2eWaitUntilFound(
-      tester,
-      find.text('New Game').hitTestable(),
-      timeout: const Duration(seconds: 30),
-      perf: perf,
-      phaseName: 'wait_main_menu_after_bootstrap',
-    );
+    await e2eWaitForNewGameEntry(tester, perf: perf);
     perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
     final preloadSw = Stopwatch()..start();
     await e2eEnsureAllRelocated64pxPngsLoad();
