@@ -53,7 +53,13 @@ void main() {
     final bootstrapSw = Stopwatch()..start();
     await bootstrapForIntegrationTest();
     await tester.pump();
-    await e2ePumpFor(tester, const Duration(milliseconds: 500));
+    await e2eWaitUntilFound(
+      tester,
+      find.text('New Game'),
+      timeout: const Duration(seconds: 15),
+      perf: perf,
+      phaseName: 'wait_until_found_new_game_after_bootstrap',
+    );
     perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
 
     final wallClock = Stopwatch()..start();
@@ -146,7 +152,13 @@ void main() {
       final bootstrapSw = Stopwatch()..start();
       await bootstrapForIntegrationTest();
       await tester.pump();
-      await e2ePumpFor(tester, const Duration(milliseconds: 500));
+      await e2eWaitUntilFound(
+        tester,
+        find.text('New Game'),
+        timeout: const Duration(seconds: 15),
+        perf: perf,
+        phaseName: 'wait_until_found_new_game_after_bootstrap',
+      );
       perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
 
       final wallClock = Stopwatch()..start();
