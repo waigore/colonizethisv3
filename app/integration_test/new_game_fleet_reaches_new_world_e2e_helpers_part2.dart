@@ -285,17 +285,17 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
     await _openNavalPanel(tester);
     if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
         _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
-      await e2eCloseBottomSheet(tester);
+      await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
       return;
     }
-    await e2eCloseBottomSheet(tester);
+    await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _tryNavalMoveSegment(
       tester,
       l10n,
       useNewWorldMapTabFirst: true,
       allowWarpDestinations: false,
     );
-    await e2eCloseBottomSheet(tester);
+    await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _advanceOneHumanTurn(tester, l10n);
   }
   // Some generated maps can keep the non-home fleet in open-ocean NW sea lanes
@@ -483,20 +483,24 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
     await tester.tap(tappable.first, warnIfMissed: false);
     await tester.pump();
     final openDeadline = DateTime.now().add(const Duration(seconds: 3));
+    var openPollMs = 25;
     while (DateTime.now().isBefore(openDeadline)) {
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(Duration(milliseconds: openPollMs));
       if (civilianPanel.evaluate().isNotEmpty) {
         return true;
       }
+      openPollMs = e2eAdaptivePollRampAfterIdle(openPollMs);
     }
     return false;
   }
 
+  var outerPollMs = 25;
   while (sw.elapsed < timeout) {
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(Duration(milliseconds: outerPollMs));
     if (civilianPanel.evaluate().isNotEmpty ||
         navalPanel.evaluate().isNotEmpty) {
-      await e2eCloseBottomSheet(tester);
+      await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
+      outerPollMs = 25;
       continue;
     }
     if (empireRailButton.evaluate().isNotEmpty) {
@@ -509,6 +513,7 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
         return;
       }
     }
+    outerPollMs = e2eAdaptivePollRampAfterIdle(outerPollMs);
   }
   fail(
     'Timed out opening civilian panel. Last exception: ${tester.takeException()}',
@@ -549,9 +554,11 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
 
       final exploreTile = find.widgetWithText(ListTile, 'Explore');
       final wait = Stopwatch()..start();
+      var explorePollMs = 25;
       while (exploreTile.evaluate().isEmpty &&
           wait.elapsed < _kMaxUiResponseWait) {
-        await tester.pump(const Duration(milliseconds: 50));
+        await tester.pump(Duration(milliseconds: explorePollMs));
+        explorePollMs = e2eAdaptivePollRampAfterIdle(explorePollMs);
       }
       if (exploreTile.evaluate().isNotEmpty) {
         final enabled = tester.widget<ListTile>(exploreTile.first).enabled;
