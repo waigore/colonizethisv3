@@ -56,6 +56,9 @@ Map<String, ExtractionTotals> computeExtraction({
   Set<String>? restrictToTileKeys,
 }) {
   _log.d('extraction compute start players=${game.players.length}');
+  final provincesByFullId = <String, Province>{
+    for (final p in allProvinces(game.worldState)) p.id: p,
+  };
   final out = <String, ExtractionTotals>{};
   for (final player in game.players) {
     final cr = connectivityResult[player.id];
@@ -89,6 +92,7 @@ Map<String, ExtractionTotals> computeExtraction({
         capitalRegionId: capitalRegionId,
         techCapForPlayer: techCapForPlayer,
         techCapForPlayerAndResource: techCapForPlayerAndResource,
+        provincesByFullId: provincesByFullId,
       );
       if (contribution == null) {
         continue;
@@ -147,6 +151,10 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
   required String? capitalRegionId,
   int Function(String playerId) techCapForPlayer = _defaultTechCap,
   int Function(String playerId, String resourceId)? techCapForPlayerAndResource,
+
+  /// When non-null (typically built once per [computeExtraction] pass), province
+  /// rows are resolved by id in O(1) instead of scanning the region list per tile.
+  Map<String, Province>? provincesByFullId,
 }) {
   if (!connectedTileKeys.contains(tileKey)) {
     return null;
@@ -180,11 +188,10 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
 
   // Province lookup must be region-scoped. SPEC/game/world-model-identity.md.
   final provinceId = '${coords.regionId}|${coords.provinceLocalId}';
-  final regionData = regionDataForId(game.worldState, coords.regionId);
-  final province = regionData?.provinces
-      .where((p) => p.id == provinceId)
-      .firstOrNull;
-  if (regionData == null || province == null) {
+  final province = provincesByFullId != null
+      ? provincesByFullId[provinceId]
+      : tryGetProvince(game.worldState, provinceId);
+  if (province == null) {
     final msg =
         'extraction province missing tileKey=$tileKey provinceId=$provinceId '
         '(region-scoped lookup failed; SPEC/game/world-model-identity.md)';
