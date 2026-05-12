@@ -51,7 +51,7 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
       await e2eCloseBottomSheet(
         tester,
         perf: perf,
-        timeout: _kMaxUiResponseWait,
+        overallTimeout: _kMaxUiResponseWait,
       );
       navalPollMs = 25;
       continue;
