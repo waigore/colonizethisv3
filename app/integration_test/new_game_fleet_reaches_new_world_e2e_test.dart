@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
@@ -16,7 +18,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         suggestWorkOrders;
 import 'package:colonizethis_models/colonizethis_models.dart'
     show MoveOrder, ProvinceId, Unit, WorkOrder, kUnitTypeExplorer;
-import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
@@ -84,7 +85,7 @@ void main() {
       }
     }
 
-    await _bootstrapNewGameToMap(tester, perf: perf);
+    await e2eBootstrapNewGameToMap(tester, perf: perf);
     ensureUnderWallClock('after bootstrap');
 
     final l10n = lookupAppLocalizations(const Locale('en'));
@@ -177,7 +178,7 @@ void main() {
         }
       }
 
-      await _bootstrapNewGameToMap(tester, perf: perf);
+      await e2eBootstrapNewGameToMap(tester, perf: perf);
       ensureUnderWallClock('after bootstrap');
 
       final l10n = lookupAppLocalizations(const Locale('en'));

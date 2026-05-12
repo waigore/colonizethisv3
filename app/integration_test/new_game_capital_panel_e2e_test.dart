@@ -1,7 +1,6 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/fleet_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
@@ -12,8 +11,6 @@ import 'e2e_test_shared.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/test_support/province_panel_e2e_expected_lines.dart';
-import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -145,85 +142,8 @@ void main() {
     await _ensureAllRelocated64pxPngsLoad();
     perf.timing('asset_preload', preloadSw.elapsed);
 
-    await tester.tap(find.text('New Game'));
-    await _waitUntilFound(
-      tester,
-      find.text('Start'),
-      timeout: const Duration(seconds: 30),
-      perf: perf,
-      phaseName: 'wait_until_found_start_button',
-    );
-
-    final startButton = find.ancestor(
-      of: find.text('Start'),
-      matching: find.byType(CtNinePatchButton),
-    );
-    expect(startButton, findsOneWidget);
-
-    final shellScrollable = find.descendant(
-      of: find.byType(CtDialogShell),
-      matching: find.byType(Scrollable),
-    );
-    await tester.dragUntilVisible(
-      startButton,
-      shellScrollable,
-      const Offset(0, -120),
-    );
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.ensureVisible(startButton);
     final newGameToMapSw = Stopwatch()..start();
-    await tester.tap(startButton);
-    await tester.pump();
-
-    // Progress dialog spins forever → never use pumpAndSettle here. Also dismiss
-    // game-start intro (Yarn) once the map exists under the overlay.
-    final setupDeadline = DateTime.now().add(const Duration(seconds: 60));
-    var reachedMap = false;
-    while (DateTime.now().isBefore(setupDeadline)) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (find.text('Could not create game').evaluate().isNotEmpty) {
-        fail(
-          'New game setup failed (error dialog). '
-          'Exception: ${tester.takeException()}',
-        );
-      }
-      final introOpen = find
-          .byType(GameStartIntroOverlay)
-          .evaluate()
-          .isNotEmpty;
-      if (introOpen) {
-        if (find.text('Continue').evaluate().isNotEmpty) {
-          await tester.tap(find.text('Continue').first);
-          await tester.pump(const Duration(milliseconds: 200));
-        } else if (find.text('I shall.').evaluate().isNotEmpty) {
-          await tester.tap(find.text('I shall.').first);
-          await tester.pump(const Duration(milliseconds: 200));
-        }
-        continue;
-      }
-      final creating = find.text('Creating game').evaluate().isNotEmpty;
-      if (creating) {
-        continue;
-      }
-      if (find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty) {
-        reachedMap = true;
-        break;
-      }
-    }
-    expect(
-      reachedMap,
-      isTrue,
-      reason:
-          'Timed out before map + home control (stuck on Creating game or setup?)',
-    );
-
-    expect(
-      find.byKey(kHomeToCapitalButtonKey),
-      findsOneWidget,
-      reason:
-          'Expected in-game map with home-to-capital control after setup (Refs #1592)',
-    );
-    await tester.pump(const Duration(milliseconds: 500));
+    await e2eBootstrapNewGameToMap(tester, perf: perf);
     perf.timing('new_game_to_map', newGameToMapSw.elapsed);
 
     await tester.tap(find.byKey(kHomeToCapitalButtonKey));

@@ -10,10 +10,6 @@ const int _kMaxNextTurnTapsForNwFleetReach = 35;
 /// next-turn label settle, panel-open loops). Fail immediately when exceeded.
 const Duration _kMaxUiResponseWait = Duration(seconds: 5);
 
-/// Overall cap for async new-game setup (map gen + intro), not a single widget
-/// poll; still bounded so hung runs exit (`SPEC/program/e2e-integration-tests.md`).
-const Duration _kBootstrapNewGameOverallCap = Duration(seconds: 60);
-
 /// Entire fleet e2e must finish within this wall clock (success or guarded fail).
 ///
 /// E2E policy caps wall-clock runtime to 5 minutes so PR feedback remains fast.
@@ -108,88 +104,6 @@ Future<void> _closeBottomSheet(WidgetTester tester, {_E2ePerfLog? perf}) async {
   );
 }
 
-Future<void> _tapGameStartIntroOverlayContinueIfPresent(
-  WidgetTester tester,
-) async {
-  if (find.text('Continue').evaluate().isNotEmpty) {
-    await tester.tap(find.text('Continue').first);
-    await tester.pump(const Duration(milliseconds: 200));
-    return;
-  }
-  if (find.text('I shall.').evaluate().isNotEmpty) {
-    await tester.tap(find.text('I shall.').first);
-    await tester.pump(const Duration(milliseconds: 200));
-  }
-}
-
-Future<void> _bootstrapNewGameToMap(
-  WidgetTester tester, {
-  _E2ePerfLog? perf,
-}) async {
-  final phaseSw = Stopwatch()..start();
-  await tester.tap(find.text('New Game'));
-  await _waitUntilFound(
-    tester,
-    find.text('Start'),
-    perf: perf,
-    phaseName: 'wait_until_found_start_button',
-  );
-
-  final startButton = find.ancestor(
-    of: find.text('Start'),
-    matching: find.byType(CtNinePatchButton),
-  );
-  expect(startButton, findsOneWidget);
-
-  final shellScrollable = find.descendant(
-    of: find.byType(CtDialogShell),
-    matching: find.byType(Scrollable),
-  );
-  await tester.dragUntilVisible(
-    startButton,
-    shellScrollable,
-    const Offset(0, -120),
-  );
-  await tester.pump(const Duration(milliseconds: 200));
-  await tester.ensureVisible(startButton);
-  await tester.tap(startButton);
-  await tester.pump();
-
-  final setupDeadline = DateTime.now().add(_kBootstrapNewGameOverallCap);
-  var reachedMap = false;
-  while (DateTime.now().isBefore(setupDeadline)) {
-    await tester.pump(const Duration(milliseconds: 100));
-    if (find.text('Could not create game').evaluate().isNotEmpty) {
-      fail(
-        'New game setup failed (error dialog). '
-        'Exception: ${tester.takeException()}',
-      );
-    }
-    final introOpen = find.byType(GameStartIntroOverlay).evaluate().isNotEmpty;
-    if (introOpen) {
-      await _tapGameStartIntroOverlayContinueIfPresent(tester);
-      continue;
-    }
-    final creating = find.text('Creating game').evaluate().isNotEmpty;
-    if (creating) {
-      continue;
-    }
-    if (find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty) {
-      reachedMap = true;
-      break;
-    }
-  }
-  if (!reachedMap) {
-    fail(
-      'Timed out after ${_kBootstrapNewGameOverallCap.inSeconds}s waiting for '
-      'map (home→capital). Last exception: ${tester.takeException()}',
-    );
-  }
-  expect(find.byKey(kHomeToCapitalButtonKey), findsOneWidget);
-  await tester.pump(const Duration(milliseconds: 500));
-  perf?.timing('new_game_to_map', phaseSw.elapsed);
-}
-
 Future<void> _expandEachExpansionTileOnce(WidgetTester tester) async {
   for (var safety = 0; safety < 32; safety++) {
     final tiles = find.byType(ExpansionTile);
@@ -221,11 +135,16 @@ Future<bool> _pollUntilNavalPanelVisible(
   Duration budget,
 ) async {
   final poll = Stopwatch()..start();
+  if (navalPanel.evaluate().isNotEmpty) {
+    return true;
+  }
+  var stepMs = 25;
   while (poll.elapsed < budget) {
-    await tester.pump(const Duration(milliseconds: 25));
+    await tester.pump(Duration(milliseconds: stepMs));
     if (navalPanel.evaluate().isNotEmpty) {
       return true;
     }
+    stepMs = math.min(500, stepMs * 2);
   }
   return false;
 }

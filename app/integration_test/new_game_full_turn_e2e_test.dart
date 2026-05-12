@@ -1,7 +1,6 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/fleet_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
@@ -212,77 +211,6 @@ Future<void> _ensureAllRelocated64pxPngsLoad() async {
 
   final failures = await e2eDecodePngAssetPathsParallel(assets);
   expect(failures, isEmpty);
-}
-
-Future<void> _tapGameStartIntroOverlayContinueIfPresent(
-  WidgetTester tester,
-) async {
-  if (find.text('Continue').evaluate().isNotEmpty) {
-    await tester.tap(find.text('Continue').first);
-    await tester.pump(const Duration(milliseconds: 200));
-    return;
-  }
-  if (find.text('I shall.').evaluate().isNotEmpty) {
-    await tester.tap(find.text('I shall.').first);
-    await tester.pump(const Duration(milliseconds: 200));
-  }
-}
-
-Future<void> _bootstrapNewGameToMap(WidgetTester tester) async {
-  await tester.tap(find.text('New Game'));
-  await _waitUntilFound(
-    tester,
-    find.text('Start'),
-    timeout: const Duration(seconds: 30),
-  );
-
-  final startButton = find.ancestor(
-    of: find.text('Start'),
-    matching: find.byType(CtNinePatchButton),
-  );
-  expect(startButton, findsOneWidget);
-
-  final shellScrollable = find.descendant(
-    of: find.byType(CtDialogShell),
-    matching: find.byType(Scrollable),
-  );
-  await tester.dragUntilVisible(
-    startButton,
-    shellScrollable,
-    const Offset(0, -120),
-  );
-  await tester.pump(const Duration(milliseconds: 200));
-  await tester.ensureVisible(startButton);
-  await tester.tap(startButton);
-  await tester.pump();
-
-  final setupDeadline = DateTime.now().add(const Duration(seconds: 60));
-  var reachedMap = false;
-  while (DateTime.now().isBefore(setupDeadline)) {
-    await tester.pump(const Duration(milliseconds: 100));
-    if (find.text('Could not create game').evaluate().isNotEmpty) {
-      fail(
-        'New game setup failed (error dialog). '
-        'Exception: ${tester.takeException()}',
-      );
-    }
-    final introOpen = find.byType(GameStartIntroOverlay).evaluate().isNotEmpty;
-    if (introOpen) {
-      await _tapGameStartIntroOverlayContinueIfPresent(tester);
-      continue;
-    }
-    final creating = find.text('Creating game').evaluate().isNotEmpty;
-    if (creating) {
-      continue;
-    }
-    if (find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty) {
-      reachedMap = true;
-      break;
-    }
-  }
-  expect(reachedMap, isTrue);
-  expect(find.byKey(kHomeToCapitalButtonKey), findsOneWidget);
-  await tester.pump(const Duration(milliseconds: 500));
 }
 
 Future<void> _closeBottomSheet(WidgetTester tester, {_E2ePerfLog? perf}) async {
@@ -534,7 +462,7 @@ void main() {
       perf.timing('asset_preload', preloadSw.elapsed);
 
       final newGameSw = Stopwatch()..start();
-      await _bootstrapNewGameToMap(tester);
+      await e2eBootstrapNewGameToMap(tester);
       perf.timing('new_game_to_map', newGameSw.elapsed);
 
       final l10n = lookupAppLocalizations(const Locale('en'));
