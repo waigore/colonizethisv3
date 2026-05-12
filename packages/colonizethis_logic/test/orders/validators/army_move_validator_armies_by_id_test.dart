@@ -190,5 +190,74 @@ void main() {
         expect(directResult.status, OrderValidationStatus.accepted);
       },
     );
+
+    test(
+      'factionMembership path matches legacy GP declare-war guard (Refs #2394)',
+      () {
+        final game = Game(
+          id: 'g2',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+            oldWorld: RegionData(
+              provinces: [
+                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+                Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+              ],
+              units: [
+                Unit(
+                  id: 'u1',
+                  type: 'pikemen',
+                  ownerId: 'p1',
+                  locationProvinceId: '$ow|P1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            armies: [
+              moveValidatorTestFieldArmy(ow, 'p1', 'P1', 'u1'),
+            ],
+            playerVisibilityByTile: const {
+              'p1': {
+                'oldWorld|P1|0|0': 'fullyVisible',
+                'oldWorld|P2|0|0': 'fullyVisible',
+              },
+            },
+          ),
+          players: const [
+            Player(id: 'p1', displayName: 'P1', isHuman: true),
+            Player(id: 'p2', displayName: 'P2', isHuman: false),
+          ],
+        );
+        final view = buildPlayerView(game, topology, 'p1');
+        final membership = DiplomacyFactionMembership.from(game);
+        final order = ArmyMoveOrder(
+          armyId: fieldArmyIdFor('p1', '$ow|P1'),
+          destinationProvinceId: '$ow|P2',
+        );
+
+        final without = validator.validate(
+          order,
+          game,
+          'p1',
+          const [],
+          view,
+          topology,
+        );
+        final withMembership = validator.validate(
+          order,
+          game,
+          'p1',
+          const [],
+          view,
+          topology,
+          factionMembership: membership,
+        );
+
+        expect(withMembership.status, without.status);
+        expect(without.status, OrderValidationStatus.rejected);
+        expect(without.reason, contains('declare war'));
+        expect(withMembership.reason, without.reason);
+      },
+    );
   });
 }

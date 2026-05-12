@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import 'order_validators.dart';
@@ -74,6 +75,17 @@ class IncrementalCandidateValidator {
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildOrders;
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildAndWorkOrders;
   Map<String, Army>? _cachedArmiesById;
+  DiplomacyFactionMembership? _cachedFactionMembership;
+
+  DiplomacyFactionMembership _factionMembership() {
+    final cached = _cachedFactionMembership;
+    if (cached != null) {
+      return cached;
+    }
+    final built = DiplomacyFactionMembership.from(game);
+    _cachedFactionMembership = built;
+    return built;
+  }
 
   bool isMoveAccepted(MoveOrder candidate) {
     const validator = MoveValidator();
@@ -123,6 +135,7 @@ class IncrementalCandidateValidator {
           view,
           topology,
           armiesById: _armiesById(),
+          factionMembership: _factionMembership(),
         )
         .isAccepted;
   }

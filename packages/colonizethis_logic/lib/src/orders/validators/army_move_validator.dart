@@ -19,6 +19,10 @@ class ArmyMoveValidator {
   /// paths (Refs #2394, SPEC/program/order-suggestions.md). When omitted, a
   /// single-pass `firstWhereOrNull`-style scan is used to preserve current
   /// behavior without allocating an intermediate list.
+  ///
+  /// [factionMembership] (optional) avoids per-candidate `.any()` scans over
+  /// players / minors / tribes when classifying destination owners (Refs
+  /// #2394).
   OrderValidationResult validate(
     ArmyMoveOrder order,
     Game game,
@@ -27,6 +31,7 @@ class ArmyMoveValidator {
     PlayerView view,
     MapTopology topology, {
     Map<String, Army>? armiesById,
+    DiplomacyFactionMembership? factionMembership,
   }) {
     final army = armiesById != null
         ? armiesById[order.armyId]
@@ -64,7 +69,7 @@ class ArmyMoveValidator {
 
     if (destOwnerId != null &&
         destOwnerId != playerId &&
-        isGreatPower(game, destOwnerId) &&
+        isGreatPower(game, destOwnerId, factionMembership: factionMembership) &&
         !canAttackWithWarOrDeclaring(
           game,
           playerId,
@@ -78,7 +83,7 @@ class ArmyMoveValidator {
 
     if (destOwnerId != null &&
         destOwnerId != playerId &&
-        isMinorOrTribe(game, destOwnerId) &&
+        isMinorOrTribe(game, destOwnerId, factionMembership: factionMembership) &&
         !canAttackWithWarOrDeclaring(
           game,
           playerId,

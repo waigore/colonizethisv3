@@ -62,12 +62,26 @@ final class DiplomacyFactionMembership {
   bool isMinorOrTribe(String factionId) => minorOrTribeIds.contains(factionId);
 }
 
-bool isMinorOrTribe(Game game, String factionId) {
+bool isMinorOrTribe(
+  Game game,
+  String factionId, {
+  DiplomacyFactionMembership? factionMembership,
+}) {
+  if (factionMembership != null) {
+    return factionMembership.isMinorOrTribe(factionId);
+  }
   return game.minorNations.any((m) => m.id == factionId) ||
       game.tribes.any((t) => t.id == factionId);
 }
 
-bool isGreatPower(Game game, String factionId) {
+bool isGreatPower(
+  Game game,
+  String factionId, {
+  DiplomacyFactionMembership? factionMembership,
+}) {
+  if (factionMembership != null) {
+    return factionMembership.isGreatPower(factionId);
+  }
   return game.players.any((p) => p.id == factionId);
 }
 
