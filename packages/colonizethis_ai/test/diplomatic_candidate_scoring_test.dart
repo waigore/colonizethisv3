@@ -4,7 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'domain_planners_test_fake_api.dart';
+import 'domain_planner_test_fake_api.dart';
 void main() {
   group('computeDiplomaticCandidateScores', () {
     test('declareWar score exceeds establishOverture for same hostile target', () {
