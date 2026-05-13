@@ -108,6 +108,11 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
 
 /// Selects the New World map region via [kCtE2ERegionTabNewWorldKey] when present
 /// (reduces ambiguous "New World" text on screen; `SPEC/program/e2e-integration-tests.md`).
+///
+/// Adaptive replacement for fixed post-tap idle pumps (GitHub #2336 / AC4–AC5):
+/// uses [e2ePumpUntilConditionOrIdle] with [e2eNewWorldRegionChipAppearsSelected]
+/// so a no-op tap (already-selected) short-circuits before the first pump, while
+/// a bounded worst-case wait remains for Linux headless when the tab must flip.
 Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
   final tab = find.byKey(kCtE2ERegionTabNewWorldKey).hitTestable();
   if (tab.evaluate().isEmpty) {
@@ -124,13 +129,17 @@ Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
 
 /// Map HUD must show **Old World** before issuing naval moves so OW-split
 /// fleets and warp orders stay coherent on Linux CI (`SPEC/program/e2e-integration-tests.md`).
+///
+/// Adaptive replacement for fixed post-tap idle pumps (GitHub #2336 / AC4–AC5):
+/// uses [e2ePumpUntilConditionOrIdle] with [e2eOldWorldRegionChipAppearsSelected]
+/// so an already-selected chip exits immediately; otherwise polls with adaptive
+/// pacing up to a bounded timeout.
 Future<void> _tapOldWorldRegionTab(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
-  final hit = find
-      .widgetWithText(CtChoiceChip, l10n.region_oldWorld)
-      .hitTestable();
+  final chip = find.widgetWithText(CtChoiceChip, l10n.region_oldWorld);
+  final hit = chip.hitTestable();
   if (hit.evaluate().isEmpty) {
     return;
   }

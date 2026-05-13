@@ -115,17 +115,25 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: SizedBox()));
       var calls = 0;
+      final sw = Stopwatch()..start();
       final result = await e2ePumpUntilConditionOrIdle(
         tester,
         () {
           calls++;
           return true;
         },
-        timeout: const Duration(seconds: 1),
+        timeout: const Duration(seconds: 5),
         phaseName: 'smoke_condition_immediate',
       );
       expect(result, isTrue);
       expect(calls, 1);
+      expect(
+        sw.elapsed < const Duration(milliseconds: 200),
+        isTrue,
+        reason:
+            'Pre-pump short-circuit must keep already-true callers from '
+            'paying any adaptive pump time (#2336 AC5).',
+      );
     },
   );
 
@@ -136,15 +144,46 @@ void main() {
       final result = await e2ePumpUntilConditionOrIdle(
         tester,
         () => false,
-        timeout: const Duration(milliseconds: 80),
+        timeout: const Duration(milliseconds: 150),
         phaseName: 'smoke_condition_timeout',
       );
-      expect(result, isFalse);
+      expect(
+        result,
+        isFalse,
+        reason:
+            'Best-effort variant must not call fail() on timeout so callers '
+            'can treat the wait as optional post-tap settle (#2336 AC5).',
+      );
     },
   );
 
   testWidgets(
     'e2ePumpUntilConditionOrIdle returns true once condition flips during pump',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      var pumps = 0;
+      final result = await e2ePumpUntilConditionOrIdle(
+        tester,
+        () {
+          pumps++;
+          return pumps >= 3;
+        },
+        timeout: const Duration(seconds: 2),
+        phaseName: 'smoke_condition_polling_steps',
+      );
+      expect(result, isTrue);
+      expect(
+        pumps >= 3,
+        isTrue,
+        reason:
+            'Condition must be evaluated at least once per polling step until '
+            'it returns true (#2336 AC5).',
+      );
+    },
+  );
+
+  testWidgets(
+    'e2ePumpUntilConditionOrIdle returns true after post-frame condition flip',
     (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: _E2eFlipStub()));
       final state = tester.state<_E2eFlipStubState>(find.byType(_E2eFlipStub));
