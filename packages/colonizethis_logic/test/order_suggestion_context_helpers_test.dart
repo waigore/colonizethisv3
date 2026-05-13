@@ -72,6 +72,28 @@ void main() {
     });
   });
 
+  group('previousStage', () {
+    test('reverses nextOvertureStage for progression chain', () {
+      for (final stage in [
+        OvertureStage.none,
+        OvertureStage.tradeConsulate,
+        OvertureStage.embassy,
+        OvertureStage.nap,
+      ]) {
+        final forward = nextOvertureStage(stage)!;
+        expect(previousStage(forward), stage);
+      }
+    });
+
+    test('none maps to itself', () {
+      expect(previousStage(OvertureStage.none), OvertureStage.none);
+    });
+
+    test('joinEmpire previous is nap', () {
+      expect(previousStage(OvertureStage.joinEmpire), OvertureStage.nap);
+    });
+  });
+
   group('acceptance wrappers', () {
     test('isNavalMoveOrderAccepted returns a boolean result', () {
       final accepted = isNavalMoveOrderAccepted(
