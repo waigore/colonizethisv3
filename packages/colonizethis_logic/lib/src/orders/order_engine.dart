@@ -110,6 +110,10 @@ typedef OrderValidatorFactory =
       DiplomacyFactionMembership factionMembership,
     );
 
+/// One post–move/army validation round: caller constructs a fresh [OrderValidators]
+/// bundle, then invokes this to append results and propagate economy state.
+typedef _OrderCategoryDescriptor = void Function(OrderValidators validators);
+
 /// Order engine: holds per-player orders, validates in submission order,
 /// exposes projected effects. SPEC/program/order-engine.md.
 /// Slot table and public add/remove/withContext methods are generated from
@@ -268,26 +272,26 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
         civilianDraftMoveUnitIds.add(m.unitId);
       }
     }
-    final factionMembership = DiplomacyFactionMembership.from(game);
-    OrderValidators refreshValidators() {
-      return _validatorFactory(
-        game,
-        player,
-        playerId,
-        view,
-        topology,
-        unitsById,
-        diplomatic,
-        tileMapByRegion,
-        civilianDraftMoveUnitIds,
-        devExclusiveTiles,
-        stockpile,
-        treasury,
-        factionMembership,
-      );
-    }
 
-    var validators = refreshValidators();
+    final factionMembership = DiplomacyFactionMembership.from(game);
+
+    OrderValidators newValidatorBundle() => _validatorFactory(
+      game,
+      player,
+      playerId,
+      view,
+      topology,
+      unitsById,
+      diplomatic,
+      tileMapByRegion,
+      civilianDraftMoveUnitIds,
+      devExclusiveTiles,
+      stockpile,
+      treasury,
+      factionMembership,
+    );
+
+    var validators = newValidatorBundle();
 
     OrderValidationResult validateMove(MoveOrder o, bool previousRejected) {
       return validators.moveValidator.validate(
@@ -329,64 +333,67 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       (o, prev) => prev ? previousInvalidOrderResult : validateArmyMove(o),
     );
 
-    validators = refreshValidators();
-    rejected = _appendValidationResults(
-      results,
-      builds,
-      rejected,
-      (o, prev) =>
-          validators.buildValidator.validate(o, previousRejected: prev),
-    );
-    stockpile = validators.buildValidator.stockpile;
-    treasury = validators.buildValidator.treasury;
-
-    validators = refreshValidators();
-    rejected = _appendValidationResults(
-      results,
-      works,
-      rejected,
-      (o, prev) => validators.workValidator.validate(o, previousRejected: prev),
-    );
-    stockpile = validators.workValidator.stockpile;
-    treasury = validators.workValidator.treasury;
-
-    validators = refreshValidators();
-    final afterDiplomatic =
-        _appendValidationResultsWithState<DiplomaticOrder, int>(
+    final postArmyCategories = <_OrderCategoryDescriptor>[
+      (v) {
+        rejected = _appendValidationResults(
           results,
-          diplomatic,
+          builds,
           rejected,
-          treasury,
-          (o, prev) {
-            final r = validators.diplomaticValidator.validate(
-              o,
-              previousRejected: prev,
-            );
-            return (result: r.result, state: r.treasury);
-          },
+          (o, prev) => v.buildValidator.validate(o, previousRejected: prev),
         );
-    rejected = afterDiplomatic.rejected;
-    treasury = afterDiplomatic.state;
+        stockpile = v.buildValidator.stockpile;
+        treasury = v.buildValidator.treasury;
+      },
+      (v) {
+        rejected = _appendValidationResults(
+          results,
+          works,
+          rejected,
+          (o, prev) => v.workValidator.validate(o, previousRejected: prev),
+        );
+        stockpile = v.workValidator.stockpile;
+        treasury = v.workValidator.treasury;
+      },
+      (v) {
+        final afterDiplomatic =
+            _appendValidationResultsWithState<DiplomaticOrder, int>(
+              results,
+              diplomatic,
+              rejected,
+              treasury,
+              (o, prev) {
+                final r = v.diplomaticValidator.validate(
+                  o,
+                  previousRejected: prev,
+                );
+                return (result: r.result, state: r.treasury);
+              },
+            );
+        rejected = afterDiplomatic.rejected;
+        treasury = afterDiplomatic.state;
+      },
+      (v) {
+        rejected = _appendValidationResults(
+          results,
+          navals,
+          rejected,
+          (o, prev) =>
+              v.navalValidator.validateNavalMove(o, previousRejected: prev),
+        );
+        rejected = _appendValidationResults(
+          results,
+          missions,
+          rejected,
+          (o, prev) =>
+              v.navalValidator.validateNavalMission(o, previousRejected: prev),
+        );
+      },
+    ];
 
-    validators = refreshValidators();
-    rejected = _appendValidationResults(
-      results,
-      navals,
-      rejected,
-      (o, prev) => validators.navalValidator.validateNavalMove(
-        o,
-        previousRejected: prev,
-      ),
-    );
-    rejected = _appendValidationResults(
-      results,
-      missions,
-      rejected,
-      (o, prev) => validators.navalValidator.validateNavalMission(
-        o,
-        previousRejected: prev,
-      ),
-    );
+    for (final step in postArmyCategories) {
+      validators = newValidatorBundle();
+      step(validators);
+    }
     return results;
   }
 
