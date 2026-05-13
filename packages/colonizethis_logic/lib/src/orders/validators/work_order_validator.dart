@@ -46,6 +46,7 @@ class WorkOrderValidationContext {
   final Set<String> civilianDraftMoveUnitIds;
   final List<DiplomaticOrder> diplomaticOrders;
   final MapTopology? topology;
+
   /// When set, avoids repeated linear faction classification in tile occupancy
   /// checks (Refs #2394).
   final DiplomacyFactionMembership? factionMembership;
@@ -85,83 +86,91 @@ class WorkOrderValidator extends StatefulValidator {
         final unit = _context.unitsById[o.unitId];
         final unitValidation = _validateOwnedUnseenUnit(o, unit);
         if (unitValidation != null) return unitValidation;
-        final validatedUnit = unit;
-        if (validatedUnit == null) {
-          return OrderValidationResult.rejected('Unit not found');
-        }
-        final type = validatedUnit.type;
-        final targetValidation = _validateWorkTargetAndTile(o, type);
-        if (targetValidation != null) return targetValidation;
-
-        final targetProvinceId = Unit.provinceIdFromTileKey(o.targetTileKey);
-        final province = targetProvinceId != null
-            ? _context.game.worldState.tryGetProvince(targetProvinceId)
-            : null;
-        final ownerId = province?.ownerId;
-
-        final preResult = _runTargetPrecheck(
-          o: o,
-          targetProvinceId: targetProvinceId,
-          ownerId: ownerId,
-          type: type,
-        );
-        if (preResult != null) {
-          return preResult;
-        }
-
-        final foreignProvinceResult = _validateForeignProvinceWork(
-          o: o,
-          type: type,
-          ownerId: ownerId,
-        );
-        if (foreignProvinceResult != null) return foreignProvinceResult;
-
-        final devExclusiveResult = _validateDevExclusiveWorkTarget(o, type);
-        if (devExclusiveResult != null) return devExclusiveResult;
-
-        final materialRuleResult = _validateMaterialAndTechRules(
-          o,
-          province?.fortLevel ?? 0,
-        );
-        if (materialRuleResult != null) return materialRuleResult;
-
-        if (!workOrderVisibilityOk(
-          _context.view,
-          validatedUnit,
-          o.target,
-          targetTileKey: o.targetTileKey,
-          worldState: _context.game.worldState,
-        )) {
-          return OrderValidationResult.rejected(
-            'Province or tile not visible for this work',
-          );
-        }
-
-        if (!civilianMayOccupyLandTileKey(
-          game: _context.game,
-          playerId: _context.playerId,
-          unitType: type,
-          destinationTileKey: o.targetTileKey,
-          factionMembership: _context.factionMembership,
-        )) {
-          return OrderValidationResult.rejected(
-            'Unit cannot occupy target tile',
-          );
-        }
-
-        final prospectResult = _validateProspectTarget(o);
-        if (prospectResult != null) return prospectResult;
-
-        if (isDevExclusiveUnitType(type) &&
-            isDevExclusiveWorkTarget(o.target)) {
-          _context.devExclusiveTiles.add(o.targetTileKey);
-        }
-
-        _applyProjectedWorkCost(o);
-
-        return OrderValidationResult.accepted();
+        // [_validateOwnedUnseenUnit] rejects null / wrong-owner units; when it
+        // returns null, [unit] is the owned player unit for this order.
+        final validatedUnit = unit!;
+        return _validateWorkOrderAfterUnitLocked(o, validatedUnit);
       },
     );
+  }
+
+  /// Post–unit-lock checks: ordered reject steps then accept path (Refs #2391
+  /// AC9 — explicit step list preserves the prior cascade order exactly).
+  OrderValidationResult _validateWorkOrderAfterUnitLocked(
+    WorkOrder o,
+    Unit validatedUnit,
+  ) {
+    final type = validatedUnit.type;
+    final targetProvinceId = Unit.provinceIdFromTileKey(o.targetTileKey);
+    final province = targetProvinceId != null
+        ? _context.game.worldState.tryGetProvince(targetProvinceId)
+        : null;
+    final ownerId = province?.ownerId;
+
+    final rejectSteps = <OrderValidationResult? Function()>[
+      () => _validateWorkTargetAndTile(o, type),
+      () => _runTargetPrecheck(
+        o: o,
+        targetProvinceId: targetProvinceId,
+        ownerId: ownerId,
+        type: type,
+      ),
+      () => _validateForeignProvinceWork(o: o, type: type, ownerId: ownerId),
+      () => _validateDevExclusiveWorkTarget(o, type),
+      () => _validateMaterialAndTechRules(o, province?.fortLevel ?? 0),
+      () => _rejectUnlessWorkOrderVisible(o, validatedUnit),
+      () => _rejectUnlessCivilianMayOccupyLand(o, type),
+      () => _validateProspectTarget(o),
+    ];
+
+    for (final step in rejectSteps) {
+      final result = step();
+      if (result != null) {
+        return result;
+      }
+    }
+
+    if (isDevExclusiveUnitType(type) && isDevExclusiveWorkTarget(o.target)) {
+      _context.devExclusiveTiles.add(o.targetTileKey);
+    }
+
+    _applyProjectedWorkCost(o);
+
+    return OrderValidationResult.accepted();
+  }
+
+  OrderValidationResult? _rejectUnlessWorkOrderVisible(
+    WorkOrder o,
+    Unit validatedUnit,
+  ) {
+    if (!workOrderVisibilityOk(
+      _context.view,
+      validatedUnit,
+      o.target,
+      targetTileKey: o.targetTileKey,
+      worldState: _context.game.worldState,
+    )) {
+      return OrderValidationResult.rejected(
+        'Province or tile not visible for this work',
+      );
+    }
+    return null;
+  }
+
+  OrderValidationResult? _rejectUnlessCivilianMayOccupyLand(
+    WorkOrder o,
+    String type,
+  ) {
+    if (!civilianMayOccupyLandTileKey(
+      game: _context.game,
+      playerId: _context.playerId,
+      unitType: type,
+      destinationTileKey: o.targetTileKey,
+      factionMembership: _context.factionMembership,
+    )) {
+      return OrderValidationResult.rejected('Unit cannot occupy target tile');
+    }
+    return null;
   }
 
   OrderValidationResult? _validateOwnedUnseenUnit(WorkOrder o, Unit? unit) {
@@ -422,7 +431,10 @@ class WorkOrderValidator extends StatefulValidator {
       target == kWorkTargetStealTech || target == kWorkTargetCounterSpy;
 
   void _applyProjectedCostMap(Map<String, int> costMap) {
-    if (!ProjectedCostEngine.canAffordWorkMaterialCost(stockpileState, costMap)) {
+    if (!ProjectedCostEngine.canAffordWorkMaterialCost(
+      stockpileState,
+      costMap,
+    )) {
       return;
     }
     stockpileState = ProjectedCostEngine.deductWorkMaterialCost(
