@@ -133,7 +133,6 @@ typedef _CanonicalProvinceTransferRow = ({
 typedef _CanonicalProvinceTransferContext = ({
   _CanonicalProvinceTransferRow row,
   RegionData region,
-  int provinceIndex,
 });
 
 _CanonicalProvinceTransferContext _resolveValidatedCanonicalTransfer(
@@ -168,14 +167,14 @@ _CanonicalProvinceTransferContext _resolveValidatedCanonicalTransfer(
       '$canonicalId (regionId=$regionId)',
     );
   }
-  final provinceIndex = region.provinces.indexWhere((p) => p.id == canonicalId);
-  if (provinceIndex < 0) {
+  final provinceRow = tryGetProvince(game.worldState, canonicalId);
+  if (provinceRow == null || provinceRow.regionId != regionId) {
     throw StateError(
       'Canonical province transfer: province missing from region data '
       '$canonicalId',
     );
   }
-  return (row: row, region: region, provinceIndex: provinceIndex);
+  return (row: row, region: region);
 }
 
 /// Single-province canonical ownership transfer: province owner, resident
@@ -212,12 +211,12 @@ _applyCanonicalSingleProvinceOwnershipTransferFromResolved(
   bool relocateIllegalCivilians = true,
 }) {
   final region = ctx.region;
-  final pIdx = ctx.provinceIndex;
   final canonicalId = ctx.row.canonicalProvinceId;
   final regionId = ctx.row.province.regionId;
 
-  final updatedProvinces = List<Province>.from(region.provinces)
-    ..[pIdx] = region.provinces[pIdx].copyWith(ownerId: newOwnerId);
+  final updatedProvinces = region.provinces
+      .map((p) => p.id == canonicalId ? p.copyWith(ownerId: newOwnerId) : p)
+      .toList();
 
   final updatedUnits = region.units.map((u) {
     if ((u.locationProvinceId == targetProvinceId ||
