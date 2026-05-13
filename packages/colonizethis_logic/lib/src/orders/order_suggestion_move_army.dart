@@ -200,22 +200,34 @@ bool _armyMoveNeedsDeclareWarTrial(
 /// Valid, sorted destinations for the Move Army dialog: player-owned and
 /// invasion targets only if the merged draft (with optional same-turn declare
 /// war) passes [OrderEngine] validation. SPEC/ui/military-units-panel.md.
+///
+/// When [playerOwnedFullProvinceIds] is provided by the caller, the picker
+/// skips the fallback owned-province [allProvinces] scan and reuses the
+/// provided set (Refs #2394).
 List<ArmyMovePickerDestination> armyMovePickerDestinations({
   required Game game,
   required MapTopology topology,
   required String playerId,
   required Army army,
   required Orders currentOrders,
+  Set<String>? playerOwnedFullProvinceIds,
 }) {
   final diplo =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ??
       const <DiplomaticOrder>[];
   final factionMembership = DiplomacyFactionMembership.from(game);
+  final ownedProvinceIds =
+      playerOwnedFullProvinceIds ??
+      <String>{
+        for (final p in allProvinces(game.worldState))
+          if (p.ownerId == playerId) toFullProvinceId(p.regionId, p.id),
+      };
   final raw = armyMoveCandidateDestinationProvinceIds(
     game: game,
     topology: topology,
     playerId: playerId,
     army: army,
+    playerOwnedFullProvinceIds: ownedProvinceIds,
   );
   final baseValidator = IncrementalCandidateValidator.forPlayer(
     game: game,
