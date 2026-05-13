@@ -694,12 +694,12 @@ Future<void> _advanceOneHumanTurn(
   }
   var labelPollMs = 25;
   while (sw.elapsed < _kMaxUiResponseWait) {
-    await tester.pump(Duration(milliseconds: labelPollMs));
     final after = _readNextTurnButtonLabel(tester);
     if (after != null && after != before) {
       perf?.timing('next_turn_advance', phaseSw.elapsed);
       return;
     }
+    await tester.pump(Duration(milliseconds: labelPollMs));
     labelPollMs = e2eAdaptivePollRampAfterIdle(labelPollMs);
   }
   fail(

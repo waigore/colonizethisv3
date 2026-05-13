@@ -248,7 +248,17 @@ Future<void> _tapAssignOnCivilianRowWithTitle(
   while (titlesInList.evaluate().isEmpty &&
       sw.elapsed < const Duration(seconds: 20)) {
     await tester.drag(panelScrollable, const Offset(0, -120));
-    await e2ePumpFor(tester, const Duration(milliseconds: 120));
+    // Replace fixed 120ms settle (#2336 AC4–AC5): poll with ramped pumps up to the
+    // same worst-case budget, exiting as soon as lazy-built rows mount.
+    if (titlesInList.evaluate().isEmpty) {
+      var postDragMs = 25;
+      final postDragBudget = Stopwatch()..start();
+      while (titlesInList.evaluate().isEmpty &&
+          postDragBudget.elapsed < const Duration(milliseconds: 120)) {
+        await tester.pump(Duration(milliseconds: postDragMs));
+        postDragMs = e2eAdaptivePollRampAfterIdle(postDragMs);
+      }
+    }
   }
   expect(
     titlesInList,
