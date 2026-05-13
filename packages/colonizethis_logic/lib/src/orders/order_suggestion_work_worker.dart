@@ -34,7 +34,7 @@ void _addWorkerSuggestionsForUnit({
       },
     );
 
-    _runWorkSuggestionPipeline(
+    WorkSuggestionPipeline.run(
       unit: unit,
       unitType: type,
       unitRegionId: unitRegionId,
