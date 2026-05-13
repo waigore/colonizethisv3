@@ -17,7 +17,10 @@ Map<String, int> _fleetIndexById(List<Fleet> fleets) => {
       for (var i = 0; i < fleets.length; i++) fleets[i].id: i,
     };
 
-List<Fleet> _applySingleNavalMissionOrder({
+/// [fleetListStructureChanged] is true when [fleets] length or id-to-index
+/// mapping changed (fleet removed); then callers must rebuild
+/// `fleetIndexById`. In-place replacements keep the prior index map valid.
+({List<Fleet> fleets, bool fleetListStructureChanged}) _applySingleNavalMissionOrder({
   required Game game,
   required List<Fleet> fleets,
   required Map<String, Fleet> fleetById,
@@ -25,19 +28,25 @@ List<Fleet> _applySingleNavalMissionOrder({
   required String playerId,
   required NavalMissionOrder order,
 }) {
-  final fleet = fleetById[order.fleetId];
-  if (fleet == null || fleet.ownerId != playerId) return fleets;
+  Fleet? fleet = fleetById[order.fleetId];
+  if (fleet == null || fleet.ownerId != playerId) {
+    return (fleets: fleets, fleetListStructureChanged: false);
+  }
   final homeFleetId = homeFleetIdFor(playerId);
 
   if (order.mission == 'join_home_fleet') {
     final homeFleet = fleetById[homeFleetId];
-    if (homeFleet == null) return fleets;
+    if (homeFleet == null) {
+      return (fleets: fleets, fleetListStructureChanged: false);
+    }
     final capitalProvinceId = game.playerById(playerId)?.capitalProvinceId;
     if (capitalProvinceId == null ||
         fleet.inPortAtProvinceId != capitalProvinceId) {
-      return fleets;
+      return (fleets: fleets, fleetListStructureChanged: false);
     }
-    if (fleet.shipTypeIds.isEmpty) return fleets;
+    if (fleet.shipTypeIds.isEmpty) {
+      return (fleets: fleets, fleetListStructureChanged: false);
+    }
     final updatedHome = homeFleet.copyWith(
       ships: [...homeFleet.ships, ...fleet.ships],
     );
@@ -45,12 +54,14 @@ List<Fleet> _applySingleNavalMissionOrder({
         .where((f) => f.id != fleet.id)
         .map((f) => f.id == homeFleetId ? updatedHome : f)
         .toList();
-    fleetById[homeFleetId] = updatedHome;
-    return next;
+    fleetById
+      ..remove(fleet.id)
+      ..[homeFleetId] = updatedHome;
+    return (fleets: next, fleetListStructureChanged: true);
   }
 
   if (fleet.id == homeFleetId) {
-    return fleets;
+    return (fleets: fleets, fleetListStructureChanged: false);
   }
   final mission = _fleetMissionFromOrderName(order.mission);
 
@@ -77,9 +88,9 @@ List<Fleet> _applySingleNavalMissionOrder({
       if (idx != null && idx >= 0 && idx < fleets.length) {
         final next = List<Fleet>.from(fleets)..[idx] = cleared;
         fleetById[fleet.id] = cleared;
-        return next;
+        return (fleets: next, fleetListStructureChanged: false);
       }
-      return fleets;
+      return (fleets: fleets, fleetListStructureChanged: false);
     }
   }
 
@@ -92,9 +103,9 @@ List<Fleet> _applySingleNavalMissionOrder({
   if (idx != null && idx >= 0 && idx < fleets.length) {
     final next = List<Fleet>.from(fleets)..[idx] = newFleet;
     fleetById[fleet.id] = newFleet;
-    return next;
+    return (fleets: next, fleetListStructureChanged: false);
   }
-  return fleets;
+  return (fleets: fleets, fleetListStructureChanged: false);
 }
 
 Game applyNavalMissionOrders(
@@ -108,7 +119,7 @@ Game applyNavalMissionOrders(
   for (final entry in navalMissionOrdersByPlayerId.entries) {
     final playerId = entry.key;
     for (final order in entry.value) {
-      fleets = _applySingleNavalMissionOrder(
+      final applied = _applySingleNavalMissionOrder(
         game: game,
         fleets: fleets,
         fleetById: fleetById,
@@ -116,7 +127,10 @@ Game applyNavalMissionOrders(
         playerId: playerId,
         order: order,
       );
-      fleetIndexById = _fleetIndexById(fleets);
+      fleets = applied.fleets;
+      if (applied.fleetListStructureChanged) {
+        fleetIndexById = _fleetIndexById(fleets);
+      }
     }
   }
 
