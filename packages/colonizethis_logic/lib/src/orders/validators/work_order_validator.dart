@@ -33,6 +33,7 @@ class WorkOrderValidationContext {
     this.civilianDraftMoveUnitIds = const <String>{},
     this.diplomaticOrders = const <DiplomaticOrder>[],
     this.topology,
+    this.factionMembership,
   });
 
   final Game game;
@@ -45,6 +46,9 @@ class WorkOrderValidationContext {
   final Set<String> civilianDraftMoveUnitIds;
   final List<DiplomaticOrder> diplomaticOrders;
   final MapTopology? topology;
+  /// When set, avoids repeated linear faction classification in tile occupancy
+  /// checks (Refs #2394).
+  final DiplomacyFactionMembership? factionMembership;
 }
 
 class WorkOrderValidator extends StatefulValidator {
@@ -163,6 +167,7 @@ class WorkOrderValidator extends StatefulValidator {
           playerId: _context.playerId,
           unitType: type,
           destinationTileKey: o.targetTileKey,
+          factionMembership: _context.factionMembership,
         )) {
           return OrderValidationResult.rejected(
             'Unit cannot occupy target tile',

@@ -47,14 +47,20 @@ Set<String> rawCandidateTilesForWorkTarget({
   required String workTarget,
   Set<String>? exploreProvinceScope,
   Map<String, TileMapResult>? tileMapByRegion,
+
+  /// When non-null, must match the ids produced by scanning [allProvinces] for
+  /// provinces owned by [playerId] (same as the default path). Callers that
+  /// invoke this repeatedly in one suggestion pass should supply a shared set
+  /// to avoid O(targets × provinces) rescans (Refs #2394).
+  Set<String>? playerOwnedProvinceIds,
 }) {
   final world = game.worldState;
-  final ownedProvinceIds = <String>{};
-  for (final p in allProvinces(world)) {
-    if (p.ownerId == playerId) {
-      ownedProvinceIds.add(p.id);
-    }
-  }
+  final ownedProvinceIds =
+      playerOwnedProvinceIds ??
+      <String>{
+        for (final p in allProvinces(world))
+          if (p.ownerId == playerId) p.id,
+      };
   return _preFilterWorkTargetTiles(
     game: game,
     workTarget: workTarget,
