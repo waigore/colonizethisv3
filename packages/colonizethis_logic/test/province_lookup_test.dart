@@ -202,4 +202,94 @@ void main() {
       );
     });
   });
+
+  // Refs #2394 — Category C: O(1) province-by-id lookup cache. The per-region
+  // cache is populated lazily on first lookup and reused for subsequent calls
+  // against the same RegionData instance.
+  group('region province-by-id cache (Refs #2394)', () {
+    test('repeated tryGetProvince returns identical Province instance', () {
+      final first = tryGetProvince(world, 'oldWorld|p1');
+      final second = tryGetProvince(world, 'oldWorld|p1');
+      expect(first, isNotNull);
+      expect(identical(first, second), isTrue);
+    });
+
+    test('updateRegionById produces a region with an independent cache', () {
+      final originalAlpha = tryGetProvince(world, 'oldWorld|p1');
+      expect(originalAlpha?.displayName, 'Alpha');
+
+      final renamed = world.updateRegionById(
+        kRegionOldWorld,
+        (region) => RegionData(
+          provinces: [
+            for (final p in region.provinces)
+              if (p.id == 'oldWorld|p1')
+                Province(
+                  id: p.id,
+                  regionId: p.regionId,
+                  displayName: 'AlphaPrime',
+                )
+              else
+                p,
+          ],
+          units: region.units,
+        ),
+      );
+
+      expect(
+        tryGetProvince(renamed, 'oldWorld|p1')?.displayName,
+        'AlphaPrime',
+      );
+      expect(tryGetProvince(world, 'oldWorld|p1')?.displayName, 'Alpha');
+    });
+
+    test('cache preserves first-match semantics when ids are duplicated', () {
+      final dup = WorldState(
+        turnState: world.turnState,
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              displayName: 'First',
+            ),
+            Province(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              displayName: 'Second',
+            ),
+          ],
+        ),
+        newWorld: RegionData(provinces: const []),
+      );
+      expect(tryGetProvince(dup, 'oldWorld|p1')?.displayName, 'First');
+    });
+
+    test('lookup correctness scales to larger regions', () {
+      const provinceCount = 200;
+      final big = WorldState(
+        turnState: world.turnState,
+        oldWorld: RegionData(
+          provinces: [
+            for (var i = 0; i < provinceCount; i++)
+              Province(
+                id: 'oldWorld|p$i',
+                regionId: 'oldWorld',
+                displayName: 'P$i',
+              ),
+          ],
+        ),
+        newWorld: RegionData(provinces: const []),
+      );
+
+      for (var i = 0; i < provinceCount; i++) {
+        expect(
+          tryGetProvince(big, 'oldWorld|p$i')?.displayName,
+          'P$i',
+          reason: 'lookup failed for index $i',
+        );
+      }
+      expect(tryGetProvince(big, 'oldWorld|missing'), isNull);
+    });
+  });
 }

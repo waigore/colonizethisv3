@@ -5,6 +5,7 @@
 ## Policy
 
 - **Canonical implementation:** `packages/colonizethis_logic/lib/src/world/province_lookup.dart` may use `oldWorld.provinces` and `newWorld.provinces` to implement `allProvinces`, `WorldState.allProvinces()`, region-scoped lookup, and related helpers.
+- **Region province-by-id cache (internal):** The canonical file may maintain an internal weak per-`RegionData` cache of `Province.id` -> `Province` to back O(1) amortized region-scoped lookups (`tryGetProvince`, `getProvince`, `tryGetProvinceByRegion`, `getProvinceByRegion`, `tryGetRegionIdForLegacyProvinceKey`). The cache must preserve "first match wins" semantics for any duplicated `Province.id` within a region (matching the previous `indexWhere` scan). The cache is per-instance and bound to the [RegionData] lifetime; each `copyWith`-produced [RegionData] (e.g. via `WorldState.updateRegionById`) gets an independent cache (Refs **#2394** Category C).
 - **Canonical implementation (units):** `packages/colonizethis_logic/lib/src/world/unit_lookup.dart` may use `oldWorld.units` and `newWorld.units` to implement `allUnits`, `WorldState.allUnits()`, region-scoped lookup, and related helpers.
 - **Canonical region updates:** Prefer `WorldState.updateRegionById(...)` (for one-region updates) and `WorldState.mapBothRegions(...)` / `WorldState.mapBothRegionUnits(...)` (for two-region updates) over inline `if (regionId == oldWorld)` or `copyWith(oldWorld: ...)/copyWith(newWorld: ...)` branching in `lib/src/**`.
 - **Elsewhere under** `packages/colonizethis_logic/lib/src/**`: prefer `allProvinces(world)` / `allUnits(world)` or the related `WorldState` lookup extension methods so dual-region iteration stays centralized.
@@ -26,6 +27,9 @@ Raising the budget requires a SPEC update in this file and a maintainer-reviewed
 
 - Given the repository at `dev` with `packages/colonizethis_logic/lib/src/**` sources, when CI runs `dart run tool/ct_repo_lint.dart` including rule `repo.logic_dual_region_province_field_access`, then the checker counts matching lines outside `province_lookup.dart` and `unit_lookup.dart` and the run passes when the count is at most 28.
 - Given a contributor adds a 29th matching line outside `province_lookup.dart` and `unit_lookup.dart` without updating the budget in this SPEC and the checker constant, when repo lint runs, then the run fails and lists each `path:line` hit.
+- Given a [RegionData] instance with provinces `[Province(id: "X|p1"), Province(id: "X|p2")]`, when `tryGetProvince(world, "X|p1")` is called twice for the same `world`, then the canonical implementation returns the identical [Province] instance on both calls (cache hit; Refs #2394).
+- Given a [RegionData] instance with two `Province` rows that share the same `id`, when `tryGetProvince` is called with that id, then the canonical implementation returns the first `Province` in the underlying provinces list (matches the prior `indexWhere` first-match semantics).
+- Given a `WorldState` whose `oldWorld` is replaced via `updateRegionById` so that the [Province] for `oldWorld|p1` now has `displayName = "AlphaPrime"`, when `tryGetProvince` is invoked on the updated `WorldState`, then the canonical implementation returns the new [Province] (the new [RegionData] has an independent cache; no stale cache reuse).
 
 ## `allProvinces(` call-site sanction gate (Refs **#2278**)
 

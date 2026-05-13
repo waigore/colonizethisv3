@@ -9,15 +9,35 @@ RegionData? _regionForId(WorldState world, String regionId) {
       : (regionId == kRegionNewWorld ? world.newWorld : null);
 }
 
+/// Per-[RegionData] cache of `Province.id` -> `Province`.
+///
+/// [RegionData] is value-typed and effectively immutable for the lifetime of
+/// each instance (provinces is `final` and replaced via `copyWith`), so a
+/// weak per-instance cache is safe: when the [RegionData] becomes unreachable
+/// the entry is collected automatically. Cache build preserves the
+/// "first match wins" semantics of the previous `indexWhere` scan via
+/// `putIfAbsent`. Refs #2394 — Category C O(1) province lookup.
+final Expando<Map<String, Province>> _provincesByFullIdCache =
+    Expando<Map<String, Province>>('provincesByFullId');
+
+Map<String, Province> _provincesByFullIdFor(RegionData region) {
+  final cached = _provincesByFullIdCache[region];
+  if (cached != null) return cached;
+  final map = <String, Province>{};
+  for (final p in region.provinces) {
+    map.putIfAbsent(p.id, () => p);
+  }
+  _provincesByFullIdCache[region] = map;
+  return map;
+}
+
 Province? _findProvinceInRegion(
   RegionData region,
   String regionId,
   String localId,
 ) {
   final fullId = ProvinceId.full(regionId, localId);
-  final idx = region.provinces.indexWhere((p) => p.id == fullId);
-  if (idx < 0) return null;
-  return region.provinces[idx];
+  return _provincesByFullIdFor(region)[fullId];
 }
 
 /// Returns the region data for [regionId], or null if unknown.
@@ -157,11 +177,14 @@ extension WorldStateProvinceLookup on WorldState {
   /// equals [key] in that region (old world checked first). For canonical
   /// lookups prefer [tryGetProvince] with a prefixed id; this exists for
   /// legacy short ids and tests (waigore/colonizethis#2071 Phase 1).
+  ///
+  /// Uses the per-region cached `id -> Province` map (Refs #2394 Category C)
+  /// so lookups are O(1) amortized instead of O(P/2) per region scan.
   String? tryGetRegionIdForLegacyProvinceKey(String key) {
-    if (oldWorld.provinces.indexWhere((p) => p.id == key) >= 0) {
+    if (_provincesByFullIdFor(oldWorld).containsKey(key)) {
       return kRegionOldWorld;
     }
-    if (newWorld.provinces.indexWhere((p) => p.id == key) >= 0) {
+    if (_provincesByFullIdFor(newWorld).containsKey(key)) {
       return kRegionNewWorld;
     }
     return null;
