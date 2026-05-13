@@ -82,4 +82,20 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
     await e2eDismissTransientUi(tester);
   });
+
+  testWidgets('e2ePumpFor completes (zero and non-zero virtual time)', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    await e2ePumpFor(tester, Duration.zero);
+    await e2ePumpFor(tester, const Duration(milliseconds: 80));
+    expect(find.byType(SizedBox), findsOneWidget);
+  });
+
+  test('E2ePerfLog bumpCounter and timing are safe to call', () {
+    final log = E2ePerfLog('smoke');
+    log.bumpCounter('a');
+    log.bumpCounter('a', by: 2);
+    log.timing('p', const Duration(milliseconds: 12));
+  });
 }
