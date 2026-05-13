@@ -12,6 +12,46 @@ void main() {
     expect(e2eAdaptivePollRampAfterIdle(100), 100);
   });
 
+  test('e2eNextIdlePollStepMs doubles until max cap', () {
+    expect(e2eNextIdlePollStepMs(25), 50);
+    expect(e2eNextIdlePollStepMs(250), 500);
+    expect(e2eNextIdlePollStepMs(500), 500);
+  });
+
+  testWidgets('e2ePumpUntilFinderEmpty returns immediately when finder empty', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    final sw = Stopwatch()..start();
+    await e2ePumpUntilFinderEmpty(
+      tester,
+      find.byType(SnackBar),
+      timeout: const Duration(seconds: 2),
+    );
+    expect(sw.elapsed, lessThan(const Duration(milliseconds: 50)));
+  });
+
+  testWidgets('e2eCollectTextPreorder walks subtree in preorder', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              Text('alpha'),
+              Row(children: [Text('beta')]),
+            ],
+          ),
+        ),
+      ),
+    );
+    final root = tester.element(find.byType(Column));
+    final lines = <String>[];
+    e2eCollectTextPreorder(root, lines);
+    expect(lines, ['alpha', 'beta']);
+  });
+
   testWidgets('e2ePumpUntil succeeds when condition is already true', (
     WidgetTester tester,
   ) async {
