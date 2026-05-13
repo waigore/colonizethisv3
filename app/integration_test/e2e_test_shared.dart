@@ -508,12 +508,22 @@ Future<void> _e2eTapGameStartIntroOverlayContinueIfPresent(
 ) async {
   if (find.text('Continue').evaluate().isNotEmpty) {
     await tester.tap(find.text('Continue').first);
-    await tester.pump(const Duration(milliseconds: 200));
+    await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => find.text('Continue').evaluate().isEmpty,
+      timeout: const Duration(milliseconds: 500),
+      phaseName: 'pump_until_intro_continue_text_cleared',
+    );
     return;
   }
   if (find.text('I shall.').evaluate().isNotEmpty) {
     await tester.tap(find.text('I shall.').first);
-    await tester.pump(const Duration(milliseconds: 200));
+    await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => find.text('I shall.').evaluate().isEmpty,
+      timeout: const Duration(milliseconds: 500),
+      phaseName: 'pump_until_intro_i_shall_text_cleared',
+    );
   }
 }
 
