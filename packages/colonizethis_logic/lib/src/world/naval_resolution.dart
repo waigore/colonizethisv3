@@ -45,14 +45,28 @@ String? _firstFriendlyOrNeutralRetreatZone(
   String ownerId,
 ) {
   final hostileByOwner = hostileFactionsByFaction(game);
+  final hostileToOwner = hostileByOwner[ownerId];
+  // Single pass over fleets, then O(fleets-in-zone) per adjacent zone (Refs #2394).
+  final fleetsAtSeaByZoneId = <String, List<Fleet>>{};
+  for (final fleet in game.worldState.fleets) {
+    if (!fleet.isAtSea) continue;
+    final z = fleet.seaZoneId;
+    if (z == null) continue;
+    (fleetsAtSeaByZoneId[z] ??= <Fleet>[]).add(fleet);
+  }
   for (final adj in _adjacentSeaZones(topology, fromSeaZoneId)) {
-    final hostileOwnersPresent = game.worldState.fleets.any(
-      (fleet) =>
-          fleet.isAtSea &&
-          fleet.seaZoneId == adj &&
-          fleet.ownerId != ownerId &&
-          (hostileByOwner[ownerId]?.contains(fleet.ownerId) ?? false),
-    );
+    final inZone = fleetsAtSeaByZoneId[adj];
+    if (inZone == null || inZone.isEmpty) {
+      return adj;
+    }
+    var hostileOwnersPresent = false;
+    for (final fleet in inZone) {
+      if (fleet.ownerId != ownerId &&
+          (hostileToOwner?.contains(fleet.ownerId) ?? false)) {
+        hostileOwnersPresent = true;
+        break;
+      }
+    }
     if (!hostileOwnersPresent) return adj;
   }
   return null;
