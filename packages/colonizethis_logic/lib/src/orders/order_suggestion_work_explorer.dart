@@ -186,6 +186,8 @@ void _addExplorerWorkSuggestionsForUnit({
     unit: unit,
     regionId: regionId,
     provinceId: provinceId,
+    unitsById: unitsById,
+    diplomatic: diplomatic,
     tileKeysByRegion: tileKeysByRegion,
     existingTargetsByUnit: existingTargetsByUnit,
     suggestions: suggestions,
@@ -272,6 +274,8 @@ void _addProspectSuggestionIfEligible({
   required Unit unit,
   required String regionId,
   required String provinceId,
+  required Map<String, Unit> unitsById,
+  required List<DiplomaticOrder> diplomatic,
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
@@ -292,10 +296,6 @@ void _addProspectSuggestionIfEligible({
     );
     return;
   }
-
-  final unitsById = Map<String, Unit>.from(unitsByIdFromWorld(game.worldState));
-  final diplomatic =
-      currentOrders.diplomaticOrdersByPlayerId[playerId] ?? const [];
 
   final prospected =
       game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
