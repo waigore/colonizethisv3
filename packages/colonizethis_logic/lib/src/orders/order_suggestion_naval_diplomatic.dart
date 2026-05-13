@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/naval.dart';
 import '../world/player_view.dart';
@@ -242,6 +243,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   required String targetId,
   required Set<String> knownTargetIds,
   required Set<String> knownFactionIds,
+  required DiplomacyFactionMembership factionMembership,
 }) {
   final treasury = player.treasury;
   final out = <DiplomaticOrder>[];
@@ -250,10 +252,8 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   final rel = getRelation(game, playerId, targetId);
   final atWar = rel?.atWar ?? false;
   final atPeace = rel == null || rel.atPeace;
-  final isGpTarget = game.players.any((p) => p.id == targetId);
-  final isMinorOrTribe =
-      game.minorNations.any((m) => m.id == targetId) ||
-      game.tribes.any((t) => t.id == targetId);
+  final isGpTarget = factionMembership.isGreatPower(targetId);
+  final isMinorOrTribe = factionMembership.isMinorOrTribe(targetId);
 
   if (knownTargetIds.contains(targetId) && atWar) {
     out.add(
@@ -347,13 +347,7 @@ DiplomaticOrder? _establishOvertureSuggestionOrder({
   if (next == OvertureStage.tradeConsulate ||
       next == OvertureStage.embassy ||
       next == OvertureStage.nap) {
-    Player? submitter;
-    for (final p in game.players) {
-      if (p.id == playerId) {
-        submitter = p;
-        break;
-      }
-    }
+    final submitter = game.playerById(playerId);
     if (submitter?.techUnlocked?[kTechIdDiplomaticExpertise] != true) {
       return null;
     }
@@ -434,6 +428,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   };
 
   final sortedTargetIds = unionTargets.toList()..sort();
+  final factionMembership = DiplomacyFactionMembership.from(game);
   var workingOrders = currentOrders;
   for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
@@ -445,6 +440,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       targetId: targetId,
       knownTargetIds: knownTargetIds,
       knownFactionIds: knownFactionIds,
+      factionMembership: factionMembership,
     );
     var trialOrders = workingOrders;
 
