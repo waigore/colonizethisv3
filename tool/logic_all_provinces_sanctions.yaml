@@ -30,14 +30,22 @@ sanctions:
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
-    line: 53
-    rationale: Work tile prefilter collects owned province ids via all provinces.
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work.dart
+    line: 57
+    rationale: Work suggestions build a once-per-pass owned-province id set from
+      all provinces so per-unit prefilter calls can reuse it (Refs #2394).
     spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
+    issue: https://github.com/waigore/colonizethisv3/issues/2394
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
-    line: 110
+    line: 61
+    rationale: Work tile prefilter collects owned province ids via all provinces when
+      callers do not supply a shared owned-province set.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2394
+
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
+    line: 116
     rationale: Town work targets enumerate town tiles across owned provinces in both regions.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
