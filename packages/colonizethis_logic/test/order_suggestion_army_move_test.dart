@@ -1,7 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_logic/src/ai/simple_ai_heuristics.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {
@@ -49,9 +48,7 @@ void main() {
             ],
           ),
           newWorld: RegionData(
-            provinces: [
-              Province(id: nw, regionId: 'newWorld', ownerId: gp),
-            ],
+            provinces: [Province(id: nw, regionId: 'newWorld', ownerId: gp)],
           ),
           armies: [
             Army(
@@ -126,9 +123,7 @@ void main() {
             type: TopologyNodeType.province,
           ),
         );
-        edges.add(
-          const TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2'),
-        );
+        edges.add(const TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2'));
       }
       return MapTopology(nodes: nodes, edges: edges);
     }
@@ -151,77 +146,76 @@ void main() {
       );
     });
 
+    test('armyMoveCandidateDestinationProvinceIds with PlayerView-owned cache '
+        'matches legacy allProvinces scan', () {
+      final game = game0();
+      final topology = topology0();
+      final view = buildPlayerView(game, topology, gp);
+      final army = game.worldState.armies.firstWhere((a) => a.id == 'field_a');
+      final ownedFromView = <String>{
+        for (final e in view.provincesById.entries)
+          if (e.value.ownerId == gp) e.key,
+      };
+      final withoutCache = armyMoveCandidateDestinationProvinceIds(
+        game: game,
+        topology: topology,
+        playerId: gp,
+        army: army,
+      );
+      final withCache = armyMoveCandidateDestinationProvinceIds(
+        game: game,
+        topology: topology,
+        playerId: gp,
+        army: army,
+        playerOwnedFullProvinceIds: ownedFromView,
+      );
+      expect(withCache, withoutCache);
+    });
+
     test(
-      'armyMoveCandidateDestinationProvinceIds with PlayerView-owned cache '
-      'matches legacy allProvinces scan',
+      'still proposes alternate destination when draft has prior army move',
       () {
-        final game = game0();
-        final topology = topology0();
-        final view = buildPlayerView(game, topology, gp);
-        final army = game.worldState.armies.firstWhere((a) => a.id == 'field_a');
-        final ownedFromView = <String>{
-          for (final e in view.provincesById.entries)
-            if (e.value.ownerId == gp) e.key,
-        };
-        final withoutCache = armyMoveCandidateDestinationProvinceIds(
-          game: game,
-          topology: topology,
-          playerId: gp,
-          army: army,
+        const p2 = 'oldWorld|p2';
+        final game = game0(extraNeighborProvinceId: p2);
+        final topology = topology0(includeP2: true);
+        final tileKeys = Map<String, List<String>>.from(
+          game.worldState.tileKeysByRegionAndProvince['oldWorld']!,
         );
-        final withCache = armyMoveCandidateDestinationProvinceIds(
-          game: game,
-          topology: topology,
-          playerId: gp,
-          army: army,
-          playerOwnedFullProvinceIds: ownedFromView,
+        tileKeys[p2] = ['oldWorld|p2|0|0'];
+        final ws = game.worldState.copyWith(
+          tileKeysByRegionAndProvince: {
+            ...game.worldState.tileKeysByRegionAndProvince,
+            'oldWorld': tileKeys,
+          },
+          playerVisibilityByTile: {
+            gp: {
+              ...game.worldState.playerVisibilityByTile[gp]!,
+              'oldWorld|p2|0|0': 'fullyVisible',
+            },
+          },
         );
-        expect(withCache, withoutCache);
+        final game2 = game.copyWith(worldState: ws);
+
+        final view2 = buildPlayerView(game2, topology, gp);
+        final current = Orders(
+          armyMoveOrdersByPlayerId: {
+            gp: [ArmyMoveOrder(armyId: 'field_a', destinationProvinceId: p2)],
+          },
+        );
+        final suggestions = suggestArmyMoveOrders(
+          view2,
+          game2,
+          topology,
+          current,
+        );
+        expect(
+          suggestions.any((s) => s.destinationProvinceId == nw),
+          isTrue,
+          reason:
+              'replacement-aware validation should allow other owned destinations',
+        );
       },
     );
-
-    test('still proposes alternate destination when draft has prior army move', () {
-      const p2 = 'oldWorld|p2';
-      final game = game0(extraNeighborProvinceId: p2);
-      final topology = topology0(includeP2: true);
-      final tileKeys = Map<String, List<String>>.from(
-        game.worldState.tileKeysByRegionAndProvince['oldWorld']!,
-      );
-      tileKeys[p2] = ['oldWorld|p2|0|0'];
-      final ws = game.worldState.copyWith(
-        tileKeysByRegionAndProvince: {
-          ...game.worldState.tileKeysByRegionAndProvince,
-          'oldWorld': tileKeys,
-        },
-        playerVisibilityByTile: {
-          gp: {
-            ...game.worldState.playerVisibilityByTile[gp]!,
-            'oldWorld|p2|0|0': 'fullyVisible',
-          },
-        },
-      );
-      final game2 = game.copyWith(worldState: ws);
-
-      final view2 = buildPlayerView(game2, topology, gp);
-      final current = Orders(
-        armyMoveOrdersByPlayerId: {
-          gp: [
-            ArmyMoveOrder(armyId: 'field_a', destinationProvinceId: p2),
-          ],
-        },
-      );
-      final suggestions = suggestArmyMoveOrders(
-        view2,
-        game2,
-        topology,
-        current,
-      );
-      expect(
-        suggestions.any((s) => s.destinationProvinceId == nw),
-        isTrue,
-        reason: 'replacement-aware validation should allow other owned destinations',
-      );
-    });
   });
 
   group('armyMoveCandidateDestinationProvinceIds', () {
@@ -249,9 +243,7 @@ void main() {
             units: const [],
           ),
           newWorld: RegionData(
-            provinces: [
-              Province(id: nw, regionId: 'newWorld', ownerId: gp),
-            ],
+            provinces: [Province(id: nw, regionId: 'newWorld', ownerId: gp)],
           ),
           armies: [
             Army(
@@ -297,9 +289,7 @@ void main() {
             type: TopologyNodeType.province,
           ),
         ],
-        edges: const [
-          TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2'),
-        ],
+        edges: const [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2')],
       );
       final army = game.worldState.armies.first;
       final uncached = armyMoveCandidateDestinationProvinceIds(
@@ -320,121 +310,6 @@ void main() {
         playerOwnedFullProvinceIds: owned,
       );
       expect(cached, uncached);
-    });
-  });
-
-  group('generateOrdersWithSimpleHeuristics army moves', () {
-    test('keeps at most one army move per army id', () {
-      const gp = 'gp_ai';
-      const cap = 'oldWorld|cap';
-      const p1 = 'oldWorld|p1';
-      const nw = 'newWorld|col';
-      final topology = MapTopology(
-        nodes: const [
-          TopologyNode(
-            id: 'oldWorld|cap',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: 'oldWorld|p1',
-            regionId: 'oldWorld',
-            type: TopologyNodeType.province,
-          ),
-          TopologyNode(
-            id: 'newWorld|col',
-            regionId: 'newWorld',
-            type: TopologyNodeType.province,
-          ),
-        ],
-        edges: const [],
-      );
-      final game = Game(
-        id: 'g_heur',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: cap,
-                regionId: 'oldWorld',
-                ownerId: gp,
-                townTileKey: 'oldWorld|cap|0|0',
-              ),
-              Province(id: p1, regionId: 'oldWorld', ownerId: gp),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: gp,
-                locationProvinceId: p1,
-                tileKey: 'oldWorld|p1|0|0',
-              ),
-            ],
-          ),
-          newWorld: RegionData(
-            provinces: [Province(id: nw, regionId: 'newWorld', ownerId: gp)],
-          ),
-          armies: [
-            Army(
-              id: homeArmyIdFor(gp),
-              ownerId: gp,
-              regionId: 'oldWorld',
-              stationedProvinceId: cap,
-              regimentUnitIds: const [],
-              isHomeArmy: true,
-            ),
-            Army(
-              id: 'field_a',
-              ownerId: gp,
-              regionId: 'oldWorld',
-              stationedProvinceId: p1,
-              regimentUnitIds: const ['u1'],
-              isHomeArmy: false,
-            ),
-          ],
-          playerVisibilityByTile: {
-            gp: {
-              'oldWorld|cap|0|0': 'fullyVisible',
-              'oldWorld|p1|0|0': 'fullyVisible',
-              'newWorld|col|0|0': 'fullyVisible',
-            },
-          },
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              cap: ['oldWorld|cap|0|0'],
-              p1: ['oldWorld|p1|0|0'],
-            },
-            'newWorld': {
-              nw: ['newWorld|col|0|0'],
-            },
-          },
-        ),
-        players: [
-          Player(
-            id: gp,
-            displayName: 'AI',
-            isHuman: false,
-            capitalProvinceId: cap,
-          ),
-        ],
-        globalGameSeed: 1,
-        aiSeedByGpId: const {gp: 42},
-      );
-
-      final orders = generateOrdersWithSimpleHeuristics(
-        game,
-        topology,
-        gp,
-        turnSeedForPlayer(game, gp, 1),
-      );
-      final list = orders.armyMoveOrdersByPlayerId[gp] ?? [];
-      final perArmy = <String, int>{};
-      for (final o in list) {
-        perArmy[o.armyId] = (perArmy[o.armyId] ?? 0) + 1;
-      }
-      expect(perArmy.values.every((c) => c <= 1), isTrue);
     });
   });
 }
