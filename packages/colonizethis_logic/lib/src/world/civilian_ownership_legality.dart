@@ -6,8 +6,6 @@ import '../constants.dart';
 import 'civilian_tile_occupancy.dart';
 import 'province_lookup.dart';
 
-final _log = packageLogger();
-
 /// Runs ownership-change civilian legality normalization for [changedProvinceIds].
 ///
 /// For civilians in changed provinces:
@@ -52,7 +50,7 @@ Game relocateIllegalCiviliansInChangedProvinces(
       );
     }
 
-    _log.d(
+    logicLog.d(
       'civilian legality relocation unit=${unit.id} owner=${unit.ownerId} from=${unit.tileKey} to=$capitalTileKey',
     );
     return unit.copyWith(

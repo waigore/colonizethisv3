@@ -11,8 +11,6 @@ import '../world/tile_key_coordinates.dart';
 import 'setup_exceptions.dart';
 import 'town_capital_occupancy.dart';
 
-final _log = packageLogger();
-
 /// Salt for `Object.hash` when building per-resource shuffle RNGs.
 /// ASCII "REDO" packed (issue #1837 / SPEC/program/game-setup-pipeline.md).
 const int kGpOwResourceRedistributionSalt = 0x5245444f;
@@ -536,7 +534,7 @@ applyGreatPowerOldWorldResourceRedistribution({
   final terrain = tileMapOldWorld.terrainGrid;
   final resGrid = tileMapOldWorld.resourceGrid;
   if (terrain == null || resGrid == null) {
-    _log.i(
+    logicLog.i(
       'skip GP Old World resource redistribution (missing terrain or resource grid)',
     );
     return (game: game, tileMap: tileMapOldWorld, fairnessScore: 0);
@@ -611,7 +609,7 @@ applyGreatPowerOldWorldResourceRedistribution({
     resourceSet: resourceSet,
   );
 
-  _log.i(
+  logicLog.i(
     'GP Old World resource redistribution complete fairnessMaxAbsDev=$fairness',
   );
 
