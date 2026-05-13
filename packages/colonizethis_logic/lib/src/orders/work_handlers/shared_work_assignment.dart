@@ -4,8 +4,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
 
-final _log = packageLogger();
-
 bool tryAssignFixedDurationWorkOrder({
   required WorkOrder order,
   required Unit unit,
@@ -17,7 +15,7 @@ bool tryAssignFixedDurationWorkOrder({
 }) {
   if (!isWorkOrderTargetAllowedForUnitType(unit.type, target)) return false;
   if (unit.currentWork != null || targetTileKey.isEmpty) return false;
-  _log.d(
+  logicLog.d(
     'work order accepted and assigned unit=${order.unitId} target=$target targetTileKey=$targetTileKey totalTurns=$totalTurns',
   );
   updateUnit(

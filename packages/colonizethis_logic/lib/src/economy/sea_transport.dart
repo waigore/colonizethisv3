@@ -6,8 +6,6 @@ import 'package:logger/logger.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import '../world/naval.dart';
 
-final _log = packageLogger();
-
 /// Sea transport: allocate overseas extraction to stockpile by priority. SPEC/program/auto-transport.
 /// Trade/transport interception: SPEC/program/naval-movement-resolution.md (P_cargo_intercept, P_ship_sunk).
 ///
@@ -80,7 +78,7 @@ void logExtractionAutoTransportOverseasAllocation({
   final detail = allocatedToStockpile.entries
       .map((e) => '${e.key}=${e.value}')
       .join(',');
-  _log.d(
+  logicLog.d(
     'extraction auto_transport overseas cargo_cap playerId=$playerId '
     'cargoHolds=$cargoHolds overseasTotalUnits=$overseasTotalUnits '
     'allocatedUnits=$allocatedUnits allocatedDetail=$detail',
@@ -103,7 +101,7 @@ void _logExtractionAutoTransportInterception(
     if (bv != av) deltas.add('$id $bv->$av');
   }
   final deltaStr = deltas.isEmpty ? 'none' : deltas.join(';');
-  _log.d(
+  logicLog.d(
     'extraction auto_transport interception playerId=$playerId '
     'deliveredBeforeUnits=$beforeUnits deliveredAfterUnits=$afterUnits '
     'perCommodityDelta=$deltaStr',

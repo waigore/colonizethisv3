@@ -7,6 +7,7 @@ const int defaultResearchSlots = 3;
 const int researchPointsLow = 100;
 const int researchPointsMedium = 300;
 const int researchPointsHigh = 800;
+
 /// Maximum funding has 2.5x efficiency bonus.
 const int researchPointsMaximum = 2500;
 
@@ -15,8 +16,9 @@ const int researchTreasuryCostMedium = 150;
 const int researchTreasuryCostHigh = 400;
 const int researchTreasuryCostMaximum = 1000;
 
-/// RP and treasury cost per turn for one slot at [level].
-({int points, int cost}) fundingStatsForLevel(ResearchFundingLevel level) {
+/// Research-funding lookup: returns both the research points awarded per turn
+/// and the treasury cost per turn for a given funding level (Refs #2391 AC2).
+({int points, int cost}) fundingStats(ResearchFundingLevel level) {
   return switch (level) {
     ResearchFundingLevel.none => (points: 0, cost: 0),
     ResearchFundingLevel.low => (
@@ -38,9 +40,7 @@ const int researchTreasuryCostMaximum = 1000;
   };
 }
 
-int pointsForFunding(ResearchFundingLevel level) =>
-    fundingStatsForLevel(level).points;
+int pointsForFunding(ResearchFundingLevel level) => fundingStats(level).points;
 
 int treasuryCostForFunding(ResearchFundingLevel level) =>
-    fundingStatsForLevel(level).cost;
-
+    fundingStats(level).cost;

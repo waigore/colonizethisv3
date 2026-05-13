@@ -2,25 +2,41 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/player_view.dart';
+import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 
 /// Suggests build-unit orders that are affordable and valid for [view.playerId].
+///
+/// Throughput hook: callers that enumerate multiple suggestion families against
+/// the same `(game, view.playerId, currentOrders)` may supply
+/// [sharedCandidateValidator] to amortize `PlayerView` / units-by-id
+/// construction across families (Refs #2394). The shared instance must be
+/// built with the same inputs; observable suggestions must match the default
+/// path.
 List<BuildUnitOrder> suggestBuildOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
   orderSuggestionLog.d('suggestBuildOrders player=${view.playerId}');
   final playerId = view.playerId;
   final player = view.player;
   final suggestions = <BuildUnitOrder>[];
-  final candidateValidator = buildIncrementalCandidateValidator(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    baseOrders: currentOrders,
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
   );
+  final candidateValidator =
+      sharedCandidateValidator ??
+      buildIncrementalCandidateValidator(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        baseOrders: currentOrders,
+      );
 
   final capitalId = player.capitalProvinceId;
   if (capitalId == null) {

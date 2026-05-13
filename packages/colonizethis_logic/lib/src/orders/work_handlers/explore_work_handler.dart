@@ -5,8 +5,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../constants.dart';
 import 'work_order_handler.dart';
 
-final _log = packageLogger();
-
 bool tryApplyExploreWorkOrder({
   required Game game,
   required WorkOrder order,
@@ -29,7 +27,7 @@ bool tryApplyExploreWorkOrder({
     if (list.length > maxTiles) maxTiles = list.length;
   }
   final totalTurns = (3 * tilesInP / maxTiles).ceil().clamp(1, 999);
-  _log.d(
+  logicLog.d(
     'work order accepted and assigned unit=${order.unitId} target=explore targetTileKey=$targetTileKey totalTurns=$totalTurns',
   );
   updateUnit(

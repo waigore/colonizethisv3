@@ -13,6 +13,7 @@ import 'order_suggestion_work_tile_keys.dart';
 import 'order_suggestion_work_tile_prefilter.dart';
 import 'order_suggestion_context.dart';
 import 'order_visibility.dart';
+import 'work_suggestion_pipeline.dart';
 import 'partial_province_reveal.dart';
 import 'orders_application_helpers.dart';
 import 'unit_type_helpers.dart';
@@ -22,115 +23,6 @@ part 'order_suggestion_work_worker.dart';
 part 'order_suggestion_work_spy.dart';
 part 'order_suggestion_work_merchant.dart';
 
-void _suggestionWorkLog({
-  required String unitId,
-  required String unitType,
-  required String unitRegionId,
-  required String atProvinceId,
-  required String workTarget,
-  required String outcome,
-  String reason = '-',
-  String tile = '-',
-
-  /// When [outcome] is `included` and greater than 1 row is accepted in one
-  /// pass, emit a single summary line with `includedCount=` (Refs #2277,
-  /// SPEC/program/order-suggestions.md § Suggestion observability).
-  int? includedRowCount,
-}) {
-  final multiIncluded =
-      outcome == 'included' && includedRowCount != null && includedRowCount > 1;
-  final tileField = multiIncluded ? '-' : tile;
-  final countSuffix = multiIncluded ? ' includedCount=$includedRowCount' : '';
-  orderSuggestionLog.d(
-    'suggest_work unitId=$unitId unitType=$unitType region=$unitRegionId '
-    'at=$atProvinceId target=$workTarget outcome=$outcome reason=$reason '
-    'tile=$tileField$countSuffix',
-  );
-}
-
-typedef _SuggestionCandidatesProvider = Iterable<WorkOrder> Function();
-typedef _SuggestionCandidateAcceptor = bool Function(WorkOrder candidate);
-
-void _runWorkSuggestionPipeline({
-  required Unit unit,
-  required String unitType,
-  required String unitRegionId,
-  required String atProvinceId,
-  required String workTarget,
-  required Map<String, Set<String>> existingTargetsByUnit,
-  required List<WorkOrder> suggestions,
-  required _SuggestionCandidatesProvider candidatesProvider,
-  required _SuggestionCandidateAcceptor candidateAcceptor,
-  required String noCandidateReason,
-  String engineRejectedReason = 'engine_rejected',
-  bool includeAllAccepted = false,
-}) {
-  final existing = existingTargetsByUnit[unit.id];
-  if (existing != null && existing.contains(workTarget)) {
-    _suggestionWorkLog(
-      unitId: unit.id,
-      unitType: unitType,
-      unitRegionId: unitRegionId,
-      atProvinceId: atProvinceId,
-      workTarget: workTarget,
-      outcome: 'excluded',
-      reason: 'duplicate_pending',
-    );
-    return;
-  }
-
-  var sawCandidate = false;
-  var acceptedCount = 0;
-  var firstIncludedTile = '-';
-  for (final candidate in candidatesProvider()) {
-    sawCandidate = true;
-    if (!candidateAcceptor(candidate)) continue;
-    acceptedCount++;
-    suggestions.add(candidate);
-    existingTargetsByUnit
-        .putIfAbsent(unit.id, () => <String>{})
-        .add(workTarget);
-    if (acceptedCount == 1) {
-      firstIncludedTile = candidate.targetTileKey;
-    }
-    if (!includeAllAccepted) {
-      _suggestionWorkLog(
-        unitId: unit.id,
-        unitType: unitType,
-        unitRegionId: unitRegionId,
-        atProvinceId: atProvinceId,
-        workTarget: workTarget,
-        outcome: 'included',
-        tile: candidate.targetTileKey,
-      );
-      return;
-    }
-  }
-
-  if (acceptedCount > 0) {
-    _suggestionWorkLog(
-      unitId: unit.id,
-      unitType: unitType,
-      unitRegionId: unitRegionId,
-      atProvinceId: atProvinceId,
-      workTarget: workTarget,
-      outcome: 'included',
-      tile: firstIncludedTile,
-      includedRowCount: acceptedCount,
-    );
-  } else {
-    _suggestionWorkLog(
-      unitId: unit.id,
-      unitType: unitType,
-      unitRegionId: unitRegionId,
-      atProvinceId: atProvinceId,
-      workTarget: workTarget,
-      outcome: 'excluded',
-      reason: sawCandidate ? engineRejectedReason : noCandidateReason,
-    );
-  }
-}
-
 /// Suggests candidate work orders for explorers and civilian workers owned by
 /// [view.playerId]. Worker units (Builder, Engineer, Rail Builder): at least
 /// one suggestion per (unit, allowed target) when any **player-controlled** tile
@@ -138,12 +30,20 @@ void _runWorkSuggestionPipeline({
 /// scope as work-order validation, not limited to the unit’s current province.
 /// Explorers/Spies/Merchants follow type-specific rules. Visibility per
 /// SPEC/program/fog-and-exploration-resolution.md.
+/// Throughput hook: callers that enumerate multiple suggestion families against
+/// the same `(game, view.playerId, currentOrders, tileMapByRegion)` may supply
+/// [sharedCandidateValidator] to amortize `PlayerView` / units-by-id
+/// construction across families (Refs #2394,
+/// `SPEC/program/order-suggestions.md` § Throughput bounds). When omitted, this
+/// function constructs its own validator. The shared instance must be built
+/// with the same inputs; observable suggestions must match the default path.
 List<WorkOrder> suggestWorkOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
   orderSuggestionLog.d('suggestWorkOrders player=${view.playerId}');
   final playerId = view.playerId;
@@ -161,6 +61,11 @@ List<WorkOrder> suggestWorkOrders(
   final partiallyRevealedProvinceCache =
       partiallyRevealedPrefixedProvinceIdsForPlayer(game: game, view: view);
 
+  final playerOwnedProvinceIds = <String>{
+    for (final p in allProvinces(game.worldState))
+      if (p.ownerId == playerId) p.id,
+  };
+
   // Pre-filter + visibility sort per workTarget; reused across worker units.
   final visibleCandidatesSortedByWorkTarget = <String, List<String>>{};
 
@@ -172,13 +77,20 @@ List<WorkOrder> suggestWorkOrders(
 
   // One validator per suggestion pass: amortizes buildPlayerView + unit map
   // across all units (Refs #2394, IncrementalCandidateValidator.forPlayer).
-  final candidateValidator = buildIncrementalCandidateValidator(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    baseOrders: currentOrders,
-    tileMapByRegion: tileMapByRegion,
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
   );
+  final candidateValidator =
+      sharedCandidateValidator ??
+      buildIncrementalCandidateValidator(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        baseOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
 
   for (final unit in view.ownUnits) {
     _addWorkSuggestionsForUnit(
@@ -193,6 +105,7 @@ List<WorkOrder> suggestWorkOrders(
       existingTargetsByUnit: existingTargetsByUnit,
       partiallyRevealedProvinceCache: partiallyRevealedProvinceCache,
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
+      playerOwnedProvinceIds: playerOwnedProvinceIds,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
       suggestions: suggestions,
       candidateValidator: candidateValidator,
@@ -232,6 +145,7 @@ void _addWorkSuggestionsForUnit({
   required Map<String, Set<String>> existingTargetsByUnit,
   required Set<String> partiallyRevealedProvinceCache,
   required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
+  required Set<String> playerOwnedProvinceIds,
   required Set<String> devExclusiveReservedTiles,
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
@@ -285,6 +199,7 @@ void _addWorkSuggestionsForUnit({
       atProvinceId: provinceId,
       existingTargetsByUnit: existingTargetsByUnit,
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
+      playerOwnedProvinceIds: playerOwnedProvinceIds,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
       suggestions: suggestions,
       candidateValidator: candidateValidator,
