@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -13,10 +12,16 @@ FleetMission _fleetMissionFromOrderName(String name) {
   return FleetMission.none;
 }
 
+/// Fleet list index by id for O(1) in-place updates (Refs #2394).
+Map<String, int> _fleetIndexById(List<Fleet> fleets) => {
+      for (var i = 0; i < fleets.length; i++) fleets[i].id: i,
+    };
+
 List<Fleet> _applySingleNavalMissionOrder({
   required Game game,
   required List<Fleet> fleets,
   required Map<String, Fleet> fleetById,
+  required Map<String, int> fleetIndexById,
   required String playerId,
   required NavalMissionOrder order,
 }) {
@@ -68,8 +73,8 @@ List<Fleet> _applySingleNavalMissionOrder({
         targetPortId: null,
         targetProvinceId: null,
       );
-      final idx = fleets.indexWhere((f) => f.id == fleet.id);
-      if (idx >= 0) {
+      final idx = fleetIndexById[fleet.id];
+      if (idx != null && idx >= 0 && idx < fleets.length) {
         final next = List<Fleet>.from(fleets)..[idx] = cleared;
         fleetById[fleet.id] = cleared;
         return next;
@@ -83,8 +88,8 @@ List<Fleet> _applySingleNavalMissionOrder({
     targetPortId: order.targetPortId,
     targetProvinceId: order.targetProvinceId,
   );
-  final idx = fleets.indexWhere((f) => f.id == fleet.id);
-  if (idx >= 0) {
+  final idx = fleetIndexById[fleet.id];
+  if (idx != null && idx >= 0 && idx < fleets.length) {
     final next = List<Fleet>.from(fleets)..[idx] = newFleet;
     fleetById[fleet.id] = newFleet;
     return next;
@@ -98,6 +103,7 @@ Game applyNavalMissionOrders(
 ) {
   var fleets = List<Fleet>.from(game.worldState.fleets);
   final fleetById = {for (final f in fleets) f.id: f};
+  var fleetIndexById = _fleetIndexById(fleets);
 
   for (final entry in navalMissionOrdersByPlayerId.entries) {
     final playerId = entry.key;
@@ -106,9 +112,11 @@ Game applyNavalMissionOrders(
         game: game,
         fleets: fleets,
         fleetById: fleetById,
+        fleetIndexById: fleetIndexById,
         playerId: playerId,
         order: order,
       );
+      fleetIndexById = _fleetIndexById(fleets);
     }
   }
 
