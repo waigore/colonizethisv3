@@ -8,8 +8,6 @@ import '../constants.dart';
 import '../world/tile_key_coordinates.dart';
 import 'town_capital_occupancy.dart';
 
-final _log = packageLogger();
-
 /// Thrown when the capital province cannot host four bootstrap grain farms on land tiles.
 class GreatPowerGrainBootstrapError implements Exception {
   GreatPowerGrainBootstrapError(this.message);
@@ -71,7 +69,7 @@ applyGreatPowerStartingGrainBootstrap({
   final terrain = tileMapOldWorld.terrainGrid;
   final resGrid = tileMapOldWorld.resourceGrid;
   if (terrain == null || resGrid == null) {
-    _log.i(
+    logicLog.i(
       'skip Great Power grain bootstrap (missing terrain or resource grid)',
     );
     return (

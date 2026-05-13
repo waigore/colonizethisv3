@@ -7,8 +7,6 @@ import '../world/unit_lookup.dart';
 import 'projected_effects.dart';
 import '../turn/turn_resolver.dart';
 
-final _log = packageLogger();
-
 /// Projects effects of unresolved orders. SPEC/program/order-projections.md.
 /// Dry-run of resolveTurnForGame; no world state mutation.
 
@@ -22,9 +20,9 @@ ProjectedEffects projectOrderEffects({
   required String playerId,
   List<AssignedRecipe> defaultAssignments = const [],
 }) {
-  _log.d('projectOrderEffects run for player $playerId');
+  logicLog.d('projectOrderEffects run for player $playerId');
   if (tileMapByRegion.isEmpty) {
-    _log.d(
+    logicLog.d(
       'projectOrderEffects with empty tileMapByRegion; extraction will be zero',
     );
   }

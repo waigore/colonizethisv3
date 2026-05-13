@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart'
-    show Stockpile, kTechIdMerchantCompanies;
+    show kTechIdMerchantCompanies;
 import 'package:colonizethis_logic/src/constants.dart';
 import 'package:colonizethis_logic/src/orders/orders_application_context.dart';
 import 'package:colonizethis_logic/src/orders/purchase_land_work_completion.dart';
