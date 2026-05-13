@@ -56,6 +56,10 @@ Game applyRelationModifiersAndUpdateScores(
 ) {
   var players = game.players;
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
+  // Stable id → row index while [players] order/count is unchanged (Refs #2394).
+  final playerIndexById = <String, int>{
+    for (var i = 0; i < players.length; i++) players[i].id: i,
+  };
 
   // GrantAid: deduct treasury, add relation modifier (+5 per grant). Requires Embassy.
   for (final entry in diploByPlayer.entries) {
@@ -81,8 +85,8 @@ Game applyRelationModifiersAndUpdateScores(
       final overture = getOverture(game, gpId, targetId);
       if (overture == null || !overture.hasEmbassy) continue;
 
-      final playerIdx = players.indexWhere((p) => p.id == gpId);
-      if (playerIdx >= 0) {
+      final playerIdx = playerIndexById[gpId];
+      if (playerIdx != null && playerIdx >= 0) {
         players = List<Player>.from(players);
         players[playerIdx] = players[playerIdx].copyWith(
           treasury: players[playerIdx].treasury - amount,
@@ -136,8 +140,8 @@ Game applyRelationModifiersAndUpdateScores(
       if (overture == null || !overture.hasConsulate) continue;
 
       // Deduct initial payment
-      final payerIdx = players.indexWhere((p) => p.id == gpId);
-      if (payerIdx >= 0) {
+      final payerIdx = playerIndexById[gpId];
+      if (payerIdx != null && payerIdx >= 0) {
         players = List<Player>.from(players);
         players[payerIdx] = players[payerIdx].copyWith(
           treasury: players[payerIdx].treasury - amount,
@@ -202,6 +206,9 @@ Game processOngoingSubsidies(
   var players = game.players;
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
+  final playerIndexById = <String, int>{
+    for (var i = 0; i < players.length; i++) players[i].id: i,
+  };
 
   for (final subsidy in subsidyStates) {
     final payerId = subsidy.payerId;
@@ -253,8 +260,8 @@ Game processOngoingSubsidies(
     }
 
     // Deduct subsidy payment
-    final payerIdx = players.indexWhere((p) => p.id == payerId);
-    if (payerIdx >= 0) {
+    final payerIdx = playerIndexById[payerId];
+    if (payerIdx != null && payerIdx >= 0) {
       players = List<Player>.from(players);
       players[payerIdx] = players[payerIdx].copyWith(
         treasury: players[payerIdx].treasury - amount,
@@ -280,8 +287,8 @@ Game processOngoingSubsidies(
       );
     } else {
       // GP target: transfer treasury
-      final targetIdx = players.indexWhere((p) => p.id == targetId);
-      if (targetIdx >= 0) {
+      final targetIdx = playerIndexById[targetId];
+      if (targetIdx != null && targetIdx >= 0) {
         players[targetIdx] = players[targetIdx].copyWith(
           treasury: players[targetIdx].treasury + amount,
         );
