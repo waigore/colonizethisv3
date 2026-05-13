@@ -58,11 +58,20 @@ bool civilianMayOccupyLandTileKey({
   required String playerId,
   required String unitType,
   required String destinationTileKey,
+  /// When set, avoids per-call linear `.any()` scans over players, minors, and
+  /// tribes when classifying [ownerId] (Refs #2394, SPEC/program/order-suggestions.md).
+  DiplomacyFactionMembership? factionMembership,
 }) {
   if (!_isValidDestinationLandTile(game, destinationTileKey)) return false;
   if (_isTilePurchasedByMover(game, playerId, destinationTileKey)) return true;
   final ownerId = _provinceOwnerIdForDestination(game, destinationTileKey);
-  return _isOccupancyAllowedByProvinceOwner(game, playerId, unitType, ownerId);
+  return _isOccupancyAllowedByProvinceOwner(
+    game,
+    playerId,
+    unitType,
+    ownerId,
+    factionMembership: factionMembership,
+  );
 }
 
 bool _isValidDestinationLandTile(Game game, String destinationTileKey) =>
@@ -85,13 +94,18 @@ bool _isOccupancyAllowedByProvinceOwner(
   Game game,
   String playerId,
   String unitType,
-  String? ownerId,
-) {
+  String? ownerId, {
+  DiplomacyFactionMembership? factionMembership,
+}) {
   if (ownerId == null || ownerId.isEmpty)
     return _isExplorerMerchantOrSpy(unitType);
   if (ownerId == playerId) return true;
-  if (isGreatPower(game, ownerId)) return isSpyUnit(unitType);
-  if (isMinorOrTribe(game, ownerId)) return _isExplorerMerchantOrSpy(unitType);
+  if (isGreatPower(game, ownerId, factionMembership: factionMembership)) {
+    return isSpyUnit(unitType);
+  }
+  if (isMinorOrTribe(game, ownerId, factionMembership: factionMembership)) {
+    return _isExplorerMerchantOrSpy(unitType);
+  }
   return false;
 }
 
