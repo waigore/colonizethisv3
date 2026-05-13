@@ -5,7 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../world/player_view.dart';
 import 'incremental_candidate_validator.dart';
 
-export '../diplomacy/overture_stage_helpers.dart';
+export '../diplomacy/overture_stage_navigation.dart';
 
 final orderSuggestionLog = packageLogger('order_suggestion');
 

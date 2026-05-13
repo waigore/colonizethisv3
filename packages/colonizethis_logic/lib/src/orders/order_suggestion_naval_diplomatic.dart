@@ -337,7 +337,7 @@ DiplomaticOrder? _establishOvertureSuggestionOrder({
 
   final existing = getOverture(game, playerId, targetId);
   final current = existing?.stage ?? OvertureStage.none;
-  final next = current.next;
+  final next = nextOvertureStage(current);
   if (next == null) return null;
   if (next == OvertureStage.tradeConsulate || next == OvertureStage.embassy) {
     final cost = next == OvertureStage.tradeConsulate

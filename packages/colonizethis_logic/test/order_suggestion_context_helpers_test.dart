@@ -53,6 +53,47 @@ void main() {
     });
   });
 
+  group('nextOvertureStage', () {
+    test('follows expected progression', () {
+      expect(
+        nextOvertureStage(OvertureStage.none),
+        OvertureStage.tradeConsulate,
+      );
+      expect(
+        nextOvertureStage(OvertureStage.tradeConsulate),
+        OvertureStage.embassy,
+      );
+      expect(nextOvertureStage(OvertureStage.embassy), OvertureStage.nap);
+      expect(nextOvertureStage(OvertureStage.nap), OvertureStage.joinEmpire);
+    });
+
+    test('returns null when already at final stage', () {
+      expect(nextOvertureStage(OvertureStage.joinEmpire), isNull);
+    });
+  });
+
+  group('previousStage', () {
+    test('reverses nextOvertureStage for progression chain', () {
+      for (final stage in [
+        OvertureStage.none,
+        OvertureStage.tradeConsulate,
+        OvertureStage.embassy,
+        OvertureStage.nap,
+      ]) {
+        final forward = nextOvertureStage(stage)!;
+        expect(previousStage(forward), stage);
+      }
+    });
+
+    test('none maps to itself', () {
+      expect(previousStage(OvertureStage.none), OvertureStage.none);
+    });
+
+    test('joinEmpire previous is nap', () {
+      expect(previousStage(OvertureStage.joinEmpire), OvertureStage.nap);
+    });
+  });
+
   group('acceptance wrappers', () {
     test('isNavalMoveOrderAccepted returns a boolean result', () {
       final accepted = isNavalMoveOrderAccepted(

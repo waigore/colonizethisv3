@@ -10,8 +10,13 @@ import '../constants.dart';
 import 'projected_effects.dart';
 import 'order_validation_result.dart';
 export 'order_validation_result.dart';
-import 'order_validators.dart';
 import 'unit_type_helpers.dart';
+export 'validator_bundle.dart'
+    show
+        OrderValidators,
+        buildWorkOrderValidationContext,
+        createOrderValidators;
+import 'validator_bundle.dart';
 
 part 'order_engine.g.dart';
 
@@ -88,39 +93,26 @@ class _OrderSlot<T> {
   final String label;
 }
 
-typedef OrderValidatorFactory = OrderValidators Function(
-  Game game,
-  Player player,
-  String playerId,
-  PlayerView view,
-  MapTopology topology,
-  Map<String, Unit> unitsById,
-  List<DiplomaticOrder> diplomaticOrders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Set<String> civilianDraftMoveUnitIds,
-  Set<String> devExclusiveTiles,
-  Stockpile stockpile,
-  int treasury,
-  DiplomacyFactionMembership factionMembership,
-);
+typedef OrderValidatorFactory =
+    OrderValidators Function(
+      Game game,
+      Player player,
+      String playerId,
+      PlayerView view,
+      MapTopology topology,
+      Map<String, Unit> unitsById,
+      List<DiplomaticOrder> diplomaticOrders,
+      Map<String, TileMapResult>? tileMapByRegion,
+      Set<String> civilianDraftMoveUnitIds,
+      Set<String> devExclusiveTiles,
+      Stockpile stockpile,
+      int treasury,
+      DiplomacyFactionMembership factionMembership,
+    );
 
-class OrderValidators {
-  const OrderValidators({
-    required this.moveValidator,
-    required this.armyMoveValidator,
-    required this.buildValidator,
-    required this.workValidator,
-    required this.diplomaticValidator,
-    required this.navalValidator,
-  });
-
-  final MoveValidator moveValidator;
-  final ArmyMoveValidator armyMoveValidator;
-  final BuildOrderValidator buildValidator;
-  final WorkOrderValidator workValidator;
-  final DiplomaticOrderValidator diplomaticValidator;
-  final NavalOrderValidator navalValidator;
-}
+/// One post–move/army validation round: caller constructs a fresh [OrderValidators]
+/// bundle, then invokes this to append results and propagate economy state.
+typedef _OrderCategoryDescriptor = void Function(OrderValidators validators);
 
 /// Order engine: holds per-player orders, validates in submission order,
 /// exposes projected effects. SPEC/program/order-engine.md.
@@ -180,7 +172,9 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       // cascade rejections ("Previous invalid"), while preserving first-cause
       // rejection logging for debugging. Refs #2237 AC3.
       if (r.reason != previousInvalidOrderResult.reason) {
-        logicLog.w('$orderLabel order rejected player=$playerId reason=${r.reason}');
+        logicLog.w(
+          '$orderLabel order rejected player=$playerId reason=${r.reason}',
+        );
       }
     }
     return r;
@@ -278,8 +272,10 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
         civilianDraftMoveUnitIds.add(m.unitId);
       }
     }
+
     final factionMembership = DiplomacyFactionMembership.from(game);
-    var validators = _validatorFactory(
+
+    OrderValidators newValidatorBundle() => _validatorFactory(
       game,
       player,
       playerId,
@@ -294,6 +290,8 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       treasury,
       factionMembership,
     );
+
+    var validators = newValidatorBundle();
 
     OrderValidationResult validateMove(MoveOrder o, bool previousRejected) {
       return validators.moveValidator.validate(
@@ -335,117 +333,67 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       (o, prev) => prev ? previousInvalidOrderResult : validateArmyMove(o),
     );
 
-    validators = _validatorFactory(
-      game,
-      player,
-      playerId,
-      view,
-      topology,
-      unitsById,
-      diplomatic,
-      tileMapByRegion,
-      civilianDraftMoveUnitIds,
-      devExclusiveTiles,
-      stockpile,
-      treasury,
-      factionMembership,
-    );
-    rejected = _appendValidationResults(
-      results,
-      builds,
-      rejected,
-      (o, prev) => validators.buildValidator.validate(o, previousRejected: prev),
-    );
-    stockpile = validators.buildValidator.stockpile;
-    treasury = validators.buildValidator.treasury;
-
-    validators = _validatorFactory(
-      game,
-      player,
-      playerId,
-      view,
-      topology,
-      unitsById,
-      diplomatic,
-      tileMapByRegion,
-      civilianDraftMoveUnitIds,
-      devExclusiveTiles,
-      stockpile,
-      treasury,
-      factionMembership,
-    );
-    rejected = _appendValidationResults(
-      results,
-      works,
-      rejected,
-      (o, prev) => validators.workValidator.validate(o, previousRejected: prev),
-    );
-    stockpile = validators.workValidator.stockpile;
-    treasury = validators.workValidator.treasury;
-
-    validators = _validatorFactory(
-      game,
-      player,
-      playerId,
-      view,
-      topology,
-      unitsById,
-      diplomatic,
-      tileMapByRegion,
-      civilianDraftMoveUnitIds,
-      devExclusiveTiles,
-      stockpile,
-      treasury,
-      factionMembership,
-    );
-    final afterDiplomatic =
-        _appendValidationResultsWithState<DiplomaticOrder, int>(
+    final postArmyCategories = <_OrderCategoryDescriptor>[
+      (v) {
+        rejected = _appendValidationResults(
           results,
-          diplomatic,
+          builds,
           rejected,
-          treasury,
-          (o, prev) {
-            final r = validators.diplomaticValidator.validate(
-              o,
-              previousRejected: prev,
-            );
-            return (result: r.result, state: r.treasury);
-          },
+          (o, prev) => v.buildValidator.validate(o, previousRejected: prev),
         );
-    rejected = afterDiplomatic.rejected;
-    treasury = afterDiplomatic.state;
+        stockpile = v.buildValidator.stockpile;
+        treasury = v.buildValidator.treasury;
+      },
+      (v) {
+        rejected = _appendValidationResults(
+          results,
+          works,
+          rejected,
+          (o, prev) => v.workValidator.validate(o, previousRejected: prev),
+        );
+        stockpile = v.workValidator.stockpile;
+        treasury = v.workValidator.treasury;
+      },
+      (v) {
+        final afterDiplomatic =
+            _appendValidationResultsWithState<DiplomaticOrder, int>(
+              results,
+              diplomatic,
+              rejected,
+              treasury,
+              (o, prev) {
+                final r = v.diplomaticValidator.validate(
+                  o,
+                  previousRejected: prev,
+                );
+                return (result: r.result, state: r.treasury);
+              },
+            );
+        rejected = afterDiplomatic.rejected;
+        treasury = afterDiplomatic.state;
+      },
+      (v) {
+        rejected = _appendValidationResults(
+          results,
+          navals,
+          rejected,
+          (o, prev) =>
+              v.navalValidator.validateNavalMove(o, previousRejected: prev),
+        );
+        rejected = _appendValidationResults(
+          results,
+          missions,
+          rejected,
+          (o, prev) =>
+              v.navalValidator.validateNavalMission(o, previousRejected: prev),
+        );
+      },
+    ];
 
-    validators = _validatorFactory(
-      game,
-      player,
-      playerId,
-      view,
-      topology,
-      unitsById,
-      diplomatic,
-      tileMapByRegion,
-      civilianDraftMoveUnitIds,
-      devExclusiveTiles,
-      stockpile,
-      treasury,
-      factionMembership,
-    );
-    rejected = _appendValidationResults(
-      results,
-      navals,
-      rejected,
-      (o, prev) =>
-          validators.navalValidator.validateNavalMove(o, previousRejected: prev),
-    );
-    rejected = _appendValidationResults(
-      results,
-      missions,
-      rejected,
-      (o, prev) => validators.navalValidator.validateNavalMission(
-        o,
-        previousRejected: prev,
-      ),
-    );
+    for (final step in postArmyCategories) {
+      validators = newValidatorBundle();
+      step(validators);
+    }
     return results;
   }
 
@@ -492,37 +440,19 @@ OrderValidators _defaultOrderValidatorFactory(
   int treasury,
   DiplomacyFactionMembership factionMembership,
 ) {
-  final workContext = WorkOrderValidationContext(
+  return createOrderValidators(
     game: game,
     player: player,
     playerId: playerId,
     view: view,
+    topology: topology,
     unitsById: unitsById,
-    devExclusiveTiles: devExclusiveTiles,
+    diplomaticOrders: diplomaticOrders,
     tileMapByRegion: tileMapByRegion,
     civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
-    diplomaticOrders: diplomaticOrders,
-    topology: topology,
+    devExclusiveTiles: devExclusiveTiles,
+    stockpile: stockpile,
+    treasury: treasury,
     factionMembership: factionMembership,
-  );
-  return OrderValidators(
-    moveValidator: const MoveValidator(),
-    armyMoveValidator: const ArmyMoveValidator(),
-    buildValidator: BuildOrderValidator(game: game, player: player),
-    workValidator: WorkOrderValidator(
-      context: workContext,
-      stockpile: stockpile,
-      treasury: treasury,
-    ),
-    diplomaticValidator: DiplomaticOrderValidator(
-      game: game,
-      playerId: playerId,
-      initialTreasury: treasury,
-    ),
-    navalValidator: NavalOrderValidator(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-    ),
   );
 }

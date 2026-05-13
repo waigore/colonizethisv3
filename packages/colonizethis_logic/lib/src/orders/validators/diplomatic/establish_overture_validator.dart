@@ -14,10 +14,16 @@ class EstablishOvertureSubValidator implements DiplomaticSubValidator {
   const EstablishOvertureSubValidator({
     required this.game,
     required this.playerId,
+    this.factionMembership,
   });
 
   final Game game;
   final String playerId;
+
+  /// Optional precomputed faction classification snapshot reused across
+  /// per-candidate probes to avoid linear `game.players` /
+  /// `game.minorNations` / `game.tribes` scans (Refs #2394).
+  final DiplomacyFactionMembership? factionMembership;
 
   @override
   ({OrderValidationResult result, int treasury}) validate({
@@ -32,7 +38,8 @@ class EstablishOvertureSubValidator implements DiplomaticSubValidator {
       );
     }
     final targetId = order.targetFactionId;
-    if (!isMinorOrTribe(game, targetId) && !isGreatPower(game, targetId)) {
+    if (!isMinorOrTribe(game, targetId, factionMembership: factionMembership) &&
+        !isGreatPower(game, targetId, factionMembership: factionMembership)) {
       return rejectDiplomaticSub(
         'Overtures are only valid toward Minor Nations, Tribes, or Great Powers',
         treasury,
@@ -178,10 +185,10 @@ class EstablishOvertureSubValidator implements DiplomaticSubValidator {
         treasury,
       );
     }
-    if (isGreatPower(game, targetId)) {
+    if (isGreatPower(game, targetId, factionMembership: factionMembership)) {
       return _validateJoinEmpireTowardGreatPower(targetId, treasury);
     }
-    if (!isMinorOrTribe(game, targetId)) {
+    if (!isMinorOrTribe(game, targetId, factionMembership: factionMembership)) {
       return rejectDiplomaticSub(
         'Join Empire target must be a Minor Nation, Tribe, or Great Power',
         treasury,
@@ -206,7 +213,11 @@ class EstablishOvertureSubValidator implements DiplomaticSubValidator {
         treasury,
       );
     }
-    if (!isGreatPowerNearlyDefeatedForJoinEmpire(game, targetId)) {
+    if (!isGreatPowerNearlyDefeatedForJoinEmpire(
+      game,
+      targetId,
+      factionMembership: factionMembership,
+    )) {
       return rejectDiplomaticSub(
         'Join Empire toward Great Power requires target to be nearly defeated (at most 3 provinces and original capital not held by target)',
         treasury,
@@ -219,7 +230,9 @@ class EstablishOvertureSubValidator implements DiplomaticSubValidator {
     String targetId,
     OvertureStage stage,
   ) {
-    if (!isMinorOrTribe(game, targetId)) return false;
+    if (!isMinorOrTribe(game, targetId, factionMembership: factionMembership)) {
+      return false;
+    }
     return stage == OvertureStage.tradeConsulate ||
         stage == OvertureStage.embassy ||
         stage == OvertureStage.nap;
