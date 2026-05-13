@@ -167,7 +167,16 @@ _CanonicalProvinceTransferContext _resolveValidatedCanonicalTransfer(
       '$canonicalId (regionId=$regionId)',
     );
   }
-  final provinceRow = tryGetProvince(game.worldState, canonicalId);
+  final fullCanonicalId = toFullProvinceId(regionId, canonicalId);
+  Province? provinceRow = tryGetProvince(game.worldState, fullCanonicalId);
+  if (provinceRow == null) {
+    for (final p in region.provinces) {
+      if (p.id == canonicalId || p.id == fullCanonicalId) {
+        provinceRow = p;
+        break;
+      }
+    }
+  }
   if (provinceRow == null || provinceRow.regionId != regionId) {
     throw StateError(
       'Canonical province transfer: province missing from region data '
