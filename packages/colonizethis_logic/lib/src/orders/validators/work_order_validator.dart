@@ -95,57 +95,17 @@ class WorkOrderValidator extends StatefulValidator {
             : null;
         final ownerId = province?.ownerId;
 
-        final preResult = _runTargetPrecheck(
+        final orderedReject = _firstOrderedWorkOrderValidationFailure(
           o: o,
+          validatedUnit: validatedUnit,
+          type: type,
           targetProvinceId: targetProvinceId,
-          ownerId: ownerId,
-          type: type,
-        );
-        if (preResult != null) {
-          return preResult;
-        }
-
-        final foreignProvinceResult = _validateForeignProvinceWork(
-          o: o,
-          type: type,
+          fortLevel: province?.fortLevel ?? 0,
           ownerId: ownerId,
         );
-        if (foreignProvinceResult != null) return foreignProvinceResult;
-
-        final devExclusiveResult = _validateDevExclusiveWorkTarget(o, type);
-        if (devExclusiveResult != null) return devExclusiveResult;
-
-        final materialRuleResult = _validateMaterialAndTechRules(
-          o,
-          province?.fortLevel ?? 0,
-        );
-        if (materialRuleResult != null) return materialRuleResult;
-
-        if (!workOrderVisibilityOk(
-          _context.view,
-          validatedUnit,
-          o.target,
-          targetTileKey: o.targetTileKey,
-          worldState: _context.game.worldState,
-        )) {
-          return OrderValidationResult.rejected(
-            'Province or tile not visible for this work',
-          );
+        if (orderedReject != null) {
+          return orderedReject;
         }
-
-        if (!civilianMayOccupyLandTileKey(
-          game: _context.game,
-          playerId: _context.playerId,
-          unitType: type,
-          destinationTileKey: o.targetTileKey,
-        )) {
-          return OrderValidationResult.rejected(
-            'Unit cannot occupy target tile',
-          );
-        }
-
-        final prospectResult = _validateProspectTarget(o);
-        if (prospectResult != null) return prospectResult;
 
         if (isDevExclusiveUnitType(type) &&
             isDevExclusiveWorkTarget(o.target)) {
@@ -157,6 +117,69 @@ class WorkOrderValidator extends StatefulValidator {
         return OrderValidationResult.accepted();
       },
     );
+  }
+
+  /// Ordered validation chain after unit + work-target checks (GitHub #2391
+  /// pattern 8 / AC9): each step returns a rejection or null to continue.
+  OrderValidationResult? _firstOrderedWorkOrderValidationFailure({
+    required WorkOrder o,
+    required Unit validatedUnit,
+    required String type,
+    required String? targetProvinceId,
+    required int fortLevel,
+    required String? ownerId,
+  }) {
+    final steps = <OrderValidationResult? Function()>[
+      () => _runTargetPrecheck(
+        o: o,
+        targetProvinceId: targetProvinceId,
+        ownerId: ownerId,
+        type: type,
+      ),
+      () => _validateForeignProvinceWork(
+        o: o,
+        type: type,
+        ownerId: ownerId,
+      ),
+      () => _validateDevExclusiveWorkTarget(o, type),
+      () => _validateMaterialAndTechRules(o, fortLevel),
+      () {
+        if (!workOrderVisibilityOk(
+          _context.view,
+          validatedUnit,
+          o.target,
+          targetTileKey: o.targetTileKey,
+          worldState: _context.game.worldState,
+        )) {
+          return OrderValidationResult.rejected(
+            'Province or tile not visible for this work',
+          );
+        }
+        return null;
+      },
+      () {
+        if (!civilianMayOccupyLandTileKey(
+          game: _context.game,
+          playerId: _context.playerId,
+          unitType: type,
+          destinationTileKey: o.targetTileKey,
+        )) {
+          return OrderValidationResult.rejected(
+            'Unit cannot occupy target tile',
+          );
+        }
+        return null;
+      },
+      () => _validateProspectTarget(o),
+    ];
+
+    for (final step in steps) {
+      final r = step();
+      if (r != null) {
+        return r;
+      }
+    }
+    return null;
   }
 
   OrderValidationResult? _validateOwnedUnseenUnit(WorkOrder o, Unit? unit) {
