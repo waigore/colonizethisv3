@@ -5,6 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../world/player_view.dart';
 import 'incremental_candidate_validator.dart';
 
+export '../diplomacy/overture_stage_navigation.dart';
+
 final orderSuggestionLog = packageLogger('order_suggestion');
 
 bool _orderSuggestionTrackWorkOrderAcceptanceProbes = false;
@@ -212,19 +214,4 @@ Orders appendDiplomaticOrderForTrial(
       playerId: [...prev, order],
     },
   );
-}
-
-OvertureStage? nextOvertureStage(OvertureStage current) {
-  switch (current) {
-    case OvertureStage.none:
-      return OvertureStage.tradeConsulate;
-    case OvertureStage.tradeConsulate:
-      return OvertureStage.embassy;
-    case OvertureStage.embassy:
-      return OvertureStage.nap;
-    case OvertureStage.nap:
-      return OvertureStage.joinEmpire;
-    case OvertureStage.joinEmpire:
-      return null;
-  }
 }
