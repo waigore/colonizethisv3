@@ -114,11 +114,17 @@ void _addExplorerWorkSuggestionsForUnit({
     return;
   }
 
-  final provinces =
-      allProvinces(
-          game.worldState,
-        ).where((p) => partiallyRevealedProvinceCache.contains(p.id)).toList()
-        ..sort((a, b) => a.id.compareTo(b.id));
+  // [buildPlayerView] already keyed every world province in [view.provincesById];
+  // resolve only ids in the partial-reveal cache instead of scanning
+  // [allProvinces] per explorer unit (Refs #2394, SPEC/program/order-suggestions.md).
+  final provinces = <Province>[];
+  for (final id in partiallyRevealedProvinceCache) {
+    final p = view.provincesById[id] ?? tryGetProvince(game.worldState, id);
+    if (p != null) {
+      provinces.add(p);
+    }
+  }
+  provinces.sort((a, b) => a.id.compareTo(b.id));
   final acceptedExplores = <WorkOrder>[];
   var lastReason = 'no_valid_tile';
   for (final prov in provinces) {

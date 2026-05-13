@@ -3,12 +3,6 @@
 # from scan). See SPEC/program/logic-dual-region-province-access.md.
 version: 1
 sanctions:
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_explorer.dart
-    line: 118
-    rationale: Cross-region explorer work enumeration over partially revealed provinces.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
   - path: packages/colonizethis_logic/lib/src/world/connectivity_resolver.dart
     line: 229
     rationale: Global connectivity / capital path checks require all province rows.
@@ -40,14 +34,14 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
-    line: 52
-    rationale: Build suggestions scan province context across regions.
+    line: 53
+    rationale: Work tile prefilter collects owned province ids via all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
-    line: 109
-    rationale: Research/build suggestion enumeration over all provinces.
+    line: 110
+    rationale: Town work targets enumerate town tiles across owned provinces in both regions.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
