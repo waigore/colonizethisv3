@@ -1,5 +1,7 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/orders/partial_province_reveal.dart';
 import 'package:colonizethis_logic/src/world/player_view.dart';
+import 'package:colonizethis_logic/src/world/province_lookup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -74,6 +76,77 @@ void main() {
       );
       expect(ids, isEmpty);
     });
+
+    test(
+      'partial reveal ids resolve via provincesById to same set as allProvinces filter',
+      () {
+        const playerId = 'gp1';
+        const ow = 'oldWorld';
+        final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
+        final p2 = Province(id: '$ow|p2', regionId: ow, ownerId: playerId);
+        final world = WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(provinces: [p1, p2], units: const []),
+          newWorld: const RegionData(),
+          tileKeysByRegionAndProvince: {
+            ow: {
+              '$ow|p1': ['$ow|p1|0|0', '$ow|p1|0|1'],
+              '$ow|p2': ['$ow|p2|0|0'],
+            },
+          },
+          playerVisibilityByTile: {
+            playerId: {
+              '$ow|p1|0|0': 'unknown',
+              '$ow|p1|0|1': 'fogged',
+              '$ow|p2|0|0': 'fogged',
+            },
+          },
+        );
+        final game = Game(
+          id: 'g1',
+          worldState: world,
+          players: const [
+            Player(id: playerId, displayName: 'GP', isHuman: true),
+          ],
+        );
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: 'p1',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: 'p2',
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: const [],
+        );
+        final view = buildPlayerView(game, topology, playerId);
+        final cache = partiallyRevealedPrefixedProvinceIdsForPlayer(
+          game: game,
+          view: view,
+        );
+        final legacy = allProvinces(game.worldState)
+            .where((p) => cache.contains(p.id))
+            .map((p) => p.id)
+            .toList()
+          ..sort();
+        final optimized = <String>[];
+        for (final id in cache) {
+          final p =
+              view.provincesById[id] ?? tryGetProvince(game.worldState, id);
+          if (p != null) {
+            optimized.add(p.id);
+          }
+        }
+        optimized.sort();
+        expect(cache, isNotEmpty);
+        expect(optimized, legacy);
+      },
+    );
   });
 
   group('sortedProvincesForPartialRevealPrefixedIds', () {
