@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../world/player_view.dart';
 import 'incremental_candidate_validator.dart';
 
 export '../diplomacy/overture_stage_helpers.dart';
@@ -33,6 +34,8 @@ IncrementalCandidateValidator buildIncrementalCandidateValidator({
   required String playerId,
   required Orders baseOrders,
   Map<String, TileMapResult>? tileMapByRegion,
+  PlayerView? view,
+  Map<String, Unit>? unitsById,
 }) {
   return IncrementalCandidateValidator.forPlayer(
     game: game,
@@ -40,6 +43,8 @@ IncrementalCandidateValidator buildIncrementalCandidateValidator({
     playerId: playerId,
     basePrefix: baseOrders,
     tileMapByRegion: tileMapByRegion,
+    view: view,
+    unitsById: unitsById,
   );
 }
 
