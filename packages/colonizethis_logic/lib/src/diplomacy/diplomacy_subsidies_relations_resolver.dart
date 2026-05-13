@@ -25,12 +25,11 @@ Game terminateAgreementsOnWar(Game game) {
         .toList();
   }
   if (overtures.length != game.overtureStates.length) {
+    final overtKeys = {
+      for (final n in overtures) (n.gpId, n.targetId),
+    };
     final removed = game.overtureStates
-        .where(
-          (o) => !overtures.any(
-            (n) => n.gpId == o.gpId && n.targetId == o.targetId,
-          ),
-        )
+        .where((o) => !overtKeys.contains((o.gpId, o.targetId)))
         .toList();
     game = game.copyWith(overtureStates: overtures);
     for (final o in removed) {
