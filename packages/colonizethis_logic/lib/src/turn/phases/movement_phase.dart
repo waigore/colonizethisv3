@@ -38,17 +38,26 @@ Game runMovementPhase(
     );
     final oldWorld = tiled.oldWorld;
     final newWorld = tiled.newWorld;
-    final spyTimers = Map<String, Map<String, int>>.from(
-      state.worldState.spyRevealTurnsByPlayer.map(
-        (k, v) => MapEntry(k, Map<String, int>.from(v)),
-      ),
-    );
+    // Defer the deep copy of spyRevealTurnsByPlayer until a spy actually
+    // leaves an enemy province; most turns have zero such events, so the
+    // eager copy was wasted O(players * provinces) work per move phase.
+    // Refs #2394 Category D.
+    final originalSpyTimers = state.worldState.spyRevealTurnsByPlayer;
+    Map<String, Map<String, int>>? mutableSpyTimers;
+    Map<String, int> spyTimersForOwner(String ownerId) {
+      mutableSpyTimers ??= {
+        for (final entry in originalSpyTimers.entries)
+          entry.key: Map<String, int>.from(entry.value),
+      };
+      return mutableSpyTimers!.putIfAbsent(ownerId, () => <String, int>{});
+    }
+
     void recordSpyLeft(String ownerId, String provinceId) {
       final provinceOwner = ownerByProvinceId[provinceId];
       if (provinceOwner == null || provinceOwner == ownerId) {
         return;
       }
-      spyTimers.putIfAbsent(ownerId, () => {})[provinceId] = 5;
+      spyTimersForOwner(ownerId)[provinceId] = 5;
     }
 
     void recordSpyProvinceChanges(RegionData before, RegionData after) {
@@ -72,7 +81,7 @@ Game runMovementPhase(
       worldState: state.worldState.copyWith(
         oldWorld: oldWorld,
         newWorld: newWorld,
-        spyRevealTurnsByPlayer: spyTimers,
+        spyRevealTurnsByPlayer: mutableSpyTimers ?? originalSpyTimers,
       ),
     );
   }
