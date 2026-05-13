@@ -8,8 +8,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'military_strength.dart';
 
-final _log = packageLogger();
-
 /// Mission factor for Patrol interception probability.
 const double kNavalInterceptMissionFactorPatrol = 0.50;
 
@@ -409,7 +407,7 @@ NavalBattleResult resolveSeaBattle(
     outcome = NavalBattleOutcome.side1Victory;
   }
 
-  _log.d(
+  logicLog.d(
     'naval battle zone=${battle.seaZoneId} side1=${battle.side1.ownerId} side2=${battle.side2.ownerId} '
     'outcome=${outcome.name} retreat1=$side1Retreated retreat2=$side2Retreated',
   );

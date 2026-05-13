@@ -121,16 +121,17 @@ List<MoveOrder> suggestMoveOrders(
 /// land provinces in the army's region plus every province owned by [playerId]
 /// in any region; excludes the army's current province.
 ///
-/// When [playerOwnedProvinceFullIds] is supplied (typically built once per
-/// [suggestArmyMoveOrders] pass from [PlayerView.provincesById]), player-owned
-/// provinces are taken from that set instead of scanning [allProvinces] again
-/// for each army (Refs #2394, SPEC/program/order-suggestions.md).
+/// When [playerOwnedFullProvinceIds] is supplied (typically built once per
+/// [suggestArmyMoveOrders] pass from [PlayerView.provincesById] or a single
+/// [allProvinces] scan), owned-province ids are taken from that set instead of
+/// rescanning the world per army (Refs #2394, SPEC/program/order-suggestions.md,
+/// SPEC/program/logic-dual-region-province-access.md).
 List<String> armyMoveCandidateDestinationProvinceIds({
   required Game game,
   required MapTopology topology,
   required String playerId,
   required Army army,
-  Set<String>? playerOwnedProvinceFullIds,
+  Set<String>? playerOwnedFullProvinceIds,
 }) {
   final fromFull = army.stationedProvinceId;
   final regionId = ProvinceId.regionIdFrom(fromFull);
@@ -140,8 +141,8 @@ List<String> armyMoveCandidateDestinationProvinceIds({
   for (final n in neighborProvinceIdsInRegion(topology, regionId, fromLocal)) {
     out.add(ProvinceId.full(regionId, n));
   }
-  if (playerOwnedProvinceFullIds != null) {
-    out.addAll(playerOwnedProvinceFullIds);
+  if (playerOwnedFullProvinceIds != null) {
+    out.addAll(playerOwnedFullProvinceIds);
   } else {
     for (final p in allProvinces(game.worldState)) {
       if (p.ownerId == playerId) {
@@ -204,22 +205,34 @@ bool _armyMoveNeedsDeclareWarTrial(
 /// Valid, sorted destinations for the Move Army dialog: player-owned and
 /// invasion targets only if the merged draft (with optional same-turn declare
 /// war) passes [OrderEngine] validation. SPEC/ui/military-units-panel.md.
+///
+/// When [playerOwnedFullProvinceIds] is provided by the caller, the picker
+/// skips the fallback owned-province [allProvinces] scan and reuses the
+/// provided set (Refs #2394).
 List<ArmyMovePickerDestination> armyMovePickerDestinations({
   required Game game,
   required MapTopology topology,
   required String playerId,
   required Army army,
   required Orders currentOrders,
+  Set<String>? playerOwnedFullProvinceIds,
 }) {
   final diplo =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ??
       const <DiplomaticOrder>[];
   final factionMembership = DiplomacyFactionMembership.from(game);
+  final ownedProvinceIds =
+      playerOwnedFullProvinceIds ??
+      <String>{
+        for (final p in allProvinces(game.worldState))
+          if (p.ownerId == playerId) toFullProvinceId(p.regionId, p.id),
+      };
   final raw = armyMoveCandidateDestinationProvinceIds(
     game: game,
     topology: topology,
     playerId: playerId,
     army: army,
+    playerOwnedFullProvinceIds: ownedProvinceIds,
   );
   final baseValidator = IncrementalCandidateValidator.forPlayer(
     game: game,
@@ -324,7 +337,7 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
     basePrefix: currentOrders,
   );
 
-  final playerOwnedProvinceFullIds = <String>{
+  final playerOwnedFullProvinceIds = <String>{
     for (final e in view.provincesById.entries)
       if (e.value.ownerId == playerId) e.key,
   };
@@ -343,7 +356,7 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
       topology: topology,
       playerId: playerId,
       army: army,
-      playerOwnedProvinceFullIds: playerOwnedProvinceFullIds,
+      playerOwnedFullProvinceIds: playerOwnedFullProvinceIds,
     );
 
     var acceptedForArmy = 0;
