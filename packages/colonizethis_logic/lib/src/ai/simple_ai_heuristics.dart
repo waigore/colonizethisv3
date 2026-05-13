@@ -16,8 +16,6 @@ import '../world/army_migration.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 
-final _log = packageLogger();
-
 /// Derives turn seed per ai-planner: turnSeed = hash(globalGameSeed, aiSeed[P], T).
 /// When [fallbackAiSeed] is provided and [game.aiSeedByGpId] has no entry for
 /// [playerId], it is used so that Option A (same seed when same role) holds.
@@ -225,7 +223,7 @@ Orders _finalizeSimpleHeuristicOrdersForPlayer({
   final b = buildByPlayer[playerId]?.length ?? 0;
   final w = workByPlayer[playerId]?.length ?? 0;
   final r = researchByPlayer[playerId]?.length ?? 0;
-  _log.i(
+  logicLog.i(
     'simple heuristics generated orders player=$playerId move=$m armyMove=$a build=$b work=$w research=$r',
   );
 
