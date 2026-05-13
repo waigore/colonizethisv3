@@ -1,3 +1,6 @@
+import 'package:colonizethis_app/config/ct_e2e.dart';
+import 'package:colonizethis_app/l10n/app_localizations_lookup.dart';
+import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,6 +56,44 @@ void main() {
       phaseName: 'smoke_condition_idle_timeout',
     );
     expect(met, isFalse);
+  });
+
+  testWidgets('e2eOldWorldRegionChipAppearsSelected reads CtChoiceChip', (
+    WidgetTester tester,
+  ) async {
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CtChoiceChip(
+            label: Text(l10n.region_oldWorld),
+            selected: true,
+            onSelected: (_) {},
+          ),
+        ),
+      ),
+    );
+    expect(e2eOldWorldRegionChipAppearsSelected(l10n), isTrue);
+  });
+
+  testWidgets('e2eNewWorldRegionChipAppearsSelected reads keyed subtree', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: KeyedSubtree(
+            key: kCtE2ERegionTabNewWorldKey,
+            child: CtChoiceChip(
+              label: const Text('New World'),
+              selected: true,
+              onSelected: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(e2eNewWorldRegionChipAppearsSelected(), isTrue);
   });
 
   testWidgets('e2eCloseBottomSheet no-ops when no bottom sheet', (

@@ -114,7 +114,12 @@ Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
     return;
   }
   await tester.tap(tab.first, warnIfMissed: false);
-  await e2ePumpFor(tester, const Duration(milliseconds: 250));
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => e2eNewWorldRegionChipAppearsSelected(),
+    timeout: const Duration(milliseconds: 500),
+    phaseName: 'pump_until_new_world_region_chip_selected',
+  );
 }
 
 /// Map HUD must show **Old World** before issuing naval moves so OW-split
@@ -130,7 +135,12 @@ Future<void> _tapOldWorldRegionTab(
     return;
   }
   await tester.tap(hit.first, warnIfMissed: false);
-  await e2ePumpFor(tester, const Duration(milliseconds: 250));
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => e2eOldWorldRegionChipAppearsSelected(l10n),
+    timeout: const Duration(milliseconds: 500),
+    phaseName: 'pump_until_old_world_region_chip_selected',
+  );
 }
 
 Finder _radioListTilesInAlertDialogs() {

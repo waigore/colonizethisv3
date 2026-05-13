@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/fleet_icon_cache.dart';
@@ -9,6 +10,8 @@ import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
+import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
+import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
@@ -362,6 +365,37 @@ Future<bool> e2ePumpUntilConditionOrIdle(
   }
   perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
   return false;
+}
+
+/// True when a [CtChoiceChip] labeled [AppLocalizations.region_oldWorld] exists
+/// and is selected (fleet E2E region-tab settle; GitHub #2336).
+bool e2eOldWorldRegionChipAppearsSelected(AppLocalizations l10n) {
+  final want = l10n.region_oldWorld;
+  for (final e in find.byType(CtChoiceChip).evaluate()) {
+    final chip = e.widget as CtChoiceChip;
+    final lw = chip.label;
+    if (lw is Text && lw.data == want) {
+      return chip.selected;
+    }
+  }
+  return false;
+}
+
+/// True when the E2E-keyed New World region chip subtree shows a selected
+/// [CtChoiceChip] (`game_map_controls.dart` / `kCtE2ERegionTabNewWorldKey`).
+bool e2eNewWorldRegionChipAppearsSelected() {
+  final root = find.byKey(kCtE2ERegionTabNewWorldKey);
+  if (root.evaluate().isEmpty) {
+    return false;
+  }
+  final chipFinder = find.descendant(
+    of: root,
+    matching: find.byType(CtChoiceChip),
+  );
+  if (chipFinder.evaluate().length != 1) {
+    return false;
+  }
+  return (chipFinder.evaluate().single.widget as CtChoiceChip).selected;
 }
 
 /// Returns after the first [Finder] has at least one hit-testable match.
