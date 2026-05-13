@@ -11,8 +11,6 @@ import '../combat_phase_helpers.dart';
 import '../turn_seed_constants.dart';
 import '../../world/capital_and_gp_fall.dart';
 
-final _log = packageLogger();
-
 void _emitPreBattleDialogueForConflicts(
   Game state,
   List<BattleContext> battles,
@@ -68,7 +66,7 @@ Game runCombatPhase(
   final turn = state.worldState.turnState.turnNumber;
   final preBattleDialogueSeed =
       (game.globalGameSeed ?? 0) ^ (turn * kTurnResolutionSeedMix);
-  _log.i('combat conflict_detection start turn=$turn');
+  logicLog.i('combat conflict_detection start turn=$turn');
   final battles = detectConflicts(state, orders);
   if (onDialogue != null && battles.isNotEmpty) {
     _emitPreBattleDialogueForConflicts(
@@ -79,7 +77,7 @@ Game runCombatPhase(
       onDialogue,
     );
   }
-  _log.i(
+  logicLog.i(
     'combat conflict_detection end turn=$turn battleContexts=${battles.length}',
   );
   final combatGeneralLedger = CombatPhaseGeneralLedger();

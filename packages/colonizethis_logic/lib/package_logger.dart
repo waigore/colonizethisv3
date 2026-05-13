@@ -8,3 +8,12 @@ CtLogger packageLogger([String? subPrefix]) {
   }
   return CtLogger('$kPackageLogPrefix.$subPrefix');
 }
+
+/// Shared package-level [CtLogger] for `colonizethis_logic` source files.
+///
+/// Every `lib/src/**/*.dart` file that previously declared a private
+/// `final _log = packageLogger();` should import and reuse [logicLog] instead.
+/// All instances share the same `logic:` prefix, so functionally this is
+/// equivalent to the per-file pattern; consolidation removes 32 duplicate
+/// declarations (Refs #2391, Pattern 1).
+final logicLog = packageLogger();

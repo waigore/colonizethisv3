@@ -8,11 +8,9 @@ import 'army_migration.dart';
 import 'movement.dart';
 import 'province_lookup.dart';
 
-final _log = packageLogger();
-
 void _logArmyMoveIgnoredHomeArmyIfDebug(String armyId) {
   if (Level.debug.value >= Logger.level.value) {
-    _log.d('army_move ignored reason=home_army_locked armyId=$armyId');
+    logicLog.d('army_move ignored reason=home_army_locked armyId=$armyId');
   }
 }
 
@@ -22,7 +20,7 @@ void _logArmyMoveIgnoredInvalidAdjacencyIfDebug(
   String toLocal,
 ) {
   if (Level.debug.value >= Logger.level.value) {
-    _log.d(
+    logicLog.d(
       'army_move ignored reason=invalid_adjacency armyId=$armyId '
       'from=$fromLocal to=$toLocal',
     );
@@ -132,7 +130,7 @@ WorldState applyArmyMoveOrdersToRegion(
   }
 
   if (applied + ignored > 0) {
-    _log.i(
+    logicLog.i(
       'army_move apply regionId=$regionId applied=$applied ignored=$ignored',
     );
   }

@@ -9,8 +9,6 @@ import 'economy_debt_rules.dart';
 import 'economy_tech_effects.dart';
 import 'research_rules.dart';
 
-final _log = packageLogger();
-
 ({Game state, Player updated}) _applyResearchUnlockSideEffects({
   required Game state,
   required Player player,
@@ -122,7 +120,7 @@ void _applyResearchOrderIfValid({
 }) {
   final slots = player.researchSlots ?? defaultResearchSlots;
   if (slots <= 0) {
-    _log.i(
+    logicLog.i(
       'research apply turn=$turn playerId=${player.id} '
       'orders=${playerOrders.length} skipped=true reason=no_research_slots',
     );
@@ -207,7 +205,7 @@ void _applyResearchOrderIfValid({
   final nextProgress = progress.isNotEmpty ? progress : const <String, int>{};
 
   final treasuryDelta = treasury - player.treasury;
-  _log.i(
+  logicLog.i(
     'research apply turn=$turn playerId=${player.id} '
     'orders=${playerOrders.length} treasuryDelta=$treasuryDelta '
     'completedTechs=${toUnlock.length} inProgressTechs=${nextProgress.length}',
@@ -229,10 +227,10 @@ void _applyResearchOrderIfValid({
 Game resolveResearchPhase(Game game, Orders orders) {
   final turn = game.worldState.turnState.turnNumber;
   final researchByPlayer = orders.researchOrdersByPlayerId;
-  _log.i('research phase start turn=$turn');
+  logicLog.i('research phase start turn=$turn');
 
   if (researchByPlayer.isEmpty) {
-    _log.i('research phase end turn=$turn playersWithOrders=0');
+    logicLog.i('research phase end turn=$turn playersWithOrders=0');
     return game;
   }
 
@@ -264,7 +262,7 @@ Game resolveResearchPhase(Game game, Orders orders) {
     updatedPlayers.add(resolved.updatedPlayer!);
   }
 
-  _log.i('research phase end turn=$turn playersWithOrders=$playersWithOrders');
+  logicLog.i('research phase end turn=$turn playersWithOrders=$playersWithOrders');
   return state.copyWith(
     players: updatedPlayers,
     dossierEvidenceEntries: [...state.dossierEvidenceEntries, ...extraEvidence],
