@@ -7,6 +7,7 @@ const int defaultResearchSlots = 3;
 const int researchPointsLow = 100;
 const int researchPointsMedium = 300;
 const int researchPointsHigh = 800;
+
 /// Maximum funding has 2.5x efficiency bonus.
 const int researchPointsMaximum = 2500;
 
@@ -15,33 +16,24 @@ const int researchTreasuryCostMedium = 150;
 const int researchTreasuryCostHigh = 400;
 const int researchTreasuryCostMaximum = 1000;
 
-int pointsForFunding(ResearchFundingLevel level) {
+/// Research-funding lookup: returns both the research points awarded per turn
+/// and the treasury cost per turn for a given funding level (Refs #2391 AC2).
+({int points, int cost}) fundingStats(ResearchFundingLevel level) {
   switch (level) {
     case ResearchFundingLevel.none:
-      return 0;
+      return (points: 0, cost: 0);
     case ResearchFundingLevel.low:
-      return researchPointsLow;
+      return (points: researchPointsLow, cost: researchTreasuryCostLow);
     case ResearchFundingLevel.medium:
-      return researchPointsMedium;
+      return (points: researchPointsMedium, cost: researchTreasuryCostMedium);
     case ResearchFundingLevel.high:
-      return researchPointsHigh;
+      return (points: researchPointsHigh, cost: researchTreasuryCostHigh);
     case ResearchFundingLevel.maximum:
-      return researchPointsMaximum;
+      return (points: researchPointsMaximum, cost: researchTreasuryCostMaximum);
   }
 }
 
-int treasuryCostForFunding(ResearchFundingLevel level) {
-  switch (level) {
-    case ResearchFundingLevel.none:
-      return 0;
-    case ResearchFundingLevel.low:
-      return researchTreasuryCostLow;
-    case ResearchFundingLevel.medium:
-      return researchTreasuryCostMedium;
-    case ResearchFundingLevel.high:
-      return researchTreasuryCostHigh;
-    case ResearchFundingLevel.maximum:
-      return researchTreasuryCostMaximum;
-  }
-}
+int pointsForFunding(ResearchFundingLevel level) => fundingStats(level).points;
 
+int treasuryCostForFunding(ResearchFundingLevel level) =>
+    fundingStats(level).cost;
