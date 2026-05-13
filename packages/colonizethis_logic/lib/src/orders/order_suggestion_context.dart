@@ -166,6 +166,13 @@ bool isDiplomaticOrderAccepted(
   Orders baseOrders,
   DiplomaticOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
+  /// When callers probe many candidates for the same `(game, topology,
+  /// playerId)` (for example diplomatic suggestion loops), they may pass the
+  /// same [view] / [unitsById] built once to skip redundant `buildPlayerView`
+  /// and `unitsByIdFromWorld` scans. Refs #2394; `SPEC/program/order-suggestions.md`
+  /// § Throughput bounds.
+  PlayerView? view,
+  Map<String, Unit>? unitsById,
 }) {
   final validator = buildIncrementalCandidateValidator(
     game: game,
@@ -173,6 +180,8 @@ bool isDiplomaticOrderAccepted(
     playerId: playerId,
     baseOrders: baseOrders,
     tileMapByRegion: tileMapByRegion,
+    view: view,
+    unitsById: unitsById,
   );
   return validator.isDiplomaticAccepted(candidate);
 }
