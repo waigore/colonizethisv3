@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import 'order_validators.dart';
 
@@ -38,6 +39,7 @@ WorkOrderValidationContext buildWorkOrderValidationContext({
   required Set<String> civilianDraftMoveUnitIds,
   required List<DiplomaticOrder> diplomaticOrders,
   required MapTopology topology,
+  DiplomacyFactionMembership? factionMembership,
 }) {
   return WorkOrderValidationContext(
     game: game,
@@ -50,6 +52,7 @@ WorkOrderValidationContext buildWorkOrderValidationContext({
     civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
     diplomaticOrders: diplomaticOrders,
     topology: topology,
+    factionMembership: factionMembership,
   );
 }
 
@@ -68,6 +71,7 @@ OrderValidators createOrderValidators({
   required Set<String> devExclusiveTiles,
   required Stockpile stockpile,
   required int treasury,
+  required DiplomacyFactionMembership factionMembership,
 }) {
   final workContext = buildWorkOrderValidationContext(
     game: game,
@@ -80,6 +84,7 @@ OrderValidators createOrderValidators({
     civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
     diplomaticOrders: diplomaticOrders,
     topology: topology,
+    factionMembership: factionMembership,
   );
   return OrderValidators(
     moveValidator: const MoveValidator(),

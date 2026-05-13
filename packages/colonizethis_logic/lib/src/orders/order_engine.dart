@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'order_projections.dart';
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import '../constants.dart';
@@ -106,6 +107,7 @@ typedef OrderValidatorFactory =
       Set<String> devExclusiveTiles,
       Stockpile stockpile,
       int treasury,
+      DiplomacyFactionMembership factionMembership,
     );
 
 /// Order engine: holds per-player orders, validates in submission order,
@@ -266,6 +268,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
         civilianDraftMoveUnitIds.add(m.unitId);
       }
     }
+    final factionMembership = DiplomacyFactionMembership.from(game);
     var validators = _validatorFactory(
       game,
       player,
@@ -279,6 +282,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       devExclusiveTiles,
       stockpile,
       treasury,
+      factionMembership,
     );
 
     OrderValidationResult validateMove(MoveOrder o, bool previousRejected) {
@@ -291,6 +295,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
         view,
         topology,
         previousRejected: previousRejected,
+        factionMembership: factionMembership,
       );
     }
 
@@ -302,6 +307,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
         diplomatic,
         view,
         topology,
+        factionMembership: factionMembership,
       );
     }
 
@@ -332,6 +338,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       devExclusiveTiles,
       stockpile,
       treasury,
+      factionMembership,
     );
     rejected = _appendValidationResults(
       results,
@@ -356,6 +363,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       devExclusiveTiles,
       stockpile,
       treasury,
+      factionMembership,
     );
     rejected = _appendValidationResults(
       results,
@@ -379,6 +387,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       devExclusiveTiles,
       stockpile,
       treasury,
+      factionMembership,
     );
     final afterDiplomatic =
         _appendValidationResultsWithState<DiplomaticOrder, int>(
@@ -410,6 +419,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       devExclusiveTiles,
       stockpile,
       treasury,
+      factionMembership,
     );
     rejected = _appendValidationResults(
       results,
@@ -473,6 +483,7 @@ OrderValidators _defaultOrderValidatorFactory(
   Set<String> devExclusiveTiles,
   Stockpile stockpile,
   int treasury,
+  DiplomacyFactionMembership factionMembership,
 ) {
   return createOrderValidators(
     game: game,
@@ -487,5 +498,6 @@ OrderValidators _defaultOrderValidatorFactory(
     devExclusiveTiles: devExclusiveTiles,
     stockpile: stockpile,
     treasury: treasury,
+    factionMembership: factionMembership,
   );
 }

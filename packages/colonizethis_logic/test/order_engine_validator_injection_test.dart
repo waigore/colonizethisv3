@@ -8,6 +8,7 @@ import 'package:colonizethis_logic/src/orders/validators/diplomatic_order_valida
 import 'package:colonizethis_logic/src/orders/validators/move_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/naval_order_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/work_order_validator.dart';
+import 'package:colonizethis_logic/src/diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_logic/src/world/player_view.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -26,6 +27,7 @@ class _AlwaysRejectMoveValidator extends MoveValidator {
     PlayerView view,
     MapTopology topology, {
     required bool previousRejected,
+    DiplomacyFactionMembership? factionMembership,
   }) {
     return OrderValidationResult.rejected('Injected move validator rejection');
   }
@@ -59,6 +61,7 @@ void main() {
             Set<String> devExclusiveTiles,
             Stockpile stockpile,
             int treasury,
+            DiplomacyFactionMembership factionMembership,
           ) {
             final workContext = buildWorkOrderValidationContext(
               game: game,
@@ -71,6 +74,7 @@ void main() {
               civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
               diplomaticOrders: diplomaticOrders,
               topology: topology,
+              factionMembership: factionMembership,
             );
             return OrderValidators(
               moveValidator: const _AlwaysRejectMoveValidator(),

@@ -37,15 +37,28 @@ class IncrementalCandidateValidator {
   /// instance per suggestion pass to amortize the per-player view/unit lookup
   /// build cost across many candidate probes (the AI suggestion API enumerates
   /// many candidates per call).
+  ///
+  /// When the caller already has a `PlayerView` and/or units-by-id map computed
+  /// for the same `(game, topology, playerId)` tuple, it may pass them via
+  /// [view] / [unitsById] to skip the embedded `buildPlayerView` and
+  /// `unitsByIdFromWorld` scans (Refs #2394, `SPEC/program/order-suggestions.md`
+  /// § Throughput bounds). The shared instances must be built from the **same**
+  /// inputs as the validator; behavior is undefined otherwise.
   factory IncrementalCandidateValidator.forPlayer({
     required Game game,
     required MapTopology topology,
     required String playerId,
     required Orders basePrefix,
     Map<String, TileMapResult>? tileMapByRegion,
+    PlayerView? view,
+    Map<String, Unit>? unitsById,
   }) {
-    final view = buildPlayerView(game, topology, playerId);
-    final unitsById = unitsByIdFromWorld(game.worldState);
+    assert(
+      view == null || view.playerId == playerId,
+      'shared PlayerView playerId must match validator playerId',
+    );
+    final actualView = view ?? buildPlayerView(game, topology, playerId);
+    final actualUnitsById = unitsById ?? unitsByIdFromWorld(game.worldState);
     final diplomaticOrders =
         basePrefix.diplomaticOrdersByPlayerId[playerId] ??
         const <DiplomaticOrder>[];
@@ -54,8 +67,8 @@ class IncrementalCandidateValidator {
       topology: topology,
       playerId: playerId,
       basePrefix: basePrefix,
-      view: view,
-      unitsById: unitsById,
+      view: actualView,
+      unitsById: actualUnitsById,
       diplomaticOrders: diplomaticOrders,
       tileMapByRegion: tileMapByRegion,
     );
@@ -100,6 +113,7 @@ class IncrementalCandidateValidator {
           view,
           topology,
           previousRejected: false,
+          factionMembership: _factionMembership(),
         )
         .isAccepted;
     if (!standalone) return false;
@@ -208,6 +222,7 @@ class IncrementalCandidateValidator {
         civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
         diplomaticOrders: diplomaticOrders,
         topology: topology,
+        factionMembership: _factionMembership(),
       ),
       stockpile: economy.stockpile,
       treasury: economy.treasury,
@@ -292,6 +307,7 @@ class IncrementalCandidateValidator {
       devExclusiveTiles: _devExclusiveTiles(),
       stockpile: afterBuild.stockpile,
       treasury: afterBuild.treasury,
+      factionMembership: _factionMembership(),
     ).workValidator;
     final works =
         basePrefix.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
