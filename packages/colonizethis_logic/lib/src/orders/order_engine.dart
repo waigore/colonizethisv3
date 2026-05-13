@@ -269,21 +269,25 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       }
     }
     final factionMembership = DiplomacyFactionMembership.from(game);
-    var validators = _validatorFactory(
-      game,
-      player,
-      playerId,
-      view,
-      topology,
-      unitsById,
-      diplomatic,
-      tileMapByRegion,
-      civilianDraftMoveUnitIds,
-      devExclusiveTiles,
-      stockpile,
-      treasury,
-      factionMembership,
-    );
+    OrderValidators refreshValidators() {
+      return _validatorFactory(
+        game,
+        player,
+        playerId,
+        view,
+        topology,
+        unitsById,
+        diplomatic,
+        tileMapByRegion,
+        civilianDraftMoveUnitIds,
+        devExclusiveTiles,
+        stockpile,
+        treasury,
+        factionMembership,
+      );
+    }
+
+    var validators = refreshValidators();
 
     OrderValidationResult validateMove(MoveOrder o, bool previousRejected) {
       return validators.moveValidator.validate(
@@ -325,21 +329,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       (o, prev) => prev ? previousInvalidOrderResult : validateArmyMove(o),
     );
 
-    validators = _validatorFactory(
-      game,
-      player,
-      playerId,
-      view,
-      topology,
-      unitsById,
-      diplomatic,
-      tileMapByRegion,
-      civilianDraftMoveUnitIds,
-      devExclusiveTiles,
-      stockpile,
-      treasury,
-      factionMembership,
-    );
+    validators = refreshValidators();
     rejected = _appendValidationResults(
       results,
       builds,
@@ -350,21 +340,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     stockpile = validators.buildValidator.stockpile;
     treasury = validators.buildValidator.treasury;
 
-    validators = _validatorFactory(
-      game,
-      player,
-      playerId,
-      view,
-      topology,
-      unitsById,
-      diplomatic,
-      tileMapByRegion,
-      civilianDraftMoveUnitIds,
-      devExclusiveTiles,
-      stockpile,
-      treasury,
-      factionMembership,
-    );
+    validators = refreshValidators();
     rejected = _appendValidationResults(
       results,
       works,
@@ -374,21 +350,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     stockpile = validators.workValidator.stockpile;
     treasury = validators.workValidator.treasury;
 
-    validators = _validatorFactory(
-      game,
-      player,
-      playerId,
-      view,
-      topology,
-      unitsById,
-      diplomatic,
-      tileMapByRegion,
-      civilianDraftMoveUnitIds,
-      devExclusiveTiles,
-      stockpile,
-      treasury,
-      factionMembership,
-    );
+    validators = refreshValidators();
     final afterDiplomatic =
         _appendValidationResultsWithState<DiplomaticOrder, int>(
           results,
@@ -406,21 +368,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     rejected = afterDiplomatic.rejected;
     treasury = afterDiplomatic.state;
 
-    validators = _validatorFactory(
-      game,
-      player,
-      playerId,
-      view,
-      topology,
-      unitsById,
-      diplomatic,
-      tileMapByRegion,
-      civilianDraftMoveUnitIds,
-      devExclusiveTiles,
-      stockpile,
-      treasury,
-      factionMembership,
-    );
+    validators = refreshValidators();
     rejected = _appendValidationResults(
       results,
       navals,
