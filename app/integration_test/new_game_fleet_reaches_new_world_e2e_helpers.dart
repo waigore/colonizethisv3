@@ -114,7 +114,21 @@ Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
     return;
   }
   await tester.tap(tab.first, warnIfMissed: false);
-  await e2ePumpFor(tester, const Duration(milliseconds: 250));
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () {
+      final chipFinder = find.descendant(
+        of: find.byKey(kCtE2ERegionTabNewWorldKey),
+        matching: find.byType(CtChoiceChip),
+      );
+      if (chipFinder.evaluate().isEmpty) {
+        return false;
+      }
+      return tester.widget<CtChoiceChip>(chipFinder.first).selected;
+    },
+    timeout: const Duration(milliseconds: 250),
+    phaseName: 'pump_until_new_world_region_tab_selected',
+  );
 }
 
 /// Map HUD must show **Old World** before issuing naval moves so OW-split
@@ -130,7 +144,21 @@ Future<void> _tapOldWorldRegionTab(
     return;
   }
   await tester.tap(hit.first, warnIfMissed: false);
-  await e2ePumpFor(tester, const Duration(milliseconds: 250));
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () {
+      final chipFinder = find.widgetWithText(
+        CtChoiceChip,
+        l10n.region_oldWorld,
+      );
+      if (chipFinder.evaluate().isEmpty) {
+        return false;
+      }
+      return tester.widget<CtChoiceChip>(chipFinder.first).selected;
+    },
+    timeout: const Duration(milliseconds: 250),
+    phaseName: 'pump_until_old_world_region_tab_selected',
+  );
 }
 
 Finder _radioListTilesInAlertDialogs() {

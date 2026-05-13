@@ -307,6 +307,41 @@ Future<void> e2ePumpUntil(
   );
 }
 
+/// Pumps until [condition] returns true or [timeout] elapses.
+///
+/// Evaluates [condition] before the first pump. Uses
+/// [e2eAdaptivePollRampAfterIdle] pacing (25→50→75→100 ms cap). Returns whether
+/// the condition became true; does **not** throw when [timeout] expires
+/// (best-effort post-tap settle; GitHub #2336).
+Future<bool> e2ePumpUntilConditionOrIdle(
+  WidgetTester tester,
+  bool Function() condition, {
+  required Duration timeout,
+  E2ePerfLog? perf,
+  String phaseName = 'pump_until_condition_or_idle',
+}) async {
+  final sw = Stopwatch()..start();
+  perf?.bumpCounter(
+    'pump_until_condition_or_idle_calls',
+    meta: 'phase=$phaseName',
+  );
+  if (condition()) {
+    perf?.timing(phaseName, sw.elapsed, meta: 'result=immediate');
+    return true;
+  }
+  var stepMs = 25;
+  while (sw.elapsed < timeout) {
+    await tester.pump(Duration(milliseconds: stepMs));
+    if (condition()) {
+      perf?.timing(phaseName, sw.elapsed, meta: 'result=met');
+      return true;
+    }
+    stepMs = e2eAdaptivePollRampAfterIdle(stepMs);
+  }
+  perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
+  return false;
+}
+
 /// Returns after the first [Finder] has at least one hit-testable match.
 Future<void> e2eWaitUntilAnyFinderHitTestable(
   WidgetTester tester,
