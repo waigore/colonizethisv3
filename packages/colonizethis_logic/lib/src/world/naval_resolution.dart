@@ -203,9 +203,17 @@ _applyDockNavalMoveOrder({
     targetPortId: null,
     targetProvinceId: null,
   );
-  final idx = fleetIndexById[fleet.id] ?? -1;
-  if (idx >= 0) {
-    final nextFleets = List<Fleet>.from(fleets)..[idx] = newFleet;
+  var replacedDockFleet = false;
+  final nextFleets = <Fleet>[];
+  for (final f in fleets) {
+    if (f.id == fleet.id) {
+      nextFleets.add(newFleet);
+      replacedDockFleet = true;
+    } else {
+      nextFleets.add(f);
+    }
+  }
+  if (replacedDockFleet) {
     fleetById[fleet.id] = newFleet;
     return (
       fleets: nextFleets,
@@ -282,9 +290,18 @@ _applySeaNavalMoveOrder({
     targetProvinceId: null,
   );
   var nextFleets = fleets;
-  final idx = fleetIndexById[fleet.id] ?? -1;
-  if (idx >= 0) {
-    nextFleets = List<Fleet>.from(fleets)..[idx] = newFleet;
+  var replacedAtSea = false;
+  final rebuiltAtSea = <Fleet>[];
+  for (final f in fleets) {
+    if (f.id == fleet.id) {
+      rebuiltAtSea.add(newFleet);
+      replacedAtSea = true;
+    } else {
+      rebuiltAtSea.add(f);
+    }
+  }
+  if (replacedAtSea) {
+    nextFleets = rebuiltAtSea;
     fleetById[fleet.id] = newFleet;
   }
 
