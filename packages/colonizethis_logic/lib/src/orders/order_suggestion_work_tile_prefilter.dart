@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/province_lookup.dart';
 import 'build_rail_work_rules.dart';
 import 'orders_application_helpers.dart';
@@ -240,9 +241,7 @@ void _prefilterWtStealTech(_WorkTilePrefilterCtx c) {
 }
 
 void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
-  final gpIds = c.game.players.map((p) => p.id).toSet();
-  final minorIds = c.game.minorNations.map((m) => m.id).toSet();
-  final tribeIds = c.game.tribes.map((t) => t.id).toSet();
+  final factionMembership = DiplomacyFactionMembership.from(c.game);
   _forEachPrefixedProvinceTile(
     tileKeysByRegion: c.tileKeysByRegion,
     onTile: (provinceId, tileKey) {
@@ -250,8 +249,8 @@ void _prefilterWtPurchaseLand(_WorkTilePrefilterCtx c) {
       if (province == null) return;
       final ownerId = province.ownerId;
       if (ownerId == null) return;
-      if (gpIds.contains(ownerId)) return;
-      if (!minorIds.contains(ownerId) && !tribeIds.contains(ownerId)) {
+      if (factionMembership.isGreatPower(ownerId)) return;
+      if (!factionMembership.isMinorOrTribe(ownerId)) {
         return;
       }
       final resourceId = c.resourceByTile[tileKey];
