@@ -53,6 +53,11 @@ List<WorkOrder> suggestWorkOrders(
   final partiallyRevealedProvinceCache =
       partiallyRevealedPrefixedProvinceIdsForPlayer(game: game, view: view);
 
+  final playerOwnedProvinceIds = <String>{
+    for (final p in allProvinces(game.worldState))
+      if (p.ownerId == playerId) p.id,
+  };
+
   // Pre-filter + visibility sort per workTarget; reused across worker units.
   final visibleCandidatesSortedByWorkTarget = <String, List<String>>{};
 
@@ -85,6 +90,7 @@ List<WorkOrder> suggestWorkOrders(
       existingTargetsByUnit: existingTargetsByUnit,
       partiallyRevealedProvinceCache: partiallyRevealedProvinceCache,
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
+      playerOwnedProvinceIds: playerOwnedProvinceIds,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
       suggestions: suggestions,
       candidateValidator: candidateValidator,
@@ -124,6 +130,7 @@ void _addWorkSuggestionsForUnit({
   required Map<String, Set<String>> existingTargetsByUnit,
   required Set<String> partiallyRevealedProvinceCache,
   required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
+  required Set<String> playerOwnedProvinceIds,
   required Set<String> devExclusiveReservedTiles,
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
@@ -177,6 +184,7 @@ void _addWorkSuggestionsForUnit({
       atProvinceId: provinceId,
       existingTargetsByUnit: existingTargetsByUnit,
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
+      playerOwnedProvinceIds: playerOwnedProvinceIds,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
       suggestions: suggestions,
       candidateValidator: candidateValidator,
