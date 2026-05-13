@@ -19,8 +19,6 @@ import 'validator_bundle.dart';
 
 part 'order_engine.g.dart';
 
-final _log = packageLogger();
-
 // --- Test-only instrumentation (Refs #2237 AC2) ---
 bool _trackValidatePlayerOrdersWithContextInvocationsForTests = false;
 int _validatePlayerOrdersWithContextInvocationCountForTests = 0;
@@ -152,7 +150,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
     Map<String, TileMapResult>? tileMapByRegion,
   }) {
     _appendOrder(playerId, order, getter, updater);
-    _log.d('validating orders with context player=$playerId');
+    logicLog.d('validating orders with context player=$playerId');
     final results = validatePlayerOrdersWithContext(
       game,
       topology,
@@ -168,7 +166,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       // cascade rejections ("Previous invalid"), while preserving first-cause
       // rejection logging for debugging. Refs #2237 AC3.
       if (r.reason != previousInvalidOrderResult.reason) {
-        _log.w(
+        logicLog.w(
           '$orderLabel order rejected player=$playerId reason=${r.reason}',
         );
       }
@@ -447,7 +445,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
   }) {
     final tileMaps = tileMapByRegion ?? <String, TileMapResult>{};
     if (tileMaps.isEmpty) {
-      _log.d(
+      logicLog.d(
         'projectedEffects called with no tileMapByRegion; expected extraction will be zero',
       );
     }

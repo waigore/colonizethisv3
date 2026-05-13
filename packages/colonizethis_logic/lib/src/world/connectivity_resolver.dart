@@ -12,8 +12,6 @@ import 'province_lookup.dart';
 import 'tile_key_coordinates.dart';
 import 'topology_helpers.dart';
 
-final _log = packageLogger();
-
 /// Counters for connectivity hot paths (Refs #2268 AC-10); used with
 /// [setConnectivityHotPathMetricsForTests] from tests only.
 class ConnectivityHotPathMetrics {
@@ -115,7 +113,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
   required MapTopology topology,
   Map<String, Set<String>>? blockadedPortProvincesByPlayerId,
 }) {
-  _log.d(
+  logicLog.d(
     'connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}',
   );
   final provinceIdsByType = provinceNodeIds(topology);
@@ -129,7 +127,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
   for (final player in game.players) {
     final capital = player.capitalTile;
     if (capital == null || player.capitalProvinceId == null) {
-      _log.d('connectivity resolve player=${player.id} skipped (no capital)');
+      logicLog.d('connectivity resolve player=${player.id} skipped (no capital)');
       result[player.id] = const ConnectivityResult(connected: {});
       continue;
     }
@@ -150,7 +148,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
   final summary = result.entries
       .map((e) => '${e.key}:${e.value.connected.length}')
       .join(' ');
-  _log.d('connectivity resolve end $summary');
+  logicLog.d('connectivity resolve end $summary');
   return result;
 }
 

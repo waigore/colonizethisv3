@@ -23,8 +23,6 @@ export 'turn_resolution_sequence.dart';
 import 'turn_resolver_config.dart';
 export 'turn_resolver_config.dart';
 
-final _log = packageLogger();
-
 /// Turn resolver stub (Phase 1 compatibility). Runs phase sequence; only
 /// endOfTurn advances turn number.
 WorldState resolveTurn(WorldState current) {
@@ -274,7 +272,7 @@ TurnResolutionResult resolveTurnForGameWithConfig({
   required TurnResolverConfig config,
 }) {
   final turn = game.worldState.turnState.turnNumber;
-  _log.i('turn $turn resolve start');
+  logicLog.i('turn $turn resolve start');
   final state = ensureMilitaryArmiesForGame(game);
   final gameAtResolutionStart = state;
   return runTurnResolutionPipeline(
