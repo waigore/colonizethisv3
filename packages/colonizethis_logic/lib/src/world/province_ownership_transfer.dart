@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../diplomacy/diplomacy_resolver.dart';
 import 'army_migration.dart';
 import 'civilian_tile_occupancy.dart';
 import 'civilian_ownership_legality.dart';
@@ -105,6 +106,7 @@ int _spyTimerRemovalsForProvince(
 
 int _civilianRelocationCountBefore(Game game, Set<String> changedProvinceIds) {
   var count = 0;
+  final factionMembership = DiplomacyFactionMembership.from(game);
   for (final u in allUnitsFromWorld(game.worldState)) {
     if (!changedProvinceIds.contains(u.locationProvinceId)) continue;
     if (canUnitInitiateCombat(u.type) || isShipUnitType(u.type)) continue;
@@ -115,6 +117,7 @@ int _civilianRelocationCountBefore(Game game, Set<String> changedProvinceIds) {
       playerId: u.ownerId,
       unitType: u.type,
       destinationTileKey: tileKey,
+      factionMembership: factionMembership,
     )) {
       count++;
     }

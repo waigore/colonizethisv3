@@ -112,6 +112,7 @@ class IncrementalCandidateValidator {
           view,
           topology,
           previousRejected: false,
+          factionMembership: _factionMembership(),
         )
         .isAccepted;
     if (!standalone) return false;
@@ -220,6 +221,7 @@ class IncrementalCandidateValidator {
         civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
         diplomaticOrders: diplomaticOrders,
         topology: topology,
+        factionMembership: _factionMembership(),
       ),
       stockpile: economy.stockpile,
       treasury: economy.treasury,
@@ -303,6 +305,7 @@ class IncrementalCandidateValidator {
         civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
         diplomaticOrders: diplomaticOrders,
         topology: topology,
+        factionMembership: _factionMembership(),
       ),
       stockpile: afterBuild.stockpile,
       treasury: afterBuild.treasury,

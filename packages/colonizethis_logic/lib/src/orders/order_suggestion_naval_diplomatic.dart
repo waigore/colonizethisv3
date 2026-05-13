@@ -6,6 +6,7 @@ import '../world/naval.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/topology_helpers.dart';
+import '../world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 import 'orders_application_helpers.dart';
@@ -426,6 +427,11 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   };
   final knownTargetIds = knownTargets.toSet();
 
+  // One world scan for the suggestion pass: every `isDiplomaticOrderAccepted`
+  // probe shares the same `(game, topology, playerId)` view/units snapshot.
+  // Refs #2394.
+  final unitsByIdForDiplomatic = unitsByIdFromWorld(game.worldState);
+
   final unionTargets = <String>{
     ...knownTargets,
     ...otherGps,
@@ -460,6 +466,8 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
         trialOrders,
         candidate,
         tileMapByRegion: tileMapByRegion,
+        view: view,
+        unitsById: unitsByIdForDiplomatic,
       )) {
         continue;
       }
@@ -484,6 +492,8 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
         trialOrders,
         candidate,
         tileMapByRegion: tileMapByRegion,
+        view: view,
+        unitsById: unitsByIdForDiplomatic,
       )) {
         continue;
       }
