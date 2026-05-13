@@ -7,11 +7,19 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       of: navalRoot,
       matching: find.byType(ExpansionTile),
     );
-    final n = tiles.evaluate().length;
+    var n = tiles.evaluate().length;
     if (n == 0) {
-      // Panel can mount before fleet rows render; treat as retryable state.
-      await tester.pump(const Duration(milliseconds: 120));
-      return false;
+      // Panel can mount before fleet rows render; poll instead of a fixed delay.
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => tiles.evaluate().isNotEmpty,
+        timeout: const Duration(seconds: 2),
+        phaseName: 'pump_until_naval_expansion_tiles_render',
+      );
+      n = tiles.evaluate().length;
+      if (n == 0) {
+        return false;
+      }
     }
     if (n == 1) {
       final onlyTile = tiles.first;

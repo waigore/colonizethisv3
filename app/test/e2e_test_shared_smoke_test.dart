@@ -29,6 +29,32 @@ void main() {
     expect(calls, 1);
   });
 
+  testWidgets('e2ePumpUntilConditionOrIdle succeeds before first pump', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    final met = await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => true,
+      timeout: const Duration(seconds: 1),
+      phaseName: 'smoke_condition_idle_immediate',
+    );
+    expect(met, isTrue);
+  });
+
+  testWidgets('e2ePumpUntilConditionOrIdle returns false when timeout elapses', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    final met = await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => false,
+      timeout: const Duration(milliseconds: 60),
+      phaseName: 'smoke_condition_idle_timeout',
+    );
+    expect(met, isFalse);
+  });
+
   testWidgets('e2eCloseBottomSheet no-ops when no bottom sheet', (
     WidgetTester tester,
   ) async {

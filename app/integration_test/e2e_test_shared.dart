@@ -193,12 +193,20 @@ Future<void> e2eDismissTransientUi(
       final tappable = candidate.hitTestable();
       if (tappable.evaluate().isNotEmpty) {
         await tester.tap(tappable.first, warnIfMissed: false);
-        await e2ePumpFor(tester, const Duration(milliseconds: 150));
+        await e2ePumpUntilFinderEmpty(
+          tester,
+          find.byType(CtDialogShell),
+          timeout: const Duration(seconds: 2),
+        );
         return;
       }
     }
     await tester.binding.handlePopRoute();
-    await e2ePumpFor(tester, const Duration(milliseconds: 150));
+    await e2ePumpUntilFinderEmpty(
+      tester,
+      find.byType(CtDialogShell),
+      timeout: const Duration(seconds: 2),
+    );
   }
 }
 
@@ -221,10 +229,24 @@ Future<void> e2eExpandEachExpansionTileOnce(WidgetTester tester) async {
         continue;
       }
       final iconHit = expandIcon.first;
+      final tileAt = tiles.at(j);
       await tester.ensureVisible(iconHit);
-      await e2ePumpFor(tester, const Duration(milliseconds: 80));
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => expandIcon.hitTestable().evaluate().isNotEmpty,
+        timeout: const Duration(milliseconds: 400),
+        phaseName: 'pump_until_expand_icon_tappable',
+      );
       await tester.tap(iconHit, warnIfMissed: false);
-      await e2ePumpFor(tester, const Duration(milliseconds: 250));
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => find
+            .descendant(of: tileAt, matching: find.byIcon(Icons.expand_more))
+            .evaluate()
+            .isEmpty,
+        timeout: const Duration(milliseconds: 800),
+        phaseName: 'pump_until_expansion_tile_open',
+      );
       expandedOne = true;
       break;
     }
@@ -305,6 +327,41 @@ Future<void> e2ePumpUntil(
     'Timed out after ${timeout.inSeconds}s in e2ePumpUntil ($phaseName). '
     'Last exception: ${tester.takeException()}',
   );
+}
+
+/// Pumps until [condition] returns true or [timeout] elapses.
+///
+/// Evaluates [condition] before the first pump. Uses
+/// [e2eAdaptivePollRampAfterIdle] pacing (25→50→75→100 ms cap). Returns whether
+/// the condition became true; does **not** throw when [timeout] expires
+/// (best-effort post-tap settle; GitHub #2336).
+Future<bool> e2ePumpUntilConditionOrIdle(
+  WidgetTester tester,
+  bool Function() condition, {
+  required Duration timeout,
+  E2ePerfLog? perf,
+  String phaseName = 'pump_until_condition_or_idle',
+}) async {
+  final sw = Stopwatch()..start();
+  perf?.bumpCounter(
+    'pump_until_condition_or_idle_calls',
+    meta: 'phase=$phaseName',
+  );
+  if (condition()) {
+    perf?.timing(phaseName, sw.elapsed, meta: 'result=immediate');
+    return true;
+  }
+  var stepMs = 25;
+  while (sw.elapsed < timeout) {
+    await tester.pump(Duration(milliseconds: stepMs));
+    if (condition()) {
+      perf?.timing(phaseName, sw.elapsed, meta: 'result=met');
+      return true;
+    }
+    stepMs = e2eAdaptivePollRampAfterIdle(stepMs);
+  }
+  perf?.timing(phaseName, sw.elapsed, meta: 'result=timeout');
+  return false;
 }
 
 /// Returns after the first [Finder] has at least one hit-testable match.
@@ -497,7 +554,13 @@ Future<void> e2eBootstrapNewGameToMap(
     shellScrollable,
     const Offset(0, -120),
   );
-  await tester.pump(const Duration(milliseconds: 200));
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => startButton.hitTestable().evaluate().isNotEmpty,
+    timeout: const Duration(milliseconds: 600),
+    perf: perf,
+    phaseName: 'pump_until_start_button_tappable_after_drag',
+  );
   await tester.ensureVisible(startButton);
   await tester.tap(startButton);
   await tester.pump();
@@ -505,7 +568,14 @@ Future<void> e2eBootstrapNewGameToMap(
   await e2eWaitForMapHudAfterNewGameStart(tester, overallCap: overallCap);
 
   expect(find.byKey(kHomeToCapitalButtonKey), findsOneWidget);
-  await tester.pump(const Duration(milliseconds: 500));
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () =>
+        find.byKey(kHomeToCapitalButtonKey).hitTestable().evaluate().isNotEmpty,
+    timeout: const Duration(milliseconds: 800),
+    perf: perf,
+    phaseName: 'pump_until_home_capital_tappable_after_map',
+  );
   perf?.timing('new_game_to_map', phaseSw.elapsed);
 }
 
