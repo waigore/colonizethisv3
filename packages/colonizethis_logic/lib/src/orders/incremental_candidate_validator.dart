@@ -37,11 +37,12 @@ class IncrementalCandidateValidator {
   /// build cost across many candidate probes (the AI suggestion API enumerates
   /// many candidates per call).
   ///
-  /// When the caller already has a [PlayerView] and/or units-by-id map for the
-  /// same `(game, topology, playerId)` tuple, pass them via [view] /
-  /// [unitsById] to skip redundant `buildPlayerView` and `unitsByIdFromWorld`
-  /// scans (Refs #2394, `SPEC/program/order-suggestions.md` § Throughput bounds).
-  /// The shared instances must match that tuple; behavior is undefined otherwise.
+  /// When the caller already has a `PlayerView` and/or units-by-id map computed
+  /// for the same `(game, topology, playerId)` tuple, it may pass them via
+  /// [view] / [unitsById] to skip the embedded `buildPlayerView` and
+  /// `unitsByIdFromWorld` scans (Refs #2394, `SPEC/program/order-suggestions.md`
+  /// § Throughput bounds). The shared instances must be built from the **same**
+  /// inputs as the validator; behavior is undefined otherwise.
   factory IncrementalCandidateValidator.forPlayer({
     required Game game,
     required MapTopology topology,
