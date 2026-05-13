@@ -3,12 +3,6 @@
 # from scan). See SPEC/program/logic-dual-region-province-access.md.
 version: 1
 sanctions:
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_explorer.dart
-    line: 118
-    rationale: Cross-region explorer work enumeration over partially revealed provinces.
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
-
   - path: packages/colonizethis_logic/lib/src/world/connectivity_resolver.dart
     line: 229
     rationale: Global connectivity / capital path checks require all province rows.
