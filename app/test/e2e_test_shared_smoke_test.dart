@@ -109,4 +109,68 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
     await e2eDismissTransientUi(tester);
   });
+
+  testWidgets(
+    'e2ePumpUntilConditionOrIdle returns true immediately when condition is already true',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      final sw = Stopwatch()..start();
+      final result = await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => true,
+        timeout: const Duration(seconds: 5),
+      );
+      expect(result, isTrue);
+      expect(
+        sw.elapsed < const Duration(milliseconds: 200),
+        isTrue,
+        reason:
+            'Pre-pump short-circuit must keep already-true callers from '
+            'paying any adaptive pump time (#2336 AC5).',
+      );
+    },
+  );
+
+  testWidgets(
+    'e2ePumpUntilConditionOrIdle returns false on timeout without throwing',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      final result = await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => false,
+        timeout: const Duration(milliseconds: 150),
+      );
+      expect(
+        result,
+        isFalse,
+        reason:
+            'Best-effort variant must not call fail() on timeout so callers '
+            'can treat the wait as optional post-tap settle (#2336 AC5).',
+      );
+    },
+  );
+
+  testWidgets(
+    'e2ePumpUntilConditionOrIdle returns true once condition flips during pump',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      var pumps = 0;
+      final result = await e2ePumpUntilConditionOrIdle(
+        tester,
+        () {
+          pumps++;
+          return pumps >= 3;
+        },
+        timeout: const Duration(seconds: 2),
+      );
+      expect(result, isTrue);
+      expect(
+        pumps >= 3,
+        isTrue,
+        reason:
+            'Condition must be evaluated at least once per polling step until '
+            'it returns true (#2336 AC5).',
+      );
+    },
+  );
 }
