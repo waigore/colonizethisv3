@@ -24,8 +24,6 @@ export 'naval_coastal_visibility.dart'
         revealTilesAfterMoveToSeaZone;
 export 'naval_mission_orders.dart' show applyNavalMissionOrders;
 
-final _log = packageLogger();
-
 List<String> _adjacentSeaZones(MapTopology topology, String seaZoneId) {
   final out = <String>[];
   for (final e in topology.edges) {
@@ -67,6 +65,10 @@ String? _firstFleetRegionIdForSeaZone(Game game, String seaZoneId) {
   return null;
 }
 
+Map<String, int> _fleetIndexById(List<Fleet> fleets) => {
+  for (var i = 0; i < fleets.length; i++) fleets[i].id: i,
+};
+
 bool _navalMoveDestinationIsReachable({
   required MapTopology topology,
   required Fleet fleet,
@@ -99,6 +101,7 @@ bool _navalMoveDestinationIsReachable({
 ({
   List<Fleet> fleets,
   Map<String, Fleet> fleetById,
+  Map<String, int> fleetIndexById,
   Map<String, Map<String, String>> visibilityByTile,
 })
 _applyDockNavalMoveOrder({
@@ -106,6 +109,7 @@ _applyDockNavalMoveOrder({
   required MapTopology topology,
   required List<Fleet> fleets,
   required Map<String, Fleet> fleetById,
+  required Map<String, int> fleetIndexById,
   required String playerId,
   required String homeFleetId,
   required Fleet fleet,
@@ -117,6 +121,7 @@ _applyDockNavalMoveOrder({
     return (
       fleets: fleets,
       fleetById: fleetById,
+      fleetIndexById: fleetIndexById,
       visibilityByTile: visibilityByTile,
     );
   }
@@ -126,6 +131,7 @@ _applyDockNavalMoveOrder({
     return (
       fleets: fleets,
       fleetById: fleetById,
+      fleetIndexById: fleetIndexById,
       visibilityByTile: visibilityByTile,
     );
   }
@@ -137,6 +143,7 @@ _applyDockNavalMoveOrder({
     return (
       fleets: fleets,
       fleetById: fleetById,
+      fleetIndexById: fleetIndexById,
       visibilityByTile: visibilityByTile,
     );
   }
@@ -151,7 +158,12 @@ _applyDockNavalMoveOrder({
   if (dockOrderTargetsPlayerCapital(game, playerId, fullProvinceId)) {
     final homeFleet = fleetById[homeFleetId];
     if (homeFleet == null) {
-      return (fleets: fleets, fleetById: fleetById, visibilityByTile: nextVis);
+      return (
+        fleets: fleets,
+        fleetById: fleetById,
+        fleetIndexById: fleetIndexById,
+        visibilityByTile: nextVis,
+      );
     }
     final updatedHome = Fleet(
       id: homeFleet.id,
@@ -168,11 +180,13 @@ _applyDockNavalMoveOrder({
         .where((f) => f.id != fleet.id)
         .map((f) => f.id == homeFleetId ? updatedHome : f)
         .toList();
+    final nextFleetIndexById = _fleetIndexById(nextFleets);
     fleetById[homeFleetId] = updatedHome;
     fleetById.remove(fleet.id);
     return (
       fleets: nextFleets,
       fleetById: fleetById,
+      fleetIndexById: nextFleetIndexById,
       visibilityByTile: nextVis,
     );
   }
@@ -204,15 +218,22 @@ _applyDockNavalMoveOrder({
     return (
       fleets: nextFleets,
       fleetById: fleetById,
+      fleetIndexById: fleetIndexById,
       visibilityByTile: nextVis,
     );
   }
-  return (fleets: fleets, fleetById: fleetById, visibilityByTile: nextVis);
+  return (
+    fleets: fleets,
+    fleetById: fleetById,
+    fleetIndexById: fleetIndexById,
+    visibilityByTile: nextVis,
+  );
 }
 
 ({
   List<Fleet> fleets,
   Map<String, Fleet> fleetById,
+  Map<String, int> fleetIndexById,
   Map<String, Map<String, String>> visibilityByTile,
 })
 _applySeaNavalMoveOrder({
@@ -220,6 +241,7 @@ _applySeaNavalMoveOrder({
   required MapTopology topology,
   required List<Fleet> fleets,
   required Map<String, Fleet> fleetById,
+  required Map<String, int> fleetIndexById,
   required String playerId,
   required Fleet fleet,
   required NavalMoveOrder order,
@@ -230,6 +252,7 @@ _applySeaNavalMoveOrder({
     return (
       fleets: fleets,
       fleetById: fleetById,
+      fleetIndexById: fleetIndexById,
       visibilityByTile: visibilityByTile,
     );
   }
@@ -237,6 +260,7 @@ _applySeaNavalMoveOrder({
     return (
       fleets: fleets,
       fleetById: fleetById,
+      fleetIndexById: fleetIndexById,
       visibilityByTile: visibilityByTile,
     );
   }
@@ -248,6 +272,7 @@ _applySeaNavalMoveOrder({
     return (
       fleets: fleets,
       fleetById: fleetById,
+      fleetIndexById: fleetIndexById,
       visibilityByTile: visibilityByTile,
     );
   }
@@ -291,7 +316,12 @@ _applySeaNavalMoveOrder({
       destZoneId: destZoneId,
     );
   }
-  return (fleets: nextFleets, fleetById: fleetById, visibilityByTile: nextVis);
+  return (
+    fleets: nextFleets,
+    fleetById: fleetById,
+    fleetIndexById: fleetIndexById,
+    visibilityByTile: nextVis,
+  );
 }
 
 Game applyNavalMovesAndShipReveal(
@@ -304,6 +334,7 @@ Game applyNavalMovesAndShipReveal(
     game.worldState.playerVisibilityByTile,
   );
   final fleetById = {for (final f in fleets) f.id: f};
+  var fleetIndexById = _fleetIndexById(fleets);
 
   for (final entry in navalMoveOrdersByPlayerId.entries) {
     final playerId = entry.key;
@@ -320,6 +351,7 @@ Game applyNavalMovesAndShipReveal(
           topology: topology,
           fleets: fleets,
           fleetById: fleetById,
+          fleetIndexById: fleetIndexById,
           playerId: playerId,
           homeFleetId: homeFleetId,
           fleet: fleet,
@@ -327,6 +359,7 @@ Game applyNavalMovesAndShipReveal(
           visibilityByTile: visibilityByTile,
         );
         fleets = docked.fleets;
+        fleetIndexById = docked.fleetIndexById;
         visibilityByTile = docked.visibilityByTile;
         continue;
       }
@@ -336,12 +369,14 @@ Game applyNavalMovesAndShipReveal(
         topology: topology,
         fleets: fleets,
         fleetById: fleetById,
+        fleetIndexById: fleetIndexById,
         playerId: playerId,
         fleet: fleet,
         order: order,
         visibilityByTile: visibilityByTile,
       );
       fleets = moved.fleets;
+      fleetIndexById = moved.fleetIndexById;
       visibilityByTile = moved.visibilityByTile;
     }
   }
@@ -426,7 +461,7 @@ Game runNavalInterceptionCombatPhase(
   GameEventBus? eventBus,
 }) {
   var battles = detectNavalConflicts(game);
-  _log.d('naval phase detected battles=${battles.length}');
+  logicLog.d('naval phase detected battles=${battles.length}');
   final movedFleetIds = <String>{
     for (final list in navalMoveOrdersByPlayerId.values)
       for (final order in list) order.fleetId,
@@ -439,7 +474,7 @@ Game runNavalInterceptionCombatPhase(
       (game.globalGameSeed ?? 0) ^
       (game.worldState.turnState.turnNumber * kTurnResolutionSeedMix);
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
-  _log.d('naval phase after interception battles=${battles.length}');
+  logicLog.d('naval phase after interception battles=${battles.length}');
   seed =
       (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
       kTurnResolutionLcgMask;
@@ -487,7 +522,7 @@ Game runNavalInterceptionCombatPhase(
       retreatDestinationSide1: retreatZoneSide1,
       retreatDestinationSide2: retreatZoneSide2,
     );
-    _log.d(
+    logicLog.d(
       'naval phase battle zone=${battle.seaZoneId} outcome=${result.outcome.name} '
       'side1Retreated=${result.side1Retreated} side2Retreated=${result.side2Retreated}',
     );

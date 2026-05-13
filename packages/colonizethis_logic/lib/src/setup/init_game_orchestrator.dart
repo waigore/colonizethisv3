@@ -16,8 +16,6 @@ import 'game_setup.dart';
 import 'setup_exceptions.dart';
 import 'warp_zone_generator.dart';
 
-final _log = packageLogger();
-
 /// Result of running init game.
 class InitGameResult {
   const InitGameResult({
@@ -93,7 +91,7 @@ InitGameResult runInitGame({
     );
   }
 
-  _log.i(
+  logicLog.i(
     'init game start OW:${config.numProvincesOldWorld} NW:${config.numProvincesNewWorld}',
   );
   final effectiveSeed = resolveEffectiveSetupSeed(config.seed);
@@ -190,7 +188,7 @@ InitGameResult runInitGame({
   // Phase 6 full AI: populate hidden agendas before first AI order generation. SPEC: game-setup-pipeline.md step 9, ai-planner.md § Phase 6.
   game = assignHiddenAgendasForGame(game);
 
-  _log.i('init game end seed=$effectiveSeed gameId=${game.id}');
+  logicLog.i('init game end seed=$effectiveSeed gameId=${game.id}');
   return InitGameResult(
     game: game,
     mapPngBytes: mapPngBytes,
@@ -209,7 +207,7 @@ InitGameResult runInitGame({
   required InitGameOptions options,
   required int effectiveSeed,
 }) {
-  _log.d('init game generating OW+NW maps (locked partition + setup retries)');
+  logicLog.d('init game generating OW+NW maps (locked partition + setup retries)');
   const maxPipelineAttempts = 64;
   for (var pipelineTry = 0; pipelineTry < maxPipelineAttempts; pipelineTry++) {
     final mapSeed = effectiveSeed + pipelineTry * 100003;
@@ -218,7 +216,7 @@ InitGameResult runInitGame({
         config: config,
         effectiveSeed: mapSeed,
         skipFillLakes: options.skipFillLakes,
-        onLog: _log.d,
+        onLog: logicLog.d,
       );
       final warpLinks = generateWarpZones(
         tileMapOldWorld: locked.tileOw,
@@ -242,7 +240,7 @@ InitGameResult runInitGame({
       return (warpLinks: warpLinks, setupResult: setupResult);
     } on MapPartitionGatesExhaustedException catch (e) {
       if (pipelineTry < maxPipelineAttempts - 1) {
-        _log.w(
+        logicLog.w(
           'logic: locked full-init partition gates exhausted at '
           'pipelineTry=$pipelineTry; bumping mapSeed (details=$e)',
         );
@@ -258,13 +256,13 @@ InitGameResult runInitGame({
           e.code == 'faction_component_bin_pack_failed' ||
           e.code == 'assignment_remainder_not_connected';
       if (retriableTopology && pipelineTry < maxPipelineAttempts - 1) {
-        _log.w(
+        logicLog.w(
           'logic: locked full-init setup topology retry at pipelineTry=$pipelineTry '
           '(code=${e.code}; regenerating maps mapSeed=$mapSeed)',
         );
         continue;
       }
-      _log.e(
+      logicLog.e(
         'logic: locked full-init setup failed: $e',
         error: e,
         stackTrace: st,
@@ -306,7 +304,7 @@ InitGameResult runInitGame({
         seaFraction: kDefaultSeaFraction,
         skipFillLakes: options.skipFillLakes,
       );
-      _log.d(
+      logicLog.d(
         'init game generating OW map (freeform attempt=$attempt mapSeed=$mapSeed)',
       );
       final ow = generateRegion(
@@ -317,7 +315,7 @@ InitGameResult runInitGame({
         resourceRules: ResourceRules.defaultRules,
       );
 
-      _log.d('init game generating NW map');
+      logicLog.d('init game generating NW map');
       final sizeNW = computeGridSizeFromParams(
         config.numProvincesNewWorld,
         mapGenParams,
@@ -362,13 +360,13 @@ InitGameResult runInitGame({
           e.code == 'faction_component_bin_pack_failed' ||
           e.code == 'assignment_remainder_not_connected';
       if (retriableTopology && attempt < maxFreeformAttempts - 1) {
-        _log.w(
+        logicLog.w(
           'logic: freeform init topology retry at attempt=$attempt '
           '(code=${e.code}; mapSeed=$mapSeed)',
         );
         continue;
       }
-      _log.e(
+      logicLog.e(
         'logic: freeform init setup failed: $e',
         error: e,
         stackTrace: st,
