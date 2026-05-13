@@ -6,6 +6,7 @@ import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import 'order_validators.dart';
 import 'unit_type_helpers.dart';
+import 'validator_bundle.dart';
 
 /// Incremental candidate validation primitive used by the order suggestion API
 /// to evaluate single candidates against an already-accepted `basePrefix`
@@ -196,7 +197,7 @@ class IncrementalCandidateValidator {
     if (player == null) return false;
     final economy = _projectEconomyAfterAcceptedBuildOrders(player);
     final workValidator = WorkOrderValidator(
-      context: WorkOrderValidationContext(
+      context: buildWorkOrderValidationContext(
         game: game,
         player: player,
         playerId: playerId,
@@ -278,22 +279,20 @@ class IncrementalCandidateValidator {
       return cached;
     }
     final afterBuild = _projectEconomyAfterAcceptedBuildOrders(player);
-    final workValidator = WorkOrderValidator(
-      context: WorkOrderValidationContext(
-        game: game,
-        player: player,
-        playerId: playerId,
-        view: view,
-        unitsById: unitsById,
-        devExclusiveTiles: _devExclusiveTiles(),
-        tileMapByRegion: tileMapByRegion,
-        civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
-        diplomaticOrders: diplomaticOrders,
-        topology: topology,
-      ),
+    final workValidator = createOrderValidators(
+      game: game,
+      player: player,
+      playerId: playerId,
+      view: view,
+      topology: topology,
+      unitsById: unitsById,
+      diplomaticOrders: diplomaticOrders,
+      tileMapByRegion: tileMapByRegion,
+      civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
+      devExclusiveTiles: _devExclusiveTiles(),
       stockpile: afterBuild.stockpile,
       treasury: afterBuild.treasury,
-    );
+    ).workValidator;
     final works =
         basePrefix.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
     for (final existing in works) {

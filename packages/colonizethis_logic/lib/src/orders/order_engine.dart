@@ -9,11 +9,13 @@ import '../constants.dart';
 import 'projected_effects.dart';
 import 'order_validation_result.dart';
 export 'order_validation_result.dart';
-import 'order_validators.dart';
 import 'unit_type_helpers.dart';
-
-
-
+export 'validator_bundle.dart'
+    show
+        OrderValidators,
+        buildWorkOrderValidationContext,
+        createOrderValidators;
+import 'validator_bundle.dart';
 
 part 'order_engine.g.dart';
 
@@ -92,38 +94,21 @@ class _OrderSlot<T> {
   final String label;
 }
 
-typedef OrderValidatorFactory = OrderValidators Function(
-  Game game,
-  Player player,
-  String playerId,
-  PlayerView view,
-  MapTopology topology,
-  Map<String, Unit> unitsById,
-  List<DiplomaticOrder> diplomaticOrders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  Set<String> civilianDraftMoveUnitIds,
-  Set<String> devExclusiveTiles,
-  Stockpile stockpile,
-  int treasury,
-);
-
-class OrderValidators {
-  const OrderValidators({
-    required this.moveValidator,
-    required this.armyMoveValidator,
-    required this.buildValidator,
-    required this.workValidator,
-    required this.diplomaticValidator,
-    required this.navalValidator,
-  });
-
-  final MoveValidator moveValidator;
-  final ArmyMoveValidator armyMoveValidator;
-  final BuildOrderValidator buildValidator;
-  final WorkOrderValidator workValidator;
-  final DiplomaticOrderValidator diplomaticValidator;
-  final NavalOrderValidator navalValidator;
-}
+typedef OrderValidatorFactory =
+    OrderValidators Function(
+      Game game,
+      Player player,
+      String playerId,
+      PlayerView view,
+      MapTopology topology,
+      Map<String, Unit> unitsById,
+      List<DiplomaticOrder> diplomaticOrders,
+      Map<String, TileMapResult>? tileMapByRegion,
+      Set<String> civilianDraftMoveUnitIds,
+      Set<String> devExclusiveTiles,
+      Stockpile stockpile,
+      int treasury,
+    );
 
 /// Order engine: holds per-player orders, validates in submission order,
 /// exposes projected effects. SPEC/program/order-engine.md.
@@ -183,7 +168,9 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       // cascade rejections ("Previous invalid"), while preserving first-cause
       // rejection logging for debugging. Refs #2237 AC3.
       if (r.reason != previousInvalidOrderResult.reason) {
-        _log.w('$orderLabel order rejected player=$playerId reason=${r.reason}');
+        _log.w(
+          '$orderLabel order rejected player=$playerId reason=${r.reason}',
+        );
       }
     }
     return r;
@@ -352,7 +339,8 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       results,
       builds,
       rejected,
-      (o, prev) => validators.buildValidator.validate(o, previousRejected: prev),
+      (o, prev) =>
+          validators.buildValidator.validate(o, previousRejected: prev),
     );
     stockpile = validators.buildValidator.stockpile;
     treasury = validators.buildValidator.treasury;
@@ -429,8 +417,10 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       results,
       navals,
       rejected,
-      (o, prev) =>
-          validators.navalValidator.validateNavalMove(o, previousRejected: prev),
+      (o, prev) => validators.navalValidator.validateNavalMove(
+        o,
+        previousRejected: prev,
+      ),
     );
     rejected = _appendValidationResults(
       results,
@@ -486,36 +476,18 @@ OrderValidators _defaultOrderValidatorFactory(
   Stockpile stockpile,
   int treasury,
 ) {
-  final workContext = WorkOrderValidationContext(
+  return createOrderValidators(
     game: game,
     player: player,
     playerId: playerId,
     view: view,
+    topology: topology,
     unitsById: unitsById,
-    devExclusiveTiles: devExclusiveTiles,
+    diplomaticOrders: diplomaticOrders,
     tileMapByRegion: tileMapByRegion,
     civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
-    diplomaticOrders: diplomaticOrders,
-    topology: topology,
-  );
-  return OrderValidators(
-    moveValidator: const MoveValidator(),
-    armyMoveValidator: const ArmyMoveValidator(),
-    buildValidator: BuildOrderValidator(game: game, player: player),
-    workValidator: WorkOrderValidator(
-      context: workContext,
-      stockpile: stockpile,
-      treasury: treasury,
-    ),
-    diplomaticValidator: DiplomaticOrderValidator(
-      game: game,
-      playerId: playerId,
-      initialTreasury: treasury,
-    ),
-    navalValidator: NavalOrderValidator(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-    ),
+    devExclusiveTiles: devExclusiveTiles,
+    stockpile: stockpile,
+    treasury: treasury,
   );
 }
