@@ -92,17 +92,20 @@ Game _absorbIntoGp(
 }) {
   final cost = joinEmpireCostForMinorOrTribe(game, absorbedFactionId);
   var players = List<Player>.from(game.players);
-  final gpIdx = players.indexWhere((p) => p.id == gpId);
+  final playerIndexById = <String, int>{
+    for (var i = 0; i < players.length; i++) players[i].id: i,
+  };
+  final gpIdx = playerIndexById[gpId];
 
   if (kind == _AbsorptionKind.greatPower) {
-    final targetIdx = players.indexWhere((p) => p.id == absorbedFactionId);
-    if (gpIdx < 0 || targetIdx < 0) return game;
+    final targetIdx = playerIndexById[absorbedFactionId];
+    if (gpIdx == null || targetIdx == null) return game;
     players[gpIdx] = players[gpIdx].copyWith(
       treasury: players[gpIdx].treasury - cost,
     );
     players.removeAt(targetIdx);
   } else {
-    if (gpIdx >= 0) {
+    if (gpIdx != null) {
       players = List<Player>.from(players);
       players[gpIdx] = players[gpIdx].copyWith(
         treasury: players[gpIdx].treasury - cost,
