@@ -346,13 +346,18 @@ OverturePaymentsResult processOverturePayments(
   List<OvertureDecision>? overtureDecisions,
 }) {
   var players = List<Player>.from(game.players);
+  // Player order is preserved across overture payment steps (in-place updates
+  // only); map avoids O(P) indexWhere per diplo bucket. Refs #2394.
+  var playerIndexById = <String, int>{
+    for (var i = 0; i < players.length; i++) players[i].id: i,
+  };
   var overtures = List<OvertureState>.from(game.overtureStates);
   var state = game;
 
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
-    final playerIdx = players.indexWhere((p) => p.id == gpId);
-    if (playerIdx < 0) continue;
+    final playerIdx = playerIndexById[gpId];
+    if (playerIdx == null) continue;
     var player = players[playerIdx];
 
     for (final order in entry.value) {
