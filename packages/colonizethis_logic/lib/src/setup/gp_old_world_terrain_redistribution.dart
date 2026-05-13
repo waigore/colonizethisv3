@@ -7,8 +7,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../constants.dart';
 import 'town_capital_occupancy.dart';
 
-final _log = packageLogger();
-
 /// Salt for deterministic tie-breaks when assigning Hamilton +1 remainders.
 /// ASCII "TRRN" packed (issue #1872).
 const int kGpOwTerrainRedistributionSalt = 0x5452524e;
@@ -194,7 +192,7 @@ applyGreatPowerOldWorldTerrainRedistribution({
   final terrainGrid = tileMapOldWorld.terrainGrid;
   final resGrid = tileMapOldWorld.resourceGrid;
   if (terrainGrid == null || resGrid == null) {
-    _log.i(
+    logicLog.i(
       'skip GP Old World terrain redistribution (missing terrain or resource grid)',
     );
     return (game: game, tileMap: tileMapOldWorld, fairnessMaxAbsFracDeviation: 0);
@@ -216,7 +214,7 @@ applyGreatPowerOldWorldTerrainRedistribution({
     forbidden: forbidden,
   );
   if (tiles.isEmpty) {
-    _log.i('GP Old World terrain redistribution: no eligible GP land tiles');
+    logicLog.i('GP Old World terrain redistribution: no eligible GP land tiles');
     return (game: game, tileMap: tileMapOldWorld, fairnessMaxAbsFracDeviation: 0);
   }
 
@@ -253,7 +251,7 @@ applyGreatPowerOldWorldTerrainRedistribution({
   }
 
   if (sequence.length != tiles.length) {
-    _log.e(
+    logicLog.e(
       'logic: GP OW terrain redistribution internal length mismatch '
       'seq=${sequence.length} tiles=${tiles.length} — leaving map unchanged',
     );
@@ -293,7 +291,7 @@ applyGreatPowerOldWorldTerrainRedistribution({
     achieved: achieved,
   );
 
-  _log.i(
+  logicLog.i(
     'GP Old World terrain redistribution complete '
     'eligibleTiles=${tiles.length} fairnessMaxAbsFracDev=$fairness '
     '(diagnostic; setup does not fail on terrain fairness)',
