@@ -195,6 +195,105 @@ void main() {
     });
   });
 
+  group('armyMoveCandidateDestinationProvinceIds', () {
+    test('cached player-owned set matches default allProvinces scan', () {
+      const gp = 'gp1';
+      const cap = 'oldWorld|cap';
+      const p1 = 'oldWorld|p1';
+      const nw = 'newWorld|col';
+      const p2 = 'oldWorld|p2';
+      final game = Game(
+        id: 'g_army_dest_ids',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: cap,
+                regionId: 'oldWorld',
+                ownerId: gp,
+                townTileKey: 'oldWorld|cap|0|0',
+              ),
+              Province(id: p1, regionId: 'oldWorld', ownerId: gp),
+              Province(id: p2, regionId: 'oldWorld', ownerId: gp),
+            ],
+            units: const [],
+          ),
+          newWorld: RegionData(
+            provinces: [
+              Province(id: nw, regionId: 'newWorld', ownerId: gp),
+            ],
+          ),
+          armies: [
+            Army(
+              id: 'field_a',
+              ownerId: gp,
+              regionId: 'oldWorld',
+              stationedProvinceId: p1,
+              regimentUnitIds: const [],
+              isHomeArmy: false,
+            ),
+          ],
+          tileKeysByRegionAndProvince: const {},
+        ),
+        players: [
+          Player(
+            id: gp,
+            displayName: 'T',
+            isHuman: true,
+            capitalProvinceId: cap,
+          ),
+        ],
+      );
+      final topology = MapTopology(
+        nodes: const [
+          TopologyNode(
+            id: 'oldWorld|cap',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'oldWorld|p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'oldWorld|p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'newWorld|col',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2'),
+        ],
+      );
+      final army = game.worldState.armies.first;
+      final uncached = armyMoveCandidateDestinationProvinceIds(
+        game: game,
+        topology: topology,
+        playerId: gp,
+        army: army,
+      );
+      final owned = <String>{
+        for (final p in allProvinces(game.worldState))
+          if (p.ownerId == gp) toFullProvinceId(p.regionId, p.id),
+      };
+      final cached = armyMoveCandidateDestinationProvinceIds(
+        game: game,
+        topology: topology,
+        playerId: gp,
+        army: army,
+        playerOwnedFullProvinceIds: owned,
+      );
+      expect(cached, uncached);
+    });
+  });
+
   group('generateOrdersWithSimpleHeuristics army moves', () {
     test('keeps at most one army move per army id', () {
       const gp = 'gp_ai';

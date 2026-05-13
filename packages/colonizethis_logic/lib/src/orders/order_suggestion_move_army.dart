@@ -120,11 +120,17 @@ List<MoveOrder> suggestMoveOrders(
 /// Destination province ids for army moves (Military Units picker parity): adjacent
 /// land provinces in the army's region plus every province owned by [playerId]
 /// in any region; excludes the army's current province.
+///
+/// When [playerOwnedFullProvinceIds] is supplied (typically built once per
+/// [suggestArmyMoveOrders] pass with a single [allProvinces] scan), owned-province
+/// ids are taken from that set instead of rescanning the world per army (Refs
+/// #2394, SPEC/program/logic-dual-region-province-access.md).
 List<String> armyMoveCandidateDestinationProvinceIds({
   required Game game,
   required MapTopology topology,
   required String playerId,
   required Army army,
+  Set<String>? playerOwnedFullProvinceIds,
 }) {
   final fromFull = army.stationedProvinceId;
   final regionId = ProvinceId.regionIdFrom(fromFull);
@@ -134,9 +140,13 @@ List<String> armyMoveCandidateDestinationProvinceIds({
   for (final n in neighborProvinceIdsInRegion(topology, regionId, fromLocal)) {
     out.add(ProvinceId.full(regionId, n));
   }
-  for (final p in allProvinces(game.worldState)) {
-    if (p.ownerId == playerId) {
-      out.add(toFullProvinceId(p.regionId, p.id));
+  if (playerOwnedFullProvinceIds != null) {
+    out.addAll(playerOwnedFullProvinceIds);
+  } else {
+    for (final p in allProvinces(game.worldState)) {
+      if (p.ownerId == playerId) {
+        out.add(toFullProvinceId(p.regionId, p.id));
+      }
     }
   }
   out.remove(fromFull);
@@ -310,6 +320,11 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
     basePrefix: currentOrders,
   );
 
+  final playerOwnedFullProvinceIds = <String>{
+    for (final p in allProvinces(game.worldState))
+      if (p.ownerId == playerId) toFullProvinceId(p.regionId, p.id),
+  };
+
   for (final army in game.worldState.armies) {
     if (army.ownerId != playerId) continue;
     if (army.isHomeArmy) continue;
@@ -324,6 +339,7 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
       topology: topology,
       playerId: playerId,
       army: army,
+      playerOwnedFullProvinceIds: playerOwnedFullProvinceIds,
     );
 
     var acceptedForArmy = 0;
