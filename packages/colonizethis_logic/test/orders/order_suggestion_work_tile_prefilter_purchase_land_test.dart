@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/constants.dart';
 import 'package:colonizethis_logic/src/orders/order_suggestion_work_tile_prefilter.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('rawCandidateTilesForWorkTarget (purchase_land)', () {
