@@ -226,6 +226,12 @@ bool _armyMoveNeedsDeclareWarTrial(
 /// When [playerOwnedFullProvinceIds] is provided by the caller, the picker
 /// skips the fallback owned-province [allProvinces] scan and reuses the
 /// provided set (Refs #2394).
+///
+/// Declare-war trial validators are keyed by invasion target faction id so
+/// multiple visible provinces of the same enemy reuse one
+/// [IncrementalCandidateValidator] and the same [PlayerView] / units-by-id
+/// maps as the validator for [currentOrders] (Refs #2394,
+/// SPEC/program/order-suggestions.md).
 List<ArmyMovePickerDestination> armyMovePickerDestinations({
   required Game game,
   required MapTopology topology,
@@ -257,6 +263,8 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     playerId: playerId,
     basePrefix: currentOrders,
   );
+  final trialValidatorsByDeclareTarget =
+      <String, IncrementalCandidateValidator>{};
   final out = <ArmyMovePickerDestination>[];
   for (final fullId in raw) {
     final province = game.worldState.tryGetProvince(fullId);
@@ -276,21 +284,30 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
       )) {
         continue;
       }
-      final trial = ordersWithAppendedDiplomaticOrder(
-        currentOrders,
-        playerId,
-        DiplomaticOrder(
-          type: DiplomaticOrderType.declareWar,
-          targetFactionId: ownerId,
-        ),
-      );
       // Trial diplomatic context differs from [currentOrders] (extra declare
-      // war), so use a per-trial validator rather than the base one above.
-      final trialValidator = IncrementalCandidateValidator.forPlayer(
-        game: game,
-        topology: topology,
-        playerId: playerId,
-        basePrefix: trial,
+      // war). Reuse one validator per declare target to avoid rebuilding
+      // [PlayerView] / units-by-id for every adjacent enemy province of the
+      // same owner.
+      final trialValidator = trialValidatorsByDeclareTarget.putIfAbsent(
+        ownerId,
+        () {
+          final trial = ordersWithAppendedDiplomaticOrder(
+            currentOrders,
+            playerId,
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: ownerId,
+            ),
+          );
+          return IncrementalCandidateValidator.forPlayer(
+            game: game,
+            topology: topology,
+            playerId: playerId,
+            basePrefix: trial,
+            view: baseValidator.view,
+            unitsById: baseValidator.unitsById,
+          );
+        },
       );
       if (!trialValidator.isArmyMoveAccepted(move)) {
         continue;
