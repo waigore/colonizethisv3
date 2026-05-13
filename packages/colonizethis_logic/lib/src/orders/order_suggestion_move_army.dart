@@ -21,12 +21,22 @@ const int _kMaxArmyMoveProbeAttemptsPerArmy = 80;
 
 /// Suggests candidate move orders that are information-legal (per [PlayerView])
 /// and rules-legal (per [OrderEngine]) for [view.playerId].
+///
+/// Throughput hook: callers that enumerate multiple suggestion families against
+/// the same `(game, view.playerId, currentOrders)` may supply
+/// [sharedCandidateValidator] to amortize `PlayerView` / units-by-id
+/// construction across families (Refs #2394,
+/// `SPEC/program/order-suggestions.md` § Throughput bounds). When omitted,
+/// this function constructs its own validator. The shared instance must be
+/// built with the same inputs as this call; observable suggestions must match
+/// the default path.
 List<MoveOrder> suggestMoveOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
   orderSuggestionLog.d('suggestMoveOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <MoveOrder>[];
@@ -55,12 +65,19 @@ List<MoveOrder> suggestMoveOrders(
   // candidate probe in the loop, instead of being rebuilt per probe via the
   // old [OrderEngine] full-pass path. SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
-  final candidateValidator = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: currentOrders,
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
   );
+  final candidateValidator =
+      sharedCandidateValidator ??
+      IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        basePrefix: currentOrders,
+      );
 
   for (final unit in view.ownUnits) {
     if (isMilitaryUnit(unit.type)) {
@@ -283,12 +300,20 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
 }
 
 /// Suggests candidate [ArmyMoveOrder]s for non-home armies owned by [view.playerId].
+///
+/// Throughput hook: callers that enumerate multiple suggestion families against
+/// the same `(game, view.playerId, currentOrders)` may supply
+/// [sharedCandidateValidator] to amortize `PlayerView` / units-by-id
+/// construction across families (Refs #2394). The shared instance must be
+/// built with the same inputs; observable suggestions must match the default
+/// path.
 List<ArmyMoveOrder> suggestArmyMoveOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
   final playerId = view.playerId;
   final suggestions = <ArmyMoveOrder>[];
   final existingArmyMoves = <String, Set<String>>{};
@@ -303,12 +328,19 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
   // Single per-player validator: amortizes the per-player [PlayerView] /
   // units-by-id setup across every candidate probe. SPEC/program/order-
   // suggestions.md § Incremental candidate validation. Refs #2237.
-  final candidateValidator = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: currentOrders,
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
   );
+  final candidateValidator =
+      sharedCandidateValidator ??
+      IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        basePrefix: currentOrders,
+      );
 
   for (final army in game.worldState.armies) {
     if (army.ownerId != playerId) continue;
