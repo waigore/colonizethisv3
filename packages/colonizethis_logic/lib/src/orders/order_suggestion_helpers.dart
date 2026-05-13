@@ -39,6 +39,9 @@ Map<String, String> getProvinceOwnerMap(Game game) {
 ///
 /// [destinationProvinceId] returns the destination province id for each order
 /// (full id: regionId|localId).
+///
+/// Minor-nation membership is indexed once per call (Refs #2394,
+/// SPEC/program/order-suggestions.md).
 List<T> filterOrdersByDiplomacy<T>(
   Game game,
   String playerId,
@@ -46,6 +49,9 @@ List<T> filterOrdersByDiplomacy<T>(
   String Function(T order) destinationProvinceId,
 ) {
   final provinceOwner = getProvinceOwnerMap(game);
+  final minorNationIds = <String>{
+    for (final mn in game.minorNations) mn.id,
+  };
   final filtered = <T>[];
   for (final m in orders) {
     final destOwner = provinceOwner[destinationProvinceId(m)];
@@ -56,7 +62,7 @@ List<T> filterOrdersByDiplomacy<T>(
     final rel = getRelation(game, playerId, destOwner);
     if (rel != null && rel.atPeace) continue;
     if (rel == null) {
-      if (game.minorNations.any((mn) => mn.id == destOwner)) continue;
+      if (minorNationIds.contains(destOwner)) continue;
     }
     filtered.add(m);
   }

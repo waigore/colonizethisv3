@@ -2,12 +2,13 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+const _ow = 'oldWorld';
+
 void main() {
   group('filterMoveOrdersByDiplomacy and getProvinceOwnerMap', () {
     test('getProvinceOwnerMap returns owner by full province id', () {
-      const ow = 'oldWorld';
-      final p1 = Province(id: 'p1', regionId: ow, ownerId: 'gp1');
-      final p2 = Province(id: 'p2', regionId: ow, ownerId: 'gp2');
+      final p1 = Province(id: 'p1', regionId: _ow, ownerId: 'gp1');
+      final p2 = Province(id: 'p2', regionId: _ow, ownerId: 'gp2');
       final world = WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
         oldWorld: RegionData(provinces: [p1, p2], units: []),
@@ -121,6 +122,70 @@ void main() {
       final filtered = filterMoveOrdersByDiplomacy(game, 'gp1', orders);
       expect(filtered.length, 1);
       expect(filtered.first.destinationTileKey, 'oldWorld|p2|0|0');
+    });
+  });
+
+  group('filterArmyMoveOrdersByDiplomacy', () {
+    test('drops army move into minor-owned province when no diplomacy row', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'p1', regionId: _ow, ownerId: 'gp1'),
+              Province(id: 'p2', regionId: _ow, ownerId: 'mn1'),
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+        ],
+        minorNations: const [
+          MinorNation(id: 'mn1', displayName: 'Minor'),
+        ],
+      );
+      const orders = [
+        ArmyMoveOrder(
+          armyId: 'a1',
+          destinationProvinceId: 'oldWorld|p2',
+        ),
+      ];
+      final filtered = filterArmyMoveOrdersByDiplomacy(game, 'gp1', orders);
+      expect(filtered, isEmpty);
+    });
+
+    test('keeps army move into tribe-owned province when no diplomacy row', () {
+      final game = Game(
+        id: 'g1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'p1', regionId: _ow, ownerId: 'gp1'),
+              Province(id: 'p2', regionId: _ow, ownerId: 'tr1'),
+            ],
+            units: [],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(id: 'gp1', displayName: 'A', isHuman: false),
+        ],
+        tribes: const [
+          Tribe(id: 'tr1', displayName: 'Tribe'),
+        ],
+      );
+      const orders = [
+        ArmyMoveOrder(
+          armyId: 'a1',
+          destinationProvinceId: 'oldWorld|p2',
+        ),
+      ];
+      final filtered = filterArmyMoveOrdersByDiplomacy(game, 'gp1', orders);
+      expect(filtered, orders);
     });
   });
 }
