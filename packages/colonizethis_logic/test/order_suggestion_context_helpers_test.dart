@@ -186,5 +186,59 @@ void main() {
         expect(defaultPath, isTrue);
       },
     );
+
+    test(
+      'isDiplomaticOrderAcceptedWithValidator matches isDiplomaticOrderAccepted',
+      () {
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+          ),
+          players: const [
+            Player(id: 'gp1', displayName: 'A', isHuman: false),
+            Player(id: 'gp2', displayName: 'B', isHuman: false),
+          ],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'gp2',
+              state: RelationState.atPeace,
+              level: RelationLevel.neutral,
+            ),
+          ],
+        );
+        const topology = MapTopology(nodes: [], edges: []);
+        const candidate = DiplomaticOrder(
+          type: DiplomaticOrderType.alliance,
+          targetFactionId: 'gp2',
+        );
+        const baseOrders = Orders();
+        final sharedView = buildPlayerView(game, topology, 'gp1');
+        final sharedUnits = unitsByIdFromWorld(game.worldState);
+        final validator = buildIncrementalCandidateValidator(
+          game: game,
+          topology: topology,
+          playerId: 'gp1',
+          baseOrders: baseOrders,
+          view: sharedView,
+          unitsById: sharedUnits,
+        );
+        expect(
+          isDiplomaticOrderAcceptedWithValidator(validator, candidate),
+          isDiplomaticOrderAccepted(
+            game,
+            topology,
+            'gp1',
+            baseOrders,
+            candidate,
+            view: sharedView,
+            unitsById: sharedUnits,
+          ),
+        );
+      },
+    );
   });
 }
