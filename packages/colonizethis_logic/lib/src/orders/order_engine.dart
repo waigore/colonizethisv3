@@ -10,8 +10,13 @@ import '../constants.dart';
 import 'projected_effects.dart';
 import 'order_validation_result.dart';
 export 'order_validation_result.dart';
-import 'order_validators.dart';
 import 'unit_type_helpers.dart';
+export 'validator_bundle.dart'
+    show
+        OrderValidators,
+        buildWorkOrderValidationContext,
+        createOrderValidators;
+import 'validator_bundle.dart';
 
 part 'order_engine.g.dart';
 
@@ -104,24 +109,6 @@ typedef OrderValidatorFactory =
       int treasury,
       DiplomacyFactionMembership factionMembership,
     );
-
-class OrderValidators {
-  const OrderValidators({
-    required this.moveValidator,
-    required this.armyMoveValidator,
-    required this.buildValidator,
-    required this.workValidator,
-    required this.diplomaticValidator,
-    required this.navalValidator,
-  });
-
-  final MoveValidator moveValidator;
-  final ArmyMoveValidator armyMoveValidator;
-  final BuildOrderValidator buildValidator;
-  final WorkOrderValidator workValidator;
-  final DiplomaticOrderValidator diplomaticValidator;
-  final NavalOrderValidator navalValidator;
-}
 
 /// One post–move/army validation round: caller constructs a fresh [OrderValidators]
 /// bundle, then invokes this to append results and propagate economy state.
@@ -453,37 +440,19 @@ OrderValidators _defaultOrderValidatorFactory(
   int treasury,
   DiplomacyFactionMembership factionMembership,
 ) {
-  final workContext = WorkOrderValidationContext(
+  return createOrderValidators(
     game: game,
     player: player,
     playerId: playerId,
     view: view,
+    topology: topology,
     unitsById: unitsById,
-    devExclusiveTiles: devExclusiveTiles,
+    diplomaticOrders: diplomaticOrders,
     tileMapByRegion: tileMapByRegion,
     civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
-    diplomaticOrders: diplomaticOrders,
-    topology: topology,
+    devExclusiveTiles: devExclusiveTiles,
+    stockpile: stockpile,
+    treasury: treasury,
     factionMembership: factionMembership,
-  );
-  return OrderValidators(
-    moveValidator: const MoveValidator(),
-    armyMoveValidator: const ArmyMoveValidator(),
-    buildValidator: BuildOrderValidator(game: game, player: player),
-    workValidator: WorkOrderValidator(
-      context: workContext,
-      stockpile: stockpile,
-      treasury: treasury,
-    ),
-    diplomaticValidator: DiplomaticOrderValidator(
-      game: game,
-      playerId: playerId,
-      initialTreasury: treasury,
-    ),
-    navalValidator: NavalOrderValidator(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-    ),
   );
 }
