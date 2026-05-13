@@ -30,24 +30,37 @@ sanctions:
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
-    line: 53
-    rationale: Work tile prefilter collects owned province ids via all provinces.
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work.dart
+    line: 65
+    rationale: Work suggestions build a once-per-pass owned-province id set from
+      all provinces so per-unit prefilter calls can reuse it (Refs #2394).
     spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
+    issue: https://github.com/waigore/colonizethisv3/issues/2394
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
-    line: 110
+    line: 61
+    rationale: Work tile prefilter collects owned province ids via all provinces when
+      callers do not supply a shared owned-province set.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2394
+
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
+    line: 116
     rationale: Town work targets enumerate town tiles across owned provinces in both regions.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
-    line: 137
-    rationale: Army move suggestions need global province ownership snapshot.
+    line: 164
+    rationale: Army move suggestions need global province ownership snapshot when per-pass player-owned province ids are not supplied.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_move_army.dart
+    line: 244
+    rationale: Army move picker fallback builds owned-province ids across regions.
+    spec: SPEC/program/logic-dual-region-province-access.md
+    issue: https://github.com/waigore/colonizethisv3/issues/2394
   - path: packages/colonizethis_logic/lib/src/world/fog_resolution.dart
     line: 31
     rationale: Fog decay / visibility aggregates owners across all provinces.

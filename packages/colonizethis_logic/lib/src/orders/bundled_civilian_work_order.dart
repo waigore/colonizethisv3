@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import 'order_validation_result.dart';
@@ -92,6 +93,7 @@ String? firstLegalBundledEntryTileKeyInProvince({
   required List<DiplomaticOrder> diplomaticOrders,
 }) {
   const moveValidator = MoveValidator();
+  final factionMembership = DiplomacyFactionMembership.from(game);
   final regionId = ProvinceId.regionIdFrom(destProvinceFullId);
 
   bool isMoveAccepted(String tileKey) {
@@ -104,6 +106,7 @@ String? firstLegalBundledEntryTileKeyInProvince({
       view,
       topology,
       previousRejected: false,
+      factionMembership: factionMembership,
     );
     return moveRes.isAccepted;
   }

@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'order_projections.dart';
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import '../constants.dart';
@@ -101,6 +102,7 @@ typedef OrderValidatorFactory =
       Set<String> devExclusiveTiles,
       Stockpile stockpile,
       int treasury,
+      DiplomacyFactionMembership factionMembership,
     );
 
 class OrderValidators {
@@ -284,6 +286,8 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       }
     }
 
+    final factionMembership = DiplomacyFactionMembership.from(game);
+
     OrderValidators newValidatorBundle() => _validatorFactory(
       game,
       player,
@@ -297,6 +301,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
       devExclusiveTiles,
       stockpile,
       treasury,
+      factionMembership,
     );
 
     var validators = newValidatorBundle();
@@ -311,6 +316,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
         view,
         topology,
         previousRejected: previousRejected,
+        factionMembership: factionMembership,
       );
     }
 
@@ -322,6 +328,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
         diplomatic,
         view,
         topology,
+        factionMembership: factionMembership,
       );
     }
 
@@ -444,6 +451,7 @@ OrderValidators _defaultOrderValidatorFactory(
   Set<String> devExclusiveTiles,
   Stockpile stockpile,
   int treasury,
+  DiplomacyFactionMembership factionMembership,
 ) {
   final workContext = WorkOrderValidationContext(
     game: game,
@@ -456,6 +464,7 @@ OrderValidators _defaultOrderValidatorFactory(
     civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
     diplomaticOrders: diplomaticOrders,
     topology: topology,
+    factionMembership: factionMembership,
   );
   return OrderValidators(
     moveValidator: const MoveValidator(),

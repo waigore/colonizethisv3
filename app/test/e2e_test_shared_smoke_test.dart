@@ -111,6 +111,26 @@ void main() {
   });
 
   testWidgets(
+    'e2ePumpUntilFinderEmpty short-circuits when finder already empty',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      final sw = Stopwatch()..start();
+      await e2ePumpUntilFinderEmpty(
+        tester,
+        find.byType(ExpansionTile),
+        timeout: const Duration(seconds: 5),
+      );
+      expect(
+        sw.elapsed < const Duration(milliseconds: 200),
+        isTrue,
+        reason:
+            'Already-empty finder must short-circuit before the timeout cap, '
+            'so dismiss-style adaptive callers do not pay for a fixed wait.',
+      );
+    },
+  );
+
+  testWidgets(
     'e2ePumpUntilConditionOrIdle returns true immediately when condition is already true',
     (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: SizedBox()));
