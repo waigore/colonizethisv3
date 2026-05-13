@@ -10,9 +10,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../orders/draft_orders_mutations.dart';
+import '../orders/incremental_candidate_validator.dart';
 import '../orders/order_suggestion.dart';
 import '../world/army_migration.dart';
 import '../world/player_view.dart';
+import '../world/unit_lookup.dart';
 
 /// Derives turn seed per ai-planner: turnSeed = hash(globalGameSeed, aiSeed[P], T).
 /// When [fallbackAiSeed] is provided and [game.aiSeedByGpId] has no entry for
@@ -255,17 +257,42 @@ Orders generateOrdersWithSimpleHeuristics(
   final rng = math.Random(turnSeed);
   var current = const Orders();
   final view = buildPlayerView(g, topology, player.id);
+  // Shared across iterations and across suggest families: PlayerView and
+  // units-by-id are derived from [g] (stable across iterations - only
+  // `current` orders accumulate), so the heavy world-state scans embedded in
+  // [IncrementalCandidateValidator.forPlayer] are paid **once** per player
+  // per turn instead of once per (iteration x suggestion family). Per
+  // iteration, a single validator wraps these around the up-to-date
+  // [current] basePrefix and feeds all four suggest families. Refs #2394;
+  // SPEC/program/order-suggestions.md § Throughput bounds.
+  final unitsById = unitsByIdFromWorld(g.worldState);
 
   /// Max iterations per player per turn (cap to avoid unbounded loops).
   /// Documented in SPEC/program/sim-game-default-ai.md.
   const maxIterationsPerPlayer = 32;
   for (var i = 0; i < maxIterationsPerPlayer; i++) {
-    final moveSuggestions = suggestMoveOrders(view, g, topology, current);
+    final candidateValidator = IncrementalCandidateValidator.forPlayer(
+      game: g,
+      topology: topology,
+      playerId: player.id,
+      basePrefix: current,
+      tileMapByRegion: tileMapByRegion,
+      view: view,
+      unitsById: unitsById,
+    );
+    final moveSuggestions = suggestMoveOrders(
+      view,
+      g,
+      topology,
+      current,
+      sharedCandidateValidator: candidateValidator,
+    );
     final armyMoveSuggestions = suggestArmyMoveOrders(
       view,
       g,
       topology,
       current,
+      sharedCandidateValidator: candidateValidator,
     );
     final workSuggestions = suggestWorkOrders(
       view,
@@ -273,8 +300,15 @@ Orders generateOrdersWithSimpleHeuristics(
       topology,
       current,
       tileMapByRegion: tileMapByRegion,
+      sharedCandidateValidator: candidateValidator,
     );
-    final buildSuggestions = suggestBuildOrders(view, g, topology, current);
+    final buildSuggestions = suggestBuildOrders(
+      view,
+      g,
+      topology,
+      current,
+      sharedCandidateValidator: candidateValidator,
+    );
     final researchSuggestions = suggestResearchOrders(
       view,
       g,

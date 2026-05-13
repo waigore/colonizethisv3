@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -6,12 +5,13 @@ import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'naval.dart';
 import 'province_lookup.dart';
 
-FleetMission _fleetMissionFromOrderName(String name) {
-  for (final m in FleetMission.values) {
-    if (m.name == name) return m;
-  }
-  return FleetMission.none;
-}
+/// O(1) mission lookup for naval order strings (Refs #2394).
+final _fleetMissionByOrderName = <String, FleetMission>{
+  for (final m in FleetMission.values) m.name: m,
+};
+
+FleetMission _fleetMissionFromOrderName(String name) =>
+    _fleetMissionByOrderName[name] ?? FleetMission.none;
 
 List<Fleet> _applySingleNavalMissionOrder({
   required Game game,

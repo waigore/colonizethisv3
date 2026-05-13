@@ -5,9 +5,7 @@ import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import '../turn/turn_resolution_result.dart';
 import 'diplomacy_resolver.dart';
-import 'overture_stage_helpers.dart';
-
-export 'overture_stage_helpers.dart' show previousStage;
+import 'overture_stage_navigation.dart';
 
 Game appendDiplomaticEvent(
   Game game,
@@ -377,9 +375,6 @@ OverturePaymentsResult processOverturePayments(
   state = state.copyWith(players: players, overtureStates: overtures);
   return OverturePaymentsResult(state);
 }
-
-// previousStage moved to overture_stage_helpers.dart and re-exported above to
-// preserve the existing public surface (Refs #2391 AC1).
 
 Game advanceOvertures(Game game, int turn) {
   // Spec: "complete the turn after payment" - paid overtures are already advanced in step 1.
