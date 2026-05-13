@@ -116,18 +116,9 @@ Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
   await tester.tap(tab.first, warnIfMissed: false);
   await e2ePumpUntilConditionOrIdle(
     tester,
-    () {
-      final chipFinder = find.descendant(
-        of: find.byKey(kCtE2ERegionTabNewWorldKey),
-        matching: find.byType(CtChoiceChip),
-      );
-      if (chipFinder.evaluate().isEmpty) {
-        return false;
-      }
-      return tester.widget<CtChoiceChip>(chipFinder.first).selected;
-    },
+    () => e2eNewWorldRegionChipAppearsSelected(),
     timeout: const Duration(milliseconds: 250),
-    phaseName: 'pump_until_new_world_region_tab_selected',
+    phaseName: 'pump_until_new_world_region_chip_selected',
   );
 }
 
@@ -146,18 +137,9 @@ Future<void> _tapOldWorldRegionTab(
   await tester.tap(hit.first, warnIfMissed: false);
   await e2ePumpUntilConditionOrIdle(
     tester,
-    () {
-      final chipFinder = find.widgetWithText(
-        CtChoiceChip,
-        l10n.region_oldWorld,
-      );
-      if (chipFinder.evaluate().isEmpty) {
-        return false;
-      }
-      return tester.widget<CtChoiceChip>(chipFinder.first).selected;
-    },
+    () => e2eOldWorldRegionChipAppearsSelected(l10n),
     timeout: const Duration(milliseconds: 250),
-    phaseName: 'pump_until_old_world_region_tab_selected',
+    phaseName: 'pump_until_old_world_region_chip_selected',
   );
 }
 
