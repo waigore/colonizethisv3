@@ -189,9 +189,17 @@ _applyDockNavalMoveOrder({
     targetPortId: null,
     targetProvinceId: null,
   );
-  final idx = fleets.indexWhere((f) => f.id == fleet.id);
-  if (idx >= 0) {
-    final nextFleets = List<Fleet>.from(fleets)..[idx] = newFleet;
+  var replacedDockFleet = false;
+  final nextFleets = <Fleet>[];
+  for (final f in fleets) {
+    if (f.id == fleet.id) {
+      nextFleets.add(newFleet);
+      replacedDockFleet = true;
+    } else {
+      nextFleets.add(f);
+    }
+  }
+  if (replacedDockFleet) {
     fleetById[fleet.id] = newFleet;
     return (
       fleets: nextFleets,
@@ -257,9 +265,18 @@ _applySeaNavalMoveOrder({
     targetProvinceId: null,
   );
   var nextFleets = fleets;
-  final idx = fleets.indexWhere((f) => f.id == fleet.id);
-  if (idx >= 0) {
-    nextFleets = List<Fleet>.from(fleets)..[idx] = newFleet;
+  var replacedAtSea = false;
+  final rebuiltAtSea = <Fleet>[];
+  for (final f in fleets) {
+    if (f.id == fleet.id) {
+      rebuiltAtSea.add(newFleet);
+      replacedAtSea = true;
+    } else {
+      rebuiltAtSea.add(f);
+    }
+  }
+  if (replacedAtSea) {
+    nextFleets = rebuiltAtSea;
     fleetById[fleet.id] = newFleet;
   }
 
@@ -458,7 +475,8 @@ Game runNavalInterceptionCombatPhase(
     // the per-battle scan cost regardless of fleet count when the topology
     // resolves the zone region directly. Lookup is extracted to keep nesting
     // within repo.control_flow_nesting_depth limits.
-    final regionId = zoneRegionId ??
+    final regionId =
+        zoneRegionId ??
         _firstFleetRegionIdForSeaZone(state, battle.seaZoneId) ??
         kRegionOldWorld;
     state = applyNavalBattleResults(
