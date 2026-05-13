@@ -87,6 +87,37 @@ Future<void> e2ePumpUntilFinderEmpty(
   }
 }
 
+/// Best-effort adaptive pump-until-condition for E2E tests (Refs #2336 / AC5).
+///
+/// Evaluates [condition] **before** the first pump (so already-true callers
+/// short-circuit), then pumps with [e2eAdaptivePollRampAfterIdle] pacing until
+/// [condition] returns true or [timeout] elapses. Unlike [e2ePumpUntil] this
+/// helper does **not** throw on timeout, so callers can treat the wait as
+/// best-effort post-tap settle (for example after a region tab tap whose
+/// selection state may not advance on Linux headless within the cap).
+///
+/// Returns `true` when [condition] became true within [timeout], `false`
+/// otherwise.
+Future<bool> e2ePumpUntilConditionOrIdle(
+  WidgetTester tester,
+  bool Function() condition, {
+  required Duration timeout,
+}) async {
+  final sw = Stopwatch()..start();
+  if (condition()) {
+    return true;
+  }
+  var stepMs = 25;
+  while (sw.elapsed < timeout) {
+    await tester.pump(Duration(milliseconds: stepMs));
+    if (condition()) {
+      return true;
+    }
+    stepMs = e2eAdaptivePollRampAfterIdle(stepMs);
+  }
+  return false;
+}
+
 /// Default cap for bottom-sheet close polling (GitHub #2336).
 const Duration kE2eDefaultBottomSheetCloseTimeout = Duration(seconds: 5);
 

@@ -108,29 +108,67 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
 
 /// Selects the New World map region via [kCtE2ERegionTabNewWorldKey] when present
 /// (reduces ambiguous "New World" text on screen; `SPEC/program/e2e-integration-tests.md`).
+///
+/// Adaptive replacement for the prior fixed 250 ms post-tap pump
+/// (GitHub #2336 / AC4 H10 family / AC5): polls the chip's [CtChoiceChip.selected]
+/// flag inside [kCtE2ERegionTabNewWorldKey] with [e2eAdaptivePollRampAfterIdle]
+/// pacing, capped at 250 ms so a no-op tap (already-selected) does not delay
+/// the surrounding fleet-reach turn loop, while preserving the pre-refactor
+/// worst-case wait on Linux headless when the tab needs to actually flip.
 Future<void> _tapNewWorldRegionTabIfPresent(WidgetTester tester) async {
   final tab = find.byKey(kCtE2ERegionTabNewWorldKey).hitTestable();
   if (tab.evaluate().isEmpty) {
     return;
   }
   await tester.tap(tab.first, warnIfMissed: false);
-  await e2ePumpFor(tester, const Duration(milliseconds: 250));
+  final chip = find.descendant(
+    of: find.byKey(kCtE2ERegionTabNewWorldKey),
+    matching: find.byType(CtChoiceChip),
+  );
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () {
+      final elements = chip.evaluate();
+      if (elements.isEmpty) {
+        return false;
+      }
+      final widget = elements.first.widget;
+      return widget is CtChoiceChip && widget.selected;
+    },
+    timeout: const Duration(milliseconds: 250),
+  );
 }
 
 /// Map HUD must show **Old World** before issuing naval moves so OW-split
 /// fleets and warp orders stay coherent on Linux CI (`SPEC/program/e2e-integration-tests.md`).
+///
+/// Adaptive replacement for the prior fixed 250 ms post-tap pump
+/// (GitHub #2336 / AC4 H10 family / AC5): polls the **Old World**
+/// [CtChoiceChip.selected] flag with [e2eAdaptivePollRampAfterIdle] pacing,
+/// capped at 250 ms so the surrounding fleet-reach turn loop short-circuits
+/// when the chip is already selected.
 Future<void> _tapOldWorldRegionTab(
   WidgetTester tester,
   AppLocalizations l10n,
 ) async {
-  final hit = find
-      .widgetWithText(CtChoiceChip, l10n.region_oldWorld)
-      .hitTestable();
+  final chip = find.widgetWithText(CtChoiceChip, l10n.region_oldWorld);
+  final hit = chip.hitTestable();
   if (hit.evaluate().isEmpty) {
     return;
   }
   await tester.tap(hit.first, warnIfMissed: false);
-  await e2ePumpFor(tester, const Duration(milliseconds: 250));
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () {
+      final elements = chip.evaluate();
+      if (elements.isEmpty) {
+        return false;
+      }
+      final widget = elements.first.widget;
+      return widget is CtChoiceChip && widget.selected;
+    },
+    timeout: const Duration(milliseconds: 250),
+  );
 }
 
 Finder _radioListTilesInAlertDialogs() {
