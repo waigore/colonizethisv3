@@ -7,8 +7,6 @@ import '../world/connectivity_resolver.dart';
 import '../world/province_lookup.dart';
 import '../world/tile_key_coordinates.dart';
 
-final _log = packageLogger();
-
 /// Per-player extraction totals: land (same region as capital) vs overseas.
 class ExtractionTotals {
   const ExtractionTotals({this.land = const {}, this.overseas = const {}});
@@ -55,7 +53,7 @@ Map<String, ExtractionTotals> computeExtraction({
   /// Used by tests (e.g. Great Power bootstrap farms) without duplicating extraction rules.
   Set<String>? restrictToTileKeys,
 }) {
-  _log.d('extraction compute start players=${game.players.length}');
+  logicLog.d('extraction compute start players=${game.players.length}');
   final provincesByFullId = <String, Province>{
     for (final p in allProvinces(game.worldState)) p.id: p,
   };
@@ -127,7 +125,7 @@ Map<String, ExtractionTotals> computeExtraction({
     0,
     (s, t) => s + t.overseas.values.fold(0, (a, b) => a + b),
   );
-  _log.d(
+  logicLog.d(
     'extraction compute end players=${out.length} landTotal=$landSum overseasTotal=$overseasSum',
   );
   return out;
@@ -195,7 +193,7 @@ TileExtractionContribution? computeTileExtractionContributionForPlayer({
     final msg =
         'extraction province missing tileKey=$tileKey provinceId=$provinceId '
         '(region-scoped lookup failed; SPEC/game/world-model-identity.md)';
-    _log.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
+    logicLog.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
     return null;
   }
   final townDevelopmentCap = province.townDevelopmentLevel;

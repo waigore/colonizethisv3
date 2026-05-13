@@ -8,8 +8,6 @@ import '../turn/trace/turn_trace_runtime.dart';
 import 'province_lookup.dart';
 import 'topology_helpers.dart';
 
-final _log = packageLogger();
-
 /// Movement validation and application.
 /// SPEC/program/movement.md
 /// Adjacency is region-scoped when topology has multiple regions (SPEC/game/world-model-identity.md).
@@ -148,7 +146,7 @@ applyCivilianTileMoveOrdersToWorldRegions(
     onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
   );
   if (result.ordersSeen > 0) {
-    _log.i(
+    logicLog.i(
       'civilian tile movement apply orders=${result.ordersSeen} '
       'applied=${result.applied} ignored=${result.ignored}',
     );
@@ -399,7 +397,7 @@ _ownerMismatchPrecheck(
   CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
 }) {
   if (Level.debug.value >= Logger.level.value) {
-    _log.d(
+    logicLog.d(
       'civilian movement ignored reason=$reason unitId=${order.unitId} '
       'orderPlayerId=$playerId${ownerId == null ? '' : ' unitOwnerId=$ownerId'}',
     );

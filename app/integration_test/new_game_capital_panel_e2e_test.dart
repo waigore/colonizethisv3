@@ -42,7 +42,13 @@ void main() {
     perf.timing('new_game_to_map', newGameToMapSw.elapsed);
 
     await tester.tap(find.byKey(kHomeToCapitalButtonKey));
-    await e2ePumpFor(tester, const Duration(seconds: 1));
+    await e2eWaitUntilFound(
+      tester,
+      find.byKey(kCtE2EOpenCapitalProvinceDetailKey).hitTestable(),
+      timeout: const Duration(seconds: 30),
+      perf: perf,
+      phaseName: 'wait_capital_detail_marker_after_home_tap',
+    );
 
     expect(find.byKey(kCtE2EOpenCapitalProvinceDetailKey), findsOneWidget);
     await tester.tap(find.byKey(kCtE2EOpenCapitalProvinceDetailKey));
