@@ -122,9 +122,10 @@ List<MoveOrder> suggestMoveOrders(
 /// in any region; excludes the army's current province.
 ///
 /// When [playerOwnedFullProvinceIds] is supplied (typically built once per
-/// [suggestArmyMoveOrders] pass with a single [allProvinces] scan), owned-province
-/// ids are taken from that set instead of rescanning the world per army (Refs
-/// #2394, SPEC/program/logic-dual-region-province-access.md).
+/// [suggestArmyMoveOrders] pass from [PlayerView.provincesById] or a single
+/// [allProvinces] scan), owned-province ids are taken from that set instead of
+/// rescanning the world per army (Refs #2394, SPEC/program/order-suggestions.md,
+/// SPEC/program/logic-dual-region-province-access.md).
 List<String> armyMoveCandidateDestinationProvinceIds({
   required Game game,
   required MapTopology topology,
@@ -191,7 +192,11 @@ bool _armyMoveNeedsDeclareWarTrial(
     return false;
   }
   if (!isGreatPower(game, destOwnerId, factionMembership: factionMembership) &&
-      !isMinorOrTribe(game, destOwnerId, factionMembership: factionMembership)) {
+      !isMinorOrTribe(
+        game,
+        destOwnerId,
+        factionMembership: factionMembership,
+      )) {
     return false;
   }
   return !canAttackWithWarOrDeclaring(game, playerId, destOwnerId, diplo);
@@ -333,8 +338,8 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
   );
 
   final playerOwnedFullProvinceIds = <String>{
-    for (final p in allProvinces(game.worldState))
-      if (p.ownerId == playerId) toFullProvinceId(p.regionId, p.id),
+    for (final e in view.provincesById.entries)
+      if (e.value.ownerId == playerId) e.key,
   };
 
   for (final army in game.worldState.armies) {
