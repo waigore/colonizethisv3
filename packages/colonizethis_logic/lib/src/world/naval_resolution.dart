@@ -24,8 +24,6 @@ export 'naval_coastal_visibility.dart'
         revealTilesAfterMoveToSeaZone;
 export 'naval_mission_orders.dart' show applyNavalMissionOrders;
 
-final _log = packageLogger();
-
 List<String> _adjacentSeaZones(MapTopology topology, String seaZoneId) {
   final out = <String>[];
   for (final e in topology.edges) {
@@ -409,7 +407,7 @@ Game runNavalInterceptionCombatPhase(
   GameEventBus? eventBus,
 }) {
   var battles = detectNavalConflicts(game);
-  _log.d('naval phase detected battles=${battles.length}');
+  logicLog.d('naval phase detected battles=${battles.length}');
   final movedFleetIds = <String>{
     for (final list in navalMoveOrdersByPlayerId.values)
       for (final order in list) order.fleetId,
@@ -422,7 +420,7 @@ Game runNavalInterceptionCombatPhase(
       (game.globalGameSeed ?? 0) ^
       (game.worldState.turnState.turnNumber * kTurnResolutionSeedMix);
   battles = filterBattlesByInterception(game, battles, movedFleetIds, seed);
-  _log.d('naval phase after interception battles=${battles.length}');
+  logicLog.d('naval phase after interception battles=${battles.length}');
   seed =
       (seed * kTurnResolutionLcgMultiplier + kTurnResolutionLcgIncrement) &
       kTurnResolutionLcgMask;
@@ -469,7 +467,7 @@ Game runNavalInterceptionCombatPhase(
       retreatDestinationSide1: retreatZoneSide1,
       retreatDestinationSide2: retreatZoneSide2,
     );
-    _log.d(
+    logicLog.d(
       'naval phase battle zone=${battle.seaZoneId} outcome=${result.outcome.name} '
       'side1Retreated=${result.side1Retreated} side2Retreated=${result.side2Retreated}',
     );

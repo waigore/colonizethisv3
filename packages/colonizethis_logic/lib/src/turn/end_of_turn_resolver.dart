@@ -10,8 +10,6 @@ import '../dossier/event_dialogue.dart';
 import '../world/fog_resolution.dart';
 import 'turn_seed_constants.dart';
 
-final _log = packageLogger();
-
 /// Runs the end-of-turn phase: victory check, era-change dialogue, Spy timers, fog decay,
 /// coastal sea zone full visibility, advance turn.
 Game runEndOfTurnPhase(
@@ -25,7 +23,7 @@ Game runEndOfTurnPhase(
   final winnerId = findMilitaryVictoryWinner(game);
   if (winnerId != null) {
     final turnNumber = game.worldState.turnState.turnNumber;
-    _log.i('military victory set winner=$winnerId turn=$turnNumber');
+    logicLog.i('military victory set winner=$winnerId turn=$turnNumber');
     return game.copyWith(
       victory: VictoryState(
         winnerPlayerId: winnerId,
