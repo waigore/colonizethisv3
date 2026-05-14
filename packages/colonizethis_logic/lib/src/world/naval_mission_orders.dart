@@ -13,10 +13,25 @@ final _fleetMissionByOrderName = <String, FleetMission>{
 FleetMission _fleetMissionFromOrderName(String name) =>
     _fleetMissionByOrderName[name] ?? FleetMission.none;
 
+void _resyncFleetLookupMaps(
+  List<Fleet> fleets,
+  Map<String, Fleet> fleetById,
+  Map<String, int> fleetIndexById,
+) {
+  fleetById
+    ..clear()
+    ..addEntries(fleets.map((f) => MapEntry(f.id, f)));
+  fleetIndexById.clear();
+  for (var i = 0; i < fleets.length; i++) {
+    fleetIndexById[fleets[i].id] = i;
+  }
+}
+
 List<Fleet> _applySingleNavalMissionOrder({
   required Game game,
   required List<Fleet> fleets,
   required Map<String, Fleet> fleetById,
+  required Map<String, int> fleetIndexById,
   required String playerId,
   required NavalMissionOrder order,
 }) {
@@ -40,7 +55,7 @@ List<Fleet> _applySingleNavalMissionOrder({
         .where((f) => f.id != fleet.id)
         .map((f) => f.id == homeFleetId ? updatedHome : f)
         .toList();
-    fleetById[homeFleetId] = updatedHome;
+    _resyncFleetLookupMaps(next, fleetById, fleetIndexById);
     return next;
   }
 
@@ -68,8 +83,8 @@ List<Fleet> _applySingleNavalMissionOrder({
         targetPortId: null,
         targetProvinceId: null,
       );
-      final idx = fleets.indexWhere((f) => f.id == fleet.id);
-      if (idx >= 0) {
+      final idx = fleetIndexById[fleet.id];
+      if (idx != null) {
         final next = List<Fleet>.from(fleets)..[idx] = cleared;
         fleetById[fleet.id] = cleared;
         return next;
@@ -83,8 +98,8 @@ List<Fleet> _applySingleNavalMissionOrder({
     targetPortId: order.targetPortId,
     targetProvinceId: order.targetProvinceId,
   );
-  final idx = fleets.indexWhere((f) => f.id == fleet.id);
-  if (idx >= 0) {
+  final idx = fleetIndexById[fleet.id];
+  if (idx != null) {
     final next = List<Fleet>.from(fleets)..[idx] = newFleet;
     fleetById[fleet.id] = newFleet;
     return next;
@@ -97,7 +112,9 @@ Game applyNavalMissionOrders(
   Map<String, List<NavalMissionOrder>> navalMissionOrdersByPlayerId,
 ) {
   var fleets = List<Fleet>.from(game.worldState.fleets);
-  final fleetById = {for (final f in fleets) f.id: f};
+  final fleetById = <String, Fleet>{};
+  final fleetIndexById = <String, int>{};
+  _resyncFleetLookupMaps(fleets, fleetById, fleetIndexById);
 
   for (final entry in navalMissionOrdersByPlayerId.entries) {
     final playerId = entry.key;
@@ -106,6 +123,7 @@ Game applyNavalMissionOrders(
         game: game,
         fleets: fleets,
         fleetById: fleetById,
+        fleetIndexById: fleetIndexById,
         playerId: playerId,
         order: order,
       );
