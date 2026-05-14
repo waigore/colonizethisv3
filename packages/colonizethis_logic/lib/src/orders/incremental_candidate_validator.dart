@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
@@ -82,8 +83,6 @@ class IncrementalCandidateValidator {
   final Map<String, Unit> unitsById;
   final List<DiplomaticOrder> diplomaticOrders;
   final Map<String, TileMapResult>? tileMapByRegion;
-  Player? _cachedPlayer;
-  bool _playerResolved = false;
   Set<String>? _cachedDevExclusiveTiles;
   Set<String>? _cachedCivilianDraftMoveUnitIds;
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildOrders;
@@ -355,18 +354,5 @@ class IncrementalCandidateValidator {
     return computed;
   }
 
-  Player? _player() {
-    if (_playerResolved) {
-      return _cachedPlayer;
-    }
-    for (final p in game.players) {
-      if (p.id == playerId) {
-        _cachedPlayer = p;
-        _playerResolved = true;
-        return p;
-      }
-    }
-    _playerResolved = true;
-    return null;
-  }
+  Player? _player() => game.playerById(playerId);
 }
