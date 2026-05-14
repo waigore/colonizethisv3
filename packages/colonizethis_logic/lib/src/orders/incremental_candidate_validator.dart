@@ -87,6 +87,12 @@ class IncrementalCandidateValidator {
   Set<String>? _cachedCivilianDraftMoveUnitIds;
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildOrders;
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildAndWorkOrders;
+
+  /// When [false], existing build orders in [basePrefix] failed incremental
+  /// replay; every [isBuildAccepted] probe must reject (Refs #2394).
+  bool? _cachedBuildPrefixReplaySucceeded;
+  ({Stockpile stockpile, int treasury, WorkerPool workers})?
+  _cachedPostBuildPrefixEconomy;
   Map<String, Army>? _cachedArmiesById;
   DiplomacyFactionMembership? _cachedFactionMembership;
   NavalOrderValidator? _cachedNavalOrderValidator;
@@ -202,15 +208,44 @@ class IncrementalCandidateValidator {
   bool isBuildAccepted(BuildUnitOrder candidate) {
     final player = _player();
     if (player == null) return false;
-    final validator = BuildOrderValidator(game: game, player: player);
+    if (_cachedBuildPrefixReplaySucceeded == false) {
+      return false;
+    }
     final builds =
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
-    for (final existing in builds) {
-      final result = validator.validate(existing, previousRejected: false);
-      if (!result.isAccepted) return false;
+    if (_cachedPostBuildPrefixEconomy == null) {
+      final prefixValidator = BuildOrderValidator(game: game, player: player);
+      for (final existing in builds) {
+        final result = prefixValidator.validate(
+          existing,
+          previousRejected: false,
+        );
+        if (!result.isAccepted) {
+          _cachedBuildPrefixReplaySucceeded = false;
+          return false;
+        }
+      }
+      _cachedBuildPrefixReplaySucceeded = true;
+      _cachedPostBuildPrefixEconomy = (
+        stockpile: prefixValidator.stockpile,
+        treasury: prefixValidator.treasury,
+        workers: prefixValidator.workers,
+      );
     }
-    return validator.validate(candidate, previousRejected: false).isAccepted;
+    final snap = _cachedPostBuildPrefixEconomy!;
+    final candidateValidator = BuildOrderValidator.withProjectedEconomy(
+      game: game,
+      player: player,
+      stockpile: Stockpile(
+        quantities: Map<String, int>.from(snap.stockpile.quantities),
+      ),
+      treasury: snap.treasury,
+      workerPool: snap.workers,
+    );
+    return candidateValidator
+        .validate(candidate, previousRejected: false)
+        .isAccepted;
   }
 
   bool isWorkAccepted(WorkOrder candidate) {

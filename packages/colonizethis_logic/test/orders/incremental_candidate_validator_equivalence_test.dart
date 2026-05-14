@@ -208,6 +208,54 @@ void main() {
       );
     });
 
+    test(
+      'build: successive candidate probes stay full-pass equivalent (#2394)',
+      () {
+        final game = TestFixtures.gameWithSingleOwnedProvince(
+          ownerPlayerId: 'p1',
+          provinceId: 'oldWorld|p1',
+          treasury: 999,
+        );
+        const topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: [],
+        );
+        const basePrefix = Orders();
+
+        const candidateA = BuildUnitOrder(
+          unitType: 'pikemen',
+          isMilitary: true,
+          spawnProvinceId: 'oldWorld|p1',
+        );
+        const candidateB = BuildUnitOrder(
+          unitType: 'musketeers',
+          isMilitary: true,
+          spawnProvinceId: 'oldWorld|p1',
+        );
+
+        final incremental = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: 'p1',
+          basePrefix: basePrefix,
+        );
+        expect(
+          incremental.isBuildAccepted(candidateA),
+          fullPassBuildAccepted(game, topology, 'p1', basePrefix, candidateA),
+        );
+        expect(
+          incremental.isBuildAccepted(candidateB),
+          fullPassBuildAccepted(game, topology, 'p1', basePrefix, candidateB),
+        );
+      },
+    );
+
     test('work: non-empty basePrefix replay remains equivalent', () {
       final game = moveCorpusGame();
       final topology = moveCorpusTopology();

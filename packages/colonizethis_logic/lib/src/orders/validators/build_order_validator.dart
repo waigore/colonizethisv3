@@ -23,6 +23,22 @@ class BuildOrderValidator extends StatefulValidator {
         workerPoolState: player.workerPool,
       );
 
+  /// Validates further [BuildUnitOrder]s from an economy snapshot produced by
+  /// replaying accepted build orders in submission order (Refs #2394).
+  BuildOrderValidator.withProjectedEconomy({
+    required Game game,
+    required Player player,
+    required Stockpile stockpile,
+    required int treasury,
+    required WorkerPool workerPool,
+  }) : _game = game,
+       _player = player,
+       super(
+         stockpileState: stockpile,
+         treasuryState: treasury,
+         workerPoolState: workerPool,
+       );
+
   WorkerPool get workers => workerPoolState;
   Stockpile get stockpile => stockpileState;
   int get treasury => treasuryState;
