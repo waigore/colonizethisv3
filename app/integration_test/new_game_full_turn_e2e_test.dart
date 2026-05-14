@@ -55,6 +55,9 @@ Future<void> _openCivilianPanel(
       await tester.pump(Duration(milliseconds: openPollMs));
       openPollMs = e2eAdaptivePollRampAfterIdle(openPollMs);
     }
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
     return false;
   }
 
@@ -145,6 +148,10 @@ Future<void> _openPanelFromMarker(
       }
       await tester.pump(Duration(milliseconds: openPollMs));
       openPollMs = e2eAdaptivePollRampAfterIdle(openPollMs);
+    }
+    if (panelRoot.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
     }
     panelPollMs = 25;
     await tester.pump(Duration(milliseconds: panelPollMs));
