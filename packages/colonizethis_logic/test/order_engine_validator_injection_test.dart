@@ -1,7 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/orders/order_engine.dart';
-import 'package:colonizethis_logic/src/orders/order_validation_result.dart';
+import 'package:colonizethis_logic/src/orders/validator_bundle.dart';
 import 'package:colonizethis_logic/src/orders/validators/army_move_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/build_order_validator.dart';
 import 'package:colonizethis_logic/src/orders/validators/diplomatic_order_validator.dart';
@@ -42,61 +42,68 @@ void main() {
     final engine = OrderEngine(
       initialOrders: Orders(
         moveOrdersByPlayerId: {
-          'p1': const [MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P1|0|0')],
+          'p1': const [
+            MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|P1|0|0'),
+          ],
         },
       ),
-      validatorFactory: (
-        Game game,
-        Player player,
-        String playerId,
-        PlayerView view,
-        MapTopology topology,
-        Map<String, Unit> unitsById,
-        List<DiplomaticOrder> diplomaticOrders,
-        Map<String, TileMapResult>? tileMapByRegion,
-        Set<String> civilianDraftMoveUnitIds,
-        Set<String> devExclusiveTiles,
-        Stockpile stockpile,
-        int treasury,
-        DiplomacyFactionMembership factionMembership,
-      ) {
-        final workContext = WorkOrderValidationContext(
-          game: game,
-          player: player,
-          playerId: playerId,
-          view: view,
-          unitsById: unitsById,
-          devExclusiveTiles: devExclusiveTiles,
-          tileMapByRegion: tileMapByRegion,
-          civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
-          diplomaticOrders: diplomaticOrders,
-          topology: topology,
-          factionMembership: factionMembership,
-        );
-        return OrderValidators(
-          moveValidator: const _AlwaysRejectMoveValidator(),
-          armyMoveValidator: const ArmyMoveValidator(),
-          buildValidator: BuildOrderValidator(game: game, player: player),
-          workValidator: WorkOrderValidator(
-            context: workContext,
-            stockpile: stockpile,
-            treasury: treasury,
-          ),
-          diplomaticValidator: DiplomaticOrderValidator(
-            game: game,
-            playerId: playerId,
-            initialTreasury: treasury,
-          ),
-          navalValidator: NavalOrderValidator(
-            game: game,
-            topology: topology,
-            playerId: playerId,
-          ),
-        );
-      },
+      validatorFactory:
+          (
+            Game game,
+            Player player,
+            String playerId,
+            PlayerView view,
+            MapTopology topology,
+            Map<String, Unit> unitsById,
+            List<DiplomaticOrder> diplomaticOrders,
+            Map<String, TileMapResult>? tileMapByRegion,
+            Set<String> civilianDraftMoveUnitIds,
+            Set<String> devExclusiveTiles,
+            Stockpile stockpile,
+            int treasury,
+            DiplomacyFactionMembership factionMembership,
+          ) {
+            final workContext = buildWorkOrderValidationContext(
+              game: game,
+              player: player,
+              playerId: playerId,
+              view: view,
+              unitsById: unitsById,
+              devExclusiveTiles: devExclusiveTiles,
+              tileMapByRegion: tileMapByRegion,
+              civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
+              diplomaticOrders: diplomaticOrders,
+              topology: topology,
+              factionMembership: factionMembership,
+            );
+            return OrderValidators(
+              moveValidator: const _AlwaysRejectMoveValidator(),
+              armyMoveValidator: const ArmyMoveValidator(),
+              buildValidator: BuildOrderValidator(game: game, player: player),
+              workValidator: WorkOrderValidator(
+                context: workContext,
+                stockpile: stockpile,
+                treasury: treasury,
+              ),
+              diplomaticValidator: DiplomaticOrderValidator(
+                game: game,
+                playerId: playerId,
+                initialTreasury: treasury,
+              ),
+              navalValidator: NavalOrderValidator(
+                game: game,
+                topology: topology,
+                playerId: playerId,
+              ),
+            );
+          },
     );
 
-    final results = engine.validatePlayerOrdersWithContext(game, topology, 'p1');
+    final results = engine.validatePlayerOrdersWithContext(
+      game,
+      topology,
+      'p1',
+    );
     expect(results, hasLength(1));
     expect(results.single.isAccepted, isFalse);
     expect(results.single.reason, 'Injected move validator rejection');

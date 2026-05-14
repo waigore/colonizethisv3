@@ -23,6 +23,7 @@ import 'stateful_validator.dart';
 class DiplomaticOrderValidator extends StatefulValidator {
   final Game _game;
   final String _playerId;
+  final DiplomacyFactionMembership? _factionMembership;
 
   /// Types already accepted toward each target this turn. SPEC/program/orders.md § diplomatic cap.
   final Map<String, Set<DiplomaticOrderType>> _typesByTarget =
@@ -34,8 +35,10 @@ class DiplomaticOrderValidator extends StatefulValidator {
     required Game game,
     required String playerId,
     required int initialTreasury,
+    DiplomacyFactionMembership? factionMembership,
   }) : _game = game,
        _playerId = playerId,
+       _factionMembership = factionMembership,
        super(
          stockpileState: game.playerById(playerId)?.stockpile ?? Stockpile.empty,
          treasuryState: initialTreasury,
@@ -54,10 +57,12 @@ class DiplomaticOrderValidator extends StatefulValidator {
       DiplomaticOrderType.alliance: AllianceSubValidator(
         game: _game,
         playerId: _playerId,
+        factionMembership: _factionMembership,
       ),
       DiplomaticOrderType.establishOverture: EstablishOvertureSubValidator(
         game: _game,
         playerId: _playerId,
+        factionMembership: _factionMembership,
       ),
       DiplomaticOrderType.grantAid: GrantAidSubValidator(
         game: _game,
@@ -124,7 +129,8 @@ class DiplomaticOrderValidator extends StatefulValidator {
     }
 
     final targetExists =
-        isGreatPower(_game, targetId) || isMinorOrTribe(_game, targetId);
+        isGreatPower(_game, targetId, factionMembership: _factionMembership) ||
+        isMinorOrTribe(_game, targetId, factionMembership: _factionMembership);
     if (!targetExists) {
       return _reject('Target faction not found');
     }

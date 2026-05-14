@@ -5,6 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../world/player_view.dart';
 import 'incremental_candidate_validator.dart';
 
+export '../diplomacy/overture_stage_navigation.dart';
+
 final orderSuggestionLog = packageLogger('order_suggestion');
 
 bool _orderSuggestionTrackWorkOrderAcceptanceProbes = false;
@@ -184,6 +186,21 @@ bool isDiplomaticOrderAccepted(
   return validator.isDiplomaticAccepted(candidate);
 }
 
+/// Validates [candidate] with an existing [validator] built for the same
+/// `(game, topology, playerId, baseOrders, …)` tuple as this probe.
+///
+/// Callers that evaluate many diplomatic candidates against the same
+/// [Orders] prefix should build one [IncrementalCandidateValidator] per
+/// prefix and reuse it here instead of calling [isDiplomaticOrderAccepted]
+/// repeatedly (Refs #2394, `SPEC/program/order-suggestions.md` § Throughput
+/// bounds).
+bool isDiplomaticOrderAcceptedWithValidator(
+  IncrementalCandidateValidator validator,
+  DiplomaticOrder candidate,
+) {
+  return validator.isDiplomaticAccepted(candidate);
+}
+
 bool isBuildOrderAcceptedWithValidator(
   IncrementalCandidateValidator validator,
   BuildUnitOrder candidate,
@@ -212,19 +229,4 @@ Orders appendDiplomaticOrderForTrial(
       playerId: [...prev, order],
     },
   );
-}
-
-OvertureStage? nextOvertureStage(OvertureStage current) {
-  switch (current) {
-    case OvertureStage.none:
-      return OvertureStage.tradeConsulate;
-    case OvertureStage.tradeConsulate:
-      return OvertureStage.embassy;
-    case OvertureStage.embassy:
-      return OvertureStage.nap;
-    case OvertureStage.nap:
-      return OvertureStage.joinEmpire;
-    case OvertureStage.joinEmpire:
-      return null;
-  }
 }
