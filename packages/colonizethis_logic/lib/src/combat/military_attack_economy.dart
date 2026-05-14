@@ -35,7 +35,8 @@ int landBattleAttackTreasuryCostForPlayer(Player player) {
 Game applyLandBattleAttackTreasuryCosts(Game game, BattleContext ctx) {
   final ids = <String>{for (final a in ctx.attackers) a.factionId};
   var players = game.players;
-  final playerIdxById = <String, int>{
+  // O(1) player row lookup per attacker instead of O(P) indexWhere each time (Refs #2394).
+  final playerIndexById = <String, int>{
     for (var i = 0; i < players.length; i++) players[i].id: i,
   };
   for (final id in ids) {
@@ -44,7 +45,7 @@ Game applyLandBattleAttackTreasuryCosts(Game game, BattleContext ctx) {
     if (p == null) continue;
     final cost = landBattleAttackTreasuryCostForPlayer(p);
     if (cost <= 0) continue;
-    final idx = playerIdxById[id];
+    final idx = playerIndexById[id];
     if (idx == null) continue;
     final nextTreasury = math.max(0, players[idx].treasury - cost);
     players = List<Player>.from(players);
