@@ -651,7 +651,8 @@ Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
 /// `waitForNextTurnLabelAdvance` helper referenced by #2336 AC5: success is
 /// checked before each pump and intervals ramp via
 /// [e2eAdaptivePollRampAfterIdle] (25→50→75→100 ms cap), while the
-/// [_kMaxUiResponseWait] post-tap budget is preserved.
+/// [_kMaxUiResponseWait] post-tap budget is preserved. The final label poll
+/// evaluates the label before each idle pump, matching [e2eWaitForNextTurnLabelAdvance].
 Future<void> _advanceOneHumanTurn(
   WidgetTester tester,
   AppLocalizations l10n, {
@@ -693,7 +694,8 @@ Future<void> _advanceOneHumanTurn(
   }
 
   final sw = Stopwatch()..start();
-  // Check before the first pump so already-advanced labels short-circuit.
+  // Check before the first pump so already-advanced labels short-circuit
+  // (same ordering as [e2eWaitForNextTurnLabelAdvance] in e2e_test_shared).
   final immediateAfter = _readNextTurnButtonLabel(tester);
   if (immediateAfter != null && immediateAfter != before) {
     perf?.timing('next_turn_advance', phaseSw.elapsed);
@@ -701,12 +703,12 @@ Future<void> _advanceOneHumanTurn(
   }
   var labelPollMs = 25;
   while (sw.elapsed < _kMaxUiResponseWait) {
-    await tester.pump(Duration(milliseconds: labelPollMs));
     final after = _readNextTurnButtonLabel(tester);
     if (after != null && after != before) {
       perf?.timing('next_turn_advance', phaseSw.elapsed);
       return;
     }
+    await tester.pump(Duration(milliseconds: labelPollMs));
     labelPollMs = e2eAdaptivePollRampAfterIdle(labelPollMs);
   }
   fail(
