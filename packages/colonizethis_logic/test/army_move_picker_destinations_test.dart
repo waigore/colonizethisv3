@@ -252,12 +252,12 @@ void main() {
       army: army,
       currentOrders: const Orders(),
     );
-    final a = list.firstWhere((e) => e.fullProvinceId == loc2);
-    final b = list.firstWhere((e) => e.fullProvinceId == loc3);
-    expect(a.requiresDeclareWarOnConfirm, isTrue);
-    expect(b.requiresDeclareWarOnConfirm, isTrue);
-    expect(a.ownerFactionId, p2);
-    expect(b.ownerFactionId, p2);
+    final invasions = list
+        .where((e) => e.fullProvinceId == loc2 || e.fullProvinceId == loc3)
+        .toList();
+    expect(invasions, hasLength(2));
+    expect(invasions.every((e) => e.requiresDeclareWarOnConfirm), isTrue);
+    expect(invasions.every((e) => e.ownerFactionId == p2), isTrue);
   });
 
   test('at war with enemy: invasion confirm not required', () {
