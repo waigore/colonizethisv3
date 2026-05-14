@@ -148,4 +148,67 @@ void main() {
       },
     );
   });
+
+  group('sortedProvincesForPartialRevealPrefixedIds', () {
+    test('returns empty list without scanning when id set is empty', () {
+      final game = TestFixtures.minimalGame(
+        id: 'g1',
+        players: const [Player(id: 'p1', displayName: 'P', isHuman: true)],
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: 'oldWorld|a',
+              regionId: 'oldWorld',
+              displayName: 'A',
+              ownerId: 'p1',
+            ),
+          ],
+          units: const [],
+        ),
+      );
+      expect(
+        sortedProvincesForPartialRevealPrefixedIds(
+          world: game.worldState,
+          partiallyRevealedPrefixedProvinceIds: const {},
+        ),
+        isEmpty,
+      );
+    });
+
+    test('returns matching provinces sorted by id', () {
+      const ow = 'oldWorld';
+      final game = TestFixtures.minimalGame(
+        id: 'g1',
+        players: const [Player(id: 'p1', displayName: 'P', isHuman: true)],
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: '$ow|z',
+              regionId: ow,
+              displayName: 'Z',
+              ownerId: 'p1',
+            ),
+            Province(
+              id: '$ow|m',
+              regionId: ow,
+              displayName: 'M',
+              ownerId: 'p1',
+            ),
+            Province(
+              id: '$ow|skip',
+              regionId: ow,
+              displayName: 'S',
+              ownerId: 'p1',
+            ),
+          ],
+          units: const [],
+        ),
+      );
+      final sorted = sortedProvincesForPartialRevealPrefixedIds(
+        world: game.worldState,
+        partiallyRevealedPrefixedProvinceIds: {'$ow|z', '$ow|m'},
+      );
+      expect(sorted.map((p) => p.id).toList(), ['$ow|m', '$ow|z']);
+    });
+  });
 }

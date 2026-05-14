@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/player_view.dart';
+import '../world/province_lookup.dart';
 
 /// Prefixed province ids whose land tile keys show mixed unknown vs known
 /// visibility for [view] (see [isPartiallyRevealedProvinceLandTilesForPlayer]).
@@ -25,6 +26,26 @@ Set<String> partiallyRevealedPrefixedProvinceIdsForPlayer({
     }
   }
   return cached;
+}
+
+/// Province rows for [partiallyRevealedPrefixedProvinceIds], sorted by full
+/// province id. Built once per work-suggestion pass and shared across explorer
+/// units instead of rescanning [allProvinces] per unit (Refs #2394).
+///
+/// When the id set is empty, returns a constant empty list without scanning.
+List<Province> sortedProvincesForPartialRevealPrefixedIds({
+  required WorldState world,
+  required Set<String> partiallyRevealedPrefixedProvinceIds,
+}) {
+  if (partiallyRevealedPrefixedProvinceIds.isEmpty) {
+    return const [];
+  }
+  final out = <Province>[
+    for (final p in allProvinces(world))
+      if (partiallyRevealedPrefixedProvinceIds.contains(p.id)) p,
+  ];
+  out.sort((a, b) => a.id.compareTo(b.id));
+  return out;
 }
 
 /// True when [landTileKeysInProvince] for this player has at least one tile at
