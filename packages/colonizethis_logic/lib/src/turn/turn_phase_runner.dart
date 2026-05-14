@@ -114,12 +114,7 @@ Map<String, Object?>? _phaseExitStateSnapshot(
   if (config.onTurnTracePhase == null) {
     return null;
   }
-  return switch (result) {
-    TurnResolutionComplete(:final game) => game.toJson(),
-    TurnResolutionPendingOvertures(:final game) => game.toJson(),
-    TurnResolutionPendingIntervention(:final game) => game.toJson(),
-    TurnResolutionPendingCallToArms(:final game) => game.toJson(),
-  };
+  return result.game.toJson();
 }
 
 Map<TurnPhase, TurnPhaseHandler> _defaultTurnPhaseHandlers() {
