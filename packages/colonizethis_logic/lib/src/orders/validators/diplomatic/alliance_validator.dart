@@ -7,10 +7,18 @@ import 'diplomatic_sub_validator.dart';
 /// Type-specific validator for [DiplomaticOrderType.alliance] orders.
 /// SPEC/program/orders.md § Diplomatic orders / alliance.
 class AllianceSubValidator implements DiplomaticSubValidator {
-  const AllianceSubValidator({required this.game, required this.playerId});
+  const AllianceSubValidator({
+    required this.game,
+    required this.playerId,
+    this.factionMembership,
+  });
 
   final Game game;
   final String playerId;
+
+  /// Optional precomputed faction classification snapshot reused across
+  /// per-candidate probes to avoid linear `game.players` scans (Refs #2394).
+  final DiplomacyFactionMembership? factionMembership;
 
   @override
   ({OrderValidationResult result, int treasury}) validate({
@@ -18,7 +26,7 @@ class AllianceSubValidator implements DiplomaticSubValidator {
     required int treasury,
   }) {
     final targetId = order.targetFactionId;
-    if (!isGreatPower(game, targetId)) {
+    if (!isGreatPower(game, targetId, factionMembership: factionMembership)) {
       return rejectDiplomaticSub(
         'Alliance target must be a Great Power',
         treasury,
