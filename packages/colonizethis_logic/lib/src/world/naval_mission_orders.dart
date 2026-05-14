@@ -18,9 +18,8 @@ void _resyncFleetLookupMaps(
   Map<String, Fleet> fleetById,
   Map<String, int> fleetIndexById,
 ) {
-  fleetById
-    ..clear()
-    ..addEntries(fleets.map((f) => MapEntry(f.id, f)));
+  fleetById.clear();
+  fleetById.addEntries(fleets.map((f) => MapEntry(f.id, f)));
   fleetIndexById.clear();
   for (var i = 0; i < fleets.length; i++) {
     fleetIndexById[fleets[i].id] = i;
