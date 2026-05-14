@@ -248,13 +248,19 @@ Orders generateOrdersWithSimpleHeuristics(
   String playerId,
   int turnSeed, {
   Map<String, TileMapResult>? tileMapByRegion,
+  /// When true, [game] is used as-is (callers must already have run
+  /// [ensureMilitaryArmiesForGame]). Used by [generateOrdersForGame] to avoid
+  /// O(players) redundant full-world army reconciliation (Refs #2394).
+  bool skipEnsureMilitaryArmies = false,
 }) {
   final player = game.playerById(playerId);
   if (player == null) {
     return const Orders();
   }
 
-  final g = ensureMilitaryArmiesForGame(game);
+  final g = skipEnsureMilitaryArmies
+      ? game
+      : ensureMilitaryArmiesForGame(game);
   final factionMembership = DiplomacyFactionMembership.from(g);
   final rng = math.Random(turnSeed);
   var current = const Orders();
