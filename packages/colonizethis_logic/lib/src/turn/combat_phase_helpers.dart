@@ -1,7 +1,7 @@
 // Helpers for the combat phase: apply one land battle (quick or auto-resolve), evidence, dialogue.
 // SPEC/program/turn-resolution-phase-details.md § Combat. Called from turn_resolver._runCombatPhase.
 
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../combat/battle_general_assignment.dart';

@@ -4,31 +4,41 @@
 // the package exposes a single shared `logicLog` whose prefix matches the
 // package log prefix `logic` and forwards through `CtLogger`.
 
+import 'package:colonizethis_logger/colonizethis_logger.dart' show CtLogger;
 import 'package:colonizethis_logic/package_log_prefix.dart';
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/package_logger.dart'
+    as pkg_logger
+    show logicLog, packageLogger;
+import 'package:colonizethis_logic/src/logging.dart' as logic_logging;
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart' show Level, LogEvent, Logger;
 
 void main() {
   group('packageLogger / logicLog (Refs #2391)', () {
     test('logicLog prefix matches kPackageLogPrefix', () {
-      expect(logicLog, isA<CtLogger>());
-      expect(logicLog.prefix, equals(kPackageLogPrefix));
+      expect(pkg_logger.logicLog, isA<CtLogger>());
+      expect(pkg_logger.logicLog.prefix, equals(kPackageLogPrefix));
       expect(kPackageLogPrefix, equals('logic'));
     });
 
+    test('lib/src/logging.dart barrel re-exports the same logicLog (AC5)', () {
+      expect(identical(pkg_logger.logicLog, logic_logging.logicLog), isTrue);
+    });
+
     test('logicLog is the single shared instance for the package', () {
-      final first = logicLog;
-      final second = logicLog;
+      final first = pkg_logger.logicLog;
+      final second = pkg_logger.logicLog;
       expect(identical(first, second), isTrue);
     });
 
-    test('packageLogger() still returns a fresh logger with the same prefix',
-        () {
-      final fresh = packageLogger();
-      expect(fresh.prefix, equals(logicLog.prefix));
-      expect(identical(fresh, logicLog), isFalse);
-    });
+    test(
+      'packageLogger() still returns a fresh logger with the same prefix',
+      () {
+        final fresh = pkg_logger.packageLogger();
+        expect(fresh.prefix, equals(pkg_logger.logicLog.prefix));
+        expect(identical(fresh, pkg_logger.logicLog), isFalse);
+      },
+    );
 
     test('logicLog emits messages with the `logic:` prefix', () {
       final captured = <LogEvent>[];
@@ -37,13 +47,14 @@ void main() {
       final priorLevel = Logger.level;
       Logger.level = Level.debug;
       try {
-        logicLog.i('shared_logger_smoke');
+        pkg_logger.logicLog.i('shared_logger_smoke');
       } finally {
         Logger.removeLogListener(listener);
         Logger.level = priorLevel;
       }
-      final messages =
-          captured.map((e) => e.message?.toString() ?? '').toList();
+      final messages = captured
+          .map((e) => e.message?.toString() ?? '')
+          .toList();
       expect(
         messages.any((m) => m.contains('logic: shared_logger_smoke')),
         isTrue,
