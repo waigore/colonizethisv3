@@ -21,12 +21,22 @@ const int _kMaxArmyMoveProbeAttemptsPerArmy = 80;
 
 /// Suggests candidate move orders that are information-legal (per [PlayerView])
 /// and rules-legal (per [OrderEngine]) for [view.playerId].
+///
+/// Throughput hook: callers that enumerate multiple suggestion families against
+/// the same `(game, view.playerId, currentOrders)` may supply
+/// [sharedCandidateValidator] to amortize `PlayerView` / units-by-id
+/// construction across families (Refs #2394,
+/// `SPEC/program/order-suggestions.md` § Throughput bounds). When omitted,
+/// this function constructs its own validator. The shared instance must be
+/// built with the same inputs as this call; observable suggestions must match
+/// the default path.
 List<MoveOrder> suggestMoveOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
   orderSuggestionLog.d('suggestMoveOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <MoveOrder>[];
@@ -55,12 +65,19 @@ List<MoveOrder> suggestMoveOrders(
   // candidate probe in the loop, instead of being rebuilt per probe via the
   // old [OrderEngine] full-pass path. SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
-  final candidateValidator = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: currentOrders,
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
   );
+  final candidateValidator =
+      sharedCandidateValidator ??
+      IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        basePrefix: currentOrders,
+      );
 
   for (final unit in view.ownUnits) {
     if (isMilitaryUnit(unit.type)) {
@@ -120,11 +137,18 @@ List<MoveOrder> suggestMoveOrders(
 /// Destination province ids for army moves (Military Units picker parity): adjacent
 /// land provinces in the army's region plus every province owned by [playerId]
 /// in any region; excludes the army's current province.
+///
+/// When [playerOwnedFullProvinceIds] is supplied (typically built once per
+/// [suggestArmyMoveOrders] pass from [PlayerView.provincesById] or a single
+/// [allProvinces] scan), owned-province ids are taken from that set instead of
+/// rescanning the world per army (Refs #2394, SPEC/program/order-suggestions.md,
+/// SPEC/program/logic-dual-region-province-access.md).
 List<String> armyMoveCandidateDestinationProvinceIds({
   required Game game,
   required MapTopology topology,
   required String playerId,
   required Army army,
+  Set<String>? playerOwnedFullProvinceIds,
 }) {
   final fromFull = army.stationedProvinceId;
   final regionId = ProvinceId.regionIdFrom(fromFull);
@@ -134,9 +158,13 @@ List<String> armyMoveCandidateDestinationProvinceIds({
   for (final n in neighborProvinceIdsInRegion(topology, regionId, fromLocal)) {
     out.add(ProvinceId.full(regionId, n));
   }
-  for (final p in allProvinces(game.worldState)) {
-    if (p.ownerId == playerId) {
-      out.add(toFullProvinceId(p.regionId, p.id));
+  if (playerOwnedFullProvinceIds != null) {
+    out.addAll(playerOwnedFullProvinceIds);
+  } else {
+    for (final p in allProvinces(game.worldState)) {
+      if (p.ownerId == playerId) {
+        out.add(toFullProvinceId(p.regionId, p.id));
+      }
     }
   }
   out.remove(fromFull);
@@ -181,7 +209,11 @@ bool _armyMoveNeedsDeclareWarTrial(
     return false;
   }
   if (!isGreatPower(game, destOwnerId, factionMembership: factionMembership) &&
-      !isMinorOrTribe(game, destOwnerId, factionMembership: factionMembership)) {
+      !isMinorOrTribe(
+        game,
+        destOwnerId,
+        factionMembership: factionMembership,
+      )) {
     return false;
   }
   return !canAttackWithWarOrDeclaring(game, playerId, destOwnerId, diplo);
@@ -190,22 +222,34 @@ bool _armyMoveNeedsDeclareWarTrial(
 /// Valid, sorted destinations for the Move Army dialog: player-owned and
 /// invasion targets only if the merged draft (with optional same-turn declare
 /// war) passes [OrderEngine] validation. SPEC/ui/military-units-panel.md.
+///
+/// When [playerOwnedFullProvinceIds] is provided by the caller, the picker
+/// skips the fallback owned-province [allProvinces] scan and reuses the
+/// provided set (Refs #2394).
 List<ArmyMovePickerDestination> armyMovePickerDestinations({
   required Game game,
   required MapTopology topology,
   required String playerId,
   required Army army,
   required Orders currentOrders,
+  Set<String>? playerOwnedFullProvinceIds,
 }) {
   final diplo =
       currentOrders.diplomaticOrdersByPlayerId[playerId] ??
       const <DiplomaticOrder>[];
   final factionMembership = DiplomacyFactionMembership.from(game);
+  final ownedProvinceIds =
+      playerOwnedFullProvinceIds ??
+      <String>{
+        for (final p in allProvinces(game.worldState))
+          if (p.ownerId == playerId) toFullProvinceId(p.regionId, p.id),
+      };
   final raw = armyMoveCandidateDestinationProvinceIds(
     game: game,
     topology: topology,
     playerId: playerId,
     army: army,
+    playerOwnedFullProvinceIds: ownedProvinceIds,
   );
   final baseValidator = IncrementalCandidateValidator.forPlayer(
     game: game,
@@ -283,12 +327,20 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
 }
 
 /// Suggests candidate [ArmyMoveOrder]s for non-home armies owned by [view.playerId].
+///
+/// Throughput hook: callers that enumerate multiple suggestion families against
+/// the same `(game, view.playerId, currentOrders)` may supply
+/// [sharedCandidateValidator] to amortize `PlayerView` / units-by-id
+/// construction across families (Refs #2394). The shared instance must be
+/// built with the same inputs; observable suggestions must match the default
+/// path.
 List<ArmyMoveOrder> suggestArmyMoveOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  IncrementalCandidateValidator? sharedCandidateValidator,
+}) {
   final playerId = view.playerId;
   final suggestions = <ArmyMoveOrder>[];
   final existingArmyMoves = <String, Set<String>>{};
@@ -303,12 +355,24 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
   // Single per-player validator: amortizes the per-player [PlayerView] /
   // units-by-id setup across every candidate probe. SPEC/program/order-
   // suggestions.md § Incremental candidate validation. Refs #2237.
-  final candidateValidator = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    basePrefix: currentOrders,
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
   );
+  final candidateValidator =
+      sharedCandidateValidator ??
+      IncrementalCandidateValidator.forPlayer(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        basePrefix: currentOrders,
+      );
+
+  final playerOwnedFullProvinceIds = <String>{
+    for (final e in view.provincesById.entries)
+      if (e.value.ownerId == playerId) e.key,
+  };
 
   for (final army in game.worldState.armies) {
     if (army.ownerId != playerId) continue;
@@ -324,6 +388,7 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
       topology: topology,
       playerId: playerId,
       army: army,
+      playerOwnedFullProvinceIds: playerOwnedFullProvinceIds,
     );
 
     var acceptedForArmy = 0;

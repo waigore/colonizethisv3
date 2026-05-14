@@ -6,8 +6,6 @@ import '../../constants.dart';
 import '../build_rail_work_rules.dart';
 import 'work_order_handler.dart';
 
-final _log = packageLogger();
-
 class _StandardWorkTargetConfig {
   const _StandardWorkTargetConfig({
     required this.allowedForUnitType,
@@ -107,7 +105,7 @@ bool applyStandardWorkOrder({
 
   deductMaterialCost(cost);
   final totalTurns = config.totalTurnsFn();
-  _log.d(
+  logicLog.d(
     'work order accepted and assigned unit=${order.unitId} target=$orderTarget targetTileKey=$targetTileKey totalTurns=$totalTurns',
   );
   updateUnit(
@@ -134,11 +132,11 @@ bool shouldSkipBuildFortForMissingTech({
 }) {
   final fortLevel = province?.fortLevel ?? 0;
   if (fortLevel == 1 && techUnlocked?[kTechIdMineEngineering] != true) {
-    _log.d('build_fort skipped - Mine Engineering required for fort level 2');
+    logicLog.d('build_fort skipped - Mine Engineering required for fort level 2');
     return true;
   }
   if (fortLevel == 2 && techUnlocked?[kTechIdModernForts] != true) {
-    _log.d('build_fort skipped - Modern Forts required for fort level 3');
+    logicLog.d('build_fort skipped - Modern Forts required for fort level 3');
     return true;
   }
   return false;
@@ -155,7 +153,7 @@ bool shouldSkipBuildRailForInvalidTerrainOrTech({
     terrain: terrain,
   );
   if (railReason == null) return false;
-  _log.d('build_rail skipped - $railReason');
+  logicLog.d('build_rail skipped - $railReason');
   return true;
 }
 

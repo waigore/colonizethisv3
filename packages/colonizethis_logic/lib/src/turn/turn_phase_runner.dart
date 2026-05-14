@@ -13,8 +13,6 @@ import 'turn_resolver_config.dart';
 import 'trace/turn_trace_contracts.dart';
 import 'phases.dart';
 
-final _log = packageLogger();
-
 /// Runs full turn phase sequence; may return early for pending diplomacy.
 TurnResolutionResult runTurnResolutionPipeline({
   required Game gameAtResolutionStart,
@@ -38,7 +36,7 @@ TurnResolutionResult runTurnResolutionPipeline({
     if (i < phaseIndex) continue;
     config.turnTraceRuntime?.clearPhaseOrderEvents();
     config.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.start);
-    _log.i('phase ${phase.name} start');
+    logicLog.i('phase ${phase.name} start');
     final beforeState = config.onTurnTracePhase == null
         ? null
         : acc.game.toJson();
@@ -67,11 +65,11 @@ TurnResolutionResult runTurnResolutionPipeline({
         );
         acc = pipeline;
     }
-    _log.i('phase ${phase.name} end');
+    logicLog.i('phase ${phase.name} end');
     config.onPhaseProgress?.call(phase, TurnPhaseProgressMarker.end);
   }
 
-  _log.i('turn $turn resolve end');
+  logicLog.i('turn $turn resolve end');
   emitPlayerDiscoveryEvents(
     gameAtResolutionStart,
     acc.game,

@@ -8,6 +8,7 @@ import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
 import 'order_suggestion_work_tile_prefilter.dart';
+import 'partial_province_reveal.dart';
 import 'unit_type_helpers.dart';
 
 /// Returns the set of tile keys that are valid targets for a work order
@@ -123,7 +124,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     playerId: playerId,
     workTarget: workTarget,
     exploreProvinceScope: workTarget == kWorkTargetExplore
-        ? _partiallyRevealedProvinceCacheForPlayer(game: game, view: view)
+        ? partiallyRevealedPrefixedProvinceIdsForPlayer(game: game, view: view)
         : null,
     tileMapByRegion: tileMapByRegion,
   );
@@ -154,41 +155,6 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
     }
   }
   return valid;
-}
-
-Set<String> _partiallyRevealedProvinceCacheForPlayer({
-  required Game game,
-  required PlayerView view,
-}) {
-  final cached = <String>{};
-  for (final regionEntry
-      in game.worldState.tileKeysByRegionAndProvince.entries) {
-    for (final provinceEntry in regionEntry.value.entries) {
-      final provinceId = provinceEntry.key;
-      if (!ProvinceId.isPrefixed(provinceId)) continue;
-      if (_hasMixedKnownAndUnknownVisibility(view, provinceEntry.value)) {
-        cached.add(provinceId);
-      }
-    }
-  }
-  return cached;
-}
-
-bool _hasMixedKnownAndUnknownVisibility(
-  PlayerView view,
-  List<String> tileKeys,
-) {
-  var hasKnown = false;
-  var hasUnknown = false;
-  for (final tileKey in tileKeys) {
-    if (view.visibilityForTile(tileKey) == VisibilityLevel.unknown) {
-      hasUnknown = true;
-    } else {
-      hasKnown = true;
-    }
-    if (hasKnown && hasUnknown) return true;
-  }
-  return false;
 }
 
 List<String> sortedVisibleWorkTargetCandidates(

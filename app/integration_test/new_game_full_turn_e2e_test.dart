@@ -27,6 +27,9 @@ Future<void> _openCivilianPanel(
   final civilianPanel = find.byKey(kCtE2ECivilianPanelRootKey);
   final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
   Future<bool> tryOpen(Finder trigger) async {
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
     final tappable = trigger.hitTestable();
     if (tappable.evaluate().isEmpty) {
       // Dismiss blocking overlays/dialogs before retrying.
@@ -36,37 +39,44 @@ Future<void> _openCivilianPanel(
     await tester.tap(tappable.first, warnIfMissed: false);
     await tester.pump();
     final openDeadline = DateTime.now().add(const Duration(seconds: 3));
+    var openPollMs = 25;
     while (DateTime.now().isBefore(openDeadline)) {
       if (civilianPanel.evaluate().isNotEmpty) {
         return true;
       }
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(Duration(milliseconds: openPollMs));
+      openPollMs = e2eAdaptivePollRampAfterIdle(openPollMs);
     }
     return false;
   }
 
-  var outerPollMs = 25;
+  var panelPollMs = 25;
   while (sw.elapsed < timeout) {
     if (civilianPanel.evaluate().isNotEmpty ||
         navalPanel.evaluate().isNotEmpty) {
       await e2eCloseBottomSheet(tester, perf: perf);
-      await tester.pump(Duration(milliseconds: outerPollMs));
-      outerPollMs = e2eAdaptivePollRampAfterIdle(outerPollMs);
+      await tester.pump(Duration(milliseconds: panelPollMs));
+      panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
       continue;
     }
     if (empireRailButton.evaluate().isNotEmpty) {
       if (await tryOpen(empireRailButton)) {
+        perf?.timing('open_panel_civilian', sw.elapsed);
         return;
       }
+      panelPollMs = 25;
+      continue;
     }
     if (markerButton.evaluate().isNotEmpty) {
       if (await tryOpen(markerButton)) {
         perf?.timing('open_panel_civilian', sw.elapsed);
         return;
       }
+      panelPollMs = 25;
+      continue;
     }
-    await tester.pump(Duration(milliseconds: outerPollMs));
-    outerPollMs = e2eAdaptivePollRampAfterIdle(outerPollMs);
+    await tester.pump(Duration(milliseconds: panelPollMs));
+    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
   }
   fail(
     'Timed out after ${timeout.inSeconds}s waiting for a civilian panel opener. '
@@ -83,7 +93,7 @@ Future<void> _openPanelFromMarker(
   E2ePerfLog? perf,
 }) async {
   final sw = Stopwatch()..start();
-  var outerPollMs = 25;
+  var panelPollMs = 25;
   while (sw.elapsed < timeout) {
     if (panelRoot.evaluate().isNotEmpty) {
       perf?.timing('open_panel_from_marker', sw.elapsed);
@@ -93,19 +103,24 @@ Future<void> _openPanelFromMarker(
     if (tappable.evaluate().isEmpty) {
       // Clear transient overlays/dialogs that can block marker taps.
       await e2eDismissTransientUi(tester, perf: perf);
-      await tester.pump(Duration(milliseconds: outerPollMs));
-      outerPollMs = e2eAdaptivePollRampAfterIdle(outerPollMs);
+      await tester.pump(Duration(milliseconds: panelPollMs));
+      panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
       continue;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
     final openDeadline = DateTime.now().add(const Duration(seconds: 3));
+    var openPollMs = 25;
     while (DateTime.now().isBefore(openDeadline)) {
       if (panelRoot.evaluate().isNotEmpty) {
         perf?.timing('open_panel_from_marker', sw.elapsed);
         return;
       }
-      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump(Duration(milliseconds: openPollMs));
+      openPollMs = e2eAdaptivePollRampAfterIdle(openPollMs);
     }
+    panelPollMs = 25;
+    await tester.pump(Duration(milliseconds: panelPollMs));
+    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
   }
   fail(
     'Timed out after ${timeout.inSeconds}s opening marker panel. '
@@ -119,8 +134,6 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
   final sw = Stopwatch()..start();
   var prodPollMs = 25;
   while (sw.elapsed < const Duration(seconds: 20)) {
-    await tester.pump(Duration(milliseconds: prodPollMs));
-    prodPollMs = e2eAdaptivePollRampAfterIdle(prodPollMs);
     if (productionPanel.evaluate().isNotEmpty) {
       return;
     }
@@ -163,7 +176,10 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
       // Dismiss transient overlays/dialogs and retry opening from the rail.
       await e2eDismissTransientUi(tester);
       prodPollMs = 25;
+      continue;
     }
+    await tester.pump(Duration(milliseconds: prodPollMs));
+    prodPollMs = e2eAdaptivePollRampAfterIdle(prodPollMs);
   }
 
   fail(
