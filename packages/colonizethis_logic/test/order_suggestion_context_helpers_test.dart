@@ -67,6 +67,25 @@ void main() {
   });
 
   group('OvertureStageChain.previous', () {
+    test('next is left inverse of previous for every non-terminal stage', () {
+      for (final stage in OvertureStage.values) {
+        final forward = stage.next;
+        if (forward == null) {
+          continue;
+        }
+        expect(forward.previous, stage);
+      }
+    });
+
+    test('previous then next restores stage for every stage past none', () {
+      for (final stage in OvertureStage.values) {
+        if (stage == OvertureStage.none) {
+          continue;
+        }
+        expect(stage.previous.next, stage);
+      }
+    });
+
     test('reverses next for progression chain', () {
       for (final stage in [
         OvertureStage.none,
