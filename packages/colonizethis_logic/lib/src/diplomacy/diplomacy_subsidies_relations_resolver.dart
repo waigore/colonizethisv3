@@ -21,6 +21,18 @@ Map<String, int> _playerListIndexById(List<Player> players) {
   return out;
 }
 
+String _subsidyPairKey(String payerId, String targetId) =>
+    '$payerId\x1F$targetId';
+
+Map<String, int> _subsidyStateIndexByPair(List<SubsidyState> states) {
+  final out = <String, int>{};
+  for (var i = 0; i < states.length; i++) {
+    final s = states[i];
+    out[_subsidyPairKey(s.payerId, s.targetId)] = i;
+  }
+  return out;
+}
+
 Game terminateAgreementsOnWar(Game game) {
   final turn = game.worldState.turnState.turnNumber;
   var overtures = game.overtureStates;
@@ -126,6 +138,7 @@ Game applyRelationModifiersAndUpdateScores(
   // SetSubsidy: Create or update ongoing subsidy. Requires Consulate or Embassy.
   // Deducts initial payment immediately; ongoing payments processed each turn.
   var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
+  var subsidyIndexByPair = _subsidyStateIndexByPair(subsidyStates);
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
 
@@ -158,9 +171,8 @@ Game applyRelationModifiersAndUpdateScores(
       }
 
       // Store/update ongoing subsidy state
-      final existingSubsidyIdx = subsidyStates.indexWhere(
-        (s) => s.payerId == gpId && s.targetId == targetId,
-      );
+      final pairKey = _subsidyPairKey(gpId, targetId);
+      final existingSubsidyIdx = subsidyIndexByPair[pairKey] ?? -1;
       final isUpdate = existingSubsidyIdx >= 0;
       if (isUpdate) {
         subsidyStates[existingSubsidyIdx] = subsidyStates[existingSubsidyIdx]
@@ -173,6 +185,7 @@ Game applyRelationModifiersAndUpdateScores(
             amountPerTurn: amount,
           ),
         );
+        subsidyIndexByPair[pairKey] = subsidyStates.length - 1;
       }
 
       game = game.copyWith(players: players, subsidyStates: subsidyStates);
