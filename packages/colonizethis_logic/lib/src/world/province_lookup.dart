@@ -21,6 +21,33 @@ Map<String, Province> _provinceIdIndexForList(List<Province> provinces) {
   return index;
 }
 
+/// O(1) check that [provinces] contains a row whose [Province.id] equals [provinceId].
+///
+/// Uses the same per-list index as region-scoped lookup (Refs #2394).
+bool provinceListContainsProvinceId(
+  List<Province> provinces,
+  String provinceId,
+) => _provinceIdIndexForList(provinces).containsKey(provinceId);
+
+/// When a row with [provinceId] exists, returns a new list with that row's
+/// [Province.fortLevel] decremented by one (clamped 0–3). Otherwise returns
+/// [provinces] unchanged (same reference).
+List<Province> decrementFortLevelForProvinceIdIfPresent(
+  List<Province> provinces,
+  String provinceId,
+) {
+  if (!_provinceIdIndexForList(provinces).containsKey(provinceId)) {
+    return provinces;
+  }
+  return [
+    for (final p in provinces)
+      if (p.id == provinceId)
+        p.copyWith(fortLevel: (p.fortLevel - 1).clamp(0, 3))
+      else
+        p,
+  ];
+}
+
 RegionData? _regionForId(WorldState world, String regionId) {
   return regionId == kRegionOldWorld
       ? world.oldWorld

@@ -202,4 +202,47 @@ void main() {
       );
     });
   });
+
+  group('provinceListContainsProvinceId', () {
+    test('true when id matches a row', () {
+      expect(
+        provinceListContainsProvinceId(world.oldWorld.provinces, 'oldWorld|p1'),
+        isTrue,
+      );
+    });
+
+    test('false when absent', () {
+      expect(
+        provinceListContainsProvinceId(
+          world.oldWorld.provinces,
+          'oldWorld|missing',
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('decrementFortLevelForProvinceIdIfPresent', () {
+    test('returns same list reference when id missing', () {
+      final provinces = world.oldWorld.provinces;
+      final out = decrementFortLevelForProvinceIdIfPresent(
+        provinces,
+        'oldWorld|missing',
+      );
+      expect(identical(out, provinces), isTrue);
+    });
+
+    test('decrements fort for matching row', () {
+      final withFort = Province(
+        id: 'oldWorld|fx',
+        regionId: 'oldWorld',
+        displayName: 'Fort',
+        fortLevel: 2,
+      );
+      final list = [withFort];
+      final out = decrementFortLevelForProvinceIdIfPresent(list, 'oldWorld|fx');
+      expect(identical(out, list), isFalse);
+      expect(out.single.fortLevel, 1);
+    });
+  });
 }
