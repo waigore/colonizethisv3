@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/naval.dart';
 import '../world/player_view.dart';
@@ -348,13 +349,8 @@ DiplomaticOrder? _establishOvertureSuggestionOrder({
   if (next == OvertureStage.tradeConsulate ||
       next == OvertureStage.embassy ||
       next == OvertureStage.nap) {
-    Player? submitter;
-    for (final p in game.players) {
-      if (p.id == playerId) {
-        submitter = p;
-        break;
-      }
-    }
+    // O(1) player lookup (Refs #2394); minor/tribe overture stages require tech.
+    final submitter = game.playerById(playerId);
     if (submitter?.techUnlocked?[kTechIdDiplomaticExpertise] != true) {
       return null;
     }

@@ -234,6 +234,73 @@ void main() {
     });
 
     test(
+      'does not suggest tradeConsulate/embassy/nap overture toward minor without diplomatic expertise',
+      () {
+        const api = DefaultOrderSuggestionAPI();
+        const topology = MapTopology(nodes: [], edges: []);
+        final game = Game(
+          id: 'g1',
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: 'oldWorld|m1',
+                  regionId: 'oldWorld',
+                  ownerId: 'minor1',
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            playerVisibilityByTile: const {
+              'gp1': {'oldWorld|m1|0|0': 'fullyVisible'},
+            },
+            tileKeysByRegionAndProvince: {
+              'oldWorld': {
+                'oldWorld|m1': ['oldWorld|m1|0|0'],
+              },
+            },
+          ),
+          players: [
+            const Player(id: 'gp1', displayName: 'A', isHuman: false).copyWith(
+              treasury: 600,
+              techUnlocked: const <String, bool>{},
+            ),
+          ],
+          minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+          diplomacyRelations: const [
+            DiplomacyRelation(
+              factionId1: 'gp1',
+              factionId2: 'minor1',
+              state: RelationState.atPeace,
+              level: RelationLevel.neutral,
+            ),
+          ],
+        );
+        final view = buildPlayerView(game, topology, 'gp1');
+        final list = api.suggestDiplomaticOrders(
+          view,
+          game,
+          topology,
+          const Orders(),
+        );
+        final overture = list
+            .where((o) => o.type == DiplomaticOrderType.establishOverture)
+            .where((o) => o.targetFactionId == 'minor1')
+            .toList();
+        expect(
+          overture.any(
+            (o) =>
+                o.overtureStage == OvertureStage.tradeConsulate ||
+                o.overtureStage == OvertureStage.embassy ||
+                o.overtureStage == OvertureStage.nap,
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test(
       'toward minor at peace with join-empire overture suggests declareWar (primary before economic)',
       () {
         const api = DefaultOrderSuggestionAPI();
