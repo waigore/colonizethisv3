@@ -3,6 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
 import '../economy/projected_cost_engine.dart';
+import '../economy/sea_transport.dart';
+import '../world/army_movement.dart';
 import '../world/naval.dart';
 import '../world/ship_instance_allocate.dart';
 import 'build_spawn_province.dart';
@@ -10,14 +12,21 @@ import 'orders_application_context.dart';
 
 /// Home-fleet ship spawn when capital has a seaboard port (naval build slice, #1618).
 class _NavalBuildSession {
-  _NavalBuildSession(this._game, this._topology);
+  _NavalBuildSession(this._game, this._topology)
+      : _fleetById = fleetsByIdForWorld(_game.worldState);
 
   Game _game;
   final MapTopology _topology;
 
+  /// Cached O(1) index of [WorldState.fleets] by fleet id. Rebuilt on
+  /// [rebase] so home-fleet lookups during build orders avoid a per-order
+  /// `indexWhere` over `WorldState.fleets`. Refs #2394.
+  Map<String, Fleet> _fleetById;
+
   /// Rebases session state onto the latest build-phase game snapshot.
   void rebase(Game game) {
     _game = game;
+    _fleetById = fleetsByIdForWorld(_game.worldState);
   }
 
   /// Spawns into home fleet when affordable build was already deducted; no-op if blocked.
@@ -33,39 +42,47 @@ class _NavalBuildSession {
     );
     if (seaZoneAtCap == null) return;
 
-    var ws = _game.worldState;
-    var fleets = List<Fleet>.from(ws.fleets);
+    final ws = _game.worldState;
     final homeFleetId = homeFleetIdFor(player.id);
-    final existing = fleets.indexWhere(
-      (f) => f.id == homeFleetId && f.ownerId == player.id,
-    );
+    // O(1) home-fleet lookup via the rebased index (Refs #2394). When the map
+    // entry exists but is owned by another faction, treat as "no home fleet"
+    // for this player and create a fresh one — same semantics as the legacy
+    // `indexWhere((f) => f.id == ... && f.ownerId == ...)` predicate.
+    final mapped = _fleetById[homeFleetId];
+    final Fleet? existingFleet =
+        (mapped != null && mapped.ownerId == player.id) ? mapped : null;
     var nextSeq = ws.nextShipInstanceSeq;
-    final inferred = inferNextShipInstanceSeqFromFleets(fleets);
+    final inferred = inferNextShipInstanceSeqFromFleets(ws.fleets);
     if (nextSeq < inferred) nextSeq = inferred;
     final (seqAfter, minted) = mintShipInstances(
       nextShipInstanceSeq: nextSeq,
       typeIds: [order.unitType],
     );
     nextSeq = seqAfter;
-    if (existing >= 0) {
-      final f = fleets[existing];
-      fleets = List<Fleet>.from(fleets)
-        ..[existing] = f.copyWith(ships: [...f.ships, ...minted]);
-    } else {
-      fleets = [
-        ...fleets,
-        Fleet(
-          id: homeFleetId,
-          ownerId: player.id,
-          seaZoneId: null,
-          inPortAtProvinceId: capProvinceId,
-          regionId: regionId,
-          ships: minted,
-        ),
+    final List<Fleet> nextFleets;
+    if (existingFleet != null) {
+      final updated = existingFleet.copyWith(
+        ships: [...existingFleet.ships, ...minted],
+      );
+      nextFleets = <Fleet>[
+        for (final f in ws.fleets)
+          if (f.id == homeFleetId && f.ownerId == player.id) updated else f,
       ];
+      _fleetById[homeFleetId] = updated;
+    } else {
+      final newFleet = Fleet(
+        id: homeFleetId,
+        ownerId: player.id,
+        seaZoneId: null,
+        inPortAtProvinceId: capProvinceId,
+        regionId: regionId,
+        ships: minted,
+      );
+      nextFleets = [...ws.fleets, newFleet];
+      _fleetById[homeFleetId] = newFleet;
     }
     _game = _game.copyWith(
-      worldState: ws.copyWith(fleets: fleets, nextShipInstanceSeq: nextSeq),
+      worldState: ws.copyWith(fleets: nextFleets, nextShipInstanceSeq: nextSeq),
     );
   }
 
@@ -105,18 +122,30 @@ class _MilitaryBuildState {
     Game game,
     Player player,
     String spawnProvinceId,
-    String newUnitId,
-  ) {
-    return appendMilitaryRegimentToArmy(game, player, spawnProvinceId, newUnitId);
+    String newUnitId, {
+    Map<String, Army>? armiesById,
+  }) {
+    return appendMilitaryRegimentToArmy(
+      game,
+      player,
+      spawnProvinceId,
+      newUnitId,
+      armiesById: armiesById,
+    );
   }
 }
 
 /// One land/civilian/military build order after affordability check; keeps [runBuildPhase]
 /// nesting shallow for CI (`repo.control_flow_nesting_depth`).
+///
+/// When [armiesById] is supplied, military recruits skip the per-order
+/// `indexWhere` over `worldState.armies` via the shared O(1) snapshot. Refs
+/// #2394, SPEC/program/order-suggestions.md § Throughput bounds.
 BuildWorkState _applyAffordableBuildUnitOrder({
   required BuildWorkState current,
   required Player player,
   required BuildUnitOrder order,
+  Map<String, Army>? armiesById,
 }) {
   final category = buildUnitCategoryForUnitType(order.unitType);
   if (category == BuildUnitCategory.unknown) return current;
@@ -168,6 +197,7 @@ BuildWorkState _applyAffordableBuildUnitOrder({
       player,
       spawnProvinceId,
       newUnit.id,
+      armiesById: armiesById,
     );
   }
 
@@ -175,11 +205,19 @@ BuildWorkState _applyAffordableBuildUnitOrder({
 }
 
 /// Applies build orders for all players. Returns state with updated [game] and unit maps.
+///
+/// Maintains an O(1) `Map<String, Army>` snapshot across all military recruits
+/// in the phase so [_applyAffordableBuildUnitOrder] avoids a per-order
+/// `indexWhere` over `WorldState.armies`. Refs #2394,
+/// SPEC/program/order-suggestions.md § Throughput bounds.
 BuildWorkState runBuildPhase(BuildWorkState state) {
   final naval = state.topology != null
       ? _NavalBuildSession(state.game, state.topology!)
       : null;
   var current = naval != null ? state.copyWith(game: naval.game) : state;
+  // Mutable O(1) army index reused across every recruit in this phase; the
+  // helper mutates it in place when armies are added or updated. Refs #2394.
+  final armiesById = armiesByIdForWorld(current.game.worldState);
 
   for (final player in current.game.players) {
     var workers = player.workerPool;
@@ -223,6 +261,7 @@ BuildWorkState runBuildPhase(BuildWorkState state) {
         current: current,
         player: player,
         order: order,
+        armiesById: armiesById,
       );
     }
 
