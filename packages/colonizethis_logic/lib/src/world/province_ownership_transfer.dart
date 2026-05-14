@@ -168,8 +168,11 @@ _CanonicalProvinceTransferContext _resolveValidatedCanonicalTransfer(
       '$canonicalId (regionId=$regionId)',
     );
   }
-  final provinceIndex = region.provinces.indexWhere((p) => p.id == canonicalId);
-  if (provinceIndex < 0) {
+  final provinceIndex = provinceListIndexOfProvinceId(
+    region.provinces,
+    canonicalId,
+  );
+  if (provinceIndex == null) {
     throw StateError(
       'Canonical province transfer: province missing from region data '
       '$canonicalId',

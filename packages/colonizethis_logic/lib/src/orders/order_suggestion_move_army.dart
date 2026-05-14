@@ -67,6 +67,7 @@ List<MoveOrder> suggestMoveOrders(
         sharedCandidateValidator.playerId == playerId,
     'sharedCandidateValidator playerId must match view.playerId',
   );
+  final factionMembership = DiplomacyFactionMembership.from(game);
   final candidateValidator =
       sharedCandidateValidator ??
       IncrementalCandidateValidator.forPlayer(
@@ -74,6 +75,7 @@ List<MoveOrder> suggestMoveOrders(
         topology: topology,
         playerId: playerId,
         basePrefix: currentOrders,
+        factionMembership: factionMembership,
       );
 
   for (final unit in view.ownUnits) {
@@ -253,6 +255,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     topology: topology,
     playerId: playerId,
     basePrefix: currentOrders,
+    factionMembership: factionMembership,
   );
   final declareWarTrialValidatorsByTargetFaction =
       <String, IncrementalCandidateValidator>{};
@@ -294,6 +297,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
           topology: topology,
           playerId: playerId,
           basePrefix: trialOrders,
+          factionMembership: factionMembership,
         );
       });
       if (!trialValidator.isArmyMoveAccepted(move)) {
@@ -364,6 +368,7 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
         sharedCandidateValidator.playerId == playerId,
     'sharedCandidateValidator playerId must match view.playerId',
   );
+  final factionMembership = DiplomacyFactionMembership.from(game);
   final candidateValidator =
       sharedCandidateValidator ??
       IncrementalCandidateValidator.forPlayer(
@@ -371,6 +376,7 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
         topology: topology,
         playerId: playerId,
         basePrefix: currentOrders,
+        factionMembership: factionMembership,
       );
 
   final playerOwnedFullProvinceIds = <String>{

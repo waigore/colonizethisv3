@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import 'order_suggestion_context.dart';
 import 'order_suggestion_helpers.dart';
@@ -97,12 +98,14 @@ AvailableWorkTargetsForUnit getAvailableWorkTargetsForUnit({
     );
   }
 
+  final factionMembership = DiplomacyFactionMembership.from(game);
   final sharedValidator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: currentOrders,
     tileMapByRegion: tileMapByRegion,
+    factionMembership: factionMembership,
   );
   final byTarget = <String, Set<String>>{};
   for (final target in allowed) {

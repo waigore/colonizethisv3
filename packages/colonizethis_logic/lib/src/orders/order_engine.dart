@@ -276,6 +276,13 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
 
     final factionMembership = DiplomacyFactionMembership.from(game);
 
+    // Single-pass army index for full-pass army-move validation (Refs #2394,
+    // SPEC/program/order-suggestions.md — same snapshot semantics as
+    // [IncrementalCandidateValidator._armiesById] for read-only [game]).
+    final armiesById = <String, Army>{
+      for (final a in game.worldState.armies) a.id: a,
+    };
+
     OrderValidators newValidatorBundle() => _validatorFactory(
       game,
       player,
@@ -316,6 +323,7 @@ class OrderEngine with _OrderEngineGeneratedOrderMethods {
         diplomatic,
         view,
         topology,
+        armiesById: armiesById,
         factionMembership: factionMembership,
       );
     }

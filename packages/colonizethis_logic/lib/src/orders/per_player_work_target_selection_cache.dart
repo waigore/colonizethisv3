@@ -4,6 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
@@ -77,6 +78,7 @@ class PerPlayerWorkTargetSelectionCache {
   }
 
   void refresh(WorkTargetSelectionSnapshot snapshot) {
+    final factionMembership = DiplomacyFactionMembership.from(snapshot.game);
     final sharedValidator =
         snapshot.sharedCandidateValidator ??
         buildIncrementalCandidateValidator(
@@ -86,6 +88,7 @@ class PerPlayerWorkTargetSelectionCache {
           baseOrders: snapshot.currentOrders,
           tileMapByRegion: snapshot.tileMapByRegion,
           view: snapshot.playerView,
+          factionMembership: factionMembership,
         );
     final snapshotForPopulation = WorkTargetSelectionSnapshot(
       game: snapshot.game,
@@ -148,6 +151,7 @@ class PerPlayerWorkTargetSelectionCache {
     WorkTargetSelectionSnapshot s,
     String workTarget,
   ) {
+    final factionMembership = DiplomacyFactionMembership.from(s.game);
     final sharedValidator =
         s.sharedCandidateValidator ??
         buildIncrementalCandidateValidator(
@@ -157,6 +161,7 @@ class PerPlayerWorkTargetSelectionCache {
           baseOrders: s.currentOrders,
           tileMapByRegion: s.tileMapByRegion,
           view: s.playerView,
+          factionMembership: factionMembership,
         );
     final merged = <String>{};
     for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
@@ -216,6 +221,7 @@ class PerPlayerWorkTargetSelectionCache {
     WorkTargetSelectionSnapshot s,
     String workTarget,
   ) {
+    final factionMembership = DiplomacyFactionMembership.from(s.game);
     final sharedValidator =
         s.sharedCandidateValidator ??
         buildIncrementalCandidateValidator(
@@ -225,6 +231,7 @@ class PerPlayerWorkTargetSelectionCache {
           baseOrders: s.currentOrders,
           tileMapByRegion: s.tileMapByRegion,
           view: s.playerView,
+          factionMembership: factionMembership,
         );
     final pendingWorkUnitIds = <String>{
       for (final w

@@ -405,20 +405,27 @@ Set<String> provinceIdsAdjacentToSeaZone(
 /// Region id for a sea zone (from topology node). Returns null when not found;
 /// callers must not infer region by defaulting (SPEC/game/world-model-identity.md).
 String? regionIdForSeaZone(MapTopology topology, String seaZoneId) {
-  final direct = topology.nodes.where((n) => n.id == seaZoneId).toList();
-  if (direct.isNotEmpty) return direct.first.regionId;
+  for (final n in topology.nodes) {
+    if (n.id == seaZoneId) {
+      return n.regionId;
+    }
+  }
   if (isCanonicalSeaZoneId(seaZoneId)) return null;
-  final localMatches = topology.nodes
-      .where(
-        (n) =>
-            n.type == TopologyNodeType.seaZone &&
-            isCanonicalSeaZoneId(n.id) &&
-            canonicalizeSeaZoneId(regionId: n.regionId, seaZoneId: seaZoneId) ==
-                n.id,
-      )
-      .toList();
-  if (localMatches.length == 1) return localMatches.first.regionId;
-  return null;
+  TopologyNode? soleLocal;
+  for (final n in topology.nodes) {
+    if (n.type != TopologyNodeType.seaZone) continue;
+    if (!isCanonicalSeaZoneId(n.id)) continue;
+    if (canonicalizeSeaZoneId(regionId: n.regionId, seaZoneId: seaZoneId) !=
+        n.id) {
+      continue;
+    }
+    if (soleLocal == null) {
+      soleLocal = n;
+    } else {
+      return null;
+    }
+  }
+  return soleLocal?.regionId;
 }
 
 /// Sea zone ids that share an edge with [provinceId] (P↔S). [provinceId] may be

@@ -202,4 +202,75 @@ void main() {
       );
     });
   });
+
+  group('provinceListContainsProvinceId', () {
+    test('true when id matches a row', () {
+      expect(
+        provinceListContainsProvinceId(world.oldWorld.provinces, 'oldWorld|p1'),
+        isTrue,
+      );
+    });
+
+    test('false when absent', () {
+      expect(
+        provinceListContainsProvinceId(
+          world.oldWorld.provinces,
+          'oldWorld|missing',
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('provinceListIndexOfProvinceId', () {
+    test('returns first index and matches indexWhere on duplicate ids', () {
+      final dupA = Province(
+        id: 'dup',
+        regionId: 'oldWorld',
+        displayName: 'First',
+      );
+      final dupB = Province(
+        id: 'dup',
+        regionId: 'oldWorld',
+        displayName: 'Second',
+      );
+      final provinces = [dupA, dupB];
+      expect(provinceListIndexOfProvinceId(provinces, 'dup'), 0);
+      expect(provinces.indexWhere((p) => p.id == 'dup'), 0);
+    });
+
+    test('returns null when absent', () {
+      expect(
+        provinceListIndexOfProvinceId(
+          world.oldWorld.provinces,
+          'oldWorld|missing',
+        ),
+        isNull,
+      );
+    });
+  });
+
+  group('decrementFortLevelForProvinceIdIfPresent', () {
+    test('returns same list reference when id missing', () {
+      final provinces = world.oldWorld.provinces;
+      final out = decrementFortLevelForProvinceIdIfPresent(
+        provinces,
+        'oldWorld|missing',
+      );
+      expect(identical(out, provinces), isTrue);
+    });
+
+    test('decrements fort for matching row', () {
+      final withFort = Province(
+        id: 'oldWorld|fx',
+        regionId: 'oldWorld',
+        displayName: 'Fort',
+        fortLevel: 2,
+      );
+      final list = [withFort];
+      final out = decrementFortLevelForProvinceIdIfPresent(list, 'oldWorld|fx');
+      expect(identical(out, list), isFalse);
+      expect(out.single.fortLevel, 1);
+    });
+  });
 }

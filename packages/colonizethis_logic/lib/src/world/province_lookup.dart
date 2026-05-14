@@ -3,6 +3,77 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 
 import '../constants.dart';
 
+/// Id → first list index for one [RegionData.provinces] list instance (Refs #2394).
+/// First matching id wins, matching [List.indexWhere] semantics on duplicates.
+final Expando<Map<String, int>> _provinceFirstIndexByIdForProvinceList =
+    Expando<Map<String, int>>('provinceFirstIndexByIdForProvinceList');
+
+/// Id → province row for one [RegionData.provinces] list instance (Refs #2394).
+/// First matching id wins, matching [List.indexWhere] semantics on duplicates.
+final Expando<Map<String, Province>> _provinceByIdForProvinceList =
+    Expando<Map<String, Province>>('provinceByIdForProvinceList');
+
+Map<String, int> _provinceFirstIndexByIdForList(List<Province> provinces) {
+  final cached = _provinceFirstIndexByIdForProvinceList[provinces];
+  if (cached != null) {
+    return cached;
+  }
+  final built = <String, int>{};
+  for (var i = 0; i < provinces.length; i++) {
+    built.putIfAbsent(provinces[i].id, () => i);
+  }
+  _provinceFirstIndexByIdForProvinceList[provinces] = built;
+  return built;
+}
+
+Map<String, Province> _provinceIdIndexForList(List<Province> provinces) {
+  var index = _provinceByIdForProvinceList[provinces];
+  if (index != null) {
+    return index;
+  }
+  index = <String, Province>{};
+  for (final p in provinces) {
+    index.putIfAbsent(p.id, () => p);
+  }
+  _provinceByIdForProvinceList[provinces] = index;
+  return index;
+}
+
+/// O(1) check that [provinces] contains a row whose [Province.id] equals [provinceId].
+///
+/// Uses the same per-list index as region-scoped lookup (Refs #2394).
+bool provinceListContainsProvinceId(
+  List<Province> provinces,
+  String provinceId,
+) => _provinceIdIndexForList(provinces).containsKey(provinceId);
+
+/// First index in [provinces] whose [Province.id] equals [provinceId], or null
+/// when none match. Matches [List.indexWhere] semantics on duplicate ids
+/// (first occurrence wins). Refs #2394.
+int? provinceListIndexOfProvinceId(
+  List<Province> provinces,
+  String provinceId,
+) => _provinceFirstIndexByIdForList(provinces)[provinceId];
+
+/// When a row with [provinceId] exists, returns a new list with that row's
+/// [Province.fortLevel] decremented by one (clamped 0–3). Otherwise returns
+/// [provinces] unchanged (same reference).
+List<Province> decrementFortLevelForProvinceIdIfPresent(
+  List<Province> provinces,
+  String provinceId,
+) {
+  if (!_provinceIdIndexForList(provinces).containsKey(provinceId)) {
+    return provinces;
+  }
+  return [
+    for (final p in provinces)
+      if (p.id == provinceId)
+        p.copyWith(fortLevel: (p.fortLevel - 1).clamp(0, 3))
+      else
+        p,
+  ];
+}
+
 RegionData? _regionForId(WorldState world, String regionId) {
   return regionId == kRegionOldWorld
       ? world.oldWorld
@@ -15,9 +86,7 @@ Province? _findProvinceInRegion(
   String localId,
 ) {
   final fullId = ProvinceId.full(regionId, localId);
-  final idx = region.provinces.indexWhere((p) => p.id == fullId);
-  if (idx < 0) return null;
-  return region.provinces[idx];
+  return _provinceIdIndexForList(region.provinces)[fullId];
 }
 
 /// Returns the region data for [regionId], or null if unknown.
@@ -158,10 +227,10 @@ extension WorldStateProvinceLookup on WorldState {
   /// lookups prefer [tryGetProvince] with a prefixed id; this exists for
   /// legacy short ids and tests (waigore/colonizethis#2071 Phase 1).
   String? tryGetRegionIdForLegacyProvinceKey(String key) {
-    if (oldWorld.provinces.indexWhere((p) => p.id == key) >= 0) {
+    if (_provinceIdIndexForList(oldWorld.provinces).containsKey(key)) {
       return kRegionOldWorld;
     }
-    if (newWorld.provinces.indexWhere((p) => p.id == key) >= 0) {
+    if (_provinceIdIndexForList(newWorld.provinces).containsKey(key)) {
       return kRegionNewWorld;
     }
     return null;
