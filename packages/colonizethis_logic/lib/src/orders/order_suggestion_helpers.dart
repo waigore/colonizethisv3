@@ -46,6 +46,10 @@ List<T> filterOrdersByDiplomacy<T>(
   String Function(T order) destinationProvinceId,
 ) {
   final provinceOwner = getProvinceOwnerMap(game);
+  // Single-pass minor ids (Refs #2394): avoid O(orders × minors) scans per row.
+  final minorNationIds = <String>{
+    for (final mn in game.minorNations) mn.id,
+  };
   final filtered = <T>[];
   for (final m in orders) {
     final destOwner = provinceOwner[destinationProvinceId(m)];
@@ -55,8 +59,8 @@ List<T> filterOrdersByDiplomacy<T>(
     }
     final rel = getRelation(game, playerId, destOwner);
     if (rel != null && rel.atPeace) continue;
-    if (rel == null) {
-      if (game.minorNations.any((mn) => mn.id == destOwner)) continue;
+    if (rel == null && minorNationIds.contains(destOwner)) {
+      continue;
     }
     filtered.add(m);
   }
