@@ -5,7 +5,7 @@ import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import '../turn/turn_resolution_result.dart';
 import 'diplomacy_resolver.dart';
-import 'overture_stage_navigation.dart';
+import 'overture_stage_helpers.dart';
 
 Game appendDiplomaticEvent(
   Game game,
@@ -188,7 +188,7 @@ _processEstablishOvertureOrderIfApplicable({
   }
 
   final existing = _findOvertureForGpTarget(overtures, gpId, targetId);
-  final prevStage = previousStage(stage);
+  final prevStage = stage.previous;
   final atPrevStage =
       (existing == null && prevStage == OvertureStage.none) ||
       (existing != null && existing.stage == prevStage);
