@@ -37,14 +37,3 @@ extension OvertureStageChain on OvertureStage {
     }
   }
 }
-
-/// Forward progression of [OvertureStage] for suggestions (none → … → joinEmpire).
-///
-/// Co-located with [previousStage] on [OvertureStageChain] (Refs #2391 Pattern 2).
-OvertureStage? nextOvertureStage(OvertureStage current) => current.next;
-
-/// Backward step used by turn-resolution overture handling.
-///
-/// Inverse of [nextOvertureStage] for every stage except [OvertureStage.none],
-/// which maps to itself (Refs #2391 Pattern 2).
-OvertureStage previousStage(OvertureStage stage) => stage.previous;

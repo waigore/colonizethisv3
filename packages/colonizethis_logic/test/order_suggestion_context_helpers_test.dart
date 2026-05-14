@@ -88,15 +88,6 @@ void main() {
     });
   });
 
-  group('nextOvertureStage and previousStage delegates', () {
-    test('match extension getters for all stages', () {
-      for (final stage in OvertureStage.values) {
-        expect(nextOvertureStage(stage), stage.next);
-        expect(previousStage(stage), stage.previous);
-      }
-    });
-  });
-
   group('acceptance wrappers', () {
     test('isNavalMoveOrderAccepted returns a boolean result', () {
       final accepted = isNavalMoveOrderAccepted(
