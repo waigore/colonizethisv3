@@ -73,11 +73,10 @@ OrderValidationResult? precheckStealTech(
   if (targetProvinceId == null) {
     return OrderValidationResult.rejected('Invalid target for steal_tech');
   }
-  final otherPlayer = ctx.game.players
-      .where(
-        (p) => p.id != ctx.playerId && p.capitalProvinceId == targetProvinceId,
-      )
-      .firstOrNull;
+  final otherPlayer = ctx.game.otherGreatPowerAtCapitalProvince(
+    targetProvinceId,
+    ctx.playerId,
+  );
   if (otherPlayer == null) {
     return OrderValidationResult.rejected(
       'steal_tech target must be another Great Power capital province',

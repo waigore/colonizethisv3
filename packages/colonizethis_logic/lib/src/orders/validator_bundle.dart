@@ -99,6 +99,7 @@ OrderValidators createOrderValidators({
       game: game,
       playerId: playerId,
       initialTreasury: treasury,
+      factionMembership: factionMembership,
     ),
     navalValidator: NavalOrderValidator(
       game: game,

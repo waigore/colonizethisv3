@@ -246,6 +246,7 @@ class IncrementalCandidateValidator {
       game: game,
       playerId: playerId,
       initialTreasury: economy.treasury,
+      factionMembership: _factionMembership(),
     );
     for (final existing in diplomaticOrders) {
       final result = validator.validate(existing, previousRejected: false);
