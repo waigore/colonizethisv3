@@ -3,10 +3,9 @@ import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../diplomacy/diplomacy_resolver.dart';
 import 'civilian_tile_occupancy.dart';
 import 'province_lookup.dart';
-
-final _log = packageLogger();
 
 /// Runs ownership-change civilian legality normalization for [changedProvinceIds].
 ///
@@ -19,6 +18,8 @@ Game relocateIllegalCiviliansInChangedProvinces(
   required Set<String> changedProvinceIds,
 }) {
   if (changedProvinceIds.isEmpty) return game;
+
+  final factionMembership = DiplomacyFactionMembership.from(game);
 
   Unit normalizeIllegalCivilian(Unit unit) {
     if (!changedProvinceIds.contains(unit.locationProvinceId)) {
@@ -33,6 +34,7 @@ Game relocateIllegalCiviliansInChangedProvinces(
       playerId: unit.ownerId,
       unitType: unit.type,
       destinationTileKey: currentTileKey,
+      factionMembership: factionMembership,
     )) {
       return unit;
     }
@@ -52,7 +54,7 @@ Game relocateIllegalCiviliansInChangedProvinces(
       );
     }
 
-    _log.d(
+    logicLog.d(
       'civilian legality relocation unit=${unit.id} owner=${unit.ownerId} from=${unit.tileKey} to=$capitalTileKey',
     );
     return unit.copyWith(

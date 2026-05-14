@@ -9,8 +9,6 @@ import 'port_seaboard_registry_key.dart';
 import 'province_lookup.dart';
 import 'capital_reassignment_fatal.dart';
 
-final _log = packageLogger();
-
 class CapitalReassignmentEligibility {
   const CapitalReassignmentEligibility({
     required this.eligible,
@@ -97,7 +95,7 @@ Game applyCapitalReassignmentAfterCombat(
             ? p
             : p.copyWith(capitalProvinceId: null, capitalTile: null),
       );
-      _log.i(
+      logicLog.i(
         'player ${player.id} lost capital and has no provinces in $regionId; capital cleared',
       );
       continue;
@@ -108,14 +106,14 @@ Game applyCapitalReassignmentAfterCombat(
       final msg =
           'capital reassignment: missing deterministic candidate in region $regionId for player ${player.id}';
       final err = StateError(msg);
-      _log.e(msg, error: err, stackTrace: StackTrace.current);
+      logicLog.e(msg, error: err, stackTrace: StackTrace.current);
       throw CapitalReassignmentFatalError(msg, err);
     }
     final newProvince = game.worldState.tryGetProvince(newProvinceId);
     if (newProvince == null) {
       final msg =
           'capital reassignment: province $newProvinceId not found in region $regionId for player ${player.id}';
-      _log.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
+      logicLog.e(msg, error: StateError(msg), stackTrace: StackTrace.current);
       throw CapitalReassignmentFatalError(msg);
     }
 
@@ -124,7 +122,7 @@ Game applyCapitalReassignmentAfterCombat(
       final msg =
           'capital reassignment: missing townTileKey for province $newProvinceId player ${player.id}';
       final err = StateError(msg);
-      _log.e(msg, error: err, stackTrace: StackTrace.current);
+      logicLog.e(msg, error: err, stackTrace: StackTrace.current);
       throw CapitalReassignmentFatalError(msg, err);
     }
 
@@ -134,7 +132,7 @@ Game applyCapitalReassignmentAfterCombat(
     } catch (e, st) {
       final msg =
           'capital reassignment: invalid townTileKey for province $newProvinceId player ${player.id} raw="$rawTown"';
-      _log.e(msg, error: e, stackTrace: st);
+      logicLog.e(msg, error: e, stackTrace: st);
       throw CapitalReassignmentFatalError(
         'Invalid townTileKey for province $newProvinceId (player ${player.id}): $e',
         e,
@@ -168,13 +166,13 @@ Game applyCapitalReassignmentAfterCombat(
           tileMapByRegion[e.key] = e.value;
         }
       }
-      _log.i(
+      logicLog.i(
         'player ${player.id} capital reassigned to $newProvinceId ($newCapKey) after loss',
       );
     } catch (e, st) {
       final msg =
           'capital reassignment: failed to apply new capital for ${player.id}';
-      _log.e(msg, error: e, stackTrace: st);
+      logicLog.e(msg, error: e, stackTrace: st);
       rethrow;
     }
   }

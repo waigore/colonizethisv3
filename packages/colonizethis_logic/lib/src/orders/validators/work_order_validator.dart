@@ -33,6 +33,7 @@ class WorkOrderValidationContext {
     this.civilianDraftMoveUnitIds = const <String>{},
     this.diplomaticOrders = const <DiplomaticOrder>[],
     this.topology,
+    this.factionMembership,
   });
 
   final Game game;
@@ -45,6 +46,9 @@ class WorkOrderValidationContext {
   final Set<String> civilianDraftMoveUnitIds;
   final List<DiplomaticOrder> diplomaticOrders;
   final MapTopology? topology;
+  /// When set, avoids repeated linear faction classification in tile occupancy
+  /// checks (Refs #2394).
+  final DiplomacyFactionMembership? factionMembership;
 }
 
 class WorkOrderValidator extends StatefulValidator {
@@ -138,6 +142,7 @@ class WorkOrderValidator extends StatefulValidator {
           playerId: _context.playerId,
           unitType: type,
           destinationTileKey: o.targetTileKey,
+          factionMembership: _context.factionMembership,
         )) {
           return OrderValidationResult.rejected(
             'Unit cannot occupy target tile',
@@ -206,6 +211,7 @@ class WorkOrderValidator extends StatefulValidator {
       playerId: _context.playerId,
       treasury: treasuryState,
       civilianEmbassyWorkAllowed: _civilianWorkAllowedInMinorTribeProvince,
+      factionMembership: _context.factionMembership,
     );
     return runWorkOrderTargetPrecheck(
       preCtx,
@@ -439,7 +445,13 @@ class WorkOrderValidator extends StatefulValidator {
         unitType != kUnitTypeMerchant) {
       return false;
     }
-    if (!isMinorOrTribe(_context.game, provinceOwnerId)) return false;
+    if (!isMinorOrTribe(
+      _context.game,
+      provinceOwnerId,
+      factionMembership: _context.factionMembership,
+    )) {
+      return false;
+    }
     final rel = getRelation(_context.game, _context.playerId, provinceOwnerId);
     if (rel?.atWar == true) return false;
     final overture = getOverture(

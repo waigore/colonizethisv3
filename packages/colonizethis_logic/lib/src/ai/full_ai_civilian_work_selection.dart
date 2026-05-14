@@ -160,6 +160,7 @@ int _prospectTerritoryPoints(
   PlayerView view,
   String playerId,
   String tileKey,
+  DiplomacyFactionMembership factionMembership,
 ) {
   final provId = Unit.provinceIdFromTileKey(tileKey);
   if (provId == null) return 0;
@@ -170,7 +171,10 @@ int _prospectTerritoryPoints(
       game.worldState.purchasedTilesByTileKey[tileKey] == playerId;
   if (purchased) return 20;
   final owner = p.ownerId;
-  if (owner != null && isMinorOrTribe(game, owner)) return 12;
+  if (owner != null &&
+      isMinorOrTribe(game, owner, factionMembership: factionMembership)) {
+    return 12;
+  }
   return 0;
 }
 
@@ -214,9 +218,17 @@ int _pScore(
   String playerId,
   Map<String, TileMapResult>? tileMapByRegion,
   Set<String> sHigh,
+  DiplomacyFactionMembership factionMembership,
 ) {
   final base =
-      25 + _prospectTerritoryPoints(game, view, playerId, w.targetTileKey);
+      25 +
+      _prospectTerritoryPoints(
+        game,
+        view,
+        playerId,
+        w.targetTileKey,
+        factionMembership,
+      );
   final urgent =
       _tileCanHostAnyMineralInSet(tileMapByRegion, w.targetTileKey, sHigh)
       ? 95
@@ -260,13 +272,30 @@ WorkOrder? _bestProspectRow(
   String playerId,
   Map<String, TileMapResult>? tileMapByRegion,
   Set<String> sHigh,
+  DiplomacyFactionMembership factionMembership,
 ) {
   if (prospects.isEmpty) return null;
   var best = prospects.first;
-  var bestScore = _pScore(best, game, view, playerId, tileMapByRegion, sHigh);
+  var bestScore = _pScore(
+    best,
+    game,
+    view,
+    playerId,
+    tileMapByRegion,
+    sHigh,
+    factionMembership,
+  );
   for (var i = 1; i < prospects.length; i++) {
     final w = prospects[i];
-    final s = _pScore(w, game, view, playerId, tileMapByRegion, sHigh);
+    final s = _pScore(
+      w,
+      game,
+      view,
+      playerId,
+      tileMapByRegion,
+      sHigh,
+      factionMembership,
+    );
     if (s > bestScore) {
       bestScore = s;
       best = w;
@@ -285,6 +314,7 @@ WorkOrder? _pickExplorerCandidateSet(
   PlayerView view,
   String playerId,
   Map<String, TileMapResult>? tileMapByRegion,
+  DiplomacyFactionMembership factionMembership,
 ) {
   final explores = c.where((w) => w.target == kWorkTargetExplore).toList();
   final prospects = c.where((w) => w.target == kWorkTargetProspect).toList();
@@ -298,12 +328,21 @@ WorkOrder? _pickExplorerCandidateSet(
     playerId,
     tileMapByRegion,
     sHigh,
+    factionMembership,
   );
   if (bestE == null && bestP == null) return null;
   if (bestE == null) return bestP;
   if (bestP == null) return bestE;
   final eScore = _eScore(bestE, view, game);
-  final pScore = _pScore(bestP, game, view, playerId, tileMapByRegion, sHigh);
+  final pScore = _pScore(
+    bestP,
+    game,
+    view,
+    playerId,
+    tileMapByRegion,
+    sHigh,
+    factionMembership,
+  );
   if (eScore > pScore) return bestE;
   if (pScore > eScore) return bestP;
   return bestE;
@@ -329,6 +368,7 @@ void _appendExplorerPathResult({
   required PlayerView view,
   required String playerId,
   Map<String, TileMapResult>? tileMapByRegion,
+  required DiplomacyFactionMembership factionMembership,
   required List<WorkOrder> workOrders,
   required List<FullAiCivilianWorkIdle> idleEvents,
 }) {
@@ -355,6 +395,7 @@ void _appendExplorerPathResult({
     view,
     playerId,
     tileMapByRegion,
+    factionMembership,
   );
   if (chosen != null) {
     workOrders.add(chosen);
@@ -398,6 +439,7 @@ void _appendSelectionForUnitId({
   required PlayerView view,
   required Game game,
   Map<String, TileMapResult>? tileMapByRegion,
+  required DiplomacyFactionMembership factionMembership,
   required List<WorkOrder> workOrders,
   required List<FullAiCivilianWorkIdle> idleEvents,
 }) {
@@ -422,6 +464,7 @@ void _appendSelectionForUnitId({
       view: view,
       playerId: view.playerId,
       tileMapByRegion: tileMapByRegion,
+      factionMembership: factionMembership,
       workOrders: workOrders,
       idleEvents: idleEvents,
     );
@@ -461,6 +504,7 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
 
   final workOrders = <WorkOrder>[];
   final idleEvents = <FullAiCivilianWorkIdle>[];
+  final factionMembership = DiplomacyFactionMembership.from(game);
 
   for (final unitId in allUnitIds) {
     _appendSelectionForUnitId(
@@ -469,6 +513,7 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
       view: view,
       game: game,
       tileMapByRegion: tileMapByRegion,
+      factionMembership: factionMembership,
       workOrders: workOrders,
       idleEvents: idleEvents,
     );

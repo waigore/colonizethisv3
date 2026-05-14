@@ -1,3 +1,4 @@
+import 'package:colonizethis_logic/src/diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_logic/src/world/civilian_tile_occupancy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -70,6 +71,29 @@ void main() {
           destinationTileKey: tileP2,
         ),
         isTrue,
+      );
+    });
+
+    test('factionMembership snapshot matches linear classification (Refs #2394)', () {
+      final game = gameWithProvinces([
+        Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
+        Province(id: '$ow|p2', regionId: ow, ownerId: 'gp2'),
+      ]);
+      final membership = DiplomacyFactionMembership.from(game);
+      expect(
+        civilianMayOccupyLandTileKey(
+          game: game,
+          playerId: 'gp1',
+          unitType: kUnitTypeSpy,
+          destinationTileKey: tileP2,
+          factionMembership: membership,
+        ),
+        civilianMayOccupyLandTileKey(
+          game: game,
+          playerId: 'gp1',
+          unitType: kUnitTypeSpy,
+          destinationTileKey: tileP2,
+        ),
       );
     });
 

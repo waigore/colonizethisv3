@@ -61,5 +61,65 @@ void main() {
       final after = applyLandBattleAttackTreasuryCosts(game, ctx);
       expect(after.playerById('a1')!.treasury, 500 - 100);
     });
+
+    test('deducts treasury for each distinct Great Power attacker side', () {
+      final game = TestFixtures.minimalGame(
+        players: const [
+          Player(id: 'a1', displayName: 'A1', isHuman: true, treasury: 300),
+          Player(id: 'a2', displayName: 'A2', isHuman: true, treasury: 400),
+          Player(id: 'd1', displayName: 'D1', isHuman: false, treasury: 0),
+        ],
+      );
+      final ctx = BattleContext(
+        regionId: kRegionOldWorld,
+        provinceId: 'oldWorld|p1',
+        defenderFactionId: 'd1',
+        defenderUnitIds: const [],
+        fortLevel: 0,
+        terrain: 'field',
+        attackers: [
+          const AttackingSide(
+            factionId: 'a1',
+            unitIds: ['u1'],
+            generalId: null,
+          ),
+          const AttackingSide(
+            factionId: 'a2',
+            unitIds: ['u2'],
+            generalId: null,
+          ),
+        ],
+        defenderGeneralId: null,
+        defenderGeneralMedals: 0,
+      );
+      final after = applyLandBattleAttackTreasuryCosts(game, ctx);
+      expect(after.playerById('a1')!.treasury, 300 - 100);
+      expect(after.playerById('a2')!.treasury, 400 - 100);
+    });
+
+    test('does not deduct treasury when attacker is not a Great Power', () {
+      final game = TestFixtures.minimalGame(
+        players: const [
+          Player(id: 'a1', displayName: 'A1', isHuman: true, treasury: 500),
+          Player(id: 'd1', displayName: 'D1', isHuman: false, treasury: 0),
+        ],
+        minorNations: const [MinorNation(id: 'm1', displayName: 'Minor')],
+      );
+      final ctx = BattleContext(
+        regionId: kRegionOldWorld,
+        provinceId: 'oldWorld|p1',
+        defenderFactionId: 'd1',
+        defenderUnitIds: const [],
+        fortLevel: 0,
+        terrain: 'field',
+        attackers: const [
+          AttackingSide(factionId: 'm1', unitIds: ['u1'], generalId: null),
+        ],
+        defenderGeneralId: null,
+        defenderGeneralMedals: 0,
+      );
+      final after = applyLandBattleAttackTreasuryCosts(game, ctx);
+      expect(after.playerById('a1')!.treasury, 500);
+    });
   });
 }
