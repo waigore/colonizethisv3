@@ -12,6 +12,7 @@ void _addWorkerSuggestionsForUnit({
   required String atProvinceId,
   required Map<String, Set<String>> existingTargetsByUnit,
   required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
+  required Set<String> playerOwnedProvinceIds,
   required Set<String> devExclusiveReservedTiles,
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
@@ -29,12 +30,13 @@ void _addWorkerSuggestionsForUnit({
           playerId: playerId,
           workTarget: target,
           tileMapByRegion: tileMapByRegion,
+          playerOwnedProvinceIds: playerOwnedProvinceIds,
         );
         return sortedVisibleWorkTargetCandidates(view, raw);
       },
     );
 
-    _runWorkSuggestionPipeline(
+    WorkSuggestionPipeline.run(
       unit: unit,
       unitType: type,
       unitRegionId: unitRegionId,

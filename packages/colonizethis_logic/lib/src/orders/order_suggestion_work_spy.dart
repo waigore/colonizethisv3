@@ -37,7 +37,7 @@ void _addSpySuggestionsForUnit({
   );
 
   if (!allowedTargets.contains(kWorkTargetStealTech)) return;
-  _runWorkSuggestionPipeline(
+  WorkSuggestionPipeline.run(
     unit: unit,
     unitType: type,
     unitRegionId: unitRegionId,
@@ -84,7 +84,7 @@ void _addCounterSpySuggestionIfEligible({
 }) {
   if (!allowedTargets.contains(kWorkTargetCounterSpy)) return;
   if (ownerId != playerId) {
-    _suggestionWorkLog(
+    logWorkOrderSuggestion(
       unitId: unit.id,
       unitType: type,
       unitRegionId: unitRegionId,
@@ -96,7 +96,7 @@ void _addCounterSpySuggestionIfEligible({
     return;
   }
 
-  _runWorkSuggestionPipeline(
+  WorkSuggestionPipeline.run(
     unit: unit,
     unitType: type,
     unitRegionId: unitRegionId,

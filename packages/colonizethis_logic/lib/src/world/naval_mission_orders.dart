@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
@@ -6,17 +5,32 @@ import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'naval.dart';
 import 'province_lookup.dart';
 
-FleetMission _fleetMissionFromOrderName(String name) {
-  for (final m in FleetMission.values) {
-    if (m.name == name) return m;
+/// O(1) mission lookup for naval order strings (Refs #2394).
+final _fleetMissionByOrderName = <String, FleetMission>{
+  for (final m in FleetMission.values) m.name: m,
+};
+
+FleetMission _fleetMissionFromOrderName(String name) =>
+    _fleetMissionByOrderName[name] ?? FleetMission.none;
+
+void _resyncFleetLookupMaps(
+  List<Fleet> fleets,
+  Map<String, Fleet> fleetById,
+  Map<String, int> fleetIndexById,
+) {
+  fleetById.clear();
+  fleetById.addEntries(fleets.map((f) => MapEntry(f.id, f)));
+  fleetIndexById.clear();
+  for (var i = 0; i < fleets.length; i++) {
+    fleetIndexById[fleets[i].id] = i;
   }
-  return FleetMission.none;
 }
 
 List<Fleet> _applySingleNavalMissionOrder({
   required Game game,
   required List<Fleet> fleets,
   required Map<String, Fleet> fleetById,
+  required Map<String, int> fleetIndexById,
   required String playerId,
   required NavalMissionOrder order,
 }) {
@@ -40,7 +54,7 @@ List<Fleet> _applySingleNavalMissionOrder({
         .where((f) => f.id != fleet.id)
         .map((f) => f.id == homeFleetId ? updatedHome : f)
         .toList();
-    fleetById[homeFleetId] = updatedHome;
+    _resyncFleetLookupMaps(next, fleetById, fleetIndexById);
     return next;
   }
 
@@ -68,8 +82,8 @@ List<Fleet> _applySingleNavalMissionOrder({
         targetPortId: null,
         targetProvinceId: null,
       );
-      final idx = fleets.indexWhere((f) => f.id == fleet.id);
-      if (idx >= 0) {
+      final idx = fleetIndexById[fleet.id];
+      if (idx != null) {
         final next = List<Fleet>.from(fleets)..[idx] = cleared;
         fleetById[fleet.id] = cleared;
         return next;
@@ -83,8 +97,8 @@ List<Fleet> _applySingleNavalMissionOrder({
     targetPortId: order.targetPortId,
     targetProvinceId: order.targetProvinceId,
   );
-  final idx = fleets.indexWhere((f) => f.id == fleet.id);
-  if (idx >= 0) {
+  final idx = fleetIndexById[fleet.id];
+  if (idx != null) {
     final next = List<Fleet>.from(fleets)..[idx] = newFleet;
     fleetById[fleet.id] = newFleet;
     return next;
@@ -97,7 +111,9 @@ Game applyNavalMissionOrders(
   Map<String, List<NavalMissionOrder>> navalMissionOrdersByPlayerId,
 ) {
   var fleets = List<Fleet>.from(game.worldState.fleets);
-  final fleetById = {for (final f in fleets) f.id: f};
+  final fleetById = <String, Fleet>{};
+  final fleetIndexById = <String, int>{};
+  _resyncFleetLookupMaps(fleets, fleetById, fleetIndexById);
 
   for (final entry in navalMissionOrdersByPlayerId.entries) {
     final playerId = entry.key;
@@ -106,6 +122,7 @@ Game applyNavalMissionOrders(
         game: game,
         fleets: fleets,
         fleetById: fleetById,
+        fleetIndexById: fleetIndexById,
         playerId: playerId,
         order: order,
       );

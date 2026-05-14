@@ -23,7 +23,7 @@ void _addMerchantSuggestionsForUnit({
 
   final resourceByTile = game.worldState.resourceByTileKey;
   final playerIds = game.players.map((p) => p.id).toSet();
-  _runWorkSuggestionPipeline(
+  WorkSuggestionPipeline.run(
     unit: unit,
     unitType: type,
     unitRegionId: unitRegionId,
