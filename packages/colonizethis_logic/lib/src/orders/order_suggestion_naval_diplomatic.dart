@@ -244,6 +244,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   required String targetId,
   required Set<String> knownTargetIds,
   required Set<String> knownFactionIds,
+  required DiplomacyFactionMembership factionMembership,
 }) {
   final treasury = player.treasury;
   final out = <DiplomaticOrder>[];
@@ -253,7 +254,11 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   final atWar = rel?.atWar ?? false;
   final atPeace = rel == null || rel.atPeace;
   final isGpTarget = game.playerById(targetId) != null;
-  final targetIsMinorOrTribe = isMinorOrTribe(game, targetId);
+  final targetIsMinorOrTribe = isMinorOrTribe(
+    game,
+    targetId,
+    factionMembership: factionMembership,
+  );
 
   if (knownTargetIds.contains(targetId) && atWar) {
     out.add(
@@ -408,16 +413,13 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     }
   }
 
-  final otherGps = game.players
-      .where((p) => p.id != playerId)
-      .map((p) => p.id)
-      .toSet();
-  final minorIds = game.minorNations.map((m) => m.id).toSet();
-  final tribeIds = game.tribes.map((t) => t.id).toSet();
+  // One membership snapshot for this pass: O(1) minor/tribe checks per target
+  // and GP id sets without repeated list scans (Refs #2394).
+  final factionMembership = DiplomacyFactionMembership.from(game);
+  final otherGps = factionMembership.greatPowerIds.difference({playerId});
   final knownTargets = <String>{
     ...otherGps.where(knownFactionIds.contains),
-    ...minorIds.where(knownFactionIds.contains),
-    ...tribeIds.where(knownFactionIds.contains),
+    ...factionMembership.minorOrTribeIds.where(knownFactionIds.contains),
   };
   final knownTargetIds = knownTargets.toSet();
 
@@ -444,6 +446,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       targetId: targetId,
       knownTargetIds: knownTargetIds,
       knownFactionIds: knownFactionIds,
+      factionMembership: factionMembership,
     );
     var trialOrders = workingOrders;
 
