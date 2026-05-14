@@ -180,6 +180,47 @@ void main() {
       expect(n.side2.ownerId, 'p2');
     });
 
+    test('stale or unknown fleet ids in movedFleetIds are ignored', () {
+      final game = gameTwoFleets(
+        fleet1: Fleet(
+          id: 'mv',
+          ownerId: 'p1',
+          seaZoneId: 'sea1',
+          regionId: 'oldWorld',
+          shipTypeIds: ['carrack'],
+          mission: FleetMission.none,
+        ),
+        fleet2: Fleet(
+          id: 'st',
+          ownerId: 'p2',
+          seaZoneId: 'sea1',
+          regionId: 'oldWorld',
+          shipTypeIds: ['fluyte'],
+          mission: FleetMission.defend,
+        ),
+      );
+      final battle = BattleContextSea(
+        seaZoneId: 'sea1',
+        side1: NavalBattleSide(
+          ownerId: 'p2',
+          ships: legacyShipInstancesForFleet('x', ['fluyte']),
+          mission: FleetMission.defend,
+        ),
+        side2: NavalBattleSide(
+          ownerId: 'p1',
+          ships: legacyShipInstancesForFleet('y', ['carrack']),
+          mission: FleetMission.none,
+        ),
+      );
+      final n = normalizeNavalBattleSidesForAttacker(
+        battle,
+        game,
+        {'mv', 'not-a-fleet-id'},
+      );
+      expect(n.side1.ownerId, 'p1');
+      expect(n.side2.ownerId, 'p2');
+    });
+
     test('interceptor is attacker when the other faction moved', () {
       final game = gameTwoFleets(
         fleet1: Fleet(

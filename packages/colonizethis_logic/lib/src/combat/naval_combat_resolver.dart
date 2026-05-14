@@ -58,19 +58,21 @@ class BattleContextSea {
 }
 
 bool _ownerHadMovingFleetInZone(
-  Game game,
+  Map<String, Fleet> fleetsById,
   String seaZoneId,
   String ownerId,
   Set<String> movedFleetIds,
 ) {
   if (movedFleetIds.isEmpty) return false;
-  return game.worldState.fleets.any(
-    (f) =>
-        f.isAtSea &&
-        f.seaZoneId == seaZoneId &&
-        f.ownerId == ownerId &&
-        movedFleetIds.contains(f.id),
-  );
+  for (final id in movedFleetIds) {
+    final f = fleetsById[id];
+    if (f == null) continue;
+    if (!f.isAtSea) continue;
+    if (f.seaZoneId != seaZoneId) continue;
+    if (f.ownerId != ownerId) continue;
+    return true;
+  }
+  return false;
 }
 
 bool _isInterceptorMission(FleetMission m) =>
@@ -99,16 +101,19 @@ BattleContextSea normalizeNavalBattleSidesForAttacker(
   Game game,
   Set<String> movedFleetIds,
 ) {
+  final fleetsById = <String, Fleet>{
+    for (final f in game.worldState.fleets) f.id: f,
+  };
   final s1 = battle.side1;
   final s2 = battle.side2;
   final m1 = _ownerHadMovingFleetInZone(
-    game,
+    fleetsById,
     battle.seaZoneId,
     s1.ownerId,
     movedFleetIds,
   );
   final m2 = _ownerHadMovingFleetInZone(
-    game,
+    fleetsById,
     battle.seaZoneId,
     s2.ownerId,
     movedFleetIds,
