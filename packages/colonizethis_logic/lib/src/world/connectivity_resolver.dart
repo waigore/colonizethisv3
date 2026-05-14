@@ -133,7 +133,9 @@ Map<String, ConnectivityResult> resolveConnectivity({
   for (final player in game.players) {
     final capital = player.capitalTile;
     if (capital == null || player.capitalProvinceId == null) {
-      logicLog.d('connectivity resolve player=${player.id} skipped (no capital)');
+      logicLog.d(
+        'connectivity resolve player=${player.id} skipped (no capital)',
+      );
       result[player.id] = const ConnectivityResult(connected: {});
       continue;
     }
@@ -177,8 +179,10 @@ _buildPerPlayerProvinceCaches(Game game) {
     ownedByPlayer.putIfAbsent(ownerId, () => <String>{}).add(province.id);
     final tk = province.townTileKey;
     if (tk != null) {
-      townByTileKeyByPlayer
-          .putIfAbsent(ownerId, () => <String, Province>{})[tk] = province;
+      townByTileKeyByPlayer.putIfAbsent(
+        ownerId,
+        () => <String, Province>{},
+      )[tk] = province;
     }
   }
   return (
@@ -191,15 +195,21 @@ bool _topologyUsesPrefixedIds(MapTopology topology) {
   return topology.nodes.any((n) => n.id.contains('|'));
 }
 
-/// Sea zones reachable from [startSeaZoneIds] by following S–S edges in [topology]. SPEC/game/map-topology, capital-and-connectivity § Sea paths.
-Set<String> _seaZonesReachableBySeaPath(
-  MapTopology topology,
-  Set<String> startSeaZoneIds,
-) {
-  final seaZoneIds = topology.nodes
+/// All sea-zone node ids in [topology], built in one pass (Refs #2394).
+Set<String> _allSeaZoneIds(MapTopology topology) {
+  return topology.nodes
       .where((n) => n.type == TopologyNodeType.seaZone)
       .map((n) => n.id)
       .toSet();
+}
+
+/// Sea zones reachable from [startSeaZoneIds] by following S–S edges in [topology]. SPEC/game/map-topology, capital-and-connectivity § Sea paths.
+Set<String> _seaZonesReachableBySeaPath(
+  MapTopology topology,
+  Set<String> startSeaZoneIds, {
+  Set<String>? precomputedSeaZoneIds,
+}) {
+  final seaZoneIds = precomputedSeaZoneIds ?? _allSeaZoneIds(topology);
   final neighbours = <String, Set<String>>{};
   for (final e in topology.edges) {
     final a = e.id1;
@@ -220,12 +230,10 @@ Set<String> _seaZonesReachableBySeaPath(
 /// Sea zone ids adjacent to province [localProvinceId] in topology (P–S edges).
 Set<String> _seaZonesAdjacentToProvince(
   MapTopology topology,
-  String localProvinceId,
-) {
-  final seaZoneIds = topology.nodes
-      .where((n) => n.type == TopologyNodeType.seaZone)
-      .map((n) => n.id)
-      .toSet();
+  String localProvinceId, {
+  Set<String>? precomputedSeaZoneIds,
+}) {
+  final seaZoneIds = precomputedSeaZoneIds ?? _allSeaZoneIds(topology);
   final out = <String>{};
   for (final edge in topology.edges) {
     if (edge.id1 != localProvinceId && edge.id2 != localProvinceId) continue;
@@ -505,11 +513,17 @@ Set<String> _seaConnectedPortKeysForCapital({
         : (ProvinceId.isPrefixed(capital.provinceId)
               ? ProvinceId.localIdFrom(capital.provinceId)
               : capital.provinceId);
+    final seaZoneIdSet = _allSeaZoneIds(topology);
     final capitalSeaZones = _seaZonesAdjacentToProvince(
       topology,
       provinceIdForLookup,
+      precomputedSeaZoneIds: seaZoneIdSet,
     );
-    final seaReachable = _seaZonesReachableBySeaPath(topology, capitalSeaZones);
+    final seaReachable = _seaZonesReachableBySeaPath(
+      topology,
+      capitalSeaZones,
+      precomputedSeaZoneIds: seaZoneIdSet,
+    );
     for (final entry in worldState.portsByProvinceSeaboard.entries) {
       final portMeta = decodePortSeaboardRegistryKey(entry.key);
       if (portMeta == null) continue;
