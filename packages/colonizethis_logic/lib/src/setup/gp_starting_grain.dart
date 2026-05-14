@@ -1,7 +1,7 @@
 // SPEC/game/tile-map-and-generation.md § Great Power starting grain (bootstrap).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';

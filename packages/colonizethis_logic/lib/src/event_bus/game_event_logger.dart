@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 
 import '../game_events.dart';
 
