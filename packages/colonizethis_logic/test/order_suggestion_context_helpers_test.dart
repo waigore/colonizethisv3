@@ -53,44 +53,57 @@ void main() {
     });
   });
 
-  group('nextOvertureStage', () {
+  group('OvertureStageChain.next', () {
     test('follows expected progression', () {
-      expect(
-        nextOvertureStage(OvertureStage.none),
-        OvertureStage.tradeConsulate,
-      );
-      expect(
-        nextOvertureStage(OvertureStage.tradeConsulate),
-        OvertureStage.embassy,
-      );
-      expect(nextOvertureStage(OvertureStage.embassy), OvertureStage.nap);
-      expect(nextOvertureStage(OvertureStage.nap), OvertureStage.joinEmpire);
+      expect(OvertureStage.none.next, OvertureStage.tradeConsulate);
+      expect(OvertureStage.tradeConsulate.next, OvertureStage.embassy);
+      expect(OvertureStage.embassy.next, OvertureStage.nap);
+      expect(OvertureStage.nap.next, OvertureStage.joinEmpire);
     });
 
     test('returns null when already at final stage', () {
-      expect(nextOvertureStage(OvertureStage.joinEmpire), isNull);
+      expect(OvertureStage.joinEmpire.next, isNull);
     });
   });
 
-  group('previousStage', () {
-    test('reverses nextOvertureStage for progression chain', () {
+  group('OvertureStageChain.previous', () {
+    test('next is left inverse of previous for every non-terminal stage', () {
+      for (final stage in OvertureStage.values) {
+        final forward = stage.next;
+        if (forward == null) {
+          continue;
+        }
+        expect(forward.previous, stage);
+      }
+    });
+
+    test('previous then next restores stage for every stage past none', () {
+      for (final stage in OvertureStage.values) {
+        if (stage == OvertureStage.none) {
+          continue;
+        }
+        expect(stage.previous.next, stage);
+      }
+    });
+
+    test('reverses next for progression chain', () {
       for (final stage in [
         OvertureStage.none,
         OvertureStage.tradeConsulate,
         OvertureStage.embassy,
         OvertureStage.nap,
       ]) {
-        final forward = nextOvertureStage(stage)!;
-        expect(previousStage(forward), stage);
+        final forward = stage.next!;
+        expect(forward.previous, stage);
       }
     });
 
     test('none maps to itself', () {
-      expect(previousStage(OvertureStage.none), OvertureStage.none);
+      expect(OvertureStage.none.previous, OvertureStage.none);
     });
 
     test('joinEmpire previous is nap', () {
-      expect(previousStage(OvertureStage.joinEmpire), OvertureStage.nap);
+      expect(OvertureStage.joinEmpire.previous, OvertureStage.nap);
     });
   });
 
