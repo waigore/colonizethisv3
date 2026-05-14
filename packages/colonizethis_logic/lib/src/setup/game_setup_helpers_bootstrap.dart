@@ -136,20 +136,30 @@ void _addStartingRegimentsForPlayer({
   }
 }
 
+Map<String, int> _fleetIdToIndex(List<Fleet> fleets) {
+  final out = <String, int>{};
+  for (var i = 0; i < fleets.length; i++) {
+    out[fleets[i].id] = i;
+  }
+  return out;
+}
+
 int _mergeHomeFleetShipsForPlayer({
   required Player player,
   required String regionId,
   required String localProvinceId,
   required int shipCount,
   required List<Fleet> fleets,
+  required Map<String, int> fleetIndexById,
   required int nextSeq,
 }) {
   if (shipCount <= 0 || regionId != kRegionOldWorld) return nextSeq;
   final fullProvinceId = '$regionId|$localProvinceId';
   final homeFleetId = homeFleetIdFor(player.id);
-  final existingIndex = fleets.indexWhere((f) => f.id == homeFleetId);
-  final existingFleet = existingIndex >= 0 ? fleets[existingIndex] : null;
-  final existingShips = existingFleet?.ships ?? const <ShipInstance>[];
+  final existingIdx = fleetIndexById[homeFleetId];
+  final existingShips = existingIdx != null
+      ? fleets[existingIdx].ships
+      : const <ShipInstance>[];
   final shipTypeId = startingShipTypeForPlayer(player);
   final (seqAfter, newInstances) = mintShipInstances(
     nextShipInstanceSeq: nextSeq,
@@ -164,10 +174,11 @@ int _mergeHomeFleetShipsForPlayer({
     regionId: regionId,
     ships: [...existingShips, ...newInstances],
   );
-  if (existingFleet == null) {
+  if (existingIdx == null) {
     fleets.add(homeFleet);
+    fleetIndexById[homeFleetId] = fleets.length - 1;
   } else {
-    fleets[existingIndex] = homeFleet;
+    fleets[existingIdx] = homeFleet;
   }
   return seqAfter;
 }
@@ -187,6 +198,7 @@ Game addStartingMilitaryAndNaval({
   var oldWorldUnits = List<Unit>.from(game.worldState.oldWorld.units);
   var newWorldUnits = List<Unit>.from(game.worldState.newWorld.units);
   var fleets = List<Fleet>.from(game.worldState.fleets);
+  var fleetIndexById = _fleetIdToIndex(fleets);
   var nextSeq = game.worldState.nextShipInstanceSeq;
   final inferredStart = inferNextShipInstanceSeqFromFleets(fleets);
   if (nextSeq < inferredStart) nextSeq = inferredStart;
@@ -213,6 +225,7 @@ Game addStartingMilitaryAndNaval({
       localProvinceId: localProvinceId,
       shipCount: shipCount,
       fleets: fleets,
+      fleetIndexById: fleetIndexById,
       nextSeq: nextSeq,
     );
   }
