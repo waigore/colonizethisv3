@@ -456,18 +456,15 @@ Future<void> _splitHomeFleetOnce(
     phaseName: 'wait_until_found_split_confirm',
   );
   await tester.tap(find.text(l10n.splitFleet_confirm));
-  // Adaptive replacement for the prior fixed 120ms pump (#2336 AC5): poll for
-  // the split dialog dismissal so we can immediately re-scan expansion tiles
-  // instead of always paying the worst-case settle.
-  final splitDialogGone = Stopwatch()..start();
-  var splitDialogPollMs = 25;
-  while (splitDialogGone.elapsed < const Duration(milliseconds: 500)) {
-    if (find.byType(CtDialogShell).evaluate().isEmpty) {
-      break;
-    }
-    await tester.pump(Duration(milliseconds: splitDialogPollMs));
-    splitDialogPollMs = e2eAdaptivePollRampAfterIdle(splitDialogPollMs);
-  }
+  // Same bounded adaptive settle as shared helpers: exit as soon as the split
+  // shell leaves the tree instead of a hand-rolled poll loop (Refs #2336).
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => find.byType(CtDialogShell).evaluate().isEmpty,
+    timeout: const Duration(milliseconds: 500),
+    perf: perf,
+    phaseName: 'pump_until_split_dialog_shell_cleared',
+  );
   await e2eExpandEachExpansionTileOnce(tester);
   perf?.timing('fleet_split', phaseSw.elapsed);
 }
@@ -527,6 +524,16 @@ Future<void> _openCivilianPanelFleetE2e(WidgetTester tester) async {
     if (civilianPanel.evaluate().isNotEmpty ||
         navalPanel.evaluate().isNotEmpty) {
       await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () =>
+            civilianPanel.evaluate().isEmpty &&
+            navalPanel.evaluate().isEmpty &&
+            find.byType(BottomSheet).evaluate().isEmpty,
+        timeout: const Duration(milliseconds: 600),
+        phaseName:
+            'pump_until_panels_cleared_after_close_sheet_fleet_civilian_open',
+      );
       loopPollMs = 25;
       continue;
     }
