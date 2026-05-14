@@ -52,7 +52,9 @@ class PerPlayerWorkTargetSelectionCache {
     Map<String, WorkTargetSelectionPopulationStrategy>? strategies,
   }) : _strategies = strategies == null
            ? _defaultStrategies
-           : Map<String, WorkTargetSelectionPopulationStrategy>.from(strategies);
+           : Map<String, WorkTargetSelectionPopulationStrategy>.from(
+               strategies,
+             );
 
   final Map<String, WorkTargetSelectionPopulationStrategy> _strategies;
   final Map<String, Map<String, Set<String>>> _cacheByPlayerAndTarget = {};
@@ -146,13 +148,15 @@ class PerPlayerWorkTargetSelectionCache {
     WorkTargetSelectionSnapshot s,
     String workTarget,
   ) {
-    final sharedValidator = s.sharedCandidateValidator ??
+    final sharedValidator =
+        s.sharedCandidateValidator ??
         buildIncrementalCandidateValidator(
           game: s.game,
           topology: s.topology,
           playerId: s.playerId,
           baseOrders: s.currentOrders,
           tileMapByRegion: s.tileMapByRegion,
+          view: s.playerView,
         );
     final merged = <String>{};
     for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
@@ -212,14 +216,22 @@ class PerPlayerWorkTargetSelectionCache {
     WorkTargetSelectionSnapshot s,
     String workTarget,
   ) {
-    final sharedValidator = s.sharedCandidateValidator ??
+    final sharedValidator =
+        s.sharedCandidateValidator ??
         buildIncrementalCandidateValidator(
           game: s.game,
           topology: s.topology,
           playerId: s.playerId,
           baseOrders: s.currentOrders,
           tileMapByRegion: s.tileMapByRegion,
+          view: s.playerView,
         );
+    final pendingWorkUnitIds = <String>{
+      for (final w
+          in s.currentOrders.workOrdersByPlayerId[s.playerId] ??
+              const <WorkOrder>[])
+        w.unitId,
+    };
     final merged = <String>{};
     for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
       final supportsTarget =
@@ -231,11 +243,7 @@ class PerPlayerWorkTargetSelectionCache {
       if (!isIdleNow || unit.currentWork != null) {
         continue;
       }
-      if (_hasPendingWorkOrderForUnit(
-        orders: s.currentOrders,
-        playerId: s.playerId,
-        unitId: unit.id,
-      )) {
+      if (pendingWorkUnitIds.contains(unit.id)) {
         continue;
       }
       final valid = getValidWorkOrderTileKeysWithVisibility(
@@ -264,19 +272,5 @@ class PerPlayerWorkTargetSelectionCache {
         yield unit;
       }
     }
-  }
-
-  static bool _hasPendingWorkOrderForUnit({
-    required Orders orders,
-    required String playerId,
-    required String unitId,
-  }) {
-    final pendingByPlayer = orders.workOrdersByPlayerId[playerId] ?? const [];
-    for (final pending in pendingByPlayer) {
-      if (pending.unitId == unitId) {
-        return true;
-      }
-    }
-    return false;
   }
 }

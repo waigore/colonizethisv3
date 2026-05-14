@@ -9,6 +9,7 @@ import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../diplomacy/diplomacy_resolver.dart';
 import '../orders/draft_orders_mutations.dart';
 import '../orders/incremental_candidate_validator.dart';
 import '../orders/order_suggestion.dart';
@@ -247,13 +248,20 @@ Orders generateOrdersWithSimpleHeuristics(
   String playerId,
   int turnSeed, {
   Map<String, TileMapResult>? tileMapByRegion,
+  /// When true, [game] is used as-is (callers must already have run
+  /// [ensureMilitaryArmiesForGame]). Used by [generateOrdersForGame] to avoid
+  /// O(players) redundant full-world army reconciliation (Refs #2394).
+  bool skipEnsureMilitaryArmies = false,
 }) {
   final player = game.playerById(playerId);
   if (player == null) {
     return const Orders();
   }
 
-  final g = ensureMilitaryArmiesForGame(game);
+  final g = skipEnsureMilitaryArmies
+      ? game
+      : ensureMilitaryArmiesForGame(game);
+  final factionMembership = DiplomacyFactionMembership.from(g);
   final rng = math.Random(turnSeed);
   var current = const Orders();
   final view = buildPlayerView(g, topology, player.id);
@@ -279,6 +287,7 @@ Orders generateOrdersWithSimpleHeuristics(
       tileMapByRegion: tileMapByRegion,
       view: view,
       unitsById: unitsById,
+      factionMembership: factionMembership,
     );
     final moveSuggestions = suggestMoveOrders(
       view,

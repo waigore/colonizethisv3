@@ -32,6 +32,7 @@ class IncrementalCandidateValidator {
     required this.unitsById,
     required this.diplomaticOrders,
     required this.tileMapByRegion,
+    this.prefetchedFactionMembership,
   });
 
   /// Builds a validator bound to the given `basePrefix` and player. Reuse one
@@ -53,6 +54,11 @@ class IncrementalCandidateValidator {
     Map<String, TileMapResult>? tileMapByRegion,
     PlayerView? view,
     Map<String, Unit>? unitsById,
+    /// When callers rebuild this validator for many `basePrefix` snapshots over
+    /// the same [game] (for example simple-heuristic iterations), supplying the
+    /// membership snapshot avoids repeated `DiplomacyFactionMembership.from`
+    /// work. Must remain valid for [game] for the validator lifetime (Refs #2394).
+    DiplomacyFactionMembership? factionMembership,
   }) {
     assert(
       view == null || view.playerId == playerId,
@@ -72,6 +78,7 @@ class IncrementalCandidateValidator {
       unitsById: actualUnitsById,
       diplomaticOrders: diplomaticOrders,
       tileMapByRegion: tileMapByRegion,
+      prefetchedFactionMembership: factionMembership,
     );
   }
 
@@ -83,15 +90,37 @@ class IncrementalCandidateValidator {
   final Map<String, Unit> unitsById;
   final List<DiplomaticOrder> diplomaticOrders;
   final Map<String, TileMapResult>? tileMapByRegion;
+  final DiplomacyFactionMembership? prefetchedFactionMembership;
   Set<String>? _cachedDevExclusiveTiles;
   Set<String>? _cachedCivilianDraftMoveUnitIds;
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildOrders;
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildAndWorkOrders;
+
+  /// When [false], existing work orders in [basePrefix] failed incremental
+  /// replay; every [isWorkAccepted] probe must reject (Refs #2394).
+  bool? _cachedWorkPrefixReplaySucceeded;
+  ({Stockpile stockpile, int treasury, Set<String> seenUnitIds, Set<String>
+      devExclusive})? _cachedPostWorkPrefixState;
+
+  /// When [false], existing build orders in [basePrefix] failed incremental
+  /// replay; every [isBuildAccepted] probe must reject (Refs #2394).
+  bool? _cachedBuildPrefixReplaySucceeded;
+  ({Stockpile stockpile, int treasury, WorkerPool workers})?
+  _cachedPostBuildPrefixEconomy;
   Map<String, Army>? _cachedArmiesById;
   DiplomacyFactionMembership? _cachedFactionMembership;
   NavalOrderValidator? _cachedNavalOrderValidator;
 
+  /// When [false], existing diplomatic orders in [basePrefix] failed incremental
+  /// replay; every [isDiplomaticAccepted] probe must reject (Refs #2394).
+  bool? _cachedDiplomaticPrefixReplaySucceeded;
+  DiplomaticPrefixCheckpoint? _cachedPostDiplomaticPrefixState;
+
   DiplomacyFactionMembership _factionMembership() {
+    final pre = prefetchedFactionMembership;
+    if (pre != null) {
+      return pre;
+    }
     final cached = _cachedFactionMembership;
     if (cached != null) {
       return cached;
@@ -202,21 +231,56 @@ class IncrementalCandidateValidator {
   bool isBuildAccepted(BuildUnitOrder candidate) {
     final player = _player();
     if (player == null) return false;
-    final validator = BuildOrderValidator(game: game, player: player);
+    if (_cachedBuildPrefixReplaySucceeded == false) {
+      return false;
+    }
     final builds =
         basePrefix.buildUnitOrdersByPlayerId[playerId] ??
         const <BuildUnitOrder>[];
-    for (final existing in builds) {
-      final result = validator.validate(existing, previousRejected: false);
-      if (!result.isAccepted) return false;
+    if (_cachedPostBuildPrefixEconomy == null) {
+      final prefixValidator = BuildOrderValidator(game: game, player: player);
+      for (final existing in builds) {
+        final result = prefixValidator.validate(
+          existing,
+          previousRejected: false,
+        );
+        if (!result.isAccepted) {
+          _cachedBuildPrefixReplaySucceeded = false;
+          return false;
+        }
+      }
+      _cachedBuildPrefixReplaySucceeded = true;
+      _cachedPostBuildPrefixEconomy = (
+        stockpile: prefixValidator.stockpile,
+        treasury: prefixValidator.treasury,
+        workers: prefixValidator.workers,
+      );
     }
-    return validator.validate(candidate, previousRejected: false).isAccepted;
+    final snap = _cachedPostBuildPrefixEconomy!;
+    final candidateValidator = BuildOrderValidator.withProjectedEconomy(
+      game: game,
+      player: player,
+      stockpile: Stockpile(
+        quantities: Map<String, int>.from(snap.stockpile.quantities),
+      ),
+      treasury: snap.treasury,
+      workerPool: snap.workers,
+    );
+    return candidateValidator
+        .validate(candidate, previousRejected: false)
+        .isAccepted;
   }
 
   bool isWorkAccepted(WorkOrder candidate) {
     final player = _player();
     if (player == null) return false;
-    final economy = _projectEconomyAfterAcceptedBuildOrders(player);
+    if (_cachedWorkPrefixReplaySucceeded == false) {
+      return false;
+    }
+    final prefix = _ensurePostWorkPrefixState(player);
+    if (prefix == null) {
+      return false;
+    }
     final workValidator = createWorkOrderValidator(
       game: game,
       player: player,
@@ -227,17 +291,14 @@ class IncrementalCandidateValidator {
       diplomaticOrders: diplomaticOrders,
       tileMapByRegion: tileMapByRegion,
       civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
-      devExclusiveTiles: _devExclusiveTiles(),
-      stockpile: economy.stockpile,
-      treasury: economy.treasury,
+      devExclusiveTiles: Set<String>.from(prefix.devExclusive),
+      stockpile: Stockpile(
+        quantities: Map<String, int>.from(prefix.stockpile.quantities),
+      ),
+      treasury: prefix.treasury,
       factionMembership: _factionMembership(),
+      initialSeenUnitIds: prefix.seenUnitIds,
     );
-    final works =
-        basePrefix.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
-    for (final existing in works) {
-      final result = workValidator.validate(existing, previousRejected: false);
-      if (!result.isAccepted) return false;
-    }
     return workValidator
         .validate(candidate, previousRejected: false)
         .isAccepted;
@@ -246,18 +307,42 @@ class IncrementalCandidateValidator {
   bool isDiplomaticAccepted(DiplomaticOrder candidate) {
     final player = _player();
     if (player == null) return false;
+    if (_cachedDiplomaticPrefixReplaySucceeded == false) {
+      return false;
+    }
     final economy = _projectEconomyAfterAcceptedBuildAndWorkOrders(player);
-    final validator = DiplomaticOrderValidator(
+    final membership = _factionMembership();
+
+    if (_cachedPostDiplomaticPrefixState == null) {
+      final prefixValidator = DiplomaticOrderValidator(
+        game: game,
+        playerId: playerId,
+        initialTreasury: economy.treasury,
+        factionMembership: membership,
+      );
+      for (final existing in diplomaticOrders) {
+        final result = prefixValidator.validate(
+          existing,
+          previousRejected: false,
+        );
+        if (!result.result.isAccepted) {
+          _cachedDiplomaticPrefixReplaySucceeded = false;
+          return false;
+        }
+      }
+      _cachedDiplomaticPrefixReplaySucceeded = true;
+      _cachedPostDiplomaticPrefixState =
+          prefixValidator.capturePrefixCheckpoint();
+    }
+
+    final checkpoint = _cachedPostDiplomaticPrefixState!;
+    final candidateValidator = DiplomaticOrderValidator.fromPrefixCheckpoint(
       game: game,
       playerId: playerId,
-      initialTreasury: economy.treasury,
-      factionMembership: _factionMembership(),
+      checkpoint: checkpoint,
+      factionMembership: membership,
     );
-    for (final existing in diplomaticOrders) {
-      final result = validator.validate(existing, previousRejected: false);
-      if (!result.result.isAccepted) return false;
-    }
-    return validator
+    return candidateValidator
         .validate(candidate, previousRejected: false)
         .result
         .isAccepted;
@@ -299,7 +384,46 @@ class IncrementalCandidateValidator {
     if (cached != null) {
       return cached;
     }
+    final prefix = _ensurePostWorkPrefixState(player);
+    if (prefix == null) {
+      final afterBuild = _projectEconomyAfterAcceptedBuildOrders(player);
+      _cachedEconomyAfterBuildAndWorkOrders = afterBuild;
+      return afterBuild;
+    }
+    final projected = (stockpile: prefix.stockpile, treasury: prefix.treasury);
+    _cachedEconomyAfterBuildAndWorkOrders = projected;
+    return projected;
+  }
+
+  /// Replays accepted work orders in [basePrefix] once per validator instance,
+  /// then exposes projected economy + work-order state for candidate probes
+  /// and diplomatic projection (Refs #2394, Category B).
+  ({Stockpile stockpile, int treasury, Set<String> seenUnitIds, Set<String>
+      devExclusive})? _ensurePostWorkPrefixState(Player player) {
+    if (_cachedWorkPrefixReplaySucceeded == false) {
+      return null;
+    }
+    final cachedState = _cachedPostWorkPrefixState;
+    if (cachedState != null) {
+      return cachedState;
+    }
     final afterBuild = _projectEconomyAfterAcceptedBuildOrders(player);
+    final works =
+        basePrefix.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
+    final baseDev = Set<String>.from(_devExclusiveTiles());
+    if (works.isEmpty) {
+      final proj = (
+        stockpile: Stockpile(
+          quantities: Map<String, int>.from(afterBuild.stockpile.quantities),
+        ),
+        treasury: afterBuild.treasury,
+        seenUnitIds: <String>{},
+        devExclusive: baseDev,
+      );
+      _cachedWorkPrefixReplaySucceeded = true;
+      _cachedPostWorkPrefixState = proj;
+      return proj;
+    }
     final workValidator = createWorkOrderValidator(
       game: game,
       player: player,
@@ -310,26 +434,29 @@ class IncrementalCandidateValidator {
       diplomaticOrders: diplomaticOrders,
       tileMapByRegion: tileMapByRegion,
       civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
-      devExclusiveTiles: _devExclusiveTiles(),
+      devExclusiveTiles: baseDev,
       stockpile: afterBuild.stockpile,
       treasury: afterBuild.treasury,
       factionMembership: _factionMembership(),
     );
-    final works =
-        basePrefix.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
     for (final existing in works) {
       final result = workValidator.validate(existing, previousRejected: false);
       if (!result.isAccepted) {
-        _cachedEconomyAfterBuildAndWorkOrders = afterBuild;
-        return afterBuild;
+        _cachedWorkPrefixReplaySucceeded = false;
+        return null;
       }
     }
-    final projected = (
-      stockpile: workValidator.stockpile,
+    final proj = (
+      stockpile: Stockpile(
+        quantities: Map<String, int>.from(workValidator.stockpile.quantities),
+      ),
       treasury: workValidator.treasury,
+      seenUnitIds: {for (final w in works) w.unitId},
+      devExclusive: Set<String>.from(baseDev),
     );
-    _cachedEconomyAfterBuildAndWorkOrders = projected;
-    return projected;
+    _cachedWorkPrefixReplaySucceeded = true;
+    _cachedPostWorkPrefixState = proj;
+    return proj;
   }
 
   Set<String> _civilianDraftMoveUnitIds() {

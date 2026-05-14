@@ -208,6 +208,54 @@ void main() {
       );
     });
 
+    test(
+      'build: successive candidate probes stay full-pass equivalent (#2394)',
+      () {
+        final game = TestFixtures.gameWithSingleOwnedProvince(
+          ownerPlayerId: 'p1',
+          provinceId: 'oldWorld|p1',
+          treasury: 999,
+        );
+        const topology = MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: [],
+        );
+        const basePrefix = Orders();
+
+        const candidateA = BuildUnitOrder(
+          unitType: 'pikemen',
+          isMilitary: true,
+          spawnProvinceId: 'oldWorld|p1',
+        );
+        const candidateB = BuildUnitOrder(
+          unitType: 'musketeers',
+          isMilitary: true,
+          spawnProvinceId: 'oldWorld|p1',
+        );
+
+        final incremental = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: 'p1',
+          basePrefix: basePrefix,
+        );
+        expect(
+          incremental.isBuildAccepted(candidateA),
+          fullPassBuildAccepted(game, topology, 'p1', basePrefix, candidateA),
+        );
+        expect(
+          incremental.isBuildAccepted(candidateB),
+          fullPassBuildAccepted(game, topology, 'p1', basePrefix, candidateB),
+        );
+      },
+    );
+
     test('work: non-empty basePrefix replay remains equivalent', () {
       final game = moveCorpusGame();
       final topology = moveCorpusTopology();
@@ -261,5 +309,81 @@ void main() {
         label: 'same-target non-economic conflict',
       );
     });
+
+    test(
+      'diplomatic: sequential probes on one validator stay equivalent (#2394)',
+      () {
+        final game = moveCorpusGame();
+        final topology = moveCorpusTopology();
+        final basePrefix = Orders(
+          diplomaticOrdersByPlayerId: {
+            'p1': [
+              const DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'p2',
+              ),
+            ],
+          },
+        );
+        const candidateA = DiplomaticOrder(
+          type: DiplomaticOrderType.alliance,
+          targetFactionId: 'p2',
+        );
+        const candidateB = DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: 'p3',
+        );
+        final incremental = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: 'p1',
+          basePrefix: basePrefix,
+        );
+        expect(
+          incremental.isDiplomaticAccepted(candidateA),
+          fullPassDiplomaticAccepted(game, topology, 'p1', basePrefix, candidateA),
+        );
+        expect(
+          incremental.isDiplomaticAccepted(candidateB),
+          fullPassDiplomaticAccepted(game, topology, 'p1', basePrefix, candidateB),
+        );
+        expect(
+          incremental.isDiplomaticAccepted(candidateA),
+          fullPassDiplomaticAccepted(game, topology, 'p1', basePrefix, candidateA),
+        );
+      },
+    );
+
+    test(
+      'prefetched DiplomacyFactionMembership matches lazy membership (#2394)',
+      () {
+        final game = armyCorpusGame();
+        final topology = armyCorpusTopology();
+        const playerId = 'p1';
+        const basePrefix = Orders();
+        final prefetched = DiplomacyFactionMembership.from(game);
+        final baseline = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+          basePrefix: basePrefix,
+        );
+        final withPrefetched = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+          basePrefix: basePrefix,
+          factionMembership: prefetched,
+        );
+        const armyMove = ArmyMoveOrder(
+          armyId: 'field_a',
+          destinationProvinceId: 'oldWorld|P4',
+        );
+        expect(
+          withPrefetched.isArmyMoveAccepted(armyMove),
+          baseline.isArmyMoveAccepted(armyMove),
+        );
+      },
+    );
   });
 }
