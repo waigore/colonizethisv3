@@ -78,7 +78,8 @@ Game applyRelationModifiersAndUpdateScores(
   int turn,
 ) {
   var players = game.players;
-  var playerIndexById = _playerListIndexById(players);
+  // Stable id → row index while [players] order/count is unchanged (Refs #2394).
+  final playerIndexById = _playerListIndexById(players);
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
 
   // GrantAid: deduct treasury, add relation modifier (+5 per grant). Requires Embassy.
@@ -225,7 +226,7 @@ Game processOngoingSubsidies(
   required DiplomacyFactionMembership factionMembership,
 }) {
   var players = game.players;
-  var playerIndexById = _playerListIndexById(players);
+  final playerIndexById = _playerListIndexById(players);
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
 
