@@ -16,12 +16,17 @@ class WorkOrderTargetPrecheckContext {
     required this.playerId,
     required this.treasury,
     required this.civilianEmbassyWorkAllowed,
+    this.factionMembership,
   });
 
   final Game game;
   final Player player;
   final String playerId;
   final int treasury;
+
+  /// When set, avoids linear scans for Minor/Tribe checks in purchase-land
+  /// prevalidation (Refs #2394).
+  final DiplomacyFactionMembership? factionMembership;
 
   /// True when the unit may perform civilian work in a Minor/Tribe province
   /// with embassy + tech (validator-specific).
@@ -120,7 +125,11 @@ OrderValidationResult? precheckPurchaseLand(
       'purchase_land target must be a Minor or Tribe province',
     );
   }
-  if (!isMinorOrTribe(ctx.game, ownerId)) {
+  if (!isMinorOrTribe(
+    ctx.game,
+    ownerId,
+    factionMembership: ctx.factionMembership,
+  )) {
     return OrderValidationResult.rejected(
       'purchase_land target must be a Minor or Tribe province',
     );
