@@ -37,7 +37,15 @@ Future<void> _openCivilianPanel(
       return false;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
+    // Match fleet E2E: short-circuit when the panel mounts synchronously so we
+    // skip the first poll pump (Refs #2336 adaptive polling / bottleneck 2).
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
     await tester.pump();
+    if (civilianPanel.evaluate().isNotEmpty) {
+      return true;
+    }
     final openDeadline = DateTime.now().add(const Duration(seconds: 3));
     var openPollMs = 25;
     while (DateTime.now().isBefore(openDeadline)) {
@@ -119,6 +127,15 @@ Future<void> _openPanelFromMarker(
       continue;
     }
     await tester.tap(tappable.first, warnIfMissed: false);
+    if (panelRoot.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
+    }
+    await tester.pump();
+    if (panelRoot.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
+    }
     final openDeadline = DateTime.now().add(const Duration(seconds: 3));
     var openPollMs = 25;
     while (DateTime.now().isBefore(openDeadline)) {
@@ -623,8 +640,7 @@ void main() {
           if (turnAfterFinder.evaluate().isEmpty) {
             return false;
           }
-          final turnAfter =
-              turnAfterFinder.evaluate().single.widget as Text;
+          final turnAfter = turnAfterFinder.evaluate().single.widget as Text;
           return turnAfter.data != turnLabelBefore;
         },
         timeout: const Duration(seconds: 2),
