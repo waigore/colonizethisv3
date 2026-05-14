@@ -227,4 +227,31 @@ void main() {
       expect(result.isPending, isFalse);
     });
   });
+
+  group('gameFromTurnResolutionResult', () {
+    test('reads carried game for TurnResolutionComplete', () {
+      final complete = TurnResolutionComplete(baseGame);
+      expect(
+        identical(gameFromTurnResolutionResult(complete), baseGame),
+        isTrue,
+      );
+    });
+
+    test('reads carried game for TurnResolutionPendingOvertures', () {
+      final pending = TurnResolutionPendingOvertures(
+        game: baseGame,
+        pendingOvertures: [
+          OvertureOffer(
+            offererGpId: 'gp1',
+            targetFactionId: 'gp2',
+            stage: OvertureStage.tradeConsulate,
+          ),
+        ],
+      );
+      expect(
+        identical(gameFromTurnResolutionResult(pending), baseGame),
+        isTrue,
+      );
+    });
+  });
 }

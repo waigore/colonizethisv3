@@ -1,3 +1,4 @@
 import 'package:colonizethis_logic/package_logger.dart';
 
-final gameSetupLog = packageLogger();
+/// Same runtime prefix as [logicLog]; kept for readable call sites in setup.
+final gameSetupLog = logicLog;

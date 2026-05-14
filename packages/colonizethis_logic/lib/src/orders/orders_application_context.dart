@@ -6,7 +6,7 @@ import '../turn/trace/turn_trace_runtime.dart';
 import '../world/army_ids.dart';
 import '../world/army_movement.dart';
 
-final ordersApplicationLog = packageLogger();
+final ordersApplicationLog = logicLog;
 
 /// Counter-spy: per-turn kill chance = (friendlySpies * [counterSpyKillChancePercentPerSpy])%,
 /// capped at [counterSpyKillChanceCapPercent]%. SPEC: work order resolution.

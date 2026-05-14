@@ -256,3 +256,7 @@ class TurnResolutionPendingCallToArms extends TurnResolutionResult {
   final Game game;
   final List<CallToArmsPending> pendingCallToArms;
 }
+
+/// Shared read of [TurnResolutionResult.game] for turn pipeline and resolver
+/// call sites (Refs #2391 AC4).
+Game gameFromTurnResolutionResult(TurnResolutionResult result) => result.game;

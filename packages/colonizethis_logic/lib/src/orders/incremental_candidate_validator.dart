@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
@@ -82,8 +83,6 @@ class IncrementalCandidateValidator {
   final Map<String, Unit> unitsById;
   final List<DiplomaticOrder> diplomaticOrders;
   final Map<String, TileMapResult>? tileMapByRegion;
-  Player? _cachedPlayer;
-  bool _playerResolved = false;
   Set<String>? _cachedDevExclusiveTiles;
   Set<String>? _cachedCivilianDraftMoveUnitIds;
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildOrders;
@@ -210,22 +209,20 @@ class IncrementalCandidateValidator {
     final player = _player();
     if (player == null) return false;
     final economy = _projectEconomyAfterAcceptedBuildOrders(player);
-    final workValidator = WorkOrderValidator(
-      context: buildWorkOrderValidationContext(
-        game: game,
-        player: player,
-        playerId: playerId,
-        view: view,
-        unitsById: unitsById,
-        devExclusiveTiles: _devExclusiveTiles(),
-        tileMapByRegion: tileMapByRegion,
-        civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
-        diplomaticOrders: diplomaticOrders,
-        topology: topology,
-        factionMembership: _factionMembership(),
-      ),
+    final workValidator = createWorkOrderValidator(
+      game: game,
+      player: player,
+      playerId: playerId,
+      view: view,
+      topology: topology,
+      unitsById: unitsById,
+      diplomaticOrders: diplomaticOrders,
+      tileMapByRegion: tileMapByRegion,
+      civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
+      devExclusiveTiles: _devExclusiveTiles(),
       stockpile: economy.stockpile,
       treasury: economy.treasury,
+      factionMembership: _factionMembership(),
     );
     final works =
         basePrefix.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
@@ -295,7 +292,7 @@ class IncrementalCandidateValidator {
       return cached;
     }
     final afterBuild = _projectEconomyAfterAcceptedBuildOrders(player);
-    final workValidator = createOrderValidators(
+    final workValidator = createWorkOrderValidator(
       game: game,
       player: player,
       playerId: playerId,
@@ -309,7 +306,7 @@ class IncrementalCandidateValidator {
       stockpile: afterBuild.stockpile,
       treasury: afterBuild.treasury,
       factionMembership: _factionMembership(),
-    ).workValidator;
+    );
     final works =
         basePrefix.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
     for (final existing in works) {
@@ -355,18 +352,5 @@ class IncrementalCandidateValidator {
     return computed;
   }
 
-  Player? _player() {
-    if (_playerResolved) {
-      return _cachedPlayer;
-    }
-    for (final p in game.players) {
-      if (p.id == playerId) {
-        _cachedPlayer = p;
-        _playerResolved = true;
-        return p;
-      }
-    }
-    _playerResolved = true;
-    return null;
-  }
+  Player? _player() => game.playerById(playerId);
 }

@@ -3,7 +3,7 @@ import 'package:colonizethis_data/colonizethis_data.dart'
 import 'package:colonizethis_logic/src/constants.dart';
 import 'package:colonizethis_logic/src/orders/orders_application_context.dart';
 import 'package:colonizethis_logic/src/orders/purchase_land_work_completion.dart';
-import 'package:colonizethis_logic/src/orders/work_handlers/purchase_land_handler.dart';
+import 'package:colonizethis_logic/src/orders/work_handlers/simple_work_order_handler.dart';
 import 'package:colonizethis_logic/src/orders/work_handlers/work_order_handler.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -13,7 +13,7 @@ import '../../test_fixtures.dart';
 void main() {
   group('PurchaseLandWorkOrderHandler', () {
     test('supports only purchase_land target', () {
-      const handler = PurchaseLandWorkOrderHandler();
+      final handler = purchaseLandWorkOrderHandler;
       expect(handler.supports(kWorkTargetPurchaseLand), isTrue);
       expect(handler.supports(kWorkTargetExplore), isFalse);
     });
@@ -61,9 +61,7 @@ void main() {
             techUnlocked: {kTechIdMerchantCompanies: true},
           ),
         ],
-        minorNations: const [
-          MinorNation(id: 'minor1', displayName: 'Minor 1'),
-        ],
+        minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
         overtureStates: [
           const OvertureState(
             gpId: 'p1',
@@ -94,20 +92,14 @@ void main() {
       );
       final player = game.players.single;
       final context = WorkOrderExecutionContext(state: state, player: player);
-      const handler = PurchaseLandWorkOrderHandler();
+      final handler = purchaseLandWorkOrderHandler;
       const order = WorkOrder(
         unitId: 'merchant1',
         target: kWorkTargetPurchaseLand,
         targetTileKey: tileKey,
       );
 
-      final applied = handler.tryApply(
-        context,
-        order,
-        merchant,
-        tileKey,
-        true,
-      );
+      final applied = handler.tryApply(context, order, merchant, tileKey, true);
 
       expect(applied, isTrue);
       expect(context.treasury, 500);
@@ -143,9 +135,7 @@ void main() {
     }
 
     test('returns unchanged treasury when tile has no resource entry', () {
-      final game = TestFixtures.minimalGame(
-        players: const [],
-      );
+      final game = TestFixtures.minimalGame(players: const []);
       final unit = Unit(
         id: 'u1',
         type: kUnitTypeMerchant,
@@ -155,11 +145,7 @@ void main() {
       );
       final out = applyPurchaseLandCompletion(
         state: minimalState(game),
-        player: const Player(
-          id: 'p1',
-          displayName: 'P1',
-          isHuman: true,
-        ),
+        player: const Player(id: 'p1', displayName: 'P1', isHuman: true),
         unit: unit,
         targetTileKey: 'oldWorld|P1|0|0',
         treasury: 100,

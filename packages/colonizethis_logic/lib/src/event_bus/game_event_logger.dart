@@ -6,8 +6,6 @@ import '../game_events.dart';
 /// SPEC/program/logging/events.md — truncate with `…` and `truncated=true` when exceeded.
 const int kGameEventLogSummaryMaxChars = 500;
 
-final _gameEventLog = packageLogger();
-
 class GameEventLogger {
   const GameEventLogger();
 
@@ -20,7 +18,7 @@ class GameEventLogger {
       truncated = true;
     }
     final suffix = truncated ? ' truncated=true' : '';
-    _gameEventLog.i('event=$typeName $summary$suffix');
+    logicLog.i('event=$typeName $summary$suffix');
   }
 
   String _payloadSummary(GameEvent event) {

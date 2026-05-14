@@ -15,7 +15,8 @@ export 'validator_bundle.dart'
     show
         OrderValidators,
         buildWorkOrderValidationContext,
-        createOrderValidators;
+        createOrderValidators,
+        createWorkOrderValidator;
 import 'validator_bundle.dart';
 
 part 'order_engine.g.dart';

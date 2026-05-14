@@ -193,6 +193,44 @@ void main() {
       expect(lines.single, contains('reason=custom_empty'));
     });
 
+    test(
+      'resolveNoCandidateReason overrides noCandidateReason when nothing yielded',
+      () {
+        const playerId = 'gp1';
+        final unit = Unit(
+          id: 'u1',
+          type: kUnitTypeBuilder,
+          ownerId: playerId,
+          locationProvinceId: 'ow|p1',
+          tileKey: 'ow|p1|0|0',
+          status: UnitStatus.idle,
+        );
+        final suggestions = <WorkOrder>[];
+        final existing = <String, Set<String>>{};
+        var probeLast = 'fallback';
+
+        WorkSuggestionPipeline.run(
+          unit: unit,
+          unitType: unit.type,
+          unitRegionId: 'ow',
+          atProvinceId: 'ow|p1',
+          workTarget: kWorkTargetBuildImprovement,
+          existingTargetsByUnit: existing,
+          suggestions: suggestions,
+          candidatesProvider: () sync* {
+            probeLast = 'after_probe';
+          },
+          candidateAcceptor: (_) => true,
+          noCandidateReason: 'ignored_when_resolver',
+          resolveNoCandidateReason: () => probeLast,
+        );
+
+        expect(suggestions, isEmpty);
+        final lines = _suggestWorkLines(capturedEvents);
+        expect(lines.single, contains('reason=after_probe'));
+      },
+    );
+
     test('rejected candidates log engineRejectedReason', () {
       const playerId = 'gp1';
       final unit = Unit(
