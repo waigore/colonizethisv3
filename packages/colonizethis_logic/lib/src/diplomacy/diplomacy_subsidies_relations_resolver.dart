@@ -9,6 +9,18 @@ import 'diplomacy_relation_updates.dart';
 import 'diplomacy_resolver.dart';
 import 'overture_resolver.dart';
 
+/// O(1) lookup of list index by player id for [players] snapshots.
+///
+/// Callers that replace [players] with `List<Player>.from(players)` preserve
+/// index order, so the returned map remains valid for the new list instance.
+Map<String, int> _playerListIndexById(List<Player> players) {
+  final out = <String, int>{};
+  for (var i = 0; i < players.length; i++) {
+    out[players[i].id] = i;
+  }
+  return out;
+}
+
 Game terminateAgreementsOnWar(Game game) {
   final turn = game.worldState.turnState.turnNumber;
   var overtures = game.overtureStates;
@@ -55,6 +67,7 @@ Game applyRelationModifiersAndUpdateScores(
   int turn,
 ) {
   var players = game.players;
+  var playerIndexById = _playerListIndexById(players);
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
 
   // GrantAid: deduct treasury, add relation modifier (+5 per grant). Requires Embassy.
@@ -81,7 +94,7 @@ Game applyRelationModifiersAndUpdateScores(
       final overture = getOverture(game, gpId, targetId);
       if (overture == null || !overture.hasEmbassy) continue;
 
-      final playerIdx = players.indexWhere((p) => p.id == gpId);
+      final playerIdx = playerIndexById[gpId] ?? -1;
       if (playerIdx >= 0) {
         players = List<Player>.from(players);
         players[playerIdx] = players[playerIdx].copyWith(
@@ -136,7 +149,7 @@ Game applyRelationModifiersAndUpdateScores(
       if (overture == null || !overture.hasConsulate) continue;
 
       // Deduct initial payment
-      final payerIdx = players.indexWhere((p) => p.id == gpId);
+      final payerIdx = playerIndexById[gpId] ?? -1;
       if (payerIdx >= 0) {
         players = List<Player>.from(players);
         players[payerIdx] = players[payerIdx].copyWith(
@@ -200,6 +213,7 @@ Game processOngoingSubsidies(
   required DiplomacyFactionMembership factionMembership,
 }) {
   var players = game.players;
+  var playerIndexById = _playerListIndexById(players);
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
 
@@ -253,7 +267,7 @@ Game processOngoingSubsidies(
     }
 
     // Deduct subsidy payment
-    final payerIdx = players.indexWhere((p) => p.id == payerId);
+    final payerIdx = playerIndexById[payerId] ?? -1;
     if (payerIdx >= 0) {
       players = List<Player>.from(players);
       players[payerIdx] = players[payerIdx].copyWith(
@@ -280,7 +294,7 @@ Game processOngoingSubsidies(
       );
     } else {
       // GP target: transfer treasury
-      final targetIdx = players.indexWhere((p) => p.id == targetId);
+      final targetIdx = playerIndexById[targetId] ?? -1;
       if (targetIdx >= 0) {
         players[targetIdx] = players[targetIdx].copyWith(
           treasury: players[targetIdx].treasury + amount,
