@@ -243,6 +243,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   required String targetId,
   required Set<String> knownTargetIds,
   required Set<String> knownFactionIds,
+  required DiplomacyFactionMembership factionMembership,
 }) {
   final treasury = player.treasury;
   final out = <DiplomaticOrder>[];
@@ -251,10 +252,16 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   final rel = getRelation(game, playerId, targetId);
   final atWar = rel?.atWar ?? false;
   final atPeace = rel == null || rel.atPeace;
-  final isGpTarget = game.players.any((p) => p.id == targetId);
-  final isMinorOrTribe =
-      game.minorNations.any((m) => m.id == targetId) ||
-      game.tribes.any((t) => t.id == targetId);
+  final targetIsGreatPower = isGreatPower(
+    game,
+    targetId,
+    factionMembership: factionMembership,
+  );
+  final targetIsMinorOrTribe = isMinorOrTribe(
+    game,
+    targetId,
+    factionMembership: factionMembership,
+  );
 
   if (knownTargetIds.contains(targetId) && atWar) {
     out.add(
@@ -264,7 +271,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
       ),
     );
   }
-  if (isGpTarget &&
+  if (targetIsGreatPower &&
       rel != null &&
       rel.atPeace &&
       rel.level != RelationLevel.allied) {
@@ -275,7 +282,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
       ),
     );
   }
-  if (isMinorOrTribe && knownFactionIds.contains(targetId)) {
+  if (targetIsMinorOrTribe && knownFactionIds.contains(targetId)) {
     final overtureOrder = _establishOvertureSuggestionOrder(
       game: game,
       playerId: playerId,
@@ -427,6 +434,10 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   };
   final knownTargetIds = knownTargets.toSet();
 
+  // One faction-membership snapshot for the pass: per-target GP / minor / tribe
+  // checks are O(1) instead of repeated linear scans (Refs #2394).
+  final factionMembership = DiplomacyFactionMembership.from(game);
+
   // One world scan for the suggestion pass: every diplomatic probe shares the
   // same `(game, topology, playerId)` view/units snapshot (Refs #2394).
   final unitsByIdForDiplomatic = unitsByIdFromWorld(game.worldState);
@@ -450,6 +461,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       targetId: targetId,
       knownTargetIds: knownTargetIds,
       knownFactionIds: knownFactionIds,
+      factionMembership: factionMembership,
     );
     var trialOrders = workingOrders;
 
