@@ -116,11 +116,7 @@ int? _overtureCostForStage(OvertureStage stage) {
   }
   if (_isTargetHumanGp(state, targetId)) {
     final pending = [
-      OvertureOffer(
-        offererGpId: gpId,
-        targetFactionId: targetId,
-        stage: stage,
-      ),
+      OvertureOffer(offererGpId: gpId, targetFactionId: targetId, stage: stage),
     ];
     final wrapped = state.copyWith(players: players, overtureStates: overtures);
     return (accepted: false, pending: OverturePaymentsResult(wrapped, pending));
