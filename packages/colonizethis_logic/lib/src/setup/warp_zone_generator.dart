@@ -4,7 +4,7 @@
 import 'dart:math';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/package_logger.dart';
+import 'package:colonizethis_logic/src/logging.dart';
 
 /// Picks one representative sea zone per map edge (top, bottom, left, right).
 /// Returns a map of edge name ('top', 'bottom', 'left', 'right') to sea zone id.

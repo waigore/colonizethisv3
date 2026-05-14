@@ -2,7 +2,7 @@
 
 import 'dart:math';
 
-import '../../package_logger.dart' show logicLog;
+import 'package:colonizethis_logic/src/logging.dart' show logicLog;
 
 /// When true (`dart run --define=CT_TRACE_LOCKED_ASSIGNER_DFS=true`),
 /// prints every DFS branch to stdout (tabu skips, greedy prunes, try_push with
