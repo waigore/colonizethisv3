@@ -87,7 +87,7 @@ void _addExplorerWorkSuggestionsForUnit({
   required Unit unit,
   required String regionId,
   required String provinceId,
-  required Set<String> partiallyRevealedProvinceCache,
+  required List<Province> partiallyRevealedProvincesSorted,
   required Map<String, Map<String, List<String>>> tileKeysByRegion,
   required Map<String, Set<String>> existingTargetsByUnit,
   required List<WorkOrder> suggestions,
@@ -114,17 +114,7 @@ void _addExplorerWorkSuggestionsForUnit({
     return;
   }
 
-  // [buildPlayerView] already keyed every world province in [view.provincesById];
-  // resolve only ids in the partial-reveal cache instead of scanning
-  // [allProvinces] per explorer unit (Refs #2394, SPEC/program/order-suggestions.md).
-  final provinces = <Province>[];
-  for (final id in partiallyRevealedProvinceCache) {
-    final p = view.provincesById[id] ?? tryGetProvince(game.worldState, id);
-    if (p != null) {
-      provinces.add(p);
-    }
-  }
-  provinces.sort((a, b) => a.id.compareTo(b.id));
+  final provinces = partiallyRevealedProvincesSorted;
   final acceptedExplores = <WorkOrder>[];
   var lastReason = 'no_valid_tile';
   for (final prov in provinces) {
