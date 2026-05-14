@@ -1,14 +1,14 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../../../constants.dart';
 import '../../../diplomacy/diplomacy_resolver.dart';
 import '../../order_validation_result.dart';
 import 'diplomatic_sub_validator.dart';
+import 'join_empire_validator.dart';
 
 /// Type-specific validator for [DiplomaticOrderType.establishOverture] orders.
-/// Owns the per-stage rules (`tradeConsulate`, `embassy`, `nap`, `joinEmpire`)
-/// and treasury debits for cost-bearing stages.
+/// Owns the per-stage rules (`tradeConsulate`, `embassy`, `nap`) and delegates
+/// [OvertureStage.joinEmpire] to [JoinEmpireOvertureValidator].
 /// SPEC/program/orders.md § Diplomatic orders / overtures.
 class EstablishOvertureSubValidator implements DiplomaticSubValidator {
   const EstablishOvertureSubValidator({
@@ -69,11 +69,15 @@ class EstablishOvertureSubValidator implements DiplomaticSubValidator {
         treasury,
       ),
       OvertureStage.nap => _validateNap(targetId, currentStage, treasury),
-      OvertureStage.joinEmpire => _validateJoinEmpire(
-        targetId,
-        rel,
-        currentStage,
-        treasury,
+      OvertureStage.joinEmpire => JoinEmpireOvertureValidator(
+        game: game,
+        playerId: playerId,
+        factionMembership: factionMembership,
+      ).validate(
+        targetId: targetId,
+        rel: rel,
+        currentStage: currentStage,
+        treasury: treasury,
       ),
       OvertureStage.none => rejectDiplomaticSub(
         'Overture stage is required for establishOverture',
@@ -160,66 +164,6 @@ class EstablishOvertureSubValidator implements DiplomaticSubValidator {
         !_playerHasDiplomaticExpertise()) {
       return rejectDiplomaticSub(
         'Diplomatic Expertise tech required for overtures with Minor Nations and Tribes',
-        treasury,
-      );
-    }
-    return acceptDiplomaticSub(treasury);
-  }
-
-  ({OrderValidationResult result, int treasury}) _validateJoinEmpire(
-    String targetId,
-    DiplomacyRelation? rel,
-    OvertureStage currentStage,
-    int treasury,
-  ) {
-    if (currentStage != OvertureStage.nap) {
-      return rejectDiplomaticSub(
-        'Join Empire requires existing Non-Aggression Pact with that faction',
-        treasury,
-      );
-    }
-    final score = rel?.score ?? relationScoreNeutral;
-    if (score < relationScoreMinFriendly) {
-      return rejectDiplomaticSub(
-        'Join Empire requires at least Friendly relations (score >= $relationScoreMinFriendly)',
-        treasury,
-      );
-    }
-    if (isGreatPower(game, targetId, factionMembership: factionMembership)) {
-      return _validateJoinEmpireTowardGreatPower(targetId, treasury);
-    }
-    if (!isMinorOrTribe(game, targetId, factionMembership: factionMembership)) {
-      return rejectDiplomaticSub(
-        'Join Empire target must be a Minor Nation, Tribe, or Great Power',
-        treasury,
-      );
-    }
-    final cost = joinEmpireCostForMinorOrTribe(game, targetId);
-    if (treasury < cost) {
-      return rejectDiplomaticSub(
-        'Join Empire requires £$cost (scales with target size); treasury is $treasury',
-        treasury,
-      );
-    }
-    return acceptDiplomaticSub(treasury);
-  }
-
-  ({OrderValidationResult result, int treasury})
-  _validateJoinEmpireTowardGreatPower(String targetId, int treasury) {
-    final submitter = game.playerById(playerId);
-    if (submitter?.techUnlocked?[kTechIdEmpireBuilding] != true) {
-      return rejectDiplomaticSub(
-        'Empire Building tech required for Join Empire toward a Great Power',
-        treasury,
-      );
-    }
-    if (!isGreatPowerNearlyDefeatedForJoinEmpire(
-      game,
-      targetId,
-      factionMembership: factionMembership,
-    )) {
-      return rejectDiplomaticSub(
-        'Join Empire toward Great Power requires target to be nearly defeated (at most 3 provinces and original capital not held by target)',
         treasury,
       );
     }
