@@ -13,6 +13,7 @@ enum DisallowedAstMatchKind {
   provinceLocalSegmentBoundaryOnly,
   scopedPackageImportContract,
   simpleReceiverRemoveAtZero,
+  linearCollectionWhereFirstOrNull,
 }
 
 class DisallowedPatternRule {
@@ -34,6 +35,8 @@ class DisallowedPatternRule {
     required this.allowedPackageImports,
     this.removeAtZeroReceiverPathPrefix,
     this.removeAtZeroReceiverIdentifier,
+    this.linearCollectionNames = const {},
+    this.linearCollectionPathPrefix,
   });
 
   final String id;
@@ -59,6 +62,16 @@ class DisallowedPatternRule {
   /// When [kind] is [DisallowedAstMatchKind.simpleReceiverRemoveAtZero]: simple
   /// identifier of the receiver for `removeAt(0)` (typically `queue`).
   final String? removeAtZeroReceiverIdentifier;
+
+  /// When [kind] is [DisallowedAstMatchKind.linearCollectionWhereFirstOrNull]:
+  /// names of getters/no-arg methods whose `.where(...).firstOrNull` chains
+  /// are linear-scan anti-patterns (for example `provinces`).
+  final Set<String> linearCollectionNames;
+
+  /// When [kind] is [DisallowedAstMatchKind.linearCollectionWhereFirstOrNull]:
+  /// path prefix (POSIX slashes) limiting matches, for example
+  /// `packages/colonizethis_logic/lib/src/`.
+  final String? linearCollectionPathPrefix;
 }
 
 class DisallowedAstViolation {
@@ -373,6 +386,46 @@ List<DisallowedPatternRule> parseDisallowedAstRulesFromYaml(Object? yamlRoot) {
           allowedPackageImports: const {},
           removeAtZeroReceiverPathPrefix: prefix,
           removeAtZeroReceiverIdentifier: receiver,
+        ),
+      );
+    } else if (kind == 'linear_collection_where_first_or_null') {
+      final namesNode = match['collection_names'];
+      final prefix =
+          match['relative_path_prefix']?.toString().replaceAll('\\', '/');
+      if (namesNode is! YamlList ||
+          prefix == null ||
+          prefix.isEmpty) {
+        continue;
+      }
+      final names = <String>{};
+      for (final n in namesNode.nodes) {
+        final s = n.value?.toString();
+        if (s != null && s.isNotEmpty) {
+          names.add(s);
+        }
+      }
+      if (names.isEmpty) {
+        continue;
+      }
+      out.add(
+        DisallowedPatternRule(
+          id: id,
+          message: message,
+          kind: DisallowedAstMatchKind.linearCollectionWhereFirstOrNull,
+          cascadedMethodNames: const {},
+          commentSubstring: null,
+          rawNamedTypeNames: const {},
+          functionName: null,
+          maxBodyLineSpan: null,
+          requireWidgetClassExtends: false,
+          argumentIndex: null,
+          invocationMethodNames: const {},
+          allowedRelativePaths: const {},
+          scopedRelativePathPrefixes: const {},
+          packageName: null,
+          allowedPackageImports: const {},
+          linearCollectionNames: names,
+          linearCollectionPathPrefix: prefix,
         ),
       );
     } else if (kind == 'scoped_package_import_contract') {

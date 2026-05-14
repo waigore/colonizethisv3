@@ -2,10 +2,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
 import '../world/player_view.dart';
-import 'draft_orders_mutations.dart';
 import 'incremental_candidate_validator.dart';
+
+export '../diplomacy/overture_stage_navigation.dart';
 
 final orderSuggestionLog = packageLogger('order_suggestion');
 
@@ -166,6 +166,13 @@ bool isDiplomaticOrderAccepted(
   Orders baseOrders,
   DiplomaticOrder candidate, {
   Map<String, TileMapResult>? tileMapByRegion,
+  /// When callers probe many candidates for the same `(game, topology,
+  /// playerId)` (for example diplomatic suggestion loops), they may pass the
+  /// same [view] / [unitsById] built once to skip redundant `buildPlayerView`
+  /// and `unitsByIdFromWorld` scans. Refs #2394; `SPEC/program/order-suggestions.md`
+  /// § Throughput bounds.
+  PlayerView? view,
+  Map<String, Unit>? unitsById,
 }) {
   final validator = buildIncrementalCandidateValidator(
     game: game,
@@ -173,7 +180,24 @@ bool isDiplomaticOrderAccepted(
     playerId: playerId,
     baseOrders: baseOrders,
     tileMapByRegion: tileMapByRegion,
+    view: view,
+    unitsById: unitsById,
   );
+  return validator.isDiplomaticAccepted(candidate);
+}
+
+/// Validates [candidate] with an existing [validator] built for the same
+/// `(game, topology, playerId, baseOrders, …)` tuple as this probe.
+///
+/// Callers that evaluate many diplomatic candidates against the same
+/// [Orders] prefix should build one [IncrementalCandidateValidator] per
+/// prefix and reuse it here instead of calling [isDiplomaticOrderAccepted]
+/// repeatedly (Refs #2394, `SPEC/program/order-suggestions.md` § Throughput
+/// bounds).
+bool isDiplomaticOrderAcceptedWithValidator(
+  IncrementalCandidateValidator validator,
+  DiplomaticOrder candidate,
+) {
   return validator.isDiplomaticAccepted(candidate);
 }
 
@@ -205,19 +229,4 @@ Orders appendDiplomaticOrderForTrial(
       playerId: [...prev, order],
     },
   );
-}
-
-OvertureStage? nextOvertureStage(OvertureStage current) {
-  switch (current) {
-    case OvertureStage.none:
-      return OvertureStage.tradeConsulate;
-    case OvertureStage.tradeConsulate:
-      return OvertureStage.embassy;
-    case OvertureStage.embassy:
-      return OvertureStage.nap;
-    case OvertureStage.nap:
-      return OvertureStage.joinEmpire;
-    case OvertureStage.joinEmpire:
-      return null;
-  }
 }

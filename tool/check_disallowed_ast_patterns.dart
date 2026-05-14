@@ -350,6 +350,62 @@ bool _looksLikeTileKeysByRegionAndProvinceLookup(IndexExpression node) {
   return src.contains('tileKeysByRegionAndProvince[');
 }
 
+bool _isLinearCollectionWhereFirstOrNullPattern(
+  PropertyAccess node,
+  DisallowedPatternRule rule,
+  String relativePath,
+) {
+  final prefix = rule.linearCollectionPathPrefix;
+  if (prefix == null || prefix.isEmpty) {
+    return false;
+  }
+  if (rule.linearCollectionNames.isEmpty) {
+    return false;
+  }
+  final slashPath = relativePath.replaceAll('\\', '/');
+  if (!slashPath.startsWith(prefix)) {
+    return false;
+  }
+  if (node.propertyName.name != 'firstOrNull') {
+    return false;
+  }
+  final whereTarget = node.target;
+  if (whereTarget is! MethodInvocation) {
+    return false;
+  }
+  if (whereTarget.methodName.name != 'where') {
+    return false;
+  }
+  if (whereTarget.argumentList.arguments.length != 1) {
+    return false;
+  }
+  final collectionTarget = whereTarget.target;
+  if (collectionTarget == null) {
+    return false;
+  }
+  return _expressionEndsInNamedCollection(
+    collectionTarget,
+    rule.linearCollectionNames,
+  );
+}
+
+bool _expressionEndsInNamedCollection(
+  Expression target,
+  Set<String> collectionNames,
+) {
+  final expr = _unwrapParenthesized(target);
+  if (expr is PropertyAccess) {
+    return collectionNames.contains(expr.propertyName.name);
+  }
+  if (expr is PrefixedIdentifier) {
+    return collectionNames.contains(expr.identifier.name);
+  }
+  if (expr is SimpleIdentifier) {
+    return collectionNames.contains(expr.name);
+  }
+  return false;
+}
+
 bool _isSimpleReceiverRemoveAtZeroPattern(
   MethodInvocation node,
   DisallowedPatternRule rule,
@@ -474,6 +530,20 @@ class _DisallowedAstVisitor extends RecursiveAstVisitor<void> {
       }
     }
     super.visitMethodInvocation(node);
+  }
+
+  @override
+  void visitPropertyAccess(PropertyAccess node) {
+    for (final rule in rules) {
+      if (rule.kind !=
+          DisallowedAstMatchKind.linearCollectionWhereFirstOrNull) {
+        continue;
+      }
+      if (_isLinearCollectionWhereFirstOrNullPattern(node, rule, path)) {
+        _recordIfAllowed(node, rule);
+      }
+    }
+    super.visitPropertyAccess(node);
   }
 
   @override
