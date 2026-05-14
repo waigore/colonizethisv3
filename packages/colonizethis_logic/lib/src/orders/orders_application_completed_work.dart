@@ -181,13 +181,17 @@ BuildWorkState _completedWorkUpgradeTown(
   BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final provinces = getProvinces();
-  final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
-  if (idx < 0) return s;
-  final p = provinces[idx];
-  final next = List<Province>.from(provinces)
-    ..[idx] = p.copyWith(
-      townDevelopmentLevel: (p.townDevelopmentLevel + 1).clamp(0, 4),
-    );
+  var replaced = false;
+  final next = provinces.map((p) {
+    if (!replaced && p.id == u.locationProvinceId) {
+      replaced = true;
+      return p.copyWith(
+        townDevelopmentLevel: (p.townDevelopmentLevel + 1).clamp(0, 4),
+      );
+    }
+    return p;
+  }).toList();
+  if (!replaced) return s;
   return s.copyWith(work: replaceProvinces(s.work, next));
 }
 
@@ -276,13 +280,17 @@ BuildWorkState _completedWorkBuildFort(
   BuildWorkState Function(BuildWorkState, Unit, String) applyExploreCompletion,
 ) {
   final provinces = getProvinces();
-  final idx = provinces.indexWhere((p) => p.id == u.locationProvinceId);
+  var replaced = false;
+  final nextProvinces = provinces.map((p) {
+    if (!replaced && p.id == u.locationProvinceId) {
+      replaced = true;
+      return p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3));
+    }
+    return p;
+  }).toList();
   WorkOrderState work = s.work;
-  if (idx >= 0) {
-    final p = provinces[idx];
-    final next = List<Province>.from(provinces)
-      ..[idx] = p.copyWith(fortLevel: (p.fortLevel + 1).clamp(0, 3));
-    work = replaceProvinces(work, next);
+  if (replaced) {
+    work = replaceProvinces(work, nextProvinces);
   }
   if (s.topology != null && s.onDialogue != null) {
     final seed =
