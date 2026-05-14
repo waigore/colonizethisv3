@@ -50,10 +50,12 @@ List<Fleet> _applySingleNavalMissionOrder({
     final updatedHome = homeFleet.copyWith(
       ships: [...homeFleet.ships, ...fleet.ships],
     );
-    final next = fleets
-        .where((f) => f.id != fleet.id)
-        .map((f) => f.id == homeFleetId ? updatedHome : f)
-        .toList();
+    // Single-pass rebuild: same ordering as the prior where/map chain without
+    // allocating two intermediate iterables (Refs #2394).
+    final next = <Fleet>[
+      for (final f in fleets)
+        if (f.id != fleet.id) f.id == homeFleetId ? updatedHome : f,
+    ];
     _resyncFleetLookupMaps(next, fleetById, fleetIndexById);
     return next;
   }
