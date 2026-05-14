@@ -66,9 +66,11 @@ List<WorkOrder> suggestWorkOrders(
         partiallyRevealedPrefixedProvinceIds: partiallyRevealedProvinceCache,
       );
 
+  // Reuse [view.provincesById] (same full-id keys as [buildPlayerView]) instead
+  // of a second [allProvinces] scan over world state (Refs #2394).
   final playerOwnedProvinceIds = <String>{
-    for (final p in allProvinces(game.worldState))
-      if (p.ownerId == playerId) p.id,
+    for (final e in view.provincesById.entries)
+      if (e.value.ownerId == playerId) e.key,
   };
 
   // Pre-filter + visibility sort per workTarget; reused across worker units.

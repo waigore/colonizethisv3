@@ -82,7 +82,7 @@ bool isGreatPower(
   if (factionMembership != null) {
     return factionMembership.isGreatPower(factionId);
   }
-  return game.players.any((p) => p.id == factionId);
+  return game.playerById(factionId) != null;
 }
 
 /// Target GP is "nearly defeated" for Join Empire: ≤3 provinces and does not hold its original capital tile province. SPEC/game/diplomacy.md.

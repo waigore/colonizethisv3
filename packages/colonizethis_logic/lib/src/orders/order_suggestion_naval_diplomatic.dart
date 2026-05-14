@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/naval.dart';
 import '../world/player_view.dart';
@@ -104,8 +105,9 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  Map<String, Unit>? unitsById,
+}) {
   orderSuggestionLog.d('suggestNavalMoveOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <NavalMoveOrder>[];
@@ -124,11 +126,17 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   // units-by-id setup across every candidate probe in the loop.
   // SPEC/program/order-suggestions.md § Incremental candidate validation.
   // Refs #2237.
+  //
+  // Reuse the caller-supplied [view] and a one-time units index so we do not
+  // pay redundant `buildPlayerView` / `unitsByIdFromWorld` scans (Refs #2394).
+  final effectiveUnits = unitsById ?? unitsByIdFromWorld(game.worldState);
   final candidateValidator = IncrementalCandidateValidator.forPlayer(
     game: game,
     topology: topology,
     playerId: playerId,
     basePrefix: currentOrders,
+    view: view,
+    unitsById: effectiveUnits,
   );
 
   final homeFleetId = homeFleetIdFor(playerId);
@@ -188,8 +196,9 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  Map<String, Unit>? unitsById,
+}) {
   orderSuggestionLog.d('suggestNavalMissionOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <NavalMissionOrder>[];
@@ -202,11 +211,16 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   // Single per-player validator amortizes per-player setup across every
   // candidate probe (mission × fleet). SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
+  //
+  // Reuse [view] and one units snapshot (Refs #2394).
+  final effectiveUnits = unitsById ?? unitsByIdFromWorld(game.worldState);
   final candidateValidator = IncrementalCandidateValidator.forPlayer(
     game: game,
     topology: topology,
     playerId: playerId,
     basePrefix: currentOrders,
+    view: view,
+    unitsById: effectiveUnits,
   );
 
   for (final fleet in game.worldState.fleets) {
@@ -243,6 +257,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   required String targetId,
   required Set<String> knownTargetIds,
   required Set<String> knownFactionIds,
+  required DiplomacyFactionMembership factionMembership,
 }) {
   final treasury = player.treasury;
   final out = <DiplomaticOrder>[];
@@ -251,10 +266,12 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   final rel = getRelation(game, playerId, targetId);
   final atWar = rel?.atWar ?? false;
   final atPeace = rel == null || rel.atPeace;
-  final isGpTarget = game.players.any((p) => p.id == targetId);
-  final isMinorOrTribe =
-      game.minorNations.any((m) => m.id == targetId) ||
-      game.tribes.any((t) => t.id == targetId);
+  final isGpTarget = game.playerById(targetId) != null;
+  final targetIsMinorOrTribe = isMinorOrTribe(
+    game,
+    targetId,
+    factionMembership: factionMembership,
+  );
 
   if (knownTargetIds.contains(targetId) && atWar) {
     out.add(
@@ -275,7 +292,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
       ),
     );
   }
-  if (isMinorOrTribe && knownFactionIds.contains(targetId)) {
+  if (targetIsMinorOrTribe && knownFactionIds.contains(targetId)) {
     final overtureOrder = _establishOvertureSuggestionOrder(
       game: game,
       playerId: playerId,
@@ -348,13 +365,8 @@ DiplomaticOrder? _establishOvertureSuggestionOrder({
   if (next == OvertureStage.tradeConsulate ||
       next == OvertureStage.embassy ||
       next == OvertureStage.nap) {
-    Player? submitter;
-    for (final p in game.players) {
-      if (p.id == playerId) {
-        submitter = p;
-        break;
-      }
-    }
+    // O(1) player lookup (Refs #2394); minor/tribe overture stages require tech.
+    final submitter = game.playerById(playerId);
     if (submitter?.techUnlocked?[kTechIdDiplomaticExpertise] != true) {
       return null;
     }
@@ -414,16 +426,13 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     }
   }
 
-  final otherGps = game.players
-      .where((p) => p.id != playerId)
-      .map((p) => p.id)
-      .toSet();
-  final minorIds = game.minorNations.map((m) => m.id).toSet();
-  final tribeIds = game.tribes.map((t) => t.id).toSet();
+  // One membership snapshot for this pass: O(1) minor/tribe checks per target
+  // and GP id sets without repeated list scans (Refs #2394).
+  final factionMembership = DiplomacyFactionMembership.from(game);
+  final otherGps = factionMembership.greatPowerIds.difference({playerId});
   final knownTargets = <String>{
     ...otherGps.where(knownFactionIds.contains),
-    ...minorIds.where(knownFactionIds.contains),
-    ...tribeIds.where(knownFactionIds.contains),
+    ...factionMembership.minorOrTribeIds.where(knownFactionIds.contains),
   };
   final knownTargetIds = knownTargets.toSet();
 
@@ -450,6 +459,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       targetId: targetId,
       knownTargetIds: knownTargetIds,
       knownFactionIds: knownFactionIds,
+      factionMembership: factionMembership,
     );
     var trialOrders = workingOrders;
 
