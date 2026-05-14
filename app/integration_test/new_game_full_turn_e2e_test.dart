@@ -248,7 +248,12 @@ Future<void> _tapAssignOnCivilianRowWithTitle(
   while (titlesInList.evaluate().isEmpty &&
       sw.elapsed < const Duration(seconds: 20)) {
     await tester.drag(panelScrollable, const Offset(0, -120));
-    await e2ePumpFor(tester, const Duration(milliseconds: 120));
+    await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => titlesInList.evaluate().isNotEmpty,
+      timeout: const Duration(milliseconds: 200),
+      phaseName: 'pump_until_civilian_title_visible_after_scroll_drag',
+    );
   }
   expect(
     titlesInList,
@@ -312,7 +317,7 @@ void main() {
       await e2eWaitForNewGameEntry(tester, perf: perf);
       perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
       final preloadSw = Stopwatch()..start();
-      await e2eEnsureAllRelocated64pxPngsLoad();
+      await e2eEnsureAllRelocated64pxPngsLoadSuiteOnce();
       perf.timing('asset_preload', preloadSw.elapsed);
 
       final newGameSw = Stopwatch()..start();

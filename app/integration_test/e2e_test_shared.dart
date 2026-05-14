@@ -508,12 +508,22 @@ Future<void> _e2eTapGameStartIntroOverlayContinueIfPresent(
 ) async {
   if (find.text('Continue').evaluate().isNotEmpty) {
     await tester.tap(find.text('Continue').first);
-    await tester.pump(const Duration(milliseconds: 200));
+    await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => find.byType(GameStartIntroOverlay).evaluate().isEmpty,
+      timeout: const Duration(milliseconds: 800),
+      phaseName: 'pump_until_intro_dismissed_after_continue',
+    );
     return;
   }
   if (find.text('I shall.').evaluate().isNotEmpty) {
     await tester.tap(find.text('I shall.').first);
-    await tester.pump(const Duration(milliseconds: 200));
+    await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => find.byType(GameStartIntroOverlay).evaluate().isEmpty,
+      timeout: const Duration(milliseconds: 800),
+      phaseName: 'pump_until_intro_dismissed_after_i_shall',
+    );
   }
 }
 
@@ -685,9 +695,11 @@ Future<void> e2eEnsureRelocated64pxPngDecode(
 /// Asserts the manifest matches the canonical map icon families, then decodes
 /// every PNG via [e2eDecodePngAssetPathsParallel] (bounded concurrency).
 ///
-/// Used by new-game E2E tests that need the same warm-cache behavior; callers
-/// should still invoke at most once per [testWidgets] unless a future shared
-/// fixture deduplicates across tests (GitHub #2336).
+/// Used by new-game E2E tests that need the same warm-cache behavior.
+///
+/// Prefer [e2eEnsureAllRelocated64pxPngsLoadSuiteOnce] when each scenario needs
+/// the same decode/assert path so work runs at most once per test VM (GitHub
+/// #2336 AC3).
 Future<void> e2eEnsureAllRelocated64pxPngsLoad() async {
   await e2eEnsureRelocated64pxPngDecode(<String>{
     ...kCivilianIconSlugs.map(
@@ -702,4 +714,15 @@ Future<void> e2eEnsureAllRelocated64pxPngsLoad() async {
     ),
     kFleetMapIcon64PngAssetPath,
   });
+}
+
+Future<void>? _e2eAllRelocated64pxPngLoadSuiteFuture;
+
+/// Runs [e2eEnsureAllRelocated64pxPngsLoad] at most once per isolate.
+///
+/// Subsequent calls await the same future so multiple E2E scenarios in one run
+/// do not repeat manifest + parallel decode work (GitHub #2336 AC3).
+Future<void> e2eEnsureAllRelocated64pxPngsLoadSuiteOnce() async {
+  _e2eAllRelocated64pxPngLoadSuiteFuture ??= e2eEnsureAllRelocated64pxPngsLoad();
+  return _e2eAllRelocated64pxPngLoadSuiteFuture!;
 }

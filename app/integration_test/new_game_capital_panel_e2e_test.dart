@@ -34,7 +34,7 @@ void main() {
     await e2eWaitForNewGameEntry(tester, perf: perf);
     perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
     final preloadSw = Stopwatch()..start();
-    await e2eEnsureAllRelocated64pxPngsLoad();
+    await e2eEnsureAllRelocated64pxPngsLoadSuiteOnce();
     perf.timing('asset_preload', preloadSw.elapsed);
 
     final newGameToMapSw = Stopwatch()..start();
