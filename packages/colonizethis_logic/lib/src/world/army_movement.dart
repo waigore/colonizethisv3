@@ -8,11 +8,21 @@ import 'army_migration.dart';
 import 'movement.dart';
 import 'province_lookup.dart';
 
-final _log = packageLogger();
+/// Single-pass index of [WorldState.armies] by army id for O(1) lookups (Refs
+/// #2394, SPEC/program/order-suggestions.md — incremental validation throughput
+/// bounds).
+///
+/// Callers that iterate over many build/recruit orders against a stable
+/// [WorldState] snapshot should build once and reuse the resulting map instead
+/// of issuing a per-order `indexWhere`/`firstWhereOrNull` scan over
+/// [WorldState.armies].
+Map<String, Army> armiesByIdForWorld(WorldState world) {
+  return {for (final a in world.armies) a.id: a};
+}
 
 void _logArmyMoveIgnoredHomeArmyIfDebug(String armyId) {
   if (Level.debug.value >= Logger.level.value) {
-    _log.d('army_move ignored reason=home_army_locked armyId=$armyId');
+    logicLog.d('army_move ignored reason=home_army_locked armyId=$armyId');
   }
 }
 
@@ -22,7 +32,7 @@ void _logArmyMoveIgnoredInvalidAdjacencyIfDebug(
   String toLocal,
 ) {
   if (Level.debug.value >= Logger.level.value) {
-    _log.d(
+    logicLog.d(
       'army_move ignored reason=invalid_adjacency armyId=$armyId '
       'from=$fromLocal to=$toLocal',
     );
@@ -50,7 +60,7 @@ WorldState applyArmyMoveOrdersToRegion(
     return worldState;
   }
 
-  final armyById = {for (final a in worldState.armies) a.id: a};
+  final armyById = armiesByIdForWorld(worldState);
   var ws = worldState;
   var applied = 0;
   var ignored = 0;
@@ -132,7 +142,7 @@ WorldState applyArmyMoveOrdersToRegion(
   }
 
   if (applied + ignored > 0) {
-    _log.i(
+    logicLog.i(
       'army_move apply regionId=$regionId applied=$applied ignored=$ignored',
     );
   }
@@ -158,7 +168,7 @@ applyCrossRegionArmyMovesWithinOwnedProvinces({
 }) {
   var ws = worldState;
   final remaining = <String, List<ArmyMoveOrder>>{};
-  final armyById = {for (final army in ws.armies) army.id: army};
+  final armyById = armiesByIdForWorld(ws);
 
   for (final entry in armyMoveOrdersByPlayerId.entries) {
     final playerId = entry.key;

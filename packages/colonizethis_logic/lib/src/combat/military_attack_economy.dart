@@ -36,6 +36,7 @@ Game applyLandBattleAttackTreasuryCosts(Game game, BattleContext ctx) {
   final ids = <String>{for (final a in ctx.attackers) a.factionId};
   var players = game.players;
   final factionMembership = DiplomacyFactionMembership.from(game);
+  // O(1) player row lookup per attacker instead of O(P) indexWhere each time (Refs #2394).
   final playerIndexById = <String, int>{
     for (var i = 0; i < players.length; i++) players[i].id: i,
   };

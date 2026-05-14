@@ -30,12 +30,20 @@ part 'order_suggestion_work_merchant.dart';
 /// scope as work-order validation, not limited to the unit’s current province.
 /// Explorers/Spies/Merchants follow type-specific rules. Visibility per
 /// SPEC/program/fog-and-exploration-resolution.md.
+/// Throughput hook: callers that enumerate multiple suggestion families against
+/// the same `(game, view.playerId, currentOrders, tileMapByRegion)` may supply
+/// [sharedCandidateValidator] to amortize `PlayerView` / units-by-id
+/// construction across families (Refs #2394,
+/// `SPEC/program/order-suggestions.md` § Throughput bounds). When omitted, this
+/// function constructs its own validator. The shared instance must be built
+/// with the same inputs; observable suggestions must match the default path.
 List<WorkOrder> suggestWorkOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
   Orders currentOrders, {
   Map<String, TileMapResult>? tileMapByRegion,
+  IncrementalCandidateValidator? sharedCandidateValidator,
 }) {
   orderSuggestionLog.d('suggestWorkOrders player=${view.playerId}');
   final playerId = view.playerId;
@@ -53,6 +61,11 @@ List<WorkOrder> suggestWorkOrders(
   final partiallyRevealedProvinceCache =
       partiallyRevealedPrefixedProvinceIdsForPlayer(game: game, view: view);
 
+  final playerOwnedProvinceIds = <String>{
+    for (final p in allProvinces(game.worldState))
+      if (p.ownerId == playerId) p.id,
+  };
+
   // Pre-filter + visibility sort per workTarget; reused across worker units.
   final visibleCandidatesSortedByWorkTarget = <String, List<String>>{};
 
@@ -64,13 +77,20 @@ List<WorkOrder> suggestWorkOrders(
 
   // One validator per suggestion pass: amortizes buildPlayerView + unit map
   // across all units (Refs #2394, IncrementalCandidateValidator.forPlayer).
-  final candidateValidator = buildIncrementalCandidateValidator(
-    game: game,
-    topology: topology,
-    playerId: playerId,
-    baseOrders: currentOrders,
-    tileMapByRegion: tileMapByRegion,
+  assert(
+    sharedCandidateValidator == null ||
+        sharedCandidateValidator.playerId == playerId,
+    'sharedCandidateValidator playerId must match view.playerId',
   );
+  final candidateValidator =
+      sharedCandidateValidator ??
+      buildIncrementalCandidateValidator(
+        game: game,
+        topology: topology,
+        playerId: playerId,
+        baseOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
 
   for (final unit in view.ownUnits) {
     _addWorkSuggestionsForUnit(
@@ -85,6 +105,7 @@ List<WorkOrder> suggestWorkOrders(
       existingTargetsByUnit: existingTargetsByUnit,
       partiallyRevealedProvinceCache: partiallyRevealedProvinceCache,
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
+      playerOwnedProvinceIds: playerOwnedProvinceIds,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
       suggestions: suggestions,
       candidateValidator: candidateValidator,
@@ -124,6 +145,7 @@ void _addWorkSuggestionsForUnit({
   required Map<String, Set<String>> existingTargetsByUnit,
   required Set<String> partiallyRevealedProvinceCache,
   required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
+  required Set<String> playerOwnedProvinceIds,
   required Set<String> devExclusiveReservedTiles,
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
@@ -177,6 +199,7 @@ void _addWorkSuggestionsForUnit({
       atProvinceId: provinceId,
       existingTargetsByUnit: existingTargetsByUnit,
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
+      playerOwnedProvinceIds: playerOwnedProvinceIds,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
       suggestions: suggestions,
       candidateValidator: candidateValidator,

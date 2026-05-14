@@ -130,14 +130,13 @@ Game applyInterventionAgainstAggressor(
 /// Minor/Tribe defender, or null. Used for tests and legacy combat hooks;
 /// primary intervention flow runs in the Diplomacy phase.
 String? needsInterventionChoice(Game game, BattleContext ctx) {
+  final effectiveMembership = DiplomacyFactionMembership.from(game);
   final defenderId = ctx.defenderFactionId;
-  final defenderIsMinorOrTribe = isMinorOrTribe(game, defenderId);
+  final defenderIsMinorOrTribe = effectiveMembership.isMinorOrTribe(defenderId);
   if (!defenderIsMinorOrTribe) return null;
 
   final attackerIds = ctx.attackers.map((a) => a.factionId).toSet();
-  final attackerIsGp = attackerIds.any(
-    (id) => game.players.any((p) => p.id == id),
-  );
+  final attackerIsGp = attackerIds.any(effectiveMembership.isGreatPower);
   if (!attackerIsGp) return null;
 
   for (final p in game.players) {
@@ -164,16 +163,18 @@ Game applyInterventionChoice(
   String gpIdWithEmbassy,
   InterventionChoice choice,
 ) {
+  final effectiveMembership = DiplomacyFactionMembership.from(game);
   var g = game;
   for (final a in ctx.attackers) {
     final attackerId = a.factionId;
-    if (!isGreatPower(game, attackerId)) continue;
+    if (!effectiveMembership.isGreatPower(attackerId)) continue;
     g = applyInterventionAgainstAggressor(
       g,
       aggressorGpId: attackerId,
       defenderMinorOrTribeId: ctx.defenderFactionId,
       interveningGpId: gpIdWithEmbassy,
       choice: choice,
+      factionMembership: effectiveMembership,
     );
   }
   return g;

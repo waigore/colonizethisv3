@@ -3,8 +3,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../world/player_state_pipeline.dart';
 
-final _log = packageLogger();
-
 /// Extraction and auto-transport helpers.
 /// SPEC/game/extraction-and-improvements.md
 /// SPEC/game/stockpiles-and-production.md
@@ -29,7 +27,7 @@ void logExtractionAutoTransportLand(
   if (land.isEmpty) return;
   final totalUnits = land.values.fold<int>(0, (a, b) => a + b);
   final detail = land.entries.map((e) => '${e.key}=${e.value}').join(',');
-  _log.d(
+  logicLog.d(
     'extraction auto_transport land playerId=$playerId totalUnits=$totalUnits detail=$detail',
   );
 }

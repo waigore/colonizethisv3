@@ -85,6 +85,11 @@ bool isProspectableTerrainId(String? terrainTypeId) {
 final Expando<Map<String, Player>> _gamePlayersById =
     Expando<Map<String, Player>>('gamePlayersById');
 
+/// GP whose [Player.capitalProvinceId] maps to each full province id (first in
+/// [Game.players] list order wins on duplicates). Refs #2394 steal_tech paths.
+final Expando<Map<String, String>> _gameGpOwnerIdByCapitalProvinceId =
+    Expando<Map<String, String>>('gameGpOwnerIdByCapitalProvinceId');
+
 /// Safe player lookup by id. Returns null if not found.
 extension GamePlayerLookup on Game {
   Player? playerById(String id) {
@@ -97,5 +102,31 @@ extension GamePlayerLookup on Game {
       _gamePlayersById[this] = byId;
     }
     return byId[id];
+  }
+
+  /// Great Power at [capitalProvinceId] (excluding [excludePlayerId]), or null.
+  ///
+  /// Uses a per-[Game] lazy map keyed by full capital province id so steal_tech
+  /// validation and completion avoid repeated linear scans over [players].
+  Player? otherGreatPowerAtCapitalProvince(
+    String capitalProvinceId,
+    String excludePlayerId,
+  ) {
+    var byCap = _gameGpOwnerIdByCapitalProvinceId[this];
+    if (byCap == null) {
+      byCap = <String, String>{};
+      for (final p in players) {
+        final cap = p.capitalProvinceId;
+        if (cap != null) {
+          byCap.putIfAbsent(cap, () => p.id);
+        }
+      }
+      _gameGpOwnerIdByCapitalProvinceId[this] = byCap;
+    }
+    final ownerId = byCap[capitalProvinceId];
+    if (ownerId == null || ownerId == excludePlayerId) {
+      return null;
+    }
+    return playerById(ownerId);
   }
 }

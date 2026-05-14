@@ -6,6 +6,7 @@ import '../world/naval.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/topology_helpers.dart';
+import '../world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 import 'orders_application_helpers.dart';
@@ -426,6 +427,10 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   };
   final knownTargetIds = knownTargets.toSet();
 
+  // One world scan for the suggestion pass: every diplomatic probe shares the
+  // same `(game, topology, playerId)` view/units snapshot (Refs #2394).
+  final unitsByIdForDiplomatic = unitsByIdFromWorld(game.worldState);
+
   final unionTargets = <String>{
     ...knownTargets,
     ...otherGps,
@@ -448,18 +453,25 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
     );
     var trialOrders = workingOrders;
 
+    // One incremental validator per trial prefix: amortizes validator setup
+    // across all candidates in the pass (Refs #2394).
+    final primaryPassValidator = buildIncrementalCandidateValidator(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      baseOrders: trialOrders,
+      tileMapByRegion: tileMapByRegion,
+      view: view,
+      unitsById: unitsByIdForDiplomatic,
+    );
     for (final candidate in candidates) {
       if (candidate.type == DiplomaticOrderType.grantAid ||
           candidate.type == DiplomaticOrderType.setSubsidy) {
         continue;
       }
-      if (!isDiplomaticOrderAccepted(
-        game,
-        topology,
-        playerId,
-        trialOrders,
+      if (!isDiplomaticOrderAcceptedWithValidator(
+        primaryPassValidator,
         candidate,
-        tileMapByRegion: tileMapByRegion,
       )) {
         continue;
       }
@@ -472,18 +484,23 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       break;
     }
 
+    final economicPassValidator = buildIncrementalCandidateValidator(
+      game: game,
+      topology: topology,
+      playerId: playerId,
+      baseOrders: trialOrders,
+      tileMapByRegion: tileMapByRegion,
+      view: view,
+      unitsById: unitsByIdForDiplomatic,
+    );
     for (final candidate in candidates) {
       if (candidate.type != DiplomaticOrderType.grantAid &&
           candidate.type != DiplomaticOrderType.setSubsidy) {
         continue;
       }
-      if (!isDiplomaticOrderAccepted(
-        game,
-        topology,
-        playerId,
-        trialOrders,
+      if (!isDiplomaticOrderAcceptedWithValidator(
+        economicPassValidator,
         candidate,
-        tileMapByRegion: tileMapByRegion,
       )) {
         continue;
       }

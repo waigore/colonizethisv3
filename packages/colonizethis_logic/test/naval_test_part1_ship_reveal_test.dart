@@ -292,5 +292,99 @@ void main() {
         expect(visBad[seaDestWater], VisibilityLevel.unknown.name);
       },
     );
+
+    test(
+      'sequential fleet updates keep later fleet moves valid in same order batch',
+      () {
+        const ow = 'oldWorld';
+        const homePort = '$ow|pHome';
+        const seaA = '$ow|seaA';
+        const seaB = '$ow|seaB';
+
+        final topology = MapTopology(
+          nodes: const [
+            TopologyNode(
+              id: homePort,
+              regionId: ow,
+              type: TopologyNodeType.province,
+            ),
+            TopologyNode(
+              id: seaA,
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+            TopologyNode(
+              id: seaB,
+              regionId: ow,
+              type: TopologyNodeType.seaZone,
+            ),
+          ],
+          edges: const [
+            TopologyEdge(id1: homePort, id2: seaA),
+            TopologyEdge(id1: seaA, id2: seaB),
+          ],
+        );
+
+        final game = Game(
+          id: 'gSequentialFleetMoves',
+          worldState: WorldState(
+            turnState: const TurnState(
+              phase: TurnPhase.movement,
+              turnNumber: 0,
+            ),
+            oldWorld: const RegionData(),
+            newWorld: const RegionData(),
+            fleets: [
+              Fleet(
+                id: homeFleetIdFor('gp1'),
+                ownerId: 'gp1',
+                inPortAtProvinceId: homePort,
+                regionId: ow,
+                shipTypeIds: const ['home-ship'],
+              ),
+              Fleet(
+                id: 'fDock',
+                ownerId: 'gp1',
+                seaZoneId: seaA,
+                regionId: ow,
+                shipTypeIds: const ['dock-ship'],
+              ),
+              Fleet(
+                id: 'fMove',
+                ownerId: 'gp1',
+                seaZoneId: seaA,
+                regionId: ow,
+                shipTypeIds: const ['move-ship'],
+              ),
+            ],
+            tileKeysByRegionAndProvince: const {
+              ow: {
+                homePort: ['$homePort|0|0'],
+                seaA: ['$seaA|0|0'],
+                seaB: ['$seaB|0|0'],
+              },
+            },
+            playerVisibilityByTile: const {'gp1': {}},
+          ),
+          players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+        );
+
+        final next = applyNavalMovesAndShipReveal(game, topology, {
+          'gp1': [
+            const NavalMoveOrder(fleetId: 'fDock', destinationSeaZoneId: seaB),
+            const NavalMoveOrder(fleetId: 'fMove', destinationSeaZoneId: seaB),
+          ],
+        });
+
+        final fleetsById = {
+          for (final fleet in next.worldState.fleets) fleet.id: fleet,
+        };
+        final dockFleet = fleetsById['fDock'];
+        final movedFleet = fleetsById['fMove'];
+
+        expect(dockFleet?.seaZoneId, seaB);
+        expect(movedFleet?.seaZoneId, seaB);
+      },
+    );
   });
 }
