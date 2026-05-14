@@ -5,22 +5,14 @@
 /// relation modifiers, score update.
 library;
 
-import 'dart:math' show Random;
-
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../ai/ai_control.dart';
 import '../constants.dart';
-import '../combat/conflict_detection.dart';
-import '../dossier/evidence_rules.dart';
 import '../turn/turn_resolution_result.dart';
-import '../world/civilian_ownership_legality.dart';
 import '../world/province_lookup.dart';
 import 'alliance_resolver.dart';
 import 'diplomacy_relation_lookup.dart';
-import 'diplomacy_relation_updates.dart';
 import 'diplomacy_subsidies_relations_resolver.dart';
 import 'intervention_resolver.dart';
 import 'overture_resolver.dart';
