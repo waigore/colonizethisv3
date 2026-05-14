@@ -105,8 +105,9 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  Map<String, Unit>? unitsById,
+}) {
   orderSuggestionLog.d('suggestNavalMoveOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <NavalMoveOrder>[];
@@ -128,14 +129,14 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   //
   // Reuse the caller-supplied [view] and a one-time units index so we do not
   // pay redundant `buildPlayerView` / `unitsByIdFromWorld` scans (Refs #2394).
-  final unitsById = unitsByIdFromWorld(game.worldState);
+  final effectiveUnits = unitsById ?? unitsByIdFromWorld(game.worldState);
   final candidateValidator = IncrementalCandidateValidator.forPlayer(
     game: game,
     topology: topology,
     playerId: playerId,
     basePrefix: currentOrders,
     view: view,
-    unitsById: unitsById,
+    unitsById: effectiveUnits,
   );
 
   final homeFleetId = homeFleetIdFor(playerId);
@@ -195,8 +196,9 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   PlayerView view,
   Game game,
   MapTopology topology,
-  Orders currentOrders,
-) {
+  Orders currentOrders, {
+  Map<String, Unit>? unitsById,
+}) {
   orderSuggestionLog.d('suggestNavalMissionOrders player=${view.playerId}');
   final playerId = view.playerId;
   final suggestions = <NavalMissionOrder>[];
@@ -211,14 +213,14 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   // § Incremental candidate validation. Refs #2237.
   //
   // Reuse [view] and one units snapshot (Refs #2394).
-  final unitsById = unitsByIdFromWorld(game.worldState);
+  final effectiveUnits = unitsById ?? unitsByIdFromWorld(game.worldState);
   final candidateValidator = IncrementalCandidateValidator.forPlayer(
     game: game,
     topology: topology,
     playerId: playerId,
     basePrefix: currentOrders,
     view: view,
-    unitsById: unitsById,
+    unitsById: effectiveUnits,
   );
 
   for (final fleet in game.worldState.fleets) {

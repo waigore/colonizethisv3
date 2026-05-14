@@ -97,8 +97,9 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) {
+    Orders currentOrders, {
+    Map<String, Unit>? unitsById,
+  }) {
     logicLog.i(
       'order suggestion API suggestNavalMoveOrders player=${view.playerId}',
     );
@@ -107,6 +108,7 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
       game,
       topology,
       currentOrders,
+      unitsById: unitsById,
     );
   }
 
@@ -115,8 +117,9 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) {
+    Orders currentOrders, {
+    Map<String, Unit>? unitsById,
+  }) {
     logicLog.i(
       'order suggestion API suggestNavalMissionOrders player=${view.playerId}',
     );
@@ -125,6 +128,7 @@ class DefaultOrderSuggestionAPI implements OrderSuggestionAPI {
       game,
       topology,
       currentOrders,
+      unitsById: unitsById,
     );
   }
 

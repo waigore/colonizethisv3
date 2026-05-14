@@ -35,4 +35,5 @@ export 'src/world/unit_lookup.dart'
     show
         allUnitsFromWorld,
         regimentTypeCountsForPlayer,
-        shipTypeCountsForPlayer;
+        shipTypeCountsForPlayer,
+        unitsByIdFromWorld;
