@@ -55,8 +55,19 @@ Future<void> _openCivilianPanel(
     if (civilianPanel.evaluate().isNotEmpty ||
         navalPanel.evaluate().isNotEmpty) {
       await e2eCloseBottomSheet(tester, perf: perf);
-      await tester.pump(Duration(milliseconds: panelPollMs));
-      panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
+      // Exit as soon as panels + sheet clear instead of a blind idle pump
+      // (Refs #2336 adaptive polling / bottleneck 2).
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () =>
+            civilianPanel.evaluate().isEmpty &&
+            navalPanel.evaluate().isEmpty &&
+            find.byType(BottomSheet).evaluate().isEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_panels_cleared_after_close_sheet_civilian_open',
+      );
+      panelPollMs = 25;
       continue;
     }
     if (empireRailButton.evaluate().isNotEmpty) {
