@@ -62,6 +62,38 @@ void main() {
       expect(after.playerById('a1')!.treasury, 500 - 100);
     });
 
+    test(
+      'deducts treasury when attacker is not first in players list order',
+      () {
+        final game = TestFixtures.minimalGame(
+          players: const [
+            Player(id: 'z1', displayName: 'Z', isHuman: false, treasury: 0),
+            Player(id: 'a1', displayName: 'A1', isHuman: true, treasury: 500),
+            Player(id: 'y1', displayName: 'Y', isHuman: false, treasury: 0),
+          ],
+        );
+        final ctx = BattleContext(
+          regionId: kRegionOldWorld,
+          provinceId: 'oldWorld|p1',
+          defenderFactionId: 'd1',
+          defenderUnitIds: const [],
+          fortLevel: 0,
+          terrain: 'field',
+          attackers: [
+            AttackingSide(
+              factionId: 'a1',
+              unitIds: const ['u1'],
+              generalId: null,
+            ),
+          ],
+          defenderGeneralId: null,
+          defenderGeneralMedals: 0,
+        );
+        final after = applyLandBattleAttackTreasuryCosts(game, ctx);
+        expect(after.playerById('a1')!.treasury, 500 - 100);
+      },
+    );
+
     test('deducts treasury for each distinct Great Power attacker side', () {
       final game = TestFixtures.minimalGame(
         players: const [
