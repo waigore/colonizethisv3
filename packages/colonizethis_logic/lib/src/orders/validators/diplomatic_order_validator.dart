@@ -13,6 +13,22 @@ import 'diplomatic/offer_peace_validator.dart';
 import 'diplomatic/set_subsidy_validator.dart';
 import 'stateful_validator.dart';
 
+/// Treasury and per-target diplomatic caps after replaying an accepted
+/// [Orders] prefix. Used to evaluate incremental diplomatic candidates without
+/// O(E) prefix replay per probe (Refs #2394, SPEC/program/order-suggestions.md).
+final class DiplomaticPrefixCheckpoint {
+  DiplomaticPrefixCheckpoint._({
+    required this.treasury,
+    required Map<String, Set<DiplomaticOrderType>> typesByTarget,
+  }) : typesByTarget = {
+         for (final e in typesByTarget.entries)
+           e.key: Set<DiplomaticOrderType>.from(e.value),
+       };
+
+  final int treasury;
+  final Map<String, Set<DiplomaticOrderType>> typesByTarget;
+}
+
 /// Validates diplomatic orders for a single player in submission order.
 /// SPEC/program/orders.md § Diplomatic orders.
 ///
@@ -73,6 +89,38 @@ class DiplomaticOrderValidator extends StatefulValidator {
         playerId: _playerId,
       ),
     };
+  }
+
+  /// Validator state cloned from [checkpoint] for a single candidate probe.
+  /// Does not replay prefix orders; mirrors post-prefix state only.
+  factory DiplomaticOrderValidator.fromPrefixCheckpoint({
+    required Game game,
+    required String playerId,
+    required DiplomaticPrefixCheckpoint checkpoint,
+    DiplomacyFactionMembership? factionMembership,
+  }) {
+    final validator = DiplomaticOrderValidator(
+      game: game,
+      playerId: playerId,
+      initialTreasury: checkpoint.treasury,
+      factionMembership: factionMembership,
+    );
+    for (final e in checkpoint.typesByTarget.entries) {
+      validator._typesByTarget[e.key] = Set<DiplomaticOrderType>.from(e.value);
+    }
+    return validator;
+  }
+
+  /// Captures treasury and accepted diplomatic caps after validating prefix
+  /// orders in submission order.
+  DiplomaticPrefixCheckpoint capturePrefixCheckpoint() {
+    return DiplomaticPrefixCheckpoint._(
+      treasury: treasuryState,
+      typesByTarget: {
+        for (final e in _typesByTarget.entries)
+          e.key: Set<DiplomaticOrderType>.from(e.value),
+      },
+    );
   }
 
   int get treasury => treasuryState;

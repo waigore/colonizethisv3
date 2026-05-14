@@ -111,6 +111,11 @@ class IncrementalCandidateValidator {
   DiplomacyFactionMembership? _cachedFactionMembership;
   NavalOrderValidator? _cachedNavalOrderValidator;
 
+  /// When [false], existing diplomatic orders in [basePrefix] failed incremental
+  /// replay; every [isDiplomaticAccepted] probe must reject (Refs #2394).
+  bool? _cachedDiplomaticPrefixReplaySucceeded;
+  DiplomaticPrefixCheckpoint? _cachedPostDiplomaticPrefixState;
+
   DiplomacyFactionMembership _factionMembership() {
     final pre = prefetchedFactionMembership;
     if (pre != null) {
@@ -302,18 +307,42 @@ class IncrementalCandidateValidator {
   bool isDiplomaticAccepted(DiplomaticOrder candidate) {
     final player = _player();
     if (player == null) return false;
+    if (_cachedDiplomaticPrefixReplaySucceeded == false) {
+      return false;
+    }
     final economy = _projectEconomyAfterAcceptedBuildAndWorkOrders(player);
-    final validator = DiplomaticOrderValidator(
+    final membership = _factionMembership();
+
+    if (_cachedPostDiplomaticPrefixState == null) {
+      final prefixValidator = DiplomaticOrderValidator(
+        game: game,
+        playerId: playerId,
+        initialTreasury: economy.treasury,
+        factionMembership: membership,
+      );
+      for (final existing in diplomaticOrders) {
+        final result = prefixValidator.validate(
+          existing,
+          previousRejected: false,
+        );
+        if (!result.result.isAccepted) {
+          _cachedDiplomaticPrefixReplaySucceeded = false;
+          return false;
+        }
+      }
+      _cachedDiplomaticPrefixReplaySucceeded = true;
+      _cachedPostDiplomaticPrefixState =
+          prefixValidator.capturePrefixCheckpoint();
+    }
+
+    final checkpoint = _cachedPostDiplomaticPrefixState!;
+    final candidateValidator = DiplomaticOrderValidator.fromPrefixCheckpoint(
       game: game,
       playerId: playerId,
-      initialTreasury: economy.treasury,
-      factionMembership: _factionMembership(),
+      checkpoint: checkpoint,
+      factionMembership: membership,
     );
-    for (final existing in diplomaticOrders) {
-      final result = validator.validate(existing, previousRejected: false);
-      if (!result.result.isAccepted) return false;
-    }
-    return validator
+    return candidateValidator
         .validate(candidate, previousRejected: false)
         .result
         .isAccepted;

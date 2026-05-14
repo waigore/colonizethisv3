@@ -311,6 +311,50 @@ void main() {
     });
 
     test(
+      'diplomatic: sequential probes on one validator stay equivalent (#2394)',
+      () {
+        final game = moveCorpusGame();
+        final topology = moveCorpusTopology();
+        final basePrefix = Orders(
+          diplomaticOrdersByPlayerId: {
+            'p1': [
+              const DiplomaticOrder(
+                type: DiplomaticOrderType.declareWar,
+                targetFactionId: 'p2',
+              ),
+            ],
+          },
+        );
+        const candidateA = DiplomaticOrder(
+          type: DiplomaticOrderType.alliance,
+          targetFactionId: 'p2',
+        );
+        const candidateB = DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: 'p3',
+        );
+        final incremental = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: 'p1',
+          basePrefix: basePrefix,
+        );
+        expect(
+          incremental.isDiplomaticAccepted(candidateA),
+          fullPassDiplomaticAccepted(game, topology, 'p1', basePrefix, candidateA),
+        );
+        expect(
+          incremental.isDiplomaticAccepted(candidateB),
+          fullPassDiplomaticAccepted(game, topology, 'p1', basePrefix, candidateB),
+        );
+        expect(
+          incremental.isDiplomaticAccepted(candidateA),
+          fullPassDiplomaticAccepted(game, topology, 'p1', basePrefix, candidateA),
+        );
+      },
+    );
+
+    test(
       'prefetched DiplomacyFactionMembership matches lazy membership (#2394)',
       () {
         final game = armyCorpusGame();
