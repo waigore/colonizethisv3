@@ -1,7 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../ai/ai_control.dart';
 import '../constants.dart';
 import '../dossier/evidence_rules.dart';
 import 'diplomacy_relation_lookup.dart';
