@@ -183,7 +183,8 @@ void main() {
   });
 
   test(
-    'two adjacent enemy provinces same owner: both declare-war invasions listed',
+    'two reachable enemy provinces of same owner both require declare war '
+    '(Refs #2394 trial-validator cache keyed by defender)',
     () {
     const p1 = 'gp1';
     const p2 = 'gp2';
@@ -203,7 +204,7 @@ void main() {
       ],
     );
     final game = Game(
-      id: 'g',
+      id: 'g_two_enemy_same_owner',
       worldState: WorldState(
         turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
         oldWorld: RegionData(

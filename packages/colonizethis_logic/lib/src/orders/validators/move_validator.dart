@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../diplomacy/diplomacy_resolver.dart';
 import '../../world/civilian_tile_occupancy.dart';
 import '../../world/player_view.dart';
 import '../../world/province_lookup.dart';
@@ -19,9 +20,10 @@ class MoveValidator extends OrderValidator {
     Map<String, Unit> unitsById,
     List<DiplomaticOrder> diplomaticOrders,
     PlayerView view,
-    MapTopology topology,
-    {required bool previousRejected}
-  ) {
+    MapTopology topology, {
+    required bool previousRejected,
+    DiplomacyFactionMembership? factionMembership,
+  }) {
     return shortCircuitIfPreviousRejected(
       previousRejected: previousRejected,
       body: () {
@@ -61,6 +63,7 @@ class MoveValidator extends OrderValidator {
           playerId: playerId,
           unitType: unit.type,
           destinationTileKey: destTile,
+          factionMembership: factionMembership,
         )) {
           return OrderValidationResult.rejected('Invalid move');
         }
