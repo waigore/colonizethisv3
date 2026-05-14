@@ -32,6 +32,7 @@ class IncrementalCandidateValidator {
     required this.unitsById,
     required this.diplomaticOrders,
     required this.tileMapByRegion,
+    this.prefetchedFactionMembership,
   });
 
   /// Builds a validator bound to the given `basePrefix` and player. Reuse one
@@ -53,6 +54,11 @@ class IncrementalCandidateValidator {
     Map<String, TileMapResult>? tileMapByRegion,
     PlayerView? view,
     Map<String, Unit>? unitsById,
+    /// When callers rebuild this validator for many `basePrefix` snapshots over
+    /// the same [game] (for example simple-heuristic iterations), supplying the
+    /// membership snapshot avoids repeated `DiplomacyFactionMembership.from`
+    /// work. Must remain valid for [game] for the validator lifetime (Refs #2394).
+    DiplomacyFactionMembership? factionMembership,
   }) {
     assert(
       view == null || view.playerId == playerId,
@@ -72,6 +78,7 @@ class IncrementalCandidateValidator {
       unitsById: actualUnitsById,
       diplomaticOrders: diplomaticOrders,
       tileMapByRegion: tileMapByRegion,
+      prefetchedFactionMembership: factionMembership,
     );
   }
 
@@ -83,6 +90,7 @@ class IncrementalCandidateValidator {
   final Map<String, Unit> unitsById;
   final List<DiplomaticOrder> diplomaticOrders;
   final Map<String, TileMapResult>? tileMapByRegion;
+  final DiplomacyFactionMembership? prefetchedFactionMembership;
   Set<String>? _cachedDevExclusiveTiles;
   Set<String>? _cachedCivilianDraftMoveUnitIds;
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildOrders;
@@ -98,6 +106,10 @@ class IncrementalCandidateValidator {
   NavalOrderValidator? _cachedNavalOrderValidator;
 
   DiplomacyFactionMembership _factionMembership() {
+    final pre = prefetchedFactionMembership;
+    if (pre != null) {
+      return pre;
+    }
     final cached = _cachedFactionMembership;
     if (cached != null) {
       return cached;

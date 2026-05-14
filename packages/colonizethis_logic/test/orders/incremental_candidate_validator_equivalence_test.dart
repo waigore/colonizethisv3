@@ -309,5 +309,37 @@ void main() {
         label: 'same-target non-economic conflict',
       );
     });
+
+    test(
+      'prefetched DiplomacyFactionMembership matches lazy membership (#2394)',
+      () {
+        final game = armyCorpusGame();
+        final topology = armyCorpusTopology();
+        const playerId = 'p1';
+        const basePrefix = Orders();
+        final prefetched = DiplomacyFactionMembership.from(game);
+        final baseline = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+          basePrefix: basePrefix,
+        );
+        final withPrefetched = IncrementalCandidateValidator.forPlayer(
+          game: game,
+          topology: topology,
+          playerId: playerId,
+          basePrefix: basePrefix,
+          factionMembership: prefetched,
+        );
+        const armyMove = ArmyMoveOrder(
+          armyId: 'field_a',
+          destinationProvinceId: 'oldWorld|P4',
+        );
+        expect(
+          withPrefetched.isArmyMoveAccepted(armyMove),
+          baseline.isArmyMoveAccepted(armyMove),
+        );
+      },
+    );
   });
 }
