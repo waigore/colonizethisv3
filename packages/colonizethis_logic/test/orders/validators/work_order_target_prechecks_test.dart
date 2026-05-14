@@ -1,7 +1,10 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/diplomacy/diplomacy_resolver.dart';
 import 'package:colonizethis_logic/src/orders/validators/work_order_target_prechecks.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import '../../order_engine_purchase_land_test_support.dart';
 
 void main() {
   group('workOrderTargetPrechecks', () {
@@ -169,6 +172,56 @@ void main() {
             kWorkTargetBuildImprovement,
           }),
         );
+      },
+    );
+
+    test(
+      'precheckPurchaseLand matches with or without DiplomacyFactionMembership '
+      '(Refs #2394)',
+      () {
+        final game = PurchaseLandTestFixture.baseGame(
+          treasury: 500,
+          overtureStates: [
+            const OvertureState(
+              gpId: 'p1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+          ],
+        );
+        final player = game.players.single;
+        final membership = DiplomacyFactionMembership.from(game);
+        WorkOrderTargetPrecheckContext ctx({required bool withSnap}) =>
+            WorkOrderTargetPrecheckContext(
+              game: game,
+              player: player,
+              playerId: 'p1',
+              treasury: 500,
+              civilianEmbassyWorkAllowed: (_, __) => false,
+              factionMembership: withSnap ? membership : null,
+            );
+        final order = WorkOrder(
+          unitId: 'merchant1',
+          target: kWorkTargetPurchaseLand,
+          targetTileKey: PurchaseLandTestFixture.tileKey,
+        );
+        final withSnap = runWorkOrderTargetPrecheck(
+          ctx(withSnap: true),
+          order,
+          PurchaseLandTestFixture.minorProvinceId,
+          'minor1',
+          kUnitTypeMerchant,
+        );
+        final linear = runWorkOrderTargetPrecheck(
+          ctx(withSnap: false),
+          order,
+          PurchaseLandTestFixture.minorProvinceId,
+          'minor1',
+          kUnitTypeMerchant,
+        );
+        expect(withSnap, isNull);
+        expect(linear, isNull);
       },
     );
 
