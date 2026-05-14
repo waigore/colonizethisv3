@@ -36,33 +36,47 @@ List<String> _adjacentSeaZones(MapTopology topology, String seaZoneId) {
   return out;
 }
 
+/// Single-pass index: sea zone id → fleets whose [Fleet.seaZoneId] equals that
+/// zone. Preserves world fleet list order within each bucket (Refs #2394).
+Map<String, List<Fleet>> _fleetsBySeaZoneId(List<Fleet> fleets) {
+  final out = <String, List<Fleet>>{};
+  for (final f in fleets) {
+    final z = f.seaZoneId;
+    if (z == null) continue;
+    out.putIfAbsent(z, () => <Fleet>[]).add(f);
+  }
+  return out;
+}
+
 String? _firstFriendlyOrNeutralRetreatZone(
-  Game game,
   MapTopology topology,
   String fromSeaZoneId,
   String ownerId,
+  Map<String, Set<String>> hostileByOwner,
+  Map<String, List<Fleet>> fleetsBySeaZoneId,
 ) {
-  final hostileByOwner = hostileFactionsByFaction(game);
   for (final adj in _adjacentSeaZones(topology, fromSeaZoneId)) {
-    final hostileOwnersPresent = game.worldState.fleets.any(
-      (fleet) =>
-          fleet.isAtSea &&
-          fleet.seaZoneId == adj &&
-          fleet.ownerId != ownerId &&
-          (hostileByOwner[ownerId]?.contains(fleet.ownerId) ?? false),
-    );
+    var hostileOwnersPresent = false;
+    for (final fleet in fleetsBySeaZoneId[adj] ?? const <Fleet>[]) {
+      if (!fleet.isAtSea) continue;
+      if (fleet.ownerId == ownerId) continue;
+      if (hostileByOwner[ownerId]?.contains(fleet.ownerId) ?? false) {
+        hostileOwnersPresent = true;
+        break;
+      }
+    }
     if (!hostileOwnersPresent) return adj;
   }
   return null;
 }
 
-String? _firstFleetRegionIdForSeaZone(Game game, String seaZoneId) {
-  for (final f in game.worldState.fleets) {
-    if (f.seaZoneId == seaZoneId) {
-      return f.regionId;
-    }
-  }
-  return null;
+String? _firstFleetRegionIdForSeaZone(
+  String seaZoneId,
+  Map<String, List<Fleet>> fleetsBySeaZoneId,
+) {
+  final inZone = fleetsBySeaZoneId[seaZoneId];
+  if (inZone == null || inZone.isEmpty) return null;
+  return inZone.first.regionId;
 }
 
 Map<String, int> _fleetIndexById(List<Fleet> fleets) => {
@@ -482,17 +496,21 @@ Game runNavalInterceptionCombatPhase(
   final turn = game.worldState.turnState.turnNumber;
   var battleIndex = 0;
   for (final battle in battles) {
+    final hostileByOwner = hostileFactionsByFaction(state);
+    final fleetsBySeaZoneId = _fleetsBySeaZoneId(state.worldState.fleets);
     final retreatZoneSide1 = _firstFriendlyOrNeutralRetreatZone(
-      state,
       topology,
       battle.seaZoneId,
       battle.side1.ownerId,
+      hostileByOwner,
+      fleetsBySeaZoneId,
     );
     final retreatZoneSide2 = _firstFriendlyOrNeutralRetreatZone(
-      state,
       topology,
       battle.seaZoneId,
       battle.side2.ownerId,
+      hostileByOwner,
+      fleetsBySeaZoneId,
     );
     final result = resolveSeaBattle(
       battle,
@@ -512,7 +530,7 @@ Game runNavalInterceptionCombatPhase(
     // within repo.control_flow_nesting_depth limits.
     final regionId =
         zoneRegionId ??
-        _firstFleetRegionIdForSeaZone(state, battle.seaZoneId) ??
+        _firstFleetRegionIdForSeaZone(battle.seaZoneId, fleetsBySeaZoneId) ??
         kRegionOldWorld;
     state = applyNavalBattleResults(
       state,
