@@ -77,9 +77,19 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
         perf?.timing('open_panel_naval', phaseSw.elapsed);
         return;
       }
+      // Bounded condition pumps instead of a single blind idle frame (Refs
+      // #2336 H6 / adaptive polling).
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => navalPanel.evaluate().isNotEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_naval_visible_after_marker_tap',
+      )) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
       navalPollMs = 25;
-      await tester.pump(Duration(milliseconds: navalPollMs));
-      navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
       continue;
     }
     final railHit = btn.hitTestable();
@@ -89,6 +99,16 @@ Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
         tester,
         navalPanel,
         const Duration(seconds: 3),
+      )) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => navalPanel.evaluate().isNotEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_naval_visible_after_rail_tap',
       )) {
         perf?.timing('open_panel_naval', phaseSw.elapsed);
         return;
