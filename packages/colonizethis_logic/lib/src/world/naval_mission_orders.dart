@@ -5,11 +5,25 @@ import '../diplomacy/diplomacy_relation_lookup.dart';
 import 'naval.dart';
 import 'province_lookup.dart';
 
-FleetMission _fleetMissionFromOrderName(String name) {
-  for (final m in FleetMission.values) {
-    if (m.name == name) return m;
+/// O(1) mission lookup for naval order strings (Refs #2394).
+final _fleetMissionByOrderName = <String, FleetMission>{
+  for (final m in FleetMission.values) m.name: m,
+};
+
+FleetMission _fleetMissionFromOrderName(String name) =>
+    _fleetMissionByOrderName[name] ?? FleetMission.none;
+
+void _resyncFleetLookupMaps(
+  List<Fleet> fleets,
+  Map<String, Fleet> fleetById,
+  Map<String, int> fleetIndexById,
+) {
+  fleetById.clear();
+  fleetById.addEntries(fleets.map((f) => MapEntry(f.id, f)));
+  fleetIndexById.clear();
+  for (var i = 0; i < fleets.length; i++) {
+    fleetIndexById[fleets[i].id] = i;
   }
-  return FleetMission.none;
 }
 
 /// Fleet list index by id for O(1) in-place updates (Refs #2394).
@@ -18,8 +32,9 @@ Map<String, int> _fleetIndexById(List<Fleet> fleets) => {
     };
 
 /// [fleetListStructureChanged] is true when [fleets] length or id-to-index
-/// mapping changed (fleet removed); then callers must rebuild
-/// `fleetIndexById`. In-place replacements keep the prior index map valid.
+/// mapping changed (fleet removed) without a full [_resyncFleetLookupMaps];
+/// then callers must rebuild `fleetIndexById`. In-place replacements keep the
+/// prior index map valid.
 ({List<Fleet> fleets, bool fleetListStructureChanged}) _applySingleNavalMissionOrder({
   required Game game,
   required List<Fleet> fleets,
@@ -54,10 +69,8 @@ Map<String, int> _fleetIndexById(List<Fleet> fleets) => {
         .where((f) => f.id != fleet.id)
         .map((f) => f.id == homeFleetId ? updatedHome : f)
         .toList();
-    fleetById
-      ..remove(fleet.id)
-      ..[homeFleetId] = updatedHome;
-    return (fleets: next, fleetListStructureChanged: true);
+    _resyncFleetLookupMaps(next, fleetById, fleetIndexById);
+    return (fleets: next, fleetListStructureChanged: false);
   }
 
   if (fleet.id == homeFleetId) {
@@ -113,8 +126,9 @@ Game applyNavalMissionOrders(
   Map<String, List<NavalMissionOrder>> navalMissionOrdersByPlayerId,
 ) {
   var fleets = List<Fleet>.from(game.worldState.fleets);
-  final fleetById = {for (final f in fleets) f.id: f};
-  var fleetIndexById = _fleetIndexById(fleets);
+  final fleetById = <String, Fleet>{};
+  var fleetIndexById = <String, int>{};
+  _resyncFleetLookupMaps(fleets, fleetById, fleetIndexById);
 
   for (final entry in navalMissionOrdersByPlayerId.entries) {
     final playerId = entry.key;
