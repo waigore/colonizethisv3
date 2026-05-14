@@ -25,7 +25,7 @@ git checkout -b fix/issue-123-short-description
 git push -u origin fix/issue-123-short-description
 
 gh pr create --base dev --head fix/issue-123-short-description \
-  --title "Short imperative title (Refs #123)" \
+  --title "fix: short imperative description (#123)" \
   --body "## Summary
 …
 
@@ -40,6 +40,8 @@ gh pr create --base dev --head fix/issue-123-short-description \
 
 Refs #123"
 ```
+
+For large issues, add commits to the **same open** branch and use `gh pr view` / `gh pr edit` to refresh the body. **Do not** open a **second simultaneous** PR for the same issue. If the first PR **merges early** while the issue still needs work, branch from current **`dev`** and `gh pr create` **one** successor PR for the remaining slices. Same rule if the user explicitly replaces a broken PR: only one open PR for that issue at a time.
 
 Adjust flags if the repo uses a fork or different default remote.
 
