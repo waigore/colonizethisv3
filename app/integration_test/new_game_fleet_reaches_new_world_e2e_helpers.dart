@@ -30,7 +30,10 @@ Future<bool> _pollUntilNavalPanelVisible(
       return true;
     }
     await tester.pump(Duration(milliseconds: stepMs));
-    stepMs = e2eAdaptivePollRampAfterIdle(stepMs);
+    // Doubling backoff capped at 500ms (same as [e2eWaitForMapHudAfterNewGameStart];
+    // Refs #2336 AC5) — fewer idle frames than 25→100ms-only ramp when the panel
+    // mounts after a marker/rail tap under headless Linux load.
+    stepMs = e2eNextIdlePollStepMs(stepMs);
   }
   return false;
 }
