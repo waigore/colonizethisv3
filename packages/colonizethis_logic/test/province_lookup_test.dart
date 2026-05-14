@@ -222,6 +222,34 @@ void main() {
     });
   });
 
+  group('provinceListIndexOfProvinceId', () {
+    test('returns first index and matches indexWhere on duplicate ids', () {
+      final dupA = Province(
+        id: 'dup',
+        regionId: 'oldWorld',
+        displayName: 'First',
+      );
+      final dupB = Province(
+        id: 'dup',
+        regionId: 'oldWorld',
+        displayName: 'Second',
+      );
+      final provinces = [dupA, dupB];
+      expect(provinceListIndexOfProvinceId(provinces, 'dup'), 0);
+      expect(provinces.indexWhere((p) => p.id == 'dup'), 0);
+    });
+
+    test('returns null when absent', () {
+      expect(
+        provinceListIndexOfProvinceId(
+          world.oldWorld.provinces,
+          'oldWorld|missing',
+        ),
+        isNull,
+      );
+    });
+  });
+
   group('decrementFortLevelForProvinceIdIfPresent', () {
     test('returns same list reference when id missing', () {
       final provinces = world.oldWorld.provinces;

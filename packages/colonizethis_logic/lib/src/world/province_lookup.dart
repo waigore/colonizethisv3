@@ -3,10 +3,28 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 
 import '../constants.dart';
 
+/// Id → first list index for one [RegionData.provinces] list instance (Refs #2394).
+/// First matching id wins, matching [List.indexWhere] semantics on duplicates.
+final Expando<Map<String, int>> _provinceFirstIndexByIdForProvinceList =
+    Expando<Map<String, int>>('provinceFirstIndexByIdForProvinceList');
+
 /// Id → province row for one [RegionData.provinces] list instance (Refs #2394).
 /// First matching id wins, matching [List.indexWhere] semantics on duplicates.
 final Expando<Map<String, Province>> _provinceByIdForProvinceList =
     Expando<Map<String, Province>>('provinceByIdForProvinceList');
+
+Map<String, int> _provinceFirstIndexByIdForList(List<Province> provinces) {
+  final cached = _provinceFirstIndexByIdForProvinceList[provinces];
+  if (cached != null) {
+    return cached;
+  }
+  final built = <String, int>{};
+  for (var i = 0; i < provinces.length; i++) {
+    built.putIfAbsent(provinces[i].id, () => i);
+  }
+  _provinceFirstIndexByIdForProvinceList[provinces] = built;
+  return built;
+}
 
 Map<String, Province> _provinceIdIndexForList(List<Province> provinces) {
   var index = _provinceByIdForProvinceList[provinces];
@@ -28,6 +46,14 @@ bool provinceListContainsProvinceId(
   List<Province> provinces,
   String provinceId,
 ) => _provinceIdIndexForList(provinces).containsKey(provinceId);
+
+/// First index in [provinces] whose [Province.id] equals [provinceId], or null
+/// when none match. Matches [List.indexWhere] semantics on duplicate ids
+/// (first occurrence wins). Refs #2394.
+int? provinceListIndexOfProvinceId(
+  List<Province> provinces,
+  String provinceId,
+) => _provinceFirstIndexByIdForList(provinces)[provinceId];
 
 /// When a row with [provinceId] exists, returns a new list with that row's
 /// [Province.fortLevel] decremented by one (clamped 0–3). Otherwise returns
