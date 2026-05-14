@@ -40,6 +40,27 @@ void main() {
       expect(next, same(original));
     });
 
+    test('Given missing fleet id When applied Then returns unchanged game', () {
+      final original = _gameWithFleets([
+        Fleet(
+          id: '1',
+          ownerId: 'gp_human',
+          regionId: 'oldWorld',
+          seaZoneId: 'sea_a',
+          ships: [ShipInstance(id: 'ship_1', typeId: 'carrack')],
+        ),
+      ]);
+
+      final next = applyNavalSplitFleet(
+        game: original,
+        humanPlayerId: 'gp_human',
+        originalFleetId: 'missing',
+        shipInstanceIdsToNewFleet: const ['ship_1'],
+      );
+
+      expect(next, same(original));
+    });
+
     test(
       'Given existing fleet and selected ships When applied Then creates split fleet and updates original',
       () {
@@ -129,6 +150,33 @@ void main() {
   });
 
   group('applyNavalTransferShipsBetweenFleets', () {
+    test(
+      'Given unknown target fleet When transferred Then returns unchanged game',
+      () {
+        final game = _gameWithFleets([
+          Fleet(
+            id: 'source',
+            ownerId: 'gp_human',
+            regionId: 'oldWorld',
+            seaZoneId: 'sea_a',
+            ships: const [
+              ShipInstance(id: 'ship_1', typeId: 'carrack'),
+            ],
+          ),
+        ]);
+
+        final next = applyNavalTransferShipsBetweenFleets(
+          game: game,
+          humanPlayerId: 'gp_human',
+          sourceFleetId: 'source',
+          targetFleetId: 'no_such_fleet',
+          shipInstanceIdsToTransfer: const ['ship_1'],
+        );
+
+        expect(next, same(game));
+      },
+    );
+
     test(
       'Given subset selected When transferred Then target gains selected and source remains',
       () {

@@ -1,5 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../economy/sea_transport.dart';
 import 'naval.dart';
 
 /// Returns [game] unchanged if the fleet is missing or [shipInstanceIdsToNewFleet] is empty.
@@ -12,13 +13,8 @@ Game applyNavalSplitFleet({
 }) {
   if (shipInstanceIdsToNewFleet.isEmpty) return game;
 
-  Fleet? originalFleet;
-  for (final f in game.worldState.fleets) {
-    if (f.id == originalFleetId) {
-      originalFleet = f;
-      break;
-    }
-  }
+  final fleetById = fleetsByIdForWorld(game.worldState);
+  final originalFleet = fleetById[originalFleetId];
   if (originalFleet == null) return game;
   final orig = originalFleet;
 
@@ -30,13 +26,12 @@ Game applyNavalSplitFleet({
       .where((s) => !idSet.contains(s.id))
       .toList();
 
-  final allFleetIds = game.worldState.fleets
-      .map((f) => int.tryParse(f.id.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0)
-      .toList();
-  final maxId = allFleetIds.isEmpty
-      ? 0
-      : allFleetIds.reduce((a, b) => a > b ? a : b);
-  final newFleetId = '${maxId + 1}';
+  var maxParsedId = 0;
+  for (final id in fleetById.keys) {
+    final parsed = int.tryParse(id.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    if (parsed > maxParsedId) maxParsedId = parsed;
+  }
+  final newFleetId = '${maxParsedId + 1}';
 
   final newFleet = Fleet(
     id: newFleetId,
@@ -52,7 +47,8 @@ Game applyNavalSplitFleet({
   final isHomeFleet = orig.id == homeFleetIdFor(humanPlayerId);
 
   final updatedFleets = <Fleet>[
-    ...game.worldState.fleets.where((f) => f.id != orig.id),
+    for (final f in game.worldState.fleets)
+      if (f.id != orig.id) f,
     if (remainingShips.isNotEmpty || isHomeFleet) updatedOriginal,
     newFleet,
   ];
@@ -78,15 +74,9 @@ Game applyNavalTransferShipsBetweenFleets({
     return game;
   }
 
-  Fleet? sourceFleet;
-  Fleet? targetFleet;
-  for (final fleet in game.worldState.fleets) {
-    if (fleet.id == sourceFleetId) {
-      sourceFleet = fleet;
-    } else if (fleet.id == targetFleetId) {
-      targetFleet = fleet;
-    }
-  }
+  final fleetById = fleetsByIdForWorld(game.worldState);
+  final sourceFleet = fleetById[sourceFleetId];
+  final targetFleet = fleetById[targetFleetId];
   if (sourceFleet == null || targetFleet == null) {
     return game;
   }
