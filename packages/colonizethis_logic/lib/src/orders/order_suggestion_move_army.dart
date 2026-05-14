@@ -253,6 +253,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     topology: topology,
     playerId: playerId,
     basePrefix: currentOrders,
+    factionMembership: factionMembership,
   );
   final declareWarTrialValidatorsByTargetFaction =
       <String, IncrementalCandidateValidator>{};
@@ -294,6 +295,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
           topology: topology,
           playerId: playerId,
           basePrefix: trialOrders,
+          factionMembership: factionMembership,
         );
       });
       if (!trialValidator.isArmyMoveAccepted(move)) {

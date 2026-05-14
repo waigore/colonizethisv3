@@ -473,6 +473,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       tileMapByRegion: tileMapByRegion,
       view: view,
       unitsById: unitsByIdForDiplomatic,
+      factionMembership: factionMembership,
     );
     for (final candidate in candidates) {
       if (candidate.type == DiplomaticOrderType.grantAid ||
@@ -502,6 +503,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       tileMapByRegion: tileMapByRegion,
       view: view,
       unitsById: unitsByIdForDiplomatic,
+      factionMembership: factionMembership,
     );
     for (final candidate in candidates) {
       if (candidate.type != DiplomaticOrderType.grantAid &&
