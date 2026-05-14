@@ -96,11 +96,11 @@ sanctions:
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_merchant.dart
-    line: 36
-    rationale: Merchant work suggestions evaluate provinces in both regions.
+  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work.dart
+    line: 41
+    rationale: merchantPurchaseLandCandidateTileKeys walks all provinces once per suggestWorkOrders pass when merchants are present (foreign-owned resource tiles).
     spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2278
+    issue: https://github.com/waigore/colonizethisv3/issues/2394
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_helpers.dart
     line: 26
