@@ -280,6 +280,14 @@ void main() {
         purchaseLandWorkOrderHandler.supports(kWorkTargetProspect),
         isFalse,
       );
+      expect(
+        exploreWorkOrderHandler.supports(kWorkTargetProspect),
+        isFalse,
+      );
+      expect(
+        prospectWorkOrderHandler.supports(kWorkTargetExplore),
+        isFalse,
+      );
     });
   });
 }

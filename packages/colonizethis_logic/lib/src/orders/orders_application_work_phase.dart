@@ -1,7 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'orders_application_context.dart';
-import 'work_handlers/explore_work_handler.dart';
 import 'work_handlers/simple_work_order_handler.dart';
 import 'work_handlers/standard_work_handler.dart';
 import 'work_handlers/work_order_handler.dart';
@@ -12,7 +11,7 @@ final List<WorkOrderHandler> _workOrderHandlers = [
   counterSpyWorkOrderHandler,
   prospectWorkOrderHandler,
   BuildImprovementWorkOrderHandler(),
-  ExploreWorkOrderHandler(),
+  exploreWorkOrderHandler,
   RemainingStandardBuildTargetsWorkOrderHandler(),
 ];
 

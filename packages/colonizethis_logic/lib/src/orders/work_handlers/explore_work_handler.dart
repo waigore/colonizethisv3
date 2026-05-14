@@ -1,9 +1,7 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../constants.dart';
-import 'work_order_handler.dart';
 
 bool tryApplyExploreWorkOrder({
   required Game game,
@@ -46,34 +44,4 @@ bool tryApplyExploreWorkOrder({
     ),
   );
   return true;
-}
-
-class ExploreWorkOrderHandler implements WorkOrderHandler {
-  const ExploreWorkOrderHandler();
-
-  @override
-  bool supports(String target) => target == kWorkTargetExplore;
-
-  @override
-  bool tryApply(
-    WorkOrderExecutionContext context,
-    WorkOrder order,
-    Unit unit,
-    String targetTileKey,
-    bool hasValidTarget,
-  ) {
-    if (!isExplorerUnit(unit.type) ||
-        unit.currentWork != null ||
-        !hasValidTarget) {
-      return false;
-    }
-    return tryApplyExploreWorkOrder(
-      game: context.state.game,
-      order: order,
-      unit: unit,
-      targetTileKey: targetTileKey,
-      regionForUnit: context.regionForUnit,
-      updateUnit: context.updateUnit,
-    );
-  }
 }

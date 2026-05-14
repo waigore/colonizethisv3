@@ -1,16 +1,16 @@
 import 'package:colonizethis_logic/src/constants.dart';
 import 'package:colonizethis_logic/src/orders/work_handlers/explore_work_handler.dart';
+import 'package:colonizethis_logic/src/orders/work_handlers/simple_work_order_handler.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../../test_fixtures.dart';
 
 void main() {
-  group('ExploreWorkOrderHandler', () {
+  group('exploreWorkOrderHandler', () {
     test('supports only explore target', () {
-      const handler = ExploreWorkOrderHandler();
-      expect(handler.supports(kWorkTargetExplore), isTrue);
-      expect(handler.supports(kWorkTargetPurchaseLand), isFalse);
+      expect(exploreWorkOrderHandler.supports(kWorkTargetExplore), isTrue);
+      expect(exploreWorkOrderHandler.supports(kWorkTargetPurchaseLand), isFalse);
     });
   });
 

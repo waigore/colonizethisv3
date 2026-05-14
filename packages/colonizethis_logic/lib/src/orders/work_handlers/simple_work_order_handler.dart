@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../constants.dart';
 import '../orders_application_helpers.dart';
 import '../purchase_land_work_completion.dart';
+import 'explore_work_handler.dart';
 import 'shared_work_assignment.dart';
 import 'work_order_handler.dart';
 
@@ -34,6 +35,28 @@ class SimpleWorkOrderHandler implements WorkOrderHandler {
     String targetTileKey,
     bool hasValidTarget,
   ) => apply(context, order, unit, targetTileKey, hasValidTarget);
+}
+
+bool _applyExploreWorkOrder(
+  WorkOrderExecutionContext context,
+  WorkOrder order,
+  Unit unit,
+  String targetTileKey,
+  bool hasValidTarget,
+) {
+  if (!isExplorerUnit(unit.type) ||
+      unit.currentWork != null ||
+      !hasValidTarget) {
+    return false;
+  }
+  return tryApplyExploreWorkOrder(
+    game: context.state.game,
+    order: order,
+    unit: unit,
+    targetTileKey: targetTileKey,
+    regionForUnit: context.regionForUnit,
+    updateUnit: context.updateUnit,
+  );
 }
 
 bool _applyStealTechWorkOrder(
@@ -139,6 +162,11 @@ bool _applyPurchaseLandWorkOrder(
     updateUnit: context.updateUnit,
   );
 }
+
+final WorkOrderHandler exploreWorkOrderHandler = SimpleWorkOrderHandler(
+  supportedTarget: kWorkTargetExplore,
+  apply: _applyExploreWorkOrder,
+);
 
 final WorkOrderHandler purchaseLandWorkOrderHandler = SimpleWorkOrderHandler(
   supportedTarget: kWorkTargetPurchaseLand,
