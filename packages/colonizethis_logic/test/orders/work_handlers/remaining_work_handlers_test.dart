@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/constants.dart';
 import 'package:colonizethis_logic/src/orders/orders_application_context.dart';
 import 'package:colonizethis_logic/src/orders/work_handlers/simple_work_order_handler.dart';
@@ -10,7 +9,7 @@ import 'package:colonizethis_test/test.dart';
 import '../../test_fixtures.dart';
 
 void main() {
-  group('StealTechWorkOrderHandler', () {
+  group('SimpleWorkOrderHandler steal_tech', () {
     test('supports only steal_tech', () {
       final h = stealTechWorkOrderHandler;
       expect(h.supports(kWorkTargetStealTech), isTrue);
@@ -69,7 +68,7 @@ void main() {
     });
   });
 
-  group('CounterSpyWorkOrderHandler', () {
+  group('SimpleWorkOrderHandler counter_spy', () {
     test('supports only counter_spy', () {
       final h = counterSpyWorkOrderHandler;
       expect(h.supports(kWorkTargetCounterSpy), isTrue);
@@ -128,7 +127,7 @@ void main() {
     });
   });
 
-  group('ProspectWorkOrderHandler', () {
+  group('SimpleWorkOrderHandler prospect', () {
     test('supports only prospect', () {
       final h = prospectWorkOrderHandler;
       expect(h.supports(kWorkTargetProspect), isTrue);
