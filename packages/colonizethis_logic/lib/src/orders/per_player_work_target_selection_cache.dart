@@ -156,6 +156,7 @@ class PerPlayerWorkTargetSelectionCache {
           playerId: s.playerId,
           baseOrders: s.currentOrders,
           tileMapByRegion: s.tileMapByRegion,
+          view: s.playerView,
         );
     final merged = <String>{};
     for (final unit in _humanCivilianUnits(s.game, s.playerId)) {
@@ -223,6 +224,7 @@ class PerPlayerWorkTargetSelectionCache {
           playerId: s.playerId,
           baseOrders: s.currentOrders,
           tileMapByRegion: s.tileMapByRegion,
+          view: s.playerView,
         );
     final pendingWorkUnitIds = <String>{
       for (final w
