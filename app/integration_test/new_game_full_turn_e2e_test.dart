@@ -151,6 +151,13 @@ Future<void> _openProductionPanel(WidgetTester tester) async {
 
     if (find.byType(BottomSheet).evaluate().isNotEmpty) {
       await e2eCloseBottomSheet(tester);
+      // Exit the spin loop as soon as the sheet is gone (Refs #2336 H7).
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => find.byType(BottomSheet).evaluate().isEmpty,
+        timeout: const Duration(milliseconds: 600),
+        phaseName: 'pump_until_sheet_cleared_production_open',
+      );
       prodPollMs = 25;
       continue;
     }
