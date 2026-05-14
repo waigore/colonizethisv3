@@ -89,8 +89,11 @@ bool _ensureHomeArmyForPlayer(WorldState ws, List<Army> armies, Player player) {
   final cap = player.capitalProvinceId;
   if (cap == null) return false;
   final hid = homeArmyIdFor(player.id);
-  final exists = armies.any((a) => a.id == hid && a.ownerId == player.id);
-  if (exists) return false;
+  for (final a in armies) {
+    if (a.id == hid && a.ownerId == player.id) {
+      return false;
+    }
+  }
   armies.add(_homeArmyForPlayerAtCapital(ws, player, cap));
   return true;
 }
@@ -422,10 +425,21 @@ bool _bothMissing(({int owIdx, int nwIdx}) indices) =>
   List<Unit> owUnits,
   List<Unit> nwUnits,
   String regimentUnitId,
-) => (
-  owIdx: owUnits.indexWhere((u) => u.id == regimentUnitId),
-  nwIdx: nwUnits.indexWhere((u) => u.id == regimentUnitId),
-);
+) {
+  // Old-world list is authoritative when the same id appears in both (invalid
+  // state); skip scanning new world once a match is found (Refs #2394).
+  for (var i = 0; i < owUnits.length; i++) {
+    if (owUnits[i].id == regimentUnitId) {
+      return (owIdx: i, nwIdx: -1);
+    }
+  }
+  for (var i = 0; i < nwUnits.length; i++) {
+    if (nwUnits[i].id == regimentUnitId) {
+      return (owIdx: -1, nwIdx: i);
+    }
+  }
+  return (owIdx: -1, nwIdx: -1);
+}
 
 bool _isOldWorldIndex(int owIdx) => owIdx >= 0;
 String _sourceRegionForIndex(bool inOldWorld) =>

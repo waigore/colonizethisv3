@@ -422,8 +422,12 @@ Unit? _findCivilianMoveUnit(List<Unit> ow, List<Unit> nw, String id) {
 }
 
 String _regionHoldingUnit(List<Unit> ow, List<Unit> nw, String unitId) {
-  if (ow.any((u) => u.id == unitId)) return kRegionOldWorld;
-  if (nw.any((u) => u.id == unitId)) return kRegionNewWorld;
+  for (final u in ow) {
+    if (u.id == unitId) return kRegionOldWorld;
+  }
+  for (final u in nw) {
+    if (u.id == unitId) return kRegionNewWorld;
+  }
   return '';
 }
 
