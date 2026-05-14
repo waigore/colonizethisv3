@@ -37,7 +37,7 @@ sanctions:
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work.dart
-    line: 65
+    line: 70
     rationale: Work suggestions build a once-per-pass owned-province id set from
       all provinces so per-unit prefilter calls can reuse it (Refs #2394).
     spec: SPEC/program/logic-dual-region-province-access.md
