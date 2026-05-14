@@ -344,11 +344,14 @@ OverturePaymentsResult processOverturePayments(
   var players = List<Player>.from(game.players);
   var overtures = List<OvertureState>.from(game.overtureStates);
   var state = game;
+  // One O(P) pass; [players] length/order stay stable while processing
+  // establish-overture orders (only in-place row updates). Refs #2394.
+  final playerIdxById = firstPlayerRowIndexById(players);
 
   for (final entry in diploByPlayer.entries) {
     final gpId = entry.key;
-    final playerIdx = players.indexWhere((p) => p.id == gpId);
-    if (playerIdx < 0) continue;
+    final playerIdx = playerIdxById[gpId];
+    if (playerIdx == null) continue;
     var player = players[playerIdx];
 
     for (final order in entry.value) {

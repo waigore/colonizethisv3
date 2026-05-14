@@ -74,6 +74,16 @@ int joinEmpireCostForMinorOrTribe(Game game, String targetId) {
   return joinEmpireBaseCost + n * joinEmpirePerProvinceCost;
 }
 
+/// First row index per [Player.id] in [players] (matches [Iterable.indexWhere]
+/// for the first matching id). Refs #2394.
+Map<String, int> firstPlayerRowIndexById(List<Player> players) {
+  final m = <String, int>{};
+  for (var i = 0; i < players.length; i++) {
+    m.putIfAbsent(players[i].id, () => i);
+  }
+  return m;
+}
+
 // --- Relation score bounds and thresholds. SPEC/game/diplomacy.md. ---
 
 /// Relation score range: min and max (inclusive).
