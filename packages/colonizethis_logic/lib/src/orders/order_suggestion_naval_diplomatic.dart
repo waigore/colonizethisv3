@@ -252,10 +252,8 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   final rel = getRelation(game, playerId, targetId);
   final atWar = rel?.atWar ?? false;
   final atPeace = rel == null || rel.atPeace;
-  final isGpTarget = game.players.any((p) => p.id == targetId);
-  final isMinorOrTribe =
-      game.minorNations.any((m) => m.id == targetId) ||
-      game.tribes.any((t) => t.id == targetId);
+  final isGpTarget = game.playerById(targetId) != null;
+  final targetIsMinorOrTribe = isMinorOrTribe(game, targetId);
 
   if (knownTargetIds.contains(targetId) && atWar) {
     out.add(
@@ -276,7 +274,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
       ),
     );
   }
-  if (isMinorOrTribe && knownFactionIds.contains(targetId)) {
+  if (targetIsMinorOrTribe && knownFactionIds.contains(targetId)) {
     final overtureOrder = _establishOvertureSuggestionOrder(
       game: game,
       playerId: playerId,
