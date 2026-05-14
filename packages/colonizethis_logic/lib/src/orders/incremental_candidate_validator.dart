@@ -209,22 +209,20 @@ class IncrementalCandidateValidator {
     final player = _player();
     if (player == null) return false;
     final economy = _projectEconomyAfterAcceptedBuildOrders(player);
-    final workValidator = WorkOrderValidator(
-      context: buildWorkOrderValidationContext(
-        game: game,
-        player: player,
-        playerId: playerId,
-        view: view,
-        unitsById: unitsById,
-        devExclusiveTiles: _devExclusiveTiles(),
-        tileMapByRegion: tileMapByRegion,
-        civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
-        diplomaticOrders: diplomaticOrders,
-        topology: topology,
-        factionMembership: _factionMembership(),
-      ),
+    final workValidator = createWorkOrderValidator(
+      game: game,
+      player: player,
+      playerId: playerId,
+      view: view,
+      topology: topology,
+      unitsById: unitsById,
+      diplomaticOrders: diplomaticOrders,
+      tileMapByRegion: tileMapByRegion,
+      civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
+      devExclusiveTiles: _devExclusiveTiles(),
       stockpile: economy.stockpile,
       treasury: economy.treasury,
+      factionMembership: _factionMembership(),
     );
     final works =
         basePrefix.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
@@ -294,7 +292,7 @@ class IncrementalCandidateValidator {
       return cached;
     }
     final afterBuild = _projectEconomyAfterAcceptedBuildOrders(player);
-    final workValidator = createOrderValidators(
+    final workValidator = createWorkOrderValidator(
       game: game,
       player: player,
       playerId: playerId,
@@ -308,7 +306,7 @@ class IncrementalCandidateValidator {
       stockpile: afterBuild.stockpile,
       treasury: afterBuild.treasury,
       factionMembership: _factionMembership(),
-    ).workValidator;
+    );
     final works =
         basePrefix.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
     for (final existing in works) {
