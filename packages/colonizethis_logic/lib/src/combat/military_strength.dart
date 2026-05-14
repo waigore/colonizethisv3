@@ -4,6 +4,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../constants.dart';
 import '../world/unit_lookup.dart';
 
 /// Military strength aggregation for display (e.g., Game Overview tab).
@@ -58,6 +59,9 @@ double moraleMultiplierForFeedingCoverage(double coverage) {
 /// Computes the effective military level for a faction.
 /// Great Powers use era 4; Minor Nations and Tribes use their effectiveMilitaryLevel.
 int effectiveEraForFaction(Game game, String factionId) {
+  if (game.playerById(factionId) != null) {
+    return 4;
+  }
   for (final m in game.minorNations) {
     if (m.id == factionId) return m.effectiveMilitaryLevel;
   }
