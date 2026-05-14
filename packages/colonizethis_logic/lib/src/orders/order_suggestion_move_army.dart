@@ -1,18 +1,15 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
 import '../diplomacy/diplomacy_resolver.dart';
 import '../world/movement.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/civilian_tile_occupancy.dart';
-import '../world/topology_helpers.dart';
 import 'draft_orders_mutations.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_suggestion_context.dart';
 import 'order_visibility.dart';
-import 'unit_type_helpers.dart';
 
 const int _kMaxMoveSuggestionsPerUnit = 24;
 const int _kMaxArmyMoveSuggestionsPerArmy = 12;
@@ -257,7 +254,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
     playerId: playerId,
     basePrefix: currentOrders,
   );
-  final trialValidatorsByDeclareTarget =
+  final declareWarTrialValidatorsByTargetFaction =
       <String, IncrementalCandidateValidator>{};
   final out = <ArmyMovePickerDestination>[];
   for (final fullId in raw) {
@@ -278,28 +275,27 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
       )) {
         continue;
       }
-      final trial = ordersWithAppendedDiplomaticOrder(
-        currentOrders,
-        playerId,
-        DiplomaticOrder(
-          type: DiplomaticOrderType.declareWar,
-          targetFactionId: ownerId,
-        ),
-      );
       // Trial diplomatic context differs from [currentOrders] (extra declare
-      // war), so use a per-trial validator rather than the base one above.
-      // Reuse one validator per declare-war target: same [trial] prefix for a
-      // given [ownerId], amortizes [buildPlayerView] across many destinations
-      // (Refs #2394, SPEC/program/order-suggestions.md).
-      final trialValidator = trialValidatorsByDeclareTarget.putIfAbsent(
-        ownerId,
-        () => IncrementalCandidateValidator.forPlayer(
+      // war on [ownerId]). Reuse one validator per target faction so multiple
+      // provinces with the same owner do not each pay a full PlayerView build
+      // (Refs #2394, SPEC/program/order-suggestions.md § Throughput bounds).
+      final trialValidator =
+          declareWarTrialValidatorsByTargetFaction.putIfAbsent(ownerId, () {
+        final trialOrders = ordersWithAppendedDiplomaticOrder(
+          currentOrders,
+          playerId,
+          DiplomaticOrder(
+            type: DiplomaticOrderType.declareWar,
+            targetFactionId: ownerId,
+          ),
+        );
+        return IncrementalCandidateValidator.forPlayer(
           game: game,
           topology: topology,
           playerId: playerId,
-          basePrefix: trial,
-        ),
-      );
+          basePrefix: trialOrders,
+        );
+      });
       if (!trialValidator.isArmyMoveAccepted(move)) {
         continue;
       }

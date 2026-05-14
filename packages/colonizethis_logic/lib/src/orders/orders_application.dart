@@ -373,11 +373,9 @@ BuildWorkState _resolveStealTechCompletion(
   Random rand,
 ) {
   final targetProvinceId = Unit.provinceIdFromTileKey(cw.tileKey);
-  final otherPlayer = s.game.players
-      .where(
-        (p) => p.id != u.ownerId && p.capitalProvinceId == targetProvinceId,
-      )
-      .firstOrNull;
+  final otherPlayer = targetProvinceId == null
+      ? null
+      : s.game.otherGreatPowerAtCapitalProvince(targetProvinceId, u.ownerId);
   var stealSuccess = false;
   var game = s.game;
   if (otherPlayer != null) {

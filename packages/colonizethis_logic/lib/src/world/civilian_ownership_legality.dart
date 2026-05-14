@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../diplomacy/diplomacy_resolver.dart';
 import 'civilian_tile_occupancy.dart';
 import 'province_lookup.dart';
 
@@ -18,6 +19,8 @@ Game relocateIllegalCiviliansInChangedProvinces(
 }) {
   if (changedProvinceIds.isEmpty) return game;
 
+  final factionMembership = DiplomacyFactionMembership.from(game);
+
   Unit normalizeIllegalCivilian(Unit unit) {
     if (!changedProvinceIds.contains(unit.locationProvinceId)) {
       return unit;
@@ -31,6 +34,7 @@ Game relocateIllegalCiviliansInChangedProvinces(
       playerId: unit.ownerId,
       unitType: unit.type,
       destinationTileKey: currentTileKey,
+      factionMembership: factionMembership,
     )) {
       return unit;
     }

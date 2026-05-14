@@ -185,6 +185,25 @@ Rule id: `logic_lib_list_queue_remove_at_zero` (`match.kind`:
 `simple_receiver_remove_at_zero`, `match.receiver_identifier`: `queue`,
 `match.relative_path_prefix`: `packages/colonizethis_logic/lib/src/`).
 
+### Linear province lookups via `.provinces.where(...).firstOrNull`
+
+In `packages/colonizethis_logic/lib/src/**`, chaining a `.where(...)` filter on
+a `.provinces` collection followed by the `.firstOrNull` getter is disallowed.
+This includes nested receivers such as `region.provinces.where(...).firstOrNull`
+or `game.worldState.oldWorld.provinces.where(...).firstOrNull`.
+
+Rationale: scanning the full province list to find one entry is **O(P)** per
+lookup and easily becomes **O(P·N)** inside hot loops. Use the O(1) province
+lookup helpers in `world/province_lookup.dart` (`tryGetProvince`,
+`getProvince`, `tryGetProvinceByRegion`, `tryGetProvinceByRegion`) keyed by the
+canonical full province id (`regionId|localId`) instead. See
+`SPEC/program/world-model.md` and the world-state lookup helpers.
+
+Rule id: `prohibited_linear_province_lookup` (`match.kind`:
+`linear_collection_where_first_or_null`, `match.collection_names`:
+`provinces`, `match.relative_path_prefix`:
+`packages/colonizethis_logic/lib/src/`).
+
 ### Coverage
 
 Enforcement walks the same domain trees via `tool/ct_repo_lint_scan_contract.dart` (`collectRepoLintDomainDartFiles`), aligned with `SPEC/program/exception-enforcement.md` coverage:
@@ -319,3 +338,32 @@ Generated files (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`) and tests (`**/te
   `packages/colonizethis_logic/lib/src/` that calls `queue.removeAt(0)`,
   **when** the disallowed AST checker runs, **then** it does not report a
   `logic_lib_list_queue_remove_at_zero` violation for that call.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that chains
+  `<receiver>.provinces.where((p) => ...).firstOrNull` (where `<receiver>` is
+  a `RegionData`, `WorldState`, or any expression whose `.provinces` getter
+  returns a province list), **when** the disallowed AST checker runs, **then**
+  it reports at least one violation for `prohibited_linear_province_lookup`
+  with the correct file and line.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that uses
+  `tryGetProvince(world, fullId)` or another O(1) province lookup helper
+  instead of `.provinces.where(...).firstOrNull`, **when** the disallowed AST
+  checker runs, **then** it does not report a
+  `prohibited_linear_province_lookup` violation for that lookup.
+
+- **Given** runtime Dart source outside
+  `packages/colonizethis_logic/lib/src/` that chains
+  `.provinces.where(...).firstOrNull`, **when** the disallowed AST checker
+  runs, **then** it does not report a `prohibited_linear_province_lookup`
+  violation for that chain.
+
+- **Given** runtime Dart source under
+  `packages/colonizethis_logic/lib/src/` that filters provinces but consumes
+  the result as an `Iterable` (for example
+  `region.provinces.where((p) => p.ownerId == playerId)` without
+  `.firstOrNull`), **when** the disallowed AST checker runs, **then** it does
+  not report a `prohibited_linear_province_lookup` violation for that
+  expression.
