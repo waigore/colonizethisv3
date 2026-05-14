@@ -23,6 +23,35 @@ part 'order_suggestion_work_worker.dart';
 part 'order_suggestion_work_spy.dart';
 part 'order_suggestion_work_merchant.dart';
 
+/// Tile keys that are merchant purchase-land suggestion candidates for [game]:
+/// tiles in provinces not owned by any [Game.players] entry that carry a
+/// resource, excluding development-exclusive tiles.
+///
+/// Built once per [suggestWorkOrders] pass when any merchant unit is present so
+/// each merchant does not rescan [allProvinces] (Refs #2394,
+/// SPEC/program/order-suggestions.md).
+List<String> merchantPurchaseLandCandidateTileKeys({
+  required Game game,
+  required Map<String, Map<String, List<String>>> tileKeysByRegion,
+  required Set<String> devExclusiveReservedTiles,
+}) {
+  final resourceByTile = game.worldState.resourceByTileKey;
+  final playerIds = {for (final p in game.players) p.id};
+  final out = <String>[];
+  for (final province in allProvinces(game.worldState)) {
+    final ownerId = province.ownerId;
+    if (ownerId == null || playerIds.contains(ownerId)) continue;
+    final regionId = province.regionId;
+    final tiles = tileKeysByRegion[regionId]?[province.id] ?? const <String>[];
+    for (final tk in tiles) {
+      if (resourceByTile[tk] == null) continue;
+      if (devExclusiveReservedTiles.contains(tk)) continue;
+      out.add(tk);
+    }
+  }
+  return out;
+}
+
 /// Suggests candidate work orders for explorers and civilian workers owned by
 /// [view.playerId]. Worker units (Builder, Engineer, Rail Builder): at least
 /// one suggestion per (unit, allowed target) when any **player-controlled** tile
@@ -99,6 +128,22 @@ List<WorkOrder> suggestWorkOrders(
         tileMapByRegion: tileMapByRegion,
       );
 
+  var needsMerchantPurchaseLandTileIndex = false;
+  for (final unit in view.ownUnits) {
+    if (unit.currentWork != null) continue;
+    if (isMerchantUnit(unit.type)) {
+      needsMerchantPurchaseLandTileIndex = true;
+      break;
+    }
+  }
+  final merchantPurchaseLandTileKeys = needsMerchantPurchaseLandTileIndex
+      ? merchantPurchaseLandCandidateTileKeys(
+          game: game,
+          tileKeysByRegion: tileKeysByRegion,
+          devExclusiveReservedTiles: devExclusiveReservedTiles,
+        )
+      : const <String>[];
+
   for (final unit in view.ownUnits) {
     _addWorkSuggestionsForUnit(
       view: view,
@@ -115,6 +160,7 @@ List<WorkOrder> suggestWorkOrders(
       visibleCandidatesSortedByWorkTarget: visibleCandidatesSortedByWorkTarget,
       playerOwnedProvinceIds: playerOwnedProvinceIds,
       devExclusiveReservedTiles: devExclusiveReservedTiles,
+      merchantPurchaseLandTileKeys: merchantPurchaseLandTileKeys,
       suggestions: suggestions,
       candidateValidator: candidateValidator,
     );
@@ -156,6 +202,7 @@ void _addWorkSuggestionsForUnit({
   required Map<String, List<String>> visibleCandidatesSortedByWorkTarget,
   required Set<String> playerOwnedProvinceIds,
   required Set<String> devExclusiveReservedTiles,
+  required List<String> merchantPurchaseLandTileKeys,
   required List<WorkOrder> suggestions,
   required IncrementalCandidateValidator candidateValidator,
   Map<String, TileMapResult>? tileMapByRegion,
@@ -237,17 +284,12 @@ void _addWorkSuggestionsForUnit({
 
   if (isMerchant) {
     _addMerchantSuggestionsForUnit(
-      game: game,
-      topology: topology,
-      currentOrders: currentOrders,
-      tileKeysByRegion: tileKeysByRegion,
-      playerId: playerId,
       unit: unit,
       type: type,
       unitRegionId: regionId,
       atProvinceId: provinceId,
       existingTargetsByUnit: existingTargetsByUnit,
-      devExclusiveReservedTiles: devExclusiveReservedTiles,
+      purchaseLandCandidateTileKeys: merchantPurchaseLandTileKeys,
       suggestions: suggestions,
       candidateValidator: candidateValidator,
     );
