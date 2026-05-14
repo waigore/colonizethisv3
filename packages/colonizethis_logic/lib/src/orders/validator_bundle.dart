@@ -73,6 +73,7 @@ WorkOrderValidator createWorkOrderValidator({
   required Stockpile stockpile,
   required int treasury,
   required DiplomacyFactionMembership factionMembership,
+  Set<String> initialSeenUnitIds = const <String>{},
 }) {
   final workContext = buildWorkOrderValidationContext(
     game: game,
@@ -91,6 +92,7 @@ WorkOrderValidator createWorkOrderValidator({
     context: workContext,
     stockpile: stockpile,
     treasury: treasury,
+    initialSeenUnitIds: initialSeenUnitIds,
   );
 }
 
