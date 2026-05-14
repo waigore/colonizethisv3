@@ -30,9 +30,13 @@ class WorkTargetSelectionSnapshot {
   final Orders currentOrders;
   final Map<String, TileMapResult>? tileMapByRegion;
 
-  /// When non-null (set by [PerPlayerWorkTargetSelectionCache.refresh]), all
-  /// default population paths reuse this instance instead of rebuilding
+  /// When non-null on the **output** snapshot passed to population strategies,
+  /// all default population paths reuse this instance instead of rebuilding
   /// [IncrementalCandidateValidator.forPlayer] per work target (Refs #2394).
+  ///
+  /// Callers may also set this on the **input** snapshot passed to [refresh];
+  /// when set, [refresh] reuses that validator instead of constructing one
+  /// (must match the same `(game, topology, playerId, currentOrders, …)` tuple).
   final IncrementalCandidateValidator? sharedCandidateValidator;
 }
 
@@ -71,13 +75,16 @@ class PerPlayerWorkTargetSelectionCache {
   }
 
   void refresh(WorkTargetSelectionSnapshot snapshot) {
-    final sharedValidator = buildIncrementalCandidateValidator(
-      game: snapshot.game,
-      topology: snapshot.topology,
-      playerId: snapshot.playerId,
-      baseOrders: snapshot.currentOrders,
-      tileMapByRegion: snapshot.tileMapByRegion,
-    );
+    final sharedValidator =
+        snapshot.sharedCandidateValidator ??
+        buildIncrementalCandidateValidator(
+          game: snapshot.game,
+          topology: snapshot.topology,
+          playerId: snapshot.playerId,
+          baseOrders: snapshot.currentOrders,
+          tileMapByRegion: snapshot.tileMapByRegion,
+          view: snapshot.playerView,
+        );
     final snapshotForPopulation = WorkTargetSelectionSnapshot(
       game: snapshot.game,
       playerId: snapshot.playerId,

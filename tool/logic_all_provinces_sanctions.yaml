@@ -36,13 +36,6 @@ sanctions:
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work.dart
-    line: 70
-    rationale: Work suggestions build a once-per-pass owned-province id set from
-      all provinces so per-unit prefilter calls can reuse it (Refs #2394).
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/2394
-
   - path: packages/colonizethis_logic/lib/src/orders/order_suggestion_work_tile_prefilter.dart
     line: 61
     rationale: Work tile prefilter collects owned province ids via all provinces when

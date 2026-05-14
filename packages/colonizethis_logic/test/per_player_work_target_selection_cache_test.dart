@@ -152,5 +152,41 @@ void main() {
         expect(prospectValidator, same(exploreValidator));
       },
     );
+
+    test(
+      'refresh reuses caller-supplied sharedCandidateValidator when set (Refs #2394)',
+      () {
+        final base = snapshotForPlayer('gp1');
+        final external = IncrementalCandidateValidator.forPlayer(
+          game: base.game,
+          topology: base.topology,
+          playerId: base.playerId,
+          basePrefix: base.currentOrders,
+          tileMapByRegion: base.tileMapByRegion,
+          view: base.playerView,
+        );
+        Object? seen;
+        final cache = PerPlayerWorkTargetSelectionCache(
+          strategies: {
+            kWorkTargetExplore: (snapshot) {
+              seen = snapshot.sharedCandidateValidator;
+              return const {'t1'};
+            },
+          },
+        );
+        cache.refresh(
+          WorkTargetSelectionSnapshot(
+            game: base.game,
+            playerId: base.playerId,
+            playerView: base.playerView,
+            topology: base.topology,
+            currentOrders: base.currentOrders,
+            tileMapByRegion: base.tileMapByRegion,
+            sharedCandidateValidator: external,
+          ),
+        );
+        expect(seen, same(external));
+      },
+    );
   });
 }

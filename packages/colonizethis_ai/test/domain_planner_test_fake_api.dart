@@ -70,16 +70,18 @@ class FakeOrderSuggestionAPIForDomainPlannerTests implements OrderSuggestionAPI 
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) => navalMove;
+    Orders currentOrders, {
+    Map<String, Unit>? unitsById,
+  }) => navalMove;
 
   @override
   List<NavalMissionOrder> suggestNavalMissionOrders(
     PlayerView view,
     Game game,
     MapTopology topology,
-    Orders currentOrders,
-  ) => navalMission;
+    Orders currentOrders, {
+    Map<String, Unit>? unitsById,
+  }) => navalMission;
 
   @override
   List<DiplomaticOrder> suggestDiplomaticOrders(

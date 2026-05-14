@@ -36,11 +36,13 @@ Orders runNavalPlanner({
 
   var o = orders;
 
+  final unitsById = unitsByIdFromWorld(game.worldState);
   final navalMoveCandidates = suggestionAPI.suggestNavalMoveOrders(
     view,
     game,
     topology,
     o,
+    unitsById: unitsById,
   );
   _log.d(
     'naval move eval nationId=$nationId '
@@ -65,6 +67,7 @@ Orders runNavalPlanner({
     game,
     topology,
     o,
+    unitsById: unitsById,
   );
   _log.d(
     'naval mission eval nationId=$nationId '

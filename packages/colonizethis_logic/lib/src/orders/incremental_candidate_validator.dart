@@ -89,6 +89,7 @@ class IncrementalCandidateValidator {
   ({Stockpile stockpile, int treasury})? _cachedEconomyAfterBuildAndWorkOrders;
   Map<String, Army>? _cachedArmiesById;
   DiplomacyFactionMembership? _cachedFactionMembership;
+  NavalOrderValidator? _cachedNavalOrderValidator;
 
   DiplomacyFactionMembership _factionMembership() {
     final cached = _cachedFactionMembership;
@@ -169,24 +170,31 @@ class IncrementalCandidateValidator {
     return computed;
   }
 
-  bool isNavalMoveAccepted(NavalMoveOrder candidate) {
-    final validator = NavalOrderValidator(
+  /// One [NavalOrderValidator] per incremental pass: it snapshots fleet ids
+  /// once; reuse avoids rebuilding the fleet map on every naval probe (Refs
+  /// #2394, SPEC/program/order-suggestions.md).
+  NavalOrderValidator _navalOrderValidator() {
+    final cached = _cachedNavalOrderValidator;
+    if (cached != null) {
+      return cached;
+    }
+    final built = NavalOrderValidator(
       game: game,
       topology: topology,
       playerId: playerId,
     );
-    return validator
+    _cachedNavalOrderValidator = built;
+    return built;
+  }
+
+  bool isNavalMoveAccepted(NavalMoveOrder candidate) {
+    return _navalOrderValidator()
         .validateNavalMove(candidate, previousRejected: false)
         .isAccepted;
   }
 
   bool isNavalMissionAccepted(NavalMissionOrder candidate) {
-    final validator = NavalOrderValidator(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-    );
-    return validator
+    return _navalOrderValidator()
         .validateNavalMission(candidate, previousRejected: false)
         .isAccepted;
   }

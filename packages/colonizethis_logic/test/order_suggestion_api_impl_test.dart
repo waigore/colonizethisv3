@@ -166,6 +166,43 @@ void main() {
       expect(list, isA<List<NavalMissionOrder>>());
     });
 
+    test(
+      'suggestNavalMoveOrders and suggestNavalMissionOrders match when '
+      'caller supplies unitsById (Refs #2394)',
+      () {
+        const api = DefaultOrderSuggestionAPI();
+        final unitsById = unitsByIdFromWorld(game.worldState);
+        final moveDefault = api.suggestNavalMoveOrders(
+          view,
+          game,
+          topology,
+          emptyOrders,
+        );
+        final moveShared = api.suggestNavalMoveOrders(
+          view,
+          game,
+          topology,
+          emptyOrders,
+          unitsById: unitsById,
+        );
+        expect(moveShared, moveDefault);
+        final missionDefault = api.suggestNavalMissionOrders(
+          view,
+          game,
+          topology,
+          emptyOrders,
+        );
+        final missionShared = api.suggestNavalMissionOrders(
+          view,
+          game,
+          topology,
+          emptyOrders,
+          unitsById: unitsById,
+        );
+        expect(missionShared, missionDefault);
+      },
+    );
+
     test('suggestDiplomaticOrders returns list', () {
       const api = DefaultOrderSuggestionAPI();
       final list = api.suggestDiplomaticOrders(
