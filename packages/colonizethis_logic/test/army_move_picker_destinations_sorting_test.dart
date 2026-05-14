@@ -153,8 +153,10 @@ void main() {
         army: army,
         currentOrders: const Orders(),
       );
-      final p2Dests =
-          list.where((e) => e.ownerFactionId == p2).map((e) => e.fullProvinceId).toSet();
+      final p2Dests = list
+          .where((e) => e.ownerFactionId == p2)
+          .map((e) => e.fullProvinceId)
+          .toSet();
       expect(p2Dests, containsAll([loc2, loc3]));
       expect(
         list
@@ -162,5 +164,6 @@ void main() {
             .every((e) => e.requiresDeclareWarOnConfirm),
         isTrue,
       );
-  });
+    },
+  );
 }
