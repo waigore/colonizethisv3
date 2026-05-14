@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/unit_lookup.dart';
 import 'incremental_candidate_validator.dart';
@@ -44,12 +45,14 @@ Set<String> getValidWorkOrderTileKeys(
     workTarget: workTarget,
     tileMapByRegion: tileMapByRegion,
   );
+  final factionMembership = DiplomacyFactionMembership.from(game);
   final candidateValidator = buildIncrementalCandidateValidator(
     game: game,
     topology: topology,
     playerId: playerId,
     baseOrders: currentOrders,
     tileMapByRegion: tileMapByRegion,
+    factionMembership: factionMembership,
   );
   final valid = <String>{};
   for (final tileKey in raw) {
@@ -137,6 +140,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
         playerId: playerId,
         baseOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
+        factionMembership: DiplomacyFactionMembership.from(game),
       );
 
   final valid = <String>{};

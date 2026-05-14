@@ -4,6 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
 import '../world/unit_lookup.dart';
@@ -118,6 +119,7 @@ List<WorkOrder> suggestWorkOrders(
         sharedCandidateValidator.playerId == playerId,
     'sharedCandidateValidator playerId must match view.playerId',
   );
+  final factionMembership = DiplomacyFactionMembership.from(game);
   final candidateValidator =
       sharedCandidateValidator ??
       buildIncrementalCandidateValidator(
@@ -126,6 +128,7 @@ List<WorkOrder> suggestWorkOrders(
         playerId: playerId,
         baseOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
+        factionMembership: factionMembership,
       );
 
   var needsMerchantPurchaseLandTileIndex = false;
