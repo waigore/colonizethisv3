@@ -125,11 +125,17 @@ List<NavalMoveOrder> suggestNavalMoveOrders(
   // units-by-id setup across every candidate probe in the loop.
   // SPEC/program/order-suggestions.md § Incremental candidate validation.
   // Refs #2237.
+  //
+  // Reuse the caller-supplied [view] and a one-time units index so we do not
+  // pay redundant `buildPlayerView` / `unitsByIdFromWorld` scans (Refs #2394).
+  final unitsById = unitsByIdFromWorld(game.worldState);
   final candidateValidator = IncrementalCandidateValidator.forPlayer(
     game: game,
     topology: topology,
     playerId: playerId,
     basePrefix: currentOrders,
+    view: view,
+    unitsById: unitsById,
   );
 
   final homeFleetId = homeFleetIdFor(playerId);
@@ -203,11 +209,16 @@ List<NavalMissionOrder> suggestNavalMissionOrders(
   // Single per-player validator amortizes per-player setup across every
   // candidate probe (mission × fleet). SPEC/program/order-suggestions.md
   // § Incremental candidate validation. Refs #2237.
+  //
+  // Reuse [view] and one units snapshot (Refs #2394).
+  final unitsById = unitsByIdFromWorld(game.worldState);
   final candidateValidator = IncrementalCandidateValidator.forPlayer(
     game: game,
     topology: topology,
     playerId: playerId,
     basePrefix: currentOrders,
+    view: view,
+    unitsById: unitsById,
   );
 
   for (final fleet in game.worldState.fleets) {
