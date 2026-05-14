@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../diplomacy/diplomacy_resolver.dart';
 import '../world/player_view.dart';
 import 'incremental_candidate_validator.dart';
 
@@ -36,6 +37,9 @@ IncrementalCandidateValidator buildIncrementalCandidateValidator({
   Map<String, TileMapResult>? tileMapByRegion,
   PlayerView? view,
   Map<String, Unit>? unitsById,
+  /// When callers already built membership for this [game], pass it to avoid a
+  /// second [DiplomacyFactionMembership.from] inside the validator.
+  DiplomacyFactionMembership? factionMembership,
 }) {
   return IncrementalCandidateValidator.forPlayer(
     game: game,
@@ -45,6 +49,7 @@ IncrementalCandidateValidator buildIncrementalCandidateValidator({
     tileMapByRegion: tileMapByRegion,
     view: view,
     unitsById: unitsById,
+    factionMembership: factionMembership,
   );
 }
 

@@ -307,12 +307,10 @@ Game applyQuickBattleResultToGame(
 
   var provinces = region.provinces;
   if (result.fortDowngradeFromDestroyedEmplaced) {
-    final idx = provinces.indexWhere((p) => p.id == ctx.provinceId);
-    if (idx >= 0) {
-      final p = provinces[idx];
-      final newLevel = (p.fortLevel - 1).clamp(0, 3);
-      provinces = List.from(provinces)..[idx] = p.copyWith(fortLevel: newLevel);
-    }
+    provinces = decrementFortLevelForProvinceIdIfPresent(
+      provinces,
+      ctx.provinceId,
+    );
   }
 
   final newRegion = RegionData(provinces: provinces, units: survivingUnits);

@@ -415,10 +415,10 @@ Game _buildResolvedBattleGame({
   var updatedProvinces = region.provinces;
   var provinceChangedOwner = false;
   if (defenderUnitIds.isEmpty && survivingAttackerFactionId != null) {
-    final idx = updatedProvinces.indexWhere((p) => p.id == ctx.provinceId);
-    if (idx >= 0) {
-      provinceChangedOwner = true;
-    }
+    provinceChangedOwner = provinceListContainsProvinceId(
+      updatedProvinces,
+      ctx.provinceId,
+    );
   }
 
   final recoveredUnits = unitsById.values

@@ -36,10 +36,15 @@ Map<String, int> regimentTypeCountsForPlayer(
   String playerId,
 ) {
   final map = <String, int>{};
-  for (final u in allUnitsFromWorld(world)) {
-    if (u.ownerId != playerId) continue;
-    map.update(u.type, (v) => v + 1, ifAbsent: () => 1);
+  void count(Iterable<Unit> units) {
+    for (final u in units) {
+      if (u.ownerId != playerId) continue;
+      map.update(u.type, (v) => v + 1, ifAbsent: () => 1);
+    }
   }
+
+  count(world.oldWorld.units);
+  count(world.newWorld.units);
   return map;
 }
 
@@ -73,13 +78,18 @@ final class MilitaryTypeCountsByPlayer {
 /// Builds regiment and ship type counts for all players in one pass.
 MilitaryTypeCountsByPlayer militaryTypeCountsByPlayer(WorldState world) {
   final regimentCountsByPlayerId = <String, Map<String, int>>{};
-  for (final unit in allUnitsFromWorld(world)) {
-    final perPlayer = regimentCountsByPlayerId.putIfAbsent(
-      unit.ownerId,
-      () => <String, int>{},
-    );
-    perPlayer.update(unit.type, (count) => count + 1, ifAbsent: () => 1);
+  void countRegiments(Iterable<Unit> units) {
+    for (final unit in units) {
+      final perPlayer = regimentCountsByPlayerId.putIfAbsent(
+        unit.ownerId,
+        () => <String, int>{},
+      );
+      perPlayer.update(unit.type, (count) => count + 1, ifAbsent: () => 1);
+    }
   }
+
+  countRegiments(world.oldWorld.units);
+  countRegiments(world.newWorld.units);
 
   final shipCountsByPlayerId = <String, Map<String, int>>{};
   for (final fleet in world.fleets) {

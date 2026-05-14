@@ -190,10 +190,12 @@ _applyDockNavalMoveOrder({
       targetPortId: null,
       targetProvinceId: null,
     );
-    final nextFleets = fleets
-        .where((f) => f.id != fleet.id)
-        .map((f) => f.id == homeFleetId ? updatedHome : f)
-        .toList();
+    // Single-pass list build (Refs #2394): avoids intermediate lazy chains from
+    // `.where` / `.map` when merging a docking fleet into the capital home fleet.
+    final nextFleets = <Fleet>[
+      for (final f in fleets)
+        if (f.id != fleet.id) f.id == homeFleetId ? updatedHome : f,
+    ];
     final nextFleetIndexById = _fleetIndexById(nextFleets);
     fleetById[homeFleetId] = updatedHome;
     fleetById.remove(fleet.id);
