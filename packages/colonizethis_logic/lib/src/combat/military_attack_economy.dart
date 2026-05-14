@@ -37,9 +37,11 @@ Game applyLandBattleAttackTreasuryCosts(Game game, BattleContext ctx) {
   var players = game.players;
   final factionMembership = DiplomacyFactionMembership.from(game);
   // O(1) player row lookup per attacker instead of O(P) indexWhere each time (Refs #2394).
-  final playerIndexById = <String, int>{
-    for (var i = 0; i < players.length; i++) players[i].id: i,
-  };
+  // First index wins for duplicate ids (matches [List.indexWhere]).
+  final playerIndexById = <String, int>{};
+  for (var i = 0; i < players.length; i++) {
+    playerIndexById.putIfAbsent(players[i].id, () => i);
+  }
   for (final id in ids) {
     if (!isGreatPower(game, id, factionMembership: factionMembership)) {
       continue;
