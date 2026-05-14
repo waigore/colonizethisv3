@@ -123,8 +123,15 @@ Game _rebuildArmiesFromMilitaryUnits(Game game) {
   );
 }
 
-List<Unit> _militaryUnitsFromWorld(WorldState ws) =>
-    allUnitsFromWorld(ws).where((u) => isMilitaryUnit(u.type)).toList();
+List<Unit> _militaryUnitsFromWorld(WorldState ws) {
+  final out = <Unit>[];
+  for (final u in allUnitsFromWorld(ws)) {
+    if (isMilitaryUnit(u.type)) {
+      out.add(u);
+    }
+  }
+  return out;
+}
 
 Map<String, String> _capitalByPlayer(List<Player> players) => {
   for (final p in players)

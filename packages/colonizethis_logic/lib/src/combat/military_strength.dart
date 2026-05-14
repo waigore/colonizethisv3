@@ -72,9 +72,11 @@ int effectiveEraForFaction(Game game, String factionId) {
 ///
 /// Spec: SPEC/program/military-strength.md
 double aggregateMilitaryStrengthForPlayer(Game game, String playerId) {
-  final units = allUnitsFromWorld(game.worldState)
-      .where((u) => u.ownerId == playerId)
-      .toList();
   final effectiveEra = effectiveEraForFaction(game, playerId);
-  return aggregateStrength(units, effectiveEra);
+  var total = 0.0;
+  for (final u in allUnitsFromWorld(game.worldState)) {
+    if (u.ownerId != playerId) continue;
+    total += unitStrength(u, effectiveEra);
+  }
+  return total;
 }
