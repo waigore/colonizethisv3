@@ -117,6 +117,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
     'connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}',
   );
   final provinceIdsByType = provinceNodeIds(topology);
+  final seaZoneNodeIds = _topologySeaZoneNodeIds(topology);
   final blockadedByPlayer =
       blockadedPortProvincesByPlayerId ??
       computeBlockadedPortProvincesByPlayer(game, topology);
@@ -145,6 +146,7 @@ Map<String, ConnectivityResult> resolveConnectivity({
       tileMapByRegion: tileMapByRegion,
       topology: topology,
       provinceIdsByType: provinceIdsByType,
+      seaZoneNodeIds: seaZoneNodeIds,
       portInfo: portInfo,
       owned: ownedByPlayer[player.id] ?? const <String>{},
       townByTileKey:
@@ -191,20 +193,25 @@ bool _topologyUsesPrefixedIds(MapTopology topology) {
   return topology.nodes.any((n) => n.id.contains('|'));
 }
 
+/// Topology sea-zone node ids, built once per connectivity resolve (Refs #2394).
+Set<String> _topologySeaZoneNodeIds(MapTopology topology) {
+  return {
+    for (final n in topology.nodes)
+      if (n.type == TopologyNodeType.seaZone) n.id,
+  };
+}
+
 /// Sea zones reachable from [startSeaZoneIds] by following S–S edges in [topology]. SPEC/game/map-topology, capital-and-connectivity § Sea paths.
 Set<String> _seaZonesReachableBySeaPath(
   MapTopology topology,
-  Set<String> startSeaZoneIds,
-) {
-  final seaZoneIds = topology.nodes
-      .where((n) => n.type == TopologyNodeType.seaZone)
-      .map((n) => n.id)
-      .toSet();
+  Set<String> startSeaZoneIds, {
+  required Set<String> seaZoneNodeIds,
+}) {
   final neighbours = <String, Set<String>>{};
   for (final e in topology.edges) {
     final a = e.id1;
     final b = e.id2;
-    if (seaZoneIds.contains(a) && seaZoneIds.contains(b)) {
+    if (seaZoneNodeIds.contains(a) && seaZoneNodeIds.contains(b)) {
       neighbours.putIfAbsent(a, () => {}).add(b);
       neighbours.putIfAbsent(b, () => {}).add(a);
     }
@@ -212,7 +219,7 @@ Set<String> _seaZonesReachableBySeaPath(
   return breadthFirstReachableInSubgraph(
     startSeaZoneIds,
     neighbours,
-    seaZoneIds,
+    seaZoneNodeIds,
     onDequeue: _recordSeaZoneBfsDequeue,
   );
 }
@@ -220,17 +227,14 @@ Set<String> _seaZonesReachableBySeaPath(
 /// Sea zone ids adjacent to province [localProvinceId] in topology (P–S edges).
 Set<String> _seaZonesAdjacentToProvince(
   MapTopology topology,
-  String localProvinceId,
-) {
-  final seaZoneIds = topology.nodes
-      .where((n) => n.type == TopologyNodeType.seaZone)
-      .map((n) => n.id)
-      .toSet();
+  String localProvinceId, {
+  required Set<String> seaZoneNodeIds,
+}) {
   final out = <String>{};
   for (final edge in topology.edges) {
     if (edge.id1 != localProvinceId && edge.id2 != localProvinceId) continue;
     final other = edge.id1 == localProvinceId ? edge.id2 : edge.id1;
-    if (seaZoneIds.contains(other)) out.add(other);
+    if (seaZoneNodeIds.contains(other)) out.add(other);
   }
   return out;
 }
@@ -324,6 +328,7 @@ ConnectivityResult _connectedTilesForPlayer({
   required Map<String, TileMapResult> tileMapByRegion,
   required MapTopology topology,
   required Set<String> provinceIdsByType,
+  required Set<String> seaZoneNodeIds,
   required Map<String, (String, String)> portInfo,
   required Set<String> owned,
   required Map<String, Province> townByTileKey,
@@ -374,6 +379,7 @@ ConnectivityResult _connectedTilesForPlayer({
     topology: topology,
     tileMapByRegion: tileMapByRegion,
     provinceIdsByType: provinceIdsByType,
+    seaZoneNodeIds: seaZoneNodeIds,
     ownedProvinceIds: owned,
     blockadedPortProvinces: blockadedPortProvinces,
     capitalRegionPortKeys: capitalRegionPortKeys,
@@ -485,6 +491,7 @@ Set<String> _seaConnectedPortKeysForCapital({
   required MapTopology topology,
   required Map<String, TileMapResult> tileMapByRegion,
   required Set<String> provinceIdsByType,
+  required Set<String> seaZoneNodeIds,
   required Set<String> ownedProvinceIds,
   required Set<String> blockadedPortProvinces,
   required Set<String> capitalRegionPortKeys,
@@ -508,8 +515,13 @@ Set<String> _seaConnectedPortKeysForCapital({
     final capitalSeaZones = _seaZonesAdjacentToProvince(
       topology,
       provinceIdForLookup,
+      seaZoneNodeIds: seaZoneNodeIds,
     );
-    final seaReachable = _seaZonesReachableBySeaPath(topology, capitalSeaZones);
+    final seaReachable = _seaZonesReachableBySeaPath(
+      topology,
+      capitalSeaZones,
+      seaZoneNodeIds: seaZoneNodeIds,
+    );
     for (final entry in worldState.portsByProvinceSeaboard.entries) {
       final portMeta = decodePortSeaboardRegistryKey(entry.key);
       if (portMeta == null) continue;
