@@ -1,5 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/orders/order_suggestion_context.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -78,6 +79,34 @@ WorkTargetSelectionSnapshot _snapshot(Game game) {
   );
 }
 
+/// Mirrors default-strategy keys in [PerPlayerWorkTargetSelectionCache].
+const _defaultWorkTargets = <String>[
+  kWorkTargetExplore,
+  kWorkTargetStealTech,
+  kWorkTargetCounterSpy,
+  kWorkTargetPurchaseLand,
+  kWorkTargetProspect,
+  kWorkTargetBuildImprovement,
+  kWorkTargetUpgradeTown,
+  kWorkTargetBuildRoad,
+  kWorkTargetBuildPort,
+  kWorkTargetBuildFort,
+  kWorkTargetBuildRail,
+];
+
+void _expectCachesEqualForAllTargets(
+  PerPlayerWorkTargetSelectionCache a,
+  PerPlayerWorkTargetSelectionCache b,
+) {
+  for (final target in _defaultWorkTargets) {
+    expect(
+      a.sorted(_playerId, target),
+      b.sorted(_playerId, target),
+      reason: 'workTarget=$target',
+    );
+  }
+}
+
 int _medianRefreshMicros({
   required PerPlayerWorkTargetSelectionCache cache,
   required Game game,
@@ -121,6 +150,46 @@ void main() {
               'median refresh=$medianµs should stay below ${ceilingMicros}µs '
               '(smoke guard for catastrophic regression; Refs #2394)',
         );
+      },
+    );
+
+    test(
+      'refresh with snapshot.sharedCandidateValidator matches implicit build',
+      () {
+        final game = _explorerStressGame(6);
+        const topology = MapTopology(nodes: [], edges: []);
+        final view = buildPlayerView(game, topology, _playerId);
+        final base = WorkTargetSelectionSnapshot(
+          game: game,
+          playerId: _playerId,
+          playerView: view,
+          topology: topology,
+          currentOrders: const Orders(),
+          tileMapByRegion: null,
+        );
+        final explicitShared = buildIncrementalCandidateValidator(
+          game: base.game,
+          topology: base.topology,
+          playerId: base.playerId,
+          baseOrders: base.currentOrders,
+          tileMapByRegion: base.tileMapByRegion,
+          view: base.playerView,
+        );
+        final withShared = WorkTargetSelectionSnapshot(
+          game: base.game,
+          playerId: base.playerId,
+          playerView: base.playerView,
+          topology: base.topology,
+          currentOrders: base.currentOrders,
+          tileMapByRegion: base.tileMapByRegion,
+          sharedCandidateValidator: explicitShared,
+        );
+
+        final implicitCache = PerPlayerWorkTargetSelectionCache();
+        final explicitCache = PerPlayerWorkTargetSelectionCache();
+        implicitCache.refresh(base);
+        explicitCache.refresh(withShared);
+        _expectCachesEqualForAllTargets(implicitCache, explicitCache);
       },
     );
 
