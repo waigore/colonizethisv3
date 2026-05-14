@@ -1,6 +1,9 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Chain navigation for [OvertureStage] (Refs #2391 AC1 / Pattern 2).
+///
+/// Ladder semantics: `SPEC/game/diplomacy.md` (Establish Overture chain);
+/// resolution ordering: `SPEC/program/diplomacy-resolution.md`.
 extension OvertureStageChain on OvertureStage {
   /// Forward progression for suggestions (none → … → joinEmpire); null at terminal.
   OvertureStage? get next {
