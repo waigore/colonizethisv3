@@ -112,4 +112,73 @@ void main() {
       expect(updated.playerById('gp4')?.displayName, 'Portugal');
     });
   });
+
+  group('GamePlayerLookup.otherGreatPowerAtCapitalProvince', () {
+    const cap = 'oldWorld|paris';
+
+    final capitalGame = Game(
+      id: 'g-cap',
+      worldState: WorldState(
+        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+      ),
+      players: const [
+        Player(
+          id: 'gp1',
+          displayName: 'France',
+          isHuman: true,
+          capitalProvinceId: cap,
+        ),
+        Player(
+          id: 'gp2',
+          displayName: 'England',
+          isHuman: false,
+          capitalProvinceId: 'oldWorld|london',
+        ),
+      ],
+    );
+
+    test('returns owner when capital matches and id is not excluded', () {
+      final p = capitalGame.otherGreatPowerAtCapitalProvince(cap, 'gp2');
+      expect(p?.id, 'gp1');
+    });
+
+    test('returns null when excluded player owns that capital', () {
+      expect(capitalGame.otherGreatPowerAtCapitalProvince(cap, 'gp1'), isNull);
+    });
+
+    test('returns null when no GP claims that capital province', () {
+      expect(
+        capitalGame.otherGreatPowerAtCapitalProvince('oldWorld|void', 'gp2'),
+        isNull,
+      );
+    });
+
+    test('duplicate capitals keep first list occurrence for owner map', () {
+      final dupCap = Game(
+        id: 'g-dup-cap',
+        worldState: WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [
+          Player(
+            id: 'a',
+            displayName: 'A',
+            isHuman: true,
+            capitalProvinceId: cap,
+          ),
+          Player(
+            id: 'b',
+            displayName: 'B',
+            isHuman: false,
+            capitalProvinceId: cap,
+          ),
+        ],
+      );
+      expect(dupCap.otherGreatPowerAtCapitalProvince(cap, 'x')?.id, 'a');
+    });
+  });
 }
