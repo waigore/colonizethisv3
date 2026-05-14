@@ -186,6 +186,21 @@ bool isDiplomaticOrderAccepted(
   return validator.isDiplomaticAccepted(candidate);
 }
 
+/// Validates [candidate] with an existing [validator] built for the same
+/// `(game, topology, playerId, baseOrders, …)` tuple as this probe.
+///
+/// Callers that evaluate many diplomatic candidates against the same
+/// [Orders] prefix should build one [IncrementalCandidateValidator] per
+/// prefix and reuse it here instead of calling [isDiplomaticOrderAccepted]
+/// repeatedly (Refs #2394, `SPEC/program/order-suggestions.md` § Throughput
+/// bounds).
+bool isDiplomaticOrderAcceptedWithValidator(
+  IncrementalCandidateValidator validator,
+  DiplomaticOrder candidate,
+) {
+  return validator.isDiplomaticAccepted(candidate);
+}
+
 bool isBuildOrderAcceptedWithValidator(
   IncrementalCandidateValidator validator,
   BuildUnitOrder candidate,
