@@ -2,7 +2,7 @@
 
 import 'dart:math';
 
-import '../../package_logger.dart';
+import '../../package_logger.dart' show logicLog;
 
 /// When true (`dart run --define=CT_TRACE_LOCKED_ASSIGNER_DFS=true`),
 /// prints every DFS branch to stdout (tabu skips, greedy prunes, try_push with
@@ -12,8 +12,6 @@ const bool _kTraceLockedAssignerDfs = bool.fromEnvironment(
   'CT_TRACE_LOCKED_ASSIGNER_DFS',
   defaultValue: false,
 );
-
-final _lockedAssignerLog = packageLogger();
 
 String _lockedAssignerOwnersCompact(Map<String, String> owners) {
   final keys = owners.keys.toList()..sort();
@@ -599,6 +597,6 @@ final class _LockedAssignerEngine {
   void _traceDfs(String msg) {
     if (!_kTraceLockedAssignerDfs) return;
     final line = 'logic: locked_assign_dfs #${traceSeq[0]++} $msg';
-    _lockedAssignerLog.i(line);
+    logicLog.i(line);
   }
 }

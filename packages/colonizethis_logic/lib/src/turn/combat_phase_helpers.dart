@@ -17,8 +17,6 @@ import '../game_events.dart';
 import '../world/province_lookup.dart';
 import 'turn_seed_constants.dart';
 
-final _combatPhaseLog = packageLogger();
-
 /// Runs one land battle: applies result (quick battle or auto-resolve), evidence, and dialogue.
 Game runOneLandBattle(
   Game state,
@@ -38,7 +36,7 @@ Game runOneLandBattle(
     0,
     (s, a) => s + a.unitIds.length,
   );
-  _combatPhaseLog.i(
+  logicLog.i(
     'combat battle_start turn=$turn battleIndex=$battleIndex '
     'regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
     'defenderFactionId=${ctx.defenderFactionId} attackerSides=${ctx.attackers.length} '
@@ -61,7 +59,7 @@ Game runOneLandBattle(
         qbResult.provinceFlips &&
         qbResult.winner == QuickBattleWinner.attacker &&
         ctx.attackers.isNotEmpty;
-    _combatPhaseLog.i(
+    logicLog.i(
       'combat battle_apply regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
       'mode=quickBattle winner=${qbResult.winner.name} provinceFlipped=$qbFlipped '
       'attCasualties=${qbResult.attackerCasualties.length} '

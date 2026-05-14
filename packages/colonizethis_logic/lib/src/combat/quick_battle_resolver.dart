@@ -13,8 +13,6 @@ import 'conflict_detection.dart';
 part 'quick_battle_resolver_engine.dart';
 part 'quick_battle_resolver_outcome.dart';
 
-final _qbLog = packageLogger();
-
 /// Quick Battle resolution pipeline. SPEC/program/quick-battle-resolution.md.
 /// Deterministic for given seed; output feeds same casualty/flip pipeline as auto-resolve.
 ///
@@ -39,7 +37,7 @@ QuickBattleResult resolveQuickBattle(
   QuickBattleInput input, {
   List<QuickBattleRoundActions>? roundActions,
 }) {
-  _qbLog.d(
+  logicLog.d(
     'quick_battle start province=${input.provinceId} '
     'seed=${input.seed} rounds=${input.maxRounds}',
   );
