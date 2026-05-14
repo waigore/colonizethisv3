@@ -55,6 +55,9 @@ Game applyRelationModifiersAndUpdateScores(
   int turn,
 ) {
   var players = game.players;
+  // Preserves player list order across in-place index updates; avoids O(P)
+  // indexWhere per GrantAid / SetSubsidy order. Refs #2394.
+  var playerIdxById = _playerIndicesById(players);
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
 
   // GrantAid: deduct treasury, add relation modifier (+5 per grant). Requires Embassy.
@@ -81,8 +84,8 @@ Game applyRelationModifiersAndUpdateScores(
       final overture = getOverture(game, gpId, targetId);
       if (overture == null || !overture.hasEmbassy) continue;
 
-      final playerIdx = players.indexWhere((p) => p.id == gpId);
-      if (playerIdx >= 0) {
+      final playerIdx = playerIdxById[gpId];
+      if (playerIdx != null) {
         players = List<Player>.from(players);
         players[playerIdx] = players[playerIdx].copyWith(
           treasury: players[playerIdx].treasury - amount,
@@ -136,8 +139,8 @@ Game applyRelationModifiersAndUpdateScores(
       if (overture == null || !overture.hasConsulate) continue;
 
       // Deduct initial payment
-      final payerIdx = players.indexWhere((p) => p.id == gpId);
-      if (payerIdx >= 0) {
+      final payerIdx = playerIdxById[gpId];
+      if (payerIdx != null) {
         players = List<Player>.from(players);
         players[payerIdx] = players[payerIdx].copyWith(
           treasury: players[payerIdx].treasury - amount,
@@ -200,6 +203,7 @@ Game processOngoingSubsidies(
   required DiplomacyFactionMembership factionMembership,
 }) {
   var players = game.players;
+  var playerIdxById = _playerIndicesById(players);
   var relations = List<DiplomacyRelation>.from(game.diplomacyRelations);
   var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
 
@@ -253,8 +257,8 @@ Game processOngoingSubsidies(
     }
 
     // Deduct subsidy payment
-    final payerIdx = players.indexWhere((p) => p.id == payerId);
-    if (payerIdx >= 0) {
+    final payerIdx = playerIdxById[payerId];
+    if (payerIdx != null) {
       players = List<Player>.from(players);
       players[payerIdx] = players[payerIdx].copyWith(
         treasury: players[payerIdx].treasury - amount,
@@ -280,8 +284,8 @@ Game processOngoingSubsidies(
       );
     } else {
       // GP target: transfer treasury
-      final targetIdx = players.indexWhere((p) => p.id == targetId);
-      if (targetIdx >= 0) {
+      final targetIdx = playerIdxById[targetId];
+      if (targetIdx != null) {
         players[targetIdx] = players[targetIdx].copyWith(
           treasury: players[targetIdx].treasury + amount,
         );
@@ -325,6 +329,10 @@ Game applyRelationConvergence(Game game, int turn) {
 
   return game.copyWith(diplomacyRelations: relations);
 }
+
+Map<String, int> _playerIndicesById(List<Player> players) => <String, int>{
+  for (var i = 0; i < players.length; i++) players[i].id: i,
+};
 
 /// Commodity slots for trade agreements: 0 without embassy; baseline **3** with
 /// embassy; **6** when [kTechIdTradeFairs] is unlocked. SPEC/program/diplomacy-resolution.md.
