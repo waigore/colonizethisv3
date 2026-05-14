@@ -3,6 +3,24 @@ import 'package:colonizethis_models/colonizethis_models.dart'
 
 import '../constants.dart';
 
+/// Id → province row for one [RegionData.provinces] list instance (Refs #2394).
+/// First matching id wins, matching [List.indexWhere] semantics on duplicates.
+final Expando<Map<String, Province>> _provinceByIdForProvinceList =
+    Expando<Map<String, Province>>('provinceByIdForProvinceList');
+
+Map<String, Province> _provinceIdIndexForList(List<Province> provinces) {
+  var index = _provinceByIdForProvinceList[provinces];
+  if (index != null) {
+    return index;
+  }
+  index = <String, Province>{};
+  for (final p in provinces) {
+    index.putIfAbsent(p.id, () => p);
+  }
+  _provinceByIdForProvinceList[provinces] = index;
+  return index;
+}
+
 RegionData? _regionForId(WorldState world, String regionId) {
   return regionId == kRegionOldWorld
       ? world.oldWorld
@@ -15,9 +33,7 @@ Province? _findProvinceInRegion(
   String localId,
 ) {
   final fullId = ProvinceId.full(regionId, localId);
-  final idx = region.provinces.indexWhere((p) => p.id == fullId);
-  if (idx < 0) return null;
-  return region.provinces[idx];
+  return _provinceIdIndexForList(region.provinces)[fullId];
 }
 
 /// Returns the region data for [regionId], or null if unknown.
@@ -158,10 +174,10 @@ extension WorldStateProvinceLookup on WorldState {
   /// lookups prefer [tryGetProvince] with a prefixed id; this exists for
   /// legacy short ids and tests (waigore/colonizethis#2071 Phase 1).
   String? tryGetRegionIdForLegacyProvinceKey(String key) {
-    if (oldWorld.provinces.indexWhere((p) => p.id == key) >= 0) {
+    if (_provinceIdIndexForList(oldWorld.provinces).containsKey(key)) {
       return kRegionOldWorld;
     }
-    if (newWorld.provinces.indexWhere((p) => p.id == key) >= 0) {
+    if (_provinceIdIndexForList(newWorld.provinces).containsKey(key)) {
       return kRegionNewWorld;
     }
     return null;
