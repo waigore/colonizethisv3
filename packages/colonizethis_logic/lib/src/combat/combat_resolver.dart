@@ -21,8 +21,6 @@ export 'combat_constants.dart';
 export 'combat_engagement.dart' show resolveEngagement;
 export 'combat_types.dart';
 
-final _combatLog = packageLogger();
-
 /// Resolves one battle context and returns updated Game state.
 /// SPEC/program/combat-resolution.md.
 Game resolveBattleContext(
@@ -138,7 +136,7 @@ Game resolveBattleContext(
       attackerLeaderMultiplier: attackerLeaderMult,
       defenderLeaderMultiplier: defenderLeaderMult,
     );
-    _combatLog.d(
+    logicLog.d(
       'combat engagement regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
       'attackerFactionId=${attacker.side.factionId} result=${outcome.result.name} '
       'attCasualties=${outcome.attackerCasualties.length} '
@@ -218,7 +216,7 @@ Game resolveBattleContext(
       }
     }
   }
-  _combatLog.i(
+  logicLog.i(
     'combat battle_apply regionId=${ctx.regionId} provinceId=${ctx.provinceId} '
     'mode=autoResolve provinceFlipped=${post.provinceChangedOwner} '
     'casualtiesApplied=${allCasualties.length} ownerAfter=$ownerAfter',

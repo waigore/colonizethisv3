@@ -115,57 +115,43 @@ void _addExplorerWorkSuggestionsForUnit({
   }
 
   final provinces = partiallyRevealedProvincesSorted;
-  final acceptedExplores = <WorkOrder>[];
   var lastReason = 'no_valid_tile';
-  for (final prov in provinces) {
-    final attempt = _tryExploreWorkOrderForProvince(
-      view: view,
-      game: game,
-      topology: topology,
-      currentOrders: currentOrders,
-      playerId: playerId,
-      unit: unit,
-      prov: prov,
-      unitsById: unitsById,
-      diplomatic: diplomatic,
-      tileKeysByRegion: tileKeysByRegion,
-      candidateValidator: candidateValidator,
-      tileMapByRegion: tileMapByRegion,
-    );
-    if (attempt.chosen != null) {
-      acceptedExplores.add(attempt.chosen!);
-    } else {
-      lastReason = attempt.lastReason;
-    }
-  }
-  if (acceptedExplores.isNotEmpty) {
-    existingTargetsByUnit
-        .putIfAbsent(unit.id, () => <String>{})
-        .add(kWorkTargetExplore);
-    for (final chosen in acceptedExplores) {
-      suggestions.add(chosen);
-    }
-    logWorkOrderSuggestion(
-      unitId: unit.id,
-      unitType: unit.type,
-      unitRegionId: regionId,
-      atProvinceId: provinceId,
-      workTarget: kWorkTargetExplore,
-      outcome: 'included',
-      tile: acceptedExplores.first.targetTileKey,
-      includedRowCount: acceptedExplores.length,
-    );
-  } else {
-    logWorkOrderSuggestion(
-      unitId: unit.id,
-      unitType: unit.type,
-      unitRegionId: regionId,
-      atProvinceId: provinceId,
-      workTarget: kWorkTargetExplore,
-      outcome: 'excluded',
-      reason: lastReason,
-    );
-  }
+  WorkSuggestionPipeline.run(
+    unit: unit,
+    unitType: unit.type,
+    unitRegionId: regionId,
+    atProvinceId: provinceId,
+    workTarget: kWorkTargetExplore,
+    existingTargetsByUnit: existingTargetsByUnit,
+    suggestions: suggestions,
+    candidatesProvider: () sync* {
+      for (final prov in provinces) {
+        final attempt = _tryExploreWorkOrderForProvince(
+          view: view,
+          game: game,
+          topology: topology,
+          currentOrders: currentOrders,
+          playerId: playerId,
+          unit: unit,
+          prov: prov,
+          unitsById: unitsById,
+          diplomatic: diplomatic,
+          tileKeysByRegion: tileKeysByRegion,
+          candidateValidator: candidateValidator,
+          tileMapByRegion: tileMapByRegion,
+        );
+        if (attempt.chosen != null) {
+          yield attempt.chosen!;
+        } else {
+          lastReason = attempt.lastReason;
+        }
+      }
+    },
+    candidateAcceptor: (_) => true,
+    noCandidateReason: 'no_valid_tile',
+    resolveNoCandidateReason: () => lastReason,
+    includeAllAccepted: true,
+  );
 
   _addProspectSuggestionIfEligible(
     view: view,

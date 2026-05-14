@@ -31,7 +31,7 @@ export 'diplomacy_subsidies_relations_resolver.dart' show tradeSlotsForGp;
 export 'intervention_resolver.dart'
     show applyInterventionChoice, needsInterventionChoice;
 
-final diploLog = packageLogger();
+final diploLog = logicLog;
 
 /// O(1) faction classification snapshot for diplomacy hot paths (Refs #2268 AC-6).
 /// Rebuild when [Game.players], [Game.minorNations], or [Game.tribes] membership

@@ -114,7 +114,7 @@ Map<String, Object?>? _phaseExitStateSnapshot(
   if (config.onTurnTracePhase == null) {
     return null;
   }
-  return result.game.toJson();
+  return gameFromTurnResolutionResult(result).toJson();
 }
 
 Map<TurnPhase, TurnPhaseHandler> _defaultTurnPhaseHandlers() {

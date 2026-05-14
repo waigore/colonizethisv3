@@ -18,6 +18,10 @@ import 'stateful_validator.dart';
 import 'work_order_cost_calculator.dart';
 import 'work_order_target_prechecks.dart';
 
+/// Nullable result means “continue”; first non-null result short-circuits the
+/// pipeline (Refs #2391 AC9).
+typedef _WorkOrderValidationGate = OrderValidationResult? Function();
+
 /// Validates work orders for a single player in submission order.
 /// Mutates internal economy state (stockpile, treasury) and [devExclusiveTiles]
 /// when an order is accepted. SPEC/program/orders.md § Work orders.
@@ -99,58 +103,60 @@ class WorkOrderValidator extends StatefulValidator {
             : null;
         final ownerId = province?.ownerId;
 
-        final preResult = _runTargetPrecheck(
-          o: o,
-          targetProvinceId: targetProvinceId,
-          ownerId: ownerId,
-          type: type,
-        );
-        if (preResult != null) {
-          return preResult;
+        final postContextGates = <_WorkOrderValidationGate>[
+          () => _runTargetPrecheck(
+            o: o,
+            targetProvinceId: targetProvinceId,
+            ownerId: ownerId,
+            type: type,
+          ),
+          () => _validateForeignProvinceWork(
+            o: o,
+            type: type,
+            ownerId: ownerId,
+          ),
+          () => _validateDevExclusiveWorkTarget(o, type),
+          () => _validateMaterialAndTechRules(
+            o,
+            province?.fortLevel ?? 0,
+          ),
+          () {
+            if (!workOrderVisibilityOk(
+              _context.view,
+              validatedUnit,
+              o.target,
+              targetTileKey: o.targetTileKey,
+              worldState: _context.game.worldState,
+            )) {
+              return OrderValidationResult.rejected(
+                'Province or tile not visible for this work',
+              );
+            }
+            return null;
+          },
+          () {
+            if (!civilianMayOccupyLandTileKey(
+              game: _context.game,
+              playerId: _context.playerId,
+              unitType: type,
+              destinationTileKey: o.targetTileKey,
+              factionMembership: _context.factionMembership,
+            )) {
+              return OrderValidationResult.rejected(
+                'Unit cannot occupy target tile',
+              );
+            }
+            return null;
+          },
+          () => _validateProspectTarget(o),
+        ];
+
+        for (final gate in postContextGates) {
+          final hit = gate();
+          if (hit != null) {
+            return hit;
+          }
         }
-
-        final foreignProvinceResult = _validateForeignProvinceWork(
-          o: o,
-          type: type,
-          ownerId: ownerId,
-        );
-        if (foreignProvinceResult != null) return foreignProvinceResult;
-
-        final devExclusiveResult = _validateDevExclusiveWorkTarget(o, type);
-        if (devExclusiveResult != null) return devExclusiveResult;
-
-        final materialRuleResult = _validateMaterialAndTechRules(
-          o,
-          province?.fortLevel ?? 0,
-        );
-        if (materialRuleResult != null) return materialRuleResult;
-
-        if (!workOrderVisibilityOk(
-          _context.view,
-          validatedUnit,
-          o.target,
-          targetTileKey: o.targetTileKey,
-          worldState: _context.game.worldState,
-        )) {
-          return OrderValidationResult.rejected(
-            'Province or tile not visible for this work',
-          );
-        }
-
-        if (!civilianMayOccupyLandTileKey(
-          game: _context.game,
-          playerId: _context.playerId,
-          unitType: type,
-          destinationTileKey: o.targetTileKey,
-          factionMembership: _context.factionMembership,
-        )) {
-          return OrderValidationResult.rejected(
-            'Unit cannot occupy target tile',
-          );
-        }
-
-        final prospectResult = _validateProspectTarget(o);
-        if (prospectResult != null) return prospectResult;
 
         if (isDevExclusiveUnitType(type) &&
             isDevExclusiveWorkTarget(o.target)) {

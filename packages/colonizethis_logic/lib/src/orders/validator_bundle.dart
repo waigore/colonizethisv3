@@ -56,9 +56,10 @@ WorkOrderValidationContext buildWorkOrderValidationContext({
   );
 }
 
-/// Factory for the default validator bundle used by [OrderEngine] and for
-/// economy projection inside incremental candidate validation.
-OrderValidators createOrderValidators({
+/// Single [WorkOrderValidator] aligned with [createOrderValidators] without
+/// constructing the full [OrderValidators] bundle (Refs #2391 AC6,
+/// SPEC/program/order-engine.md — incremental work probes stay lean).
+WorkOrderValidator createWorkOrderValidator({
   required Game game,
   required Player player,
   required String playerId,
@@ -86,14 +87,48 @@ OrderValidators createOrderValidators({
     topology: topology,
     factionMembership: factionMembership,
   );
+  return WorkOrderValidator(
+    context: workContext,
+    stockpile: stockpile,
+    treasury: treasury,
+  );
+}
+
+/// Factory for the default validator bundle used by [OrderEngine] and for
+/// economy projection inside incremental candidate validation.
+OrderValidators createOrderValidators({
+  required Game game,
+  required Player player,
+  required String playerId,
+  required PlayerView view,
+  required MapTopology topology,
+  required Map<String, Unit> unitsById,
+  required List<DiplomaticOrder> diplomaticOrders,
+  required Map<String, TileMapResult>? tileMapByRegion,
+  required Set<String> civilianDraftMoveUnitIds,
+  required Set<String> devExclusiveTiles,
+  required Stockpile stockpile,
+  required int treasury,
+  required DiplomacyFactionMembership factionMembership,
+}) {
   return OrderValidators(
     moveValidator: const MoveValidator(),
     armyMoveValidator: const ArmyMoveValidator(),
     buildValidator: BuildOrderValidator(game: game, player: player),
-    workValidator: WorkOrderValidator(
-      context: workContext,
+    workValidator: createWorkOrderValidator(
+      game: game,
+      player: player,
+      playerId: playerId,
+      view: view,
+      topology: topology,
+      unitsById: unitsById,
+      diplomaticOrders: diplomaticOrders,
+      tileMapByRegion: tileMapByRegion,
+      civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
+      devExclusiveTiles: devExclusiveTiles,
       stockpile: stockpile,
       treasury: treasury,
+      factionMembership: factionMembership,
     ),
     diplomaticValidator: DiplomaticOrderValidator(
       game: game,

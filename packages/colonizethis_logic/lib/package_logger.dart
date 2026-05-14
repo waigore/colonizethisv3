@@ -13,7 +13,7 @@ CtLogger packageLogger([String? subPrefix]) {
 ///
 /// Every `lib/src/**/*.dart` file that previously declared a private
 /// `final _log = packageLogger();` should import and reuse [logicLog] instead.
-/// All instances share the same `logic:` prefix, so functionally this is
-/// equivalent to the per-file pattern; consolidation removes 32 duplicate
-/// declarations (Refs #2391, Pattern 1).
+/// Named module loggers that keep the default `logic:` prefix should alias
+/// [logicLog] rather than calling [packageLogger] again (Refs #2391 AC5).
+/// Sub-prefixed loggers (for example `order_suggestion`) still use [packageLogger].
 final logicLog = packageLogger();

@@ -285,7 +285,7 @@ TurnResolutionResult resolveTurnForGameWithConfig({
 /// Use in tests or callers that do not yet handle [TurnResolutionPendingOvertures].
 Game requireTurnResolutionComplete(TurnResolutionResult result) {
   if (result is TurnResolutionComplete) {
-    return result.game;
+    return gameFromTurnResolutionResult(result);
   }
   throw StateError(_pendingTurnResolutionMessage(result));
 }

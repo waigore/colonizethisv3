@@ -51,6 +51,12 @@ class WorkSuggestionPipeline {
     required String noCandidateReason,
     String engineRejectedReason = 'engine_rejected',
     bool includeAllAccepted = false,
+
+    /// When the provider yields **no** candidates ([sawCandidate] stays false),
+    /// call this for the `excluded` log reason instead of a fixed
+    /// [noCandidateReason] — for example after a [sync*] generator updated a
+    /// mutable `lastReason` while probing provinces (Refs #2391 AC8).
+    String Function()? resolveNoCandidateReason,
   }) {
     final existing = existingTargetsByUnit[unit.id];
     if (existing != null && existing.contains(workTarget)) {
@@ -106,6 +112,9 @@ class WorkSuggestionPipeline {
         includedRowCount: acceptedCount,
       );
     } else {
+      final reason = sawCandidate
+          ? engineRejectedReason
+          : (resolveNoCandidateReason?.call() ?? noCandidateReason);
       logWorkOrderSuggestion(
         unitId: unit.id,
         unitType: unitType,
@@ -113,7 +122,7 @@ class WorkSuggestionPipeline {
         atProvinceId: atProvinceId,
         workTarget: workTarget,
         outcome: 'excluded',
-        reason: sawCandidate ? engineRejectedReason : noCandidateReason,
+        reason: reason,
       );
     }
   }

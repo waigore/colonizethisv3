@@ -1,10 +1,7 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/src/constants.dart';
 import 'package:colonizethis_logic/src/orders/orders_application_context.dart';
-import 'package:colonizethis_logic/src/orders/work_handlers/counter_spy_work_handler.dart';
-import 'package:colonizethis_logic/src/orders/work_handlers/prospect_work_handler.dart';
+import 'package:colonizethis_logic/src/orders/work_handlers/simple_work_order_handler.dart';
 import 'package:colonizethis_logic/src/orders/work_handlers/standard_work_handler.dart';
-import 'package:colonizethis_logic/src/orders/work_handlers/steal_tech_work_handler.dart';
 import 'package:colonizethis_logic/src/orders/work_handlers/work_order_handler.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -12,9 +9,9 @@ import 'package:colonizethis_test/test.dart';
 import '../../test_fixtures.dart';
 
 void main() {
-  group('StealTechWorkOrderHandler', () {
+  group('SimpleWorkOrderHandler steal_tech', () {
     test('supports only steal_tech', () {
-      const h = StealTechWorkOrderHandler();
+      final h = stealTechWorkOrderHandler;
       expect(h.supports(kWorkTargetStealTech), isTrue);
       expect(h.supports(kWorkTargetCounterSpy), isFalse);
     });
@@ -57,7 +54,7 @@ void main() {
         state: state,
         player: game.players.single,
       );
-      const handler = StealTechWorkOrderHandler();
+      final handler = stealTechWorkOrderHandler;
       const order = WorkOrder(
         unitId: 'spy1',
         target: kWorkTargetStealTech,
@@ -71,9 +68,9 @@ void main() {
     });
   });
 
-  group('CounterSpyWorkOrderHandler', () {
+  group('SimpleWorkOrderHandler counter_spy', () {
     test('supports only counter_spy', () {
-      const h = CounterSpyWorkOrderHandler();
+      final h = counterSpyWorkOrderHandler;
       expect(h.supports(kWorkTargetCounterSpy), isTrue);
       expect(h.supports(kWorkTargetStealTech), isFalse);
     });
@@ -116,7 +113,7 @@ void main() {
         state: state,
         player: game.players.single,
       );
-      const handler = CounterSpyWorkOrderHandler();
+      final handler = counterSpyWorkOrderHandler;
       const order = WorkOrder(
         unitId: 'spy2',
         target: kWorkTargetCounterSpy,
@@ -130,9 +127,9 @@ void main() {
     });
   });
 
-  group('ProspectWorkOrderHandler', () {
+  group('SimpleWorkOrderHandler prospect', () {
     test('supports only prospect', () {
-      const h = ProspectWorkOrderHandler();
+      final h = prospectWorkOrderHandler;
       expect(h.supports(kWorkTargetProspect), isTrue);
       expect(h.supports(kWorkTargetExplore), isFalse);
     });
@@ -150,9 +147,7 @@ void main() {
       );
       final game = TestFixtures.minimalGame(
         oldWorld: RegionData(
-          provinces: [
-            Province(id: provinceId, regionId: ow, ownerId: 'p1'),
-          ],
+          provinces: [Province(id: provinceId, regionId: ow, ownerId: 'p1')],
           units: [explorer],
         ),
         resourceByTileKey: const {tileKey: 'grain'},
@@ -178,13 +173,16 @@ void main() {
         state: state,
         player: game.players.single,
       );
-      const handler = ProspectWorkOrderHandler();
+      final handler = prospectWorkOrderHandler;
       const order = WorkOrder(
         unitId: 'ex1',
         target: kWorkTargetProspect,
         targetTileKey: tileKey,
       );
-      expect(handler.tryApply(context, order, explorer, tileKey, true), isFalse);
+      expect(
+        handler.tryApply(context, order, explorer, tileKey, true),
+        isFalse,
+      );
       expect(
         context.state.game.worldState.playerProspectedTiles['p1'] ??
             const <String>{},
@@ -261,6 +259,35 @@ void main() {
       const h = BuildImprovementWorkOrderHandler();
       expect(h.supports(kWorkTargetBuildImprovement), isTrue);
       expect(h.supports(kWorkTargetBuildRoad), isFalse);
+    });
+  });
+
+  group('SimpleWorkOrderHandler', () {
+    test('singleton handlers do not cross-support other simple targets', () {
+      expect(
+        stealTechWorkOrderHandler.supports(kWorkTargetCounterSpy),
+        isFalse,
+      );
+      expect(
+        counterSpyWorkOrderHandler.supports(kWorkTargetStealTech),
+        isFalse,
+      );
+      expect(
+        prospectWorkOrderHandler.supports(kWorkTargetPurchaseLand),
+        isFalse,
+      );
+      expect(
+        purchaseLandWorkOrderHandler.supports(kWorkTargetProspect),
+        isFalse,
+      );
+      expect(
+        exploreWorkOrderHandler.supports(kWorkTargetProspect),
+        isFalse,
+      );
+      expect(
+        prospectWorkOrderHandler.supports(kWorkTargetExplore),
+        isFalse,
+      );
     });
   });
 }
