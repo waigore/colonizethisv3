@@ -258,6 +258,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
   required Set<String> knownTargetIds,
   required Set<String> knownFactionIds,
   required DiplomacyFactionMembership factionMembership,
+  required Map<String, OvertureState> playerOverturesByTargetId,
 }) {
   final treasury = player.treasury;
   final out = <DiplomaticOrder>[];
@@ -302,13 +303,7 @@ List<DiplomaticOrder> _diplomaticCandidatesForTargetOrdered({
     if (overtureOrder != null) out.add(overtureOrder);
   }
 
-  OvertureState? overtureRow;
-  for (final o in game.overtureStates) {
-    if (o.gpId == playerId && o.targetId == targetId) {
-      overtureRow = o;
-      break;
-    }
-  }
+  final overtureRow = playerOverturesByTargetId[targetId];
   if (overtureRow != null) {
     if (overtureRow.hasEmbassy && treasury >= grantAidDefaultAmount) {
       out.add(
@@ -436,6 +431,13 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   };
   final knownTargetIds = knownTargets.toSet();
 
+  // First matching overture row per target (same order as legacy linear scan).
+  final playerOverturesByTargetId = <String, OvertureState>{};
+  for (final o in game.overtureStates) {
+    if (o.gpId != playerId) continue;
+    playerOverturesByTargetId.putIfAbsent(o.targetId, () => o);
+  }
+
   // One world scan for the suggestion pass: every diplomatic probe shares the
   // same `(game, topology, playerId)` view/units snapshot (Refs #2394).
   final unitsByIdForDiplomatic = unitsByIdFromWorld(game.worldState);
@@ -443,8 +445,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   final unionTargets = <String>{
     ...knownTargets,
     ...otherGps,
-    for (final o in game.overtureStates)
-      if (o.gpId == playerId) o.targetId,
+    ...playerOverturesByTargetId.keys,
   };
 
   final sortedTargetIds = unionTargets.toList()..sort();
@@ -460,6 +461,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
       knownTargetIds: knownTargetIds,
       knownFactionIds: knownFactionIds,
       factionMembership: factionMembership,
+      playerOverturesByTargetId: playerOverturesByTargetId,
     );
     var trialOrders = workingOrders;
 
