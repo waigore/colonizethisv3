@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_map/src/tile_map_directions.dart';
 import 'package:colonizethis_map/src/tile_map_topology_helpers.dart';
 import 'package:logger/logger.dart';
 
@@ -424,7 +425,7 @@ void main() {
         final reachable = queue.toSet();
         while (queue.isNotEmpty) {
           final (x, y) = queue.removeLast();
-          for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+          for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
             final nx = x + dx;
             final ny = y + dy;
             if (nx >= 0 && nx < result.width && ny >= 0 && ny < result.height) {
