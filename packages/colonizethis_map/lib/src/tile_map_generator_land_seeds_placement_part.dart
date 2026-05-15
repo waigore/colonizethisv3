@@ -100,7 +100,7 @@ double _nextGaussian(Random rnd) {
   return sqrt(-2 * log(u1)) * cos(2 * pi * u2);
 }
 
-/// Per-continent land budget; assign to `_landSentinel` by smallest effective
+/// Per-continent land budget; assign to `kTileMapLandSentinel` by smallest effective
 /// distance (with optional Voronoi noise). Each cell at most one continent.
 List<List<String>> _assignLandByLandSeedsImpl(
   TileMapLandSeedParams params,
@@ -154,7 +154,7 @@ List<List<String>> _assignLandByLandSeedsImpl(
   final used = List<int>.filled(numContinents, 0);
   for (final (_, x, y, c) in entries) {
     if (used[c] < budget[c]) {
-      next[y][x] = _landSentinel;
+      next[y][x] = kTileMapLandSentinel;
       used[c]++;
     }
   }

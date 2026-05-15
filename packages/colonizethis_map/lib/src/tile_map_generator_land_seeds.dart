@@ -26,8 +26,6 @@ part 'tile_map_generator_land_seeds_placement_part.dart';
 part 'tile_map_generator_land_seeds_organic_part.dart';
 part 'tile_map_generator_land_seeds_coast_part.dart';
 
-String get _landSentinel => kTileMapLandSentinel;
-
 /// Pass 2–3: land seed placement and assignment (organic and seed-before-assignment).
 class TileMapGenLandSeeds {
   TileMapGenLandSeeds(this.params);
@@ -56,7 +54,7 @@ class TileMapGenLandSeeds {
     rnd,
   );
 
-  /// Per-continent land budget; assign to `_landSentinel` by smallest effective
+  /// Per-continent land budget; assign to [kTileMapLandSentinel] by smallest effective
   /// distance (with optional Voronoi noise). Each cell at most one continent.
   List<List<String>> assignLandByLandSeeds(
     List<List<String>> grid,
