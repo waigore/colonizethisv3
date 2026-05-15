@@ -222,6 +222,60 @@ void main() {
             ),
           ),
         );
+        expect(
+          suggestNavalMoveOrders(
+            view,
+            game,
+            topology,
+            orders,
+            sharedCandidateValidator: defaultValidator,
+          ),
+          equals(
+            suggestNavalMoveOrders(
+              view,
+              game,
+              topology,
+              orders,
+              sharedCandidateValidator: sharedValidator,
+            ),
+          ),
+        );
+        expect(
+          suggestNavalMissionOrders(
+            view,
+            game,
+            topology,
+            orders,
+            sharedCandidateValidator: defaultValidator,
+          ),
+          equals(
+            suggestNavalMissionOrders(
+              view,
+              game,
+              topology,
+              orders,
+              sharedCandidateValidator: sharedValidator,
+            ),
+          ),
+        );
+        expect(
+          suggestDiplomaticOrders(
+            view,
+            game,
+            topology,
+            orders,
+            sharedCandidateValidator: defaultValidator,
+          ),
+          equals(
+            suggestDiplomaticOrders(
+              view,
+              game,
+              topology,
+              orders,
+              sharedCandidateValidator: sharedValidator,
+            ),
+          ),
+        );
       },
     );
 

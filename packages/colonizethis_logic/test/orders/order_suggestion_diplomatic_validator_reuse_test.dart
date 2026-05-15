@@ -1,5 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/src/orders/order_suggestion_context.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -59,6 +60,35 @@ void main() {
               'one pass-level build; must not call buildIncrementalCandidateValidator '
               'per target for the economic pass (Refs #2394)',
         );
+      },
+    );
+
+    test(
+      'skips pass-level build when sharedCandidateValidator is supplied',
+      () {
+        const topology = MapTopology(nodes: [], edges: []);
+        final game = _twoGpPeaceGame();
+        final view = buildPlayerView(game, topology, 'gp1');
+        const orders = Orders();
+        final shared = buildIncrementalCandidateValidator(
+          game: game,
+          topology: topology,
+          playerId: 'gp1',
+          baseOrders: orders,
+          view: view,
+          unitsById: unitsByIdFromWorld(game.worldState),
+        );
+
+        resetIncrementalCandidateValidatorBuildCountForTests();
+        suggestDiplomaticOrders(
+          view,
+          game,
+          topology,
+          orders,
+          sharedCandidateValidator: shared,
+        );
+
+        expect(incrementalCandidateValidatorBuildCountForTests, 0);
       },
     );
 
