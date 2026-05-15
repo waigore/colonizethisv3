@@ -5,6 +5,7 @@ import '../diplomacy/diplomacy_resolver.dart';
 import '../world/movement.dart';
 import '../world/player_view.dart';
 import '../world/province_lookup.dart';
+import '../world/unit_lookup.dart';
 import '../world/civilian_tile_occupancy.dart';
 import 'draft_orders_mutations.dart';
 import 'incremental_candidate_validator.dart';
@@ -75,6 +76,8 @@ List<MoveOrder> suggestMoveOrders(
         playerId: playerId,
         basePrefix: currentOrders,
         factionMembership: DiplomacyFactionMembership.from(game),
+        view: view,
+        unitsById: unitsByIdFromWorld(game.worldState),
       );
 
   for (final unit in view.ownUnits) {
@@ -388,6 +391,8 @@ List<ArmyMoveOrder> suggestArmyMoveOrders(
         playerId: playerId,
         basePrefix: currentOrders,
         factionMembership: DiplomacyFactionMembership.from(game),
+        view: view,
+        unitsById: unitsByIdFromWorld(game.worldState),
       );
 
   final playerOwnedFullProvinceIds = <String>{
