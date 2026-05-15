@@ -452,7 +452,16 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
   var workingOrders = currentOrders;
   // Rebind [basePrefix] per target via [forBasePrefix]; pay view/units/membership
   // setup once for the whole suggestion pass (Refs #2394).
-  IncrementalCandidateValidator? passValidator;
+  var passValidator = buildIncrementalCandidateValidator(
+    game: game,
+    topology: topology,
+    playerId: playerId,
+    baseOrders: workingOrders,
+    tileMapByRegion: tileMapByRegion,
+    view: view,
+    unitsById: unitsByIdForDiplomatic,
+    factionMembership: factionMembership,
+  );
   for (final targetId in sortedTargetIds) {
     if (targetId == playerId) continue;
 
@@ -470,18 +479,7 @@ List<DiplomaticOrder> suggestDiplomaticOrders(
 
     // One incremental validator per trial prefix: amortizes validator setup
     // across all candidates in the pass (Refs #2394).
-    final prefixPassValidator = passValidator == null
-        ? buildIncrementalCandidateValidator(
-            game: game,
-            topology: topology,
-            playerId: playerId,
-            baseOrders: trialOrders,
-            tileMapByRegion: tileMapByRegion,
-            view: view,
-            unitsById: unitsByIdForDiplomatic,
-            factionMembership: factionMembership,
-          )
-        : passValidator.forBasePrefix(trialOrders);
+    final prefixPassValidator = passValidator.forBasePrefix(trialOrders);
     passValidator = prefixPassValidator;
     var prefixPassAcceptedOrder = false;
     for (final candidate in candidates) {
