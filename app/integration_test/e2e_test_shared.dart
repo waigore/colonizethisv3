@@ -163,19 +163,13 @@ Future<void> e2eOpenCivilianPanel(
     if (civilianPanel.evaluate().isNotEmpty) {
       return true;
     }
-    final openDeadline = DateTime.now().add(const Duration(seconds: 3));
-    var openPollMs = 25;
-    while (DateTime.now().isBefore(openDeadline)) {
-      if (civilianPanel.evaluate().isNotEmpty) {
-        return true;
-      }
-      await tester.pump(Duration(milliseconds: openPollMs));
-      openPollMs = e2eAdaptivePollRampAfterIdle(openPollMs);
-    }
-    if (civilianPanel.evaluate().isNotEmpty) {
-      return true;
-    }
-    return false;
+    return e2ePumpUntilConditionOrIdle(
+      tester,
+      () => civilianPanel.evaluate().isNotEmpty,
+      timeout: const Duration(seconds: 3),
+      perf: perf,
+      phaseName: 'pump_until_civilian_panel_after_trigger_tap',
+    );
   }
 
   var panelPollMs = 25;

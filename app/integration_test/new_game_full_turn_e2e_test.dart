@@ -61,17 +61,13 @@ Future<void> _openPanelFromMarker(
       perf?.timing('open_panel_from_marker', sw.elapsed);
       return;
     }
-    final openDeadline = DateTime.now().add(const Duration(seconds: 3));
-    var openPollMs = 25;
-    while (DateTime.now().isBefore(openDeadline)) {
-      if (panelRoot.evaluate().isNotEmpty) {
-        perf?.timing('open_panel_from_marker', sw.elapsed);
-        return;
-      }
-      await tester.pump(Duration(milliseconds: openPollMs));
-      openPollMs = e2eAdaptivePollRampAfterIdle(openPollMs);
-    }
-    if (panelRoot.evaluate().isNotEmpty) {
+    if (await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => panelRoot.evaluate().isNotEmpty,
+      timeout: const Duration(seconds: 3),
+      perf: perf,
+      phaseName: 'pump_until_marker_panel_root_after_tap',
+    )) {
       perf?.timing('open_panel_from_marker', sw.elapsed);
       return;
     }
