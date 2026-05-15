@@ -14,7 +14,7 @@ void _appendOrthogonalSeaNeighborsToCoastalList(
   int sy,
   List<(int x, int y)> coastalList,
 ) {
-  for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+  for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
     final nx = sx + dx;
     final ny = sy + dy;
     if (nx >= 0 &&
@@ -36,7 +36,7 @@ void _registerFirstOrthogonalSeaTouchingLand(
   int y,
   void Function(int nx, int ny) onSea,
 ) {
-  for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+  for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
     final nx = x + dx;
     final ny = y + dy;
     if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
@@ -57,7 +57,7 @@ void _registerCoastalSeaTilesAdjacentToLand(
 ) {
   for (var y = 0; y < params.height; y++) {
     for (var x = 0; x < params.width; x++) {
-      if (g[y][x] != _landSentinel) continue;
+      if (g[y][x] != kTileMapLandSentinel) continue;
       final c = cg[y][x];
       if (c < 0) continue;
       _registerFirstOrthogonalSeaTouchingLand(
@@ -79,7 +79,7 @@ int _coastalNeighborScoreDelta(
   int ny,
   int continentIndex,
 ) {
-  if (g[ny][nx] != _landSentinel) return 0;
+  if (g[ny][nx] != kTileMapLandSentinel) return 0;
   final nc = cg[ny][nx];
   if (nc == continentIndex) return 1;
   if (nc >= 0 && nc != continentIndex) return -10;
@@ -167,7 +167,7 @@ bool _tryGrowOneCoastalCellForContinent(
   final (sx, sy) = bestCandidates[rnd.nextInt(bestCandidates.length)];
   if (g[sy][sx] != seaZoneId) return false;
 
-  g[sy][sx] = _landSentinel;
+  g[sy][sx] = kTileMapLandSentinel;
   cg[sy][sx] = continentIndex;
   budgetPerContinent[continentIndex]--;
 

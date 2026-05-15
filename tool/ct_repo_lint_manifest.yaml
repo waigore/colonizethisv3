@@ -244,6 +244,14 @@ rules:
     runner: dart
     script: tool/check_colonizethis_map_lib_pipe_split.dart
 
+  - rule_id: repo.tile_map_inline_cardinal_directions
+    group: structure
+    title: colonizethis_map lib uses kTileMapDirections4/8 instead of inline neighbor tuples
+    spec: SPEC/program/tile-map-gen-algorithm.md
+    runner: dart
+    script: tool/check_tile_map_inline_cardinal_directions.dart
+    pr_incremental: true
+
   - rule_id: repo.map_no_partfile_classes
     group: structure
     title: colonizethis_map lib/src part files must not declare non-private classes

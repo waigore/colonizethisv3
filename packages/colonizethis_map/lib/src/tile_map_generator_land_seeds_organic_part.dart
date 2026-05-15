@@ -179,7 +179,7 @@ int _minManhattanDistToOtherContinentCells(
       : params.continentBufferTiles;
   final offsets = _bufferOffsets(buffer);
   for (final (_, x, y, c) in entries) {
-    if (next[y][x] == _landSentinel) continue;
+    if (next[y][x] == kTileMapLandSentinel) continue;
     if (used[c] >= budgetPerContinent[c]) continue;
     if (_wouldJoinOtherContinentInBuffer(
       nextContinent,
@@ -191,7 +191,7 @@ int _minManhattanDistToOtherContinentCells(
     )) {
       continue;
     }
-    next[y][x] = _landSentinel;
+    next[y][x] = kTileMapLandSentinel;
     nextContinent[y][x] = c;
     used[c]++;
   }
@@ -315,7 +315,7 @@ _placeLandSeedsOrganicImpl(
         landSeeds.add((sx, sy));
         continentBySeedIndex.add(c);
         seedCountsPerContinent[c]++;
-        g[sy][sx] = _landSentinel;
+        g[sy][sx] = kTileMapLandSentinel;
         continentGrid[sy][sx] = c;
       }
     }
@@ -342,7 +342,7 @@ _placeLandSeedsOrganicImpl(
   var usedTotal = 0;
   for (var y = 0; y < params.height; y++) {
     for (var x = 0; x < params.width; x++) {
-      if (g[y][x] == _landSentinel) usedTotal++;
+      if (g[y][x] == kTileMapLandSentinel) usedTotal++;
     }
   }
   if (usedTotal < landBudgetTotal) {

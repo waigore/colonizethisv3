@@ -1,6 +1,7 @@
 /// Grid and connectivity helpers shared by tile map generation passes.
 /// SPEC/program/tile-map-gen-algorithm.md
 
+import 'tile_map_directions.dart';
 import 'tile_map_distance_sentinels.dart';
 import 'tile_map_land_seed_contract.dart';
 
@@ -213,7 +214,7 @@ class TileMapGridGraph {
   ) {
     final continentSet = <int>{};
     for (final (x, y) in component) {
-      for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+      for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
         final nx = x + dx;
         final ny = y + dy;
         if (nx < 0 || nx >= params.width || ny < 0 || ny >= params.height) {
@@ -228,12 +229,13 @@ class TileMapGridGraph {
     return continentSet;
   }
 
-  /// Continent index for a land cell from nearest land seed. Returns 0 when seeds empty.
-  int continentForLandCell(
+  /// Index of the land seed with smallest squared distance to (x, y).
+  ///
+  /// Returns 0 when [landSeeds] is empty. Refs #2489.
+  int nearestLandSeedIndexForCell(
     int x,
     int y,
     List<(int x, int y)> landSeeds,
-    List<int> continentBySeedIndex,
   ) {
     if (landSeeds.isEmpty) return 0;
     var bestSeedIndex = 0;
@@ -246,7 +248,20 @@ class TileMapGridGraph {
         bestSeedIndex = i;
       }
     }
-    return continentBySeedIndex[bestSeedIndex];
+    return bestSeedIndex;
+  }
+
+  /// Continent index for a land cell from nearest land seed. Returns 0 when seeds empty.
+  int continentForLandCell(
+    int x,
+    int y,
+    List<(int x, int y)> landSeeds,
+    List<int> continentBySeedIndex,
+  ) {
+    if (landSeeds.isEmpty) return 0;
+    return continentBySeedIndex[
+      nearestLandSeedIndexForCell(x, y, landSeeds)
+    ];
   }
 
   int oceanNeighbourCount(
@@ -257,7 +272,7 @@ class TileMapGridGraph {
     Set<(int x, int y)> ocean,
   ) {
     var n = 0;
-    for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+    for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
       final nx = x + dx;
       final ny = y + dy;
       if (nx >= 0 &&
@@ -279,7 +294,7 @@ class TileMapGridGraph {
     Set<(int x, int y)> component,
     List<(int x, int y)> queue,
   ) {
-    for (final (dx, dy) in [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+    for (final (dx, dy) in kTileMapDirections4NorthSouthWestEast) {
       final n = (x + dx, y + dy);
       if (!remaining.remove(n)) continue;
       component.add(n);

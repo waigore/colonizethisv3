@@ -11,6 +11,7 @@ import 'check_app_widget_imports.dart';
 import 'check_asset_path_constants.dart';
 import 'check_canonical_province_tile_keys.dart';
 import 'check_colonizethis_map_lib_pipe_split.dart';
+import 'check_tile_map_inline_cardinal_directions.dart';
 import 'check_civilian_unit_type_constants.dart';
 import 'check_control_flow_nesting_depth.dart';
 import 'check_custom_exceptions.dart';
@@ -775,6 +776,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckCanonicalProvinceTileKeys(repoRoot);
     case 'repo.colonizethis_map_lib_pipe_split':
       return runCheckColonizethisMapLibPipeSplit(repoRoot);
+    case 'repo.tile_map_inline_cardinal_directions':
+      return runCheckTileMapInlineCardinalDirections(repoRoot);
     case 'repo.land_province_bucket_keys':
       return runCheckLandProvinceBucketKeys(repoRoot);
     case 'repo.logic_dual_region_province_field_access':

@@ -13,16 +13,17 @@ library tile_map_generator_land_seeds;
 import 'dart:math';
 
 import 'grid_voronoi.dart';
+import 'tile_map_directions.dart';
 import 'tile_map_distance_sentinels.dart';
 import 'tile_map_land_seed_contract.dart';
+import 'tile_map_grid_copy.dart';
 import 'tile_map_land_sentinel.dart';
+import 'tile_map_province_budget.dart';
 
 part 'tile_map_generator_land_seeds_shared_part.dart';
 part 'tile_map_generator_land_seeds_placement_part.dart';
 part 'tile_map_generator_land_seeds_organic_part.dart';
 part 'tile_map_generator_land_seeds_coast_part.dart';
-
-String get _landSentinel => kTileMapLandSentinel;
 
 /// Pass 2–3: land seed placement and assignment (organic and seed-before-assignment).
 class TileMapGenLandSeeds {
@@ -52,7 +53,7 @@ class TileMapGenLandSeeds {
     rnd,
   );
 
-  /// Per-continent land budget; assign to `_landSentinel` by smallest effective
+  /// Per-continent land budget; assign to [kTileMapLandSentinel] by smallest effective
   /// distance (with optional Voronoi noise). Each cell at most one continent.
   List<List<String>> assignLandByLandSeeds(
     List<List<String>> grid,
