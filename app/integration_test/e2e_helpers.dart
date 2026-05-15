@@ -10,6 +10,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'e2e_test_shared.dart';
+import 'e2e_test_shared_bootstrap.dart';
 
 /// Re-export shared polling / settle entrypoints so scenarios depend on this
 /// barrel only (GitHub #2336 AC2).
