@@ -314,15 +314,7 @@ List<ArmyMovePickerDestination> armyMovePickerDestinations({
             targetFactionId: ownerId,
           ),
         );
-        return IncrementalCandidateValidator.forPlayer(
-          game: game,
-          topology: topology,
-          playerId: playerId,
-          basePrefix: trialOrders,
-          factionMembership: effectiveFactionMembership,
-          view: playerView,
-          unitsById: unitsById,
-        );
+        return baseValidator.forBasePrefix(trialOrders);
       });
       if (!trialValidator.isArmyMoveAccepted(move)) {
         continue;
