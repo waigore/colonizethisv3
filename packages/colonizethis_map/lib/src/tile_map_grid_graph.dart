@@ -146,7 +146,9 @@ class TileMapGridGraph {
     const dominantOceanPercentNumerator = 80;
     final legacyOcean = _legacyBoundaryReachableSea(grid, seaZoneId);
     final components = connectedComponentsOfSea(grid, seaZoneId);
-    final totalSea = countSeaCells(grid, seaZoneId);
+    // One full-grid sea pass via [connectedComponentsOfSea]; avoid a second
+    // [countSeaCells] scan (Refs #2489).
+    final totalSea = components.fold<int>(0, (sum, c) => sum + c.length);
     // One continent-set computation per sea component (Refs #2489 P1); both passes
     // below reuse this cache instead of calling [_continentSetForSeaComponent]
     // twice per component.
