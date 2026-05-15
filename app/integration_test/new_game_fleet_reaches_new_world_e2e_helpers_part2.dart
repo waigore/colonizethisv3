@@ -57,7 +57,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
           final iconHit = expandIcon.first;
           await tester.ensureVisible(iconHit);
           await tester.tap(iconHit, warnIfMissed: false);
-          await e2eWaitUntilFound(
+          await waitUntilFound(
             tester,
             find.descendant(of: sub, matching: find.text('Move')),
             timeout: const Duration(seconds: 3),
@@ -81,7 +81,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       }
       if (loc.evaluate().isNotEmpty) {
         await tester.tap(hit.first, warnIfMissed: false);
-        await e2eWaitUntilFound(
+        await waitUntilFound(
           tester,
           find.byType(AlertDialog),
           timeout: const Duration(seconds: 3),
@@ -93,7 +93,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
     }
     if (fallbackMove != null) {
       await tester.tap(fallbackMove, warnIfMissed: false);
-      await e2eWaitUntilFound(
+      await waitUntilFound(
         tester,
         find.byType(AlertDialog),
         timeout: const Duration(seconds: 3),
@@ -102,7 +102,7 @@ Future<bool> _tapMoveOnFirstNonHomeFleet(WidgetTester tester) async {
       return true;
     }
     if (allowExpandAllFallback) {
-      await e2eExpandEachExpansionTileOnce(tester);
+      await expandEachExpansionTileOnce(tester);
       return false;
     }
     return false;
@@ -278,6 +278,12 @@ bool _harnessDetectsNonHomeFleetInNewWorld(WidgetTester tester) =>
     (ctE2eNavalPanelSnapshot == null &&
         _navalPanelShowsNonHomeFleetInNewWorld(tester));
 
+/// Post–next-turn [ctE2eNavalPanelSnapshot] refresh (see
+/// [refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled]) lets fleet loops skip
+/// [openNavalPanel] when world state already shows arrival (Refs #2336).
+bool _fleetReachDoneFromCtSnapshotOnly() =>
+    _nonHomeHumanFleetInNewWorldFromCtSnapshot();
+
 /// Post–#1869 only: fleet may sit in open-ocean New World first; ship reveal needs
 /// a P–S coastal sea zone (or visibility already updated). Sail / advance until then.
 Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
@@ -288,23 +294,35 @@ Future<void> _awaitNwCoastalOrVisibleLandForBundledExploreE2e({
   const maxTurns = 35;
   for (var i = 0; i < maxTurns; i++) {
     ensureUnderWallClock('NW bundled-explore readiness i=$i');
-    await e2eDismissTransientUi(tester);
+    await dismissTransientUi(tester);
     await _tapNewWorldRegionTabIfPresent(tester);
-    await _openNavalPanel(tester);
     if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
         _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
-      await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
       return;
     }
-    await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
+    await openNavalPanel(
+      tester,
+      timeout: _kMaxUiResponseWait,
+      bottomSheetCloseTimeout: _kMaxUiResponseWait,
+    );
+    if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
+        _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+      await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
+      return;
+    }
     await _tryNavalMoveSegment(
       tester,
       l10n,
       useNewWorldMapTabFirst: true,
       allowWarpDestinations: false,
+      navalPanelAlreadyOpen: true,
     );
-    await e2eCloseBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
+    await closeBottomSheet(tester, overallTimeout: _kMaxUiResponseWait);
     await _advanceOneHumanTurn(tester, l10n);
+    if (_nonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot() ||
+        _playerHasAnyNewWorldFoggedOrBetterFromCtSnapshot()) {
+      return;
+    }
   }
   // Some generated maps can keep the non-home fleet in open-ocean NW sea lanes
   // for long bounded stretches; in that case bundled Explore has no visible NW
@@ -411,64 +429,6 @@ String _bundledExploreRejectionDiagnostics([
   return lines.join('\n');
 }
 
-Future<void> _splitHomeFleetOnce(
-  WidgetTester tester,
-  AppLocalizations l10n, {
-  E2ePerfLog? perf,
-}) async {
-  final phaseSw = Stopwatch()..start();
-  await tester.tap(find.byKey(kEmpireNavalUnitsButtonKey));
-  await e2eWaitUntilFound(
-    tester,
-    find.byKey(kCtE2ENavalPanelRootKey),
-    timeout: _kMaxUiResponseWait,
-    perf: perf,
-    phaseName: 'wait_until_found_naval_panel',
-  );
-  await e2eExpandEachExpansionTileOnce(tester);
-  final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
-  final split = find.descendant(
-    of: navalPanelRoot,
-    matching: find.text('Split'),
-  );
-  expect(split, findsWidgets);
-  await tester.tap(split.first, warnIfMissed: false);
-  await e2eWaitUntilFound(
-    tester,
-    find.descendant(
-      of: find.byType(CtDialogShell),
-      matching: find.widgetWithText(CtNinePatchButton, '>'),
-    ),
-    timeout: const Duration(seconds: 4),
-    phaseName: 'wait_until_found_split_nudge_right',
-  );
-
-  final moveOneRight = find.descendant(
-    of: find.byType(CtDialogShell),
-    matching: find.widgetWithText(CtNinePatchButton, '>'),
-  );
-  expect(moveOneRight, findsWidgets);
-  await tester.tap(moveOneRight.first);
-  await e2eWaitUntilFound(
-    tester,
-    find.text(l10n.splitFleet_confirm),
-    timeout: const Duration(seconds: 4),
-    phaseName: 'wait_until_found_split_confirm',
-  );
-  await tester.tap(find.text(l10n.splitFleet_confirm));
-  // Same bounded adaptive settle as shared helpers: exit as soon as the split
-  // shell leaves the tree instead of a hand-rolled poll loop (Refs #2336).
-  await e2ePumpUntilConditionOrIdle(
-    tester,
-    () => find.byType(CtDialogShell).evaluate().isEmpty,
-    timeout: const Duration(milliseconds: 500),
-    perf: perf,
-    phaseName: 'pump_until_split_dialog_shell_cleared',
-  );
-  await e2eExpandEachExpansionTileOnce(tester);
-  perf?.timing('fleet_split', phaseSw.elapsed);
-}
-
 /// Text inside the map HUD next-turn [CtNinePatchButton] (`game_nextTurnButton`).
 String? _readNextTurnButtonLabel(WidgetTester tester) {
   final inner = find.descendant(
@@ -482,9 +442,30 @@ String? _readNextTurnButtonLabel(WidgetTester tester) {
   return w is Text ? w.data : null;
 }
 
+/// When the civilian panel is open, [ctE2eCivilianPanelSnapshot] mirrors
+/// [availableWorkTargetIdsForUnitProvider] — the same work-target ids that
+/// drive enabled Assign rows. Returns `null` when no snapshot is available.
+bool? _exploreAssignEnabledFromCivilianSnapshot() {
+  final snap = ctE2eCivilianPanelSnapshot;
+  if (snap == null) {
+    return null;
+  }
+  for (final targets in snap.availableWorkTargets.values) {
+    if (targets.contains(kWorkTargetExplore)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Future<bool> _anyExplorerHasEnabledExploreAssignFleetE2e(
   WidgetTester tester,
 ) async {
+  final snapshotHint = _exploreAssignEnabledFromCivilianSnapshot();
+  if (snapshotHint != null) {
+    return snapshotHint;
+  }
+
   final root = find.byKey(kCtE2ECivilianPanelRootKey);
   final listView = find.descendant(of: root, matching: find.byType(ListView));
   expect(listView, findsOneWidget);

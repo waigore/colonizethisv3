@@ -6,7 +6,7 @@ part of 'new_game_fleet_reaches_new_world_e2e_test.dart';
 /// worst observed CI need (Refs #1849 / PR 1849).
 const int _kMaxNextTurnTapsForNwFleetReach = 35;
 
-/// Hard cap for any single “wait until UI shows X” poll (`e2eWaitUntilFound`,
+/// Hard cap for any single “wait until UI shows X” poll (`waitUntilFound`,
 /// next-turn label settle, panel-open loops). Fail immediately when exceeded.
 const Duration _kMaxUiResponseWait = Duration(seconds: 5);
 
@@ -14,120 +14,6 @@ const Duration _kMaxUiResponseWait = Duration(seconds: 5);
 ///
 /// E2E policy caps wall-clock runtime to 5 minutes so PR feedback remains fast.
 const Duration _kFleetE2eMaxWallClock = Duration(minutes: 5);
-
-Future<bool> _pollUntilNavalPanelVisible(
-  WidgetTester tester,
-  Finder navalPanel,
-  Duration budget,
-) async {
-  final poll = Stopwatch()..start();
-  if (navalPanel.evaluate().isNotEmpty) {
-    return true;
-  }
-  var stepMs = 25;
-  while (poll.elapsed < budget) {
-    if (navalPanel.evaluate().isNotEmpty) {
-      return true;
-    }
-    await tester.pump(Duration(milliseconds: stepMs));
-    // Doubling backoff capped at 500ms (same as [e2eWaitForMapHudAfterNewGameStart];
-    // Refs #2336 AC5) — fewer idle frames than 25→100ms-only ramp when the panel
-    // mounts after a marker/rail tap under headless Linux load.
-    stepMs = e2eNextIdlePollStepMs(stepMs);
-  }
-  return false;
-}
-
-Future<void> _openNavalPanel(WidgetTester tester, {E2ePerfLog? perf}) async {
-  final phaseSw = Stopwatch()..start();
-  final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
-  final markerBtn = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
-  final btn = find.byKey(kEmpireNavalUnitsButtonKey);
-  final sw = Stopwatch()..start();
-  var navalPollMs = 25;
-  while (sw.elapsed < _kMaxUiResponseWait) {
-    if (navalPanel.evaluate().isNotEmpty) {
-      perf?.timing('open_panel_naval', phaseSw.elapsed);
-      return;
-    }
-    if (find.byType(BottomSheet).evaluate().isNotEmpty) {
-      await e2eCloseBottomSheet(
-        tester,
-        perf: perf,
-        overallTimeout: _kMaxUiResponseWait,
-      );
-      navalPollMs = 25;
-      continue;
-    }
-    if (find.byType(AlertDialog).evaluate().isNotEmpty) {
-      await e2eDismissTransientUi(tester, perf: perf);
-      navalPollMs = 25;
-      continue;
-    }
-    if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
-      await e2eDismissTransientUi(tester, perf: perf);
-      navalPollMs = 25;
-      continue;
-    }
-    final markerHit = markerBtn.hitTestable();
-    if (markerHit.evaluate().isNotEmpty) {
-      await tester.tap(markerHit.first, warnIfMissed: false);
-      if (await _pollUntilNavalPanelVisible(
-        tester,
-        navalPanel,
-        const Duration(seconds: 2),
-      )) {
-        perf?.timing('open_panel_naval', phaseSw.elapsed);
-        return;
-      }
-      // Bounded condition pumps instead of a single blind idle frame (Refs
-      // #2336 H6 / adaptive polling).
-      if (await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => navalPanel.evaluate().isNotEmpty,
-        timeout: const Duration(milliseconds: 600),
-        perf: perf,
-        phaseName: 'pump_until_naval_visible_after_marker_tap',
-      )) {
-        perf?.timing('open_panel_naval', phaseSw.elapsed);
-        return;
-      }
-      navalPollMs = 25;
-      continue;
-    }
-    final railHit = btn.hitTestable();
-    if (railHit.evaluate().isNotEmpty) {
-      await tester.tap(railHit.first, warnIfMissed: false);
-      if (await _pollUntilNavalPanelVisible(
-        tester,
-        navalPanel,
-        const Duration(seconds: 3),
-      )) {
-        perf?.timing('open_panel_naval', phaseSw.elapsed);
-        return;
-      }
-      if (await e2ePumpUntilConditionOrIdle(
-        tester,
-        () => navalPanel.evaluate().isNotEmpty,
-        timeout: const Duration(milliseconds: 600),
-        perf: perf,
-        phaseName: 'pump_until_naval_visible_after_rail_tap',
-      )) {
-        perf?.timing('open_panel_naval', phaseSw.elapsed);
-        return;
-      }
-      navalPollMs = 25;
-      continue;
-    }
-    await e2eDismissTransientUi(tester, perf: perf);
-    await tester.pump(Duration(milliseconds: navalPollMs));
-    navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
-  }
-  fail(
-    'Timed out after ${_kMaxUiResponseWait.inSeconds}s opening naval panel. '
-    'Last exception: ${tester.takeException()}',
-  );
-}
 
 /// Selects the New World map region via [kCtE2ERegionTabNewWorldKey] when present
 /// (reduces ambiguous "New World" text on screen; `SPEC/program/e2e-integration-tests.md`).
@@ -205,7 +91,7 @@ Future<void> _pickMoveDestinationAndConfirm(
   }
 
   ensureBudget('start');
-  await e2eWaitUntilFound(
+  await waitUntilFound(
     tester,
     find.byType(AlertDialog),
     timeout: const Duration(seconds: 2),
@@ -238,7 +124,10 @@ Future<void> _pickMoveDestinationAndConfirm(
           // Row may not be built yet; fall back to drag probing below.
         }
       }
-      for (var i = 0; i < 20 && warp.hitTestable().evaluate().isEmpty; i++) {
+      const maxWarpDragProbes = 12;
+      for (var i = 0;
+          i < maxWarpDragProbes && warp.hitTestable().evaluate().isEmpty;
+          i++) {
         ensureBudget('warp drag $i');
         await tester.drag(sc, const Offset(0, -120));
         // Short-circuit as soon as the warp row becomes hit-testable instead of
@@ -276,7 +165,7 @@ Future<void> _pickMoveDestinationAndConfirm(
     expect(seaRadio, findsWidgets);
     await tester.tap(seaRadio.first, warnIfMissed: false);
   }
-  await e2eWaitUntilFound(
+  await waitUntilFound(
     tester,
     find.text(l10n.common_confirm),
     timeout: const Duration(seconds: 2),
@@ -300,6 +189,9 @@ Future<void> _tryNavalMoveSegment(
   AppLocalizations l10n, {
   bool useNewWorldMapTabFirst = false,
   bool allowWarpDestinations = true,
+  /// When true, the naval panel is already open from a prior [openNavalPanel]
+  /// in the same turn iteration — skip close/reopen (Refs #2336 Bottleneck 4).
+  bool navalPanelAlreadyOpen = false,
   E2ePerfLog? perf,
 }) async {
   final phaseSw = Stopwatch()..start();
@@ -308,7 +200,14 @@ Future<void> _tryNavalMoveSegment(
   } else {
     await _tapOldWorldRegionTab(tester, l10n);
   }
-  await _openNavalPanel(tester, perf: perf);
+  if (!navalPanelAlreadyOpen) {
+    await openNavalPanel(
+      tester,
+      perf: perf,
+      timeout: _kMaxUiResponseWait,
+      bottomSheetCloseTimeout: _kMaxUiResponseWait,
+    );
+  }
   final tappedMove = await _tapMoveOnFirstNonHomeFleet(tester);
   if (!tappedMove) {
     perf?.timing(
@@ -318,7 +217,7 @@ Future<void> _tryNavalMoveSegment(
     );
     return;
   }
-  await e2eWaitUntilFound(
+  await waitUntilFound(
     tester,
     find.byType(AlertDialog),
     timeout: const Duration(seconds: 2),

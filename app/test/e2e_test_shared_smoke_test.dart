@@ -110,6 +110,33 @@ void main() {
     await e2eDismissTransientUi(tester);
   });
 
+  testWidgets('e2eOpenPanelFromMarker short-circuits when panel already open', (
+    WidgetTester tester,
+  ) async {
+    const panelKey = Key('e2e_smoke_panel_root');
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: KeyedSubtree(
+            key: panelKey,
+            child: SizedBox(),
+          ),
+        ),
+      ),
+    );
+    final sw = Stopwatch()..start();
+    await e2eOpenPanelFromMarker(
+      tester,
+      markerButton: find.byKey(kCtE2EOpenFirstCivilianMarkerPanelKey),
+      panelRoot: find.byKey(panelKey),
+    );
+    expect(
+      sw.elapsed < const Duration(milliseconds: 200),
+      isTrue,
+      reason: 'Already-mounted panel root must return before marker polling.',
+    );
+  });
+
   testWidgets(
     'e2ePumpUntilFinderEmpty short-circuits when finder already empty',
     (WidgetTester tester) async {

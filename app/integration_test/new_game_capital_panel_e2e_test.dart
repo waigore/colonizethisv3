@@ -2,7 +2,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
-import 'e2e_test_shared.dart';
+import 'e2e_helpers.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/test_support/province_panel_e2e_expected_lines.dart';
@@ -35,11 +35,11 @@ void main() {
     perf.timing('bootstrap_for_integration_test', bootstrapSw.elapsed);
 
     final newGameToMapSw = Stopwatch()..start();
-    await e2eBootstrapNewGameToMap(tester, perf: perf);
+    await bootstrapNewGameToMap(tester, perf: perf);
     perf.timing('new_game_to_map', newGameToMapSw.elapsed);
 
     await tester.tap(find.byKey(kHomeToCapitalButtonKey));
-    await e2eWaitUntilFound(
+    await waitUntilFound(
       tester,
       find.byKey(kCtE2EOpenCapitalProvinceDetailKey).hitTestable(),
       timeout: const Duration(seconds: 30),
@@ -50,7 +50,7 @@ void main() {
     expect(find.byKey(kCtE2EOpenCapitalProvinceDetailKey), findsOneWidget);
     await tester.tap(find.byKey(kCtE2EOpenCapitalProvinceDetailKey));
 
-    await e2eWaitUntilFound(
+    await waitUntilFound(
       tester,
       find.byKey(kCtE2EProvincePanelRootKey),
       timeout: const Duration(seconds: 30),
@@ -66,7 +66,7 @@ void main() {
     final expected = provincePanelWideLayoutExpectedTexts(snap!, l10n);
 
     final actual = <String>[];
-    e2eCollectTextPreorder(
+    collectTextPreorder(
       tester.element(find.byKey(kCtE2EProvincePanelRootKey)),
       actual,
     );

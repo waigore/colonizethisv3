@@ -354,9 +354,8 @@ class AppEventHandler {
         },
       ),
     ).whenComplete(() {
-      if (kCtE2EEnabled) {
-        updateCtE2eNavalPanelSnapshotIfEnabled(null);
-      }
+      // Keep the last naval snapshot after close; [refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled]
+      // updates it post–next-turn so fleet E2E can skip reopening the panel (Refs #2336).
       _bus.emit(const UnitsPanelClosedEvent('naval'));
     });
   }

@@ -263,6 +263,35 @@ python3 pytool/wang_reference_legal_layout_64.py --run-dir app/assets/images/ter
 
 ---
 
+## run_e2e_timing.sh (E2E wall-clock, #2336)
+
+Runs the three Linux desktop `integration_test` scenarios from [SPEC/program/e2e-integration-tests.md](../SPEC/program/e2e-integration-tests.md) with `--dart-define=CT_E2E=true`, **N times each** (default 3), and writes per-run logs plus a markdown summary (min/median/max per test and sum of medians for AC8). CI does not run these tests; use on a maintainer machine with a working Flutter Linux desktop toolchain, a display or `xvfb-run`, and (for snap Flutter) `ld.lld` available to the bundled LLVM path. Set `FLUTTER_BIN` to override the Flutter executable (default search: `~/development/flutter/bin/flutter`, then `PATH`).
+
+**Invocation**
+
+```bash
+tool/run_e2e_timing.sh          # 3 runs per test
+tool/run_e2e_timing.sh 5        # 5 runs per test
+E2E_TIMING_OUT=./my_timing tool/run_e2e_timing.sh 3
+```
+
+Output defaults to `.cursor/e2e-timing/` (gitignored). Paste the summary medians into the PR baseline/after table (Refs GitHub #2336 AC8–AC9).
+
+## compare_e2e_timing.sh (baseline vs after table, #2336)
+
+Reads two markdown summaries from `run_e2e_timing.sh` (capture one on `dev` tip, one on the PR branch) and prints a markdown table with per-test median deltas plus aggregate suite total and AC9 pass/fail (default **≥25%** aggregate reduction).
+
+**Invocation**
+
+```bash
+tool/compare_e2e_timing.sh .cursor/e2e-timing/summary_dev.md .cursor/e2e-timing/summary_pr.md
+tool/compare_e2e_timing.sh baseline.md after.md --min-reduction-pct 25
+```
+
+Paste the script output into the PR description for AC8–AC9 evidence.
+
+---
+
 ## run_quality_gate_tests.sh (CI verification)
 
 Runs the same test and coverage steps as the GitHub Quality workflow (`.github/workflows/quality.yml`): **Wang incremental assets** (`python3 pytool/test_wang_incremental_assets_and_preview.py`; CI installs **`python3-pil`** via apt; locally install Pillow e.g. `python3 -m pip install pillow` or use your `pytool` venv), packages (Dart), app (Flutter) with **app widget coverage gate ≥ 80%** (applies to `lib/widgets/` only; see SPEC/program/test-logging.md), ctdev (Flutter), tool packages (Dart), coverage gate (logic/map/ai ≥ 90%), and sim_scenarios. Use this to verify the quality gate locally before pushing. Spec: [SPEC/program/test-logging.md](../SPEC/program/test-logging.md).

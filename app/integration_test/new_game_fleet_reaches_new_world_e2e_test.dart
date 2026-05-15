@@ -3,7 +3,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/ct_e2e.dart';
 import 'package:colonizethis_app/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_region_label.dart';
-import 'e2e_test_shared.dart';
+import 'e2e_helpers.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         OrderEngine,
@@ -20,7 +20,6 @@ import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
 import 'package:colonizethis_app/l10n/l10n.dart';
 import 'package:colonizethis_app/main.dart' show bootstrapForIntegrationTest;
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
-import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -64,13 +63,19 @@ void main() {
       }
     }
 
-    await e2eBootstrapNewGameToMap(tester, perf: perf);
+    await bootstrapNewGameToMap(tester, perf: perf);
     ensureUnderWallClock('after bootstrap');
 
     final l10n = lookupAppLocalizations(const Locale('en'));
 
-    await _splitHomeFleetOnce(tester, l10n, perf: perf);
-    await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+    await splitHomeFleetOnce(
+      tester,
+      l10n,
+      perf: perf,
+      openNavalTimeout: _kMaxUiResponseWait,
+      bottomSheetCloseTimeout: _kMaxUiResponseWait,
+    );
+    await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
     ensureUnderWallClock('after split fleet');
 
     for (
@@ -80,11 +85,24 @@ void main() {
     ) {
       ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
       perf.bumpCounter('turn_loop_iterations');
-      await e2eDismissTransientUi(tester, perf: perf);
+      await dismissTransientUi(tester, perf: perf);
       await _tapNewWorldRegionTabIfPresent(tester);
-      await _openNavalPanel(tester, perf: perf);
+      if (_fleetReachDoneFromCtSnapshotOnly()) {
+        perf.timing(
+          'test_total',
+          testSw.elapsed,
+          meta: 'result=reached_snapshot_precheck',
+        );
+        return;
+      }
+      await openNavalPanel(
+        tester,
+        perf: perf,
+        timeout: _kMaxUiResponseWait,
+        bottomSheetCloseTimeout: _kMaxUiResponseWait,
+      );
       if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
-        await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+        await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
         perf.timing(
           'test_total',
           testSw.elapsed,
@@ -92,10 +110,14 @@ void main() {
         );
         return;
       }
-      await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
-      await _tryNavalMoveSegment(tester, l10n, perf: perf);
-      await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+      await _tryNavalMoveSegment(
+        tester,
+        l10n,
+        perf: perf,
+        navalPanelAlreadyOpen: true,
+      );
+      await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
       if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
         perf.timing(
@@ -107,14 +129,29 @@ void main() {
       }
 
       await _advanceOneHumanTurn(tester, l10n, perf: perf);
-      await e2eDismissTransientUi(tester, perf: perf);
+      if (_fleetReachDoneFromCtSnapshotOnly()) {
+        perf.timing(
+          'test_total',
+          testSw.elapsed,
+          meta: 'result=reached_snapshot_after_turn',
+        );
+        return;
+      }
+      await dismissTransientUi(tester, perf: perf);
       ensureUnderWallClock('after turn advance turnIdx=$turnIdx');
     }
 
     ensureUnderWallClock('before final naval check');
-    await e2eDismissTransientUi(tester, perf: perf);
+    await dismissTransientUi(tester, perf: perf);
     await _tapNewWorldRegionTabIfPresent(tester);
-    await _openNavalPanel(tester, perf: perf);
+    if (!_fleetReachDoneFromCtSnapshotOnly()) {
+      await openNavalPanel(
+        tester,
+        perf: perf,
+        timeout: _kMaxUiResponseWait,
+        bottomSheetCloseTimeout: _kMaxUiResponseWait,
+      );
+    }
     if (!_harnessDetectsNonHomeFleetInNewWorld(tester)) {
       fail(
         'After $_kMaxNextTurnTapsForNwFleetReach Next turn resolutions, no non-home human fleet in region '
@@ -122,7 +159,7 @@ void main() {
         'Last exception: ${tester.takeException()}',
       );
     }
-    await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+    await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
     ensureUnderWallClock('test complete');
     perf.timing('test_total', testSw.elapsed, meta: 'result=final_check');
   });
@@ -157,13 +194,19 @@ void main() {
         }
       }
 
-      await e2eBootstrapNewGameToMap(tester, perf: perf);
+      await bootstrapNewGameToMap(tester, perf: perf);
       ensureUnderWallClock('after bootstrap');
 
       final l10n = lookupAppLocalizations(const Locale('en'));
 
-      await _splitHomeFleetOnce(tester, l10n, perf: perf);
-      await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+      await splitHomeFleetOnce(
+      tester,
+      l10n,
+      perf: perf,
+      openNavalTimeout: _kMaxUiResponseWait,
+      bottomSheetCloseTimeout: _kMaxUiResponseWait,
+    );
+      await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
       ensureUnderWallClock('after split fleet');
       CtE2eNavalPanelSnapshot? lastKnownNavalSnapshot;
 
@@ -174,33 +217,55 @@ void main() {
       ) {
         ensureUnderWallClock('turn loop start turnIdx=$turnIdx');
         perf.bumpCounter('turn_loop_iterations');
-        await e2eDismissTransientUi(tester, perf: perf);
+        await dismissTransientUi(tester, perf: perf);
         await _tapNewWorldRegionTabIfPresent(tester);
-        await _openNavalPanel(tester, perf: perf);
+        if (_fleetReachDoneFromCtSnapshotOnly()) {
+          break;
+        }
+        await openNavalPanel(
+          tester,
+          perf: perf,
+          timeout: _kMaxUiResponseWait,
+          bottomSheetCloseTimeout: _kMaxUiResponseWait,
+        );
         if (ctE2eNavalPanelSnapshot != null) {
           lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
         }
         if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
-          await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+          await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
           break;
         }
-        await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
-        await _tryNavalMoveSegment(tester, l10n, perf: perf);
-        await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+        await _tryNavalMoveSegment(
+          tester,
+          l10n,
+          perf: perf,
+          navalPanelAlreadyOpen: true,
+        );
+        await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
 
         if (_harnessDetectsNonHomeFleetInNewWorld(tester)) {
           break;
         }
 
         await _advanceOneHumanTurn(tester, l10n, perf: perf);
-        await e2eDismissTransientUi(tester, perf: perf);
+        if (_fleetReachDoneFromCtSnapshotOnly()) {
+          break;
+        }
+        await dismissTransientUi(tester, perf: perf);
         ensureUnderWallClock('after turn advance turnIdx=$turnIdx');
       }
 
-      await e2eDismissTransientUi(tester, perf: perf);
+      await dismissTransientUi(tester, perf: perf);
       await _tapNewWorldRegionTabIfPresent(tester);
-      await _openNavalPanel(tester, perf: perf);
+      if (!_fleetReachDoneFromCtSnapshotOnly()) {
+        await openNavalPanel(
+          tester,
+          perf: perf,
+          timeout: _kMaxUiResponseWait,
+          bottomSheetCloseTimeout: _kMaxUiResponseWait,
+        );
+      }
       if (ctE2eNavalPanelSnapshot != null) {
         lastKnownNavalSnapshot = ctE2eNavalPanelSnapshot;
       }
@@ -210,7 +275,7 @@ void main() {
           'Last exception: ${tester.takeException()}',
         );
       }
-      await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+      await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
       ensureUnderWallClock('fleet in NW confirmed');
 
       await _awaitNwCoastalOrVisibleLandForBundledExploreE2e(
@@ -222,13 +287,13 @@ void main() {
       await _tapNewWorldRegionTabIfPresent(tester);
       Future<bool> checkExploreEnabledFromCivilianPanel() async {
         final phaseSw = Stopwatch()..start();
-        await e2eOpenCivilianPanel(
+        await openCivilianPanel(
           tester,
           afterSheetPanelsClearPhase:
               'pump_until_panels_cleared_after_close_sheet_fleet_civilian_open',
           bottomSheetCloseTimeout: _kMaxUiResponseWait,
         );
-        await e2eWaitUntilFound(
+        await waitUntilFound(
           tester,
           find.byKey(kCtE2ECivilianPanelRootKey),
           timeout: _kMaxUiResponseWait,
@@ -238,7 +303,7 @@ void main() {
         final enabled = await _anyExplorerHasEnabledExploreAssignFleetE2e(
           tester,
         );
-        await e2eCloseBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
+        await closeBottomSheet(tester, perf: perf, overallTimeout: _kMaxUiResponseWait);
         perf.timing(
           'bundled_explore_retry_loop',
           phaseSw.elapsed,
@@ -261,7 +326,7 @@ void main() {
         // Keep assertion strict, but retry with a small bounded loop.
         perf.bumpCounter('bundled_explore_retry_iterations');
         await _advanceOneHumanTurn(tester, l10n, perf: perf);
-        await e2eDismissTransientUi(tester, perf: perf);
+        await dismissTransientUi(tester, perf: perf);
         await _tapNewWorldRegionTabIfPresent(tester);
         exploreEnabled = await checkExploreEnabledFromCivilianPanel();
       }

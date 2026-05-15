@@ -1,21 +1,12 @@
-import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:colonizethis_app/config/ct_e2e.dart';
-import 'package:colonizethis_app/features/game/dialogue/game_start_intro_overlay.dart';
-import 'package:colonizethis_app/features/game/flame/civilian_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/fleet_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/game_screen_shared.dart';
-import 'package:colonizethis_app/features/game/flame/province_label_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/resource_icon_cache.dart';
-import 'package:colonizethis_app/features/game/flame/town_icon_cache.dart';
 import 'package:colonizethis_app/l10n/app_localizations_contract.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Next interval after an idle poll pump in E2E busy-wait loops (25→50→75→100 ms).
@@ -229,6 +220,447 @@ Future<void> e2eOpenCivilianPanel(
     'empire=$empireRailButton marker=$markerButton '
     'Last exception: ${tester.takeException()}',
   );
+}
+
+/// Default cap for naval-panel open polling (matches prior fleet E2E constant).
+const Duration kE2eDefaultNavalOpenTimeout = Duration(seconds: 5);
+
+/// Opens the naval units panel from the empire rail or the first fleet marker,
+/// dismissing transient UI and closing conflicting sheets when needed.
+///
+/// Single canonical implementation for fleet E2E (GitHub #2336); mirrors
+/// [e2eOpenCivilianPanel] structure with naval keys and adaptive polling.
+Future<void> e2eOpenNavalPanel(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration timeout = kE2eDefaultNavalOpenTimeout,
+  Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+}) async {
+  final phaseSw = Stopwatch()..start();
+  final navalPanel = find.byKey(kCtE2ENavalPanelRootKey);
+  final markerBtn = find.byKey(kCtE2EOpenFirstFleetMarkerPanelKey);
+  final btn = find.byKey(kEmpireNavalUnitsButtonKey);
+
+  Future<bool> pollUntilNavalVisible(Duration budget) async {
+    final poll = Stopwatch()..start();
+    if (navalPanel.evaluate().isNotEmpty) {
+      return true;
+    }
+    var stepMs = 25;
+    while (poll.elapsed < budget) {
+      if (navalPanel.evaluate().isNotEmpty) {
+        return true;
+      }
+      await tester.pump(Duration(milliseconds: stepMs));
+      stepMs = e2eNextIdlePollStepMs(stepMs);
+    }
+    return false;
+  }
+
+  final sw = Stopwatch()..start();
+  var navalPollMs = 25;
+  while (sw.elapsed < timeout) {
+    if (navalPanel.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_naval', phaseSw.elapsed);
+      return;
+    }
+    if (find.byType(BottomSheet).evaluate().isNotEmpty) {
+      await e2eCloseBottomSheet(
+        tester,
+        perf: perf,
+        overallTimeout: bottomSheetCloseTimeout,
+      );
+      navalPollMs = 25;
+      continue;
+    }
+    if (find.byType(AlertDialog).evaluate().isNotEmpty) {
+      await e2eDismissTransientUi(tester, perf: perf);
+      navalPollMs = 25;
+      continue;
+    }
+    if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
+      await e2eDismissTransientUi(tester, perf: perf);
+      navalPollMs = 25;
+      continue;
+    }
+    final markerHit = markerBtn.hitTestable();
+    if (markerHit.evaluate().isNotEmpty) {
+      await tester.tap(markerHit.first, warnIfMissed: false);
+      if (await pollUntilNavalVisible(const Duration(seconds: 2))) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => navalPanel.evaluate().isNotEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_naval_visible_after_marker_tap',
+      )) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
+      navalPollMs = 25;
+      continue;
+    }
+    final railHit = btn.hitTestable();
+    if (railHit.evaluate().isNotEmpty) {
+      await tester.tap(railHit.first, warnIfMissed: false);
+      if (await pollUntilNavalVisible(const Duration(seconds: 3))) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => navalPanel.evaluate().isNotEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_naval_visible_after_rail_tap',
+      )) {
+        perf?.timing('open_panel_naval', phaseSw.elapsed);
+        return;
+      }
+      navalPollMs = 25;
+      continue;
+    }
+    await e2eDismissTransientUi(tester, perf: perf);
+    await tester.pump(Duration(milliseconds: navalPollMs));
+    navalPollMs = e2eAdaptivePollRampAfterIdle(navalPollMs);
+  }
+  fail(
+    'Timed out after ${timeout.inSeconds}s opening naval panel. '
+    'Last exception: ${tester.takeException()}',
+  );
+}
+
+/// Opens a map-marker panel when [markerButton] is tappable and [panelRoot] mounts.
+///
+/// Shared full-turn path for tile-scoped civilian/naval markers (GitHub #2336 AC2).
+Future<void> e2eOpenPanelFromMarker(
+  WidgetTester tester, {
+  required Finder markerButton,
+  required Finder panelRoot,
+  Duration timeout = const Duration(seconds: 20),
+  E2ePerfLog? perf,
+}) async {
+  final sw = Stopwatch()..start();
+  var panelPollMs = 25;
+  while (sw.elapsed < timeout) {
+    if (panelRoot.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
+    }
+    final tappable = markerButton.hitTestable();
+    if (tappable.evaluate().isEmpty) {
+      await e2eDismissTransientUi(tester, perf: perf);
+      if (panelRoot.evaluate().isNotEmpty) {
+        perf?.timing('open_panel_from_marker', sw.elapsed);
+        return;
+      }
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => markerButton.hitTestable().evaluate().isNotEmpty,
+        timeout: Duration(milliseconds: panelPollMs),
+        perf: perf,
+        phaseName: 'pump_until_marker_hit_testable_after_dismiss',
+      )) {
+        panelPollMs = 25;
+      } else {
+        panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
+      }
+      continue;
+    }
+    await tester.tap(tappable.first, warnIfMissed: false);
+    if (panelRoot.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
+    }
+    await tester.pump();
+    if (panelRoot.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
+    }
+    if (await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => panelRoot.evaluate().isNotEmpty,
+      timeout: const Duration(seconds: 3),
+      perf: perf,
+      phaseName: 'pump_until_marker_panel_root_after_tap',
+    )) {
+      perf?.timing('open_panel_from_marker', sw.elapsed);
+      return;
+    }
+    panelPollMs = 25;
+    await tester.pump(Duration(milliseconds: panelPollMs));
+    panelPollMs = e2eAdaptivePollRampAfterIdle(panelPollMs);
+  }
+  fail(
+    'Timed out after ${timeout.inSeconds}s opening marker panel. '
+    'marker=$markerButton panel=$panelRoot Last exception: ${tester.takeException()}',
+  );
+}
+
+/// Opens the production screen from the empire rail, closing conflicting sheets
+/// and dialogs first (GitHub #2336 H7 / shared full-turn path).
+Future<void> e2eOpenProductionPanel(
+  WidgetTester tester, {
+  E2ePerfLog? perf,
+  Duration timeout = const Duration(seconds: 20),
+}) async {
+  final productionPanel = find.byKey(kCtE2EProductionPanelRootKey);
+  final productionButton = find.byKey(kEmpireProductionButtonKey);
+  final sw = Stopwatch()..start();
+  var idlePollMs = 25;
+  while (sw.elapsed < timeout) {
+    if (productionPanel.evaluate().isNotEmpty) {
+      perf?.timing('open_panel_production', sw.elapsed);
+      return;
+    }
+
+    if (find.byType(BottomSheet).evaluate().isNotEmpty) {
+      await e2eCloseBottomSheet(tester, perf: perf);
+      await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => find.byType(BottomSheet).evaluate().isEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_sheet_cleared_production_open',
+      );
+      idlePollMs = 25;
+      continue;
+    }
+
+    if (find.byType(CtDialogShell).evaluate().isNotEmpty) {
+      await tester.binding.handlePopRoute();
+      await e2ePumpUntil(
+        tester,
+        () => find.byType(CtDialogShell).evaluate().isEmpty,
+        timeout: const Duration(seconds: 2),
+        perf: perf,
+        phaseName: 'pump_until_production_path_shell_cleared',
+      );
+      idlePollMs = 25;
+      continue;
+    }
+
+    if (productionButton.evaluate().isNotEmpty) {
+      final productionButtonHit = productionButton.hitTestable();
+      final target = productionButtonHit.evaluate().isNotEmpty
+          ? productionButtonHit
+          : productionButton;
+      await tester.tap(target.first, warnIfMissed: false);
+      if (productionPanel.evaluate().isNotEmpty) {
+        perf?.timing('open_panel_production', sw.elapsed);
+        return;
+      }
+      idlePollMs = 25;
+      await tester.pump();
+      if (productionPanel.evaluate().isNotEmpty) {
+        perf?.timing('open_panel_production', sw.elapsed);
+        return;
+      }
+      await e2eWaitUntilFound(
+        tester,
+        productionPanel,
+        timeout: const Duration(seconds: 5),
+        perf: perf,
+        phaseName: 'wait_until_production_panel_after_rail_tap',
+      );
+      if (productionPanel.evaluate().isNotEmpty) {
+        perf?.timing('open_panel_production', sw.elapsed);
+        return;
+      }
+      if (await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => productionPanel.evaluate().isNotEmpty,
+        timeout: const Duration(milliseconds: 600),
+        perf: perf,
+        phaseName: 'pump_until_production_panel_after_rail_tap_miss',
+      )) {
+        perf?.timing('open_panel_production', sw.elapsed);
+        return;
+      }
+      idlePollMs = 25;
+      continue;
+    }
+    await e2eDismissTransientUi(tester, perf: perf);
+    if (await e2ePumpUntilConditionOrIdle(
+      tester,
+      () =>
+          productionPanel.evaluate().isNotEmpty ||
+          productionButton.hitTestable().evaluate().isNotEmpty,
+      timeout: Duration(milliseconds: idlePollMs),
+      perf: perf,
+      phaseName: 'pump_until_production_entry_after_dismiss_transient',
+    )) {
+      idlePollMs = 25;
+    } else {
+      idlePollMs = e2eAdaptivePollRampAfterIdle(idlePollMs);
+    }
+  }
+
+  fail(
+    'Timed out opening production panel; '
+    'button=$productionButton panel=$productionPanel',
+  );
+}
+
+/// Splits the home fleet once via the naval panel (GitHub #2336 H8).
+Future<void> e2eSplitHomeFleetOnce(
+  WidgetTester tester,
+  AppLocalizations l10n, {
+  E2ePerfLog? perf,
+  Duration openNavalTimeout = kE2eDefaultNavalOpenTimeout,
+  Duration bottomSheetCloseTimeout = kE2eDefaultBottomSheetCloseTimeout,
+}) async {
+  final phaseSw = Stopwatch()..start();
+  await e2eOpenNavalPanel(
+    tester,
+    perf: perf,
+    timeout: openNavalTimeout,
+    bottomSheetCloseTimeout: bottomSheetCloseTimeout,
+  );
+  await e2eExpandEachExpansionTileOnce(tester);
+  final navalPanelRoot = find.byKey(kCtE2ENavalPanelRootKey);
+  final split = find.descendant(
+    of: navalPanelRoot,
+    matching: find.text('Split'),
+  );
+  expect(split, findsWidgets);
+  await tester.tap(split.first, warnIfMissed: false);
+  await e2eWaitUntilFound(
+    tester,
+    find.descendant(
+      of: find.byType(CtDialogShell),
+      matching: find.widgetWithText(CtNinePatchButton, '>'),
+    ),
+    timeout: const Duration(seconds: 4),
+    perf: perf,
+    phaseName: 'wait_until_found_split_nudge_right',
+  );
+
+  final moveOneRight = find.descendant(
+    of: find.byType(CtDialogShell),
+    matching: find.widgetWithText(CtNinePatchButton, '>'),
+  );
+  expect(moveOneRight, findsWidgets);
+  await tester.tap(moveOneRight.first);
+  await e2eWaitUntilFound(
+    tester,
+    find.text(l10n.splitFleet_confirm),
+    timeout: const Duration(seconds: 4),
+    perf: perf,
+    phaseName: 'wait_until_found_split_confirm',
+  );
+  await tester.tap(find.text(l10n.splitFleet_confirm));
+  await e2ePumpUntilConditionOrIdle(
+    tester,
+    () => find.byType(CtDialogShell).evaluate().isEmpty,
+    timeout: const Duration(milliseconds: 500),
+    perf: perf,
+    phaseName: 'pump_until_split_dialog_shell_cleared',
+  );
+  await e2eExpandEachExpansionTileOnce(tester);
+  perf?.timing('fleet_split', phaseSw.elapsed);
+}
+
+/// Taps the first visible **Assign** in the civilian panel work menu (GitHub #2336 H9).
+Future<void> e2eTapFirstAssignInCivilianPanel(WidgetTester tester) async {
+  final root = find.byKey(kCtE2ECivilianPanelRootKey);
+  final listView = find.descendant(of: root, matching: find.byType(ListView));
+  expect(listView, findsOneWidget);
+  final panelScrollable = find.descendant(
+    of: listView,
+    matching: find.byType(Scrollable),
+  );
+  expect(panelScrollable, findsOneWidget);
+  final assign = find.descendant(of: root, matching: find.text('Assign'));
+  expect(assign, findsWidgets);
+  final firstAssign = assign.first;
+  await tester.scrollUntilVisible(
+    firstAssign,
+    120,
+    scrollable: panelScrollable,
+  );
+  await tester.ensureVisible(firstAssign);
+  await tester.pump();
+  await tester.tap(firstAssign);
+  await e2eWaitUntilAnyFinderHitTestable(
+    tester,
+    <Finder>[
+      find.text('Build improvement'),
+      find.text('Prospect'),
+      find.text('Explore'),
+    ],
+    timeout: const Duration(seconds: 5),
+    phaseName: 'wait_until_civilian_work_menu',
+  );
+}
+
+/// Taps **Assign** on a [ListTile] whose title is exactly [unitTypeTitle] (GitHub #2336 H9).
+Future<void> e2eTapAssignOnCivilianRowWithTitle(
+  WidgetTester tester,
+  String unitTypeTitle,
+) async {
+  final root = find.byKey(kCtE2ECivilianPanelRootKey);
+  final listView = find.descendant(of: root, matching: find.byType(ListView));
+  expect(listView, findsOneWidget);
+  final panelScrollable = find.descendant(
+    of: listView,
+    matching: find.byType(Scrollable),
+  );
+  expect(panelScrollable, findsOneWidget);
+  final titlesInList = find.descendant(
+    of: listView,
+    matching: find.text(unitTypeTitle),
+  );
+  final sw = Stopwatch()..start();
+  while (titlesInList.evaluate().isEmpty &&
+      sw.elapsed < const Duration(seconds: 20)) {
+    await tester.drag(panelScrollable, const Offset(0, -120));
+    await e2ePumpUntilConditionOrIdle(
+      tester,
+      () => titlesInList.evaluate().isNotEmpty,
+      timeout: const Duration(milliseconds: 200),
+      phaseName: 'pump_until_civilian_title_visible_after_scroll_drag',
+    );
+  }
+  expect(
+    titlesInList,
+    findsWidgets,
+    reason:
+        'Timed out scrolling civilian panel for a visible "$unitTypeTitle" row',
+  );
+  final n = titlesInList.evaluate().length;
+  for (var i = 0; i < n; i++) {
+    final titleAt = titlesInList.at(i);
+    await tester.scrollUntilVisible(titleAt, 120, scrollable: panelScrollable);
+    await tester.ensureVisible(titleAt);
+    final listTile = find.ancestor(
+      of: titleAt,
+      matching: find.byType(ListTile),
+    );
+    final assign = find.descendant(of: listTile, matching: find.text('Assign'));
+    if (assign.evaluate().isEmpty) {
+      continue;
+    }
+    final assignHit = assign.first;
+    await tester.ensureVisible(assignHit);
+    await tester.pump();
+    await tester.tap(assignHit);
+    await e2eWaitUntilAnyFinderHitTestable(
+      tester,
+      <Finder>[
+        find.text('Build improvement'),
+        find.text('Prospect'),
+        find.text('Explore'),
+      ],
+      timeout: const Duration(seconds: 5),
+      phaseName: 'wait_until_civilian_work_menu_row',
+    );
+    return;
+  }
+  fail('No idle Assign row for unit type "$unitTypeTitle" in civilian panel');
 }
 
 /// Dismisses snackbars, generic OK dialogs, [AlertDialog] actions, bottom sheets,
@@ -583,262 +1015,3 @@ Future<Duration> e2eWaitForNextTurnLabelAdvance(
   );
 }
 
-/// Loads and decodes each path with bounded concurrency (overlapping I/O +
-/// image decode completion) instead of strictly serial awaits.
-Future<List<String>> e2eDecodePngAssetPathsParallel(
-  List<String> assetPaths, {
-  int batchSize = 8,
-}) async {
-  final failures = <String>[];
-  for (var i = 0; i < assetPaths.length; i += batchSize) {
-    final end = i + batchSize > assetPaths.length
-        ? assetPaths.length
-        : i + batchSize;
-    final chunk = assetPaths.sublist(i, end);
-    final chunkFailures = await Future.wait(
-      chunk.map((assetPath) async {
-        try {
-          final data = await rootBundle.load(assetPath);
-          final bytes = data.buffer.asUint8List();
-          final completer = Completer<ui.Image>();
-          ui.decodeImageFromList(bytes, completer.complete);
-          final image = await completer.future;
-          image.dispose();
-          return null;
-        } catch (e) {
-          return '$assetPath ($e)';
-        }
-      }),
-    );
-    for (final message in chunkFailures) {
-      if (message != null) {
-        failures.add(message);
-      }
-    }
-  }
-  return failures;
-}
-
-Future<void> _e2eTapGameStartIntroOverlayContinueIfPresent(
-  WidgetTester tester,
-) async {
-  if (find.text('Continue').evaluate().isNotEmpty) {
-    await tester.tap(find.text('Continue').first);
-    await e2ePumpUntilConditionOrIdle(
-      tester,
-      () => find.byType(GameStartIntroOverlay).evaluate().isEmpty,
-      timeout: const Duration(milliseconds: 800),
-      phaseName: 'pump_until_intro_dismissed_after_continue',
-    );
-    return;
-  }
-  if (find.text('I shall.').evaluate().isNotEmpty) {
-    await tester.tap(find.text('I shall.').first);
-    await e2ePumpUntilConditionOrIdle(
-      tester,
-      () => find.byType(GameStartIntroOverlay).evaluate().isEmpty,
-      timeout: const Duration(milliseconds: 800),
-      phaseName: 'pump_until_intro_dismissed_after_i_shall',
-    );
-  }
-}
-
-/// After [Start] is tapped, polls until the in-game map HUD is visible.
-///
-/// Evaluates success before the first pump; uses exponential backoff on pump
-/// intervals (25ms → … capped at 500ms) per `SPEC/program/e2e-integration-tests.md`
-/// / issue #2336 adaptive polling guidance.
-Future<void> e2eWaitForMapHudAfterNewGameStart(
-  WidgetTester tester, {
-  Duration overallCap = const Duration(seconds: 60),
-}) async {
-  final setupDeadline = DateTime.now().add(overallCap);
-  var stepMs = 25;
-  while (DateTime.now().isBefore(setupDeadline)) {
-    if (find.text('Could not create game').evaluate().isNotEmpty) {
-      fail(
-        'New game setup failed (error dialog). '
-        'Exception: ${tester.takeException()}',
-      );
-    }
-    if (find.byKey(kHomeToCapitalButtonKey).evaluate().isNotEmpty) {
-      return;
-    }
-    if (find.byType(GameStartIntroOverlay).evaluate().isNotEmpty) {
-      await _e2eTapGameStartIntroOverlayContinueIfPresent(tester);
-      stepMs = 25;
-      continue;
-    }
-    if (find.text('Creating game').evaluate().isNotEmpty) {
-      await tester.pump(Duration(milliseconds: stepMs));
-      stepMs = math.min(500, stepMs * 2);
-      continue;
-    }
-    await tester.pump(Duration(milliseconds: stepMs));
-    stepMs = math.min(500, stepMs * 2);
-  }
-  fail(
-    'Timed out after ${overallCap.inSeconds}s waiting for '
-    'map (home→capital). Last exception: ${tester.takeException()}',
-  );
-}
-
-/// Canonical new-game → map HUD path shared by E2E scenarios (Refs #2336).
-Future<void> e2eBootstrapNewGameToMap(
-  WidgetTester tester, {
-  E2ePerfLog? perf,
-  Duration overallCap = const Duration(seconds: 60),
-}) async {
-  final phaseSw = Stopwatch()..start();
-  await tester.tap(find.text('New Game'));
-  await e2eWaitUntilFound(
-    tester,
-    find.text('Start'),
-    timeout: const Duration(seconds: 30),
-    perf: perf,
-    phaseName: 'wait_until_found_start_button',
-  );
-
-  final startButton = find.ancestor(
-    of: find.text('Start'),
-    matching: find.byType(CtNinePatchButton),
-  );
-  expect(startButton, findsOneWidget);
-
-  final shellScrollable = find.descendant(
-    of: find.byType(CtDialogShell),
-    matching: find.byType(Scrollable),
-  );
-  await tester.dragUntilVisible(
-    startButton,
-    shellScrollable,
-    const Offset(0, -120),
-  );
-  await e2ePumpUntilConditionOrIdle(
-    tester,
-    () => startButton.hitTestable().evaluate().isNotEmpty,
-    timeout: const Duration(milliseconds: 600),
-    perf: perf,
-    phaseName: 'pump_until_start_button_tappable_after_drag',
-  );
-  await tester.ensureVisible(startButton);
-  await tester.tap(startButton);
-  await tester.pump();
-
-  await e2eWaitForMapHudAfterNewGameStart(tester, overallCap: overallCap);
-
-  expect(find.byKey(kHomeToCapitalButtonKey), findsOneWidget);
-  await e2ePumpUntilConditionOrIdle(
-    tester,
-    () =>
-        find.byKey(kHomeToCapitalButtonKey).hitTestable().evaluate().isNotEmpty,
-    timeout: const Duration(milliseconds: 800),
-    perf: perf,
-    phaseName: 'pump_until_home_capital_tappable_after_map',
-  );
-  perf?.timing('new_game_to_map', phaseSw.elapsed);
-}
-
-/// Collects non-empty [Text] data in depth-first preorder (E2E snapshot helpers).
-void e2eCollectTextPreorder(Element element, List<String> out) {
-  final w = element.widget;
-  if (w is Text) {
-    final d = w.data;
-    if (d != null && d.isNotEmpty) {
-      out.add(d);
-    }
-  }
-  element.visitChildren((child) {
-    e2eCollectTextPreorder(child, out);
-  });
-}
-
-/// Relocated 64px map icon paths from the asset manifest (sorted).
-Future<List<String>> e2eDiscoverRelocated64pxPngAssets() async {
-  final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-  final assets =
-      manifest
-          .listAssets()
-          .where(
-            (assetPath) =>
-                assetPath.startsWith('assets/icons/64/') &&
-                assetPath.endsWith('.png'),
-          )
-          .toList()
-        ..sort();
-  return assets;
-}
-
-/// Asserts manifest contents match [expectedAssets], then decodes via
-/// [e2eDecodePngAssetPathsParallel] (Refs #2336 AC3).
-Future<void> e2eEnsureRelocated64pxPngDecode(
-  Set<String> expectedAssets, {
-  String emptyManifestReason =
-      'Expected relocated map icon PNGs under assets/icons/64/, but none were found in the asset manifest.',
-  String? countMismatchReason,
-  String? orderedMismatchReason,
-  String decodeFailuresPrefix =
-      'Failed to load one or more relocated 64px PNG assets:',
-}) async {
-  final assets = await e2eDiscoverRelocated64pxPngAssets();
-  final expectedSorted = expectedAssets.toList()..sort();
-  expect(assets, isNotEmpty, reason: emptyManifestReason);
-  expect(
-    assets.length,
-    expectedAssets.length,
-    reason:
-        countMismatchReason ??
-        'Unexpected number of relocated 64px PNG assets. '
-            'Expected ${expectedAssets.length} map-family files, found ${assets.length}.',
-  );
-  expect(
-    assets,
-    orderedEquals(expectedSorted),
-    reason:
-        orderedMismatchReason ??
-        'Relocated 64px PNG manifest entries do not match expected map icon families.',
-  );
-  final failures = await e2eDecodePngAssetPathsParallel(assets);
-  expect(
-    failures,
-    isEmpty,
-    reason: failures.isEmpty
-        ? null
-        : '$decodeFailuresPrefix\n${failures.join('\n')}',
-  );
-}
-
-/// Asserts the manifest matches the canonical map icon families, then decodes
-/// every PNG via [e2eDecodePngAssetPathsParallel] (bounded concurrency).
-///
-/// Used by new-game E2E tests that need the same warm-cache behavior.
-///
-/// Prefer [e2eEnsureAllRelocated64pxPngsLoadSuiteOnce] when each scenario needs
-/// the same decode/assert path so work runs at most once per test VM (GitHub
-/// #2336 AC3).
-Future<void> e2eEnsureAllRelocated64pxPngsLoad() async {
-  await e2eEnsureRelocated64pxPngDecode(<String>{
-    ...kCivilianIconSlugs.map(
-      (slug) => 'assets/icons/64/ui_icon_civ_$slug.png',
-    ),
-    ...kResourceIconIds.map(
-      (resourceId) => 'assets/icons/64/ui_icon_com_$resourceId.png',
-    ),
-    ...kTownIconIds.map((iconId) => 'assets/icons/64/ui_icon_com_$iconId.png'),
-    ...kProvinceLabelIconIds.map(
-      (iconId) => 'assets/icons/64/ui_icon_$iconId.png',
-    ),
-    kFleetMapIcon64PngAssetPath,
-  });
-}
-
-Future<void>? _e2eAllRelocated64pxPngLoadSuiteFuture;
-
-/// Runs [e2eEnsureAllRelocated64pxPngsLoad] at most once per isolate.
-///
-/// Subsequent calls await the same future so multiple E2E scenarios in one run
-/// do not repeat manifest + parallel decode work (GitHub #2336 AC3).
-Future<void> e2eEnsureAllRelocated64pxPngsLoadSuiteOnce() async {
-  _e2eAllRelocated64pxPngLoadSuiteFuture ??= e2eEnsureAllRelocated64pxPngsLoad();
-  return _e2eAllRelocated64pxPngLoadSuiteFuture!;
-}
