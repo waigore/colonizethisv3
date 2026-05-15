@@ -4,6 +4,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:image/image.dart' as img;
 
+import 'init_game_map_view_data.dart';
 import 'tile_map_colors.dart';
 
 export 'tile_map_colors.dart';
@@ -14,6 +15,25 @@ const int legendPadding = 12;
 const int legendLineHeight = 20;
 const int swatchSize = 14;
 const int swatchGap = 8;
+
+/// Title line for PNG game-world ownership overlays (combined and view-data paths).
+/// SPEC/program/map-visualization.md § Game world state map visualizer.
+const String kGameWorldMapOwnershipLegendBlurb =
+    'Ownership by faction. Black = land borders; light blue = sea borders.';
+
+/// Sea-zone local ids from flattened [RegionMapViewData] cells.
+///
+/// Use when rendering from view data without a [MapTopology] (dual with
+/// [seaZoneIdsFromTopology]). Order is not preserved; ids are unique.
+Set<String> seaZoneLocalIdsFromRegionCells(List<CellViewData> cells) {
+  final out = <String>{};
+  for (final cell in cells) {
+    if (cell.isSea) {
+      out.add(cell.regionCellId);
+    }
+  }
+  return out;
+}
 
 img.Color _borderColorForAdjacentCells(
   String id,
