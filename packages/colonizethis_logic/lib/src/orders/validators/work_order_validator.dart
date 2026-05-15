@@ -87,35 +87,30 @@ class WorkOrderValidator extends StatefulValidator {
       previousRejected: previousRejected,
       body: () {
         final unit = _context.unitsById[o.unitId];
-        final unitValidation = _validateOwnedUnseenUnit(o, unit);
-        if (unitValidation != null) return unitValidation;
-        final validatedUnit = unit;
-        if (validatedUnit == null) {
-          return OrderValidationResult.rejected('Unit not found');
-        }
-        final type = validatedUnit.type;
-        final targetValidation = _validateWorkTargetAndTile(o, type);
-        if (targetValidation != null) return targetValidation;
-
         final targetProvinceId = Unit.provinceIdFromTileKey(o.targetTileKey);
         final province = targetProvinceId != null
             ? _context.game.worldState.tryGetProvince(targetProvinceId)
             : null;
         final ownerId = province?.ownerId;
 
-        final postContextGates = <_WorkOrderValidationGate>[
+        final gates = <_WorkOrderValidationGate>[
+          () => _validateOwnedUnseenUnit(o, unit),
+          () {
+            final type = unit!.type;
+            return _validateWorkTargetAndTile(o, type);
+          },
           () => _runTargetPrecheck(
             o: o,
             targetProvinceId: targetProvinceId,
             ownerId: ownerId,
-            type: type,
+            type: unit!.type,
           ),
           () => _validateForeignProvinceWork(
             o: o,
-            type: type,
+            type: unit!.type,
             ownerId: ownerId,
           ),
-          () => _validateDevExclusiveWorkTarget(o, type),
+          () => _validateDevExclusiveWorkTarget(o, unit!.type),
           () => _validateMaterialAndTechRules(
             o,
             province?.fortLevel ?? 0,
@@ -123,7 +118,7 @@ class WorkOrderValidator extends StatefulValidator {
           () {
             if (!workOrderVisibilityOk(
               _context.view,
-              validatedUnit,
+              unit!,
               o.target,
               targetTileKey: o.targetTileKey,
               worldState: _context.game.worldState,
@@ -138,7 +133,7 @@ class WorkOrderValidator extends StatefulValidator {
             if (!civilianMayOccupyLandTileKey(
               game: _context.game,
               playerId: _context.playerId,
-              unitType: type,
+              unitType: unit!.type,
               destinationTileKey: o.targetTileKey,
               factionMembership: _context.factionMembership,
             )) {
@@ -151,13 +146,14 @@ class WorkOrderValidator extends StatefulValidator {
           () => _validateProspectTarget(o),
         ];
 
-        for (final gate in postContextGates) {
+        for (final gate in gates) {
           final hit = gate();
           if (hit != null) {
             return hit;
           }
         }
 
+        final type = unit!.type;
         if (isDevExclusiveUnitType(type) &&
             isDevExclusiveWorkTarget(o.target)) {
           _context.devExclusiveTiles.add(o.targetTileKey);
