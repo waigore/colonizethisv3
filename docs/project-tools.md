@@ -265,7 +265,7 @@ python3 pytool/wang_reference_legal_layout_64.py --run-dir app/assets/images/ter
 
 ## run_e2e_timing.sh (E2E wall-clock, #2336)
 
-Runs the three Linux desktop `integration_test` scenarios from [SPEC/program/e2e-integration-tests.md](../SPEC/program/e2e-integration-tests.md) with `--dart-define=CT_E2E=true`, **N times each** (default 3), and writes per-run logs plus a markdown summary (min/median/max per test and sum of medians for AC8). CI does not run these tests; use on a maintainer machine with a working Flutter Linux toolchain (including `ld.lld`).
+Runs the three Linux desktop `integration_test` scenarios from [SPEC/program/e2e-integration-tests.md](../SPEC/program/e2e-integration-tests.md) with `--dart-define=CT_E2E=true`, **N times each** (default 3), and writes per-run logs plus a markdown summary (min/median/max per test and sum of medians for AC8). CI does not run these tests; use on a maintainer machine with a working Flutter Linux desktop toolchain, a display or `xvfb-run`, and (for snap Flutter) `ld.lld` available to the bundled LLVM path. Set `FLUTTER_BIN` to override the Flutter executable (default search: `~/development/flutter/bin/flutter`, then `PATH`).
 
 **Invocation**
 
