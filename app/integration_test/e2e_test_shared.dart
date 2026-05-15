@@ -414,6 +414,13 @@ Future<void> e2eWaitUntilAnyFinderHitTestable(
   if (finders.isEmpty) {
     return;
   }
+  for (final finder in finders) {
+    if (finder.hitTestable().evaluate().isNotEmpty) {
+      perf?.bumpCounter('wait_until_any_calls', meta: 'phase=$phaseName');
+      perf?.timing(phaseName, Duration.zero, meta: 'result=found_immediate');
+      return;
+    }
+  }
   final sw = Stopwatch()..start();
   perf?.bumpCounter('wait_until_any_calls', meta: 'phase=$phaseName');
   var stepMs = 25;
