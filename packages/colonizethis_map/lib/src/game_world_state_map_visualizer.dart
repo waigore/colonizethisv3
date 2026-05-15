@@ -7,6 +7,7 @@ import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'tile_map_topology_helpers.dart';
 import 'tile_map_visualization.dart';
 import 'tile_map_visualization_shared.dart';
 import 'multi_region_map_rendering.dart';
@@ -162,10 +163,7 @@ Uint8List renderSingleRegionGameStateMapToPng({
   Map<String, (int r, int g, int b)>? factionColorsOverride,
   List<({int x, int y})> portTiles = const [],
 }) {
-  final seaZoneIds = {
-    for (final n in topology.nodes)
-      if (n.type == TopologyNodeType.seaZone) n.id,
-  };
+  final seaZoneIds = seaZoneIdsFromTopology(topology);
 
   final List<String> factionIds;
   final Map<String, (int r, int g, int b)> factionColors;

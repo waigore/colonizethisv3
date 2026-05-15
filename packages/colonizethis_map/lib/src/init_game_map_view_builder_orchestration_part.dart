@@ -201,10 +201,7 @@ _buildProvinceMetadata({
   required bool isOldWorld,
   required MapTopology topology,
 }) {
-  final seaZoneIds = {
-    for (final n in topology.nodes)
-      if (n.type == TopologyNodeType.seaZone) n.id,
-  };
+  final seaZoneIds = seaZoneIdsFromTopology(topology);
   final provinces = isOldWorld
       ? game.worldState.oldWorld.provinces
       : game.worldState.newWorld.provinces;

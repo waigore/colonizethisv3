@@ -145,15 +145,19 @@ class TileMapGridGraph {
     final legacyOcean = _legacyBoundaryReachableSea(grid, seaZoneId);
     final components = connectedComponentsOfSea(grid, seaZoneId);
     final totalSea = countSeaCells(grid, seaZoneId);
+    final continentSetByComponent = {
+      for (final component in components)
+        component: _continentSetForSeaComponent(
+          grid,
+          seaZoneId,
+          component,
+          landSeeds,
+          continentBySeedIndex,
+        ),
+    };
     final touchLegacyFillable = <Set<(int x, int y)>>[];
     for (final component in components) {
-      final continentSet = _continentSetForSeaComponent(
-        grid,
-        seaZoneId,
-        component,
-        landSeeds,
-        continentBySeedIndex,
-      );
+      final continentSet = continentSetByComponent[component]!;
       if (continentSet.length != 1) continue;
       if (!component.any((p) => legacyOcean.contains(p))) continue;
       touchLegacyFillable.add(component);
@@ -179,13 +183,7 @@ class TileMapGridGraph {
 
     final fillableLake = <(int x, int y)>{};
     for (final component in components) {
-      final continentSet = _continentSetForSeaComponent(
-        grid,
-        seaZoneId,
-        component,
-        landSeeds,
-        continentBySeedIndex,
-      );
+      final continentSet = continentSetByComponent[component]!;
       if (continentSet.length != 1) continue;
       if (excludedMainOcean != null &&
           component.length == excludedMainOcean.length &&

@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:colonizethis_data/colonizethis_data.dart';
 
+import 'tile_map_topology_helpers.dart';
 import 'tile_map_visualization_shared.dart'
     show
         colorMapFromIds,
@@ -13,6 +14,7 @@ import 'tile_map_visualization_shared.dart'
         drawBorders,
         drawLegendContinentSeedMarker,
         drawLegendLandSeedMarker,
+        drawLegendLine,
         drawLegendSwatch,
         drawResourceLetterAtCellCenter,
         landSeedMarkerRgb,
@@ -358,40 +360,23 @@ void _drawTerrainLegend({
     y: legendY0 + legendLineHeight,
     color: black,
   );
-  var row = _titleLines;
-  drawLegendSwatch(
+  var y = legendY0 + _titleLines * legendLineHeight;
+  y = drawLegendLine(
     image,
-    legendY0 + row * legendLineHeight,
+    y,
     seaColorRgb.$1,
     seaColorRgb.$2,
     seaColorRgb.$3,
-  );
-  img.drawString(
-    image,
     'Sea',
-    font: img.arial14,
-    x: legendPadding + swatchSize + swatchGap,
-    y: legendY0 + row * legendLineHeight,
-    color: black,
   );
-  row++;
   for (final t in TerrainType.values) {
     final (r, g, b) = terrainColorRgb[t]!;
-    drawLegendSwatch(image, legendY0 + row * legendLineHeight, r, g, b);
-    img.drawString(
-      image,
-      _terrainLabel(t),
-      font: img.arial14,
-      x: legendPadding + swatchSize + swatchGap,
-      y: legendY0 + row * legendLineHeight,
-      color: black,
-    );
-    row++;
+    y = drawLegendLine(image, y, r, g, b, _terrainLabel(t));
   }
   _drawOptionalLegendSections(
     image,
     legendY0,
-    row,
+    (y - legendY0) ~/ legendLineHeight,
     showContinentSeeds: showContinentSeeds,
     showLandSeeds: showLandSeeds,
     useLandSeedByContinent: useLandSeedByContinent,
@@ -430,25 +415,22 @@ void _drawRegionLegend({
   );
   final nodesSorted = List<TopologyNode>.from(topology.nodes)
     ..sort((a, b) => a.id.compareTo(b.id));
-  var row = _titleLines;
+  var y = legendY0 + _titleLines * legendLineHeight;
   for (final n in nodesSorted) {
-    final y = legendY0 + row * legendLineHeight;
     final c = regionColors[n.id]!;
-    drawLegendSwatch(image, y, c.$1, c.$2, c.$3);
-    img.drawString(
+    y = drawLegendLine(
       image,
+      y,
+      c.$1,
+      c.$2,
+      c.$3,
       '${n.id} (${n.type == TopologyNodeType.province ? 'P' : 'S'})',
-      font: img.arial14,
-      x: legendPadding + swatchSize + swatchGap,
-      y: y,
-      color: black,
     );
-    row++;
   }
   _drawOptionalLegendSections(
     image,
     legendY0,
-    row,
+    (y - legendY0) ~/ legendLineHeight,
     showContinentSeeds: showContinentSeeds,
     showLandSeeds: showLandSeeds,
     useLandSeedByContinent: useLandSeedByContinent,
@@ -479,10 +461,7 @@ Uint8List renderTileMapToPng(
       landSeedContinentIndices.length == landSeedPositions.length;
   final showContinentSeeds =
       continentSeedPositions != null && continentSeedPositions.isNotEmpty;
-  final seaZoneIds = {
-    for (final n in topology.nodes)
-      if (n.type == TopologyNodeType.seaZone) n.id,
-  };
+  final seaZoneIds = seaZoneIdsFromTopology(topology);
 
   final mapW = result.width * cellSize;
   final mapH = result.height * cellSize;
