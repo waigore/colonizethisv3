@@ -1,6 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_map/src/tile_map_topology_helpers.dart';
 import 'package:logger/logger.dart';
 
 void main() {
@@ -456,10 +457,7 @@ void main() {
             seaFraction: 0.6,
           ),
         ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
-        final seaZoneIds = topology.nodes
-            .where((n) => n.type == TopologyNodeType.seaZone)
-            .map((n) => n.id)
-            .toSet();
+        final seaZoneIds = seaZoneIdsFromTopology(topology);
         if (seaZoneIds.isEmpty) return;
         final boundaryIds = <String>{};
         final w = result.width;
@@ -486,10 +484,7 @@ void main() {
       final (result, topology) = TileMapGenerator(
         params: TileMapParams(width: 24, height: 24, seed: 7, seaFraction: 0.6),
       ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
-      final seaNodes = topology.nodes
-          .where((n) => n.type == TopologyNodeType.seaZone)
-          .map((n) => n.id)
-          .toSet();
+      final seaNodes = seaZoneIdsFromTopology(topology);
       expect(seaNodes, isNotEmpty);
       for (final id in seaNodes) {
         expect(RegExp(r'^s\d+$').hasMatch(id), isTrue);
@@ -523,9 +518,7 @@ void main() {
           }
         }
         if (totalSea == 0) return;
-        final seaZoneCount = topology.nodes
-            .where((n) => n.type == TopologyNodeType.seaZone)
-            .length;
+        final seaZoneCount = seaZoneIdsFromTopology(topology).length;
         // With 5% cap, one ocean should be split into at least ~20 zones.
         expect(
           seaZoneCount,
